@@ -131,21 +131,6 @@ func main() {
 
 </details>
 
-### Deprecation and Sunset
-
-If the Equinix Metal API returns a [RFC-8594](https://tools.ietf.org/html/rfc8594) `Deprecation` or `Sunset` header, packngo will log this header to stderr with any accompanied `Link` headers.
-
-Example:
-
-```console
-WARNING: "POST /deprecate-and-sunset" reported deprecation
-WARNING: "POST /deprecate-and-sunset" reported sunsetting on Sat, 1 Aug 2020 23:59:59 GMT
-WARNING: See <https://api.example.com/deprecation/field-a> for deprecation details
-WARNING: See <https://api.example.com/sunset/value-a> for sunset details
-WARNING: See <https://api.example.com/sunset> for sunset details
-WARNING: See <https://api.example.com/deprecation> for deprecation details
-```
-
 ## Contributing
 
 See [CONTIBUTING.md](CONTRIBUTING.md).

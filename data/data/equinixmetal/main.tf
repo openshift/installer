@@ -18,6 +18,8 @@ module "bootstrap" {
   //ocp_version_zstream = var.metal_ocp_version_zstream
   //depends              = [module.prepare_openshift.finished]
 
+  ip_addresses = module.dns.boostrap_a
+
   ignition = var.ignition_bootstrap
 }
 
@@ -40,22 +42,19 @@ module "master" {
   //ocp_version_zstream = var.metal_ocp_version_zstream
   //depends              = [module.prepare_openshift.finished]
 
+  ip_addresses = module.dns.masters_a
+
   ignition = var.ignition_master
 
   bootstrap_ip = module.bootstrap.lb_ip
 }
 
-/*
-module "dns_lb" {
+module "dns" {
   source = "./dns"
 
   cluster_name       = var.cluster_name
   cluster_basedomain = var.cluster_basedomain
- // cf_zone_id         = var.cf_zone_id
-  node_type          = "bootstrap"
-  node_ips           = tolist([module.bootstrap.lb_ip])
 }
-*/
 /*
 module "prepare_openshift" {
 

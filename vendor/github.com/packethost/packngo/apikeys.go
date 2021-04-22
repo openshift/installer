@@ -2,11 +2,11 @@ package packngo
 
 import (
 	"fmt"
-	"path"
 )
 
 const (
-	apiKeyBasePath = "/api-keys"
+	apiKeyUserBasePath    = "/user/api-keys"
+	apiKeyProjectBasePath = "/projects/%s/api-keys"
 )
 
 // APIKeyService interface defines available device methods
@@ -74,11 +74,12 @@ type APIKeyServiceOp struct {
 	client *Client
 }
 
-func (s *APIKeyServiceOp) list(url string, opts *ListOptions) ([]APIKey, *Response, error) {
+func (s *APIKeyServiceOp) list(url string, lopts *ListOptions) ([]APIKey, *Response, error) {
 	root := new(apiKeyRoot)
-	apiPathQuery := opts.WithQuery(url)
+	params := urlQuery(lopts)
+	paramURL := fmt.Sprintf("%s?%s", url, params)
 
-	resp, err := s.client.DoRequest("GET", apiPathQuery, nil, root)
+	resp, err := s.client.DoRequest("GET", paramURL, nil, root)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -88,9 +89,8 @@ func (s *APIKeyServiceOp) list(url string, opts *ListOptions) ([]APIKey, *Respon
 
 // ProjectList lists the API keys associated with a project having `projectID`
 // match `Project.ID`.
-func (s *APIKeyServiceOp) ProjectList(projectID string, opts *ListOptions) ([]APIKey, *Response, error) {
-	endpointPath := path.Join(projectBasePath, projectID, apiKeyBasePath)
-	return s.list(endpointPath, opts)
+func (s *APIKeyServiceOp) ProjectList(projectID string, lopts *ListOptions) ([]APIKey, *Response, error) {
+	return s.list(fmt.Sprintf(apiKeyProjectBasePath, projectID), lopts)
 }
 
 // UserList returns the API keys for the User associated with the
@@ -98,9 +98,8 @@ func (s *APIKeyServiceOp) ProjectList(projectID string, opts *ListOptions) ([]AP
 //
 // When `Client.APIKey` is a Project API key, this method will return an access
 // denied error.
-func (s *APIKeyServiceOp) UserList(opts *ListOptions) ([]APIKey, *Response, error) {
-	endpointPath := path.Join(userBasePath, apiKeyBasePath)
-	return s.list(endpointPath, opts)
+func (s *APIKeyServiceOp) UserList(lopts *ListOptions) ([]APIKey, *Response, error) {
+	return s.list(apiKeyUserBasePath, lopts)
 }
 
 // ProjectGet returns the Project API key with the given `APIKey.ID`.
@@ -111,8 +110,12 @@ func (s *APIKeyServiceOp) UserList(opts *ListOptions) ([]APIKey, *Response, erro
 // APIKeys.  That is why in this method, all API keys are listed and compared
 // for a match. Therefor, the Response is not returned and a custom error will
 // be returned when the key is not found.
-func (s *APIKeyServiceOp) ProjectGet(projectID, apiKeyID string, opts *GetOptions) (*APIKey, error) {
-	pkeys, _, err := s.ProjectList(projectID, opts)
+func (s *APIKeyServiceOp) ProjectGet(projectID, apiKeyID string, getOpt *GetOptions) (*APIKey, error) {
+	var lopts *ListOptions
+	if getOpt != nil {
+		lopts = &ListOptions{Includes: getOpt.Includes, Excludes: getOpt.Excludes}
+	}
+	pkeys, _, err := s.ProjectList(projectID, lopts)
 	if err != nil {
 		return nil, err
 	}
@@ -132,8 +135,12 @@ func (s *APIKeyServiceOp) ProjectGet(projectID, apiKeyID string, opts *GetOption
 // APIKeys.  That is why in this method, all API keys are listed and compared
 // for a match. Therefor, the Response is not returned and a custom error will
 // be returned when the key is not found.
-func (s *APIKeyServiceOp) UserGet(apiKeyID string, opts *GetOptions) (*APIKey, error) {
-	ukeys, _, err := s.UserList(opts)
+func (s *APIKeyServiceOp) UserGet(apiKeyID string, getOpt *GetOptions) (*APIKey, error) {
+	var lopts *ListOptions
+	if getOpt != nil {
+		lopts = &ListOptions{Includes: getOpt.Includes, Excludes: getOpt.Excludes}
+	}
+	ukeys, _, err := s.UserList(lopts)
 	if err != nil {
 		return nil, err
 	}
@@ -151,13 +158,13 @@ func (s *APIKeyServiceOp) UserGet(apiKeyID string, opts *GetOptions) (*APIKey, e
 // the value (or emptiness) of `APIKeyCreateRequest.ProjectID`. Either `User` or
 // `Project` will be non-nil in the `APIKey` depending on this factor.
 func (s *APIKeyServiceOp) Create(createRequest *APIKeyCreateRequest) (*APIKey, *Response, error) {
-	apiPath := path.Join(userBasePath, apiKeyBasePath)
+	path := apiKeyUserBasePath
 	if createRequest.ProjectID != "" {
-		apiPath = path.Join(projectBasePath, createRequest.ProjectID, apiKeyBasePath)
+		path = fmt.Sprintf(apiKeyProjectBasePath, createRequest.ProjectID)
 	}
 	apiKey := new(APIKey)
 
-	resp, err := s.client.DoRequest("POST", apiPath, createRequest, apiKey)
+	resp, err := s.client.DoRequest("POST", path, createRequest, apiKey)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -171,6 +178,6 @@ func (s *APIKeyServiceOp) Create(createRequest *APIKeyCreateRequest) (*APIKey, *
 //
 // Project API keys can not be used to delete themselves.
 func (s *APIKeyServiceOp) Delete(apiKeyID string) (*Response, error) {
-	apiPath := path.Join(userBasePath, apiKeyBasePath, apiKeyID)
-	return s.client.DoRequest("DELETE", apiPath, nil, nil)
+	path := fmt.Sprintf("%s/%s", apiKeyUserBasePath, apiKeyID)
+	return s.client.DoRequest("DELETE", path, nil, nil)
 }

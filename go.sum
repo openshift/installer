@@ -1194,9 +1194,8 @@ github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b/go.mod h1:01TrycV0kFyex
 github.com/mholt/archiver v3.1.1+incompatible/go.mod h1:Dh2dOXnSdiLxRiPoVfIr/fI1TwETms9B8CTWfeh7ROU=
 github.com/michaelklishin/rabbit-hole v0.0.0-20191008194146-93d9988f0cd5/go.mod h1:+pmbihVqjC3GPdfWv1V2TnRSuVvwrWLKfEP/MZVB/Wc=
 github.com/microcosm-cc/bluemonday v1.0.1/go.mod h1:hsXNsILzKxV+sX77C5b8FSuKF00vh2OMYv+xgHpAMF4=
-github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
-github.com/miekg/dns v1.1.15/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
-github.com/miekg/dns v1.1.22/go.mod h1:bPDLeHnStXmXAq1m/Ch/hvfNHr14JKNPMBo3VZKjuso=
+github.com/miekg/dns v1.0.8 h1:Zi8HNpze3NeRWH1PQV6O71YcvJRQ6j0lORO6DAEmAAI=
+github.com/miekg/dns v1.0.8/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/mikefarah/yaml/v2 v2.4.0/go.mod h1:ahVqZF4n1W4NqwvVnZzC4es67xsW9uR/RRf2RRxieJU=
 github.com/mikefarah/yq/v2 v2.4.1/go.mod h1:i8SYf1XdgUvY2OFwSqGAtWOOgimD2McJ6iutoxRm4k0=
 github.com/minio/minio-go/v6 v6.0.49/go.mod h1:qD0lajrGW49lKZLtXKtCB4X/qkMf0a5tBvN2PaZg7Gg=
@@ -1417,9 +1416,8 @@ github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db h1:9uViuKtx1jrlXLBW/pMnhOfzn3iSEdLase/But/IZRU=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
 github.com/packethost/packngo v0.4.1/go.mod h1:aRxUEV1TprXVcWr35v8tNYgZMjv7FHaInXx224vF2fc=
+github.com/packethost/packngo v0.5.1 h1:y+jWcMnyArP3hVZRsBkAXTLhokuqdYg6JUmkshX2SMk=
 github.com/packethost/packngo v0.5.1/go.mod h1:aRxUEV1TprXVcWr35v8tNYgZMjv7FHaInXx224vF2fc=
-github.com/packethost/packngo v0.13.0 h1:VIeDY/Uju53v8LAKxiqTrfR9jkpX5PhWdnQC0h3aUU8=
-github.com/packethost/packngo v0.13.0/go.mod h1:YrtUNN9IRjjqN6zK+cy2IYoi3EjHfoWTWxJkI1I1Vk0=
 github.com/packethost/terraform-provider-packet v1.7.3-0.20201202165003-a5613b748108 h1:s9ccBJwDTOmg0Nk3b7y58oOl9oXyzIUCL+3bARmP1oQ=
 github.com/packethost/terraform-provider-packet v1.7.3-0.20201202165003-a5613b748108/go.mod h1:HBMb6iZY/8T2e4rB4G6TVdawR6a23JSIMjzNe5hTtAw=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
@@ -1676,6 +1674,8 @@ github.com/terraform-provider-openstack/terraform-provider-openstack v1.32.0 h1:
 github.com/terraform-provider-openstack/terraform-provider-openstack v1.32.0/go.mod h1:Xm/accuOkyS8NkNp9HwqNMPu5rAFnHP7g/2uNRZbO8c=
 github.com/terraform-providers/terraform-provider-azuread v0.9.0 h1:XLzFgVHakq6qjJ2L0o/tN2yHu/hT4vIW9sKtejr7gPs=
 github.com/terraform-providers/terraform-provider-azuread v0.9.0/go.mod h1:sSDzB/8CD639+yWo5lZf+NJvGSYQBSS6z+GoET9IrzE=
+github.com/terraform-providers/terraform-provider-dns v0.0.0-20190724194907-24de60f297b6 h1:7DIDiI0H7f0ksjSBnw5ojEfUeWBlc87oGp3TJ3kfJVE=
+github.com/terraform-providers/terraform-provider-dns v0.0.0-20190724194907-24de60f297b6/go.mod h1:aUpZ80xerw1PT+j8NO7UDtgVHc/DU4xyHQJarln9oq8=
 github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160 h1:Ghc1PD9TckxsdyP1BG+dM8q84cNNyL93qRmYq/PVNow=
 github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160/go.mod h1:QxehqxV8Swl+O2JXJUdS6orHYJXWUEr4HFfYH5JV9ew=
 github.com/terraform-providers/terraform-provider-ignition v1.2.1 h1:dlRZGcokysc9Z2gTVm+neSghAMv9/2WA/pYiGZ6JHCg=
@@ -2045,7 +2045,6 @@ golang.org/x/sys v0.0.0-20190826190057-c7b8b68b1456/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20190904154756-749cb33beabd/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190916202348-b4ddaad3f8a3/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190922100055-0a153f010e69/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20190924154521-2837fb4f24fe/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191001151750-bb3f8db39f24/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191005200804-aed5e4c7ecf9/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191008105621-543471e840be/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
@@ -2145,7 +2144,6 @@ golang.org/x/tools v0.0.0-20190718200317-82a3ea8a504c/go.mod h1:jcCCGcm9btYwXyDq
 golang.org/x/tools v0.0.0-20190719005602-e377ae9d6386/go.mod h1:jcCCGcm9btYwXyDqrUWc6MKQKKGJCWEQ3AfLSRIbEuI=
 golang.org/x/tools v0.0.0-20190813034749-528a2984e271/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
 golang.org/x/tools v0.0.0-20190816200558-6889da9d5479/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
-golang.org/x/tools v0.0.0-20190907020128-2ca718005c18/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
 golang.org/x/tools v0.0.0-20190909030654-5b82db07426d/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
 golang.org/x/tools v0.0.0-20190910044552-dd2b5c81c578/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
 golang.org/x/tools v0.0.0-20190911174233-4f2ddba30aff/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=

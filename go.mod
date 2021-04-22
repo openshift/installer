@@ -62,7 +62,7 @@ require (
 	github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27
 	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200914080915-c4444fb5c201
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
-	github.com/packethost/packngo v0.13.0
+	github.com/packethost/packngo v0.5.1
 	github.com/pborman/uuid v1.2.0
 	github.com/pierrec/lz4 v2.3.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1
@@ -78,6 +78,7 @@ require (
 	github.com/terraform-provider-openstack/terraform-provider-openstack v1.32.0
 	github.com/terraform-providers/terraform-provider-aws v0.0.0
 	github.com/terraform-providers/terraform-provider-azurerm v0.0.0
+	github.com/terraform-providers/terraform-provider-dns v0.0.0-20190724194907-24de60f297b6
 	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
 	github.com/terraform-providers/terraform-provider-ignition/v2 v2.1.0
 	github.com/terraform-providers/terraform-provider-local v1.4.0
@@ -108,6 +109,7 @@ require (
 	sigs.k8s.io/cluster-api-provider-azure v0.0.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.0.0
 	sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
+	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
@@ -122,6 +124,7 @@ replace (
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift // Pin to fork with public rpc types
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200715132148-0f91f62a41fe // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
+	github.com/miekg/dns => github.com/miekg/dns v1.0.8 // Pin to terraform-provider-dns
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422 // Pin API
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c // Pin client-go
 	github.com/openshift/cluster-api-provider-equinix-metal => github.com/detiber/openshift-provider-packet v0.0.0-20201117162756-512a178614c0

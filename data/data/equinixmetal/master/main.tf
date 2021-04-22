@@ -2,7 +2,7 @@ resource "packet_device" "node" {
   count = var.node_count
 
   depends_on       = [var.depends]
-  hostname         = format("cp-%01d.%s.%s", count.index, replace(var.cluster_domain, ".${var.base_domain}", ""), var.base_domain)
+  hostname         = format("master%01d.%s.%s", count.index, replace(var.cluster_domain, ".${var.base_domain}", ""), var.base_domain)
   operating_system = "custom_ipxe"
   // ipxe_script_url  = "http://${var.bootstrap_ip}:8080/${var.node_type}.ipxe"
   billing_cycle = "hourly"
@@ -15,5 +15,11 @@ resource "packet_device" "node" {
 
 
   user_data = var.ignition
+}
+
+resource "packet_ip_attachment" "node-address" {
+  count     = var.node_count
+  device_id = packet_device.node[count.index].id
+  cidr      = "${var.ip_addresses[count.index]}/32"
 }
 

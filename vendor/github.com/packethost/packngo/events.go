@@ -1,8 +1,6 @@
 package packngo
 
-import (
-	"path"
-)
+import "fmt"
 
 const eventBasePath = "/events"
 
@@ -41,38 +39,63 @@ func (s *EventServiceOp) List(listOpt *ListOptions) ([]Event, *Response, error) 
 
 // Get returns an event by ID
 func (s *EventServiceOp) Get(eventID string, getOpt *GetOptions) (*Event, *Response, error) {
-	apiPath := path.Join(eventBasePath, eventID)
-	return get(s.client, apiPath, getOpt)
+	path := fmt.Sprintf("%s/%s", eventBasePath, eventID)
+	return get(s.client, path, getOpt)
 }
 
 // list helper function for all event functions
-func listEvents(client requestDoer, endpointPath string, opts *ListOptions) (events []Event, resp *Response, err error) {
-	apiPathQuery := opts.WithQuery(endpointPath)
+func listEvents(client requestDoer, path string, listOpt *ListOptions) (events []Event, resp *Response, err error) {
+	params := urlQuery(listOpt)
+	path = fmt.Sprintf("%s?%s", path, params)
 
 	for {
 		subset := new(eventsRoot)
 
-		resp, err = client.DoRequest("GET", apiPathQuery, nil, subset)
+		resp, err = client.DoRequest("GET", path, nil, subset)
 		if err != nil {
 			return nil, resp, err
 		}
 
 		events = append(events, subset.Events...)
 
-		if apiPathQuery = nextPage(subset.Meta, opts); apiPathQuery != "" {
+		if subset.Meta.Next != nil && (listOpt == nil || listOpt.Page == 0) {
+			path = subset.Meta.Next.Href
+			if params != "" {
+				path = fmt.Sprintf("%s&%s", path, params)
+			}
 			continue
 		}
+
 		return
 	}
 
 }
 
-func get(client *Client, endpointPath string, opts *GetOptions) (*Event, *Response, error) {
+// list helper function for all event functions
+/*
+func listEvents(client *Client, path string, listOpt *ListOptions) ([]Event, *Response, error) {
+	params := urlQuery(listOpt)
+	root := new(eventsRoot)
+
+	path = fmt.Sprintf("%s?%s", path, params)
+
+	resp, err := client.DoRequest("GET", path, nil, root)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return root.Events, resp, err
+}
+*/
+
+func get(client *Client, path string, getOpt *GetOptions) (*Event, *Response, error) {
+	params := urlQuery(getOpt)
+
 	event := new(Event)
 
-	apiPathQuery := opts.WithQuery(endpointPath)
+	path = fmt.Sprintf("%s?%s", path, params)
 
-	resp, err := client.DoRequest("GET", apiPathQuery, nil, event)
+	resp, err := client.DoRequest("GET", path, nil, event)
 	if err != nil {
 		return nil, resp, err
 	}

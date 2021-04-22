@@ -781,12 +781,15 @@ github.com/hashicorp/terraform/configs/configupgrade
 github.com/hashicorp/terraform/configs/hcl2shim
 github.com/hashicorp/terraform/dag
 github.com/hashicorp/terraform/experiments
+github.com/hashicorp/terraform/flatmap
+github.com/hashicorp/terraform/helper/config
 github.com/hashicorp/terraform/helper/didyoumean
 github.com/hashicorp/terraform/helper/experiment
 github.com/hashicorp/terraform/helper/hashcode
 github.com/hashicorp/terraform/helper/hilmapstructure
 github.com/hashicorp/terraform/helper/logging
 github.com/hashicorp/terraform/helper/plugin
+github.com/hashicorp/terraform/helper/resource
 github.com/hashicorp/terraform/helper/schema
 github.com/hashicorp/terraform/helper/slowmessage
 github.com/hashicorp/terraform/helper/structure
@@ -969,6 +972,8 @@ github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis
 github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1
 # github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 github.com/mgutz/ansi
+# github.com/miekg/dns v1.1.22 => github.com/miekg/dns v1.0.8
+github.com/miekg/dns
 # github.com/mitchellh/cli v1.1.1
 ## explicit
 github.com/mitchellh/cli
@@ -1071,7 +1076,7 @@ github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
 ## explicit
 github.com/packer-community/winrmcp/winrmcp
-# github.com/packethost/packngo v0.13.0
+# github.com/packethost/packngo v0.5.1
 ## explicit
 github.com/packethost/packngo
 # github.com/pborman/uuid v1.2.0
@@ -1429,6 +1434,9 @@ github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/st
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils
 github.com/terraform-providers/terraform-provider-azurerm/version
+# github.com/terraform-providers/terraform-provider-dns v0.0.0-20190724194907-24de60f297b6
+## explicit
+github.com/terraform-providers/terraform-provider-dns/dns
 # github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
 ## explicit
 github.com/terraform-providers/terraform-provider-google/google
@@ -1596,6 +1604,7 @@ golang.org/x/lint/golint
 golang.org/x/mod/module
 golang.org/x/mod/semver
 # golang.org/x/net v0.0.0-20200822124328-c89045814202
+golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/html
@@ -1605,7 +1614,11 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
+golang.org/x/net/internal/iana
+golang.org/x/net/internal/socket
 golang.org/x/net/internal/timeseries
+golang.org/x/net/ipv4
+golang.org/x/net/ipv6
 golang.org/x/net/trace
 # golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 ## explicit
@@ -2123,6 +2136,7 @@ sigs.k8s.io/controller-tools/pkg/webhook
 # sigs.k8s.io/structured-merge-diff/v4 v4.0.1
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
+## explicit
 sigs.k8s.io/yaml
 # bitbucket.org/ww/goautoneg => github.com/munnerz/goautoneg v0.0.0-20120707110453-a547fc61f48d
 # github.com/Azure/go-autorest => github.com/tombuildsstuff/go-autorest v14.0.1-0.20200416184303-d4e299a3c04a+incompatible
@@ -2134,6 +2148,7 @@ sigs.k8s.io/yaml
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
 # github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200715132148-0f91f62a41fe
 # github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
+# github.com/miekg/dns => github.com/miekg/dns v1.0.8
 # github.com/openshift/api => github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422
 # github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c
 # github.com/openshift/cluster-api-provider-equinix-metal => github.com/detiber/openshift-provider-packet v0.0.0-20201117162756-512a178614c0

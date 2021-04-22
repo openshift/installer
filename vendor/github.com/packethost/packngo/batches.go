@@ -2,7 +2,6 @@ package packngo
 
 import (
 	"fmt"
-	"path"
 )
 
 const batchBasePath = "/batches"
@@ -17,10 +16,7 @@ type BatchService interface {
 
 // Batch type
 type Batch struct {
-	ID            string   `json:"id"`
-	ErrorMessages []string `json:"error_messages,omitempty"`
-
-	// State may be 'failed' or 'completed'
+	ID        string     `json:"id"`
 	State     string     `json:"state,omitempty"`
 	Quantity  int32      `json:"quantity,omitempty"`
 	CreatedAt *Timestamp `json:"created_at,omitempty"`
@@ -42,10 +38,8 @@ type BatchCreateRequest struct {
 // BatchCreateDevice type used to describe batch instances
 type BatchCreateDevice struct {
 	DeviceCreateRequest
-	Quantity               int32   `json:"quantity"`
-	FacilityDiversityLevel int32   `json:"facility_diversity_level,omitempty"`
-	SpotInstance           bool    `json:"spot_instance,omitempty"`
-	SpotPriceMax           float64 `json:"spot_price_max,omitempty"`
+	Quantity               int32 `json:"quantity"`
+	FacilityDiversityLevel int32 `json:"facility_diversity_level,omitempty"`
 }
 
 // BatchServiceOp implements BatchService
@@ -54,12 +48,12 @@ type BatchServiceOp struct {
 }
 
 // Get returns batch details
-func (s *BatchServiceOp) Get(batchID string, opts *GetOptions) (*Batch, *Response, error) {
-	endpointPath := path.Join(batchBasePath, batchID)
-	apiPathQuery := opts.WithQuery(endpointPath)
+func (s *BatchServiceOp) Get(batchID string, getOpt *GetOptions) (*Batch, *Response, error) {
+	params := urlQuery(getOpt)
+	path := fmt.Sprintf("%s/%s?%s", batchBasePath, batchID, params)
 	batch := new(Batch)
 
-	resp, err := s.client.DoRequest("GET", apiPathQuery, nil, batch)
+	resp, err := s.client.DoRequest("GET", path, nil, batch)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -68,11 +62,11 @@ func (s *BatchServiceOp) Get(batchID string, opts *GetOptions) (*Batch, *Respons
 }
 
 // List returns batches on a project
-func (s *BatchServiceOp) List(projectID string, opts *ListOptions) (batches []Batch, resp *Response, err error) {
-	endpointPath := path.Join(projectBasePath, projectID, batchBasePath)
-	apiPathQuery := opts.WithQuery(endpointPath)
+func (s *BatchServiceOp) List(projectID string, listOpt *ListOptions) (batches []Batch, resp *Response, err error) {
+	params := urlQuery(listOpt)
+	path := fmt.Sprintf("%s/%s%s?%s", projectBasePath, projectID, batchBasePath, params)
 	subset := new(batchesList)
-	resp, err = s.client.DoRequest("GET", apiPathQuery, nil, subset)
+	resp, err = s.client.DoRequest("GET", path, nil, subset)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -83,10 +77,10 @@ func (s *BatchServiceOp) List(projectID string, opts *ListOptions) (batches []Ba
 
 // Create function to create batch of device instances
 func (s *BatchServiceOp) Create(projectID string, request *BatchCreateRequest) ([]Batch, *Response, error) {
-	apiPath := path.Join(projectBasePath, projectID, "devices", "batch")
+	path := fmt.Sprintf("%s/%s/devices/batch", projectBasePath, projectID)
 
 	batches := new(batchesList)
-	resp, err := s.client.DoRequest("POST", apiPath, request, batches)
+	resp, err := s.client.DoRequest("POST", path, request, batches)
 
 	if err != nil {
 		return nil, resp, err
@@ -97,10 +91,7 @@ func (s *BatchServiceOp) Create(projectID string, request *BatchCreateRequest) (
 
 // Delete function to remove an instance batch
 func (s *BatchServiceOp) Delete(id string, removeDevices bool) (*Response, error) {
-	// API doc days the remove_associated_instances params shout be in the body
-	// https://metal.equinix.com/developers/api/batches/#delete-the-batch
-	// .. does this even work?
-	apiPath := fmt.Sprintf("%s/%s?remove_associated_instances=%t", batchBasePath, id, removeDevices)
+	path := fmt.Sprintf("%s/%s?remove_associated_instances=%t", batchBasePath, id, removeDevices)
 
-	return s.client.DoRequest("DELETE", apiPath, nil, nil)
+	return s.client.DoRequest("DELETE", path, nil, nil)
 }

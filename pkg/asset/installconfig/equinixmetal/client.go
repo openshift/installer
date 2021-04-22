@@ -17,7 +17,7 @@ const (
 type API interface {
 	ListProjects(ctx context.Context) ([]packngo.Project, error)
 	ListFacilities(ctx context.Context) ([]packngo.Facility, error)
-	ListMetros(ctx context.Context) ([]packngo.Metro, error)
+	// ListMetros(ctx context.Context) ([]packngo.Metro, error)
 	ListPlans(ctx context.Context) ([]packngo.Plan, error)
 }
 
@@ -40,10 +40,12 @@ func (c *Client) ListFacilities(_ context.Context) ([]packngo.Facility, error) {
 	return f, err
 }
 
+/*
 func (c *Client) ListMetros(_ context.Context) ([]packngo.Metro, error) {
 	m, _, err := c.Conn.Metros.List(nil)
 	return m, err
 }
+*/
 
 func (c *Client) ListPlans(_ context.Context) ([]packngo.Plan, error) {
 	p, _, err := c.Conn.Plans.List(nil)

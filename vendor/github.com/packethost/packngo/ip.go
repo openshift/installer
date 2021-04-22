@@ -2,7 +2,6 @@ package packngo
 
 import (
 	"fmt"
-	"path"
 )
 
 const ipBasePath = "/ips"
@@ -27,37 +26,36 @@ type DeviceIPService interface {
 	Assign(deviceID string, assignRequest *AddressStruct) (*IPAddressAssignment, *Response, error)
 	Unassign(assignmentID string) (*Response, error)
 	Get(assignmentID string, getOpt *GetOptions) (*IPAddressAssignment, *Response, error)
-	List(deviceID string, opts *ListOptions) ([]IPAddressAssignment, *Response, error)
+	List(deviceID string, listOpt *ListOptions) ([]IPAddressAssignment, *Response, error)
 }
 
 // ProjectIPService handles reservation of IP address blocks for a project.
 type ProjectIPService interface {
 	Get(reservationID string, getOpt *GetOptions) (*IPAddressReservation, *Response, error)
-	List(projectID string, opts *ListOptions) ([]IPAddressReservation, *Response, error)
+	List(projectID string, listOpt *ListOptions) ([]IPAddressReservation, *Response, error)
 	Request(projectID string, ipReservationReq *IPReservationRequest) (*IPAddressReservation, *Response, error)
 	Remove(ipReservationID string) (*Response, error)
 	AvailableAddresses(ipReservationID string, r *AvailableRequest) ([]string, *Response, error)
 }
 
 type IpAddressCommon struct { //nolint:golint
-	ID            string      `json:"id"`
-	Address       string      `json:"address"`
-	Gateway       string      `json:"gateway"`
-	Network       string      `json:"network"`
-	AddressFamily int         `json:"address_family"`
-	Netmask       string      `json:"netmask"`
-	Public        bool        `json:"public"`
-	CIDR          int         `json:"cidr"`
-	Created       string      `json:"created_at,omitempty"`
-	Updated       string      `json:"updated_at,omitempty"`
-	Href          string      `json:"href"`
-	Management    bool        `json:"management"`
-	Manageable    bool        `json:"manageable"`
-	Metro         *Metro      `json:"metro,omitempty"`
-	Project       Href        `json:"project"`
-	Global        *bool       `json:"global_ip"`
-	Tags          []string    `json:"tags,omitempty"`
-	CustomData    interface{} `json:"customdata,omitempty"`
+	ID            string                 `json:"id"`
+	Address       string                 `json:"address"`
+	Gateway       string                 `json:"gateway"`
+	Network       string                 `json:"network"`
+	AddressFamily int                    `json:"address_family"`
+	Netmask       string                 `json:"netmask"`
+	Public        bool                   `json:"public"`
+	CIDR          int                    `json:"cidr"`
+	Created       string                 `json:"created_at,omitempty"`
+	Updated       string                 `json:"updated_at,omitempty"`
+	Href          string                 `json:"href"`
+	Management    bool                   `json:"management"`
+	Manageable    bool                   `json:"manageable"`
+	Project       Href                   `json:"project"`
+	Global        *bool                  `json:"global_ip"`
+	Tags          []string               `json:"tags,omitempty"`
+	CustomData    map[string]interface{} `json:"customdata,omitempty"`
 }
 
 // IPAddressReservation is created when user sends IP reservation request for a project (considering it's within quota).
@@ -89,13 +87,12 @@ type IPAddressAssignment struct {
 
 // IPReservationRequest represents the body of a reservation request.
 type IPReservationRequest struct {
-	Type        string      `json:"type"`
-	Quantity    int         `json:"quantity"`
-	Description string      `json:"details,omitempty"`
-	Facility    *string     `json:"facility,omitempty"`
-	Metro       *string     `json:"metro,omitempty"`
-	Tags        []string    `json:"tags,omitempty"`
-	CustomData  interface{} `json:"customdata,omitempty"`
+	Type        string                 `json:"type"`
+	Quantity    int                    `json:"quantity"`
+	Description string                 `json:"details,omitempty"`
+	Facility    *string                `json:"facility,omitempty"`
+	Tags        []string               `json:"tags,omitempty"`
+	CustomData  map[string]interface{} `json:"customdata,omitempty"`
 	// FailOnApprovalRequired if the IP request cannot be approved automatically, rather than sending to
 	// the longer Equinix Metal approval process, fail immediately with a 422 error
 	FailOnApprovalRequired bool `json:"fail_on_approval_required,omitempty"`
@@ -107,9 +104,9 @@ type AddressStruct struct {
 }
 
 func deleteFromIP(client *Client, resourceID string) (*Response, error) {
-	apiPath := path.Join(ipBasePath, resourceID)
+	path := fmt.Sprintf("%s/%s", ipBasePath, resourceID)
 
-	return client.DoRequest("DELETE", apiPath, nil, nil)
+	return client.DoRequest("DELETE", path, nil, nil)
 }
 
 func (i IPAddressReservation) String() string {
@@ -135,10 +132,10 @@ func (i *DeviceIPServiceOp) Unassign(assignmentID string) (*Response, error) {
 // Assign assigns an IP address to a device.
 // The IP address must be in one of the IP ranges assigned to the device’s project.
 func (i *DeviceIPServiceOp) Assign(deviceID string, assignRequest *AddressStruct) (*IPAddressAssignment, *Response, error) {
-	apiPath := path.Join(deviceBasePath, deviceID, ipBasePath)
+	path := fmt.Sprintf("%s/%s%s", deviceBasePath, deviceID, ipBasePath)
 	ipa := new(IPAddressAssignment)
 
-	resp, err := i.client.DoRequest("POST", apiPath, assignRequest, ipa)
+	resp, err := i.client.DoRequest("POST", path, assignRequest, ipa)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -147,12 +144,12 @@ func (i *DeviceIPServiceOp) Assign(deviceID string, assignRequest *AddressStruct
 }
 
 // Get returns assignment by ID.
-func (i *DeviceIPServiceOp) Get(assignmentID string, opts *GetOptions) (*IPAddressAssignment, *Response, error) {
-	endpointPath := path.Join(ipBasePath, assignmentID)
-	apiPathQuery := opts.WithQuery(endpointPath)
+func (i *DeviceIPServiceOp) Get(assignmentID string, getOpt *GetOptions) (*IPAddressAssignment, *Response, error) {
+	params := urlQuery(getOpt)
+	path := fmt.Sprintf("%s/%s?%s", ipBasePath, assignmentID, params)
 	ipa := new(IPAddressAssignment)
 
-	resp, err := i.client.DoRequest("GET", apiPathQuery, nil, ipa)
+	resp, err := i.client.DoRequest("GET", path, nil, ipa)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -161,9 +158,10 @@ func (i *DeviceIPServiceOp) Get(assignmentID string, opts *GetOptions) (*IPAddre
 }
 
 // List list all of the IP address assignments on a device
-func (i *DeviceIPServiceOp) List(deviceID string, opts *ListOptions) ([]IPAddressAssignment, *Response, error) {
-	endpointPath := path.Join(deviceBasePath, deviceID, ipBasePath)
-	apiPathQuery := opts.WithQuery(endpointPath)
+func (i *DeviceIPServiceOp) List(deviceID string, listOpt *ListOptions) ([]IPAddressAssignment, *Response, error) {
+	params := urlQuery(listOpt)
+
+	path := fmt.Sprintf("%s/%s%s?%s", deviceBasePath, deviceID, ipBasePath, params)
 
 	//ipList represents collection of IP Address reservations
 	type ipList struct {
@@ -172,7 +170,7 @@ func (i *DeviceIPServiceOp) List(deviceID string, opts *ListOptions) ([]IPAddres
 
 	ips := new(ipList)
 
-	resp, err := i.client.DoRequest("GET", apiPathQuery, nil, ips)
+	resp, err := i.client.DoRequest("GET", path, nil, ips)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -186,12 +184,12 @@ type ProjectIPServiceOp struct {
 }
 
 // Get returns reservation by ID.
-func (i *ProjectIPServiceOp) Get(reservationID string, opts *GetOptions) (*IPAddressReservation, *Response, error) {
-	endpointPath := path.Join(ipBasePath, reservationID)
-	apiPathQuery := opts.WithQuery(endpointPath)
+func (i *ProjectIPServiceOp) Get(reservationID string, getOpt *GetOptions) (*IPAddressReservation, *Response, error) {
+	params := urlQuery(getOpt)
+	path := fmt.Sprintf("%s/%s?%s", ipBasePath, reservationID, params)
 	ipr := new(IPAddressReservation)
 
-	resp, err := i.client.DoRequest("GET", apiPathQuery, nil, ipr)
+	resp, err := i.client.DoRequest("GET", path, nil, ipr)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -200,14 +198,15 @@ func (i *ProjectIPServiceOp) Get(reservationID string, opts *GetOptions) (*IPAdd
 }
 
 // List provides a list of IP resevations for a single project.
-func (i *ProjectIPServiceOp) List(projectID string, opts *ListOptions) ([]IPAddressReservation, *Response, error) {
-	endpointPath := path.Join(projectBasePath, projectID, ipBasePath)
-	apiPathQuery := opts.WithQuery(endpointPath)
+func (i *ProjectIPServiceOp) List(projectID string, listOpt *ListOptions) ([]IPAddressReservation, *Response, error) {
+	params := urlQuery(listOpt)
+
+	path := fmt.Sprintf("%s/%s%s?%s", projectBasePath, projectID, ipBasePath, params)
 	reservations := new(struct {
 		Reservations []IPAddressReservation `json:"ip_addresses"`
 	})
 
-	resp, err := i.client.DoRequest("GET", apiPathQuery, nil, reservations)
+	resp, err := i.client.DoRequest("GET", path, nil, reservations)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -216,10 +215,10 @@ func (i *ProjectIPServiceOp) List(projectID string, opts *ListOptions) ([]IPAddr
 
 // Request requests more IP space for a project in order to have additional IP addresses to assign to devices.
 func (i *ProjectIPServiceOp) Request(projectID string, ipReservationReq *IPReservationRequest) (*IPAddressReservation, *Response, error) {
-	apiPath := path.Join(projectBasePath, projectID, ipBasePath)
+	path := fmt.Sprintf("%s/%s%s", projectBasePath, projectID, ipBasePath)
 	ipr := new(IPAddressReservation)
 
-	resp, err := i.client.DoRequest("POST", apiPath, ipReservationReq, ipr)
+	resp, err := i.client.DoRequest("POST", path, ipReservationReq, ipr)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -233,10 +232,10 @@ func (i *ProjectIPServiceOp) Remove(ipReservationID string) (*Response, error) {
 
 // AvailableAddresses lists addresses available from a reserved block
 func (i *ProjectIPServiceOp) AvailableAddresses(ipReservationID string, r *AvailableRequest) ([]string, *Response, error) {
-	apiPathQuery := fmt.Sprintf("%s/%s/available?cidr=%d", ipBasePath, ipReservationID, r.CIDR)
+	path := fmt.Sprintf("%s/%s/available?cidr=%d", ipBasePath, ipReservationID, r.CIDR)
 	ar := new(AvailableResponse)
 
-	resp, err := i.client.DoRequest("GET", apiPathQuery, r, ar)
+	resp, err := i.client.DoRequest("GET", path, r, ar)
 	if err != nil {
 		return nil, resp, err
 	}

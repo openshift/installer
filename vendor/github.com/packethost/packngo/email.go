@@ -1,8 +1,6 @@
 package packngo
 
-import (
-	"path"
-)
+import "fmt"
 
 const emailBasePath = "/emails"
 
@@ -38,12 +36,12 @@ type EmailServiceOp struct {
 }
 
 // Get retrieves an email by id
-func (s *EmailServiceOp) Get(emailID string, opts *GetOptions) (*Email, *Response, error) {
-	endpointPath := path.Join(emailBasePath, emailID)
-	apiPathQuery := opts.WithQuery(endpointPath)
+func (s *EmailServiceOp) Get(emailID string, getOpt *GetOptions) (*Email, *Response, error) {
+	params := urlQuery(getOpt)
+	path := fmt.Sprintf("%s/%s?%s", emailBasePath, emailID, params)
 	email := new(Email)
 
-	resp, err := s.client.DoRequest("GET", apiPathQuery, nil, email)
+	resp, err := s.client.DoRequest("GET", path, nil, email)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -63,11 +61,11 @@ func (s *EmailServiceOp) Create(request *EmailRequest) (*Email, *Response, error
 	return email, resp, err
 }
 
-// Delete removes the email address from the current user account
+// Delete removes the email addres from the current user account
 func (s *EmailServiceOp) Delete(emailID string) (*Response, error) {
-	apiPath := path.Join(emailBasePath, emailID)
+	path := fmt.Sprintf("%s/%s", emailBasePath, emailID)
 
-	resp, err := s.client.DoRequest("DELETE", apiPath, nil, nil)
+	resp, err := s.client.DoRequest("DELETE", path, nil, nil)
 	if err != nil {
 		return resp, err
 	}
@@ -78,9 +76,9 @@ func (s *EmailServiceOp) Delete(emailID string) (*Response, error) {
 // Update email parameters
 func (s *EmailServiceOp) Update(emailID string, request *EmailRequest) (*Email, *Response, error) {
 	email := new(Email)
-	apiPath := path.Join(emailBasePath, emailID)
+	path := fmt.Sprintf("%s/%s", emailBasePath, emailID)
 
-	resp, err := s.client.DoRequest("PUT", apiPath, request, email)
+	resp, err := s.client.DoRequest("PUT", path, request, email)
 	if err != nil {
 		return nil, resp, err
 	}

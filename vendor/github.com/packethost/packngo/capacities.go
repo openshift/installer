@@ -1,16 +1,11 @@
 package packngo
 
-const (
-	capacityBasePath       = "/capacity"
-	capacityBasePathMetros = "/capacity/metros"
-)
+const capacityBasePath = "/capacity"
 
 // CapacityService interface defines available capacity methods
 type CapacityService interface {
 	List() (*CapacityReport, *Response, error)
-	ListMetros() (*CapacityReport, *Response, error)
 	Check(*CapacityInput) (*CapacityInput, *Response, error)
-	CheckMetros(*CapacityInput) (*CapacityInput, *Response, error)
 }
 
 // CapacityInput struct
@@ -21,7 +16,6 @@ type CapacityInput struct {
 // ServerInfo struct
 type ServerInfo struct {
 	Facility  string `json:"facility,omitempty"`
-	Metro     string `json:"metro,omitempty"`
 	Plan      string `json:"plan,omitempty"`
 	Quantity  int    `json:"quantity,omitempty"`
 	Available bool   `json:"available,omitempty"`
@@ -65,10 +59,11 @@ type CapacityServiceOp struct {
 	client *Client
 }
 
-func capacityList(client *Client, capUrl string) (*CapacityReport, *Response, error) {
+// List returns a list of facilities and plans with their current capacity.
+func (s *CapacityServiceOp) List() (*CapacityReport, *Response, error) {
 	root := new(capacityRoot)
 
-	resp, err := client.DoRequest("GET", capUrl, nil, root)
+	resp, err := s.client.DoRequest("GET", capacityBasePath, nil, root)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -76,28 +71,9 @@ func capacityList(client *Client, capUrl string) (*CapacityReport, *Response, er
 	return &root.Capacity, nil, nil
 }
 
-// List returns a list of facilities and plans with their current capacity.
-func (s *CapacityServiceOp) List() (*CapacityReport, *Response, error) {
-	return capacityList(s.client, capacityBasePath)
-}
-
-// ListMetros returns a list of metros and plans with their current capacity.
-func (s *CapacityServiceOp) ListMetros() (*CapacityReport, *Response, error) {
-	return capacityList(s.client, capacityBasePathMetros)
-}
-
-func checkCapacity(client *Client, input *CapacityInput, capUrl string) (capInput *CapacityInput, resp *Response, err error) {
-	capInput = new(CapacityInput)
-	resp, err = client.DoRequest("POST", capUrl, input, capInput)
-	return capInput, resp, err
-}
-
-// Check validates if a deploy can be fulfilled in a capacity.
-func (s *CapacityServiceOp) Check(input *CapacityInput) (capInput *CapacityInput, resp *Response, err error) {
-	return checkCapacity(s.client, input, capacityBasePath)
-}
-
-// Check validates if a deploy can be fulfilled in a metro.
-func (s *CapacityServiceOp) CheckMetros(input *CapacityInput) (capInput *CapacityInput, resp *Response, err error) {
-	return checkCapacity(s.client, input, capacityBasePathMetros)
+// Check validates if a deploy can be fulfilled.
+func (s *CapacityServiceOp) Check(input *CapacityInput) (cap *CapacityInput, resp *Response, err error) {
+	cap = new(CapacityInput)
+	resp, err = s.client.DoRequest("POST", capacityBasePath, input, cap)
+	return cap, resp, err
 }

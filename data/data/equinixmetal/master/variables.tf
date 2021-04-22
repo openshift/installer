@@ -20,3 +20,8 @@ variable "depends" {
   type    = any
   default = null
 }
+
+variable "ip_addresses" {
+  description = "IP Reservation IPv4 addresses to assign to masters"
+  type        = list(string)
+}

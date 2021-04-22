@@ -61,6 +61,13 @@ resource "packet_device" "bootstrap" {
   user_data = var.ignition
 }
 
+resource "packet_ip_attachment" "node-address" {
+  device_id = packet_device.bootstrap.id
+  cidr      = "${var.ip_addresses[count.index]}/32"
+}
+
+
+
 /*
 resource "null_resource" "dircheck" {
 

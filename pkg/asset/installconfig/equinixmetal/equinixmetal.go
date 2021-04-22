@@ -119,38 +119,41 @@ func selectFacility(client *Client) (string, error) {
 }
 
 func selectMetro(client *Client) (string, error) {
-	var metroID string
+	return "", nil
+	/*
+		var metroID string
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cancel()
 
-	metros, err := client.ListMetros(ctx)
+		metros, err := client.ListMetros(ctx)
 
-	if err != nil {
-		return "", errors.Wrap(err, "failed to list Equinix Metal metros")
-	}
+		if err != nil {
+			return "", errors.Wrap(err, "failed to list Equinix Metal metros")
+		}
 
-	metroNames := []string{}
-	for _, m := range metros {
-		metroNames = append(metroNames, m.Code+" ("+m.Name+")")
-	}
+		metroNames := []string{}
+		for _, m := range metros {
+			metroNames = append(metroNames, m.Code+" ("+m.Name+")")
+		}
 
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Select{
-				Message: "Equinix Metal Metro Code",
-				Help:    "The Equinix Metal Metro code (this is the short name, e.g. 'SV')",
-				Default: DefaultMetro,
-				Options: metroNames,
+		err = survey.Ask([]*survey.Question{
+			{
+				Prompt: &survey.Select{
+					Message: "Equinix Metal Metro Code",
+					Help:    "The Equinix Metal Metro code (this is the short name, e.g. 'SV')",
+					Default: DefaultMetro,
+					Options: metroNames,
+				},
+				Validate: survey.ComposeValidators(survey.Required),
 			},
-			Validate: survey.ComposeValidators(survey.Required),
-		},
-	}, &metroID)
+		}, &metroID)
 
-	if err != nil {
-		return "", err
-	}
-	return metroID, nil
+		if err != nil {
+			return "", err
+		}
+		return metroID, nil
+	*/
 }
 
 func askForConfig() (*Config, error) {
