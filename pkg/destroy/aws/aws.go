@@ -1454,7 +1454,6 @@ func deleteElasticLoadBalancing(ctx context.Context, session *session.Session, a
 			return errors.Errorf("cannot parse subresource %q into {subtype}/{id}", id)
 		}
 		subtype := segments[0]
-		id = segments[1]
 		switch subtype {
 		case "net":
 			return deleteElasticLoadBalancerV2(ctx, elbv2.New(session), arn, logger)
