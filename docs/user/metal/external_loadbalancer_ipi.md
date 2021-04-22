@@ -28,7 +28,7 @@ frontend <cluster-name>-apps-80
     bind :::80  v4v6
     default_backend ingress
 frontend <cluster-name>-apps-443
-    bind :::80  v4v6
+    bind :::443  v4v6
     default_backend ingress-sec
 backend api
     option  httpchk GET /readyz HTTP/1.0
