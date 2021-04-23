@@ -74,6 +74,7 @@ func (client LoadBalancerBackendAddressPoolsClient) Get(ctx context.Context, res
 	result, err = client.GetResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "network.LoadBalancerBackendAddressPoolsClient", "Get", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -112,7 +113,6 @@ func (client LoadBalancerBackendAddressPoolsClient) GetSender(req *http.Request)
 func (client LoadBalancerBackendAddressPoolsClient) GetResponder(resp *http.Response) (result BackendAddressPool, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -152,6 +152,11 @@ func (client LoadBalancerBackendAddressPoolsClient) List(ctx context.Context, re
 	result.lbbaplr, err = client.ListResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "network.LoadBalancerBackendAddressPoolsClient", "List", resp, "Failure responding to request")
+		return
+	}
+	if result.lbbaplr.hasNextLink() && result.lbbaplr.IsEmpty() {
+		err = result.NextWithContext(ctx)
+		return
 	}
 
 	return
@@ -189,7 +194,6 @@ func (client LoadBalancerBackendAddressPoolsClient) ListSender(req *http.Request
 func (client LoadBalancerBackendAddressPoolsClient) ListResponder(resp *http.Response) (result LoadBalancerBackendAddressPoolListResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())

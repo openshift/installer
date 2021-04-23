@@ -7,9 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/internal/helper/plugin"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/providers"
+	proto "github.com/hashicorp/terraform-plugin-sdk/tfplugin5"
 	tfplugin "github.com/hashicorp/terraform-plugin-sdk/plugin"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	proto "github.com/hashicorp/terraform-plugin-sdk/tfplugin5"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 )

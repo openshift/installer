@@ -60,7 +60,7 @@ variable "disk_size" {
 }
 
 variable "tags" {
-  type = list
+  type = list(any)
 }
 
 variable "cluster_id" {
