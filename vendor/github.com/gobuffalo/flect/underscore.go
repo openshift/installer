@@ -18,17 +18,16 @@ func Underscore(s string) string {
 //	Nice to see you! = nice_to_see_you
 //	widgetID = widget_id
 func (i Ident) Underscore() Ident {
-	out := make([]string, 0, len(i.Parts))
+	var out []string
 	for _, part := range i.Parts {
-		var x strings.Builder
-		x.Grow(len(part))
+		var x string
 		for _, c := range part {
 			if unicode.IsLetter(c) || unicode.IsDigit(c) {
-				x.WriteRune(c)
+				x += string(c)
 			}
 		}
-		if x.Len() > 0 {
-			out = append(out, x.String())
+		if x != "" {
+			out = append(out, x)
 		}
 	}
 	return New(strings.ToLower(strings.Join(out, "_")))

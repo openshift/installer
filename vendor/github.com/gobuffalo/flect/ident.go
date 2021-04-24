@@ -38,9 +38,9 @@ func toParts(s string) []string {
 		return []string{strings.ToUpper(s)}
 	}
 	var prev rune
-	var x strings.Builder
-	x.Grow(len(s))
+	var x string
 	for _, c := range s {
+		cs := string(c)
 		// fmt.Println("### cs ->", cs)
 		// fmt.Println("### unicode.IsControl(c) ->", unicode.IsControl(c))
 		// fmt.Println("### unicode.IsDigit(c) ->", unicode.IsDigit(c))
@@ -58,57 +58,41 @@ func toParts(s string) []string {
 		}
 
 		if isSpace(c) {
-			parts = xappend(parts, x.String())
-			x.Reset()
-			x.WriteRune(c)
+			parts = xappend(parts, x)
+			x = cs
 			prev = c
 			continue
 		}
 
 		if unicode.IsUpper(c) && !unicode.IsUpper(prev) {
-			parts = xappend(parts, x.String())
-			x.Reset()
-			x.WriteRune(c)
+			parts = xappend(parts, x)
+			x = cs
 			prev = c
 			continue
 		}
-		if unicode.IsUpper(c) && baseAcronyms[strings.ToUpper(x.String())] {
-			parts = xappend(parts, x.String())
-			x.Reset()
-			x.WriteRune(c)
+		if unicode.IsUpper(c) && baseAcronyms[strings.ToUpper(x)] {
+			parts = xappend(parts, x)
+			x = cs
 			prev = c
 			continue
 		}
 		if unicode.IsLetter(c) || unicode.IsDigit(c) || unicode.IsPunct(c) || c == '`' {
 			prev = c
-			x.WriteRune(c)
+			x += cs
 			continue
 		}
 
-		parts = xappend(parts, x.String())
-		x.Reset()
+		parts = xappend(parts, x)
+		x = ""
 		prev = c
 	}
-	parts = xappend(parts, x.String())
+	parts = xappend(parts, x)
 
 	return parts
 }
 
 var _ encoding.TextUnmarshaler = &Ident{}
 var _ encoding.TextMarshaler = &Ident{}
-
-// LastPart returns the last part/word of the original string
-func (i *Ident) LastPart() string {
-	if len(i.Parts) == 0 {
-		return ""
-	}
-	return i.Parts[len(i.Parts)-1]
-}
-
-// ReplaceSuffix creates a new Ident with the original suffix replaced by new
-func (i Ident) ReplaceSuffix(orig, new string) Ident {
-	return New(strings.TrimSuffix(i.Original, orig) + new)
-}
 
 //UnmarshalText unmarshalls byte array into the Ident
 func (i *Ident) UnmarshalText(data []byte) error {
