@@ -286,9 +286,7 @@ func resourceNetworkingPortV2Create(d *schema.ResourceData, meta interface{}) er
 	}
 
 	securityGroups := expandToStringSlice(d.Get("security_group_ids").(*schema.Set).List())
-	log.Printf("[DEBUG] openstack_networking_port_v2 security groups: %#v", securityGroups)
 	noSecurityGroups := d.Get("no_security_groups").(bool)
-	log.Printf("[DEBUG] openstack_networking_port_v2 noSecurityGroups bool: %s", noSecurityGroups)
 
 	// Check and make sure an invalid security group configuration wasn't given.
 	if noSecurityGroups && len(securityGroups) > 0 {
@@ -296,7 +294,6 @@ func resourceNetworkingPortV2Create(d *schema.ResourceData, meta interface{}) er
 	}
 
 	allowedAddressPairs := d.Get("allowed_address_pairs").(*schema.Set)
-	log.Printf("[DEBUG] openstack_networking_port_v2 create address pairs: %#v", allowedAddressPairs)
 	createOpts := PortCreateOpts{
 		ports.CreateOpts{
 			Name:                d.Get("name").(string),
@@ -322,14 +319,11 @@ func resourceNetworkingPortV2Create(d *schema.ResourceData, meta interface{}) er
 		createOpts.SecurityGroups = &securityGroups
 	}
 
-	log.Printf("[DEBUG] openstack_networking_port_v2 nosg sgs: %s", securityGroups)
-
 	// Only set SecurityGroups if one was specified.
 	// Otherwise this would mimic the no_security_groups action.
 	if len(securityGroups) > 0 {
 		createOpts.SecurityGroups = &securityGroups
 	}
-	log.Printf("[DEBUG] openstack_networking_port_v2 nonempty sg: %s", securityGroups)
 
 	// Declare a finalCreateOpts interface to hold either the
 	// base create options or the extended DHCP options.
@@ -347,7 +341,6 @@ func resourceNetworkingPortV2Create(d *schema.ResourceData, meta interface{}) er
 	// Add the port security attribute if specified.
 	if v, ok := d.GetOkExists("port_security_enabled"); ok {
 		portSecurityEnabled := v.(bool)
-		log.Printf("[DEBUG] openstack_networking_port_v2 port security enabled")
 		finalCreateOpts = portsecurity.PortCreateOptsExt{
 			CreateOptsBuilder:   finalCreateOpts,
 			PortSecurityEnabled: &portSecurityEnabled,
@@ -399,7 +392,6 @@ func resourceNetworkingPortV2Create(d *schema.ResourceData, meta interface{}) er
 
 	err = ports.Create(networkingClient, finalCreateOpts).ExtractInto(&port)
 	if err != nil {
-		log.Printf("[DEBUG] hawk errlog: %s: %s", port, finalCreateOpts)
 		return fmt.Errorf("Error creating openstack_networking_port_v2: %s", err)
 	}
 
