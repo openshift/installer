@@ -371,6 +371,15 @@ spec:
                           items:
                             type: string
                           type: array
+                        autoPinningPolicy:
+                          description: AutoPinningPolicy defines the policy to automatically
+                            set the CPU and NUMA including pinning to the host for
+                            the instance. When the field is omitted the default will
+                            be "none".
+                          enum:
+                          - none
+                          - resize_and_pin
+                          type: string
                         cpu:
                           description: CPU defines the VM CPU.
                           properties:
@@ -388,6 +397,14 @@ spec:
                           - cores
                           - sockets
                           type: object
+                        hugepages:
+                          description: Hugepages is the size of a VM's hugepages to
+                            use in KiBs.
+                          enum:
+                          - 2048
+                          - 1048576
+                          format: int32
+                          type: integer
                         instanceTypeID:
                           description: InstanceTypeID defines the VM instance type
                             and overrides the hardware parameters of the created VM,
@@ -779,6 +796,15 @@ spec:
                         items:
                           type: string
                         type: array
+                      autoPinningPolicy:
+                        description: AutoPinningPolicy defines the policy to automatically
+                          set the CPU and NUMA including pinning to the host for the
+                          instance. When the field is omitted the default will be
+                          "none".
+                        enum:
+                        - none
+                        - resize_and_pin
+                        type: string
                       cpu:
                         description: CPU defines the VM CPU.
                         properties:
@@ -796,6 +822,14 @@ spec:
                         - cores
                         - sockets
                         type: object
+                      hugepages:
+                        description: Hugepages is the size of a VM's hugepages to
+                          use in KiBs.
+                        enum:
+                        - 2048
+                        - 1048576
+                        format: int32
+                        type: integer
                       instanceTypeID:
                         description: InstanceTypeID defines the VM instance type and
                           overrides the hardware parameters of the created VM, including
@@ -1926,6 +1960,15 @@ spec:
                         items:
                           type: string
                         type: array
+                      autoPinningPolicy:
+                        description: AutoPinningPolicy defines the policy to automatically
+                          set the CPU and NUMA including pinning to the host for the
+                          instance. When the field is omitted the default will be
+                          "none".
+                        enum:
+                        - none
+                        - resize_and_pin
+                        type: string
                       cpu:
                         description: CPU defines the VM CPU.
                         properties:
@@ -1943,6 +1986,14 @@ spec:
                         - cores
                         - sockets
                         type: object
+                      hugepages:
+                        description: Hugepages is the size of a VM's hugepages to
+                          use in KiBs.
+                        enum:
+                        - 2048
+                        - 1048576
+                        format: int32
+                        type: integer
                       instanceTypeID:
                         description: InstanceTypeID defines the VM instance type and
                           overrides the hardware parameters of the created VM, including
