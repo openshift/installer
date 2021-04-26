@@ -185,6 +185,37 @@ github.com/ChrisTrenkamp/goxpath/tree/xmltree/xmlbuilder
 github.com/ChrisTrenkamp/goxpath/tree/xmltree/xmlele
 github.com/ChrisTrenkamp/goxpath/tree/xmltree/xmlnode
 github.com/ChrisTrenkamp/goxpath/xconst
+# github.com/IBM-Cloud/power-go-client v1.0.56
+## explicit
+github.com/IBM-Cloud/power-go-client/helpers
+github.com/IBM-Cloud/power-go-client/ibmpisession
+github.com/IBM-Cloud/power-go-client/power/client
+github.com/IBM-Cloud/power-go-client/power/client/authentication
+github.com/IBM-Cloud/power-go-client/power/client/bluemix_service_instances
+github.com/IBM-Cloud/power-go-client/power/client/catalog
+github.com/IBM-Cloud/power-go-client/power/client/hardware_platforms
+github.com/IBM-Cloud/power-go-client/power/client/iaas_service_broker
+github.com/IBM-Cloud/power-go-client/power/client/open_stacks
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_cloud_connections
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_events
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_images
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_instances
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_networks
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_p_vm_instances
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_s_a_p
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_snapshots
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_storage_capacity
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_system_pools
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tasks
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tenants
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tenants_ssh_keys
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volumes
+github.com/IBM-Cloud/power-go-client/power/client/service_bindings
+github.com/IBM-Cloud/power-go-client/power/client/service_instances
+github.com/IBM-Cloud/power-go-client/power/client/storage_types
+github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
+github.com/IBM-Cloud/power-go-client/power/models
+github.com/IBM-Cloud/power-go-client/utils
 # github.com/MakeNowJust/heredoc v1.0.0
 github.com/MakeNowJust/heredoc
 # github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667
@@ -206,6 +237,8 @@ github.com/apparentlymart/go-textseg/v12/textseg
 github.com/armon/circbuf
 # github.com/armon/go-radix v1.0.0
 github.com/armon/go-radix
+# github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
+github.com/asaskevich/govalidator
 # github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 ## explicit
 github.com/awalterschulze/gographviz
@@ -503,14 +536,34 @@ github.com/ghodss/yaml
 github.com/go-errors/errors
 # github.com/go-logr/logr v0.4.0
 github.com/go-logr/logr
+# github.com/go-openapi/analysis v0.19.5
+github.com/go-openapi/analysis
+github.com/go-openapi/analysis/internal
+# github.com/go-openapi/errors v0.19.3
+github.com/go-openapi/errors
 # github.com/go-openapi/jsonpointer v0.19.3
 github.com/go-openapi/jsonpointer
 # github.com/go-openapi/jsonreference v0.19.4
 github.com/go-openapi/jsonreference
+# github.com/go-openapi/loads v0.19.4
+github.com/go-openapi/loads
+# github.com/go-openapi/runtime v0.19.11
+github.com/go-openapi/runtime
+github.com/go-openapi/runtime/client
+github.com/go-openapi/runtime/logger
+github.com/go-openapi/runtime/middleware
+github.com/go-openapi/runtime/middleware/denco
+github.com/go-openapi/runtime/middleware/header
+github.com/go-openapi/runtime/middleware/untyped
+github.com/go-openapi/runtime/security
 # github.com/go-openapi/spec v0.19.9 => github.com/go-openapi/spec v0.19.4
 github.com/go-openapi/spec
+# github.com/go-openapi/strfmt v0.19.5
+github.com/go-openapi/strfmt
 # github.com/go-openapi/swag v0.19.9
 github.com/go-openapi/swag
+# github.com/go-openapi/validate v0.19.8
+github.com/go-openapi/validate
 # github.com/go-playground/locales v0.13.0
 github.com/go-playground/locales
 github.com/go-playground/locales/currency
@@ -1743,6 +1796,13 @@ github.com/zclconf/go-cty/cty/msgpack
 github.com/zclconf/go-cty/cty/set
 # github.com/zclconf/go-cty-yaml v1.0.2
 github.com/zclconf/go-cty-yaml
+# go.mongodb.org/mongo-driver v1.1.2
+go.mongodb.org/mongo-driver/bson
+go.mongodb.org/mongo-driver/bson/bsoncodec
+go.mongodb.org/mongo-driver/bson/bsonrw
+go.mongodb.org/mongo-driver/bson/bsontype
+go.mongodb.org/mongo-driver/bson/primitive
+go.mongodb.org/mongo-driver/x/bsonx/bsoncore
 # go.opencensus.io v0.22.5
 go.opencensus.io
 go.opencensus.io/internal
