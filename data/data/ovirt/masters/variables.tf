@@ -67,3 +67,13 @@ variable "ovirt_affinity_group_count" {
   type        = string
   description = "create a dependency between affinity_group module to masters module"
 }
+
+variable "ovirt_master_auto_pinning_policy" {
+  type        = string
+  description = "master VM auto pinning policy"
+}
+
+variable "ovirt_master_hugepages" {
+  type        = string
+  description = "master VM hugepages size in KiB"
+}
