@@ -112,3 +112,14 @@ variable "ovirt_master_affinity_groups" {
   type        = list(string)
   description = "master VMs affinity groups names"
 }
+
+variable "ovirt_master_auto_pinning_policy" {
+  type        = string
+  default     = "none"
+  description = "master VM auto pinning policy"
+}
+
+variable "ovirt_master_hugepages" {
+  type        = string
+  description = "master VM hugepages size in KiB"
+}
