@@ -1,11 +1,5 @@
 package powervs
 
-import "k8s.io/apimachinery/pkg/util/sets"
-
-var (
-	// C2SRegions are the C2S AWS regions.
-	C2SRegions = sets.NewString("us-iso-east-1")
-)
 
 // Platform stores all the global configuration that all machinesets
 // use.
@@ -39,17 +33,3 @@ type Platform struct {
 
 }
 
-// ServiceEndpoint store the configuration for services to
-// override existing defaults
-type ServiceEndpoint struct {
-	// Name is the name of the AWS service.
-	// This must be provided and cannot be empty.
-	Name string `json:"name"`
-
-	// URL is fully qualified URI with scheme https, that overrides the default generated
-	// endpoint for a client.
-	// This must be provided and cannot be empty.
-	//
-	// +kubebuilder:validation:Pattern=`^https://`
-	URL string `json:"url"`
-}

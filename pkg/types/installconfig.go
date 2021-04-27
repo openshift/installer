@@ -186,7 +186,7 @@ type Platform struct {
 	// +optional
 	OpenStack *openstack.Platform `json:"openstack,omitempty"`
 
-	// PowerVS is the configuration used when installing on PowerVS.
+	// PowerVS is the configuration used when installing on Power VS.
 	// +optional
 	PowerVS *powervs.Platform `json:"powervs,omitempty"`
 

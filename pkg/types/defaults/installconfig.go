@@ -13,6 +13,7 @@ import (
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	ovirtdefaults "github.com/openshift/installer/pkg/types/ovirt/defaults"
+	powervsdefaults "github.com/openshift/installer/pkg/types/powervs/defaults"
 	vspheredefaults "github.com/openshift/installer/pkg/types/vsphere/defaults"
 )
 
@@ -90,6 +91,8 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		for i := range c.Compute {
 			ovirtdefaults.SetComputeDefaults(c.Platform.Ovirt, &c.Compute[i])
 		}
+	case c.Platform.PowerVS != nil:
+		powervsdefaults.SetPlatformDefaults(c.Platform.PowerVS)
 	case c.Platform.Kubevirt != nil:
 		kubevirtdefaults.SetPlatformDefaults(c.Platform.Kubevirt)
 	case c.Platform.None != nil:
