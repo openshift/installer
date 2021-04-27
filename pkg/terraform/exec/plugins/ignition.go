@@ -6,10 +6,14 @@ import (
 )
 
 func init() {
-	exec := func() {
+	ignitionProvider := func() {
 		plugin.Serve(&plugin.ServeOpts{
 			ProviderFunc: ignition.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-ignition"] = exec
+	KnownPlugins["terraform-provider-ignition"] = &TFPlugin{
+		Name:      "ignition",
+		Exec:      ignitionProvider,
+		Resources: []string{"compat"},
+	}
 }

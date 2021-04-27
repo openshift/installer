@@ -8,10 +8,14 @@ import (
 )
 
 func init() {
-	exec := func() {
+	ironicProvider := func() {
 		plugin.Serve(&plugin.ServeOpts{
 			ProviderFunc: ironic.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-ironic"] = exec
+	KnownPlugins["terraform-provider-ironic"] = &TFPlugin{
+		Name:      "ironic",
+		Exec:      ironicProvider,
+		Resources: []string{"compat"},
+	}
 }

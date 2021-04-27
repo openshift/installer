@@ -23,14 +23,25 @@ const (
 
 	// VarFileName is the default name for Terraform var file.
 	VarFileName string = "terraform.tfvars"
+
+	// TargetBootstrap is the default name for the bootstrap directory
+	TargetBootstrap string = "bootstrap"
+
+	// TargetCompat is the name for the legacy terraform directory
+	TargetCompat string = "compat"
 )
+
+// GetStateFileName returns the name of the terraform state file.
+func GetStateFileName(target string) string {
+	return fmt.Sprintf("terraform.%s.tfstate", target)
+}
 
 // Apply unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
 // apply'.  It returns the absolute path of the tfstate file, rooted
 // in the specified directory, along with any errors from Terraform.
-func Apply(dir string, platform string, extraArgs ...string) (path string, err error) {
-	err = unpackAndInit(dir, platform)
+func Apply(dir string, platform string, target string, extraArgs ...string) (path string, err error) {
+	err = unpackAndInit(dir, platform, target)
 	if err != nil {
 		return "", err
 	}
@@ -38,12 +49,12 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 	defaultArgs := []string{
 		"-auto-approve",
 		"-input=false",
-		fmt.Sprintf("-state=%s", filepath.Join(dir, StateFileName)),
-		fmt.Sprintf("-state-out=%s", filepath.Join(dir, StateFileName)),
+		fmt.Sprintf("-state=%s", filepath.Join(dir, GetStateFileName(target))),
+		fmt.Sprintf("-state-out=%s", filepath.Join(dir, GetStateFileName(target))),
 	}
 	args := append(defaultArgs, extraArgs...)
 	args = append(args, dir)
-	sf := filepath.Join(dir, StateFileName)
+	sf := filepath.Join(dir, GetStateFileName(target))
 
 	lpDebug := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Debug}).Print}
 	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
@@ -60,8 +71,8 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 // Destroy unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
 // destroy'.
-func Destroy(dir string, platform string, extraArgs ...string) (err error) {
-	err = unpackAndInit(dir, platform)
+func Destroy(dir string, platform string, target string, extraArgs ...string) (err error) {
+	err = unpackAndInit(dir, platform, target)
 	if err != nil {
 		return err
 	}
@@ -69,8 +80,8 @@ func Destroy(dir string, platform string, extraArgs ...string) (err error) {
 	defaultArgs := []string{
 		"-auto-approve",
 		"-input=false",
-		fmt.Sprintf("-state=%s", filepath.Join(dir, StateFileName)),
-		fmt.Sprintf("-state-out=%s", filepath.Join(dir, StateFileName)),
+		fmt.Sprintf("-state=%s", filepath.Join(dir, GetStateFileName(target))),
+		fmt.Sprintf("-state-out=%s", filepath.Join(dir, GetStateFileName(target))),
 	}
 	args := append(defaultArgs, extraArgs...)
 	args = append(args, dir)
@@ -88,8 +99,8 @@ func Destroy(dir string, platform string, extraArgs ...string) (err error) {
 
 // unpack unpacks the platform-specific Terraform modules into the
 // given directory.
-func unpack(dir string, platform string) (err error) {
-	err = data.Unpack(dir, platform)
+func unpack(dir string, platform string, target string) (err error) {
+	err = data.Unpack(dir, filepath.Join(platform, target))
 	if err != nil {
 		return err
 	}
@@ -99,13 +110,20 @@ func unpack(dir string, platform string) (err error) {
 		return err
 	}
 
+	platformVarFile := fmt.Sprintf("variables-%s.tf", platform)
+
+	err = data.Unpack(filepath.Join(dir, platformVarFile), filepath.Join(platform, platformVarFile))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // unpackAndInit unpacks the platform-specific Terraform modules into
 // the given directory and then runs 'terraform init'.
-func unpackAndInit(dir string, platform string) (err error) {
-	err = unpack(dir, platform)
+func unpackAndInit(dir string, platform string, target string) (err error) {
+	err = unpack(dir, platform, target)
 	if err != nil {
 		return errors.Wrap(err, "failed to unpack Terraform modules")
 	}
@@ -139,8 +157,8 @@ func setupEmbeddedPlugins(dir string) error {
 	if err := os.MkdirAll(pdir, 0777); err != nil {
 		return err
 	}
-	for name := range plugins.KnownPlugins {
-		dst := filepath.Join(pdir, name)
+	for providerName, plugin := range plugins.KnownPlugins {
+		dst := filepath.Join(pdir, providerName)
 		if runtime.GOOS == "windows" {
 			dst = fmt.Sprintf("%s.exe", dst)
 		}
@@ -148,7 +166,7 @@ func setupEmbeddedPlugins(dir string) error {
 			// stat succeeded, the plugin already exists.
 			continue
 		}
-		logrus.Debugf("Symlinking plugin %s src: %q dst: %q", name, execPath, dst)
+		logrus.Debugf("Symlinking plugin %s src: %q dst: %q", plugin.Name, execPath, dst)
 		if err := os.Symlink(execPath, dst); err != nil {
 			return err
 		}

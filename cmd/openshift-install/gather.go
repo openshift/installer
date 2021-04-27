@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/exec/plugins"
 	gatheraws "github.com/openshift/installer/pkg/terraform/gather/aws"
 	gatherazure "github.com/openshift/installer/pkg/terraform/gather/azure"
 	gatherbaremetal "github.com/openshift/installer/pkg/terraform/gather/baremetal"
@@ -122,18 +123,32 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 	}
 	gatherBootstrapOpts.sshKeys = append(gatherBootstrapOpts.sshKeys, tmpfile.Name())
 
-	tfStateFilePath := filepath.Join(directory, terraform.StateFileName)
+	config := &installconfig.InstallConfig{}
+	if err := assetStore.Fetch(config); err != nil {
+		return "", errors.Wrapf(err, "failed to fetch %s", config.Name())
+	}
+
+	platform := config.Config.Platform.Name()
+	tfPlugin, err := plugins.GetPlugin(platform)
+	if err != nil {
+		return "", errors.Wrapf(err, "Unable to find terraform plugin for %s", platform)
+	}
+
+	target := terraform.TargetBootstrap
+	for _, item := range tfPlugin.Resources {
+		if item == terraform.TargetCompat {
+			target = terraform.TargetCompat
+			break
+		}
+	}
+
+	tfStateFilePath := filepath.Join(directory, terraform.GetStateFileName(target))
 	_, err = os.Stat(tfStateFilePath)
 	if os.IsNotExist(err) {
 		return unSupportedPlatformGather(directory)
 	}
 	if err != nil {
 		return "", err
-	}
-
-	config := &installconfig.InstallConfig{}
-	if err := assetStore.Fetch(config); err != nil {
-		return "", errors.Wrapf(err, "failed to fetch %s", config.Name())
 	}
 
 	tfstate, err := terraform.ReadState(tfStateFilePath)
