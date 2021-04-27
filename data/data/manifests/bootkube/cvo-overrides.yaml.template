@@ -4,5 +4,5 @@ metadata:
   namespace: openshift-cluster-version
   name: version
 spec:
-  channel: stable-4.7
+  channel: stable-4.8
   clusterID: {{.CVOClusterID}}
