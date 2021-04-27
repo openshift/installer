@@ -66,7 +66,6 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
-		&openshift.PrivateClusterOutbound{},
 		&openshift.BaremetalConfig{},
 		new(rhcos.Image),
 		&openshift.AzureCloudProviderSecret{},
@@ -249,14 +248,6 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			ProvisioningOSDownloadURL: string(*rhcosImage),
 		}
 		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
-	}
-
-	if platform == azuretypes.Name &&
-		installConfig.Config.Publish == types.InternalPublishingStrategy &&
-		installConfig.Config.Azure.OutboundType == azuretypes.LoadbalancerOutboundType {
-		privateClusterOutbound := &openshift.PrivateClusterOutbound{}
-		dependencies.Get(privateClusterOutbound)
-		assetData["99_private-cluster-outbound-service.yaml"] = applyTemplateData(privateClusterOutbound.Files()[0].Data, templateData)
 	}
 
 	if platform == azuretypes.Name && installConfig.Config.Azure.IsARO() {
