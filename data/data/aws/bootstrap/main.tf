@@ -1,196 +1,79 @@
 locals {
-  public_endpoints = var.publish_strategy == "External" ? true : false
-  description      = "Created By OpenShift Installer"
-}
-
-data "aws_partition" "current" {}
-
-data "aws_ebs_default_kms_key" "current" {}
-
-resource "aws_s3_bucket" "ignition" {
-  bucket = var.ignition_bucket
-  acl    = "private"
-
   tags = merge(
     {
-      "Name" = "${var.cluster_id}-bootstrap"
+      "kubernetes.io/cluster/${var.cluster_id}" = "owned"
     },
-    var.tags,
+    var.aws_extra_tags,
   )
+  description = "Created By OpenShift Installer"
+}
 
-  lifecycle {
-    ignore_changes = all
+provider "aws" {
+  region = var.aws_region
+
+  skip_region_validation = var.aws_skip_region_validation
+
+  endpoints {
+    ec2     = lookup(var.custom_endpoints, "ec2", null)
+    elb     = lookup(var.custom_endpoints, "elasticloadbalancing", null)
+    iam     = lookup(var.custom_endpoints, "iam", null)
+    route53 = lookup(var.custom_endpoints, "route53", null)
+    s3      = lookup(var.custom_endpoints, "s3", null)
+    sts     = lookup(var.custom_endpoints, "sts", null)
   }
 }
 
-resource "aws_s3_bucket_object" "ignition" {
-  bucket = aws_s3_bucket.ignition.id
-  key    = "bootstrap.ign"
-  source = var.ignition
-  acl    = "private"
+module "bootstrap" {
+  source = "./bootstrap"
 
-  server_side_encryption = "AES256"
+  ami                      = var.aws_region == var.aws_ami_region ? var.aws_ami : data.aws_ami.imported[0].id
+  instance_type            = var.aws_bootstrap_instance_type
+  cluster_id               = var.cluster_id
+  ignition                 = var.ignition_bootstrap_file
+  ignition_bucket          = var.aws_ignition_bucket
+  ignition_stub            = var.aws_bootstrap_stub_ignition
+  subnet_id                = var.aws_publish_strategy == "External" ? module.vpc.az_to_public_subnet_id[var.aws_master_availability_zones[0]] : module.vpc.az_to_private_subnet_id[var.aws_master_availability_zones[0]]
+  target_group_arns        = module.vpc.aws_lb_target_group_arns
+  target_group_arns_length = module.vpc.aws_lb_target_group_arns_length
+  vpc_id                   = module.vpc.vpc_id
+  vpc_cidrs                = var.machine_v4_cidrs
+  vpc_security_group_ids   = [module.vpc.master_sg_id]
+  volume_kms_key_id        = var.aws_master_root_volume_kms_key_id
+  publish_strategy         = var.aws_publish_strategy
+  iam_role_name            = var.aws_master_iam_role_name
 
-  tags = merge(
-    {
-      "Name" = "${var.cluster_id}-bootstrap"
-    },
-    var.tags,
+  tags = local.tags
+}
+
+module "vpc" {
+  source = "./vpc"
+
+  cidr_blocks      = var.machine_v4_cidrs
+  cluster_id       = var.cluster_id
+  region           = var.aws_region
+  vpc              = var.aws_vpc
+  public_subnets   = var.aws_public_subnets
+  private_subnets  = var.aws_private_subnets
+  publish_strategy = var.aws_publish_strategy
+
+  availability_zones = distinct(
+    concat(
+      var.aws_master_availability_zones,
+      var.aws_worker_availability_zones,
+    ),
   )
 
-  lifecycle {
-    ignore_changes = all
+  tags = local.tags
+}
+
+data "aws_ami" "imported" {
+  count = var.aws_region != var.aws_ami_region ? 1 : 0
+
+  owners      = ["self"]
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["${var.cluster_id}-master"]
   }
 }
-
-resource "aws_iam_instance_profile" "bootstrap" {
-  name = "${var.cluster_id}-bootstrap-profile"
-
-  role = var.iam_role_name != "" ? var.iam_role_name : aws_iam_role.bootstrap[0].name
-}
-
-resource "aws_iam_role" "bootstrap" {
-  count = var.iam_role_name == "" ? 1 : 0
-
-  name = "${var.cluster_id}-bootstrap-role"
-  path = "/"
-
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "sts:AssumeRole",
-            "Principal": {
-                "Service": "ec2.${data.aws_partition.current.dns_suffix}"
-            },
-            "Effect": "Allow",
-            "Sid": ""
-        }
-    ]
-}
-EOF
-
-  tags = merge(
-    {
-      "Name" = "${var.cluster_id}-bootstrap-role"
-    },
-    var.tags,
-  )
-}
-
-resource "aws_iam_role_policy" "bootstrap" {
-  count = var.iam_role_name == "" ? 1 : 0
-  name = "${var.cluster_id}-bootstrap-policy"
-  role = aws_iam_role.bootstrap[0].id
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "ec2:Describe*",
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ec2:AttachVolume",
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ec2:DetachVolume",
-      "Resource": "*"
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_instance" "bootstrap" {
-  ami = var.ami
-
-  iam_instance_profile        = aws_iam_instance_profile.bootstrap.name
-  instance_type               = var.instance_type
-  subnet_id                   = var.subnet_id
-  user_data                   = var.ignition_stub
-  vpc_security_group_ids      = flatten([var.vpc_security_group_ids, aws_security_group.bootstrap.id])
-  associate_public_ip_address = local.public_endpoints
-
-  lifecycle {
-    # Ignore changes in the AMI which force recreation of the resource. This
-    # avoids accidental deletion of nodes whenever a new OS release comes out.
-    ignore_changes = [ami]
-  }
-
-  tags = merge(
-    {
-      "Name" = "${var.cluster_id}-bootstrap"
-    },
-    var.tags,
-  )
-
-  root_block_device {
-    volume_type = var.volume_type
-    volume_size = var.volume_size
-    iops        = var.volume_type == "io1" ? var.volume_iops : 0
-    encrypted   = true
-    kms_key_id  = var.volume_kms_key_id == "" ? data.aws_ebs_default_kms_key.current.key_arn : var.volume_kms_key_id
-  }
-
-  volume_tags = merge(
-    {
-      "Name" = "${var.cluster_id}-bootstrap-vol"
-    },
-    var.tags,
-  )
-}
-
-resource "aws_lb_target_group_attachment" "bootstrap" {
-  // Because of the issue https://github.com/hashicorp/terraform/issues/12570, the consumers cannot use a dynamic list for count
-  // and therefore are force to implicitly assume that the list is of aws_lb_target_group_arns_length - 1, in case there is no api_external
-  count = local.public_endpoints ? var.target_group_arns_length : var.target_group_arns_length - 1
-
-  target_group_arn = var.target_group_arns[count.index]
-  target_id        = aws_instance.bootstrap.private_ip
-}
-
-resource "aws_security_group" "bootstrap" {
-  vpc_id      = var.vpc_id
-  description = local.description
-
-  timeouts {
-    create = "20m"
-  }
-
-  tags = merge(
-    {
-      "Name" = "${var.cluster_id}-bootstrap-sg"
-    },
-    var.tags,
-  )
-}
-
-resource "aws_security_group_rule" "ssh" {
-  type              = "ingress"
-  security_group_id = aws_security_group.bootstrap.id
-  description       = local.description
-
-  protocol    = "tcp"
-  cidr_blocks = local.public_endpoints ? ["0.0.0.0/0"] : var.vpc_cidrs
-  from_port   = 22
-  to_port     = 22
-}
-
-resource "aws_security_group_rule" "bootstrap_journald_gateway" {
-  type              = "ingress"
-  security_group_id = aws_security_group.bootstrap.id
-  description       = local.description
-
-  protocol    = "tcp"
-  cidr_blocks = local.public_endpoints ? ["0.0.0.0/0"] : var.vpc_cidrs
-  from_port   = 19531
-  to_port     = 19531
-}
-
