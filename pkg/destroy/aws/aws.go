@@ -417,7 +417,7 @@ func (o *ClusterUninstaller) findResourcesByTag(
 //   deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
 func (o *ClusterUninstaller) findIAMRoles(ctx context.Context, search *iamRoleSearch, deleted sets.String) (sets.String, error) {
 	o.Logger.Debug("search for IAM roles")
-	resources, err := search.arns(ctx)
+	resources, _, err := search.find(ctx)
 	if err != nil {
 		o.Logger.Info(err)
 		return nil, err
@@ -519,12 +519,11 @@ type iamRoleSearch struct {
 	unmatched map[string]struct{}
 }
 
-func (search *iamRoleSearch) arns(ctx context.Context) ([]string, error) {
+func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []string, returnErr error) {
 	if search.unmatched == nil {
 		search.unmatched = map[string]struct{}{}
 	}
 
-	arns := []string{}
 	var lastError error
 	err := search.client.ListRolesPagesWithContext(
 		ctx,
@@ -554,6 +553,7 @@ func (search *iamRoleSearch) arns(ctx context.Context) ([]string, error) {
 					}
 					if tagMatch(search.filters, tags) {
 						arns = append(arns, *role.Arn)
+						names = append(names, *role.RoleName)
 					} else {
 						search.unmatched[*role.Arn] = exists
 					}
@@ -565,9 +565,9 @@ func (search *iamRoleSearch) arns(ctx context.Context) ([]string, error) {
 	)
 
 	if lastError != nil {
-		return arns, lastError
+		return arns, names, lastError
 	}
-	return arns, err
+	return arns, names, err
 }
 
 type iamUserSearch struct {
