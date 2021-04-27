@@ -23,28 +23,6 @@ provider "aws" {
   }
 }
 
-module "bootstrap" {
-  source = "./bootstrap"
-
-  ami                      = var.aws_region == var.aws_ami_region ? var.aws_ami : aws_ami_copy.imported[0].id
-  instance_type            = var.aws_bootstrap_instance_type
-  cluster_id               = var.cluster_id
-  ignition                 = var.ignition_bootstrap_file
-  ignition_bucket          = var.aws_ignition_bucket
-  ignition_stub            = var.aws_bootstrap_stub_ignition
-  subnet_id                = var.aws_publish_strategy == "External" ? module.vpc.az_to_public_subnet_id[var.aws_master_availability_zones[0]] : module.vpc.az_to_private_subnet_id[var.aws_master_availability_zones[0]]
-  target_group_arns        = module.vpc.aws_lb_target_group_arns
-  target_group_arns_length = module.vpc.aws_lb_target_group_arns_length
-  vpc_id                   = module.vpc.vpc_id
-  vpc_cidrs                = var.machine_v4_cidrs
-  vpc_security_group_ids   = [module.vpc.master_sg_id]
-  volume_kms_key_id        = var.aws_master_root_volume_kms_key_id
-  publish_strategy         = var.aws_publish_strategy
-  iam_role_name            = var.aws_master_iam_role_name
-
-  tags = local.tags
-}
-
 module "masters" {
   source = "./master"
 

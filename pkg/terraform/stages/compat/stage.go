@@ -8,7 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/terraform"
-	gatheraws "github.com/openshift/installer/pkg/terraform/gather/aws"
 	gatherazure "github.com/openshift/installer/pkg/terraform/gather/azure"
 	gatherbaremetal "github.com/openshift/installer/pkg/terraform/gather/baremetal"
 	gathergcp "github.com/openshift/installer/pkg/terraform/gather/gcp"
@@ -18,7 +17,6 @@ import (
 	gatherovirt "github.com/openshift/installer/pkg/terraform/gather/ovirt"
 	gathervsphere "github.com/openshift/installer/pkg/terraform/gather/vsphere"
 	"github.com/openshift/installer/pkg/types"
-	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
@@ -103,15 +101,6 @@ func (s stage) ExtractHostAddresses(directory string, config *types.InstallConfi
 func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State) (bootstrap string, port int, masters []string, err error) {
 	port = 22
 	switch config.Platform.Name() {
-	case awstypes.Name:
-		bootstrap, err = gatheraws.BootstrapIP(tfstate)
-		if err != nil {
-			return bootstrap, port, masters, err
-		}
-		masters, err = gatheraws.ControlPlaneIPs(tfstate)
-		if err != nil {
-			logrus.Error(err)
-		}
 	case azuretypes.Name:
 		bootstrap, err = gatherazure.BootstrapIP(tfstate)
 		if err != nil {
