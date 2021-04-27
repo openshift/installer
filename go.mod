@@ -4,11 +4,11 @@ go 1.14
 
 require (
 	cloud.google.com/go v0.65.0
-	github.com/Azure/azure-sdk-for-go v43.2.0+incompatible
-	github.com/Azure/go-autorest/autorest v0.11.12
-	github.com/Azure/go-autorest/autorest/adal v0.9.5
+	github.com/Azure/azure-sdk-for-go v51.2.0+incompatible
+	github.com/Azure/go-autorest/autorest v0.11.17
+	github.com/Azure/go-autorest/autorest/adal v0.9.10
 	github.com/Azure/go-autorest/autorest/azure/auth v0.4.1
-	github.com/Azure/go-autorest/autorest/to v0.3.1-0.20191028180845-3492b2aff503
+	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/Azure/go-ntlmssp v0.0.0-20191115210519-2b2be6cc8ed4 // indirect
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20190607011252-c5096ec8773d // indirect
 	github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667 // indirect
@@ -34,7 +34,7 @@ require (
 	github.com/gophercloud/gophercloud v0.17.0
 	github.com/gophercloud/utils v0.0.0-20210323225332-7b186010c04f
 	github.com/h2non/filetype v1.0.12
-	github.com/hashicorp/go-azure-helpers v0.10.0
+	github.com/hashicorp/go-azure-helpers v0.13.0
 	github.com/hashicorp/go-plugin v1.3.0
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/terraform v0.13.4
@@ -115,9 +115,6 @@ require (
 
 replace (
 	cloud.google.com/go => cloud.google.com/go v0.57.0
-	github.com/Azure/go-autorest => github.com/tombuildsstuff/go-autorest v14.0.1-0.20200416184303-d4e299a3c04a+incompatible
-	github.com/Azure/go-autorest/autorest => github.com/tombuildsstuff/go-autorest/autorest v0.10.1-0.20200416184303-d4e299a3c04a
-	github.com/Azure/go-autorest/autorest/azure/auth => github.com/tombuildsstuff/go-autorest/autorest/azure/auth v0.4.3-0.20200416184303-d4e299a3c04a
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
 	github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4 // Pin to fork with deduplicated rpc types v0.12.20-openshift-4
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift // Pin to fork with public rpc types
@@ -128,7 +125,7 @@ replace (
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c // Pin client-go
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 // Pin MCO so it doesn't get downgraded
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699 // Pin to openshift fork with tag v2.67.0-openshift
-	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a // release-2.17.0 branch
+	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4 // Pin to 2.48.0-openshift
 	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
 	k8s.io/client-go => k8s.io/client-go v0.21.0-rc.0
 	k8s.io/kubectl => k8s.io/kubectl v0.21.0-rc.0
@@ -143,10 +140,6 @@ replace (
 // Prevent the following modules from upgrading version as result of terraform-provider-kubernetes module
 // The following modules need to be locked to compile correctly with terraform-provider-azure and terraform-provider-google
 replace (
-	github.com/Azure/go-autorest/autorest/adal => github.com/Azure/go-autorest/autorest/adal v0.8.2
-	github.com/Azure/go-autorest/autorest/azure/cli => github.com/Azure/go-autorest/autorest/azure/cli v0.3.1
-	github.com/Azure/go-autorest/autorest/date => github.com/Azure/go-autorest/autorest/date v0.2.0
-	github.com/Azure/go-autorest/autorest/validation => github.com/Azure/go-autorest/autorest/validation v0.2.1-0.20191028180845-3492b2aff503
 	github.com/apparentlymart/go-cidr => github.com/apparentlymart/go-cidr v1.0.1
 	github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.32.3
 	github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.4
