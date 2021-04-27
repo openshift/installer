@@ -2,5 +2,5 @@
 // configuration and management.
 package powervs
 
-// Name is name for the AWS platform.
+// Name is name for the Power VS platform.
 const Name string = "powervs"
