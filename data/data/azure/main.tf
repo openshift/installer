@@ -6,6 +6,9 @@ locals {
     var.azure_extra_tags,
   )
   description = "Created By OpenShift Installer"
+  # At this time min_tls_version is only supported in the Public Cloud and US Government Cloud.
+  environments_with_min_tls_version = ["public", "usgovernment"]
+
 }
 
 provider "azurerm" {
@@ -146,6 +149,7 @@ resource "azurerm_storage_account" "cluster" {
   location                 = var.azure_region
   account_tier             = "Standard"
   account_replication_type = "LRS"
+  min_tls_version          = contains(local.environments_with_min_tls_version, var.azure_environment) ? "TLS1_2" : null
 }
 
 resource "azurerm_user_assigned_identity" "main" {
