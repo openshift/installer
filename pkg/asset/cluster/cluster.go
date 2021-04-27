@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/quota"
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/exec/plugins"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 )
@@ -65,23 +66,14 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		return errors.New("cluster cannot be created with platform set to 'none'")
 	}
 
-	// Copy the terraform.tfvars to a temp directory where the terraform will be invoked within.
-	tmpDir, err := ioutil.TempDir("", "openshift-install-")
+	platform := installConfig.Config.Platform.Name()
+	tfPlugin, err := plugins.GetPlugin(platform)
 	if err != nil {
-		return errors.Wrap(err, "failed to create temp dir for terraform execution")
-	}
-	defer os.RemoveAll(tmpDir)
-
-	extraArgs := []string{}
-	for _, file := range terraformVariables.Files() {
-		if err := ioutil.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0600); err != nil {
-			return err
-		}
-		extraArgs = append(extraArgs, fmt.Sprintf("-var-file=%s", filepath.Join(tmpDir, file.Filename)))
+		return errors.Errorf("Unable to find terraform plugin for %s", platform)
 	}
 
 	logrus.Infof("Creating infrastructure resources...")
-	switch installConfig.Config.Platform.Name() {
+	switch platform {
 	case typesaws.Name:
 		if err := aws.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
 			return err
@@ -92,32 +84,54 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		}
 	}
 
-	timer.StartTimer("Infrastructure")
+	for _, r := range tfPlugin.Resources {
 
-	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name(), extraArgs...)
-	if err != nil {
-		err = errors.Wrap(err, "failed to create cluster")
-		if stateFile == "" {
+		// Copy the terraform.tfvars to a temp directory where the terraform
+		// will be invoked within.
+		tmpDir, err := ioutil.TempDir("", fmt.Sprintf("openshift-install-%s-", r))
+		if err != nil {
+			return errors.Wrap(err, "failed to create temp dir for terraform execution")
+		}
+		defer os.RemoveAll(tmpDir)
+
+		var extraArgs []string
+		for _, file := range terraformVariables.Files() {
+			if err := ioutil.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0600); err != nil {
+				return err
+			}
+			extraArgs = append(extraArgs, fmt.Sprintf("-var-file=%s", filepath.Join(tmpDir, file.Filename)))
+		}
+
+		timer.StartTimer(r)
+		stateFile, err := terraform.Apply(tmpDir, platform, r, extraArgs...)
+		if err != nil {
+			err = errors.Wrap(err, "failed to create cluster")
+			if stateFile == "" {
+				return err
+			}
+			// Store the error from the apply, but continue with the
+			// generation so that the Terraform state file is recovered from
+			// the temporary directory.
+		}
+
+		data, err2 := ioutil.ReadFile(stateFile)
+		if err2 == nil {
+			c.FileList = append(c.FileList, &asset.File{
+				Filename: terraform.GetStateFileName(r),
+				Data:     data,
+			})
+		} else if err == nil {
+			err = err2
+		} else {
+			logrus.Errorf("Failed to read tfstate: %v", err2)
+		}
+
+		timer.StopTimer(r)
+		if err != nil {
 			return err
 		}
-		// Store the error from the apply, but continue with the
-		// generation so that the Terraform state file is recovered from
-		// the temporary directory.
 	}
 
-	data, err2 := ioutil.ReadFile(stateFile)
-	if err2 == nil {
-		c.FileList = append(c.FileList, &asset.File{
-			Filename: terraform.StateFileName,
-			Data:     data,
-		})
-	} else if err == nil {
-		err = err2
-	} else {
-		logrus.Errorf("Failed to read tfstate: %v", err2)
-	}
-
-	timer.StopTimer("Infrastructure")
 	return err
 }
 
@@ -129,13 +143,13 @@ func (c *Cluster) Files() []*asset.File {
 // Load returns error if the tfstate file is already on-disk, because we want to
 // prevent user from accidentally re-launching the cluster.
 func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
-	_, err = f.FetchByName(terraform.StateFileName)
+	matches, err := filepath.Glob("terraform(.*)?.tfstate")
 	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
+		return true, err
+	}
+	if len(matches) != 0 {
+		return true, errors.New("terraform state files already exist.  There may already be a running cluster")
 	}
 
-	return true, errors.Errorf("%q already exists.  There may already be a running cluster", terraform.StateFileName)
+	return false, nil
 }
