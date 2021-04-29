@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -154,6 +155,82 @@ func TestValidatePlatform(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Regexp(t, tc.expected, err)
+			}
+		})
+	}
+}
+
+func TestValidateTag(t *testing.T) {
+	cases := []struct {
+		name      string
+		key       string
+		value     string
+		expectErr bool
+	}{{
+		name:  "valid",
+		key:   "test-key",
+		value: "test-value",
+	}, {
+		name:      "invalid characters in key",
+		key:       "bad-key***",
+		value:     "test-value",
+		expectErr: true,
+	}, {
+		name:      "invalid characters in value",
+		key:       "test-key",
+		value:     "bad-value***",
+		expectErr: true,
+	}, {
+		name:      "empty key",
+		key:       "",
+		value:     "test-value",
+		expectErr: true,
+	}, {
+		name:      "empty value",
+		key:       "test-key",
+		value:     "",
+		expectErr: true,
+	}, {
+		name:      "key too long",
+		key:       strings.Repeat("a", 129),
+		value:     "test-value",
+		expectErr: true,
+	}, {
+		name:      "value too long",
+		key:       "test-key",
+		value:     strings.Repeat("a", 257),
+		expectErr: true,
+	}, {
+		name:      "key in kubernetes.io namespace",
+		key:       "kubernetes.io/cluster/some-cluster",
+		value:     "owned",
+		expectErr: true,
+	}, {
+		name:      "key in openshift.io namespace",
+		key:       "openshift.io/some-key",
+		value:     "some-value",
+		expectErr: true,
+	}, {
+		name:      "key in openshift.io subdomain namespace",
+		key:       "other.openshift.io/some-key",
+		value:     "some-value",
+		expectErr: true,
+	}, {
+		name:  "key in namespace similar to openshift.io",
+		key:   "otheropenshift.io/some-key",
+		value: "some-value",
+	}, {
+		name:  "key with openshift.io in path",
+		key:   "some-domain/openshift.io/some-key",
+		value: "some-value",
+	}}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateTag(tc.key, tc.value)
+			if tc.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

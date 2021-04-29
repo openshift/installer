@@ -43,6 +43,12 @@ type Platform struct {
 	// platform configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
+
+	// ExperimentalPropagateUserTags is an experimental flag that directs in-cluster
+	// operators to include the specified user tags in the tags of the AWS resources
+	// that the operators create.
+	// +optional
+	ExperimentalPropagateUserTag bool `json:"experimentalPropagateUserTags,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to

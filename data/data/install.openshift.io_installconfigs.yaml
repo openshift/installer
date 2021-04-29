@@ -948,6 +948,12 @@ spec:
                           type: string
                         type: array
                     type: object
+                  experimentalPropagateUserTags:
+                    description: ExperimentalPropagateUserTags is an experimental
+                      flag that directs in-cluster operators to include the specified
+                      user tags in the tags of the AWS resources that the operators
+                      create.
+                    type: boolean
                   region:
                     description: Region specifies the AWS region where the cluster
                       will be created.
