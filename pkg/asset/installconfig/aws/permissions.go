@@ -229,7 +229,6 @@ var permissions = map[PermissionGroup][]string{
 	},
 	// Permissions required for deleting a cluster with shared instance roles
 	PermissionDeleteSharedInstanceRole: {
-		"tag:UnTagResources",
 		"iam:UntagRole",
 	},
 }
