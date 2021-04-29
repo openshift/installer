@@ -42,13 +42,11 @@ if (echo "${TAGS}" | grep -q 'libvirt')
 then
 	export CGO_ENABLED=1
 fi
-case "$(go env GOARCH)" in
-arm64|ppc64le)
-	# arm64: https://github.com/golang/go/issues/40492
-	# ppc64le: https://github.com/golang/go/issues/45564
+if test "$(go env GOARCH)" = "arm64"
+then
+	# https://github.com/golang/go/issues/40492
 	LDFLAGS="${LDFLAGS} -linkmode external"
 	export CGO_ENABLED=1
-	;;
-esac
+fi
 
 go build "${GOFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
