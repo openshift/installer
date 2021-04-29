@@ -114,7 +114,7 @@ pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
 
-[availablity-zones]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
+[availability-zones]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
 [instance-type]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
 [kms-key-default]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
 [kms-key]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html
