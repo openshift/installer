@@ -52,6 +52,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	// /<datacenter>/vm/<folder_path> so we can split on "vm/".
 	folderRelPath := strings.SplitAfterN(controlPlaneConfig.Workspace.Folder, "vm/", 2)[1]
 
+	// The vSphere provider needs explicit path of the datacenter to avoid
+	// conflicts when multiple datacenters have the same name even though they
+	// are in different folders.
+	datacenter := controlPlaneConfig.Workspace.Datacenter
+	if !strings.HasPrefix(datacenter, "/") && !strings.HasPrefix(datacenter, "./") {
+		datacenter = "./" + datacenter
+	}
+
 	cfg := &config{
 		VSphereURL:        controlPlaneConfig.Workspace.Server,
 		VSphereUsername:   sources.Username,
@@ -61,7 +69,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		NumCPUs:           controlPlaneConfig.NumCPUs,
 		NumCoresPerSocket: controlPlaneConfig.NumCoresPerSocket,
 		Cluster:           sources.Cluster,
-		Datacenter:        controlPlaneConfig.Workspace.Datacenter,
+		Datacenter:        datacenter,
 		Datastore:         controlPlaneConfig.Workspace.Datastore,
 		Folder:            folderRelPath,
 		Network:           controlPlaneConfig.Network.Devices[0].NetworkName,
