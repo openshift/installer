@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/asset"
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	bmconfig "github.com/openshift/installer/pkg/asset/installconfig/baremetal"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -44,6 +45,12 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 	var err error
 	platform := ic.Config.Platform.Name()
 	switch platform {
+	case aws.Name:
+		session, err := ic.AWS.Session(context.TODO())
+		if err != nil {
+			return err
+		}
+		return awsconfig.ValidateForProvisioning(session, ic.Config, ic.AWS)
 	case azure.Name:
 		dnsConfig, err := ic.Azure.DNSConfig()
 		if err != nil {
@@ -82,7 +89,7 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-	case aws.Name, libvirt.Name, none.Name, ovirt.Name, kubevirt.Name:
+	case libvirt.Name, none.Name, ovirt.Name, kubevirt.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

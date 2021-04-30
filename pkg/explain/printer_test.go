@@ -122,6 +122,9 @@ func Test_PrintFields(t *testing.T) {
     experimentalPropagateUserTags <boolean>
       ExperimentalPropagateUserTags is an experimental flag that directs in-cluster operators to include the specified user tags in the tags of the AWS resources that the operators create.
 
+    hostedZone <string>
+      HostedZone is the ID of an existing hosted zone into which to add DNS records for the cluster's internal API. An existing hosted zone can only be used when also using existing subnets. The hosted zone must be associated with the VPC containing the subnets. Leave the hosted zone unset to have the installer create the hosted zone on your behalf.
+
     region <string> -required-
       Region specifies the AWS region where the cluster will be created.
 
