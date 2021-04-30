@@ -233,6 +233,23 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if len(osImage) == 2 {
 			osImageRegion = osImage[1]
 		}
+
+		workerIAMRoleName := ""
+		if mp := installConfig.Config.WorkerMachinePool(); mp != nil {
+			awsMP := &aws.MachinePool{}
+			awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+			awsMP.Set(mp.Platform.AWS)
+			workerIAMRoleName = awsMP.IAMRole
+		}
+
+		masterIAMRoleName := ""
+		if mp := installConfig.Config.ControlPlane; mp != nil {
+			awsMP := &aws.MachinePool{}
+			awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+			awsMP.Set(mp.Platform.AWS)
+			masterIAMRoleName = awsMP.IAMRole
+		}
+
 		data, err := awstfvars.TFVars(awstfvars.TFVarsSources{
 			VPC:                   vpc,
 			PrivateSubnets:        privateSubnets,
@@ -247,6 +264,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			IgnitionBucket:        bucket,
 			IgnitionPresignedURL:  url,
 			AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
+			MasterIAMRoleName:     masterIAMRoleName,
+			WorkerIAMRoleName:     workerIAMRoleName,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

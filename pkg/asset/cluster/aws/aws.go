@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
 
@@ -32,7 +33,12 @@ func Metadata(clusterID, infraID string, config *types.InstallConfig) *awstypes.
 // PreTerraform performs any infrastructure initialization which must
 // happen before Terraform creates the remaining infrastructure.
 func PreTerraform(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
+
 	if err := tagSharedVPCResources(ctx, clusterID, installConfig); err != nil {
+		return err
+	}
+
+	if err := tagSharedIAMRoles(ctx, clusterID, installConfig); err != nil {
 		return err
 	}
 
@@ -50,6 +56,9 @@ func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig 
 	}
 
 	publicSubnets, err := installConfig.AWS.PublicSubnets(ctx)
+	if err != nil {
+		return err
+	}
 
 	ids := make([]*string, 0, len(privateSubnets)+len(publicSubnets))
 	for id := range privateSubnets {
@@ -82,6 +91,49 @@ func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig 
 			AddTags:      []*route53.Tag{{Key: &tagKey, Value: &tagValue}},
 		}); err != nil {
 			return errors.Wrap(err, "could not add tags to hosted zone")
+		}
+	}
+
+	return nil
+}
+
+func tagSharedIAMRoles(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
+	var iamRoleNames []*string
+	if mp := installConfig.Config.ControlPlane; mp != nil {
+		awsMP := &awstypes.MachinePool{}
+		awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+		awsMP.Set(mp.Platform.AWS)
+		if iamRole := awsMP.IAMRole; iamRole != "" {
+			iamRoleNames = append(iamRoleNames, &iamRole)
+		}
+	}
+	if mp := installConfig.Config.WorkerMachinePool(); mp != nil {
+		awsMP := &awstypes.MachinePool{}
+		awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+		awsMP.Set(mp.Platform.AWS)
+		if iamRole := awsMP.IAMRole; iamRole != "" {
+			iamRoleNames = append(iamRoleNames, &iamRole)
+		}
+	}
+
+	if len(iamRoleNames) == 0 {
+		return nil
+	}
+
+	session, err := installConfig.AWS.Session(ctx)
+	if err != nil {
+		return err
+	}
+	key, value := sharedTag(clusterID)
+	iamTags := []*iam.Tag{{Key: &key, Value: &value}}
+	iamClient := iam.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
+
+	for _, iamRoleName := range iamRoleNames {
+		if _, err := iamClient.TagRoleWithContext(ctx, &iam.TagRoleInput{
+			RoleName: iamRoleName,
+			Tags:     iamTags,
+		}); err != nil {
+			return errors.Wrapf(err, "could not tag %s role", *iamRoleName)
 		}
 	}
 
