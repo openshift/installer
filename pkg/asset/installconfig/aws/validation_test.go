@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/utils/pointer"
 
@@ -583,6 +584,52 @@ func TestValidate(t *testing.T) {
 					assert.Regexp(t, test.expectErr, err.Error())
 				}
 			}
+		})
+	}
+}
+
+func TestIsHostedZoneDomainParentOfClusterDomain(t *testing.T) {
+	cases := []struct {
+		name             string
+		hostedZoneDomain string
+		clusterDomain    string
+		expected         bool
+	}{{
+		name:             "same",
+		hostedZoneDomain: "c.b.a.",
+		clusterDomain:    "c.b.a.",
+		expected:         true,
+	}, {
+		name:             "strict parent",
+		hostedZoneDomain: "b.a.",
+		clusterDomain:    "c.b.a.",
+		expected:         true,
+	}, {
+		name:             "grandparent",
+		hostedZoneDomain: "a.",
+		clusterDomain:    "c.b.a.",
+		expected:         true,
+	}, {
+		name:             "not parent",
+		hostedZoneDomain: "f.e.d.",
+		clusterDomain:    "c.b.a.",
+		expected:         false,
+	}, {
+		name:             "child",
+		hostedZoneDomain: "d.c.b.a.",
+		clusterDomain:    "c.b.a.",
+		expected:         false,
+	}, {
+		name:             "suffix but not parent",
+		hostedZoneDomain: "b.a.",
+		clusterDomain:    "cb.a.",
+		expected:         false,
+	}}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			zone := &route53.HostedZone{Name: &tc.hostedZoneDomain}
+			actual := isHostedZoneDomainParentOfClusterDomain(zone, tc.clusterDomain)
+			assert.Equal(t, tc.expected, actual)
 		})
 	}
 }

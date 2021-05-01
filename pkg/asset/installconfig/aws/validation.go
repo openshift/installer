@@ -351,8 +351,15 @@ func validateExistingHostedZone(session *session.Session, ic *types.InstallConfi
 		allErrs = append(allErrs, field.Invalid(hostedZonePath, ic.AWS.HostedZone, "no VPC found"))
 	}
 
-	// validate that the hosted zone does not already have any record sets for the cluster domain
 	dottedClusterDomain := ic.ClusterDomain() + "."
+
+	// validate that the domain of the hosted zone is the cluster domain or a parent of the cluster domain
+	if !isHostedZoneDomainParentOfClusterDomain(zone.HostedZone, dottedClusterDomain) {
+		allErrs = append(allErrs, field.Invalid(hostedZonePath, ic.AWS.HostedZone,
+			fmt.Sprintf("hosted zone domain %q is not a parent of the cluster domain %q", *zone.HostedZone.Name, dottedClusterDomain)))
+	}
+
+	// validate that the hosted zone does not already have any record sets for the cluster domain
 	var problematicRecords []string
 	if err := client.ListResourceRecordSetsPages(
 		&route53.ListResourceRecordSetsInput{HostedZoneId: zone.HostedZone.Id},
@@ -399,4 +406,11 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 		}
 	}
 	return false
+}
+
+func isHostedZoneDomainParentOfClusterDomain(hostedZone *route53.HostedZone, dottedClusterDomain string) bool {
+	if *hostedZone.Name == dottedClusterDomain {
+		return true
+	}
+	return strings.HasSuffix(dottedClusterDomain, "."+*hostedZone.Name)
 }
