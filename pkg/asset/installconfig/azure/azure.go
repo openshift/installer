@@ -6,12 +6,12 @@ import (
 	"sort"
 	"strings"
 
+	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types/azure"
-
-	"github.com/pkg/errors"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
 const (
@@ -51,9 +51,15 @@ func Platform() (*azure.Platform, error) {
 		}
 	}
 
-	regionTransform := survey.TransformString(func(s string) string {
-		return strings.SplitN(s, " ", 2)[0]
-	})
+	var regionTransform survey.Transformer = func(ans interface{}) interface{} {
+		switch v := ans.(type) {
+		case core.OptionAnswer:
+			return core.OptionAnswer{Value: strings.SplitN(v.Value, " ", 2)[0], Index: v.Index}
+		case string:
+			return strings.SplitN(v, " ", 2)[0]
+		}
+		return ""
+	}
 
 	_, ok := regions[defaultRegion]
 	if !ok {
@@ -73,7 +79,7 @@ func Platform() (*azure.Platform, error) {
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				choice := regionTransform(ans).(string)
+				choice := regionTransform(ans).(core.OptionAnswer).Value
 				i := sort.SearchStrings(shortRegions, choice)
 				if i == len(shortRegions) || shortRegions[i] != choice {
 					return errors.Errorf("invalid region %q", choice)

@@ -3,9 +3,9 @@ package baremetal
 
 import (
 	"fmt"
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/pkg/errors"
-	"gopkg.in/AlecAivazis/survey.v1"
-	"gopkg.in/AlecAivazis/survey.v1/terminal"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -92,7 +92,7 @@ func Platform() (*baremetal.Platform, error) {
 		var host *baremetal.Host
 		var err error
 		host, err = Host()
-		// Check for kebyoard interrupt or else we'll loop forever
+		// Check for keyboard interrupt or else we'll loop forever
 		if errors.Is(err, terminal.InterruptErr) {
 			fmt.Println("interrupted - hosts were not added")
 			break

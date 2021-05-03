@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	survey "github.com/AlecAivazis/survey/v2"
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
 //DNSConfig exposes functions to choose the DNS settings

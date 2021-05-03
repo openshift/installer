@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -15,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 	ini "gopkg.in/ini.v1"
 
 	typesaws "github.com/openshift/installer/pkg/types/aws"

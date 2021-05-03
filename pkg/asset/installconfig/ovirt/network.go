@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/core"
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
-	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/ovirt"
 )
@@ -29,14 +30,15 @@ func askNetwork(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 		networkByNames[network.MustName()] = network
 		networkNames = append(networkNames, network.MustName())
 	}
-	if err := survey.AskOne(&survey.Select{
-		Message: "Network",
-		Help:    "The Engine network of the deployed VMs. 'ovirtmgmt' is the default network. It is recommended to use a dedicated network for each OpenShift cluster.",
-		Options: networkNames,
-	},
+	if err := survey.AskOne(
+		&survey.Select{
+			Message: "Network",
+			Help:    "The Engine network of the deployed VMs. 'ovirtmgmt' is the default network. It is recommended to use a dedicated network for each OpenShift cluster.",
+			Options: networkNames,
+		},
 		&networkName,
-		func(ans interface{}) error {
-			choice := ans.(string)
+		survey.WithValidator(func(ans interface{}) error {
+			choice := ans.(core.OptionAnswer).Value
 			sort.Strings(networkNames)
 			i := sort.SearchStrings(networkNames, choice)
 			if i == len(networkNames) || networkNames[i] != choice {
@@ -48,7 +50,8 @@ func askNetwork(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 			}
 			p.NetworkName = network.MustName()
 			return nil
-		}); err != nil {
+		}),
+	); err != nil {
 		return errors.Wrap(err, "failed UserInput")
 	}
 	return nil
@@ -74,14 +77,15 @@ func askVNICProfileID(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 	}
 
 	// we have multiple vnic profile for the selected network
-	if err := survey.AskOne(&survey.Select{
-		Message: "VNIC Profile",
-		Help:    "The Engine VNIC profile of the VMs.",
-		Options: profileNames,
-	},
+	if err := survey.AskOne(
+		&survey.Select{
+			Message: "VNIC Profile",
+			Help:    "The Engine VNIC profile of the VMs.",
+			Options: profileNames,
+		},
 		&profileID,
-		func(ans interface{}) error {
-			choice := ans.(string)
+		survey.WithValidator(func(ans interface{}) error {
+			choice := ans.(core.OptionAnswer).Value
 			sort.Strings(profileNames)
 			i := sort.SearchStrings(profileNames, choice)
 			if i == len(profileNames) || profileNames[i] != choice {
@@ -93,7 +97,8 @@ func askVNICProfileID(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 			}
 			p.VNICProfileID = profile.MustId()
 			return nil
-		}); err != nil {
+		}),
+	); err != nil {
 		return errors.Wrap(err, "failed UserInput")
 	}
 	return nil

@@ -3,10 +3,10 @@ package ovirt
 import (
 	"fmt"
 
+	"github.com/AlecAivazis/survey/v2"
 	ovirtsdk "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/AlecAivazis/survey.v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"

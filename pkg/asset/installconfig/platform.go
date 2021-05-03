@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"sort"
 
+	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
@@ -119,7 +120,7 @@ func (a *platform) queryUserForPlatform() (platform string, err error) {
 				Help:    "The platform on which the cluster will run.  For a full list of platforms, including those not supported by this wizard, see https://github.com/openshift/installer",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				choice := ans.(string)
+				choice := ans.(core.OptionAnswer).Value
 				i := sort.SearchStrings(types.PlatformNames, choice)
 				if i == len(types.PlatformNames) || types.PlatformNames[i] != choice {
 					return errors.Errorf("invalid platform %q", choice)

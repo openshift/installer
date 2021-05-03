@@ -1,9 +1,9 @@
 package installconfig
 
 import (
+	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/pkg/errors"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
