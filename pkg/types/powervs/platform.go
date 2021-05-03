@@ -31,5 +31,19 @@ type Platform struct {
 	// +optional
 	UserTags map[string]string `json:"userTags,omitempty"`
 
+    // BootstrapOSImage is a URL to override the default OS image                                                                                                                                                                             
+    // for the bootstrap node. The URL must contain a sha256 hash of the image                                                                                                                                                                
+    // e.g https://mirror.example.com/images/image.ova.gz?sha256=a07bd...                                                                                                                                                                    
+    //                                                                                                                                                                                                                                        
+    // +optional                                                                                                                                                                                                                              
+    BootstrapOSImage string `json:"bootstrapOSImage,omitempty" validate:"omitempty,osimageuri,urlexist"`
+
+    // ClusterOSImage is a URL to override the default OS image                                                                                                                                                                               
+    // for cluster nodes. The URL must contain a sha256 hash of the image                                                                                                                                                                     
+    // e.g https://mirror.example.com/images/powervs.ova.gz?sha256=3b5a8...                                                                                                                                                                   
+    //                                                                                                                                                                                                                                        
+    // +optional                                                                                                                                                                                                                              
+    ClusterOSImage string `json:"clusterOSImage,omitempty" validate:"omitempty,osimageuri,urlexist"`
+
 }
 
