@@ -44,6 +44,17 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 			},
 		},
 		{
+			name: "release-image successful bootstrap-in-place",
+			files: map[string]string{
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json": `[
+{"phase":"service start"},
+{"phase":"stage start", "stage":"pull-release-image"},
+{"phase":"stage end", "stage":"pull-release-image", "result":"success"},
+{"phase":"service end", "result":"success"}
+]`,
+			},
+		},
+		{
 			name: "release-image failed",
 			files: map[string]string{
 				"log-bundle/bootstrap/services/release-image.json": `[
