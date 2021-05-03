@@ -53,43 +53,47 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 func (o *ClusterUninstaller) deleteStoragePool(conn *libvirt.Connect) error {
 	o.Logger.Debug("Deleting baremetal bootstrap volumes")
 
-	pname := o.InfraID + "-bootstrap"
-	pool, err := conn.LookupStoragePoolByName(pname)
+	pName := o.InfraID + "-bootstrap"
+	pool, err := conn.LookupStoragePoolByName(pName)
 	if err != nil {
-		return errors.Wrapf(err, "get storage pool %q", pname)
+		o.Logger.Warnf("Unable to get storage pool %s: %s", pName, err)
+		return nil
 	}
 	defer pool.Free()
 
 	// delete vols
 	vols, err := pool.ListAllStorageVolumes(0)
 	if err != nil {
-		return errors.Wrapf(err, "list volumes in %q", pname)
+		o.Logger.Warnf("Unable to get volumes in storage pool %s: %s", pName, err)
+		return nil
 	}
 
 	for _, vol := range vols {
 		defer vol.Free()
 		vName, err := vol.GetName()
 		if err != nil {
-			return errors.Wrapf(err, "get volume names in %q", pname)
+			o.Logger.Warnf("Unable to get volume %s in storage pool %s: %s", vName, pName, err)
+			return nil
 		}
 		if err := vol.Delete(0); err != nil {
-			return errors.Wrapf(err, "delete volume %q from %q", vName, pname)
+			o.Logger.Warnf("Unable to delete volume %s in storage pool %s: %s", vName, pName, err)
+			return nil
 		}
 		o.Logger.WithField("volume", vName).Info("Deleted volume")
 	}
 
 	if err := pool.Destroy(); err != nil {
-		return errors.Wrapf(err, "destroy pool %q", pname)
+		o.Logger.Warnf("Unable to destroy storage pool %s: %s", pName, err)
 	}
 
 	if err := pool.Delete(0); err != nil {
-		return errors.Wrapf(err, "delete pool %q", pname)
+		o.Logger.Warnf("Unable to delete storage pool %s: %s", pName, err)
 	}
 
 	if err := pool.Undefine(); err != nil {
-		return errors.Wrapf(err, "undefine pool %q", pname)
+		o.Logger.Warnf("Unable to undefine storage pool %s: %s", pName, err)
 	}
-	o.Logger.WithField("pool", pname).Info("Deleted pool")
+	o.Logger.WithField("pool", pName).Info("Deleted pool")
 
 	return nil
 }
