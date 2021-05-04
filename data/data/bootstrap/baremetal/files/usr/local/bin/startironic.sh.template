@@ -75,6 +75,7 @@ done
 {{ if .PlatformData.BareMetal.ProvisioningDNSMasq }}
 dnsmasq_container_name="dnsmasq"
 podman run -d --net host --privileged --name $dnsmasq_container_name \
+     --restart on-failure \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env DHCP_RANGE=$DHCP_RANGE \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE}
@@ -83,10 +84,12 @@ dnsmasq_container_name=""
 {{ end }}
 
 podman run -d --net host --privileged --name mariadb \
+     --restart on-failure \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runmariadb \
      --env MARIADB_PASSWORD=$mariadb_password ${IRONIC_IMAGE}
 
 podman run -d --net host --privileged --name httpd \
+     --restart on-failure \
      --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
@@ -104,10 +107,12 @@ IPTABLES=iptables
 IP=$(echo $RHCOS_BOOT_IMAGE_URL | sed -e 's/.*:\/\/\([^/]*\)\/.*/\1/g' )
 CACHEURL="http://$IP/images"
 podman run -d --net host --name coreos-downloader \
+     --restart on-failure \
      --env CACHEURL=${CACHEURL} \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_BOOT_IMAGE_URL
 
 podman run -d --net host --name ipa-downloader \
+     --restart on-failure \
      --env CACHEURL=${CACHEURL} \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
 
@@ -149,6 +154,7 @@ while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs
 while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
 
 sudo podman run -d --net host --privileged --name ironic-conductor \
+     --restart on-failure \
      --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
@@ -162,12 +168,14 @@ sudo podman run -d --net host --privileged --name ironic-conductor \
 sleep 10
 
 podman run -d --net host --privileged --name ironic-inspector \
+     --restart on-failure \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env HTTP_BASIC_HTPASSWD=${IRONIC_HTPASSWD} \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_INSPECTOR_IMAGE}"
 
 sudo podman run -d --net host --privileged --name ironic-api \
+     --restart on-failure \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env HTTP_BASIC_HTPASSWD=${IRONIC_HTPASSWD} \
@@ -176,26 +184,40 @@ sudo podman run -d --net host --privileged --name ironic-api \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 
 sudo podman run -d --name ironic-deploy-ramdisk-logs \
+     --restart on-failure \
      --entrypoint /bin/runlogwatch.sh \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 
 podman run -d --name ironic-inspector-ramdisk-logs \
+     --restart on-failure \
      --entrypoint /bin/runlogwatch.sh \
      -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_INSPECTOR_IMAGE}"
 
-# Now loop so the service remains active and restart everything should one of the containers exit unexpectedly.
-# The alternative would be RemainAfterExit=yes but then we lose the ability to restart if something crashes.
+set +x
+AUTH_DIR=/opt/metal3/auth
+ironic_url="$(printf 'http://%s:%s@localhost:6385/v1' "$(cat "${AUTH_DIR}/ironic/username")" "$(cat "${AUTH_DIR}/ironic/password")")"
+inspector_url="$(printf 'http://%s:%s@localhost:5050/v1' "$(cat "${AUTH_DIR}/ironic-inspector/username")" "$(cat "${AUTH_DIR}/ironic-inspector/password")")"
+
+while [ "$(curl -s "${ironic_url}/nodes" | jq '.nodes[] | .uuid' | wc -l)" -lt 1 ]; do
+  echo "Waiting for a control plane host to show up in Ironic..."
+  sleep 20
+done
+
 while true; do
-    for name in ironic-api ironic-conductor ironic-inspector ironic-deploy-ramdisk-logs ironic-inspector-ramdisk-logs $dnsmasq_container_name httpd mariadb; do
-        # Note there are two levels of go templating here, the outer braces
-        # are for the templating done in openshift-install, to escape the
-        # templating input to the --format option of podman inspect
-        state=$(podman inspect ${name} --format  {{ "{{.State.Status}}" }})
-        if [[ $state != "running" ]]; then
-            echo "ERROR: Unexpected service status for $name"
-            podman inspect ${name}
-            exit 1
-        fi
-    done
+    # Check if all nodes have been deployed
+    if ! curl -s "${ironic_url}/nodes" | jq '.nodes[] | .provision_state' | grep -v active;
+    then
+      echo "All hosts have been deployed."
+      sleep 30
+      while ! test -f /opt/openshift/.master-bmh-update.done; do
+        echo "Waiting for introspection data to be synced..."
+        sleep 10
+      done
+
+      echo "Stopping provisioning services..."
+      podman stop ironic-api ironic-conductor ironic-inspector ironic-deploy-ramdisk-logs ironic-inspector-ramdisk-logs $dnsmasq_container_name httpd mariadb
+      exit 0
+    fi
+
     sleep 10
 done

@@ -47,3 +47,5 @@ for node in $(curl -s "${ironic_url}/nodes" | jq -r '.nodes[] | .uuid'); do
 
      oc annotate --overwrite -n openshift-machine-api baremetalhosts "$name" 'baremetalhost.metal3.io/status'="$HARDWARE_DETAILS" 'baremetalhost.metal3.io/paused-'
 done
+
+touch /opt/openshift/.master-bmh-update.done
