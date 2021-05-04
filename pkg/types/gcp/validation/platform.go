@@ -27,6 +27,7 @@ var (
 		"asia-southeast1":         "Jurong West, Singapore",
 		"asia-southeast2":         "Jakarta, Indonesia",
 		"australia-southeast1":    "Sydney, Australia",
+		"europe-central2":         "Warsaw, Poland",
 		"europe-north1":           "Hamina, Finland",
 		"europe-west1":            "St. Ghislain, Belgium",
 		"europe-west2":            "London, England, UK",
