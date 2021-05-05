@@ -138,10 +138,11 @@ func TFVars(libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, 
 			"image_checksum": cacheChecksumURL,
 		}
 
+		// This is the only place where we need to set instance_info capabilities,
+		// if we need to add another capabilitie we need merge the values
+		// and ensure they are in the `key1:value1,key2:value2` format
 		if host.BootMode == baremetal.UEFISecureBoot {
-			instanceInfo["capabilities"] = map[string]string{
-				"secure_boot": "true",
-			}
+			instanceInfo["capabilities"] = "secure_boot:true"
 		}
 
 		hosts = append(hosts, hostMap)
