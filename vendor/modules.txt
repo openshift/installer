@@ -574,6 +574,7 @@ github.com/gophercloud/gophercloud/openstack/blockstorage/v2/snapshots
 github.com/gophercloud/gophercloud/openstack/blockstorage/v2/volumes
 github.com/gophercloud/gophercloud/openstack/blockstorage/v3/snapshots
 github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes
+github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumetypes
 github.com/gophercloud/gophercloud/openstack/common/extensions
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/aggregates
