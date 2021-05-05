@@ -53,10 +53,10 @@ do
 done
 sudo cp -r /var/log/bootstrap-control-plane/ "${ARTIFACTS}/bootstrap/containers"
 mkdir -p "${ARTIFACTS}/bootstrap/pods"
-sudo podman ps --all --quiet | while read -r container
+sudo podman ps --all --format "{{ .ID }} {{ .Names }}" | while read -r container_id container_name
 do
-    sudo podman logs "${container}" >& "${ARTIFACTS}/bootstrap/pods/${container}.log"
-    sudo podman inspect "${container}" >& "${ARTIFACTS}/bootstrap/pods/${container}.inspect"
+    sudo podman logs "${container_id}" >& "${ARTIFACTS}/bootstrap/pods/${container_name}-${container_id}.log"
+    sudo podman inspect "${container_id}" >& "${ARTIFACTS}/bootstrap/pods/${container_name}-${container_id}.inspect"
 done
 
 echo "Gathering rendered assets..."

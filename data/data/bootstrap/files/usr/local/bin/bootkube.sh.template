@@ -86,6 +86,7 @@ then
 	rm --recursive --force cvo-bootstrap
 
 	bootkube_podman_run \
+		--name cvo-render \
 		--volume "$PWD:/assets:z" \
 {{- if .ClusterProfile}}
 		--env CLUSTER_PROFILE="{{.ClusterProfile}}" \
@@ -110,6 +111,7 @@ then
     record_service_stage_start "etcd-bootstrap"
 	echo "Rendering CEO Manifests..."
 	bootkube_podman_run \
+		--name etcd-render \
 		--volume "$PWD:/assets:z" \
 		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-etcd-operator render \
@@ -143,6 +145,7 @@ then
 	fi
 
 	bootkube_podman_run \
+		--name config-render \
 		--volume "$PWD:/assets:z" \
 		"${CONFIG_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-config-operator render \
@@ -167,6 +170,7 @@ then
 	rm --recursive --force kube-apiserver-bootstrap
 
 	bootkube_podman_run  \
+		--name kube-apiserver-render \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-apiserver-operator render \
@@ -196,6 +200,7 @@ then
 	rm --recursive --force kube-controller-manager-bootstrap
 
 	bootkube_podman_run \
+		--name kube-controller-render \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-controller-manager-operator render \
@@ -233,6 +238,7 @@ then
 	rm --recursive --force kube-scheduler-bootstrap
 
 	bootkube_podman_run \
+		--name kube-scheduler-render \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-scheduler-operator render \
@@ -257,6 +263,7 @@ then
 	rm --recursive --force ingress-operator-bootstrap
 
 	bootkube_podman_run \
+		--name ingress-render \
 		--volume "$PWD:/assets:z" \
 		"${INGRESS_OPERATOR_IMAGE}" \
 		render \
@@ -285,6 +292,7 @@ then
 	fi
 
 	bootkube_podman_run \
+		--name mco-render \
 		--user 0 \
 		--volume "$PWD:/assets:z" \
 		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
@@ -352,6 +360,7 @@ then
 
 	# shellcheck disable=SC2154
 	bootkube_podman_run \
+		--name cco-render \
 		--quiet \
 		--user 0 \
 		--volume "$PWD:/assets:z" \
@@ -390,6 +399,7 @@ echo "Starting cluster-bootstrap..."
 run_cluster_bootstrap() {
 	record_service_stage_start "cb-bootstrap"
 	bootkube_podman_run \
+        --name cluster-bootstrap \
         --rm \
         --volume "$PWD:/assets:z" \
         --volume /etc/kubernetes:/etc/kubernetes:z \
@@ -422,6 +432,7 @@ else
         record_service_stage_start "wait-for-ceo"
         echo "Waiting for CEO to finish..."
         bootkube_podman_run \
+            --name wait-for-ceo \
             --volume "$PWD:/assets:z" \
             "${CLUSTER_ETCD_OPERATOR_IMAGE}" \
             /usr/bin/cluster-etcd-operator \

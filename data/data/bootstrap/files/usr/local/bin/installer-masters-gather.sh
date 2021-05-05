@@ -42,10 +42,11 @@ do
     crictl logs "${container}" >& "${ARTIFACTS}/containers/${container_name}-${container}.log"
     crictl inspect "${container}" >& "${ARTIFACTS}/containers/${container_name}-${container}.inspect"
 done
-for container in $(podman ps --all --quiet)
+
+podman ps --all --format "{{ .ID }} {{ .Names }}" | while read -r container_id container_name
 do
-    podman logs "${container}" >& "${ARTIFACTS}/containers/${container}.log"
-    podman inspect "${container}" >& "${ARTIFACTS}/containers/${container}.inspect"
+    podman logs "${container_id}" >& "${ARTIFACTS}/containers/${container_name}-${container_id}.log"
+    podman inspect "${container_id}" >& "${ARTIFACTS}/containers/${container_name}-${container_id}.inspect"
 done
 
 echo "Waiting for logs ..."
