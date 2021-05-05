@@ -30,6 +30,12 @@ module "bootstrap" {
   openstack_base_image_local_file_path = var.openstack_base_image_local_file_path
 }
 
+module "affinity_group" {
+  source                = "./affinity_group"
+  ovirt_cluster_id      = var.ovirt_cluster_id
+  ovirt_affinity_groups = var.ovirt_affinity_groups
+}
+
 module "masters" {
   source                        = "./masters"
   master_count                  = var.master_count
@@ -44,4 +50,7 @@ module "masters" {
   ovirt_master_memory           = var.ovirt_master_memory
   ovirt_master_vm_type          = var.ovirt_master_vm_type
   ovirt_master_os_disk_size_gb  = var.ovirt_master_os_disk_gb
+  ovirt_master_affinity_groups  = var.ovirt_master_affinity_groups
+  ovirt_affinity_group_count    = module.affinity_group.ovirt_affinity_group_count
 }
+

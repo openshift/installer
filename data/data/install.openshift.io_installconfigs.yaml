@@ -327,6 +327,14 @@ spec:
                       description: Ovirt is the configuration used when installing
                         on oVirt.
                       properties:
+                        affinityGroupsNames:
+                          description: AffinityGroupsNames contains a list of oVirt
+                            affinity group names that the newly created machines will
+                            join. The affinity groups should exist on the oVirt cluster
+                            or created by the OpenShift installer.
+                          items:
+                            type: string
+                          type: array
                         cpu:
                           description: CPU defines the VM CPU.
                           properties:
@@ -691,6 +699,14 @@ spec:
                     description: Ovirt is the configuration used when installing on
                       oVirt.
                     properties:
+                      affinityGroupsNames:
+                        description: AffinityGroupsNames contains a list of oVirt
+                          affinity group names that the newly created machines will
+                          join. The affinity groups should exist on the oVirt cluster
+                          or created by the OpenShift installer.
+                        items:
+                          type: string
+                        type: array
                       cpu:
                         description: CPU defines the VM CPU.
                         properties:
@@ -1714,6 +1730,32 @@ spec:
               ovirt:
                 description: Ovirt is the configuration used when installing on oVirt.
                 properties:
+                  affinityGroups:
+                    description: AffinityGroups contains the RHV affinity groups that
+                      the installer will create.
+                    items:
+                      description: AffinityGroup defines the affinity group that the
+                        installer will create
+                      properties:
+                        description:
+                          description: Description of the affinity group
+                          type: string
+                        enforcing:
+                          description: Enforcing whether to create a hard affinity
+                            rule, default is false
+                          type: boolean
+                        name:
+                          description: Name name of the affinity group
+                          type: string
+                        priority:
+                          description: Priority of the affinity group, needs to be
+                            between 1 (lowest) - 5 (highest)
+                          type: integer
+                      required:
+                      - name
+                      - priority
+                      type: object
+                    type: array
                   api_vip:
                     description: APIVIP is an IP which will be served by bootstrap
                       and then pivoted masters, using keepalived
@@ -1724,6 +1766,14 @@ spec:
                       define their own platform configuration. Default will set the
                       image field to the latest RHCOS image.
                     properties:
+                      affinityGroupsNames:
+                        description: AffinityGroupsNames contains a list of oVirt
+                          affinity group names that the newly created machines will
+                          join. The affinity groups should exist on the oVirt cluster
+                          or created by the OpenShift installer.
+                        items:
+                          type: string
+                        type: array
                       cpu:
                         description: CPU defines the VM CPU.
                         properties:

@@ -56,3 +56,14 @@ variable "ovirt_master_instance_type_id" {
   type        = string
   description = "master VM instance type ID"
 }
+
+variable "ovirt_master_affinity_groups" {
+  type        = list(string)
+  description = "master VMs affinity groups names"
+}
+
+//TODO: REMOVE once we port to TF 0.13 and can use depends_on modules
+variable "ovirt_affinity_group_count" {
+  type        = string
+  description = "create a dependency between affinity_group module to masters module"
+}

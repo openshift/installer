@@ -553,6 +553,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			string(*rhcosImage),
 			clusterID.InfraID,
 			masters[0].Spec.ProviderSpec.Value.Object.(*ovirtprovider.OvirtMachineProviderSpec),
+			installConfig.Config.Platform.Ovirt.AffinityGroups,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

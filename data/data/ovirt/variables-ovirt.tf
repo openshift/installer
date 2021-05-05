@@ -72,6 +72,12 @@ variable "ovirt_vnic_profile_id" {
   description = "The ID of the vNIC profile of Logical Network."
 }
 
+variable "ovirt_affinity_groups" {
+  type        = list(object({ name = string, priority = number, description = string, enforcing = string }))
+  description = "Affinity groups that will be created"
+  default     = []
+}
+
 variable "ovirt_master_memory" {
   type        = string
   description = "master VM memory in MiB"
@@ -100,4 +106,9 @@ variable "ovirt_master_vm_type" {
 variable "ovirt_master_instance_type_id" {
   type        = string
   description = "master VM instance type ID"
+}
+
+variable "ovirt_master_affinity_groups" {
+  type        = list(string)
+  description = "master VMs affinity groups names"
 }

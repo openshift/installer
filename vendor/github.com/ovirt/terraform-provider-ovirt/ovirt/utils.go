@@ -64,3 +64,19 @@ func parseResourceID(id string, count int) ([]string, error) {
 	}
 	return parts, nil
 }
+
+//Converts an array of type []interface{} to []string, notice that all the interface elements needs to be strings
+func convInterfaceArrToStringArr(arr []interface{}) ([]string, error) {
+	var newArr []string
+	for _, val := range arr {
+		if s, ok := val.(string); ok {
+			newArr = append(newArr, s)
+		} else {
+			return nil, fmt.Errorf(
+				"error converting []interface{} to []string, "+
+					"provided interface array %v contains non string elements %v",
+				arr, val)
+		}
+	}
+	return newArr, nil
+}

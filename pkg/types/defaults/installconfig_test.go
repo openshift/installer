@@ -18,6 +18,8 @@ import (
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/types/ovirt"
+	ovirtdefaults "github.com/openshift/installer/pkg/types/ovirt/defaults"
 )
 
 func defaultInstallConfig() *types.InstallConfig {
@@ -69,6 +71,17 @@ func defaultOpenStackInstallConfig() *types.InstallConfig {
 	c := defaultInstallConfig()
 	c.Platform.OpenStack = &openstack.Platform{}
 	openstackdefaults.SetPlatformDefaults(c.Platform.OpenStack, c.Networking)
+	return c
+}
+
+func defaultOvirtInstallConfig() *types.InstallConfig {
+	c := defaultInstallConfig()
+	c.Platform.Ovirt = &ovirt.Platform{}
+	ovirtdefaults.SetPlatformDefaults(c.Platform.Ovirt)
+	ovirtdefaults.SetControlPlaneDefaults(c.Platform.Ovirt, c.ControlPlane)
+	for i := range c.Compute {
+		ovirtdefaults.SetComputeDefaults(c.Platform.Ovirt, &c.Compute[i])
+	}
 	return c
 }
 
@@ -125,6 +138,15 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 				},
 			},
 			expected: defaultOpenStackInstallConfig(),
+		},
+		{
+			name: "empty oVirt",
+			config: &types.InstallConfig{
+				Platform: types.Platform{
+					Ovirt: &ovirt.Platform{},
+				},
+			},
+			expected: defaultOvirtInstallConfig(),
 		},
 		{
 			name: "Networking present",
