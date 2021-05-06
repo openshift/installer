@@ -1417,7 +1417,7 @@ github.com/openshift/cluster-api-provider-kubevirt/pkg/utils
 ## explicit
 github.com/openshift/cluster-api-provider-libvirt/pkg/apis
 github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1
-# github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210406154451-1ea59ab6b543
+# github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210622084102-c4f9f269bcb7
 ## explicit
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
@@ -1427,7 +1427,7 @@ github.com/openshift/custom-resource-status/conditions/v1
 ## explicit
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/route/routeapihelpers
-# github.com/openshift/machine-api-operator v0.2.1-0.20210504014029-a132ec00f7dd
+# github.com/openshift/machine-api-operator v0.2.1-0.20210505133115-b7ef098180db
 ## explicit
 github.com/openshift/machine-api-operator/pkg/apis/machine
 github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
@@ -1439,7 +1439,7 @@ github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.opens
 # github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
 ## explicit
 github.com/ovirt/go-ovirt
-# github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210527150815-b3d4424a7da1
+# github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210628083913-78ce17b16709
 ## explicit
 github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
