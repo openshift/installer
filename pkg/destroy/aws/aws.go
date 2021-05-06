@@ -185,18 +185,24 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	// running on the cluster creating new resources while we are attempting to delete resources, which could leak
 	// the new resources.
 	ec2Client := ec2.New(awsSession)
+	lastTerminateTime := time.Now()
 	err = wait.PollImmediateUntil(
 		time.Second*10,
 		func() (done bool, err error) {
-			instancesToDelete, err := o.findEC2Instances(ctx, ec2Client, deleted)
+			instancesRunning, instancesNotTerminated, err := o.findEC2Instances(ctx, ec2Client, deleted)
 			if err != nil {
 				o.Logger.WithError(err).Info("error while finding EC2 instances to delete")
 				if err := ctx.Err(); err != nil {
 					return false, err
 				}
 			}
-			if len(instancesToDelete) == 0 && err == nil {
+			if len(instancesNotTerminated) == 0 && len(instancesRunning) == 0 && err == nil {
 				return true, nil
+			}
+			instancesToDelete := instancesRunning
+			if time.Since(lastTerminateTime) > 10*time.Minute {
+				instancesToDelete = instancesNotTerminated
+				lastTerminateTime = time.Now()
 			}
 			newlyDeleted, err := o.deleteResources(ctx, awsSession, instancesToDelete, tracker)
 			// Delete from the resources-to-delete set so that the current state of the resources to delete can be
@@ -259,18 +265,21 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 }
 
 // findEC2Instances returns the EC2 instances with tags that satisfy the filters.
+// returns two lists, first one is the list of all resources that are not terminated and are not in shutdown
+// stage and the second list is the list of resources that are not terminated.
 //   deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func (o *ClusterUninstaller) findEC2Instances(ctx context.Context, ec2Client *ec2.EC2, deleted sets.String) ([]string, error) {
+func (o *ClusterUninstaller) findEC2Instances(ctx context.Context, ec2Client *ec2.EC2, deleted sets.String) ([]string, []string, error) {
 	if ec2Client.Config.Region == nil {
-		return nil, errors.New("EC2 client does not have region configured")
+		return nil, nil, errors.New("EC2 client does not have region configured")
 	}
 
 	partition, ok := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), *ec2Client.Config.Region)
 	if !ok {
-		return nil, errors.Errorf("no partition found for region %q", *ec2Client.Config.Region)
+		return nil, nil, errors.Errorf("no partition found for region %q", *ec2Client.Config.Region)
 	}
 
-	var resources []string
+	var resourcesRunning []string
+	var resourcesNotTerminated []string
 	for _, filter := range o.Filters {
 		o.Logger.Debugf("search for instances by tag matching %#+v", filter)
 		instanceFilters := make([]*ec2.Filter, 0, len(filter))
@@ -301,9 +310,12 @@ func (o *ClusterUninstaller) findEC2Instances(ctx context.Context, ec2Client *ec
 								instanceLogger.Info("Terminated")
 								deleted.Insert(arn)
 							}
-						} else {
-							resources = append(resources, arn)
+							continue
 						}
+						if *instance.State.Name != "shutting-down" {
+							resourcesRunning = append(resourcesRunning, arn)
+						}
+						resourcesNotTerminated = append(resourcesNotTerminated, arn)
 					}
 				}
 				return !lastPage
@@ -312,10 +324,10 @@ func (o *ClusterUninstaller) findEC2Instances(ctx context.Context, ec2Client *ec
 		if err != nil {
 			err = errors.Wrap(err, "get ec2 instances")
 			o.Logger.Info(err)
-			return resources, err
+			return resourcesRunning, resourcesNotTerminated, err
 		}
 	}
-	return resources, nil
+	return resourcesRunning, resourcesNotTerminated, nil
 }
 
 // findResourcesToDelete returns the resources that should be deleted.
@@ -868,8 +880,8 @@ func terminateEC2Instance(ctx context.Context, ec2Client *ec2.EC2, iamClient *ia
 }
 
 func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2.EC2, iamClient *iam.IAM, instance *ec2.Instance, logger logrus.FieldLogger) error {
-	// Skip 'shutting-down' and 'terminated' instances since they take a while to get cleaned up
-	if instance.State == nil || *instance.State.Name == "shutting-down" || *instance.State.Name == "terminated" {
+	// Ignore instances that are already terminated
+	if instance.State == nil || *instance.State.Name == "terminated" {
 		return nil
 	}
 
