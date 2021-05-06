@@ -91,7 +91,7 @@ func (a *ibmcAccessDetails) PowerInterface() string {
 }
 
 func (a *ibmcAccessDetails) RAIDInterface() string {
-	return ""
+	return "no-raid"
 }
 
 func (a *ibmcAccessDetails) VendorInterface() string {

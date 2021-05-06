@@ -48,7 +48,7 @@ require (
 	github.com/libvirt/libvirt-go v5.10.0+incompatible
 	github.com/masterzen/simplexml v0.0.0-20190410153822-31eea3082786 // indirect
 	github.com/masterzen/winrm v0.0.0-20190308153735-1d17eaf15943 // indirect
-	github.com/metal3-io/baremetal-operator v0.0.0-20210212154228-75e27989f8c7
+	github.com/metal3-io/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.1.1
 	github.com/openshift-metal3/terraform-provider-ironic v0.2.5
@@ -120,7 +120,7 @@ replace (
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift // Pin to fork with public rpc types
 	github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
 	github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
-	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210315180230-b37e044d24a4 // Use OpenShift fork
+	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c // Pin client-go
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 // Pin MCO so it doesn't get downgraded
