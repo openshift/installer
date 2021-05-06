@@ -14,6 +14,17 @@ set -euo pipefail
 
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
-sed --in-place --expression "s,pause_image *=.*,pause_image = \"${MACHINE_CONFIG_INFRA_IMAGE}\"," /etc/crio/crio.conf
-sed --in-place --expression 's,pause_command *=.*,pause_command = "/usr/bin/pod",' /etc/crio/crio.conf
-sed --in-place --expression 's,"/usr/share/containers/oci/hooks.d","/etc/containers/oci/hooks.d",' /etc/crio/crio.conf
+# make the drop-in directory if that hasn't been done yet
+mkdir -p /etc/crio/crio.conf.d
+
+cat <<EOF > /etc/crio/crio.conf.d/50-bootstrap-override.conf
+[crio]
+[crio.runtime]
+hooks_dir = [
+	"/usr/share/containers/oci/hooks.d",
+	"/etc/containers/oci/hooks.d",
+]
+[crio.image]
+pause_image = "$MACHINE_CONFIG_INFRA_IMAGE"
+pause_command = "/usr/bin/pod"
+EOF
