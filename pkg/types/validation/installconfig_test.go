@@ -1208,6 +1208,25 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `\Q[networking.machineNewtork[0]: Invalid value: "172.17.64.0/18": overlaps with default Docker Bridge subnet, platform: Invalid value: "libvirt": must specify one of the platforms (\E.*\Q)]\E`,
 		},
+		{
+			name: "publish internal for non-cloud platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{VSphere: validVSpherePlatform()}
+				c.Publish = types.InternalPublishingStrategy
+				return c
+			}(),
+			expectedError: `publish: Invalid value: "Internal": Internal publish strategy is not supported on "vsphere" platform`,
+		},
+		{
+			name: "publish internal for cloud platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Publish = types.InternalPublishingStrategy
+				return c
+			}(),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
