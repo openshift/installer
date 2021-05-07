@@ -147,6 +147,11 @@ func TestValidate(t *testing.T) {
 			edits:    editFunctions{validVPCConfig, machinePoolInvalidType},
 			errorMsg: `^\QcontrolPlane.platform.ibmcloud.type: Not found: "invalid-type"\E$`,
 		},
+		{
+			name:     "machine pool invalid type",
+			edits:    editFunctions{validVPCConfig, machinePoolInvalidType},
+			errorMsg: `^\QcontrolPlane.platform.ibmcloud.type: Not found: "invalid-type"\E$`,
+		},
 	}
 
 	mockCtrl := gomock.NewController(t)
