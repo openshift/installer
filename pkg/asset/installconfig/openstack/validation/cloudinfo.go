@@ -218,7 +218,7 @@ func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
 	subnet, err := subnets.Get(ci.clients.networkClient, subnetID).Extract()
 	if err != nil {
 		if isNotFoundError(err) {
-			return nil, nil
+			return nil, err
 		}
 		return nil, err
 	}
