@@ -142,7 +142,7 @@ data "libvirt_network_dns_host_template" "masters_int" {
 
 data "libvirt_network_dnsmasq_options_template" "options" {
   count        = length(var.libvirt_dnsmasq_options)
-  option_name  = keys(var.libvirt_dnsmasq_options)[count.index]
-  option_value = values(var.libvirt_dnsmasq_options)[count.index]
+  option_name  = var.libvirt_dnsmasq_options[count.index]["option_name"]
+  option_value = var.libvirt_dnsmasq_options[count.index]["option_value"]
 }
 

@@ -404,11 +404,15 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		// convert options list to a map which can be consumed by terraform
-		dnsmasqoptions := make(map[string]string)
+		// convert options list to a list of mappings which can be consumed by terraform
+		var dnsmasqoptions []map[string]string
 		for _, option := range installConfig.Config.Platform.Libvirt.Network.DnsmasqOptions {
-			dnsmasqoptions[option.Name] = option.Value
+			dnsmasqoptions = append(dnsmasqoptions,
+				map[string]string{
+					"option_name":  option.Name,
+					"option_value": option.Value})
 		}
+
 		data, err = libvirttfvars.TFVars(
 			libvirttfvars.TFVarsSources{
 				MasterConfig:   masters[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
