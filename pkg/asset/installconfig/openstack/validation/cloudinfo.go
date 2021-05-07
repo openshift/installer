@@ -357,7 +357,7 @@ func (ci *CloudInfo) getVolumeZones() ([]string, error) {
 	}
 
 	if len(availabilityZoneInfo) == 0 {
-		return nil, errors.New("could not find an available compute availability zone")
+		return nil, errors.New("could not find an available volume availability zone")
 	}
 
 	var zones []string
