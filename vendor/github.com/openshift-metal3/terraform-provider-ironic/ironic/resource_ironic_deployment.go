@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes"
 	utils "github.com/gophercloud/utils/openstack/baremetal/v1/nodes"
@@ -94,7 +95,21 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 	// Set instance info
 	instanceInfo := d.Get("instance_info").(map[string]interface{})
 	if instanceInfo != nil {
-		_, err := UpdateNode(client, d.Get("node_uuid").(string), nodes.UpdateOpts{
+		instanceInfoCapabilities, found := instanceInfo["capabilities"]
+		capabilities := make(map[string]string)
+		nodeUUID := d.Get("node_uuid").(string)
+		if found {
+			for _, e := range strings.Split(instanceInfoCapabilities.(string), ",") {
+				parts := strings.Split(e, ":")
+				if len(parts) != 2 {
+					return fmt.Errorf("error while parsing capabilities: %s, the correct format is key:value", e)
+				}
+				capabilities[parts[0]] = parts[1]
+
+			}
+			delete(instanceInfo, "capabilities")
+		}
+		_, err := UpdateNode(client, nodeUUID, nodes.UpdateOpts{
 			nodes.UpdateOperation{
 				Op:    nodes.AddOp,
 				Path:  "/instance_info",
@@ -103,6 +118,19 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 		})
 		if err != nil {
 			return fmt.Errorf("could not update instance info: %s", err)
+		}
+
+		if len(capabilities) != 0 {
+			_, err = UpdateNode(client, nodeUUID, nodes.UpdateOpts{
+				nodes.UpdateOperation{
+					Op:    nodes.AddOp,
+					Path:  "/instance_info/capabilities",
+					Value: capabilities,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("could not update instance info capabilities: %s", err)
+			}
 		}
 	}
 
