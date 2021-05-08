@@ -83,6 +83,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	switch installConfig.Config.Platform.Name() {
 	case aws.Name:
 		config.Spec.PlatformSpec.Type = configv1.AWSPlatformType
+		config.Spec.PlatformSpec.AWS = &configv1.AWSPlatformSpec{}
 
 		var resourceTags []configv1.AWSResourceTag
 		if installConfig.Config.AWS.ExperimentalPropagateUserTag {
