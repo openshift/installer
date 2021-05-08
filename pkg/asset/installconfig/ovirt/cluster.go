@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/core"
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/ovirt"
 )
@@ -44,8 +45,8 @@ func askCluster(c *ovirtsdk4.Connection, p *ovirt.Platform) (string, error) {
 		Options: clusterNames,
 	},
 		&clusterName,
-		func(ans interface{}) error {
-			choice := ans.(string)
+		survey.WithValidator(func(ans interface{}) error {
+			choice := ans.(core.OptionAnswer).Value
 			sort.Strings(clusterNames)
 			i := sort.SearchStrings(clusterNames, choice)
 			if i == len(clusterNames) || clusterNames[i] != choice {
@@ -57,7 +58,7 @@ func askCluster(c *ovirtsdk4.Connection, p *ovirt.Platform) (string, error) {
 			}
 			p.ClusterID = cl.MustId()
 			return nil
-		}); err != nil {
+		})); err != nil {
 		return clusterName, errors.Wrap(err, "failed UserInput")
 	}
 	return clusterName, nil

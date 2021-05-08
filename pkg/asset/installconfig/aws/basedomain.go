@@ -5,13 +5,14 @@ import (
 	"sort"
 	"strings"
 
+	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
 // IsForbidden returns true if and only if the input error is an HTTP
@@ -61,14 +62,14 @@ func GetBaseDomain() (string, error) {
 		Message: "Base Domain",
 		Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name.\n\nIf you don't see you intended base-domain listed, create a new public Route53 hosted zone and rerun the installer.",
 		Options: publicZones,
-	}, &domain, func(ans interface{}) error {
-		choice := ans.(string)
+	}, &domain, survey.WithValidator(func(ans interface{}) error {
+		choice := ans.(core.OptionAnswer).Value
 		i := sort.SearchStrings(publicZones, choice)
 		if i == len(publicZones) || publicZones[i] != choice {
 			return errors.Errorf("invalid base domain %q", choice)
 		}
 		return nil
-	}); err != nil {
+	})); err != nil {
 		return "", errors.Wrap(err, "failed UserInput")
 	}
 

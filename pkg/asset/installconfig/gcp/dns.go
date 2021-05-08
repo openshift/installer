@@ -5,10 +5,11 @@ import (
 	"sort"
 	"time"
 
+	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
 // GetPublicZone returns a DNS managed zone from the provided project which matches the baseDomain
@@ -51,14 +52,14 @@ func GetBaseDomain(project string) (string, error) {
 		Message: "Base Domain",
 		Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name.\n\nIf you don't see you intended base-domain listed, create a new public hosted zone and rerun the installer.",
 		Options: publicZones,
-	}, &domain, func(ans interface{}) error {
-		choice := ans.(string)
+	}, &domain, survey.WithValidator(func(ans interface{}) error {
+		choice := ans.(core.OptionAnswer).Value
 		i := sort.SearchStrings(publicZones, choice)
 		if i == len(publicZones) || publicZones[i] != choice {
 			return errors.Errorf("invalid base domain %q", choice)
 		}
 		return nil
-	}); err != nil {
+	})); err != nil {
 		return "", errors.Wrap(err, "failed UserInput")
 	}
 

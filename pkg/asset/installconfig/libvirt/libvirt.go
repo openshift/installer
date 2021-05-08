@@ -2,8 +2,8 @@
 package libvirt
 
 import (
+	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/pkg/errors"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/libvirt"
 	libvirtdefaults "github.com/openshift/installer/pkg/types/libvirt/defaults"

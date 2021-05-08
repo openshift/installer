@@ -1,7 +1,7 @@
 package installconfig
 
 import (
-	survey "gopkg.in/AlecAivazis/survey.v1"
+	survey "github.com/AlecAivazis/survey/v2"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/ipnet"

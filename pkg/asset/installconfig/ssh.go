@@ -7,8 +7,9 @@ import (
 	"path/filepath"
 	"sort"
 
+	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/validate"
@@ -84,14 +85,14 @@ func (a *sshPublicKey) Generate(asset.Parents) error {
 		Help:    "The SSH public key used to access all nodes within the cluster. This is optional.",
 		Options: paths,
 		Default: noSSHKey,
-	}, &path, func(ans interface{}) error {
-		choice := ans.(string)
+	}, &path, survey.WithValidator(func(ans interface{}) error {
+		choice := ans.(core.OptionAnswer).Value
 		i := sort.SearchStrings(paths, choice)
 		if i == len(paths) || paths[i] != choice {
 			return fmt.Errorf("invalid path %q", choice)
 		}
 		return nil
-	}); err != nil {
+	})); err != nil {
 		return errors.Wrap(err, "failed UserInput")
 	}
 
