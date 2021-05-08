@@ -5,6 +5,7 @@ import (
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/availabilityzones"
+	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumetypes"
 	computequotasets "github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/quotasets"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	tokensv2 "github.com/gophercloud/gophercloud/openstack/identity/v2/tokens"
@@ -37,6 +38,7 @@ type CloudInfo struct {
 	OSImage         *images.Image
 	ComputeZones    []string
 	VolumeZones     []string
+	VolumeTypes     []string
 	Quotas          []quota.Quota
 
 	clients *clients
@@ -191,6 +193,11 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	}
 
 	ci.VolumeZones, err = ci.getVolumeZones()
+	if err != nil {
+		return err
+	}
+
+	ci.VolumeTypes, err = ci.getVolumeTypes()
 	if err != nil {
 		return err
 	}
@@ -368,6 +375,29 @@ func (ci *CloudInfo) getVolumeZones() ([]string, error) {
 	}
 
 	return zones, nil
+}
+
+func (ci *CloudInfo) getVolumeTypes() ([]string, error) {
+	allPages, err := volumetypes.List(ci.clients.volumeClient, volumetypes.ListOpts{}).AllPages()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list volume types")
+	}
+
+	volumeTypeInfo, err := volumetypes.ExtractVolumeTypes(allPages)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse response with volume types list")
+	}
+
+	if len(volumeTypeInfo) == 0 {
+		return nil, errors.New("could not find an available block storage volume type")
+	}
+
+	var types []string
+	for _, volumeType := range volumeTypeInfo {
+		types = append(types, volumeType.Name)
+	}
+
+	return types, nil
 }
 
 // loadLimits loads the consumer quota metric.

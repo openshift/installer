@@ -25,6 +25,7 @@ const (
 	baremetalFlavor = "baremetal-flavor"
 
 	volumeType      = "performance"
+	invalidType     = "invalid-type"
 	volumeSmallSize = 10
 	volumeLargeSize = 25
 )
@@ -110,6 +111,9 @@ func validMpoolCloudInfo() *CloudInfo {
 		},
 		VolumeZones: []string{
 			validZone,
+		},
+		VolumeTypes: []string{
+			volumeType,
 		},
 	}
 }
@@ -298,6 +302,30 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			cloudInfo:      validMpoolCloudInfo(),
 			expectedError:  true,
 			expectedErrMsg: `compute\[0\].platform.openstack.rootVolume.zones: Invalid value: \[\]string{"AZ1", "AZ2"}: there must be either just one volume availability zone common to all nodes or the number of compute and volume availability zones must be equal`,
+		},
+		{
+			name:         "empty volume type",
+			controlPlane: false,
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePoolLargeVolume()
+				mp.RootVolume.Type = ""
+				return mp
+			}(),
+			cloudInfo:      validMpoolCloudInfo(),
+			expectedError:  true,
+			expectedErrMsg: `compute\[0\].platform.openstack.rootVolume.type: Invalid value: \"\": Volume type must be specified to use root volumes`,
+		},
+		{
+			name:         "invalid volume type",
+			controlPlane: false,
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePoolLargeVolume()
+				mp.RootVolume.Type = invalidType
+				return mp
+			}(),
+			cloudInfo:      validMpoolCloudInfo(),
+			expectedError:  true,
+			expectedErrMsg: `compute\[0\].platform.openstack.rootVolume.type: Invalid value: \"invalid-type\": Volume Type either does not exist in this cloud, or is not available`,
 		},
 	}
 
