@@ -38,7 +38,7 @@ func validateMachinesSubnet(p *openstack.Platform, n *types.Networking, ci *Clou
 		if len(p.ExternalDNS) > 0 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("externalDNS"), p.ExternalDNS, "externalDNS is set, externalDNS is not supported when machinesSubnet is set"))
 		}
-		if !validUUIDv4(p.MachinesSubnet) {
+		if !validUUIDv4(p.MachinesSubnet) || ci.MachinesSubnet == nil {
 			allErrs = append(allErrs, field.InternalError(fldPath.Child("machinesSubnet"), errors.New("invalid subnet ID")))
 		} else {
 			if n.MachineNetwork[0].CIDR.String() != ci.MachinesSubnet.CIDR {
