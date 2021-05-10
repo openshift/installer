@@ -5,7 +5,7 @@ It uses [implicit provider inheritance][implicit-provider-inheritance] to access
 
 ## Example
 
-Set up a `main.tf` with:
+Set up a `main.tf` with :
 
 ```hcl
 provider "libvirt" {
