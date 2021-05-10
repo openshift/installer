@@ -86,7 +86,7 @@ func (a *ipmiAccessDetails) PowerInterface() string {
 }
 
 func (a *ipmiAccessDetails) RAIDInterface() string {
-	return ""
+	return "no-raid"
 }
 
 func (a *ipmiAccessDetails) VendorInterface() string {

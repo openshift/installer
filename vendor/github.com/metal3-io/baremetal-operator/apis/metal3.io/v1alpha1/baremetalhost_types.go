@@ -39,6 +39,10 @@ const (
 	// an immediate requeue)
 	PausedAnnotation = "baremetalhost.metal3.io/paused"
 
+	// Detached is the annotation which stops provisioner management of the host
+	// unlike in the paused case, the host status may be updated
+	DetachedAnnotation = "baremetalhost.metal3.io/detached"
+
 	// StatusAnnotation is the annotation that keeps a copy of the Status of BMH
 	// This is particularly useful when we pivot BMH. If the status
 	// annotation is present and status is empty, BMO will reconstruct BMH Status
@@ -118,7 +122,13 @@ const (
 	// has any sort of error.
 	OperationalStatusError OperationalStatus = "error"
 
+	// OperationalStatusDelayed is the status value for when the host
+	// deployment needs to be delayed to limit simultaneous hosts provisioning
 	OperationalStatusDelayed = "delayed"
+
+	// OperationalStatusDetached is the status value when the host is
+	// marked unmanaged via the detached annotation
+	OperationalStatusDetached OperationalStatus = "detached"
 )
 
 // ErrorType indicates the class of problem that has caused the Host resource
@@ -145,6 +155,9 @@ const (
 	// PowerManagementError is an error condition occurring when the
 	// controller is unable to modify the power state of the Host.
 	PowerManagementError ErrorType = "power management error"
+	// DetachError is an error condition occurring when the
+	// controller is unable to detatch the host from the provisioner
+	DetachError ErrorType = "detach error"
 )
 
 // ProvisioningState defines the states the provisioner will report
@@ -344,7 +357,24 @@ type BareMetalHostSpec struct {
 	// the power status and hardware inventory inspection. If the
 	// Image field is filled in, this field is ignored.
 	ExternallyProvisioned bool `json:"externallyProvisioned,omitempty"`
+
+	// When set to disabled, automated cleaning will be avoided
+	// during provisioning and deprovisioning.
+	// +optional
+	// +kubebuilder:default:=metadata
+	// +kubebuilder:validation:Optional
+	AutomatedCleaningMode AutomatedCleaningMode `json:"automatedCleaningMode,omitempty"`
 }
+
+// AutomatedCleaningMode is the interface to enable/disable automated cleaning
+// +kubebuilder:validation:Enum:=metadata;disabled
+type AutomatedCleaningMode string
+
+// Allowed automated cleaning modes
+const (
+	CleaningModeDisabled AutomatedCleaningMode = "disabled"
+	CleaningModeMetadata AutomatedCleaningMode = "metadata"
+)
 
 // ChecksumType holds the algorithm name for the checksum
 // +kubebuilder:validation:Enum=md5;sha256;sha512
@@ -546,10 +576,13 @@ type CredentialsStatus struct {
 type RebootMode string
 
 const (
+	// RebootModeHard defined for hard reset of a node
 	RebootModeHard RebootMode = "hard"
+	// RebootModeSoft defined for soft reset of a node
 	RebootModeSoft RebootMode = "soft"
 )
 
+// RebootAnnotationArguments defines the arguments of the RebootAnnotation type
 type RebootAnnotationArguments struct {
 	Mode RebootMode `json:"mode"`
 }
@@ -603,7 +636,7 @@ type BareMetalHostStatus struct {
 	// after modifying this file
 
 	// OperationalStatus holds the status of the host
-	// +kubebuilder:validation:Enum="";OK;discovered;error;delayed
+	// +kubebuilder:validation:Enum="";OK;discovered;error;delayed;detached
 	OperationalStatus OperationalStatus `json:"operationalStatus"`
 
 	// ErrorType indicates the type of failure encountered when the
@@ -891,11 +924,7 @@ func (host *BareMetalHost) OperationMetricForState(operation ProvisioningState) 
 	return
 }
 
-// GetImageChecksum returns the hash value and its algo.
-func (host *BareMetalHost) GetImageChecksum() (string, string, bool) {
-	return host.Spec.Image.GetChecksum()
-}
-
+// GetChecksum method returns the checksum of an image
 func (image *Image) GetChecksum() (checksum, checksumType string, ok bool) {
 	if image == nil {
 		return

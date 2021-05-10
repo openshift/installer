@@ -737,6 +737,7 @@ github.com/gophercloud/gophercloud v0.7.1-0.20191210042042-7aa2e52d21f9/go.mod h
 github.com/gophercloud/gophercloud v0.12.0/go.mod h1:gmC5oQqMDOMO1t1gq5DquX/yAU808e/4mzjjDA76+Ss=
 github.com/gophercloud/gophercloud v0.14.0/go.mod h1:VX0Ibx85B60B5XOrZr6kaNwrmPUzcmMpwxvQ1WQIIWM=
 github.com/gophercloud/gophercloud v0.15.1-0.20210202035223-633d73521055/go.mod h1:wRtmUelyIIv3CSSDI47aUwbs075O6i+LY+pXsKCBsb4=
+github.com/gophercloud/gophercloud v0.16.0/go.mod h1:wRtmUelyIIv3CSSDI47aUwbs075O6i+LY+pXsKCBsb4=
 github.com/gophercloud/gophercloud v0.17.0 h1:BgVw0saxyeHWH5us/SQe1ltp0GRnytjmOLXDA8pO77E=
 github.com/gophercloud/gophercloud v0.17.0/go.mod h1:wRtmUelyIIv3CSSDI47aUwbs075O6i+LY+pXsKCBsb4=
 github.com/gophercloud/utils v0.0.0-20190313033024-0bcc8e728cb5/go.mod h1:SZ9FTKibIotDtCrxAU/evccoyu1yhKST6hgBvwTB5Eg=
@@ -1286,6 +1287,8 @@ github.com/openshift/api v0.0.0-20210420151714-a3c8fa53e01b h1:rHqB8raDfF9HTHOjz
 github.com/openshift/api v0.0.0-20210420151714-a3c8fa53e01b/go.mod h1:dZ4kytOo3svxJHNYd0J55hwe/6IQG5gAUHUE0F3Jkio=
 github.com/openshift/baremetal-operator v0.0.0-20210315180230-b37e044d24a4 h1:ox7fndpU81UmJ3WTwhcq/PT+nThW5DOvTc84yUGIfrA=
 github.com/openshift/baremetal-operator v0.0.0-20210315180230-b37e044d24a4/go.mod h1:vaX/okUVvS3jCoBahaln8pCrAiICHp3Z/zHmVr69lAY=
+github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc h1:EWLfxK3DvQ+tgy69TRmL6K1gG7N+2pT1eUDY89C1O74=
+github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc/go.mod h1:n34Id58U3kzxyhLs+HWEX7IuScU0DMYMLVwxIvSlGCI=
 github.com/openshift/build-machinery-go v0.0.0-20200211121458-5e3d6e570160/go.mod h1:1CkcsT3aVebzRBzVTSbiKSkJMsC/CASqxesfqEMfJEc=
 github.com/openshift/build-machinery-go v0.0.0-20200424080330-082bf86082cc/go.mod h1:1CkcsT3aVebzRBzVTSbiKSkJMsC/CASqxesfqEMfJEc=
 github.com/openshift/build-machinery-go v0.0.0-20200819073603-48aa266c95f7/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
@@ -2232,6 +2235,7 @@ k8s.io/api v0.19.0/go.mod h1:I1K45XlvTrDjmj5LoM5LuP/KYrhWbjUKT/SoPG0qTjw=
 k8s.io/api v0.19.1/go.mod h1:+u/k4/K/7vp4vsfdT7dyl8Oxk1F26Md4g5F26Tu85PU=
 k8s.io/api v0.19.2/go.mod h1:IQpK0zFQ1xc5iNIQPqzgoOwuFugaYHK4iCknlAQP9nI=
 k8s.io/api v0.20.0/go.mod h1:HyLC5l5eoS/ygQYl1BXBgFzWNlkHiAuyNAbevIn+FKg=
+k8s.io/api v0.20.1/go.mod h1:KqwcCVogGxQY3nBlRpwt+wpAMF/KjaCc7RpywacvqUo=
 k8s.io/api v0.21.0-beta.1/go.mod h1:8A+GKfJYDnFlmsIqnwi7z2l5+GwI3fbIdAkPu3xiZKA=
 k8s.io/api v0.21.0-rc.0 h1:t/kW96KdNJNamYNqxaxRirahK+FaWJQ6BJPbXm5Jb+o=
 k8s.io/api v0.21.0-rc.0/go.mod h1:Dkc/ZauWJrgZhjOjeBgW89xZQiTBJA2RaBKYHXPsi2Y=
@@ -2260,6 +2264,7 @@ k8s.io/apimachinery v0.19.0/go.mod h1:DnPGDnARWFvYa3pMHgSxtbZb7gpzzAZ1pTfaUNDVlm
 k8s.io/apimachinery v0.19.1/go.mod h1:DnPGDnARWFvYa3pMHgSxtbZb7gpzzAZ1pTfaUNDVlmA=
 k8s.io/apimachinery v0.19.2/go.mod h1:DnPGDnARWFvYa3pMHgSxtbZb7gpzzAZ1pTfaUNDVlmA=
 k8s.io/apimachinery v0.20.0/go.mod h1:WlLqWAHZGg07AeltaI0MV5uk1Omp8xaN0JGLY6gkRpU=
+k8s.io/apimachinery v0.20.1/go.mod h1:WlLqWAHZGg07AeltaI0MV5uk1Omp8xaN0JGLY6gkRpU=
 k8s.io/apimachinery v0.21.0-beta.1/go.mod h1:ZaN7d/yx5I8h2mk8Nu08sdLigsmkt4flkTxCTc9LElI=
 k8s.io/apimachinery v0.21.0-rc.0 h1:m9dyzHb8QZAHOZKIz2SiabSif1oLsfgrnwiago/9xJA=
 k8s.io/apimachinery v0.21.0-rc.0/go.mod h1:jbreFvJo3ov9rj7eWT7+sYiRx+qZuCYXwWT1bcDswPY=

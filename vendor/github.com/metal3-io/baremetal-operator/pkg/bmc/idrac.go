@@ -87,7 +87,7 @@ func (a *iDracAccessDetails) PowerInterface() string {
 }
 
 func (a *iDracAccessDetails) RAIDInterface() string {
-	return ""
+	return "idrac-wsman"
 }
 
 func (a *iDracAccessDetails) VendorInterface() string {

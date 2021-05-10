@@ -83,7 +83,7 @@ func (a *iLOAccessDetails) PowerInterface() string {
 }
 
 func (a *iLOAccessDetails) RAIDInterface() string {
-	return ""
+	return "no-raid"
 }
 
 func (a *iLOAccessDetails) VendorInterface() string {

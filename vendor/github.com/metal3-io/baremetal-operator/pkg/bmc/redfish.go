@@ -9,6 +9,7 @@ func init() {
 	schemes := []string{"http", "https"}
 	RegisterFactory("redfish", newRedfishAccessDetails, schemes)
 	RegisterFactory("ilo5-redfish", newRedfishAccessDetails, schemes)
+	RegisterFactory("idrac-redfish", newRedfishiDracAccessDetails, schemes)
 }
 
 func redfishDetails(parsedURL *url.URL, disableCertificateVerification bool) *redfishAccessDetails {
@@ -24,11 +25,21 @@ func newRedfishAccessDetails(parsedURL *url.URL, disableCertificateVerification 
 	return redfishDetails(parsedURL, disableCertificateVerification), nil
 }
 
+func newRedfishiDracAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
+	return &redfishiDracAccessDetails{
+		*redfishDetails(parsedURL, disableCertificateVerification),
+	}, nil
+}
+
 type redfishAccessDetails struct {
 	bmcType                        string
 	host                           string
 	path                           string
 	disableCertificateVerification bool
+}
+
+type redfishiDracAccessDetails struct {
+	redfishAccessDetails
 }
 
 const redfishDefaultScheme = "https"
@@ -100,7 +111,7 @@ func (a *redfishAccessDetails) PowerInterface() string {
 }
 
 func (a *redfishAccessDetails) RAIDInterface() string {
-	return ""
+	return "no-raid"
 }
 
 func (a *redfishAccessDetails) VendorInterface() string {
@@ -109,4 +120,30 @@ func (a *redfishAccessDetails) VendorInterface() string {
 
 func (a *redfishAccessDetails) SupportsSecureBoot() bool {
 	return true
+}
+
+// iDrac Redfish Overrides
+
+func (a *redfishiDracAccessDetails) Driver() string {
+	return "idrac"
+}
+
+func (a *redfishiDracAccessDetails) BootInterface() string {
+	return "ipxe"
+}
+
+func (a *redfishiDracAccessDetails) ManagementInterface() string {
+	return "idrac-redfish"
+}
+
+func (a *redfishiDracAccessDetails) PowerInterface() string {
+	return "idrac-redfish"
+}
+
+func (a *redfishiDracAccessDetails) RAIDInterface() string {
+	return "no-raid"
+}
+
+func (a *redfishiDracAccessDetails) VendorInterface() string {
+	return "no-vendor"
 }

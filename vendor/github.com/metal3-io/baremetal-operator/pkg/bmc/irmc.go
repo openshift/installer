@@ -74,7 +74,7 @@ func (a *iRMCAccessDetails) ManagementInterface() string {
 }
 
 func (a *iRMCAccessDetails) PowerInterface() string {
-	return ""
+	return "ipmitool"
 }
 
 func (a *iRMCAccessDetails) RAIDInterface() string {
