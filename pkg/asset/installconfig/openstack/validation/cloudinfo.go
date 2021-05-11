@@ -140,9 +140,12 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	if ic.Platform.OpenStack.DefaultMachinePlatform != nil {
 		if flavorName := ic.Platform.OpenStack.DefaultMachinePlatform.FlavorName; flavorName != "" {
 			if _, seen := ci.Flavors[flavorName]; !seen {
-				ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
-				if err != nil {
-					return err
+				flavor, err := ci.getFlavor(flavorName)
+				if !isNotFoundError(err) {
+					if err != nil {
+						return err
+					}
+					ci.Flavors[flavorName] = flavor
 				}
 			}
 		}
@@ -151,9 +154,12 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.OpenStack != nil {
 		if flavorName := ic.ControlPlane.Platform.OpenStack.FlavorName; flavorName != "" {
 			if _, seen := ci.Flavors[flavorName]; !seen {
-				ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
-				if err != nil {
-					return err
+				flavor, err := ci.getFlavor(flavorName)
+				if !isNotFoundError(err) {
+					if err != nil {
+						return err
+					}
+					ci.Flavors[flavorName] = flavor
 				}
 			}
 		}
@@ -163,9 +169,12 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 		if machine.Platform.OpenStack != nil {
 			if flavorName := machine.Platform.OpenStack.FlavorName; flavorName != "" {
 				if _, seen := ci.Flavors[flavorName]; !seen {
-					ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
-					if err != nil {
-						return err
+					flavor, err := ci.getFlavor(flavorName)
+					if !isNotFoundError(err) {
+						if err != nil {
+							return err
+						}
+						ci.Flavors[flavorName] = flavor
 					}
 				}
 			}
@@ -245,9 +254,6 @@ func isNotFoundError(err error) bool {
 func (ci *CloudInfo) getFlavor(flavorName string) (Flavor, error) {
 	flavorID, err := flavorutils.IDFromName(ci.clients.computeClient, flavorName)
 	if err != nil {
-		if isNotFoundError(err) {
-			return Flavor{}, nil
-		}
 		return Flavor{}, err
 	}
 
