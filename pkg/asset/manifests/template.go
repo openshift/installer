@@ -24,6 +24,11 @@ type GCPCredsSecretData struct {
 	Base64encodeServiceAccount string
 }
 
+// IBMCloudCredsSecretData holds encoded credentials and is used to generate cloud-creds secret
+type IBMCloudCredsSecretData struct {
+	Base64encodeAPIKey string
+}
+
 // OpenStackCredsSecretData holds encoded credentials and is used to generate cloud-creds secret
 type OpenStackCredsSecretData struct {
 	Base64encodeCloudCreds    string
@@ -56,6 +61,7 @@ type cloudCredsSecretData struct {
 	AWS       *AwsCredsSecretData
 	Azure     *AzureCredsSecretData
 	GCP       *GCPCredsSecretData
+	IBMCloud  *IBMCloudCredsSecretData
 	OpenStack *OpenStackCredsSecretData
 	VSphere   *VSphereCredsSecretData
 	Ovirt     *OvirtCredsSecretData

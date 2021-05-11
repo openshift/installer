@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -102,6 +103,15 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return fmt.Sprintf("projects/%s/global/images/%s", img.Project, img.Name), nil
 		}
 		return "", fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
+	case ibmcloud.Name:
+		if config.Platform.IBMCloud.ClusterOSImage != "" {
+			return config.Platform.IBMCloud.ClusterOSImage, nil
+		}
+
+		if a, ok := streamArch.Artifacts["ibmcloud"]; ok {
+			return rhcos.FindArtifactURL(a)
+		}
+		return "", fmt.Errorf("%s: No ibmcloud build found", st.FormatPrefix(archName))
 	case libvirt.Name:
 		// 𝅘𝅥𝅮 Everything's going to be a-ok 𝅘𝅥𝅮
 		if a, ok := streamArch.Artifacts["qemu"]; ok {

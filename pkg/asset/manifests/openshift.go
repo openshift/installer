@@ -30,6 +30,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	kubevirttypes "github.com/openshift/installer/pkg/types/kubevirt"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
@@ -135,6 +136,8 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodeServiceAccount: base64.StdEncoding.EncodeToString(creds),
 			},
 		}
+	case ibmcloudtypes.Name:
+		// TODO: IBM[#94]: openshift - cloud creds
 	case openstacktypes.Name:
 		opts := new(clientconfig.ClientOpts)
 		opts.Cloud = installConfig.Config.Platform.OpenStack.Cloud

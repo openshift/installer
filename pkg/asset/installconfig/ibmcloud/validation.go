@@ -187,7 +187,7 @@ func validateSubnets(client API, ic *types.InstallConfig, subnets []string, path
 		allErrs = append(allErrs, validateSubnetZone(client, subnet, validZones, subnetPath)...)
 	}
 
-	// TODO: IBM: additional subnet validation
+	// TODO: IBM[#80]: additional subnet validation
 	return allErrs
 }
 

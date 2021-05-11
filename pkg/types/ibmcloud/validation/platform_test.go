@@ -23,7 +23,6 @@ func validMinimalPlatform() *ibmcloud.Platform {
 }
 
 func validMachinePool() *ibmcloud.MachinePool {
-	// TODO: IBM: Update this once the MachinePool type is done.
 	return &ibmcloud.MachinePool{}
 }
 

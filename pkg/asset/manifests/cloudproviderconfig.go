@@ -21,6 +21,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	kubevirttypes "github.com/openshift/installer/pkg/types/kubevirt"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -150,6 +151,8 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
 		cm.Data[cloudProviderConfigDataKey] = gcpConfig
+	case ibmcloudtypes.Name:
+		// TODO: IBM[#92]: cloudproviderconfig
 	case vspheretypes.Name:
 		folderPath := installConfig.Config.Platform.VSphere.Folder
 		if len(folderPath) == 0 {
