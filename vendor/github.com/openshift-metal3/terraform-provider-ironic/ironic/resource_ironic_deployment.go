@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -38,6 +39,11 @@ func resourceDeployment() *schema.Resource {
 			"instance_info": {
 				Type:     schema.TypeMap,
 				Required: true,
+				ForceNew: true,
+			},
+			"deploy_steps": {
+				Type:     schema.TypeString,
+				Optional: true,
 				ForceNew: true,
 			},
 			"user_data": {
@@ -92,12 +98,12 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 	// Reload the resource before returning
 	defer func() { _ = resourceDeploymentRead(d, meta) }()
 
+	nodeUUID := d.Get("node_uuid").(string)
 	// Set instance info
 	instanceInfo := d.Get("instance_info").(map[string]interface{})
 	if instanceInfo != nil {
 		instanceInfoCapabilities, found := instanceInfo["capabilities"]
 		capabilities := make(map[string]string)
-		nodeUUID := d.Get("node_uuid").(string)
 		if found {
 			for _, e := range strings.Split(instanceInfoCapabilities.(string), ",") {
 				parts := strings.Split(e, ":")
@@ -134,7 +140,17 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	d.SetId(d.Get("node_uuid").(string))
+	d.SetId(nodeUUID)
+
+	// deploy_steps is a json string
+	dSteps := d.Get("deploy_steps").(string)
+	var deploySteps []nodes.DeployStep
+	if len(dSteps) > 0 {
+		deploySteps, err = buildDeploySteps(dSteps)
+		if err != nil {
+			return fmt.Errorf("could not fetch deploy steps: %s", err)
+		}
+	}
 
 	userData := d.Get("user_data").(string)
 	userDataURL := d.Get("user_data_url").(string)
@@ -159,7 +175,7 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Deploy the node - drive Ironic state machine until node is 'active'
-	return ChangeProvisionStateToTarget(client, d.Id(), "active", &configDrive)
+	return ChangeProvisionStateToTarget(client, nodeUUID, "active", &configDrive, deploySteps)
 }
 
 // fetchFullIgnition gets full igntion from the URL and cert passed to it and returns userdata as a string
@@ -210,6 +226,18 @@ func fetchFullIgnition(userDataURL string, userDataCaCert string, userDataHeader
 		return string(userData), nil
 	}
 	return "", nil
+}
+
+// buildDeploySteps handles customized deploy steps
+func buildDeploySteps(steps string) ([]nodes.DeployStep, error) {
+	var deploySteps []nodes.DeployStep
+	err := json.Unmarshal([]byte(steps), &deploySteps)
+	if err != nil {
+		log.Printf("could not unmarshal deploy_steps.\n")
+		return nil, err
+	}
+
+	return deploySteps, nil
 }
 
 // buildConfigDrive handles building a config drive appropriate for the Ironic version we are using.  Newer versions
@@ -273,5 +301,5 @@ func resourceDeploymentDelete(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	return ChangeProvisionStateToTarget(client, d.Id(), "deleted", nil)
+	return ChangeProvisionStateToTarget(client, d.Id(), "deleted", nil, nil)
 }

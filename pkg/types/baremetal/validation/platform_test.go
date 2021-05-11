@@ -233,6 +233,15 @@ func TestValidateProvisioning(t *testing.T) {
 				ClusterOSImage(imagesServer.URL + "/images/metal.x86_64.qcow2.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da").build(),
 		},
 		{
+			name: "valid_with_live_image_os_image_overrides",
+			platform: platform().
+				BootstrapOSImage(imagesServer.URL + "/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").
+				ClusterOSImage(imagesServer.URL + "/images/metal-live.iso?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da" + "," +
+					imagesServer.URL + "/images/metal-live-kernel?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da" + "," +
+					imagesServer.URL + "/images/metal-live-rootfs.img?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da" + "," +
+					imagesServer.URL + "/images/metal-live-initramfs.img?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da").build(),
+		},
+		{
 			name: "invalid_bootstraposimage",
 			platform: platform().
 				BootstrapOSImage("192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").build(),

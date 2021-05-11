@@ -57,3 +57,8 @@ variable "instance_infos" {
   type        = list(map(string))
   description = "Instance information for hosts"
 }
+
+variable "deploy_steps" {
+  type        = list(string)
+  description = "The contents of custom deploy steps for the node in JSON format"
+}

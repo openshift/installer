@@ -946,7 +946,7 @@ github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/shares
 github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/snapshots
 github.com/gophercloud/gophercloud/openstack/utils
 github.com/gophercloud/gophercloud/pagination
-# github.com/gophercloud/utils v0.0.0-20210323225332-7b186010c04f
+# github.com/gophercloud/utils v0.0.0-20210530213738-7c693d7efe47
 ## explicit
 github.com/gophercloud/utils/client
 github.com/gophercloud/utils/env
@@ -1374,7 +1374,7 @@ github.com/opencontainers/go-digest
 # github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift-metal3/terraform-provider-ironic v0.2.6
+# github.com/openshift-metal3/terraform-provider-ironic v0.0.0 => github.com/kirankt/terraform-provider-ironic v0.1.10-0.20210615125855-0a09dee268a6
 ## explicit
 github.com/openshift-metal3/terraform-provider-ironic/ironic
 # github.com/openshift/api v0.0.0-20210622200201-7740bfb97397
@@ -2081,7 +2081,7 @@ golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/knownhosts
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/lint v0.0.0-20200302205851-738671d3881b
+# golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 ## explicit
 golang.org/x/lint
 golang.org/x/lint/golint
@@ -2914,6 +2914,7 @@ sigs.k8s.io/yaml
 # github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
 # github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d
 # github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
+# github.com/openshift-metal3/terraform-provider-ironic => github.com/kirankt/terraform-provider-ironic v0.1.10-0.20210615125855-0a09dee268a6
 # github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c
 # github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 # github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20210622193531-7d13cfbb1a8c

@@ -38,7 +38,7 @@ require (
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gophercloud/gophercloud v0.17.0
-	github.com/gophercloud/utils v0.0.0-20210323225332-7b186010c04f
+	github.com/gophercloud/utils v0.0.0-20210530213738-7c693d7efe47
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.13.0
 	github.com/hashicorp/go-plugin v1.3.0
@@ -57,7 +57,7 @@ require (
 	github.com/metal3-io/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.1.1
-	github.com/openshift-metal3/terraform-provider-ironic v0.2.6
+	github.com/openshift-metal3/terraform-provider-ironic v0.0.0
 	github.com/openshift/api v0.0.0-20210622200201-7740bfb97397
 	github.com/openshift/client-go v0.0.0-20210409155308-a8e62c60e930
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
@@ -95,7 +95,7 @@ require (
 	github.com/vmware/govmomi v0.24.0
 	github.com/zclconf/go-cty v1.6.1
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
+	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/mod v0.4.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
@@ -129,6 +129,7 @@ replace (
 	github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
+	github.com/openshift-metal3/terraform-provider-ironic => github.com/kirankt/terraform-provider-ironic v0.1.10-0.20210615125855-0a09dee268a6
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c // Pin client-go
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 // Pin MCO so it doesn't get downgraded
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20210622193531-7d13cfbb1a8c // Pin to openshift fork with tag v2.67.0-openshift-1
