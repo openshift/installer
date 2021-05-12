@@ -82,7 +82,8 @@ resource "ovirt_template" "releaseimage_template" {
   name       = var.openstack_base_image_name
   cluster_id = data.ovirt_vms.tmp_import_vm_data.0.vms.0.cluster_id
   // create from vm
-  vm_id = data.ovirt_vms.tmp_import_vm_data.0.vms.0.id
+  vm_id             = data.ovirt_vms.tmp_import_vm_data.0.vms.0.id
+  guaranteed_memory = 16348
   timeouts {
     create = "20m"
   }

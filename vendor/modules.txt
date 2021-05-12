@@ -1173,7 +1173,7 @@ github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.opens
 # github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
 ## explicit
 github.com/ovirt/go-ovirt
-# github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210419101841-5d3f6567ce90
+# github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210419101841-5d3f6567ce90 => github.com/eslutsky/terraform-provider-ovirt v0.4.3-0.20210512074315-41399f7979de
 ## explicit
 github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
@@ -2603,3 +2603,4 @@ sigs.k8s.io/yaml
 # google.golang.org/api => google.golang.org/api v0.25.0
 # google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 # google.golang.org/grpc => google.golang.org/grpc v1.29.1
+# github.com/ovirt/terraform-provider-ovirt => github.com/eslutsky/terraform-provider-ovirt v0.4.3-0.20210512074315-41399f7979de
