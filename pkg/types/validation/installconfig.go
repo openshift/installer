@@ -115,6 +115,14 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	}
 	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform.Name())...)
 
+	if c.Publish == types.InternalPublishingStrategy {
+		switch platformName := c.Platform.Name(); platformName {
+		case aws.Name, azure.Name, gcp.Name:
+		default:
+			allErrs = append(allErrs, field.Invalid(field.NewPath("publish"), c.Publish, fmt.Sprintf("Internal publish strategy is not supported on %q platform", platformName)))
+		}
+	}
+
 	return allErrs
 }
 
