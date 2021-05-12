@@ -41,11 +41,3 @@ variable "lb_kubernetes_api_public_hostname" {
 variable "lb_kubernetes_api_private_hostname" {
   type = string
 }
-
-variable "lb_application_ingress_public_hostname" {
-  type = string
-}
-
-variable "lb_application_ingress_private_hostname" {
-  type = string
-}

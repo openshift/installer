@@ -87,10 +87,8 @@ module "cis" {
   master_name_list         = module.master.name_list
   master_ipv4_address_list = module.master.primary_ipv4_address_list
 
-  lb_kubernetes_api_public_hostname       = module.vpc.lb_kubernetes_api_public_hostname
-  lb_kubernetes_api_private_hostname      = module.vpc.lb_kubernetes_api_private_hostname
-  lb_application_ingress_public_hostname  = module.vpc.lb_application_ingress_public_hostname
-  lb_application_ingress_private_hostname = module.vpc.lb_application_ingress_private_hostname
+  lb_kubernetes_api_public_hostname  = module.vpc.lb_kubernetes_api_public_hostname
+  lb_kubernetes_api_private_hostname = module.vpc.lb_kubernetes_api_private_hostname
 }
 
 ############################################

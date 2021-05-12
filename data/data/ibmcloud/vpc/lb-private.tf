@@ -22,14 +22,6 @@ resource "ibm_is_lb" "kubernetes_api_private" {
   type            = "private"
 }
 
-resource "ibm_is_lb" "application_ingress_private" {
-  name            = "${local.prefix}-application-ingress-private"
-  resource_group  = var.resource_group_id
-  security_groups = [ ibm_is_security_group.compute.id ]
-  subnets         = ibm_is_subnet.compute.*.id
-  type            = "private"
-}
-
 ############################################
 # Load balancer backend pools
 ############################################
@@ -59,30 +51,6 @@ resource "ibm_is_lb_pool" "machine_config" {
   health_monitor_port = local.port_machine_config
 }
 
-resource "ibm_is_lb_pool" "application_ingress_private_http" {
-  name                = "${local.prefix}-application-ingress-private-http"
-  lb                  = ibm_is_lb.application_ingress_private.id
-  algorithm           = "round_robin"
-  protocol            = "tcp"
-  health_delay        = 60
-  health_retries      = 5
-  health_timeout      = 30
-  health_type         = "tcp"
-  health_monitor_port = local.port_ingress_http
-}
-
-resource "ibm_is_lb_pool" "application_ingress_private_https" {
-  name                = "${local.prefix}-application-ingress-private-https"
-  lb                  = ibm_is_lb.application_ingress_private.id
-  algorithm           = "round_robin"
-  protocol            = "tcp"
-  health_delay        = 60
-  health_retries      = 5
-  health_timeout      = 30
-  health_type         = "tcp"
-  health_monitor_port = local.port_ingress_https
-}
-
 ############################################
 # Load balancer frontend listeners
 ############################################
@@ -98,19 +66,5 @@ resource "ibm_is_lb_listener" "machine_config" {
   lb           = ibm_is_lb.kubernetes_api_private.id
   default_pool = ibm_is_lb_pool.machine_config.id
   port         = local.port_machine_config
-  protocol     = "tcp"
-}
-
-resource "ibm_is_lb_listener" "application_ingress_private_http" {
-  lb           = ibm_is_lb.application_ingress_private.id
-  default_pool = ibm_is_lb_pool.application_ingress_private_http.id
-  port         = local.port_ingress_http
-  protocol     = "tcp"
-}
-
-resource "ibm_is_lb_listener" "application_ingress_private_https" {
-  lb           = ibm_is_lb.application_ingress_private.id
-  default_pool = ibm_is_lb_pool.application_ingress_private_https.id
-  port         = local.port_ingress_https
   protocol     = "tcp"
 }

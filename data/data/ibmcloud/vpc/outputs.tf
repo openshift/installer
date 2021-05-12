@@ -50,22 +50,6 @@ output "lb_kubernetes_api_private_id" {
   value = ibm_is_lb.kubernetes_api_private.id
 }
 
-output "lb_application_ingress_public_hostname" {
-  value = ibm_is_lb.application_ingress_public.hostname
-}
-
-output "lb_application_ingress_public_id" {
-  value = ibm_is_lb.application_ingress_public.id
-}
-
-output "lb_application_ingress_private_hostname" {
-  value = ibm_is_lb.application_ingress_private.hostname
-}
-
-output "lb_application_ingress_private_id" {
-  value = ibm_is_lb.application_ingress_private.id
-}
-
 output "lb_pool_kubernetes_api_public_id" {
   value = ibm_is_lb_pool.kubernetes_api_public.id
 }
@@ -76,22 +60,6 @@ output "lb_pool_kubernetes_api_private_id" {
 
 output "lb_pool_machine_config_id" {
   value = ibm_is_lb_pool.machine_config.id
-}
-
-output "lb_pool_application_ingress_public_http_id" {
-  value = ibm_is_lb_pool.application_ingress_public_http.id
-}
-
-output "lb_pool_application_ingress_public_https_id" {
-  value = ibm_is_lb_pool.application_ingress_public_https.id
-}
-
-output "lb_pool_application_ingress_private_http_id" {
-  value = ibm_is_lb_pool.application_ingress_private_http.id
-}
-
-output "lb_pool_application_ingress_private_https_id" {
-  value = ibm_is_lb_pool.application_ingress_private_https.id
 }
 
 output "vpc_crn" {
