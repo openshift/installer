@@ -3,7 +3,7 @@
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.15-openshift-4.8 AS builder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
-RUN hack/build.sh
+RUN make build
 
 FROM registry.ci.openshift.org/origin/4.8:cli AS cli
 
