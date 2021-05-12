@@ -1,10 +1,10 @@
 package ovirt
 
 import (
+	"github.com/AlecAivazis/survey/v2"
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/ovirt"
 )

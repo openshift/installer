@@ -6,19 +6,35 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // the tag used to denote the name of the question
 const tagName = "survey"
 
-// add a few interfaces so users can configure how the prompt values are set
-type settable interface {
+// Settable allow for configuration when assigning answers
+type Settable interface {
 	WriteAnswer(field string, value interface{}) error
+}
+
+// OptionAnswer is the return type of Selects/MultiSelects that lets the appropriate information
+// get copied to the user's struct
+type OptionAnswer struct {
+	Value string
+	Index int
+}
+
+func OptionAnswerList(incoming []string) []OptionAnswer {
+	list := []OptionAnswer{}
+	for i, opt := range incoming {
+		list = append(list, OptionAnswer{Value: opt, Index: i})
+	}
+	return list
 }
 
 func WriteAnswer(t interface{}, name string, v interface{}) (err error) {
 	// if the field is a custom type
-	if s, ok := t.(settable); ok {
+	if s, ok := t.(Settable); ok {
 		// use the interface method
 		return s.WriteAnswer(name, v)
 	}
@@ -39,6 +55,13 @@ func WriteAnswer(t interface{}, name string, v interface{}) (err error) {
 	switch elem.Kind() {
 	// if we are writing to a struct
 	case reflect.Struct:
+		// if we are writing to an option answer than we want to treat
+		// it like a single thing and not a place to deposit answers
+		if elem.Type().Name() == "OptionAnswer" {
+			// copy the value over to the normal struct
+			return copy(elem, value)
+		}
+
 		// get the name of the field that matches the string we  were given
 		fieldIndex, err := findFieldIndex(elem, name)
 		// if something went wrong
@@ -47,13 +70,13 @@ func WriteAnswer(t interface{}, name string, v interface{}) (err error) {
 			return err
 		}
 		field := elem.Field(fieldIndex)
-		// handle references to the settable interface aswell
-		if s, ok := field.Interface().(settable); ok {
+		// handle references to the Settable interface aswell
+		if s, ok := field.Interface().(Settable); ok {
 			// use the interface method
 			return s.WriteAnswer(name, v)
 		}
 		if field.CanAddr() {
-			if s, ok := field.Addr().Interface().(settable); ok {
+			if s, ok := field.Addr().Interface().(Settable); ok {
 				// use the interface method
 				return s.WriteAnswer(name, v)
 			}
@@ -63,7 +86,25 @@ func WriteAnswer(t interface{}, name string, v interface{}) (err error) {
 		return copy(field, value)
 	case reflect.Map:
 		mapType := reflect.TypeOf(t).Elem()
-		if mapType.Key().Kind() != reflect.String || mapType.Elem().Kind() != reflect.Interface {
+		if mapType.Key().Kind() != reflect.String {
+			return errors.New("answer maps key must be of type string")
+		}
+
+		// copy only string value/index value to map if,
+		// map is not of type interface and is 'OptionAnswer'
+		if value.Type().Name() == "OptionAnswer" {
+			if kval := mapType.Elem().Kind(); kval == reflect.String {
+				mt := *t.(*map[string]string)
+				mt[name] = value.FieldByName("Value").String()
+				return nil
+			} else if kval == reflect.Int {
+				mt := *t.(*map[string]int)
+				mt[name] = int(value.FieldByName("Index").Int())
+				return nil
+			}
+		}
+
+		if mapType.Elem().Kind() != reflect.Interface {
 			return errors.New("answer maps must be of type map[string]interface")
 		}
 		mt := *t.(*map[string]interface{})
@@ -72,6 +113,45 @@ func WriteAnswer(t interface{}, name string, v interface{}) (err error) {
 	}
 	// otherwise just copy the value to the target
 	return copy(elem, value)
+}
+
+type errFieldNotMatch struct {
+	questionName string
+}
+
+func (err errFieldNotMatch) Error() string {
+	return fmt.Sprintf("could not find field matching %v", err.questionName)
+}
+
+func (err errFieldNotMatch) Is(target error) bool { // implements the dynamic errors.Is interface.
+	if target != nil {
+		if name, ok := IsFieldNotMatch(target); ok {
+			// if have a filled questionName then perform "deeper" comparison.
+			return name == "" || err.questionName == "" || name == err.questionName
+		}
+	}
+
+	return false
+}
+
+// IsFieldNotMatch reports whether an "err" is caused by a non matching field.
+// It returns the Question.Name that couldn't be matched with a destination field.
+//
+// Usage:
+// err := survey.Ask(qs, &v);
+// if err != nil {
+// 	if name, ok := core.IsFieldNotMatch(err); ok {
+//		[...name is the not matched question name]
+// 	}
+// }
+func IsFieldNotMatch(err error) (string, bool) {
+	if err != nil {
+		if v, ok := err.(errFieldNotMatch); ok {
+			return v.questionName, true
+		}
+	}
+
+	return "", false
 }
 
 // BUG(AlecAivazis): the current implementation might cause weird conflicts if there are
@@ -106,7 +186,7 @@ func findFieldIndex(s reflect.Value, name string) (int, error) {
 	}
 
 	// we didn't find the field
-	return -1, fmt.Errorf("could not find field matching %v", name)
+	return -1, errFieldNotMatch{name}
 }
 
 // isList returns true if the element is something we can Len()
@@ -165,7 +245,11 @@ func copy(t reflect.Value, v reflect.Value) (err error) {
 				castVal = int32(val64)
 			}
 		case reflect.Int64:
-			castVal, casterr = strconv.ParseInt(vString, 10, 64)
+			if t.Type() == reflect.TypeOf(time.Duration(0)) {
+				castVal, casterr = time.ParseDuration(vString)
+			} else {
+				castVal, casterr = strconv.ParseInt(vString, 10, 64)
+			}
 		case reflect.Uint:
 			var val64 uint64
 			val64, casterr = strconv.ParseUint(vString, 10, 8)
@@ -210,6 +294,32 @@ func copy(t reflect.Value, v reflect.Value) (err error) {
 
 		t.Set(reflect.ValueOf(castVal))
 		return
+	}
+
+	// if we are copying from an OptionAnswer to something
+	if v.Type().Name() == "OptionAnswer" {
+		// copying an option answer to a string
+		if t.Kind() == reflect.String {
+			// copies the Value field of the struct
+			t.Set(reflect.ValueOf(v.FieldByName("Value").Interface()))
+			return
+		}
+
+		// copying an option answer to an int
+		if t.Kind() == reflect.Int {
+			// copies the Index field of the struct
+			t.Set(reflect.ValueOf(v.FieldByName("Index").Interface()))
+			return
+		}
+
+		// copying an OptionAnswer to an OptionAnswer
+		if t.Type().Name() == "OptionAnswer" {
+			t.Set(v)
+			return
+		}
+
+		// we're copying an option answer to an incorrect type
+		return fmt.Errorf("Unable to convert from OptionAnswer to type %s", t.Kind())
 	}
 
 	// if we are copying from one slice or array to another

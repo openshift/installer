@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/azure"
 )

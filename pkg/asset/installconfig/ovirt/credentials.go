@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/AlecAivazis/survey.v1"
 )
 
 var errHTTPNotFound = errors.New("http response 404")
@@ -123,7 +123,7 @@ func askPassword(c *Config) error {
 		{
 			Prompt: &survey.Password{
 				Message: "Engine password",
-				Help:    "Password for the choosen username",
+				Help:    "Password for the chosen username",
 			},
 			Validate: survey.ComposeValidators(survey.Required, authenticated(c)),
 		},
@@ -168,7 +168,9 @@ func askQuestionTrueOrFalse(question string, helpMessage string) (bool, error) {
 			Message: question,
 			Help:    helpMessage,
 		},
-		&value, survey.Required)
+		&value,
+		survey.WithValidator(survey.Required),
+	)
 	if err != nil {
 		return value, err
 	}
@@ -241,12 +243,14 @@ func showPEM(pemFilePath string) error {
 // or in case of failure returns error
 func askPEMFile() (string, error) {
 	bundlePEM := ""
-	err := survey.AskOne(&survey.Multiline{
-		Message: "Certificate bundle",
-		Help:    "The certificate bundle to installer be able to communicate with oVirt API",
-	},
+	err := survey.AskOne(
+		&survey.Multiline{
+			Message: "Certificate bundle",
+			Help:    "The certificate bundle to installer be able to communicate with oVirt API",
+		},
 		&bundlePEM,
-		survey.ComposeValidators(survey.Required))
+		survey.WithValidator(survey.Required),
+	)
 	if err != nil {
 		return bundlePEM, err
 	}

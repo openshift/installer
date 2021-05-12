@@ -3,8 +3,8 @@ package survey
 import (
 	"errors"
 
-	"gopkg.in/AlecAivazis/survey.v1/core"
-	"gopkg.in/AlecAivazis/survey.v1/terminal"
+	"github.com/AlecAivazis/survey/v2/core"
+	"github.com/AlecAivazis/survey/v2/terminal"
 )
 
 /*
@@ -16,61 +16,69 @@ for them to select using the arrow keys and enter. Response type is a string.
 		Message: "Choose a color:",
 		Options: []string{"red", "blue", "green"},
 	}
-	survey.AskOne(prompt, &color, nil)
+	survey.AskOne(prompt, &color)
 */
 type Select struct {
-	core.Renderer
+	Renderer
 	Message       string
 	Options       []string
-	Default       string
+	Default       interface{}
 	Help          string
 	PageSize      int
 	VimMode       bool
 	FilterMessage string
-	FilterFn      func(string, []string) []string
+	Filter        func(filter string, value string, index int) bool
 	filter        string
 	selectedIndex int
 	useDefault    bool
 	showingHelp   bool
 }
 
-// the data available to the templates when processing
+// SelectTemplateData is the data available to the templates when processing
 type SelectTemplateData struct {
 	Select
-	PageEntries   []string
+	PageEntries   []core.OptionAnswer
 	SelectedIndex int
 	Answer        string
 	ShowAnswer    bool
 	ShowHelp      bool
+	Config        *PromptConfig
 }
 
 var SelectQuestionTemplate = `
-{{- if .ShowHelp }}{{- color "cyan"}}{{ HelpIcon }} {{ .Help }}{{color "reset"}}{{"\n"}}{{end}}
-{{- color "green+hb"}}{{ QuestionIcon }} {{color "reset"}}
+{{- if .ShowHelp }}{{- color .Config.Icons.Help.Format }}{{ .Config.Icons.Help.Text }} {{ .Help }}{{color "reset"}}{{"\n"}}{{end}}
+{{- color .Config.Icons.Question.Format }}{{ .Config.Icons.Question.Text }} {{color "reset"}}
 {{- color "default+hb"}}{{ .Message }}{{ .FilterMessage }}{{color "reset"}}
 {{- if .ShowAnswer}}{{color "cyan"}} {{.Answer}}{{color "reset"}}{{"\n"}}
 {{- else}}
-  {{- "  "}}{{- color "cyan"}}[Use arrows to move, enter to select, type to filter{{- if and .Help (not .ShowHelp)}}, {{ HelpInputRune }} for more help{{end}}]{{color "reset"}}
+  {{- "  "}}{{- color "cyan"}}[Use arrows to move, type to filter{{- if and .Help (not .ShowHelp)}}, {{ .Config.HelpInput }} for more help{{end}}]{{color "reset"}}
   {{- "\n"}}
   {{- range $ix, $choice := .PageEntries}}
-    {{- if eq $ix $.SelectedIndex}}{{color "cyan+b"}}{{ SelectFocusIcon }} {{else}}{{color "default+hb"}}  {{end}}
-    {{- $choice}}
+    {{- if eq $ix $.SelectedIndex }}{{color $.Config.Icons.SelectFocus.Format }}{{ $.Config.Icons.SelectFocus.Text }} {{else}}{{color "default"}}  {{end}}
+    {{- $choice.Value}}
     {{- color "reset"}}{{"\n"}}
   {{- end}}
 {{- end}}`
 
 // OnChange is called on every keypress.
-func (s *Select) OnChange(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
-	options := s.filterOptions()
+func (s *Select) OnChange(key rune, config *PromptConfig) bool {
+	options := s.filterOptions(config)
 	oldFilter := s.filter
 
-	// if the user pressed the enter key
-	if key == terminal.KeyEnter {
-		if s.selectedIndex < len(options) {
-			return []rune(options[s.selectedIndex]), 0, true
+	// if the user pressed the enter key and the index is a valid option
+	if key == terminal.KeyEnter || key == '\n' {
+		// if the selected index is a valid option
+		if len(options) > 0 && s.selectedIndex < len(options) {
+
+			// we're done (stop prompting the user)
+			return true
 		}
+
+		// we're not done (keep prompting)
+		return false
+
 		// if the user pressed the up arrow or 'k' to emulate vim
-	} else if key == terminal.KeyArrowUp || (s.VimMode && key == 'k') && len(options) > 0 {
+	} else if (key == terminal.KeyArrowUp || (s.VimMode && key == 'k')) && len(options) > 0 {
 		s.useDefault = false
 
 		// if we are at the top of the list
@@ -83,7 +91,7 @@ func (s *Select) OnChange(line []rune, pos int, key rune) (newLine []rune, newPo
 		}
 
 		// if the user pressed down or 'j' to emulate vim
-	} else if key == terminal.KeyArrowDown || (s.VimMode && key == 'j') && len(options) > 0 {
+	} else if (key == terminal.KeyTab || key == terminal.KeyArrowDown || (s.VimMode && key == 'j')) && len(options) > 0 {
 		s.useDefault = false
 		// if we are at the bottom of the list
 		if s.selectedIndex == len(options)-1 {
@@ -94,7 +102,7 @@ func (s *Select) OnChange(line []rune, pos int, key rune) (newLine []rune, newPo
 			s.selectedIndex++
 		}
 		// only show the help message if we have one
-	} else if key == core.HelpInputRune && s.Help != "" {
+	} else if string(key) == config.HelpInput && s.Help != "" {
 		s.showingHelp = true
 		// if the user wants to toggle vim mode on/off
 	} else if key == terminal.KeyEscape {
@@ -106,8 +114,9 @@ func (s *Select) OnChange(line []rune, pos int, key rune) (newLine []rune, newPo
 	} else if key == terminal.KeyDelete || key == terminal.KeyBackspace {
 		// if there is content in the filter to delete
 		if s.filter != "" {
+			runeFilter := []rune(s.filter)
 			// subtract a line from the current filter
-			s.filter = s.filter[0 : len(s.filter)-1]
+			s.filter = string(runeFilter[0 : len(runeFilter)-1])
 			// we removed the last value in the filter
 		}
 	} else if key >= terminal.KeySpace {
@@ -124,17 +133,24 @@ func (s *Select) OnChange(line []rune, pos int, key rune) (newLine []rune, newPo
 	}
 	if oldFilter != s.filter {
 		// filter changed
-		options = s.filterOptions()
+		options = s.filterOptions(config)
 		if len(options) > 0 && len(options) <= s.selectedIndex {
 			s.selectedIndex = len(options) - 1
 		}
 	}
 
 	// figure out the options and index to render
+	// figure out the page size
+	pageSize := s.PageSize
+	// if we dont have a specific one
+	if pageSize == 0 {
+		// grab the global value
+		pageSize = config.PageSize
+	}
 
 	// TODO if we have started filtering and were looking at the end of a list
 	// and we have modified the filter then we should move the page back!
-	opts, idx := paginate(s.PageSize, options, s.selectedIndex)
+	opts, idx := paginate(pageSize, options, s.selectedIndex)
 
 	// render the options
 	s.Render(
@@ -144,33 +160,45 @@ func (s *Select) OnChange(line []rune, pos int, key rune) (newLine []rune, newPo
 			SelectedIndex: idx,
 			ShowHelp:      s.showingHelp,
 			PageEntries:   opts,
+			Config:        config,
 		},
 	)
 
-	// if we are not pressing ent
-	if len(options) <= s.selectedIndex {
-		return []rune{}, 0, false
-	}
-
-	// s.selectedIndex should not be a negative number
-	if s.selectedIndex < 0 {
-		return []rune{}, 0, false
-	}
-
-	return []rune(options[s.selectedIndex]), 0, true
+	// keep prompting
+	return false
 }
 
-func (s *Select) filterOptions() []string {
+func (s *Select) filterOptions(config *PromptConfig) []core.OptionAnswer {
+	// the filtered list
+	answers := []core.OptionAnswer{}
+
+	// if there is no filter applied
 	if s.filter == "" {
-		return s.Options
+		return core.OptionAnswerList(s.Options)
 	}
-	if s.FilterFn != nil {
-		return s.FilterFn(s.filter, s.Options)
+
+	// the filter to apply
+	filter := s.Filter
+	if filter == nil {
+		filter = config.Filter
 	}
-	return DefaultFilterFn(s.filter, s.Options)
+
+	//
+	for i, opt := range s.Options {
+		// i the filter says to include the option
+		if filter(s.filter, opt, i) {
+			answers = append(answers, core.OptionAnswer{
+				Index: i,
+				Value: opt,
+			})
+		}
+	}
+
+	// return the list of answers
+	return answers
 }
 
-func (s *Select) Prompt() (interface{}, error) {
+func (s *Select) Prompt(config *PromptConfig) (interface{}, error) {
 	// if there are no options to render
 	if len(s.Options) == 0 {
 		// we failed
@@ -195,8 +223,16 @@ func (s *Select) Prompt() (interface{}, error) {
 	// save the selected index
 	s.selectedIndex = sel
 
+	// figure out the page size
+	pageSize := s.PageSize
+	// if we dont have a specific one
+	if pageSize == 0 {
+		// grab the global value
+		pageSize = config.PageSize
+	}
+
 	// figure out the options and index to render
-	opts, idx := paginate(s.PageSize, s.Options, sel)
+	opts, idx := paginate(pageSize, core.OptionAnswerList(s.Options), sel)
 
 	// ask the question
 	err := s.Render(
@@ -205,6 +241,7 @@ func (s *Select) Prompt() (interface{}, error) {
 			Select:        *s,
 			PageEntries:   opts,
 			SelectedIndex: idx,
+			Config:        config,
 		},
 	)
 	if err != nil {
@@ -228,47 +265,65 @@ func (s *Select) Prompt() (interface{}, error) {
 		if err != nil {
 			return "", err
 		}
-		if r == '\r' || r == '\n' {
-			break
-		}
 		if r == terminal.KeyInterrupt {
 			return "", terminal.InterruptErr
 		}
 		if r == terminal.KeyEndTransmission {
 			break
 		}
-		s.OnChange(nil, 0, r)
+		if s.OnChange(r, config) {
+			break
+		}
 	}
-	options := s.filterOptions()
+	options := s.filterOptions(config)
 	s.filter = ""
 	s.FilterMessage = ""
 
+	// the index to report
 	var val string
 	// if we are supposed to use the default value
 	if s.useDefault || s.selectedIndex >= len(options) {
 		// if there is a default value
-		if s.Default != "" {
-			// use the default value
-			val = s.Default
+		if s.Default != nil {
+			// if the default is a string
+			if defaultString, ok := s.Default.(string); ok {
+				// use the default value
+				val = defaultString
+				// the default value could also be an interpret which is interpretted as the index
+			} else if defaultIndex, ok := s.Default.(int); ok {
+				val = s.Options[defaultIndex]
+			} else {
+				return val, errors.New("default value of select must be an int or string")
+			}
 		} else if len(options) > 0 {
 			// there is no default value so use the first
-			val = options[0]
+			val = options[0].Value
 		}
 		// otherwise the selected index points to the value
-	} else if s.selectedIndex >= 0 && s.selectedIndex < len(options) {
+	} else if s.selectedIndex < len(options) {
 		// the
-		val = options[s.selectedIndex]
+		val = options[s.selectedIndex].Value
 	}
-	return val, err
+
+	// now that we have the value lets go hunt down the right index to return
+	idx = -1
+	for i, optionValue := range s.Options {
+		if optionValue == val {
+			idx = i
+		}
+	}
+
+	return core.OptionAnswer{Value: val, Index: idx}, err
 }
 
-func (s *Select) Cleanup(val interface{}) error {
+func (s *Select) Cleanup(config *PromptConfig, val interface{}) error {
 	return s.Render(
 		SelectQuestionTemplate,
 		SelectTemplateData{
 			Select:     *s,
-			Answer:     val.(string),
+			Answer:     val.(core.OptionAnswer).Value,
 			ShowAnswer: true,
+			Config:     config,
 		},
 	)
 }

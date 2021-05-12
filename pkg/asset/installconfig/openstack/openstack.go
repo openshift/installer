@@ -5,8 +5,9 @@ import (
 	"sort"
 	"strings"
 
+	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -32,7 +33,7 @@ func Platform() (*openstack.Platform, error) {
 				Options: cloudNames,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				value := ans.(string)
+				value := ans.(core.OptionAnswer).Value
 				i := sort.SearchStrings(cloudNames, value)
 				if i == len(cloudNames) || cloudNames[i] != value {
 					return errors.Errorf("invalid cloud name %q, should be one of %+v", value, strings.Join(cloudNames, ", "))
@@ -61,7 +62,7 @@ func Platform() (*openstack.Platform, error) {
 				Default: noExtNet,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				value := ans.(string)
+				value := ans.(core.OptionAnswer).Value
 				i := sort.SearchStrings(networkNames, value)
 				if i == len(networkNames) || networkNames[i] != value {
 					return errors.Errorf("invalid network name %q, should be one of %+v", value, strings.Join(networkNames, ", "))
@@ -92,7 +93,7 @@ func Platform() (*openstack.Platform, error) {
 					Options: floatingIPNames,
 				},
 				Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-					value := ans.(string)
+					value := ans.(core.OptionAnswer).Value
 					i := sort.SearchStrings(floatingIPNames, value)
 					if i == len(floatingIPNames) || floatingIPNames[i] != value {
 						return errors.Errorf("invalid floating IP %q, should be one of %+v", value, strings.Join(floatingIPNames, ", "))
@@ -120,7 +121,7 @@ func Platform() (*openstack.Platform, error) {
 				Options: flavorNames,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				value := ans.(string)
+				value := ans.(core.OptionAnswer).Value
 				i := sort.SearchStrings(flavorNames, value)
 				if i == len(flavorNames) || flavorNames[i] != value {
 					return errors.Errorf("invalid flavor name %q, should be one of %+v", value, strings.Join(flavorNames, ", "))
