@@ -172,17 +172,18 @@ func resourceArmPrivateDNSArvRecordDelete(d *schema.ResourceData, meta interface
 }
 
 func flattenAzureRmPrivateDNSSrvRecords(records *[]privatedns.SrvRecord) []map[string]interface{} {
+	if records == nil {
+		return nil
+	}
 	results := make([]map[string]interface{}, 0, len(*records))
 
-	if records != nil {
-		for _, record := range *records {
-			results = append(results, map[string]interface{}{
-				"priority": *record.Priority,
-				"weight":   *record.Weight,
-				"port":     *record.Port,
-				"target":   *record.Target,
-			})
-		}
+	for _, record := range *records {
+		results = append(results, map[string]interface{}{
+			"priority": *record.Priority,
+			"weight":   *record.Weight,
+			"port":     *record.Port,
+			"target":   *record.Target,
+		})
 	}
 
 	return results

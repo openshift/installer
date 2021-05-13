@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // PrivateKeyToPem converts an rsa.PrivateKey object to pem string
@@ -45,6 +46,7 @@ func CSRToPem(cert *x509.CertificateRequest) []byte {
 // PublicKeyToPem converts an rsa.PublicKey object to pem string
 func PublicKeyToPem(key *rsa.PublicKey) ([]byte, error) {
 	keyInBytes, err := x509.MarshalPKIXPublicKey(key)
+	logrus.Debugf("Failed to marshal PKIX public key: %s", err)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to MarshalPKIXPublicKey")
 	}

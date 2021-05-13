@@ -221,6 +221,7 @@ func showPEM(pemFilePath string) error {
 
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
+		logrus.Debugf("Failed to read the cert: %s", err)
 		return errors.Wrapf(err, "failed to read the cert: %s", pemFilePath)
 	}
 

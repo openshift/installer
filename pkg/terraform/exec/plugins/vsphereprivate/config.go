@@ -53,9 +53,6 @@ func (cw *ConfigWrapper) restURL() (*cache.Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
 	u.User = url.UserPassword(cw.config.User, cw.config.Password)
 	s := &cache.Session{
 		URL:      u,

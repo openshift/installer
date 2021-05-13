@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -164,14 +165,17 @@ func GenerateSignedCertificate(caKey *rsa.PrivateKey, caCert *x509.Certificate,
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create certificate request")
 	}
+
 	csr, err := x509.ParseCertificateRequest(csrBytes)
 	if err != nil {
+		logrus.Debugf("Failed to parse x509 certificate request: %s", err)
 		return nil, nil, errors.Wrap(err, "error parsing x509 certificate request")
 	}
 
 	// create a cert
 	cert, err := SignedCertificate(cfg, csr, key, caCert, caKey)
 	if err != nil {
+		logrus.Debugf("Failed to create a signed certificate: %s", err)
 		return nil, nil, errors.Wrap(err, "failed to create a signed certificate")
 	}
 	return key, cert, nil
@@ -181,11 +185,13 @@ func GenerateSignedCertificate(caKey *rsa.PrivateKey, caCert *x509.Certificate,
 func GenerateSelfSignedCertificate(cfg *CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
 	key, err := PrivateKey()
 	if err != nil {
+		logrus.Debugf("Failed to generate a private key: %s", err)
 		return nil, nil, errors.Wrap(err, "failed to generate private key")
 	}
 
 	crt, err := SelfSignedCertificate(cfg, key)
 	if err != nil {
+		logrus.Debugf("Failed to create self-signed certificate: %s", err)
 		return nil, nil, errors.Wrap(err, "failed to create self-signed certificate")
 	}
 	return key, crt, nil
