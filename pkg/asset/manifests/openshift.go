@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	installconfigaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	kubeconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -137,7 +138,15 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case ibmcloudtypes.Name:
-		// TODO: IBM[#94]: openshift - cloud creds
+		client, err := ibmcloud.NewClient(context.TODO())
+		if err != nil {
+			return err
+		}
+		cloudCreds = cloudCredsSecretData{
+			IBMCloud: &IBMCloudCredsSecretData{
+				Base64encodeAPIKey: base64.StdEncoding.EncodeToString([]byte(client.Authenticator.ApiKey)),
+			},
+		}
 	case openstacktypes.Name:
 		opts := new(clientconfig.ClientOpts)
 		opts.Cloud = installConfig.Config.Platform.OpenStack.Cloud
@@ -240,7 +249,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	}
 
 	switch platform {
-	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name, ovirttypes.Name, kubevirttypes.Name:
+	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name, ibmcloudtypes.Name, ovirttypes.Name, kubevirttypes.Name:
 		if installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
 			assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		}

@@ -38,7 +38,7 @@ type Client struct {
 	managementAPI *resourcemanagerv2.ResourceManagerV2
 	controllerAPI *resourcecontrollerv2.ResourceControllerV2
 	vpcAPI        *vpcv1.VpcV1
-	authenticator *core.IamAuthenticator
+	Authenticator *core.IamAuthenticator
 }
 
 // cisServiceID is the Cloud Internet Services' catalog service ID.
@@ -83,7 +83,7 @@ func NewClient() (*Client, error) {
 	}
 
 	client := &Client{
-		authenticator: authenticator,
+		Authenticator: authenticator,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
@@ -141,7 +141,7 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
 	for _, instance := range listResourceInstancesResponse.Resources {
 		crnstr := instance.CRN
 		zonesService, err := zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
-			Authenticator: c.authenticator,
+			Authenticator: c.Authenticator,
 			Crn:           crnstr,
 		})
 		if err != nil {
@@ -365,7 +365,7 @@ func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
 
 func (c *Client) loadResourceManagementAPI() error {
 	options := &resourcemanagerv2.ResourceManagerV2Options{
-		Authenticator: c.authenticator,
+		Authenticator: c.Authenticator,
 	}
 	resourceManagerV2Service, err := resourcemanagerv2.NewResourceManagerV2(options)
 	if err != nil {
@@ -377,7 +377,7 @@ func (c *Client) loadResourceManagementAPI() error {
 
 func (c *Client) loadResourceControllerAPI() error {
 	options := &resourcecontrollerv2.ResourceControllerV2Options{
-		Authenticator: c.authenticator,
+		Authenticator: c.Authenticator,
 	}
 	resourceControllerV2Service, err := resourcecontrollerv2.NewResourceControllerV2(options)
 	if err != nil {
@@ -389,7 +389,7 @@ func (c *Client) loadResourceControllerAPI() error {
 
 func (c *Client) loadVPCV1API() error {
 	vpcService, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
-		Authenticator: c.authenticator,
+		Authenticator: c.Authenticator,
 	})
 	if err != nil {
 		return err
