@@ -3,8 +3,8 @@ provider "libvirt" {
 }
 
 provider "ironic" {
-  url                = "http://${var.bootstrap_provisioning_ip}:6385/v1"
-  inspector          = "http://${var.bootstrap_provisioning_ip}:5050/v1"
+  url                = var.ironic_uri
+  inspector          = var.inspector_uri
   microversion       = "1.56"
   timeout            = 3600
   auth_strategy      = "http_basic"

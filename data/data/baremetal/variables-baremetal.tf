@@ -1,6 +1,11 @@
-variable "bootstrap_provisioning_ip" {
+variable "ironic_uri" {
   type        = string
-  description = "IP for the bootstrap VM provisioning nic"
+  description = "URI for accessing the Ironic REST API"
+}
+
+variable "inspector_uri" {
+  type        = string
+  description = "URI for accessing the Ironic Inspector REST API"
 }
 
 variable "libvirt_uri" {
