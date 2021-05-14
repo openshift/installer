@@ -9,6 +9,13 @@ func Get(client *gophercloud.ServiceClient, projectID string) (r GetResult) {
 	return
 }
 
+// GetDetail returns detailed Networking Quotas for a project.
+func GetDetail(client *gophercloud.ServiceClient, projectID string) (r GetDetailResult) {
+	resp, err := client.Get(getDetailURL(client, projectID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
 // UpdateOptsBuilder allows extensions to add additional parameters to the
 // Update request.
 type UpdateOptsBuilder interface {
@@ -43,6 +50,9 @@ type UpdateOpts struct {
 
 	// SubnetPool represents a number of subnet pools. A "-1" value means no limit.
 	SubnetPool *int `json:"subnetpool,omitempty"`
+
+	// Trunk represents a number of trunks. A "-1" value means no limit.
+	Trunk *int `json:"trunk,omitempty"`
 }
 
 // ToQuotaUpdateMap builds a request body from UpdateOpts.

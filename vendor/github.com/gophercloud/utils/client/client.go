@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,7 +10,11 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/gophercloud/gophercloud"
 )
 
 // Logger is an interface representing the Logger struct
@@ -357,4 +362,43 @@ func FormatJSON(raw []byte) (string, error) {
 	}
 
 	return string(pretty), nil
+}
+
+func RetryBackoffFunc(logger Logger) gophercloud.RetryFunc {
+	return func(ctx context.Context, respErr *gophercloud.ErrUnexpectedResponseCode, e error, retries uint) error {
+		retryAfter := respErr.ResponseHeader.Get("Retry-After")
+		if retryAfter == "" {
+			return e
+		}
+
+		var sleep time.Duration
+
+		// Parse delay seconds or HTTP date
+		if v, err := strconv.ParseUint(retryAfter, 10, 32); err == nil {
+			sleep = time.Duration(v) * time.Second
+		} else if v, err := time.Parse(http.TimeFormat, retryAfter); err == nil {
+			sleep = time.Until(v)
+		} else {
+			return e
+		}
+
+		l := logger
+		if l != nil {
+			l.Printf("Received StatusTooManyRequests response code sleeping for %s", sleep)
+		}
+		if c := ctx; c != nil {
+			select {
+			case <-time.After(sleep):
+			case <-c.Done():
+				if l != nil {
+					l.Printf("Sleeping aborted: %w", c.Err())
+				}
+				return e
+			}
+		} else {
+			time.Sleep(sleep)
+		}
+
+		return nil
+	}
 }

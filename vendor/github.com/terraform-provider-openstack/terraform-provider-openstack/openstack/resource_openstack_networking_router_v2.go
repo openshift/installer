@@ -20,6 +20,9 @@ const (
 
 	errExternalFixedIPWithoutExternalNet = "setting an external_fixed_ip for openstack_networking_router_v2 " +
 		"requires external_network_id to be set"
+
+	errExternalSubnetIDWithoutExternalNet = "setting external_subnet_ids for openstack_networking_router_v2 " +
+		"requires external_network_id to be set"
 )
 
 func resourceNetworkingRouterV2() *schema.Resource {
@@ -113,6 +116,13 @@ func resourceNetworkingRouterV2() *schema.Resource {
 						},
 					},
 				},
+			},
+
+			"external_subnet_ids": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				ConflictsWith: []string{"external_fixed_ip"},
 			},
 
 			"tenant_id": {
@@ -231,6 +241,8 @@ func resourceNetworkingRouterV2Create(d *schema.ResourceData, meta interface{}) 
 		gatewayInfo.ExternalFixedIPs = externalFixedIPs
 	}
 
+	externalSubnetIDs := expandNetworkingRouterExternalSubnetIDsV2(d.Get("external_subnet_ids").([]interface{}))
+
 	// vendorUpdateGateway is a flag for certain vendor-specific virtual routers
 	// which do not allow gateway settings to be set during router creation.
 	// If this flag was not enabled, then we can safely set the gateway
@@ -239,11 +251,39 @@ func resourceNetworkingRouterV2Create(d *schema.ResourceData, meta interface{}) 
 		createOpts.GatewayInfo = &gatewayInfo
 	}
 
+	var r *routers.Router
 	log.Printf("[DEBUG] openstack_networking_router_v2 create options: %#v", createOpts)
 
-	r, err := routers.Create(networkingClient, createOpts).Extract()
-	if err != nil {
-		return fmt.Errorf("Error creating openstack_networking_router_v2: %s", err)
+	if len(externalSubnetIDs) == 0 {
+		// router creation without a retry
+		r, err = routers.Create(networkingClient, createOpts).Extract()
+		if err != nil {
+			return fmt.Errorf("Error creating openstack_networking_router_v2: %s", err)
+		}
+	} else {
+		if externalNetworkID == "" {
+			return errors.New(errExternalSubnetIDWithoutExternalNet)
+		}
+
+		// create a router in a loop with the first available external subnet
+		for i, externalSubnetID := range externalSubnetIDs {
+			gatewayInfo.ExternalFixedIPs = []routers.ExternalFixedIP{externalSubnetID}
+
+			log.Printf("[DEBUG] openstack_networking_router_v2 create options (try %d): %#v", i+1, createOpts)
+
+			r, err = routers.Create(networkingClient, createOpts).Extract()
+			if err != nil {
+				if retryOn409(err) {
+					continue
+				}
+				return fmt.Errorf("Error creating openstack_networking_router_v2: %s", err)
+			}
+			break
+		}
+		// handle the last error
+		if err != nil {
+			return fmt.Errorf("Error creating openstack_networking_router_v2: %d subnets exhausted: %s", len(externalSubnetIDs), err)
+		}
 	}
 
 	log.Printf("[DEBUG] Waiting for openstack_networking_router_v2 %s to become available.", r.ID)
@@ -347,9 +387,8 @@ func resourceNetworkingRouterV2Update(d *schema.ResourceData, meta interface{}) 
 	}
 
 	routerID := d.Id()
-	mutex := config.MutexKV
-	mutex.Lock(routerID)
-	defer mutex.Unlock(routerID)
+	config.MutexKV.Lock(routerID)
+	defer config.MutexKV.Unlock(routerID)
 
 	var hasChange bool
 	var updateOpts routers.UpdateOpts

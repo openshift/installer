@@ -57,6 +57,9 @@ type Endpoint struct {
 
 	// URL is the url of the Endpoint.
 	URL string `json:"url"`
+
+	// Enabled is whether or not the endpoint is enabled.
+	Enabled bool `json:"enabled"`
 }
 
 // EndpointPage is a single page of Endpoint results.

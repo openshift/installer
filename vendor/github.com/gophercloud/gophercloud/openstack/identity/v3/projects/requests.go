@@ -85,6 +85,14 @@ func List(client *gophercloud.ServiceClient, opts ListOptsBuilder) pagination.Pa
 	})
 }
 
+// ListAvailable enumerates the Projects which are available to a specific user.
+func ListAvailable(client *gophercloud.ServiceClient) pagination.Pager {
+	url := listAvailableURL(client)
+	return pagination.NewPager(client, url, func(r pagination.PageResult) pagination.Page {
+		return ProjectPage{pagination.LinkedPageBase{PageResult: r}}
+	})
+}
+
 // Get retrieves details on a single project, by ID.
 func Get(client *gophercloud.ServiceClient, id string) (r GetResult) {
 	resp, err := client.Get(getURL(client, id), &r.Body, nil)

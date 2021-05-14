@@ -7,36 +7,31 @@ import (
 
 // IDFromName is a convienience function that returns an image's ID given its name.
 func IDFromName(client *gophercloud.ServiceClient, name string) (string, error) {
-	count := 0
-	id := ""
-
-	listOpts := images.ListOpts{
+	allPages, err := images.List(client, images.ListOpts{
 		Name: name,
-	}
-
-	pages, err := images.List(client, listOpts).AllPages()
+	}).AllPages()
 	if err != nil {
 		return "", err
 	}
 
-	all, err := images.ExtractImages(pages)
+	allImages, err := images.ExtractImages(allPages)
 	if err != nil {
 		return "", err
 	}
 
-	for _, s := range all {
-		if s.Name == name {
-			count++
-			id = s.ID
-		}
-	}
-
-	switch count {
+	switch count := len(allImages); count {
 	case 0:
-		return "", gophercloud.ErrResourceNotFound{Name: name, ResourceType: "image"}
+		return "", gophercloud.ErrResourceNotFound{
+			Name:         name,
+			ResourceType: "image",
+		}
 	case 1:
-		return id, nil
+		return allImages[0].ID, nil
 	default:
-		return "", gophercloud.ErrMultipleResourcesFound{Name: name, Count: count, ResourceType: "image"}
+		return "", gophercloud.ErrMultipleResourcesFound{
+			Name:         name,
+			Count:        count,
+			ResourceType: "image",
+		}
 	}
 }

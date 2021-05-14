@@ -82,7 +82,7 @@ func resourceImagesImageV2FileProps(filename string) (int64, string, error) {
 	return filesize, filechecksum, nil
 }
 
-func resourceImagesImageV2File(d *schema.ResourceData) (string, error) {
+func resourceImagesImageV2File(client *gophercloud.ServiceClient, d *schema.ResourceData) (string, error) {
 	if filename := d.Get("local_file_path").(string); filename != "" {
 		return filename, nil
 	} else if furl := d.Get("image_source_url").(string); furl != "" {
@@ -100,10 +100,28 @@ func resourceImagesImageV2File(d *schema.ResourceData) (string, error) {
 				return "", fmt.Errorf("Error creating file %q: %s", filename, err)
 			}
 			defer file.Close()
-			resp, err := http.Get(furl)
+			client := &client.ProviderClient.HTTPClient
+			request, err := http.NewRequest("GET", furl, nil)
+			if err != nil {
+				return "", fmt.Errorf("Error create a new request")
+			}
+
+			username := d.Get("image_source_username").(string)
+			password := d.Get("image_source_password").(string)
+			if username != "" && password != "" {
+				request.SetBasicAuth(username, password)
+			}
+
+			resp, err := client.Do(request)
 			if err != nil {
 				return "", fmt.Errorf("Error downloading image from %q", furl)
 			}
+
+			// check for credential error among other errors
+			if resp.StatusCode != http.StatusOK {
+				return "", fmt.Errorf("Error downloading image from %q, statusCode is %d", furl, resp.StatusCode)
+			}
+
 			defer resp.Body.Close()
 
 			if _, err = io.Copy(file, resp.Body); err != nil {
@@ -166,6 +184,13 @@ func resourceImagesImageV2UpdateComputedAttributes(diff *schema.ResourceDiff, me
 			for oldKey, oldValue := range o.(map[string]interface{}) {
 				// os_ keys are provided by the OpenStack Image service.
 				if strings.HasPrefix(oldKey, "os_") {
+					if v, ok := oldValue.(string); ok {
+						newProperties[oldKey] = v
+					}
+				}
+
+				// stores is provided by the OpenStack Image service.
+				if oldKey == "stores" {
 					if v, ok := oldValue.(string); ok {
 						newProperties[oldKey] = v
 					}

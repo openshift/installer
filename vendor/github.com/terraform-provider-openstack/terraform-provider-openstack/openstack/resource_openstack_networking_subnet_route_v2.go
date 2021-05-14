@@ -55,13 +55,9 @@ func resourceNetworkingSubnetRouteV2Create(d *schema.ResourceData, meta interfac
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
-	destCIDR := d.Get("destination_cidr").(string)
-	nextHop := d.Get("next_hop").(string)
-
 	subnetID := d.Get("subnet_id").(string)
-	mutex := config.MutexKV
-	mutex.Lock(subnetID)
-	defer mutex.Unlock(subnetID)
+	config.MutexKV.Lock(subnetID)
+	defer config.MutexKV.Unlock(subnetID)
 
 	subnet, err := subnets.Get(networkingClient, subnetID).Extract()
 	if err != nil {
@@ -72,6 +68,9 @@ func resourceNetworkingSubnetRouteV2Create(d *schema.ResourceData, meta interfac
 
 		return fmt.Errorf("Error retrieving openstack_networking_subnet_v2: %s", err)
 	}
+
+	destCIDR := d.Get("destination_cidr").(string)
+	nextHop := d.Get("next_hop").(string)
 
 	for _, r := range subnet.HostRoutes {
 		if r.DestinationCIDR == destCIDR && r.NextHop == nextHop {
@@ -163,9 +162,8 @@ func resourceNetworkingSubnetRouteV2Delete(d *schema.ResourceData, meta interfac
 	}
 
 	subnetID := d.Get("subnet_id").(string)
-	mutex := config.MutexKV
-	mutex.Lock(subnetID)
-	defer mutex.Unlock(subnetID)
+	config.MutexKV.Lock(subnetID)
+	defer config.MutexKV.Unlock(subnetID)
 
 	subnet, err := subnets.Get(networkingClient, subnetID).Extract()
 	if err != nil {
