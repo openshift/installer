@@ -94,12 +94,8 @@ before starting the installation process.
 In a `baremetal` environment, we do not know the IP addresses of all hosts in
 advance.  Those will come from an organization’s DHCP server.  Further, we can
 not rely on being able to program an organization’s DNS infrastructure in all
-cases.  We address these challenges in two ways:
-
-1. Self host some DNS infrastructure to provide DNS resolution for records only
-   needed internal to the cluster.
-2. Make use of mDNS (Multicast DNS) to dynamically discover the addresses of
-   hosts that we must resolve records for.
+cases.  We address these challenges by self hosting a DNS server to provide DNS
+resolution for records internal to the cluster.
 
 ### api-int hostname resolution
 
@@ -107,41 +103,22 @@ The CoreDNS server performing our internal DNS resolution includes
 configuration to resolve the `api-int` hostname. `api-int` will be resolved to
 the API VIP.
 
-### mdns-publisher
+### nodes hostname resolution
 
-https://github.com/openshift/mdns-publisher
+The same CoreDNS server also resolves the `master-NN` and `worker-NN` records
+in the cluster domain.
 
-The `mdns-publisher` is the component that runs on each host to make itself
-discoverable by other hosts in the cluster.  Control plane hosts currently
-advertise `master-NN` names, and the worker nodes advertise
-`worker-NN` names.  *Note: The `master-NN` and `worker-NN` names were based on records
-previously published on AWS clusters, but may no longer be necessary.*
-
-On masters and workers it is run by the `machine-config-operator`.
-
-`mdns-publisher` is not run on the bootstrap node, as there is no need for any
-other host to discover the IP address that the bootstrap VM gets from DHCP.
-
-### coredns-mdns
-
-https://github.com/openshift/coredns-mdns/
-
-The `mdns` plugin for `coredns` was developed to perform DNS lookups
-based on discoverable information from mDNS. The plugin will resolve the
-`master-NN` and `worker-NN` records in the cluster domain.
-
-The IP addresses that the `master-NN` host records resolve to comes from the
-mDNS advertisement sent out by the `mdns-publisher` on that control plane node.
+The IP addresses that the `master-NN` and `worker-NN` host records resolve to
+comes from querying the OpenShift API.
 
 ### DNS Resolution
 
 Because the baremetal platform does not have a cloud DNS service available to
-provide internal DNS records, it instead uses a coredns static pod configured
-with the `coredns-mdns` plugin discussed above. There is one of these pods
-running on every node in a deployment, and a NetworkManager dispatcher script
-is used to configure resolv.conf to point at the node's public IP address.
-`localhost` can't be used because `resolv.conf` is propagated into some
-containers where that won't resolve to the actual host.
+provide internal DNS records, it instead uses a coredns static pod. There is
+one of these pods running on every node in a deployment, and a NetworkManager
+dispatcher script is used to configure resolv.conf to point at the node's
+public IP address.  `localhost` can't be used because `resolv.conf` is
+propagated into some containers where that won't resolve to the actual host.
 
 ### Bootstrap Asset Details
 
