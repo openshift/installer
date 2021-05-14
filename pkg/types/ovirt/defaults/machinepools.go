@@ -12,7 +12,7 @@ func setMachinePool(p *types.MachinePool) {
 }
 
 func setDefaultAffinityGroups(p *ovirt.Platform, mp *types.MachinePool, agName string) {
-	if len(mp.Platform.Ovirt.AffinityGroupsNames) == 0 {
+	if mp.Platform.Ovirt.AffinityGroupsNames == nil {
 		for _, ag := range p.AffinityGroups {
 			if ag.Name == agName {
 				mp.Platform.Ovirt.AffinityGroupsNames = []string{agName}

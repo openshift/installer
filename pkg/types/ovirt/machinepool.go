@@ -28,7 +28,7 @@ type MachinePool struct {
 	// AffinityGroupsNames contains a list of oVirt affinity group names that the newly created machines will join.
 	// The affinity groups should exist on the oVirt cluster or created by the OpenShift installer.
 	// +optional
-	AffinityGroupsNames []string `json:"affinityGroupsNames,omitempty"`
+	AffinityGroupsNames []string `json:"affinityGroupsNames"`
 }
 
 // Disk defines a VM disk
