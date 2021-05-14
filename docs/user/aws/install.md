@@ -68,5 +68,5 @@ The OpenShift console is available via the kubeadmin login provided by the insta
 
 ![OpenShift web console](images/install_console.png)
 
-[cloud-install]: https://cloud.openshift.com/clusters/install
+[cloud-install]: https://cloud.redhat.com/openshift/create
 [encrypted-copy]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIEncryption.html#create-ami-encrypted-root-snapshot
