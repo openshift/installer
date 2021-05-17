@@ -27,6 +27,7 @@ var (
 	validComputeSubnet = "valid-compute-subnet"
 	validCPSubnet      = "valid-controlplane-subnet"
 	validCIDR          = "10.0.0.0/16"
+	validClusterName   = "valid-cluster"
 
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
@@ -64,6 +65,7 @@ var (
 	invalidateProject       = func(ic *types.InstallConfig) { ic.GCP.ProjectID = "invalid-project" }
 	removeVPC               = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
 	removeSubnets           = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet, ic.GCP.ControlPlaneSubnet = "", "" }
+	invalidClusterName      = func(ic *types.InstallConfig) { ic.ObjectMeta.Name = "testgoogletest" }
 
 	machineTypeAPIResult = map[string]*compute.MachineType{
 		"n1-standard-1": {GuestCpus: 1, MemoryMb: 3840},
@@ -85,6 +87,9 @@ var (
 
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: validClusterName,
+		},
 		Networking: &types.Networking{
 			MachineNetwork: []types.MachineNetworkEntry{
 				{CIDR: *ipnet.MustParseCIDR(validCIDR)},
@@ -125,6 +130,12 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			edits:          editFunctions{},
 			expectedError:  false,
 			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid ClusterName",
+			edits:          editFunctions{invalidClusterName},
+			expectedError:  true,
+			expectedErrMsg: `clusterName: Invalid value: "testgoogletest": cluster name must not start with "goog" or contain variations of "google"`,
 		},
 		{
 			name:           "Valid install config without network & subnets",

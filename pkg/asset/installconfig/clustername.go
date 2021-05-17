@@ -35,7 +35,13 @@ func (a *clusterName) Generate(parents asset.Parents) error {
 		validator = survey.ComposeValidators(validator, func(ans interface{}) error {
 			return validate.ClusterName1035(ans.(string))
 		})
+		if platform.GCP != nil {
+			validator = survey.ComposeValidators(validator, func(ans interface{}) error {
+				return validate.GCPClusterName(ans.(string))
+			})
+		}
 	}
+
 	if platform.Ovirt != nil {
 		// FIX-ME: As soon bz#1915122 get resolved remove the limitation of 14 chars for the clustername
 		validator = survey.ComposeValidators(validator, func(ans interface{}) error {

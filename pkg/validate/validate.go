@@ -115,6 +115,17 @@ func ClusterName1035(v string) error {
 	return ClusterName(v)
 }
 
+// GCPClusterName checks if the provided cluster name has words similar to the word 'google'
+// since resources with that name are not allowed in GCP.
+func GCPClusterName(v string) error {
+	reStartsWith := regexp.MustCompile("^goog")
+	reContains := regexp.MustCompile(".*g[o0]{2}gle.*")
+	if reStartsWith.MatchString(v) || reContains.MatchString(v) {
+		return errors.New("cluster name must not start with \"goog\" or contain variations of \"google\"")
+	}
+	return nil
+}
+
 // ClusterNameMaxLength validates if the string provided length is
 // greater than maxlen argument.
 func ClusterNameMaxLength(v string, maxlen int) error {
