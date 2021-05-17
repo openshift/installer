@@ -131,6 +131,7 @@ func LoadPrivateSSHKeys(paths []string) (map[string]interface{}, error) {
 		}
 		key, err := ssh.ParseRawPrivateKey(data)
 		if err != nil {
+			logrus.Debugf("failed to parse SSH private key from %q", path)
 			errs = append(errs, errors.Wrapf(err, "failed to parse SSH private key from %q", path))
 			continue
 		}

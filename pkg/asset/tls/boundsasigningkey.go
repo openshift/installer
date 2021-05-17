@@ -6,6 +6,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // BoundSASigningKey contains a user provided key and public parts for the
@@ -47,8 +48,10 @@ func (sk *BoundSASigningKey) Load(f asset.FileFetcher) (bool, error) {
 		}
 		return false, err
 	}
+
 	rsaKey, err := PemToPrivateKey(keyFile.Data)
 	if err != nil {
+		logrus.Debugf("Failed to load rsa.PrivateKey from file: %s", err)
 		return false, errors.Wrap(err, "failed to load rsa.PrivateKey from the file")
 	}
 	pubData, err := PublicKeyToPem(&rsaKey.PublicKey)

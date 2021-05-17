@@ -13,10 +13,6 @@ import (
 func ValidateMachinePool(p *kubevirt.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if p.CPU < 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("cpu"), p.CPU, "CPU must be positive"))
-	}
-
 	if p.StorageSize != "" {
 		storageQuantity, err := resource.ParseQuantity(p.StorageSize)
 

@@ -2,6 +2,7 @@ package tls
 
 import (
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -38,6 +39,7 @@ func (a *BootstrapSSHKeyPair) Generate(dependencies asset.Parents) error {
 
 	publicRSAKey, err := PemToPublicKey(kp.Pub)
 	if err != nil {
+		logrus.Debugf("Failed to parse the public RSA key: %s", err)
 		return errors.Wrap(err, "failed to parse the public RSA key")
 	}
 

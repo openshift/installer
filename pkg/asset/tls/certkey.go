@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
 )
@@ -98,16 +99,19 @@ func (c *SignedCertKey) Generate(
 
 	caKey, err := PemToPrivateKey(parentCA.Key())
 	if err != nil {
+		logrus.Debugf("Failed to parse RSA private key: %s", err)
 		return errors.Wrap(err, "failed to parse rsa private key")
 	}
 
 	caCert, err := PemToCertificate(parentCA.Cert())
 	if err != nil {
+		logrus.Debugf("Failed to parse x509 certificate: %s", err)
 		return errors.Wrap(err, "failed to parse x509 certificate")
 	}
 
 	key, crt, err = GenerateSignedCertificate(caKey, caCert, cfg)
 	if err != nil {
+		logrus.Debugf("Failed to generate signed cert/key pair: %s", err)
 		return errors.Wrap(err, "failed to generate signed cert/key pair")
 	}
 

@@ -189,7 +189,7 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 	for _, hostObj := range hosts {
 		foundDatastore := false
 		foundNetwork := false
-		hostObj.Properties(ctx, hostObj.Reference(), []string{"network", "datastore", "runtime"}, &hostSystemManagedObject)
+		err := hostObj.Properties(ctx, hostObj.Reference(), []string{"network", "datastore", "runtime"}, &hostSystemManagedObject)
 		if err != nil {
 			return nil, err
 		}
