@@ -51,6 +51,7 @@ CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
 CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-kube-controller-manager-operator)
+CLUSTER_CLOUD_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-cloud-controller-manager-operator)
 KUBE_SCHEDULER_OPERATOR_IMAGE=$(image_for cluster-kube-scheduler-operator)
 INGRESS_OPERATOR_IMAGE=$(image_for cluster-ingress-operator)
 
@@ -227,6 +228,36 @@ then
 	fi
 
 	touch kube-controller-manager-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f cloud-controller-manager-bootstrap.done ]
+then
+    record_service_stage_start "cluster-cloud-controller-manager-bootstrap"
+	echo "Rendering Cloud Controller Manager core manifests..."
+
+	rm --recursive --force cloud-controller-manager-bootstrap
+
+	# Copy the CCCMO images configMap to resolve pod images from internal registry in CCCMO render run
+	# Source config map is located in https://github.com/openshift/cluster-cloud-controller-manager-operator/blob/master/manifests/0000_26_cloud-controller-manager-operator_01_images.configmap.yaml
+	bootkube_podman_run \
+	--name copy-cloud-controller-manager-images \
+	--entrypoint /bin/bash "${RELEASE_IMAGE_DIGEST}" \
+	-c "cat /release-manifests/0000_26_cloud-controller-manager-operator_01_images.configmap.yaml" > manifests/ccm-images.yaml
+
+	bootkube_podman_run \
+		--name cloud-controller-render \
+		--volume "$PWD:/assets:z" \
+		"${CLUSTER_CLOUD_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
+		/render run \
+		--images-file=/assets/manifests/ccm-images.yaml \
+		--dest-dir=/assets/cloud-controller-manager-bootstrap \
+		--cluster-infrastructure-file=/assets/manifests/cluster-infrastructure-02-config.yml
+
+	# Copy rendered resources to manifests folder
+	cp cloud-controller-manager-bootstrap/manifests/* manifests/
+
+	touch cloud-controller-manager-bootstrap.done
     record_service_stage_success
 fi
 
