@@ -27,18 +27,10 @@ resource "ironic_node_v1" "openshift-master-host" {
   vendor_interface     = var.hosts[count.index]["vendor_interface"]
 }
 
-resource "ironic_allocation_v1" "openshift-master-allocation" {
-  name           = "master-${count.index}"
-  count          = var.master_count
-  resource_class = "baremetal"
-
-  candidate_nodes = ironic_node_v1.openshift-master-host.*.id
-}
-
 resource "ironic_deployment" "openshift-master-deployment" {
   count = var.master_count
   node_uuid = element(
-    ironic_allocation_v1.openshift-master-allocation.*.node_uuid,
+    ironic_node_v1.openshift-master-host.*.id,
     count.index,
   )
 
