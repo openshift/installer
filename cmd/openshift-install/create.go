@@ -235,7 +235,6 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 		}
 
 		for _, a := range targets {
-			logrus.Debugf("bluejay target: %s", a.Name())
 			err := assetStore.Fetch(a, targets...)
 			if err != nil {
 				err = errors.Wrapf(err, "failed to fetch %s", a.Name())
