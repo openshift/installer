@@ -108,16 +108,19 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 				for j := 0; i+j < len(arns) && j < 20; j++ {
 					request.ResourceARNList = append(request.ResourceARNList, aws.String(arns[i+j]))
 				}
-				_, err = tagClient.UntagResourcesWithContext(ctx, request)
+				result, err := tagClient.UntagResourcesWithContext(ctx, request)
 				if err != nil {
 					err = errors.Wrap(err, "untag shared resources")
 					o.Logger.Info(err)
 					continue
 				}
-				for j := 0; i+j < len(arns) && j < 20; j++ {
-					arn := arns[i+j]
-					o.Logger.WithField("arn", arn).Infof("Removed tag %s: shared", key)
-					removed[arn] = exists
+				for _, arn := range request.ResourceARNList {
+					if info, failed := result.FailedResourcesMap[*arn]; failed {
+						o.Logger.WithField("arn", *arn).Infof("Failed to remove tag %s: shared; error=%s", key, *info.ErrorMessage)
+						continue
+					}
+					o.Logger.WithField("arn", *arn).Infof("Removed tag %s: shared", key)
+					removed[*arn] = exists
 				}
 			}
 		}
