@@ -54,10 +54,6 @@ func Validate(ic *types.InstallConfig) error {
 		}
 	}
 
-	allErrs = append(
-		allErrs,
-		validateAffinityGroups(ic, ovirtPlatformPath.Child("affinityGroups"), con)...)
-
 	return allErrs.ToAggregate()
 }
 
@@ -69,47 +65,25 @@ func validateMachinePool(con *ovirtsdk.Connection, child *field.Path, pool *ovir
 	return allErrs
 }
 
-// validateAffinityGroups validates that the affinity group definitions on all machinePools are valid
-// - Affinity group contains valid fields
-// - Affinity group doesn't already exist in the cluster
-// - oVirt cluster has sufficient resources to fulfil the affinity group constraints
-func validateAffinityGroups(ic *types.InstallConfig, fldPath *field.Path, con *ovirtsdk.Connection) field.ErrorList {
-	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, validateExistingAffinityGroup(con, *ic.Ovirt, fldPath)...)
-	allErrs = append(allErrs, validateClusterResources(con, ic, fldPath)...)
-	return allErrs
-}
-
 // validateExistingAffinityGroup checks that there is no affinity group with the same name in the cluster
-func validateExistingAffinityGroup(con *ovirtsdk.Connection, platform ovirt.Platform, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
+func validateExistingAffinityGroup(con *ovirtsdk.Connection, platform ovirt.Platform) error {
 	res, err := con.SystemService().ClustersService().
 		ClusterService(platform.ClusterID).AffinityGroupsService().List().Send()
 	if err != nil {
-		return append(
-			allErrs,
-			field.InternalError(
-				fldPath,
-				errors.Errorf("failed listing affinity groups for cluster %v", platform.ClusterID)))
+		return errors.Errorf("failed listing affinity groups for cluster %v", platform.ClusterID)
 	}
 	for _, ag := range res.MustGroups().Slice() {
 		for _, agNew := range platform.AffinityGroups {
 			if ag.MustName() == agNew.Name {
-				allErrs = append(
-					allErrs,
-					field.Invalid(
-						fldPath,
-						ag,
-						fmt.Sprintf("affinity group %v already exist in cluster %v", agNew.Name, platform.ClusterID)))
+				return errors.Errorf(
+					"affinity group %v already exist in cluster %v", agNew.Name, platform.ClusterID)
 			}
 		}
 	}
-	return allErrs
+	return nil
 }
 
-func validateClusterResources(con *ovirtsdk.Connection, ic *types.InstallConfig, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
+func validateClusterResources(con *ovirtsdk.Connection, ic *types.InstallConfig) error {
 	mAgReplicas := make(map[string]int)
 	for _, agn := range ic.ControlPlane.Platform.Ovirt.AffinityGroupsNames {
 		mAgReplicas[agn] = mAgReplicas[agn] + int(*ic.ControlPlane.Replicas)
@@ -122,11 +96,11 @@ func validateClusterResources(con *ovirtsdk.Connection, ic *types.InstallConfig,
 
 	clusterName, err := GetClusterName(con, ic.Ovirt.ClusterID)
 	if err != nil {
-		return append(allErrs, field.InternalError(fldPath, err))
+		return err
 	}
 	hosts, err := FindHostsInCluster(con, clusterName)
 	if err != nil {
-		return append(allErrs, field.InternalError(fldPath, err))
+		return err
 	}
 	for _, ag := range ic.Ovirt.AffinityGroups {
 		if _, found := mAgReplicas[ag.Name]; found {
@@ -135,14 +109,13 @@ func validateClusterResources(con *ovirtsdk.Connection, ic *types.InstallConfig,
 					"have enough hosts: found %v hosts but %v replicas assigned to affinity group",
 					ag.Name, len(hosts), mAgReplicas[ag.Name])
 				if ag.Enforcing {
-					allErrs = append(allErrs, field.Invalid(fldPath, ag, msg))
-				} else {
-					logrus.Warning(msg)
+					return fmt.Errorf(msg, ag)
 				}
+				logrus.Warning(msg)
 			}
 		}
 	}
-	return allErrs
+	return nil
 }
 
 func validateInstanceTypeID(con *ovirtsdk.Connection, child *field.Path, machinePool *ovirt.MachinePool) field.ErrorList {
@@ -219,7 +192,6 @@ func authenticated(c *Config) survey.Validator {
 		}
 		return nil
 	}
-
 }
 
 // validate the provided vnic profile exists and belongs the the cluster network
@@ -240,6 +212,22 @@ func validateVNICProfile(platform ovirt.Platform, con *ovirtsdk.Connection) erro
 			"vNic profile ID %s does not belong to cluster network %s",
 			platform.VNICProfileID,
 			platform.NetworkName)
+	}
+	return nil
+}
+
+// ValidateForProvisioning validates that the install config is valid for provisioning the cluster.
+func ValidateForProvisioning(ic *types.InstallConfig) error {
+	con, err := NewConnection()
+	if err != nil {
+		return err
+	}
+	defer con.Close()
+	if err := validateClusterResources(con, ic); err != nil {
+		return err
+	}
+	if err := validateExistingAffinityGroup(con, *ic.Ovirt); err != nil {
+		return err
 	}
 	return nil
 }
