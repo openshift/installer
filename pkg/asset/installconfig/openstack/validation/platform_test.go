@@ -194,6 +194,19 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: "platform.openstack.externalNetwork: Not found: \"valid-external-network\"",
 		},
+		{
+			name: "APIVIP and IngressVIP are the same",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.APIVIP = "128.35.27.8"
+				p.IngressVIP = "128.35.27.8"
+				return p
+			}(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: "platform.openstack.ingressVIP: Invalid value: \"128.35.27.8\": ingressVIP can not be the same as apiVIP",
+		},
 	}
 
 	for _, tc := range cases {
