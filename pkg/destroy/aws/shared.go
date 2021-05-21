@@ -196,7 +196,7 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, client *
 	}
 	dottedClusterDomain := o.ClusterDomain + "."
 
-	publicZoneID, err := findAncestorPublicRoute53(ctx, client, o.ClusterDomain, logger)
+	publicZoneID, err := findAncestorPublicRoute53(ctx, client, dottedClusterDomain, logger)
 	if err != nil {
 		return err
 	}
