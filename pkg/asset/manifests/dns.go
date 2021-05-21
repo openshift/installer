@@ -18,6 +18,7 @@ import (
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
@@ -111,8 +112,10 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 				ID: dnsConfig.GetDNSZoneID(installConfig.Config.Azure.BaseDomainResourceGroupName, installConfig.Config.BaseDomain),
 			}
 		}
-		config.Spec.PrivateZone = &configv1.DNSZone{
-			ID: dnsConfig.GetPrivateDNSZoneID(installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID), installConfig.Config.ClusterDomain()),
+		if installConfig.Config.Azure.CloudName != azure.StackCloud {
+			config.Spec.PrivateZone = &configv1.DNSZone{
+				ID: dnsConfig.GetPrivateDNSZoneID(installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID), installConfig.Config.ClusterDomain()),
+			}
 		}
 	case gcptypes.Name:
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
