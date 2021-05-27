@@ -126,13 +126,12 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		}
 		config.Spec.PrivateZone = &configv1.DNSZone{ID: fmt.Sprintf("%s-private-zone", clusterID.InfraID)}
 	case ibmcloudtypes.Name:
-		// TODO: IBM[#93]: dns - understand more about what's happening here.
-		client, err := icibmcloud.NewClient(context.TODO())
+		client, err := icibmcloud.NewClient()
 		if err != nil {
 			return errors.Wrap(err, "failed to get IBM Cloud client")
 		}
 
-		zoneID, err := client.GetZoneIDByName(context.TODO(), installConfig.Config.Platform.IBMCloud.CISInstanceCRN, installConfig.Config.BaseDomain)
+		zoneID, err := client.GetZoneIDByName(context.TODO(), installConfig.Config.BaseDomain)
 		if err != nil {
 			return errors.Wrap(err, "failed ot get DNS zone ID")
 		}

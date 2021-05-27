@@ -113,7 +113,7 @@ func defaultGCPMachinePoolPlatform() gcptypes.MachinePool {
 
 func defaultIBMCloudMachinePoolPlatform() ibmcloudtypes.MachinePool {
 	return ibmcloudtypes.MachinePool{
-		Type: "bx2d-4x16",
+		InstanceType: "bx2d-4x16",
 	}
 }
 

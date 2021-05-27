@@ -1,5 +1,6 @@
 locals {
-  description = "Created By OpenShift Installer"
+  description       = "Created By OpenShift Installer"
+  resource_group_id = var.ibmcloud_resource_group_name == "" ? ibm_resource_group.group.0.id : data.ibm_resource_group.group.0.id
 }
 
 ############################################
@@ -7,7 +8,8 @@ locals {
 ############################################
 
 provider "ibm" {
-  region = var.ibmcloud_region
+  ibmcloud_api_key = var.ibmcloud_api_key
+  region           = var.ibmcloud_region
 }
 
 ############################################
@@ -16,6 +18,20 @@ provider "ibm" {
 
 data "ibm_is_image" "vsi_image" {
   name = var.ibmcloud_vsi_image
+}
+
+############################################
+# Resource group
+############################################
+
+resource "ibm_resource_group" "group" {
+  count = var.ibmcloud_resource_group_name == "" ? 1 : 0
+  name  = var.cluster_id
+}
+
+data "ibm_resource_group" "group" {
+  count = var.ibmcloud_resource_group_name == "" ? 0 : 1
+  name  = var.ibmcloud_resource_group_name
 }
 
 ############################################
@@ -49,7 +65,8 @@ module "bootstrap" {
 
 module "master" {
   source     = "./master"
-  depends_on = [ module.bootstrap ]
+
+  bootstrap_ready = module.bootstrap.ready
   
   cluster_id        = var.cluster_id
   instance_count    = var.master_count
@@ -76,9 +93,9 @@ module "master" {
 module "cis" {
   source     = "./cis"
   
-  cis_id     = var.ibmcloud_cis_id
-  cluster_id = var.cluster_id
-  domain     = var.base_domain
+  cis_id         = var.ibmcloud_cis_crn
+  base_domain    = var.base_domain
+  cluster_domain = var.cluster_domain
 
   bootstrap_name         = module.bootstrap.name
   bootstrap_ipv4_address = module.bootstrap.primary_ipv4_address

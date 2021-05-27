@@ -1,7 +1,3 @@
-locals {
-  ignition_object_name = "bootstrap.ign"
-}
-
 ############################################
 # COS service instance
 ############################################
@@ -23,6 +19,18 @@ resource "ibm_cos_bucket" "bootstrap_ignition" {
   resource_instance_id = ibm_resource_instance.cos.id
   region_location      = var.cos_bucket_region
   storage_class        = "smart"
+}
+
+############################################
+# COS object
+############################################
+
+resource "ibm_cos_bucket_object" "bootstrap_ignition" {
+  bucket_crn      = ibm_cos_bucket.bootstrap_ignition.crn
+  bucket_location = ibm_cos_bucket.bootstrap_ignition.region_location
+  key             = "bootstrap.ign"
+  content_file    = var.ignition_file
+  etag            = filemd5(var.ignition_file)
 }
 
 ############################################
@@ -58,23 +66,3 @@ data "ibm_iam_auth_token" "iam_token" {}
 #     serviceid_crn = ibm_iam_service_id.cos.crn
 #   }
 # }
-
-############################################
-# Upload ignition config to COS bucket
-############################################
-
-resource "null_resource" "upload_ignition" {
-  triggers = {
-    ignition_content = filesha512(var.ignition_file)
-    cos_bucket_crn   = ibm_cos_bucket.bootstrap_ignition.crn
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      curl -X PUT 'https://${ibm_cos_bucket.bootstrap_ignition.s3_endpoint_public}/${ibm_cos_bucket.bootstrap_ignition.bucket_name}/${local.ignition_object_name}' \
-      -H 'Authorization: ${data.ibm_iam_auth_token.iam_token.iam_access_token}' \
-      -H 'Content-Type: application/json' \
-      -d @${var.ignition_file}
-    EOT
-  }
-}

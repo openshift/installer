@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	typesgcp "github.com/openshift/installer/pkg/types/gcp"
+	typesibmcloud "github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -54,6 +55,11 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 	mastersAsset := &machines.Master{}
 	workersAsset := &machines.Worker{}
 	dependencies.Get(ic, mastersAsset, workersAsset)
+
+	// TODO: IBM[#87]: Add quota checks
+	if ic.Config.Platform.Name() == typesibmcloud.Name {
+		return nil
+	}
 
 	masters, err := mastersAsset.Machines()
 	if err != nil {
@@ -121,6 +127,9 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 			return summarizeFailingReport(reports)
 		}
 		summarizeReport(reports)
+	case typesibmcloud.Name:
+		// TODO: IBM[#87]: Add quota checks
+		return nil
 	case typesopenstack.Name:
 		ci, err := openstackvalidation.GetCloudInfo(ic.Config)
 		if err != nil {

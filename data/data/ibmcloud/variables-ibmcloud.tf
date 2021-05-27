@@ -2,7 +2,14 @@
 # Top-level module variables (required)
 #######################################
 
-variable "ibmcloud_cis_id" {
+variable "ibmcloud_api_key" {
+  type        = string
+  # TODO: Supported on tf 0.14
+  # sensitive   = true
+  description = "The IAM API key for authenticating with IBM Cloud APIs."
+}
+
+variable "ibmcloud_cis_crn" {
   type        = string
   description = "The CRN of CIS instance to use."
 }
@@ -25,11 +32,6 @@ variable "ibmcloud_vsi_image" {
 #######################################
 # Top-level module variables (optional)
 #######################################
-
-variable "ibmcloud_resource_group_create" {
-  type    = bool
-  default = false
-}
 
 variable "ibmcloud_resource_group_name" {
   type    = string

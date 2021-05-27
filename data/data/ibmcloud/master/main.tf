@@ -12,6 +12,9 @@ locals {
 
 resource "ibm_is_instance" "master_node" {
   count = var.instance_count
+  depends_on = [
+    var.bootstrap_ready
+  ]
 
   # Naming:  "{prefix}-master-{zone}-{index per zone}"
   # Example: "prefix-master-us-east-1-0", "prefix-master-us-east-2-0", "prefix-master-us-east-3-0"

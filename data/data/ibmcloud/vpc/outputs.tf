@@ -39,6 +39,10 @@ output "lb_kubernetes_api_public_hostname" {
 }
 
 output "lb_kubernetes_api_public_id" {
+  # Wait for frontend listeners to be ready before use
+  depends_on = [
+    ibm_is_lb_listener.kubernetes_api_public
+  ]
   value = ibm_is_lb.kubernetes_api_public.id
 }
 
@@ -47,6 +51,11 @@ output "lb_kubernetes_api_private_hostname" {
 }
 
 output "lb_kubernetes_api_private_id" {
+  # Wait for frontend listeners to be ready before use
+  depends_on = [
+    ibm_is_lb_listener.kubernetes_api_private,
+    ibm_is_lb_listener.machine_config,
+  ]
   value = ibm_is_lb.kubernetes_api_private.id
 }
 

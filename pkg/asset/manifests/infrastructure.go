@@ -170,17 +170,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			Data:     content,
 		})
 	case ibmcloud.Name:
-		// TODO: IBM: where did the configv1 IBM Cloud types originate? Can we
-		// modify them as needed? (e.g. Location -> Region, ResourceGroupName ->
-		// ResourceGroup).
-		//
-		// Looks like IBMCloudPlatformType is used in the Cluster Ingress Operator,
-		// but IBMCloudPlatformStatus is not used anywhere outside of the API def:
-		// https://github.com/search?q=org%3Aopenshift+IBMCloudPlatformStatus&type=code
 		config.Spec.PlatformSpec.Type = configv1.IBMCloudPlatformType
 		config.Status.PlatformStatus.IBMCloud = &configv1.IBMCloudPlatformStatus{
 			Location:          installConfig.Config.Platform.IBMCloud.Region,
-			ResourceGroupName: installConfig.Config.Platform.IBMCloud.ResourceGroup,
+			ResourceGroupName: installConfig.Config.Platform.IBMCloud.ClusterResourceGroupName(clusterID.InfraID),
 		}
 	case libvirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.LibvirtPlatformType

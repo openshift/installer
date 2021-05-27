@@ -28,7 +28,7 @@ resource "ibm_is_instance" "bootstrap_node" {
   user_data = templatefile("${path.module}/templates/bootstrap.ign", {
     HOSTNAME    = ibm_cos_bucket.bootstrap_ignition.s3_endpoint_public
     BUCKET_NAME = ibm_cos_bucket.bootstrap_ignition.bucket_name
-    OBJECT_NAME = local.ignition_object_name
+    OBJECT_NAME = ibm_cos_bucket_object.bootstrap_ignition.key
     IAM_TOKEN   = data.ibm_iam_auth_token.iam_token.iam_access_token
   })
 }

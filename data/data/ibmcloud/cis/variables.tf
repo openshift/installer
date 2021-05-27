@@ -6,11 +6,11 @@ variable "cis_id" {
   type = string
 }
 
-variable "cluster_id" {
+variable "base_domain" {
   type = string
 }
 
-variable "domain" {
+variable "cluster_domain" {
   type = string
 }
 

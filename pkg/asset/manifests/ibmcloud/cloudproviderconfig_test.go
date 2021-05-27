@@ -25,9 +25,7 @@ clusterID = ocp4-8pxks
 
 	ic := types.InstallConfig{
 		Platform: types.Platform{
-			IBMCloud: &ibmcloud.Platform{
-				CISInstanceCRN: "crn:v1:bluemix:public:internet-svcs:us-south:a/1e1f75646aef447814a6d907cc83fb3c:instance::",
-			},
+			IBMCloud: &ibmcloud.Platform{},
 		},
 	}
 

@@ -2,6 +2,10 @@
 # Master module variables
 #######################################
 
+variable "bootstrap_ready" {
+  type = bool
+}
+
 variable "cluster_id" {
   type = string
 }

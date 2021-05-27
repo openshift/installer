@@ -37,7 +37,9 @@ type provider struct {
 
 // CloudProviderConfig generates the cloud provider config for the IBMCloud platform.
 func CloudProviderConfig(infraID string, installConfig types.InstallConfig) (string, error) {
-	CRN, err := crn.Parse(installConfig.Platform.IBMCloud.CISInstanceCRN)
+	// TODO: Get CRN from InstallConfig metadata or BaseDomain
+	crnstr := "crn:v1:bluemix:public:internet-svcs:us-south:a/1e1f75646aef447814a6d907cc83fb3c:instance::"
+	CRN, err := crn.Parse(crnstr)
 	if err != nil {
 		return "", err
 	}
