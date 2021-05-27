@@ -1,4 +1,3 @@
-
 output "bootstrap_a" {
   description = "IP Address of the bootstrap node"
   value       = dns_a_record_set.bootstrap.addrs[0]

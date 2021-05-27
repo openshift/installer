@@ -78,7 +78,7 @@ require (
 	github.com/terraform-provider-openstack/terraform-provider-openstack v1.32.0
 	github.com/terraform-providers/terraform-provider-aws v0.0.0
 	github.com/terraform-providers/terraform-provider-azurerm v0.0.0
-	github.com/terraform-providers/terraform-provider-dns v0.0.0-20190724194907-24de60f297b6
+	github.com/terraform-providers/terraform-provider-dns v0.0.0-20191209223915-3fb1c1918eb1
 	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
 	github.com/terraform-providers/terraform-provider-ignition/v2 v2.1.0
 	github.com/terraform-providers/terraform-provider-local v1.4.0

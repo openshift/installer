@@ -1676,6 +1676,8 @@ github.com/terraform-providers/terraform-provider-azuread v0.9.0 h1:XLzFgVHakq6q
 github.com/terraform-providers/terraform-provider-azuread v0.9.0/go.mod h1:sSDzB/8CD639+yWo5lZf+NJvGSYQBSS6z+GoET9IrzE=
 github.com/terraform-providers/terraform-provider-dns v0.0.0-20190724194907-24de60f297b6 h1:7DIDiI0H7f0ksjSBnw5ojEfUeWBlc87oGp3TJ3kfJVE=
 github.com/terraform-providers/terraform-provider-dns v0.0.0-20190724194907-24de60f297b6/go.mod h1:aUpZ80xerw1PT+j8NO7UDtgVHc/DU4xyHQJarln9oq8=
+github.com/terraform-providers/terraform-provider-dns v0.0.0-20191209223915-3fb1c1918eb1 h1:fsepTKeS1gKsCk3ODLeaSAx1kinBljzsTPtQDqOfreE=
+github.com/terraform-providers/terraform-provider-dns v0.0.0-20191209223915-3fb1c1918eb1/go.mod h1:t5ie+C2S9ezG7YeW5JSuhBKFZ0MDq/xcz7SbRplcjnA=
 github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160 h1:Ghc1PD9TckxsdyP1BG+dM8q84cNNyL93qRmYq/PVNow=
 github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160/go.mod h1:QxehqxV8Swl+O2JXJUdS6orHYJXWUEr4HFfYH5JV9ew=
 github.com/terraform-providers/terraform-provider-ignition v1.2.1 h1:dlRZGcokysc9Z2gTVm+neSghAMv9/2WA/pYiGZ6JHCg=

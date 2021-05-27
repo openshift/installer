@@ -5,7 +5,7 @@ import (
 	"net"
 	"sort"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func dataSourceDnsNSRecordSet() *schema.Resource {

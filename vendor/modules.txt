@@ -781,15 +781,12 @@ github.com/hashicorp/terraform/configs/configupgrade
 github.com/hashicorp/terraform/configs/hcl2shim
 github.com/hashicorp/terraform/dag
 github.com/hashicorp/terraform/experiments
-github.com/hashicorp/terraform/flatmap
-github.com/hashicorp/terraform/helper/config
 github.com/hashicorp/terraform/helper/didyoumean
 github.com/hashicorp/terraform/helper/experiment
 github.com/hashicorp/terraform/helper/hashcode
 github.com/hashicorp/terraform/helper/hilmapstructure
 github.com/hashicorp/terraform/helper/logging
 github.com/hashicorp/terraform/helper/plugin
-github.com/hashicorp/terraform/helper/resource
 github.com/hashicorp/terraform/helper/schema
 github.com/hashicorp/terraform/helper/slowmessage
 github.com/hashicorp/terraform/helper/structure
@@ -1434,7 +1431,7 @@ github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/st
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils
 github.com/terraform-providers/terraform-provider-azurerm/version
-# github.com/terraform-providers/terraform-provider-dns v0.0.0-20190724194907-24de60f297b6
+# github.com/terraform-providers/terraform-provider-dns v0.0.0-20191209223915-3fb1c1918eb1
 ## explicit
 github.com/terraform-providers/terraform-provider-dns/dns
 # github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
