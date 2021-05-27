@@ -49,7 +49,7 @@ module "bootstrap" {
   subnet_id         = module.vpc.control_plane_subnet_id_list[0]
   vpc_id            = module.vpc.vpc_id
   vsi_image_id      = data.ibm_is_image.vsi_image.id
-  vsi_profile       = var.ibmcloud_vsi_profile
+  vsi_profile       = var.ibmcloud_bootstrap_instance_type
   zone              = module.vpc.control_plane_subnet_zone_list[0]
 
   lb_kubernetes_api_public_id       = module.vpc.lb_kubernetes_api_public_id
@@ -76,7 +76,7 @@ module "master" {
   subnet_id_list    = module.vpc.control_plane_subnet_id_list
   vpc_id            = module.vpc.vpc_id
   vsi_image_id      = data.ibm_is_image.vsi_image.id
-  vsi_profile       = var.ibmcloud_vsi_profile
+  vsi_profile       = var.ibmcloud_master_instance_type
   zone_list         = module.vpc.control_plane_subnet_zone_list
 
   lb_kubernetes_api_public_id       = module.vpc.lb_kubernetes_api_public_id

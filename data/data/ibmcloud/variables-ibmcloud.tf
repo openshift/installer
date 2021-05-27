@@ -9,6 +9,11 @@ variable "ibmcloud_api_key" {
   description = "The IAM API key for authenticating with IBM Cloud APIs."
 }
 
+variable "ibmcloud_bootstrap_instance_type" {
+  type        = string
+  description = "Instance type for the bootstrap node. Example: `bx2d-4x16`"
+}
+
 variable "ibmcloud_cis_crn" {
   type        = string
   description = "The CRN of CIS instance to use."
@@ -17,6 +22,11 @@ variable "ibmcloud_cis_crn" {
 variable "ibmcloud_region" {
   type        = string
   description = "The target IBM Cloud region for the cluster."
+}
+
+variable "ibmcloud_master_instance_type" {
+  type        = string
+  description = "Instance type for the master node(s). Example: `bx2d-4x16`"
 }
 
 variable "ibmcloud_master_availability_zones" {
@@ -36,9 +46,4 @@ variable "ibmcloud_vsi_image" {
 variable "ibmcloud_resource_group_name" {
   type    = string
   default = ""
-}
-variable "ibmcloud_vsi_profile" {
-  type        = string
-  description = "Name of VPC VSI profile to use for all nodes."
-  default     = "bx2d-4x16"
 }

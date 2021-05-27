@@ -430,7 +430,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		// 	workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
 		// }
 
-		// TODO: IBM: Should be retrieved from machine configs in the future
+		// TODO: IBM: Fetch config from masterConfig instead
 		zones, err := client.GetVPCZonesForRegion(ctx, installConfig.Config.Platform.IBMCloud.Region)
 		if err != nil {
 			return err
@@ -438,11 +438,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		data, err = ibmcloudtfvars.TFVars(
 			ibmcloudtfvars.TFVarsSources{
-				Auth:                    auth,
+				Auth:              auth,
+				CISInstanceCRN:    installConfig.Config.Platform.IBMCloud.CISInstanceCRN,
+				ResourceGroupName: installConfig.Config.Platform.IBMCloud.ResourceGroupName,
+
+				// TODO: IBM: Fetch config from masterConfig instead
 				Region:                  installConfig.Config.Platform.IBMCloud.Region,
-				CISInstanceCRN:          installConfig.Config.Platform.IBMCloud.CISInstanceCRN,
+				MachineType:             "bx2d-4x16",
 				MasterAvailabilityZones: zones,
-				ResourceGroupName:       installConfig.Config.Platform.IBMCloud.ResourceGroupName,
 				VSIImage:                installConfig.Config.Platform.IBMCloud.ClusterOSImage,
 			},
 		)
