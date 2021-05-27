@@ -87,6 +87,15 @@ volumeBindingMode: WaitForFirstConsumer
 
 [nova-az-setting]: ../openstack#setting-nova-availability-zones
 
+## Problems when changing the Machine spec for master node
+
+Changing the Machine spec (e.g. the image name) for master node will delete the instance in OpenStack and the machine status will change to `phase: failed with errorMessage: Can't find created instance`.
+This is a known limitation in cluster-api-provider-openstack where we don't support that action.
+To recover from a scenario where one or multiple master nodes are in failed status, you will have to follow the [restore procedure](https://docs.openshift.com/container-platform/4.6/backup_and_restore/replacing-unhealthy-etcd-member.html#restore-replace-stopped-etcd-member_replacing-unhealthy-etcd-member) to scale-up master nodes to reach quorum again.
+
+Even if master node was removed in Nova, it can still appear when you run `oc get machines -n openshift-machine-api`.
+To delete it, you can run: `oc delete machine --force=true -n openshift-machine-api <$NODE-NAME>`
+
 # Known Issues specific to User-Provisioned Installations
 
 ## Stale resources
