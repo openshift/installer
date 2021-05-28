@@ -47,7 +47,7 @@ variable "libvirt_master_vcpu" {
 variable "libvirt_bootstrap_memory" {
   type        = number
   description = "RAM in MiB allocated to the bootstrap node"
-  default     = 4096
+  default     = 8192
 }
 
 # Currently RHCOS maintain its default 16G size if that
