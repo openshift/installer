@@ -1062,7 +1062,7 @@ github.com/mattn/go-colorable
 github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/metal3-io/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc => github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc
+# github.com/metal3-io/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d => github.com/openshift/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d
 ## explicit
 github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1
 github.com/metal3-io/baremetal-operator/pkg/bmc
@@ -2580,7 +2580,7 @@ sigs.k8s.io/yaml
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
 # github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
 # github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
-# github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc
+# github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d
 # github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
 # github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c
 # github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8

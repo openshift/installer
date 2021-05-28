@@ -1290,6 +1290,8 @@ github.com/openshift/baremetal-operator v0.0.0-20210315180230-b37e044d24a4 h1:ox
 github.com/openshift/baremetal-operator v0.0.0-20210315180230-b37e044d24a4/go.mod h1:vaX/okUVvS3jCoBahaln8pCrAiICHp3Z/zHmVr69lAY=
 github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc h1:EWLfxK3DvQ+tgy69TRmL6K1gG7N+2pT1eUDY89C1O74=
 github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc/go.mod h1:n34Id58U3kzxyhLs+HWEX7IuScU0DMYMLVwxIvSlGCI=
+github.com/openshift/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d h1:S/ucduf5Mu7ktSj/d21079Ye4h7wC8blFFTRUfs03CU=
+github.com/openshift/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d/go.mod h1:n34Id58U3kzxyhLs+HWEX7IuScU0DMYMLVwxIvSlGCI=
 github.com/openshift/build-machinery-go v0.0.0-20200211121458-5e3d6e570160/go.mod h1:1CkcsT3aVebzRBzVTSbiKSkJMsC/CASqxesfqEMfJEc=
 github.com/openshift/build-machinery-go v0.0.0-20200424080330-082bf86082cc/go.mod h1:1CkcsT3aVebzRBzVTSbiKSkJMsC/CASqxesfqEMfJEc=
 github.com/openshift/build-machinery-go v0.0.0-20200819073603-48aa266c95f7/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
