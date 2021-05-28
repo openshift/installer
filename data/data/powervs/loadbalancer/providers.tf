@@ -1,5 +1,3 @@
-# TODO(mjturek): Remove this file once no longer needed
-
 terraform {
   required_providers {
     ibm = {
