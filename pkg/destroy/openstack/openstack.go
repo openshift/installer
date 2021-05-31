@@ -86,21 +86,20 @@ func (o *ClusterUninstaller) Run() error {
 	// deleteFuncs contains the functions that will be launched as
 	// goroutines.
 	deleteFuncs := map[string]deleteFunc{
-		"deleteServers":         deleteServers,
-		"deleteServerGroups":    deleteServerGroups,
-		"deleteTrunks":          deleteTrunks,
-		"deleteLoadBalancers":   deleteLoadBalancers,
-		"deletePorts":           deletePorts,
-		"deleteSecurityGroups":  deleteSecurityGroups,
-		"deleteRouters":         deleteRouters,
-		"deleteSubnets":         deleteSubnets,
-		"deleteSubnetPools":     deleteSubnetPools,
-		"deleteNetworks":        deleteNetworks,
-		"deleteContainers":      deleteContainers,
-		"deleteVolumes":         deleteVolumes,
-		"deleteVolumeSnapshots": deleteVolumeSnapshots,
-		"deleteFloatingIPs":     deleteFloatingIPs,
-		"deleteImages":          deleteImages,
+		"deleteServers":        deleteServers,
+		"deleteServerGroups":   deleteServerGroups,
+		"deleteTrunks":         deleteTrunks,
+		"deleteLoadBalancers":  deleteLoadBalancers,
+		"deletePorts":          deletePorts,
+		"deleteSecurityGroups": deleteSecurityGroups,
+		"deleteRouters":        deleteRouters,
+		"deleteSubnets":        deleteSubnets,
+		"deleteSubnetPools":    deleteSubnetPools,
+		"deleteNetworks":       deleteNetworks,
+		"deleteContainers":     deleteContainers,
+		"deleteVolumes":        deleteVolumes,
+		"deleteFloatingIPs":    deleteFloatingIPs,
+		"deleteImages":         deleteImages,
 	}
 	returnChannel := make(chan string)
 
@@ -1214,6 +1213,14 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	}
 
 	for _, volumeID := range volumeIDs {
+		deleted, err := deleteSnapshots(conn, volumeID, logger)
+		if err != nil {
+			return false, err
+		}
+		if !deleted {
+			return false, nil
+		}
+
 		logger.Debugf("Deleting volume %q", volumeID)
 		err = volumes.Delete(conn, volumeID, deleteOpts).ExtractErr()
 		if err != nil {
@@ -1230,25 +1237,13 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	return true, nil
 }
 
-func deleteVolumeSnapshots(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Deleting OpenStack volume snapshots")
-	defer logger.Debugf("Exiting deleting OpenStack volume snapshots")
+func deleteSnapshots(conn *gophercloud.ServiceClient, volumeID string, logger logrus.FieldLogger) (bool, error) {
+	logger.Debugf("Deleting OpenStack snapshots for volume %v", volumeID)
+	defer logger.Debugf("Exiting deleting OpenStack snapshots for volume %v", volumeID)
 
-	var clusterID string
-	for k, v := range filter {
-		if strings.ToLower(k) == "openshiftclusterid" {
-			clusterID = v
-			break
-		}
+	listOpts := snapshots.ListOpts{
+		VolumeID: volumeID,
 	}
-
-	conn, err := clientconfig.NewServiceClient("volume", opts)
-	if err != nil {
-		logger.Error(err)
-		return false, nil
-	}
-
-	listOpts := snapshots.ListOpts{}
 
 	allPages, err := snapshots.List(conn, listOpts).AllPages()
 	if err != nil {
@@ -1263,19 +1258,16 @@ func deleteVolumeSnapshots(opts *clientconfig.ClientOpts, filter Filter, logger 
 	}
 
 	for _, snapshot := range allSnapshots {
-		// Delete only those snapshots that contain cluster ID in the metadata
-		if val, ok := snapshot.Metadata[cinderCSIClusterIDKey]; ok && val == clusterID {
-			logger.Debugf("Deleting volume snapshot %q", snapshot.ID)
-			err = snapshots.Delete(conn, snapshot.ID).ExtractErr()
-			if err != nil {
-				// Ignore the error if the server cannot be found
-				var gerr gophercloud.ErrDefault404
-				if !errors.As(err, &gerr) {
-					logger.Debugf("Deleting volume snapshot %q failed: %v", snapshot.ID, err)
-					return false, nil
-				}
-				logger.Debugf("Cannot find volume snapshot %q. It's probably already been deleted.", snapshot.ID)
+		logger.Debugf("Deleting volume snapshot %q", snapshot.ID)
+		err = snapshots.Delete(conn, snapshot.ID).ExtractErr()
+		if err != nil {
+			// Ignore the error if the volume snapshot cannot be found
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
+				logger.Debugf("Deleting volume snapshot %q failed: %v", snapshot.ID, err)
+				return false, nil
 			}
+			logger.Debugf("Cannot find volume snapshot %q. It's probably already been deleted.", snapshot.ID)
 		}
 	}
 
