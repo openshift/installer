@@ -148,4 +148,5 @@ replace (
 	google.golang.org/api => google.golang.org/api v0.25.0
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 	google.golang.org/grpc => google.golang.org/grpc v1.29.1
+	github.com/ovirt/terraform-provider-ovirt => github.com/eslutsky/terraform-provider-ovirt v0.4.3-0.20210512074315-41399f7979de
 )
