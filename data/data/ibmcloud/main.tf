@@ -65,8 +65,6 @@ module "bootstrap" {
 
 module "master" {
   source     = "./master"
-
-  bootstrap_ready = module.bootstrap.ready
   
   cluster_id        = var.cluster_id
   instance_count    = var.master_count

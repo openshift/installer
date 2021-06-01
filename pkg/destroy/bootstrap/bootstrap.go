@@ -74,11 +74,6 @@ func Destroy(dir string) (err error) {
 		tempStateFilePath := filepath.Join(dir, stage.StateFilename()+".new")
 		err = copy(filepath.Join(tempDir, stage.StateFilename()), tempStateFilePath)
 		if err != nil {
-			return errors.Wrapf(err, "failed to copy %s from the temporary directory", stage.StateFilename())
-		}
-		if err := os.Rename(tempStateFilePath, filepath.Join(dir, stage.StateFilename())); err != nil {
-			return err
-		}
 	}
 
 	return nil

@@ -13,7 +13,8 @@ locals {
 resource "ibm_is_instance" "master_node" {
   count = var.instance_count
   depends_on = [
-    var.bootstrap_ready
+    var.lb_kubernetes_api_public_id,
+    var.lb_kubernetes_api_public_id
   ]
 
   # Naming:  "{prefix}-master-{zone}-{index per zone}"
