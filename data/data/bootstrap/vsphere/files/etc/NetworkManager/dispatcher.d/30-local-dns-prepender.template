@@ -17,6 +17,11 @@ case "$STATUS" in
             done
         fi
 EOF
+    
+    if [[ ! -e /etc/resolv.conf ]] || ! grep -q nameserver /etc/resolv.conf; then
+        cp /var/run/NetworkManager/resolv.conf /etc/resolv.conf
+    fi
+
     set +e
     logger -s "NM local-dns-prepender: Checking if local DNS IP is the first entry in resolv.conf"
     if grep nameserver /etc/resolv.conf | head -n 1 | grep -q "$DNS_IP" ; then
