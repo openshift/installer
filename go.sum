@@ -1286,8 +1286,6 @@ github.com/openshift/api v0.0.0-20201214114959-164a2fb63b5f/go.mod h1:aqU5Cq+kqK
 github.com/openshift/api v0.0.0-20201216151826-78a19e96f9eb/go.mod h1:aqU5Cq+kqKKPbDMqxo9FojgDeSpNJI7iuskjXjtojDg=
 github.com/openshift/api v0.0.0-20210420151714-a3c8fa53e01b h1:rHqB8raDfF9HTHOjzrDmrSpW4eNfN2JyyS2ul/RNrWY=
 github.com/openshift/api v0.0.0-20210420151714-a3c8fa53e01b/go.mod h1:dZ4kytOo3svxJHNYd0J55hwe/6IQG5gAUHUE0F3Jkio=
-github.com/openshift/baremetal-operator v0.0.0-20210315180230-b37e044d24a4 h1:ox7fndpU81UmJ3WTwhcq/PT+nThW5DOvTc84yUGIfrA=
-github.com/openshift/baremetal-operator v0.0.0-20210315180230-b37e044d24a4/go.mod h1:vaX/okUVvS3jCoBahaln8pCrAiICHp3Z/zHmVr69lAY=
 github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc h1:EWLfxK3DvQ+tgy69TRmL6K1gG7N+2pT1eUDY89C1O74=
 github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc/go.mod h1:n34Id58U3kzxyhLs+HWEX7IuScU0DMYMLVwxIvSlGCI=
 github.com/openshift/build-machinery-go v0.0.0-20200211121458-5e3d6e570160/go.mod h1:1CkcsT3aVebzRBzVTSbiKSkJMsC/CASqxesfqEMfJEc=
@@ -1373,8 +1371,8 @@ github.com/ory/dockertest v3.3.4+incompatible/go.mod h1:1vX4m9wsvi00u5bseYwXaSnh
 github.com/ostreedev/ostree-go v0.0.0-20190702140239-759a8c1ac913/go.mod h1:J6OG6YJVEWopen4avK3VNQSnALmmjvniMmni/YFYAwc=
 github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c h1:2SbYZedeIawU8sGFnohfrdEcEMBA4V8SDouG6hly+H4=
 github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
-github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210419101841-5d3f6567ce90 h1:7URZwDm8pcQukU2VH69h8eI1DQDLZtfCKkKtuvQ9/DA=
-github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210419101841-5d3f6567ce90/go.mod h1:wnTGn9+USQJ51TMV5brymzjxUfmYmnOQZuNfYeuqky8=
+github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210527150815-b3d4424a7da1 h1:0RaJz73jvqRLtctoHjDELqRnZnC74VaS4ws2xh628/w=
+github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210527150815-b3d4424a7da1/go.mod h1:wnTGn9+USQJ51TMV5brymzjxUfmYmnOQZuNfYeuqky8=
 github.com/oxtoacart/bpool v0.0.0-20150712133111-4e1c5567d7c2/go.mod h1:L3UMQOThbttwfYRNFOWLLVXMhk5Lkio4GGOtw5UrxS0=
 github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db h1:9uViuKtx1jrlXLBW/pMnhOfzn3iSEdLase/But/IZRU=

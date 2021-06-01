@@ -1178,7 +1178,7 @@ github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.opens
 # github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
 ## explicit
 github.com/ovirt/go-ovirt
-# github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210419101841-5d3f6567ce90
+# github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210527150815-b3d4424a7da1
 ## explicit
 github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db

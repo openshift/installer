@@ -610,23 +610,15 @@ func (c *providerContext) resourceOvirtVMCreate(d *schema.ResourceData, meta int
 	if err != nil {
 		return err
 	}
-	if _, ok := d.GetOk("auto_pinning_policy"); ok && versionCompareResult < 0 {
-		log.Printf("[WARN] The engine version %d.%d.%d is not supporting the auto pinning feature. "+
-			"Please update to 4.4.5 or later.", engineVer.MustMajor(), engineVer.MustMinor(), engineVer.MustBuild())
-	} else {
-		// Mimic the UI behavior. unless specified set to existing policy for high performance VMs.
-		if _, ok := d.GetOk("auto_pinning_policy"); !ok && isHighPerformance {
-			err := d.Set("auto_pinning_policy", ovirtsdk4.AUTOPINNINGPOLICY_EXISTING)
-			if err != nil {
-				return err
-			}
-		}
-		if v, ok := d.GetOk("auto_pinning_policy"); ok {
-			isAutoPinning = true
+	if v, ok := d.GetOk("auto_pinning_policy"); ok {
+		if versionCompareResult < 0 {
+			log.Printf("[WARN] The engine version %d.%d.%d does not support the auto pinning feature. "+
+				"Please update to 4.4.5 or later.", engineVer.MustMajor(), engineVer.MustMinor(), engineVer.MustBuild())
+		} else {
 			autoPinningPolicy := ovirtsdk4.AutoPinningPolicy(fmt.Sprint(v))
-
 			// if we have a policy, we need to set the pinning to all the hosts in the cluster.
 			if autoPinningPolicy != ovirtsdk4.AUTOPINNINGPOLICY_DISABLED {
+				isAutoPinning = true
 				hostsInCluster, err := ovirtGetHostsInCluster(cluster, meta)
 				if err != nil {
 					return err
