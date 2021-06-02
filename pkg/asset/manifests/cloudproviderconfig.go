@@ -152,8 +152,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	case vspheretypes.Name:
 		folderPath := installConfig.Config.Platform.VSphere.Folder
 		if len(folderPath) == 0 {
-			dataCenter := installConfig.Config.Platform.VSphere.Datacenter
-			folderPath = fmt.Sprintf("/%s/vm/%s", dataCenter, clusterID.InfraID)
+			folderPath = fmt.Sprintf("%s/vm/%s", vspheretypes.FullyQualifiedPath(installConfig.Config.Platform.VSphere.Datacenter), clusterID.InfraID)
 		}
 		vsphereConfig, err := vspheremanifests.CloudProviderConfig(
 			folderPath,

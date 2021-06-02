@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/vmware/govmomi"
@@ -36,4 +37,13 @@ func CreateVSphereClients(ctx context.Context, vcenter, username, password strin
 	}
 
 	return c.Client, restClient, nil
+}
+
+// FullyQualifiedPath takes a path and prepends a leading
+// '/' if it doesn't already have it.
+func FullyQualifiedPath(path string) string{
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	return path
 }

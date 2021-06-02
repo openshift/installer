@@ -27,13 +27,13 @@ func CloudProviderConfig(folderPath string, p *vspheretypes.Platform) (string, e
 
 	fmt.Fprintln(buf, "[Workspace]")
 	printIfNotEmpty(buf, "server", p.VCenter)
-	printIfNotEmpty(buf, "datacenter", p.Datacenter)
+	printIfNotEmpty(buf, "datacenter", vspheretypes.FullyQualifiedPath(p.Datacenter))
 	printIfNotEmpty(buf, "default-datastore", p.DefaultDatastore)
 	printIfNotEmpty(buf, "folder", folderPath)
 	fmt.Fprintln(buf, "")
 
 	fmt.Fprintf(buf, "[VirtualCenter %q]\n", p.VCenter)
-	printIfNotEmpty(buf, "datacenters", p.Datacenter)
+	printIfNotEmpty(buf, "datacenters", vspheretypes.FullyQualifiedPath(p.Datacenter))
 
 	return buf.String(), nil
 }
