@@ -17,6 +17,7 @@ type config struct {
 	Region                  string   `json:"ibmcloud_region,omitempty"`
 	BootstrapInstanceType   string   `json:"ibmcloud_bootstrap_instance_type,omitempty"`
 	CISInstanceCRN          string   `json:"ibmcloud_cis_crn,omitempty"`
+	ExtraTags               []string `json:"ibmcloud_extra_tags,omitempty"`
 	MasterAvailabilityZones []string `json:"ibmcloud_master_availability_zones"`
 	MasterInstanceType      string   `json:"ibmcloud_master_instance_type,omitempty"`
 	ResourceGroupName       string   `json:"ibmcloud_resource_group_name,omitempty"`
@@ -72,7 +73,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ImageFilePath:           cachedImage,
 
 		// TODO: IBM: Future support
-		// Region                   masterConfig.Region,
+		// ExtraTags:               masterConfig.Tags,
+		// Region:                  masterConfig.Region,
 		// BootstrapInstanceType:   masterConfig.MachineType,
 		// MasterInstanceType:      masterConfig.MachineType,
 		// MasterAvailabilityZones: masterAvailabilityZones,

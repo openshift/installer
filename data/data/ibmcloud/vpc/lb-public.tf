@@ -14,6 +14,7 @@ resource "ibm_is_lb" "kubernetes_api_public" {
   resource_group  = var.resource_group_id
   security_groups = [ ibm_is_security_group.control_plane.id ]
   subnets         = ibm_is_subnet.control_plane.*.id
+  tags            = var.tags
   type            = "public"
 }
 

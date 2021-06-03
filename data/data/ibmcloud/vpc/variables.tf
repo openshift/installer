@@ -14,6 +14,10 @@ variable "resource_group_id" {
   type = string
 }
 
+variable "tags" {
+  type = list(string)
+}
+
 variable "zone_list" {
   type = list(string)
 }

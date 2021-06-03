@@ -13,6 +13,7 @@ resource "ibm_is_instance" "bootstrap_node" {
   image          = var.vsi_image_id
   profile        = var.vsi_profile
   resource_group = var.resource_group_id
+  tags           = var.tags
 
   primary_network_interface {
     name            = "eth0"
@@ -41,6 +42,7 @@ resource "ibm_is_floating_ip" "bootstrap_floatingip" {
   name           = "${local.prefix}-bootstrap-node-ip"
   resource_group = var.resource_group_id
   target         = ibm_is_instance.bootstrap_node.primary_network_interface.0.id
+  tags           = var.tags
 }
 
 ############################################

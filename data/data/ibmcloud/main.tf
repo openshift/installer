@@ -1,6 +1,10 @@
 locals {
   description       = "Created By OpenShift Installer"
   resource_group_id = var.ibmcloud_resource_group_name == "" ? ibm_resource_group.group.0.id : data.ibm_resource_group.group.0.id
+  tags = concat(
+    [ "kubernetes.io_cluster_${var.cluster_id}:owned" ],
+    var.ibmcloud_extra_tags
+  )
 }
 
 ############################################
@@ -35,6 +39,7 @@ resource "ibm_resource_instance" "cos" {
   plan              = "standard"
   location          = "global"
   resource_group_id = local.resource_group_id
+  tags              = local.tags
 }
 
 ############################################
@@ -49,6 +54,7 @@ module "image" {
   cluster_id               = var.cluster_id
   region                   = var.ibmcloud_region
   resource_group_id        = local.resource_group_id
+  tags                     = local.tags
   cos_resource_instance_id = ibm_resource_instance.cos.id
 }
 
@@ -66,6 +72,7 @@ module "bootstrap" {
   resource_group_id        = local.resource_group_id
   security_group_id        = module.vpc.control_plane_security_group_id
   subnet_id                = module.vpc.control_plane_subnet_id_list[0]
+  tags                     = local.tags
   vpc_id                   = module.vpc.vpc_id
   vsi_image_id             = module.image.vsi_image_id
   vsi_profile              = var.ibmcloud_bootstrap_instance_type
@@ -91,6 +98,7 @@ module "master" {
   resource_group_id = local.resource_group_id
   security_group_id = module.vpc.control_plane_security_group_id
   subnet_id_list    = module.vpc.control_plane_subnet_id_list
+  tags              = local.tags
   vpc_id            = module.vpc.vpc_id
   vsi_image_id      = module.image.vsi_image_id
   vsi_profile       = var.ibmcloud_master_instance_type
@@ -135,5 +143,6 @@ module "vpc" {
   cluster_id        = var.cluster_id
   resource_group_id = local.resource_group_id
   region            = var.ibmcloud_region
+  tags              = local.tags
   zone_list         = distinct(var.ibmcloud_master_availability_zones)
 }

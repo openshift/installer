@@ -43,7 +43,20 @@ variable "ibmcloud_image_filepath" {
 # Top-level module variables (optional)
 #######################################
 
+variable "ibmcloud_extra_tags" {
+  type = list(string)
+  description = <<EOF
+(optional) Extra IBM Cloud tags to be applied to created resources.
+Example: `[ "key:value", "foo:bar" ]`
+EOF
+  default = []
+}
+
 variable "ibmcloud_resource_group_name" {
   type    = string
+  description = <<EOF
+(optional) The name of the resource group for the cluster. If this is set, the cluster is installed to that existing resource group
+otherwise a new resource group will be created using cluster id.
+EOF
   default = ""
 }

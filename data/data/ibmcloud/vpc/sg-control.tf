@@ -12,6 +12,7 @@ locals {
 resource "ibm_is_security_group" "control_plane" {
   name           = "${local.prefix}-security-group-control-plane"
   resource_group = var.resource_group_id
+  tags           = var.tags
   vpc            = ibm_is_vpc.vpc.id
 }
 

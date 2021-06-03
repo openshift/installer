@@ -34,4 +34,5 @@ resource "ibm_is_image" "image" {
   href             = "cos://${ibm_cos_bucket.images.region_location}/${ibm_cos_bucket.images.bucket_name}/${ibm_cos_bucket_object.file.key}"
   operating_system = "centos-8-amd64"
   resource_group   = var.resource_group_id
+  tags             = var.tags
 }

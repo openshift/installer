@@ -24,6 +24,7 @@ resource "ibm_is_instance" "master_node" {
   image          = var.vsi_image_id
   profile        = var.vsi_profile
   resource_group = var.resource_group_id
+  tags           = var.tags
 
   primary_network_interface {
     name   = "eth0"
