@@ -27,6 +27,8 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
+	"github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/shares"
+	sharesnapshots "github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/snapshots"
 	"github.com/gophercloud/gophercloud/pagination"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
@@ -37,6 +39,7 @@ import (
 
 const (
 	cinderCSIClusterIDKey           = "cinder.csi.openstack.org/cluster"
+	manilaCSIClusterIDKey           = "manila.csi.openstack.org/cluster"
 	minOctaviaVersionWithTagSupport = "v2.5"
 )
 
@@ -98,6 +101,7 @@ func (o *ClusterUninstaller) Run() error {
 		"deleteNetworks":       deleteNetworks,
 		"deleteContainers":     deleteContainers,
 		"deleteVolumes":        deleteVolumes,
+		"deleteShares":         deleteShares,
 		"deleteFloatingIPs":    deleteFloatingIPs,
 		"deleteImages":         deleteImages,
 	}
@@ -1224,7 +1228,7 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		logger.Debugf("Deleting volume %q", volumeID)
 		err = volumes.Delete(conn, volumeID, deleteOpts).ExtractErr()
 		if err != nil {
-			// Ignore the error if the server cannot be found
+			// Ignore the error if the volume cannot be found
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
 				logger.Debugf("Deleting volume %q failed: %v", volumeID, err)
@@ -1268,6 +1272,108 @@ func deleteSnapshots(conn *gophercloud.ServiceClient, volumeID string, logger lo
 				return false, nil
 			}
 			logger.Debugf("Cannot find volume snapshot %q. It's probably already been deleted.", snapshot.ID)
+		}
+	}
+
+	return true, nil
+}
+
+func deleteShares(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting OpenStack shares")
+	defer logger.Debugf("Exiting deleting OpenStack shares")
+
+	var clusterID string
+	for k, v := range filter {
+		if strings.ToLower(k) == "openshiftclusterid" {
+			clusterID = v
+			break
+		}
+	}
+
+	conn, err := clientconfig.NewServiceClient("sharev2", opts)
+	if err != nil {
+		// Ignore the error if Manila is not available in the cloud
+		var gerr *gophercloud.ErrEndpointNotFound
+		if errors.As(err, &gerr) {
+			logger.Debug("Skip share deletion because Manila endpoint is not found")
+			return true, nil
+		}
+		logger.Error(err)
+		return false, nil
+	}
+
+	listOpts := shares.ListOpts{
+		Metadata: map[string]string{manilaCSIClusterIDKey: clusterID},
+	}
+
+	allPages, err := shares.ListDetail(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	allShares, err := shares.ExtractShares(allPages)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	for _, share := range allShares {
+		deleted, err := deleteShareSnapshots(conn, share.ID, logger)
+		if err != nil {
+			return false, err
+		}
+		if !deleted {
+			return false, nil
+		}
+
+		logger.Debugf("Deleting share %q", share.ID)
+		err = shares.Delete(conn, share.ID).ExtractErr()
+		if err != nil {
+			// Ignore the error if the share cannot be found
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
+				logger.Debugf("Deleting share %q failed: %v", share.ID, err)
+				return false, nil
+			}
+			logger.Debugf("Cannot find share %q. It's probably already been deleted.", share.ID)
+		}
+	}
+
+	return true, nil
+}
+
+func deleteShareSnapshots(conn *gophercloud.ServiceClient, shareID string, logger logrus.FieldLogger) (bool, error) {
+	logger.Debugf("Deleting OpenStack snapshots for share %v", shareID)
+	defer logger.Debugf("Exiting deleting OpenStack snapshots for share %v", shareID)
+
+	listOpts := sharesnapshots.ListOpts{
+		ShareID: shareID,
+	}
+
+	allPages, err := sharesnapshots.ListDetail(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	allSnapshots, err := sharesnapshots.ExtractSnapshots(allPages)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	for _, snapshot := range allSnapshots {
+		logger.Debugf("Deleting share snapshot %q", snapshot.ID)
+		err = sharesnapshots.Delete(conn, snapshot.ID).ExtractErr()
+		if err != nil {
+			// Ignore the error if the share snapshot cannot be found
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
+				logger.Debugf("Deleting share snapshot %q failed: %v", snapshot.ID, err)
+				return false, nil
+			}
+			logger.Debugf("Cannot find share snapshot %q. It's probably already been deleted.", snapshot.ID)
 		}
 	}
 
