@@ -104,10 +104,6 @@ func osImage(config *types.InstallConfig) (string, error) {
 		}
 		return "", fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
 	case ibmcloud.Name:
-		if config.Platform.IBMCloud.ClusterOSImage != "" {
-			return config.Platform.IBMCloud.ClusterOSImage, nil
-		}
-
 		if a, ok := streamArch.Artifacts["ibmcloud"]; ok {
 			return rhcos.FindArtifactURL(a)
 		}

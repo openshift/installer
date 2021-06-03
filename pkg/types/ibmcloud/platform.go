@@ -6,9 +6,6 @@ type Platform struct {
 	// created.
 	Region string `json:"region"`
 
-	// ClusterOSImage is the name of the custom RHCOS image.
-	ClusterOSImage string `json:"clusterOSImage"`
-
 	// ResourceGroupName is the name of an already existing resource group where the
 	// cluster should be installed. This resource group should only be used for
 	// this specific cluster and the cluster components will assume ownership of

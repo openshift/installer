@@ -19,7 +19,6 @@ type editFunctions []func(ic *types.InstallConfig)
 var (
 	validRegion                  = "us-south"
 	validCIDR                    = "10.0.0.0/16"
-	validClusterOSImage          = "valid-rhcos-image"
 	validDNSZoneID               = "valid-zone-id"
 	validBaseDomain              = "valid.base.domain"
 	validVPC                     = "valid-vpc"
@@ -37,10 +36,8 @@ var (
 
 	validInstanceProfies = []vpcv1.InstanceProfile{{Name: &[]string{"type-a"}[0]}, {Name: &[]string{"type-b"}[0]}}
 
-	notFoundBaseDomain             = func(ic *types.InstallConfig) { ic.BaseDomain = "notfound.base.domain" }
-	notFoundInRegionClusterOSImage = func(ic *types.InstallConfig) { ic.IBMCloud.Region = "us-east" }
-	notFoundClusterOSImage         = func(ic *types.InstallConfig) { ic.IBMCloud.ClusterOSImage = "not-found" }
-	validVPCConfig                 = func(ic *types.InstallConfig) {
+	notFoundBaseDomain = func(ic *types.InstallConfig) { ic.BaseDomain = "notfound.base.domain" }
+	validVPCConfig     = func(ic *types.InstallConfig) {
 		ic.IBMCloud.VPC = validVPC
 		ic.IBMCloud.Subnets = validSubnets
 	}
@@ -92,8 +89,7 @@ func validInstallConfig() *types.InstallConfig {
 
 func validMinimalPlatform() *ibmcloudtypes.Platform {
 	return &ibmcloudtypes.Platform{
-		Region:         validRegion,
-		ClusterOSImage: validClusterOSImage,
+		Region: validRegion,
 	}
 }
 
@@ -111,16 +107,6 @@ func TestValidate(t *testing.T) {
 			name:     "Valid install config",
 			edits:    editFunctions{},
 			errorMsg: "",
-		},
-		{
-			name:     "not found clusterOSImage in region",
-			edits:    editFunctions{notFoundInRegionClusterOSImage},
-			errorMsg: `^platform\.ibmcloud\.clusterOSImage: Not found: "valid-rhcos-image"$`,
-		},
-		{
-			name:     "not found clusterOSImage",
-			edits:    editFunctions{notFoundClusterOSImage},
-			errorMsg: `^platform\.ibmcloud\.clusterOSImage: Not found: "not-found"$`,
 		},
 		{
 			name:     "valid vpc config",
@@ -158,10 +144,6 @@ func TestValidate(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	ibmcloudClient := mock.NewMockAPI(mockCtrl)
-
-	ibmcloudClient.EXPECT().GetCustomImageByName(gomock.Any(), validClusterOSImage, validRegion).Return(&vpcv1.Image{}, nil).AnyTimes()
-	ibmcloudClient.EXPECT().GetCustomImageByName(gomock.Any(), validClusterOSImage, gomock.Not(validRegion)).Return(nil, fmt.Errorf("")).AnyTimes()
-	ibmcloudClient.EXPECT().GetCustomImageByName(gomock.Any(), gomock.Not(validClusterOSImage), validRegion).Return(nil, fmt.Errorf("")).AnyTimes()
 
 	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), validVPC).Return(&vpcv1.VPC{}, nil).AnyTimes()
 	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), "not-found").Return(nil, &ibmcloud.VPCResourceNotFoundError{})

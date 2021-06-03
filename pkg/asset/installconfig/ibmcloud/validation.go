@@ -37,9 +37,6 @@ func Validate(client API, ic *types.InstallConfig) error {
 func validatePlatform(client API, ic *types.InstallConfig, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, validateClusterOSImage(client, ic.Platform.IBMCloud.ClusterOSImage, ic.Platform.IBMCloud.Region, path)...)
-	allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
-
 	if ic.Platform.IBMCloud.ResourceGroupName != "" {
 		allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
 	}
@@ -145,15 +142,6 @@ func validateResourceGroup(client API, ic *types.InstallConfig, path *field.Path
 		return append(allErrs, field.NotFound(path.Child("resourceGroupName"), ic.IBMCloud.ResourceGroupName))
 	}
 
-	return allErrs
-}
-
-func validateClusterOSImage(client API, imageName string, region string, path *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-	customImage, _ := client.GetCustomImageByName(context.TODO(), imageName, region)
-	if customImage == nil {
-		allErrs = append(allErrs, field.NotFound(path.Child("clusterOSImage"), imageName))
-	}
 	return allErrs
 }
 

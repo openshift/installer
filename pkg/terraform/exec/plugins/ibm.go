@@ -1,8 +1,8 @@
 package plugins
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/plugin"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm"
+	"github.com/hashicorp/terraform-plugin-sdk/plugin"
 )
 
 func init() {

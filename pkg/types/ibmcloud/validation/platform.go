@@ -42,10 +42,6 @@ func ValidatePlatform(p *ibmcloud.Platform, fldPath *field.Path) field.ErrorList
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, regionShortNames))
 	}
 
-	if p.ClusterOSImage == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), "clusterOSImage must be specified"))
-	}
-
 	allErrs = append(allErrs, validateVPCConfig(p, fldPath)...)
 
 	if p.DefaultMachinePlatform != nil {

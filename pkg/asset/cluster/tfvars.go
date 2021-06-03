@@ -404,7 +404,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case ibmcloud.Name:
-		client, err := ibmcloudconfig.NewClient(ctx)
+		client, err := ibmcloudconfig.NewClient()
 		if err != nil {
 			return err
 		}
@@ -436,17 +436,20 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 
+		// TODO: Get CRN from InstallConfig metadata or BaseDomain
+		crnstr := "crn:v1:bluemix:public:internet-svcs:us-south:a/1e1f75646aef447814a6d907cc83fb3c:instance::"
+
 		data, err = ibmcloudtfvars.TFVars(
 			ibmcloudtfvars.TFVarsSources{
 				Auth:              auth,
-				CISInstanceCRN:    installConfig.Config.Platform.IBMCloud.CISInstanceCRN,
+				CISInstanceCRN:    crnstr,
 				ResourceGroupName: installConfig.Config.Platform.IBMCloud.ResourceGroupName,
 
 				// TODO: IBM: Fetch config from masterConfig instead
 				Region:                  installConfig.Config.Platform.IBMCloud.Region,
 				MachineType:             "bx2d-4x16",
 				MasterAvailabilityZones: zones,
-				VSIImage:                installConfig.Config.Platform.IBMCloud.ClusterOSImage,
+				ImageURL:                string(*rhcosImage),
 			},
 		)
 		if err != nil {

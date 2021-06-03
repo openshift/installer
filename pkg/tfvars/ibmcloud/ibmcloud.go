@@ -2,6 +2,9 @@ package ibmcloud
 
 import (
 	"encoding/json"
+
+	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+	"github.com/pkg/errors"
 )
 
 // Auth is the collection of credentials that will be used by terrform.
@@ -17,7 +20,7 @@ type config struct {
 	MasterAvailabilityZones []string `json:"ibmcloud_master_availability_zones"`
 	MasterInstanceType      string   `json:"ibmcloud_master_instance_type,omitempty"`
 	ResourceGroupName       string   `json:"ibmcloud_resource_group_name,omitempty"`
-	VSIImage                string   `json:"ibmcloud_vsi_image,omitempty"`
+	ImageFilePath           string   `json:"ibmcloud_image_filepath,omitempty"`
 
 	// TODO: IBM[#100]: Support publish strategy modes
 	// PublishStrategy         string   `json:"ibmcloud_publish_strategy,omitempty"`
@@ -33,7 +36,7 @@ type TFVarsSources struct {
 	MachineType             string
 	MasterAvailabilityZones []string
 	Region                  string
-	VSIImage                string
+	ImageURL                string
 
 	// TODO: IBM: Future support
 	// MasterConfigs      []*ibmcloudprovider.ibmcloudMachineProviderSpec
@@ -43,6 +46,11 @@ type TFVarsSources struct {
 
 // TFVars generates ibmcloud-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
+	cachedImage, err := cache.DownloadImageFile(sources.ImageURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to use cached ibmcloud image")
+	}
+
 	// TODO: IBM: Future support
 	// masterConfig := sources.MasterConfigs[0]
 	// workerConfig := sources.WorkerConfigs[0]
@@ -61,7 +69,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterAvailabilityZones: sources.MasterAvailabilityZones,
 		MasterInstanceType:      sources.MachineType,
 		Region:                  sources.Region,
-		VSIImage:                sources.VSIImage,
+		ImageFilePath:           cachedImage,
 
 		// TODO: IBM: Future support
 		// Region                   masterConfig.Region,

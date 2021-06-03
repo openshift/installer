@@ -1,22 +1,10 @@
 ############################################
-# COS service instance
-############################################
-
-resource "ibm_resource_instance" "cos" {
-  name              = "${local.prefix}-cos"
-  service           = "cloud-object-storage"
-  plan              = "standard"
-  location          = "global"
-  resource_group_id = var.resource_group_id
-}
-
-############################################
 # COS bucket
 ############################################
 
 resource "ibm_cos_bucket" "bootstrap_ignition" {
   bucket_name          = "${local.prefix}-bootstrap-ignition"
-  resource_instance_id = ibm_resource_instance.cos.id
+  resource_instance_id = var.cos_resource_instance_id
   region_location      = var.cos_bucket_region
   storage_class        = "smart"
 }

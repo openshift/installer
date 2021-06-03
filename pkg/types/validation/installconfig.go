@@ -560,7 +560,7 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 		aws.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
 		azure.Name:    {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
 		gcp.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
-		ibmcloud.Name: {types.PassthroughCredentialsMode},
+		ibmcloud.Name: {types.ManualCredentialsMode},
 	}
 	if validModes, ok := validPlatformCredentialsModes[platform]; ok {
 		validModesSet := sets.NewString()

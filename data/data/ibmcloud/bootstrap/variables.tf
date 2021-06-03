@@ -6,6 +6,10 @@ variable "cluster_id" {
   type = string
 }
 
+variable "cos_resource_instance_id" {
+  type = string
+}
+
 variable "cos_bucket_region" {
   type = string
 }

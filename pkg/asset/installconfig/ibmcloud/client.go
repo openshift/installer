@@ -20,8 +20,6 @@ import (
 // API represents the calls made to the API.
 type API interface {
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
-	GetCustomImageByName(ctx context.Context, imageName string, region string) (*vpcv1.Image, error)
-	GetCustomImages(ctx context.Context, region string) ([]vpcv1.Image, error)
 	GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error)
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*EncryptionKeyResponse, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
@@ -236,48 +234,6 @@ func (c *Client) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet,
 	return subnet, err
 }
 
-// GetCustomImages gets a list of custom images within a region. If the image
-// status is not "available" it is omitted.
-func (c *Client) GetCustomImages(ctx context.Context, region string) ([]vpcv1.Image, error) {
-	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
-	vpcRegion, err := c.getVPCRegionByName(ctx, region)
-	if err != nil {
-		return nil, err
-	}
-
-	var images []vpcv1.Image
-	privateImages, err := c.listPrivateImagesForRegion(ctx, *vpcRegion)
-	if err != nil {
-		return nil, err
-	}
-	for _, image := range privateImages {
-		if *image.Status == vpcv1.ImageStatusAvailableConst {
-			images = append(images, image)
-		}
-	}
-	return images, nil
-}
-
-// GetCustomImageByName gets a custom image using its name and region.
-func (c *Client) GetCustomImageByName(ctx context.Context, imageName string, region string) (*vpcv1.Image, error) {
-	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
-	customImages, err := c.GetCustomImages(ctx, region)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, image := range customImages {
-		if *image.Name == imageName && *image.Status == vpcv1.ImageStatusAvailableConst {
-			return &image, nil
-		}
-	}
-	return nil, fmt.Errorf("image %q not found", imageName)
-}
-
 // GetVSIProfiles gets a list of all VSI profiles.
 func (c *Client) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error) {
 	listInstanceProfilesOptions := c.vpcAPI.NewListInstanceProfilesOptions()
@@ -329,28 +285,6 @@ func (c *Client) GetVPCZonesForRegion(ctx context.Context, region string) ([]str
 		response[idx] = *zone.Name
 	}
 	return response, err
-}
-
-func (c *Client) getVPCRegionByName(ctx context.Context, regionName string) (*vpcv1.Region, error) {
-	region, _, err := c.vpcAPI.GetRegionWithContext(ctx, c.vpcAPI.NewGetRegionOptions(regionName))
-	return region, err
-}
-
-func (c *Client) listPrivateImagesForRegion(ctx context.Context, region vpcv1.Region) ([]vpcv1.Image, error) {
-	listImageOptions := c.vpcAPI.NewListImagesOptions()
-	listImageOptions.SetVisibility(vpcv1.ImageVisibilityPrivateConst)
-
-	err := c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to set vpc api service url")
-	}
-
-	listImagesResponse, _, err := c.vpcAPI.ListImagesWithContext(ctx, listImageOptions)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to list vpc images")
-	}
-
-	return listImagesResponse.Images, nil
 }
 
 func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {

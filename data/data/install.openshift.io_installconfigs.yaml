@@ -854,7 +854,7 @@ spec:
               \n For each of the following platforms, the field can set to the specified
               values. For all other platforms, the field must not be set. AWS: \"Mint\",
               \"Passthrough\", \"Manual\" Azure: \"Mint\", \"Passthrough\", \"Manual\"
-              GCP: \"Mint\", \"Passthrough\", \"Manual\""
+              GCP: \"Mint\", \"Passthrough\", \"Manual\" IBMCloud: \"Manual\""
             enum:
             - ""
             - Mint
@@ -1537,9 +1537,6 @@ spec:
                 description: IBMCloud is the configuration used when installing on
                   IBM Cloud.
                 properties:
-                  clusterOSImage:
-                    description: ClusterOSImage is the name of the custom RHCOS image.
-                    type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on IBM Cloud for machine pools which do
@@ -1598,7 +1595,6 @@ spec:
                       defined.
                     type: string
                 required:
-                - clusterOSImage
                 - region
                 type: object
               kubevirt:

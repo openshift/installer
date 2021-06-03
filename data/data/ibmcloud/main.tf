@@ -13,14 +13,6 @@ provider "ibm" {
 }
 
 ############################################
-# Datasources
-############################################
-
-data "ibm_is_image" "vsi_image" {
-  name = var.ibmcloud_vsi_image
-}
-
-############################################
 # Resource group
 ############################################
 
@@ -35,22 +27,49 @@ data "ibm_resource_group" "group" {
 }
 
 ############################################
+# Shared COS Instance
+############################################
+resource "ibm_resource_instance" "cos" {
+  name              = "${var.cluster_id}-cos"
+  service           = "cloud-object-storage"
+  plan              = "standard"
+  location          = "global"
+  resource_group_id = local.resource_group_id
+}
+
+############################################
+# Import VPC Custom Image
+############################################
+
+module "image" {
+  source = "./image"
+
+  name                     = "${var.cluster_id}-rhcos"
+  image_filepath           = var.ibmcloud_image_filepath
+  cluster_id               = var.cluster_id
+  region                   = var.ibmcloud_region
+  resource_group_id        = local.resource_group_id
+  cos_resource_instance_id = ibm_resource_instance.cos.id
+}
+
+############################################
 # Bootstrap module
 ############################################
 
 module "bootstrap" {
   source = "./bootstrap"
   
-  cluster_id        = var.cluster_id
-  cos_bucket_region = var.ibmcloud_region
-  ignition_file     = var.ignition_bootstrap_file
-  resource_group_id = local.resource_group_id
-  security_group_id = module.vpc.control_plane_security_group_id
-  subnet_id         = module.vpc.control_plane_subnet_id_list[0]
-  vpc_id            = module.vpc.vpc_id
-  vsi_image_id      = data.ibm_is_image.vsi_image.id
-  vsi_profile       = var.ibmcloud_bootstrap_instance_type
-  zone              = module.vpc.control_plane_subnet_zone_list[0]
+  cluster_id               = var.cluster_id
+  cos_resource_instance_id = ibm_resource_instance.cos.id
+  cos_bucket_region        = var.ibmcloud_region
+  ignition_file            = var.ignition_bootstrap_file
+  resource_group_id        = local.resource_group_id
+  security_group_id        = module.vpc.control_plane_security_group_id
+  subnet_id                = module.vpc.control_plane_subnet_id_list[0]
+  vpc_id                   = module.vpc.vpc_id
+  vsi_image_id             = module.image.vsi_image_id
+  vsi_profile              = var.ibmcloud_bootstrap_instance_type
+  zone                     = module.vpc.control_plane_subnet_zone_list[0]
 
   lb_kubernetes_api_public_id       = module.vpc.lb_kubernetes_api_public_id
   lb_kubernetes_api_private_id      = module.vpc.lb_kubernetes_api_private_id
@@ -73,7 +92,7 @@ module "master" {
   security_group_id = module.vpc.control_plane_security_group_id
   subnet_id_list    = module.vpc.control_plane_subnet_id_list
   vpc_id            = module.vpc.vpc_id
-  vsi_image_id      = data.ibm_is_image.vsi_image.id
+  vsi_image_id      = module.image.vsi_image_id
   vsi_profile       = var.ibmcloud_master_instance_type
   zone_list         = module.vpc.control_plane_subnet_zone_list
 

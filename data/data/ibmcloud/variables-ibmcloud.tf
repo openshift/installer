@@ -34,9 +34,9 @@ variable "ibmcloud_master_availability_zones" {
   description = "The availability zones in which to create the masters. The length of this list must match master_count."
 }
 
-variable "ibmcloud_vsi_image" {
+variable "ibmcloud_image_filepath" {
   type        = string
-  description = "Name of VPC VSI image to use for all nodes."
+  description = "The file path to the RHCOS image"
 }
 
 #######################################

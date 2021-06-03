@@ -43,7 +43,7 @@ func Test_PrintFields(t *testing.T) {
       CredentialsMode is used to explicitly set the mode with which CredentialRequests are satisfied. 
  If this field is set, then the installer will not attempt to query the cloud permissions before attempting installation. If the field is not set or empty, then the installer will perform its normal verification that the credentials provided are sufficient to perform an installation. 
  There are three possible values for this field, but the valid values are dependent upon the platform being used. "Mint": create new credentials with a subset of the overall permissions for each CredentialsRequest "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest "Manual": CredentialsRequests must be handled manually by the user 
- For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: "Mint", "Passthrough", "Manual" Azure: "Mint", "Passthrough", "Manual" GCP: "Mint", "Passthrough", "Manual"
+ For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: "Mint", "Passthrough", "Manual" Azure: "Mint", "Passthrough", "Manual" GCP: "Mint", "Passthrough", "Manual" IBMCloud: "Manual"
 
     fips <boolean>
       Default: false
