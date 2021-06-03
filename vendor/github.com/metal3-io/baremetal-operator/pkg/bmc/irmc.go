@@ -52,6 +52,9 @@ func (a *iRMCAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interfac
 		"irmc_username": bmcCreds.Username,
 		"irmc_password": bmcCreds.Password,
 		"irmc_address":  a.hostname,
+		"ipmi_username": bmcCreds.Username,
+		"ipmi_password": bmcCreds.Password,
+		"ipmi_address":  a.hostname,
 	}
 
 	if a.disableCertificateVerification {
