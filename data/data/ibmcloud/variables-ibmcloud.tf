@@ -52,6 +52,17 @@ EOF
   default = []
 }
 
+variable "ibmcloud_publish_strategy" {
+  type        = string
+  description = "The cluster publishing strategy, either Internal or External"
+  default     = "External"
+  # TODO: Supported on tf 0.13
+  # validation {
+  #   condition     = "External" || "Internal"
+  #   error_message = "The ibmcloud_publish_strategy value must be \"External\" or \"Internal\"."
+  # }
+}
+
 variable "ibmcloud_resource_group_name" {
   type    = string
   description = <<EOF

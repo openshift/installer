@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
 )
 
@@ -20,17 +21,16 @@ type config struct {
 	ExtraTags               []string `json:"ibmcloud_extra_tags,omitempty"`
 	MasterAvailabilityZones []string `json:"ibmcloud_master_availability_zones"`
 	MasterInstanceType      string   `json:"ibmcloud_master_instance_type,omitempty"`
+	PublishStrategy         string   `json:"ibmcloud_publish_strategy,omitempty"`
 	ResourceGroupName       string   `json:"ibmcloud_resource_group_name,omitempty"`
 	ImageFilePath           string   `json:"ibmcloud_image_filepath,omitempty"`
-
-	// TODO: IBM[#100]: Support publish strategy modes
-	// PublishStrategy         string   `json:"ibmcloud_publish_strategy,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
 	Auth              Auth
 	CISInstanceCRN    string
+	PublishStrategy   types.PublishingStrategy
 	ResourceGroupName string
 
 	// TODO: IBM: Fetch config from masterConfig instead
@@ -42,7 +42,6 @@ type TFVarsSources struct {
 	// TODO: IBM: Future support
 	// MasterConfigs      []*ibmcloudprovider.ibmcloudMachineProviderSpec
 	// WorkerConfigs      []*ibmcloudprovider.ibmcloudMachineProviderSpec
-	// PublishStrategy types.PublishingStrategy
 }
 
 // TFVars generates ibmcloud-specific Terraform variables launching the cluster.
@@ -63,6 +62,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	cfg := &config{
 		Auth:              sources.Auth,
 		CISInstanceCRN:    sources.CISInstanceCRN,
+		PublishStrategy:   string(sources.PublishStrategy),
 		ResourceGroupName: sources.ResourceGroupName,
 
 		// TODO: IBM: Fetch config from masterConfig instead
@@ -78,7 +78,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		// BootstrapInstanceType:   masterConfig.MachineType,
 		// MasterInstanceType:      masterConfig.MachineType,
 		// MasterAvailabilityZones: masterAvailabilityZones,
-		// PublishStrategy:         string(sources.PublishStrategy),
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

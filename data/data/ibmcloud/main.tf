@@ -1,5 +1,6 @@
 locals {
   description       = "Created By OpenShift Installer"
+  public_endpoints  = var.ibmcloud_publish_strategy == "External" ? true : false
   resource_group_id = var.ibmcloud_resource_group_name == "" ? ibm_resource_group.group.0.id : data.ibm_resource_group.group.0.id
   tags = concat(
     [ "kubernetes.io_cluster_${var.cluster_id}:owned" ],
@@ -69,6 +70,7 @@ module "bootstrap" {
   cos_resource_instance_id = ibm_resource_instance.cos.id
   cos_bucket_region        = var.ibmcloud_region
   ignition_file            = var.ignition_bootstrap_file
+  public_endpoints         = local.public_endpoints
   resource_group_id        = local.resource_group_id
   security_group_id        = module.vpc.control_plane_security_group_id
   subnet_id                = module.vpc.control_plane_subnet_id_list[0]
@@ -95,6 +97,7 @@ module "master" {
   cluster_id        = var.cluster_id
   instance_count    = var.master_count
   ignition          = var.ignition_master
+  public_endpoints  = local.public_endpoints
   resource_group_id = local.resource_group_id
   security_group_id = module.vpc.control_plane_security_group_id
   subnet_id_list    = module.vpc.control_plane_subnet_id_list
@@ -141,6 +144,7 @@ module "vpc" {
   source = "./vpc"
   
   cluster_id        = var.cluster_id
+  public_endpoints  = local.public_endpoints
   resource_group_id = local.resource_group_id
   region            = var.ibmcloud_region
   tags              = local.tags

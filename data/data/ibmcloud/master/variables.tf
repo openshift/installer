@@ -34,6 +34,10 @@ variable "lb_pool_machine_config_id" {
   type = string
 }
 
+variable "public_endpoints" {
+  type = bool
+}
+
 variable "resource_group_id" {
   type = string
 }

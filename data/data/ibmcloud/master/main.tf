@@ -13,7 +13,7 @@ locals {
 resource "ibm_is_instance" "master_node" {
   count = var.instance_count
   depends_on = [
-    var.lb_kubernetes_api_public_id,
+    var.lb_kubernetes_api_private_id,
     var.lb_kubernetes_api_public_id
   ]
 
@@ -44,7 +44,7 @@ resource "ibm_is_instance" "master_node" {
 ############################################
 
 resource "ibm_is_lb_pool_member" "kubernetes_api_public" {
-  count          = var.instance_count
+  count          = var.public_endpoints ? var.instance_count : 0
 
   lb             = var.lb_kubernetes_api_public_id
   pool           = var.lb_pool_kubernetes_api_public_id

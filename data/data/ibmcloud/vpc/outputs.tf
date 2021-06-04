@@ -35,7 +35,7 @@ output "compute_subnet_zone_list" {
 }
 
 output "lb_kubernetes_api_public_hostname" {
-  value = ibm_is_lb.kubernetes_api_public.hostname
+  value = var.public_endpoints ? ibm_is_lb.kubernetes_api_public.0.hostname : ""
 }
 
 output "lb_kubernetes_api_public_id" {
@@ -43,7 +43,7 @@ output "lb_kubernetes_api_public_id" {
   depends_on = [
     ibm_is_lb_listener.kubernetes_api_public
   ]
-  value = ibm_is_lb.kubernetes_api_public.id
+  value = var.public_endpoints ? ibm_is_lb.kubernetes_api_public.0.id : ""
 }
 
 output "lb_kubernetes_api_private_hostname" {
@@ -60,7 +60,7 @@ output "lb_kubernetes_api_private_id" {
 }
 
 output "lb_pool_kubernetes_api_public_id" {
-  value = ibm_is_lb_pool.kubernetes_api_public.id
+  value = var.public_endpoints ? ibm_is_lb_pool.kubernetes_api_public.0.id : ""
 }
 
 output "lb_pool_kubernetes_api_private_id" {

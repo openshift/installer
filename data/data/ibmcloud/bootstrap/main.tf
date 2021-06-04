@@ -39,6 +39,8 @@ resource "ibm_is_instance" "bootstrap_node" {
 ############################################
 
 resource "ibm_is_floating_ip" "bootstrap_floatingip" {
+  count          = var.public_endpoints ? 1 : 0
+
   name           = "${local.prefix}-bootstrap-node-ip"
   resource_group = var.resource_group_id
   target         = ibm_is_instance.bootstrap_node.primary_network_interface.0.id
@@ -50,6 +52,8 @@ resource "ibm_is_floating_ip" "bootstrap_floatingip" {
 ############################################
 
 resource "ibm_is_lb_pool_member" "kubernetes_api_public" {
+  count          = var.public_endpoints ? 1 : 0
+
   lb             = var.lb_kubernetes_api_public_id
   pool           = var.lb_pool_kubernetes_api_public_id
   port           = local.port_kubernetes_api

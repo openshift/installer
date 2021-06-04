@@ -443,6 +443,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			ibmcloudtfvars.TFVarsSources{
 				Auth:              auth,
 				CISInstanceCRN:    crnstr,
+				PublishStrategy:   installConfig.Config.Publish,
 				ResourceGroupName: installConfig.Config.Platform.IBMCloud.ResourceGroupName,
 
 				// TODO: IBM: Fetch config from masterConfig instead
