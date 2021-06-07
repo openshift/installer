@@ -245,6 +245,11 @@ then
 	--entrypoint /bin/bash "${RELEASE_IMAGE_DIGEST}" \
 	-c "cat /release-manifests/0000_26_cloud-controller-manager-operator_01_images.configmap.yaml" > manifests/ccm-images.yaml
 
+	ADDITIONAL_FLAGS=""
+	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
+		ADDITIONAL_FLAGS="--cloud-config-file=/assets/manifests/cloud-provider-config.yaml"
+	fi
+
 	bootkube_podman_run \
 		--name cloud-controller-render \
 		--volume "$PWD:/assets:z" \
@@ -252,10 +257,14 @@ then
 		/render run \
 		--images-file=/assets/manifests/ccm-images.yaml \
 		--dest-dir=/assets/cloud-controller-manager-bootstrap \
-		--cluster-infrastructure-file=/assets/manifests/cluster-infrastructure-02-config.yml
+		--cluster-infrastructure-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		${ADDITIONAL_FLAGS}
 
 	# Copy rendered resources to manifests folder
-	cp cloud-controller-manager-bootstrap/manifests/* manifests/
+	cp -r cloud-controller-manager-bootstrap/bootstrap/. bootstrap-manifests/
+	# Copy cloud config to /etc/kubernetes/bootstrap-configs
+	cp -r cloud-controller-manager-bootstrap/config/. /etc/kubernetes/bootstrap-configs
+
 
 	touch cloud-controller-manager-bootstrap.done
     record_service_stage_success
