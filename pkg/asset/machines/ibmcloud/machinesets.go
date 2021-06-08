@@ -7,11 +7,13 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*machineapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]*machineapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != ibmcloud.Name {
 		return nil, fmt.Errorf("non-IBMCloud configuration: %q", configPlatform)
 	}
@@ -34,10 +36,10 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			replicas++
 		}
 
-		// provider, err := provider(clusterID, platform, mpool, osImage, idx, role, userDataSecret)
-		// if err != nil {
-		// 	return nil, errors.Wrap(err, "failed to create provider")
-		// }
+		provider, err := provider(clusterID, platform, mpool, idx, role, userDataSecret)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create provider")
+		}
 		name := fmt.Sprintf("%s-%s-%s", clusterID, pool.Name, strings.TrimPrefix(az, fmt.Sprintf("%s-", platform.Region)))
 		mset := &machineapi.MachineSet{
 			TypeMeta: metav1.TypeMeta{
@@ -69,9 +71,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 						},
 					},
 					Spec: machineapi.MachineSpec{
-						// TODO: IBM: uncomment and use provider when it's implemented.
 						ProviderSpec: machineapi.ProviderSpec{
-							// 	Value: &runtime.RawExtension{Object: provider},
+							Value: &runtime.RawExtension{Object: provider},
 						},
 					},
 				},

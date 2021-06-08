@@ -250,7 +250,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.IBMCloud = &mpool
-		machines, err = ibmcloud.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = ibmcloud.Machines(clusterID.InfraID, ic, &pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}

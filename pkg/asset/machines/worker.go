@@ -376,7 +376,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				mpool.Zones = azs
 			}
 			pool.Platform.IBMCloud = &mpool
-			sets, err := ibmcloud.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+			sets, err := ibmcloud.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
