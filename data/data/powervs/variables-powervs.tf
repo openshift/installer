@@ -34,6 +34,12 @@ variable "ibmcloud_zone" {
   }
 }
 
+variable "powervs_resource_group" {
+  type        = string
+  description = "The cloud instance resource group"
+  default     = ""
+}
+
 variable "cloud_instance_id" {
   type        = string
   description = "The cloud instance ID of your account"
