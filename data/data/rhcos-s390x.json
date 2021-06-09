@@ -1,5 +1,5 @@
 {
-    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.8-s390x/48.84.202105190719-0/s390x/",
+    "baseURI": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.8-s390x/48.84.202105190719-0/s390x/",
     "buildid": "48.84.202105190719-0",
     "images": {
         "dasd": {

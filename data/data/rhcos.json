@@ -68,7 +68,7 @@
         "image": "rhcos-48.84.202105190318-0-azure.x86_64.vhd",
         "url": "https://rhcos.blob.core.windows.net/imagebucket/rhcos-48.84.202105190318-0-azure.x86_64.vhd"
     },
-    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.8/48.84.202105190318-0/x86_64/",
+    "baseURI": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.8/48.84.202105190318-0/x86_64/",
     "buildid": "48.84.202105190318-0",
     "gcp": {
         "image": "rhcos-48-84-202105190318-0-gcp-x86-64",
