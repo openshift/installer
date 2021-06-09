@@ -7,7 +7,7 @@ import urllib.request
 
 # An app running in the CI cluster exposes this public endpoint about ART RHCOS
 # builds.  Do not try to e.g. point to RHT-internal endpoints.
-RHCOS_RELEASES_APP = 'https://releases-art-rhcos.svc.ci.openshift.org'
+RHCOS_RELEASES_APP = 'https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("meta", action='store')
