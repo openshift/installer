@@ -134,3 +134,8 @@ This determined whether User defined routing will be used for egress to Internet
 When false, Standard LB will be used for egress to the Internet.
 EOF
 }
+
+variable "azure_storage_suffix" {
+  type        = string
+  description = "This is the 5 character random suffix used for azure storage account."
+}
