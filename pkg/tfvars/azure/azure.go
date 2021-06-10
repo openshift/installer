@@ -2,6 +2,8 @@ package azure
 
 import (
 	"encoding/json"
+	"math/rand"
+	"time"
 
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
@@ -41,6 +43,7 @@ type config struct {
 	PreexistingNetwork          bool              `json:"azure_preexisting_network"`
 	Private                     bool              `json:"azure_private"`
 	OutboundUDR                 bool              `json:"azure_outbound_user_defined_routing"`
+	StorageSuffix               string            `json:"azure_storage_suffix"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -93,6 +96,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ControlPlaneSubnet:          masterConfig.Subnet,
 		ComputeSubnet:               workerConfig.Subnet,
 		PreexistingNetwork:          sources.PreexistingNetwork,
+		StorageSuffix:               storageSuffix(),
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
@@ -112,4 +116,18 @@ func environment(cloudName azure.CloudEnvironment) (string, error) {
 	default:
 		return "", errors.Errorf("unsupported cloud name %q", cloudName)
 	}
+}
+
+// storageSuffix generates a random 5 character string for the azure storage
+// suffix
+func storageSuffix() string {
+	rand.Seed(time.Now().UnixNano())
+	chars := "abcdefghijklmnopqrstuvwxyz0123456789"
+
+	s := make([]byte, 5)
+	for i := range s {
+		s[i] = chars[rand.Intn(len(chars))]
+	}
+
+	return string(s)
 }
