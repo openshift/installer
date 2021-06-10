@@ -209,6 +209,76 @@ After you finish editing your machineSet, upload it to your OpenShift cluster:
 oc create -f sriov_machineset.yaml
 ```
 
+To create SR-IOV ports on a network with the port security disabled, you need to make additional changes to your machineSet due to security groups being set on the instance by default, and allowed address pairs automatically getting added to ports created through the `networks` and `subnets` interfaces. The solution is to define all of your ports with the `ports` interface in your machineSet. Remember that the port for the machines subnet needs:
+- allowed address pairs for your API and ingress vip ports
+- the worker security group
+- to be attached to the machines network and subnet
+
+```yaml
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineSet
+metadata:
+  labels:
+    machine.openshift.io/cluster-api-cluster: <infrastructure_ID>
+    machine.openshift.io/cluster-api-machine-role: <node_role>
+    machine.openshift.io/cluster-api-machine-type: <node_role>
+  name: <infrastructure_ID>-<node_role>
+  namespace: openshift-machine-api
+spec:
+  replicas: <number_of_replicas>
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-cluster: <infrastructure_ID>
+      machine.openshift.io/cluster-api-machineset: <infrastructure_ID>-<node_role>
+  template:
+    metadata:
+      labels:
+        machine.openshift.io/cluster-api-cluster: <infrastructure_ID>
+        machine.openshift.io/cluster-api-machine-role: <node_role>
+        machine.openshift.io/cluster-api-machine-type: <node_role>
+        machine.openshift.io/cluster-api-machineset: <infrastructure_ID>-<node_role>
+    spec:
+      metadata: {}
+      providerSpec:
+        value:
+          apiVersion: openstackproviderconfig.openshift.io/v1alpha1
+          cloudName: openstack
+          cloudsSecret:
+            name: openstack-cloud-credentials
+            namespace: openshift-machine-api
+          flavor: <nova_flavor>
+          image: <glance_image_name_or_location>
+          kind: OpenstackProviderSpec
+          configDrive: True
+          ports:
+            - allowedAddressPairs:
+              - ipAddress: <api_vip_port_IP>
+              - ipAddress: <ingress_vip_port_IP>
+              fixedIPs:
+                - subnetID: <machines_subnet_UUID>
+              nameSuffix: nodes
+              networkID: <machines_network_UUID>
+              securityGroups:
+                  - <worker_security_group_UUID>
+            - networkID: <sriov_network_UUID>
+              nameSuffix: sriov
+              fixedIPs:
+                - subnetID: <sriov_subnet_UUID>
+              tags:
+                - sriov
+              vnicType: direct
+              portSecurity: False
+          primarySubnet: <machines_subnet_UUID>
+          serverMetadata:
+            Name: <infrastructure_ID>-<node_role>
+            openshiftClusterID: <infrastructure_ID>
+          tags:
+          - openshiftClusterID=<infrastructure_ID>
+          trunk: false
+          userDataSecret:
+            name: worker-user-data
+```
+
 ## Creating SR-IOV Worker Nodes in UPI
 
 Because UPI implementation depends largely on your deployment environment and requirements, there is no official script for deploying SR-IOV worker nodes. However, we can share a verified example that is based on the [compute-nodes.yaml](../../../upi/openstack/compute-nodes.yaml) script to help you understand the process. To use the script, open up a terminal to the location of the `inventory.yaml` and `common.yaml` UPI Ansible scripts. In the following example, we add provider networks named `radio` and `uplink` to the `inventory.yaml` file. Note that the count parameter specifies the number of virtual functions (VFs) to attach to each worker node. This code can also be found on [github](https://github.com/shiftstack/SRIOV-Compute-Nodes-Ansible-Automation).
