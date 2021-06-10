@@ -413,6 +413,17 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		machineConfigs = append(machineConfigs, ignFIPS)
 	}
+	if ic.Platform.Name() == azuretypes.Name && ic.Platform.Azure.CloudName == azuretypes.StackCloud {
+		session, err := installConfig.Azure.Session()
+		if err != nil {
+			return errors.Wrap(err, "failed to fetch session for Azure Stack master machine configs")
+		}
+		ignASH, err := machineconfig.AzureStack(session.Environment, "master")
+		if err != nil {
+			return errors.Wrap(err, "failed to create ignition for ASH master machines")
+		}
+		machineConfigs = append(machineConfigs, ignASH)
+	}
 
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "master", directory)
 	if err != nil {

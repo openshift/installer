@@ -223,6 +223,17 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 			machineConfigs = append(machineConfigs, ignFIPS)
 		}
+		if ic.Platform.Name() == azuretypes.Name && ic.Platform.Azure.CloudName == azuretypes.StackCloud {
+			session, err := installConfig.Azure.Session()
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch session for Azure Stack worker machine configs")
+			}
+			ignASH, err := machineconfig.AzureStack(session.Environment, "worker")
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for ASH worker machines")
+			}
+			machineConfigs = append(machineConfigs, ignASH)
+		}
 		switch ic.Platform.Name() {
 		case awstypes.Name:
 			subnets := map[string]string{}
