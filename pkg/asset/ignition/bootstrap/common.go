@@ -264,12 +264,24 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Config.Platform.VSphere)
 	}
 
-	var APIIntVIPonIPv6 bool
+	var useIPv6ForNodeIP bool
 	platformAPIVIP := apiVIP(&installConfig.Config.Platform)
 	if platformAPIVIP == "" {
-		APIIntVIPonIPv6 = false
+		var ipv4, ipv6 bool
+
+		useIPv6ForNodeIP = false
+		for _, network := range installConfig.Config.Networking.ServiceNetwork {
+			if network.IP.To4() == nil {
+				ipv6 = true
+			} else {
+				ipv4 = true
+			}
+		}
+		if ipv6 && !ipv4 {
+			useIPv6ForNodeIP = true
+		}
 	} else {
-		APIIntVIPonIPv6 = net.ParseIP(platformAPIVIP).To4() == nil
+		useIPv6ForNodeIP = net.ParseIP(platformAPIVIP).To4() == nil
 	}
 
 	// Set cluster profile
@@ -295,7 +307,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		PlatformData:          platformData,
 		ClusterProfile:        clusterProfile,
 		BootstrapInPlace:      bootstrapInPlaceConfig,
-		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
+		UseIPv6ForNodeIP:      useIPv6ForNodeIP,
 		IsOKD:                 installConfig.Config.IsOKD(),
 	}
 }
