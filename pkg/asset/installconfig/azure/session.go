@@ -98,7 +98,7 @@ func newSessionFromFile(cloudName azure.CloudEnvironment, authFilePath, armEndpo
 		logrus.Infof("Credentials loaded from file %q", authFilePath)
 	})
 
-	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(env.ResourceManagerEndpoint)
+	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(env.TokenAudience)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client credentials authorizer from saved azure auth settings")
 	}

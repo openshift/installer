@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
+	"github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -19,7 +19,7 @@ import (
 // Metadata converts an install configuration to Azure metadata.
 func Metadata(config *types.InstallConfig) *azure.Metadata {
 	return &azure.Metadata{
-		ARMEndpoint:	   config.Platform.Azure.ARMEndpoint,
+		ARMEndpoint:       config.Platform.Azure.ARMEndpoint,
 		CloudName:         config.Platform.Azure.CloudName,
 		Region:            config.Platform.Azure.Region,
 		ResourceGroupName: config.Azure.ResourceGroupName,

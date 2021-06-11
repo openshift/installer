@@ -81,7 +81,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Environment:                 environment,
 		ARMEndpoint:                 sources.ARMEndpoint,
 		Region:                      region,
-		BootstrapInstanceType:       defaults.BootstrapInstanceType(region),
+		BootstrapInstanceType:       defaults.BootstrapInstanceType(sources.CloudName, region),
 		MasterInstanceType:          masterConfig.VMSize,
 		MasterAvailabilityZones:     masterAvailabilityZones,
 		VolumeType:                  masterConfig.OSDisk.ManagedDisk.StorageAccountType,
