@@ -53,22 +53,22 @@ func Platform() (*vsphere.Platform, error) {
 	finder := find.NewFinder(vCenter.Client)
 	ctx := context.TODO()
 
-	dc, dcPath, err := getDataCenter(ctx, finder, vCenter.Client)
+	dc, err := getDataCenter(ctx, finder, vCenter.Client)
 	if err != nil {
 		return nil, err
 	}
 
-	cluster, err := getCluster(ctx, dcPath, finder, vCenter.Client)
+	cluster, err := getCluster(ctx, dc, finder, vCenter.Client)
 	if err != nil {
 		return nil, err
 	}
 
-	datastore, err := getDataStore(ctx, dcPath, finder, vCenter.Client)
+	datastore, err := getDataStore(ctx, dc, finder, vCenter.Client)
 	if err != nil {
 		return nil, err
 	}
 
-	network, err := getNetwork(ctx, dcPath, finder, vCenter.Client)
+	network, err := getNetwork(ctx, dc, finder, vCenter.Client)
 	if err != nil {
 		return nil, err
 	}
@@ -159,33 +159,28 @@ func getClients() (*vCenterClient, error) {
 }
 
 // getDataCenter searches the root for all datacenters and, if there is more than one, lets the user select
-// one to use for installation. Returns the name and path of the selected datacenter. The name is used
-// to generate the install config and the path is used to determine the options for cluster, datastore and network.
-func getDataCenter(ctx context.Context, finder *find.Finder, client *vim25.Client) (string, string, error) {
+// one to use for installation. Returns the path of the selected datacenter.
+func getDataCenter(ctx context.Context, finder *find.Finder, client *vim25.Client) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
 	dataCenters, err := finder.DatacenterList(ctx, root)
 	if err != nil {
-		return "", "", errors.Wrap(err, "unable to list datacenters")
+		return "", errors.Wrap(err, "unable to list datacenters")
 	}
 
 	// API returns an error when no results, but let's leave this in to be defensive.
 	if len(dataCenters) == 0 {
-		return "", "", errors.New("did not find any datacenters")
+		return "", errors.New("did not find any datacenters")
 	}
 	if len(dataCenters) == 1 {
-		name := strings.TrimPrefix(dataCenters[0].InventoryPath, "/")
-		logrus.Infof("Defaulting to only available datacenter: %s", name)
-		return name, dataCenters[0].InventoryPath, nil
+		logrus.Infof("Defaulting to only available datacenter: %s", dataCenters[0].InventoryPath)
+		return dataCenters[0].InventoryPath, nil
 	}
 
-	dataCenterPaths := make(map[string]string)
 	var dataCenterChoices []string
 	for _, dc := range dataCenters {
-		name := strings.TrimPrefix(dc.InventoryPath, "/")
-		dataCenterPaths[name] = dc.InventoryPath
-		dataCenterChoices = append(dataCenterChoices, name)
+		dataCenterChoices = append(dataCenterChoices, dc.InventoryPath)
 	}
 	sort.Strings(dataCenterChoices)
 
@@ -200,10 +195,10 @@ func getDataCenter(ctx context.Context, finder *find.Finder, client *vim25.Clien
 			Validate: survey.Required,
 		},
 	}, &selectedDataCenter); err != nil {
-		return "", "", errors.Wrap(err, "failed UserInput")
+		return "", errors.Wrap(err, "failed UserInput")
 	}
 
-	return selectedDataCenter, dataCenterPaths[selectedDataCenter], nil
+	return selectedDataCenter, nil
 }
 
 func getCluster(ctx context.Context, path string, finder *find.Finder, client *vim25.Client) (string, error) {
