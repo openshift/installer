@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
-	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-08-01/network"
+	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
+	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
