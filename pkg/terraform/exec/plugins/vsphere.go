@@ -14,8 +14,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-vsphere"] = &TFPlugin{
-		Name:      vspheretypes.Name,
-		Exec:      vsphereProvider,
-		Resources: []string{"compat"},
+		Name: vspheretypes.Name,
+		Exec: vsphereProvider,
 	}
 }

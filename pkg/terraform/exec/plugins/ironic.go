@@ -14,8 +14,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-ironic"] = &TFPlugin{
-		Name:      "ironic",
-		Exec:      ironicProvider,
-		Resources: []string{"compat"},
+		Name: "ironic",
+		Exec: ironicProvider,
 	}
 }

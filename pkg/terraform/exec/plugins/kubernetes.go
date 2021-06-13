@@ -11,8 +11,7 @@ func init() {
 			ProviderFunc: kubernetes.Provider})
 	}
 	KnownPlugins["terraform-provider-kubernetes"] = &TFPlugin{
-		Name:      "kubernetes",
-		Exec:      kubernetesProvider,
-		Resources: []string{"compat"},
+		Name: "kubernetes",
+		Exec: kubernetesProvider,
 	}
 }

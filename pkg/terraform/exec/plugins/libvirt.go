@@ -18,8 +18,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-libvirt"] = &TFPlugin{
-		Name:      libvirttypes.Name,
-		Exec:      libvirtProvider,
-		Resources: []string{"compat"},
+		Name: libvirttypes.Name,
+		Exec: libvirtProvider,
 	}
 }

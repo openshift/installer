@@ -13,8 +13,7 @@ func init() {
 			ProviderFunc: kubevirt.Provider})
 	}
 	KnownPlugins["terraform-provider-kubevirt"] = &TFPlugin{
-		Name:      kubevirttypes.Name,
-		Exec:      kubevirtProvider,
-		Resources: []string{"compat"},
+		Name: kubevirttypes.Name,
+		Exec: kubevirtProvider,
 	}
 }

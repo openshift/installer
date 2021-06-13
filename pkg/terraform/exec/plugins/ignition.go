@@ -12,8 +12,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-ignition"] = &TFPlugin{
-		Name:      "ignition",
-		Exec:      ignitionProvider,
-		Resources: []string{"compat"},
+		Name: "ignition",
+		Exec: ignitionProvider,
 	}
 }

@@ -12,8 +12,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-random"] = &TFPlugin{
-		Name:      "random",
-		Exec:      randomProvider,
-		Resources: []string{"compat"},
+		Name: "random",
+		Exec: randomProvider,
 	}
 }

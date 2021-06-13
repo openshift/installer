@@ -56,7 +56,7 @@ func (s stage) Destroy(directory string, extraArgs []string) error {
 	switch s.platform {
 	case libvirttypes.Name:
 		// First remove the bootstrap node from DNS
-		if _, err := terraform.Apply(directory, s.platform, s.Name(), append(extraArgs, "-var=bootstrap_dns=false")...); err != nil {
+		if _, err := terraform.Apply(directory, s.platform, s, append(extraArgs, "-var=bootstrap_dns=false")...); err != nil {
 			return errors.Wrap(err, "Terraform apply")
 		}
 	case ovirttypes.Name:
@@ -66,7 +66,7 @@ func (s stage) Destroy(directory string, extraArgs []string) error {
 
 	extraArgs = append(extraArgs, "-target=module.bootstrap")
 
-	return errors.Wrap(terraform.Destroy(directory, s.platform, s.Name(), extraArgs...), "terraform destroy")
+	return errors.Wrap(terraform.Destroy(directory, s.platform, s, extraArgs...), "terraform destroy")
 }
 
 func (s stage) ExtractHostAddresses(directory string, config *types.InstallConfig) (string, int, []string, error) {

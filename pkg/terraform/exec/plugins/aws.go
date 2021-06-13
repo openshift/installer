@@ -14,8 +14,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-aws"] = &TFPlugin{
-		Name:      awstypes.Name,
-		Exec:      awsProvider,
-		Resources: []string{"vpc", "cluster", "bootstrap"},
+		Name: awstypes.Name,
+		Exec: awsProvider,
 	}
 }

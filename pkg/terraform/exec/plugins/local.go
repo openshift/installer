@@ -12,8 +12,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-local"] = &TFPlugin{
-		Name:      "local",
-		Exec:      localProvider,
-		Resources: []string{"compat"},
+		Name: "local",
+		Exec: localProvider,
 	}
 }

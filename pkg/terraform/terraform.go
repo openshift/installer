@@ -8,40 +8,22 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/openshift/installer/data"
 
 	"github.com/openshift/installer/pkg/lineprinter"
 	texec "github.com/openshift/installer/pkg/terraform/exec"
 	"github.com/openshift/installer/pkg/terraform/exec/plugins"
 )
 
-const (
-	// StateFileName is the default name for Terraform state files.
-	StateFileName string = "terraform.tfstate"
-
-	// VarFileName is the default name for Terraform var file.
-	VarFileName string = "terraform.tfvars"
-
-	// TargetBootstrap is the default name for the bootstrap directory
-	TargetBootstrap string = "bootstrap"
-
-	// TargetCompat is the name for the legacy terraform directory
-	TargetCompat string = "compat"
-)
-
-// GetStateFileName returns the name of the terraform state file.
-func GetStateFileName(target string) string {
-	return fmt.Sprintf("terraform.%s.tfstate", target)
-}
-
 // Apply unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
 // apply'.  It returns the absolute path of the tfstate file, rooted
 // in the specified directory, along with any errors from Terraform.
-func Apply(dir string, platform string, target string, extraArgs ...string) (path string, err error) {
-	err = unpackAndInit(dir, platform, target)
+func Apply(dir string, platform string, stage Stage, extraArgs ...string) (path string, err error) {
+	err = unpackAndInit(dir, platform, stage.Name())
 	if err != nil {
 		return "", err
 	}
@@ -49,12 +31,12 @@ func Apply(dir string, platform string, target string, extraArgs ...string) (pat
 	defaultArgs := []string{
 		"-auto-approve",
 		"-input=false",
-		fmt.Sprintf("-state=%s", filepath.Join(dir, GetStateFileName(target))),
-		fmt.Sprintf("-state-out=%s", filepath.Join(dir, GetStateFileName(target))),
+		fmt.Sprintf("-state=%s", filepath.Join(dir, stage.StateFilename())),
+		fmt.Sprintf("-state-out=%s", filepath.Join(dir, stage.StateFilename())),
 	}
 	args := append(defaultArgs, extraArgs...)
 	args = append(args, dir)
-	sf := filepath.Join(dir, GetStateFileName(target))
+	sf := filepath.Join(dir, stage.StateFilename())
 
 	lpDebug := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Debug}).Print}
 	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
@@ -71,8 +53,8 @@ func Apply(dir string, platform string, target string, extraArgs ...string) (pat
 // Destroy unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
 // destroy'.
-func Destroy(dir string, platform string, target string, extraArgs ...string) (err error) {
-	err = unpackAndInit(dir, platform, target)
+func Destroy(dir string, platform string, stage Stage, extraArgs ...string) (err error) {
+	err = unpackAndInit(dir, platform, stage.Name())
 	if err != nil {
 		return err
 	}
@@ -80,8 +62,8 @@ func Destroy(dir string, platform string, target string, extraArgs ...string) (e
 	defaultArgs := []string{
 		"-auto-approve",
 		"-input=false",
-		fmt.Sprintf("-state=%s", filepath.Join(dir, GetStateFileName(target))),
-		fmt.Sprintf("-state-out=%s", filepath.Join(dir, GetStateFileName(target))),
+		fmt.Sprintf("-state=%s", filepath.Join(dir, stage.StateFilename())),
+		fmt.Sprintf("-state-out=%s", filepath.Join(dir, stage.StateFilename())),
 	}
 	args := append(defaultArgs, extraArgs...)
 	args = append(args, dir)

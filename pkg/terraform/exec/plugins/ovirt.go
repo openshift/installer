@@ -14,8 +14,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-ovirt"] = &TFPlugin{
-		Name:      ovirttypes.Name,
-		Exec:      ovirtProvider,
-		Resources: []string{"compat"},
+		Name: ovirttypes.Name,
+		Exec: ovirtProvider,
 	}
 }

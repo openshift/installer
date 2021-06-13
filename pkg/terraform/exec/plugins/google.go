@@ -14,8 +14,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-google"] = &TFPlugin{
-		Name:      gcptypes.Name,
-		Exec:      googleProvider,
-		Resources: []string{"compat"},
+		Name: gcptypes.Name,
+		Exec: googleProvider,
 	}
 }

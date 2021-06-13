@@ -8,7 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/destroy"
 	_ "github.com/openshift/installer/pkg/destroy/aws"
@@ -22,8 +21,6 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
-	"github.com/openshift/installer/pkg/terraform"
-	"github.com/openshift/installer/pkg/terraform/exec/plugins"
 )
 
 func newDestroyCmd() *cobra.Command {
@@ -83,22 +80,18 @@ func runDestroyCmd(directory string) error {
 		return errors.Wrap(err, "failed to remove state file")
 	}
 
-	config := &installconfig.InstallConfig{}
-	if err := store.Fetch(config); err != nil {
-		return errors.Wrapf(err, "failed to fetch %s", config.Name())
-	}
-
-	platform := config.Config.Platform.Name()
-	tfPlugin, err := plugins.GetPlugin(platform)
+	// delete terraform files
+	tfstateFiles, err := filepath.Glob(filepath.Join(directory, "*.tfstate"))
 	if err != nil {
-		return errors.Wrapf(err, "Unable to find terraform plugin for %s", platform)
+		return errors.Wrap(err, "failed to glob for tfstate files")
 	}
-
-	for _, r := range tfPlugin.Resources {
-		tfStateFilePath := filepath.Join(directory, terraform.GetStateFileName(r))
-		err = os.Remove(tfStateFilePath)
-		if err != nil && !os.IsNotExist(err) {
-			return errors.Wrap(err, "failed to remove Terraform state")
+	tfvarsFiles, err := filepath.Glob(filepath.Join(directory, "*.tfvars.json"))
+	if err != nil {
+		return errors.Wrap(err, "failed to glob for tfvars files")
+	}
+	for _, f := range append(tfstateFiles, tfvarsFiles...) {
+		if err := os.Remove(f); err != nil {
+			return errors.Wrapf(err, "failed to remove terraform file %q", f)
 		}
 	}
 

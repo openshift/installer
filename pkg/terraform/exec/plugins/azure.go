@@ -14,8 +14,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-azurerm"] = &TFPlugin{
-		Name:      azuretypes.Name,
-		Exec:      azurermProvider,
-		Resources: []string{"compat"},
+		Name: azuretypes.Name,
+		Exec: azurermProvider,
 	}
 }

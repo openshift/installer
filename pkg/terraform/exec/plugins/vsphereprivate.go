@@ -11,8 +11,7 @@ func init() {
 			ProviderFunc: vsphereprivate.Provider})
 	}
 	KnownPlugins["terraform-provider-vsphereproviate"] = &TFPlugin{
-		Name:      "vsphereprivate",
-		Exec:      vspherePrivateProvider,
-		Resources: []string{"compat"},
+		Name: "vsphereprivate",
+		Exec: vspherePrivateProvider,
 	}
 }

@@ -14,8 +14,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-openstack"] = &TFPlugin{
-		Name:      openstacktypes.Name,
-		Exec:      openstackProvider,
-		Resources: []string{"compat"},
+		Name: openstacktypes.Name,
+		Exec: openstackProvider,
 	}
 }

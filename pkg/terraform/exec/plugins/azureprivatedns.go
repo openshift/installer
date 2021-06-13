@@ -12,8 +12,7 @@ func init() {
 		})
 	}
 	KnownPlugins["terraform-provider-azureprivatedns"] = &TFPlugin{
-		Name:      "azureprivatedns",
-		Exec:      azurePrivateDNSProvider,
-		Resources: []string{"compat"},
+		Name: "azureprivatedns",
+		Exec: azurePrivateDNSProvider,
 	}
 }
