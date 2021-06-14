@@ -144,6 +144,9 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		if nrg := installConfig.Config.Platform.Azure.NetworkResourceGroupName; nrg != "" {
 			config.Status.PlatformStatus.Azure.NetworkResourceGroupName = nrg
 		}
+		if installConfig.Config.Platform.Azure.CloudName == azure.StackCloud {
+			config.Status.PlatformStatus.Azure.ARMEndpoint = installConfig.Config.Platform.Azure.ARMEndpoint
+		}
 	case baremetal.Name:
 		config.Spec.PlatformSpec.Type = configv1.BareMetalPlatformType
 		config.Status.PlatformStatus.BareMetal = &configv1.BareMetalPlatformStatus{
