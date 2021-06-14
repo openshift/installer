@@ -14,7 +14,7 @@ More background:
 
 ## Stream metadata
 
-As of 4.8 the [stream metadata enhancement](https://github.com/openshift/enhancements/blobmaster/enhancements/coreos-bootimages.md)
+As of 4.8 the [stream metadata enhancement](https://github.com/openshift/enhancements/blob/master/enhancements/coreos-bootimages.md)
 is in progress which provides a standardized JSON format and injects
 that data into the cluster as well.
 
