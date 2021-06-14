@@ -10,7 +10,6 @@ import (
 	"github.com/openshift/installer/pkg/terraform"
 	gatherazure "github.com/openshift/installer/pkg/terraform/gather/azure"
 	gatherbaremetal "github.com/openshift/installer/pkg/terraform/gather/baremetal"
-	gathergcp "github.com/openshift/installer/pkg/terraform/gather/gcp"
 	gatherkubevirt "github.com/openshift/installer/pkg/terraform/gather/kubevirt"
 	gatherlibvirt "github.com/openshift/installer/pkg/terraform/gather/libvirt"
 	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
@@ -19,7 +18,6 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
-	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	kubevirttypes "github.com/openshift/installer/pkg/types/kubevirt"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -54,17 +52,6 @@ func (s stage) DestroyWithBootstrap() bool {
 
 func (s stage) Destroy(directory string, extraArgs []string) error {
 	switch s.platform {
-	case gcptypes.Name:
-		// First remove the bootstrap node from the load balancers to avoid race condition.
-		if _, err := terraform.Apply(directory, s.platform, s, append(extraArgs, "-var=gcp_bootstrap_lb=false")...); err != nil {
-			return errors.Wrap(err, "failed disabling bootstrap load balancing")
-		}
-
-		// Then destory the bootstrap instance and instance group so destroy runs cleanly.
-		// First remove the bootstrap from LB target and its instance so that bootstrap module is cleanly destroyed.
-		if _, err := terraform.Apply(directory, s.platform, s, append(extraArgs, "-var=gcp_bootstrap_enabled=false")...); err != nil {
-			return errors.Wrap(err, "failed disabling bootstrap")
-		}
 	case libvirttypes.Name:
 		// First remove the bootstrap node from DNS
 		if _, err := terraform.Apply(directory, s.platform, s, append(extraArgs, "-var=bootstrap_dns=false")...); err != nil {
@@ -115,15 +102,6 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 		masters, err = gatherbaremetal.ControlPlaneIPs(config, tfstate)
 		if err != nil {
 			return
-		}
-	case gcptypes.Name:
-		bootstrap, err = gathergcp.BootstrapIP(tfstate)
-		if err != nil {
-			return bootstrap, port, masters, err
-		}
-		masters, err = gathergcp.ControlPlaneIPs(tfstate)
-		if err != nil {
-			logrus.Error(err)
 		}
 	case libvirttypes.Name:
 		bootstrap, err = gatherlibvirt.BootstrapIP(tfstate)

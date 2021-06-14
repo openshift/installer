@@ -1,9 +1,9 @@
 output "cluster_ip" {
-  value = google_compute_forwarding_rule.api_internal.ip_address
+  value = google_compute_address.cluster_ip.address
 }
 
 output "cluster_public_ip" {
-  value = var.public_endpoints ? google_compute_forwarding_rule.api[0].ip_address : null
+  value = var.public_endpoints ? google_compute_address.cluster_public_ip[0].address : null
 }
 
 output "network" {
@@ -16,4 +16,12 @@ output "worker_subnet" {
 
 output "master_subnet" {
   value = local.master_subnet
+}
+
+output "api_health_checks" {
+  value = google_compute_http_health_check.api.*.self_link
+}
+
+output "api_internal_health_checks" {
+  value = google_compute_health_check.api_internal.*.self_link
 }

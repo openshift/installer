@@ -20,29 +20,6 @@ provider "google" {
   region      = var.gcp_region
 }
 
-module "bootstrap" {
-  source = "./bootstrap"
-
-  bootstrap_enabled = var.gcp_bootstrap_enabled
-
-  image            = local.gcp_image
-  machine_type     = var.gcp_bootstrap_instance_type
-  cluster_id       = var.cluster_id
-  ignition         = var.ignition_bootstrap
-  network          = module.network.network
-  network_cidr     = var.machine_v4_cidrs[0]
-  public_endpoints = local.public_endpoints
-  subnet           = module.network.master_subnet
-  zone             = var.gcp_master_availability_zones[0]
-  region           = var.gcp_region
-
-  root_volume_size         = var.gcp_master_root_volume_size
-  root_volume_type         = var.gcp_master_root_volume_type
-  root_volume_kms_key_link = var.gcp_root_volume_kms_key_link
-
-  labels = local.labels
-}
-
 module "master" {
   source = "./master"
 
@@ -75,13 +52,6 @@ module "network" {
   worker_subnet_cidr = local.worker_subnet_cidr
   network_cidr       = var.machine_v4_cidrs[0]
   public_endpoints   = local.public_endpoints
-
-  bootstrap_lb              = var.gcp_bootstrap_enabled && var.gcp_bootstrap_lb
-  bootstrap_instances       = module.bootstrap.bootstrap_instances
-  bootstrap_instance_groups = module.bootstrap.bootstrap_instance_groups
-
-  master_instances       = module.master.master_instances
-  master_instance_groups = module.master.master_instance_groups
 
   preexisting_network = var.gcp_preexisting_network
   cluster_network     = var.gcp_cluster_network
