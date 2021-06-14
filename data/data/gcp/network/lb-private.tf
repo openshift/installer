@@ -19,6 +19,9 @@ resource "google_compute_health_check" "api_internal" {
     port         = 6443
     request_path = "/readyz"
   }
+  log_config {
+    enable = true
+  }
 }
 
 resource "google_compute_region_backend_service" "api_internal" {
