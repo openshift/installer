@@ -23,7 +23,6 @@ aliases:
     - cfergeau
   openstack-approvers:
     - EmilienM
-    - Fedosin
     - adduarte
     - iamemilio
     - mandre
@@ -31,7 +30,6 @@ aliases:
     - pierreprinetti
   openstack-reviewers:
     - EmilienM
-    - Fedosin
     - adduarte
     - iamemilio
     - mandre
