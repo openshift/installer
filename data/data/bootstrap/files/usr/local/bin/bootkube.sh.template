@@ -161,6 +161,20 @@ then
     record_service_stage_success
 fi
 
+if [ ! -f crio-bootstrap.done ]
+then
+	record_service_stage_start "crio-bootstrap"
+	echo "Copying CRI-O certificates..."
+
+	rm --recursive --force crio-bootstrap
+
+	mkdir -p /etc/crio/certs
+	cp /opt/openshift/tls/crio-* /etc/crio/certs
+
+	touch crio-bootstrap.done
+	record_service_stage_success
+fi
+
 if [ ! -f kube-apiserver-bootstrap.done ]
 then
     record_service_stage_start "kube-apiserver-bootstrap"
