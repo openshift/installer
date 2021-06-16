@@ -220,8 +220,6 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		}
 		for k, v := range presence {
 			switch {
-			case k == "machineNetwork" && p.AWS != nil:
-				// AWS can default an ipv6 subnet
 			case v.IPv4 && !v.IPv6:
 				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipnetworksToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv6 network in this list"))
 			case !v.IPv4 && v.IPv6:

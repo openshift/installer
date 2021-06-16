@@ -1113,16 +1113,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `Invalid value: "10.0.0.0/16": dual-stack IPv4/IPv6 requires an IPv6 network in this list`,
 		},
 		{
-			name: "valid dual-stack configuration, machine has no IPv6 but is on AWS",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Networking = validDualStackNetworkingConfig()
-				c.Networking.MachineNetwork = c.Networking.MachineNetwork[1:]
-				return c
-			}(),
-			expectedError: `Invalid value: "DualStack": dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address`,
-		},
-		{
 			name: "invalid dual-stack configuration, IPv6-primary",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
