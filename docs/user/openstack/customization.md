@@ -39,6 +39,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 * `additionalNetworkIDs` (optional list of strings): IDs of additional networks for machines.
 * `additionalSecurityGroupIDs` (optional list of strings): IDs of additional security groups for machines.
+* `serverGroupPolicy` (optional string): Server group policy to apply to the group that will contain the machines in the pool. Defaults to "soft-anti-affinity". Only applicable to the Control plane MachinePool.
 * `type` (optional string): The OpenStack flavor name for machines in the pool.
 * `rootVolume` (optional object): Defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
   * `size` (required integer): Size of the root volume in GB. Must be set to at least 25.

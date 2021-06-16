@@ -44,7 +44,7 @@ resource "openstack_blockstorage_volume_v3" "master_volume" {
 
 resource "openstack_compute_servergroup_v2" "master_group" {
   name = var.server_group_name
-  policies = ["soft-anti-affinity"]
+  policies = [var.server_group_policy]
 }
 
 # The master servers are created in three separate resource definition blocks,
