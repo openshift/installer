@@ -155,7 +155,7 @@ func validIPv6NetworkingConfig() *types.Networking {
 			},
 		},
 		ServiceNetwork: []ipnet.IPNet{
-			*ipnet.MustParseCIDR("ffd1::/48"),
+			*ipnet.MustParseCIDR("ffd1::/112"),
 		},
 		ClusterNetwork: []types.ClusterNetworkEntry{
 			{
@@ -179,7 +179,7 @@ func validDualStackNetworkingConfig() *types.Networking {
 		},
 		ServiceNetwork: []ipnet.IPNet{
 			*ipnet.MustParseCIDR("172.30.0.0/16"),
-			*ipnet.MustParseCIDR("ffd1::/48"),
+			*ipnet.MustParseCIDR("ffd1::/112"),
 		},
 		ClusterNetwork: []types.ClusterNetworkEntry{
 			{
@@ -1162,6 +1162,17 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `Invalid value: 72: cluster network host subnetwork prefix must be 64 for IPv6 networks`,
+		},
+		{
+			name: "invalid IPv6 service network size",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validIPv6NetworkingConfig()
+				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("ffd1::/48")
+				return c
+			}(),
+			expectedError: `Invalid value: "ffd1::/48": subnet size for IPv6 service network should be /112`,
 		},
 
 		{
