@@ -12,6 +12,7 @@ import (
 	dockerref "github.com/containers/image/docker/reference"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -126,8 +127,15 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	return allErrs
 }
 
-// ipAddressTypeByField is a map of field path to whether they request IPv4 or IPv6.
-type ipAddressTypeByField map[string]struct{ IPv4, IPv6 bool }
+// ipAddressType indicates the address types provided for a given field
+type ipAddressType struct {
+	IPv4    bool
+	IPv6    bool
+	Primary corev1.IPFamily
+}
+
+// ipAddressTypeByField is a map of field path to ipAddressType
+type ipAddressTypeByField map[string]ipAddressType
 
 // ipByField is a map of field path to the net.IPs in sorted order.
 type ipByField map[string][]net.IP
@@ -151,15 +159,21 @@ func inferIPVersionFromInstallConfig(n *types.Networking) (hasIPv4, hasIPv6 bool
 	}
 	presence = make(ipAddressTypeByField)
 	for k, ips := range addresses {
-		for _, ip := range ips {
+		for i, ip := range ips {
 			has := presence[k]
 			if ip.To4() != nil {
 				has.IPv4 = true
+				if i == 0 {
+					has.Primary = corev1.IPv4Protocol
+				}
 				if k == "serviceNetwork" {
 					hasIPv4 = true
 				}
 			} else {
 				has.IPv6 = true
+				if i == 0 {
+					has.Primary = corev1.IPv6Protocol
+				}
 				if k == "serviceNetwork" {
 					hasIPv6 = true
 				}
@@ -221,6 +235,13 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipSliceToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv6 address in this list"))
 			case !v.IPv4 && v.IPv6:
 				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipSliceToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv4 address in this list"))
+			}
+
+			// FIXME: we should allow either all-networks-IPv4Primary or
+			// all-networks-IPv6Primary, but the latter currently causes
+			// confusing install failures, so block it.
+			if v.IPv4 && v.IPv6 && v.Primary != corev1.IPv4Protocol {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipSliceToStrings(addresses[k]), ", "), "IPv4 addresses must be listed before IPv6 addresses"))
 			}
 		}
 
