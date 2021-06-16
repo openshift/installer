@@ -229,6 +229,8 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	}
 
 	filteredServers := filterObjects(serverObjects, filter)
+	numberToDelete := len(filteredServers)
+	numberDeleted := 0
 	for _, server := range filteredServers {
 		logger.Debugf("Deleting Server %q", server.ID)
 		err = servers.Delete(conn, server.ID).ExtractErr()
@@ -236,13 +238,15 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			// Ignore the error if the server cannot be found and return with an appropriate message if it's another type of error
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
+				// Just log the error and move on to the next server
 				logger.Errorf("Deleting server %q failed: %v", server.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find server %q. It's probably already been deleted.", server.ID)
 		}
+		numberDeleted++
 	}
-	return len(filteredServers) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteServerGroups(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -284,6 +288,8 @@ func deleteServerGroups(opts *clientconfig.ClientOpts, filter Filter, logger log
 		}
 	}
 
+	numberToDelete := len(filteredGroups)
+	numberDeleted := 0
 	for _, serverGroup := range filteredGroups {
 		logger.Debugf("Deleting Server Group %q", serverGroup.ID)
 		if err = servergroups.Delete(conn, serverGroup.ID).ExtractErr(); err != nil {
@@ -292,13 +298,15 @@ func deleteServerGroups(opts *clientconfig.ClientOpts, filter Filter, logger log
 			// type of error
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
+				// Just log the error and move on to the next server group
 				logger.Errorf("Deleting server group %q failed: %v", serverGroup.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find server group %q. It's probably already been deleted.", serverGroup.ID)
 		}
+		numberDeleted++
 	}
-	return len(filteredGroups) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -326,6 +334,8 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 		logger.Error(err)
 		return false, nil
 	}
+	numberToDelete := len(allPorts)
+	numberDeleted := 0
 	for _, port := range allPorts {
 		listOpts := floatingips.ListOpts{
 			PortID: port.ID,
@@ -349,8 +359,9 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 				// Ignore the error if the floating ip cannot be found and return with an appropriate message if it's another type of error
 				var gerr gophercloud.ErrDefault404
 				if !errors.As(err, &gerr) {
+					// Just log the error and move on to the next port
 					logger.Errorf("While deleting port %q, the update of the floating IP %q failed with error: %v", port.ID, fip.ID, err)
-					return false, nil
+					continue
 				}
 				logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", fip.ID)
 			}
@@ -360,13 +371,15 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 		err = ports.Delete(conn, port.ID).ExtractErr()
 		if err != nil {
 			// This can fail when port is still in use so return/retry
+			// Just log the error and move on to the next port
 			logger.Debugf("Deleting Port %q failed with error: %v", port.ID, err)
 			// Try to delete associated trunk
 			deleteAssociatedTrunk(conn, logger, port.ID)
-			return false, nil
+			continue
 		}
+		numberDeleted++
 	}
-	return len(allPorts) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -394,6 +407,8 @@ func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger l
 		logger.Error(err)
 		return false, nil
 	}
+	numberToDelete := len(allGroups)
+	numberDeleted := 0
 	for _, group := range allGroups {
 		logger.Debugf("Deleting Security Group: %q", group.ID)
 		err = sg.Delete(conn, group.ID).ExtractErr()
@@ -402,13 +417,15 @@ func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger l
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
 				// This can fail when sg is still in use by servers
+				// Just log the error and move on to the next security group
 				logger.Debugf("Deleting Security Group %q failed with error: %v", group.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find security group %q. It's probably already been deleted.", group.ID)
 		}
+		numberDeleted++
 	}
-	return len(allGroups) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func updateFips(allFIPs []floatingips.FloatingIP, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) error {
@@ -457,6 +474,8 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		logger.Error(err)
 		return false, nil
 	}
+	numberToDelete := len(allRouters)
+	numberDeleted := 0
 	for _, router := range allRouters {
 		fipOpts := floatingips.ListOpts{
 			RouterID: router.ID,
@@ -478,7 +497,7 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		err = updateFips(allFIPs, opts, filter, logger)
 		if err != nil {
 			logger.Error(err)
-			return false, nil
+			continue
 		}
 		// Clean Gateway interface
 		updateOpts := routers.UpdateOpts{
@@ -492,7 +511,7 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 
 		_, err = removeRouterInterfaces(conn, filter, router, logger)
 		if err != nil {
-			return false, nil
+			continue
 		}
 
 		logger.Debugf("Deleting Router %q", router.ID)
@@ -501,13 +520,15 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			// Ignore the error if the router cannot be found and return with an appropriate message if it's another type of error
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
+				// Just log the error and move on to the next router
 				logger.Errorf("Deleting router %q failed: %v", router.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find router %q. It's probably already been deleted.", router.ID)
 		}
+		numberDeleted++
 	}
-	return len(allRouters) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -769,8 +790,9 @@ func deleteLeftoverLoadBalancers(opts *clientconfig.ClientOpts, logger logrus.Fi
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
 				// This can fail when the load balancer is still in use so return/retry
+				// Just log the error and move on to the next LB
 				logger.Debugf("Deleting load balancer %q failed: %v", loadbalancer.ID, err)
-				return
+				continue
 			}
 			logger.Debugf("Cannot find load balancer %q. It's probably already been deleted.", loadbalancer.ID)
 		}
@@ -812,6 +834,9 @@ func deleteSubnets(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		logger.Error(err)
 		return false, nil
 	}
+
+	numberToDelete := len(allSubnets)
+	numberDeleted := 0
 	for _, subnet := range allSubnets {
 		logger.Debugf("Deleting Subnet: %q", subnet.ID)
 		err = subnets.Delete(conn, subnet.ID).ExtractErr()
@@ -820,13 +845,15 @@ func deleteSubnets(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
 				// This can fail when subnet is still in use
+				// Just log the error and move on to the next subnet
 				logger.Debugf("Deleting Subnet %q failed: %v", subnet.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find subnet %q. It's probably already been deleted.", subnet.ID)
 		}
+		numberDeleted++
 	}
-	return len(allSubnets) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -854,6 +881,8 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 		logger.Error(err)
 		return false, nil
 	}
+	numberToDelete := len(allNetworks)
+	numberDeleted := 0
 	for _, network := range allNetworks {
 		logger.Debugf("Deleting network: %q", network.ID)
 		err = networks.Delete(conn, network.ID).ExtractErr()
@@ -862,15 +891,17 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
 				// This can fail when network is still in use
+				// Just log the error and move on to the next port
 				logger.Debugf("Deleting Network %q failed: %v", network.ID, err)
 				// Try to delete eventual leftover load balancers
 				deleteLeftoverLoadBalancers(opts, logger, network.ID)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find network %q. It's probably already been deleted.", network.ID)
 		}
+		numberDeleted++
 	}
-	return len(allNetworks) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -1017,6 +1048,8 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 		logger.Error(err)
 		return false, nil
 	}
+	numberToDelete := len(allTrunks)
+	numberDeleted := 0
 	for _, trunk := range allTrunks {
 		logger.Debugf("Deleting Trunk %q", trunk.ID)
 		err = trunks.Delete(conn, trunk.ID).ExtractErr()
@@ -1025,13 +1058,15 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
 				// This can fail when the trunk is still in use so return/retry
+				// Just log the error and move on to the next trunk
 				logger.Debugf("Deleting Trunk %q failed: %v", trunk.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find trunk %q. It's probably already been deleted.", trunk.ID)
 		}
+		numberDeleted++
 	}
-	return len(allTrunks) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteAssociatedTrunk(conn *gophercloud.ServiceClient, logger logrus.FieldLogger, portID string) {
@@ -1065,8 +1100,9 @@ func deleteAssociatedTrunk(conn *gophercloud.ServiceClient, logger logrus.FieldL
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
 				// This can fail when the trunk is still in use so return/retry
+				// Just log the error and move on to the next trunk
 				logger.Debugf("Deleting Trunk %q failed: %v", trunk.ID, err)
-				return
+				continue
 			}
 			logger.Debugf("Cannot find trunk %q. It's probably already been deleted.", trunk.ID)
 		}
@@ -1149,6 +1185,8 @@ func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger lo
 	deleteOpts := loadbalancers.DeleteOpts{
 		Cascade: true,
 	}
+	numberToDelete := len(allLoadBalancers)
+	numberDeleted := 0
 	for _, loadbalancer := range allLoadBalancers {
 		logger.Debugf("Deleting LoadBalancer %q", loadbalancer.ID)
 		err = loadbalancers.Delete(conn, loadbalancer.ID, deleteOpts).ExtractErr()
@@ -1157,14 +1195,16 @@ func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger lo
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
 				// This can fail when the load balancer is still in use so return/retry
+				// Just log the error and move on to the next port
 				logger.Debugf("Deleting load balancer %q failed: %v", loadbalancer.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find load balancer %q. It's probably already been deleted.", loadbalancer.ID)
 		}
+		numberDeleted++
 	}
 
-	return len(allLoadBalancers) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteSubnetPools(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -1192,6 +1232,8 @@ func deleteSubnetPools(opts *clientconfig.ClientOpts, filter Filter, logger logr
 		logger.Error(err)
 		return false, nil
 	}
+	numberToDelete := len(allSubnetPools)
+	numberDeleted := 0
 	for _, subnetPool := range allSubnetPools {
 		logger.Debugf("Deleting Subnet Pool %q", subnetPool.ID)
 		err = subnetpools.Delete(conn, subnetPool.ID).ExtractErr()
@@ -1199,13 +1241,15 @@ func deleteSubnetPools(opts *clientconfig.ClientOpts, filter Filter, logger logr
 			// Ignore the error if the subnet pool cannot be found
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
+				// Just log the error and move on to the next subnet pool
 				logger.Debugf("Deleting subnet pool %q failed: %v", subnetPool.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find subnet pool %q. It's probably already been deleted.", subnetPool.ID)
 		}
+		numberDeleted++
 	}
-	return len(allSubnetPools) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -1258,13 +1302,13 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		Cascade: false,
 	}
 
+	numberToDelete := len(volumeIDs)
+	numberDeleted := 0
 	for _, volumeID := range volumeIDs {
 		deleted, err := deleteSnapshots(conn, volumeID, logger)
-		if err != nil {
-			return false, err
-		}
-		if !deleted {
-			return false, nil
+		if !deleted || err != nil {
+			// Move on to the next volume
+			continue
 		}
 
 		logger.Debugf("Deleting volume %q", volumeID)
@@ -1273,14 +1317,16 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			// Ignore the error if the volume cannot be found
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
+				// Just log the error and move on to the next volume
 				logger.Debugf("Deleting volume %q failed: %v", volumeID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find volume %q. It's probably already been deleted.", volumeID)
 		}
+		numberDeleted++
 	}
 
-	return true, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteSnapshots(conn *gophercloud.ServiceClient, volumeID string, logger logrus.FieldLogger) (bool, error) {
@@ -1303,6 +1349,8 @@ func deleteSnapshots(conn *gophercloud.ServiceClient, volumeID string, logger lo
 		return false, nil
 	}
 
+	numberToDelete := len(allSnapshots)
+	numberDeleted := 0
 	for _, snapshot := range allSnapshots {
 		logger.Debugf("Deleting volume snapshot %q", snapshot.ID)
 		err = snapshots.Delete(conn, snapshot.ID).ExtractErr()
@@ -1310,14 +1358,16 @@ func deleteSnapshots(conn *gophercloud.ServiceClient, volumeID string, logger lo
 			// Ignore the error if the volume snapshot cannot be found
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
+				// Just log the error and move on to the next volume snapshot
 				logger.Debugf("Deleting volume snapshot %q failed: %v", snapshot.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find volume snapshot %q. It's probably already been deleted.", snapshot.ID)
 		}
+		numberDeleted++
 	}
 
-	return true, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteShares(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -1360,6 +1410,8 @@ func deleteShares(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 		return false, nil
 	}
 
+	numberToDelete := len(allShares)
+	numberDeleted := 0
 	for _, share := range allShares {
 		deleted, err := deleteShareSnapshots(conn, share.ID, logger)
 		if err != nil {
@@ -1375,14 +1427,16 @@ func deleteShares(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 			// Ignore the error if the share cannot be found
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
+				// Just log the error and move on to the next share
 				logger.Debugf("Deleting share %q failed: %v", share.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find share %q. It's probably already been deleted.", share.ID)
 		}
+		numberDeleted++
 	}
 
-	return true, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteShareSnapshots(conn *gophercloud.ServiceClient, shareID string, logger logrus.FieldLogger) (bool, error) {
@@ -1405,6 +1459,8 @@ func deleteShareSnapshots(conn *gophercloud.ServiceClient, shareID string, logge
 		return false, nil
 	}
 
+	numberToDelete := len(allSnapshots)
+	numberDeleted := 0
 	for _, snapshot := range allSnapshots {
 		logger.Debugf("Deleting share snapshot %q", snapshot.ID)
 		err = sharesnapshots.Delete(conn, snapshot.ID).ExtractErr()
@@ -1412,14 +1468,16 @@ func deleteShareSnapshots(conn *gophercloud.ServiceClient, shareID string, logge
 			// Ignore the error if the share snapshot cannot be found
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
+				// Just log the error and move on to the next share snapshot
 				logger.Debugf("Deleting share snapshot %q failed: %v", snapshot.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find share snapshot %q. It's probably already been deleted.", snapshot.ID)
 		}
+		numberDeleted++
 	}
 
-	return true, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteFloatingIPs(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -1447,6 +1505,9 @@ func deleteFloatingIPs(opts *clientconfig.ClientOpts, filter Filter, logger logr
 		logger.Error(err)
 		return false, nil
 	}
+
+	numberToDelete := len(allFloatingIPs)
+	numberDeleted := 0
 	for _, floatingIP := range allFloatingIPs {
 		logger.Debugf("Deleting Floating IP %q", floatingIP.ID)
 		err = floatingips.Delete(conn, floatingIP.ID).ExtractErr()
@@ -1454,13 +1515,15 @@ func deleteFloatingIPs(opts *clientconfig.ClientOpts, filter Filter, logger logr
 			// Ignore the error if the floating ip cannot be found
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
+				// Just log the error and move on to the next floating IP
 				logger.Debugf("Deleting floating ip %q failed: %v", floatingIP.ID, err)
-				return false, nil
+				continue
 			}
 			logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", floatingIP.ID)
 		}
+		numberDeleted++
 	}
-	return len(allFloatingIPs) == 0, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func deleteImages(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
@@ -1489,16 +1552,20 @@ func deleteImages(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 		return false, nil
 	}
 
+	numberToDelete := len(allImages)
+	numberDeleted := 0
 	for _, image := range allImages {
 		logger.Debugf("Deleting image: %+v", image.ID)
 		err := images.Delete(conn, image.ID).ExtractErr()
 		if err != nil {
 			// This can fail if the image is still in use by other VMs
+			// Just log the error and move on to the next image
 			logger.Debugf("Deleting Image failed: %v", err)
-			return false, nil
+			continue
 		}
+		numberDeleted++
 	}
-	return true, nil
+	return numberDeleted == numberToDelete, nil
 }
 
 func untagRunner(opts *clientconfig.ClientOpts, infraID string, logger logrus.FieldLogger) error {
