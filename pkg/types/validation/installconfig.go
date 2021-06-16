@@ -303,7 +303,7 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	}
 
 	for i, sn := range n.ServiceNetwork {
-		if err := validate.SubnetCIDR(&sn.IPNet); err != nil {
+		if err := validate.ServiceSubnetCIDR(&sn.IPNet); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), err.Error()))
 		}
 		for _, network := range n.MachineNetwork {
