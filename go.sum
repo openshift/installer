@@ -1354,8 +1354,6 @@ github.com/openshift/api v0.0.0-20201214114959-164a2fb63b5f/go.mod h1:aqU5Cq+kqK
 github.com/openshift/api v0.0.0-20201216151826-78a19e96f9eb/go.mod h1:aqU5Cq+kqKKPbDMqxo9FojgDeSpNJI7iuskjXjtojDg=
 github.com/openshift/api v0.0.0-20210420151714-a3c8fa53e01b h1:rHqB8raDfF9HTHOjzrDmrSpW4eNfN2JyyS2ul/RNrWY=
 github.com/openshift/api v0.0.0-20210420151714-a3c8fa53e01b/go.mod h1:dZ4kytOo3svxJHNYd0J55hwe/6IQG5gAUHUE0F3Jkio=
-github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc h1:EWLfxK3DvQ+tgy69TRmL6K1gG7N+2pT1eUDY89C1O74=
-github.com/openshift/baremetal-operator v0.0.0-20210422153428-d22c5f710cdc/go.mod h1:n34Id58U3kzxyhLs+HWEX7IuScU0DMYMLVwxIvSlGCI=
 github.com/openshift/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d h1:S/ucduf5Mu7ktSj/d21079Ye4h7wC8blFFTRUfs03CU=
 github.com/openshift/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d/go.mod h1:n34Id58U3kzxyhLs+HWEX7IuScU0DMYMLVwxIvSlGCI=
 github.com/openshift/build-machinery-go v0.0.0-20200211121458-5e3d6e570160/go.mod h1:1CkcsT3aVebzRBzVTSbiKSkJMsC/CASqxesfqEMfJEc=
@@ -1421,8 +1419,8 @@ github.com/openshift/prom-label-proxy v0.1.1-0.20191016113035-b8153a7f39f1/go.mo
 github.com/openshift/runtime-utils v0.0.0-20200415173359-c45d4ff3f912/go.mod h1:0OXNy7VoqFexkxKqyQbHJLPwn1MFp1/CxRJAgKHM+/o=
 github.com/openshift/terraform v0.12.20-openshift-4 h1:1v7cIei84p26eqbD4LiTZOH0ecXbL7Qss0sy4BFeWhY=
 github.com/openshift/terraform v0.12.20-openshift-4/go.mod h1:R/dUWEZVB5itR8fNzx3g8QZMIwwWuI8rcwF8SbL1sq4=
-github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699 h1:vDqnd5N3KG0NvPXOQ6iO5rWMJ/R7ccxtO3Tis1gZRYE=
-github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699/go.mod h1:0U3OgA2uDYSc7gNkdWA92+/BxWXwuYhWqqZ4UhM1RCw=
+github.com/openshift/terraform-provider-aws v1.60.1-0.20210622193531-7d13cfbb1a8c h1:Zw9FWh0U9XIxnm4eFj/ebOnWJWe4BtxbwGjNDEpnBkw=
+github.com/openshift/terraform-provider-aws v1.60.1-0.20210622193531-7d13cfbb1a8c/go.mod h1:0U3OgA2uDYSc7gNkdWA92+/BxWXwuYhWqqZ4UhM1RCw=
 github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4 h1:pwWMhAha70saUe66//ErWm39hek9FUijl67WfxaqXxY=
 github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4/go.mod h1:MohWawSEwkGnsTTEW/U/sPVxsgQVHBNg2LsqQPbMa/U=
 github.com/openshift/terraform-provider-vsphere v1.24.3-openshift h1:tG83XgfFwH4OLONUeEsxh8JPG9QRrqKLoPzkPmLye/Y=
