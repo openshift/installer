@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -43,6 +44,7 @@ var (
 	// to the user in the interactive wizard.
 	HiddenPlatformNames = []string{
 		baremetal.Name,
+		ibmcloud.Name,
 		kubevirt.Name,
 		none.Name,
 	}
@@ -172,6 +174,10 @@ type Platform struct {
 	// +optional
 	GCP *gcp.Platform `json:"gcp,omitempty"`
 
+	// IBMCloud is the configuration used when installing on IBM Cloud.
+	// +optional
+	IBMCloud *ibmcloud.Platform `json:"ibmcloud,omitempty"`
+
 	// Libvirt is the configuration used when installing on libvirt.
 	// +optional
 	Libvirt *libvirt.Platform `json:"libvirt,omitempty"`
@@ -212,6 +218,8 @@ func (p *Platform) Name() string {
 		return baremetal.Name
 	case p.GCP != nil:
 		return gcp.Name
+	case p.IBMCloud != nil:
+		return ibmcloud.Name
 	case p.Libvirt != nil:
 		return libvirt.Name
 	case p.None != nil:

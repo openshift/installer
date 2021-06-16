@@ -96,6 +96,9 @@ func Test_PrintFields(t *testing.T) {
     gcp <object>
       GCP is the configuration used when installing on Google Cloud Platform.
 
+    ibmcloud <object>
+      IBMCloud is the configuration used when installing on IBM Cloud.
+
     kubevirt <object>
       Kubevirt is the configuration used when installing on kubevirt.
 
