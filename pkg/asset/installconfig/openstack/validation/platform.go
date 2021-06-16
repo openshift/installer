@@ -26,6 +26,9 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	// validate floating ips
 	allErrs = append(allErrs, validateFloatingIPs(p, ci, fldPath)...)
 
+	// validate vips
+	allErrs = append(allErrs, validateVIPs(p, ci, fldPath)...)
+
 	// validate custom cluster os image
 	allErrs = append(allErrs, validateClusterOSImage(p, ci, fldPath)...)
 
@@ -85,6 +88,15 @@ func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Pa
 		}
 		if p.APIFloatingIP != "" && p.APIFloatingIP == p.IngressFloatingIP {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressFloatingIP"), p.IngressFloatingIP, "ingressFloatingIP can not be the same as apiFloatingIP"))
+		}
+	}
+	return allErrs
+}
+
+func validateVIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
+	if p.APIVIP != "" && p.IngressVIP != "" {
+		if p.APIVIP == p.IngressVIP {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, "ingressVIP can not be the same as apiVIP"))
 		}
 	}
 	return allErrs
