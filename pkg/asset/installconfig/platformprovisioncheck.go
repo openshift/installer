@@ -11,8 +11,8 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	osconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
-	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -44,6 +44,7 @@ func (a *PlatformProvisionCheck) Dependencies() []asset.Asset {
 func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 	ic := &InstallConfig{}
 	dependencies.Get(ic)
+
 	var err error
 	platform := ic.Config.Platform.Name()
 	switch platform {
@@ -107,7 +108,7 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-	case libvirt.Name, none.Name:
+	case libvirt.Name, none.Name, alibabacloud.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

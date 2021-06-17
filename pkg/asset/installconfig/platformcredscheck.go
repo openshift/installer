@@ -12,6 +12,7 @@ import (
 	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -69,7 +70,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "creating OpenStack session")
 		}
-	case baremetal.Name, libvirt.Name, none.Name, vsphere.Name:
+	case baremetal.Name, libvirt.Name, none.Name, vsphere.Name, alibabacloud.Name:
 		// no creds to check
 	case azure.Name:
 		_, err = ic.Azure.Session()

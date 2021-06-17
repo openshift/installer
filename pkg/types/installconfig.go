@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -32,6 +33,7 @@ var (
 	// platform names in alphabetical order. This is the list of
 	// platforms presented to the user in the interactive wizard.
 	PlatformNames = []string{
+		alibabacloud.Name,
 		aws.Name,
 		azure.Name,
 		gcp.Name,
@@ -159,6 +161,10 @@ func (c *InstallConfig) ClusterDomain() string {
 // Platform is the configuration for the specific platform upon which to perform
 // the installation. Only one of the platform configuration should be set.
 type Platform struct {
+	// AlibabaCloud is the configuration used when installing on Alibaba Cloud.
+	// +optional
+	AlibabaCloud *alibabacloud.Platform `json:"alibabacloud,omitempty"`
+
 	// AWS is the configuration used when installing on AWS.
 	// +optional
 	AWS *aws.Platform `json:"aws,omitempty"`
@@ -211,6 +217,8 @@ func (p *Platform) Name() string {
 	switch {
 	case p == nil:
 		return ""
+	case p.AlibabaCloud != nil:
+		return alibabacloud.Name
 	case p.AWS != nil:
 		return aws.Name
 	case p.Azure != nil:

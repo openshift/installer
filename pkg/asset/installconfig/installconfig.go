@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -84,6 +85,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		},
 	}
 
+	a.Config.AlibabaCloud = platform.AlibabaCloud
 	a.Config.AWS = platform.AWS
 	a.Config.Libvirt = platform.Libvirt
 	a.Config.None = platform.None
@@ -175,6 +177,13 @@ func (a *InstallConfig) finish(filename string) error {
 }
 
 func (a *InstallConfig) platformValidation() error {
+	if a.Config.Platform.AlibabaCloud != nil {
+		client, err := alibabacloud.NewClient(alibabacloud.DefaultRegion)
+		if err != nil {
+			return err
+		}
+		return alibabacloud.Validate(client, a.Config)
+	}
 	if a.Config.Platform.Azure != nil {
 		client, err := a.Azure.Client()
 		if err != nil {
