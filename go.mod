@@ -19,6 +19,7 @@ require (
 	github.com/IBM/platform-services-go-sdk v0.18.13
 	github.com/IBM/vpc-go-sdk v1.0.1
 	github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667 // indirect
+	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1147
 	github.com/antchfx/xpath v1.1.2 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
