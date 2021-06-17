@@ -1654,10 +1654,6 @@ github.com/spf13/viper v1.6.1/go.mod h1:t3iDnF5Jlj76alVNuyFBk5oUMCvsrkbvZK0WQdfD
 github.com/spf13/viper v1.7.0/go.mod h1:8WkrPz2fc9jxqZNCJI/76HCieCp4Q8HaLFoCha5qpdg=
 github.com/spf13/viper v1.7.1/go.mod h1:8WkrPz2fc9jxqZNCJI/76HCieCp4Q8HaLFoCha5qpdg=
 github.com/ssgreg/nlreturn/v2 v2.1.0/go.mod h1:E/iiPB78hV7Szg2YfRgyIrk1AD6JVMTRkkxBiELzh2I=
-github.com/staebler/terraform-provider-azurestack v0.9.1-0.20210327183415-835df76afb4d h1:bj1zqSgVH8BPoXgl4dsGYK6M/bw0JNbGCt3REpPs5oo=
-github.com/staebler/terraform-provider-azurestack v0.9.1-0.20210327183415-835df76afb4d/go.mod h1:la/dfibxCegM5U5aDzjdw0hdLoUDGM/KKs7+24ADx8E=
-github.com/staebler/terraform-provider-azurestack v0.9.1-0.20210617223927-8aaa3816a7b7 h1:+jyV9UnXloWnxP+wVgFJV4NIgRAIQ7ElkbOQw6ZSNBA=
-github.com/staebler/terraform-provider-azurestack v0.9.1-0.20210617223927-8aaa3816a7b7/go.mod h1:la/dfibxCegM5U5aDzjdw0hdLoUDGM/KKs7+24ADx8E=
 github.com/staebler/terraform-provider-azurestack v0.9.1-0.20210617224946-9bd479741e17 h1:YbomYh+V+9+kzg8NGMbB1VQ9QF3rot6hB881K8zL99w=
 github.com/staebler/terraform-provider-azurestack v0.9.1-0.20210617224946-9bd479741e17/go.mod h1:la/dfibxCegM5U5aDzjdw0hdLoUDGM/KKs7+24ADx8E=
 github.com/stoewer/go-strcase v1.0.2/go.mod h1:eLfe5bL3qbL7ep/KafHzthxejrOF5J3xmt03uL5tzek=
