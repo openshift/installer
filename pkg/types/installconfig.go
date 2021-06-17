@@ -33,7 +33,6 @@ var (
 	// platform names in alphabetical order. This is the list of
 	// platforms presented to the user in the interactive wizard.
 	PlatformNames = []string{
-		alibabacloud.Name,
 		aws.Name,
 		azure.Name,
 		gcp.Name,
@@ -45,6 +44,7 @@ var (
 	// hidden-but-supported platform names. This list isn't presented
 	// to the user in the interactive wizard.
 	HiddenPlatformNames = []string{
+		alibabacloud.Name,
 		baremetal.Name,
 		ibmcloud.Name,
 		kubevirt.Name,

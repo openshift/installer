@@ -14,7 +14,7 @@ func TestDescribeRegions(t *testing.T) {
 
 	_, err = client.DescribeRegions(DefaultRegion)
 	if err != nil {
-		t.Errorf(fmt.Sprintf("Filed to describe regions, Response: %s", _err))
+		t.Errorf(fmt.Sprintf("Filed to describe regions, Response: %s", err))
 	}
 }
 
@@ -28,6 +28,6 @@ func TestListResourceGroups(t *testing.T) {
 	_, err = client.ListResourceGroups()
 	// fmt.Print(resp.ResourceGroups.ResourceGroup)
 	if err != nil {
-		t.Errorf(fmt.Sprintf("Filed to describe regions, Response: %s", _err))
+		t.Errorf(fmt.Sprintf("Filed to describe regions, Response: %s", err))
 	}
 }
