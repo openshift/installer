@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -14,12 +15,14 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	alibabacloudmanifests "github.com/openshift/installer/pkg/asset/manifests/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	ibmcloudmanifests "github.com/openshift/installer/pkg/asset/manifests/ibmcloud"
 	kubevirtmanifests "github.com/openshift/installer/pkg/asset/manifests/kubevirt"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
+	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -98,7 +101,24 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return nil
 		}
 		cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
+	case alibabacloudtypes.Name:
+		client, err := installConfig.AlibabaCloud.Client(installConfig.Config.AlibabaCloud.Region)
+		if err != nil {
+			return err
+		}
 
+		alibabacloudConfig, err := alibabacloudmanifests.CloudConfig{
+			Global: alibabacloudmanifests.GlobalConfig{
+				AccessKeyID:     base64.StdEncoding.EncodeToString([]byte(client.AccessKeyID)),
+				AccessKeySecret: base64.StdEncoding.EncodeToString([]byte(client.AccessKeySecret)),
+				ClusterID:       clusterID.InfraID,
+				Region:          client.RegionID,
+			},
+		}.JSON()
+		if err != nil {
+			return errors.Wrap(err, "could not create Alibaba Cloud provider config")
+		}
+		cm.Data[cloudProviderConfigDataKey] = alibabacloudConfig
 	case openstacktypes.Name:
 		cloudProviderConfigData, cloudProviderConfigCABundleData, err := openstackmanifests.GenerateCloudProviderConfig(*installConfig.Config)
 		if err != nil {

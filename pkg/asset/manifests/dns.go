@@ -14,10 +14,12 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	icalibabacloud "github.com/openshift/installer/pkg/asset/installconfig/alibabacloud"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/types"
+	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -81,6 +83,34 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
+	case alibabacloudtypes.Name:
+		client, err := icalibabacloud.NewClient(installConfig.Config.AlibabaCloud.Region)
+		if err != nil {
+			return errors.Wrap(err, "failed to get AlibabaCloud Cloud client")
+		}
+
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+			domains, err := client.ListDNSDomain(installConfig.Config.BaseDomain)
+			if err != nil {
+				return errors.Wrap(err, "failed to get domains")
+			}
+			if domains.TotalCount == 0 {
+				return errors.New("failed to get domains")
+			}
+			domainName := ""
+			for _, domain := range domains.Domains.Domain {
+				if domain.DomainName == installConfig.Config.BaseDomain {
+					domainName = domain.DomainName
+					break
+				}
+			}
+			if domainName == "" {
+				return errors.New("failed to get domains")
+			}
+			config.Spec.PublicZone = &configv1.DNSZone{ID: domains.Domains.Domain[0].DomainId}
+		}
+		// On Alibaba Cloud can be fetched using `ID` as a pre-determined privat zone name,
+		config.Spec.PrivateZone = &configv1.DNSZone{ID: installConfig.Config.ClusterDomain()}
 	case awstypes.Name:
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 			sess, err := installConfig.AWS.Session(context.TODO())

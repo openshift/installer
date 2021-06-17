@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -147,6 +148,21 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		}
 		if installConfig.Config.Platform.Azure.CloudName == azure.StackCloud {
 			config.Status.PlatformStatus.Azure.ARMEndpoint = installConfig.Config.Platform.Azure.ARMEndpoint
+		}
+	case alibabacloud.Name:
+		var tags []configv1.AlibabaCloudResourceTag
+		if len(installConfig.Config.AlibabaCloud.Tags) > 0 {
+			tags = make([]configv1.AlibabaCloudResourceTag, 0, len(installConfig.Config.AlibabaCloud.Tags))
+			for k, v := range installConfig.Config.AlibabaCloud.Tags {
+				tags = append(tags, configv1.AlibabaCloudResourceTag{Key: k, Value: v})
+			}
+		}
+
+		config.Spec.PlatformSpec.Type = configv1.AlibabaCloudPlatformType
+		config.Status.PlatformStatus.AlibabaCloud = &configv1.AlibabaCloudPlatformStatus{
+			Region:          installConfig.Config.Platform.AlibabaCloud.Region,
+			ResourceGroupID: installConfig.Config.Platform.AlibabaCloud.ResourceGroupID,
+			ResourceTags:    tags,
 		}
 	case baremetal.Name:
 		config.Spec.PlatformSpec.Type = configv1.BareMetalPlatformType

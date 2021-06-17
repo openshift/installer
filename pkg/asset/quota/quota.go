@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/quota"
 	quotaaws "github.com/openshift/installer/pkg/quota/aws"
 	quotagcp "github.com/openshift/installer/pkg/quota/gcp"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -56,6 +57,11 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 	mastersAsset := &machines.Master{}
 	workersAsset := &machines.Worker{}
 	dependencies.Get(ic, mastersAsset, workersAsset)
+
+	// TODO: AlibabaCloud: quota checks
+	if ic.Config.Platform.Name() == alibabacloud.Name {
+		return nil
+	}
 
 	masters, err := mastersAsset.Machines()
 	if err != nil {

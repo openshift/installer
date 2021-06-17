@@ -15,6 +15,9 @@ import (
 	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+
+	// TODO Alibaba: In the future, will use this repo: github.com/openshift/cluster-api-provider-alibaba
+	alibabacloudprovider "github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis/alibabacloudprovider/v1beta1"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -28,6 +31,7 @@ import (
 	baremetalbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	icalibabacloud "github.com/openshift/installer/pkg/asset/installconfig/alibabacloud"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
@@ -37,6 +41,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcospkg "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
+	alibabacloudtfvars "github.com/openshift/installer/pkg/tfvars/alibabacloud"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
@@ -48,6 +53,7 @@ import (
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
 	vspheretfvars "github.com/openshift/installer/pkg/tfvars/vsphere"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -689,7 +695,68 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
 			Data:     data,
 		})
+	case alibabacloud.Name:
+		client, err := icalibabacloud.NewClient(installConfig.Config.Platform.AlibabaCloud.Region)
+		if err != nil {
+			return err
+		}
+		bucket := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
+		object := "bootstrap.ign"
+		signURL, err := client.GetOSSObjectSignURL(bucket, object)
+		if err != nil {
+			return err
+		}
 
+		auth := alibabacloudtfvars.Auth{
+			AccessKey: client.AccessKeyID,
+			SecretKey: client.AccessKeySecret,
+		}
+
+		masters, err := mastersAsset.Machines()
+		if err != nil {
+			return err
+		}
+		masterConfigs := make([]*alibabacloudprovider.AlibabaCloudMachineProviderConfig, len(masters))
+		for i, m := range masters {
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.AlibabaCloudMachineProviderConfig)
+		}
+		workers, err := workersAsset.MachineSets()
+		if err != nil {
+			return err
+		}
+		workerConfigs := make([]*alibabacloudprovider.AlibabaCloudMachineProviderConfig, len(workers))
+		for i, w := range workers {
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.AlibabaCloudMachineProviderConfig)
+		}
+
+		natGatewayZones, err := client.ListEnhanhcedNatGatewayAvailableZones()
+		if err != nil {
+			return err
+		}
+		natGatewayZoneID := natGatewayZones.Zones[0].ZoneId
+
+		data, err := alibabacloudtfvars.TFVars(
+			alibabacloudtfvars.TFVarsSources{
+				Auth:                  auth,
+				ResourceGroupID:       installConfig.Config.AlibabaCloud.ResourceGroupID,
+				BaseDomain:            installConfig.Config.BaseDomain,
+				NatGatewayZoneID:      natGatewayZoneID,
+				MasterConfigs:         masterConfigs,
+				WorkerConfigs:         workerConfigs,
+				IgnitionBucket:        bucket,
+				IgnitionPresignedURL:  signURL,
+				AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
+				Architecture:          installConfig.Config.ControlPlane.Architecture,
+				Publish:               installConfig.Config.Publish,
+			},
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Data:     data,
+		})
 	default:
 		logrus.Warnf("unrecognized platform %s", platform)
 	}

@@ -15,6 +15,7 @@ import (
 	configaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -158,6 +159,23 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return rhcos.FindArtifactURL(a)
 		}
 		return "", fmt.Errorf("%s: No vmware build found", st.FormatPrefix(archName))
+	case alibabacloud.Name:
+		if len(config.Platform.AlibabaCloud.ImageID) > 0 {
+			return config.Platform.AlibabaCloud.ImageID, nil
+		}
+		return "", nil
+		// TODO Alibaba: waiting to update 'AlibabaCloudImage' in the
+		// 'https://github.com/coreos/stream-metadata-go/blob/main/stream/stream.go'
+
+		// region := config.Platform.AlibabaCloud.Region
+		// osimage, err := st.GetAlibabaImage(archName, region)
+		// if err != nil {
+		// 	return "", err
+		// }
+		// if region != config.Platform.AlibabaCloud.Region {
+		// 	osimage = fmt.Sprintf("%s,%s", osimage, region)
+		// }
+		// return osimage, nil
 	case none.Name:
 		return "", nil
 	default:

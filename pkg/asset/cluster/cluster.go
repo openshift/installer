@@ -90,9 +90,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	tfvarsFiles := make([]*asset.File, 0, len(terraformVariables.Files())+len(stages))
-	for _, file := range terraformVariables.Files() {
-		tfvarsFiles = append(tfvarsFiles, file)
-	}
+	tfvarsFiles = append(tfvarsFiles, terraformVariables.Files()...)
 
 	for _, stage := range stages {
 
