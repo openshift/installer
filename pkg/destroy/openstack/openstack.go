@@ -361,6 +361,8 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 		if err != nil {
 			// This can fail when port is still in use so return/retry
 			logger.Debugf("Deleting Port %q failed with error: %v", port.ID, err)
+			// Try to delete associated trunk
+			deleteAssociatedTrunk(conn, logger, port.ID)
 			return false, nil
 		}
 	}
@@ -1030,6 +1032,46 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 		}
 	}
 	return len(allTrunks) == 0, nil
+}
+
+func deleteAssociatedTrunk(conn *gophercloud.ServiceClient, logger logrus.FieldLogger, portID string) {
+	logger.Debug("Deleting associated trunk")
+	defer logger.Debugf("Exiting deleting associated trunk")
+
+	listOpts := trunks.ListOpts{
+		PortID: portID,
+	}
+	allPages, err := trunks.List(conn, listOpts).AllPages()
+	if err != nil {
+		var gerr gophercloud.ErrDefault404
+		if errors.As(err, &gerr) {
+			logger.Debug("Skip trunk deletion because the cloud doesn't support trunk ports")
+			return
+		}
+		logger.Error(err)
+		return
+	}
+
+	allTrunks, err := trunks.ExtractTrunks(allPages)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	for _, trunk := range allTrunks {
+		logger.Debugf("Deleting Trunk %q", trunk.ID)
+		err = trunks.Delete(conn, trunk.ID).ExtractErr()
+		if err != nil {
+			// Ignore the error if the trunk cannot be found
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
+				// This can fail when the trunk is still in use so return/retry
+				logger.Debugf("Deleting Trunk %q failed: %v", trunk.ID, err)
+				return
+			}
+			logger.Debugf("Cannot find trunk %q. It's probably already been deleted.", trunk.ID)
+		}
+	}
+	return
 }
 
 func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
