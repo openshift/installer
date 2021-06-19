@@ -159,7 +159,7 @@ func (c *client) GetDataVolume(ctx context.Context, namespace string, name strin
 	}
 	var dv cdiv1.DataVolume
 	err = c.fromUnstructedToInterface(*resp, &dv, "DataVolume")
-	return &dv, nil
+	return &dv, err
 }
 
 func (c *client) ListDataVolume(ctx context.Context, namespace string, opts metav1.ListOptions) (*cdiv1.DataVolumeList, error) {
