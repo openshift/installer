@@ -89,6 +89,7 @@ func Provider() terraform.ResourceProvider {
 			"azurestack_availability_set":                   resourceArmAvailabilitySet(),
 			"azurestack_dns_zone":                           resourceArmDnsZone(),
 			"azurestack_dns_a_record":                       resourceArmDnsARecord(),
+			"azurestack_image":                              resourceArmImage(),
 			"azurestack_network_interface":                  resourceArmNetworkInterface(),
 			"azurestack_network_security_group":             resourceArmNetworkSecurityGroup(),
 			"azurestack_network_security_rule":              resourceArmNetworkSecurityRule(),

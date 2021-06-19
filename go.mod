@@ -132,7 +132,7 @@ replace (
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 // Pin MCO so it doesn't get downgraded
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699 // Pin to openshift fork with tag v2.67.0-openshift
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4 // Pin to 2.48.0-openshift
-	github.com/terraform-providers/terraform-provider-azurestack => github.com/staebler/terraform-provider-azurestack v0.9.1-0.20210617224946-9bd479741e17
+	github.com/terraform-providers/terraform-provider-azurestack => github.com/staebler/terraform-provider-azurestack v0.9.1-0.20210619022331-40dbbec156c8 // update_azure_rm_with_resource_arm_image
 	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
 	k8s.io/client-go => k8s.io/client-go v0.21.0-rc.0
 	k8s.io/kubectl => k8s.io/kubectl v0.21.0-rc.0

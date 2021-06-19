@@ -1466,7 +1466,7 @@ func expandAzureStackVirtualMachineImageReference(d *schema.ResourceData) (*comp
 	if imageID != "" && publisher != "" {
 		return nil, fmt.Errorf("[ERROR] Conflict between `id` and `publisher` (only one or the other can be used)")
 	}
-	
+
 	if imageID != "" {
 		imageReference.ID = &imageID
 	} else {
