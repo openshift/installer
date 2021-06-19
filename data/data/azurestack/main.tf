@@ -21,7 +21,7 @@ module "bootstrap" {
   resource_group_name    = data.azurestack_resource_group.main.name
   region                 = var.azure_region
   vm_size                = var.azure_bootstrap_vm_type
-  vm_image_uri           = ""//azurestack_storage_blob.rhcos_image.url
+  vm_image_uri           = azurestack_image.cluster.id
   cluster_id             = var.cluster_id
   ignition               = var.ignition_bootstrap
   subnet_id              = module.vnet.master_subnet_id
@@ -56,7 +56,7 @@ module "master" {
   cluster_id             = var.cluster_id
   region                 = var.azure_region
   vm_size                = var.azure_master_vm_type
-  vm_image_uri           = ""//azurestack_storage_blob.rhcos_image.url
+  vm_image_uri           = azurestack_image.cluster.id
   ignition               = var.ignition_master
   elb_backend_pool_v4_id = module.vnet.public_lb_backend_pool_v4_id
   ilb_backend_pool_v4_id = module.vnet.internal_lb_backend_pool_v4_id
@@ -116,34 +116,33 @@ resource "azurestack_storage_account" "cluster" {
   account_replication_type = "LRS"
 }
 
-// TODO: Implement azurestack_image resource.
-//# copy over the vhd to cluster resource group and create an image using that
-//resource "azurestack_storage_container" "vhd" {
-//  name                 = "vhd"
-//  resource_group_name  = data.azurestack_resource_group.main.name
-//  storage_account_name = azurestack_storage_account.cluster.name
-//}
-//
-//resource "azurestack_storage_blob" "rhcos_image" {
-//  name                   = "rhcos${random_string.storage_suffix.result}.vhd"
-//  resource_group_name    = data.azurestack_resource_group.main.name
-//  storage_account_name   = azurestack_storage_account.cluster.name
-//  storage_container_name = azurestack_storage_container.vhd.name
-//  type                   = "page"
-//  source_uri             = var.azure_image_url
-//}
-//
-//resource "azurestack_image" "cluster" {
-//  name                = var.cluster_id
-//  resource_group_name = data.azurestack_resource_group.main.name
-//  location            = var.azure_region
-//
-//  os_disk {
-//    os_type  = "Linux"
-//    os_state = "Generalized"
-//    blob_uri = azurestack_storage_blob.rhcos_image.url
-//  }
-//}
+# copy over the vhd to cluster resource group and create an image using that
+resource "azurestack_storage_container" "vhd" {
+  name                 = "vhd"
+  resource_group_name  = data.azurestack_resource_group.main.name
+  storage_account_name = azurestack_storage_account.cluster.name
+}
+
+resource "azurestack_storage_blob" "rhcos_image" {
+  name                   = "rhcos${random_string.storage_suffix.result}.vhd"
+  resource_group_name    = data.azurestack_resource_group.main.name
+  storage_account_name   = azurestack_storage_account.cluster.name
+  storage_container_name = azurestack_storage_container.vhd.name
+  type                   = "page"
+  source_uri             = var.azure_image_url
+}
+
+resource "azurestack_image" "cluster" {
+  name                = var.cluster_id
+  resource_group_name = data.azurestack_resource_group.main.name
+  location            = var.azure_region
+
+  os_disk {
+    os_type  = "Linux"
+    os_state = "Generalized"
+    blob_uri = azurestack_storage_blob.rhcos_image.url
+  }
+}
 
 resource "azurestack_availability_set" "master_availability_set" {
   name                = "${var.cluster_id}-master"

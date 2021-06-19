@@ -47,9 +47,8 @@ resource "azurestack_virtual_machine" "master" {
     disable_password_authentication = false
   }
 
-  // TODO: Use Azure image created specifically for this cluster instead of a hard-coded one.
   storage_image_reference {
-    id = "/subscriptions/e90a4bc2-2f4e-4d36-874b-9011e4734d74/resourceGroups/PADILLON-4XKQH-RG/providers/Microsoft.Compute/images/padillon-4xkqh-image"
+    id = var.vm_image_uri
   }
 
   storage_os_disk {
