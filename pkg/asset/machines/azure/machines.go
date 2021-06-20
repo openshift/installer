@@ -101,6 +101,11 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		publicLB = ""
 	}
 
+	managedIdentity := fmt.Sprintf("%s-identity", clusterID)
+	if platform.IsARO() {
+		managedIdentity = ""
+	}
+
 	return &azureprovider.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "azureproviderconfig.openshift.io/v1beta1",
@@ -122,7 +127,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		},
 		Zone:                 az,
 		Subnet:               subnet,
-		ManagedIdentity:      fmt.Sprintf("%s-identity", clusterID),
+		ManagedIdentity:      managedIdentity,
 		Vnet:                 virtualNetwork,
 		ResourceGroup:        rg,
 		NetworkResourceGroup: networkResourceGroup,

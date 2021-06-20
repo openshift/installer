@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// aro is a setting to enable aro-only modifications
+var aro bool
+
 // OutboundType is a strategy for how egress from cluster is achieved.
 // +kubebuilder:validation:Enum="";Loadbalancer;UserDefinedRouting
 type OutboundType string
@@ -114,4 +117,9 @@ func (p *Platform) ClusterResourceGroupName(infraID string) string {
 		return p.ResourceGroupName
 	}
 	return fmt.Sprintf("%s-rg", infraID)
+}
+
+// IsARO returns true if ARO-only modifications are enabled
+func (p *Platform) IsARO() bool {
+	return aro
 }
