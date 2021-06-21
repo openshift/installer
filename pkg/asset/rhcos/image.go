@@ -85,7 +85,7 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return config.Platform.AWS.AMIID, nil
 		}
 		region := config.Platform.AWS.Region
-		if !configaws.IsKnownRegion(config.Platform.AWS.Region) {
+		if !configaws.IsKnownRegion(config.Platform.AWS.Region, config.ControlPlane.Architecture) {
 			region = "us-east-1"
 		}
 		osimage, err := st.GetAMI(archName, region)

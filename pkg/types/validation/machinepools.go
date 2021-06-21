@@ -44,6 +44,7 @@ var (
 		types.ArchitectureAMD64:   true,
 		types.ArchitectureS390X:   true,
 		types.ArchitecturePPC64LE: true,
+		types.ArchitectureARM64:   true,
 	}
 
 	validArchitectureValues = func() []string {
@@ -70,6 +71,9 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 	}
 	if !validArchitectures[p.Architecture] {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("architecture"), p.Architecture, validArchitectureValues))
+	}
+	if platform.AWS != nil {
+		allErrs = append(allErrs, awsvalidation.ValidateMachinePoolArchitecture(p, fldPath.Child("architecture"))...)
 	}
 	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, p, fldPath.Child("platform"))...)
 	return allErrs

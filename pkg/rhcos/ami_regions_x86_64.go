@@ -2,8 +2,8 @@
 
 package rhcos
 
-// AMIRegoins is a list of regions where the RHEL CoreOS is published.
-var AMIRegions = []string{
+// AMIRegionsX86_64 is a list of regions where the RHEL CoreOS is published for architecture X86_64.
+var AMIRegionsX86_64 = []string{
 	"af-south-1",
 	"ap-east-1",
 	"ap-northeast-1",

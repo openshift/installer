@@ -5,13 +5,13 @@ FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.8 AS m
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN go generate ./data && \
-    SKIP_GENERATION=y GOOS=darwin GOARCH=amd64 hack/build.sh
+    SKIP_GENERATION=y GOOS=darwin GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.8 AS linuxbuilder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN go generate ./data && \
-    SKIP_GENERATION=y GOOS=linux GOARCH=amd64 hack/build.sh
+    SKIP_GENERATION=y GOOS=linux GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/4.8:installer
 COPY --from=macbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac/openshift-install

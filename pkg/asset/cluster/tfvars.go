@@ -267,6 +267,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
 			MasterIAMRoleName:     masterIAMRoleName,
 			WorkerIAMRoleName:     workerIAMRoleName,
+			Architecture:          installConfig.Config.ControlPlane.Architecture,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

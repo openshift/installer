@@ -59,6 +59,8 @@ type TFVarsSources struct {
 	AdditionalTrustBundle string
 
 	MasterIAMRoleName, WorkerIAMRoleName string
+
+	Architecture types.Architecture
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -112,7 +114,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, errors.New("EBS IOPS must be configured for the io1 root volume")
 	}
 
-	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region)
+	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region, sources.Architecture)
 
 	cfg := &config{
 		CustomEndpoints:         endpoints,
@@ -128,7 +130,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PrivateSubnets:          sources.PrivateSubnets,
 		InternalZone:            sources.InternalZone,
 		PublishStrategy:         string(sources.Publish),
-		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region),
+		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region, sources.Architecture),
 		IgnitionBucket:          sources.IgnitionBucket,
 		MasterIAMRoleName:       sources.MasterIAMRoleName,
 		WorkerIAMRoleName:       sources.WorkerIAMRoleName,

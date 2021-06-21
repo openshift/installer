@@ -39,7 +39,8 @@ func validInstallConfig() *types.InstallConfig {
 			},
 		},
 		ControlPlane: &types.MachinePool{
-			Replicas: pointer.Int64Ptr(3),
+			Architecture: types.ArchitectureAMD64,
+			Replicas:     pointer.Int64Ptr(3),
 			Platform: types.MachinePoolPlatform{
 				AWS: &aws.MachinePool{
 					Zones: []string{"a", "b", "c"},
@@ -47,7 +48,8 @@ func validInstallConfig() *types.InstallConfig {
 			},
 		},
 		Compute: []types.MachinePool{{
-			Replicas: pointer.Int64Ptr(3),
+			Architecture: types.ArchitectureAMD64,
+			Replicas:     pointer.Int64Ptr(3),
 			Platform: types.MachinePoolPlatform{
 				AWS: &aws.MachinePool{
 					Zones: []string{"a", "b", "c"},
@@ -401,6 +403,7 @@ func TestValidate(t *testing.T) {
 			c := validInstallConfig()
 			c.Compute[0].Platform.AWS.Zones = append(c.ControlPlane.Platform.AWS.Zones, "d")
 			c.Compute = append(c.Compute, types.MachinePool{
+				Architecture: types.ArchitectureAMD64,
 				Platform: types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{
 						Zones: []string{"a", "b", "e"},

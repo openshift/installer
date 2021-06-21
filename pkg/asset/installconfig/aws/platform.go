@@ -11,11 +11,13 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/version"
 )
 
 // Platform collects AWS-specific configuration.
 func Platform() (*aws.Platform, error) {
-	regions := knownRegions()
+	architecture := version.DefaultArch()
+	regions := knownRegions(architecture)
 	longRegions := make([]string, 0, len(regions))
 	shortRegions := make([]string, 0, len(regions))
 	for id, location := range regions {
@@ -33,7 +35,7 @@ func Platform() (*aws.Platform, error) {
 	}
 
 	defaultRegion := "us-east-1"
-	if !IsKnownRegion(defaultRegion) {
+	if !IsKnownRegion(defaultRegion, architecture) {
 		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
 	}
 
@@ -44,7 +46,7 @@ func Platform() (*aws.Platform, error) {
 
 	defaultRegionPointer := ssn.Config.Region
 	if defaultRegionPointer != nil && *defaultRegionPointer != "" {
-		if IsKnownRegion(*defaultRegionPointer) {
+		if IsKnownRegion(*defaultRegionPointer, architecture) {
 			defaultRegion = *defaultRegionPointer
 		} else {
 			logrus.Warnf("Unrecognized AWS region %q, defaulting to %s", *defaultRegionPointer, defaultRegion)

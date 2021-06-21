@@ -127,8 +127,8 @@ func (m *Master) Dependencies() []asset.Asset {
 	}
 }
 
-func awsDefaultMasterMachineTypes(region string) []string {
-	classes := awsdefaults.InstanceClasses(region)
+func awsDefaultMasterMachineTypes(region string, arch types.Architecture) []string {
+	classes := awsdefaults.InstanceClasses(region, arch)
 	types := make([]string, len(classes))
 	for i, c := range classes {
 		types[i] = fmt.Sprintf("%s.xlarge", c)
@@ -174,6 +174,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.AWS)
+		zoneDefaults := false
 		if len(mpool.Zones) == 0 {
 			if len(subnets) > 0 {
 				for zone := range subnets {
@@ -184,13 +185,23 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 				if err != nil {
 					return err
 				}
+				zoneDefaults = true
 			}
 		}
+
 		if mpool.InstanceType == "" {
-			mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMasterMachineTypes(installConfig.Config.Platform.AWS.Region), mpool.Zones)
+			mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMasterMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
 			if err != nil {
 				logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
-				mpool.InstanceType = awsDefaultMasterMachineTypes(installConfig.Config.Platform.AWS.Region)[0]
+				mpool.InstanceType = awsDefaultMasterMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
+			}
+		}
+
+		// if the list of zones is the default we need to try to filter the list in case there are some zones where the instance might not be available
+		if zoneDefaults {
+			mpool.Zones, err = aws.FilterZonesBasedOnInstanceType(ctx, installConfig.AWS, mpool.InstanceType, mpool.Zones)
+			if err != nil {
+				logrus.Warn(errors.Wrap(err, "failed to filter zone list"))
 			}
 		}
 

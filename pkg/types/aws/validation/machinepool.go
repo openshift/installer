@@ -7,7 +7,24 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+)
+
+var (
+	validArchitectures = map[types.Architecture]bool{
+		types.ArchitectureAMD64: true,
+		types.ArchitectureARM64: true,
+	}
+
+	// ValidArchitectureValues lists the supported arches for AWS
+	ValidArchitectureValues = func() []string {
+		v := make([]string, 0, len(validArchitectures))
+		for m := range validArchitectures {
+			v = append(v, string(m))
+		}
+		return v
+	}()
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
@@ -40,6 +57,16 @@ func ValidateAMIID(platform *aws.Platform, p *aws.MachinePool, fldPath *field.Pa
 	regions := sets.NewString("us-gov-west-1", "us-gov-east-1", "us-iso-east-1", "cn-north-1", "cn-northwest-1")
 	if pool.AMIID == "" && regions.Has(platform.Region) {
 		allErrs = append(allErrs, field.Required(fldPath, fmt.Sprintf("AMI ID must be provided for regions %s", strings.Join(regions.List(), ", "))))
+	}
+	return allErrs
+}
+
+// ValidateMachinePoolArchitecture checks that a valid architecture is set for a machine pool.
+func ValidateMachinePoolArchitecture(pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !validArchitectures[pool.Architecture] {
+		allErrs = append(allErrs, field.NotSupported(fldPath, pool.Architecture, ValidArchitectureValues))
 	}
 	return allErrs
 }
