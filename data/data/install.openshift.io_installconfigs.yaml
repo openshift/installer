@@ -1473,7 +1473,6 @@ spec:
                 - apiVIP
                 - hosts
                 - ingressVIP
-                - provisioningNetworkInterface
                 type: object
               gcp:
                 description: GCP is the configuration used when installing on Google

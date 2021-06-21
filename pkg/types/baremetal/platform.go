@@ -117,6 +117,7 @@ type Platform struct {
 
 	// ProvisioningNetworkInterface is the name of the network interface on a control plane
 	// baremetal host that is connected to the provisioning network.
+	// +optional
 	ProvisioningNetworkInterface string `json:"provisioningNetworkInterface"`
 
 	// ProvisioningNetworkCIDR defines the network to use for provisioning.
