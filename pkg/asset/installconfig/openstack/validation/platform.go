@@ -52,9 +52,6 @@ func validateMachinesSubnet(p *openstack.Platform, n *types.Networking, ci *Clou
 		}
 	}
 
-	if len(p.ExternalDNS) > 0 && p.MachinesSubnet != "" {
-		allErrs = append(allErrs, field.InternalError(fldPath.Child("machinesSubnet"), fmt.Errorf("externalDNS can't be set when using a custom machinesSubnet")))
-	}
 	return allErrs
 }
 
