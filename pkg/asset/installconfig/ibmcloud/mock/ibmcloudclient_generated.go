@@ -6,6 +6,7 @@ package mock
 
 import (
 	context "context"
+	iamidentityv1 "github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	resourcecontrollerv2 "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	resourcemanagerv2 "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	vpcv1 "github.com/IBM/vpc-go-sdk/vpcv1"
@@ -35,6 +36,21 @@ func NewMockAPI(ctrl *gomock.Controller) *MockAPI {
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
+}
+
+// GetAuthenticatorAPIKeyDetails mocks base method
+func (m *MockAPI) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAuthenticatorAPIKeyDetails", ctx)
+	ret0, _ := ret[0].(*iamidentityv1.APIKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAuthenticatorAPIKeyDetails indicates an expected call of GetAuthenticatorAPIKeyDetails
+func (mr *MockAPIMockRecorder) GetAuthenticatorAPIKeyDetails(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticatorAPIKeyDetails", reflect.TypeOf((*MockAPI)(nil).GetAuthenticatorAPIKeyDetails), ctx)
 }
 
 // GetCISInstance mocks base method

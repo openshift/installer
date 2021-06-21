@@ -30,7 +30,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
-	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -404,7 +403,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case ibmcloud.Name:
-		client, err := ibmcloudconfig.NewClient()
+		client, err := installConfig.IBMCloud.Client()
 		if err != nil {
 			return err
 		}
@@ -436,13 +435,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 
-		// TODO: Get CRN from InstallConfig metadata or BaseDomain
-		crnstr := "crn:v1:bluemix:public:internet-svcs:us-south:a/1e1f75646aef447814a6d907cc83fb3c:instance::"
+		// Get CISInstanceCRN from InstallConfig metadata
+		crn, err := installConfig.IBMCloud.CISInstanceCRN(ctx)
+		if err != nil {
+			return err
+		}
 
 		data, err = ibmcloudtfvars.TFVars(
 			ibmcloudtfvars.TFVarsSources{
 				Auth:              auth,
-				CISInstanceCRN:    crnstr,
+				CISInstanceCRN:    crn,
 				PublishStrategy:   installConfig.Config.Publish,
 				ResourceGroupName: installConfig.Config.Platform.IBMCloud.ResourceGroupName,
 

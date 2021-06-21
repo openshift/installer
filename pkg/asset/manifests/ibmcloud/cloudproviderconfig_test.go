@@ -3,8 +3,6 @@ package ibmcloud
 import (
 	"testing"
 
-	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,13 +21,7 @@ clusterID = ocp4-8pxks
 
 `
 
-	ic := types.InstallConfig{
-		Platform: types.Platform{
-			IBMCloud: &ibmcloud.Platform{},
-		},
-	}
-
-	actualConfig, err := CloudProviderConfig("ocp4-8pxks", ic)
+	actualConfig, err := CloudProviderConfig("ocp4-8pxks", "1e1f75646aef447814a6d907cc83fb3c")
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expectedConfig, actualConfig, "unexpected cloud provider config")
 }

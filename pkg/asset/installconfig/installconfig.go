@@ -30,10 +30,11 @@ const (
 
 // InstallConfig generates the install-config.yaml file.
 type InstallConfig struct {
-	Config *types.InstallConfig `json:"config"`
-	File   *asset.File          `json:"file"`
-	AWS    *aws.Metadata        `json:"aws,omitempty"`
-	Azure  *icazure.Metadata    `json:"azure,omitempty"`
+	Config   *types.InstallConfig `json:"config"`
+	File     *asset.File          `json:"file"`
+	AWS      *aws.Metadata        `json:"aws,omitempty"`
+	Azure    *icazure.Metadata    `json:"azure,omitempty"`
+	IBMCloud *icibmcloud.Metadata `json:"ibmcloud,omitempty"`
 }
 
 var _ asset.WritableAsset = (*InstallConfig)(nil)
@@ -147,6 +148,9 @@ func (a *InstallConfig) finish(filename string) error {
 	}
 	if a.Config.Azure != nil {
 		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint)
+	}
+	if a.Config.IBMCloud != nil {
+		a.IBMCloud = icibmcloud.NewMetadata(a.Config.BaseDomain)
 	}
 	if err := validation.ValidateInstallConfig(a.Config).ToAggregate(); err != nil {
 		if filename == "" {

@@ -3,9 +3,6 @@ package ibmcloud
 import (
 	"bytes"
 	"text/template"
-
-	"github.com/IBM-Cloud/bluemix-go/crn"
-	"github.com/openshift/installer/pkg/types"
 )
 
 // https://github.com/kubernetes/kubernetes/blob/368ee4bb8ee7a0c18431cd87ee49f0c890aa53e5/staging/src/k8s.io/legacy-cloud-providers/gce/gce.go#L188
@@ -36,14 +33,7 @@ type provider struct {
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBMCloud platform.
-func CloudProviderConfig(infraID string, installConfig types.InstallConfig) (string, error) {
-	// TODO: Get CRN from InstallConfig metadata or BaseDomain
-	crnstr := "crn:v1:bluemix:public:internet-svcs:us-south:a/1e1f75646aef447814a6d907cc83fb3c:instance::"
-	CRN, err := crn.Parse(crnstr)
-	if err != nil {
-		return "", err
-	}
-
+func CloudProviderConfig(infraID string, accountID string) (string, error) {
 	config := &config{
 		Global: global{
 			Version: "1.1.0",
@@ -57,7 +47,7 @@ func CloudProviderConfig(infraID string, installConfig types.InstallConfig) (str
 			VLANIPConfigMap: "ibm-cloud-provider-vlan-ip-config",
 		},
 		Provider: provider{
-			AccountID: CRN.Scope,
+			AccountID: accountID,
 			ClusterID: infraID,
 		},
 	}

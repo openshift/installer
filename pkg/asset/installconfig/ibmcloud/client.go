@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/zonesv1"
+	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
@@ -19,6 +20,7 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
+	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error)
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*EncryptionKeyResponse, error)
@@ -106,6 +108,22 @@ func (c *Client) loadSDKServices() error {
 	}
 
 	return nil
+}
+
+// GetAuthenticatorAPIKeyDetails gets detailed information on the API key used
+// for authentication to the IBM Cloud APIs
+func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
+	iamIdentityService, err := iamidentityv1.NewIamIdentityV1(&iamidentityv1.IamIdentityV1Options{
+		Authenticator: c.Authenticator,
+	})
+
+	options := iamIdentityService.NewGetAPIKeysDetailsOptions()
+	options.SetIamAPIKey(c.Authenticator.ApiKey)
+	details, _, err := iamIdentityService.GetAPIKeysDetailsWithContext(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	return details, nil
 }
 
 // GetCISInstance gets a specific Cloud Internet Services instance by its CRN.
