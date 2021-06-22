@@ -93,21 +93,9 @@ func Platform() (*azure.Platform, error) {
 		return nil, err
 	}
 
-	var acceleratedNetworking bool
-	err = survey.AskOne(&survey.Select{
-		Message: "AcceleratedNetworking",
-		Help:    "Whether to enable accelerated networking.",
-		Default: false,
-		Options: []string{"true", "false"},
-	}, &acceleratedNetworking)
-	if err != nil {
-		return nil, err
-	}
-
 	return &azure.Platform{
-		Region:                region,
-		CloudName:             cloudName,
-		AcceleratedNetworking: to.BoolPtr(acceleratedNetworking),
+		Region:    region,
+		CloudName: cloudName,
 	}, nil
 }
 

@@ -96,6 +96,11 @@ type AzureMachineProviderSpec struct {
 	// SecurityProfile specifies the Security profile settings for a virtual machine.
 	// +optional
 	SecurityProfile *SecurityProfile `json:"securityProfile,omitempty"`
+
+	// AcceleratedNetworking enables or disables Azure accelerated networking feature.
+	// Set to false by default. If true, then this will depend on whether the requested
+	// VMSize is supported. If set to true with an unsupported VMSize, Azure will return an error.
+	AcceleratedNetworking bool `json:"acceleratedNetworking,omitempty"`
 }
 
 // SpotVMOptions defines the options relevant to running the Machine on Spot VMs

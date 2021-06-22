@@ -77,6 +77,12 @@ variable "identity" {
   description = "The user assigned identity id for the vm."
 }
 
+variable "enable_accelerated_networking" {
+  type        = bool
+  default     = true
+  description = "Option to enable accelerated networking"
+}
+
 variable "outbound_udr" {
   type    = bool
   default = false

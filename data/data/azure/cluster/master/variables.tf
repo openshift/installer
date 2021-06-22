@@ -118,3 +118,9 @@ This is required because terraform cannot calculate counts during plan phase com
 conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
 EOF
 }
+
+variable "accelerated_networking" {
+  type        = bool
+  default     = true
+  description = "This value determines if accelerated networking is enabled."
+}

@@ -19,6 +19,13 @@ type MachinePool struct {
 	//
 	// +optional
 	OSDisk `json:"osDisk"`
+
+	// AcceleratedNetworking specifies whether to enable accelerated networking
+	//  Accelerated networking enables single root I/O virtualization (SR-IOV) to a VM, greatly improving its
+	//  networking performance.
+	//
+	// +optional
+	AcceleratedNetworking bool `json:"acceleratedNetworking,omitempty"`
 }
 
 // OSDisk defines the disk for machines on Azure.
@@ -49,9 +56,7 @@ func (a *MachinePool) Set(required *MachinePool) {
 		a.Zones = required.Zones
 	}
 
-	if required.InstanceType != "" {
-		a.InstanceType = required.InstanceType
-	}
+	a.AcceleratedNetworking = required.AcceleratedNetworking
 
 	if required.OSDisk.DiskSizeGB != 0 {
 		a.OSDisk.DiskSizeGB = required.OSDisk.DiskSizeGB
@@ -60,4 +65,5 @@ func (a *MachinePool) Set(required *MachinePool) {
 	if required.OSDisk.DiskType != "" {
 		a.OSDisk.DiskType = required.OSDisk.DiskType
 	}
+
 }

@@ -16,6 +16,12 @@ limitations under the License.
 
 package v1beta1
 
+const (
+	// PausedAnnotation is an annotation that can be applied to MachineHealthCheck objects to prevent the MHC controller
+	// from processing it.
+	PausedAnnotation = "cluster.x-k8s.io/paused"
+)
+
 // Constants aren't automatically generated for unversioned packages.
 // Instead share the same constant for all versioned packages
 type MachineStatusError string

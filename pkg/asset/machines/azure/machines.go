@@ -132,7 +132,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		ResourceGroup:         rg,
 		NetworkResourceGroup:  networkResourceGroup,
 		PublicLoadBalancer:    publicLB,
-		AcceleratedNetworking: platform.AcceleratedNetworking,
+		AcceleratedNetworking: mpool.AcceleratedNetworking,
 	}, nil
 }
 
