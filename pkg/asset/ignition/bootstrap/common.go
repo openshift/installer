@@ -199,6 +199,17 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 		}},
 	)
 
+	// TODO: Remove this. This is a hack to work around a bug with the hard-coded RCHOS image that we are using for ASH.
+	a.Config.Storage.Files = append(
+		a.Config.Storage.Files,
+		ignition.FileFromString(
+			"/etc/sysconfig/crio",
+			"core",
+			0777,
+			"HOME=/root",
+		),
+	)
+
 	return nil
 }
 

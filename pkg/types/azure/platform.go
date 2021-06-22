@@ -28,6 +28,9 @@ type Platform struct {
 	// Region specifies the Azure region where the cluster will be created.
 	Region string `json:"region"`
 
+	// ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack.
+	ARMEndpoint string `json:"armEndpoint,omitempty"`
+
 	// BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found.
 	BaseDomainResourceGroupName string `json:"baseDomainResourceGroupName,omitempty"`
 
@@ -81,7 +84,7 @@ type Platform struct {
 }
 
 // CloudEnvironment is the name of the Azure cloud environment
-// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud
+// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud;AzureStackCloud
 type CloudEnvironment string
 
 const (
@@ -96,6 +99,9 @@ const (
 
 	// GermanCloud is the Azure cloud environment used in Germany.
 	GermanCloud CloudEnvironment = "AzureGermanCloud"
+
+	// StackCloud is the Azure cloud environment used at the edge and on premises.
+	StackCloud CloudEnvironment = "AzureStackCloud"
 )
 
 // Name returns name that Azure uses for the cloud environment.

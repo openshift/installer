@@ -260,7 +260,10 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		openstack.ConfigMasters(machines, clusterID.InfraID)
 	case azuretypes.Name:
 		mpool := defaultAzureMachinePoolPlatform()
-		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(installConfig.Config.Platform.Azure.Region)
+		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(
+			installConfig.Config.Platform.Azure.CloudName,
+			installConfig.Config.Platform.Azure.Region,
+		)
 		mpool.OSDisk.DiskSizeGB = 1024
 		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Azure)

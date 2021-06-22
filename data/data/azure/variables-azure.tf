@@ -61,6 +61,12 @@ variable "azure_image_url" {
   description = "The URL of the vm image used for all nodes."
 }
 
+variable "azure_arm_endpoint" {
+  type        = string
+  default     = ""
+  description = "The endpoint for the Azure API. Only used when installing to Azure Stack"
+}
+
 variable "azure_subscription_id" {
   type        = string
   description = "The subscription that should be used to interact with Azure API"

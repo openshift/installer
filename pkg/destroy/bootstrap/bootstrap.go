@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
 	"github.com/openshift/installer/pkg/terraform"
+	typesazure "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -28,6 +29,9 @@ func Destroy(dir string) (err error) {
 	platform := metadata.Platform()
 	if platform == "" {
 		return errors.New("no platform configured in metadata")
+	}
+	if platform == typesazure.Name && metadata.Azure.CloudName == typesazure.StackCloud {
+		platform = "azurestack"
 	}
 
 	tfPlatformVarsFileName := fmt.Sprintf(cluster.TfPlatformVarsFileName, platform)

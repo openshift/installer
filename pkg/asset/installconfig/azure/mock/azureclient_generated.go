@@ -6,10 +6,10 @@ package mock
 
 import (
 	context "context"
-	compute "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute"
-	network "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
-	resources "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
-	subscriptions "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-06-01/subscriptions"
+	compute "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/compute/mgmt/compute"
+	network "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
+	resources "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
+	subscriptions "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )

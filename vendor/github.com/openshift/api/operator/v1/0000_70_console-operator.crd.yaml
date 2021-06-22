@@ -1,25 +1,22 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: consoles.operator.openshift.io
   annotations:
+    api-approved.openshift.io: https://github.com/openshift/api/pull/486
     include.release.openshift.io/ibm-cloud-managed: "true"
     include.release.openshift.io/self-managed-high-availability: "true"
     include.release.openshift.io/single-node-developer: "true"
+  name: consoles.operator.openshift.io
 spec:
-  scope: Cluster
   group: operator.openshift.io
   names:
     kind: Console
     listKind: ConsoleList
     plural: consoles
     singular: console
+  scope: Cluster
   versions:
   - name: v1
-    served: true
-    storage: true
-    subresources:
-      status: {}
     schema:
       openAPIV3Schema:
         description: Console provides a means to configure an operator to manage the
@@ -50,6 +47,19 @@ spec:
                   of customization options to the web console.
                 type: object
                 properties:
+                  addPage:
+                    description: addPage allows customizing actions on the Add page
+                      in developer perspective.
+                    type: object
+                    properties:
+                      disabledActions:
+                        description: disabledActions is a list of actions that are
+                          not shown to users. Each action in the list is represented
+                          by its ID.
+                        type: array
+                        minItems: 1
+                        items:
+                          type: string
                   brand:
                     description: brand is the default branding of the web console
                       which can be overridden by providing the brand field.  There
@@ -256,7 +266,7 @@ spec:
                   domain, manual DNS configurations steps are necessary. The default
                   console route will be maintained to reserve the default hostname
                   for console if the custom route is removed. If not specified, default
-                  route will be used.
+                  route will be used. DEPRECATED
                 type: object
                 properties:
                   hostname:
@@ -354,3 +364,7 @@ spec:
               version:
                 description: version is the level this availability applies to
                 type: string
+    served: true
+    storage: true
+    subresources:
+      status: {}
