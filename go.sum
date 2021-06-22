@@ -166,6 +166,9 @@ github.com/IBM/vpc-go-sdk v0.7.0 h1:LNAnzcDLD2Bf2UbiYfFFsWGlHQf2N/Qc6S5iM7qln1o=
 github.com/IBM/vpc-go-sdk v0.7.0/go.mod h1:wxicPDnSTPXt1eNxSO/9KNGqOW9RMgxPoSh4gd8KJY4=
 github.com/IBM-Cloud/power-go-client v1.0.56 h1:zm1fjEbwc3JSnaCQIWmCMjFWrHmAUht/HKGtwJIjHz0=
 github.com/IBM-Cloud/power-go-client v1.0.56/go.mod h1:I4r5tCrA8mV5GFqGAJG4/Tn+/JpR+XLnDCLLNVKJxuI=
+github.com/IBM/go-sdk-core/v4 v4.5.1/go.mod h1:lTUXbqIX6/aAbSCkP6q59+dyFsTwZAc0ewRS2vJWVbg=
+github.com/IBM/go-sdk-core/v5 v5.2.0/go.mod h1:vyNdbFujJtdTj9HbihtvKwwS3k/GKSKpOx9ZIQ6MWDY=
+github.com/IBM/vpc-go-sdk v1.0.1/go.mod h1:bhd7r482lV30UJz46r2oRgYGawGEo+TuS41ZLIY65y0=
 github.com/InVisionApp/go-health v2.1.0+incompatible/go.mod h1:/+Gv1o8JUsrjC6pi6MN6/CgKJo4OqZ6x77XAnImrzhg=
 github.com/Jeffail/gabs v1.1.1/go.mod h1:6xMvQMK4k33lb7GUUpaAPh6nKMmemQeg5d4gn7/bOXc=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
@@ -1428,6 +1431,8 @@ github.com/opencontainers/runtime-spec v0.1.2-0.20190507144316-5b71a03e2700/go.m
 github.com/opencontainers/selinux v1.5.2/go.mod h1:yTcKuYAh6R95iDpefGLQaPaRwJFwyzAJufJyiTt7s0g=
 github.com/openshift-metal3/terraform-provider-ironic v0.2.6 h1:R48DOxq2z6NpFkRs/OHzbkWA8aLZMIXljMK2aq1VvbM=
 github.com/openshift-metal3/terraform-provider-ironic v0.2.6/go.mod h1:ux2W6gsCIYsY/fX5N0V0ZgwFEBNN7P8g6RlH6ACi97k=
+github.com/openshift-powervs/cluster-api-provider-powervs v0.0.0-20210519105315-8c84c49e8770 h1:E04UpDoHnFOnNn1NXgKbCFr5R8qc3dbImL2V8Q6nxjc=
+github.com/openshift-powervs/cluster-api-provider-powervs v0.0.0-20210519105315-8c84c49e8770/go.mod h1:/y5oeo3qZ6EJqkjfeV1MbzBLdqZoPny/zVFM1JtxX/Y=
 github.com/openshift/api v0.0.0-20191219222812-2987a591a72c/go.mod h1:dh9o4Fs58gpFXGSYfnVxGR9PnV53I8TW84pQaJDdGiY=
 github.com/openshift/api v0.0.0-20200326160804-ecb9283fe820/go.mod h1:RKMJ5CBnljLfnej+BJ/xnOWc3kZDvJUaIAEq2oKSPtE=
 github.com/openshift/api v0.0.0-20200424083944-0422dc17083e/go.mod h1:VnbEzX8SAaRj7Yfl836NykdQIlbEjfL6/CD+AaJQg5Q=
@@ -1590,6 +1595,8 @@ github.com/posener/complete v1.2.3 h1:NP0eAhjcjImqslEwo/1hq7gpajME0fTLTezBKDqfXq
 github.com/posener/complete v1.2.3/go.mod h1:WZIdtGGp+qx0sLrYKtIRAruyNpv6hFCicSgv7Sy7s/s=
 github.com/posener/complete/v2 v2.0.1-alpha.12/go.mod h1://JlL91cS2JV7rOl6LVHrRqBXoBUecJu3ILQPgbJiMQ=
 github.com/posener/script v1.0.4/go.mod h1:Rg3ijooqulo05aGLyGsHoLmIOUzHUVK19WVgrYBPU/E=
+github.com/ppc64le-cloud/powervs-utils v0.0.0-20210106101518-5d3f965b0344/go.mod h1:KImYgHmvBVtAczNhyDBDSN54PGIdz0+QiPVQMmObEQY=
+github.com/ppc64le-cloud/powervs-utils v0.0.0-20210415051532-4cdd6a79c8fa/go.mod h1:KImYgHmvBVtAczNhyDBDSN54PGIdz0+QiPVQMmObEQY=
 github.com/pquerna/cachecontrol v0.0.0-20171018203845-0dec1b30a021/go.mod h1:prYjPmNq4d1NPVmpShWobRqXY3q7Vp+80DqgxxUrUIA=
 github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35/go.mod h1:prYjPmNq4d1NPVmpShWobRqXY3q7Vp+80DqgxxUrUIA=
 github.com/pquerna/ffjson v0.0.0-20181028064349-e517b90714f7/go.mod h1:YARuvh7BUWHNhzDq2OM5tzR2RiCcN2D7sapiKyCel/M=

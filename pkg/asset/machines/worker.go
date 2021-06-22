@@ -3,6 +3,7 @@ package machines
 import (
 	"context"
 	"fmt"
+	"github.com/openshift/installer/pkg/asset/machines/powervs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +21,8 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+	powervsapi "github.com/openshift/cluster-api-provider-powervs/pkg/apis"
+	powervsprovider "github.com/openshift/cluster-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	vsphereproviderapi "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
@@ -64,6 +67,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -163,8 +167,18 @@ func defaultKubevirtMachinePoolPlatform() kubevirttypes.MachinePool {
 	}
 }
 
+func defaultPowerVSMachinePoolPlatform() powervstypes.MachinePool {
+	return powervstypes.MachinePool{
+		Memory:     32,
+		Processors: 0.25,
+		ProcType:   "shared",
+		SysType:    "s922",
+	}
+}
+
 func awsDefaultWorkerMachineTypes(region string, arch types.Architecture) []string {
 	classes := awsdefaults.InstanceClasses(region, arch)
+
 	types := make([]string, len(classes))
 	for i, c := range classes {
 		types[i] = fmt.Sprintf("%s.large", c)
@@ -457,6 +471,18 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+		case powervstypes.Name:
+			mpool := defaultPowerVSMachinePoolPlatform()
+			mpool.Set(ic.Platform.PowerVS.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.PowerVS)
+			pool.Platform.PowerVS = &mpool
+			sets, err := powervs.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data", installConfig.Config.Platform.PowerVS.UserTags)
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects for ovirt provider")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		case nonetypes.Name:
 		default:
 			return fmt.Errorf("invalid Platform")
@@ -543,6 +569,7 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 	ovirtproviderapi.AddToScheme(scheme)
 	vsphereproviderapi.AddToScheme(scheme)
 	kubevirtproviderapi.AddToScheme(scheme)
+	powervsapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
 		azureprovider.SchemeGroupVersion,
@@ -554,6 +581,7 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 		ovirtprovider.SchemeGroupVersion,
 		vsphereprovider.SchemeGroupVersion,
 		kubevirtprovider.SchemeGroupVersion,
+		powervsprovider.GroupVersion, //TODO: Should we rename from GroupVersion to SchemeGroupVersion
 	)
 
 	machineSets := []machineapi.MachineSet{}
