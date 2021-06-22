@@ -32,7 +32,7 @@ type ClusterPlatformMetadata struct {
 	Libvirt   *libvirt.Metadata   `json:"libvirt,omitempty"`
 	Azure     *azure.Metadata     `json:"azure,omitempty"`
 	GCP       *gcp.Metadata       `json:"gcp,omitempty"`
-	IBMCloud  *ibmcloud.Metadata  `jsno:"ibmcloud,omitempty"`
+	IBMCloud  *ibmcloud.Metadata  `json:"ibmcloud,omitempty"`
 	BareMetal *baremetal.Metadata `json:"baremetal,omitempty"`
 	Ovirt     *ovirt.Metadata     `json:"ovirt,omitempty"`
 	VSphere   *vsphere.Metadata   `json:"vsphere,omitempty"`
