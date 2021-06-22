@@ -24,7 +24,8 @@ func NewMetadata(baseDomain string) *Metadata {
 	return &Metadata{BaseDomain: baseDomain}
 }
 
-// AccountID ...
+// AccountID returns the IBM Cloud account ID associated with the authentication
+// credentials.
 func (m *Metadata) AccountID(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -45,7 +46,8 @@ func (m *Metadata) AccountID(ctx context.Context) (string, error) {
 	return m.accountID, nil
 }
 
-// CISInstanceCRN ...
+// CISInstanceCRN returns the Cloud Internet Services instance CRN that is
+// managing the DNS zone for the base domain.
 func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -72,6 +74,7 @@ func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 	return m.cisInstanceCRN, nil
 }
 
+// Client returns a client used for making API calls to IBM Cloud services.
 func (m *Metadata) Client() (*Client, error) {
 	if m.client == nil {
 		client, err := NewClient()
