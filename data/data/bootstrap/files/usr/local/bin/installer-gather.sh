@@ -29,6 +29,13 @@ do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/bootstrap/journals/${service}.log"
 done
 
+echo "Gathering bootstrap networking ..."
+mkdir -p "${ARTIFACTS}/bootstrap/network"
+ip addr >& "${ARTIFACTS}/bootstrap/network/ip-addr.txt"
+ip route >& "${ARTIFACTS}/bootstrap/network/ip-route.txt"
+hostname >& "${ARTIFACTS}/bootstrap/network/hostname.txt"
+cp -r /etc/resolv.conf "${ARTIFACTS}/bootstrap/network/"
+
 echo "Gathering bootstrap containers ..."
 mkdir -p "${ARTIFACTS}/bootstrap/containers"
 sudo crictl ps --all --quiet | while read -r container

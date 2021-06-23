@@ -27,6 +27,13 @@ do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/journals/${service}.log"
 done
 
+echo "Gathering master networking ..."
+mkdir -p "${ARTIFACTS}/network"
+ip addr >& "${ARTIFACTS}/network/ip-addr.txt"
+ip route >& "${ARTIFACTS}/network/ip-route.txt"
+hostname >& "${ARTIFACTS}/network/hostname.txt"
+cp -r /etc/resolv.conf "${ARTIFACTS}/network/"
+
 echo "Gathering master containers ..."
 mkdir -p "${ARTIFACTS}/containers"
 for container in $(crictl ps --all --quiet)
