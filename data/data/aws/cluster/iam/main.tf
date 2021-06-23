@@ -69,3 +69,70 @@ EOF
 
 }
 
+
+resource "aws_iam_instance_profile" "bootstrap" {
+  count = var.include_bootstrap ? 1 : 0
+
+  name = "${var.cluster_id}-bootstrap-profile"
+
+  role = var.master_iam_role_name != "" ? var.master_iam_role_name : aws_iam_role.bootstrap[0].name
+}
+
+resource "aws_iam_role" "bootstrap" {
+  count = var.include_bootstrap && var.master_iam_role_name == "" ? 1 : 0
+
+  name = "${var.cluster_id}-bootstrap-role"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+                "Service": "ec2.${data.aws_partition.current.dns_suffix}"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+
+  tags = merge(
+    {
+      "Name" = "${var.cluster_id}-bootstrap-role"
+    },
+    var.tags,
+  )
+}
+
+resource "aws_iam_role_policy" "bootstrap" {
+  count = var.include_bootstrap && var.master_iam_role_name == "" ? 1 : 0
+  name = "${var.cluster_id}-bootstrap-policy"
+  role = aws_iam_role.bootstrap[0].id
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "ec2:Describe*",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ec2:AttachVolume",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ec2:DetachVolume",
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}

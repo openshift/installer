@@ -29,3 +29,7 @@ output "master_sg_id" {
 output "ami_id" {
   value = var.aws_region == var.aws_ami_region ? var.aws_ami : aws_ami_copy.imported[0].id
 }
+
+output "bootstrap_instance_profile_name" {
+  value = module.iam.bootstrap_instance_profile_name
+}

@@ -25,3 +25,7 @@ variable "master_sg_id" {
 variable "ami_id" {
   type = string
 }
+
+variable "bootstrap_instance_profile_name" {
+  type = string
+}

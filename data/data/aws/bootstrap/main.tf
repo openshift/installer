@@ -68,75 +68,10 @@ resource "aws_s3_bucket_object" "ignition" {
   }
 }
 
-resource "aws_iam_instance_profile" "bootstrap" {
-  name = "${var.cluster_id}-bootstrap-profile"
-
-  role = var.aws_master_iam_role_name != "" ? var.aws_master_iam_role_name : aws_iam_role.bootstrap[0].name
-}
-
-resource "aws_iam_role" "bootstrap" {
-  count = var.aws_master_iam_role_name == "" ? 1 : 0
-
-  name = "${var.cluster_id}-bootstrap-role"
-  path = "/"
-
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "sts:AssumeRole",
-            "Principal": {
-                "Service": "ec2.${data.aws_partition.current.dns_suffix}"
-            },
-            "Effect": "Allow",
-            "Sid": ""
-        }
-    ]
-}
-EOF
-
-  tags = merge(
-    {
-      "Name" = "${var.cluster_id}-bootstrap-role"
-    },
-    local.tags,
-  )
-}
-
-resource "aws_iam_role_policy" "bootstrap" {
-  count = var.aws_master_iam_role_name == "" ? 1 : 0
-  name = "${var.cluster_id}-bootstrap-policy"
-  role = aws_iam_role.bootstrap[0].id
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "ec2:Describe*",
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ec2:AttachVolume",
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ec2:DetachVolume",
-      "Resource": "*"
-    }
-  ]
-}
-EOF
-}
-
 resource "aws_instance" "bootstrap" {
   ami = var.ami_id
 
-  iam_instance_profile        = aws_iam_instance_profile.bootstrap.name
+  iam_instance_profile        = var.bootstrap_instance_profile_name
   instance_type               = var.aws_bootstrap_instance_type
   subnet_id                   = var.aws_publish_strategy == "External" ? var.public_subnet_ids[0] : var.private_subnet_ids[0]
   user_data                   = var.aws_bootstrap_stub_ignition

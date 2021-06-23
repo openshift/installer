@@ -52,7 +52,9 @@ module "iam" {
   source = "./iam"
 
   cluster_id           = var.cluster_id
+  master_iam_role_name = var.aws_master_iam_role_name
   worker_iam_role_name = var.aws_worker_iam_role_name
+  include_bootstrap    = !var.destroy_bootstrap
 
   tags = local.tags
 }
