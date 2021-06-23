@@ -74,6 +74,12 @@ resource "aws_iam_instance_profile" "bootstrap" {
   role = var.aws_master_iam_role_name != "" ? var.aws_master_iam_role_name : aws_iam_role.bootstrap[0].name
 }
 
+data "aws_iam_instance_profile" "bootstrap" {
+  name = "${var.cluster_id}-bootstrap-profile"
+
+  depends_on = [aws_iam_instance_profile.bootstrap, aws_iam_role.bootstrap, aws_iam_role_policy.bootstrap]
+}
+
 resource "aws_iam_role" "bootstrap" {
   count = var.aws_master_iam_role_name == "" ? 1 : 0
 
@@ -136,7 +142,7 @@ EOF
 resource "aws_instance" "bootstrap" {
   ami = var.ami_id
 
-  iam_instance_profile        = aws_iam_instance_profile.bootstrap.name
+  iam_instance_profile        = data.aws_iam_instance_profile.bootstrap.name
   instance_type               = var.aws_bootstrap_instance_type
   subnet_id                   = var.aws_publish_strategy == "External" ? var.public_subnet_ids[0] : var.private_subnet_ids[0]
   user_data                   = var.aws_bootstrap_stub_ignition
@@ -170,6 +176,8 @@ resource "aws_instance" "bootstrap" {
     },
     local.tags,
   )
+
+  depends_on = [data.aws_iam_instance_profile.bootstrap]
 }
 
 resource "aws_lb_target_group_attachment" "bootstrap" {
