@@ -362,10 +362,14 @@ type AzurePlatformStatus struct {
 	// If empty, the value is equal to `AzurePublicCloud`.
 	// +optional
 	CloudName AzureCloudEnvironment `json:"cloudName,omitempty"`
+
+	// armEndpoint specifies a URL to use for resource management in non-soverign clouds such as Azure Stack.
+	// +optional
+	ARMEndpoint string `json:"armEndpoint,omitempty"`
 }
 
 // AzureCloudEnvironment is the name of the Azure cloud environment
-// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud
+// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud;AzureStackCloud
 type AzureCloudEnvironment string
 
 const (
@@ -380,6 +384,9 @@ const (
 
 	// AzureGermanCloud is the Azure cloud environment used in Germany.
 	AzureGermanCloud AzureCloudEnvironment = "AzureGermanCloud"
+
+	// AzureStackCloud is the Azure cloud environment used at the edge and on premises.
+	AzureStackCloud AzureCloudEnvironment = "AzureStackCloud"
 )
 
 // GCPPlatformSpec holds the desired state of the Google Cloud Platform infrastructure provider.
