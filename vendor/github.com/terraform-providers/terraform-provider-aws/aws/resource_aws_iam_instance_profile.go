@@ -136,7 +136,7 @@ func instanceProfileAddRole(iamconn *iam.IAM, profileName, roleName string) erro
 		RoleName:            aws.String(roleName),
 	}
 
-	err := resource.Retry(30*time.Second, func() *resource.RetryError {
+	err := resource.Retry(2*time.Minute, func() *resource.RetryError {
 		var err error
 		_, err = iamconn.AddRoleToInstanceProfile(request)
 		// IAM unfortunately does not provide a better error code or message for eventual consistency

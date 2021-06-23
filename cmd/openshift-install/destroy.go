@@ -21,7 +21,6 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
-	"github.com/openshift/installer/pkg/terraform"
 )
 
 func newDestroyCmd() *cobra.Command {
@@ -74,17 +73,28 @@ func runDestroyCmd(directory string) error {
 			return errors.Wrapf(err, "failed to destroy asset %q", asset.Name())
 		}
 	}
+
 	// delete the state file as well
 	err = store.DestroyState()
 	if err != nil {
 		return errors.Wrap(err, "failed to remove state file")
 	}
 
-	tfStateFilePath := filepath.Join(directory, terraform.StateFileName)
-	err = os.Remove(tfStateFilePath)
-	if err != nil && !os.IsNotExist(err) {
-		return errors.Wrap(err, "failed to remove Terraform state")
+	// delete terraform files
+	tfstateFiles, err := filepath.Glob(filepath.Join(directory, "*.tfstate"))
+	if err != nil {
+		return errors.Wrap(err, "failed to glob for tfstate files")
 	}
+	tfvarsFiles, err := filepath.Glob(filepath.Join(directory, "*.tfvars.json"))
+	if err != nil {
+		return errors.Wrap(err, "failed to glob for tfvars files")
+	}
+	for _, f := range append(tfstateFiles, tfvarsFiles...) {
+		if err := os.Remove(f); err != nil {
+			return errors.Wrapf(err, "failed to remove terraform file %q", f)
+		}
+	}
+
 	timer.StopTimer(timer.TotalTimeElapsed)
 	timer.LogSummary()
 
