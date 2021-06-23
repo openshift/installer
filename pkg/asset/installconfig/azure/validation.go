@@ -114,7 +114,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			instanceType = defaultInstanceType
 		}
 		if instanceType == "" {
-			instanceType = defaults.ControlPlaneInstanceType(ic.Azure.Region)
+			instanceType = defaults.ControlPlaneInstanceType(ic.Azure.CloudName, ic.Azure.Region)
 		}
 		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("controlPlane", "platform", "azure"), ic.Azure.Region, instanceType, diskType, controlPlaneReq)...)
 	}
@@ -132,7 +132,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 				instanceType = defaultInstanceType
 			}
 			if instanceType == "" {
-				instanceType = defaults.ComputeInstanceType(ic.Azure.Region)
+				instanceType = defaults.ComputeInstanceType(ic.Azure.CloudName, ic.Azure.Region)
 			}
 			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "azure"),
 				ic.Azure.Region, instanceType, diskType, computeReq)...)
