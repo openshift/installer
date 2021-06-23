@@ -22,6 +22,31 @@ variable "ilb_backend_pool_v6_id" {
   description = "The internal load balancer bakend pool id for ipv6. used to attach the bootstrap NIC"
 }
 
+variable "public_lb_pip_v4_fqdn" {
+  type    = string
+  default = null
+}
+
+variable "public_lb_pip_v6_fqdn" {
+  type    = string
+  default = null
+}
+
+variable "internal_lb_ip_v4_address" {
+  type    = string
+  default = null
+}
+
+variable "internal_lb_ip_v6_address" {
+  type    = string
+  default = null
+}
+
+variable "virtual_network_id" {
+  description = "The ID for Virtual Network that will be linked to the Private DNS zone."
+  type        = string
+}
+
 variable "master_subnet_id" {
   type        = string
   description = "The subnet ID for the bootstrap node."
@@ -67,4 +92,3 @@ conditional need to be recreated. See
 https://github.com/hashicorp/terraform/issues/12570
 EOF
 }
-
