@@ -3,8 +3,12 @@
 terraform {
   required_providers {
     ibm = {
-      source = "ibm-cloud/ibm"
-      version = "~> 1.24.0"
+      source  = "ibm-cloud/ibm"
+      version = "1.25.0"
+    }
+    ignition = {
+      source = "community-terraform-providers/ignition"
+      version = "2.1.2"
     }
   }
 }
