@@ -3,9 +3,11 @@ package platform
 import (
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/stages/aws"
+	"github.com/openshift/installer/pkg/terraform/stages/azure"
 	"github.com/openshift/installer/pkg/terraform/stages/compat"
 	"github.com/openshift/installer/pkg/terraform/stages/gcp"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -14,6 +16,8 @@ func StagesForPlatform(platform string) []terraform.Stage {
 	switch platform {
 	case awstypes.Name:
 		return aws.PlatformStages
+	case azuretypes.Name:
+		return azure.PlatformStages
 	case gcptypes.Name:
 		return gcp.PlatformStages
 	default:
