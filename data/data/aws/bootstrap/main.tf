@@ -170,6 +170,8 @@ resource "aws_instance" "bootstrap" {
     },
     local.tags,
   )
+
+  depends_on = [aws_s3_bucket_object.ignition]
 }
 
 resource "aws_lb_target_group_attachment" "bootstrap" {
