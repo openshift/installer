@@ -50,21 +50,21 @@ variable "powervs_cloud_instance_id" {
 # Configure storage
 ################################################################
 variable "powervs_cos_instance_location" {
-    type        = string
-    description = "The location of your COS instance"
-    default     = "global"
+  type        = string
+  description = "The location of your COS instance"
+  default     = "global"
 }
 
 variable "powervs_cos_bucket_location" {
-    type       = string
-    description = "The location to create your COS bucket"
-    default = "us-east"
+  type        = string
+  description = "The location to create your COS bucket"
+  default     = "us-east"
 }
 
 variable "powervs_cos_storage_class" {
-    type        = string
-    description = "The plan used for your COS instance"
-    default     = "smart"
+  type        = string
+  description = "The plan used for your COS instance"
+  default     = "smart"
 }
 
 ################################################################
@@ -108,6 +108,19 @@ variable "powervs_sys_type" {
   description = "The type of system (s922/e980)"
   default     = "s922"
 }
+
+variable "powervs_base_domain" {
+  type        = string
+  description = "The base domain name of the cluster"
+  default     = ""
+}
+
+variable "powervs_cluster_domain" {
+  type        = string
+  description = "The name of the cluster that all DNS records must belong to."
+  default     = ""
+}
+
 
 # Must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
 # Length cannot exceed 14 characters when combined with cluster_id_prefix
