@@ -167,16 +167,18 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
 		options := zonesService.NewListZonesOptions()
 		listZonesResponse, _, _ := zonesService.ListZones(options)
 
-		for _, zone := range listZonesResponse.Result {
-			if *zone.Status == "active" {
-				zoneStruct := DNSZoneResponse{
-					Name:            *zone.Name,
-					ID:              *zone.ID,
-					CISInstanceCRN:  *instance.CRN,
-					CISInstanceName: *instance.Name,
-					ResourceGroupID: *instance.ResourceGroupID,
+		if listZonesResponse != nil {
+			for _, zone := range listZonesResponse.Result {
+				if *zone.Status == "active" {
+					zoneStruct := DNSZoneResponse{
+						Name:            *zone.Name,
+						ID:              *zone.ID,
+						CISInstanceCRN:  *instance.CRN,
+						CISInstanceName: *instance.Name,
+						ResourceGroupID: *instance.ResourceGroupID,
+					}
+					allZones = append(allZones, zoneStruct)
 				}
-				allZones = append(allZones, zoneStruct)
 			}
 		}
 	}
