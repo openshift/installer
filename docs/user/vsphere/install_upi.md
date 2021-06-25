@@ -279,72 +279,16 @@ The Ignition config created by the OpenShift Installer cannot be used directly b
   },
 }
 ```
-### Hostname
+
+## Configuring Hostname and Static IP Addresses with Afterburn
 
 The hostname of each control plane and worker machine must be resolvable from all nodes within the cluster.
 
-Preferrably, the hostname will be set via DHCP. If you need to manually set a hostname, you can create a hostname file by adding an entry in the `.storage.files` list in an Ignition config.
+Preferrably, the hostname and IP address will be set via DHCP.
 
-For example, the following Ignition config will create a hostname file that sets the hostname of a machine to `control-plane-0.
+If you need to manually set a hostname and/or configure a static IP address, you can pass a custom networking command-line `ip=` parameter to Afterburn for configuration. In order to do so, set the vApp property `guestinfo.afterburn.initrd.network-kargs` to the `ip` parameter using this format: `ip=<ip_address>::<gateway>:<netmask>:<hostname>:<iface>:<protocol>:<dns_address>`, e.g. `ip=10.0.0.2::10.0.0.2:255.255.255.0:compute-1:ens192:none:8.8.8.8`
 
-```json
-{
-  "ignition": {
-    "version": "3.1.0"
-  },
-  "storage": {
-    "files": [
-      {
-        "path": "/etc/hostname",
-        "contents": {
-          "source": "data:text/plain;charset=utf-8,control-plane-0",
-        },
-        "mode": 420
-      }
-    ]
-  },
-}
-```
-
-### Static IP Addresses
-
-Preferrably, the IP address for each machine will be set via DHCP. If you need to use a static IP address, you can be set one for a machine by creating an ifcfg file. You can create an ifcfg file by adding an entry in the `.storage.files` list in an Ignition config.
-
-For example, the following Ignition config will create an ifcfg file that sets the IP address of the ens192 device to 10.0.0.2.
-
-```json
-{
-  "ignition": {
-    "version": "3.1.0"
-  },
-  "storage": {
-    "files": [
-      {
-        "path": "/etc/sysconfig/network-scripts/ifcfg-ens192",
-        "contents": {
-          "source": "data:text/plain;charset=utf-8;base64,VFlQRT1FdGhlcm5ldApCT09UUFJPVE89bm9uZQpOQU1FPWVuczE5MgpERVZJQ0U9ZW5zMTkyCk9OQk9PVD15ZXMKSVBBRERSPTEwLjAuMC4yClBSRUZJWD0yNApHQVRFV0FZPTEwLjAuMC4xCkRPTUFJTj1teWRvbWFpbi5jb20KRE5TMT04LjguOC44",
-        },
-        "mode": 420
-      }
-    ]
-  },
-}
-```
-
-The ifcfg file will have the following contents.
-
-```
-TYPE=Ethernet
-BOOTPROTO=none
-NAME=ens192
-DEVICE=ens192
-ONBOOT=yes
-IPADDR=10.0.0.2
-PREFIX=24
-GATEWAY=10.0.0.1
-DOMAIN=mydomain.com
-DNS1=8.8.8.8
-```
+The full syntax of the `ip=` parameter is documented in the [Dracut manpages](https://www.man7.org/linux/man-pages/man7/dracut.cmdline.7.html).
 
 ## Watching your installation
 
