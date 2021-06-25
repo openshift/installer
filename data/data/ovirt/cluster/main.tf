@@ -8,26 +8,11 @@ provider "ovirt" {
 }
 
 module "template" {
-  source                               = "./template"
-  ovirt_cluster_id                     = var.ovirt_cluster_id
-  ovirt_storage_domain_id              = var.ovirt_storage_domain_id
-  ignition_bootstrap                   = var.ignition_bootstrap
-  cluster_id                           = var.cluster_id
-  openstack_base_image_name            = var.openstack_base_image_name
-  openstack_base_image_local_file_path = var.openstack_base_image_local_file_path
-  ovirt_network_name                   = var.ovirt_network_name
-  ovirt_vnic_profile_id                = var.ovirt_vnic_profile_id
-}
-
-module "bootstrap" {
-  source                               = "./bootstrap"
-  ovirt_cluster_id                     = var.ovirt_cluster_id
-  ovirt_template_id                    = module.template.releaseimage_template_id
-  ovirt_tmp_template_vm_id             = module.template.tmp_import_vm
-  ignition_bootstrap                   = var.ignition_bootstrap
-  cluster_id                           = var.cluster_id
-  openstack_base_image_name            = var.openstack_base_image_name
-  openstack_base_image_local_file_path = var.openstack_base_image_local_file_path
+  source                    = "./template"
+  ovirt_cluster_id          = var.ovirt_cluster_id
+  cluster_id                = var.cluster_id
+  openstack_base_image_name = var.ovirt_base_image_name
+  tmp_import_vm_id          = var.tmp_import_vm_id
 }
 
 module "affinity_group" {
