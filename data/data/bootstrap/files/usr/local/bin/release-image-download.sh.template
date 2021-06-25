@@ -28,6 +28,7 @@ do
 done
 
 # Sanity check the image metadata to see if the arches match
+record_service_stage_start "image-metadata-arches-match"
 image_arch=$(podman inspect $RELEASE_IMAGE --format {{ "{{.Architecture}}" }})
 host_arch=$(uname -m)
 case $host_arch in
@@ -39,4 +40,6 @@ if [[ "$image_arch" != "$host_arch" ]]; then
     record_service_stage_failure
     echo "ERROR: release image arch $image_arch does not match host arch $host_arch"
     exit 1
+else
+    record_service_stage_success
 fi
