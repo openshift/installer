@@ -58,7 +58,7 @@ require (
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.1.1
 	github.com/openshift-metal3/terraform-provider-ironic v0.2.6
-	github.com/openshift/api v0.0.0-20210420151714-a3c8fa53e01b
+	github.com/openshift/api v0.0.0-20210622200201-7740bfb97397
 	github.com/openshift/client-go v0.0.0-20201214125552-e615e336eb49
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api v0.0.0-20191030113141-9a3a7bbe9258
@@ -104,9 +104,9 @@ require (
 	google.golang.org/grpc v1.32.0
 	gopkg.in/ini.v1 v1.61.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.21.0-rc.0
+	k8s.io/api v0.21.1
 	k8s.io/apiextensions-apiserver v0.21.0-rc.0
-	k8s.io/apimachinery v0.21.0-rc.0
+	k8s.io/apimachinery v0.21.1
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.8.0

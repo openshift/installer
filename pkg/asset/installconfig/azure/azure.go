@@ -22,7 +22,7 @@ const (
 func Platform() (*azure.Platform, error) {
 	// Create client using public cloud because install config has not been generated yet.
 	const cloudName = azure.PublicCloud
-	ssn, err := GetSession(cloudName)
+	ssn, err := GetSession(cloudName, "")
 	if err != nil {
 		return nil, err
 	}

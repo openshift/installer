@@ -1116,6 +1116,10 @@ spec:
               azure:
                 description: Azure is the configuration used when installing on Azure.
                 properties:
+                  armEndpoint:
+                    description: ARMEndpoint is the endpoint for the Azure API when
+                      installing on Azure Stack.
+                    type: string
                   baseDomainResourceGroupName:
                     description: BaseDomainResourceGroupName specifies the resource
                       group where the Azure DNS zone for the base domain is found.
@@ -1130,6 +1134,7 @@ spec:
                     - AzureUSGovernmentCloud
                     - AzureChinaCloud
                     - AzureGermanCloud
+                    - AzureStackCloud
                     type: string
                   computeSubnet:
                     description: ComputeSubnet specifies an existing subnet for use

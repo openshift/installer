@@ -146,7 +146,7 @@ func (a *InstallConfig) finish(filename string) error {
 		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.Subnets, a.Config.AWS.ServiceEndpoints)
 	}
 	if a.Config.Azure != nil {
-		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName)
+		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint)
 	}
 	if err := validation.ValidateInstallConfig(a.Config).ToAggregate(); err != nil {
 		if filename == "" {
