@@ -49,7 +49,7 @@ var defaultTerraformOvirtVarsJSON = `{
       "priority": 3
     }
   ],
-  "openstack_base_image_name": "some-base-image",
+  "ovirt_base_image_name": "some-base-image",
   "ovirt_master_instance_type_id": "",
   "ovirt_master_vm_type": "high_performance",
   "ovirt_master_memory": 16000,

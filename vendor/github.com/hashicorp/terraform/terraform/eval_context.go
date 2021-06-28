@@ -2,14 +2,15 @@ package terraform
 
 import (
 	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/configs/configschema"
+	"github.com/hashicorp/terraform/instances"
 	"github.com/hashicorp/terraform/lang"
 	"github.com/hashicorp/terraform/plans"
 	"github.com/hashicorp/terraform/providers"
 	"github.com/hashicorp/terraform/provisioners"
 	"github.com/hashicorp/terraform/states"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -29,11 +30,13 @@ type EvalContext interface {
 	// Input is the UIInput object for interacting with the UI.
 	Input() UIInput
 
-	// InitProvider initializes the provider with the given type and address, and
-	// returns the implementation of the resource provider or an error.
+	// InitProvider initializes the provider with the given address, and returns
+	// the implementation of the resource provider or an error.
 	//
-	// It is an error to initialize the same provider more than once.
-	InitProvider(typ string, addr addrs.ProviderConfig) (providers.Interface, error)
+	// It is an error to initialize the same provider more than once. This
+	// method will panic if the module instance address of the given provider
+	// configuration does not match the Path() of the EvalContext.
+	InitProvider(addr addrs.AbsProviderConfig) (providers.Interface, error)
 
 	// Provider gets the provider instance with the given address (already
 	// initialized) or returns nil if the provider isn't initialized.
@@ -52,24 +55,31 @@ type EvalContext interface {
 	ProviderSchema(addrs.AbsProviderConfig) *ProviderSchema
 
 	// CloseProvider closes provider connections that aren't needed anymore.
-	CloseProvider(addrs.ProviderConfig) error
+	//
+	// This method will panic if the module instance address of the given
+	// provider configuration does not match the Path() of the EvalContext.
+	CloseProvider(addrs.AbsProviderConfig) error
 
 	// ConfigureProvider configures the provider with the given
 	// configuration. This is a separate context call because this call
 	// is used to store the provider configuration for inheritance lookups
 	// with ParentProviderConfig().
-	ConfigureProvider(addrs.ProviderConfig, cty.Value) tfdiags.Diagnostics
+	//
+	// This method will panic if the module instance address of the given
+	// provider configuration does not match the Path() of the EvalContext.
+	ConfigureProvider(addrs.AbsProviderConfig, cty.Value) tfdiags.Diagnostics
 
 	// ProviderInput and SetProviderInput are used to configure providers
 	// from user input.
-	ProviderInput(addrs.ProviderConfig) map[string]cty.Value
-	SetProviderInput(addrs.ProviderConfig, map[string]cty.Value)
-
-	// InitProvisioner initializes the provisioner with the given name and
-	// returns the implementation of the resource provisioner or an error.
 	//
+	// These methods will panic if the module instance address of the given
+	// provider configuration does not match the Path() of the EvalContext.
+	ProviderInput(addrs.AbsProviderConfig) map[string]cty.Value
+	SetProviderInput(addrs.AbsProviderConfig, map[string]cty.Value)
+
+	// InitProvisioner initializes the provisioner with the given name.
 	// It is an error to initialize the same provisioner more than once.
-	InitProvisioner(string) (provisioners.Interface, error)
+	InitProvisioner(string) error
 
 	// Provisioner gets the provisioner instance with the given name (already
 	// initialized) or returns nil if the provisioner isn't initialized.
@@ -141,4 +151,21 @@ type EvalContext interface {
 	// State returns a wrapper object that provides safe concurrent access to
 	// the global state.
 	State() *states.SyncState
+
+	// RefreshState returns a wrapper object that provides safe concurrent
+	// access to the state used to store the most recently refreshed resource
+	// values.
+	RefreshState() *states.SyncState
+
+	// InstanceExpander returns a helper object for tracking the expansion of
+	// graph nodes during the plan phase in response to "count" and "for_each"
+	// arguments.
+	//
+	// The InstanceExpander is a global object that is shared across all of the
+	// EvalContext objects for a given configuration.
+	InstanceExpander() *instances.Expander
+
+	// WithPath returns a copy of the context with the internal path set to the
+	// path argument.
+	WithPath(path addrs.ModuleInstance) EvalContext
 }

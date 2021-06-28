@@ -7,8 +7,8 @@ import (
 
 	"github.com/hashicorp/terraform/states/statemgr"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/mitchellh/cli"
 )
 
@@ -19,11 +19,7 @@ type UnlockCommand struct {
 }
 
 func (c *UnlockCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, false)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	var force bool
 	cmdFlags := c.Meta.defaultFlagSet("force-unlock")
 	cmdFlags.BoolVar(&force, "force", false, "force")
@@ -69,7 +65,11 @@ func (c *UnlockCommand) Run(args []string) int {
 		return 1
 	}
 
-	env := c.Workspace()
+	env, err := c.Workspace()
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("Error selecting workspace: %s", err))
+		return 1
+	}
 	stateMgr, err := b.StateMgr(env)
 	if err != nil {
 		c.Ui.Error(fmt.Sprintf("Failed to load state: %s", err))
@@ -121,7 +121,7 @@ Usage: terraform force-unlock LOCK_ID [DIR]
   Manually unlock the state for the defined configuration.
 
   This will not modify your infrastructure. This command removes the lock on the
-  state for the current configuration. The behavior of this lock is dependent
+  state for the current workspace. The behavior of this lock is dependent
   on the backend being used. Local state files cannot be unlocked by another
   process.
 
@@ -133,7 +133,7 @@ Options:
 }
 
 func (c *UnlockCommand) Synopsis() string {
-	return "Manually unlock the terraform state"
+	return "Release a stuck lock on the current workspace"
 }
 
 const outputUnlockSuccess = `

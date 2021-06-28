@@ -19,11 +19,7 @@ type StateShowCommand struct {
 }
 
 func (c *StateShowCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, true)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	cmdFlags := c.Meta.defaultFlagSet("state show")
 	cmdFlags.StringVar(&c.Meta.statePath, "state", "", "path")
 	if err := cmdFlags.Parse(args); err != nil {
@@ -37,6 +33,7 @@ func (c *StateShowCommand) Run(args []string) int {
 	}
 
 	// Check for user-supplied plugin path
+	var err error
 	if c.pluginPath, err = c.loadPluginPath(); err != nil {
 		c.Ui.Error(fmt.Sprintf("Error loading plugin path: %s", err))
 		return 1
@@ -55,6 +52,9 @@ func (c *StateShowCommand) Run(args []string) int {
 		c.Ui.Error(ErrUnsupportedLocalOp)
 		return 1
 	}
+
+	// This is a read-only command
+	c.ignoreRemoteBackendVersionConflict(b)
 
 	// Check if the address can be parsed
 	addr, addrDiags := addrs.ParseAbsResourceInstanceStr(args[0])
@@ -92,7 +92,11 @@ func (c *StateShowCommand) Run(args []string) int {
 	schemas := ctx.Schemas()
 
 	// Get the state
-	env := c.Workspace()
+	env, err := c.Workspace()
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("Error selecting workspace: %s", err))
+		return 1
+	}
 	stateMgr, err := b.StateMgr(env)
 	if err != nil {
 		c.Ui.Error(fmt.Sprintf(errStateLoadingState, err))
@@ -115,11 +119,18 @@ func (c *StateShowCommand) Run(args []string) int {
 		return 1
 	}
 
+	// check if the resource has a configured provider, otherwise this will use the default provider
+	rs := state.Resource(addr.ContainingResource())
+	absPc := addrs.AbsProviderConfig{
+		Provider: rs.ProviderConfig.Provider,
+		Alias:    rs.ProviderConfig.Alias,
+		Module:   addrs.RootModule,
+	}
 	singleInstance := states.NewState()
 	singleInstance.EnsureModule(addr.Module).SetResourceInstanceCurrent(
 		addr.Resource,
 		is.Current,
-		addr.Resource.Resource.DefaultProviderConfig().Absolute(addr.Module),
+		absPc,
 	)
 
 	output := format.State(&format.StateOpts{

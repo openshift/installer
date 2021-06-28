@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/plans"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 
 	"github.com/hashicorp/terraform/backend"
 	"github.com/hashicorp/terraform/dag"
@@ -24,11 +24,7 @@ func (c *GraphCommand) Run(args []string) int {
 	var moduleDepth int
 	var verbose bool
 
-	args, err := c.Meta.process(args, false)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	cmdFlags := c.Meta.defaultFlagSet("graph")
 	cmdFlags.BoolVar(&drawCycles, "draw-cycles", false, "draw-cycles")
 	cmdFlags.StringVar(&graphTypeStr, "type", "", "type")
@@ -91,6 +87,9 @@ func (c *GraphCommand) Run(args []string) int {
 		return 1
 	}
 
+	// This is a read-only command
+	c.ignoreRemoteBackendVersionConflict(b)
+
 	// Build the operation
 	opReq := c.Operation(b)
 	opReq.ConfigDir = configPath
@@ -110,13 +109,6 @@ func (c *GraphCommand) Run(args []string) int {
 		c.showDiagnostics(diags)
 		return 1
 	}
-
-	defer func() {
-		err := opReq.StateLocker.Unlock(nil)
-		if err != nil {
-			c.Ui.Error(err.Error())
-		}
-	}()
 
 	// Determine the graph type
 	graphType := terraform.GraphTypePlan
@@ -201,5 +193,5 @@ Options:
 }
 
 func (c *GraphCommand) Synopsis() string {
-	return "Create a visual graph of Terraform resources"
+	return "Generate a Graphviz graph of the steps in an operation"
 }
