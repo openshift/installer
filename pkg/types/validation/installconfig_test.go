@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -45,6 +46,12 @@ func validInstallConfig() *types.InstallConfig {
 			HTTPSProxy: "https://user:password@127.0.0.1:8080",
 			NoProxy:    "valid-proxy.com,172.30.0.0/16",
 		},
+	}
+}
+
+func validAlibabaCloudCloudPlatform() *alibabacloud.Platform {
+	return &alibabacloud.Platform{
+		Region: "cn-hangzhou",
 	}
 }
 
@@ -958,6 +965,16 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Proxy.NoProxy = "*"
+				return c
+			}(),
+		},
+		{
+			name: "valid alibabacloud platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					AlibabaCloud: validAlibabaCloudCloudPlatform(),
+				}
 				return c
 			}(),
 		},

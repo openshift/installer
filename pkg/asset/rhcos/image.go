@@ -160,8 +160,10 @@ func osImage(config *types.InstallConfig) (string, error) {
 		}
 		return "", fmt.Errorf("%s: No vmware build found", st.FormatPrefix(archName))
 	case alibabacloud.Name:
-		//pass
-		return "", nil
+		if a, ok := streamArch.Artifacts["alibabacloud"]; ok {
+			return rhcos.FindArtifactURL(a)
+		}
+		return "", fmt.Errorf("%s: No alibabacloud build found", st.FormatPrefix(archName))
 	case none.Name:
 		return "", nil
 	default:

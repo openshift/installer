@@ -145,6 +145,7 @@ type InstallConfig struct {
 	// Azure: "Mint", "Passthrough", "Manual"
 	// GCP: "Mint", "Passthrough", "Manual"
 	// IBMCloud: "Manual"
+	// AlibabaCloud: "Manual"
 	// +optional
 	CredentialsMode CredentialsMode `json:"credentialsMode,omitempty"`
 

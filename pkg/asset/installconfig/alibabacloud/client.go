@@ -22,7 +22,8 @@ const (
 // Client makes calls to the Alibaba Cloud API.
 type Client struct {
 	sdk.Client
-	credential auth.Credential
+	AccessKeyId     string
+	AccessKeySecret string
 }
 
 func NewClientWithOptions(regionId string, config *sdk.Config, credential auth.Credential) (client *Client, err error) {
@@ -40,7 +41,11 @@ func NewClient(regionId string) (client *Client, err error) {
 	config := sdk.NewConfig()
 
 	client, err = NewClientWithOptions(regionId, config, credential)
-	client.credential = credential
+
+	if _credential, ok := credential.(credentials.AccessKeyCredential); ok {
+		client.AccessKeyId = _credential.AccessKeyId
+		client.AccessKeySecret = _credential.AccessKeySecret
+	}
 	return
 }
 

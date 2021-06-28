@@ -5,6 +5,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// TODO: AlibabaCLoud: Future support "cluster-api-provider-alibabacloud"
 type AlibabacloudMachineProviderSpec struct {
 	metav1.TypeMeta    `json:",inline"`
 	metav1.ObjectMeta  `json:"metadata,omitempty"`
