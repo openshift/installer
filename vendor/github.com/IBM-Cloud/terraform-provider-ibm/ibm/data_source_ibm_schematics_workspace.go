@@ -234,7 +234,30 @@ func dataSourceIBMSchematicsWorkspace() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "List of environment values.",
-				Elem:        &schema.Schema{Type: schema.TypeMap},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name of the variable.",
+						},
+						"value": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Enter the value as a string for the primitive types such as `bool`, `number`, `string`, and `HCL` format for the complex variables, as you provide in a `.tfvars` file. **You need to enter escaped string of `HCL` format for the complex variable value**. For more information, about how to declare variables in a terraform configuration file and provide value to schematics, see [Providing values for the declared variables](/docs/schematics?topic=schematics-create-tf-config#declare-variable).",
+						},
+						"secure": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "If set to `true`, the value of your input variable is protected and not returned in your API response.",
+						},
+						"hidden": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "If set to `true`, the value of your input variable is protected and not returned in your API response.",
+						},
+					},
+				},
 			},
 			"template_git_folder": &schema.Schema{
 				Type:        schema.TypeString,
@@ -777,13 +800,13 @@ func dataSourceWorkspaceResponseTemplateDataEnvValuesToMap(envValuesItem schemat
 	envValuesMap = map[string]interface{}{}
 
 	if envValuesItem.Hidden != nil {
-		envValuesMap["hidden"] = envValuesItem.Hidden
+		envValuesMap["hidden"] = *envValuesItem.Hidden
 	}
 	if envValuesItem.Name != nil {
 		envValuesMap["name"] = envValuesItem.Name
 	}
 	if envValuesItem.Secure != nil {
-		envValuesMap["secure"] = envValuesItem.Secure
+		envValuesMap["secure"] = *envValuesItem.Secure
 	}
 	if envValuesItem.Value != nil {
 		envValuesMap["value"] = envValuesItem.Value

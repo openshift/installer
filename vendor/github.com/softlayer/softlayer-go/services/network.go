@@ -4289,14 +4289,6 @@ func (r Network_Gateway) RebuildvSRXHACluster() (resp bool, err error) {
 	return
 }
 
-// Used to refresh the license for the Juniper Gateway, requires License readiness check has passed.
-//
-//
-func (r Network_Gateway) RefreshGatewayLicense() (resp bool, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Gateway", "refreshGatewayLicense", nil, &r.Options, &resp)
-	return
-}
-
 // Returns true if password change is successful, false if not successful
 //
 //
@@ -8212,12 +8204,6 @@ func (r Network_Storage) GetMetricTrackingObject() (resp datatypes.Metric_Tracki
 	return
 }
 
-// Retrieve Retrieves the NFS Network Mount Path for a given File Storage Volume.
-func (r Network_Storage) GetMountPath() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage", "getMountPath", nil, &r.Options, &resp)
-	return
-}
-
 // Retrieve Whether or not a network storage volume may be mounted.
 func (r Network_Storage) GetMountableFlag() (resp string, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Storage", "getMountableFlag", nil, &r.Options, &resp)
@@ -8239,12 +8225,6 @@ func (r Network_Storage) GetNetworkConnectionDetails() (resp datatypes.Container
 // no documentation yet
 func (r Network_Storage) GetNetworkMountAddress() (resp string, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Storage", "getNetworkMountAddress", nil, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage) GetNetworkMountPath() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage", "getNetworkMountPath", nil, &r.Options, &resp)
 	return
 }
 
@@ -8397,12 +8377,6 @@ func (r Network_Storage) GetReplicationSchedule() (resp datatypes.Network_Storag
 // Retrieve The current replication status of a network storage volume. Indicates Failover or Failback status.
 func (r Network_Storage) GetReplicationStatus() (resp string, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Storage", "getReplicationStatus", nil, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage) GetReplicationTimestamp() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage", "getReplicationTimestamp", nil, &r.Options, &resp)
 	return
 }
 
@@ -8586,18 +8560,6 @@ func (r Network_Storage) ImmediateFailoverToReplicant(replicantId *int) (resp bo
 		replicantId,
 	}
 	err = r.Session.DoRequest("SoftLayer_Network_Storage", "immediateFailoverToReplicant", params, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage) InitiateOriginVolumeReclaim() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage", "initiateOriginVolumeReclaim", nil, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage) InitiateVolumeCutover() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage", "initiateVolumeCutover", nil, &r.Options, &resp)
 	return
 }
 
@@ -10410,12 +10372,6 @@ func (r Network_Storage_Backup_Evault) GetMetricTrackingObject() (resp datatypes
 	return
 }
 
-// Retrieve Retrieves the NFS Network Mount Path for a given File Storage Volume.
-func (r Network_Storage_Backup_Evault) GetMountPath() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage_Backup_Evault", "getMountPath", nil, &r.Options, &resp)
-	return
-}
-
 // Retrieve Whether or not a network storage volume may be mounted.
 func (r Network_Storage_Backup_Evault) GetMountableFlag() (resp string, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Storage_Backup_Evault", "getMountableFlag", nil, &r.Options, &resp)
@@ -10437,12 +10393,6 @@ func (r Network_Storage_Backup_Evault) GetNetworkConnectionDetails() (resp datat
 // no documentation yet
 func (r Network_Storage_Backup_Evault) GetNetworkMountAddress() (resp string, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Storage_Backup_Evault", "getNetworkMountAddress", nil, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage_Backup_Evault) GetNetworkMountPath() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage_Backup_Evault", "getNetworkMountPath", nil, &r.Options, &resp)
 	return
 }
 
@@ -10593,12 +10543,6 @@ func (r Network_Storage_Backup_Evault) GetReplicationSchedule() (resp datatypes.
 // Retrieve The current replication status of a network storage volume. Indicates Failover or Failback status.
 func (r Network_Storage_Backup_Evault) GetReplicationStatus() (resp string, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Storage_Backup_Evault", "getReplicationStatus", nil, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage_Backup_Evault) GetReplicationTimestamp() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage_Backup_Evault", "getReplicationTimestamp", nil, &r.Options, &resp)
 	return
 }
 
@@ -10803,18 +10747,6 @@ func (r Network_Storage_Backup_Evault) InitiateBareMetalRestoreForServer(hardwar
 		hardwareId,
 	}
 	err = r.Session.DoRequest("SoftLayer_Network_Storage_Backup_Evault", "initiateBareMetalRestoreForServer", params, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage_Backup_Evault) InitiateOriginVolumeReclaim() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage_Backup_Evault", "initiateOriginVolumeReclaim", nil, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage_Backup_Evault) InitiateVolumeCutover() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage_Backup_Evault", "initiateVolumeCutover", nil, &r.Options, &resp)
 	return
 }
 
@@ -12743,12 +12675,6 @@ func (r Network_Storage_Iscsi) GetMetricTrackingObject() (resp datatypes.Metric_
 	return
 }
 
-// Retrieve Retrieves the NFS Network Mount Path for a given File Storage Volume.
-func (r Network_Storage_Iscsi) GetMountPath() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage_Iscsi", "getMountPath", nil, &r.Options, &resp)
-	return
-}
-
 // Retrieve Whether or not a network storage volume may be mounted.
 func (r Network_Storage_Iscsi) GetMountableFlag() (resp string, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Storage_Iscsi", "getMountableFlag", nil, &r.Options, &resp)
@@ -12770,12 +12696,6 @@ func (r Network_Storage_Iscsi) GetNetworkConnectionDetails() (resp datatypes.Con
 // no documentation yet
 func (r Network_Storage_Iscsi) GetNetworkMountAddress() (resp string, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Storage_Iscsi", "getNetworkMountAddress", nil, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage_Iscsi) GetNetworkMountPath() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage_Iscsi", "getNetworkMountPath", nil, &r.Options, &resp)
 	return
 }
 
@@ -12926,12 +12846,6 @@ func (r Network_Storage_Iscsi) GetReplicationSchedule() (resp datatypes.Network_
 // Retrieve The current replication status of a network storage volume. Indicates Failover or Failback status.
 func (r Network_Storage_Iscsi) GetReplicationStatus() (resp string, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Storage_Iscsi", "getReplicationStatus", nil, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage_Iscsi) GetReplicationTimestamp() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage_Iscsi", "getReplicationTimestamp", nil, &r.Options, &resp)
 	return
 }
 
@@ -13115,18 +13029,6 @@ func (r Network_Storage_Iscsi) ImmediateFailoverToReplicant(replicantId *int) (r
 		replicantId,
 	}
 	err = r.Session.DoRequest("SoftLayer_Network_Storage_Iscsi", "immediateFailoverToReplicant", params, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage_Iscsi) InitiateOriginVolumeReclaim() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage_Iscsi", "initiateOriginVolumeReclaim", nil, &r.Options, &resp)
-	return
-}
-
-// no documentation yet
-func (r Network_Storage_Iscsi) InitiateVolumeCutover() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Storage_Iscsi", "initiateVolumeCutover", nil, &r.Options, &resp)
 	return
 }
 
@@ -14802,12 +14704,8 @@ func (r Network_Subnet_IpAddress_Global) GetObject() (resp datatypes.Network_Sub
 	return
 }
 
-//
-// ***DEPRECATED***
-// This endpoint is deprecated in favor of the more expressive and capable SoftLayer_Network_Subnet::route, to which this endpoint now proxies. Refer to it for more information.
-//
-// Similarly, unroute requests are proxied to SoftLayer_Network_Subnet::clearRoute.
-func (r Network_Subnet_IpAddress_Global) Route(newEndPointIpAddress *string) (resp bool, err error) {
+// This function is used to create a new transaction to modify a global IP route. Routes are updated in one to two minutes depending on the number of transactions that are pending for a router.
+func (r Network_Subnet_IpAddress_Global) Route(newEndPointIpAddress *string) (resp datatypes.Provisioning_Version1_Transaction, err error) {
 	params := []interface{}{
 		newEndPointIpAddress,
 	}
@@ -14815,10 +14713,8 @@ func (r Network_Subnet_IpAddress_Global) Route(newEndPointIpAddress *string) (re
 	return
 }
 
-//
-// ***DEPRECATED***
-// This endpoint is deprecated in favor of SoftLayer_Network_Subnet::clearRoute, to which this endpoint now proxies. Refer to it for more information.
-func (r Network_Subnet_IpAddress_Global) Unroute() (resp bool, err error) {
+// This function is used to create a new transaction to unroute a global IP address. Routes are updated in one to two minutes depending on the number of transactions that are pending for a router.
+func (r Network_Subnet_IpAddress_Global) Unroute() (resp datatypes.Provisioning_Version1_Transaction, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Subnet_IpAddress_Global", "unroute", nil, &r.Options, &resp)
 	return
 }
@@ -16155,12 +16051,6 @@ func (r Network_Vlan_Firewall) GetBypassRequestStatus() (resp string, err error)
 // Retrieve The datacenter that the firewall resides in.
 func (r Network_Vlan_Firewall) GetDatacenter() (resp datatypes.Location, err error) {
 	err = r.Session.DoRequest("SoftLayer_Network_Vlan_Firewall", "getDatacenter", nil, &r.Options, &resp)
-	return
-}
-
-// Retrieve the firewall device firmware version from database.
-func (r Network_Vlan_Firewall) GetFirewallFirmwareVersion() (resp string, err error) {
-	err = r.Session.DoRequest("SoftLayer_Network_Vlan_Firewall", "getFirewallFirmwareVersion", nil, &r.Options, &resp)
 	return
 }
 

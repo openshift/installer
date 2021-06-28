@@ -1861,9 +1861,6 @@ type Network_Gateway_Member_Attribute struct {
 	// The previous vSRX version of the gateway software
 	LastvSRXVersion *string `json:"lastvSRXVersion,omitempty" xmlrpc:"lastvSRXVersion,omitempty"`
 
-	// Timestamp for the expiration date of the license key
-	LicenseExpirationDate *Time `json:"licenseExpirationDate,omitempty" xmlrpc:"licenseExpirationDate,omitempty"`
-
 	// no documentation yet
 	LicenseKey *string `json:"licenseKey,omitempty" xmlrpc:"licenseKey,omitempty"`
 
@@ -3944,9 +3941,6 @@ type Network_Storage struct {
 
 	// A network storage volume's metric tracking object. This object records all periodic polled data available to this volume.
 	MetricTrackingObject *Metric_Tracking_Object `json:"metricTrackingObject,omitempty" xmlrpc:"metricTrackingObject,omitempty"`
-
-	// Retrieves the NFS Network Mount Path for a given File Storage Volume.
-	MountPath *string `json:"mountPath,omitempty" xmlrpc:"mountPath,omitempty"`
 
 	// Whether or not a network storage volume may be mounted.
 	MountableFlag *string `json:"mountableFlag,omitempty" xmlrpc:"mountableFlag,omitempty"`

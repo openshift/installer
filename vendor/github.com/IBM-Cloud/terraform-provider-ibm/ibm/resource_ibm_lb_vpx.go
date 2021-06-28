@@ -294,7 +294,7 @@ func findVPXByOrderId(orderId int, meta interface{}) (datatypes.Network_Applicat
 			if len(vpxs) == 1 {
 				return vpxs[0], "complete", nil
 			} else if len(vpxs) == 0 {
-				return nil, "pending", nil
+				return datatypes.Network_Application_Delivery_Controller{}, "pending", nil
 			} else {
 				return nil, "", fmt.Errorf("Expected one VPX: %s", err)
 			}

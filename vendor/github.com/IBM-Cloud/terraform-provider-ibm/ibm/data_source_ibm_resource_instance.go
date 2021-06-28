@@ -5,6 +5,7 @@ package ibm
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
@@ -60,6 +61,12 @@ func dataSourceIBMResourceInstance() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "CRN of resource instance",
+			},
+			"tags": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Tags of Resource Instance",
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"guid": {
@@ -210,6 +217,12 @@ func dataSourceIBMResourceInstanceRead(d *schema.ResourceData, meta interface{})
 	}
 	d.Set("plan", servicePlan)
 	d.Set("crn", instance.Crn.String())
+	tags, err := GetTagsUsingCRN(meta, instance.Crn.String())
+	if err != nil {
+		log.Printf(
+			"Error on get of resource instance tags (%s) tags: %s", d.Id(), err)
+	}
+	d.Set("tags", tags)
 
 	return nil
 }

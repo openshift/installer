@@ -4,11 +4,10 @@
 package ibm
 
 import (
-	"log"
-
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"log"
 
 	//"fmt"
 	"github.com/IBM-Cloud/power-go-client/clients/instance"

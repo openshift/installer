@@ -76,7 +76,7 @@ func resolveCredsFromProfile(cfg *aws.Config,
 					Err: awserr.New("SharedCredsLoad",
 						fmt.Sprintf("failed to load profile, %s.", envCfg.Profile), nil),
 				},
-				//defaults.RemoteCredProvider(*cfg, handlers),
+				//defaults.RemoteCredProvider(*cfg, handlers), IBM
 			},
 		})
 	}

@@ -296,26 +296,27 @@ func (r *clusters) GetClusterConfigDetail(name, dir string, admin bool, target C
 	files, _ := ioutil.ReadDir(resultDir)
 
 	for _, f := range files {
-		fileContent, _ := ioutil.ReadFile(resultDir + "/" + f.Name())
-		if f.Name() == "admin-key.pem" {
-			clusterkey.AdminKey = string(fileContent)
-		}
-		if f.Name() == "admin.pem" {
-			clusterkey.Admin = string(fileContent)
-		}
-		if strings.HasPrefix(f.Name(), "ca") && strings.HasSuffix(f.Name(), ".pem") {
-			clusterkey.ClusterCACertificate = string(fileContent)
-		}
-		old := filepath.Join(resultDir, f.Name())
-		new := filepath.Join(resultDir, f.Name())
-		if strings.HasSuffix(f.Name(), ".yaml") {
-			new = filepath.Join(path.Clean(resultDir), "/", path.Clean(kubeConfigName))
-			// new = kubeConfigName
-			kubeyml = new
-		}
-		err := os.Rename(old, new)
-		if err != nil {
-			return clusterkey, fmt.Errorf("Couldn't rename: %q", err)
+		if !strings.HasSuffix(f.Name(), ".zip") {
+			fileContent, _ := ioutil.ReadFile(resultDir + "/" + f.Name())
+			if f.Name() == "admin-key.pem" {
+				clusterkey.AdminKey = string(fileContent)
+			}
+			if f.Name() == "admin.pem" {
+				clusterkey.Admin = string(fileContent)
+			}
+			if strings.HasPrefix(f.Name(), "ca") && strings.HasSuffix(f.Name(), ".pem") {
+				clusterkey.ClusterCACertificate = string(fileContent)
+			}
+			old := filepath.Join(resultDir, f.Name())
+			new := filepath.Join(resultDir, f.Name())
+			if strings.HasSuffix(f.Name(), ".yaml") {
+				new = filepath.Join(path.Clean(resultDir), "/", path.Clean(kubeConfigName))
+				kubeyml = new
+			}
+			err := os.Rename(old, new)
+			if err != nil {
+				return clusterkey, fmt.Errorf("Couldn't rename: %q", err)
+			}
 		}
 	}
 	if resultDir == "" {
@@ -434,21 +435,23 @@ func (r *clusters) StoreConfigDetail(name, dir string, admin, createCalicoConfig
 	trace.Logger.Println("Located unzipped directory: ", unzipConfigPath)
 	files, _ := ioutil.ReadDir(unzipConfigPath)
 	for _, f := range files {
-		fileContent, _ := ioutil.ReadFile(unzipConfigPath + "/" + f.Name())
-		if f.Name() == "admin-key.pem" {
-			clusterkey.AdminKey = string(fileContent)
-		}
-		if f.Name() == "admin.pem" {
-			clusterkey.Admin = string(fileContent)
-		}
-		if strings.HasPrefix(f.Name(), "ca-") && strings.HasSuffix(f.Name(), ".pem") {
-			clusterkey.ClusterCACertificate = string(fileContent)
-		}
-		old := filepath.Join(unzipConfigPath, f.Name())
-		new := filepath.Join(unzipConfigPath, f.Name())
-		err := os.Rename(old, new)
-		if err != nil {
-			return "", clusterkey, fmt.Errorf("Couldn't rename: %q", err)
+		if !strings.HasSuffix(f.Name(), ".zip") {
+			fileContent, _ := ioutil.ReadFile(unzipConfigPath + "/" + f.Name())
+			if f.Name() == "admin-key.pem" {
+				clusterkey.AdminKey = string(fileContent)
+			}
+			if f.Name() == "admin.pem" {
+				clusterkey.Admin = string(fileContent)
+			}
+			if strings.HasPrefix(f.Name(), "ca") && strings.HasSuffix(f.Name(), ".pem") {
+				clusterkey.ClusterCACertificate = string(fileContent)
+			}
+			old := filepath.Join(unzipConfigPath, f.Name())
+			new := filepath.Join(unzipConfigPath, f.Name())
+			err := os.Rename(old, new)
+			if err != nil {
+				return "", clusterkey, fmt.Errorf("Couldn't rename: %q", err)
+			}
 		}
 	}
 	baseDirFiles, err := ioutil.ReadDir(resultDir)

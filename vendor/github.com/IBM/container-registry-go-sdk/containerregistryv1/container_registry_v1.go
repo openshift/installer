@@ -134,6 +134,7 @@ func GetServiceURLForRegion(region string) (string, error) {
 		"au-syd":     "https://au.icr.io",  // au-syd
 		"global":     "https://icr.io",     // global
 		"jp-osa":     "https://jp2.icr.io", // jp-osa
+		"ca-tor":     "https://ca.icr.io",  // ca-tor
 	}
 
 	if url, ok := endpoints[region]; ok {
@@ -513,7 +514,8 @@ func (containerRegistry *ContainerRegistryV1) ListImageDigestsWithContext(ctx co
 }
 
 // TagImage : Create tag
-// Create a new tag in a private registry that refers to an existing image in the same region.
+// Create a new tag in a private registry that refers to an existing image in the same region. If the fromimage has Red
+// Hat® signatures and the toimage is in a different repository, those signatures are copied to that repository.
 func (containerRegistry *ContainerRegistryV1) TagImage(tagImageOptions *TagImageOptions) (response *core.DetailedResponse, err error) {
 	return containerRegistry.TagImageWithContext(context.Background(), tagImageOptions)
 }

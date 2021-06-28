@@ -69,7 +69,7 @@ func resourceIBMFunctionTrigger() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Default:      "[]",
-							Description:  "Parameters values in KEY VALUE format. Parameter bindings included in the context passed to the action invoke.",
+							Description:  "Parameters values in KEY VALUE format. Parameter bindings included in the context.TODO() passed to the action invoke.",
 							ValidateFunc: InvokeValidator("ibm_function_trigger", funcTriggerParams),
 							DiffSuppressFunc: func(k, o, n string, d *schema.ResourceData) bool {
 								if o == "" && n == "" {
@@ -114,7 +114,7 @@ func resourceIBMFunctionTrigger() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "[]",
-				Description:      "Parameters values in KEY VALUE format. Parameter bindings included in the context passed to the trigger.",
+				Description:      "Parameters values in KEY VALUE format. Parameter bindings included in the context.TODO() passed to the trigger.",
 				ValidateFunc:     InvokeValidator("ibm_function_trigger", funcTriggerUsrDefParams),
 				DiffSuppressFunc: suppressEquivalentJSON,
 				StateFunc: func(v interface{}) string {

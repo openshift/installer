@@ -5,7 +5,6 @@ package ibm
 
 import (
 	"bytes"
-
 	"fmt"
 	"log"
 	"os"
@@ -13,12 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/internal/hashcode"
 	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/internal/hashcode"
 )
 
 const (
@@ -240,9 +240,8 @@ func resourceIBMISVPC() *schema.Resource {
 
 						isVPCSecurityGroupID: {
 							Type:        schema.TypeString,
-							Required:    true,
+							Computed:    true,
 							Description: "Security group id",
-							ForceNew:    true,
 						},
 
 						isSecurityGroupRules: {

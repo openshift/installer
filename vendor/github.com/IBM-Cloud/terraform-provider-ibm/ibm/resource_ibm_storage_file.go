@@ -718,7 +718,7 @@ func findStorageByOrderId(sess *session.Session, orderId int, timeout time.Durat
 			if len(storage) == 1 {
 				return storage[0], "complete", nil
 			} else if len(storage) == 0 {
-				return nil, "pending", nil
+				return datatypes.Network_Storage{}, "pending", nil
 			} else {
 				return nil, "", fmt.Errorf("Expected one Storage: %s", err)
 			}

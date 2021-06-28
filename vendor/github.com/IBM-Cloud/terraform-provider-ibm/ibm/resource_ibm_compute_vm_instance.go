@@ -2070,9 +2070,6 @@ func placeOrder(d *schema.ResourceData, meta interface{}, name string, publicVla
 		}
 		// GenerateOrderTemplate omits UserData, subnet, and maxSpeed, so configure virtual_guest.
 		template.VirtualGuests[0] = opts
-		if opts.DedicatedHost != nil {
-			template.HostId = opts.DedicatedHost.Id
-		}
 		guestOrders = append(guestOrders, template)
 
 	}

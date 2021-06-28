@@ -386,15 +386,6 @@ type Virtual_Guest struct {
 	// A computing instance's block devices. Block devices link [[SoftLayer_Virtual_Disk_Image|disk images]] to computing instances.
 	BlockDevices []Virtual_Guest_Block_Device `json:"blockDevices,omitempty" xmlrpc:"blockDevices,omitempty"`
 
-	// A count of a virtual guest's browser access logs.
-	BrowserConsoleAccessLogCount *uint `json:"browserConsoleAccessLogCount,omitempty" xmlrpc:"browserConsoleAccessLogCount,omitempty"`
-
-	// A virtual guest's browser access logs.
-	BrowserConsoleAccessLogs []Virtual_Guest_BrowserConsoleAccessLog `json:"browserConsoleAccessLogs,omitempty" xmlrpc:"browserConsoleAccessLogs,omitempty"`
-
-	// A container for a guest's console data
-	ConsoleData *Container_Virtual_Guest_ConsoleData `json:"consoleData,omitempty" xmlrpc:"consoleData,omitempty"`
-
 	// A flag indicating a computing instance's console IP address is assigned.
 	ConsoleIpAddressFlag *bool `json:"consoleIpAddressFlag,omitempty" xmlrpc:"consoleIpAddressFlag,omitempty"`
 
@@ -1105,46 +1096,6 @@ type Virtual_Guest_Boot_Parameter_Type struct {
 
 	// The virtual machine arguments
 	Value *string `json:"value,omitempty" xmlrpc:"value,omitempty"`
-}
-
-// The SoftLayer_Virtual_Guest_BrowserConsoleAccessLog data type presents the data for events associated with accessing a VSIs console via the browser interface.
-//
-//
-type Virtual_Guest_BrowserConsoleAccessLog struct {
-	Entity
-
-	// Date created
-	CreateDate *Time `json:"createDate,omitempty" xmlrpc:"createDate,omitempty"`
-
-	// The event type that was triggered
-	EventType *string `json:"eventType,omitempty" xmlrpc:"eventType,omitempty"`
-
-	// The guest id that this access log belongs to
-	GuestId *int `json:"guestId,omitempty" xmlrpc:"guestId,omitempty"`
-
-	// Unique ID for a console log event instance.
-	Id *int `json:"id,omitempty" xmlrpc:"id,omitempty"`
-
-	// The message for the event
-	Message *string `json:"message,omitempty" xmlrpc:"message,omitempty"`
-
-	// Date modified
-	ModifyDate *Time `json:"modifyDate,omitempty" xmlrpc:"modifyDate,omitempty"`
-
-	// The IP address of the client that triggered the event
-	SourceIp *string `json:"sourceIp,omitempty" xmlrpc:"sourceIp,omitempty"`
-
-	// The IP port of the client that triggered the event
-	SourcePort *int `json:"sourcePort,omitempty" xmlrpc:"sourcePort,omitempty"`
-
-	// The user id that triggered the event
-	UserId *int `json:"userId,omitempty" xmlrpc:"userId,omitempty"`
-
-	// The user type that triggered the event
-	UserType *string `json:"userType,omitempty" xmlrpc:"userType,omitempty"`
-
-	// The username of the user that triggered the event
-	Username *string `json:"username,omitempty" xmlrpc:"username,omitempty"`
 }
 
 // The virtual guest network component data type presents the structure in which all computing instance network components are presented. Internally, the structure supports various virtualization platforms with no change to external interaction.

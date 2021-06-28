@@ -437,8 +437,8 @@ func resourceIBMCISInstanceExists(d *schema.ResourceData, meta interface{}) (boo
 		}
 		return false, fmt.Errorf("Error communicating with the API: %s %s", err, response)
 	}
-	if strings.Contains(*instance.State, "removed") {
-		log.Printf("[WARN] Removing instance from state because it's in removed state")
+	if instance != nil && (strings.Contains(*instance.State, "removed") || strings.Contains(*instance.State, cisInstanceReclamation)) {
+		log.Printf("[WARN] Removing instance from state because it's in removed or pending_reclamation state")
 		d.SetId("")
 		return false, nil
 	}

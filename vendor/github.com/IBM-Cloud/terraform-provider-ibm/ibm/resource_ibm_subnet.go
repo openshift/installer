@@ -294,7 +294,7 @@ func findSubnetByOrderID(sess *session.Session, orderID int, d *schema.ResourceD
 			if len(subnets) == 1 && subnets[0].ActiveTransaction == nil {
 				return subnets[0], "complete", nil
 			}
-			return nil, "pending", nil
+			return datatypes.Network_Subnet{}, "pending", nil
 		},
 		Timeout:        d.Timeout(schema.TimeoutCreate),
 		Delay:          5 * time.Second,

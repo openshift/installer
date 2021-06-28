@@ -18,7 +18,6 @@ package session
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -35,21 +34,6 @@ import (
 )
 
 type RestTransport struct{}
-
-const IBMCLOUDIAMENDPOINT = "https://iam.cloud.ibm.com/identity/token"
-
-//IAMTokenResponse ...
-type IAMTokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	TokenType    string `json:"token_type"`
-}
-
-// IAMErrorMessage -
-type IAMErrorMessage struct {
-	ErrorMessage string `json:"errormessage"`
-	ErrorCode    string `json:"errorcode"`
-}
 
 // DoRequest - Implementation of the TransportHandler interface for handling
 // calls to the REST endpoint.
@@ -205,22 +189,6 @@ func tryHTTPRequest(
 
 	resp, code, err := makeHTTPRequest(sess, path, requestType, requestBody, options)
 	if err != nil {
-		if code == 500 && (sess.IAMToken != "" && sess.IAMRefreshToken != "") {
-			authErr := refreshToken(sess)
-			if authErr == nil {
-				if retries--; retries > 0 {
-					jitter := time.Duration(rand.Int63n(int64(wait)))
-					wait = wait + jitter/2
-					time.Sleep(wait)
-					return tryHTTPRequest(
-						retries, wait, sess, path, requestType, requestBody, options)
-				}
-			}
-			if authErr != nil {
-				return resp, code, fmt.Errorf("Unable to refresh auth token: {{%v}}", authErr)
-			}
-
-		}
 		if !isRetryable(err) {
 			return resp, code, err
 		}
@@ -350,53 +318,5 @@ func findResponseError(code int, resp []byte) error {
 		}
 		return e
 	}
-	return nil
-}
-
-func refreshToken(sess *Session) error {
-
-	client := http.DefaultClient
-	reqPayload := url.Values{}
-	reqPayload.Add("grant_type", "refresh_token")
-	reqPayload.Add("refresh_token", sess.IAMRefreshToken)
-
-	req, err := http.NewRequest("POST", IBMCLOUDIAMENDPOINT, strings.NewReader(reqPayload.Encode()))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte("bx:bx")))
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Accept", "application/json")
-	var token IAMTokenResponse
-	var eresp IAMErrorMessage
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	responseBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	if resp != nil && resp.StatusCode != 200 {
-		err = json.Unmarshal(responseBody, &eresp)
-		if err != nil {
-			return err
-		}
-		if eresp.ErrorCode != "" {
-			return sl.Error{Exception: eresp.ErrorCode, Message: eresp.ErrorMessage}
-		}
-	}
-
-	err = json.Unmarshal(responseBody, &token)
-	if err != nil {
-		return err
-	}
-	sess.IAMToken = fmt.Sprintf("%s %s", token.TokenType, token.AccessToken)
-	sess.IAMRefreshToken = token.RefreshToken
 	return nil
 }

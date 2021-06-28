@@ -337,7 +337,7 @@ func findEvaultStorageByOrderID(d *schema.ResourceData, meta interface{}, orderI
 			if len(storages) == 1 {
 				return storages[0], "complete", nil
 			} else if len(storages) == 0 {
-				return nil, "pending", nil
+				return datatypes.Network_Storage{}, "pending", nil
 			} else {
 				return nil, "", fmt.Errorf("Expected one evault: %s", err)
 			}

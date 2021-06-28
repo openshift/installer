@@ -5,6 +5,7 @@ package ibm
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -294,6 +295,23 @@ func resourceIBMCOSBucket() *schema.Resource {
 					},
 				},
 			},
+			"object_versioning": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"retention_rule", "expire_rule"},
+				Description:   "Protect objects from accidental deletion or overwrites. Versioning allows you to keep multiple versions of an object protecting from unintentional data loss.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enable": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Enable or suspend the versioning for objects in the bucket",
+						},
+					},
+				},
+			},
 			"force_delete": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -532,6 +550,37 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 		}
 	}
 
+	//update the object versioning (object versioning)
+	if d.HasChange("object_versioning") {
+		versioningConf := &s3.VersioningConfiguration{}
+		if versioning, ok := d.GetOk("object_versioning"); ok {
+			versioningList := versioning.([]interface{})
+			for _, l := range versioningList {
+				versioningMap, _ := l.(map[string]interface{})
+				//Status Enable/Disable
+				if object_versioning_statusSet, exist1 := versioningMap["enable"]; exist1 {
+					versioningStatusEnabled := object_versioning_statusSet.(bool)
+					if versioningStatusEnabled == true {
+						versioningConf.Status = aws.String("Enabled")
+					} else {
+						versioningConf.Status = aws.String("Suspended")
+					}
+				}
+			}
+		} else {
+			versioningConf.Status = aws.String("Suspended")
+		}
+		// PUT BUCKET Object Versioning
+		input := &s3.PutBucketVersioningInput{
+			Bucket:                  aws.String(bucketName),
+			VersioningConfiguration: versioningConf,
+		}
+		_, err := s3Client.PutBucketVersioning(input)
+		if err != nil {
+			return fmt.Errorf("failed to update the object versioning on COS bucket %s, %v", bucketName, err)
+		}
+	}
+
 	sess, err := meta.(ClientSession).CosConfigV1API()
 	if err != nil {
 		return err
@@ -751,7 +800,7 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 			d.Set("metrics_monitoring", flattenMetricsMonitor(bucketPtr.MetricsMonitoring))
 		}
 	}
-	// Read the lifecycle configuration (archive)
+	// Read the lifecycle configuration (archive & expiration)
 
 	gInput := &s3.GetBucketLifecycleConfigurationInput{
 		Bucket: aws.String(bucketName),
@@ -774,6 +823,7 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// Read retention rule
 	retentionInput := &s3.GetBucketProtectionConfigurationInput{
 		Bucket: aws.String(bucketName),
 	}
@@ -790,6 +840,23 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// Read Object versioning
+	versionInput := &s3.GetBucketVersioningInput{
+		Bucket: aws.String(bucketName),
+	}
+	versionPtr, err := s3Client.GetBucketVersioning(versionInput)
+
+	if err != nil && bucketPtr != nil && bucketPtr.Firewall != nil && !strings.Contains(err.Error(), "AccessDenied: Access Denied") {
+		return err
+	}
+	if versionPtr != nil {
+		versioningData := flattenCosObejctVersioning(versionPtr)
+		if len(versioningData) > 0 {
+			d.Set("object_versioning", versioningData)
+		} else {
+			d.Set("object_versioning", nil)
+		}
+	}
 	return nil
 }
 
@@ -935,41 +1002,38 @@ func resourceIBMCOSBucketDelete(d *schema.ResourceData, meta interface{}) error 
 	s3Sess := session.Must(session.NewSession())
 	s3Client := s3.New(s3Sess, s3Conf)
 
-	if delbucket, ok := d.GetOk("force_delete"); ok {
-		if delbucket.(bool) {
-
-			// List objects within a bucket
-			resp, err := s3Client.ListObjects(&s3.ListObjectsInput{Bucket: aws.String(bucketName)})
-			if err != nil {
-				return fmt.Errorf("Unable to list items in bucket %s, %v", bucketName, err)
-			}
-			for _, item := range resp.Contents {
-				// Delete object within the bucket
-				_, err = s3Client.DeleteObject(&s3.DeleteObjectInput{Bucket: aws.String(bucketName), Key: aws.String(*item.Key)})
-
-				if err != nil {
-					return fmt.Errorf("Unable to delete object %s from bucket %s, %v", *item.Key, bucketName, err)
-				}
-
-				err = s3Client.WaitUntilObjectNotExists(&s3.HeadObjectInput{
-					Bucket: aws.String(bucketName),
-					Key:    aws.String(*item.Key),
-				})
-				if err != nil {
-					return fmt.Errorf("Error occurred while waiting for object %s to be deleted %v", *item.Key, err)
-				}
-			}
-		}
-	}
-
 	delete := &s3.DeleteBucketInput{
 		Bucket: aws.String(bucketName),
 	}
 	_, err = s3Client.DeleteBucket(delete)
-	if err != nil {
-		return err
+
+	if err != nil && strings.Contains(err.Error(), "BucketNotEmpty") {
+		if delbucket, ok := d.GetOk("force_delete"); ok {
+			if delbucket.(bool) {
+				// Use a S3 service client that can handle multiple slashes in URIs.
+				// While ibm_cos_bucket_object resources cannot create these object
+				// keys, other AWS services and applications using the COS Bucket can.
+
+				// bucket may have things delete them
+				log.Printf("[DEBUG] COS Bucket attempting to forceDelete %+v", err)
+
+				// Delete everything including locked objects.
+				// Don't ignore any object errors or we could recurse infinitely.
+				err = deleteAllCOSObjectVersions(s3Client, bucketName, "", false, false)
+
+				if err != nil {
+					return fmt.Errorf("error COS Bucket force_delete: %s", err)
+				}
+
+				// this line recurses until all objects are deleted or an error is returned
+				return resourceIBMCOSBucketDelete(d, meta)
+			}
+		}
 	}
-	d.SetId("")
+	if err != nil {
+		return fmt.Errorf("error deleting COS Bucket (%s): %s", d.Id(), err)
+	}
+
 	return nil
 }
 

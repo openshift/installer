@@ -104,9 +104,6 @@ type Session struct {
 	//IAMToken is the IAM token secret that included IMS account for token-based authentication
 	IAMToken string
 
-	//IAMRefreshToken is the IAM refresh token secret that required to refresh IAM Token
-	IAMRefreshToken string
-
 	// AuthToken is the token secret for token-based authentication
 	AuthToken string
 

@@ -5,11 +5,10 @@ package ibm
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/softlayer/softlayer-go/filter"
 	"github.com/softlayer/softlayer-go/services"
+	"log"
 )
 
 func dataSourceIBMDNSDomainRegistration() *schema.Resource {

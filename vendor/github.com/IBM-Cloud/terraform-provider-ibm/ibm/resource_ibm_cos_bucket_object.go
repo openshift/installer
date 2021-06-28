@@ -108,6 +108,16 @@ func resourceIBMCOSBucketObject() *schema.Resource {
 				Computed:    true,
 				Description: "COS object last modified date",
 			},
+			"version_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"force_delete": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "COS buckets need to be empty before they can be deleted. force_delete option empty the bucket and delete it.",
+			},
 		},
 	}
 }
@@ -262,6 +272,7 @@ func resourceIBMCOSBucketObjectRead(d *schema.ResourceData, m interface{}) error
 	}
 
 	d.Set("key", objectKey)
+	d.Set("version_id", out.VersionId)
 
 	return nil
 }
@@ -349,20 +360,17 @@ func resourceIBMCOSBucketObjectDelete(d *schema.ResourceData, m interface{}) err
 	if err != nil {
 		return err
 	}
-
 	objectKey := d.Get("key").(string)
 
-	deleteInput := &s3.DeleteObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(objectKey),
+	if _, ok := d.GetOk("version_id"); ok {
+		err = deleteAllCOSObjectVersions(s3Client, bucketName, objectKey, d.Get("force_delete").(bool), false)
+	} else {
+		err = deleteCOSObjectVersion(s3Client, bucketName, objectKey, "", false)
 	}
 
-	_, err = s3Client.DeleteObject(deleteInput)
 	if err != nil {
 		return err
 	}
-
-	d.SetId("")
 	return nil
 }
 
@@ -484,4 +492,128 @@ func parseObjectId(id string, info string) string {
 	}
 
 	return parseBucketId(splitID[0], info)
+}
+
+// deleteAllCOSObjectVersions deletes all versions of a specified key from an COS bucket.
+// If key is empty then all versions of all objects are deleted.
+func deleteAllCOSObjectVersions(conn *s3.S3, bucketName, key string, force, ignoreObjectErrors bool) error {
+	input := &s3.ListObjectVersionsInput{
+		Bucket: aws.String(bucketName),
+	}
+	if key != "" {
+		input.Prefix = aws.String(key)
+	}
+
+	var lastErr error
+	err := conn.ListObjectVersionsPages(input, func(page *s3.ListObjectVersionsOutput, lastPage bool) bool {
+		if page == nil {
+			return !lastPage
+		}
+
+		for _, objectVersion := range page.Versions {
+			objectKey := aws.StringValue(objectVersion.Key)
+			objectVersionID := aws.StringValue(objectVersion.VersionId)
+			log.Printf("[INFO] Object {%s} Version Id {%s}: ", objectKey, objectVersionID)
+
+			if key != "" && key != objectKey {
+				continue
+			}
+
+			err := deleteCOSObjectVersion(conn, bucketName, objectKey, objectVersionID, force)
+
+			if err != nil {
+				if strings.Contains(err.Error(), "AccessDenied") && force {
+					// Remove any legal hold.
+					_, err := conn.HeadObject(&s3.HeadObjectInput{
+						Bucket:    aws.String(bucketName),
+						Key:       objectVersion.Key,
+						VersionId: objectVersion.VersionId,
+					})
+
+					if err != nil {
+						log.Printf("[ERROR] Error getting COS Bucket (%s) Object (%s) Version (%s) metadata: %s", bucketName, objectKey, objectVersionID, err)
+						lastErr = err
+						continue
+					}
+
+					// AccessDenied for another reason.
+					lastErr = fmt.Errorf("AccessDenied deleting COS Bucket (%s) Object (%s) Version: %s", bucketName, objectKey, objectVersionID)
+					continue
+				}
+			}
+		}
+
+		return !lastPage
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if lastErr != nil {
+		if !ignoreObjectErrors {
+			return fmt.Errorf("error deleting at least one object version, last error: %s", lastErr)
+		}
+
+		lastErr = nil
+	}
+
+	err = conn.ListObjectVersionsPages(input, func(page *s3.ListObjectVersionsOutput, lastPage bool) bool {
+		if page == nil {
+			return !lastPage
+		}
+
+		for _, deleteMarker := range page.DeleteMarkers {
+			deleteMarkerKey := aws.StringValue(deleteMarker.Key)
+			deleteMarkerVersionID := aws.StringValue(deleteMarker.VersionId)
+
+			if key != "" && key != deleteMarkerKey {
+				continue
+			}
+
+			// Delete markers have no object lock protections.
+			err := deleteCOSObjectVersion(conn, bucketName, deleteMarkerKey, deleteMarkerVersionID, false)
+
+			if err != nil {
+				lastErr = err
+			}
+		}
+
+		return !lastPage
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if lastErr != nil {
+		if !ignoreObjectErrors {
+			return fmt.Errorf("error deleting at least one object delete marker, last error: %s", lastErr)
+		}
+
+		lastErr = nil
+	}
+
+	return nil
+}
+
+// deleteCOSObjectVersion deletes a specific bucket object version.
+func deleteCOSObjectVersion(conn *s3.S3, b, k, v string, force bool) error {
+	input := &s3.DeleteObjectInput{
+		Bucket: aws.String(b),
+		Key:    aws.String(k),
+	}
+
+	if v != "" {
+		input.VersionId = aws.String(v)
+	}
+
+	log.Printf("[INFO] Deleting COS Bucket (%s) Object (%s) Version: %s", b, k, v)
+	_, err := conn.DeleteObject(input)
+
+	if err != nil {
+		log.Printf("[WARN] Error deleting S3 Bucket (%s) Object (%s) Version (%s): %s", b, k, v, err)
+	}
+
+	return err
 }

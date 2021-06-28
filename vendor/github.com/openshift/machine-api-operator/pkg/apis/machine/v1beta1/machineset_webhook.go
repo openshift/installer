@@ -3,14 +3,12 @@ package v1beta1
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	osconfigv1 "github.com/openshift/api/config/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/klog/v2"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -30,19 +28,10 @@ type machineSetDefaulterHandler struct {
 }
 
 // NewMachineSetValidator returns a new machineSetValidatorHandler.
-func NewMachineSetValidator() (*machineSetValidatorHandler, error) {
+func NewMachineSetValidator(client client.Client) (*machineSetValidatorHandler, error) {
 	infra, err := getInfra()
 	if err != nil {
 		return nil, err
-	}
-
-	cfg, err := ctrl.GetConfig()
-	if err != nil {
-		return nil, err
-	}
-	c, err := client.New(cfg, client.Options{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to build kubernetes client: %v", err)
 	}
 
 	dns, err := getDNS()
@@ -50,7 +39,7 @@ func NewMachineSetValidator() (*machineSetValidatorHandler, error) {
 		return nil, err
 	}
 
-	return createMachineSetValidator(infra, c, dns), nil
+	return createMachineSetValidator(infra, client, dns), nil
 }
 
 func createMachineSetValidator(infra *osconfigv1.Infrastructure, client client.Client, dns *osconfigv1.DNS) *machineSetValidatorHandler {

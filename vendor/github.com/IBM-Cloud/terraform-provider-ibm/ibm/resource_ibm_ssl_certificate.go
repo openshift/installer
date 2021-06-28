@@ -830,7 +830,7 @@ func findSSLByOrderId(sess *session1.Session, orderId int) (datatypes.Security_C
 			if len(ssls) >= 1 {
 				return ssls[0], "complete", nil
 			} else {
-				return nil, "pending", nil
+				return datatypes.Security_Certificate_Request{}, "pending", nil
 			}
 		},
 		Timeout:    10 * time.Minute,

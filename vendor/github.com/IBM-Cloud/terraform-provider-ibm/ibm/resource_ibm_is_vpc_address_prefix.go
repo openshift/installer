@@ -498,6 +498,9 @@ func resourceIBMISVpcAddressPrefixExists(d *schema.ResourceData, meta interface{
 		return false, err
 	}
 	parts, err := idParts(d.Id())
+	if len(parts) != 2 {
+		return false, fmt.Errorf("Incorrect ID %s: ID should be a combination of vpcID/addrPrefixID", d.Id())
+	}
 	if err != nil {
 		return false, err
 	}

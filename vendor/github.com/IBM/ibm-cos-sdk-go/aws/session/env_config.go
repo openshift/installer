@@ -101,11 +101,23 @@ type envConfig struct {
 	//  AWS_CA_BUNDLE=$HOME/my_custom_ca_bundle
 	CustomCABundle string
 
-	enableEndpointDiscovery string
+	// Sets the TLC client certificate that should be used by the SDK's HTTP transport
+	// when making requests. The certificate must be paired with a TLS client key file.
+	//
+	//  AWS_SDK_GO_CLIENT_TLS_CERT=$HOME/my_client_cert
+	ClientTLSCert string
+
+	// Sets the TLC client key that should be used by the SDK's HTTP transport
+	// when making requests. The key must be paired with a TLS client certificate file.
+	//
+	//  AWS_SDK_GO_CLIENT_TLS_KEY=$HOME/my_client_key
+	ClientTLSKey string
+
 	// Enables endpoint discovery via environment variables.
 	//
 	//	AWS_ENABLE_ENDPOINT_DISCOVERY=true
 	EnableEndpointDiscovery *bool
+	enableEndpointDiscovery string
 
 	// Specifies the S3 Regional Endpoint flag for the SDK to resolve the
 	// endpoint for a service.
@@ -157,6 +169,15 @@ var (
 	}
 	s3UseARNRegionEnvKey = []string{
 		"AWS_S3_USE_ARN_REGION",
+	}
+	useCABundleKey = []string{
+		"AWS_CA_BUNDLE",
+	}
+	useClientTLSCert = []string{
+		"AWS_SDK_GO_CLIENT_TLS_CERT",
+	}
+	useClientTLSKey = []string{
+		"AWS_SDK_GO_CLIENT_TLS_KEY",
 	}
 )
 
@@ -230,7 +251,9 @@ func envConfigLoad(enableSharedConfig bool) (envConfig, error) {
 		cfg.SharedConfigFile = defaults.SharedConfigFilename()
 	}
 
-	cfg.CustomCABundle = os.Getenv("AWS_CA_BUNDLE")
+	setFromEnvVal(&cfg.CustomCABundle, useCABundleKey)
+	setFromEnvVal(&cfg.ClientTLSCert, useClientTLSCert)
+	setFromEnvVal(&cfg.ClientTLSKey, useClientTLSKey)
 
 	var err error
 	// S3 Regional Endpoint variable

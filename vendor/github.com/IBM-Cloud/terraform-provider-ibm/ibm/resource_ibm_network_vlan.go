@@ -419,7 +419,7 @@ func findVlanByOrderId(sess *session.Session, orderId int, timeout time.Duration
 			if len(vlans) == 1 {
 				return vlans[0], "complete", nil
 			} else if len(vlans) == 0 {
-				return nil, "pending", nil
+				return []datatypes.Network_Vlan{}, "pending", nil
 			} else {
 				return nil, "", fmt.Errorf("Expected one vlan: %s", err)
 			}

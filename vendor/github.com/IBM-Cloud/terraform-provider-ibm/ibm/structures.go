@@ -24,10 +24,10 @@ import (
 	"github.com/IBM/platform-services-go-sdk/globaltaggingv1"
 	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
 	"github.com/apache/openwhisk-client-go/whisk"
+	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/softlayer/softlayer-go/datatypes"
 	"github.com/softlayer/softlayer-go/sl"
-	"github.ibm.com/ibmcloud/kubernetesservice-go-sdk/kubernetesserviceapiv1"
 
 	"github.com/IBM-Cloud/bluemix-go/api/container/containerv1"
 	"github.com/IBM-Cloud/bluemix-go/api/container/containerv2"
@@ -744,7 +744,7 @@ func expireRuleGet(in []*s3.LifecycleRule) []interface{} {
 
 func retentionRuleGet(in *s3.ProtectionConfiguration) []interface{} {
 	rules := make([]interface{}, 0, 1)
-	if in != nil && in.Status != nil && *in.Status == "Retention" {
+	if in != nil && in.Status != nil && *in.Status == "COMPLIANCE" {
 		protectConfig := make(map[string]interface{})
 		if in.DefaultRetention != nil {
 			protectConfig["default"] = int(*(in.DefaultRetention).Days)
@@ -761,6 +761,22 @@ func retentionRuleGet(in *s3.ProtectionConfiguration) []interface{} {
 		rules = append(rules, protectConfig)
 	}
 	return rules
+}
+
+func flattenCosObejctVersioning(in *s3.GetBucketVersioningOutput) []interface{} {
+	versioning := make([]interface{}, 0, 1)
+	if in != nil {
+		if in.Status != nil {
+			att := make(map[string]interface{})
+			if *in.Status == "Enabled" {
+				att["enable"] = true
+			} else {
+				att["enable"] = false
+			}
+			versioning = append(versioning, att)
+		}
+	}
+	return versioning
 }
 
 func flattenLimits(in *whisk.Limits) []interface{} {
@@ -868,6 +884,20 @@ func intValue(i64 *int64) (i int) {
 func float64Value(f32 *float32) (f float64) {
 	if f32 != nil {
 		f = float64(*f32)
+	}
+	return
+}
+
+func dateToString(d *strfmt.Date) (s string) {
+	if d != nil {
+		s = d.String()
+	}
+	return
+}
+
+func dateTimeToString(dt *strfmt.DateTime) (s string) {
+	if dt != nil {
+		s = dt.String()
 	}
 	return
 }
@@ -1959,6 +1989,34 @@ func resourceTagsCustomizeDiff(diff *schema.ResourceDiff) error {
 	return nil
 }
 
+func resourceVolumeAttachmentValidate(diff *schema.ResourceDiff) error {
+
+	if volsintf, ok := diff.GetOk("volume_attachments"); ok {
+		vols := volsintf.([]interface{})
+		for volAttIdx := range vols {
+			volumeid := "volume_attachments." + strconv.Itoa(volAttIdx) + "." + isInstanceTemplateVolAttVol
+			volumePrototype := "volume_attachments." + strconv.Itoa(volAttIdx) + "." + isInstanceTemplateVolAttVolPrototype
+			var volIdnterpolated = false
+			var volumeIdFound = false
+			if _, volumeIdFound = diff.GetOk(volumeid); !volumeIdFound {
+				if !diff.NewValueKnown(volumeid) {
+					volIdnterpolated = true
+				}
+			}
+			_, volPrototypeFound := diff.GetOk(volumePrototype)
+
+			if volPrototypeFound && (volumeIdFound || volIdnterpolated) {
+				return fmt.Errorf("InstanceTemplate - volume_attachments[%d]: Cannot provide both 'volume' and 'volume_prototype' together.", volAttIdx)
+			}
+			if !volPrototypeFound && !volumeIdFound && !volIdnterpolated {
+				return fmt.Errorf("InstanceTemplate - volume_attachments[%d]: Volume details missing. Provide either 'volume' or 'volume_prototype'.", volAttIdx)
+			}
+		}
+	}
+
+	return nil
+}
+
 func flattenRoleData(object []iampolicymanagementv1.Role, roleType string) []map[string]string {
 	var roles []map[string]string
 
@@ -2095,33 +2153,6 @@ func IgnoreSystemLabels(labels map[string]string) map[string]string {
 	}
 
 	return result
-}
-
-// expandCosConfig ..
-func expandCosConfig(cos []interface{}) *kubernetesserviceapiv1.COSBucket {
-	if len(cos) == 0 || cos[0] == nil {
-		return &kubernetesserviceapiv1.COSBucket{}
-	}
-	in := cos[0].(map[string]interface{})
-	obj := &kubernetesserviceapiv1.COSBucket{
-		Bucket:   ptrToString(in["bucket"].(string)),
-		Endpoint: ptrToString(in["endpoint"].(string)),
-		Region:   ptrToString(in["region"].(string)),
-	}
-	return obj
-}
-
-// expandCosCredentials ..
-func expandCosCredentials(cos []interface{}) *kubernetesserviceapiv1.COSAuthorization {
-	if len(cos) == 0 || cos[0] == nil {
-		return &kubernetesserviceapiv1.COSAuthorization{}
-	}
-	in := cos[0].(map[string]interface{})
-	obj := &kubernetesserviceapiv1.COSAuthorization{
-		AccessKeyID:     ptrToString(in["access_key-id"].(string)),
-		SecretAccessKey: ptrToString(in["secret_access_key"].(string)),
-	}
-	return obj
 }
 
 // flattenHostLabels ..
@@ -2432,19 +2463,13 @@ func getIBMUniqueId(accountID, userEmail string, meta interface{}) (string, erro
 	return "", fmt.Errorf("User %s is not found under account %s", userEmail, accountID)
 }
 
-func immutableResourceCustomizeDiff(resourceList []string, diff *schema.ResourceDiff) error {
-
-	for _, rName := range resourceList {
-		if diff.Id() != "" && diff.HasChange(rName) {
-			o, n := diff.GetChange(rName)
-			old := o.(string)
-			new := n.(string)
-			if len(old) > 0 && old != new {
-				if !(rName == sateLocZone && strings.Contains(old, new)) {
-					return fmt.Errorf("'%s' attribute is immutable and can't be changed from %s to %s.", rName, old, new)
-				}
-			}
-		}
+func flattenWorkerPoolHostLabels(hostLabels map[string]string) *schema.Set {
+	mapped := make([]string, len(hostLabels))
+	idx := 0
+	for k, v := range hostLabels {
+		mapped[idx] = fmt.Sprintf("%s:%v", k, v)
+		idx++
 	}
-	return nil
+
+	return newStringSet(schema.HashString, mapped)
 }

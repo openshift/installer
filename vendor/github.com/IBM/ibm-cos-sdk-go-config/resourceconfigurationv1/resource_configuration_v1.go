@@ -202,6 +202,9 @@ func (resourceConfiguration *ResourceConfigurationV1) UpdateBucketConfig(updateB
 	if updateBucketConfigOptions.MetricsMonitoring != nil {
 		body["metrics_monitoring"] = updateBucketConfigOptions.MetricsMonitoring
 	}
+	if updateBucketConfigOptions.HardQuota != nil {
+		body["hard_quota"] = updateBucketConfigOptions.HardQuota
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -228,7 +231,7 @@ type ActivityTracking struct {
 	// If set to `true`, all object write events (i.e. uploads) will be sent to Activity Tracker.
 	WriteDataEvents *bool `json:"write_data_events,omitempty"`
 
-	// Required the first time `activity_tracking` is configured. The instance of Activity Tracker that will recieve object
+	// Required the first time `activity_tracking` is configured. The instance of Activity Tracker that will receive object
 	// event data. The format is "crn:v1:bluemix:public:logdnaat:{bucket location}:a/{storage account}:{activity tracker
 	// service instance}::".
 	ActivityTrackerCrn *string `json:"activity_tracker_crn,omitempty"`
@@ -260,6 +263,18 @@ type Bucket struct {
 
 	// Total size of all objects in the bucket. Non-mutable.
 	BytesUsed *int64 `json:"bytes_used,omitempty"`
+
+	// Number of non-current object versions in the bucket. Non-mutable.
+	NoncurrentObjectCount *int64 `json:"noncurrent_object_count,omitempty"`
+
+	// Total size of all non-current object versions in the bucket. Non-mutable.
+	NoncurrentBytesUsed *int64 `json:"noncurrent_bytes_used,omitempty"`
+
+	// Total number of delete markers in the bucket. Non-mutable.
+	DeleteMarkerCount *int64 `json:"delete_marker_count,omitempty"`
+
+	// Maximum bytes for this bucket.
+	HardQuota *int64 `json:"hard_quota,omitempty"`
 
 	// An access control mechanism based on the network (IP address) where request originated. Requests not originating
 	// from IP addresses listed in the `allowed_ip` field will be denied regardless of any access policies (including
@@ -352,6 +367,9 @@ type UpdateBucketConfigOptions struct {
 	// in the `monitoring_crn` field.
 	MetricsMonitoring *MetricsMonitoring `json:"metrics_monitoring,omitempty"`
 
+	// Maximum bytes for this bucket.
+	HardQuota *int64 `json:"hard_quota,omitempty"`
+
 	// An Etag previously returned in a header when fetching or updating a bucket's metadata. If this value does not match
 	// the active Etag, the request will fail.
 	IfMatch *string `json:"if-match,omitempty"`
@@ -388,6 +406,12 @@ func (options *UpdateBucketConfigOptions) SetActivityTracking(activityTracking *
 // SetMetricsMonitoring : Allow user to set MetricsMonitoring
 func (options *UpdateBucketConfigOptions) SetMetricsMonitoring(metricsMonitoring *MetricsMonitoring) *UpdateBucketConfigOptions {
 	options.MetricsMonitoring = metricsMonitoring
+	return options
+}
+
+// SetHardQuota : Allow user to set HardQuota
+func (options *UpdateBucketConfigOptions) SetHardQuota(hardQuota int64) *UpdateBucketConfigOptions {
+	options.HardQuota = core.Int64Ptr(hardQuota)
 	return options
 }
 

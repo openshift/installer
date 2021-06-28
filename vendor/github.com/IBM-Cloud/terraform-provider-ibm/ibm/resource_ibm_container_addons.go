@@ -130,7 +130,7 @@ func resourceIBMContainerAddOnsCreate(d *schema.ResourceData, meta interface{}) 
 		fmt.Println("[ WARN ] Error getting Addons.")
 	}
 
-	payload, err := expandAddOns(d, existingAddons)
+	payload, err := expandAddOns(d, meta, cluster, targetEnv, existingAddons)
 	if err != nil {
 		return fmt.Errorf("Error in getting addons from expandAddOns %s", err)
 	}
@@ -148,7 +148,7 @@ func resourceIBMContainerAddOnsCreate(d *schema.ResourceData, meta interface{}) 
 
 	return resourceIBMContainerAddOnsRead(d, meta)
 }
-func expandAddOns(d *schema.ResourceData, existingAddons []v1.AddOn) (addOns v1.ConfigureAddOns, err error) {
+func expandAddOns(d *schema.ResourceData, meta interface{}, cluster string, targetEnv v1.ClusterTargetHeader, existingAddons []v1.AddOn) (addOns v1.ConfigureAddOns, err error) {
 	addOnSet := d.Get("addons").(*schema.Set).List()
 	if existingAddons == nil || len(existingAddons) < 1 {
 		for _, aoSet := range addOnSet {
@@ -169,6 +169,12 @@ func expandAddOns(d *schema.ResourceData, existingAddons []v1.AddOn) (addOns v1.
 			for _, existAddon := range existingAddons {
 				if existAddon.Name == ao["name"].(string) {
 					exist = true
+					if existAddon.Version != ao["version"].(string) {
+						err := updateAddOnVersion(d, meta, ao, cluster, targetEnv)
+						if err != nil {
+							return addOns, err
+						}
+					}
 				}
 			}
 			if !exist {
@@ -184,6 +190,36 @@ func expandAddOns(d *schema.ResourceData, existingAddons []v1.AddOn) (addOns v1.
 	}
 
 	return addOns, nil
+}
+func updateAddOnVersion(d *schema.ResourceData, meta interface{}, u map[string]interface{}, cluster string, targetEnv v1.ClusterTargetHeader) error {
+	csClient, err := meta.(ClientSession).ContainerAPI()
+	if err != nil {
+		return err
+	}
+	addOnAPI := csClient.AddOns()
+
+	update := v1.AddOn{
+		Name: u["name"].(string),
+	}
+	if u["version"].(string) != "" {
+		update.Version = u["version"].(string)
+	}
+	updateList := v1.ConfigureAddOns{}
+	updateList.AddonsList = append(updateList.AddonsList, update)
+	updateList.Update = true
+	_, err = addOnAPI.ConfigureAddons(cluster, &updateList, targetEnv)
+	if err != nil {
+		return err
+	}
+	if !d.IsNewResource() {
+		_, err = waitForContainerAddOns(d, meta, cluster, schema.TimeoutUpdate)
+		if err != nil {
+			return fmt.Errorf(
+				"Error waiting for Updating Addon (%s) : %s", d.Id(), err)
+		}
+	}
+
+	return nil
 }
 func resourceIBMContainerAddOnsRead(d *schema.ResourceData, meta interface{}) error {
 	csClient, err := meta.(ClientSession).ContainerAPI()
@@ -277,23 +313,9 @@ func resourceIBMContainerAddOnsUpdate(d *schema.ResourceData, meta interface{}) 
 			for _, oA := range os.List() {
 				oldPack := oA.(map[string]interface{})
 				if (strings.Compare(newPack["name"].(string), oldPack["name"].(string)) == 0) && (strings.Compare(newPack["version"].(string), oldPack["version"].(string)) != 0) && (newPack["version"].(string) != "") {
-					update := v1.AddOn{
-						Name: newPack["name"].(string),
-					}
-					if newPack["version"].(string) != "" {
-						update.Version = newPack["version"].(string)
-					}
-					updateList := v1.ConfigureAddOns{}
-					updateList.AddonsList = append(updateList.AddonsList, update)
-					updateList.Update = true
-					_, err = addOnAPI.ConfigureAddons(cluster, &updateList, targetEnv)
+					err := updateAddOnVersion(d, meta, newPack, cluster, targetEnv)
 					if err != nil {
 						return err
-					}
-					_, err = waitForContainerAddOns(d, meta, cluster, schema.TimeoutUpdate)
-					if err != nil {
-						return fmt.Errorf(
-							"Error waiting for Updating Addon (%s) : %s", d.Id(), err)
 					}
 					ns.Remove(nA)
 					os.Remove(oA)
@@ -361,7 +383,7 @@ func resourceIBMContainerAddOnsDelete(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 	cluster := d.Id()
-	payload, err := expandAddOns(d, nil)
+	payload, err := expandAddOns(d, meta, cluster, targetEnv, nil)
 	if err != nil {
 		return fmt.Errorf("Error in getting addons from expandAddOns %s", err)
 	}

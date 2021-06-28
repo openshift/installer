@@ -8,9 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/internal/mutexkv"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/internal/mutexkv"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -251,10 +252,14 @@ func Provider() terraform.ResourceProvider {
 			"ibm_is_images":                          dataSourceIBMISImages(),
 			"ibm_is_endpoint_gateway_targets":        dataSourceIBMISEndpointGatewayTargets(),
 			"ibm_is_instance_group":                  dataSourceIBMISInstanceGroup(),
+			"ibm_is_instance_group_memberships":      dataSourceIBMISInstanceGroupMemberships(),
+			"ibm_is_instance_group_membership":       dataSourceIBMISInstanceGroupMembership(),
 			"ibm_is_instance_group_manager":          dataSourceIBMISInstanceGroupManager(),
 			"ibm_is_instance_group_managers":         dataSourceIBMISInstanceGroupManagers(),
 			"ibm_is_instance_group_manager_policies": dataSourceIBMISInstanceGroupManagerPolicies(),
 			"ibm_is_instance_group_manager_policy":   dataSourceIBMISInstanceGroupManagerPolicy(),
+			"ibm_is_instance_group_manager_action":   dataSourceIBMISInstanceGroupManagerAction(),
+			"ibm_is_instance_group_manager_actions":  dataSourceIBMISInstanceGroupManagerActions(),
 			"ibm_is_virtual_endpoint_gateways":       dataSourceIBMISEndpointGateways(),
 			"ibm_is_virtual_endpoint_gateway_ips":    dataSourceIBMISEndpointGatewayIPs(),
 			"ibm_is_virtual_endpoint_gateway":        dataSourceIBMISEndpointGateway(),
@@ -290,6 +295,8 @@ func Provider() terraform.ResourceProvider {
 			"ibm_is_vpc_routing_table_routes":        dataSourceIBMISVPCRoutingTableRoutes(),
 			"ibm_is_zone":                            dataSourceIBMISZone(),
 			"ibm_is_zones":                           dataSourceIBMISZones(),
+			"ibm_is_operating_system":                dataSourceIBMISOperatingSystem(),
+			"ibm_is_operating_systems":               dataSourceIBMISOperatingSystems(),
 			"ibm_lbaas":                              dataSourceIBMLbaas(),
 			"ibm_network_vlan":                       dataSourceIBMNetworkVlan(),
 			"ibm_org":                                dataSourceIBMOrg(),
@@ -298,6 +305,10 @@ func Provider() terraform.ResourceProvider {
 			"ibm_kms_key_rings":                      dataSourceIBMKMSkeyRings(),
 			"ibm_kms_keys":                           dataSourceIBMKMSkeys(),
 			"ibm_pn_application_chrome":              dataSourceIBMPNApplicationChrome(),
+			"ibm_app_config_environment":             dataSourceIbmAppConfigEnvironment(),
+			"ibm_app_config_environments":            dataSourceIbmAppConfigEnvironments(),
+			"ibm_app_config_feature":                 dataSourceIbmAppConfigFeature(),
+			"ibm_app_config_features":                dataSourceIbmAppConfigFeatures(),
 			"ibm_kms_key":                            dataSourceIBMKMSkey(),
 			"ibm_resource_quota":                     dataSourceIBMResourceQuota(),
 			"ibm_resource_group":                     dataSourceIBMResourceGroup(),
@@ -369,10 +380,6 @@ func Provider() terraform.ResourceProvider {
 			//Added for Secrets Manager
 			"ibm_secrets_manager_secrets": dataSourceIBMSecretsManagerSecrets(),
 			"ibm_secrets_manager_secret":  dataSourceIBMSecretsManagerSecret(),
-
-			//Added for Satellite
-			"ibm_satellite_location":           dataSourceIBMSatelliteLocation(),
-			"ibm_satellite_attach_host_script": dataSourceIBMSatelliteAttachHostScript(),
 
 			// Catalog related resources
 			"ibm_cm_catalog":           dataSourceIBMCmCatalog(),
@@ -482,8 +489,10 @@ func Provider() terraform.ResourceProvider {
 			"ibm_is_instance":                                    resourceIBMISInstance(),
 			"ibm_is_instance_disk_management":                    resourceIBMISInstanceDiskManagement(),
 			"ibm_is_instance_group":                              resourceIBMISInstanceGroup(),
+			"ibm_is_instance_group_membership":                   resourceIBMISInstanceGroupMembership(),
 			"ibm_is_instance_group_manager":                      resourceIBMISInstanceGroupManager(),
 			"ibm_is_instance_group_manager_policy":               resourceIBMISInstanceGroupManagerPolicy(),
+			"ibm_is_instance_group_manager_action":               resourceIBMISInstanceGroupManagerAction(),
 			"ibm_is_virtual_endpoint_gateway":                    resourceIBMISEndpointGateway(),
 			"ibm_is_virtual_endpoint_gateway_ip":                 resourceIBMISEndpointGatewayIP(),
 			"ibm_is_instance_template":                           resourceIBMISInstanceTemplate(),
@@ -534,6 +543,8 @@ func Provider() terraform.ResourceProvider {
 			"ibm_object_storage_account":                         resourceIBMObjectStorageAccount(),
 			"ibm_org":                                            resourceIBMOrg(),
 			"ibm_pn_application_chrome":                          resourceIBMPNApplicationChrome(),
+			"ibm_app_config_environment":                         resourceIbmAppConfigEnvironment(),
+			"ibm_app_config_feature":                             resourceIbmIbmAppConfigFeature(),
 			"ibm_kms_key":                                        resourceIBMKmskey(),
 			"ibm_kms_key_alias":                                  resourceIBMKmskeyAlias(),
 			"ibm_kms_key_rings":                                  resourceIBMKmskeyRings(),
@@ -601,11 +612,7 @@ func Provider() terraform.ResourceProvider {
 			"ibm_schematics_action":    resourceIBMSchematicsAction(),
 			"ibm_schematics_job":       resourceIBMSchematicsJob(),
 
-			//satellite  resources
-			"ibm_satellite_location": resourceIBMSatelliteLocation(),
-			"ibm_satellite_host":     resourceIBMSatelliteHost(),
-
-			//Resource Tag
+			//Added for Resource Tag
 			"ibm_resource_tag": resourceIBMResourceTag(),
 		},
 
@@ -641,6 +648,7 @@ func Validator() ValidatorDict {
 				"ibm_cis_certificate_order":             resourceIBMCISCertificateOrderValidator(),
 				"ibm_cr_namespace":                      resourceIBMCrNamespaceValidator(),
 				"ibm_tg_gateway":                        resourceIBMTGValidator(),
+				"ibm_app_config_feature":                resourceIbmAppConfigFeatureValidator(),
 				"ibm_tg_connection":                     resourceIBMTransitGatewayConnectionValidator(),
 				"ibm_dl_virtual_connection":             resourceIBMdlGatewayVCValidator(),
 				"ibm_dl_gateway":                        resourceIBMDLGatewayValidator(),
@@ -656,8 +664,10 @@ func Validator() ValidatorDict {
 				"ibm_is_dedicated_host_disk_management": resourceIBMISDedicatedHostDiskManagementValidator(),
 				"ibm_is_flow_log":                       resourceIBMISFlowLogValidator(),
 				"ibm_is_instance_group":                 resourceIBMISInstanceGroupValidator(),
+				"ibm_is_instance_group_membership":      resourceIBMISInstanceGroupMembershipValidator(),
 				"ibm_is_instance_group_manager":         resourceIBMISInstanceGroupManagerValidator(),
 				"ibm_is_instance_group_manager_policy":  resourceIBMISInstanceGroupManagerPolicyValidator(),
+				"ibm_is_instance_group_manager_action":  resourceIBMISInstanceGroupManagerActionValidator(),
 				"ibm_is_floating_ip":                    resourceIBMISFloatingIPValidator(),
 				"ibm_is_ike_policy":                     resourceIBMISIKEValidator(),
 				"ibm_is_image":                          resourceIBMISImageValidator(),
@@ -696,7 +706,6 @@ func Validator() ValidatorDict {
 				"ibm_container_vpc_cluster":             resourceIBMContainerVpcClusterValidator(),
 				"ibm_container_cluster":                 resourceIBMContainerClusterValidator(),
 				"ibm_resource_tag":                      resourceIBMResourceTagValidator(),
-				"ibm_satellite_location":                resourceIBMSatelliteLocationValidator(),
 			},
 			DataSourceValidatorDictionary: map[string]*ResourceValidator{
 				"ibm_is_subnet":               dataSourceIBMISSubnetValidator(),

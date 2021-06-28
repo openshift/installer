@@ -590,7 +590,9 @@ func lbListenerPolicyRuleExists(d *schema.ResourceData, meta interface{}, ID str
 	if err != nil {
 		return false, err
 	}
-
+	if len(parts) != 4 {
+		return false, fmt.Errorf("Incorrect ID %s: ID should be a combination of lbID/listenerID/policyID/ruleID", d.Id())
+	}
 	lbID := parts[0]
 	listenerID := parts[1]
 	policyID := parts[2]

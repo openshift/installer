@@ -336,7 +336,7 @@ func findDedicatedFirewallByOrderId(sess *session.Session, orderId int, d *schem
 			} else if len(firewalls) == 1 {
 				return firewalls[0], "complete", nil
 			} else if len(vlans) == 0 || len(firewalls) == 0 || *upgraderequest.Status.Name != "Complete" {
-				return nil, "pending", nil
+				return datatypes.Network_Vlan{}, "pending", nil
 			}
 			return nil, "", fmt.Errorf("Expected one dedicated firewall: %s", err)
 		},

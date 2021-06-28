@@ -921,7 +921,7 @@ func resourceIBMISLBPoolMemberExists(d *schema.ResourceData, meta interface{}) (
 	if err != nil {
 		return false, err
 	}
-	if len(parts) < 3 {
+	if len(parts) != 3 {
 		return false, fmt.Errorf(
 			"The id should contain loadbalancer Id, loadbalancer pool Id and loadbalancer poolmemebr Id")
 	}

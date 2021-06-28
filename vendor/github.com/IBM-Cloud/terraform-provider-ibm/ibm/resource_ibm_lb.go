@@ -433,7 +433,7 @@ func findLoadBalancerByOrderId(sess *session.Session, orderId int, dedicated boo
 			if len(lbs) == 1 {
 				return lbs[0], "complete", nil
 			} else if len(lbs) == 0 {
-				return nil, "pending", nil
+				return datatypes.Network_Application_Delivery_Controller_LoadBalancer_VirtualIpAddress{}, "pending", nil
 			} else {
 				return nil, "", fmt.Errorf("Expected one load balancer: %s", err)
 			}

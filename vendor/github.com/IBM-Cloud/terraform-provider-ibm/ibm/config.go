@@ -17,6 +17,7 @@ import (
 	// Added code for the Power Colo Offering
 
 	apigateway "github.com/IBM/apigateway-go-sdk"
+	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
 	"github.com/IBM/container-registry-go-sdk/containerregistryv1"
 	"github.com/IBM/go-sdk-core/v4/core"
 	cosconfig "github.com/IBM/ibm-cos-sdk-go-config/resourceconfigurationv1"
@@ -62,7 +63,6 @@ import (
 	"github.com/apache/openwhisk-client-go/whisk"
 	jwt "github.com/dgrijalva/jwt-go"
 	slsession "github.com/softlayer/softlayer-go/session"
-	"github.ibm.com/ibmcloud/kubernetesservice-go-sdk/kubernetesserviceapiv1"
 
 	bluemix "github.com/IBM-Cloud/bluemix-go"
 	"github.com/IBM-Cloud/bluemix-go/api/account/accountv1"
@@ -76,16 +76,13 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/api/globaltagging/globaltaggingv3"
 	"github.com/IBM-Cloud/bluemix-go/api/hpcs"
 	"github.com/IBM-Cloud/bluemix-go/api/iam/iamv1"
-	"github.com/IBM-Cloud/bluemix-go/api/iamuum/iamuumv1"
 	"github.com/IBM-Cloud/bluemix-go/api/iamuum/iamuumv2"
 	"github.com/IBM-Cloud/bluemix-go/api/icd/icdv4"
 	"github.com/IBM-Cloud/bluemix-go/api/mccp/mccpv2"
 	"github.com/IBM-Cloud/bluemix-go/api/resource/resourcev1/catalog"
 	"github.com/IBM-Cloud/bluemix-go/api/resource/resourcev1/controller"
-	"github.com/IBM-Cloud/bluemix-go/api/resource/resourcev1/management"
 	"github.com/IBM-Cloud/bluemix-go/api/resource/resourcev2/controllerv2"
 	"github.com/IBM-Cloud/bluemix-go/api/resource/resourcev2/managementv2"
-	"github.com/IBM-Cloud/bluemix-go/api/schematics"
 	"github.com/IBM-Cloud/bluemix-go/api/usermanagement/usermanagementv2"
 	"github.com/IBM-Cloud/bluemix-go/authentication"
 	"github.com/IBM-Cloud/bluemix-go/bmxerror"
@@ -197,11 +194,9 @@ type ClientSession interface {
 	ICDAPI() (icdv4.ICDServiceAPI, error)
 	IAMAPI() (iamv1.IAMServiceAPI, error)
 	IAMPolicyManagementV1API() (*iampolicymanagement.IamPolicyManagementV1, error)
-	IAMUUMAPI() (iamuumv1.IAMUUMServiceAPI, error)
 	IAMUUMAPIV2() (iamuumv2.IAMUUMServiceAPIv2, error)
 	MccpAPI() (mccpv2.MccpServiceAPI, error)
 	ResourceCatalogAPI() (catalog.ResourceCatalogAPI, error)
-	ResourceManagementAPI() (management.ResourceManagementAPI, error)
 	ResourceManagementAPIv2() (managementv2.ResourceManagementAPIv2, error)
 	ResourceControllerAPI() (controller.ResourceControllerAPI, error)
 	ResourceControllerAPIV2() (controllerv2.ResourceControllerAPIV2, error)
@@ -209,6 +204,7 @@ type ClientSession interface {
 	IBMPISession() (*ibmpisession.IBMPISession, error)
 	UserManagementAPI() (usermanagementv2.UserManagementAPI, error)
 	PushServiceV1() (*pushservicev1.PushServiceV1, error)
+	AppConfigurationV1() (*appconfigurationv1.AppConfigurationV1, error)
 	CertificateManagerAPI() (certificatemanager.CertificateManagerServiceAPI, error)
 	keyProtectAPI() (*kp.Client, error)
 	keyManagementAPI() (*kp.Client, error)
@@ -251,7 +247,6 @@ type ClientSession interface {
 	ResourceControllerV2API() (*resourcecontroller.ResourceControllerV2, error)
 	SecretsManagerV1() (*secretsmanagerv1.SecretsManagerV1, error)
 	SchematicsV1() (*schematicsv1.SchematicsV1, error)
-	SatelliteClientSession() (*kubernetesserviceapiv1.KubernetesServiceApiV1, error)
 }
 
 type clientSession struct {
@@ -278,9 +273,6 @@ type clientSession struct {
 	containerRegistryClientErr error
 	containerRegistryClient    *containerregistryv1.ContainerRegistryV1
 
-	stxConfigErr  error
-	stxServiceAPI schematics.SchematicsServiceAPI
-
 	certManagementErr error
 	certManagementAPI certificatemanager.CertificateManagerServiceAPI
 
@@ -302,9 +294,6 @@ type clientSession struct {
 	globalTaggingConfigErrV1  error
 	globalTaggingServiceAPIV1 globaltaggingv1.GlobalTaggingV1
 
-	iamUUMConfigErr  error
-	iamUUMServiceAPI iamuumv1.IAMUUMServiceAPI
-
 	iamUUMConfigErrV2  error
 	iamUUMServiceAPIV2 iamuumv2.IAMUUMServiceAPIv2
 
@@ -314,9 +303,6 @@ type clientSession struct {
 	userManagementErr error
 	userManagementAPI usermanagementv2.UserManagementAPI
 
-	enterprise    *enterprisemanagementv1.EnterpriseManagementV1
-	enterpriseErr error
-
 	icdConfigErr  error
 	icdServiceAPI icdv4.ICDServiceAPI
 
@@ -325,9 +311,6 @@ type clientSession struct {
 
 	resourceControllerConfigErrv2  error
 	resourceControllerServiceAPIv2 controllerv2.ResourceControllerAPIV2
-
-	resourceManagementConfigErr  error
-	resourceManagementServiceAPI management.ResourceManagementAPI
 
 	resourceManagementConfigErrv2  error
 	resourceManagementServiceAPIv2 managementv2.ResourceManagementAPIv2
@@ -355,6 +338,9 @@ type clientSession struct {
 
 	pushServiceClient    *pushservicev1.PushServiceV1
 	pushServiceClientErr error
+
+	appConfigurationClient    *appconfigurationv1.AppConfigurationV1
+	appConfigurationClientErr error
 
 	vpcClassicErr error
 	vpcClassicAPI *vpcclassic.VpcClassicV1
@@ -488,10 +474,6 @@ type clientSession struct {
 	schematicsClient    *schematicsv1.SchematicsV1
 	schematicsClientErr error
 
-	//Satellite service
-	satelliteClient    *kubernetesserviceapiv1.KubernetesServiceApiV1
-	satelliteClientErr error
-
 	//IAM Policy Management
 	iamPolicyManagementErr error
 	iamPolicyManagementAPI *iampolicymanagement.IamPolicyManagementV1
@@ -586,11 +568,6 @@ func (sess clientSession) IAMPolicyManagementV1API() (*iampolicymanagement.IamPo
 	return sess.iamPolicyManagementAPI, sess.iamPolicyManagementErr
 }
 
-// IAMUUMAPI provides IAM UUM APIs ...
-func (sess clientSession) IAMUUMAPI() (iamuumv1.IAMUUMServiceAPI, error) {
-	return sess.iamUUMServiceAPI, sess.iamUUMConfigErr
-}
-
 // IAMUUMAPIV2 provides IAM UUM APIs ...
 func (sess clientSession) IAMUUMAPIV2() (iamuumv2.IAMUUMServiceAPIv2, error) {
 	return sess.iamUUMServiceAPIV2, sess.iamUUMConfigErrV2
@@ -609,11 +586,6 @@ func (sess clientSession) MccpAPI() (mccpv2.MccpServiceAPI, error) {
 // ResourceCatalogAPI ...
 func (sess clientSession) ResourceCatalogAPI() (catalog.ResourceCatalogAPI, error) {
 	return sess.resourceCatalogServiceAPI, sess.resourceCatalogConfigErr
-}
-
-// ResourceManagementAPI ...
-func (sess clientSession) ResourceManagementAPI() (management.ResourceManagementAPI, error) {
-	return sess.resourceManagementServiceAPI, sess.resourceManagementConfigErr
 }
 
 // ResourceManagementAPIv2 ...
@@ -648,6 +620,10 @@ func (sess clientSession) APIGateway() (*apigateway.ApiGatewayControllerApiV1, e
 
 func (session clientSession) PushServiceV1() (*pushservicev1.PushServiceV1, error) {
 	return session.pushServiceClient, session.pushServiceClientErr
+}
+
+func (session clientSession) AppConfigurationV1() (*appconfigurationv1.AppConfigurationV1, error) {
+	return session.appConfigurationClient, session.appConfigurationClientErr
 }
 
 func (sess clientSession) keyProtectAPI() (*kp.Client, error) {
@@ -900,11 +876,6 @@ func (session clientSession) SecretsManagerV1() (*secretsmanagerv1.SecretsManage
 
 var cloudEndpoint = "cloud.ibm.com"
 
-// Session to the Satellite client
-func (sess clientSession) SatelliteClientSession() (*kubernetesserviceapiv1.KubernetesServiceApiV1, error) {
-	return sess.satelliteClient, sess.satelliteClientErr
-}
-
 // ClientSession configures and returns a fully initialized ClientSession
 func (c *Config) ClientSession() (interface{}, error) {
 	sess, err := newSession(c)
@@ -927,23 +898,26 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.containerRegistryClientErr = errEmptyBluemixCredentials
 		session.kpErr = errEmptyBluemixCredentials
 		session.pushServiceClientErr = errEmptyBluemixCredentials
+		session.appConfigurationClientErr = errEmptyBluemixCredentials
 		session.kmsErr = errEmptyBluemixCredentials
-		session.stxConfigErr = errEmptyBluemixCredentials
 		session.cfConfigErr = errEmptyBluemixCredentials
 		session.cisConfigErr = errEmptyBluemixCredentials
 		session.functionConfigErr = errEmptyBluemixCredentials
 		session.globalSearchConfigErr = errEmptyBluemixCredentials
 		session.globalTaggingConfigErr = errEmptyBluemixCredentials
+		session.globalTaggingConfigErrV1 = errEmptyBluemixCredentials
 		session.hpcsEndpointErr = errEmptyBluemixCredentials
 		session.iamConfigErr = errEmptyBluemixCredentials
-		session.iamUUMConfigErr = errEmptyBluemixCredentials
 		session.iamUUMConfigErrV2 = errEmptyBluemixCredentials
 		session.icdConfigErr = errEmptyBluemixCredentials
 		session.resourceCatalogConfigErr = errEmptyBluemixCredentials
-		session.resourceManagementConfigErr = errEmptyBluemixCredentials
+		session.resourceManagerErr = errEmptyBluemixCredentials
 		session.resourceManagementConfigErrv2 = errEmptyBluemixCredentials
 		session.resourceControllerConfigErr = errEmptyBluemixCredentials
 		session.resourceControllerConfigErrv2 = errEmptyBluemixCredentials
+		session.enterpriseManagementClientErr = errEmptyBluemixCredentials
+		session.resourceControllerErr = errEmptyBluemixCredentials
+		session.catalogManagementClientErr = errEmptyBluemixCredentials
 		session.powerConfigErr = errEmptyBluemixCredentials
 		session.ibmpiConfigErr = errEmptyBluemixCredentials
 		session.userManagementErr = errEmptyBluemixCredentials
@@ -982,6 +956,8 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.cisWAFRuleErr = errEmptyBluemixCredentials
 		session.iamIdentityErr = errEmptyBluemixCredentials
 		session.secretsManagerClientErr = errEmptyBluemixCredentials
+		session.schematicsClientErr = errEmptyBluemixCredentials
+		session.iamPolicyManagementErr = errEmptyBluemixCredentials
 
 		return session, nil
 	}
@@ -1045,7 +1021,6 @@ func (c *Config) ClientSession() (interface{}, error) {
 
 	if sess.SoftLayerSession != nil && sess.SoftLayerSession.IAMToken != "" {
 		sess.SoftLayerSession.IAMToken = sess.BluemixSession.Config.IAMAccessToken
-		sess.SoftLayerSession.IAMRefreshToken = sess.BluemixSession.Config.IAMRefreshToken
 	}
 
 	session.functionClient, session.functionConfigErr = FunctionClient(sess.BluemixSession.Config)
@@ -1092,11 +1067,22 @@ func (c *Config) ClientSession() (interface{}, error) {
 	if c.Visibility == "private" || c.Visibility == "public-and-private" {
 		kpurl = contructEndpoint(fmt.Sprintf("private.%s.kms", c.Region), cloudEndpoint)
 	}
-	options := kp.ClientConfig{
-		BaseURL:       envFallBack([]string{"IBMCLOUD_KP_API_ENDPOINT"}, kpurl),
-		Authorization: sess.BluemixSession.Config.IAMAccessToken,
-		// InstanceID:    "42fET57nnadurKXzXAedFLOhGqETfIGYxOmQXkFgkJV9",
-		Verbose: kp.VerboseFailOnly,
+	var options kp.ClientConfig
+	if c.BluemixAPIKey != "" {
+		options = kp.ClientConfig{
+			BaseURL: envFallBack([]string{"IBMCLOUD_KP_API_ENDPOINT"}, kpurl),
+			APIKey:  sess.BluemixSession.Config.BluemixAPIKey, //pragma: allowlist secret
+			// InstanceID:    "42fET57nnadurKXzXAedFLOhGqETfIGYxOmQXkFgkJV9",
+			Verbose: kp.VerboseFailOnly,
+		}
+
+	} else {
+		options = kp.ClientConfig{
+			BaseURL:       envFallBack([]string{"IBMCLOUD_KP_API_ENDPOINT"}, kpurl),
+			Authorization: sess.BluemixSession.Config.IAMAccessToken,
+			// InstanceID:    "42fET57nnadurKXzXAedFLOhGqETfIGYxOmQXkFgkJV9",
+			Verbose: kp.VerboseFailOnly,
+		}
 	}
 	kpAPIclient, err := kp.New(options, kp.DefaultTransport())
 	if err != nil {
@@ -1108,11 +1094,22 @@ func (c *Config) ClientSession() (interface{}, error) {
 	if c.Visibility == "private" || c.Visibility == "public-and-private" {
 		kmsurl = contructEndpoint(fmt.Sprintf("private.%s.kms", c.Region), cloudEndpoint)
 	}
-	kmsOptions := kp.ClientConfig{
-		BaseURL:       envFallBack([]string{"IBMCLOUD_KP_API_ENDPOINT"}, kmsurl),
-		Authorization: sess.BluemixSession.Config.IAMAccessToken,
-		// InstanceID:    "5af62d5d-5d90-4b84-bbcd-90d2123ae6c8",
-		Verbose: kp.VerboseFailOnly,
+	var kmsOptions kp.ClientConfig
+	if c.BluemixAPIKey != "" {
+		kmsOptions = kp.ClientConfig{
+			BaseURL: envFallBack([]string{"IBMCLOUD_KP_API_ENDPOINT"}, kmsurl),
+			APIKey:  sess.BluemixSession.Config.BluemixAPIKey, //pragma: allowlist secret
+			// InstanceID:    "5af62d5d-5d90-4b84-bbcd-90d2123ae6c8",
+			Verbose: kp.VerboseFailOnly,
+		}
+
+	} else {
+		kmsOptions = kp.ClientConfig{
+			BaseURL:       envFallBack([]string{"IBMCLOUD_KP_API_ENDPOINT"}, kmsurl),
+			Authorization: sess.BluemixSession.Config.IAMAccessToken,
+			// InstanceID:    "5af62d5d-5d90-4b84-bbcd-90d2123ae6c8",
+			Verbose: kp.VerboseFailOnly,
+		}
 	}
 	kmsAPIclient, err := kp.New(kmsOptions, DefaultTransport())
 	if err != nil {
@@ -1243,7 +1240,7 @@ func (c *Config) ClientSession() (interface{}, error) {
 
 	pnurl := fmt.Sprintf("https://%s.imfpush.cloud.ibm.com/imfpush/v1", c.Region)
 	if c.Visibility == "private" {
-		session.pushServiceClientErr = fmt.Errorf("Push Service API doesnot support private endpoints")
+		session.pushServiceClientErr = fmt.Errorf("Push Notifications Service API doesnot support private endpoints")
 	}
 	pushNotificationOptions := &pushservicev1.PushServiceV1Options{
 		URL:           envFallBack([]string{"IBMCLOUD_PUSH_API_ENDPOINT"}, pnurl),
@@ -1257,7 +1254,20 @@ func (c *Config) ClientSession() (interface{}, error) {
 	} else {
 		session.pushServiceClientErr = fmt.Errorf("Error occured while configuring push notification service: %q", err)
 	}
-
+	if c.Visibility == "private" {
+		session.appConfigurationClientErr = fmt.Errorf("App Configuration Service API doesnot support private endpoints")
+	}
+	appConfigurationClientOptions := &appconfigurationv1.AppConfigurationV1Options{
+		Authenticator: authenticator,
+	}
+	appConfigClient, err := appconfigurationv1.NewAppConfigurationV1(appConfigurationClientOptions)
+	if appConfigClient != nil {
+		// Enable retries for API calls
+		appConfigClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
+		session.appConfigurationClient = appConfigClient
+	} else {
+		session.appConfigurationClientErr = fmt.Errorf("Error occurred while configuring App Configuration service: %q", err)
+	}
 	// Construct an "options" struct for creating the service client.
 	containerRegistryClientURL, err := containerregistryv1.GetServiceURLForRegion(c.Region)
 	if err != nil {
@@ -1335,7 +1345,7 @@ func (c *Config) ClientSession() (interface{}, error) {
 
 	globalTaggingAPIV1, err := globaltaggingv1.NewGlobalTaggingV1(globalTaggingV1Options)
 	if err != nil {
-		session.globalTaggingConfigErr = fmt.Errorf("Error occured while configuring Global Tagging: %q", err)
+		session.globalTaggingConfigErrV1 = fmt.Errorf("Error occured while configuring Global Tagging: %q", err)
 	}
 	if globalTaggingAPIV1 != nil {
 		session.globalTaggingServiceAPIV1 = *globalTaggingAPIV1
@@ -1347,12 +1357,6 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.iamConfigErr = fmt.Errorf("Error occured while configuring Bluemix IAM Service: %q", err)
 	}
 	session.iamServiceAPI = iam
-
-	iamuum, err := iamuumv1.New(sess.BluemixSession)
-	if err != nil {
-		session.iamUUMConfigErr = fmt.Errorf("Error occured while configuring Bluemix IAMUUM Service: %q", err)
-	}
-	session.iamUUMServiceAPI = iamuum
 
 	iamuumv2, err := iamuumv2.New(sess.BluemixSession)
 	if err != nil {
@@ -1371,12 +1375,6 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.resourceCatalogConfigErr = fmt.Errorf("Error occured while configuring Resource Catalog service: %q", err)
 	}
 	session.resourceCatalogServiceAPI = resourceCatalogAPI
-
-	resourceManagementAPI, err := management.New(sess.BluemixSession)
-	if err != nil {
-		session.resourceManagementConfigErr = fmt.Errorf("Error occured while configuring Resource Management service: %q", err)
-	}
-	session.resourceManagementServiceAPI = resourceManagementAPI
 
 	resourceManagementAPIv2, err := managementv2.New(sess.BluemixSession)
 	if err != nil {
@@ -1934,7 +1932,7 @@ func (c *Config) ClientSession() (interface{}, error) {
 	}
 	iamIdentityClient, err := iamidentity.NewIamIdentityV1(iamIdentityOptions)
 	if err != nil {
-		session.vpcErr = fmt.Errorf("Error occured while configuring IAM Identity service: %q", err)
+		session.iamIdentityErr = fmt.Errorf("Error occured while configuring IAM Identity service: %q", err)
 	}
 	if iamIdentityClient != nil && iamIdentityClient.Service != nil {
 		iamIdentityClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
@@ -1955,7 +1953,7 @@ func (c *Config) ClientSession() (interface{}, error) {
 	}
 	iamPolicyManagementClient, err := iampolicymanagement.NewIamPolicyManagementV1(iamPolicyManagementOptions)
 	if err != nil {
-		session.vpcErr = fmt.Errorf("Error occured while configuring IAM Policy Management service: %q", err)
+		session.iamPolicyManagementErr = fmt.Errorf("Error occured while configuring IAM Policy Management service: %q", err)
 	}
 	if iamPolicyManagementClient != nil && iamPolicyManagementClient.Service != nil {
 		iamPolicyManagementClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
@@ -2068,23 +2066,6 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.secretsManagerClientErr = fmt.Errorf("Error occurred while configuring IBM Cloud Secrets Manager API service: %q", err)
 	}
 
-	containerEndpoint := kubernetesserviceapiv1.DefaultServiceURL
-	if c.Visibility == "private" || c.Visibility == "public-and-private" {
-		containerEndpoint = contructEndpoint(fmt.Sprintf("private.%s.containers", c.Region), fmt.Sprintf("%s/global", cloudEndpoint))
-	}
-
-	kubernetesServiceV1Options := &kubernetesserviceapiv1.KubernetesServiceApiV1Options{
-		URL:           envFallBack([]string{"IBMCLOUD_SATELLITE_API_ENDPOINT"}, containerEndpoint),
-		Authenticator: authenticator,
-	}
-
-	session.satelliteClient, err = kubernetesserviceapiv1.NewKubernetesServiceApiV1(kubernetesServiceV1Options)
-	if err != nil {
-		session.satelliteClientErr = fmt.Errorf("Error occured while configuring satellite client: %q", err)
-	}
-	// Enable retries for API calls
-	session.satelliteClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
-
 	return session, nil
 }
 
@@ -2110,7 +2091,6 @@ func newSession(c *Config) (*Session, error) {
 	if c.IAMToken != "" {
 		log.Println("Configuring SoftLayer Session with token")
 		softlayerSession.IAMToken = c.IAMToken
-		softlayerSession.IAMRefreshToken = c.IAMRefreshToken
 	}
 	if c.SoftLayerAPIKey != "" && c.SoftLayerUserName != "" {
 		log.Println("Configuring SoftLayer Session with API key")

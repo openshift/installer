@@ -6,6 +6,7 @@ package ibm
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/IBM/platform-services-go-sdk/catalogmanagementv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -30,6 +31,11 @@ func resourceIBMCmOfferingInstance() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "platform CRN for this instance.",
+			},
+			"_rev": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Cloudant Revision for this instance",
 			},
 			"label": &schema.Schema{
 				Type:        schema.TypeString,
@@ -77,6 +83,16 @@ func resourceIBMCmOfferingInstance() *schema.Resource {
 				Required:    true,
 				Description: "designate to install into all namespaces.",
 			},
+			"schematics_workspace_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "id of the schematics workspace, for offerings installed through schematics",
+			},
+			"resource_group_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "id of the resource group",
+			},
 		},
 	}
 }
@@ -94,6 +110,10 @@ func resourceIBMCmOfferingInstanceCreate(d *schema.ResourceData, meta interface{
 
 	createOfferingInstanceOptions := &catalogmanagementv1.CreateOfferingInstanceOptions{}
 
+	schemID, isfound := os.LookupEnv("IC_SCHEMATICS_WORKSPACE_ID")
+	if isfound {
+		createOfferingInstanceOptions.SetSchematicsWorkspaceID(schemID)
+	}
 	createOfferingInstanceOptions.SetXAuthRefreshToken(rsConClient.Config.IAMRefreshToken)
 	if _, ok := d.GetOk("label"); ok {
 		createOfferingInstanceOptions.SetLabel(d.Get("label").(string))
@@ -122,6 +142,9 @@ func resourceIBMCmOfferingInstanceCreate(d *schema.ResourceData, meta interface{
 	}
 	if _, ok := d.GetOk("cluster_all_namespaces"); ok {
 		createOfferingInstanceOptions.SetClusterAllNamespaces(d.Get("cluster_all_namespaces").(bool))
+	}
+	if _, ok := d.GetOk("resource_group_id"); ok {
+		createOfferingInstanceOptions.SetResourceGroupID(d.Get("resource_group_id").(string))
 	}
 
 	offeringInstance, response, err := catalogManagementClient.CreateOfferingInstance(createOfferingInstanceOptions)
@@ -163,6 +186,9 @@ func resourceIBMCmOfferingInstanceRead(d *schema.ResourceData, meta interface{})
 	if err = d.Set("crn", offeringInstance.CRN); err != nil {
 		return fmt.Errorf("Error setting crn: %s", err)
 	}
+	if err = d.Set("_rev", offeringInstance.Rev); err != nil {
+		return fmt.Errorf("Error setting _rev: %s", err)
+	}
 	if err = d.Set("label", offeringInstance.Label); err != nil {
 		return fmt.Errorf("Error setting label: %s", err)
 	}
@@ -192,6 +218,9 @@ func resourceIBMCmOfferingInstanceRead(d *schema.ResourceData, meta interface{})
 	if err = d.Set("cluster_all_namespaces", offeringInstance.ClusterAllNamespaces); err != nil {
 		return fmt.Errorf("Error setting cluster_all_namespaces: %s", err)
 	}
+	if err = d.Set("schematics_workspace_id", offeringInstance.SchematicsWorkspaceID); err != nil {
+		return fmt.Errorf("Error setting schematics_workspace_id: %s", err)
+	}
 
 	return nil
 }
@@ -199,6 +228,16 @@ func resourceIBMCmOfferingInstanceRead(d *schema.ResourceData, meta interface{})
 func resourceIBMCmOfferingInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	catalogManagementClient, err := meta.(ClientSession).CatalogManagementV1()
 	if err != nil {
+		return err
+	}
+
+	getOfferingInstanceOptions := &catalogmanagementv1.GetOfferingInstanceOptions{}
+
+	getOfferingInstanceOptions.SetInstanceIdentifier(d.Id())
+
+	offeringInstance, response, err := catalogManagementClient.GetOfferingInstance(getOfferingInstanceOptions)
+	if err != nil {
+		log.Printf("[DEBUG] Failed to retrieve rev %s\n%s", err, response)
 		return err
 	}
 
@@ -210,7 +249,9 @@ func resourceIBMCmOfferingInstanceUpdate(d *schema.ResourceData, meta interface{
 	putOfferingInstanceOptions := &catalogmanagementv1.PutOfferingInstanceOptions{}
 
 	putOfferingInstanceOptions.SetInstanceIdentifier(d.Id())
+	putOfferingInstanceOptions.SetID(d.Id())
 	putOfferingInstanceOptions.SetXAuthRefreshToken(rsConClient.Config.IAMRefreshToken)
+	putOfferingInstanceOptions.SetRev(*offeringInstance.Rev)
 	if _, ok := d.GetOk("label"); ok {
 		putOfferingInstanceOptions.SetLabel(d.Get("label").(string))
 	}
@@ -239,8 +280,11 @@ func resourceIBMCmOfferingInstanceUpdate(d *schema.ResourceData, meta interface{
 	if _, ok := d.GetOk("cluster_all_namespaces"); ok {
 		putOfferingInstanceOptions.SetClusterAllNamespaces(d.Get("cluster_all_namespaces").(bool))
 	}
+	if _, ok := d.GetOk("resource_group_id"); ok {
+		putOfferingInstanceOptions.SetResourceGroupID(d.Get("resource_group_id").(string))
+	}
 
-	_, response, err := catalogManagementClient.PutOfferingInstance(putOfferingInstanceOptions)
+	_, response, err = catalogManagementClient.PutOfferingInstance(putOfferingInstanceOptions)
 	if err != nil {
 		log.Printf("[DEBUG] PutOfferingInstance failed %s\n%s", err, response)
 		return err

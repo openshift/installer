@@ -465,18 +465,15 @@ func resourceIBMNetworkGatewayCreate(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	clusterIdentifier := randomString(8)
-
 	productOrder = datatypes.Container_Product_Order{
 		OrderContainers: []datatypes.Container_Product_Order{
 			{
-				ComplexType:       sl.String("SoftLayer_Container_Product_Order_Hardware_Server_Gateway_Appliance"),
-				Quantity:          order.Quantity,
-				PackageId:         order.PackageId,
-				Prices:            order.Prices,
-				Hardware:          order.Hardware,
-				Location:          order.Location,
-				ClusterIdentifier: sl.String(clusterIdentifier),
+				ComplexType: sl.String("SoftLayer_Container_Product_Order_Hardware_Server_Gateway_Appliance"),
+				Quantity:    order.Quantity,
+				PackageId:   order.PackageId,
+				Prices:      order.Prices,
+				Hardware:    order.Hardware,
+				Location:    order.Location,
 			},
 			{
 				ComplexType: sl.String("SoftLayer_Container_Product_Order_Gateway_Appliance_Cluster"),
@@ -485,7 +482,6 @@ func resourceIBMNetworkGatewayCreate(d *schema.ResourceData, meta interface{}) e
 				Prices: []datatypes.Product_Item_Price{
 					gwCluster,
 				},
-				ClusterIdentifier: sl.String(clusterIdentifier),
 			},
 		},
 	}

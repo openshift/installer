@@ -611,7 +611,9 @@ func resourceIBMISVpcRouteExists(d *schema.ResourceData, meta interface{}) (bool
 	if err != nil {
 		return false, err
 	}
-
+	if len(parts) != 2 {
+		return false, fmt.Errorf("Incorrect ID %s: ID should be a combination of vpcID/routeID", d.Id())
+	}
 	vpcID := parts[0]
 	routeID := parts[1]
 	if userDetails.generation == 1 {

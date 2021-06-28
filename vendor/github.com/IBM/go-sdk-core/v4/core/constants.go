@@ -1,6 +1,6 @@
 package core
 
-// (C) Copyright IBM Corp. 2019.
+// (C) Copyright IBM Corp. 2019, 2021.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ const (
 	// Common error messages.
 	ERRORMSG_PROP_MISSING            = "The %s property is required but was not specified."
 	ERRORMSG_PROP_INVALID            = "The %s property is invalid. Please remove any surrounding {, }, or \" characters."
+	ERRORMSG_EXCLUSIVE_PROPS_ERROR   = "Exactly one of %s or %s must be specified."
 	ERRORMSG_NO_AUTHENTICATOR        = "Authentication information was not properly configured."
 	ERRORMSG_AUTHTYPE_UNKNOWN        = "Unrecognized authentication type: %s"
 	ERRORMSG_PROPS_MAP_NIL           = "The 'properties' map cannot be nil."
@@ -67,4 +68,5 @@ const (
 	ERRORMSG_CONVERT_SLICE           = "An error occurred while converting 'slice' to string slice"
 	ERRORMSG_CREATE_RETRYABLE_REQ    = "An error occurred while creating a retryable http Request: %s"
 	ERRORMSG_UNEXPECTED_STATUS_CODE  = "Unexpected HTTP status code %d (%s)"
+	ERRORMSG_UNMARSHAL_AUTH_RESPONSE = "error unmarshalling authentication response: %s"
 )

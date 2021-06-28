@@ -268,7 +268,7 @@ func findGlobalIpByOrderId(sess *session.Session, orderId int, d *schema.Resourc
 			if len(globalIps) == 1 && globalIps[0].IpAddress != nil {
 				return globalIps[0], "complete", nil
 			} else if len(globalIps) == 0 || len(globalIps) == 1 {
-				return nil, "pending", nil
+				return datatypes.Network_Subnet_IpAddress_Global{}, "pending", nil
 			} else {
 				return nil, "", fmt.Errorf("Expected one network public ip: %s", err)
 			}

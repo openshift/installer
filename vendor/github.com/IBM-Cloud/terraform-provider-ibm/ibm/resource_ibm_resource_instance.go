@@ -757,6 +757,11 @@ func resourceIBMResourceInstanceExists(d *schema.ResourceData, meta interface{})
 		}
 		return false, fmt.Errorf("Error communicating with the API: %s with resp code: %s", err, resp)
 	}
+	if instance != nil && (strings.Contains(*instance.State, "removed") || strings.Contains(*instance.State, rsInstanceReclamation)) {
+		log.Printf("[WARN] Removing instance from state because it's in removed or pending_reclamation state")
+		d.SetId("")
+		return false, nil
+	}
 
 	return *instance.ID == instanceID, nil
 }

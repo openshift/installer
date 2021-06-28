@@ -84,6 +84,27 @@ func dataSourceIBMISInstanceGroupManagers() *schema.Resource {
 							Computed:    true,
 							Description: "list of Policies associated with instancegroup manager",
 						},
+
+						"actions": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"instance_group_manager_action": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"instance_group_manager_action_name": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"resource_type": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -124,25 +145,51 @@ func dataSourceIBMISInstanceGroupManagersRead(d *schema.ResourceData, meta inter
 	instanceGroupMnagers := make([]map[string]interface{}, 0)
 	for _, instanceGroupManagerIntf := range allrecs {
 		instanceGroupManager := instanceGroupManagerIntf.(*vpcv1.InstanceGroupManager)
-		manager := map[string]interface{}{
-			"id":                   fmt.Sprintf("%s/%s", instanceGroupID, *instanceGroupManager.ID),
-			"manager_id":           *instanceGroupManager.ID,
-			"name":                 *instanceGroupManager.Name,
-			"aggregation_window":   *instanceGroupManager.AggregationWindow,
-			"cooldown":             *instanceGroupManager.Cooldown,
-			"max_membership_count": *instanceGroupManager.MaxMembershipCount,
-			"min_membership_count": *instanceGroupManager.MinMembershipCount,
-			"manager_type":         *instanceGroupManager.ManagerType,
+
+		if *instanceGroupManager.ManagerType == "scheduled" {
+			manager := map[string]interface{}{
+				"id":           fmt.Sprintf("%s/%s", instanceGroupID, *instanceGroupManager.ID),
+				"manager_id":   *instanceGroupManager.ID,
+				"name":         *instanceGroupManager.Name,
+				"manager_type": *instanceGroupManager.ManagerType,
+			}
+
+			actions := make([]map[string]interface{}, 0)
+			if instanceGroupManager.Actions != nil {
+				for _, action := range instanceGroupManager.Actions {
+					actn := map[string]interface{}{
+						"instance_group_manager_action":      action.ID,
+						"instance_group_manager_action_name": action.Name,
+						"resource_type":                      action.ResourceType,
+					}
+					actions = append(actions, actn)
+				}
+				manager["actions"] = actions
+			}
+			instanceGroupMnagers = append(instanceGroupMnagers, manager)
+
+		} else {
+			manager := map[string]interface{}{
+				"id":                   fmt.Sprintf("%s/%s", instanceGroupID, *instanceGroupManager.ID),
+				"manager_id":           *instanceGroupManager.ID,
+				"name":                 *instanceGroupManager.Name,
+				"aggregation_window":   *instanceGroupManager.AggregationWindow,
+				"cooldown":             *instanceGroupManager.Cooldown,
+				"max_membership_count": *instanceGroupManager.MaxMembershipCount,
+				"min_membership_count": *instanceGroupManager.MinMembershipCount,
+				"manager_type":         *instanceGroupManager.ManagerType,
+			}
+
+			policies := make([]string, 0)
+			if instanceGroupManager.Policies != nil {
+				for i := 0; i < len(instanceGroupManager.Policies); i++ {
+					policies = append(policies, string(*(instanceGroupManager.Policies[i].ID)))
+				}
+			}
+			manager["policies"] = policies
+			instanceGroupMnagers = append(instanceGroupMnagers, manager)
 		}
 
-		policies := make([]string, 0)
-		if instanceGroupManager.Policies != nil {
-			for i := 0; i < len(instanceGroupManager.Policies); i++ {
-				policies = append(policies, string(*(instanceGroupManager.Policies[i].ID)))
-			}
-		}
-		manager["policies"] = policies
-		instanceGroupMnagers = append(instanceGroupMnagers, manager)
 	}
 	d.Set("instance_group_managers", instanceGroupMnagers)
 	d.SetId(dataSourceIBMISInstanceGroupManagersID(d))

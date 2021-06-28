@@ -5,10 +5,9 @@ package ibm
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/IBM/networking-go-sdk/directlinkv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"time"
 )
 
 const (

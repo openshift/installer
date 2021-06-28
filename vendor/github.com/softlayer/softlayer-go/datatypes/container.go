@@ -2882,7 +2882,7 @@ type Container_Network_Media_Transcode_Preset_Element_Option struct {
 	Value *string `json:"value,omitempty" xmlrpc:"value,omitempty"`
 }
 
-// This datatype is deprecated and will be removed in API version 3.2.
+// no documentation yet
 type Container_Network_Message_Delivery_Email struct {
 	Entity
 
@@ -3622,11 +3622,6 @@ type Container_Product_Item_Discount_Program struct {
 // This is the datatype that needs to be populated and sent to SoftLayer_Product_Order::placeOrder. This datatype has everything required to place an order with SoftLayer.
 type Container_Product_Order struct {
 	Entity
-
-	// Used to identify which items on an order belong in the same cluster.
-	ClusterIdentifier *string `json:"clusterIdentifier,omitempty" xmlrpc:"clusterIdentifier,omitempty"`
-
-	HostId *int `json:"hostId,omitempty" xmlrpc:"hostId,omitempty"`
 
 	// Flag for identifying an order for Big Data Deployment.
 	BigDataOrderFlag *bool `json:"bigDataOrderFlag,omitempty" xmlrpc:"bigDataOrderFlag,omitempty"`
@@ -6232,20 +6227,6 @@ type Container_Virtual_Guest_Configuration_Option struct {
 	//
 	// Provides a fragment of the request with the properties and values that must be sent when creating a computing instance with the option.
 	Template *Virtual_Guest `json:"template,omitempty" xmlrpc:"template,omitempty"`
-}
-
-// The SoftLayer_Container_Virtual_Guest_ConsoleData data type contains information used to access a VSIs console
-type Container_Virtual_Guest_ConsoleData struct {
-	Entity
-
-	// The websocket host address used to access the console
-	WebsocketHost *string `json:"websocketHost,omitempty" xmlrpc:"websocketHost,omitempty"`
-
-	// The websocket port used to access the console
-	WebsocketPort *string `json:"websocketPort,omitempty" xmlrpc:"websocketPort,omitempty"`
-
-	// The token used to authenticate with the console websocket
-	WebsocketToken *string `json:"websocketToken,omitempty" xmlrpc:"websocketToken,omitempty"`
 }
 
 // The SoftLayer_Container_Virtual_Guest_PendingMaintenanceAction data type contains information relating to a SoftLayer_Virtual_Guest's pending maintenance actions.

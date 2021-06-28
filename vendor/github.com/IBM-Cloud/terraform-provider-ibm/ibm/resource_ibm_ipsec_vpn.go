@@ -265,7 +265,7 @@ func findIPSecVpnByOrderID(sess *session.Session, orderID int, d *schema.Resourc
 			if len(vpn) == 1 {
 				return vpn[0], "complete", nil
 			} else if len(vpn) == 0 {
-				return nil, "pending", nil
+				return datatypes.Network_Tunnel_Module_Context{}, "pending", nil
 			}
 			return nil, "", fmt.Errorf("Expected one IPSec VPN: %s", err)
 		},

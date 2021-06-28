@@ -295,6 +295,10 @@ func resourceIBMISInstanceGroupManagerPolicyExists(d *schema.ResourceData, meta 
 	if err != nil {
 		return false, err
 	}
+
+	if len(parts) != 3 {
+		return false, fmt.Errorf("Incorrect ID %s: ID should be a combination of instanceGroupID/instanceGroupManagerID/instanceGroupManagerPolicyID", d.Id())
+	}
 	instanceGroupID := parts[0]
 	instanceGroupManagerID := parts[1]
 	instanceGroupManagerPolicyID := parts[2]
