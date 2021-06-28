@@ -1170,8 +1170,7 @@ github.com/openshift/client-go/route/clientset/versioned/typed/route/v1
 github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1
 github.com/openshift/cloud-credential-operator/pkg/aws
 github.com/openshift/cloud-credential-operator/version
-# github.com/openshift/cluster-api v0.0.0-20191030113141-9a3a7bbe9258
-## explicit
+# github.com/openshift/cluster-api v0.0.0-20190805113604-f8de78af80fc
 github.com/openshift/cluster-api/pkg/apis/machine/common
 github.com/openshift/cluster-api/pkg/apis/machine/v1beta1
 # github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5

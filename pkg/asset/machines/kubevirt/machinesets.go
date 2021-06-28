@@ -4,7 +4,7 @@ package kubevirt
 import (
 	"fmt"
 
-	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
@@ -55,7 +55,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 				},
 			},
 			Template: machineapi.MachineTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: machineapi.ObjectMeta{
 					Labels: map[string]string{
 						"machine.openshift.io/cluster-api-machineset":   name,
 						"machine.openshift.io/cluster-api-cluster":      clusterID,
