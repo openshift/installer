@@ -18,7 +18,7 @@ resource "ibm_is_vpc" "vpc" {
 ############################################
 
 resource "ibm_is_public_gateway" "public_gateway" {
-  count          = local.zone_count
+  count = local.zone_count
 
   name           = "${local.prefix}-public-gateway-${var.zone_list[count.index]}"
   resource_group = var.resource_group_id
@@ -32,7 +32,7 @@ resource "ibm_is_public_gateway" "public_gateway" {
 ############################################
 
 resource "ibm_is_subnet" "control_plane" {
-  count                    = local.zone_count
+  count = local.zone_count
 
   name                     = "${local.prefix}-subnet-control-plane-${var.zone_list[count.index]}"
   resource_group           = var.resource_group_id
@@ -44,7 +44,7 @@ resource "ibm_is_subnet" "control_plane" {
 }
 
 resource "ibm_is_subnet" "compute" {
-  count                    = local.zone_count
+  count = local.zone_count
 
   name                     = "${local.prefix}-subnet-compute-${var.zone_list[count.index]}"
   resource_group           = var.resource_group_id

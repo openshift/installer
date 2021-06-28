@@ -17,13 +17,13 @@ resource "ibm_is_security_group" "control_plane" {
 }
 
 resource "ibm_is_security_group_rule" "control_plane_inbound" {
-  group = ibm_is_security_group.control_plane.id
+  group     = ibm_is_security_group.control_plane.id
   direction = "inbound"
-  remote = "0.0.0.0/0"
+  remote    = "0.0.0.0/0"
 }
 
 resource "ibm_is_security_group_rule" "control_plane_outbound" {
-  group = ibm_is_security_group.control_plane.id
+  group     = ibm_is_security_group.control_plane.id
   direction = "outbound"
-  remote = "0.0.0.0/0"
+  remote    = "0.0.0.0/0"
 }

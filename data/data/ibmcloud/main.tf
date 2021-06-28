@@ -3,7 +3,7 @@ locals {
   public_endpoints  = var.ibmcloud_publish_strategy == "External" ? true : false
   resource_group_id = var.ibmcloud_resource_group_name == "" ? ibm_resource_group.group.0.id : data.ibm_resource_group.group.0.id
   tags = concat(
-    [ "kubernetes.io_cluster_${var.cluster_id}:owned" ],
+    ["kubernetes.io_cluster_${var.cluster_id}:owned"],
     var.ibmcloud_extra_tags
   )
 }
@@ -65,7 +65,7 @@ module "image" {
 
 module "bootstrap" {
   source = "./bootstrap"
-  
+
   cluster_id               = var.cluster_id
   cos_resource_instance_id = ibm_resource_instance.cos.id
   cos_bucket_region        = var.ibmcloud_region
@@ -92,8 +92,8 @@ module "bootstrap" {
 ############################################
 
 module "master" {
-  source     = "./master"
-  
+  source = "./master"
+
   cluster_id        = var.cluster_id
   instance_count    = var.master_count
   ignition          = var.ignition_master
@@ -119,8 +119,8 @@ module "master" {
 ############################################
 
 module "cis" {
-  source     = "./cis"
-  
+  source = "./cis"
+
   cis_id         = var.ibmcloud_cis_crn
   base_domain    = var.base_domain
   cluster_domain = var.cluster_domain
@@ -142,7 +142,7 @@ module "cis" {
 
 module "vpc" {
   source = "./vpc"
-  
+
   cluster_id        = var.cluster_id
   public_endpoints  = local.public_endpoints
   resource_group_id = local.resource_group_id

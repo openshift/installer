@@ -27,9 +27,9 @@ resource "ibm_is_instance" "master_node" {
   tags           = var.tags
 
   primary_network_interface {
-    name   = "eth0"
-    subnet = var.subnet_id_list[count.index % local.subnet_count]
-    security_groups = [ var.security_group_id ]
+    name            = "eth0"
+    subnet          = var.subnet_id_list[count.index % local.subnet_count]
+    security_groups = [var.security_group_id]
   }
 
   vpc  = var.vpc_id
@@ -44,7 +44,7 @@ resource "ibm_is_instance" "master_node" {
 ############################################
 
 resource "ibm_is_lb_pool_member" "kubernetes_api_public" {
-  count          = var.public_endpoints ? var.instance_count : 0
+  count = var.public_endpoints ? var.instance_count : 0
 
   lb             = var.lb_kubernetes_api_public_id
   pool           = var.lb_pool_kubernetes_api_public_id
@@ -53,7 +53,7 @@ resource "ibm_is_lb_pool_member" "kubernetes_api_public" {
 }
 
 resource "ibm_is_lb_pool_member" "kubernetes_api_private" {
-  count          = var.instance_count
+  count = var.instance_count
 
   lb             = var.lb_kubernetes_api_private_id
   pool           = var.lb_pool_kubernetes_api_private_id
@@ -62,7 +62,7 @@ resource "ibm_is_lb_pool_member" "kubernetes_api_private" {
 }
 
 resource "ibm_is_lb_pool_member" "machine_config" {
-  count          = var.instance_count
+  count = var.instance_count
 
   lb             = var.lb_kubernetes_api_private_id
   pool           = var.lb_pool_machine_config_id

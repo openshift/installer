@@ -17,13 +17,13 @@ resource "ibm_is_security_group" "compute" {
 }
 
 resource "ibm_is_security_group_rule" "compute_inbound" {
-  group = ibm_is_security_group.compute.id
+  group     = ibm_is_security_group.compute.id
   direction = "inbound"
-  remote = "0.0.0.0/0"
+  remote    = "0.0.0.0/0"
 }
 
 resource "ibm_is_security_group_rule" "compute_outbound" {
-  group = ibm_is_security_group.compute.id
+  group     = ibm_is_security_group.compute.id
   direction = "outbound"
-  remote = "0.0.0.0/0"
+  remote    = "0.0.0.0/0"
 }

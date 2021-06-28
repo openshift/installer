@@ -3,7 +3,7 @@
 #######################################
 
 variable "ibmcloud_api_key" {
-  type        = string
+  type = string
   # TODO: Supported on tf 0.14
   # sensitive   = true
   description = "The IAM API key for authenticating with IBM Cloud APIs."
@@ -44,7 +44,7 @@ variable "ibmcloud_image_filepath" {
 #######################################
 
 variable "ibmcloud_extra_tags" {
-  type = list(string)
+  type        = list(string)
   description = <<EOF
 (optional) Extra IBM Cloud tags to be applied to created resources.
 Example: `[ "key:value", "foo:bar" ]`
@@ -53,9 +53,9 @@ EOF
 }
 
 variable "ibmcloud_publish_strategy" {
-  type        = string
+  type = string
   description = "The cluster publishing strategy, either Internal or External"
-  default     = "External"
+  default = "External"
   # TODO: Supported on tf 0.13
   # validation {
   #   condition     = "External" || "Internal"
@@ -64,7 +64,7 @@ variable "ibmcloud_publish_strategy" {
 }
 
 variable "ibmcloud_resource_group_name" {
-  type    = string
+  type = string
   description = <<EOF
 (optional) The name of the resource group for the cluster. If this is set, the cluster is installed to that existing resource group
 otherwise a new resource group will be created using cluster id.

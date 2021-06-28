@@ -43,7 +43,7 @@ resource "ibm_cis_dns_record" "bootstrap_node" {
 }
 
 resource "ibm_cis_dns_record" "master_node" {
-  count     = var.master_count
+  count = var.master_count
 
   cis_id    = var.cis_id
   domain_id = data.ibm_cis_domain.base_domain.id
@@ -67,7 +67,7 @@ resource "ibm_cis_dns_record" "bootstrap_node_ptr" {
 }
 
 resource "ibm_cis_dns_record" "master_node_ptr" {
-  count     = var.master_count
+  count = var.master_count
 
   cis_id    = var.cis_id
   domain_id = data.ibm_cis_domain.base_domain.id
