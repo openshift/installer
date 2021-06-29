@@ -135,6 +135,8 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			ResourcePrefix:           clusterID.InfraID,
 			SubscriptionID:           session.Credentials.SubscriptionID,
 			TenantID:                 session.Credentials.TenantID,
+			AADClientID:              session.Credentials.ClientID,
+			AADClientSecret:          session.Credentials.ClientSecret,
 			NetworkResourceGroupName: nrg,
 			NetworkSecurityGroupName: nsg,
 			VirtualNetworkName:       vnet,
