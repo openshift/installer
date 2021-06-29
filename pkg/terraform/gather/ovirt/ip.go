@@ -55,11 +55,10 @@ func getReportedDevices(c *ovirtsdk4.Connection, vmID string) (*ovirtsdk4.Report
 	return reportedDeviceSlice, nil
 }
 
-func findVirtualMachineIP(c *ovirtsdk4.Connection, moRefValue string) (string, error) {
-
-	reportedDeviceSlice, err := getReportedDevices(c, moRefValue)
-	if err != nil {
-		return "", err
+func findVirtualMachineIP(moRefValue string, client *ovirtsdk4.Connection) (string, error) {
+	reportedDeviceSlice, err := getReportedDevices(client, moRefValue)
+	if err == nil {
+		return "", errors.Wrapf(err, "couldnt Find IP Address for vm id: %s", moRefValue)
 	}
 
 	for _, reportedDevice := range reportedDeviceSlice.Slice() {
@@ -69,52 +68,64 @@ func findVirtualMachineIP(c *ovirtsdk4.Connection, moRefValue string) (string, e
 				ipres, hasAddress := ip.Address()
 				if hasAddress {
 					if checkPortIsOpen(ipres, bootstrapSSHPort) {
-						logrus.Debugf("ovirt vm id: %s , found usable bootstrap IP %s", moRefValue, ipres)
+						logrus.Debugf("ovirt vm id: %s , found usable  IP Address: %s", moRefValue, ipres)
 						return ipres, nil
 					}
 				}
 			}
 		}
 	}
-	return "", fmt.Errorf("could not find usable bootstrap IP address for vm id: %s", moRefValue)
+	return "", fmt.Errorf("could not find usable IP address for vm id: %s", moRefValue)
 }
 
-// BootstrapIP returns the ip address for bootstrap host.
-// still unsupported, because qemu-ga is not available - see https://bugzilla.redhat.com/show_bug.cgi?id=1764804
-func BootstrapIP(tfs *terraform.State) (string, error) {
+func lookupVMResources(tfs *terraform.State, moduleName string, name string) ([]string, error) {
 
 	client, err := ovirt.NewConnection()
 	if err != nil {
-		return "", fmt.Errorf("failed to initialize connection to ovirt-engine's %s", err)
+		return nil, fmt.Errorf("failed to initialize connection to ovirt-engine's %s", err)
 	}
 	defer client.Close()
 
-	br, err := terraform.LookupResource(tfs, "module.bootstrap", "ovirt_vm", "bootstrap")
+	br, err := terraform.LookupResource(tfs, moduleName, "ovirt_vm", name)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to lookup bootstrap")
+		return nil, errors.Wrapf(err, "failed to lookup %s VM", name)
 	}
 
 	if len(br.Instances) == 0 {
-		return "", errors.New("no bootstrap instance found")
+		return nil, errors.New(fmt.Sprintf("no %s instance found", name))
 	}
 
-	vmid, found, err := unstructured.NestedString(br.Instances[0].Attributes, "id")
-	if err != nil {
-		return "", errors.Wrap(err, "failed to lookup bootstrap managed object reference")
-	}
-	if !found {
-		return "", errors.Errorf("failed to lookup bootstrap by vmID: %s", vmid)
+	var ips []string
+
+	for _, instance := range br.Instances {
+		vmid, found, err := unstructured.NestedString(instance.Attributes, "id")
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to lookup %s managed object reference", name)
+		}
+		if !found {
+			return nil, errors.Errorf("failed to lookup %s by vmID: %s", name, vmid)
+		}
+		ip, err := findVirtualMachineIP(vmid, client)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to lookup %s ipv4 address", name)
+		}
+		ips = append(ips, ip)
 	}
 
-	ip, err := findVirtualMachineIP(client, vmid)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to lookup bootstrap ipv4 address")
+	return ips, nil
+}
+
+// BootstrapIP returns the ip address for bootstrap host.
+func BootstrapIP(tfs *terraform.State) (string, error) {
+	ips, err := lookupVMResources(tfs, "module.bootstrap", "bootstrap")
+	if len(ips) == 0 {
+		return "", errors.Wrapf(err, "no ips Found for Bootstrap VM")
 	}
-	return ip, nil
+
+	return ips[0], err
 }
 
 // ControlPlaneIPs returns the ip addresses for control plane hosts.
-// still unsupported, because qemu-ga is not available  - see https://bugzilla.redhat.com/show_bug.cgi?id=1764804
 func ControlPlaneIPs(tfs *terraform.State) ([]string, error) {
-	return []string{""}, nil
+	return lookupVMResources(tfs, "module.masters", "master")
 }
