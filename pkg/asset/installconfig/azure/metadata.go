@@ -22,12 +22,31 @@ type Metadata struct {
 	// ARMEndpoint indicates the resource management API endpoint used by AzureStack.
 	ARMEndpoint string `json:"armEndpoint,omitempty"`
 
+	// Credentials hold prepopulated Azure credentials.
+	// At the moment the installer doesn't use it and reads credentials
+	// from the file system, but external consumers of the package can
+	// provide credentials. This is useful when we run the installer
+	// as a service (Azure Red Hat OpenShift, for example): in this case
+	// we do not want to rely on the filesystem or user input as we
+	// serve multiple users with different credentials via a web server.
+	Credentials *Credentials `json:"credentials,omitempty"`
+
 	mutex sync.Mutex
 }
 
 // NewMetadata initializes a new Metadata object.
 func NewMetadata(cloudName typesazure.CloudEnvironment, armEndpoint string) *Metadata {
-	return &Metadata{CloudName: cloudName, ARMEndpoint: armEndpoint}
+	return NewMetadataWithCredentials(cloudName, armEndpoint, nil)
+}
+
+// NewMetadataWithCredentials initializes a new Metadata object
+// with prepopulated Azure credentials.
+func NewMetadataWithCredentials(cloudName typesazure.CloudEnvironment, armEndpoint string, credentials *Credentials) *Metadata {
+	return &Metadata{
+		CloudName:   cloudName,
+		ARMEndpoint: armEndpoint,
+		Credentials: credentials,
+	}
 }
 
 // Session holds an Azure session which can be used for Azure API calls
@@ -42,7 +61,7 @@ func (m *Metadata) Session() (*Session, error) {
 func (m *Metadata) unlockedSession() (*Session, error) {
 	if m.session == nil {
 		var err error
-		m.session, err = GetSession(m.CloudName, m.ARMEndpoint)
+		m.session, err = GetSessionWithCredentials(m.CloudName, m.ARMEndpoint, m.Credentials)
 		if err != nil {
 			return nil, errors.Wrap(err, "creating Azure session")
 		}
