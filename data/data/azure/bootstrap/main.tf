@@ -202,10 +202,11 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   }
 
   os_disk {
-    name                 = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
-    caching              = "ReadWrite"
-    storage_account_type = "Premium_LRS"
-    disk_size_gb         = 100
+    name                   = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
+    caching                = "ReadWrite"
+    storage_account_type   = "Premium_LRS"
+    disk_size_gb           = 100
+    disk_encryption_set_id = var.azure_master_disk_encryption_set_id
   }
 
   source_image_id = var.vm_image

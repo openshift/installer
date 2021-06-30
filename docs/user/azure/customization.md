@@ -23,6 +23,7 @@ The following options are available when using Azure:
 * `osDisk` (optional object):
     * `diskSizeGB` (optional integer): The size of the disk in gigabytes (GB).
     * `diskType` (optional string): The type of disk (allowed values are: `Premium_LRS`, `Standard_LRS`, and `StandardSSD_LRS`).
+    * `diskEncryptionSetId` (optional string): resource ID of disk encryption set
 * `type` (optional string): The Azure instance type.
 * `zones` (optional string slice): List of Azure availability zones that can be used (for example, `["1", "2", "3"]`).
 
