@@ -26,7 +26,7 @@ resource "ibm_is_instance" "master_node" {
   primary_network_interface {
     name            = "eth0"
     subnet          = var.subnet_id_list[count.index % local.subnet_count]
-    security_groups = [var.security_group_id]
+    security_groups = var.security_group_id_list
   }
 
   vpc  = var.vpc_id

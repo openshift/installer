@@ -14,7 +14,7 @@ resource "ibm_is_lb" "kubernetes_api_public" {
 
   name            = "${local.prefix}-kubernetes-api-public"
   resource_group  = var.resource_group_id
-  security_groups = [ibm_is_security_group.control_plane.id]
+  security_groups = [ibm_is_security_group.kubernetes_api_lb.id]
   subnets         = ibm_is_subnet.control_plane.*.id
   tags            = var.tags
   type            = "public"

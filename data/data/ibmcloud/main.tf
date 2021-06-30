@@ -72,7 +72,7 @@ module "bootstrap" {
   ignition_file            = var.ignition_bootstrap_file
   public_endpoints         = local.public_endpoints
   resource_group_id        = local.resource_group_id
-  security_group_id        = module.vpc.control_plane_security_group_id
+  security_group_id_list   = module.vpc.control_plane_security_group_id_list
   subnet_id                = module.vpc.control_plane_subnet_id_list[0]
   tags                     = local.tags
   vpc_id                   = module.vpc.vpc_id
@@ -94,18 +94,18 @@ module "bootstrap" {
 module "master" {
   source = "./master"
 
-  cluster_id        = var.cluster_id
-  instance_count    = var.master_count
-  ignition          = var.ignition_master
-  public_endpoints  = local.public_endpoints
-  resource_group_id = local.resource_group_id
-  security_group_id = module.vpc.control_plane_security_group_id
-  subnet_id_list    = module.vpc.control_plane_subnet_id_list
-  tags              = local.tags
-  vpc_id            = module.vpc.vpc_id
-  vsi_image_id      = module.image.vsi_image_id
-  vsi_profile       = var.ibmcloud_master_instance_type
-  zone_list         = module.vpc.control_plane_subnet_zone_list
+  cluster_id             = var.cluster_id
+  instance_count         = var.master_count
+  ignition               = var.ignition_master
+  public_endpoints       = local.public_endpoints
+  resource_group_id      = local.resource_group_id
+  security_group_id_list = module.vpc.control_plane_security_group_id_list
+  subnet_id_list         = module.vpc.control_plane_subnet_id_list
+  tags                   = local.tags
+  vpc_id                 = module.vpc.vpc_id
+  vsi_image_id           = module.image.vsi_image_id
+  vsi_profile            = var.ibmcloud_master_instance_type
+  zone_list              = module.vpc.control_plane_subnet_zone_list
 
   lb_kubernetes_api_public_id       = module.vpc.lb_kubernetes_api_public_id
   lb_kubernetes_api_private_id      = module.vpc.lb_kubernetes_api_private_id

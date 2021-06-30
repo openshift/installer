@@ -46,8 +46,8 @@ variable "resource_group_id" {
   type = string
 }
 
-variable "security_group_id" {
-  type = string
+variable "security_group_id_list" {
+  type = list(string)
 }
 
 variable "subnet_id" {

@@ -18,7 +18,7 @@ resource "ibm_is_instance" "bootstrap_node" {
   primary_network_interface {
     name            = "eth0"
     subnet          = var.subnet_id
-    security_groups = [var.security_group_id]
+    security_groups = var.security_group_id_list
   }
 
   vpc  = var.vpc_id
