@@ -16,6 +16,12 @@ variable "vm_size" {
   type = string
 }
 
+variable "disk_encryption_set_id" {
+  default     = null
+  type        = string
+  description = "The ID of the Disk Encryption Set which should be used to encrypt OS disk."
+}
+
 variable "vm_image" {
   type        = string
   description = "The resource id of the vm image used for masters."
