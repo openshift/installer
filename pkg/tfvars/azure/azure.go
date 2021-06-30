@@ -28,6 +28,7 @@ type config struct {
 	BootstrapInstanceType           string            `json:"azure_bootstrap_vm_type,omitempty"`
 	MasterInstanceType              string            `json:"azure_master_vm_type,omitempty"`
 	MasterAvailabilityZones         []string          `json:"azure_master_availability_zones"`
+	MasterEncryptionAtHostEnabled   bool              `json:"azure_master_encryption_at_host_enabled,omitempty"`
 	MasterDiskEncryptionSetID       string            `json:"azure_master_disk_encryption_set_id,omitempty"`
 	VolumeType                      string            `json:"azure_master_root_volume_type"`
 	VolumeSize                      int32             `json:"azure_master_root_volume_size"`
@@ -80,6 +81,10 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, errors.Wrap(err, "could not determine Azure environment to use for Terraform")
 	}
 
+	masterEncryptionAtHostEnabled := masterConfig.SecurityProfile != nil &&
+		(*masterConfig.SecurityProfile).EncryptionAtHost != nil &&
+		*masterConfig.SecurityProfile.EncryptionAtHost
+
 	var masterDiskEncryptionSetID string
 	if masterConfig.OSDisk.ManagedDisk.DiskEncryptionSet != nil {
 		masterDiskEncryptionSetID = masterConfig.OSDisk.ManagedDisk.DiskEncryptionSet.ID
@@ -93,6 +98,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		BootstrapInstanceType:           defaults.BootstrapInstanceType(sources.CloudName, region),
 		MasterInstanceType:              masterConfig.VMSize,
 		MasterAvailabilityZones:         masterAvailabilityZones,
+		MasterEncryptionAtHostEnabled:   masterEncryptionAtHostEnabled,
 		MasterDiskEncryptionSetID:       masterDiskEncryptionSetID,
 		VolumeType:                      masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                      masterConfig.OSDisk.DiskSizeGB,

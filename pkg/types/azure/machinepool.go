@@ -15,6 +15,11 @@ type MachinePool struct {
 	// +optional
 	InstanceType string `json:"type"`
 
+	// EncryptionAtHost enables encryption at the VM host.
+	//
+	// +optional
+	EncryptionAtHost bool `json:"encryptionAtHost,omitempty"`
+
 	// OSDisk defines the storage for instance.
 	//
 	// +optional
@@ -55,6 +60,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.InstanceType != "" {
 		a.InstanceType = required.InstanceType
+	}
+
+	if required.EncryptionAtHost {
+		a.EncryptionAtHost = required.EncryptionAtHost
 	}
 
 	if required.OSDisk.DiskSizeGB != 0 {
