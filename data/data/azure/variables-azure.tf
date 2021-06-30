@@ -34,6 +34,12 @@ variable "azure_master_disk_encryption_set_id" {
   description = "The ID of the Disk Encryption Set which should be used to encrypt OS disk for the master node(s)."
 }
 
+variable "azure_master_encryption_at_host_enabled" {
+  default = false
+  type = bool
+  description = "Enables encryption at the VM host for the master node(s)."
+}
+
 variable "azure_extra_tags" {
   type = map(string)
 

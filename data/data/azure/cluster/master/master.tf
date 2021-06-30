@@ -96,6 +96,7 @@ resource "azurerm_linux_virtual_machine" "master" {
   # included here because it is required by the Azure ARM API.
   admin_password                  = "NotActuallyApplied!"
   disable_password_authentication = false
+  encryption_at_host_enabled      = var.encryption_at_host_enabled
 
   identity {
     type         = "UserAssigned"
@@ -112,7 +113,7 @@ resource "azurerm_linux_virtual_machine" "master" {
 
   source_image_id = var.vm_image
 
-  //we don't provide a ssh key, because it is set with ignition. 
+  //we don't provide a ssh key, because it is set with ignition.
   //it is required to provide at least 1 auth method to deploy a linux vm
   computer_name = "${var.cluster_id}-master-${count.index}"
   custom_data   = base64encode(var.ignition)
@@ -121,4 +122,3 @@ resource "azurerm_linux_virtual_machine" "master" {
     storage_account_uri = var.storage_account.primary_blob_endpoint
   }
 }
-

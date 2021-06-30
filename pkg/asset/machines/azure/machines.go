@@ -112,6 +112,13 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		}
 	}
 
+	var securityProfile *machineapi.SecurityProfile
+	if mpool.EncryptionAtHost {
+		securityProfile = &machineapi.SecurityProfile{
+			EncryptionAtHost: &mpool.EncryptionAtHost,
+		}
+	}
+
 	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -132,6 +139,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				DiskEncryptionSet:  diskEncryptionSet,
 			},
 		},
+		SecurityProfile:      securityProfile,
 		Zone:                 az,
 		Subnet:               subnet,
 		ManagedIdentity:      managedIdentity,

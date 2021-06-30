@@ -195,6 +195,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   # included here because it is required by the Azure ARM API.
   admin_password                  = "NotActuallyApplied!"
   disable_password_authentication = false
+  encryption_at_host_enabled      = var.azure_master_encryption_at_host_enabled
 
   identity {
     type         = "UserAssigned"

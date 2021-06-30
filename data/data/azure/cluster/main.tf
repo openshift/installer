@@ -36,6 +36,7 @@ module "master" {
   availability_zones         = var.azure_master_availability_zones
   vm_size                    = var.azure_master_vm_type
   disk_encryption_set_id     = var.azure_master_disk_encryption_set_id
+  encryption_at_host_enabled = var.azure_master_encryption_at_host_enabled
   vm_image                   = var.vm_image
   identity                   = var.identity
   ignition                   = var.ignition_master
