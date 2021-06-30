@@ -50,6 +50,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -84,6 +85,16 @@ func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 		EC2RootVolume: awstypes.EC2RootVolume{
 			Type: "gp2",
 			Size: 120,
+		},
+	}
+}
+
+func defaultAlibabaCloudMachinePoolPlatform() alibabacloudtypes.MachinePool {
+	return alibabacloudtypes.MachinePool{
+		InstanceType: "ecs.xn4.small",
+		SystemDisk: alibabacloudtypes.SystemDisk{
+			Size:     100,
+			Category: alibabacloudtypes.DefaultDiskCategory,
 		},
 	}
 }

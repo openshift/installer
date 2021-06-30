@@ -28,6 +28,7 @@ import (
 	baremetalbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	icalibabacloud "github.com/openshift/installer/pkg/asset/installconfig/alibabacloud"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
@@ -37,6 +38,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcospkg "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
+	alibabacloudtfvars "github.com/openshift/installer/pkg/tfvars/alibabacloud"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
@@ -48,6 +50,7 @@ import (
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
 	vspheretfvars "github.com/openshift/installer/pkg/tfvars/vsphere"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -679,6 +682,58 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageURL:        string(*rhcosImage),
 				Namespace:       installConfig.Config.Kubevirt.Namespace,
 				ResourcesLabels: labels,
+			},
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Data:     data,
+		})
+	case alibabacloud.Name:
+		client, err := icalibabacloud.NewClient(installConfig.Config.Platform.AlibabaCloud.Region)
+		if err != nil {
+			return err
+		}
+		bucket := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
+		auth := alibabacloudtfvars.Auth{
+			AccessKey: client.AccessKeyId,
+			SecretKey: client.AccessKeySecret,
+		}
+
+		// TODO AlibabaCloud: Master and worker machine info
+		// masters, err := mastersAsset.Machines()
+		// if err != nil {
+		// 	return err
+		// }
+		// masterConfigs := make([]*alibabacloudprovider.AlibabacloudMachineProviderSpec, len(masters))
+		// for i, m := range masters {
+		// 	masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.AlibabacloudMachineProviderSpec)
+		// }
+		// workers, err := workersAsset.MachineSets()
+		// if err != nil {
+		// 	return err
+		// }
+		// workerConfigs := make([]*alibabacloudprovider.AlibabacloudMachineProviderSpec, len(workers))
+		// for i, w := range workers {
+		// 	workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.AlibabacloudMachineProviderSpec)
+		// }
+
+		data, err := alibabacloudtfvars.TFVars(
+			alibabacloudtfvars.TFVarsSources{
+				Auth:            auth,
+				ResourceGroupId: installConfig.Config.AlibabaCloud.ResourceGroupName,
+				// VpcCidrBlock:
+				// VSwitchCidrBlocks:
+				Publish:    installConfig.Config.Publish,
+				BaseDomain: installConfig.Config.BaseDomain,
+				// MasterConfigs:               masterConfigs,
+				// WorkerConfigs:               workerConfigs,
+				IgnitionBucket: bucket,
+				// IgnitionFile
+				// IgnitionStub
+				// ImageId
 			},
 		)
 		if err != nil {

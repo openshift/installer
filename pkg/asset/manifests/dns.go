@@ -14,10 +14,12 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	icalibabacloud "github.com/openshift/installer/pkg/asset/installconfig/alibabacloud"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/types"
+	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -81,6 +83,38 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
+	case alibabacloudtypes.Name:
+		client, err := icalibabacloud.NewClient(installConfig.Config.AlibabaCloud.Region)
+		if err != nil {
+			return errors.Wrap(err, "failed to get AlibabaCloud Cloud client")
+		}
+
+		privatezones, err := client.ListPrivateZones(installConfig.Config.BaseDomain)
+		if err != nil || len(privatezones.Zones.Zone) == 0 {
+			return errors.Wrap(err, "failed ot get DNS zone ID")
+		}
+
+		zoneName := ""
+		zoneId := ""
+		for _, zone := range privatezones.Zones.Zone {
+			if zone.ZoneName == installConfig.Config.BaseDomain {
+				zoneName = zone.ZoneName
+				zoneId = zone.ZoneId
+				break
+			}
+		}
+		if zoneName == "" {
+			return errors.Wrap(err, "failed ot get DNS zone ID")
+		}
+
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+			config.Spec.PublicZone = &configv1.DNSZone{
+				ID: zoneId,
+			}
+		}
+		config.Spec.PrivateZone = &configv1.DNSZone{
+			ID: zoneId,
+		}
 	case awstypes.Name:
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 			sess, err := installConfig.AWS.Session(context.TODO())

@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -148,6 +149,13 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		if installConfig.Config.Platform.Azure.CloudName == azure.StackCloud {
 			config.Status.PlatformStatus.Azure.ARMEndpoint = installConfig.Config.Platform.Azure.ARMEndpoint
 		}
+	case alibabacloud.Name:
+		// TODO AlibabaCloud: support AlibabaCloudPlatformType,AlibabaCloudPlatformStatus
+		config.Spec.PlatformSpec.Type = "AlibabaCloud"
+		// config.Status.PlatformStatus.AlibabaCloud = &configv1.AlibabaCloudPlatformStatus{
+		// 	Location:          installConfig.Config.Platform.AlibabaCloud.Region,
+		// 	ResourceGroupName: installConfig.Config.Platform.AlibabaCloud.ClusterResourceGroupName(clusterID.InfraID),
+		// }
 	case baremetal.Name:
 		config.Spec.PlatformSpec.Type = configv1.BareMetalPlatformType
 		config.Status.PlatformStatus.BareMetal = &configv1.BareMetalPlatformStatus{

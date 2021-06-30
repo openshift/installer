@@ -42,6 +42,9 @@ func (a *MachinePool) Set(required *MachinePool) {
 	}
 }
 
+// DefaultDiskCategory holds the default Alibaba Cloud disk type used by the ECS.
+const DefaultDiskCategory string = "cloud_essd"
+
 // SystemDisk defines the storage for an ecs instance.
 type SystemDisk struct {
 	// Size defines the size of the disk in gibibytes (GiB).

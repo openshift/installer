@@ -43,7 +43,7 @@ func Platform() (*alibabacloud.Platform, error) {
 }
 
 func selectRegion(client *Client) (string, error) {
-	regions_resp, err := client.DescribeRegions("cn-hangzhou")
+	regions_resp, err := client.ListPrivateZoneRegions()
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +52,7 @@ func selectRegion(client *Client) (string, error) {
 	longRegions := make([]string, 0, len(regions))
 	shortRegions := make([]string, 0, len(regions))
 	for _, location := range regions {
-		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", location.RegionId, location.LocalName))
+		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", location.RegionId, location.RegionName))
 		shortRegions = append(shortRegions, location.RegionId)
 	}
 	var regionTransform survey.Transformer = func(ans interface{}) interface{} {

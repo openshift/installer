@@ -109,7 +109,9 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-	case libvirt.Name, none.Name, alibabacloud.Name:
+	case alibabacloud.Name:
+		// TODO AlibabaCloud: add validation for provisioning
+	case libvirt.Name, none.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

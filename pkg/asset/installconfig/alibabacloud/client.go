@@ -10,6 +10,7 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials/provider"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/pvtz"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/resourcemanager"
 )
 
@@ -125,6 +126,27 @@ func (client *Client) ListResourceGroups() (response *resourcemanager.ListResour
 	request.Status = "OK"
 	request.Scheme = "https"
 	response = &resourcemanager.ListResourceGroupsResponse{
+		BaseResponse: &responses.BaseResponse{},
+	}
+	err = client.DoAction(request, response)
+	return
+}
+
+func (client *Client) ListPrivateZoneRegions() (response *pvtz.DescribeRegionsResponse, err error) {
+	request := pvtz.CreateDescribeRegionsRequest()
+	request.AcceptLanguage = DefaultAcceptLanguage
+	response = &pvtz.DescribeRegionsResponse{
+		BaseResponse: &responses.BaseResponse{},
+	}
+	err = client.DoAction(request, response)
+	return
+}
+
+func (client *Client) ListPrivateZones(zone_name string) (response *pvtz.DescribeZonesResponse, err error) {
+	request := pvtz.CreateDescribeZonesRequest()
+	request.Lang = "en"
+	request.Keyword = zone_name
+	response = &pvtz.DescribeZonesResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
 	err = client.DoAction(request, response)
