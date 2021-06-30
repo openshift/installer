@@ -403,9 +403,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects for kubevirt provider")
 		}
-	case alibabatypes.Name:
-		//pass
-		return nil
 	case nonetypes.Name:
 	default:
 		return fmt.Errorf("invalid Platform")
