@@ -97,6 +97,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&machines.Master{},
 		&machines.Worker{},
 		&baremetalbootstrap.IronicCreds{},
+		&installconfig.PlatformProvisionCheck{},
 	}
 }
 
