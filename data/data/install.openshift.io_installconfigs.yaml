@@ -910,7 +910,7 @@ spec:
               \n For each of the following platforms, the field can set to the specified
               values. For all other platforms, the field must not be set. AWS: \"Mint\",
               \"Passthrough\", \"Manual\" Azure: \"Mint\", \"Passthrough\", \"Manual\"
-              GCP: \"Mint\", \"Passthrough\", \"Manual\" IBMCloud: \"Manual\""
+              GCP: \"Mint\", \"Passthrough\", \"Manual\" IBMCloud: \"Manual\" AlibabaCloud: \"Manual\""
             enum:
             - ""
             - Mint
@@ -1051,6 +1051,20 @@ spec:
             description: Platform is the configuration for the specific platform upon
               which to perform the installation.
             properties:
+              alibabacloud:
+                description: AlibabaCloud is the configuration used when installing
+                  on Alibaba Cloud.
+                properties:
+                  region:
+                    description: Region specifies the Alibaba Cloud region where the
+                      cluster will be created.
+                    type: string
+                  resourceGroupName:
+                    type: string
+                required:
+                - region
+                - resourceGroupName
+                type: object
               aws:
                 description: AWS is the configuration used when installing on AWS.
                 properties:

@@ -707,17 +707,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		// if err != nil {
 		// 	return err
 		// }
-		// masterConfigs := make([]*alibabacloudprovider.AlibabacloudMachineProviderSpec, len(masters))
+		// masterConfigs := make([]*alibabacloudprovider.MachineProviderSpec, len(masters))
 		// for i, m := range masters {
-		// 	masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.AlibabacloudMachineProviderSpec)
+		// 	masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.MachineProviderSpec)
 		// }
 		// workers, err := workersAsset.MachineSets()
 		// if err != nil {
 		// 	return err
 		// }
-		// workerConfigs := make([]*alibabacloudprovider.AlibabacloudMachineProviderSpec, len(workers))
+		// workerConfigs := make([]*alibabacloudprovider.MachineProviderSpec, len(workers))
 		// for i, w := range workers {
-		// 	workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.AlibabacloudMachineProviderSpec)
+		// 	workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.MachineProviderSpec)
 		// }
 
 		data, err := alibabacloudtfvars.TFVars(

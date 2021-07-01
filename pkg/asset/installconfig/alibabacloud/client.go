@@ -117,7 +117,7 @@ func askCredentials() (auth.Credential, error) {
 	return credentials.NewAccessKeyCredential(accessKeyID, accessKeySecret), nil
 }
 
-func (client *Client) DoActionWithSetDomain(request requests.AcsRequest, response responses.AcsResponse) (err error) {
+func (client *Client) doActionWithSetDomain(request requests.AcsRequest, response responses.AcsResponse) (err error) {
 	endpoint, err := endpoints.Resolve(&endpoints.ResolveParam{
 		Product:  strings.ToLower(request.GetProduct()),
 		RegionId: strings.ToLower(client.RegionID),
@@ -139,7 +139,7 @@ func (client *Client) DescribeRegions() (response *ecs.DescribeRegionsResponse, 
 	response = &ecs.DescribeRegionsResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
-	err = client.DoActionWithSetDomain(request, response)
+	err = client.doActionWithSetDomain(request, response)
 	return
 }
 
@@ -151,7 +151,7 @@ func (client *Client) ListResourceGroups() (response *resourcemanager.ListResour
 	response = &resourcemanager.ListResourceGroupsResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
-	err = client.DoActionWithSetDomain(request, response)
+	err = client.doActionWithSetDomain(request, response)
 	return
 }
 
@@ -162,11 +162,11 @@ func (client *Client) ListPrivateZoneRegions() (response *pvtz.DescribeRegionsRe
 	response = &pvtz.DescribeRegionsResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
-	err = client.DoActionWithSetDomain(request, response)
+	err = client.doActionWithSetDomain(request, response)
 	return
 }
 
-// ListPrivateZoneRegions gets the list of privatzones.
+// ListPrivateZones gets the list of privatzones.
 func (client *Client) ListPrivateZones(zoneName string) (response *pvtz.DescribeZonesResponse, err error) {
 	request := pvtz.CreateDescribeZonesRequest()
 	request.Lang = "en"
@@ -174,7 +174,7 @@ func (client *Client) ListPrivateZones(zoneName string) (response *pvtz.Describe
 	response = &pvtz.DescribeZonesResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
-	err = client.DoActionWithSetDomain(request, response)
+	err = client.doActionWithSetDomain(request, response)
 	return
 }
 

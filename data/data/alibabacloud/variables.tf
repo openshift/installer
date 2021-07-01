@@ -74,16 +74,16 @@ variable "resource_tags" {
 
 Example: `{ "key" = "value", "foo" = "bar" }`
 EOF
-  default     = {}
+  default = {}
 }
 
 variable "ignition_bucket" {
-  type        = string
+  type = string
   description = "The name of the new OSS bucket."
 }
 
 variable "ignition_stub" {
-  type        = string
+  type = string
   description = <<EOF
 The stub ignition config that should be used to boot the bootstrap instance. This already points to the presigned URL for the OSS bucket
 specified in ignition_bucket.

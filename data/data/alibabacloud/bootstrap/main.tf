@@ -22,8 +22,8 @@ resource "alicloud_oss_bucket_object" "ignition_file" {
 }
 
 resource "alicloud_ram_role" "role" {
-  name        = "${local.prefix}-role-bootstrap"
-  document    = <<EOF
+  name     = "${local.prefix}-role-bootstrap"
+  document = <<EOF
   {
     "Statement": [
       {
@@ -43,7 +43,7 @@ resource "alicloud_ram_role" "role" {
 }
 
 resource "alicloud_ram_policy" "role_policy" {
-  policy_name     = "${local.prefix}-bootstrap-policy"
+  policy_name = "${local.prefix}-bootstrap-policy"
   policy_document = <<EOF
   {
     "Statement": [

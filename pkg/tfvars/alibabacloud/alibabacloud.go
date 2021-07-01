@@ -40,8 +40,8 @@ type TFVarsSources struct {
 	VSwitchCidrBlocks []string
 	Publish           types.PublishingStrategy
 	BaseDomain        string
-	MasterConfigs     []*AlibabaCloudMachineProviderSpec
-	WorkerConfigs     []*AlibabaCloudMachineProviderSpec
+	MasterConfigs     []*MachineProviderSpec
+	WorkerConfigs     []*MachineProviderSpec
 	IgnitionBucket    string
 	IgnitionFile      string
 	IgnitionStub      string
