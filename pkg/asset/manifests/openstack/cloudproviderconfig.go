@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -72,7 +73,7 @@ func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 	return []byte(res.String()), nil
 }
 
-func generateCloudProviderConfig(cloudConfig *clientconfig.Cloud) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
+func generateCloudProviderConfig(cloudConfig *clientconfig.Cloud, installConfig types.InstallConfig) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
 	cloudProviderConfigData = `[Global]
 secret-name = openstack-credentials
 secret-namespace = kube-system
@@ -90,6 +91,10 @@ secret-namespace = kube-system
 		cloudProviderConfigCABundleData = string(caFile)
 	}
 
+	if installConfig.NetworkType == string(operv1.NetworkTypeKuryr) {
+		cloudProviderConfigData += "[LoadBalancer]\nuse-octavia = False\n"
+	}
+
 	return cloudProviderConfigData, cloudProviderConfigCABundleData, nil
 }
 
@@ -101,5 +106,5 @@ func GenerateCloudProviderConfig(installConfig types.InstallConfig) (cloudProvid
 		return "", "", Error{err, "failed to get cloud config for openstack"}
 	}
 
-	return generateCloudProviderConfig(cloud.CloudConfig)
+	return generateCloudProviderConfig(cloud.CloudConfig, installConfig)
 }
