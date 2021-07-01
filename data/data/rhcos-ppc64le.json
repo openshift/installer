@@ -44,6 +44,11 @@
             "sha256": "80787791994e79515caece67e4b5152ec148767954e2af799fe37401912c2d2e",
             "size": 915937280
         },
+	"powervs": {
+            "path": "rhcos-48.84.202105182221-0-powervs-ppc64le.ova",
+            "sha256": "02addcf3150a34ea76c8e5b86db3a78fd8925ce2ff7dd4507d8895d5dd139030",
+            "size": 2463334400
+	},
         "qemu": {
             "path": "rhcos-49.84.202108241610-0-qemu.ppc64le.qcow2.gz",
             "sha256": "e4d1dcda57dc2ad576a5288f00141106813098c5b5e770131401242eebe6ca0c",
@@ -58,4 +63,17 @@
     },
     "ostree-commit": "3b626a10ec039f3f788748880e9fca831212bcf20c466b8a76795c45d0fca60b",
     "ostree-version": "49.84.202108241610-0"
+}
+    "ostree-commit": "63a0c41848555ff81ef062bfbfbd8c467979c2a3c4889bdf2b61eb83069efb90",
+    "ostree-version": "49.84.202107010047-0"
+    "powervs": {
+	"us-east": {
+	    "url": "https://ocp-on-powervs-public-bucket-pubpublic.s3.direct.us-east.cloud-object-storage.appdomain.cloud/rhcos-48-83-202105181429-0.ova",
+	    "bucket": "ocp-on-powervs-public-bucket-pubpublic"
+	},
+	"eu-gb": {
+	    "url": "https://ocp-on-powervs-public-bucket-pubpublic.s3.direct.us-east.cloud-object-storage.appdomain.cloud/rhcos-48-83-202105181429-0.ova",
+	    "bucket": "ocp-on-powervs-public-bucket-pubpublic"
+	}
+    }
 }
