@@ -91,8 +91,11 @@ secret-namespace = kube-system
 		cloudProviderConfigCABundleData = string(caFile)
 	}
 
+	cloudProviderConfigData += "[LoadBalancer]\n"
 	if installConfig.NetworkType == string(operv1.NetworkTypeKuryr) {
-		cloudProviderConfigData += "[LoadBalancer]\nuse-octavia = False\n"
+		cloudProviderConfigData += "use-octavia = False\n"
+	} else {
+		cloudProviderConfigData += "use-octavia = True\n"
 	}
 
 	return cloudProviderConfigData, cloudProviderConfigCABundleData, nil
