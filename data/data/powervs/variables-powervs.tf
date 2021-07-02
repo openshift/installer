@@ -97,6 +97,32 @@ variable "powervs_bootstrap_ignition" {
   description = "Contents of ignition file used by the bootstrap node."
 }
 
+# TODO(mjturek): Remove once we are no longer directly running the terraform.
+#                This var is set elsewhere but putting it in the powervs module
+#                for now for testing purposes.
+variable "master_count" {
+  type        = number
+  description = "Number of master nodes to create"
+  default     = 3
+}
+
+variable "powervs_master_memory" {
+  type        = string
+  description = "Amount of memory, in  GiB, used by each master node."
+  default     = "32"
+}
+
+variable "powervs_master_processors" {
+  type        = string
+  description = "Number of processors used by each master node."
+  default     = "0.5"
+}
+
+variable "powervs_master_ignition" {
+  type        = string
+  description = "Contents of ignition file used by each master node."
+}
+
 variable "powervs_proc_type" {
   type        = string
   description = "The type of processor mode for all nodes (shared/dedicated)"
@@ -121,6 +147,11 @@ variable "powervs_cluster_domain" {
   default     = ""
 }
 
+variable "powervs_ssh_key" {
+  type        = string
+  description = "Public key for keypair used to access cluster."
+  default     = ""
+}
 
 # Must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
 # Length cannot exceed 14 characters when combined with cluster_id_prefix
