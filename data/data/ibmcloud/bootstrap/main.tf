@@ -26,6 +26,9 @@ resource "ibm_is_instance" "bootstrap_node" {
   keys = []
 
   # Use custom ignition config that pulls content from COS bucket
+  # TODO: Once support for the httpHeaders field is added to
+  # terraform-provider-ignition, we should use it instead of this template.
+  # https://github.com/community-terraform-providers/terraform-provider-ignition/issues/16
   user_data = templatefile("${path.module}/templates/bootstrap.ign", {
     HOSTNAME    = ibm_cos_bucket.bootstrap_ignition.s3_endpoint_public
     BUCKET_NAME = ibm_cos_bucket.bootstrap_ignition.bucket_name
