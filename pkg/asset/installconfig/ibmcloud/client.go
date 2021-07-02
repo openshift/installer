@@ -165,20 +165,22 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
 		}
 
 		options := zonesService.NewListZonesOptions()
-		listZonesResponse, _, _ := zonesService.ListZones(options)
+		listZonesResponse, _, err := zonesService.ListZones(options)
 
-		if listZonesResponse != nil {
-			for _, zone := range listZonesResponse.Result {
-				if *zone.Status == "active" {
-					zoneStruct := DNSZoneResponse{
-						Name:            *zone.Name,
-						ID:              *zone.ID,
-						CISInstanceCRN:  *instance.CRN,
-						CISInstanceName: *instance.Name,
-						ResourceGroupID: *instance.ResourceGroupID,
-					}
-					allZones = append(allZones, zoneStruct)
+		if listZonesResponse == nil {
+			return nil, err
+		}
+
+		for _, zone := range listZonesResponse.Result {
+			if *zone.Status == "active" {
+				zoneStruct := DNSZoneResponse{
+					Name:            *zone.Name,
+					ID:              *zone.ID,
+					CISInstanceCRN:  *instance.CRN,
+					CISInstanceName: *instance.Name,
+					ResourceGroupID: *instance.ResourceGroupID,
 				}
+				allZones = append(allZones, zoneStruct)
 			}
 		}
 	}

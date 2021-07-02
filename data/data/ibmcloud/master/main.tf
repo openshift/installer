@@ -17,10 +17,7 @@ resource "ibm_is_instance" "master_node" {
     var.lb_kubernetes_api_public_id
   ]
 
-  # Naming:  "{prefix}-master-{zone}-{index per zone}"
-  # Example: "prefix-master-us-east-1-0", "prefix-master-us-east-2-0", "prefix-master-us-east-3-0"
-  #          "prefix-master-us-east-1-1", "prefix-master-us-east-2-1", "prefix-master-us-east-3-1"
-  name           = "${local.prefix}-master-${var.zone_list[count.index % local.zone_count]}-${floor(count.index / local.zone_count)}"
+  name           = "${local.prefix}-master-${count.index}"
   image          = var.vsi_image_id
   profile        = var.vsi_profile
   resource_group = var.resource_group_id
