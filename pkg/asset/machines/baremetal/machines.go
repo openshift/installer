@@ -89,12 +89,10 @@ func provider(platform *baremetal.Platform, osImage string, userDataSecret strin
 	cachedImageFilename := "cached-" + imageFilename
 
 	cacheImageIP := platform.ClusterProvisioningIP
-	cacheImagePort := "6180"
 	if platform.ProvisioningNetwork == baremetal.DisabledProvisioningNetwork && platform.ClusterProvisioningIP == "" {
 		cacheImageIP = platform.APIVIP
-		cacheImagePort = "6181"
 	}
-	cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(cacheImageIP, cacheImagePort), imageFilename, cachedImageFilename)
+	cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(cacheImageIP, "6181"), imageFilename, cachedImageFilename)
 	cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 	config := &baremetalprovider.BareMetalMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
