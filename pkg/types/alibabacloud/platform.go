@@ -7,6 +7,7 @@ type Platform struct {
 	ResourceGroupName string `json:"resourceGroupName"`
 }
 
+// SetBaseDomain parses the baseDomainID and sets the related fields on alibabacloud.Platform
 func (p *Platform) SetBaseDomain() error {
 	// pass
 	return nil

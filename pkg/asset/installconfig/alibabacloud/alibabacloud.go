@@ -12,21 +12,27 @@ import (
 )
 
 const (
-	DefaultRegion         = "cn-hangzhou"
-	DefaultAcceptLanguage = "en-US"
+	defaultRegion         = "cn-hangzhou"
+	defaultAcceptLanguage = "en-US"
 )
 
 const (
 	noResourceGroup = "<none>"
 )
 
+// Platform collects AlibabaCloud-specific configuration.
 func Platform() (*alibabacloud.Platform, error) {
-	client, err := NewClient(DefaultRegion)
+	client, err := NewClient(defaultRegion)
 	if err != nil {
 		return nil, err
 	}
 
 	region, err := selectRegion(client)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err = NewClient(region)
 	if err != nil {
 		return nil, err
 	}
@@ -43,16 +49,16 @@ func Platform() (*alibabacloud.Platform, error) {
 }
 
 func selectRegion(client *Client) (string, error) {
-	regions_resp, err := client.ListPrivateZoneRegions()
+	regionsResponse, err := client.DescribeRegions()
 	if err != nil {
 		return "", err
 	}
-	regions := regions_resp.Regions.Region
+	regions := regionsResponse.Regions.Region
 
 	longRegions := make([]string, 0, len(regions))
 	shortRegions := make([]string, 0, len(regions))
 	for _, location := range regions {
-		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", location.RegionId, location.RegionName))
+		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", location.RegionId, location.LocalName))
 		shortRegions = append(shortRegions, location.RegionId)
 	}
 	var regionTransform survey.Transformer = func(ans interface{}) interface{} {
@@ -74,7 +80,7 @@ func selectRegion(client *Client) (string, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The Alibaba Cloud region to be used for installation.",
-				Default: DefaultRegion,
+				Default: defaultRegion,
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
@@ -95,12 +101,12 @@ func selectRegion(client *Client) (string, error) {
 }
 
 func selectResourceGroup(client *Client) (string, error) {
-	groups_resp, err := client.ListResourceGroups()
+	groupsResponse, err := client.ListResourceGroups()
 	if err != nil {
 		return "", errors.Wrap(err, "failed to list resource groups")
 	}
 
-	groups := groups_resp.ResourceGroups.ResourceGroup
+	groups := groupsResponse.ResourceGroups.ResourceGroup
 
 	var options []string
 	names := make(map[string]string)

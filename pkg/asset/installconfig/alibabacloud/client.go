@@ -2,12 +2,15 @@ package alibabacloud
 
 import (
 	"os"
+	"strings"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials/provider"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/endpoints"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/pvtz"
@@ -23,17 +26,21 @@ const (
 // Client makes calls to the Alibaba Cloud API.
 type Client struct {
 	sdk.Client
-	AccessKeyId     string
+	RegionID        string
+	AccessKeyID     string
 	AccessKeySecret string
 }
 
-func NewClientWithOptions(regionId string, config *sdk.Config, credential auth.Credential) (client *Client, err error) {
-	client = &Client{}
-	err = client.InitWithOptions(regionId, config, credential)
+func newClientWithOptions(regionID string, config *sdk.Config, credential auth.Credential) (client *Client, err error) {
+	client = &Client{
+		RegionID: regionID,
+	}
+	err = client.InitWithOptions(regionID, config, credential)
 	return
 }
 
-func NewClient(regionId string) (client *Client, err error) {
+// NewClient initializes a client with a session.
+func NewClient(regionID string) (client *Client, err error) {
 	credential, err := getCredentials()
 	if err != nil {
 		return nil, err
@@ -41,10 +48,10 @@ func NewClient(regionId string) (client *Client, err error) {
 
 	config := sdk.NewConfig()
 
-	client, err = NewClientWithOptions(regionId, config, credential)
+	client, err = newClientWithOptions(regionID, config, credential)
 
 	if _credential, ok := credential.(credentials.AccessKeyCredential); ok {
-		client.AccessKeyId = _credential.AccessKeyId
+		client.AccessKeyID = _credential.AccessKeyId
 		client.AccessKeySecret = _credential.AccessKeySecret
 	}
 	return
@@ -75,7 +82,7 @@ func getCredentials() (credential auth.Credential, err error) {
 }
 
 func askCredentials() (auth.Credential, error) {
-	var access_key_id string
+	var accessKeyID string
 
 	err := survey.Ask([]*survey.Question{
 		{
@@ -84,13 +91,13 @@ func askCredentials() (auth.Credential, error) {
 				Help:    "The AccessKey ID is used to identify a user.\nhttps://www.alibabacloud.com/help/doc-detail/53045.html",
 			},
 		},
-	}, &access_key_id)
+	}, &accessKeyID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var access_key_secret string
+	var accessKeySecret string
 	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Password{
@@ -98,29 +105,45 @@ func askCredentials() (auth.Credential, error) {
 				Help:    "The AccessKey secret is used to verify a user. You must keep your AccessKey secret strictly confidential.",
 			},
 		},
-	}, &access_key_secret)
+	}, &accessKeySecret)
 
 	if err != nil {
 		return nil, err
 	}
 
-	os.Setenv(ENVAccessKeyID, access_key_id)
-	os.Setenv(ENVAccessKeySecret, access_key_secret)
+	os.Setenv(ENVAccessKeyID, accessKeyID)
+	os.Setenv(ENVAccessKeySecret, accessKeySecret)
 
-	return credentials.NewAccessKeyCredential(access_key_id, access_key_secret), nil
+	return credentials.NewAccessKeyCredential(accessKeyID, accessKeySecret), nil
 }
 
-func (client *Client) DescribeRegions(region_id string) (response *ecs.DescribeRegionsResponse, err error) {
-	request := ecs.CreateDescribeRegionsRequest()
-	request.AcceptLanguage = DefaultAcceptLanguage
-	request.RegionId = region_id
-	response = &ecs.DescribeRegionsResponse{
-		BaseResponse: &responses.BaseResponse{},
+func (client *Client) DoActionWithSetDomain(request requests.AcsRequest, response responses.AcsResponse) (err error) {
+	endpoint, err := endpoints.Resolve(&endpoints.ResolveParam{
+		Product:  strings.ToLower(request.GetProduct()),
+		RegionId: strings.ToLower(client.RegionID),
+	})
+
+	if err != nil {
+		endpoint = defaultEndpoint()[strings.ToLower(request.GetProduct())]
 	}
+
+	request.SetDomain(endpoint)
 	err = client.DoAction(request, response)
 	return
 }
 
+// DescribeRegions gets the list of regions.
+func (client *Client) DescribeRegions() (response *ecs.DescribeRegionsResponse, err error) {
+	request := ecs.CreateDescribeRegionsRequest()
+	request.AcceptLanguage = defaultAcceptLanguage
+	response = &ecs.DescribeRegionsResponse{
+		BaseResponse: &responses.BaseResponse{},
+	}
+	err = client.DoActionWithSetDomain(request, response)
+	return
+}
+
+// ListResourceGroups gets the list of resource groups.
 func (client *Client) ListResourceGroups() (response *resourcemanager.ListResourceGroupsResponse, err error) {
 	request := resourcemanager.CreateListResourceGroupsRequest()
 	request.Status = "OK"
@@ -128,27 +151,37 @@ func (client *Client) ListResourceGroups() (response *resourcemanager.ListResour
 	response = &resourcemanager.ListResourceGroupsResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
-	err = client.DoAction(request, response)
+	err = client.DoActionWithSetDomain(request, response)
 	return
 }
 
+// ListPrivateZoneRegions gets the list of regions for privatzone.
 func (client *Client) ListPrivateZoneRegions() (response *pvtz.DescribeRegionsResponse, err error) {
 	request := pvtz.CreateDescribeRegionsRequest()
-	request.AcceptLanguage = DefaultAcceptLanguage
+	request.AcceptLanguage = defaultAcceptLanguage
 	response = &pvtz.DescribeRegionsResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
-	err = client.DoAction(request, response)
+	err = client.DoActionWithSetDomain(request, response)
 	return
 }
 
-func (client *Client) ListPrivateZones(zone_name string) (response *pvtz.DescribeZonesResponse, err error) {
+// ListPrivateZoneRegions gets the list of privatzones.
+func (client *Client) ListPrivateZones(zoneName string) (response *pvtz.DescribeZonesResponse, err error) {
 	request := pvtz.CreateDescribeZonesRequest()
 	request.Lang = "en"
-	request.Keyword = zone_name
+	request.Keyword = zoneName
 	response = &pvtz.DescribeZonesResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
-	err = client.DoAction(request, response)
+	err = client.DoActionWithSetDomain(request, response)
 	return
+}
+
+func defaultEndpoint() map[string]string {
+	return map[string]string{
+		"pvtz":            "pvtz.aliyuncs.com",
+		"resourcemanager": "resourcemanager.aliyuncs.com",
+		"ecs":             "ecs.aliyuncs.com",
+	}
 }

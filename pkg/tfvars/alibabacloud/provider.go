@@ -5,26 +5,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// TODO: AlibabaCLoud: Future support "cluster-api-provider-alibabacloud"
-type AlibabacloudMachineProviderSpec struct {
+// AlibabaCloudMachineProviderSpec is the Schema for the alibabacloudmachineproviderconfigs API
+// AlibabaCloudMachineProviderSpec: TODO AlibabaCLoud: Future support "cluster-api-provider-alibabacloud"
+type AlibabaCloudMachineProviderSpec struct {
 	metav1.TypeMeta    `json:",inline"`
 	metav1.ObjectMeta  `json:"metadata,omitempty"`
-	RegionId           string             `json:"RegionId,omitempty"`
+	RegionID           string             `json:"RegionID,omitempty"`
 	KeyPairName        string             `json:"KeyPairName,omitempty"`
-	ResourceGroupId    string             `json:"ResourceGroupId,omitempty"`
+	ResourceGroupID    string             `json:"ResourceGroupId,omitempty"`
 	HostName           string             `json:"HostName,omitempty"`
 	Password           string             `json:"Password,omitempty"`
 	Tag                []InstanceTag      `json:"Tag,omitempty"`
-	VSwitchId          string             `json:"VSwitchId"`
-	PrivateIpAddress   string             `json:"PrivateIpAddress,omitempty"`
+	VSwitchID          string             `json:"VSwitchId"`
+	PrivateIPAddress   string             `json:"PrivateIpAddress,omitempty"`
 	InstanceName       string             `json:"InstanceName,omitempty"`
-	ZoneId             string             `json:"ZoneId"`
-	ImageId            string             `json:"ImageId"`
-	SecurityGroupId    string             `json:"SecurityGroupId"`
+	ZoneID             string             `json:"ZoneId"`
+	ImageID            string             `json:"ImageId"`
+	SecurityGroupID    string             `json:"SecurityGroupId"`
 	SystemDiskCategory string             `json:"SystemDiskCategory"`
 	UserData           string             `json:"UserData,omitempty"`
 	InstanceType       string             `json:"InstanceType,omitempty"`
-	RamRoleName        string             `json:"RamRoleName,omitempty"`
+	RAMRoleName        string             `json:"RAMRoleName,omitempty"`
 	DataDisk           []InstanceDataDisk `json:"DataDisk,omitempty"`
 	SystemDiskSize     string             `json:"SystemDiskSize,omitempty"`
 
@@ -33,21 +34,23 @@ type AlibabacloudMachineProviderSpec struct {
 	CredentialsSecret *corev1.LocalObjectReference `json:"credentialsSecret,omitempty"`
 }
 
+// InstanceTag is the set of tags to add to apply to an instance
 type InstanceTag struct {
-	Value string `name:"value"`
+	Value string `name:"Value"`
 	Key   string `name:"Key"`
 }
 
+// InstanceDataDisk describes a data disk.
 type InstanceDataDisk struct {
 	DiskName           string `name:"DiskName"`
-	SnapshotId         string `name:"SnapshotId"`
+	SnapshotID         string `name:"SnapshotId"`
 	Size               string `name:"Size"`
 	Encrypted          string `name:"Encrypted"`
 	PerformanceLevel   string `name:"PerformanceLevel"`
 	EncryptAlgorithm   string `name:"EncryptAlgorithm"`
 	Description        string `name:"Description"`
 	Category           string `name:"Category"`
-	KMSKeyId           string `name:"KMSKeyId"`
+	KMSKeyID           string `name:"KMSKeyId"`
 	Device             string `name:"Device"`
 	DeleteWithInstance string `name:"DeleteWithInstance"`
 }

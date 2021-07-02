@@ -110,13 +110,13 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case alibabacloudtypes.Name:
-		client, err := alibabacloud.NewClient(alibabacloud.DefaultRegion)
+		client, err := alibabacloud.NewClient(installConfig.Config.AlibabaCloud.Region)
 		if err != nil {
 			return err
 		}
 		cloudCreds = cloudCredsSecretData{
 			AlibabaCloud: &AlibabaCloudCredsSecretData{
-				Base64encodeAccessKeyID:     base64.StdEncoding.EncodeToString([]byte(client.AccessKeyId)),
+				Base64encodeAccessKeyID:     base64.StdEncoding.EncodeToString([]byte(client.AccessKeyID)),
 				Base64encodeSecretAccessKey: base64.StdEncoding.EncodeToString([]byte(client.AccessKeySecret)),
 			},
 		}

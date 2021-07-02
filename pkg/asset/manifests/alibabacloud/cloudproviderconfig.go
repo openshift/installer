@@ -2,7 +2,7 @@ package alibabacloud
 
 // CloudProviderConfig is the alibabacloud cloud provider config
 type CloudProviderConfig struct {
-	AccessKeyId       string
+	AccessKeyID       string
 	AccessKeySecret   string
 	ResourceGroupName string
 }

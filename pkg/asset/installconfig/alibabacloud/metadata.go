@@ -21,9 +21,9 @@ func NewMetadata(region string, baseDomain string) *Metadata {
 }
 
 // Client returns a client used for making API calls to Alibaba Cloud services.
-func (m *Metadata) Client(regionId string) (*Client, error) {
+func (m *Metadata) Client(regionID string) (*Client, error) {
 	if m.client == nil {
-		client, err := NewClient(regionId)
+		client, err := NewClient(regionID)
 		if err != nil {
 			return nil, err
 		}
