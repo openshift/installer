@@ -333,6 +333,17 @@ spec:
                           - size
                           - type
                           type: object
+                        serverGroupPolicy:
+                          description: ServerGroupPolicy will be used to create the
+                            Server Group that will contain all the machines of this
+                            MachinePool. Defaults to "soft-anti-affinity".
+                          enum:
+                          - ""
+                          - affinity
+                          - soft-affinity
+                          - anti-affinity
+                          - soft-anti-affinity
+                          type: string
                         type:
                           description: FlavorName defines the OpenStack Nova flavor.
                             eg. m1.large
@@ -730,6 +741,17 @@ spec:
                         - size
                         - type
                         type: object
+                      serverGroupPolicy:
+                        description: ServerGroupPolicy will be used to create the
+                          Server Group that will contain all the machines of this
+                          MachinePool. Defaults to "soft-anti-affinity".
+                        enum:
+                        - ""
+                        - affinity
+                        - soft-affinity
+                        - anti-affinity
+                        - soft-anti-affinity
+                        type: string
                       type:
                         description: FlavorName defines the OpenStack Nova flavor.
                           eg. m1.large
@@ -1784,6 +1806,17 @@ spec:
                         - size
                         - type
                         type: object
+                      serverGroupPolicy:
+                        description: ServerGroupPolicy will be used to create the
+                          Server Group that will contain all the machines of this
+                          MachinePool. Defaults to "soft-anti-affinity".
+                        enum:
+                        - ""
+                        - affinity
+                        - soft-affinity
+                        - anti-affinity
+                        - soft-anti-affinity
+                        type: string
                       type:
                         description: FlavorName defines the OpenStack Nova flavor.
                           eg. m1.large

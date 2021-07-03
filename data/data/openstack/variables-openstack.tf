@@ -348,6 +348,11 @@ variable "openstack_master_server_group_name" {
   description = "Name of the server group for the master nodes."
 }
 
+variable "openstack_master_server_group_policy" {
+  type = string
+  description = "Policy of the server group for the master nodes."
+}
+
 variable "openstack_machines_subnet_id" {
   type = string
   default = ""

@@ -46,6 +46,11 @@ variable "server_group_name" {
   description = "Name of the server group for the master nodes."
 }
 
+variable "server_group_policy" {
+  type        = string
+  description = "Policy of the server group for the master nodes."
+}
+
 variable "additional_network_ids" {
   type        = list(string)
   description = "IDs of additional networks for master nodes."

@@ -68,6 +68,7 @@ module "masters" {
   root_volume_size       = var.openstack_master_root_volume_size
   root_volume_type       = var.openstack_master_root_volume_type
   server_group_name      = var.openstack_master_server_group_name
+  server_group_policy    = var.openstack_master_server_group_policy
   additional_network_ids = var.openstack_additional_network_ids
   zones                  = var.openstack_master_availability_zones
   root_volume_zones      = var.openstack_master_root_volume_availability_zones

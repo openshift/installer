@@ -20,6 +20,8 @@ import (
 	kubevirtvalidation "github.com/openshift/installer/pkg/types/kubevirt/validation"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	libvirtvalidation "github.com/openshift/installer/pkg/types/libvirt/validation"
+	"github.com/openshift/installer/pkg/types/openstack"
+	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	ovirtvalidation "github.com/openshift/installer/pkg/types/ovirt/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -119,6 +121,11 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	}
 	if p.Kubevirt != nil {
 		validate(kubevirt.Name, p.Kubevirt, func(f *field.Path) field.ErrorList { return kubevirtvalidation.ValidateMachinePool(p.Kubevirt, f) })
+	}
+	if p.OpenStack != nil {
+		validate(openstack.Name, p.OpenStack, func(f *field.Path) field.ErrorList {
+			return openstackvalidation.ValidateMachinePool(platform.OpenStack, p.OpenStack, pool.Name, f)
+		})
 	}
 	return allErrs
 }

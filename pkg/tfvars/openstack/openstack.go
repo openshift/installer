@@ -23,27 +23,28 @@ import (
 )
 
 type config struct {
-	BaseImageName                    string   `json:"openstack_base_image_name,omitempty"`
-	ExternalNetwork                  string   `json:"openstack_external_network,omitempty"`
-	Cloud                            string   `json:"openstack_credentials_cloud,omitempty"`
-	FlavorName                       string   `json:"openstack_master_flavor_name,omitempty"`
-	APIFloatingIP                    string   `json:"openstack_api_floating_ip,omitempty"`
-	IngressFloatingIP                string   `json:"openstack_ingress_floating_ip,omitempty"`
-	APIVIP                           string   `json:"openstack_api_int_ip,omitempty"`
-	IngressVIP                       string   `json:"openstack_ingress_ip,omitempty"`
-	TrunkSupport                     bool     `json:"openstack_trunk_support,omitempty"`
-	OctaviaSupport                   bool     `json:"openstack_octavia_support,omitempty"`
-	RootVolumeSize                   int      `json:"openstack_master_root_volume_size,omitempty"`
-	RootVolumeType                   string   `json:"openstack_master_root_volume_type,omitempty"`
-	BootstrapShim                    string   `json:"openstack_bootstrap_shim_ignition,omitempty"`
-	ExternalDNS                      []string `json:"openstack_external_dns,omitempty"`
-	MasterServerGroupName            string   `json:"openstack_master_server_group_name,omitempty"`
-	AdditionalNetworkIDs             []string `json:"openstack_additional_network_ids,omitempty"`
-	AdditionalSecurityGroupIDs       []string `json:"openstack_master_extra_sg_ids,omitempty"`
-	MachinesSubnet                   string   `json:"openstack_machines_subnet_id,omitempty"`
-	MachinesNetwork                  string   `json:"openstack_machines_network_id,omitempty"`
-	MasterAvailabilityZones          []string `json:"openstack_master_availability_zones,omitempty"`
-	MasterRootVolumeAvalabilityZones []string `json:"openstack_master_root_volume_availability_zones,omitempty"`
+	BaseImageName                    string                            `json:"openstack_base_image_name,omitempty"`
+	ExternalNetwork                  string                            `json:"openstack_external_network,omitempty"`
+	Cloud                            string                            `json:"openstack_credentials_cloud,omitempty"`
+	FlavorName                       string                            `json:"openstack_master_flavor_name,omitempty"`
+	APIFloatingIP                    string                            `json:"openstack_api_floating_ip,omitempty"`
+	IngressFloatingIP                string                            `json:"openstack_ingress_floating_ip,omitempty"`
+	APIVIP                           string                            `json:"openstack_api_int_ip,omitempty"`
+	IngressVIP                       string                            `json:"openstack_ingress_ip,omitempty"`
+	TrunkSupport                     bool                              `json:"openstack_trunk_support,omitempty"`
+	OctaviaSupport                   bool                              `json:"openstack_octavia_support,omitempty"`
+	RootVolumeSize                   int                               `json:"openstack_master_root_volume_size,omitempty"`
+	RootVolumeType                   string                            `json:"openstack_master_root_volume_type,omitempty"`
+	BootstrapShim                    string                            `json:"openstack_bootstrap_shim_ignition,omitempty"`
+	ExternalDNS                      []string                          `json:"openstack_external_dns,omitempty"`
+	MasterServerGroupName            string                            `json:"openstack_master_server_group_name,omitempty"`
+	MasterServerGroupPolicy          types_openstack.ServerGroupPolicy `json:"openstack_master_server_group_policy"`
+	AdditionalNetworkIDs             []string                          `json:"openstack_additional_network_ids,omitempty"`
+	AdditionalSecurityGroupIDs       []string                          `json:"openstack_master_extra_sg_ids,omitempty"`
+	MachinesSubnet                   string                            `json:"openstack_machines_subnet_id,omitempty"`
+	MachinesNetwork                  string                            `json:"openstack_machines_network_id,omitempty"`
+	MasterAvailabilityZones          []string                          `json:"openstack_master_availability_zones,omitempty"`
+	MasterRootVolumeAvalabilityZones []string                          `json:"openstack_master_root_volume_availability_zones,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
@@ -160,6 +161,14 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 	}
 
 	cfg.MasterServerGroupName = masterConfig.ServerGroupName
+
+	if mpool != nil && mpool.ServerGroupPolicy != types_openstack.SGPolicyUnset {
+		cfg.MasterServerGroupPolicy = mpool.ServerGroupPolicy
+	} else if defaultmpool != nil && defaultmpool.ServerGroupPolicy != types_openstack.SGPolicyUnset {
+		cfg.MasterServerGroupPolicy = defaultmpool.ServerGroupPolicy
+	} else {
+		cfg.MasterServerGroupPolicy = types_openstack.SGPolicySoftAntiAffinity
+	}
 
 	if masterConfig.ServerGroupID != "" {
 		return nil, errors.Errorf("ServerGroupID is not implemented in the Installer. Please use ServerGroupName for automatic creation of the Control Plane server group.")
