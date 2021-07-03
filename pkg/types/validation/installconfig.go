@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	dockerref "github.com/containers/image/docker/reference"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -60,11 +62,17 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	default:
 		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), c.TypeMeta.APIVersion, fmt.Sprintf("install-config version must be %q", types.InstallConfigVersion))}
 	}
+
 	if c.SSHKey != "" {
-		if err := validate.SSHPublicKey(c.SSHKey); err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, err.Error()))
+		if c.FIPS == true {
+			allErrs = append(allErrs, validateFIPSconfig(c)...)
+		} else {
+			if err := validate.SSHPublicKey(c.SSHKey); err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, err.Error()))
+			}
 		}
 	}
+
 	if c.AdditionalTrustBundle != "" {
 		if err := validate.CABundle(c.AdditionalTrustBundle); err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalTrustBundle"), c.AdditionalTrustBundle, err.Error()))
@@ -617,6 +625,24 @@ func validateIPProxy(proxy string, n *types.Networking, fldPath *field.Path) fie
 		if network.Contains(proxyIP) {
 			allErrs = append(allErrs, field.Invalid(fldPath, proxy, "proxy value is part of the service networks"))
 			break
+		}
+	}
+	return allErrs
+}
+
+// validateFIPSconfig checks if the current install-config is compatible with FIPS standards
+// and returns an error if it's not the case. As of this writing, only rsa or ecdsa algorithms are supported
+// for ssh keys on FIPS.
+func validateFIPSconfig(c *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	sshParsedKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(c.SSHKey))
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, fmt.Sprintf("Fatal error trying to parse configured public key: %s", err)))
+	} else {
+		sshKeyType := sshParsedKey.Type()
+		re := regexp.MustCompile(`^ecdsa-sha2-nistp\d{3}$|^ssh-rsa$`)
+		if !re.MatchString(sshKeyType) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, fmt.Sprintf("SSH key type %s unavailable when FIPS is enabled. Please use rsa or ecdsa.", sshKeyType)))
 		}
 	}
 	return allErrs
