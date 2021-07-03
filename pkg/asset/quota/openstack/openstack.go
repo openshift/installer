@@ -4,6 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/quota"
 	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
@@ -29,7 +30,7 @@ func buildNetworkConstraint(ports, routers, subnets, networks, securityGroups, s
 }
 
 func getNetworkConstraints(networkType string) []quota.Constraint {
-	if networkType == "kuryr" {
+	if networkType == string(operv1.NetworkTypeKuryr) {
 		return networkConstraintWithKuryr
 	}
 	return networkConstraint
