@@ -250,7 +250,11 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
 	}
 
-	if platform == azuretypes.Name && installConfig.Config.Azure.IsARO() {
+	useMergedAzureCloudConfig := platform == azuretypes.Name &&
+		(installConfig.Config.Azure.IsARO() ||
+			installConfig.Config.Azure.CloudName == azuretypes.StackCloud)
+
+	if useMergedAzureCloudConfig {
 		// config is used to created compatible secret to trigger azure cloud
 		// controller config merge behaviour
 		// https://github.com/openshift/origin/blob/90c050f5afb4c52ace82b15e126efe98fa798d88/vendor/k8s.io/legacy-cloud-providers/azure/azure_config.go#L83

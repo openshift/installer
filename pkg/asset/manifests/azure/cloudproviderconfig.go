@@ -25,17 +25,13 @@ type CloudProviderConfig struct {
 // JSON generates the cloud provider json config for the azure platform.
 // managed resource names are matching the convention defined by capz
 func (params CloudProviderConfig) JSON() (string, error) {
-	useManagedIdentityExtension := true
-	if params.ARO {
-		useManagedIdentityExtension = false
-	}
 
 	config := config{
 		authConfig: authConfig{
 			Cloud:                       params.CloudName.Name(),
 			TenantID:                    params.TenantID,
 			SubscriptionID:              params.SubscriptionID,
-			UseManagedIdentityExtension: useManagedIdentityExtension,
+			UseManagedIdentityExtension: true,
 			// The cloud provider needs the clientID which is only known after terraform has run.
 			// When left empty, the existing managed identity on the VM will be used.
 			// By leaving it empty, we don't have to create the identity before running the installer.
@@ -62,6 +58,17 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		// https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-tcp-reset
 		LoadBalancerSku: "standard",
 	}
+
+	if params.ARO {
+		config.authConfig.UseManagedIdentityExtension = false
+	}
+
+	if params.CloudName == azure.StackCloud {
+		config.authConfig.UseManagedIdentityExtension = false
+		config.LoadBalancerSku = "basic"
+		config.UseInstanceMetadata = false
+	}
+
 	buff := &bytes.Buffer{}
 	encoder := json.NewEncoder(buff)
 	encoder.SetIndent("", "\t")
