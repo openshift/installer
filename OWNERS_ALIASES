@@ -86,13 +86,13 @@ aliases:
     - Gal-Zaidman
     - eslutsky
     - dougsland
-    - janoszen
+    - janosdebugs
   ovirt-reviewers:
     - rgolangh
     - Gal-Zaidman
     - eslutsky
     - dougsland
-    - janoszen
+    - janosdebugs
   kubevirt-approvers:
     - nirarg
     - bardielle
