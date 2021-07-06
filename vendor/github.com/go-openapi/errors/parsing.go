@@ -16,7 +16,7 @@ package errors
 
 import "fmt"
 
-// ParseError represents a parsing error
+// ParseError respresents a parsing error
 type ParseError struct {
 	code    int32
 	Name    string

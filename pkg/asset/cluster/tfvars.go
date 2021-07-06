@@ -41,6 +41,7 @@ import (
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
+	ibmcloudtfvars "github.com/openshift/installer/pkg/tfvars/ibmcloud"
 	kubevirttfvars "github.com/openshift/installer/pkg/tfvars/kubevirt"
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
@@ -51,6 +52,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -392,6 +394,66 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PublicZoneName:     publicZoneName,
 				PublishStrategy:    installConfig.Config.Publish,
 				PreexistingNetwork: preexistingnetwork,
+			},
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Data:     data,
+		})
+	case ibmcloud.Name:
+		client, err := installConfig.IBMCloud.Client()
+		if err != nil {
+			return err
+		}
+		auth := ibmcloudtfvars.Auth{
+			APIKey: client.Authenticator.ApiKey,
+		}
+
+		// TODO: IBM: Get master and worker machine info
+		// masters, err := mastersAsset.Machines()
+		// if err != nil {
+		// 	return err
+		// }
+		// masterConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(masters))
+		// for i, m := range masters {
+		// 	masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
+		// }
+		// workers, err := workersAsset.MachineSets()
+		// if err != nil {
+		// 	return err
+		// }
+		// workerConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(workers))
+		// for i, w := range workers {
+		// 	workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
+		// }
+
+		// TODO: IBM: Fetch config from masterConfig instead
+		zones, err := client.GetVPCZonesForRegion(ctx, installConfig.Config.Platform.IBMCloud.Region)
+		if err != nil {
+			return err
+		}
+
+		// Get CISInstanceCRN from InstallConfig metadata
+		crn, err := installConfig.IBMCloud.CISInstanceCRN(ctx)
+		if err != nil {
+			return err
+		}
+
+		data, err = ibmcloudtfvars.TFVars(
+			ibmcloudtfvars.TFVarsSources{
+				Auth:              auth,
+				CISInstanceCRN:    crn,
+				PublishStrategy:   installConfig.Config.Publish,
+				ResourceGroupName: installConfig.Config.Platform.IBMCloud.ResourceGroupName,
+
+				// TODO: IBM: Fetch config from masterConfig instead
+				Region:                  installConfig.Config.Platform.IBMCloud.Region,
+				MachineType:             "bx2d-4x16",
+				MasterAvailabilityZones: zones,
+				ImageURL:                string(*rhcosImage),
 			},
 		)
 		if err != nil {

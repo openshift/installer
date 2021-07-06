@@ -91,8 +91,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to validate services in this project")
 		}
 	case ibmcloud.Name:
-		// no permissions to check
-		// TODO: IBM: verify there are none
+		// TODO: IBM[#90]: platformpermscheck
 	case kubevirt.Name:
 		client, err := kubevirtconfig.NewClient()
 		if err != nil {

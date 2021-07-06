@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -168,6 +169,12 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			Filename: cloudControllerUIDFilename,
 			Data:     content,
 		})
+	case ibmcloud.Name:
+		config.Spec.PlatformSpec.Type = configv1.IBMCloudPlatformType
+		config.Status.PlatformStatus.IBMCloud = &configv1.IBMCloudPlatformStatus{
+			Location:          installConfig.Config.Platform.IBMCloud.Region,
+			ResourceGroupName: installConfig.Config.Platform.IBMCloud.ClusterResourceGroupName(clusterID.InfraID),
+		}
 	case libvirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.LibvirtPlatformType
 	case none.Name:

@@ -34,15 +34,9 @@ func Platform() (*ibmcloud.Platform, error) {
 		return nil, err
 	}
 
-	clusterOSImage, err := selectClusterOSImage(context.TODO(), client, region)
-	if err != nil {
-		return nil, err
-	}
-
 	return &ibmcloud.Platform{
 		ResourceGroupName: resourceGroup,
 		Region:            region,
-		ClusterOSImage:    clusterOSImage,
 	}, nil
 }
 
@@ -125,47 +119,4 @@ func selectRegion() (string, error) {
 		return "", err
 	}
 	return selectedRegion, nil
-}
-
-func selectClusterOSImage(ctx context.Context, client *Client, region string) (string, error) {
-	customImages, err := client.GetCustomImages(ctx, region)
-	if err != nil {
-		return "", err
-	}
-
-	if len(customImages) == 0 {
-		return "", errors.New("could not find custom RHCOS image")
-	}
-
-	var customImageOptions []string
-	for _, image := range customImages {
-		customImageOptions = append(customImageOptions, *image.Name)
-	}
-
-	sort.Strings(customImageOptions)
-
-	var selectedImage string
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Select{
-				Message: "RHCOS Custom Image",
-				Help:    "The custom RHCOS image to use for machines.",
-				Options: customImageOptions,
-				Default: customImageOptions[0],
-			},
-			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				choice := ans.(core.OptionAnswer).Value
-				i := sort.SearchStrings(customImageOptions, choice)
-				if i == len(customImageOptions) || customImageOptions[i] != choice {
-					return errors.Errorf("invalid image %q", choice)
-				}
-				return nil
-			}),
-		},
-	}, &selectedImage)
-	if err != nil {
-		return "", err
-	}
-
-	return selectedImage, nil
 }

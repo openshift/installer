@@ -6,6 +6,7 @@ package mock
 
 import (
 	context "context"
+	iamidentityv1 "github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	resourcecontrollerv2 "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	resourcemanagerv2 "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	vpcv1 "github.com/IBM/vpc-go-sdk/vpcv1"
@@ -37,6 +38,21 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
+// GetAuthenticatorAPIKeyDetails mocks base method
+func (m *MockAPI) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAuthenticatorAPIKeyDetails", ctx)
+	ret0, _ := ret[0].(*iamidentityv1.APIKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAuthenticatorAPIKeyDetails indicates an expected call of GetAuthenticatorAPIKeyDetails
+func (mr *MockAPIMockRecorder) GetAuthenticatorAPIKeyDetails(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticatorAPIKeyDetails", reflect.TypeOf((*MockAPI)(nil).GetAuthenticatorAPIKeyDetails), ctx)
+}
+
 // GetCISInstance mocks base method
 func (m *MockAPI) GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
 	m.ctrl.T.Helper()
@@ -50,36 +66,6 @@ func (m *MockAPI) GetCISInstance(ctx context.Context, crnstr string) (*resourcec
 func (mr *MockAPIMockRecorder) GetCISInstance(ctx, crnstr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCISInstance", reflect.TypeOf((*MockAPI)(nil).GetCISInstance), ctx, crnstr)
-}
-
-// GetCustomImageByName mocks base method
-func (m *MockAPI) GetCustomImageByName(ctx context.Context, imageName, region string) (*vpcv1.Image, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCustomImageByName", ctx, imageName, region)
-	ret0, _ := ret[0].(*vpcv1.Image)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetCustomImageByName indicates an expected call of GetCustomImageByName
-func (mr *MockAPIMockRecorder) GetCustomImageByName(ctx, imageName, region interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCustomImageByName", reflect.TypeOf((*MockAPI)(nil).GetCustomImageByName), ctx, imageName, region)
-}
-
-// GetCustomImages mocks base method
-func (m *MockAPI) GetCustomImages(ctx context.Context, region string) ([]vpcv1.Image, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCustomImages", ctx, region)
-	ret0, _ := ret[0].([]vpcv1.Image)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetCustomImages indicates an expected call of GetCustomImages
-func (mr *MockAPIMockRecorder) GetCustomImages(ctx, region interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCustomImages", reflect.TypeOf((*MockAPI)(nil).GetCustomImages), ctx, region)
 }
 
 // GetDNSZones mocks base method

@@ -149,6 +149,8 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 		}
 	}
 
+	// TODO: IBM[#95]: proxy
+
 	// From https://cloud.google.com/vpc/docs/special-configurations add GCP metadata.
 	// "metadata.google.internal." added due to https://bugzilla.redhat.com/show_bug.cgi?id=1754049
 	if platform == gcp.Name {

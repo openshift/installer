@@ -10,20 +10,16 @@ import (
 )
 
 var (
-	validCRN            = "crn:v1:bluemix:public:internet-svcs:us-south:a/account:instance::"
-	validRegion         = "us-south"
-	validClusterOSImage = "valid-rhcos-image-name"
+	validRegion = "us-south"
 )
 
 func validMinimalPlatform() *ibmcloud.Platform {
 	return &ibmcloud.Platform{
-		Region:         validRegion,
-		ClusterOSImage: validClusterOSImage,
+		Region: validRegion,
 	}
 }
 
 func validMachinePool() *ibmcloud.MachinePool {
-	// TODO: IBM: Update this once the MachinePool type is done.
 	return &ibmcloud.MachinePool{}
 }
 
@@ -52,15 +48,6 @@ func TestValidatePlatform(t *testing.T) {
 			platform: func() *ibmcloud.Platform {
 				p := validMinimalPlatform()
 				p.Region = ""
-				return p
-			}(),
-			valid: false,
-		},
-		{
-			name: "missing clusterOSImage",
-			platform: func() *ibmcloud.Platform {
-				p := validMinimalPlatform()
-				p.ClusterOSImage = ""
 				return p
 			}(),
 			valid: false,
@@ -107,6 +94,25 @@ func TestValidatePlatform(t *testing.T) {
 		},
 		{
 			name: "invalid vpc config missing vpcResourceGroupNname",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPC = "valid-vpc-name"
+				p.Subnets = []string{"valid-compute-subnet-id", "valid-control-subnet-id"}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "invalid vpc config missing vpc and subnets",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCResourceGroupName = "vpc-rg-name"
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "invalid vpc config missing vpcResourceGroupName",
 			platform: func() *ibmcloud.Platform {
 				p := validMinimalPlatform()
 				p.VPC = "valid-vpc-name"

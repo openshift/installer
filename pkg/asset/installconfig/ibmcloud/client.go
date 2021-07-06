@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/zonesv1"
+	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
@@ -19,9 +20,8 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
+	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
-	GetCustomImageByName(ctx context.Context, imageName string, region string) (*vpcv1.Image, error)
-	GetCustomImages(ctx context.Context, region string) ([]vpcv1.Image, error)
 	GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error)
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*EncryptionKeyResponse, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
@@ -38,7 +38,7 @@ type Client struct {
 	managementAPI *resourcemanagerv2.ResourceManagerV2
 	controllerAPI *resourcecontrollerv2.ResourceControllerV2
 	vpcAPI        *vpcv1.VpcV1
-	authenticator *core.IamAuthenticator
+	Authenticator *core.IamAuthenticator
 }
 
 // cisServiceID is the Cloud Internet Services' catalog service ID.
@@ -83,7 +83,7 @@ func NewClient() (*Client, error) {
 	}
 
 	client := &Client{
-		authenticator: authenticator,
+		Authenticator: authenticator,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
@@ -108,6 +108,22 @@ func (c *Client) loadSDKServices() error {
 	}
 
 	return nil
+}
+
+// GetAuthenticatorAPIKeyDetails gets detailed information on the API key used
+// for authentication to the IBM Cloud APIs
+func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
+	iamIdentityService, err := iamidentityv1.NewIamIdentityV1(&iamidentityv1.IamIdentityV1Options{
+		Authenticator: c.Authenticator,
+	})
+
+	options := iamIdentityService.NewGetAPIKeysDetailsOptions()
+	options.SetIamAPIKey(c.Authenticator.ApiKey)
+	details, _, err := iamIdentityService.GetAPIKeysDetailsWithContext(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	return details, nil
 }
 
 // GetCISInstance gets a specific Cloud Internet Services instance by its CRN.
@@ -141,7 +157,7 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
 	for _, instance := range listResourceInstancesResponse.Resources {
 		crnstr := instance.CRN
 		zonesService, err := zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
-			Authenticator: c.authenticator,
+			Authenticator: c.Authenticator,
 			Crn:           crnstr,
 		})
 		if err != nil {
@@ -149,7 +165,11 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
 		}
 
 		options := zonesService.NewListZonesOptions()
-		listZonesResponse, _, _ := zonesService.ListZones(options)
+		listZonesResponse, _, err := zonesService.ListZones(options)
+
+		if listZonesResponse == nil {
+			return nil, err
+		}
 
 		for _, zone := range listZonesResponse.Result {
 			if *zone.Status == "active" {
@@ -236,48 +256,6 @@ func (c *Client) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet,
 	return subnet, err
 }
 
-// GetCustomImages gets a list of custom images within a region. If the image
-// status is not "available" it is omitted.
-func (c *Client) GetCustomImages(ctx context.Context, region string) ([]vpcv1.Image, error) {
-	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
-	vpcRegion, err := c.getVPCRegionByName(ctx, region)
-	if err != nil {
-		return nil, err
-	}
-
-	var images []vpcv1.Image
-	privateImages, err := c.listPrivateImagesForRegion(ctx, *vpcRegion)
-	if err != nil {
-		return nil, err
-	}
-	for _, image := range privateImages {
-		if *image.Status == vpcv1.ImageStatusAvailableConst {
-			images = append(images, image)
-		}
-	}
-	return images, nil
-}
-
-// GetCustomImageByName gets a custom image using its name and region.
-func (c *Client) GetCustomImageByName(ctx context.Context, imageName string, region string) (*vpcv1.Image, error) {
-	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
-	customImages, err := c.GetCustomImages(ctx, region)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, image := range customImages {
-		if *image.Name == imageName && *image.Status == vpcv1.ImageStatusAvailableConst {
-			return &image, nil
-		}
-	}
-	return nil, fmt.Errorf("image %q not found", imageName)
-}
-
 // GetVSIProfiles gets a list of all VSI profiles.
 func (c *Client) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error) {
 	listInstanceProfilesOptions := c.vpcAPI.NewListInstanceProfilesOptions()
@@ -331,28 +309,6 @@ func (c *Client) GetVPCZonesForRegion(ctx context.Context, region string) ([]str
 	return response, err
 }
 
-func (c *Client) getVPCRegionByName(ctx context.Context, regionName string) (*vpcv1.Region, error) {
-	region, _, err := c.vpcAPI.GetRegionWithContext(ctx, c.vpcAPI.NewGetRegionOptions(regionName))
-	return region, err
-}
-
-func (c *Client) listPrivateImagesForRegion(ctx context.Context, region vpcv1.Region) ([]vpcv1.Image, error) {
-	listImageOptions := c.vpcAPI.NewListImagesOptions()
-	listImageOptions.SetVisibility(vpcv1.ImageVisibilityPrivateConst)
-
-	err := c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to set vpc api service url")
-	}
-
-	listImagesResponse, _, err := c.vpcAPI.ListImagesWithContext(ctx, listImageOptions)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to list vpc images")
-	}
-
-	return listImagesResponse.Images, nil
-}
-
 func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
 	listRegionsOptions := c.vpcAPI.NewListRegionsOptions()
 	listRegionsResponse, _, err := c.vpcAPI.ListRegionsWithContext(ctx, listRegionsOptions)
@@ -365,7 +321,7 @@ func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
 
 func (c *Client) loadResourceManagementAPI() error {
 	options := &resourcemanagerv2.ResourceManagerV2Options{
-		Authenticator: c.authenticator,
+		Authenticator: c.Authenticator,
 	}
 	resourceManagerV2Service, err := resourcemanagerv2.NewResourceManagerV2(options)
 	if err != nil {
@@ -377,7 +333,7 @@ func (c *Client) loadResourceManagementAPI() error {
 
 func (c *Client) loadResourceControllerAPI() error {
 	options := &resourcecontrollerv2.ResourceControllerV2Options{
-		Authenticator: c.authenticator,
+		Authenticator: c.Authenticator,
 	}
 	resourceControllerV2Service, err := resourcecontrollerv2.NewResourceControllerV2(options)
 	if err != nil {
@@ -389,7 +345,7 @@ func (c *Client) loadResourceControllerAPI() error {
 
 func (c *Client) loadVPCV1API() error {
 	vpcService, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
-		Authenticator: c.authenticator,
+		Authenticator: c.Authenticator,
 	})
 	if err != nil {
 		return err

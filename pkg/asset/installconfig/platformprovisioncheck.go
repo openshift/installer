@@ -82,7 +82,7 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case ibmcloud.Name:
-		// TODO: IBM: add validation for provisioning
+		// TODO: IBM[#91]: add validation for provisioning
 	case openstack.Name:
 		err = osconfig.ValidateForProvisioning(ic.Config)
 		if err != nil {

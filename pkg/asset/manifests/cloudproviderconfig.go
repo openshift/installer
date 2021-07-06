@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
+	ibmcloudmanifests "github.com/openshift/installer/pkg/asset/manifests/ibmcloud"
 	kubevirtmanifests "github.com/openshift/installer/pkg/asset/manifests/kubevirt"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
@@ -21,6 +23,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	kubevirttypes "github.com/openshift/installer/pkg/types/kubevirt"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -150,6 +153,16 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
 		cm.Data[cloudProviderConfigDataKey] = gcpConfig
+	case ibmcloudtypes.Name:
+		accountID, err := installConfig.IBMCloud.AccountID(context.TODO())
+		if err != nil {
+			return err
+		}
+		ibmcloudConfig, err := ibmcloudmanifests.CloudProviderConfig(clusterID.InfraID, accountID)
+		if err != nil {
+			return errors.Wrap(err, "could not create cloud provider config")
+		}
+		cm.Data[cloudProviderConfigDataKey] = ibmcloudConfig
 	case vspheretypes.Name:
 		folderPath := installConfig.Config.Platform.VSphere.Folder
 		if len(folderPath) == 0 {

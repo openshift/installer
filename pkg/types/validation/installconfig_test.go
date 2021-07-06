@@ -63,8 +63,7 @@ func validGCPPlatform() *gcp.Platform {
 
 func validIBMCloudPlatform() *ibmcloud.Platform {
 	return &ibmcloud.Platform{
-		Region:         "us-south",
-		ClusterOSImage: "custom-rhcos-image",
+		Region: "us-south",
 	}
 }
 
@@ -1003,7 +1002,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^\Q[platform.ibmcloud.region: Required value: region must be specified, platform.ibmcloud.clusterOSImage: Required value: clusterOSImage must be specified]\E$`,
+			expectedError: `^\Qplatform.ibmcloud.region: Required value: region must be specified\E$`,
 		},
 		{
 			name: "release image source is not canonical",

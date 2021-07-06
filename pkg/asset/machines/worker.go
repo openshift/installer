@@ -40,6 +40,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
+	"github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/machines/kubevirt"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
@@ -55,6 +56,7 @@ import (
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	kubevirttypes "github.com/openshift/installer/pkg/types/kubevirt"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -106,6 +108,12 @@ func defaultGCPMachinePoolPlatform() gcptypes.MachinePool {
 			DiskSizeGB: 128,
 			DiskType:   "pd-ssd",
 		},
+	}
+}
+
+func defaultIBMCloudMachinePoolPlatform() ibmcloudtypes.MachinePool {
+	return ibmcloudtypes.MachinePool{
+		InstanceType: "bx2d-4x16",
 	}
 }
 
@@ -350,6 +358,25 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 			pool.Platform.GCP = &mpool
 			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
+		case ibmcloudtypes.Name:
+			mpool := defaultIBMCloudMachinePoolPlatform()
+			mpool.Set(ic.Platform.IBMCloud.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.IBMCloud)
+			if len(mpool.Zones) == 0 {
+				azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region)
+				if err != nil {
+					return errors.Wrap(err, "failed to fetch availability zones")
+				}
+				mpool.Zones = azs
+			}
+			pool.Platform.IBMCloud = &mpool
+			sets, err := ibmcloud.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
