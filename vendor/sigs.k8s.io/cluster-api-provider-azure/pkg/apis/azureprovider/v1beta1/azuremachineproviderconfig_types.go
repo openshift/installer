@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -91,12 +92,16 @@ type AzureMachineProviderSpec struct {
 
 	// SpotVMOptions allows the ability to specify the Machine should use a Spot VM
 	SpotVMOptions *SpotVMOptions `json:"spotVMOptions,omitempty"`
+
+	// SecurityProfile specifies the Security profile settings for a virtual machine.
+	// +optional
+	SecurityProfile *SecurityProfile `json:"securityProfile,omitempty"`
 }
 
 // SpotVMOptions defines the options relevant to running the Machine on Spot VMs
 type SpotVMOptions struct {
 	// MaxPrice defines the maximum price the user is willing to pay for Spot VM instances
-	MaxPrice *string `json:"maxPrice,omitempty"`
+	MaxPrice *resource.Quantity `json:"maxPrice,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

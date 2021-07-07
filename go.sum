@@ -42,6 +42,7 @@ github.com/Azure/azure-sdk-for-go v42.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9mo
 github.com/Azure/azure-sdk-for-go v42.1.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v45.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v47.1.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
+github.com/Azure/azure-sdk-for-go v48.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v51.2.0+incompatible h1:qQNk//OOHK0GZcgMMgdJ4tZuuh0zcOeUkpTxjvKFpSQ=
 github.com/Azure/azure-sdk-for-go v51.2.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 h1:w+iIsaOQNcT7OZ575w+acHgRric5iCyQh+xv+KJ4HB8=
@@ -1494,6 +1495,8 @@ github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a
 github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80/go.mod h1:JV7aXj/LZ8B4MwIQdhGxpTO2PCG8+7UKFd6FaOZCSzA=
 github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20201016155852-4090a6970205 h1:CIW1iJdHO6gz30wd+MPZAxrmCKfL/MsixgZeiSlDdRk=
 github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20201016155852-4090a6970205/go.mod h1:oOG/TNSBse4brosfLCH/G2Q/42ye+DZQq8VslA5SxOs=
+github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f h1:rQwvVLPZfM5o0USkVY6mrAyJwzMUkhjn9Wz2D5vX81k=
+github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f/go.mod h1:GR+ocB8I+Z7JTSBdO+DMu/diBfH66lRlRpnc1KWysUM=
 github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d h1:6+XwaVvSMPHm3nFdZW3g+iXiOHpf0Y2ajY5/Zr66Dt0=
 github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d/go.mod h1:S+wtA0Rm2FZ5ccC9zNQXUWUDesR6Jsdn5eb6HjAR+Gs=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200701112720-3a7d727c9a10/go.mod h1:wgkZrOlcIMWTzo8khB4Js2PoDJDlIUUdzCBm7BuDdqw=
