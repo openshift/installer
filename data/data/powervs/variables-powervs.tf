@@ -92,20 +92,6 @@ variable "powervs_bootstrap_processors" {
   default     = "0.5"
 }
 
-variable "powervs_bootstrap_ignition" {
-  type        = string
-  description = "Contents of ignition file used by the bootstrap node."
-}
-
-# TODO(mjturek): Remove once we are no longer directly running the terraform.
-#                This var is set elsewhere but putting it in the powervs module
-#                for now for testing purposes.
-variable "master_count" {
-  type        = number
-  description = "Number of master nodes to create"
-  default     = 3
-}
-
 variable "powervs_master_memory" {
   type        = string
   description = "Amount of memory, in  GiB, used by each master node."
@@ -116,11 +102,6 @@ variable "powervs_master_processors" {
   type        = string
   description = "Number of processors used by each master node."
   default     = "0.5"
-}
-
-variable "powervs_master_ignition" {
-  type        = string
-  description = "Contents of ignition file used by each master node."
 }
 
 variable "powervs_proc_type" {
@@ -153,23 +134,6 @@ variable "powervs_ssh_key" {
   default     = ""
 }
 
-# Must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
-# Length cannot exceed 14 characters when combined with cluster_id_prefix
-variable "powervs_cluster_id" {
-  type    = string
-  default = ""
-
-  validation {
-    condition     = can(regex("^$|^[a-z0-9]+[a-zA-Z0-9_\\-.]*[a-z0-9]+$", var.powervs_cluster_id))
-    error_message = "The cluster_id value must be a lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
-  }
-
-  validation {
-    condition     = length(var.powervs_cluster_id) <= 14
-    error_message = "The cluster_id value shouldn't be greater than 14 characters."
-  }
-}
-
 variable "powervs_vpc_name" {
   type        = string
   description = "Name of the IBM Cloud Virtual Private Cloud (VPC) to setup the load balancer."
@@ -181,4 +145,3 @@ variable "powervs_vpc_subnet_name" {
   description = "Name of the VPC subnet having DirectLink access to the PowerVS private network"
   default     = ""
 }
-
