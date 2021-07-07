@@ -107,5 +107,7 @@ aliases:
     - chenyosef
   ibmcloud-approvers:
     - bobbyradford
+    - hasueki
   ibmcloud-reviewers:
     - bobbyradford
+    - hasueki
