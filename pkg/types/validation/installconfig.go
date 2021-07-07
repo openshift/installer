@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"sort"
 	"strings"
@@ -462,22 +463,22 @@ func validateProxy(p *types.Proxy, fldPath *field.Path) field.ErrorList {
 		allErrs = append(allErrs, field.Required(fldPath, "must include httpProxy or httpsProxy"))
 	}
 	if p.HTTPProxy != "" {
-		if err := validate.URI(p.HTTPProxy); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("httpProxy"), p.HTTPProxy, err.Error()))
-		}
+		allErrs = append(allErrs, validateURI(p.HTTPProxy, fldPath.Child("httpProxy"), []string{"http"})...)
 	}
 	if p.HTTPSProxy != "" {
-		if err := validate.URI(p.HTTPSProxy); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("httpsProxy"), p.HTTPSProxy, err.Error()))
-		}
+		allErrs = append(allErrs, validateURI(p.HTTPSProxy, fldPath.Child("httpsProxy"), []string{"http", "https"})...)
 	}
 	if p.NoProxy != "" && p.NoProxy != "*" {
+		if strings.Contains(p.NoProxy, " ") {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("noProxy"), p.NoProxy, fmt.Sprintf("noProxy must not have spaces")))
+		}
 		for idx, v := range strings.Split(p.NoProxy, ",") {
 			v = strings.TrimSpace(v)
 			errDomain := validate.NoProxyDomainName(v)
 			_, _, errCIDR := net.ParseCIDR(v)
 			if errDomain != nil && errCIDR != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("noProxy").Index(idx), v, "must be a CIDR or domain, without wildcard characters"))
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("noProxy"), p.NoProxy, fmt.Sprintf(
+					"each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element %d %q", idx, v)))
 			}
 		}
 	}
@@ -554,4 +555,19 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 		allErrs = append(allErrs, field.Invalid(fldPath, mode, fmt.Sprintf("cannot be set when using the %q platform", platform)))
 	}
 	return allErrs
+}
+
+// validateURI checks if the given url is of the right format. It also checks if the scheme of the uri
+// provided is within the list of accepted schema provided as part of the input.
+func validateURI(uri string, fldPath *field.Path, schemes []string) field.ErrorList {
+	parsed, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return field.ErrorList{field.Invalid(fldPath, uri, err.Error())}
+	}
+	for _, scheme := range schemes {
+		if scheme == parsed.Scheme {
+			return nil
+		}
+	}
+	return field.ErrorList{field.NotSupported(fldPath, parsed.Scheme, schemes)}
 }

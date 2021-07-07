@@ -42,7 +42,7 @@ func validInstallConfig() *types.InstallConfig {
 		Proxy: &types.Proxy{
 			HTTPProxy:  "http://user:password@127.0.0.1:8080",
 			HTTPSProxy: "https://user:password@127.0.0.1:8080",
-			NoProxy:    "valid-proxy.com, 172.30.0.0/16",
+			NoProxy:    "valid-proxy.com,172.30.0.0/16",
 		},
 	}
 }
@@ -694,7 +694,25 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.HTTPProxy = "http://bad%20uri"
 				return c
 			}(),
-			expectedError: `^proxy.httpProxy: Invalid value: "http://bad%20uri": parse .*: invalid URL escape "%20"$`,
+			expectedError: `^proxy.httpProxy: Invalid value: "http://bad%20uri": parse "http://bad%20uri": invalid URL escape "%20"$`,
+		},
+		{
+			name: "invalid HTTPProxy Schema missing",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http//baduri"
+				return c
+			}(),
+			expectedError: `^proxy.httpProxy: Invalid value: "http//baduri": parse "http//baduri": invalid URI for request$`,
+		},
+		{
+			name: "invalid HTTPProxy Schema different schema",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "ftp://baduri"
+				return c
+			}(),
+			expectedError: `^proxy.httpProxy: Unsupported value: "ftp": supported values: "http"$`,
 		},
 		{
 			name: "invalid HTTPSProxy",
@@ -703,34 +721,61 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.HTTPSProxy = "https://bad%20uri"
 				return c
 			}(),
-			expectedError: `^proxy.httpsProxy: Invalid value: "https://bad%20uri": parse .*: invalid URL escape "%20"$`,
+			expectedError: `^proxy.httpsProxy: Invalid value: "https://bad%20uri": parse "https://bad%20uri": invalid URL escape "%20"$`,
+		},
+		{
+			name: "invalid HTTPSProxy Schema missing",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "http//baduri"
+				return c
+			}(),
+			expectedError: `^proxy.httpsProxy: Invalid value: "http//baduri": parse "http//baduri": invalid URI for request$`,
+		},
+		{
+			name: "invalid HTTPSProxy Schema different schema",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "ftp://baduri"
+				return c
+			}(),
+			expectedError: `^proxy.httpsProxy: Unsupported value: "ftp": supported values: "http", "https"$`,
 		},
 		{
 			name: "invalid NoProxy domain",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.Proxy.NoProxy = "good-no-proxy.com,*.bad-proxy"
+				return c
+			}(),
+			expectedError: `^\Qproxy.noProxy: Invalid value: "good-no-proxy.com,*.bad-proxy": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 1 "*.bad-proxy"\E$`,
+		},
+		{
+			name: "invalid NoProxy spaces",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
 				c.Proxy.NoProxy = "good-no-proxy.com, *.bad-proxy"
 				return c
 			}(),
-			expectedError: `^\Qproxy.noProxy[1]: Invalid value: "*.bad-proxy": must be a CIDR or domain, without wildcard characters\E$`,
+			expectedError: `^\Q[proxy.noProxy: Invalid value: "good-no-proxy.com, *.bad-proxy": noProxy must not have spaces, proxy.noProxy: Invalid value: "good-no-proxy.com, *.bad-proxy": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 1 "*.bad-proxy"]\E$`,
 		},
 		{
 			name: "invalid NoProxy CIDR",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Proxy.NoProxy = "good-no-proxy.com, 172.bad.CIDR.0/16"
+				c.Proxy.NoProxy = "good-no-proxy.com,172.bad.CIDR.0/16"
 				return c
 			}(),
-			expectedError: `^\Qproxy.noProxy[1]: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters\E$`,
+			expectedError: `^\Qproxy.noProxy: Invalid value: "good-no-proxy.com,172.bad.CIDR.0/16": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 1 "172.bad.CIDR.0/16"\E$`,
 		},
 		{
 			name: "invalid NoProxy domain & CIDR",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Proxy.NoProxy = "good-no-proxy.com, a-good-one, *.bad-proxy., another,   172.bad.CIDR.0/16, good-end"
+				c.Proxy.NoProxy = "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end"
 				return c
 			}(),
-			expectedError: `^\Q[proxy.noProxy[2]: Invalid value: "*.bad-proxy.": must be a CIDR or domain, without wildcard characters, proxy.noProxy[4]: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters]\E$`,
+			expectedError: `^\Q[proxy.noProxy: Invalid value: "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 2 "*.bad-proxy.", proxy.noProxy: Invalid value: "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 4 "172.bad.CIDR.0/16"]\E$`,
 		},
 		{
 			name: "valid * NoProxy",
