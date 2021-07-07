@@ -17,15 +17,17 @@ package resourcemanager
 
 // Handshake is a nested struct in resourcemanager response
 type Handshake struct {
-	ModifyTime          string `json:"ModifyTime" xml:"ModifyTime"`
-	HandshakeId         string `json:"HandshakeId" xml:"HandshakeId"`
-	MasterAccountName   string `json:"MasterAccountName" xml:"MasterAccountName"`
-	MasterAccountId     string `json:"MasterAccountId" xml:"MasterAccountId"`
-	CreateTime          string `json:"CreateTime" xml:"CreateTime"`
-	ExpireTime          string `json:"ExpireTime" xml:"ExpireTime"`
-	Status              string `json:"Status" xml:"Status"`
-	Note                string `json:"Note" xml:"Note"`
-	TargetEntity        string `json:"TargetEntity" xml:"TargetEntity"`
-	ResourceDirectoryId string `json:"ResourceDirectoryId" xml:"ResourceDirectoryId"`
-	TargetType          string `json:"TargetType" xml:"TargetType"`
+	ModifyTime             string `json:"ModifyTime" xml:"ModifyTime"`
+	HandshakeId            string `json:"HandshakeId" xml:"HandshakeId"`
+	MasterAccountName      string `json:"MasterAccountName" xml:"MasterAccountName"`
+	CreateTime             string `json:"CreateTime" xml:"CreateTime"`
+	Note                   string `json:"Note" xml:"Note"`
+	TargetEntity           string `json:"TargetEntity" xml:"TargetEntity"`
+	TargetType             string `json:"TargetType" xml:"TargetType"`
+	MasterAccountRealName  string `json:"MasterAccountRealName" xml:"MasterAccountRealName"`
+	InvitedAccountRealName string `json:"InvitedAccountRealName" xml:"InvitedAccountRealName"`
+	MasterAccountId        string `json:"MasterAccountId" xml:"MasterAccountId"`
+	ExpireTime             string `json:"ExpireTime" xml:"ExpireTime"`
+	Status                 string `json:"Status" xml:"Status"`
+	ResourceDirectoryId    string `json:"ResourceDirectoryId" xml:"ResourceDirectoryId"`
 }

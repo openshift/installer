@@ -21,7 +21,6 @@ import (
 )
 
 // ListAccountsForParent invokes the resourcemanager.ListAccountsForParent API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listaccountsforparent.html
 func (client *Client) ListAccountsForParent(request *ListAccountsForParentRequest) (response *ListAccountsForParentResponse, err error) {
 	response = CreateListAccountsForParentResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListAccountsForParent(request *ListAccountsForParentReques
 }
 
 // ListAccountsForParentWithChan invokes the resourcemanager.ListAccountsForParent API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listaccountsforparent.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListAccountsForParentWithChan(request *ListAccountsForParentRequest) (<-chan *ListAccountsForParentResponse, <-chan error) {
 	responseChan := make(chan *ListAccountsForParentResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListAccountsForParentWithChan(request *ListAccountsForPare
 }
 
 // ListAccountsForParentWithCallback invokes the resourcemanager.ListAccountsForParent API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listaccountsforparent.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListAccountsForParentWithCallback(request *ListAccountsForParentRequest, callback func(response *ListAccountsForParentResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -85,10 +80,10 @@ type ListAccountsForParentRequest struct {
 // ListAccountsForParentResponse is the response struct for api ListAccountsForParent
 type ListAccountsForParentResponse struct {
 	*responses.BaseResponse
+	TotalCount int                             `json:"TotalCount" xml:"TotalCount"`
+	PageSize   int                             `json:"PageSize" xml:"PageSize"`
 	RequestId  string                          `json:"RequestId" xml:"RequestId"`
 	PageNumber int                             `json:"PageNumber" xml:"PageNumber"`
-	PageSize   int                             `json:"PageSize" xml:"PageSize"`
-	TotalCount int                             `json:"TotalCount" xml:"TotalCount"`
 	Accounts   AccountsInListAccountsForParent `json:"Accounts" xml:"Accounts"`
 }
 
@@ -97,7 +92,8 @@ func CreateListAccountsForParentRequest() (request *ListAccountsForParentRequest
 	request = &ListAccountsForParentRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListAccountsForParent", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListAccountsForParent", "", "")
+	request.Method = requests.POST
 	return
 }
 

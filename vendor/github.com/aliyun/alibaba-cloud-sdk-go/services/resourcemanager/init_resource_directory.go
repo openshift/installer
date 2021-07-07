@@ -21,7 +21,6 @@ import (
 )
 
 // InitResourceDirectory invokes the resourcemanager.InitResourceDirectory API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/initresourcedirectory.html
 func (client *Client) InitResourceDirectory(request *InitResourceDirectoryRequest) (response *InitResourceDirectoryResponse, err error) {
 	response = CreateInitResourceDirectoryResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) InitResourceDirectory(request *InitResourceDirectoryReques
 }
 
 // InitResourceDirectoryWithChan invokes the resourcemanager.InitResourceDirectory API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/initresourcedirectory.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) InitResourceDirectoryWithChan(request *InitResourceDirectoryRequest) (<-chan *InitResourceDirectoryResponse, <-chan error) {
 	responseChan := make(chan *InitResourceDirectoryResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) InitResourceDirectoryWithChan(request *InitResourceDirecto
 }
 
 // InitResourceDirectoryWithCallback invokes the resourcemanager.InitResourceDirectory API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/initresourcedirectory.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) InitResourceDirectoryWithCallback(request *InitResourceDirectoryRequest, callback func(response *InitResourceDirectoryResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -90,7 +85,8 @@ func CreateInitResourceDirectoryRequest() (request *InitResourceDirectoryRequest
 	request = &InitResourceDirectoryRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "InitResourceDirectory", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "InitResourceDirectory", "", "")
+	request.Method = requests.POST
 	return
 }
 

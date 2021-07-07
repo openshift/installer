@@ -21,7 +21,6 @@ import (
 )
 
 // DeclineHandshake invokes the resourcemanager.DeclineHandshake API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/declinehandshake.html
 func (client *Client) DeclineHandshake(request *DeclineHandshakeRequest) (response *DeclineHandshakeResponse, err error) {
 	response = CreateDeclineHandshakeResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) DeclineHandshake(request *DeclineHandshakeRequest) (respon
 }
 
 // DeclineHandshakeWithChan invokes the resourcemanager.DeclineHandshake API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/declinehandshake.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeclineHandshakeWithChan(request *DeclineHandshakeRequest) (<-chan *DeclineHandshakeResponse, <-chan error) {
 	responseChan := make(chan *DeclineHandshakeResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) DeclineHandshakeWithChan(request *DeclineHandshakeRequest)
 }
 
 // DeclineHandshakeWithCallback invokes the resourcemanager.DeclineHandshake API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/declinehandshake.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeclineHandshakeWithCallback(request *DeclineHandshakeRequest, callback func(response *DeclineHandshakeResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateDeclineHandshakeRequest() (request *DeclineHandshakeRequest) {
 	request = &DeclineHandshakeRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeclineHandshake", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeclineHandshake", "", "")
+	request.Method = requests.POST
 	return
 }
 

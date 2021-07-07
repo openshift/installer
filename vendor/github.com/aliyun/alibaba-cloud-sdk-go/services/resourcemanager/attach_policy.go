@@ -21,7 +21,6 @@ import (
 )
 
 // AttachPolicy invokes the resourcemanager.AttachPolicy API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/attachpolicy.html
 func (client *Client) AttachPolicy(request *AttachPolicyRequest) (response *AttachPolicyResponse, err error) {
 	response = CreateAttachPolicyResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) AttachPolicy(request *AttachPolicyRequest) (response *Atta
 }
 
 // AttachPolicyWithChan invokes the resourcemanager.AttachPolicy API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/attachpolicy.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) AttachPolicyWithChan(request *AttachPolicyRequest) (<-chan *AttachPolicyResponse, <-chan error) {
 	responseChan := make(chan *AttachPolicyResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) AttachPolicyWithChan(request *AttachPolicyRequest) (<-chan
 }
 
 // AttachPolicyWithCallback invokes the resourcemanager.AttachPolicy API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/attachpolicy.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) AttachPolicyWithCallback(request *AttachPolicyRequest, callback func(response *AttachPolicyResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -94,7 +89,8 @@ func CreateAttachPolicyRequest() (request *AttachPolicyRequest) {
 	request = &AttachPolicyRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "AttachPolicy", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "AttachPolicy", "", "")
+	request.Method = requests.POST
 	return
 }
 

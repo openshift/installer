@@ -21,7 +21,6 @@ import (
 )
 
 // RemoveCloudAccount invokes the resourcemanager.RemoveCloudAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/removecloudaccount.html
 func (client *Client) RemoveCloudAccount(request *RemoveCloudAccountRequest) (response *RemoveCloudAccountResponse, err error) {
 	response = CreateRemoveCloudAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) RemoveCloudAccount(request *RemoveCloudAccountRequest) (re
 }
 
 // RemoveCloudAccountWithChan invokes the resourcemanager.RemoveCloudAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/removecloudaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) RemoveCloudAccountWithChan(request *RemoveCloudAccountRequest) (<-chan *RemoveCloudAccountResponse, <-chan error) {
 	responseChan := make(chan *RemoveCloudAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) RemoveCloudAccountWithChan(request *RemoveCloudAccountRequ
 }
 
 // RemoveCloudAccountWithCallback invokes the resourcemanager.RemoveCloudAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/removecloudaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) RemoveCloudAccountWithCallback(request *RemoveCloudAccountRequest, callback func(response *RemoveCloudAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -90,7 +85,8 @@ func CreateRemoveCloudAccountRequest() (request *RemoveCloudAccountRequest) {
 	request = &RemoveCloudAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "RemoveCloudAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "RemoveCloudAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

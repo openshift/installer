@@ -21,7 +21,6 @@ import (
 )
 
 // CreateFolder invokes the resourcemanager.CreateFolder API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createfolder.html
 func (client *Client) CreateFolder(request *CreateFolderRequest) (response *CreateFolderResponse, err error) {
 	response = CreateCreateFolderResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) CreateFolder(request *CreateFolderRequest) (response *Crea
 }
 
 // CreateFolderWithChan invokes the resourcemanager.CreateFolder API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createfolder.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreateFolderWithChan(request *CreateFolderRequest) (<-chan *CreateFolderResponse, <-chan error) {
 	responseChan := make(chan *CreateFolderResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) CreateFolderWithChan(request *CreateFolderRequest) (<-chan
 }
 
 // CreateFolderWithCallback invokes the resourcemanager.CreateFolder API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createfolder.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreateFolderWithCallback(request *CreateFolderRequest, callback func(response *CreateFolderResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -92,7 +87,8 @@ func CreateCreateFolderRequest() (request *CreateFolderRequest) {
 	request = &CreateFolderRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreateFolder", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreateFolder", "", "")
+	request.Method = requests.POST
 	return
 }
 

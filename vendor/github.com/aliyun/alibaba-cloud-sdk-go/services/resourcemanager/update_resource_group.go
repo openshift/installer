@@ -21,7 +21,6 @@ import (
 )
 
 // UpdateResourceGroup invokes the resourcemanager.UpdateResourceGroup API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updateresourcegroup.html
 func (client *Client) UpdateResourceGroup(request *UpdateResourceGroupRequest) (response *UpdateResourceGroupResponse, err error) {
 	response = CreateUpdateResourceGroupResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) UpdateResourceGroup(request *UpdateResourceGroupRequest) (
 }
 
 // UpdateResourceGroupWithChan invokes the resourcemanager.UpdateResourceGroup API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updateresourcegroup.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) UpdateResourceGroupWithChan(request *UpdateResourceGroupRequest) (<-chan *UpdateResourceGroupResponse, <-chan error) {
 	responseChan := make(chan *UpdateResourceGroupResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) UpdateResourceGroupWithChan(request *UpdateResourceGroupRe
 }
 
 // UpdateResourceGroupWithCallback invokes the resourcemanager.UpdateResourceGroup API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updateresourcegroup.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) UpdateResourceGroupWithCallback(request *UpdateResourceGroupRequest, callback func(response *UpdateResourceGroupResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -92,7 +87,8 @@ func CreateUpdateResourceGroupRequest() (request *UpdateResourceGroupRequest) {
 	request = &UpdateResourceGroupRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "UpdateResourceGroup", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "UpdateResourceGroup", "", "")
+	request.Method = requests.POST
 	return
 }
 

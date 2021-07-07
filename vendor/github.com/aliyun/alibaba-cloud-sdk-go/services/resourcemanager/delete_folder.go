@@ -21,7 +21,6 @@ import (
 )
 
 // DeleteFolder invokes the resourcemanager.DeleteFolder API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deletefolder.html
 func (client *Client) DeleteFolder(request *DeleteFolderRequest) (response *DeleteFolderResponse, err error) {
 	response = CreateDeleteFolderResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) DeleteFolder(request *DeleteFolderRequest) (response *Dele
 }
 
 // DeleteFolderWithChan invokes the resourcemanager.DeleteFolder API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deletefolder.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeleteFolderWithChan(request *DeleteFolderRequest) (<-chan *DeleteFolderResponse, <-chan error) {
 	responseChan := make(chan *DeleteFolderResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) DeleteFolderWithChan(request *DeleteFolderRequest) (<-chan
 }
 
 // DeleteFolderWithCallback invokes the resourcemanager.DeleteFolder API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deletefolder.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeleteFolderWithCallback(request *DeleteFolderRequest, callback func(response *DeleteFolderResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -90,7 +85,8 @@ func CreateDeleteFolderRequest() (request *DeleteFolderRequest) {
 	request = &DeleteFolderRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeleteFolder", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeleteFolder", "", "")
+	request.Method = requests.POST
 	return
 }
 

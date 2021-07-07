@@ -20,6 +20,8 @@ type ResourceDirectory struct {
 	MasterAccountName   string `json:"MasterAccountName" xml:"MasterAccountName"`
 	MasterAccountId     string `json:"MasterAccountId" xml:"MasterAccountId"`
 	CreateTime          string `json:"CreateTime" xml:"CreateTime"`
+	ControlPolicyStatus string `json:"ControlPolicyStatus" xml:"ControlPolicyStatus"`
+	ScpStatus           string `json:"ScpStatus" xml:"ScpStatus"`
 	RootFolderId        string `json:"RootFolderId" xml:"RootFolderId"`
 	ResourceDirectoryId string `json:"ResourceDirectoryId" xml:"ResourceDirectoryId"`
 }

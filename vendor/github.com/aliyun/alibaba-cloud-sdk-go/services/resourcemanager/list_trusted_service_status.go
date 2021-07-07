@@ -21,7 +21,6 @@ import (
 )
 
 // ListTrustedServiceStatus invokes the resourcemanager.ListTrustedServiceStatus API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listtrustedservicestatus.html
 func (client *Client) ListTrustedServiceStatus(request *ListTrustedServiceStatusRequest) (response *ListTrustedServiceStatusResponse, err error) {
 	response = CreateListTrustedServiceStatusResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListTrustedServiceStatus(request *ListTrustedServiceStatus
 }
 
 // ListTrustedServiceStatusWithChan invokes the resourcemanager.ListTrustedServiceStatus API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listtrustedservicestatus.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListTrustedServiceStatusWithChan(request *ListTrustedServiceStatusRequest) (<-chan *ListTrustedServiceStatusResponse, <-chan error) {
 	responseChan := make(chan *ListTrustedServiceStatusResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListTrustedServiceStatusWithChan(request *ListTrustedServi
 }
 
 // ListTrustedServiceStatusWithCallback invokes the resourcemanager.ListTrustedServiceStatus API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listtrustedservicestatus.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListTrustedServiceStatusWithCallback(request *ListTrustedServiceStatusRequest, callback func(response *ListTrustedServiceStatusResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -76,17 +71,18 @@ func (client *Client) ListTrustedServiceStatusWithCallback(request *ListTrustedS
 // ListTrustedServiceStatusRequest is the request struct for api ListTrustedServiceStatus
 type ListTrustedServiceStatusRequest struct {
 	*requests.RpcRequest
-	PageNumber requests.Integer `position:"Query" name:"PageNumber"`
-	PageSize   requests.Integer `position:"Query" name:"PageSize"`
+	AdminAccountId string           `position:"Query" name:"AdminAccountId"`
+	PageNumber     requests.Integer `position:"Query" name:"PageNumber"`
+	PageSize       requests.Integer `position:"Query" name:"PageSize"`
 }
 
 // ListTrustedServiceStatusResponse is the response struct for api ListTrustedServiceStatus
 type ListTrustedServiceStatusResponse struct {
 	*responses.BaseResponse
-	RequestId                string                   `json:"RequestId" xml:"RequestId"`
-	PageNumber               int                      `json:"PageNumber" xml:"PageNumber"`
-	PageSize                 int                      `json:"PageSize" xml:"PageSize"`
 	TotalCount               int                      `json:"TotalCount" xml:"TotalCount"`
+	RequestId                string                   `json:"RequestId" xml:"RequestId"`
+	PageSize                 int                      `json:"PageSize" xml:"PageSize"`
+	PageNumber               int                      `json:"PageNumber" xml:"PageNumber"`
 	EnabledServicePrincipals EnabledServicePrincipals `json:"EnabledServicePrincipals" xml:"EnabledServicePrincipals"`
 }
 
@@ -95,7 +91,8 @@ func CreateListTrustedServiceStatusRequest() (request *ListTrustedServiceStatusR
 	request = &ListTrustedServiceStatusRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListTrustedServiceStatus", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListTrustedServiceStatus", "", "")
+	request.Method = requests.POST
 	return
 }
 

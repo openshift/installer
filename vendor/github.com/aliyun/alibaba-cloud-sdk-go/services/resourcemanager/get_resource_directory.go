@@ -21,7 +21,6 @@ import (
 )
 
 // GetResourceDirectory invokes the resourcemanager.GetResourceDirectory API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getresourcedirectory.html
 func (client *Client) GetResourceDirectory(request *GetResourceDirectoryRequest) (response *GetResourceDirectoryResponse, err error) {
 	response = CreateGetResourceDirectoryResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) GetResourceDirectory(request *GetResourceDirectoryRequest)
 }
 
 // GetResourceDirectoryWithChan invokes the resourcemanager.GetResourceDirectory API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getresourcedirectory.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetResourceDirectoryWithChan(request *GetResourceDirectoryRequest) (<-chan *GetResourceDirectoryResponse, <-chan error) {
 	responseChan := make(chan *GetResourceDirectoryResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) GetResourceDirectoryWithChan(request *GetResourceDirectory
 }
 
 // GetResourceDirectoryWithCallback invokes the resourcemanager.GetResourceDirectory API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getresourcedirectory.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetResourceDirectoryWithCallback(request *GetResourceDirectoryRequest, callback func(response *GetResourceDirectoryResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -90,7 +85,8 @@ func CreateGetResourceDirectoryRequest() (request *GetResourceDirectoryRequest) 
 	request = &GetResourceDirectoryRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetResourceDirectory", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetResourceDirectory", "", "")
+	request.Method = requests.POST
 	return
 }
 

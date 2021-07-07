@@ -21,7 +21,6 @@ import (
 )
 
 // ListPolicyAttachments invokes the resourcemanager.ListPolicyAttachments API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listpolicyattachments.html
 func (client *Client) ListPolicyAttachments(request *ListPolicyAttachmentsRequest) (response *ListPolicyAttachmentsResponse, err error) {
 	response = CreateListPolicyAttachmentsResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListPolicyAttachments(request *ListPolicyAttachmentsReques
 }
 
 // ListPolicyAttachmentsWithChan invokes the resourcemanager.ListPolicyAttachments API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listpolicyattachments.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListPolicyAttachmentsWithChan(request *ListPolicyAttachmentsRequest) (<-chan *ListPolicyAttachmentsResponse, <-chan error) {
 	responseChan := make(chan *ListPolicyAttachmentsResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListPolicyAttachmentsWithChan(request *ListPolicyAttachmen
 }
 
 // ListPolicyAttachmentsWithCallback invokes the resourcemanager.ListPolicyAttachments API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listpolicyattachments.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListPolicyAttachmentsWithCallback(request *ListPolicyAttachmentsRequest, callback func(response *ListPolicyAttachmentsResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -89,10 +84,10 @@ type ListPolicyAttachmentsRequest struct {
 // ListPolicyAttachmentsResponse is the response struct for api ListPolicyAttachments
 type ListPolicyAttachmentsResponse struct {
 	*responses.BaseResponse
+	TotalCount        int               `json:"TotalCount" xml:"TotalCount"`
+	PageSize          int               `json:"PageSize" xml:"PageSize"`
 	RequestId         string            `json:"RequestId" xml:"RequestId"`
 	PageNumber        int               `json:"PageNumber" xml:"PageNumber"`
-	PageSize          int               `json:"PageSize" xml:"PageSize"`
-	TotalCount        int               `json:"TotalCount" xml:"TotalCount"`
 	PolicyAttachments PolicyAttachments `json:"PolicyAttachments" xml:"PolicyAttachments"`
 }
 
@@ -101,7 +96,8 @@ func CreateListPolicyAttachmentsRequest() (request *ListPolicyAttachmentsRequest
 	request = &ListPolicyAttachmentsRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListPolicyAttachments", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListPolicyAttachments", "", "")
+	request.Method = requests.POST
 	return
 }
 

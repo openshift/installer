@@ -21,7 +21,6 @@ import (
 )
 
 // UpdateFolder invokes the resourcemanager.UpdateFolder API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updatefolder.html
 func (client *Client) UpdateFolder(request *UpdateFolderRequest) (response *UpdateFolderResponse, err error) {
 	response = CreateUpdateFolderResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) UpdateFolder(request *UpdateFolderRequest) (response *Upda
 }
 
 // UpdateFolderWithChan invokes the resourcemanager.UpdateFolder API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updatefolder.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) UpdateFolderWithChan(request *UpdateFolderRequest) (<-chan *UpdateFolderResponse, <-chan error) {
 	responseChan := make(chan *UpdateFolderResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) UpdateFolderWithChan(request *UpdateFolderRequest) (<-chan
 }
 
 // UpdateFolderWithCallback invokes the resourcemanager.UpdateFolder API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updatefolder.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) UpdateFolderWithCallback(request *UpdateFolderRequest, callback func(response *UpdateFolderResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -92,7 +87,8 @@ func CreateUpdateFolderRequest() (request *UpdateFolderRequest) {
 	request = &UpdateFolderRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "UpdateFolder", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "UpdateFolder", "", "")
+	request.Method = requests.POST
 	return
 }
 

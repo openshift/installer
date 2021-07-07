@@ -21,7 +21,6 @@ import (
 )
 
 // SetDefaultPolicyVersion invokes the resourcemanager.SetDefaultPolicyVersion API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/setdefaultpolicyversion.html
 func (client *Client) SetDefaultPolicyVersion(request *SetDefaultPolicyVersionRequest) (response *SetDefaultPolicyVersionResponse, err error) {
 	response = CreateSetDefaultPolicyVersionResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) SetDefaultPolicyVersion(request *SetDefaultPolicyVersionRe
 }
 
 // SetDefaultPolicyVersionWithChan invokes the resourcemanager.SetDefaultPolicyVersion API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/setdefaultpolicyversion.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) SetDefaultPolicyVersionWithChan(request *SetDefaultPolicyVersionRequest) (<-chan *SetDefaultPolicyVersionResponse, <-chan error) {
 	responseChan := make(chan *SetDefaultPolicyVersionResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) SetDefaultPolicyVersionWithChan(request *SetDefaultPolicyV
 }
 
 // SetDefaultPolicyVersionWithCallback invokes the resourcemanager.SetDefaultPolicyVersion API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/setdefaultpolicyversion.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) SetDefaultPolicyVersionWithCallback(request *SetDefaultPolicyVersionRequest, callback func(response *SetDefaultPolicyVersionResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateSetDefaultPolicyVersionRequest() (request *SetDefaultPolicyVersionReq
 	request = &SetDefaultPolicyVersionRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "SetDefaultPolicyVersion", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "SetDefaultPolicyVersion", "", "")
+	request.Method = requests.POST
 	return
 }
 

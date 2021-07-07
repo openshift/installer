@@ -21,7 +21,6 @@ import (
 )
 
 // CancelPromoteResourceAccount invokes the resourcemanager.CancelPromoteResourceAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/cancelpromoteresourceaccount.html
 func (client *Client) CancelPromoteResourceAccount(request *CancelPromoteResourceAccountRequest) (response *CancelPromoteResourceAccountResponse, err error) {
 	response = CreateCancelPromoteResourceAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) CancelPromoteResourceAccount(request *CancelPromoteResourc
 }
 
 // CancelPromoteResourceAccountWithChan invokes the resourcemanager.CancelPromoteResourceAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/cancelpromoteresourceaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CancelPromoteResourceAccountWithChan(request *CancelPromoteResourceAccountRequest) (<-chan *CancelPromoteResourceAccountResponse, <-chan error) {
 	responseChan := make(chan *CancelPromoteResourceAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) CancelPromoteResourceAccountWithChan(request *CancelPromot
 }
 
 // CancelPromoteResourceAccountWithCallback invokes the resourcemanager.CancelPromoteResourceAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/cancelpromoteresourceaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CancelPromoteResourceAccountWithCallback(request *CancelPromoteResourceAccountRequest, callback func(response *CancelPromoteResourceAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -90,7 +85,8 @@ func CreateCancelPromoteResourceAccountRequest() (request *CancelPromoteResource
 	request = &CancelPromoteResourceAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CancelPromoteResourceAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CancelPromoteResourceAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

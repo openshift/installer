@@ -21,7 +21,6 @@ import (
 )
 
 // ListAncestors invokes the resourcemanager.ListAncestors API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listancestors.html
 func (client *Client) ListAncestors(request *ListAncestorsRequest) (response *ListAncestorsResponse, err error) {
 	response = CreateListAncestorsResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListAncestors(request *ListAncestorsRequest) (response *Li
 }
 
 // ListAncestorsWithChan invokes the resourcemanager.ListAncestors API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listancestors.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListAncestorsWithChan(request *ListAncestorsRequest) (<-chan *ListAncestorsResponse, <-chan error) {
 	responseChan := make(chan *ListAncestorsResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListAncestorsWithChan(request *ListAncestorsRequest) (<-ch
 }
 
 // ListAncestorsWithCallback invokes the resourcemanager.ListAncestors API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listancestors.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListAncestorsWithCallback(request *ListAncestorsRequest, callback func(response *ListAncestorsResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateListAncestorsRequest() (request *ListAncestorsRequest) {
 	request = &ListAncestorsRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListAncestors", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListAncestors", "", "")
+	request.Method = requests.POST
 	return
 }
 

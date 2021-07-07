@@ -21,7 +21,6 @@ import (
 )
 
 // CreateCloudAccount invokes the resourcemanager.CreateCloudAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createcloudaccount.html
 func (client *Client) CreateCloudAccount(request *CreateCloudAccountRequest) (response *CreateCloudAccountResponse, err error) {
 	response = CreateCreateCloudAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) CreateCloudAccount(request *CreateCloudAccountRequest) (re
 }
 
 // CreateCloudAccountWithChan invokes the resourcemanager.CreateCloudAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createcloudaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreateCloudAccountWithChan(request *CreateCloudAccountRequest) (<-chan *CreateCloudAccountResponse, <-chan error) {
 	responseChan := make(chan *CreateCloudAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) CreateCloudAccountWithChan(request *CreateCloudAccountRequ
 }
 
 // CreateCloudAccountWithCallback invokes the resourcemanager.CreateCloudAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createcloudaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreateCloudAccountWithCallback(request *CreateCloudAccountRequest, callback func(response *CreateCloudAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -94,7 +89,8 @@ func CreateCreateCloudAccountRequest() (request *CreateCloudAccountRequest) {
 	request = &CreateCloudAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreateCloudAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreateCloudAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

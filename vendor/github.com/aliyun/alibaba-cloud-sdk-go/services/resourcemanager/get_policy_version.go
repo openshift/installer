@@ -21,7 +21,6 @@ import (
 )
 
 // GetPolicyVersion invokes the resourcemanager.GetPolicyVersion API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getpolicyversion.html
 func (client *Client) GetPolicyVersion(request *GetPolicyVersionRequest) (response *GetPolicyVersionResponse, err error) {
 	response = CreateGetPolicyVersionResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) GetPolicyVersion(request *GetPolicyVersionRequest) (respon
 }
 
 // GetPolicyVersionWithChan invokes the resourcemanager.GetPolicyVersion API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getpolicyversion.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetPolicyVersionWithChan(request *GetPolicyVersionRequest) (<-chan *GetPolicyVersionResponse, <-chan error) {
 	responseChan := make(chan *GetPolicyVersionResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) GetPolicyVersionWithChan(request *GetPolicyVersionRequest)
 }
 
 // GetPolicyVersionWithCallback invokes the resourcemanager.GetPolicyVersion API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getpolicyversion.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetPolicyVersionWithCallback(request *GetPolicyVersionRequest, callback func(response *GetPolicyVersionResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -93,7 +88,8 @@ func CreateGetPolicyVersionRequest() (request *GetPolicyVersionRequest) {
 	request = &GetPolicyVersionRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetPolicyVersion", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetPolicyVersion", "", "")
+	request.Method = requests.POST
 	return
 }
 

@@ -21,7 +21,6 @@ import (
 )
 
 // UpdateRole invokes the resourcemanager.UpdateRole API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updaterole.html
 func (client *Client) UpdateRole(request *UpdateRoleRequest) (response *UpdateRoleResponse, err error) {
 	response = CreateUpdateRoleResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) UpdateRole(request *UpdateRoleRequest) (response *UpdateRo
 }
 
 // UpdateRoleWithChan invokes the resourcemanager.UpdateRole API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updaterole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) UpdateRoleWithChan(request *UpdateRoleRequest) (<-chan *UpdateRoleResponse, <-chan error) {
 	responseChan := make(chan *UpdateRoleResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) UpdateRoleWithChan(request *UpdateRoleRequest) (<-chan *Up
 }
 
 // UpdateRoleWithCallback invokes the resourcemanager.UpdateRole API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updaterole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) UpdateRoleWithCallback(request *UpdateRoleRequest, callback func(response *UpdateRoleResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -79,6 +74,7 @@ type UpdateRoleRequest struct {
 	NewAssumeRolePolicyDocument string           `position:"Query" name:"NewAssumeRolePolicyDocument"`
 	RoleName                    string           `position:"Query" name:"RoleName"`
 	NewMaxSessionDuration       requests.Integer `position:"Query" name:"NewMaxSessionDuration"`
+	NewDescription              string           `position:"Query" name:"NewDescription"`
 }
 
 // UpdateRoleResponse is the response struct for api UpdateRole
@@ -93,7 +89,8 @@ func CreateUpdateRoleRequest() (request *UpdateRoleRequest) {
 	request = &UpdateRoleRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "UpdateRole", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "UpdateRole", "", "")
+	request.Method = requests.POST
 	return
 }
 

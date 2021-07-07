@@ -21,7 +21,6 @@ import (
 )
 
 // PromoteResourceAccount invokes the resourcemanager.PromoteResourceAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/promoteresourceaccount.html
 func (client *Client) PromoteResourceAccount(request *PromoteResourceAccountRequest) (response *PromoteResourceAccountResponse, err error) {
 	response = CreatePromoteResourceAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) PromoteResourceAccount(request *PromoteResourceAccountRequ
 }
 
 // PromoteResourceAccountWithChan invokes the resourcemanager.PromoteResourceAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/promoteresourceaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) PromoteResourceAccountWithChan(request *PromoteResourceAccountRequest) (<-chan *PromoteResourceAccountResponse, <-chan error) {
 	responseChan := make(chan *PromoteResourceAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) PromoteResourceAccountWithChan(request *PromoteResourceAcc
 }
 
 // PromoteResourceAccountWithCallback invokes the resourcemanager.PromoteResourceAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/promoteresourceaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) PromoteResourceAccountWithCallback(request *PromoteResourceAccountRequest, callback func(response *PromoteResourceAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -92,7 +87,8 @@ func CreatePromoteResourceAccountRequest() (request *PromoteResourceAccountReque
 	request = &PromoteResourceAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "PromoteResourceAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "PromoteResourceAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

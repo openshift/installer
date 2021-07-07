@@ -21,7 +21,6 @@ import (
 )
 
 // ResendPromoteResourceAccountEmail invokes the resourcemanager.ResendPromoteResourceAccountEmail API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/resendpromoteresourceaccountemail.html
 func (client *Client) ResendPromoteResourceAccountEmail(request *ResendPromoteResourceAccountEmailRequest) (response *ResendPromoteResourceAccountEmailResponse, err error) {
 	response = CreateResendPromoteResourceAccountEmailResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ResendPromoteResourceAccountEmail(request *ResendPromoteRe
 }
 
 // ResendPromoteResourceAccountEmailWithChan invokes the resourcemanager.ResendPromoteResourceAccountEmail API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/resendpromoteresourceaccountemail.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ResendPromoteResourceAccountEmailWithChan(request *ResendPromoteResourceAccountEmailRequest) (<-chan *ResendPromoteResourceAccountEmailResponse, <-chan error) {
 	responseChan := make(chan *ResendPromoteResourceAccountEmailResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ResendPromoteResourceAccountEmailWithChan(request *ResendP
 }
 
 // ResendPromoteResourceAccountEmailWithCallback invokes the resourcemanager.ResendPromoteResourceAccountEmail API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/resendpromoteresourceaccountemail.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ResendPromoteResourceAccountEmailWithCallback(request *ResendPromoteResourceAccountEmailRequest, callback func(response *ResendPromoteResourceAccountEmailResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateResendPromoteResourceAccountEmailRequest() (request *ResendPromoteRes
 	request = &ResendPromoteResourceAccountEmailRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ResendPromoteResourceAccountEmail", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ResendPromoteResourceAccountEmail", "", "")
+	request.Method = requests.POST
 	return
 }
 

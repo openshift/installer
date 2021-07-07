@@ -21,7 +21,6 @@ import (
 )
 
 // DestroyResourceDirectory invokes the resourcemanager.DestroyResourceDirectory API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/destroyresourcedirectory.html
 func (client *Client) DestroyResourceDirectory(request *DestroyResourceDirectoryRequest) (response *DestroyResourceDirectoryResponse, err error) {
 	response = CreateDestroyResourceDirectoryResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) DestroyResourceDirectory(request *DestroyResourceDirectory
 }
 
 // DestroyResourceDirectoryWithChan invokes the resourcemanager.DestroyResourceDirectory API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/destroyresourcedirectory.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DestroyResourceDirectoryWithChan(request *DestroyResourceDirectoryRequest) (<-chan *DestroyResourceDirectoryResponse, <-chan error) {
 	responseChan := make(chan *DestroyResourceDirectoryResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) DestroyResourceDirectoryWithChan(request *DestroyResourceD
 }
 
 // DestroyResourceDirectoryWithCallback invokes the resourcemanager.DestroyResourceDirectory API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/destroyresourcedirectory.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DestroyResourceDirectoryWithCallback(request *DestroyResourceDirectoryRequest, callback func(response *DestroyResourceDirectoryResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -89,7 +84,8 @@ func CreateDestroyResourceDirectoryRequest() (request *DestroyResourceDirectoryR
 	request = &DestroyResourceDirectoryRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DestroyResourceDirectory", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DestroyResourceDirectory", "", "")
+	request.Method = requests.POST
 	return
 }
 

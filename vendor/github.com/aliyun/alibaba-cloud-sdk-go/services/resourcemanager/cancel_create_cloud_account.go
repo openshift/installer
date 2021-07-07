@@ -21,7 +21,6 @@ import (
 )
 
 // CancelCreateCloudAccount invokes the resourcemanager.CancelCreateCloudAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/cancelcreatecloudaccount.html
 func (client *Client) CancelCreateCloudAccount(request *CancelCreateCloudAccountRequest) (response *CancelCreateCloudAccountResponse, err error) {
 	response = CreateCancelCreateCloudAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) CancelCreateCloudAccount(request *CancelCreateCloudAccount
 }
 
 // CancelCreateCloudAccountWithChan invokes the resourcemanager.CancelCreateCloudAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/cancelcreatecloudaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CancelCreateCloudAccountWithChan(request *CancelCreateCloudAccountRequest) (<-chan *CancelCreateCloudAccountResponse, <-chan error) {
 	responseChan := make(chan *CancelCreateCloudAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) CancelCreateCloudAccountWithChan(request *CancelCreateClou
 }
 
 // CancelCreateCloudAccountWithCallback invokes the resourcemanager.CancelCreateCloudAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/cancelcreatecloudaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CancelCreateCloudAccountWithCallback(request *CancelCreateCloudAccountRequest, callback func(response *CancelCreateCloudAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -90,7 +85,8 @@ func CreateCancelCreateCloudAccountRequest() (request *CancelCreateCloudAccountR
 	request = &CancelCreateCloudAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CancelCreateCloudAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CancelCreateCloudAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

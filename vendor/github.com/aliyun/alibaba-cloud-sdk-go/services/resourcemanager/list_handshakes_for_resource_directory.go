@@ -21,7 +21,6 @@ import (
 )
 
 // ListHandshakesForResourceDirectory invokes the resourcemanager.ListHandshakesForResourceDirectory API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listhandshakesforresourcedirectory.html
 func (client *Client) ListHandshakesForResourceDirectory(request *ListHandshakesForResourceDirectoryRequest) (response *ListHandshakesForResourceDirectoryResponse, err error) {
 	response = CreateListHandshakesForResourceDirectoryResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListHandshakesForResourceDirectory(request *ListHandshakes
 }
 
 // ListHandshakesForResourceDirectoryWithChan invokes the resourcemanager.ListHandshakesForResourceDirectory API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listhandshakesforresourcedirectory.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListHandshakesForResourceDirectoryWithChan(request *ListHandshakesForResourceDirectoryRequest) (<-chan *ListHandshakesForResourceDirectoryResponse, <-chan error) {
 	responseChan := make(chan *ListHandshakesForResourceDirectoryResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListHandshakesForResourceDirectoryWithChan(request *ListHa
 }
 
 // ListHandshakesForResourceDirectoryWithCallback invokes the resourcemanager.ListHandshakesForResourceDirectory API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listhandshakesforresourcedirectory.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListHandshakesForResourceDirectoryWithCallback(request *ListHandshakesForResourceDirectoryRequest, callback func(response *ListHandshakesForResourceDirectoryResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -83,10 +78,10 @@ type ListHandshakesForResourceDirectoryRequest struct {
 // ListHandshakesForResourceDirectoryResponse is the response struct for api ListHandshakesForResourceDirectory
 type ListHandshakesForResourceDirectoryResponse struct {
 	*responses.BaseResponse
+	TotalCount int                                            `json:"TotalCount" xml:"TotalCount"`
+	PageSize   int                                            `json:"PageSize" xml:"PageSize"`
 	RequestId  string                                         `json:"RequestId" xml:"RequestId"`
 	PageNumber int                                            `json:"PageNumber" xml:"PageNumber"`
-	PageSize   int                                            `json:"PageSize" xml:"PageSize"`
-	TotalCount int                                            `json:"TotalCount" xml:"TotalCount"`
 	Handshakes HandshakesInListHandshakesForResourceDirectory `json:"Handshakes" xml:"Handshakes"`
 }
 
@@ -95,7 +90,8 @@ func CreateListHandshakesForResourceDirectoryRequest() (request *ListHandshakesF
 	request = &ListHandshakesForResourceDirectoryRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListHandshakesForResourceDirectory", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListHandshakesForResourceDirectory", "", "")
+	request.Method = requests.POST
 	return
 }
 

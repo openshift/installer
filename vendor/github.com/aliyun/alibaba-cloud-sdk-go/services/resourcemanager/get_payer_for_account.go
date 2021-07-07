@@ -21,7 +21,6 @@ import (
 )
 
 // GetPayerForAccount invokes the resourcemanager.GetPayerForAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getpayerforaccount.html
 func (client *Client) GetPayerForAccount(request *GetPayerForAccountRequest) (response *GetPayerForAccountResponse, err error) {
 	response = CreateGetPayerForAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) GetPayerForAccount(request *GetPayerForAccountRequest) (re
 }
 
 // GetPayerForAccountWithChan invokes the resourcemanager.GetPayerForAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getpayerforaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetPayerForAccountWithChan(request *GetPayerForAccountRequest) (<-chan *GetPayerForAccountResponse, <-chan error) {
 	responseChan := make(chan *GetPayerForAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) GetPayerForAccountWithChan(request *GetPayerForAccountRequ
 }
 
 // GetPayerForAccountWithCallback invokes the resourcemanager.GetPayerForAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getpayerforaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetPayerForAccountWithCallback(request *GetPayerForAccountRequest, callback func(response *GetPayerForAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -82,9 +77,9 @@ type GetPayerForAccountRequest struct {
 // GetPayerForAccountResponse is the response struct for api GetPayerForAccount
 type GetPayerForAccountResponse struct {
 	*responses.BaseResponse
+	PayerAccountName string `json:"PayerAccountName" xml:"PayerAccountName"`
 	RequestId        string `json:"RequestId" xml:"RequestId"`
 	PayerAccountId   string `json:"PayerAccountId" xml:"PayerAccountId"`
-	PayerAccountName string `json:"PayerAccountName" xml:"PayerAccountName"`
 }
 
 // CreateGetPayerForAccountRequest creates a request to invoke GetPayerForAccount API
@@ -92,7 +87,8 @@ func CreateGetPayerForAccountRequest() (request *GetPayerForAccountRequest) {
 	request = &GetPayerForAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetPayerForAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetPayerForAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

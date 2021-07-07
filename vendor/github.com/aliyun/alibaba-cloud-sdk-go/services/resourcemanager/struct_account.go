@@ -17,16 +17,18 @@ package resourcemanager
 
 // Account is a nested struct in resourcemanager response
 type Account struct {
-	ModifyTime          string `json:"ModifyTime" xml:"ModifyTime"`
-	AccountId           string `json:"AccountId" xml:"AccountId"`
-	JoinTime            string `json:"JoinTime" xml:"JoinTime"`
-	AccountName         string `json:"AccountName" xml:"AccountName"`
-	IdentityInformation string `json:"IdentityInformation" xml:"IdentityInformation"`
-	RecordId            string `json:"RecordId" xml:"RecordId"`
-	Status              string `json:"Status" xml:"Status"`
-	FolderId            string `json:"FolderId" xml:"FolderId"`
-	JoinMethod          string `json:"JoinMethod" xml:"JoinMethod"`
-	DisplayName         string `json:"DisplayName" xml:"DisplayName"`
-	ResourceDirectoryId string `json:"ResourceDirectoryId" xml:"ResourceDirectoryId"`
-	Type                string `json:"Type" xml:"Type"`
+	ModifyTime            string `json:"ModifyTime" xml:"ModifyTime"`
+	DelegationEnabledTime string `json:"DelegationEnabledTime" xml:"DelegationEnabledTime"`
+	JoinTime              string `json:"JoinTime" xml:"JoinTime"`
+	FolderId              string `json:"FolderId" xml:"FolderId"`
+	DisplayName           string `json:"DisplayName" xml:"DisplayName"`
+	AccountId             string `json:"AccountId" xml:"AccountId"`
+	ServicePrincipal      string `json:"ServicePrincipal" xml:"ServicePrincipal"`
+	AccountName           string `json:"AccountName" xml:"AccountName"`
+	IdentityInformation   string `json:"IdentityInformation" xml:"IdentityInformation"`
+	RecordId              string `json:"RecordId" xml:"RecordId"`
+	Status                string `json:"Status" xml:"Status"`
+	JoinMethod            string `json:"JoinMethod" xml:"JoinMethod"`
+	ResourceDirectoryId   string `json:"ResourceDirectoryId" xml:"ResourceDirectoryId"`
+	Type                  string `json:"Type" xml:"Type"`
 }

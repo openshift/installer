@@ -21,7 +21,6 @@ import (
 )
 
 // MoveAccount invokes the resourcemanager.MoveAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/moveaccount.html
 func (client *Client) MoveAccount(request *MoveAccountRequest) (response *MoveAccountResponse, err error) {
 	response = CreateMoveAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) MoveAccount(request *MoveAccountRequest) (response *MoveAc
 }
 
 // MoveAccountWithChan invokes the resourcemanager.MoveAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/moveaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) MoveAccountWithChan(request *MoveAccountRequest) (<-chan *MoveAccountResponse, <-chan error) {
 	responseChan := make(chan *MoveAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) MoveAccountWithChan(request *MoveAccountRequest) (<-chan *
 }
 
 // MoveAccountWithCallback invokes the resourcemanager.MoveAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/moveaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) MoveAccountWithCallback(request *MoveAccountRequest, callback func(response *MoveAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateMoveAccountRequest() (request *MoveAccountRequest) {
 	request = &MoveAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "MoveAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "MoveAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

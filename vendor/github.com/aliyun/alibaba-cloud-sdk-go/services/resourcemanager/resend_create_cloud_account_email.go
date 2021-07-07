@@ -21,7 +21,6 @@ import (
 )
 
 // ResendCreateCloudAccountEmail invokes the resourcemanager.ResendCreateCloudAccountEmail API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/resendcreatecloudaccountemail.html
 func (client *Client) ResendCreateCloudAccountEmail(request *ResendCreateCloudAccountEmailRequest) (response *ResendCreateCloudAccountEmailResponse, err error) {
 	response = CreateResendCreateCloudAccountEmailResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ResendCreateCloudAccountEmail(request *ResendCreateCloudAc
 }
 
 // ResendCreateCloudAccountEmailWithChan invokes the resourcemanager.ResendCreateCloudAccountEmail API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/resendcreatecloudaccountemail.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ResendCreateCloudAccountEmailWithChan(request *ResendCreateCloudAccountEmailRequest) (<-chan *ResendCreateCloudAccountEmailResponse, <-chan error) {
 	responseChan := make(chan *ResendCreateCloudAccountEmailResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ResendCreateCloudAccountEmailWithChan(request *ResendCreat
 }
 
 // ResendCreateCloudAccountEmailWithCallback invokes the resourcemanager.ResendCreateCloudAccountEmail API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/resendcreatecloudaccountemail.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ResendCreateCloudAccountEmailWithCallback(request *ResendCreateCloudAccountEmailRequest, callback func(response *ResendCreateCloudAccountEmailResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateResendCreateCloudAccountEmailRequest() (request *ResendCreateCloudAcc
 	request = &ResendCreateCloudAccountEmailRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ResendCreateCloudAccountEmail", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ResendCreateCloudAccountEmail", "", "")
+	request.Method = requests.POST
 	return
 }
 

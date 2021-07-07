@@ -19,7 +19,8 @@ require (
 	github.com/IBM/platform-services-go-sdk v0.18.13
 	github.com/IBM/vpc-go-sdk v1.0.1
 	github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667 // indirect
-	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1147
+	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1154
+	github.com/aliyun/terraform-provider-alicloud v1.125.0 // indirect
 	github.com/antchfx/xpath v1.1.2 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
@@ -123,6 +124,7 @@ require (
 replace (
 	cloud.google.com/go => cloud.google.com/go v0.57.0
 	github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
+	github.com/Sirupsen/logrus v0.0.0-20181010200618-458213699411 => github.com/sirupsen/logrus v0.0.0-20181010200618-458213699411
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
 	github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4 // Pin to fork with deduplicated rpc types v0.12.20-openshift-4
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift // Pin to fork with public rpc types

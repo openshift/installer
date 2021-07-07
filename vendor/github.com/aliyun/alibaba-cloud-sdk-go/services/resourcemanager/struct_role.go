@@ -17,15 +17,15 @@ package resourcemanager
 
 // Role is a nested struct in resourcemanager response
 type Role struct {
-	CreateDate               string             `json:"CreateDate" xml:"CreateDate"`
 	RoleId                   string             `json:"RoleId" xml:"RoleId"`
+	CreateDate               string             `json:"CreateDate" xml:"CreateDate"`
 	Arn                      string             `json:"Arn" xml:"Arn"`
 	IsServiceLinkedRole      bool               `json:"IsServiceLinkedRole" xml:"IsServiceLinkedRole"`
 	UpdateDate               string             `json:"UpdateDate" xml:"UpdateDate"`
 	MaxSessionDuration       int64              `json:"MaxSessionDuration" xml:"MaxSessionDuration"`
 	Description              string             `json:"Description" xml:"Description"`
+	RoleName                 string             `json:"RoleName" xml:"RoleName"`
 	AssumeRolePolicyDocument string             `json:"AssumeRolePolicyDocument" xml:"AssumeRolePolicyDocument"`
 	RolePrincipalName        string             `json:"RolePrincipalName" xml:"RolePrincipalName"`
-	RoleName                 string             `json:"RoleName" xml:"RoleName"`
 	LatestDeletionTask       LatestDeletionTask `json:"LatestDeletionTask" xml:"LatestDeletionTask"`
 }

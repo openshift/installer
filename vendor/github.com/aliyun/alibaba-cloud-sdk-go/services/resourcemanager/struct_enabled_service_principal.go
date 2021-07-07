@@ -17,6 +17,6 @@ package resourcemanager
 
 // EnabledServicePrincipal is a nested struct in resourcemanager response
 type EnabledServicePrincipal struct {
-	EnableTime       string `json:"EnableTime" xml:"EnableTime"`
 	ServicePrincipal string `json:"ServicePrincipal" xml:"ServicePrincipal"`
+	EnableTime       string `json:"EnableTime" xml:"EnableTime"`
 }

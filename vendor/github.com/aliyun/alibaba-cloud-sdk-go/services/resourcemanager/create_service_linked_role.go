@@ -21,7 +21,6 @@ import (
 )
 
 // CreateServiceLinkedRole invokes the resourcemanager.CreateServiceLinkedRole API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createservicelinkedrole.html
 func (client *Client) CreateServiceLinkedRole(request *CreateServiceLinkedRoleRequest) (response *CreateServiceLinkedRoleResponse, err error) {
 	response = CreateCreateServiceLinkedRoleResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) CreateServiceLinkedRole(request *CreateServiceLinkedRoleRe
 }
 
 // CreateServiceLinkedRoleWithChan invokes the resourcemanager.CreateServiceLinkedRole API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createservicelinkedrole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreateServiceLinkedRoleWithChan(request *CreateServiceLinkedRoleRequest) (<-chan *CreateServiceLinkedRoleResponse, <-chan error) {
 	responseChan := make(chan *CreateServiceLinkedRoleResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) CreateServiceLinkedRoleWithChan(request *CreateServiceLink
 }
 
 // CreateServiceLinkedRoleWithCallback invokes the resourcemanager.CreateServiceLinkedRole API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createservicelinkedrole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreateServiceLinkedRoleWithCallback(request *CreateServiceLinkedRoleRequest, callback func(response *CreateServiceLinkedRoleResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -93,7 +88,8 @@ func CreateCreateServiceLinkedRoleRequest() (request *CreateServiceLinkedRoleReq
 	request = &CreateServiceLinkedRoleRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreateServiceLinkedRole", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreateServiceLinkedRole", "", "")
+	request.Method = requests.POST
 	return
 }
 

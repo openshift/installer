@@ -21,7 +21,6 @@ import (
 )
 
 // DeleteServiceLinkedRole invokes the resourcemanager.DeleteServiceLinkedRole API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deleteservicelinkedrole.html
 func (client *Client) DeleteServiceLinkedRole(request *DeleteServiceLinkedRoleRequest) (response *DeleteServiceLinkedRoleResponse, err error) {
 	response = CreateDeleteServiceLinkedRoleResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) DeleteServiceLinkedRole(request *DeleteServiceLinkedRoleRe
 }
 
 // DeleteServiceLinkedRoleWithChan invokes the resourcemanager.DeleteServiceLinkedRole API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deleteservicelinkedrole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeleteServiceLinkedRoleWithChan(request *DeleteServiceLinkedRoleRequest) (<-chan *DeleteServiceLinkedRoleResponse, <-chan error) {
 	responseChan := make(chan *DeleteServiceLinkedRoleResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) DeleteServiceLinkedRoleWithChan(request *DeleteServiceLink
 }
 
 // DeleteServiceLinkedRoleWithCallback invokes the resourcemanager.DeleteServiceLinkedRole API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deleteservicelinkedrole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeleteServiceLinkedRoleWithCallback(request *DeleteServiceLinkedRoleRequest, callback func(response *DeleteServiceLinkedRoleResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateDeleteServiceLinkedRoleRequest() (request *DeleteServiceLinkedRoleReq
 	request = &DeleteServiceLinkedRoleRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeleteServiceLinkedRole", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeleteServiceLinkedRole", "", "")
+	request.Method = requests.POST
 	return
 }
 

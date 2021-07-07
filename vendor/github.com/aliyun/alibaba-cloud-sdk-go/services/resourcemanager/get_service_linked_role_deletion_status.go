@@ -21,7 +21,6 @@ import (
 )
 
 // GetServiceLinkedRoleDeletionStatus invokes the resourcemanager.GetServiceLinkedRoleDeletionStatus API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getservicelinkedroledeletionstatus.html
 func (client *Client) GetServiceLinkedRoleDeletionStatus(request *GetServiceLinkedRoleDeletionStatusRequest) (response *GetServiceLinkedRoleDeletionStatusResponse, err error) {
 	response = CreateGetServiceLinkedRoleDeletionStatusResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) GetServiceLinkedRoleDeletionStatus(request *GetServiceLink
 }
 
 // GetServiceLinkedRoleDeletionStatusWithChan invokes the resourcemanager.GetServiceLinkedRoleDeletionStatus API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getservicelinkedroledeletionstatus.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetServiceLinkedRoleDeletionStatusWithChan(request *GetServiceLinkedRoleDeletionStatusRequest) (<-chan *GetServiceLinkedRoleDeletionStatusResponse, <-chan error) {
 	responseChan := make(chan *GetServiceLinkedRoleDeletionStatusResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) GetServiceLinkedRoleDeletionStatusWithChan(request *GetSer
 }
 
 // GetServiceLinkedRoleDeletionStatusWithCallback invokes the resourcemanager.GetServiceLinkedRoleDeletionStatus API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getservicelinkedroledeletionstatus.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetServiceLinkedRoleDeletionStatusWithCallback(request *GetServiceLinkedRoleDeletionStatusRequest, callback func(response *GetServiceLinkedRoleDeletionStatusResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -82,8 +77,8 @@ type GetServiceLinkedRoleDeletionStatusRequest struct {
 // GetServiceLinkedRoleDeletionStatusResponse is the response struct for api GetServiceLinkedRoleDeletionStatus
 type GetServiceLinkedRoleDeletionStatusResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
 	Status    string `json:"Status" xml:"Status"`
+	RequestId string `json:"RequestId" xml:"RequestId"`
 	Reason    Reason `json:"Reason" xml:"Reason"`
 }
 
@@ -92,7 +87,8 @@ func CreateGetServiceLinkedRoleDeletionStatusRequest() (request *GetServiceLinke
 	request = &GetServiceLinkedRoleDeletionStatusRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetServiceLinkedRoleDeletionStatus", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetServiceLinkedRoleDeletionStatus", "", "")
+	request.Method = requests.POST
 	return
 }
 

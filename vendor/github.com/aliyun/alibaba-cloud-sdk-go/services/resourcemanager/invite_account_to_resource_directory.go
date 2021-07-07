@@ -21,7 +21,6 @@ import (
 )
 
 // InviteAccountToResourceDirectory invokes the resourcemanager.InviteAccountToResourceDirectory API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/inviteaccounttoresourcedirectory.html
 func (client *Client) InviteAccountToResourceDirectory(request *InviteAccountToResourceDirectoryRequest) (response *InviteAccountToResourceDirectoryResponse, err error) {
 	response = CreateInviteAccountToResourceDirectoryResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) InviteAccountToResourceDirectory(request *InviteAccountToR
 }
 
 // InviteAccountToResourceDirectoryWithChan invokes the resourcemanager.InviteAccountToResourceDirectory API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/inviteaccounttoresourcedirectory.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) InviteAccountToResourceDirectoryWithChan(request *InviteAccountToResourceDirectoryRequest) (<-chan *InviteAccountToResourceDirectoryResponse, <-chan error) {
 	responseChan := make(chan *InviteAccountToResourceDirectoryResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) InviteAccountToResourceDirectoryWithChan(request *InviteAc
 }
 
 // InviteAccountToResourceDirectoryWithCallback invokes the resourcemanager.InviteAccountToResourceDirectory API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/inviteaccounttoresourcedirectory.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) InviteAccountToResourceDirectoryWithCallback(request *InviteAccountToResourceDirectoryRequest, callback func(response *InviteAccountToResourceDirectoryResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -93,7 +88,8 @@ func CreateInviteAccountToResourceDirectoryRequest() (request *InviteAccountToRe
 	request = &InviteAccountToResourceDirectoryRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "InviteAccountToResourceDirectory", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "InviteAccountToResourceDirectory", "", "")
+	request.Method = requests.POST
 	return
 }
 

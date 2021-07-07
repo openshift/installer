@@ -21,7 +21,6 @@ import (
 )
 
 // DetachPolicy invokes the resourcemanager.DetachPolicy API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/detachpolicy.html
 func (client *Client) DetachPolicy(request *DetachPolicyRequest) (response *DetachPolicyResponse, err error) {
 	response = CreateDetachPolicyResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) DetachPolicy(request *DetachPolicyRequest) (response *Deta
 }
 
 // DetachPolicyWithChan invokes the resourcemanager.DetachPolicy API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/detachpolicy.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DetachPolicyWithChan(request *DetachPolicyRequest) (<-chan *DetachPolicyResponse, <-chan error) {
 	responseChan := make(chan *DetachPolicyResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) DetachPolicyWithChan(request *DetachPolicyRequest) (<-chan
 }
 
 // DetachPolicyWithCallback invokes the resourcemanager.DetachPolicy API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/detachpolicy.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DetachPolicyWithCallback(request *DetachPolicyRequest, callback func(response *DetachPolicyResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -94,7 +89,8 @@ func CreateDetachPolicyRequest() (request *DetachPolicyRequest) {
 	request = &DetachPolicyRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DetachPolicy", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DetachPolicy", "", "")
+	request.Method = requests.POST
 	return
 }
 

@@ -21,7 +21,6 @@ import (
 )
 
 // DeleteRole invokes the resourcemanager.DeleteRole API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deleterole.html
 func (client *Client) DeleteRole(request *DeleteRoleRequest) (response *DeleteRoleResponse, err error) {
 	response = CreateDeleteRoleResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) DeleteRole(request *DeleteRoleRequest) (response *DeleteRo
 }
 
 // DeleteRoleWithChan invokes the resourcemanager.DeleteRole API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deleterole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeleteRoleWithChan(request *DeleteRoleRequest) (<-chan *DeleteRoleResponse, <-chan error) {
 	responseChan := make(chan *DeleteRoleResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) DeleteRoleWithChan(request *DeleteRoleRequest) (<-chan *De
 }
 
 // DeleteRoleWithCallback invokes the resourcemanager.DeleteRole API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deleterole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeleteRoleWithCallback(request *DeleteRoleRequest, callback func(response *DeleteRoleResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -90,7 +85,8 @@ func CreateDeleteRoleRequest() (request *DeleteRoleRequest) {
 	request = &DeleteRoleRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeleteRole", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeleteRole", "", "")
+	request.Method = requests.POST
 	return
 }
 

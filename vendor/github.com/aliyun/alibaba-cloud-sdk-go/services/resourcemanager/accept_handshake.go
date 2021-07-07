@@ -21,7 +21,6 @@ import (
 )
 
 // AcceptHandshake invokes the resourcemanager.AcceptHandshake API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/accepthandshake.html
 func (client *Client) AcceptHandshake(request *AcceptHandshakeRequest) (response *AcceptHandshakeResponse, err error) {
 	response = CreateAcceptHandshakeResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) AcceptHandshake(request *AcceptHandshakeRequest) (response
 }
 
 // AcceptHandshakeWithChan invokes the resourcemanager.AcceptHandshake API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/accepthandshake.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) AcceptHandshakeWithChan(request *AcceptHandshakeRequest) (<-chan *AcceptHandshakeResponse, <-chan error) {
 	responseChan := make(chan *AcceptHandshakeResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) AcceptHandshakeWithChan(request *AcceptHandshakeRequest) (
 }
 
 // AcceptHandshakeWithCallback invokes the resourcemanager.AcceptHandshake API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/accepthandshake.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) AcceptHandshakeWithCallback(request *AcceptHandshakeRequest, callback func(response *AcceptHandshakeResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateAcceptHandshakeRequest() (request *AcceptHandshakeRequest) {
 	request = &AcceptHandshakeRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "AcceptHandshake", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "AcceptHandshake", "", "")
+	request.Method = requests.POST
 	return
 }
 

@@ -21,7 +21,6 @@ import (
 )
 
 // ListResources invokes the resourcemanager.ListResources API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listresources.html
 func (client *Client) ListResources(request *ListResourcesRequest) (response *ListResourcesResponse, err error) {
 	response = CreateListResourcesResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListResources(request *ListResourcesRequest) (response *Li
 }
 
 // ListResourcesWithChan invokes the resourcemanager.ListResources API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listresources.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListResourcesWithChan(request *ListResourcesRequest) (<-chan *ListResourcesResponse, <-chan error) {
 	responseChan := make(chan *ListResourcesResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListResourcesWithChan(request *ListResourcesRequest) (<-ch
 }
 
 // ListResourcesWithCallback invokes the resourcemanager.ListResources API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listresources.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListResourcesWithCallback(request *ListResourcesRequest, callback func(response *ListResourcesResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -83,15 +78,16 @@ type ListResourcesRequest struct {
 	ResourceType    string           `position:"Query" name:"ResourceType"`
 	Service         string           `position:"Query" name:"Service"`
 	Region          string           `position:"Query" name:"Region"`
+	ResourceIds     string           `position:"Query" name:"ResourceIds"`
 }
 
 // ListResourcesResponse is the response struct for api ListResources
 type ListResourcesResponse struct {
 	*responses.BaseResponse
+	TotalCount int                      `json:"TotalCount" xml:"TotalCount"`
+	PageSize   int                      `json:"PageSize" xml:"PageSize"`
 	RequestId  string                   `json:"RequestId" xml:"RequestId"`
 	PageNumber int                      `json:"PageNumber" xml:"PageNumber"`
-	PageSize   int                      `json:"PageSize" xml:"PageSize"`
-	TotalCount int                      `json:"TotalCount" xml:"TotalCount"`
 	Resources  ResourcesInListResources `json:"Resources" xml:"Resources"`
 }
 
@@ -100,7 +96,8 @@ func CreateListResourcesRequest() (request *ListResourcesRequest) {
 	request = &ListResourcesRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListResources", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListResources", "", "")
+	request.Method = requests.POST
 	return
 }
 

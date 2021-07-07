@@ -21,7 +21,6 @@ import (
 )
 
 // UpdateAccount invokes the resourcemanager.UpdateAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updateaccount.html
 func (client *Client) UpdateAccount(request *UpdateAccountRequest) (response *UpdateAccountResponse, err error) {
 	response = CreateUpdateAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) UpdateAccount(request *UpdateAccountRequest) (response *Up
 }
 
 // UpdateAccountWithChan invokes the resourcemanager.UpdateAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updateaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) UpdateAccountWithChan(request *UpdateAccountRequest) (<-chan *UpdateAccountResponse, <-chan error) {
 	responseChan := make(chan *UpdateAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) UpdateAccountWithChan(request *UpdateAccountRequest) (<-ch
 }
 
 // UpdateAccountWithCallback invokes the resourcemanager.UpdateAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/updateaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) UpdateAccountWithCallback(request *UpdateAccountRequest, callback func(response *UpdateAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -77,6 +72,7 @@ func (client *Client) UpdateAccountWithCallback(request *UpdateAccountRequest, c
 type UpdateAccountRequest struct {
 	*requests.RpcRequest
 	NewDisplayName string `position:"Query" name:"NewDisplayName"`
+	NewAccountType string `position:"Query" name:"NewAccountType"`
 	AccountId      string `position:"Query" name:"AccountId"`
 }
 
@@ -92,7 +88,8 @@ func CreateUpdateAccountRequest() (request *UpdateAccountRequest) {
 	request = &UpdateAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "UpdateAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "UpdateAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

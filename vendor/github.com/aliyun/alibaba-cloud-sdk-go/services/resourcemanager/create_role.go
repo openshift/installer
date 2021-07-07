@@ -21,7 +21,6 @@ import (
 )
 
 // CreateRole invokes the resourcemanager.CreateRole API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createrole.html
 func (client *Client) CreateRole(request *CreateRoleRequest) (response *CreateRoleResponse, err error) {
 	response = CreateCreateRoleResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) CreateRole(request *CreateRoleRequest) (response *CreateRo
 }
 
 // CreateRoleWithChan invokes the resourcemanager.CreateRole API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createrole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreateRoleWithChan(request *CreateRoleRequest) (<-chan *CreateRoleResponse, <-chan error) {
 	responseChan := make(chan *CreateRoleResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) CreateRoleWithChan(request *CreateRoleRequest) (<-chan *Cr
 }
 
 // CreateRoleWithCallback invokes the resourcemanager.CreateRole API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createrole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreateRoleWithCallback(request *CreateRoleRequest, callback func(response *CreateRoleResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -94,7 +89,8 @@ func CreateCreateRoleRequest() (request *CreateRoleRequest) {
 	request = &CreateRoleRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreateRole", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreateRole", "", "")
+	request.Method = requests.POST
 	return
 }
 

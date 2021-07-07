@@ -21,7 +21,6 @@ import (
 )
 
 // DeletePolicy invokes the resourcemanager.DeletePolicy API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deletepolicy.html
 func (client *Client) DeletePolicy(request *DeletePolicyRequest) (response *DeletePolicyResponse, err error) {
 	response = CreateDeletePolicyResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) DeletePolicy(request *DeletePolicyRequest) (response *Dele
 }
 
 // DeletePolicyWithChan invokes the resourcemanager.DeletePolicy API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deletepolicy.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeletePolicyWithChan(request *DeletePolicyRequest) (<-chan *DeletePolicyResponse, <-chan error) {
 	responseChan := make(chan *DeletePolicyResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) DeletePolicyWithChan(request *DeletePolicyRequest) (<-chan
 }
 
 // DeletePolicyWithCallback invokes the resourcemanager.DeletePolicy API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deletepolicy.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeletePolicyWithCallback(request *DeletePolicyRequest, callback func(response *DeletePolicyResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -90,7 +85,8 @@ func CreateDeletePolicyRequest() (request *DeletePolicyRequest) {
 	request = &DeletePolicyRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeletePolicy", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeletePolicy", "", "")
+	request.Method = requests.POST
 	return
 }
 

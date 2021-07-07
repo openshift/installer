@@ -21,7 +21,6 @@ import (
 )
 
 // GetResourceGroup invokes the resourcemanager.GetResourceGroup API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getresourcegroup.html
 func (client *Client) GetResourceGroup(request *GetResourceGroupRequest) (response *GetResourceGroupResponse, err error) {
 	response = CreateGetResourceGroupResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) GetResourceGroup(request *GetResourceGroupRequest) (respon
 }
 
 // GetResourceGroupWithChan invokes the resourcemanager.GetResourceGroup API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getresourcegroup.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetResourceGroupWithChan(request *GetResourceGroupRequest) (<-chan *GetResourceGroupResponse, <-chan error) {
 	responseChan := make(chan *GetResourceGroupResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) GetResourceGroupWithChan(request *GetResourceGroupRequest)
 }
 
 // GetResourceGroupWithCallback invokes the resourcemanager.GetResourceGroup API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getresourcegroup.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetResourceGroupWithCallback(request *GetResourceGroupRequest, callback func(response *GetResourceGroupResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateGetResourceGroupRequest() (request *GetResourceGroupRequest) {
 	request = &GetResourceGroupRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetResourceGroup", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetResourceGroup", "", "")
+	request.Method = requests.POST
 	return
 }
 

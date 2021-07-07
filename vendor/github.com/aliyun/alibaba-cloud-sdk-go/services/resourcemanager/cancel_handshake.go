@@ -21,7 +21,6 @@ import (
 )
 
 // CancelHandshake invokes the resourcemanager.CancelHandshake API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/cancelhandshake.html
 func (client *Client) CancelHandshake(request *CancelHandshakeRequest) (response *CancelHandshakeResponse, err error) {
 	response = CreateCancelHandshakeResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) CancelHandshake(request *CancelHandshakeRequest) (response
 }
 
 // CancelHandshakeWithChan invokes the resourcemanager.CancelHandshake API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/cancelhandshake.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CancelHandshakeWithChan(request *CancelHandshakeRequest) (<-chan *CancelHandshakeResponse, <-chan error) {
 	responseChan := make(chan *CancelHandshakeResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) CancelHandshakeWithChan(request *CancelHandshakeRequest) (
 }
 
 // CancelHandshakeWithCallback invokes the resourcemanager.CancelHandshake API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/cancelhandshake.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CancelHandshakeWithCallback(request *CancelHandshakeRequest, callback func(response *CancelHandshakeResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateCancelHandshakeRequest() (request *CancelHandshakeRequest) {
 	request = &CancelHandshakeRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CancelHandshake", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CancelHandshake", "", "")
+	request.Method = requests.POST
 	return
 }
 

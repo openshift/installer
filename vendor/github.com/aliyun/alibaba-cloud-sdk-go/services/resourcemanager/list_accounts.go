@@ -21,7 +21,6 @@ import (
 )
 
 // ListAccounts invokes the resourcemanager.ListAccounts API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listaccounts.html
 func (client *Client) ListAccounts(request *ListAccountsRequest) (response *ListAccountsResponse, err error) {
 	response = CreateListAccountsResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListAccounts(request *ListAccountsRequest) (response *List
 }
 
 // ListAccountsWithChan invokes the resourcemanager.ListAccounts API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listaccounts.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListAccountsWithChan(request *ListAccountsRequest) (<-chan *ListAccountsResponse, <-chan error) {
 	responseChan := make(chan *ListAccountsResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListAccountsWithChan(request *ListAccountsRequest) (<-chan
 }
 
 // ListAccountsWithCallback invokes the resourcemanager.ListAccounts API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listaccounts.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListAccountsWithCallback(request *ListAccountsRequest, callback func(response *ListAccountsResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -83,10 +78,10 @@ type ListAccountsRequest struct {
 // ListAccountsResponse is the response struct for api ListAccounts
 type ListAccountsResponse struct {
 	*responses.BaseResponse
+	TotalCount int                    `json:"TotalCount" xml:"TotalCount"`
+	PageSize   int                    `json:"PageSize" xml:"PageSize"`
 	RequestId  string                 `json:"RequestId" xml:"RequestId"`
 	PageNumber int                    `json:"PageNumber" xml:"PageNumber"`
-	PageSize   int                    `json:"PageSize" xml:"PageSize"`
-	TotalCount int                    `json:"TotalCount" xml:"TotalCount"`
 	Accounts   AccountsInListAccounts `json:"Accounts" xml:"Accounts"`
 }
 
@@ -95,7 +90,8 @@ func CreateListAccountsRequest() (request *ListAccountsRequest) {
 	request = &ListAccountsRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListAccounts", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListAccounts", "", "")
+	request.Method = requests.POST
 	return
 }
 

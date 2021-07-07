@@ -21,7 +21,6 @@ import (
 )
 
 // ListFoldersForParent invokes the resourcemanager.ListFoldersForParent API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listfoldersforparent.html
 func (client *Client) ListFoldersForParent(request *ListFoldersForParentRequest) (response *ListFoldersForParentResponse, err error) {
 	response = CreateListFoldersForParentResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListFoldersForParent(request *ListFoldersForParentRequest)
 }
 
 // ListFoldersForParentWithChan invokes the resourcemanager.ListFoldersForParent API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listfoldersforparent.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListFoldersForParentWithChan(request *ListFoldersForParentRequest) (<-chan *ListFoldersForParentResponse, <-chan error) {
 	responseChan := make(chan *ListFoldersForParentResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListFoldersForParentWithChan(request *ListFoldersForParent
 }
 
 // ListFoldersForParentWithCallback invokes the resourcemanager.ListFoldersForParent API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listfoldersforparent.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListFoldersForParentWithCallback(request *ListFoldersForParentRequest, callback func(response *ListFoldersForParentResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -85,10 +80,10 @@ type ListFoldersForParentRequest struct {
 // ListFoldersForParentResponse is the response struct for api ListFoldersForParent
 type ListFoldersForParentResponse struct {
 	*responses.BaseResponse
+	TotalCount int                           `json:"TotalCount" xml:"TotalCount"`
+	PageSize   int                           `json:"PageSize" xml:"PageSize"`
 	RequestId  string                        `json:"RequestId" xml:"RequestId"`
 	PageNumber int                           `json:"PageNumber" xml:"PageNumber"`
-	PageSize   int                           `json:"PageSize" xml:"PageSize"`
-	TotalCount int                           `json:"TotalCount" xml:"TotalCount"`
 	Folders    FoldersInListFoldersForParent `json:"Folders" xml:"Folders"`
 }
 
@@ -97,7 +92,8 @@ func CreateListFoldersForParentRequest() (request *ListFoldersForParentRequest) 
 	request = &ListFoldersForParentRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListFoldersForParent", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListFoldersForParent", "", "")
+	request.Method = requests.POST
 	return
 }
 

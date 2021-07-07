@@ -21,7 +21,6 @@ import (
 )
 
 // ListHandshakesForAccount invokes the resourcemanager.ListHandshakesForAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listhandshakesforaccount.html
 func (client *Client) ListHandshakesForAccount(request *ListHandshakesForAccountRequest) (response *ListHandshakesForAccountResponse, err error) {
 	response = CreateListHandshakesForAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListHandshakesForAccount(request *ListHandshakesForAccount
 }
 
 // ListHandshakesForAccountWithChan invokes the resourcemanager.ListHandshakesForAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listhandshakesforaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListHandshakesForAccountWithChan(request *ListHandshakesForAccountRequest) (<-chan *ListHandshakesForAccountResponse, <-chan error) {
 	responseChan := make(chan *ListHandshakesForAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListHandshakesForAccountWithChan(request *ListHandshakesFo
 }
 
 // ListHandshakesForAccountWithCallback invokes the resourcemanager.ListHandshakesForAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listhandshakesforaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListHandshakesForAccountWithCallback(request *ListHandshakesForAccountRequest, callback func(response *ListHandshakesForAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -83,10 +78,10 @@ type ListHandshakesForAccountRequest struct {
 // ListHandshakesForAccountResponse is the response struct for api ListHandshakesForAccount
 type ListHandshakesForAccountResponse struct {
 	*responses.BaseResponse
+	TotalCount int                                  `json:"TotalCount" xml:"TotalCount"`
+	PageSize   int                                  `json:"PageSize" xml:"PageSize"`
 	RequestId  string                               `json:"RequestId" xml:"RequestId"`
 	PageNumber int                                  `json:"PageNumber" xml:"PageNumber"`
-	PageSize   int                                  `json:"PageSize" xml:"PageSize"`
-	TotalCount int                                  `json:"TotalCount" xml:"TotalCount"`
 	Handshakes HandshakesInListHandshakesForAccount `json:"Handshakes" xml:"Handshakes"`
 }
 
@@ -95,7 +90,8 @@ func CreateListHandshakesForAccountRequest() (request *ListHandshakesForAccountR
 	request = &ListHandshakesForAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListHandshakesForAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListHandshakesForAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

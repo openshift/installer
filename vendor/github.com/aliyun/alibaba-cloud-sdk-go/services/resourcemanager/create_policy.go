@@ -21,7 +21,6 @@ import (
 )
 
 // CreatePolicy invokes the resourcemanager.CreatePolicy API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createpolicy.html
 func (client *Client) CreatePolicy(request *CreatePolicyRequest) (response *CreatePolicyResponse, err error) {
 	response = CreateCreatePolicyResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) CreatePolicy(request *CreatePolicyRequest) (response *Crea
 }
 
 // CreatePolicyWithChan invokes the resourcemanager.CreatePolicy API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createpolicy.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreatePolicyWithChan(request *CreatePolicyRequest) (<-chan *CreatePolicyResponse, <-chan error) {
 	responseChan := make(chan *CreatePolicyResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) CreatePolicyWithChan(request *CreatePolicyRequest) (<-chan
 }
 
 // CreatePolicyWithCallback invokes the resourcemanager.CreatePolicy API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createpolicy.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreatePolicyWithCallback(request *CreatePolicyRequest, callback func(response *CreatePolicyResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -93,7 +88,8 @@ func CreateCreatePolicyRequest() (request *CreatePolicyRequest) {
 	request = &CreatePolicyRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreatePolicy", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreatePolicy", "", "")
+	request.Method = requests.POST
 	return
 }
 

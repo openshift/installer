@@ -21,7 +21,6 @@ import (
 )
 
 // ListRoles invokes the resourcemanager.ListRoles API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listroles.html
 func (client *Client) ListRoles(request *ListRolesRequest) (response *ListRolesResponse, err error) {
 	response = CreateListRolesResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListRoles(request *ListRolesRequest) (response *ListRolesR
 }
 
 // ListRolesWithChan invokes the resourcemanager.ListRoles API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listroles.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListRolesWithChan(request *ListRolesRequest) (<-chan *ListRolesResponse, <-chan error) {
 	responseChan := make(chan *ListRolesResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListRolesWithChan(request *ListRolesRequest) (<-chan *List
 }
 
 // ListRolesWithCallback invokes the resourcemanager.ListRoles API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listroles.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListRolesWithCallback(request *ListRolesRequest, callback func(response *ListRolesResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -84,10 +79,10 @@ type ListRolesRequest struct {
 // ListRolesResponse is the response struct for api ListRoles
 type ListRolesResponse struct {
 	*responses.BaseResponse
+	TotalCount int    `json:"TotalCount" xml:"TotalCount"`
+	PageSize   int    `json:"PageSize" xml:"PageSize"`
 	RequestId  string `json:"RequestId" xml:"RequestId"`
 	PageNumber int    `json:"PageNumber" xml:"PageNumber"`
-	PageSize   int    `json:"PageSize" xml:"PageSize"`
-	TotalCount int    `json:"TotalCount" xml:"TotalCount"`
 	Roles      Roles  `json:"Roles" xml:"Roles"`
 }
 
@@ -96,7 +91,8 @@ func CreateListRolesRequest() (request *ListRolesRequest) {
 	request = &ListRolesRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListRoles", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListRoles", "", "")
+	request.Method = requests.POST
 	return
 }
 

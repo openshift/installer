@@ -21,7 +21,6 @@ import (
 )
 
 // ListPolicies invokes the resourcemanager.ListPolicies API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listpolicies.html
 func (client *Client) ListPolicies(request *ListPoliciesRequest) (response *ListPoliciesResponse, err error) {
 	response = CreateListPoliciesResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) ListPolicies(request *ListPoliciesRequest) (response *List
 }
 
 // ListPoliciesWithChan invokes the resourcemanager.ListPolicies API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listpolicies.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListPoliciesWithChan(request *ListPoliciesRequest) (<-chan *ListPoliciesResponse, <-chan error) {
 	responseChan := make(chan *ListPoliciesResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) ListPoliciesWithChan(request *ListPoliciesRequest) (<-chan
 }
 
 // ListPoliciesWithCallback invokes the resourcemanager.ListPolicies API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/listpolicies.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) ListPoliciesWithCallback(request *ListPoliciesRequest, callback func(response *ListPoliciesResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -85,10 +80,10 @@ type ListPoliciesRequest struct {
 // ListPoliciesResponse is the response struct for api ListPolicies
 type ListPoliciesResponse struct {
 	*responses.BaseResponse
+	TotalCount int      `json:"TotalCount" xml:"TotalCount"`
+	PageSize   int      `json:"PageSize" xml:"PageSize"`
 	RequestId  string   `json:"RequestId" xml:"RequestId"`
 	PageNumber int      `json:"PageNumber" xml:"PageNumber"`
-	PageSize   int      `json:"PageSize" xml:"PageSize"`
-	TotalCount int      `json:"TotalCount" xml:"TotalCount"`
 	Policies   Policies `json:"Policies" xml:"Policies"`
 }
 
@@ -97,7 +92,8 @@ func CreateListPoliciesRequest() (request *ListPoliciesRequest) {
 	request = &ListPoliciesRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListPolicies", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "ListPolicies", "", "")
+	request.Method = requests.POST
 	return
 }
 

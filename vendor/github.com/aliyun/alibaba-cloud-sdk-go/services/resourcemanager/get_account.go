@@ -21,7 +21,6 @@ import (
 )
 
 // GetAccount invokes the resourcemanager.GetAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getaccount.html
 func (client *Client) GetAccount(request *GetAccountRequest) (response *GetAccountResponse, err error) {
 	response = CreateGetAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) GetAccount(request *GetAccountRequest) (response *GetAccou
 }
 
 // GetAccountWithChan invokes the resourcemanager.GetAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetAccountWithChan(request *GetAccountRequest) (<-chan *GetAccountResponse, <-chan error) {
 	responseChan := make(chan *GetAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) GetAccountWithChan(request *GetAccountRequest) (<-chan *Ge
 }
 
 // GetAccountWithCallback invokes the resourcemanager.GetAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/getaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetAccountWithCallback(request *GetAccountRequest, callback func(response *GetAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateGetAccountRequest() (request *GetAccountRequest) {
 	request = &GetAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "GetAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

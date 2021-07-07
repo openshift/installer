@@ -21,7 +21,6 @@ import (
 )
 
 // CreateResourceAccount invokes the resourcemanager.CreateResourceAccount API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createresourceaccount.html
 func (client *Client) CreateResourceAccount(request *CreateResourceAccountRequest) (response *CreateResourceAccountResponse, err error) {
 	response = CreateCreateResourceAccountResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) CreateResourceAccount(request *CreateResourceAccountReques
 }
 
 // CreateResourceAccountWithChan invokes the resourcemanager.CreateResourceAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createresourceaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreateResourceAccountWithChan(request *CreateResourceAccountRequest) (<-chan *CreateResourceAccountResponse, <-chan error) {
 	responseChan := make(chan *CreateResourceAccountResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) CreateResourceAccountWithChan(request *CreateResourceAccou
 }
 
 // CreateResourceAccountWithCallback invokes the resourcemanager.CreateResourceAccount API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/createresourceaccount.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) CreateResourceAccountWithCallback(request *CreateResourceAccountRequest, callback func(response *CreateResourceAccountResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -76,9 +71,10 @@ func (client *Client) CreateResourceAccountWithCallback(request *CreateResourceA
 // CreateResourceAccountRequest is the request struct for api CreateResourceAccount
 type CreateResourceAccountRequest struct {
 	*requests.RpcRequest
-	ParentFolderId string `position:"Query" name:"ParentFolderId"`
-	DisplayName    string `position:"Query" name:"DisplayName"`
-	PayerAccountId string `position:"Query" name:"PayerAccountId"`
+	AccountNamePrefix string `position:"Query" name:"AccountNamePrefix"`
+	ParentFolderId    string `position:"Query" name:"ParentFolderId"`
+	DisplayName       string `position:"Query" name:"DisplayName"`
+	PayerAccountId    string `position:"Query" name:"PayerAccountId"`
 }
 
 // CreateResourceAccountResponse is the response struct for api CreateResourceAccount
@@ -93,7 +89,8 @@ func CreateCreateResourceAccountRequest() (request *CreateResourceAccountRequest
 	request = &CreateResourceAccountRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreateResourceAccount", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "CreateResourceAccount", "", "")
+	request.Method = requests.POST
 	return
 }
 

@@ -21,7 +21,6 @@ import (
 )
 
 // DeletePolicyVersion invokes the resourcemanager.DeletePolicyVersion API synchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deletepolicyversion.html
 func (client *Client) DeletePolicyVersion(request *DeletePolicyVersionRequest) (response *DeletePolicyVersionResponse, err error) {
 	response = CreateDeletePolicyVersionResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) DeletePolicyVersion(request *DeletePolicyVersionRequest) (
 }
 
 // DeletePolicyVersionWithChan invokes the resourcemanager.DeletePolicyVersion API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deletepolicyversion.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeletePolicyVersionWithChan(request *DeletePolicyVersionRequest) (<-chan *DeletePolicyVersionResponse, <-chan error) {
 	responseChan := make(chan *DeletePolicyVersionResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) DeletePolicyVersionWithChan(request *DeletePolicyVersionRe
 }
 
 // DeletePolicyVersionWithCallback invokes the resourcemanager.DeletePolicyVersion API asynchronously
-// api document: https://help.aliyun.com/api/resourcemanager/deletepolicyversion.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) DeletePolicyVersionWithCallback(request *DeletePolicyVersionRequest, callback func(response *DeletePolicyVersionResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -91,7 +86,8 @@ func CreateDeletePolicyVersionRequest() (request *DeletePolicyVersionRequest) {
 	request = &DeletePolicyVersionRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeletePolicyVersion", "resourcemanager", "openAPI")
+	request.InitWithApiInfo("ResourceManager", "2020-03-31", "DeletePolicyVersion", "", "")
+	request.Method = requests.POST
 	return
 }
 
