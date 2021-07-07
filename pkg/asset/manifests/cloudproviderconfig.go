@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	alibabacloudmanifests "github.com/openshift/installer/pkg/asset/manifests/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	ibmcloudmanifests "github.com/openshift/installer/pkg/asset/manifests/ibmcloud"
@@ -98,9 +99,18 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 		cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
 	case alibabacloudtypes.Name:
-		// TODO AlibabaCloud: CloudProviderConfig
-		// alibabacloudConfig := alibabacloudmanifests.CloudProviderConfig()
-		// cm.Data[cloudProviderConfigDataKey] = alibabacloudConfig
+		client, err := installConfig.AlibabaCloud.Client(installConfig.Config.AlibabaCloud.Region)
+		if err != nil {
+			return err
+		}
+		accessKeyID := client.AccessKeyID
+		accessKeySecret := client.AccessKeySecret
+
+		alibabacloudConfig, err := alibabacloudmanifests.CloudProviderConfig(clusterID.InfraID, accessKeyID, accessKeySecret)
+		if err != nil {
+			return errors.Wrap(err, "could not create cloud provider config")
+		}
+		cm.Data[cloudProviderConfigDataKey] = alibabacloudConfig
 	case openstacktypes.Name:
 		cloudProviderConfigData, cloudProviderConfigCABundleData, err := openstackmanifests.GenerateCloudProviderConfig(*installConfig.Config)
 		if err != nil {

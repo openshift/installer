@@ -7,10 +7,9 @@ resource "alicloud_instance" "master" {
   count             = length(var.vswitch_ids)
   resource_group_id = var.resource_group_id
 
-  instance_name = "${local.prefix}_master_${count.index}"
-  instance_type = var.instance_type
-  image_id      = var.image_id
-  // Setting "internet_max_bandwidth_out" larger than 0 can allocate a public ip address for an instance
+  instance_name              = "${local.prefix}_master_${count.index}"
+  instance_type              = var.instance_type
+  image_id                   = var.image_id
   internet_max_bandwidth_out = 0
 
   vswitch_id      = var.vswitch_ids[count.index]
@@ -33,7 +32,7 @@ resource "alicloud_instance" "master" {
   key_name  = var.key_name
   tags = merge(
     {
-      "Name" = "${local.prefix}-master"
+      "Name" = "${local.prefix}-master-${count.index}"
     },
     var.tags,
   )

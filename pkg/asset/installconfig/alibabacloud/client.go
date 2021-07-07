@@ -143,6 +143,18 @@ func (client *Client) DescribeRegions() (response *ecs.DescribeRegionsResponse, 
 	return
 }
 
+// DescribeAvailableResource query available resources.
+func (client *Client) DescribeAvailableResource(destinationResource string) (response *ecs.DescribeAvailableResourceResponse, err error) {
+	request := ecs.CreateDescribeAvailableResourceRequest()
+	request.RegionId = client.RegionID
+	request.DestinationResource = destinationResource
+	response = &ecs.DescribeAvailableResourceResponse{
+		BaseResponse: &responses.BaseResponse{},
+	}
+	err = client.doActionWithSetDomain(request, response)
+	return
+}
+
 // ListResourceGroups gets the list of resource groups.
 func (client *Client) ListResourceGroups() (response *resourcemanager.ListResourceGroupsResponse, err error) {
 	request := resourcemanager.CreateListResourceGroupsRequest()

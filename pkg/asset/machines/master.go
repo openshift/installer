@@ -36,6 +36,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
@@ -154,6 +155,23 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	var err error
 	machines := []machineapi.Machine{}
 	switch ic.Platform.Name() {
+	case alibabacloudtypes.Name:
+		mpool := defaultAlibabaCloudMachinePoolPlatform()
+		mpool.Set(ic.Platform.AlibabaCloud.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.AlibabaCloud)
+		if len(mpool.Zones) == 0 {
+			azs, err := alibabacloud.GetAvailabilityZones(ic.Platform.AlibabaCloud.Region)
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch availability zones")
+			}
+			mpool.Zones = azs
+		}
+		pool.Platform.AlibabaCloud = &mpool
+		machines, err = alibabacloud.Machines(clusterID.InfraID, ic, &pool, "master", "master-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
+		}
+		// TODO AlibabaCloud: implement ConfigMasters() if needed
 	case awstypes.Name:
 		subnets := map[string]string{}
 		if len(ic.Platform.AWS.Subnets) > 0 {
@@ -222,8 +240,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		aws.ConfigMasters(machines, clusterID.InfraID, ic.Publish)
-	case alibabacloudtypes.Name:
-		// TODO AlibabaCloud:
 	case gcptypes.Name:
 		mpool := defaultGCPMachinePoolPlatform()
 		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)

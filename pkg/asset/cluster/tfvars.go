@@ -15,6 +15,7 @@ import (
 	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+	alibabacloudprovider "github.com/openshift/installer/pkg/tfvars/alibabacloud"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -703,22 +704,22 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		// TODO AlibabaCloud: Master and worker machine info
-		// masters, err := mastersAsset.Machines()
-		// if err != nil {
-		// 	return err
-		// }
-		// masterConfigs := make([]*alibabacloudprovider.MachineProviderSpec, len(masters))
-		// for i, m := range masters {
-		// 	masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.MachineProviderSpec)
-		// }
-		// workers, err := workersAsset.MachineSets()
-		// if err != nil {
-		// 	return err
-		// }
-		// workerConfigs := make([]*alibabacloudprovider.MachineProviderSpec, len(workers))
-		// for i, w := range workers {
-		// 	workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.MachineProviderSpec)
-		// }
+		masters, err := mastersAsset.Machines()
+		if err != nil {
+			return err
+		}
+		masterConfigs := make([]*alibabacloudprovider.MachineProviderSpec, len(masters))
+		for i, m := range masters {
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.MachineProviderSpec)
+		}
+		workers, err := workersAsset.MachineSets()
+		if err != nil {
+			return err
+		}
+		workerConfigs := make([]*alibabacloudprovider.MachineProviderSpec, len(workers))
+		for i, w := range workers {
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.MachineProviderSpec)
+		}
 
 		data, err := alibabacloudtfvars.TFVars(
 			alibabacloudtfvars.TFVarsSources{
@@ -726,10 +727,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ResourceGroupID: installConfig.Config.AlibabaCloud.ResourceGroupName,
 				// VpcCidrBlock:
 				// VSwitchCidrBlocks:
-				Publish:    installConfig.Config.Publish,
-				BaseDomain: installConfig.Config.BaseDomain,
-				// MasterConfigs:               masterConfigs,
-				// WorkerConfigs:               workerConfigs,
+				Publish:        installConfig.Config.Publish,
+				BaseDomain:     installConfig.Config.BaseDomain,
+				MasterConfigs:  masterConfigs,
+				WorkerConfigs:  workerConfigs,
 				IgnitionBucket: bucket,
 				// IgnitionFile
 				// IgnitionStub

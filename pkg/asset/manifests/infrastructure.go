@@ -151,6 +151,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		}
 	case alibabacloud.Name:
 		// TODO AlibabaCloud: support AlibabaCloudPlatformType,AlibabaCloudPlatformStatus
+		// config.Spec.PlatformSpec.Type = configv1.AlibabaCloudPlatformType
 		config.Spec.PlatformSpec.Type = "AlibabaCloud"
 		// config.Status.PlatformStatus.AlibabaCloud = &configv1.AlibabaCloudPlatformStatus{
 		// 	Location:          installConfig.Config.Platform.AlibabaCloud.Region,

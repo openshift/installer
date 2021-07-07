@@ -2,14 +2,13 @@ package plugins
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/plugin"
-	// "github.com/terraform-providers/terraform-provider-alicloud/alicloud"
+	// "github.com/aliyun/terraform-provider-alicloud/alicloud"
 )
 
 func init() {
-	// TODO AlibabaCloud:
 	exec := func() {
 		plugin.Serve(&plugin.ServeOpts{
-			// ProviderFunc: ,
+			// TODO AlibabaCloud: There is a multi-version dependency problem with k8s.io/client-go v11.0.0+incompatible
 			// ProviderFunc: alicloud.Provider,
 		})
 	}
