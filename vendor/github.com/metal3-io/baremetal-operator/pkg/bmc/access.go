@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+
+	metal3v1alpha1 "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 )
 
 // AccessDetailsFactory describes a callable that returns a new
@@ -62,6 +64,9 @@ type AccessDetails interface {
 
 	// Whether the driver supports changing secure boot state.
 	SupportsSecureBoot() bool
+
+	// Build bios clean steps for ironic
+	BuildBIOSSettings(firmwareConfig *metal3v1alpha1.FirmwareConfig) (settings []map[string]string, err error)
 }
 
 func getParsedURL(address string) (parsedURL *url.URL, err error) {
