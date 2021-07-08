@@ -129,8 +129,8 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 	// Set CIS DNS record service
 	dnsService, err := dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
 		Authenticator:  c.Authenticator,
-		Crn:            &crnstr,
-		ZoneIdentifier: &zoneID,
+		Crn:            core.StringPtr(crnstr),
+		ZoneIdentifier: core.StringPtr(zoneID),
 	})
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 
 	// Get CIS DNS records by name
 	records, _, err := dnsService.ListAllDnsRecordsWithContext(ctx, &dnsrecordsv1.ListAllDnsRecordsOptions{
-		Name: &recordName,
+		Name: core.StringPtr(recordName),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "could not retrieve DNS records")
@@ -149,8 +149,6 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 
 // GetDNSZoneIDByName gets the CIS zone ID from its domain name.
 func (c *Client) GetDNSZoneIDByName(ctx context.Context, name string) (string, error) {
-	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
 
 	zones, err := c.GetDNSZones(ctx)
 	if err != nil {
