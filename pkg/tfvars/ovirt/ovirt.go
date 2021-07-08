@@ -29,8 +29,8 @@ type config struct {
 	NetworkName            string                   `json:"ovirt_network_name,omitempty"`
 	VNICProfileID          string                   `json:"ovirt_vnic_profile_id,omitempty"`
 	AffinityGroups         []map[string]interface{} `json:"ovirt_affinity_groups,omitempty"`
-	BaseImageName          string                   `json:"openstack_base_image_name,omitempty"`
-	BaseImageLocalFilePath string                   `json:"openstack_base_image_local_file_path,omitempty"`
+	BaseImageName          string                   `json:"ovirt_base_image_name,omitempty"`
+	BaseImageLocalFilePath string                   `json:"ovirt_base_image_local_file_path,omitempty"`
 	MasterInstanceTypeID   string                   `json:"ovirt_master_instance_type_id"`
 	MasterVMType           string                   `json:"ovirt_master_vm_type,omitempty"`
 	MasterMemory           int32                    `json:"ovirt_master_memory"`
@@ -58,7 +58,6 @@ func TFVars(
 		StorageDomainID:      storageDomainID,
 		NetworkName:          networkName,
 		VNICProfileID:        vnicProfileID,
-		BaseImageName:        baseImage,
 		MasterInstanceTypeID: masterSpec.InstanceTypeId,
 		MasterVMType:         masterSpec.VMType,
 		MasterOsDiskGB:       masterSpec.OSDisk.SizeGB,
@@ -71,13 +70,14 @@ func TFVars(
 	}
 
 	imageName, isURL := rhcos.GenerateOpenStackImageName(baseImage, infraID)
-	cfg.BaseImageName = imageName
 	if isURL {
 		imageFilePath, err := cache.DownloadImageFile(baseImage)
 		if err != nil {
 			return nil, err
 		}
 		cfg.BaseImageLocalFilePath = imageFilePath
+	} else {
+		cfg.BaseImageName = imageName
 	}
 	if len(affinityGroups) > 0 {
 		cfg.AffinityGroups = handleAffinityGroups(affinityGroups, infraID)
