@@ -1,3 +1,15 @@
+provider "ironic" {
+  url                = var.ironic_uri
+  inspector          = var.inspector_uri
+  microversion       = "1.56"
+  timeout            = 3600
+  auth_strategy      = "http_basic"
+  ironic_username    = var.ironic_username
+  ironic_password    = var.ironic_password
+  inspector_username = var.ironic_username
+  inspector_password = var.ironic_password
+}
+
 resource "ironic_node_v1" "openshift-master-host" {
   count          = var.master_count
   name           = var.masters[count.index]["name"]
@@ -35,7 +47,7 @@ resource "ironic_deployment" "openshift-master-deployment" {
   )
 
   instance_info = var.instance_infos[count.index]
-  user_data     = var.ignition
+  user_data     = var.ignition_master
 }
 
 data "ironic_introspection" "openshift-master-introspection" {

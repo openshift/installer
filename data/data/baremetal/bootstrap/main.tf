@@ -1,3 +1,19 @@
+provider "libvirt" {
+  uri = var.libvirt_uri
+}
+
+provider "ironic" {
+  url                = var.ironic_uri
+  inspector          = var.inspector_uri
+  microversion       = "1.56"
+  timeout            = 3600
+  auth_strategy      = "http_basic"
+  ironic_username    = var.ironic_username
+  ironic_password    = var.ironic_password
+  inspector_username = var.ironic_username
+  inspector_password = var.ironic_password
+}
+
 resource "libvirt_pool" "bootstrap" {
   name = "${var.cluster_id}-bootstrap"
   type = "dir"
@@ -7,7 +23,7 @@ resource "libvirt_pool" "bootstrap" {
 resource "libvirt_volume" "bootstrap-base" {
   name   = "${var.cluster_id}-bootstrap-base"
   pool   = libvirt_pool.bootstrap.name
-  source = var.image
+  source = var.bootstrap_os_image
 }
 
 resource "libvirt_volume" "bootstrap" {
@@ -22,7 +38,7 @@ resource "libvirt_volume" "bootstrap" {
 resource "libvirt_ignition" "bootstrap" {
   name    = "${var.cluster_id}-bootstrap.ign"
   pool    = libvirt_pool.bootstrap.name
-  content = var.ignition
+  content = var.ignition_bootstrap
 }
 
 resource "libvirt_domain" "bootstrap" {
