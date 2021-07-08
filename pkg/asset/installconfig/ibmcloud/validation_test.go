@@ -55,7 +55,7 @@ var (
 		}
 	}
 
-	existingDnsRecordsResponse = []dnsrecordsv1.DnsrecordDetails{
+	existingDNSRecordsResponse = []dnsrecordsv1.DnsrecordDetails{
 		{
 			ID: core.StringPtr("valid-dns-record-1"),
 		},
@@ -63,7 +63,7 @@ var (
 			ID: core.StringPtr("valid-dns-record-2"),
 		},
 	}
-	noDnsRecordsResponse = []dnsrecordsv1.DnsrecordDetails{}
+	noDNSRecordsResponse = []dnsrecordsv1.DnsrecordDetails{}
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -216,11 +216,11 @@ func TestValidatePreExitingPublicDNS(t *testing.T) {
 
 	// Mocks: no pre-existing DNS records
 	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return(validDNSZoneID, nil)
-	ibmcloudClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(noDnsRecordsResponse, nil)
+	ibmcloudClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(noDNSRecordsResponse, nil)
 
 	// Mocks: pre-existing DNS records
 	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return(validDNSZoneID, nil)
-	ibmcloudClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(existingDnsRecordsResponse, nil)
+	ibmcloudClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(existingDNSRecordsResponse, nil)
 
 	// Mocks: cannot get zone ID
 	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return("", fmt.Errorf(""))
