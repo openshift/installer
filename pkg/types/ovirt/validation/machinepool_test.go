@@ -74,6 +74,20 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			valid: false,
 		},
+		{
+			name: "invalid auto_pinning_policy",
+			pool: &ovirt.MachinePool{
+				AutoPinningPolicy: "wrong",
+			},
+			valid: false,
+		},
+		{
+			name: "invalid hugepages",
+			pool: &ovirt.MachinePool{
+				Hugepages: 100,
+			},
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

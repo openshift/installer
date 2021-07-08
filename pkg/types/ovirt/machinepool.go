@@ -29,6 +29,16 @@ type MachinePool struct {
 	// The affinity groups should exist on the oVirt cluster or created by the OpenShift installer.
 	// +optional
 	AffinityGroupsNames []string `json:"affinityGroupsNames"`
+
+	// AutoPinningPolicy defines the policy to automatically set the CPU
+	// and NUMA including pinning to the host for the instance.
+	// When the field is omitted the default will be "none".
+	// +optional
+	AutoPinningPolicy AutoPinningPolicy `json:"autoPinningPolicy,omitempty"`
+
+	// Hugepages is the size of a VM's hugepages to use in KiBs.
+	// +optional
+	Hugepages Hugepages `json:"hugepages,omitempty"`
 }
 
 // Disk defines a VM disk
@@ -70,6 +80,35 @@ const (
 	VMTypeHighPerformance VMType = "high_performance"
 )
 
+// AutoPinningPolicy defines the policy to automatically set the CPU
+// and NUMA including pinning to the host for the instance.
+// +kubebuilder:validation:Enum=none;resize_and_pin
+type AutoPinningPolicy string
+
+const (
+	// AutoPinningNone - will mean to do nothing, leaving the VM configuration
+	// as is.
+	AutoPinningNone AutoPinningPolicy = "none"
+	// AutoPinningResizeAndPin - will override the CPU and NUMA topology to fit the host,
+	// including pinning them to get maximal performance.
+	AutoPinningResizeAndPin AutoPinningPolicy = "resize_and_pin"
+)
+
+// Hugepages is the size of a VM's hugepages to use in KiBs.
+// The VM will consume its memory from the host using the host
+// hugepages.
+// In order to run the VM, the host should have enough hugepages
+// with the specific size.
+// +kubebuilder:validation:Enum=2048;1048576
+type Hugepages int32
+
+const (
+	// Hugepages2MB for using 2MB hugepages.
+	Hugepages2MB Hugepages = 2048
+	// Hugepages1GB for using 1GB hugepages.
+	Hugepages1GB Hugepages = 1048576
+)
+
 // Set sets the values from `required` to `p`.
 func (p *MachinePool) Set(required *MachinePool) {
 	if required == nil || p == nil {
@@ -98,5 +137,13 @@ func (p *MachinePool) Set(required *MachinePool) {
 
 	if len(required.AffinityGroupsNames) > 0 {
 		p.AffinityGroupsNames = required.AffinityGroupsNames
+	}
+
+	if required.AutoPinningPolicy != "" {
+		p.AutoPinningPolicy = required.AutoPinningPolicy
+	}
+
+	if required.Hugepages > 0 {
+		p.Hugepages = required.Hugepages
 	}
 }

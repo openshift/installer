@@ -21,6 +21,7 @@ func defaultMachineSpec() *v1beta1.OvirtMachineProviderSpec {
 		OSDisk:              &v1beta1.Disk{SizeGB: 31},
 		VMType:              "high_performance",
 		AffinityGroupsNames: []string{"clusterName-xxxxx-controlplane"},
+		AutoPinningPolicy:   "none",
 	}
 }
 
@@ -58,7 +59,9 @@ var defaultTerraformOvirtVarsJSON = `{
   "ovirt_master_os_disk_gb": 31,
   "ovirt_master_affinity_groups": [
     "clusterName-xxxxx-controlplane"
-  ]
+  ],
+  "ovirt_master_auto_pinning_policy": "none",
+  "ovirt_master_hugepages": 0
 }`
 
 func TestSetPlatformDefaults(t *testing.T) {

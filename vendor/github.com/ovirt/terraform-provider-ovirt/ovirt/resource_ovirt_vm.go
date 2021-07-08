@@ -20,8 +20,18 @@ import (
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
 )
 
-// BlankTemplateID indicates the ID of default blank template in oVirt
-const BlankTemplateID = "00000000-0000-0000-0000-000000000000"
+const (
+	// BlankTemplateID indicates the ID of default blank template in oVirt
+	BlankTemplateID = "00000000-0000-0000-0000-000000000000"
+	// AutoPinningNone - will mean to do nothing, leaving the VM configuration
+	// as is.
+	AutoPinningNone = "none"
+	// AutoPinningPin - will use the existing CPU topology to create a fit pinning to the host.
+	AutoPinningPin = "pin"
+	// AutoPinningResizeAndPin - will override the CPU and NUMA topology to fit the host,
+	// including pinning them to get maximal performance.
+	AutoPinningResizeAndPin = "resize_and_pin"
+)
 
 func resourceOvirtVM(c *providerContext) *schema.Resource {
 	return &schema.Resource{
@@ -352,14 +362,20 @@ func resourceOvirtVM(c *providerContext) *schema.Resource {
 			"auto_pinning_policy": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Description: fmt.Sprintf("The Auto Pinning Policy. One of %s, %s, %s",
+				Description: fmt.Sprintf("The Auto Pinning Policy. One of %s, %s, %s, %s, %s, %s",
 					ovirtsdk4.AUTOPINNINGPOLICY_DISABLED,
 					ovirtsdk4.AUTOPINNINGPOLICY_EXISTING,
-					ovirtsdk4.AUTOPINNINGPOLICY_ADJUST),
+					ovirtsdk4.AUTOPINNINGPOLICY_ADJUST,
+					AutoPinningNone,
+					AutoPinningPin,
+					AutoPinningResizeAndPin),
 				ValidateFunc: validation.StringInSlice([]string{
 					string(ovirtsdk4.AUTOPINNINGPOLICY_DISABLED),
 					string(ovirtsdk4.AUTOPINNINGPOLICY_EXISTING),
 					string(ovirtsdk4.AUTOPINNINGPOLICY_ADJUST),
+					AutoPinningNone,
+					AutoPinningPin,
+					AutoPinningResizeAndPin,
 				}, false),
 			},
 			"affinity_groups": {
@@ -615,7 +631,7 @@ func (c *providerContext) resourceOvirtVMCreate(d *schema.ResourceData, meta int
 			log.Printf("[WARN] The engine version %d.%d.%d does not support the auto pinning feature. "+
 				"Please update to 4.4.5 or later.", engineVer.MustMajor(), engineVer.MustMinor(), engineVer.MustBuild())
 		} else {
-			autoPinningPolicy := ovirtsdk4.AutoPinningPolicy(fmt.Sprint(v))
+			autoPinningPolicy := mapAutoPinningPolicy(fmt.Sprint(v))
 			// if we have a policy, we need to set the pinning to all the hosts in the cluster.
 			if autoPinningPolicy != ovirtsdk4.AUTOPINNINGPOLICY_DISABLED {
 				isAutoPinning = true
@@ -717,7 +733,7 @@ func (c *providerContext) resourceOvirtVMCreate(d *schema.ResourceData, meta int
 
 	// update the VM with the auto pinning
 	if isAutoPinning {
-		autoPinningPolicy := ovirtsdk4.AutoPinningPolicy(fmt.Sprint(d.Get("auto_pinning_policy")))
+		autoPinningPolicy := mapAutoPinningPolicy(fmt.Sprint(d.Get("auto_pinning_policy")))
 		if autoPinningPolicy != ovirtsdk4.AUTOPINNINGPOLICY_DISABLED {
 			log.Printf("[DEBUG] Setting Auto Pinning Policy to VM (%s).", d.Id())
 			err := ovirtSetAutoPinningPolicy(d.Id(), autoPinningPolicy, meta)
@@ -1695,4 +1711,17 @@ func (c *providerContext) addVmToAffinityGroups(conn *ovirtsdk4.Connection, vm *
 		}
 	}
 	return nil
+}
+
+func mapAutoPinningPolicy(policy string) ovirtsdk4.AutoPinningPolicy {
+	switch policy {
+	case AutoPinningNone:
+		return ovirtsdk4.AUTOPINNINGPOLICY_DISABLED
+	case AutoPinningPin:
+		return ovirtsdk4.AUTOPINNINGPOLICY_EXISTING
+	case AutoPinningResizeAndPin:
+		return ovirtsdk4.AUTOPINNINGPOLICY_ADJUST
+	default:
+		return ovirtsdk4.AutoPinningPolicy(policy)
+	}
 }

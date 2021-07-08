@@ -71,6 +71,8 @@ func provider(platform *ovirt.Platform, pool *types.MachinePool, userDataSecret 
 		InstanceTypeId:    pool.Platform.Ovirt.InstanceTypeID,
 		MemoryMB:          pool.Platform.Ovirt.MemoryMB,
 		VMType:            string(pool.Platform.Ovirt.VMType),
+		AutoPinningPolicy: string(pool.Platform.Ovirt.AutoPinningPolicy),
+		Hugepages:         int32(pool.Platform.Ovirt.Hugepages),
 	}
 	uniqueNewAG := make(map[string]ovirt.AffinityGroup)
 	for _, ag := range platform.AffinityGroups {
