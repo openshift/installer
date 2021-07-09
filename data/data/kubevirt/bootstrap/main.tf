@@ -1,3 +1,9 @@
+provider "kubernetes" {
+}
+
+provider "kubevirt" {
+}
+
 data "ignition_file" "hostname" {
   mode = "420"
   path = "/etc/hostname"
@@ -12,7 +18,7 @@ EOF
 data "ignition_config" "bootstrap_ignition_config" {
 
   merge {
-    source = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition_data)}"
+    source = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition_bootstrap)}"
   }
 
   files = [
@@ -23,8 +29,8 @@ data "ignition_config" "bootstrap_ignition_config" {
 resource "kubernetes_secret" "bootstrap_ignition" {
   metadata {
     name = "${var.cluster_id}-bootstrap-ignition"
-    namespace = var.namespace
-    labels = var.labels
+    namespace = var.kubevirt_namespace
+    labels = var.kubevirt_labels
   }
   data = {
     "userdata" = element(
@@ -38,31 +44,31 @@ resource "kubevirt_virtual_machine" "bootstrap_vm" {
 
   metadata {
     name = "${var.cluster_id}-bootstrap"
-    namespace = var.namespace
-    labels = var.labels
+    namespace = var.kubevirt_namespace
+    labels = var.kubevirt_labels
   }
   spec {
     run_strategy = "Always"
     data_volume_templates {
       metadata {
         name = "${var.cluster_id}-bootstrap-bootvolume"
-        namespace = var.namespace
+        namespace = var.kubevirt_namespace
       }
       spec {
         source {
           pvc {
-            name = var.pvc_name
-            namespace = var.namespace
+            name = var.kubevirt_source_pvc_name
+            namespace = var.kubevirt_namespace
           }
         }
         pvc {
-          access_modes = [var.pv_access_mode]
+          access_modes = [var.kubevirt_pv_access_mode]
           resources {
             requests = {
               storage = var.storage
             }
           }
-          storage_class_name = var.storage_class
+          storage_class_name = var.kubevirt_storage_class
         }
       }
     }
@@ -117,7 +123,7 @@ resource "kubevirt_virtual_machine" "bootstrap_vm" {
             }
             interface {
               name = "main"
-              interface_binding_method = var.interface_binding_method
+              interface_binding_method = var.kubevirt_interface_binding_method
             }
           }
         }
@@ -125,7 +131,7 @@ resource "kubevirt_virtual_machine" "bootstrap_vm" {
           name = "main"
           network_source {
             multus {
-              network_name = var.network_name
+              network_name = var.kubevirt_network_name
             }
           }
         }

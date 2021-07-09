@@ -7,12 +7,14 @@ import (
 	"github.com/openshift/installer/pkg/terraform/stages/compat"
 	"github.com/openshift/installer/pkg/terraform/stages/gcp"
 	"github.com/openshift/installer/pkg/terraform/stages/ibmcloud"
+	"github.com/openshift/installer/pkg/terraform/stages/kubevirt"
 	"github.com/openshift/installer/pkg/terraform/stages/libvirt"
 	"github.com/openshift/installer/pkg/terraform/stages/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
+	kubevirttypes "github.com/openshift/installer/pkg/types/kubevirt"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -34,6 +36,8 @@ func StagesForPlatform(platform string) []terraform.Stage {
 		return libvirt.PlatformStages
 	case vspheretypes.Name:
 		return vsphere.PlatformStages
+	case kubevirttypes.Name:
+		return kubevirt.PlatformStages
 	default:
 		return compat.PlatformStages(platform)
 	}

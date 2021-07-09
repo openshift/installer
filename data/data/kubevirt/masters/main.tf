@@ -1,3 +1,36 @@
+provider "kubernetes" {
+}
+
+provider "kubevirt" {
+}
+
+resource "kubevirt_data_volume" "data_volume" {
+  metadata {
+    name      = var.kubevirt_source_pvc_name
+    namespace = var.kubevirt_namespace
+    labels    = var.kubevirt_labels
+    annotations = {
+      "cdi.kubevirt.io/storage.bind.immediate.requested" = "true"
+    }
+  }
+  spec {
+    source {
+      http {
+        url = var.kubevirt_image_url
+      }
+    }
+    pvc {
+      access_modes = [var.kubevirt_pv_access_mode]
+      resources {
+        requests = {
+          storage = var.storage
+        }
+      }
+      storage_class_name = var.kubevirt_storage_class
+    }
+  }
+}
+
 data "ignition_file" "hostname" {
   count = var.master_count
   mode  = "420"
@@ -12,7 +45,7 @@ data "ignition_config" "master_ignition_config" {
   count = var.master_count
 
   merge {
-    source = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition_data)}"
+    source = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition_master)}"
   }
 
   files = [
@@ -25,8 +58,8 @@ resource "kubernetes_secret" "master_ignition" {
 
   metadata {
     name      = "${var.cluster_id}-master-${count.index}-ignition"
-    namespace = var.namespace
-    labels    = var.labels
+    namespace = var.kubevirt_namespace
+    labels    = var.kubevirt_labels
   }
   data = {
     "userdata" = element(
@@ -47,31 +80,31 @@ resource "kubevirt_virtual_machine" "master_vm" {
 
   metadata {
     name      = "${var.cluster_id}-master-${count.index}"
-    namespace = var.namespace
-    labels    = merge(var.labels, local.anti_affinity_label)
+    namespace = var.kubevirt_namespace
+    labels    = merge(var.kubevirt_labels, local.anti_affinity_label)
   }
   spec {
     run_strategy = "Always"
     data_volume_templates {
       metadata {
         name      = "${var.cluster_id}-master-${count.index}-bootvolume"
-        namespace = var.namespace
+        namespace = var.kubevirt_namespace
       }
       spec {
         source {
           pvc {
-            name      = var.pvc_name
-            namespace = var.namespace
+            name      = kubevirt_data_volume.data_volume.metadata[0].name
+            namespace = var.kubevirt_namespace
           }
         }
         pvc {
-          access_modes = [var.pv_access_mode]
+          access_modes = [var.kubevirt_pv_access_mode]
           resources {
             requests = {
-              storage = var.storage
+              storage = var.kubevirt_master_storage
             }
           }
-          storage_class_name = var.storage_class
+          storage_class_name = var.kubevirt_storage_class
         }
       }
     }
@@ -104,8 +137,8 @@ resource "kubevirt_virtual_machine" "master_vm" {
         domain {
           resources {
             requests = {
-              memory = var.memory
-              cpu    = var.cpu
+              memory = var.kubevirt_master_memory
+              cpu    = var.kubevirt_master_cpu
             }
           }
           devices {
@@ -127,7 +160,7 @@ resource "kubevirt_virtual_machine" "master_vm" {
             }
             interface {
               name                     = "main"
-              interface_binding_method = var.interface_binding_method
+              interface_binding_method = var.kubevirt_interface_binding_method
             }
           }
         }
@@ -135,7 +168,7 @@ resource "kubevirt_virtual_machine" "master_vm" {
           name = "main"
           network_source {
             multus {
-              network_name = var.network_name
+              network_name = var.kubevirt_network_name
             }
           }
         }
