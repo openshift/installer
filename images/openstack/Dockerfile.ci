@@ -24,9 +24,10 @@ RUN yum install --setopt=tsflags=nodocs -y git gzip util-linux glibc-locale-sour
     git config --system user.email test@example.com && \
     chmod g+w /etc/passwd
 
+# Pin openstacksdk - https://bugzilla.redhat.com/show_bug.cgi?id=1980029
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    python3-openstackclient ansible-2.9.14-1.el8ae python3-openstacksdk python3-netaddr unzip jq && \
+    python3-openstackclient ansible-2.9.14-1.el8ae python3-openstacksdk-0.36.* python3-netaddr unzip jq && \
     yum clean all && rm -rf /var/cache/yum/*
 
 RUN python -m pip install yq
