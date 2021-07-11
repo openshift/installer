@@ -32,7 +32,7 @@ variable "libvirt_master_ips" {
 variable "libvirt_master_memory" {
   type        = string
   description = "RAM in MiB allocated to masters"
-  default     = "6144"
+  default     = "16384"
 }
 
 # At some point this one is likely to default to the number
@@ -41,13 +41,13 @@ variable "libvirt_master_memory" {
 variable "libvirt_master_vcpu" {
   type        = string
   description = "CPUs allocated to masters"
-  default     = "4"
+  default     = "2"
 }
 
 variable "libvirt_bootstrap_memory" {
   type        = number
   description = "RAM in MiB allocated to the bootstrap node"
-  default     = 4096
+  default     = 8192
 }
 
 # Currently RHCOS maintain its default 16G size if that
