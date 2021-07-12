@@ -73,6 +73,13 @@ module "masters" {
   root_volume_zones      = var.openstack_master_root_volume_availability_zones
 }
 
+module "workers" {
+  source = "./workers"
+
+  server_group_names  = var.openstack_worker_server_group_names
+  server_group_policy = var.openstack_worker_server_group_policy
+}
+
 module "topology" {
   source = "./topology"
 
