@@ -14,6 +14,7 @@ resource "ovirt_vm" "master" {
   affinity_groups     = var.ovirt_master_affinity_groups
   auto_pinning_policy = var.ovirt_master_auto_pinning_policy != "" ? var.ovirt_master_auto_pinning_policy : null
   hugepages           = var.ovirt_master_hugepages > 0 ? var.ovirt_master_hugepages : null
+  guaranteed_memory   = var.ovirt_master_instance_type_id != "" ? 16348 : var.ovirt_master_guaranteed_memory
 
   initialization {
     host_name     = "${var.cluster_id}-master-${count.index}"
