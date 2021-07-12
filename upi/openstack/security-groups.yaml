@@ -162,7 +162,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
-      remote_ip_prefix: "{{ os_subnet_range }}"
+      remote_ip_prefix: "0.0.0.0/0"
       port_range_min: 30000
       port_range_max: 32767
 
@@ -170,7 +170,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
-      remote_ip_prefix: "{{ os_subnet_range }}"
+      remote_ip_prefix: "0.0.0.0/0"
       port_range_min: 30000
       port_range_max: 32767
 
@@ -276,7 +276,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
-      remote_ip_prefix: "{{ os_subnet_range }}"
+      remote_ip_prefix: "0.0.0.0/0"
       port_range_min: 30000
       port_range_max: 32767
 
@@ -284,7 +284,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
-      remote_ip_prefix: "{{ os_subnet_range }}"
+      remote_ip_prefix: "0.0.0.0/0"
       port_range_min: 30000
       port_range_max: 32767
 
