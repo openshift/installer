@@ -10,7 +10,6 @@ resource "alicloud_security_group" "sg_master" {
   )
 }
 
-
 resource "alicloud_security_group_rule" "sg_rule_master_ingress_mcs" {
   type              = "ingress"
   ip_protocol       = "tcp"

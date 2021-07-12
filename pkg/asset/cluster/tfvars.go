@@ -723,18 +723,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		data, err := alibabacloudtfvars.TFVars(
 			alibabacloudtfvars.TFVarsSources{
+				// TODO: AlibabaCloud: later PR
 				Auth:            auth,
 				ResourceGroupID: installConfig.Config.AlibabaCloud.ResourceGroupName,
-				// VpcCidrBlock:
-				// VSwitchCidrBlocks:
-				Publish:        installConfig.Config.Publish,
-				BaseDomain:     installConfig.Config.BaseDomain,
-				MasterConfigs:  masterConfigs,
-				WorkerConfigs:  workerConfigs,
+				Publish:         installConfig.Config.Publish,
+				BaseDomain:      installConfig.Config.BaseDomain,
+				// MasterConfigs:  masterConfigs,
+				// WorkerConfigs:  workerConfigs,
 				IgnitionBucket: bucket,
-				// IgnitionFile
-				// IgnitionStub
-				// ImageId
 			},
 		)
 		if err != nil {

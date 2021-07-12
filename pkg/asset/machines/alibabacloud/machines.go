@@ -71,7 +71,7 @@ func provider(clusterID string,
 	role string,
 	userDataSecret string,
 ) (*alibabacloudprovider.MachineProviderSpec, error) {
-	// az := mpool.Zones[azIdx]
+	az := mpool.Zones[azIdx]
 
 	var resourceGroup string
 	if platform.ResourceGroupName != "" {
@@ -82,21 +82,15 @@ func provider(clusterID string,
 
 	return &alibabacloudprovider.MachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "alibabacloudproviderconfig.openshift.io/v1beta1",
+			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "MachineProviderSpec",
 		},
-		// VPC:           vpc,
-		// Tags:          []alibabacloudprovider.TagSpecs{},
-		// Image:         fmt.Sprintf("%s-rhcos", clusterID),
-		// Profile:       mpool.InstanceType,
-		// Region:        platform.Region,
-		ResourceGroupID: resourceGroup,
-		// Zone:          az,
-		// PrimaryNetworkInterface: alibabacloudprovider.NetworkInterface{
-		// 	SecurityGroups: []string{securityGroup},
-		// },
+		ImageID:           fmt.Sprintf("%s-rhcos", clusterID),
+		InstanceType:      mpool.InstanceType,
+		RegionID:          platform.Region,
+		ResourceGroupID:   resourceGroup,
+		ZoneID:            az,
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "alibabacloud-credentials"},
-		// TODO: AlibabaCloud:
 	}, nil
 }

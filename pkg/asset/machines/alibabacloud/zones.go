@@ -1,14 +1,11 @@
 package alibabacloud
 
 import (
-	// "context"
-
 	"github.com/openshift/installer/pkg/asset/installconfig/alibabacloud"
 )
 
 // GetAvailabilityZones returns a list of supported zones for the specified region.
 func GetAvailabilityZones(region string) ([]string, error) {
-	// ctx := context.TODO()
 	client, err := alibabacloud.NewClient(region)
 	if err != nil {
 		return nil, err

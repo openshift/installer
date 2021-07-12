@@ -15,6 +15,7 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/pvtz"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/resourcemanager"
+	"github.com/pkg/errors"
 )
 
 // Environmental virables
@@ -50,10 +51,16 @@ func NewClient(regionID string) (client *Client, err error) {
 
 	client, err = newClientWithOptions(regionID, config, credential)
 
-	if _credential, ok := credential.(credentials.AccessKeyCredential); ok {
-		client.AccessKeyID = _credential.AccessKeyId
-		client.AccessKeySecret = _credential.AccessKeySecret
+	switch _credential := credential.(type) {
+	case *credentials.AccessKeyCredential:
+		{
+			client.AccessKeyID = _credential.AccessKeyId
+			client.AccessKeySecret = _credential.AccessKeySecret
+		}
+	default:
+		errors.Errorf("Please use certification type AccessKey.")
 	}
+
 	return
 }
 
@@ -61,20 +68,20 @@ func getCredentials() (credential auth.Credential, err error) {
 	// Get AccessKey and AccessKeySecret information from the enviroment
 	// usage: https://github.com/aliyun/alibaba-cloud-sdk-go/blob/7259de46d58ef905c66e04babf791190512a85da/docs/2-Client-EN.md#1-environment-credentials
 	credential, err = provider.NewEnvProvider().Resolve()
-	if credential != nil {
+	if err == nil && credential != nil {
 		return credential, nil
 	}
 
 	// Get AccessKey and AccessKeySecret information from configuration file,default path:"~/.alibabacloud/credentials"
 	// usage: https://github.com/aliyun/alibaba-cloud-sdk-go/blob/7259de46d58ef905c66e04babf791190512a85da/docs/2-Client-EN.md#2-credentials-file
 	credential, err = provider.NewProfileProvider().Resolve()
-	if credential != nil {
+	if err == nil && credential != nil {
 		return credential, nil
 	}
 
 	// Get AccessKey and AccessKeySecret information via interactive command line
 	credential, err = askCredentials()
-	if credential != nil {
+	if err == nil && credential != nil {
 		return credential, nil
 	}
 

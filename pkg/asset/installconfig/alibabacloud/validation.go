@@ -9,7 +9,7 @@ import (
 // Validate executes platform-specific validation.
 func Validate(client *Client, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
-	platformPath := field.NewPath("platorm").Child("alibabacloud")
+	platformPath := field.NewPath("platform").Child("alibabacloud")
 	allErrs = append(allErrs, validatePlatform(client, ic, platformPath)...)
 
 	return allErrs.ToAggregate()
