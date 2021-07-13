@@ -14,7 +14,7 @@ import (
 	resourcemanagerv2 "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	vpcv1 "github.com/IBM/vpc-go-sdk/vpcv1"
 	gomock "github.com/golang/mock/gomock"
-	ibmcloud "github.com/openshift/installer/pkg/types/ibmcloud"
+	ibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 )
 
 // MockAPI is a mock of API interface.

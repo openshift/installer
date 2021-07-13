@@ -1,4 +1,4 @@
-package ibmcloud
+package ibmcloud_test
 
 import (
 	"fmt"
@@ -8,11 +8,11 @@ import (
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/golang/mock/gomock"
-
+	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/ibmcloud"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/stretchr/testify/assert"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,7 +50,7 @@ var (
 	internalErrorVPC       = func(ic *types.InstallConfig) { ic.IBMCloud.VPC = "internal-error-vpc" }
 	subnetInvalidZone      = func(ic *types.InstallConfig) { ic.IBMCloud.Subnets = []string{"subnet-invalid-zone"} }
 	machinePoolInvalidType = func(ic *types.InstallConfig) {
-		ic.ControlPlane.Platform.IBMCloud = &ibmcloud.MachinePool{
+		ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
 			InstanceType: "invalid-type",
 		}
 	}
@@ -94,14 +94,14 @@ func validInstallConfig() *types.InstallConfig {
 	}
 }
 
-func validMinimalPlatform() *ibmcloud.Platform {
-	return &ibmcloud.Platform{
+func validMinimalPlatform() *ibmcloudtypes.Platform {
+	return &ibmcloudtypes.Platform{
 		Region: validRegion,
 	}
 }
 
-func validMachinePool() *ibmcloud.MachinePool {
-	return &ibmcloud.MachinePool{}
+func validMachinePool() *ibmcloudtypes.MachinePool {
+	return &ibmcloudtypes.MachinePool{}
 }
 
 func TestValidate(t *testing.T) {
@@ -153,7 +153,7 @@ func TestValidate(t *testing.T) {
 	ibmcloudClient := mock.NewMockAPI(mockCtrl)
 
 	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), validVPC).Return(&vpcv1.VPC{}, nil).AnyTimes()
-	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), "not-found").Return(nil, &VPCResourceNotFoundError{})
+	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), "not-found").Return(nil, &ibmcloud.VPCResourceNotFoundError{})
 	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), "internal-error-vpc").Return(nil, fmt.Errorf(""))
 
 	ibmcloudClient.EXPECT().GetSubnet(gomock.Any(), validPublicSubnetUSSouth1ID).Return(&vpcv1.Subnet{Zone: &vpcv1.ZoneReference{Name: &validZoneUSSouth1}}, nil).AnyTimes()
@@ -173,7 +173,7 @@ func TestValidate(t *testing.T) {
 				edit(editedInstallConfig)
 			}
 
-			aggregatedErrors := Validate(ibmcloudClient, editedInstallConfig)
+			aggregatedErrors := ibmcloud.Validate(ibmcloudClient, editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
@@ -214,6 +214,9 @@ func TestValidatePreExitingPublicDNS(t *testing.T) {
 
 	dnsRecordName := fmt.Sprintf("api.%s.%s", validClusterName, validBaseDomain)
 
+	metadata := ibmcloud.NewMetadata(validBaseDomain)
+	metadata.SetCISInstanceCRN(validCISInstanceCRN)
+
 	// Mocks: no pre-existing DNS records
 	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return(validDNSZoneID, nil)
 	ibmcloudClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(noDNSRecordsResponse, nil)
@@ -232,10 +235,7 @@ func TestValidatePreExitingPublicDNS(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			validInstallConfig := validInstallConfig()
-			meta := &Metadata{
-				cisInstanceCRN: validCISInstanceCRN,
-			}
-			aggregatedErrors := ValidatePreExitingPublicDNS(ibmcloudClient, validInstallConfig, meta)
+			aggregatedErrors := ibmcloud.ValidatePreExitingPublicDNS(ibmcloudClient, validInstallConfig, metadata)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {

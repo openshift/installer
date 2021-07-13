@@ -14,7 +14,6 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/pkg/errors"
 )
 
@@ -26,8 +25,8 @@ type API interface {
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error)
 	GetDNSZoneIDByName(ctx context.Context, name string) (string, error)
-	GetDNSZones(ctx context.Context) ([]ibmcloud.DNSZoneResponse, error)
-	GetEncryptionKey(ctx context.Context, keyCRN string) (*ibmcloud.EncryptionKeyResponse, error)
+	GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error)
+	GetEncryptionKey(ctx context.Context, keyCRN string) (*EncryptionKeyResponse, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
@@ -54,6 +53,29 @@ type VPCResourceNotFoundError struct{}
 func (e *VPCResourceNotFoundError) Error() string {
 	return "Not Found"
 }
+
+// DNSZoneResponse represents a DNS zone response.
+type DNSZoneResponse struct {
+	// Name is the domain name of the zone.
+	Name string
+
+	// ID is the zone's ID.
+	ID string
+
+	// CISInstanceCRN is the IBM Cloud Resource Name for the CIS instance where
+	// the DNS zone is managed.
+	CISInstanceCRN string
+
+	// CISInstanceName is the display name of the CIS instance where the DNS zone
+	// is managed.
+	CISInstanceName string
+
+	// ResourceGroupID is the resource group ID of the CIS instance.
+	ResourceGroupID string
+}
+
+// EncryptionKeyResponse represents an encryption key response.
+type EncryptionKeyResponse struct{}
 
 // NewClient initializes a client with a session.
 func NewClient() (*Client, error) {
@@ -165,7 +187,7 @@ func (c *Client) GetDNSZoneIDByName(ctx context.Context, name string) (string, e
 }
 
 // GetDNSZones returns all of the active DNS zones managed by CIS.
-func (c *Client) GetDNSZones(ctx context.Context) ([]ibmcloud.DNSZoneResponse, error) {
+func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
@@ -177,7 +199,7 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]ibmcloud.DNSZoneResponse, e
 		return nil, errors.Wrap(err, "failed to get cis instance")
 	}
 
-	var allZones []ibmcloud.DNSZoneResponse
+	var allZones []DNSZoneResponse
 	for _, instance := range listResourceInstancesResponse.Resources {
 		crnstr := instance.CRN
 		zonesService, err := zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
@@ -197,7 +219,7 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]ibmcloud.DNSZoneResponse, e
 
 		for _, zone := range listZonesResponse.Result {
 			if *zone.Status == "active" {
-				zoneStruct := ibmcloud.DNSZoneResponse{
+				zoneStruct := DNSZoneResponse{
 					Name:            *zone.Name,
 					ID:              *zone.ID,
 					CISInstanceCRN:  *instance.CRN,
@@ -213,9 +235,9 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]ibmcloud.DNSZoneResponse, e
 }
 
 // GetEncryptionKey gets data for an encryption key
-func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*ibmcloud.EncryptionKeyResponse, error) {
+func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*EncryptionKeyResponse, error) {
 	// TODO: IBM: Call KMS / Hyperprotect Crpyto APIs.
-	return &ibmcloud.EncryptionKeyResponse{}, nil
+	return &EncryptionKeyResponse{}, nil
 }
 
 // GetResourceGroup gets a resource group by its name or ID.
