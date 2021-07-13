@@ -54,5 +54,6 @@ module "masters" {
   ovirt_affinity_group_count       = module.affinity_group.ovirt_affinity_group_count
   ovirt_master_auto_pinning_policy = var.ovirt_master_auto_pinning_policy
   ovirt_master_hugepages           = var.ovirt_master_hugepages
+  ovirt_master_guaranteed_memory   = var.ovirt_master_guaranteed_memory
 }
 
