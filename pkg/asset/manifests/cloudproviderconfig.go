@@ -103,12 +103,17 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		accessKeyID := client.AccessKeyID
-		accessKeySecret := client.AccessKeySecret
-
-		alibabacloudConfig, err := alibabacloudmanifests.CloudProviderConfig(clusterID.InfraID, accessKeyID, accessKeySecret)
+		// TODO: AlibabaCloud: Add 'VpcID','ZoneID','VswitchID'
+		alibabacloudConfig, err := alibabacloudmanifests.CloudConfig{
+			Global: alibabacloudmanifests.GlobalConfig{
+				AccessKeyID:     client.AccessKeyID,
+				AccessKeySecret: client.AccessKeySecret,
+				ClusterID:       clusterID.InfraID,
+				Region:          client.RegionID,
+			},
+		}.JSON()
 		if err != nil {
-			return errors.Wrap(err, "could not create cloud provider config")
+			return errors.Wrap(err, "could not create Alibaba Cloud provider config")
 		}
 		cm.Data[cloudProviderConfigDataKey] = alibabacloudConfig
 	case openstacktypes.Name:

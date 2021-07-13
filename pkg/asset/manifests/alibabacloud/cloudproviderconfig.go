@@ -2,74 +2,43 @@ package alibabacloud
 
 import (
 	"bytes"
-	"text/template"
+	"encoding/json"
 )
 
-// ref: https://github.com/kubernetes/kubernetes/blob/368ee4bb8ee7a0c18431cd87ee49f0c890aa53e5/staging/src/k8s.io/legacy-cloud-providers/gce/gce.go#L188
-type config struct {
-	Global                 global                 `gcfg:"global"`
-	Kubernetes             kubernetes             `gcfg:"kubernetes"`
-	LoadBalancerDeployment loadBalancerDeployment `gcfg:"load-balancer-deployment"`
-	Provider               provider               `gcfg:"provider"`
+// CloudConfig wraps the settings for the Alibaba Cloud provider.
+// ref: https://github.com/kubernetes/cloud-provider-alibaba-cloud/blob/d6d0962b4be051c7dc536dc7e49ad0aff018ef3b/cloud-controller-manager/alicloud.go#L90
+type CloudConfig struct {
+	Global GlobalConfig `json:"Global"`
 }
 
-type global struct {
-	Version string `gcfg:"version"`
+// GlobalConfig wraps the settings 'Global' for the Alibaba Cloud provider .
+type GlobalConfig struct {
+	KubernetesClusterTag string `json:"kubernetesClusterTag"`
+	NodeMonitorPeriod    int64  `json:"nodeMonitorPeriod"`
+	NodeAddrSyncPeriod   int64  `json:"nodeAddrSyncPeriod"`
+	UID                  string `json:"uid"`
+	VpcID                string `json:"vpcid"`
+	Region               string `json:"region"`
+	ZoneID               string `json:"zoneid"`
+	VswitchID            string `json:"vswitchid"`
+	ClusterID            string `json:"clusterID"`
+	RouteTableIDs        string `json:"routeTableIDs"`
+	ServiceBackendType   string `json:"serviceBackendType"`
+
+	DisablePublicSLB bool `json:"disablePublicSLB"`
+
+	AccessKeyID     string `json:"accessKeyID"`
+	AccessKeySecret string `json:"accessKeySecret"`
 }
 
-type kubernetes struct {
-	ConfigFile string `gcfg:"config-file"`
-}
-
-type loadBalancerDeployment struct {
-	Image           string `gcfg:"image"`
-	Application     string `gcfg:"application"`
-	VLANIPConfigMap string `gcfg:"vlan-ip-config-map"`
-}
-
-type provider struct {
-	AccessKeyID     string `gcfg:"accessKeyID"`
-	AccessKeySecret string `gcfg:"accessKeySecret"`
-	ClusterID       string `gcfg:"clusterID"`
-}
-
-// CloudProviderConfig generates the cloud provider config for the Alibaba Cloud platform.
-func CloudProviderConfig(infraID string, accessKeyID string, accessKeySecret string) (string, error) {
-	config := &config{
-		Global: global{
-			Version: "1.1.0",
-		},
-		Kubernetes: kubernetes{
-			ConfigFile: "/mnt/etc/kubernetes/controller-manager-kubeconfig",
-		},
-		LoadBalancerDeployment: loadBalancerDeployment{
-			Image:           "[REGISTRY]/[NAMESPACE]/keepalived:[TAG]",
-			Application:     "keepalived",
-			VLANIPConfigMap: "alibaba-cloud-provider-vlan-ip-config",
-		},
-		Provider: provider{
-			AccessKeyID:     accessKeyID,
-			AccessKeySecret: accessKeySecret,
-			ClusterID:       infraID,
-		},
-	}
-	buf := &bytes.Buffer{}
-	template := template.Must(template.New("alibaba cloudproviderconfig").Parse(configTmpl))
-	if err := template.Execute(buf, config); err != nil {
+// JSON generates the cloud provider json config for the Alibaba Cloud platform.
+// managed resource names are matching the convention defined by capz
+func (params CloudConfig) JSON() (string, error) {
+	buff := &bytes.Buffer{}
+	encoder := json.NewEncoder(buff)
+	encoder.SetIndent("", "\t")
+	if err := encoder.Encode(params); err != nil {
 		return "", err
 	}
-	return buf.String(), nil
+	return buff.String(), nil
 }
-
-var configTmpl = `[global]
-version = {{.Global.Version}}
-[kubernetes]
-config-file = {{.Kubernetes.ConfigFile}}
-[load-balancer-deployment]
-image = {{.LoadBalancerDeployment.Image}}
-application = {{.LoadBalancerDeployment.Application}}
-vlan-ip-config-map = {{.LoadBalancerDeployment.VLANIPConfigMap}}
-[provider]
-clusterID = {{.Provider.ClusterID}}
-
-`
