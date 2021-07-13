@@ -12,6 +12,8 @@ import (
 	baremetalprovider "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
 	gcpapi "github.com/openshift/cluster-api-provider-gcp/pkg/apis"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
+	ibmcloudapi "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis"
+	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1"
 	kubevirtproviderapi "github.com/openshift/cluster-api-provider-kubevirt/pkg/apis"
 	kubevirtprovider "github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1"
 	libvirtapi "github.com/openshift/cluster-api-provider-libvirt/pkg/apis"
@@ -524,6 +526,7 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 	azureapi.AddToScheme(scheme)
 	baremetalapi.AddToScheme(scheme)
 	gcpapi.AddToScheme(scheme)
+	ibmcloudapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
@@ -534,6 +537,7 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 		azureprovider.SchemeGroupVersion,
 		baremetalprovider.SchemeGroupVersion,
 		gcpprovider.SchemeGroupVersion,
+		ibmcloudprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
 		openstackprovider.SchemeGroupVersion,
 		vsphereprovider.SchemeGroupVersion,
