@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -91,6 +92,40 @@ password = "` + v + `"
 }
 
 func TestCloudProviderConfig(t *testing.T) {
+	cases := []struct {
+		name           string
+		installConfig  *types.InstallConfig
+		expectedConfig string
+	}{
+		{
+			name: "default install config",
+			installConfig: &types.InstallConfig{
+				Networking: &types.Networking{},
+			},
+			expectedConfig: `[Global]
+secret-name = openstack-credentials
+secret-namespace = kube-system
+region = my_region
+[LoadBalancer]
+use-octavia = True
+`,
+		}, {
+			name: "installation with kuryr",
+			installConfig: &types.InstallConfig{
+				Networking: &types.Networking{
+					NetworkType: "Kuryr",
+				},
+			},
+			expectedConfig: `[Global]
+secret-name = openstack-credentials
+secret-namespace = kube-system
+region = my_region
+[LoadBalancer]
+use-octavia = False
+`,
+		},
+	}
+
 	cloud := clientconfig.Cloud{
 		AuthInfo: &clientconfig.AuthInfo{
 			Username:   "my_user",
@@ -103,11 +138,10 @@ func TestCloudProviderConfig(t *testing.T) {
 		RegionName: "my_region",
 	}
 
-	expectedConfig := `[Global]
-secret-name = openstack-credentials
-secret-namespace = kube-system
-region = my_region
-`
-	actualConfig, _, _ := generateCloudProviderConfig(&cloud)
-	assert.Equal(t, expectedConfig, string(actualConfig), "unexpected cloud provider config")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualConfig, _, _ := generateCloudProviderConfig(&cloud, *tc.installConfig)
+			assert.Equal(t, tc.expectedConfig, string(actualConfig), "unexpected cloud provider config")
+		})
+	}
 }
