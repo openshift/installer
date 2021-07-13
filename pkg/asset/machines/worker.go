@@ -139,8 +139,9 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 		OSDisk: &ovirttypes.Disk{
 			SizeGB: 120,
 		},
-		VMType:            ovirttypes.VMTypeServer,
-		AutoPinningPolicy: ovirttypes.AutoPinningNone,
+		VMType:             ovirttypes.VMTypeServer,
+		AutoPinningPolicy:  ovirttypes.AutoPinningNone,
+		MemoryGuaranteedMB: 16348,
 	}
 }
 
