@@ -2,12 +2,15 @@ package vsphere
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/pbm"
+	pbmtypes "github.com/vmware/govmomi/pbm/types"
 	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/vapi/rest"
 	"github.com/vmware/govmomi/vapi/tags"
@@ -130,6 +133,40 @@ func getAttachedObjectsOnTag(ctx context.Context, client *rest.Client, tagName s
 	return attached, nil
 }
 
+func deleteStoragePolicy(ctx context.Context, client *vim25.Client, infraID string) error {
+	rtype := pbmtypes.PbmProfileResourceType{
+		ResourceType: string(pbmtypes.PbmProfileResourceTypeEnumSTORAGE),
+	}
+
+	category := pbmtypes.PbmProfileCategoryEnumREQUIREMENT
+
+	pbmClient, err := pbm.NewClient(ctx, client)
+	if err != nil {
+		return err
+	}
+
+	ids, err := pbmClient.QueryProfile(ctx, rtype, string(category))
+	if err != nil {
+		return err
+	}
+
+	profiles, err := pbmClient.RetrieveContent(ctx, ids)
+	if err != nil {
+		return err
+	}
+	policyName := fmt.Sprintf("openshift-storage-policy-%s", infraID)
+
+	matchingProfileIds := []pbmtypes.PbmProfileId{}
+	for _, p := range profiles {
+		if p.GetPbmProfile().Name == policyName {
+			profileID := p.GetPbmProfile().ProfileId
+			matchingProfileIds = append(matchingProfileIds, profileID)
+		}
+	}
+	_, err = pbmClient.DeleteProfile(ctx, matchingProfileIds)
+	return err
+}
+
 func deleteTag(ctx context.Context, client *rest.Client, tagID string) error {
 	tagManager := tags.NewManager(client)
 	tag, err := tagManager.GetTag(ctx, tagID)
@@ -210,6 +247,11 @@ func (o *ClusterUninstaller) Run() error {
 		}
 	} else {
 		o.Logger.Debug("No managed Folder found")
+	}
+
+	err = deleteStoragePolicy(context.TODO(), o.Client, o.InfraID)
+	if err != nil {
+		return errors.Errorf("error deleting storage policy: %v", err)
 	}
 
 	o.Logger.Debug("Delete tag")
