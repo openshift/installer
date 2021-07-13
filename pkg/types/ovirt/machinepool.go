@@ -39,6 +39,10 @@ type MachinePool struct {
 	// Hugepages is the size of a VM's hugepages to use in KiBs.
 	// +optional
 	Hugepages Hugepages `json:"hugepages,omitempty"`
+
+	// MemoryGuaranteedMB is the size of a VM's guaranteed memory in MiBs.
+	// +optional
+	MemoryGuaranteedMB int32 `json:"memoryGuaranteedMB,omitempty"`
 }
 
 // Disk defines a VM disk
@@ -145,5 +149,9 @@ func (p *MachinePool) Set(required *MachinePool) {
 
 	if required.Hugepages > 0 {
 		p.Hugepages = required.Hugepages
+	}
+
+	if required.MemoryGuaranteedMB != 0 {
+		p.MemoryGuaranteedMB = required.MemoryGuaranteedMB
 	}
 }
