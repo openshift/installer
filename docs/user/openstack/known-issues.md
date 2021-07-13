@@ -92,6 +92,29 @@ To recover from a scenario where one or multiple master nodes are in failed stat
 Even if master node was removed in Nova, it can still appear when you run `oc get machines -n openshift-machine-api`.
 To delete it, you can run: `oc delete machine --force=true -n openshift-machine-api <$NODE-NAME>`
 
+## Changing user domain for image registry
+
+When users change their user domain name or ID globally they hit an issue with the image registry, when the operator doesn't update its configuration accordingly. It leads to the fact that the operator can't authenticate in OpenStack Swift and becomes degraded.
+
+```sh
+$ oc logs cluster-image-registry-operator-748f8f9855-fhblt -c cluster-image-registry-operator --tail=20
+
+I0303 17:32:15.100153      14 controller.go:291] object changed: *v1.Config, Name=cluster (status=true): changed:status.conditions.0.lastTransitionTime={"2021-03-03T17:32:14Z" -> "2021-03-03T17:32:15Z"}
+I0303 17:32:15.603731      14 controller.go:291] object changed: *v1.Config, Name=cluster (status=true): 
+E0303 17:32:15.610609      14 controller.go:330] unable to sync: unable to sync storage configuration: Failed to authenticate provider client: Authentication failed, requeuing
+I0303 17:32:15.644501      14 controller.go:291] object changed: *v1.Config, Name=cluster (status=true): 
+E0303 17:32:15.650130      14 controller.go:330] unable to sync: unable to sync storage configuration: Failed to authenticate provider client: Authentication failed, requeuing
+```
+
+This issue was fixed in 4.8, which means that all new deployments work correctly and update image registry configuration in the case of credentials change. For older versions, and for clusters that have been upgraded to 4.8, you need to manually clean the config and delete the incorrect values. 
+
+To do so, execute `oc edit configs.imageregistry.operator.openshift.io/cluster` and manually remove `domain` or `domainID` in the `.spec.storage.swift` section. Alternatively you can use the `oc patch` command:
+
+```sh
+$ oc patch configs.imageregistry.operator.openshift.io/cluster --type 'json' -p='[{"op": "remove", "path": "/spec/storage/swift/domain"}]'
+config.imageregistry.operator.openshift.io/cluster patched
+```
+
 # Known Issues specific to User-Provisioned Installations
 
 ## Stale resources
