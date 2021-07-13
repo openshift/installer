@@ -355,7 +355,7 @@ github.com/IBM/networking-go-sdk/zonelockdownv1
 github.com/IBM/networking-go-sdk/zoneratelimitsv1
 github.com/IBM/networking-go-sdk/zonessettingsv1
 github.com/IBM/networking-go-sdk/zonesv1
-# github.com/IBM/platform-services-go-sdk v0.18.13
+# github.com/IBM/platform-services-go-sdk v0.18.16
 ## explicit
 github.com/IBM/platform-services-go-sdk/catalogmanagementv1
 github.com/IBM/platform-services-go-sdk/common
@@ -1405,8 +1405,9 @@ github.com/openshift/cluster-api/pkg/apis/machine/v1beta1
 ## explicit
 github.com/openshift/cluster-api-provider-gcp/pkg/apis
 github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1
-# github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210608192136-4b79b3b71eec
+# github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d
 ## explicit
+github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis
 github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1
 # github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20201214114543-e5aed9c73f1f
 ## explicit

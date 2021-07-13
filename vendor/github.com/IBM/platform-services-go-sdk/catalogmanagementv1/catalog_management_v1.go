@@ -4677,6 +4677,18 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingInstanceWithContext(
 	if createOfferingInstanceOptions.ResourceGroupID != nil {
 		body["resource_group_id"] = createOfferingInstanceOptions.ResourceGroupID
 	}
+	if createOfferingInstanceOptions.InstallPlan != nil {
+		body["install_plan"] = createOfferingInstanceOptions.InstallPlan
+	}
+	if createOfferingInstanceOptions.Channel != nil {
+		body["channel"] = createOfferingInstanceOptions.Channel
+	}
+	if createOfferingInstanceOptions.Metadata != nil {
+		body["metadata"] = createOfferingInstanceOptions.Metadata
+	}
+	if createOfferingInstanceOptions.LastOperation != nil {
+		body["last_operation"] = createOfferingInstanceOptions.LastOperation
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -4851,6 +4863,18 @@ func (catalogManagement *CatalogManagementV1) PutOfferingInstanceWithContext(ctx
 	}
 	if putOfferingInstanceOptions.ResourceGroupID != nil {
 		body["resource_group_id"] = putOfferingInstanceOptions.ResourceGroupID
+	}
+	if putOfferingInstanceOptions.InstallPlan != nil {
+		body["install_plan"] = putOfferingInstanceOptions.InstallPlan
+	}
+	if putOfferingInstanceOptions.Channel != nil {
+		body["channel"] = putOfferingInstanceOptions.Channel
+	}
+	if putOfferingInstanceOptions.Metadata != nil {
+		body["metadata"] = putOfferingInstanceOptions.Metadata
+	}
+	if putOfferingInstanceOptions.LastOperation != nil {
+		body["last_operation"] = putOfferingInstanceOptions.LastOperation
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -6231,6 +6255,19 @@ type CreateOfferingInstanceOptions struct {
 	// Id of the resource group to provision the offering instance into.
 	ResourceGroupID *string
 
+	// Type of install plan (also known as approval strategy) for operator subscriptions. Can be either automatic, which
+	// automatically upgrades operators to the latest in a channel, or manual, which requires approval on the cluster.
+	InstallPlan *string
+
+	// Channel to pin the operator subscription to.
+	Channel *string
+
+	// Map of metadata values for this offering instance.
+	Metadata map[string]interface{}
+
+	// the last operation performed and status.
+	LastOperation *OfferingInstanceLastOperation
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -6335,6 +6372,30 @@ func (options *CreateOfferingInstanceOptions) SetSchematicsWorkspaceID(schematic
 // SetResourceGroupID : Allow user to set ResourceGroupID
 func (options *CreateOfferingInstanceOptions) SetResourceGroupID(resourceGroupID string) *CreateOfferingInstanceOptions {
 	options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return options
+}
+
+// SetInstallPlan : Allow user to set InstallPlan
+func (options *CreateOfferingInstanceOptions) SetInstallPlan(installPlan string) *CreateOfferingInstanceOptions {
+	options.InstallPlan = core.StringPtr(installPlan)
+	return options
+}
+
+// SetChannel : Allow user to set Channel
+func (options *CreateOfferingInstanceOptions) SetChannel(channel string) *CreateOfferingInstanceOptions {
+	options.Channel = core.StringPtr(channel)
+	return options
+}
+
+// SetMetadata : Allow user to set Metadata
+func (options *CreateOfferingInstanceOptions) SetMetadata(metadata map[string]interface{}) *CreateOfferingInstanceOptions {
+	options.Metadata = metadata
+	return options
+}
+
+// SetLastOperation : Allow user to set LastOperation
+func (options *CreateOfferingInstanceOptions) SetLastOperation(lastOperation *OfferingInstanceLastOperation) *CreateOfferingInstanceOptions {
+	options.LastOperation = lastOperation
 	return options
 }
 
@@ -9881,6 +9942,19 @@ type OfferingInstance struct {
 
 	// Id of the resource group to provision the offering instance into.
 	ResourceGroupID *string `json:"resource_group_id,omitempty"`
+
+	// Type of install plan (also known as approval strategy) for operator subscriptions. Can be either automatic, which
+	// automatically upgrades operators to the latest in a channel, or manual, which requires approval on the cluster.
+	InstallPlan *string `json:"install_plan,omitempty"`
+
+	// Channel to pin the operator subscription to.
+	Channel *string `json:"channel,omitempty"`
+
+	// Map of metadata values for this offering instance.
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+
+	// the last operation performed and status.
+	LastOperation *OfferingInstanceLastOperation `json:"last_operation,omitempty"`
 }
 
 // UnmarshalOfferingInstance unmarshals an instance of OfferingInstance from the specified map of raw messages.
@@ -9943,6 +10017,67 @@ func UnmarshalOfferingInstance(m map[string]json.RawMessage, result interface{})
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "install_plan", &obj.InstallPlan)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "channel", &obj.Channel)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "last_operation", &obj.LastOperation, UnmarshalOfferingInstanceLastOperation)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OfferingInstanceLastOperation : the last operation performed and status.
+type OfferingInstanceLastOperation struct {
+	// last operation performed.
+	Operation *string `json:"operation,omitempty"`
+
+	// state after the last operation performed.
+	State *string `json:"state,omitempty"`
+
+	// additional information about the last operation.
+	Message *string `json:"message,omitempty"`
+
+	// transaction id from the last operation.
+	TransactionID *string `json:"transaction_id,omitempty"`
+
+	// Date and time last updated.
+	Updated *string `json:"updated,omitempty"`
+}
+
+// UnmarshalOfferingInstanceLastOperation unmarshals an instance of OfferingInstanceLastOperation from the specified map of raw messages.
+func UnmarshalOfferingInstanceLastOperation(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OfferingInstanceLastOperation)
+	err = core.UnmarshalPrimitive(m, "operation", &obj.Operation)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "state", &obj.State)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "transaction_id", &obj.TransactionID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
 	if err != nil {
 		return
 	}
@@ -10505,6 +10640,19 @@ type PutOfferingInstanceOptions struct {
 	// Id of the resource group to provision the offering instance into.
 	ResourceGroupID *string
 
+	// Type of install plan (also known as approval strategy) for operator subscriptions. Can be either automatic, which
+	// automatically upgrades operators to the latest in a channel, or manual, which requires approval on the cluster.
+	InstallPlan *string
+
+	// Channel to pin the operator subscription to.
+	Channel *string
+
+	// Map of metadata values for this offering instance.
+	Metadata map[string]interface{}
+
+	// the last operation performed and status.
+	LastOperation *OfferingInstanceLastOperation
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -10616,6 +10764,30 @@ func (options *PutOfferingInstanceOptions) SetSchematicsWorkspaceID(schematicsWo
 // SetResourceGroupID : Allow user to set ResourceGroupID
 func (options *PutOfferingInstanceOptions) SetResourceGroupID(resourceGroupID string) *PutOfferingInstanceOptions {
 	options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return options
+}
+
+// SetInstallPlan : Allow user to set InstallPlan
+func (options *PutOfferingInstanceOptions) SetInstallPlan(installPlan string) *PutOfferingInstanceOptions {
+	options.InstallPlan = core.StringPtr(installPlan)
+	return options
+}
+
+// SetChannel : Allow user to set Channel
+func (options *PutOfferingInstanceOptions) SetChannel(channel string) *PutOfferingInstanceOptions {
+	options.Channel = core.StringPtr(channel)
+	return options
+}
+
+// SetMetadata : Allow user to set Metadata
+func (options *PutOfferingInstanceOptions) SetMetadata(metadata map[string]interface{}) *PutOfferingInstanceOptions {
+	options.Metadata = metadata
+	return options
+}
+
+// SetLastOperation : Allow user to set LastOperation
+func (options *PutOfferingInstanceOptions) SetLastOperation(lastOperation *OfferingInstanceLastOperation) *PutOfferingInstanceOptions {
+	options.LastOperation = lastOperation
 	return options
 }
 

@@ -18,7 +18,7 @@ require (
 	github.com/IBM/go-sdk-core/v4 v4.10.0 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.4.3
 	github.com/IBM/networking-go-sdk v0.14.0
-	github.com/IBM/platform-services-go-sdk v0.18.13
+	github.com/IBM/platform-services-go-sdk v0.18.16
 	github.com/IBM/vpc-go-sdk v1.0.1
 	github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667 // indirect
 	github.com/antchfx/xpath v1.1.2 // indirect
@@ -64,7 +64,7 @@ require (
 	github.com/openshift/client-go v0.0.0-20210409155308-a8e62c60e930
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5
-	github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210608192136-4b79b3b71eec
+	github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d
 	github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20201214114543-e5aed9c73f1f
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210622084102-c4f9f269bcb7

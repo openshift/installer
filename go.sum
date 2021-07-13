@@ -167,6 +167,8 @@ github.com/IBM/platform-services-go-sdk v0.18.11/go.mod h1:yaE+2oxhno9RhKYyvzeek
 github.com/IBM/platform-services-go-sdk v0.18.12/go.mod h1:awc7TZUeGMlToSeMSaWEz34Knf0lQnuGWumcI4pcuoM=
 github.com/IBM/platform-services-go-sdk v0.18.13 h1:RrqgUtX56XWIuZS85xxB7b2uZLs5AbTbOwhl1PAcn5E=
 github.com/IBM/platform-services-go-sdk v0.18.13/go.mod h1:awc7TZUeGMlToSeMSaWEz34Knf0lQnuGWumcI4pcuoM=
+github.com/IBM/platform-services-go-sdk v0.18.16 h1:blYycstPoNtPKtu1uZe240WvzcJENy/Lzx+HMUA8bOo=
+github.com/IBM/platform-services-go-sdk v0.18.16/go.mod h1:awc7TZUeGMlToSeMSaWEz34Knf0lQnuGWumcI4pcuoM=
 github.com/IBM/push-notifications-go-sdk v0.0.0-20210310100607-5790b96c47f5 h1:NPUhkoOCRuv3OFWt19PmwjXGGTKlvmbuPg9fUrBUNe4=
 github.com/IBM/push-notifications-go-sdk v0.0.0-20210310100607-5790b96c47f5/go.mod h1:b07XHUVh0XYnQE9s2mqgjYST1h9buaQNqN4EcKhOsX0=
 github.com/IBM/schematics-go-sdk v0.0.2 h1:IFdM73VL3xwf/KaTh1IY99hkiTfFRYg5F1JNj69FOEg=
@@ -1507,6 +1509,8 @@ github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5/go.mod h1:/XjFaKnqBc8K/jcRXHO7tau39CmzNinqmpxYaQGRvnE=
 github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210608192136-4b79b3b71eec h1:Um4LLVvJ3FK3CXLgye4c1r3FsTGGaumuYNriucJKnu0=
 github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210608192136-4b79b3b71eec/go.mod h1:4PlLZBW38lwAUTzV61pDWQ72ikepGW8oywll89tss0M=
+github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d h1:FD/0xn/h8Do//QkPGhsf1pgXkH8nUkfIUmQ16bRU6TQ=
+github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d/go.mod h1:hIEdP3ZudO/l2J8+gm8IFW0KMHn0YURvMSTZy9luK7w=
 github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20201214114543-e5aed9c73f1f h1:GLvV9l0Qtk8NfqrfDuanHPUyZB413vxp9nUUX1+oyfg=
 github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20201214114543-e5aed9c73f1f/go.mod h1:Moiq8vUJ4IdTaJBxIA756FFJ4GgVXZAiOds7lTpZ1kQ=
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603 h1:MC6BSZYxFPoqqKj9PdlGjHGVKcMsvn6Kv1NiVzQErZ8=
