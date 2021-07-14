@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	apigatewaysdk "github.com/IBM/apigateway-go-sdk"
+	apigatewaysdk "github.com/IBM/apigateway-go-sdk/apigatewaycontrollerapiv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
