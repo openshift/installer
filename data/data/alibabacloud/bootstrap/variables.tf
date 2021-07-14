@@ -60,17 +60,6 @@ variable "system_disk_category" {
   default = "cloud_essd"
 }
 
-variable "data_disk_size" {
-  type = number
-  description = "The data disk size of the bootstrap ECS."
-}
-
-variable "data_disk_category" {
-  type = string
-  description = "The data disk category of the bootstrap ECS.Valid values are cloud_efficiency, cloud_ssd, cloud_essd. Default value is cloud_essd."
-  default = "cloud_essd"
-}
-
 variable "key_name" {
   type = string
   description = "The name of key pair that can login bootstrap ECS instance successfully without password."

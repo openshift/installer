@@ -50,17 +50,6 @@ variable "system_disk_category" {
   default     = "cloud_essd"
 }
 
-variable "data_disk_size" {
-  type        = number
-  description = "The data disk size of the master ECS."
-}
-
-variable "data_disk_category" {
-  type        = string
-  description = "The data disk category of the master ECS.Valid values are cloud_efficiency, cloud_ssd, cloud_essd. Default value is cloud_essd."
-  default     = "cloud_essd"
-}
-
 variable "key_name" {
   type        = string
   description = "The name of key pair that can login ECS instance successfully without password."

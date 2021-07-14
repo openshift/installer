@@ -10,15 +10,6 @@ resource "alicloud_security_group" "sg_worker" {
   )
 }
 
-resource "alicloud_security_group_rule" "sg_rule_worker_ingress_mcs" {
-  type              = "ingress"
-  ip_protocol       = "tcp"
-  policy            = "accept"
-  port_range        = "22623/22623"
-  security_group_id = alicloud_security_group.sg_worker.id
-  cidr_ip           = var.vpc_cidr_block
-}
-
 resource "alicloud_security_group_rule" "sg_rule_worker_ingress_icmp" {
   type              = "ingress"
   ip_protocol       = "icmp"
@@ -33,15 +24,6 @@ resource "alicloud_security_group_rule" "sg_rule_worker_ingress_ssh" {
   ip_protocol       = "tcp"
   policy            = "accept"
   port_range        = "22/22"
-  security_group_id = alicloud_security_group.sg_worker.id
-  cidr_ip           = var.vpc_cidr_block
-}
-
-resource "alicloud_security_group_rule" "sg_rule_worker_ingress_https" {
-  type              = "ingress"
-  ip_protocol       = "tcp"
-  policy            = "accept"
-  port_range        = "6443/6443"
   security_group_id = alicloud_security_group.sg_worker.id
   cidr_ip           = var.vpc_cidr_block
 }
@@ -82,24 +64,6 @@ resource "alicloud_security_group_rule" "sg_rule_worker_ingress_ike_nat_t" {
   cidr_ip           = var.vpc_cidr_block
 }
 
-resource "alicloud_security_group_rule" "sg_rule_worker_ingress_esp" {
-  type              = "ingress"
-  ip_protocol       = "udp"
-  policy            = "accept"
-  port_range        = "4500/4500"
-  security_group_id = alicloud_security_group.sg_worker.id
-  cidr_ip           = var.vpc_cidr_block
-}
-
-resource "alicloud_security_group_rule" "sg_rule_worker_ingress_ovndb" {
-  type              = "ingress"
-  ip_protocol       = "tcp"
-  policy            = "accept"
-  port_range        = "6641/6642"
-  security_group_id = alicloud_security_group.sg_worker.id
-  cidr_ip           = var.vpc_cidr_block
-}
-
 resource "alicloud_security_group_rule" "sg_rule_worker_ingress_vxlan_from_master" {
   type                     = "ingress"
   ip_protocol              = "udp"
@@ -132,15 +96,6 @@ resource "alicloud_security_group_rule" "sg_rule_worker_ingress_ike_nat_t_from_m
   ip_protocol              = "udp"
   policy                   = "accept"
   port_range               = "4500/4500"
-  security_group_id        = alicloud_security_group.sg_worker.id
-  source_security_group_id = alicloud_security_group.sg_master.id
-}
-
-resource "alicloud_security_group_rule" "sg_rule_worker_ingress_ovndb_from_master" {
-  type                     = "ingress"
-  ip_protocol              = "tcp"
-  policy                   = "accept"
-  port_range               = "6641/6642"
   security_group_id        = alicloud_security_group.sg_worker.id
   source_security_group_id = alicloud_security_group.sg_master.id
 }
@@ -181,34 +136,7 @@ resource "alicloud_security_group_rule" "sg_rule_worker_ingress_internal_from_ma
   source_security_group_id = alicloud_security_group.sg_master.id
 }
 
-resource "alicloud_security_group_rule" "sg_rule_worker_ingress_kube_scheduler_from_master" {
-  type              = "ingress"
-  ip_protocol       = "tcp"
-  policy            = "accept"
-  port_range        = "10259/10259"
-  security_group_id = alicloud_security_group.sg_worker.id
-  cidr_ip           = var.vpc_cidr_block
-}
-
-resource "alicloud_security_group_rule" "sg_rule_worker_kube_controller_manager" {
-  type              = "ingress"
-  ip_protocol       = "tcp"
-  policy            = "accept"
-  port_range        = "10257/10257"
-  security_group_id = alicloud_security_group.sg_worker.id
-  cidr_ip           = var.vpc_cidr_block
-}
-
-resource "alicloud_security_group_rule" "sg_rule_worker_ingress_kube_controller_manager_from_master" {
-  type                     = "ingress"
-  ip_protocol              = "tcp"
-  policy                   = "accept"
-  port_range               = "10257/10257"
-  security_group_id        = alicloud_security_group.sg_worker.id
-  source_security_group_id = alicloud_security_group.sg_master.id
-}
-
-resource "alicloud_security_group_rule" "sg_rule_worker_ingress_kubelet_secure" {
+resource "alicloud_security_group_rule" "sg_rule_worker_ingress_kubelet_insecure" {
   type                     = "ingress"
   ip_protocol              = "tcp"
   policy                   = "accept"
@@ -217,22 +145,13 @@ resource "alicloud_security_group_rule" "sg_rule_worker_ingress_kubelet_secure" 
   source_security_group_id = alicloud_security_group.sg_master.id
 }
 
-resource "alicloud_security_group_rule" "sg_rule_worker_ingress_kubelet_secure_from_master" {
+resource "alicloud_security_group_rule" "sg_rule_worker_ingress_kubelet_insecure_from_master" {
   type                     = "ingress"
   ip_protocol              = "tcp"
   policy                   = "accept"
   port_range               = "10250/10250"
   security_group_id        = alicloud_security_group.sg_worker.id
   source_security_group_id = alicloud_security_group.sg_master.id
-}
-
-resource "alicloud_security_group_rule" "sg_rule_worker_ingress_etcd" {
-  type              = "ingress"
-  ip_protocol       = "tcp"
-  policy            = "accept"
-  port_range        = "2379/2380"
-  security_group_id = alicloud_security_group.sg_worker.id
-  cidr_ip           = var.vpc_cidr_block
 }
 
 resource "alicloud_security_group_rule" "sg_rule_worker_services_tcp" {

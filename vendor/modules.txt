@@ -406,8 +406,6 @@ github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils
 github.com/aliyun/alibaba-cloud-sdk-go/services/ecs
 github.com/aliyun/alibaba-cloud-sdk-go/services/pvtz
 github.com/aliyun/alibaba-cloud-sdk-go/services/resourcemanager
-# github.com/aliyun/terraform-provider-alicloud v1.125.0
-## explicit
 # github.com/antchfx/xpath v1.1.2
 ## explicit
 # github.com/apache/openwhisk-client-go v0.0.0-20200201143223-a804fb82d105
@@ -977,6 +975,8 @@ github.com/gophercloud/utils/openstack/imageservice/v2/images
 github.com/gophercloud/utils/openstack/networking/v2/networks
 github.com/gophercloud/utils/terraform/auth
 github.com/gophercloud/utils/terraform/mutexkv
+# github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00
+## explicit
 # github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 github.com/gregjones/httpcache
 github.com/gregjones/httpcache/diskcache
@@ -1278,6 +1278,7 @@ github.com/keybase/go-crypto/openpgp/packet
 github.com/keybase/go-crypto/openpgp/s2k
 github.com/keybase/go-crypto/rsa
 # github.com/klauspost/compress v1.11.8
+## explicit
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
 github.com/klauspost/compress/snappy
@@ -1468,6 +1469,7 @@ github.com/pelletier/go-toml
 # github.com/peterbourgon/diskv v2.0.1+incompatible
 github.com/peterbourgon/diskv
 # github.com/pierrec/lz4 v2.6.0+incompatible
+## explicit
 github.com/pierrec/lz4
 github.com/pierrec/lz4/internal/xxh32
 # github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
@@ -1526,6 +1528,8 @@ github.com/shurcooL/vfsgen
 ## explicit
 github.com/sirupsen/logrus
 github.com/sirupsen/logrus/hooks/test
+# github.com/smartystreets/assertions v1.1.0
+## explicit
 # github.com/softlayer/softlayer-go v1.0.3
 github.com/softlayer/softlayer-go/config
 github.com/softlayer/softlayer-go/datatypes

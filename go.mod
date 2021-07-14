@@ -20,7 +20,6 @@ require (
 	github.com/IBM/vpc-go-sdk v1.0.1
 	github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667 // indirect
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1154
-	github.com/aliyun/terraform-provider-alicloud v1.125.0 // indirect
 	github.com/antchfx/xpath v1.1.2 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
@@ -41,6 +40,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/gophercloud/gophercloud v0.17.0
 	github.com/gophercloud/utils v0.0.0-20210323225332-7b186010c04f
+	github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00 // indirect
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.13.0
 	github.com/hashicorp/go-plugin v1.3.0
@@ -52,6 +52,7 @@ require (
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v0.0.0-20191119172530-79f836b90111
+	github.com/klauspost/compress v1.11.8 // indirect
 	github.com/kubevirt/terraform-provider-kubevirt v0.0.0-00010101000000-000000000000
 	github.com/libvirt/libvirt-go v5.10.0+incompatible
 	github.com/masterzen/simplexml v0.0.0-20190410153822-31eea3082786 // indirect
@@ -75,6 +76,7 @@ require (
 	github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210628083913-78ce17b16709
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pborman/uuid v1.2.0
+	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.10.1
 	github.com/prometheus/client_golang v1.9.0
@@ -83,6 +85,7 @@ require (
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/sirupsen/logrus v1.7.0
+	github.com/smartystreets/assertions v1.1.0 // indirect
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0
 	github.com/terraform-provider-openstack/terraform-provider-openstack v1.37.0

@@ -56,8 +56,6 @@ module "master" {
   image_id             = var.image_id
   system_disk_size     = var.system_disk_size
   system_disk_category = var.system_disk_category
-  data_disk_size       = var.data_disk_size
-  data_disk_category   = var.data_disk_category
   user_data_ign        = var.ignition_master
   key_name             = var.key_name
   role_name            = module.ram.role_master_name
@@ -78,8 +76,6 @@ module "bootstrap" {
   image_id             = var.image_id
   system_disk_size     = var.system_disk_size
   system_disk_category = var.system_disk_category
-  data_disk_size       = var.data_disk_size
-  data_disk_category   = var.data_disk_category
   key_name             = var.key_name
   tags                 = local.tags
 }

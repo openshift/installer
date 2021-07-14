@@ -9,7 +9,7 @@ type MachinePool struct {
 	Zones []string `json:"zones,omitempty"`
 
 	// InstanceType defines the ECS instance type.
-	// eg. ecs.xn4.small
+	// eg. ecs.g6.large
 	//
 	// +optional
 	InstanceType string `json:"instanceType"`
@@ -49,7 +49,7 @@ const DefaultDiskCategory string = "cloud_essd"
 type SystemDisk struct {
 	// Size defines the size of the disk in gibibytes (GiB).
 	//
-	// +kubebuilder:validation:Minimum=20
+	// +kubebuilder:validation:Minimum=120
 	Size int `json:"size"`
 
 	// Category defines the category of the disk.
