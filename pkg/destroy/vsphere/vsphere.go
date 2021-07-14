@@ -133,7 +133,10 @@ func getAttachedObjectsOnTag(ctx context.Context, client *rest.Client, tagName s
 	return attached, nil
 }
 
-func deleteStoragePolicy(ctx context.Context, client *vim25.Client, infraID string) error {
+func deleteStoragePolicy(ctx context.Context, client *vim25.Client, infraID string, logger logrus.FieldLogger) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
+	defer cancel()
+
 	rtype := pbmtypes.PbmProfileResourceType{
 		ResourceType: string(pbmtypes.PbmProfileResourceTypeEnumSTORAGE),
 	}
@@ -155,6 +158,7 @@ func deleteStoragePolicy(ctx context.Context, client *vim25.Client, infraID stri
 		return err
 	}
 	policyName := fmt.Sprintf("openshift-storage-policy-%s", infraID)
+	policyLogger := logger.WithField("StoragePolicy", policyName)
 
 	matchingProfileIds := []pbmtypes.PbmProfileId{}
 	for _, p := range profiles {
@@ -163,8 +167,15 @@ func deleteStoragePolicy(ctx context.Context, client *vim25.Client, infraID stri
 			matchingProfileIds = append(matchingProfileIds, profileID)
 		}
 	}
-	_, err = pbmClient.DeleteProfile(ctx, matchingProfileIds)
-	return err
+	if len(matchingProfileIds) > 0 {
+		_, err = pbmClient.DeleteProfile(ctx, matchingProfileIds)
+		if err != nil {
+			return err
+		}
+		policyLogger.Info("Destroyed")
+
+	}
+	return nil
 }
 
 func deleteTag(ctx context.Context, client *rest.Client, tagID string) error {
@@ -249,7 +260,7 @@ func (o *ClusterUninstaller) Run() error {
 		o.Logger.Debug("No managed Folder found")
 	}
 
-	err = deleteStoragePolicy(context.TODO(), o.Client, o.InfraID)
+	err = deleteStoragePolicy(context.TODO(), o.Client, o.InfraID, o.Logger)
 	if err != nil {
 		return errors.Errorf("error deleting storage policy: %v", err)
 	}
