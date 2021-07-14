@@ -21,7 +21,7 @@ resource "ibm_is_security_group" "cluster_wide" {
 resource "ibm_is_security_group_rule" "cluster_wide_ssh_inbound" {
   group     = ibm_is_security_group.cluster_wide.id
   direction = "inbound"
-  remote    = var.public_endpoints ? "0.0.0.0/0" : ibm_is_security_group.cluster_wide.id
+  remote    = ibm_is_security_group.cluster_wide.id
   tcp {
     port_min = 22
     port_max = 22
@@ -34,17 +34,6 @@ resource "ibm_is_security_group_rule" "cluster_wide_icmp_inbound" {
   direction = "inbound"
   remote    = ibm_is_security_group.cluster_wide.id
   icmp {}
-}
-
-# Metrics
-resource "ibm_is_security_group_rule" "cluster_wide_metrics_inbound" {
-  group     = ibm_is_security_group.cluster_wide.id
-  direction = "inbound"
-  remote    = ibm_is_security_group.cluster_wide.id
-  tcp {
-    port_min = 1936
-    port_max = 1936
-  }
 }
 
 # VXLAN and Geneve - port 4789
@@ -116,7 +105,7 @@ resource "ibm_is_security_group_rule" "openshift_network_kube_default_ports_inbo
   remote    = ibm_is_security_group.openshift_network.id
   tcp {
     port_min = 10250
-    port_max = 10259
+    port_max = 10250
   }
 }
 
@@ -216,6 +205,17 @@ resource "ibm_is_security_group_rule" "control_plane_etcd_inbound" {
   tcp {
     port_min = 2379
     port_max = 2380
+  }
+}
+
+# Kubernetes default ports
+resource "ibm_is_security_group_rule" "control_plane_kube_default_ports_inbound" {
+  group     = ibm_is_security_group.control_plane.id
+  direction = "inbound"
+  remote    = ibm_is_security_group.control_plane.id
+  tcp {
+    port_min = 10257
+    port_max = 10259
   }
 }
 

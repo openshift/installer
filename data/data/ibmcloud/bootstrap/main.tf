@@ -18,7 +18,7 @@ resource "ibm_is_instance" "bootstrap_node" {
   primary_network_interface {
     name            = "eth0"
     subnet          = var.subnet_id
-    security_groups = var.security_group_id_list
+    security_groups = concat(var.security_group_id_list, [ibm_is_security_group.bootstrap.id])
   }
 
   vpc  = var.vpc_id
@@ -48,6 +48,28 @@ resource "ibm_is_floating_ip" "bootstrap_floatingip" {
   resource_group = var.resource_group_id
   target         = ibm_is_instance.bootstrap_node.primary_network_interface.0.id
   tags           = var.tags
+}
+
+############################################
+# Security group
+############################################
+
+resource "ibm_is_security_group" "bootstrap" {
+  name           = "${local.prefix}-security-group-bootstrap"
+  resource_group = var.resource_group_id
+  tags           = var.tags
+  vpc            = var.vpc_id
+}
+
+# SSH
+resource "ibm_is_security_group_rule" "bootstrap_ssh_inbound" {
+  group     = ibm_is_security_group.bootstrap.id
+  direction = "inbound"
+  remote    = var.public_endpoints ? "0.0.0.0/0" : var.security_group_id_list.0.id
+  tcp {
+    port_min = 22
+    port_max = 22
+  }
 }
 
 ############################################
