@@ -21,13 +21,6 @@ resource "alicloud_instance" "master" {
   system_disk_category    = var.system_disk_category
   system_disk_size        = var.system_disk_size
 
-  data_disks {
-    name        = "${local.prefix}_data_disk-master_${count.index}"
-    category    = var.data_disk_category
-    size        = var.data_disk_size
-    description = local.description
-  }
-
   user_data = var.user_data_ign
   key_name  = var.key_name
   tags = merge(

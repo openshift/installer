@@ -116,13 +116,6 @@ resource "alicloud_instance" "bootstrap" {
   system_disk_category    = var.system_disk_category
   system_disk_size        = var.system_disk_size
 
-  data_disks {
-    name        = "${local.prefix}_data_disk-bootstrap"
-    category    = var.data_disk_category
-    size        = var.data_disk_size
-    description = local.description
-  }
-
   user_data = var.ignition_stub
   key_name  = var.key_name
   tags = merge(

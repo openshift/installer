@@ -83,7 +83,7 @@ spec:
                       properties:
                         instanceType:
                           description: InstanceType defines the ECS instance type.
-                            eg. ecs.xn4.small
+                            eg. ecs.g6.large
                           type: string
                         systemDisk:
                           description: SystemDisk defines the system disk for ECS
@@ -95,7 +95,7 @@ spec:
                             size:
                               description: Size defines the size of the disk in gibibytes
                                 (GiB).
-                              minimum: 20
+                              minimum: 120
                               type: integer
                           required:
                           - category
@@ -541,7 +541,7 @@ spec:
                     properties:
                       instanceType:
                         description: InstanceType defines the ECS instance type. eg.
-                          ecs.xn4.small
+                          ecs.g6.large
                         type: string
                       systemDisk:
                         description: SystemDisk defines the system disk for ECS instances
@@ -553,7 +553,7 @@ spec:
                           size:
                             description: Size defines the size of the disk in gibibytes
                               (GiB).
-                            minimum: 20
+                            minimum: 120
                             type: integer
                         required:
                         - category
@@ -1125,7 +1125,7 @@ spec:
                     properties:
                       instanceType:
                         description: InstanceType defines the ECS instance type. eg.
-                          ecs.xn4.small
+                          ecs.g6.large
                         type: string
                       systemDisk:
                         description: SystemDisk defines the system disk for ECS instances
@@ -1137,7 +1137,7 @@ spec:
                           size:
                             description: Size defines the size of the disk in gibibytes
                               (GiB).
-                            minimum: 20
+                            minimum: 120
                             type: integer
                         required:
                         - category

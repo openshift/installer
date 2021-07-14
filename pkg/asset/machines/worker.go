@@ -92,9 +92,9 @@ func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 
 func defaultAlibabaCloudMachinePoolPlatform() alibabacloudtypes.MachinePool {
 	return alibabacloudtypes.MachinePool{
-		InstanceType: "ecs.xn4.small",
+		InstanceType: "ecs.g6.large",
 		SystemDisk: alibabacloudtypes.SystemDisk{
-			Size:     100,
+			Size:     120,
 			Category: alibabacloudtypes.DefaultDiskCategory,
 		},
 	}

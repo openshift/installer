@@ -82,15 +82,6 @@ resource "alicloud_security_group_rule" "sg_rule_master_ingress_ike_nat_t" {
   cidr_ip           = var.vpc_cidr_block
 }
 
-resource "alicloud_security_group_rule" "sg_rule_master_ingress_esp" {
-  type              = "ingress"
-  ip_protocol       = "udp"
-  policy            = "accept"
-  port_range        = "4500/4500"
-  security_group_id = alicloud_security_group.sg_master.id
-  cidr_ip           = var.vpc_cidr_block
-}
-
 resource "alicloud_security_group_rule" "sg_rule_master_ingress_ovndb" {
   type              = "ingress"
   ip_protocol       = "tcp"
@@ -181,13 +172,22 @@ resource "alicloud_security_group_rule" "sg_rule_master_ingress_internal_from_wo
   source_security_group_id = alicloud_security_group.sg_worker.id
 }
 
-resource "alicloud_security_group_rule" "sg_rule_master_ingress_kube_scheduler_from_worker" {
+resource "alicloud_security_group_rule" "sg_rule_master_ingress_kube_scheduler" {
   type              = "ingress"
   ip_protocol       = "tcp"
   policy            = "accept"
   port_range        = "10259/10259"
   security_group_id = alicloud_security_group.sg_master.id
   cidr_ip           = var.vpc_cidr_block
+}
+
+resource "alicloud_security_group_rule" "sg_rule_master_ingress_kube_scheduler_from_worker" {
+  type                     = "ingress"
+  ip_protocol              = "tcp"
+  policy                   = "accept"
+  port_range               = "10259/10259"
+  security_group_id        = alicloud_security_group.sg_master.id
+  source_security_group_id = alicloud_security_group.sg_worker.id
 }
 
 
@@ -210,7 +210,7 @@ resource "alicloud_security_group_rule" "sg_rule_master_ingress_kube_controller_
   source_security_group_id = alicloud_security_group.sg_worker.id
 }
 
-resource "alicloud_security_group_rule" "sg_rule_master_ingress_kubelet_secure" {
+resource "alicloud_security_group_rule" "sg_rule_master_ingress_kubelet_insecure" {
   type                     = "ingress"
   ip_protocol              = "tcp"
   policy                   = "accept"
@@ -219,7 +219,7 @@ resource "alicloud_security_group_rule" "sg_rule_master_ingress_kubelet_secure" 
   source_security_group_id = alicloud_security_group.sg_worker.id
 }
 
-resource "alicloud_security_group_rule" "sg_rule_master_ingress_kubelet_secure_from_worker" {
+resource "alicloud_security_group_rule" "sg_rule_master_ingress_kubelet_insecure_from_worker" {
   type                     = "ingress"
   ip_protocol              = "tcp"
   policy                   = "accept"
