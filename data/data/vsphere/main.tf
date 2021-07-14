@@ -60,7 +60,9 @@ resource "vsphere_tag_category" "category" {
   associable_types = [
     "VirtualMachine",
     "ResourcePool",
-    "Folder"
+    "Folder",
+    "Datastore",
+    "StoragePod"
   ]
 }
 
