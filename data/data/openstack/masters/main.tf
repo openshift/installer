@@ -2,12 +2,40 @@ locals {
   description = "Created By OpenShift Installer"
 }
 
+provider "openstack" {
+  auth_url            = var.openstack_credentials_auth_url
+  cert                = var.openstack_credentials_cert
+  cloud               = var.openstack_credentials_cloud
+  domain_id           = var.openstack_credentials_domain_id
+  domain_name         = var.openstack_credentials_domain_name
+  endpoint_type       = var.openstack_credentials_endpoint_type
+  insecure            = var.openstack_credentials_insecure
+  key                 = var.openstack_credentials_key
+  password            = var.openstack_credentials_password
+  project_domain_id   = var.openstack_credentials_project_domain_id
+  project_domain_name = var.openstack_credentials_project_domain_name
+  region              = var.openstack_credentials_region
+  swauth              = var.openstack_credentials_swauth
+  tenant_id           = var.openstack_credentials_tenant_id
+  tenant_name         = var.openstack_credentials_tenant_name
+  token               = var.openstack_credentials_token
+  use_octavia         = var.openstack_credentials_use_octavia
+  user_domain_id      = var.openstack_credentials_user_domain_id
+  user_domain_name    = var.openstack_credentials_user_domain_name
+  user_id             = var.openstack_credentials_user_id
+  user_name           = var.openstack_credentials_user_name
+}
+
+data "openstack_images_image_v2" "base_image" {
+  name = var.openstack_base_image_name
+}
+
 data "openstack_compute_flavor_v2" "masters_flavor" {
-  name = var.flavor_name
+  name = var.openstack_master_flavor_name
 }
 
 data "ignition_file" "hostname" {
-  count = var.instance_count
+  count = var.master_count
   mode  = "420" // 0644
   path  = "/etc/hostname"
 
@@ -19,10 +47,10 @@ EOF
 }
 
 data "ignition_config" "master_ignition_config" {
-  count = var.instance_count
+  count = var.master_count
 
   merge {
-    source = "data:text/plain;charset=utf-8;base64,${base64encode(var.user_data_ign)}"
+    source = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition_master)}"
   }
 
   files = [
@@ -33,18 +61,18 @@ data "ignition_config" "master_ignition_config" {
 resource "openstack_blockstorage_volume_v3" "master_volume" {
   name = "${var.cluster_id}-master-${count.index}"
   description = local.description
-  count = var.root_volume_size == null ? 0 : var.instance_count
+  count = var.openstack_master_root_volume_size == null ? 0 : var.master_count
 
-  size = var.root_volume_size
-  volume_type = var.root_volume_type
-  image_id = var.base_image_id
+  size = var.openstack_master_root_volume_size
+  volume_type = var.openstack_master_root_volume_type
+  image_id = data.openstack_images_image_v2.base_image.id
 
-  availability_zone = var.root_volume_zones[count.index % length(var.root_volume_zones)]
+  availability_zone = var.openstack_master_root_volume_availability_zones[count.index % length(var.openstack_master_root_volume_availability_zones)]
 }
 
 resource "openstack_compute_servergroup_v2" "master_group" {
-  name = var.server_group_name
-  policies = [var.server_group_policy]
+  name = var.openstack_master_server_group_name
+  policies = [var.openstack_master_server_group_policy]
 }
 
 # The master servers are created in three separate resource definition blocks,
@@ -65,20 +93,20 @@ resource "openstack_compute_servergroup_v2" "master_group" {
 #
 # [1]: https://github.com/openshift/installer/tree/master/docs/user/openstack#master-nodes
 resource "openstack_compute_instance_v2" "master_conf_0" {
-  count = var.instance_count > 0 ? 1 : 0
+  count = var.master_count > 0 ? 1 : 0
   name = "${var.cluster_id}-master-0"
 
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
-  image_id = var.root_volume_size == null ? var.base_image_id : null
-  security_groups = var.master_sg_ids
-  availability_zone = var.zones[0 % length(var.zones)]
+  image_id = var.openstack_master_root_volume_size == null ? data.openstack_images_image_v2.base_image.id : null
+  security_groups = local.master_sg_ids
+  availability_zone = var.openstack_master_availability_zones[0 % length(var.openstack_master_availability_zones)]
   user_data = element(
     data.ignition_config.master_ignition_config.*.rendered,
     0,
   )
 
   dynamic "block_device" {
-    for_each = var.root_volume_size == null ? [] : [openstack_blockstorage_volume_v3.master_volume[0].id]
+    for_each = var.openstack_master_root_volume_size == null ? [] : [openstack_blockstorage_volume_v3.master_volume[0].id]
     content {
       uuid = block_device.value
       source_type = "volume"
@@ -89,7 +117,7 @@ resource "openstack_compute_instance_v2" "master_conf_0" {
   }
 
   network {
-    port = var.master_port_ids[0]
+    port = local.master_port_ids[0]
   }
 
   scheduler_hints {
@@ -97,7 +125,7 @@ resource "openstack_compute_instance_v2" "master_conf_0" {
   }
 
   dynamic "network" {
-    for_each = var.additional_network_ids
+    for_each = var.openstack_additional_network_ids
 
     content {
       uuid = network.value
@@ -113,20 +141,20 @@ resource "openstack_compute_instance_v2" "master_conf_0" {
 }
 
 resource "openstack_compute_instance_v2" "master_conf_1" {
-  count = var.instance_count > 1 ? 1 : 0
+  count = var.master_count > 1 ? 1 : 0
   name = "${var.cluster_id}-master-1"
 
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
-  image_id = var.root_volume_size == null ? var.base_image_id : null
-  security_groups = var.master_sg_ids
-  availability_zone = var.zones[1 % length(var.zones)]
+  image_id = var.openstack_master_root_volume_size == null ? data.openstack_images_image_v2.base_image.id : null
+  security_groups = local.master_sg_ids
+  availability_zone = var.openstack_master_availability_zones[1 % length(var.openstack_master_availability_zones)]
   user_data = element(
     data.ignition_config.master_ignition_config.*.rendered,
     1,
   )
 
   dynamic "block_device" {
-    for_each = var.root_volume_size == null ? [] : [openstack_blockstorage_volume_v3.master_volume[1].id]
+    for_each = var.openstack_master_root_volume_size == null ? [] : [openstack_blockstorage_volume_v3.master_volume[1].id]
     content {
       uuid = block_device.value
       source_type = "volume"
@@ -137,7 +165,7 @@ resource "openstack_compute_instance_v2" "master_conf_1" {
   }
 
   network {
-    port = var.master_port_ids[1]
+    port = local.master_port_ids[1]
   }
 
   scheduler_hints {
@@ -145,7 +173,7 @@ resource "openstack_compute_instance_v2" "master_conf_1" {
   }
 
   dynamic "network" {
-    for_each = var.additional_network_ids
+    for_each = var.openstack_additional_network_ids
 
     content {
       uuid = network.value
@@ -163,20 +191,20 @@ resource "openstack_compute_instance_v2" "master_conf_1" {
 }
 
 resource "openstack_compute_instance_v2" "master_conf_2" {
-  count = var.instance_count > 2 ? 1 : 0
+  count = var.master_count > 2 ? 1 : 0
   name = "${var.cluster_id}-master-2"
 
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
-  image_id = var.root_volume_size == null ? var.base_image_id : null
-  security_groups = var.master_sg_ids
-  availability_zone = var.zones[2 % length(var.zones)]
+  image_id = var.openstack_master_root_volume_size == null ? data.openstack_images_image_v2.base_image.id : null
+  security_groups = local.master_sg_ids
+  availability_zone = var.openstack_master_availability_zones[2 % length(var.openstack_master_availability_zones)]
   user_data = element(
     data.ignition_config.master_ignition_config.*.rendered,
     2,
   )
 
   dynamic "block_device" {
-    for_each = var.root_volume_size == null ? [] : [openstack_blockstorage_volume_v3.master_volume[2].id]
+    for_each = var.openstack_master_root_volume_size == null ? [] : [openstack_blockstorage_volume_v3.master_volume[2].id]
     content {
       uuid = block_device.value
       source_type = "volume"
@@ -187,7 +215,7 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
   }
 
   network {
-    port = var.master_port_ids[2]
+    port = local.master_port_ids[2]
   }
 
   scheduler_hints {
@@ -195,7 +223,7 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
   }
 
   dynamic "network" {
-    for_each = var.additional_network_ids
+    for_each = var.openstack_additional_network_ids
 
     content {
       uuid = network.value
@@ -210,4 +238,11 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
   }
 
   depends_on = [openstack_compute_instance_v2.master_conf_1]
+}
+
+# Pre-create server groups for the Compute MachineSets, with the given policy.
+resource "openstack_compute_servergroup_v2" "server_groups" {
+  for_each = var.openstack_worker_server_group_names
+  name = each.key
+  policies = [var.openstack_master_server_group_policy]
 }

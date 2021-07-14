@@ -8,10 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/terraform"
-	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
 	gatherovirt "github.com/openshift/installer/pkg/terraform/gather/ovirt"
 	"github.com/openshift/installer/pkg/types"
-	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 )
 
@@ -73,15 +71,6 @@ func (s stage) ExtractHostAddresses(directory string, config *types.InstallConfi
 func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State) (bootstrap string, port int, masters []string, err error) {
 	port = 22
 	switch config.Platform.Name() {
-	case openstacktypes.Name:
-		bootstrap, err = gatheropenstack.BootstrapIP(tfstate)
-		if err != nil {
-			return
-		}
-		masters, err = gatheropenstack.ControlPlaneIPs(tfstate)
-		if err != nil {
-			logrus.Error(err)
-		}
 	case ovirttypes.Name:
 		bootstrap, err = gatherovirt.BootstrapIP(tfstate)
 		if err != nil {
