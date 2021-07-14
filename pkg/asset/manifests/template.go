@@ -42,7 +42,6 @@ type OvirtCredsSecretData struct {
 	Base64encodeURL      string
 	Base64encodeUsername string
 	Base64encodePassword string
-	Base64encodeCAFile   string
 	Base64encodeInsecure string
 	Base64encodeCABundle string
 }
