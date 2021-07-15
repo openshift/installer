@@ -20,16 +20,20 @@ aliases:
     - praveenkumar
     - cfergeau
   openstack-approvers:
+    - EmilienM
     - Fedosin
     - adduarte
     - iamemilio
     - mandre
+    - mdbooth
     - pierreprinetti
   openstack-reviewers:
+    - EmilienM
     - Fedosin
     - adduarte
     - iamemilio
     - mandre
+    - mdbooth
     - pierreprinetti
   vsphere-approvers:
     - dav1x
