@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -37,6 +38,7 @@ func validInstallConfig() *types.InstallConfig {
 			},
 		},
 		ControlPlane: &types.MachinePool{
+			Replicas: pointer.Int64Ptr(3),
 			Platform: types.MachinePoolPlatform{
 				AWS: &aws.MachinePool{
 					Zones: []string{"a", "b", "c"},
@@ -44,6 +46,7 @@ func validInstallConfig() *types.InstallConfig {
 			},
 		},
 		Compute: []types.MachinePool{{
+			Replicas: pointer.Int64Ptr(3),
 			Platform: types.MachinePoolPlatform{
 				AWS: &aws.MachinePool{
 					Zones: []string{"a", "b", "c"},
@@ -123,7 +126,7 @@ func TestValidate(t *testing.T) {
 		availZones     []string
 		privateSubnets map[string]Subnet
 		publicSubnets  map[string]Subnet
-		exptectErr     string
+		expectErr      string
 	}{{
 		name: "valid no byo",
 		installConfig: func() *types.InstallConfig {
@@ -181,7 +184,7 @@ func TestValidate(t *testing.T) {
 		}(),
 		availZones:    validAvailZones(),
 		publicSubnets: validPublicSubnets(),
-		exptectErr:    `^\[platform\.aws\.subnets: Invalid value: \[\]string{\"valid-public-subnet-a\", \"valid-public-subnet-b\", \"valid-public-subnet-c\"}: No private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\"}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\"}: No subnets provided for zones \[a b c\]\]$`,
+		expectErr:     `^\[platform\.aws\.subnets: Invalid value: \[\]string{\"valid-public-subnet-a\", \"valid-public-subnet-b\", \"valid-public-subnet-c\"}: No private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\"}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\"}: No subnets provided for zones \[a b c\]\]$`,
 	}, {
 		name: "invalid no public subnets",
 		installConfig: func() *types.InstallConfig {
@@ -195,7 +198,7 @@ func TestValidate(t *testing.T) {
 		}(),
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
-		exptectErr:     `^platform\.aws\.subnets: Invalid value: \[\]string{\"valid-private-subnet-a\", \"valid-private-subnet-b\", \"valid-private-subnet-c\"}: No public subnet provided for zones \[a b c\]$`,
+		expectErr:      `^platform\.aws\.subnets: Invalid value: \[\]string{\"valid-private-subnet-a\", \"valid-private-subnet-b\", \"valid-private-subnet-c\"}: No public subnet provided for zones \[a b c\]$`,
 	}, {
 		name: "invalid cidr does not belong to machine CIDR",
 		installConfig: func() *types.InstallConfig {
@@ -212,7 +215,7 @@ func TestValidate(t *testing.T) {
 			}
 			return s
 		}(),
-		exptectErr: `^platform\.aws\.subnets\[6\]: Invalid value: \"invalid-cidr-subnet\": subnet's CIDR range start 192.168.126.0 is outside of the specified machine networks$`,
+		expectErr: `^platform\.aws\.subnets\[6\]: Invalid value: \"invalid-cidr-subnet\": subnet's CIDR range start 192.168.126.0 is outside of the specified machine networks$`,
 	}, {
 		name: "invalid cidr does not belong to machine CIDR",
 		installConfig: func() *types.InstallConfig {
@@ -235,7 +238,7 @@ func TestValidate(t *testing.T) {
 			}
 			return s
 		}(),
-		exptectErr: `^\[platform\.aws\.subnets\[6\]: Invalid value: \"invalid-private-cidr-subnet\": subnet's CIDR range start 192.168.126.0 is outside of the specified machine networks, platform\.aws\.subnets\[7\]: Invalid value: \"invalid-public-cidr-subnet\": subnet's CIDR range start 192.168.127.0 is outside of the specified machine networks\]$`,
+		expectErr: `^\[platform\.aws\.subnets\[6\]: Invalid value: \"invalid-private-cidr-subnet\": subnet's CIDR range start 192.168.126.0 is outside of the specified machine networks, platform\.aws\.subnets\[7\]: Invalid value: \"invalid-public-cidr-subnet\": subnet's CIDR range start 192.168.127.0 is outside of the specified machine networks\]$`,
 	}, {
 		name: "invalid missing public subnet in a zone",
 		installConfig: func() *types.InstallConfig {
@@ -253,7 +256,7 @@ func TestValidate(t *testing.T) {
 			return s
 		}(),
 		publicSubnets: validPublicSubnets(),
-		exptectErr:    `^platform\.aws\.subnets: Invalid value: \[\]string{\"valid-private-subnet-a\", \"valid-private-subnet-b\", \"valid-private-subnet-c\", \"valid-public-subnet-a\", \"valid-public-subnet-b\", \"valid-public-subnet-c\", \"no-matching-public-private-zone\"}: No public subnet provided for zones \[f\]$`,
+		expectErr:     `^platform\.aws\.subnets: Invalid value: \[\]string{\"valid-private-subnet-a\", \"valid-private-subnet-b\", \"valid-private-subnet-c\", \"valid-public-subnet-a\", \"valid-public-subnet-b\", \"valid-public-subnet-c\", \"no-matching-public-private-zone\"}: No public subnet provided for zones \[f\]$`,
 	}, {
 		name: "invalid multiple private in same zone",
 		installConfig: func() *types.InstallConfig {
@@ -271,7 +274,7 @@ func TestValidate(t *testing.T) {
 			return s
 		}(),
 		publicSubnets: validPublicSubnets(),
-		exptectErr:    `^platform\.aws\.subnets\[6\]: Invalid value: \"valid-private-zone-c-2\": private subnet valid-private-subnet-c is also in zone c$`,
+		expectErr:     `^platform\.aws\.subnets\[6\]: Invalid value: \"valid-private-zone-c-2\": private subnet valid-private-subnet-c is also in zone c$`,
 	}, {
 		name: "invalid multiple public in same zone",
 		installConfig: func() *types.InstallConfig {
@@ -289,7 +292,7 @@ func TestValidate(t *testing.T) {
 			}
 			return s
 		}(),
-		exptectErr: `^platform\.aws\.subnets\[6\]: Invalid value: \"valid-public-zone-c-2\": public subnet valid-public-subnet-c is also in zone c$`,
+		expectErr: `^platform\.aws\.subnets\[6\]: Invalid value: \"valid-public-zone-c-2\": public subnet valid-public-subnet-c is also in zone c$`,
 	}, {
 		name: "invalid no subnet for control plane zones",
 		installConfig: func() *types.InstallConfig {
@@ -300,7 +303,7 @@ func TestValidate(t *testing.T) {
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
-		exptectErr:     `^controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\]$`,
+		expectErr:      `^controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\]$`,
 	}, {
 		name: "invalid no subnet for control plane zones",
 		installConfig: func() *types.InstallConfig {
@@ -311,7 +314,7 @@ func TestValidate(t *testing.T) {
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
-		exptectErr:     `^controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\", \"e\"}: No subnets provided for zones \[d e\]$`,
+		expectErr:      `^controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\", \"e\"}: No subnets provided for zones \[d e\]$`,
 	}, {
 		name: "invalid no subnet for compute[0] zones",
 		installConfig: func() *types.InstallConfig {
@@ -322,7 +325,7 @@ func TestValidate(t *testing.T) {
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
-		exptectErr:     `^compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\]$`,
+		expectErr:      `^compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\]$`,
 	}, {
 		name: "invalid no subnet for compute zone",
 		installConfig: func() *types.InstallConfig {
@@ -340,7 +343,7 @@ func TestValidate(t *testing.T) {
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
-		exptectErr:     `^\[compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\], compute\[1\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"e\"}: No subnets provided for zones \[e\]\]$`,
+		expectErr:      `^\[compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\], compute\[1\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"e\"}: No subnets provided for zones \[e\]\]$`,
 	}, {
 		name: "custom region invalid service endpoints none provided",
 		installConfig: func() *types.InstallConfig {
@@ -352,7 +355,7 @@ func TestValidate(t *testing.T) {
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
-		exptectErr:     `^platform\.aws\.serviceEndpoints: Invalid value: (.|\n)*: \[failed to find endpoint for service "ec2": (.|\n)*, failed to find endpoint for service "elasticloadbalancing": (.|\n)*, failed to find endpoint for service "iam": (.|\n)*, failed to find endpoint for service "route53": (.|\n)*, failed to find endpoint for service "s3": (.|\n)*, failed to find endpoint for service "sts": (.|\n)*, failed to find endpoint for service "tagging": (.|\n)*\]$`,
+		expectErr:      `^platform\.aws\.serviceEndpoints: Invalid value: (.|\n)*: \[failed to find endpoint for service "ec2": (.|\n)*, failed to find endpoint for service "elasticloadbalancing": (.|\n)*, failed to find endpoint for service "iam": (.|\n)*, failed to find endpoint for service "route53": (.|\n)*, failed to find endpoint for service "s3": (.|\n)*, failed to find endpoint for service "sts": (.|\n)*, failed to find endpoint for service "tagging": (.|\n)*\]$`,
 	}, {
 		name: "custom region invalid service endpoints some provided",
 		installConfig: func() *types.InstallConfig {
@@ -365,7 +368,7 @@ func TestValidate(t *testing.T) {
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
-		exptectErr:     `^platform\.aws\.serviceEndpoints: Invalid value: (.|\n)*: \[failed to find endpoint for service "elasticloadbalancing": (.|\n)*, failed to find endpoint for service "route53": (.|\n)*, failed to find endpoint for service "sts": (.|\n)*, failed to find endpoint for service "tagging": (.|\n)*$`,
+		expectErr:      `^platform\.aws\.serviceEndpoints: Invalid value: (.|\n)*: \[failed to find endpoint for service "elasticloadbalancing": (.|\n)*, failed to find endpoint for service "route53": (.|\n)*, failed to find endpoint for service "sts": (.|\n)*, failed to find endpoint for service "tagging": (.|\n)*$`,
 	}, {
 		name: "custom region valid service endpoints",
 		installConfig: func() *types.InstallConfig {
@@ -379,6 +382,110 @@ func TestValidate(t *testing.T) {
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
 	}, {
+		name: "AMI omitted for new region in standard partition",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-newregion-1"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "accept platform-level AMI",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.Platform.AWS.AMIID = "custom-ami"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "accept AMI from default machine platform",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.Platform.AWS.DefaultMachinePlatform = &aws.MachinePool{AMIID: "custom-ami"}
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "accept AMIs specified for each machine pool",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
+			c.Compute[0].Platform.AWS.AMIID = "custom-ami"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "AMI not provided for control plane",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.Compute[0].Platform.AWS.AMIID = "custom-ami"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
+		name: "AMI not provided for compute",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
+		name: "machine platform not provided for compute",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
+			c.Compute[0].Platform.AWS = nil
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
+		name: "AMI omitted for compute with no replicas",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
+			c.Compute[0].Replicas = pointer.Int64Ptr(0)
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "AMI not provided for US gov region",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
 		name: "AMI not provided for unknown region",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
@@ -389,7 +496,7 @@ func TestValidate(t *testing.T) {
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
-		exptectErr:     `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
 	}}
 
 	for _, test := range tests {
@@ -400,10 +507,12 @@ func TestValidate(t *testing.T) {
 				publicSubnets:     test.publicSubnets,
 			}
 			err := Validate(context.TODO(), meta, test.installConfig)
-			if test.exptectErr == "" {
+			if test.expectErr == "" {
 				assert.NoError(t, err)
 			} else {
-				assert.Regexp(t, test.exptectErr, err.Error())
+				if assert.Error(t, err) {
+					assert.Regexp(t, test.expectErr, err.Error())
+				}
 			}
 		})
 	}
