@@ -216,4 +216,4 @@ control-plane
 3 directories, 0 files
 ```
 
-The troubleshooting would require the logs of the installer gathering the log bundle, which are easily availble in `.openshift_install.log`.
+The troubleshooting would require the logs of the installer gathering the log bundle, which are easily available in `.openshift_install.log`.

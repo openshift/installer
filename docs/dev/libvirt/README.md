@@ -113,7 +113,7 @@ First, you need to start the libvirtd TCP socket, which is managed by systemd:
 sudo systemctl start libvirtd-tcp.socket
 ```
 
-To make this change persistent accross reboots you can optionally enable it:
+To make this change persistent across reboots you can optionally enable it:
 
 ```sh
 sudo systemctl enable libvirtd-tcp.socket
