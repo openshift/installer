@@ -3,7 +3,6 @@ kind: Provisioning
 metadata:
   name: provisioning-configuration
 spec:
-  provisioningInterface: "{{.Baremetal.ProvisioningNetworkInterface}}"
   provisioningIP: "{{.Baremetal.ClusterProvisioningIP}}"
   provisioningNetworkCIDR: "{{.Baremetal.ProvisioningNetworkCIDR}}"
   provisioningNetwork: "{{.Baremetal.ProvisioningNetwork}}"

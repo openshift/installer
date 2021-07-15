@@ -48,7 +48,7 @@ accessible over the external network which may not be desirable.
 
 * **NIC #2 - Provisioning Network (optional) **
   * A private network used for PXE based provisioning.
-  * You must specify `provisioningNetworkInterface` to indicate which
+  * You can specify `provisioningNetworkInterface` to indicate which
     interface is connected to this network on the control plane nodes.
   * The provisioning network may be "Managed" (default), "Unmanaged," or
     "Disabled."
@@ -103,7 +103,7 @@ cluster.  That way it is already connected to the proper networks.
 
 It is recommended that the provisioning host be a bare metal host, as it must be
 able to use libvirt to launch the OpenShift bootstrap VM locally. Additionally,
-the installer creates a directory backed libvirt storage pool in the 
+the installer creates a directory backed libvirt storage pool in the
 `/var/lib/libvirt/openshift-images` directory. Sufficient disk space must be
 available in the directory to host the bootstrap VM volume.
 
@@ -160,7 +160,6 @@ platform:
   baremetal:
     apiVIP: 192.168.111.5
     ingressVIP: 192.168.111.4
-    provisioningNetworkInterface: enp1s0
     hosts:
       - name: openshift-master-0
         role: master
@@ -208,7 +207,6 @@ sshKey: ...
 
 | Parameter | Default | Description |
 | --- | --- | --- |
-`provisioningNetworkInterface` | | The name of the network interface on control plane nodes connected to the provisioning network. It cannot overlap with the main network (see `machineNetwork`) |
 `hosts` | | Details about bare metal hosts to use to build the cluster. See below for more details. |
 `defaultMachinePlatform` | | The default configuration used for machine pools without a platform configuration. |
 `apiVIP` | `api.<clusterdomain>` | The VIP to use for internal API communication. |
