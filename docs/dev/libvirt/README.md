@@ -227,9 +227,25 @@ NOTE: When the firewall rules are no longer needed, `sudo firewall-cmd --reload`
 will remove the changes made as they were not permanently added. For persistence,
 add `--permanent` to the `firewall-cmd` commands and run them a second time.
 
-### Set up NetworkManager DNS overlay
+### Set up DNS
 
 This step allows installer and users to resolve cluster-internal hostnames from your host.
+
+#### Using systemd-resolved
+
+If your system is using `systemd-resolved` (the default since Fedora 33), then you can setup DNS without using `dnsmasq`.
+
+Just point `resovectl` to use `192.168.126.1` for your `baseDomain`. Replace `baseDomain` in the example accordingly.
+
+```sh
+sudo resolvectl dns tt0 192.168.126.1
+sudo resolvectl domain tt0 ~<baseDomain>
+```
+
+Your cluster might run on a different network interface. To find which one it is, either check your `install-config.yaml`
+or run `nmcli` and find the interface that's running the `192.168.126.0/24` net.
+
+#### Using NetworkManager DNS overlay
 
 1. Tell NetworkManager to use `dnsmasq`:
 
