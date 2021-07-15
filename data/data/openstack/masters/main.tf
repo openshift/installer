@@ -211,3 +211,10 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
 
   depends_on = [openstack_compute_instance_v2.master_conf_1]
 }
+
+# Pre-create server groups for the Compute MachineSets, with the given policy.
+resource "openstack_compute_servergroup_v2" "worker_group" {
+  for_each = var.worker_server_group_names
+  name = each.key
+  policies = [var.worker_server_group_policy]
+}

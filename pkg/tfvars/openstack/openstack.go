@@ -39,6 +39,8 @@ type config struct {
 	ExternalDNS                      []string                          `json:"openstack_external_dns,omitempty"`
 	MasterServerGroupName            string                            `json:"openstack_master_server_group_name,omitempty"`
 	MasterServerGroupPolicy          types_openstack.ServerGroupPolicy `json:"openstack_master_server_group_policy"`
+	WorkerServerGroupNames           []string                          `json:"openstack_worker_server_group_names,omitempty"`
+	WorkerServerGroupPolicy          types_openstack.ServerGroupPolicy `json:"openstack_worker_server_group_policy"`
 	AdditionalNetworkIDs             []string                          `json:"openstack_additional_network_ids,omitempty"`
 	AdditionalSecurityGroupIDs       []string                          `json:"openstack_master_extra_sg_ids,omitempty"`
 	MachinesSubnet                   string                            `json:"openstack_machines_subnet_id,omitempty"`
@@ -48,7 +50,7 @@ type config struct {
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy) ([]byte, error) {
+func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mastermpool, workermpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy) ([]byte, error) {
 	zones := []string{}
 	seen := map[string]bool{}
 	for _, config := range masterConfigs {
@@ -74,8 +76,8 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 	if defaultmpool != nil && defaultmpool.RootVolume != nil {
 		cfg.MasterRootVolumeAvalabilityZones = defaultmpool.RootVolume.Zones
 	}
-	if mpool != nil && mpool.RootVolume != nil && mpool.RootVolume.Zones != nil {
-		cfg.MasterRootVolumeAvalabilityZones = mpool.RootVolume.Zones
+	if mastermpool != nil && mastermpool.RootVolume != nil && mastermpool.RootVolume.Zones != nil {
+		cfg.MasterRootVolumeAvalabilityZones = mastermpool.RootVolume.Zones
 	}
 
 	serviceCatalog, err := getServiceCatalog(cloud)
@@ -162,8 +164,8 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 
 	cfg.MasterServerGroupName = masterConfig.ServerGroupName
 
-	if mpool != nil && mpool.ServerGroupPolicy != types_openstack.SGPolicyUnset {
-		cfg.MasterServerGroupPolicy = mpool.ServerGroupPolicy
+	if mastermpool != nil && mastermpool.ServerGroupPolicy != types_openstack.SGPolicyUnset {
+		cfg.MasterServerGroupPolicy = mastermpool.ServerGroupPolicy
 	} else if defaultmpool != nil && defaultmpool.ServerGroupPolicy != types_openstack.SGPolicyUnset {
 		cfg.MasterServerGroupPolicy = defaultmpool.ServerGroupPolicy
 	} else {
@@ -174,14 +176,29 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 		return nil, errors.Errorf("ServerGroupID is not implemented in the Installer. Please use ServerGroupName for automatic creation of the Control Plane server group.")
 	}
 
+	for _, workerConfig := range workerConfigs {
+		cfg.WorkerServerGroupNames = append(cfg.WorkerServerGroupNames, workerConfig.ServerGroupName)
+		if workerConfig.ServerGroupID != "" {
+			return nil, errors.Errorf("ServerGroupID is not implemented in the Installer. Please use ServerGroupName for automatic creation of the Compute server group.")
+		}
+	}
+
+	if workermpool != nil && workermpool.ServerGroupPolicy != types_openstack.SGPolicyUnset {
+		cfg.WorkerServerGroupPolicy = workermpool.ServerGroupPolicy
+	} else if defaultmpool != nil && defaultmpool.ServerGroupPolicy != types_openstack.SGPolicyUnset {
+		cfg.WorkerServerGroupPolicy = defaultmpool.ServerGroupPolicy
+	} else {
+		cfg.WorkerServerGroupPolicy = types_openstack.SGPolicySoftAntiAffinity
+	}
+
 	cfg.AdditionalNetworkIDs = []string{}
-	if mpool != nil {
-		cfg.AdditionalNetworkIDs = append(cfg.AdditionalNetworkIDs, mpool.AdditionalNetworkIDs...)
+	if mastermpool != nil {
+		cfg.AdditionalNetworkIDs = append(cfg.AdditionalNetworkIDs, mastermpool.AdditionalNetworkIDs...)
 	}
 
 	cfg.AdditionalSecurityGroupIDs = []string{}
-	if mpool != nil {
-		cfg.AdditionalSecurityGroupIDs = append(cfg.AdditionalSecurityGroupIDs, mpool.AdditionalSecurityGroupIDs...)
+	if mastermpool != nil {
+		cfg.AdditionalSecurityGroupIDs = append(cfg.AdditionalSecurityGroupIDs, mastermpool.AdditionalSecurityGroupIDs...)
 	}
 
 	if machinesSubnet != "" {

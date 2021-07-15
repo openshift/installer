@@ -510,17 +510,38 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			caCert = string(caFile)
 		}
 
-		masters, err := mastersAsset.Machines()
-		if err != nil {
-			return err
+		var masterSpecs []*openstackprovider.OpenstackProviderSpec
+		{
+			masters, err := mastersAsset.Machines()
+			if err != nil {
+				return err
+			}
+
+			for _, master := range masters {
+				masterSpecs = append(masterSpecs, master.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec))
+			}
 		}
 
-		var masterSpecs []*openstackprovider.OpenstackProviderSpec
-		for _, master := range masters {
-			masterSpecs = append(masterSpecs, master.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec))
+		var workerSpecs []*openstackprovider.OpenstackProviderSpec
+		{
+			workers, err := workersAsset.MachineSets()
+			if err != nil {
+				return err
+			}
+
+			for _, worker := range workers {
+				workerSpecs = append(workerSpecs, worker.Spec.Template.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec))
+			}
 		}
+
+		var workermpool *openstack.MachinePool
+		if len(installConfig.Config.Compute) > 0 {
+			workermpool = installConfig.Config.Compute[0].Platform.OpenStack
+		}
+
 		data, err = openstacktfvars.TFVars(
 			masterSpecs,
+			workerSpecs,
 			installConfig.Config.Platform.OpenStack.Cloud,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.ExternalDNS,
@@ -534,6 +555,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			caCert,
 			bootstrapIgn,
 			installConfig.Config.ControlPlane.Platform.OpenStack,
+			workermpool,
 			installConfig.Config.OpenStack.DefaultMachinePlatform,
 			installConfig.Config.Platform.OpenStack.MachinesSubnet,
 			installConfig.Config.Proxy,

@@ -123,9 +123,7 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 		validate(kubevirt.Name, p.Kubevirt, func(f *field.Path) field.ErrorList { return kubevirtvalidation.ValidateMachinePool(p.Kubevirt, f) })
 	}
 	if p.OpenStack != nil {
-		validate(openstack.Name, p.OpenStack, func(f *field.Path) field.ErrorList {
-			return openstackvalidation.ValidateMachinePool(platform.OpenStack, p.OpenStack, pool.Name, f)
-		})
+		validate(openstack.Name, p.OpenStack, func(f *field.Path) field.ErrorList { return openstackvalidation.ValidateMachinePool(p.OpenStack, f) })
 	}
 	return allErrs
 }

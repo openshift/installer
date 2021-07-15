@@ -65,3 +65,13 @@ variable "root_volume_zones" {
   type        = list(string)
   description = "Availability Zones to schedule root volumes on."
 }
+
+variable "worker_server_group_names" {
+  type        = set(string)
+  description = "Names of the server groups for the worker nodes."
+}
+
+variable "worker_server_group_policy" {
+  type        = string
+  description = "Policy of the server group for the worker nodes."
+}
