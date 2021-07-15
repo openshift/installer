@@ -6,7 +6,7 @@ import (
 	"time"
 
 	survey "github.com/AlecAivazis/survey/v2"
-	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
+	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 )

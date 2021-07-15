@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	azsku "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute"
-	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
-	azres "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
-	azsubs "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-06-01/subscriptions"
+	azsku "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/compute/mgmt/compute"
+	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
+	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
+	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 )
