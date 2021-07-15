@@ -1,7 +1,10 @@
 package bmc
 
 import (
+	"fmt"
 	"net/url"
+
+	metal3v1alpha1 "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 )
 
 func init() {
@@ -9,11 +12,24 @@ func init() {
 	RegisterFactory("libvirt", newIPMIAccessDetails, []string{})
 }
 
+func getPrivilegeLevel(rawquery string) string {
+	privilegelevel := "ADMINISTRATOR"
+	q, err := url.ParseQuery(rawquery)
+	if err != nil {
+		return privilegelevel
+	}
+	if val, ok := q["privilegelevel"]; ok {
+		return val[0]
+	}
+	return privilegelevel
+}
+
 func newIPMIAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
 	return &ipmiAccessDetails{
 		bmcType:                        parsedURL.Scheme,
 		portNum:                        parsedURL.Port(),
 		hostname:                       parsedURL.Hostname(),
+		privilegelevel:                 getPrivilegeLevel(parsedURL.RawQuery),
 		disableCertificateVerification: disableCertificateVerification,
 	}, nil
 }
@@ -22,6 +38,7 @@ type ipmiAccessDetails struct {
 	bmcType                        string
 	portNum                        string
 	hostname                       string
+	privilegelevel                 string
 	disableCertificateVerification bool
 }
 
@@ -58,10 +75,11 @@ func (a *ipmiAccessDetails) DisableCertificateVerification() bool {
 // the kernel and ramdisk locations).
 func (a *ipmiAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interface{} {
 	result := map[string]interface{}{
-		"ipmi_port":     a.portNum,
-		"ipmi_username": bmcCreds.Username,
-		"ipmi_password": bmcCreds.Password,
-		"ipmi_address":  a.hostname,
+		"ipmi_port":       a.portNum,
+		"ipmi_username":   bmcCreds.Username,
+		"ipmi_password":   bmcCreds.Password,
+		"ipmi_address":    a.hostname,
+		"ipmi_priv_level": a.privilegelevel,
 	}
 
 	if a.disableCertificateVerification {
@@ -95,4 +113,11 @@ func (a *ipmiAccessDetails) VendorInterface() string {
 
 func (a *ipmiAccessDetails) SupportsSecureBoot() bool {
 	return false
+}
+
+func (a *ipmiAccessDetails) BuildBIOSSettings(firmwareConfig *metal3v1alpha1.FirmwareConfig) (settings []map[string]string, err error) {
+	if firmwareConfig != nil {
+		return nil, fmt.Errorf("firmware settings for %s are not supported", a.Driver())
+	}
+	return nil, nil
 }

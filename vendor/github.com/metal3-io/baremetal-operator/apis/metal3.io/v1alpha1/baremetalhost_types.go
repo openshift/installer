@@ -39,7 +39,7 @@ const (
 	// an immediate requeue)
 	PausedAnnotation = "baremetalhost.metal3.io/paused"
 
-	// Detached is the annotation which stops provisioner management of the host
+	// DetachedAnnotation is the annotation which stops provisioner management of the host
 	// unlike in the paused case, the host status may be updated
 	DetachedAnnotation = "baremetalhost.metal3.io/detached"
 
@@ -149,7 +149,7 @@ const (
 	// PreparationError is an error condition occurring when do
 	// cleaning steps failed.
 	PreparationError ErrorType = "preparation error"
-	// ProvisioningError is an error condition occuring when the controller
+	// ProvisioningError is an error condition occurring when the controller
 	// fails to provision or deprovision the Host.
 	ProvisioningError ErrorType = "provisioning error"
 	// PowerManagementError is an error condition occurring when the
@@ -289,6 +289,24 @@ type RAIDConfig struct {
 	SoftwareRAIDVolumes []SoftwareRAIDVolume `json:"softwareRAIDVolumes,omitempty"`
 }
 
+// FirmwareConfig contains the configuration that you want to configure BIOS settings in Bare metal server
+type FirmwareConfig struct {
+	// Supports the virtualization of platform hardware.
+	// This supports following options: true, false.
+	// +kubebuilder:validation:Enum=true;false
+	VirtualizationEnabled *bool `json:"virtualizationEnabled,omitempty"`
+
+	// Allows a single physical processor core to appear as several logical processors.
+	// This supports following options: true, false.
+	// +kubebuilder:validation:Enum=true;false
+	SimultaneousMultithreadingEnabled *bool `json:"simultaneousMultithreadingEnabled,omitempty"`
+
+	// SR-IOV support enables a hypervisor to create virtual instances of a PCI-express device, potentially increasing performance.
+	// This supports following options: true, false.
+	// +kubebuilder:validation:Enum=true;false
+	SriovEnabled *bool `json:"sriovEnabled,omitempty"`
+}
+
 // BareMetalHostSpec defines the desired state of BareMetalHost
 type BareMetalHostSpec struct {
 	// Important: Run "make generate manifests" to regenerate code
@@ -305,6 +323,9 @@ type BareMetalHostSpec struct {
 
 	// RAID configuration for bare metal server
 	RAID *RAIDConfig `json:"raid,omitempty"`
+
+	// BIOS configuration for bare metal server
+	Firmware *FirmwareConfig `json:"firmware,omitempty"`
 
 	// What is the name of the hardware profile for this host? It
 	// should only be necessary to set this when inspection cannot
@@ -364,6 +385,10 @@ type BareMetalHostSpec struct {
 	// +kubebuilder:default:=metadata
 	// +kubebuilder:validation:Optional
 	AutomatedCleaningMode AutomatedCleaningMode `json:"automatedCleaningMode,omitempty"`
+
+	// A custom deploy procedure.
+	// +optional
+	CustomDeploy *CustomDeploy `json:"customDeploy,omitempty"`
 }
 
 // AutomatedCleaningMode is the interface to enable/disable automated cleaning
@@ -413,6 +438,14 @@ type Image struct {
 	DiskFormat *string `json:"format,omitempty"`
 }
 
+// Custom deploy is a description of a customized deploy process.
+type CustomDeploy struct {
+	// Custom deploy method name.
+	// This name is specific to the deploy ramdisk used. If you don't have
+	// a custom deploy ramdisk, you shouldn't use CustomDeploy.
+	Method string `json:"method"`
+}
+
 // FIXME(dhellmann): We probably want some other module to own these
 // data structures.
 
@@ -442,6 +475,16 @@ const (
 	TeraByte          = GigaByte * 1000
 )
 
+// DiskType is a disk type, i.e. HDD, SSD, NVME.
+type DiskType string
+
+// DiskType constants.
+const (
+	HDD  DiskType = "HDD"
+	SSD  DiskType = "SSD"
+	NVME DiskType = "NVME"
+)
+
 // CPU describes one processor on the host.
 type CPU struct {
 	Arch           string     `json:"arch,omitempty"`
@@ -457,8 +500,16 @@ type Storage struct {
 	// may not be stable across reboots.
 	Name string `json:"name,omitempty"`
 
-	// Whether this disk represents rotational storage
+	// Whether this disk represents rotational storage.
+	// This field is not recommended for usage, please
+	// prefer using 'Type' field instead, this field
+	// will be deprecated eventually.
 	Rotational bool `json:"rotational,omitempty"`
+
+	// Device type, one of: HDD, SSD, NVME.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=HDD;SSD;NVME;
+	Type DiskType `json:"type,omitempty"`
 
 	// The size of the disk in Bytes
 	SizeBytes Capacity `json:"sizeBytes,omitempty"`
@@ -698,6 +749,12 @@ type ProvisionStatus struct {
 
 	// The Raid set by the user
 	RAID *RAIDConfig `json:"raid,omitempty"`
+
+	// The Bios set by the user
+	Firmware *FirmwareConfig `json:"firmware,omitempty"`
+
+	// Custom deploy procedure applied to the host.
+	CustomDeploy *CustomDeploy `json:"customDeploy,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -827,6 +884,11 @@ func (host *BareMetalHost) NeedsProvisioning() bool {
 		// The host is not supposed to be powered on.
 		return false
 	}
+
+	return host.hasNewImage() || host.hasNewCustomDeploy()
+}
+
+func (host *BareMetalHost) hasNewImage() bool {
 	if host.Spec.Image == nil {
 		// Without an image, there is nothing to provision.
 		return false
@@ -837,6 +899,22 @@ func (host *BareMetalHost) NeedsProvisioning() bool {
 	}
 	if host.Status.Provisioning.Image.URL == "" {
 		// We have an image set, but not provisioned.
+		return true
+	}
+	return false
+}
+
+func (host *BareMetalHost) hasNewCustomDeploy() bool {
+	if host.Spec.CustomDeploy == nil {
+		return false
+	}
+	if host.Spec.CustomDeploy.Method == "" {
+		return false
+	}
+	if host.Status.Provisioning.CustomDeploy == nil {
+		return true
+	}
+	if host.Status.Provisioning.CustomDeploy.Method != host.Spec.CustomDeploy.Method {
 		return true
 	}
 	return false

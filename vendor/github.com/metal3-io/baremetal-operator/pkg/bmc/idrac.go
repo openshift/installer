@@ -3,6 +3,8 @@ package bmc
 import (
 	"net/url"
 	"strings"
+
+	metal3v1alpha1 "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 )
 
 func init() {
@@ -87,7 +89,9 @@ func (a *iDracAccessDetails) PowerInterface() string {
 }
 
 func (a *iDracAccessDetails) RAIDInterface() string {
-	return "idrac-wsman"
+	// Disabled RAID in OpenShift because we are not ready to support it
+	//return "idrac-wsman"
+	return "no-raid"
 }
 
 func (a *iDracAccessDetails) VendorInterface() string {
@@ -98,4 +102,53 @@ func (a *iDracAccessDetails) VendorInterface() string {
 // by default.
 func (a *iDracAccessDetails) SupportsSecureBoot() bool {
 	return false
+}
+
+func (a *iDracAccessDetails) BuildBIOSSettings(firmwareConfig *metal3v1alpha1.FirmwareConfig) (settings []map[string]string, err error) {
+	if firmwareConfig == nil {
+		return nil, nil
+	}
+
+	var value string
+
+	if firmwareConfig.VirtualizationEnabled != nil {
+		value = "Disabled"
+		if *firmwareConfig.VirtualizationEnabled {
+			value = "Enabled"
+		}
+		settings = append(settings,
+			map[string]string{
+				"name":  "ProcVirtualization",
+				"value": value,
+			},
+		)
+	}
+
+	if firmwareConfig.SimultaneousMultithreadingEnabled != nil {
+		value = "Disabled"
+		if *firmwareConfig.SimultaneousMultithreadingEnabled {
+			value = "Enabled"
+		}
+		settings = append(settings,
+			map[string]string{
+				"name":  "LogicalProc",
+				"value": value,
+			},
+		)
+	}
+
+	if firmwareConfig.SriovEnabled != nil {
+		value = "Disabled"
+		if *firmwareConfig.SriovEnabled {
+			value = "Enabled"
+		}
+		settings = append(settings,
+			map[string]string{
+				"name":  "SriovGlobalEnable",
+				"value": value,
+			},
+		)
+	}
+
+	return
 }
