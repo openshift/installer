@@ -17,7 +17,7 @@ resource "libvirt_domain" "bootstrap" {
 
   memory = var.bootstrap_memory
 
-  vcpu = "2"
+  vcpu = "8"
 
   coreos_ignition = libvirt_ignition.bootstrap.id
 
