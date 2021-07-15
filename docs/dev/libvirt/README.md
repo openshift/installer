@@ -247,6 +247,34 @@ This step allows installer and users to resolve cluster-internal hostnames from 
 
 3. Reload NetworkManager to pick up the `dns` configuration change: `sudo systemctl reload NetworkManager`
 
+### Setting the resolver on Fedora 33+ with systemd-resolved
+
+Fedora 33 switched to utilizing systemd-resolved and changes how DNS resolution works on a per-interface basis. 
+
+If you are running Fedora 33, you must indicate that you want your resolver to point to the local dnsmasq resolver on the `tt0` interface.
+
+The below example uses the default `tt0` interface, change the interface name if you are utilizing a custom interface/bridge instead.
+
+```sh
+resolvectl dns tt0 127.0.0.1
+```
+
+You may see which interfaces point to which DNS resolvers by typing `resolvectl`. `tt0` should be now pointing to 127.0.0.1, where the dnsmasq process is listening.
+
+```sh
+resolvectl
+...
+Link 100 (tt0)
+    Current Scopes: none
+         Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+Current DNS Server: 127.0.0.1
+       DNS Servers: 127.0.0.1
+...
+```
+
+Please note that this is not persistant across libvirt network creation/deletion of the tt0 interface. Once the tt0 interface is deleted and recreated, it will need to updated again with the proper resolver.
+
+
 ## Build the installer
 
 Set `TAGS=libvirt` to add support for libvirt; this is not enabled by default because libvirt is [development only](../../../README.md#supported-platforms).
