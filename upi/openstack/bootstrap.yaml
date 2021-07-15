@@ -20,14 +20,11 @@
       allowed_address_pairs:
       - ip_address: "{{ os_apiVIP }}"
 
+  # Remove that task once we can create ports with tags directly:
+  # https://review.opendev.org/c/openstack/ansible-collections-openstack/+/767219
   - name: 'Set bootstrap port tag'
     command:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_bootstrap }}"
-
-  - name: 'Set bootstrap auto_ip to false'
-    ansible.builtin.set_fact:
-      bootstrap_auto_ip: false
-    when: os_bootstrap_fip is not defined
 
   - name: 'Create the bootstrap server'
     os_server:
@@ -36,7 +33,7 @@
       flavor: "{{ os_flavor_master }}"
       userdata: "{{ lookup('file', os_bootstrap_ignition) | string }}"
       floating_ips: "{{ os_bootstrap_fip | default(omit) }}"
-      auto_ip: "{{ bootstrap_auto_ip | default(omit) }}"
+      auto_ip: "{{ (os_bootstrap_fip is defined and bootstrap_auto_ip is defined) | ternary(bootstrap_auto_ip, omit) }}"
       nics:
       - port-name: "{{ os_port_bootstrap }}"
       meta: "{{ cluster_id_tag }}"

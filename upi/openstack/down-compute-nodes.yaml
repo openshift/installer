@@ -7,14 +7,16 @@
 - import_playbook: common.yaml
 
 - hosts: all
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: 'Remove the Compute servers'
     os_server:
-      name: "{{ item.1 }}-{{ item.0 }}"
+      name: "{{ item }}-{{ index_server }}"
       state: absent
-    with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
+    loop: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
+    loop_control:
+      index_var: index_server
 
   - name: 'List the Compute trunks'
     command:
@@ -24,14 +26,18 @@
 
   - name: 'Remove the Compute trunks'
     command:
-      cmd: "openstack network trunk delete {{ item.1 }}-{{ item.0 }}"
+      cmd: "openstack network trunk delete {{ item }}-{{ index_trunk }}"
     when:
     - os_networking_type == "Kuryr"
-    - (item.1|string + '-' + item.0|string) in trunks.stdout_lines|list
-    with_indexed_items: "{{ [os_compute_trunk_name] * os_compute_nodes_number }}"
+    - (item|string + '-' + index_trunk|string) in trunks.stdout_lines|list
+    loop: "{{ [os_compute_trunk_name] * os_compute_nodes_number }}"
+    loop_control:
+      index_var: index_trunk
 
   - name: 'Remove the Compute ports'
     os_port:
-      name: "{{ item.1 }}-{{ item.0 }}"
+      name: "{{ item }}-{{ index_port }}"
       state: absent
-    with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
+    loop: "{{ [os_port_worker] * os_compute_nodes_number }}"
+    loop_control:
+      index_var: index_port

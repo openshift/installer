@@ -7,7 +7,7 @@
 - import_playbook: common.yaml
 
 - hosts: all
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: 'List security groups'
@@ -17,5 +17,5 @@
 
   - name: 'Remove the cluster security groups'
     command:
-      cmd: "openstack security group delete {{ item.1 }}"
-    with_indexed_items: "{{ security_groups.stdout_lines }}"
+      cmd: "openstack security group delete {{ item }}"
+    loop: "{{ security_groups.stdout_lines }}"
