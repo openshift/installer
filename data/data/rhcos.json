@@ -12,6 +12,9 @@
         "ap-northeast-2": {
             "hvm": "ami-0fdc25c8a0273a742"
         },
+        "ap-northeast-3": {
+            "hvm": "ami-0310bc3d6eec49e56"
+        },
         "ap-south-1": {
             "hvm": "ami-09e3deb397cc526a8"
         },
