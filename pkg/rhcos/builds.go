@@ -19,7 +19,7 @@ import (
 // FetchRawCoreOSStream returns the raw stream metadata for the
 // bootimages embedded in the installer.
 func FetchRawCoreOSStream(ctx context.Context) ([]byte, error) {
-	file, err := data.Assets.Open("rhcos-stream.json")
+	file, err := data.Assets.Open(getStreamFileName())
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read embedded CoreOS stream metadata")
 	}

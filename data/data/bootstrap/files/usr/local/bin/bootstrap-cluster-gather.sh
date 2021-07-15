@@ -67,7 +67,7 @@ function cluster_bootstrap_gather() {
     FILTER=gzip queue resources/openapi.json.gz oc --request-timeout=5s get --raw /openapi/v2
 
     echo "Waiting for logs ..."
-    wait
+    while wait -n; do jobs; done
 
     if (( $(stat -c%s "${ARTIFACTS_TEMP}/resources/openapi.json.gz") <= 20 ))
     then
