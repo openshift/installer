@@ -47,9 +47,9 @@ func getReportedDevices(c *ovirtsdk4.Connection, vmID string) (*ovirtsdk4.Report
 	if err != nil {
 		return nil, fmt.Errorf("failed to get reported devices list, reason: %v", err)
 	}
-	reportedDeviceSlice, _ := reportedDeviceResp.ReportedDevice()
+	reportedDeviceSlice, hasIps := reportedDeviceResp.ReportedDevice()
 
-	if len(reportedDeviceSlice.Slice()) == 0 {
+	if !hasIps {
 		return nil, fmt.Errorf("cannot find IPs for vmId: %s", vmID)
 	}
 	return reportedDeviceSlice, nil
