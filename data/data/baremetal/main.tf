@@ -5,7 +5,7 @@ provider "libvirt" {
 provider "ironic" {
   url                = var.ironic_uri
   inspector          = var.inspector_uri
-  microversion       = "1.56"
+  microversion       = "1.69"
   timeout            = 3600
   auth_strategy      = "http_basic"
   ironic_username    = var.ironic_username
@@ -33,4 +33,5 @@ module "masters" {
   root_devices   = var.root_devices
   driver_infos   = var.driver_infos
   instance_infos = var.instance_infos
+  deploy_steps   = var.deploy_steps
 }
