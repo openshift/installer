@@ -25,7 +25,7 @@ variable "azure_bootstrap_vm_type" {
 
 variable "azure_master_vm_type" {
   type = string
-  description = "Instance type for the master node(s). Example: `Standard_DS4_v3`."
+  description = "Instance type for the master node(s). Example: `Standard_D8s_v3`."
 }
 
 variable "azure_extra_tags" {
