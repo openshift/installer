@@ -231,6 +231,8 @@ add `--permanent` to the `firewall-cmd` commands and run them a second time.
 
 This step allows installer and users to resolve cluster-internal hostnames from your host.
 
+#### For non systemd-resolved activated hosts
+
 1. Tell NetworkManager to use `dnsmasq`:
 
     ```sh
@@ -246,6 +248,31 @@ This step allows installer and users to resolve cluster-internal hostnames from 
     ```
 
 3. Reload NetworkManager to pick up the `dns` configuration change: `sudo systemctl reload NetworkManager`
+
+#### For systemd-resolved activated hosts
+
+1. Wait till `tt0` libvirt interface shows up:
+
+```sh
+$ ifconfig tt0
+tt0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.126.1  netmask 255.255.255.0  broadcast 192.168.126.255
+```
+
+2. Use this interface for `<baseDomain>` and set IP to `192.168.126.1`
+
+```
+$ sudo resolvectl domain tt0 ~testing
+$ sudo resolvectl dns tt0 192.168.126.1
+$ sudo resolvectl default-route tt0 false
+```
+
+3. Verify that internal domains are now able to resolve
+```
+$ dig +short api.crc.testing
+192.168.126.11
+192.168.126.10
+```
 
 ## Build the installer
 
