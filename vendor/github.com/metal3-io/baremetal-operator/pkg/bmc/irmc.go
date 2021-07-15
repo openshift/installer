@@ -2,6 +2,8 @@ package bmc
 
 import (
 	"net/url"
+
+	metal3v1alpha1 "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 )
 
 func init() {
@@ -81,7 +83,7 @@ func (a *iRMCAccessDetails) PowerInterface() string {
 }
 
 func (a *iRMCAccessDetails) RAIDInterface() string {
-	return "irmc"
+	return "no-raid"
 }
 
 func (a *iRMCAccessDetails) VendorInterface() string {
@@ -90,4 +92,57 @@ func (a *iRMCAccessDetails) VendorInterface() string {
 
 func (a *iRMCAccessDetails) SupportsSecureBoot() bool {
 	return true
+}
+
+func (a *iRMCAccessDetails) BuildBIOSSettings(firmwareConfig *metal3v1alpha1.FirmwareConfig) (settings []map[string]string, err error) {
+	if firmwareConfig == nil {
+		return nil, nil
+	}
+
+	if firmwareConfig == nil {
+		return nil, nil
+	}
+
+	var value string
+
+	if firmwareConfig.VirtualizationEnabled != nil {
+		value = "False"
+		if *firmwareConfig.VirtualizationEnabled {
+			value = "True"
+		}
+		settings = append(settings,
+			map[string]string{
+				"name":  "cpu_vt_enabled",
+				"value": value,
+			},
+		)
+	}
+
+	if firmwareConfig.SimultaneousMultithreadingEnabled != nil {
+		value = "False"
+		if *firmwareConfig.SimultaneousMultithreadingEnabled {
+			value = "True"
+		}
+		settings = append(settings,
+			map[string]string{
+				"name":  "hyper_threading_enabled",
+				"value": value,
+			},
+		)
+	}
+
+	if firmwareConfig.SriovEnabled != nil {
+		value = "False"
+		if *firmwareConfig.SriovEnabled {
+			value = "True"
+		}
+		settings = append(settings,
+			map[string]string{
+				"name":  "single_root_io_virtualization_support_enabled",
+				"value": value,
+			},
+		)
+	}
+
+	return
 }
