@@ -50,4 +50,5 @@ then
 	export CGO_ENABLED=1
 fi
 
-go build "${GOFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
+# shellcheck disable=SC2086
+go build ${GOFLAGS} -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
