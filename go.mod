@@ -14,8 +14,6 @@ require (
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20190607011252-c5096ec8773d // indirect
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20210611051827-cdc80c935c05
 	github.com/IBM-Cloud/terraform-provider-ibm v1.26.2
-	github.com/IBM/go-sdk-core v1.1.0 // indirect
-	github.com/IBM/go-sdk-core/v4 v4.10.0 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.4.3
 	github.com/IBM/networking-go-sdk v0.14.0
 	github.com/IBM/platform-services-go-sdk v0.18.13
@@ -123,7 +121,7 @@ require (
 
 replace (
 	cloud.google.com/go => cloud.google.com/go v0.57.0
-	github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift
+	github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
 	github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4 // Pin to fork with deduplicated rpc types v0.12.20-openshift-4
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift // Pin to fork with public rpc types

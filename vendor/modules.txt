@@ -254,14 +254,14 @@ github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
 github.com/IBM-Cloud/power-go-client/power/models
 github.com/IBM-Cloud/power-go-client/utils
-# github.com/IBM-Cloud/terraform-provider-ibm v1.26.2 => github.com/openshift/terraform-provider-ibm v1.26.2-openshift
+# github.com/IBM-Cloud/terraform-provider-ibm v1.26.2 => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
 ## explicit
 github.com/IBM-Cloud/terraform-provider-ibm/ibm
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/internal/hashcode
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/internal/mutexkv
 github.com/IBM-Cloud/terraform-provider-ibm/version
-# github.com/IBM/apigateway-go-sdk v0.0.0-20200414212859-416e5948678a
-github.com/IBM/apigateway-go-sdk
+# github.com/IBM/apigateway-go-sdk v0.0.0-20210714141226-a5d5d49caaca
+github.com/IBM/apigateway-go-sdk/apigatewaycontrollerapiv1
 github.com/IBM/apigateway-go-sdk/common
 # github.com/IBM/appconfiguration-go-admin-sdk v0.1.0
 github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1
@@ -270,12 +270,10 @@ github.com/IBM/appconfiguration-go-admin-sdk/common
 github.com/IBM/container-registry-go-sdk/common
 github.com/IBM/container-registry-go-sdk/containerregistryv1
 # github.com/IBM/go-sdk-core v1.1.0
-## explicit
 github.com/IBM/go-sdk-core/core
 # github.com/IBM/go-sdk-core/v3 v3.3.1
 github.com/IBM/go-sdk-core/v3/core
 # github.com/IBM/go-sdk-core/v4 v4.10.0
-## explicit
 github.com/IBM/go-sdk-core/v4/core
 # github.com/IBM/go-sdk-core/v5 v5.4.3
 ## explicit
@@ -1029,7 +1027,7 @@ github.com/hashicorp/hcl/v2/hclparse
 github.com/hashicorp/hcl/v2/hclsyntax
 github.com/hashicorp/hcl/v2/hclwrite
 github.com/hashicorp/hcl/v2/json
-# github.com/hashicorp/hil v0.0.0-20200423225030-a18a1cd20038
+# github.com/hashicorp/hil v0.0.0-20190212132231-97b3a9cdfa93
 github.com/hashicorp/hil
 github.com/hashicorp/hil/ast
 github.com/hashicorp/hil/parser
@@ -2908,7 +2906,7 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
 # cloud.google.com/go => cloud.google.com/go v0.57.0
-# github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift
+# github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
 # github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb
 # github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift

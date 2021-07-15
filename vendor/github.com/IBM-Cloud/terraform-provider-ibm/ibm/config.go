@@ -16,7 +16,7 @@ import (
 
 	// Added code for the Power Colo Offering
 
-	apigateway "github.com/IBM/apigateway-go-sdk"
+	apigateway "github.com/IBM/apigateway-go-sdk/apigatewaycontrollerapiv1"
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
 	"github.com/IBM/container-registry-go-sdk/containerregistryv1"
 	"github.com/IBM/go-sdk-core/v4/core"
