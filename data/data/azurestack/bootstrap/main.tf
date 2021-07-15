@@ -100,6 +100,12 @@ resource "azurestack_virtual_machine" "bootstrap" {
     enabled     = true
     storage_uri = var.storage_account.primary_blob_endpoint
   }
+
+  # Workaround for bug in provider where destroy fails by trying to delete NIC before VM.
+  # This depends_on ensures the VM is destroyed before the NIC.
+  depends_on = [
+    azurestack_network_interface.bootstrap
+  ]
 }
 
 resource "azurestack_network_security_rule" "bootstrap_ssh_in" {

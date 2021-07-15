@@ -68,6 +68,9 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	platform := installConfig.Config.Platform.Name()
+	if platform == typesazure.Name && installConfig.Config.Azure.CloudName == typesazure.StackCloud {
+		platform = "azurestack"
+	}
 	stages := platformstages.StagesForPlatform(platform)
 
 	logrus.Infof("Creating infrastructure resources...")
