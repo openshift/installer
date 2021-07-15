@@ -203,6 +203,25 @@ spec:
           configDrive: true
 ```
 
+If you are using Kuryr and your SR-IOV network has `port_security_enabled=False`, then you must create the worker node, setting its primary port with `portSecurity: false` and empty `spec.template.spec.providerSpec.value.securityGroups`. E.g.:
+
+```
+          networks:
+            - subnets:
+              - uuid: <machines_subnet_uuid>
+                portSecurityEnabled: false
+              portSecurityEnabled: false
+          securityGroups: []
+```
+
+In that case you can still apply the workers SG to the primary VM interface *after* the VM is created:
+
+```
+openstack port set --enable-port-security --security-group <infrastructure_ID>-<node_role> <main_port_id>
+```
+
+Those Kuryr specifics will be fixed in the future OpenShift versions.
+
 After you finish editing your machineSet, upload it to your OpenShift cluster:
 
 ```sh
