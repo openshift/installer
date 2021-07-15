@@ -42,6 +42,17 @@ func validateIPinMachineCIDR(vip string, n *types.Networking) error {
 	return fmt.Errorf("IP expected to be in one of the machine networks: %s", strings.Join(networks, ","))
 }
 
+func validateCIDRSize(p *baremetal.Platform) error {
+	provisionNetworkCIDR := &p.ProvisioningNetworkCIDR.IPNet
+	if p.ProvisioningNetwork == baremetal.ManagedProvisioningNetwork {
+		cidrSize, _ := provisionNetworkCIDR.Mask.Size()
+		if cidrSize < 64 && provisionNetworkCIDR.IP.To4() == nil && provisionNetworkCIDR.IP.To16() != nil {
+			return fmt.Errorf("provisioningNetworkCIDR mask must be greater than or equal to 64 for IPv6 networks")
+		}
+	}
+	return nil
+}
+
 func validateIPNotinMachineCIDR(ip string, n *types.Networking) error {
 	for _, network := range n.MachineNetwork {
 		if network.CIDR.Contains(net.ParseIP(ip)) {
@@ -374,6 +385,11 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 			}
 		}
 	default:
+		// Ensure provisioningNetworkCIDR mask is >= 64 for managed ipv6 networks due to a dnsmasq limitation
+		if err := validateCIDRSize(p); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR.String(), err.Error()))
+		}
+
 		// Ensure provisioningNetworkCIDR doesn't overlap with any machine network
 		if err := validateNoOverlapMachineCIDR(&p.ProvisioningNetworkCIDR.IPNet, n); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR.String(), err.Error()))
