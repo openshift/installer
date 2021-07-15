@@ -40,6 +40,7 @@ type config struct {
 	MasterAffinityGroups    []string                 `json:"ovirt_master_affinity_groups"`
 	MasterAutoPinningPolicy string                   `json:"ovirt_master_auto_pinning_policy,omitempty"`
 	MasterHugePages         int32                    `json:"ovirt_master_hugepages"`
+	MasterGuaranteedMemory  int32                    `json:"ovirt_master_guaranteed_memory"`
 }
 
 // TFVars generates ovirt-specific Terraform variables.
@@ -68,6 +69,7 @@ func TFVars(
 		MasterAffinityGroups:    masterSpec.AffinityGroupsNames,
 		MasterAutoPinningPolicy: masterSpec.AutoPinningPolicy,
 		MasterHugePages:         masterSpec.Hugepages,
+		MasterGuaranteedMemory:  masterSpec.GuaranteedMemoryMB,
 	}
 	if masterSpec.CPU != nil {
 		cfg.MasterCores = masterSpec.CPU.Cores

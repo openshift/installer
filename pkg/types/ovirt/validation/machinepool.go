@@ -60,6 +60,10 @@ func ValidateMachinePool(p *ovirt.MachinePool, fldPath *field.Path) field.ErrorL
 		}
 	}
 
+	if p.MemoryGuaranteedMB < 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("memoryGuaranteedMB"), p.MemoryGuaranteedMB, "Guaranteed Memory value must be nonnegative"))
+	}
+
 	return allErrs
 }
 

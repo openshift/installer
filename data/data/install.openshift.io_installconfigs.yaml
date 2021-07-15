@@ -411,6 +411,11 @@ spec:
                             including cpu and memory. If InstanceTypeID is passed,
                             all memory and cpu variables will be ignored.
                           type: string
+                        memoryGuaranteedMB:
+                          description: MemoryGuaranteedMB is the size of a VM's guaranteed
+                            memory in MiBs.
+                          format: int32
+                          type: integer
                         memoryMB:
                           description: MemoryMB is the size of a VM's memory in MiBs.
                           format: int32
@@ -836,6 +841,11 @@ spec:
                           cpu and memory. If InstanceTypeID is passed, all memory
                           and cpu variables will be ignored.
                         type: string
+                      memoryGuaranteedMB:
+                        description: MemoryGuaranteedMB is the size of a VM's guaranteed
+                          memory in MiBs.
+                        format: int32
+                        type: integer
                       memoryMB:
                         description: MemoryMB is the size of a VM's memory in MiBs.
                         format: int32
@@ -2000,6 +2010,11 @@ spec:
                           cpu and memory. If InstanceTypeID is passed, all memory
                           and cpu variables will be ignored.
                         type: string
+                      memoryGuaranteedMB:
+                        description: MemoryGuaranteedMB is the size of a VM's guaranteed
+                          memory in MiBs.
+                        format: int32
+                        type: integer
                       memoryMB:
                         description: MemoryMB is the size of a VM's memory in MiBs.
                         format: int32

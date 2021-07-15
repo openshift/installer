@@ -123,3 +123,8 @@ variable "ovirt_master_hugepages" {
   type        = string
   description = "master VM hugepages size in KiB"
 }
+
+variable "ovirt_master_guaranteed_memory" {
+  type        = string
+  description = "master VM guaranteed memory in MiB"
+}

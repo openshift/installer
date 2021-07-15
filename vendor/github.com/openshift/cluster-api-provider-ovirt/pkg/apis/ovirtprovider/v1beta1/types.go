@@ -85,6 +85,9 @@ type OvirtMachineProviderSpec struct {
 	// Hugepages is the size of a VM's hugepages to use in KiBs.
 	// Only 2048 and 1048576 supported.
 	Hugepages int32 `json:"hugepages,omitempty"`
+
+	// GuaranteedMemoryMB is the size of a VM's guaranteed memory in MiBs.
+	GuaranteedMemoryMB int32 `json:"guaranteed_memory_mb,omitempty"`
 }
 
 // CPU defines the VM cpu, made of (Sockets * Cores * Threads)
