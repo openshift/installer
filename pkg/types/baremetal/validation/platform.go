@@ -109,6 +109,11 @@ func validateOSImageURI(uri string) error {
 	} else {
 		return fmt.Errorf("the URI provided: %s must begin with http/https", uri)
 	}
+	// Verify that the URI path ends in a qcow image.  This also exists in the downloader container so
+	// we want to catch it here first.
+	if !strings.HasSuffix(parsedURL.Path, ".qcow2.gz") && !strings.HasSuffix(parsedURL.Path, ".qcow2.xz") {
+		return fmt.Errorf("the URI provided: %s is an OS image and must end in .qcow2.gz or .qcow2.xz", uri)
+	}
 	return nil
 }
 
