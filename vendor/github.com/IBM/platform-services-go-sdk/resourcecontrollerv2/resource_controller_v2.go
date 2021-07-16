@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 99-SNAPSHOT-77b4cbf2-20210420-134305
+ * IBM OpenAPI SDK Code Generator Version: 3.32.0-4c6a3129-20210514-210323
  */
 
 // Package resourcecontrollerv2 : Operations and models for the ResourceControllerV2 service
@@ -224,9 +224,6 @@ func (resourceController *ResourceControllerV2) ListResourceInstancesWithContext
 	if listResourceInstancesOptions.State != nil {
 		builder.AddQuery("state", fmt.Sprint(*listResourceInstancesOptions.State))
 	}
-	if listResourceInstancesOptions.OrderDirection != nil {
-		builder.AddQuery("order_direction", fmt.Sprint(*listResourceInstancesOptions.OrderDirection))
-	}
 	if listResourceInstancesOptions.UpdatedFrom != nil {
 		builder.AddQuery("updated_from", fmt.Sprint(*listResourceInstancesOptions.UpdatedFrom))
 	}
@@ -244,11 +241,13 @@ func (resourceController *ResourceControllerV2) ListResourceInstancesWithContext
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstancesList)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstancesList)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -330,11 +329,13 @@ func (resourceController *ResourceControllerV2) CreateResourceInstanceWithContex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstance)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstance)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -389,18 +390,20 @@ func (resourceController *ResourceControllerV2) GetResourceInstanceWithContext(c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstance)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstance)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // DeleteResourceInstance : Delete a resource instance
 // Delete a resource instance by ID. If the resource instance has any resource keys or aliases associated with it, use
-// the `recursive=true` parameter to delete it.
+// the `recursive=true parameter` to delete it.
 func (resourceController *ResourceControllerV2) DeleteResourceInstance(deleteResourceInstanceOptions *DeleteResourceInstanceOptions) (response *core.DetailedResponse, err error) {
 	return resourceController.DeleteResourceInstanceWithContext(context.Background(), deleteResourceInstanceOptions)
 }
@@ -519,11 +522,13 @@ func (resourceController *ResourceControllerV2) UpdateResourceInstanceWithContex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstance)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstance)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -584,11 +589,13 @@ func (resourceController *ResourceControllerV2) ListResourceAliasesForInstanceWi
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceAliasesList)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceAliasesList)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -650,11 +657,13 @@ func (resourceController *ResourceControllerV2) ListResourceKeysForInstanceWithC
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceKeysList)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceKeysList)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -709,11 +718,13 @@ func (resourceController *ResourceControllerV2) LockResourceInstanceWithContext(
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstance)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstance)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -768,17 +779,19 @@ func (resourceController *ResourceControllerV2) UnlockResourceInstanceWithContex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstance)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceInstance)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // ListResourceKeys : Get a list of all of the resource keys
-// List all resource keys.
+// View all of the resource keys that exist for all of your resource instances.
 func (resourceController *ResourceControllerV2) ListResourceKeys(listResourceKeysOptions *ListResourceKeysOptions) (result *ResourceKeysList, response *core.DetailedResponse, err error) {
 	return resourceController.ListResourceKeysWithContext(context.Background(), listResourceKeysOptions)
 }
@@ -843,17 +856,19 @@ func (resourceController *ResourceControllerV2) ListResourceKeysWithContext(ctx 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceKeysList)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceKeysList)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // CreateResourceKey : Create a new resource key
-// Create a new resource key.
+// A resource key is a saved credential you can use to authenticate with a resource instance.
 func (resourceController *ResourceControllerV2) CreateResourceKey(createResourceKeyOptions *CreateResourceKeyOptions) (result *ResourceKey, response *core.DetailedResponse, err error) {
 	return resourceController.CreateResourceKeyWithContext(context.Background(), createResourceKeyOptions)
 }
@@ -916,17 +931,19 @@ func (resourceController *ResourceControllerV2) CreateResourceKeyWithContext(ctx
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceKey)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceKey)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // GetResourceKey : Get resource key by ID
-// Get resource key by ID.
+// View a resource key and all of its details, like the credentials for the key and who created it.
 func (resourceController *ResourceControllerV2) GetResourceKey(getResourceKeyOptions *GetResourceKeyOptions) (result *ResourceKey, response *core.DetailedResponse, err error) {
 	return resourceController.GetResourceKeyWithContext(context.Background(), getResourceKeyOptions)
 }
@@ -974,17 +991,19 @@ func (resourceController *ResourceControllerV2) GetResourceKeyWithContext(ctx co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceKey)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceKey)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // DeleteResourceKey : Delete a resource key by ID
-// Delete a resource key by ID.
+// Deleting a resource key does not affect any resource instance or resource alias associated with the key.
 func (resourceController *ResourceControllerV2) DeleteResourceKey(deleteResourceKeyOptions *DeleteResourceKeyOptions) (response *core.DetailedResponse, err error) {
 	return resourceController.DeleteResourceKeyWithContext(context.Background(), deleteResourceKeyOptions)
 }
@@ -1032,7 +1051,7 @@ func (resourceController *ResourceControllerV2) DeleteResourceKeyWithContext(ctx
 }
 
 // UpdateResourceKey : Update a resource key
-// Update a resource key by ID.
+// Use the resource key ID to update the name of the resource key.
 func (resourceController *ResourceControllerV2) UpdateResourceKey(updateResourceKeyOptions *UpdateResourceKeyOptions) (result *ResourceKey, response *core.DetailedResponse, err error) {
 	return resourceController.UpdateResourceKeyWithContext(context.Background(), updateResourceKeyOptions)
 }
@@ -1090,17 +1109,19 @@ func (resourceController *ResourceControllerV2) UpdateResourceKeyWithContext(ctx
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceKey)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceKey)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // ListResourceBindings : Get a list of all resource bindings
-// Get a list of all resource bindings.
+// View all of the resource bindings that exist for all of your resource aliases.
 func (resourceController *ResourceControllerV2) ListResourceBindings(listResourceBindingsOptions *ListResourceBindingsOptions) (result *ResourceBindingsList, response *core.DetailedResponse, err error) {
 	return resourceController.ListResourceBindingsWithContext(context.Background(), listResourceBindingsOptions)
 }
@@ -1168,17 +1189,19 @@ func (resourceController *ResourceControllerV2) ListResourceBindingsWithContext(
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceBindingsList)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceBindingsList)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // CreateResourceBinding : Create a new resource binding
-// Create a new resource binding.
+// A resource binding connects credentials to a resource alias. The credentials are in the form of a resource key.
 func (resourceController *ResourceControllerV2) CreateResourceBinding(createResourceBindingOptions *CreateResourceBindingOptions) (result *ResourceBinding, response *core.DetailedResponse, err error) {
 	return resourceController.CreateResourceBindingWithContext(context.Background(), createResourceBindingOptions)
 }
@@ -1244,17 +1267,20 @@ func (resourceController *ResourceControllerV2) CreateResourceBindingWithContext
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceBinding)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceBinding)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // GetResourceBinding : Get a resource binding
-// Retrieve a resource binding by ID.
+// View a resource binding and all of its details, like who created it, the credential, and the resource alias that the
+// binding is associated with.
 func (resourceController *ResourceControllerV2) GetResourceBinding(getResourceBindingOptions *GetResourceBindingOptions) (result *ResourceBinding, response *core.DetailedResponse, err error) {
 	return resourceController.GetResourceBindingWithContext(context.Background(), getResourceBindingOptions)
 }
@@ -1302,17 +1328,19 @@ func (resourceController *ResourceControllerV2) GetResourceBindingWithContext(ct
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceBinding)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceBinding)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // DeleteResourceBinding : Delete a resource binding
-// Delete a resource binding by ID.
+// Deleting a resource binding does not affect the resource alias that the binding is associated with.
 func (resourceController *ResourceControllerV2) DeleteResourceBinding(deleteResourceBindingOptions *DeleteResourceBindingOptions) (response *core.DetailedResponse, err error) {
 	return resourceController.DeleteResourceBindingWithContext(context.Background(), deleteResourceBindingOptions)
 }
@@ -1360,7 +1388,7 @@ func (resourceController *ResourceControllerV2) DeleteResourceBindingWithContext
 }
 
 // UpdateResourceBinding : Update a resource binding
-// Update a resource binding by ID.
+// Use the resource binding ID to update the name of the resource binding.
 func (resourceController *ResourceControllerV2) UpdateResourceBinding(updateResourceBindingOptions *UpdateResourceBindingOptions) (result *ResourceBinding, response *core.DetailedResponse, err error) {
 	return resourceController.UpdateResourceBindingWithContext(context.Background(), updateResourceBindingOptions)
 }
@@ -1418,17 +1446,19 @@ func (resourceController *ResourceControllerV2) UpdateResourceBindingWithContext
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceBinding)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceBinding)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // ListResourceAliases : Get a list of all resource aliases
-// Get a list of all resource aliases.
+// View all of the resource aliases that exist for every resource instance.
 func (resourceController *ResourceControllerV2) ListResourceAliases(listResourceAliasesOptions *ListResourceAliasesOptions) (result *ResourceAliasesList, response *core.DetailedResponse, err error) {
 	return resourceController.ListResourceAliasesWithContext(context.Background(), listResourceAliasesOptions)
 }
@@ -1499,11 +1529,13 @@ func (resourceController *ResourceControllerV2) ListResourceAliasesWithContext(c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceAliasesList)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceAliasesList)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1569,17 +1601,20 @@ func (resourceController *ResourceControllerV2) CreateResourceAliasWithContext(c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceAlias)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceAlias)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // GetResourceAlias : Get a resource alias
-// Retrieve a resource alias by ID.
+// View a resource alias and all of its details, like who created it and the resource instance that it's associated
+// with.
 func (resourceController *ResourceControllerV2) GetResourceAlias(getResourceAliasOptions *GetResourceAliasOptions) (result *ResourceAlias, response *core.DetailedResponse, err error) {
 	return resourceController.GetResourceAliasWithContext(context.Background(), getResourceAliasOptions)
 }
@@ -1627,17 +1662,20 @@ func (resourceController *ResourceControllerV2) GetResourceAliasWithContext(ctx 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceAlias)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceAlias)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // DeleteResourceAlias : Delete a resource alias
-// Delete a resource alias by ID.
+// If the resource alias has any resource keys or bindings associated with it, you must delete those child resources
+// before deleting the resource alias.
 func (resourceController *ResourceControllerV2) DeleteResourceAlias(deleteResourceAliasOptions *DeleteResourceAliasOptions) (response *core.DetailedResponse, err error) {
 	return resourceController.DeleteResourceAliasWithContext(context.Background(), deleteResourceAliasOptions)
 }
@@ -1685,7 +1723,7 @@ func (resourceController *ResourceControllerV2) DeleteResourceAliasWithContext(c
 }
 
 // UpdateResourceAlias : Update a resource alias
-// Update a resource alias by ID.
+// Use the resource alias ID to update the name of the resource alias.
 func (resourceController *ResourceControllerV2) UpdateResourceAlias(updateResourceAliasOptions *UpdateResourceAliasOptions) (result *ResourceAlias, response *core.DetailedResponse, err error) {
 	return resourceController.UpdateResourceAliasWithContext(context.Background(), updateResourceAliasOptions)
 }
@@ -1743,17 +1781,19 @@ func (resourceController *ResourceControllerV2) UpdateResourceAliasWithContext(c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceAlias)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceAlias)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // ListResourceBindingsForAlias : Get a list of all resource bindings for the alias
-// Get a list of all resource bindings for the alias.
+// View all of the resource bindings associated with a specific resource alias.
 func (resourceController *ResourceControllerV2) ListResourceBindingsForAlias(listResourceBindingsForAliasOptions *ListResourceBindingsForAliasOptions) (result *ResourceBindingsList, response *core.DetailedResponse, err error) {
 	return resourceController.ListResourceBindingsForAliasWithContext(context.Background(), listResourceBindingsForAliasOptions)
 }
@@ -1808,17 +1848,19 @@ func (resourceController *ResourceControllerV2) ListResourceBindingsForAliasWith
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceBindingsList)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceBindingsList)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // ListReclamations : Get a list of all reclamations
-// Get a list of all reclamations.
+// View all of the resource reclamations that exist for every resource instance.
 func (resourceController *ResourceControllerV2) ListReclamations(listReclamationsOptions *ListReclamationsOptions) (result *ReclamationsList, response *core.DetailedResponse, err error) {
 	return resourceController.ListReclamationsWithContext(context.Background(), listReclamationsOptions)
 }
@@ -1865,17 +1907,19 @@ func (resourceController *ResourceControllerV2) ListReclamationsWithContext(ctx 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReclamationsList)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReclamationsList)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // RunReclamationAction : Perform a reclamation action
-// Reclaim (provisionally delete) a resource so that it can no longer be used, or restore a resource so that it's usable
+// Reclaim a resource instance so that it can no longer be used, or restore the resource instance so that it's usable
 // again.
 func (resourceController *ResourceControllerV2) RunReclamationAction(runReclamationActionOptions *RunReclamationActionOptions) (result *Reclamation, response *core.DetailedResponse, err error) {
 	return resourceController.RunReclamationActionWithContext(context.Background(), runReclamationActionOptions)
@@ -1893,7 +1937,7 @@ func (resourceController *ResourceControllerV2) RunReclamationActionWithContext(
 	}
 
 	pathParamsMap := map[string]string{
-		"id":          *runReclamationActionOptions.ID,
+		"id": *runReclamationActionOptions.ID,
 		"action_name": *runReclamationActionOptions.ActionName,
 	}
 
@@ -1938,11 +1982,13 @@ func (resourceController *ResourceControllerV2) RunReclamationActionWithContext(
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReclamation)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReclamation)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1966,7 +2012,7 @@ type CreateResourceAliasOptions struct {
 // NewCreateResourceAliasOptions : Instantiate CreateResourceAliasOptions
 func (*ResourceControllerV2) NewCreateResourceAliasOptions(name string, source string, target string) *CreateResourceAliasOptions {
 	return &CreateResourceAliasOptions{
-		Name:   core.StringPtr(name),
+		Name: core.StringPtr(name),
 		Source: core.StringPtr(source),
 		Target: core.StringPtr(target),
 	}
@@ -2100,9 +2146,9 @@ type CreateResourceInstanceOptions struct {
 // NewCreateResourceInstanceOptions : Instantiate CreateResourceInstanceOptions
 func (*ResourceControllerV2) NewCreateResourceInstanceOptions(name string, target string, resourceGroup string, resourcePlanID string) *CreateResourceInstanceOptions {
 	return &CreateResourceInstanceOptions{
-		Name:           core.StringPtr(name),
-		Target:         core.StringPtr(target),
-		ResourceGroup:  core.StringPtr(resourceGroup),
+		Name: core.StringPtr(name),
+		Target: core.StringPtr(target),
+		ResourceGroup: core.StringPtr(resourceGroup),
 		ResourcePlanID: core.StringPtr(resourcePlanID),
 	}
 }
@@ -2183,7 +2229,7 @@ type CreateResourceKeyOptions struct {
 // NewCreateResourceKeyOptions : Instantiate CreateResourceKeyOptions
 func (*ResourceControllerV2) NewCreateResourceKeyOptions(name string, source string) *CreateResourceKeyOptions {
 	return &CreateResourceKeyOptions{
-		Name:   core.StringPtr(name),
+		Name: core.StringPtr(name),
 		Source: core.StringPtr(source),
 	}
 }
@@ -2936,9 +2982,6 @@ type ListResourceInstancesOptions struct {
 	// The state of the instance. If not specified, instances in state `active` and `provisioning` are returned.
 	State *string
 
-	// Order of results.
-	OrderDirection *string
-
 	// Start date inclusive filter.
 	UpdatedFrom *string
 
@@ -2952,16 +2995,9 @@ type ListResourceInstancesOptions struct {
 // Constants associated with the ListResourceInstancesOptions.State property.
 // The state of the instance. If not specified, instances in state `active` and `provisioning` are returned.
 const (
-	ListResourceInstancesOptionsStateActiveConst       = "active"
+	ListResourceInstancesOptionsStateActiveConst = "active"
 	ListResourceInstancesOptionsStateProvisioningConst = "provisioning"
-	ListResourceInstancesOptionsStateRemovedConst      = "removed"
-)
-
-// Constants associated with the ListResourceInstancesOptions.OrderDirection property.
-// Order of results.
-const (
-	ListResourceInstancesOptionsOrderDirectionAscConst  = "asc"
-	ListResourceInstancesOptionsOrderDirectionDescConst = "desc"
+	ListResourceInstancesOptionsStateRemovedConst = "removed"
 )
 
 // NewListResourceInstancesOptions : Instantiate ListResourceInstancesOptions
@@ -3026,12 +3062,6 @@ func (options *ListResourceInstancesOptions) SetStart(start string) *ListResourc
 // SetState : Allow user to set State
 func (options *ListResourceInstancesOptions) SetState(state string) *ListResourceInstancesOptions {
 	options.State = core.StringPtr(state)
-	return options
-}
-
-// SetOrderDirection : Allow user to set OrderDirection
-func (options *ListResourceInstancesOptions) SetOrderDirection(orderDirection string) *ListResourceInstancesOptions {
-	options.OrderDirection = core.StringPtr(orderDirection)
 	return options
 }
 
@@ -4447,7 +4477,7 @@ type RunReclamationActionOptions struct {
 // NewRunReclamationActionOptions : Instantiate RunReclamationActionOptions
 func (*ResourceControllerV2) NewRunReclamationActionOptions(id string, actionName string) *RunReclamationActionOptions {
 	return &RunReclamationActionOptions{
-		ID:         core.StringPtr(id),
+		ID: core.StringPtr(id),
 		ActionName: core.StringPtr(actionName),
 	}
 }
@@ -4526,7 +4556,7 @@ type UpdateResourceAliasOptions struct {
 // NewUpdateResourceAliasOptions : Instantiate UpdateResourceAliasOptions
 func (*ResourceControllerV2) NewUpdateResourceAliasOptions(id string, name string) *UpdateResourceAliasOptions {
 	return &UpdateResourceAliasOptions{
-		ID:   core.StringPtr(id),
+		ID: core.StringPtr(id),
 		Name: core.StringPtr(name),
 	}
 }
@@ -4565,7 +4595,7 @@ type UpdateResourceBindingOptions struct {
 // NewUpdateResourceBindingOptions : Instantiate UpdateResourceBindingOptions
 func (*ResourceControllerV2) NewUpdateResourceBindingOptions(id string, name string) *UpdateResourceBindingOptions {
 	return &UpdateResourceBindingOptions{
-		ID:   core.StringPtr(id),
+		ID: core.StringPtr(id),
 		Name: core.StringPtr(name),
 	}
 }
@@ -4670,7 +4700,7 @@ type UpdateResourceKeyOptions struct {
 // NewUpdateResourceKeyOptions : Instantiate UpdateResourceKeyOptions
 func (*ResourceControllerV2) NewUpdateResourceKeyOptions(id string, name string) *UpdateResourceKeyOptions {
 	return &UpdateResourceKeyOptions{
-		ID:   core.StringPtr(id),
+		ID: core.StringPtr(id),
 		Name: core.StringPtr(name),
 	}
 }
