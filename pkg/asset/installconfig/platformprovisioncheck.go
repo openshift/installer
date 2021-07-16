@@ -9,6 +9,7 @@ import (
 	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	bmconfig "github.com/openshift/installer/pkg/asset/installconfig/baremetal"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	osconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
@@ -82,7 +83,14 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case ibmcloud.Name:
-		// TODO: IBM[#91]: add validation for provisioning
+		client, err := ibmcloudconfig.NewClient()
+		if err != nil {
+			return err
+		}
+		err = ibmcloudconfig.ValidatePreExitingPublicDNS(client, ic.Config, ic.IBMCloud)
+		if err != nil {
+			return err
+		}
 	case openstack.Name:
 		err = osconfig.ValidateForProvisioning(ic.Config)
 		if err != nil {

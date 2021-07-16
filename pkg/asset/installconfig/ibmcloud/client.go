@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
@@ -22,6 +23,8 @@ import (
 type API interface {
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
+	GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error)
+	GetDNSZoneIDByName(ctx context.Context, name string) (string, error)
 	GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error)
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*EncryptionKeyResponse, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
@@ -30,7 +33,6 @@ type API interface {
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
 	GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error)
 	GetVPCZonesForRegion(ctx context.Context, region string) ([]string, error)
-	GetZoneIDByName(ctx context.Context, name string) (string, error)
 }
 
 // Client makes calls to the IBM Cloud API.
@@ -116,6 +118,9 @@ func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentit
 	iamIdentityService, err := iamidentityv1.NewIamIdentityV1(&iamidentityv1.IamIdentityV1Options{
 		Authenticator: c.Authenticator,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	options := iamIdentityService.NewGetAPIKeysDetailsOptions()
 	options.SetIamAPIKey(c.Authenticator.ApiKey)
@@ -138,6 +143,47 @@ func (c *Client) GetCISInstance(ctx context.Context, crnstr string) (*resourceco
 	}
 
 	return resourceInstance, nil
+}
+
+// GetDNSRecordsByName gets DNS records in specific Cloud Internet Services instance
+// by its CRN, zone ID, and DNS record name.
+func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error) {
+	// Set CIS DNS record service
+	dnsService, err := dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
+		Authenticator:  c.Authenticator,
+		Crn:            core.StringPtr(crnstr),
+		ZoneIdentifier: core.StringPtr(zoneID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Get CIS DNS records by name
+	records, _, err := dnsService.ListAllDnsRecordsWithContext(ctx, &dnsrecordsv1.ListAllDnsRecordsOptions{
+		Name: core.StringPtr(recordName),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "could not retrieve DNS records")
+	}
+
+	return records.Result, nil
+}
+
+// GetDNSZoneIDByName gets the CIS zone ID from its domain name.
+func (c *Client) GetDNSZoneIDByName(ctx context.Context, name string) (string, error) {
+
+	zones, err := c.GetDNSZones(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	for _, z := range zones {
+		if z.Name == name {
+			return z.ID, nil
+		}
+	}
+
+	return "", fmt.Errorf("DNS zone %q not found", name)
 }
 
 // GetDNSZones returns all of the active DNS zones managed by CIS.
@@ -192,25 +238,6 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
 func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*EncryptionKeyResponse, error) {
 	// TODO: IBM: Call KMS / Hyperprotect Crpyto APIs.
 	return &EncryptionKeyResponse{}, nil
-}
-
-// GetZoneIDByName gets the CIS zone ID from its domain name.
-func (c *Client) GetZoneIDByName(ctx context.Context, name string) (string, error) {
-	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
-	zones, err := c.GetDNSZones(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	for _, z := range zones {
-		if z.Name == name {
-			return z.ID, nil
-		}
-	}
-
-	return "", fmt.Errorf("zone %q not found", name)
 }
 
 // GetResourceGroup gets a resource group by its name or ID.
