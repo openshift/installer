@@ -19,6 +19,7 @@ const (
 	HardwareProfile         = "default"
 	APIVIP                  = ""
 	IngressVIP              = ""
+	BootMode                = baremetal.UEFI
 )
 
 // Wrapper for net.LookupHost so we can override in the test
@@ -87,6 +88,10 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 	for _, host := range p.Hosts {
 		if host.HardwareProfile == "" {
 			host.HardwareProfile = HardwareProfile
+		}
+
+		if host.BootMode == "" {
+			host.BootMode = BootMode
 		}
 	}
 

@@ -14,6 +14,10 @@ import (
 
 const testClusterName = "test-cluster"
 
+var host = &baremetal.Host{
+	Name: "test-host",
+}
+
 func TestSetPlatformDefaults(t *testing.T) {
 	// Stub the call to net.LookupHost
 	lookupHost = func(host string) (addrs []string, err error) {
@@ -31,9 +35,10 @@ func TestSetPlatformDefaults(t *testing.T) {
 	machineNetwork := ipnet.MustParseCIDR("192.168.111.0/24")
 
 	cases := []struct {
-		name     string
-		platform *baremetal.Platform
-		expected *baremetal.Platform
+		name         string
+		platform     *baremetal.Platform
+		expected     *baremetal.Platform
+		expectedHost *baremetal.Host
 	}{
 		{
 			name:     "default_empty",
@@ -142,7 +147,21 @@ func TestSetPlatformDefaults(t *testing.T) {
 				IngressVIP:              "192.168.111.3",
 			},
 		},
+		{
+			name: "defaults_for_hosts",
+			platform: &baremetal.Platform{
+				Hosts: []*baremetal.Host{
+					host,
+				},
+			},
+			expectedHost: &baremetal.Host{
+				Name:            "test-host",
+				BootMode:        "UEFI",
+				HardwareProfile: "default",
+			},
+		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 
@@ -160,7 +179,13 @@ func TestSetPlatformDefaults(t *testing.T) {
 				BaseDomain: "test",
 			}
 			SetPlatformDefaults(tc.platform, ic)
-			assert.Equal(t, tc.expected, tc.platform, "unexpected platform")
+			if tc.expected != nil {
+				assert.Equal(t, tc.expected, tc.platform, "unexpected platform")
+			}
+
+			if tc.expectedHost != nil {
+				assert.Contains(t, tc.platform.Hosts, tc.expectedHost, "expected host not found")
+			}
 		})
 	}
 }
