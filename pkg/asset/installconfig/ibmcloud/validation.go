@@ -195,3 +195,33 @@ func validateSubnetZone(client API, subnetID string, validZones sets.String, sub
 	}
 	return allErrs
 }
+
+// ValidatePreExitingPublicDNS ensure no pre-existing DNS record exists in the CIS
+// DNS zone for cluster's Kubernetes API.
+func ValidatePreExitingPublicDNS(client API, ic *types.InstallConfig, metadata *Metadata) error {
+	// Get CIS CRN
+	crn, err := metadata.CISInstanceCRN(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	// Get CIS zone ID by name
+	zoneID, err := client.GetDNSZoneIDByName(context.TODO(), ic.BaseDomain)
+	if err != nil {
+		return field.InternalError(field.NewPath("baseDomain"), err)
+	}
+
+	// Get CIS DNS record by name
+	recordName := fmt.Sprintf("api.%s", ic.ClusterDomain())
+	records, err := client.GetDNSRecordsByName(context.TODO(), crn, zoneID, recordName)
+	if err != nil {
+		return field.InternalError(field.NewPath("baseDomain"), err)
+	}
+
+	// DNS record exists
+	if len(records) != 0 {
+		return fmt.Errorf("record %s already exists in CIS zone (%s) and might be in use by another cluster, please remove it to continue", recordName, zoneID)
+	}
+
+	return nil
+}

@@ -65,13 +65,18 @@ func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 
 		for _, z := range zones {
 			if z.Name == m.BaseDomain {
-				m.cisInstanceCRN = z.CISInstanceCRN
+				m.SetCISInstanceCRN(z.CISInstanceCRN)
 				return m.cisInstanceCRN, nil
 			}
 		}
 		return "", fmt.Errorf("cisInstanceCRN unknown due to DNS zone %q not found", m.BaseDomain)
 	}
 	return m.cisInstanceCRN, nil
+}
+
+// SetCISInstanceCRN sets Cloud Internet Services instance CRN to a string value.
+func (m *Metadata) SetCISInstanceCRN(crn string) {
+	m.cisInstanceCRN = crn
 }
 
 // Client returns a client used for making API calls to IBM Cloud services.

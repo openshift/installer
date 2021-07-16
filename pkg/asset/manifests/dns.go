@@ -131,7 +131,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to get IBM Cloud client")
 		}
 
-		zoneID, err := client.GetZoneIDByName(context.TODO(), installConfig.Config.BaseDomain)
+		zoneID, err := client.GetDNSZoneIDByName(context.TODO(), installConfig.Config.BaseDomain)
 		if err != nil {
 			return errors.Wrap(err, "failed ot get DNS zone ID")
 		}
