@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -27,16 +28,17 @@ type ClusterMetadata struct {
 
 // ClusterPlatformMetadata contains metadata for platfrom.
 type ClusterPlatformMetadata struct {
-	AWS       *aws.Metadata       `json:"aws,omitempty"`
-	OpenStack *openstack.Metadata `json:"openstack,omitempty"`
-	Libvirt   *libvirt.Metadata   `json:"libvirt,omitempty"`
-	Azure     *azure.Metadata     `json:"azure,omitempty"`
-	GCP       *gcp.Metadata       `json:"gcp,omitempty"`
-	IBMCloud  *ibmcloud.Metadata  `json:"ibmcloud,omitempty"`
-	BareMetal *baremetal.Metadata `json:"baremetal,omitempty"`
-	Ovirt     *ovirt.Metadata     `json:"ovirt,omitempty"`
-	VSphere   *vsphere.Metadata   `json:"vsphere,omitempty"`
-	Kubevirt  *kubevirt.Metadata  `json:"kubevirt,omitempty"`
+	AlibabaCloud *alibabacloud.Metadata `json:"alibabacloud,omitempty"`
+	AWS          *aws.Metadata          `json:"aws,omitempty"`
+	OpenStack    *openstack.Metadata    `json:"openstack,omitempty"`
+	Libvirt      *libvirt.Metadata      `json:"libvirt,omitempty"`
+	Azure        *azure.Metadata        `json:"azure,omitempty"`
+	GCP          *gcp.Metadata          `json:"gcp,omitempty"`
+	IBMCloud     *ibmcloud.Metadata     `json:"ibmcloud,omitempty"`
+	BareMetal    *baremetal.Metadata    `json:"baremetal,omitempty"`
+	Ovirt        *ovirt.Metadata        `json:"ovirt,omitempty"`
+	VSphere      *vsphere.Metadata      `json:"vsphere,omitempty"`
+	Kubevirt     *kubevirt.Metadata     `json:"kubevirt,omitempty"`
 }
 
 // Platform returns a string representation of the platform
@@ -45,6 +47,9 @@ type ClusterPlatformMetadata struct {
 func (cpm *ClusterPlatformMetadata) Platform() string {
 	if cpm == nil {
 		return ""
+	}
+	if cpm.AlibabaCloud != nil {
+		return alibabacloud.Name
 	}
 	if cpm.AWS != nil {
 		return aws.Name

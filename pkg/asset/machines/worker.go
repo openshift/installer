@@ -36,6 +36,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
@@ -50,6 +51,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -84,6 +86,16 @@ func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 		EC2RootVolume: awstypes.EC2RootVolume{
 			Type: "gp2",
 			Size: 120,
+		},
+	}
+}
+
+func defaultAlibabaCloudMachinePoolPlatform() alibabacloudtypes.MachinePool {
+	return alibabacloudtypes.MachinePool{
+		InstanceType: "ecs.g6.large",
+		SystemDisk: alibabacloudtypes.SystemDisk{
+			Size:     120,
+			Category: alibabacloudtypes.DefaultDiskCategory,
 		},
 	}
 }
@@ -233,6 +245,25 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			machineConfigs = append(machineConfigs, ignFIPS)
 		}
 		switch ic.Platform.Name() {
+		case alibabacloudtypes.Name:
+			mpool := defaultAlibabaCloudMachinePoolPlatform()
+			mpool.Set(ic.Platform.AlibabaCloud.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.AlibabaCloud)
+			if len(mpool.Zones) == 0 {
+				azs, err := alibabacloud.GetAvailabilityZones(ic.Platform.AlibabaCloud.Region)
+				if err != nil {
+					return errors.Wrap(err, "failed to fetch availability zones")
+				}
+				mpool.Zones = azs
+			}
+			pool.Platform.AlibabaCloud = &mpool
+			sets, err := alibabacloud.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		case awstypes.Name:
 			subnets := map[string]string{}
 			if len(ic.Platform.AWS.Subnets) > 0 {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -45,6 +46,12 @@ func validInstallConfig() *types.InstallConfig {
 			HTTPSProxy: "https://user:password@127.0.0.1:8080",
 			NoProxy:    "valid-proxy.com,172.30.0.0/16",
 		},
+	}
+}
+
+func validAlibabaCloudCloudPlatform() *alibabacloud.Platform {
+	return &alibabacloud.Platform{
+		Region: "cn-hangzhou",
 	}
 }
 
@@ -503,7 +510,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(aws, azure, baremetal, gcp, ibmcloud, kubevirt, none, openstack, ovirt, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, kubevirt, none, openstack, ovirt, vsphere\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -534,7 +541,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(aws, azure, baremetal, gcp, ibmcloud, kubevirt, none, openstack, ovirt, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, kubevirt, none, openstack, ovirt, vsphere\)$`,
 		},
 		{
 			name: "invalid libvirt platform",
@@ -546,7 +553,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt.URI = ""
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(aws, azure, baremetal, gcp, ibmcloud, kubevirt, none, openstack, ovirt, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
+			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, kubevirt, none, openstack, ovirt, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
 		},
 		{
 			name: "valid none platform",
@@ -958,6 +965,16 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Proxy.NoProxy = "*"
+				return c
+			}(),
+		},
+		{
+			name: "valid alibabacloud platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					AlibabaCloud: validAlibabaCloudCloudPlatform(),
+				}
 				return c
 			}(),
 		},

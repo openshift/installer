@@ -20,6 +20,7 @@ import (
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -565,10 +566,11 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 	// validPlatformCredentialsModes is a map from the platform name to a slice of credentials modes that are valid
 	// for the platform. If a platform name is not in the map, then the credentials mode cannot be set for that platform.
 	validPlatformCredentialsModes := map[string][]types.CredentialsMode{
-		aws.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
-		azure.Name:    {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
-		gcp.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
-		ibmcloud.Name: {types.ManualCredentialsMode},
+		alibabacloud.Name: {types.ManualCredentialsMode},
+		aws.Name:          {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
+		azure.Name:        {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
+		gcp.Name:          {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
+		ibmcloud.Name:     {types.ManualCredentialsMode},
 	}
 	if validModes, ok := validPlatformCredentialsModes[platform]; ok {
 		validModesSet := sets.NewString()
