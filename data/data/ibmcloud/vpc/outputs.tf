@@ -2,12 +2,12 @@
 # VPC module outputs
 #######################################
 
-output "control_plane_security_group_id" {
-  # depends_on = [
-  #   ibm_is_security_group_rule.control_plane_inbound,
-  #   ibm_is_security_group_rule.control_plane_outbound,
-  # ]
-  value = ibm_is_security_group.control_plane.id
+output "control_plane_security_group_id_list" {
+  value = [
+    ibm_is_security_group.cluster_wide.id,
+    ibm_is_security_group.openshift_network.id,
+    ibm_is_security_group.control_plane.id,
+  ]
 }
 
 output "control_plane_subnet_id_list" {
@@ -16,14 +16,6 @@ output "control_plane_subnet_id_list" {
 
 output "control_plane_subnet_zone_list" {
   value = ibm_is_subnet.control_plane.*.zone
-}
-
-output "compute_security_group_id" {
-  # depends_on = [
-  #   ibm_is_security_group_rule.compute_inbound,
-  #   ibm_is_security_group_rule.compute_outbound,
-  # ]
-  value = ibm_is_security_group.compute.id
 }
 
 output "compute_subnet_id_list" {
