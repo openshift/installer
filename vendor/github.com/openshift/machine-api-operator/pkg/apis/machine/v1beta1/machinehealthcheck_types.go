@@ -72,14 +72,16 @@ type MachineHealthCheckSpec struct {
 
 	// Machines older than this duration without a node will be considered to have
 	// failed and will be remediated.
+	// To prevent Machines without Nodes from being removed, disable startup checks
+	// by setting this value explicitly to "0".
 	// Expects an unsigned duration string of decimal numbers each with optional
 	// fraction and a unit suffix, eg "300ms", "1.5h" or "2h45m".
 	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	// +optional
 	// +kubebuilder:default:="10m"
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:Pattern="^0|([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	// +kubebuilder:validation:Type:=string
-	NodeStartupTimeout metav1.Duration `json:"nodeStartupTimeout,omitempty"`
+	NodeStartupTimeout *metav1.Duration `json:"nodeStartupTimeout,omitempty"`
 
 	// RemediationTemplate is a reference to a remediation template
 	// provided by an infrastructure provider.

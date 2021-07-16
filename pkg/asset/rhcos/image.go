@@ -141,13 +141,30 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return oi, nil
 		}
 
-		// Note that baremetal IPI currently uses the OpenStack image
-		// because this contains the necessary ironic config drive
-		// ignition support, which isn't enabled in the UPI BM images
-		if a, ok := streamArch.Artifacts["openstack"]; ok {
-			return rhcos.FindArtifactURL(a)
+		// Note that baremetal IPI currently uses the RHCOS live-iso image.
+		// We will need to pass 4 URLs one for virtual media and 3 for PXE
+		// booting. We will concatenate the URLs with a separator for easier extraction.
+		// Note: We cannot use rhcos.FindArtifactURL for the "metal" artifact.
+		// The iso image is optional, so we will continue looking for others.
+		iso := streamArch.Artifacts["metal"].Formats["iso"].Disk.Location
+
+		kernel := streamArch.Artifacts["metal"].Formats["pxe"].Kernel.Location
+		if kernel == "" {
+			return "", fmt.Errorf("%s: No live-kernel build found", st.FormatPrefix(archName))
 		}
-		return "", fmt.Errorf("%s: No openstack build found", st.FormatPrefix(archName))
+
+		initramfs := streamArch.Artifacts["metal"].Formats["pxe"].Initramfs.Location
+		if initramfs == "" {
+			return "", fmt.Errorf("%s: No live-initramfs build found", st.FormatPrefix(archName))
+		}
+
+		rootfs := streamArch.Artifacts["metal"].Formats["pxe"].Rootfs.Location
+		if rootfs == "" {
+			return "", fmt.Errorf("%s: No live-rootfs build found", st.FormatPrefix(archName))
+		}
+
+		urls := iso + "," + kernel + "," + initramfs + "," + rootfs
+		return urls, nil
 	case vsphere.Name:
 		// Check for image URL override
 		if config.Platform.VSphere.ClusterOSImage != "" {

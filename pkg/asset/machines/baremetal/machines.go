@@ -3,12 +3,8 @@ package baremetal
 
 import (
 	"fmt"
-	"net"
-	"net/url"
-	"path"
-	"strings"
 
-	baremetalprovider "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
+	baremetalprovider "github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
 	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -20,7 +16,7 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != baremetal.Name {
 		return nil, fmt.Errorf("non bare metal configuration: %q", configPlatform)
 	}
@@ -33,7 +29,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider, err := provider(platform, osImage, userDataSecret)
+	provider, err := provider(platform, userDataSecret)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
 	}
@@ -66,42 +62,14 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *baremetal.Platform, osImage string, userDataSecret string) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
-	// The machine-os-downloader container launched by the baremetal-operator downloads the image,
-	// compresses it to speed up deployments and makes it available on platform.ClusterProvisioningIP, via http
-	// osImage looks like:
-	//   https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2/42.80.20190725.1/rhcos-42.80.20190725.1-openstack.qcow2?sha256sum=123
-	// And the cached URL looks like:
-	//   http://172.22.0.3:6180/images/rhcos-42.80.20190725.1-openstack.qcow2/cached-rhcos-42.80.20190725.1-openstack.qcow2
-	// See https://github.com/openshift/ironic-rhcos-downloader for more details
-	// The image is now formatted with a query string containing the sha256sum, we strip that here
-	// and it will be consumed for validation in ironic-machine-os-downloader
-	imageURL, err := url.Parse(osImage)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid osImage URL format")
-	}
-	imageURL.RawQuery = ""
-	imageURL.Fragment = ""
-	// We strip any .gz/.xz suffix because ironic-machine-os-downloader unzips the image
-	// ref https://github.com/openshift/ironic-rhcos-downloader/pull/12
-	imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
-	imageFilename = strings.TrimSuffix(imageFilename, ".xz")
-	cachedImageFilename := "cached-" + imageFilename
-
-	cacheImageIP := platform.ClusterProvisioningIP
-	if platform.ProvisioningNetwork == baremetal.DisabledProvisioningNetwork && platform.ClusterProvisioningIP == "" {
-		cacheImageIP = platform.APIVIP
-	}
-	cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(cacheImageIP, "6181"), imageFilename, cachedImageFilename)
-	cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
+func provider(platform *baremetal.Platform, userDataSecret string) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
 	config := &baremetalprovider.BareMetalMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "baremetal.cluster.k8s.io/v1alpha1",
 			Kind:       "BareMetalMachineProviderSpec",
 		},
-		Image: baremetalprovider.Image{
-			URL:      cacheImageURL,
-			Checksum: cacheChecksumURL,
+		CustomDeploy: &baremetalprovider.CustomDeploy{
+			Method: "install_coreos",
 		},
 		UserData: &corev1.SecretReference{Name: userDataSecret},
 	}
