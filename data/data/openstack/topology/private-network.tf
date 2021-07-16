@@ -1,19 +1,19 @@
 locals {
-  nodes_cidr_block = var.cidr_block
-  nodes_subnet_id  = var.machines_subnet_id != "" ? var.machines_subnet_id : openstack_networking_subnet_v2.nodes[0].id
-  nodes_network_id = var.machines_network_id != "" ? var.machines_network_id : openstack_networking_network_v2.openshift-private[0].id
-  create_router    = (var.external_network != "" && var.machines_subnet_id == "") ? 1 : 0
+  nodes_cidr_block = var.machine_v4_cidrs[0]
+  nodes_subnet_id  = var.openstack_machines_subnet_id != "" ? var.openstack_machines_subnet_id : openstack_networking_subnet_v2.nodes[0].id
+  nodes_network_id = var.openstack_machines_network_id != "" ? var.openstack_machines_network_id : openstack_networking_network_v2.openshift-private[0].id
+  create_router    = (var.openstack_external_network != "" && var.openstack_machines_subnet_id == "") ? 1 : 0
 }
 
 data "openstack_networking_network_v2" "external_network" {
-  count      = var.external_network != "" ? 1 : 0
-  name       = var.external_network
-  network_id = var.external_network_id
+  count      = var.openstack_external_network != "" ? 1 : 0
+  name       = var.openstack_external_network
+  network_id = var.openstack_external_network_id
   external   = true
 }
 
 resource "openstack_networking_network_v2" "openshift-private" {
-  count          = var.machines_subnet_id == "" ? 1 : 0
+  count          = var.openstack_machines_subnet_id == "" ? 1 : 0
   name           = "${var.cluster_id}-openshift"
   admin_state_up = "true"
   description    = local.description
@@ -21,14 +21,14 @@ resource "openstack_networking_network_v2" "openshift-private" {
 }
 
 resource "openstack_networking_subnet_v2" "nodes" {
-  count           = var.machines_subnet_id == "" ? 1 : 0
+  count           = var.openstack_machines_subnet_id == "" ? 1 : 0
   name            = "${var.cluster_id}-nodes"
   description     = local.description
   cidr            = local.nodes_cidr_block
   ip_version      = 4
   network_id      = local.nodes_network_id
   tags            = ["openshiftClusterID=${var.cluster_id}"]
-  dns_nameservers = var.external_dns
+  dns_nameservers = var.openstack_external_dns
 
   # We reserve some space at the beginning of the CIDR to use for the VIPs
   # FIXME(mandre) if we let the ports pick up VIPs automatically, we don't have
@@ -41,13 +41,13 @@ resource "openstack_networking_subnet_v2" "nodes" {
 
 resource "openstack_networking_port_v2" "masters" {
   name        = "${var.cluster_id}-master-${count.index}"
-  count       = var.masters_count
+  count       = var.master_count
   description = local.description
 
   admin_state_up = "true"
   network_id     = local.nodes_network_id
   security_group_ids = concat(
-    var.master_extra_sg_ids,
+    var.openstack_master_extra_sg_ids,
     [openstack_networking_secgroup_v2.master.id],
   )
   tags = ["openshiftClusterID=${var.cluster_id}"]
@@ -62,11 +62,11 @@ resource "openstack_networking_port_v2" "masters" {
   }
 
   allowed_address_pairs {
-    ip_address = var.api_int_ip
+    ip_address = var.openstack_api_int_ip
   }
 
   allowed_address_pairs {
-    ip_address = var.ingress_ip
+    ip_address = var.openstack_ingress_ip
   }
 
   depends_on = [openstack_networking_port_v2.api_port, openstack_networking_port_v2.ingress_port]
@@ -83,7 +83,7 @@ resource "openstack_networking_port_v2" "api_port" {
 
   fixed_ip {
     subnet_id  = local.nodes_subnet_id
-    ip_address = var.api_int_ip
+    ip_address = var.openstack_api_int_ip
   }
 }
 
@@ -98,13 +98,13 @@ resource "openstack_networking_port_v2" "ingress_port" {
 
   fixed_ip {
     subnet_id  = local.nodes_subnet_id
-    ip_address = var.ingress_ip
+    ip_address = var.openstack_ingress_ip
   }
 }
 
 resource "openstack_networking_trunk_v2" "masters" {
   name        = "${var.cluster_id}-master-trunk-${count.index}"
-  count       = var.trunk_support ? var.masters_count : 0
+  count       = var.openstack_trunk_support ? var.master_count : 0
   description = local.description
   tags        = ["openshiftClusterID=${var.cluster_id}"]
 
@@ -133,16 +133,16 @@ resource "openstack_networking_trunk_v2" "masters" {
 // as expected.
 
 resource "openstack_networking_floatingip_associate_v2" "api_fip" {
-  count       = length(var.api_floating_ip) == 0 ? 0 : 1
+  count       = length(var.openstack_api_floating_ip) == 0 ? 0 : 1
   port_id     = openstack_networking_port_v2.api_port.id
-  floating_ip = var.api_floating_ip
+  floating_ip = var.openstack_api_floating_ip
   depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }
 
 resource "openstack_networking_floatingip_associate_v2" "ingress_fip" {
-  count       = length(var.ingress_floating_ip) == 0 ? 0 : 1
+  count       = length(var.openstack_ingress_floating_ip) == 0 ? 0 : 1
   port_id     = openstack_networking_port_v2.ingress_port.id
-  floating_ip = var.ingress_floating_ip
+  floating_ip = var.openstack_ingress_floating_ip
   depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }
 

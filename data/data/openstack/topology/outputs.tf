@@ -2,6 +2,13 @@ output "master_sg_id" {
   value = openstack_networking_secgroup_v2.master.id
 }
 
+output "master_sg_ids" {
+  value = concat(
+    var.openstack_master_extra_sg_ids,
+    [openstack_networking_secgroup_v2.master.id],
+  )
+}
+
 output "master_port_ids" {
   value = local.master_port_ids
 }
@@ -13,4 +20,3 @@ output "private_network_id" {
 output "nodes_subnet_id" {
   value = local.nodes_subnet_id
 }
-
