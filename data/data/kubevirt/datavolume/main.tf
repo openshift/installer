@@ -1,8 +1,11 @@
+provider "kubevirt" {
+}
+
 resource "kubevirt_data_volume" "data_volume" {
   metadata {
-    name      = var.pvc_name
-    namespace = var.namespace
-    labels    = var.labels
+    name      = var.kubevirt_source_pvc_name
+    namespace = var.kubevirt_namespace
+    labels    = var.kubevirt_labels
     annotations = {
       "cdi.kubevirt.io/storage.bind.immediate.requested" = "true"
     }
@@ -10,17 +13,17 @@ resource "kubevirt_data_volume" "data_volume" {
   spec {
     source {
       http {
-        url = var.image_url
+        url = var.kubevirt_image_url
       }
     }
     pvc {
-      access_modes = [var.pv_access_mode]
+      access_modes = [var.kubevirt_pv_access_mode]
       resources {
         requests = {
           storage = var.storage
         }
       }
-      storage_class_name = var.storage_class
+      storage_class_name = var.kubevirt_storage_class
     }
   }
 }
