@@ -5,9 +5,9 @@ locals {
 
 locals {
   // DEBUG: Azure apparently requires dual stack LB for v6
-  need_public_ipv4 = ! var.private || ! var.outbound_udr
+  need_public_ipv4 = ! var.azure_private || ! var.azure_outbound_user_defined_routing
 
-  need_public_ipv6 = var.use_ipv6 && (! var.private || ! var.outbound_udr)
+  need_public_ipv6 = var.use_ipv6 && (! var.azure_private || ! var.azure_outbound_user_defined_routing)
 }
 
 
@@ -15,11 +15,11 @@ resource "azurerm_public_ip" "cluster_public_ip_v4" {
   count = local.need_public_ipv4 ? 1 : 0
 
   sku                 = "Standard"
-  location            = var.region
+  location            = var.azure_region
   name                = "${var.cluster_id}-pip-v4"
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
   allocation_method   = "Static"
-  domain_name_label   = var.dns_label
+  domain_name_label   = var.cluster_id
 }
 
 data "azurerm_public_ip" "cluster_public_ip_v4" {
@@ -27,7 +27,7 @@ data "azurerm_public_ip" "cluster_public_ip_v4" {
   count = local.need_public_ipv4 ? 1 : 0
 
   name                = azurerm_public_ip.cluster_public_ip_v4[0].name
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
 }
 
 
@@ -36,25 +36,25 @@ resource "azurerm_public_ip" "cluster_public_ip_v6" {
 
   ip_version          = "IPv6"
   sku                 = "Standard"
-  location            = var.region
+  location            = var.azure_region
   name                = "${var.cluster_id}-pip-v6"
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
   allocation_method   = "Static"
-  domain_name_label   = var.dns_label
+  domain_name_label   = var.cluster_id
 }
 
 data "azurerm_public_ip" "cluster_public_ip_v6" {
   count = local.need_public_ipv6 ? 1 : 0
 
   name                = azurerm_public_ip.cluster_public_ip_v6[0].name
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
 }
 
 resource "azurerm_lb" "public" {
   sku                 = "Standard"
   name                = var.cluster_id
-  resource_group_name = var.resource_group_name
-  location            = var.region
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.azure_region
 
   dynamic "frontend_ip_configuration" {
     for_each = [for ip in [
@@ -96,7 +96,7 @@ resource "azurerm_lb" "public" {
 resource "azurerm_lb_backend_address_pool" "public_lb_pool_v4" {
   count = local.need_public_ipv4 ? 1 : 0
 
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
   loadbalancer_id     = azurerm_lb.public.id
   name                = var.cluster_id
 }
@@ -104,16 +104,16 @@ resource "azurerm_lb_backend_address_pool" "public_lb_pool_v4" {
 resource "azurerm_lb_backend_address_pool" "public_lb_pool_v6" {
   count = local.need_public_ipv6 ? 1 : 0
 
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
   loadbalancer_id     = azurerm_lb.public.id
   name                = "${var.cluster_id}-IPv6"
 }
 
 resource "azurerm_lb_rule" "public_lb_rule_api_internal_v4" {
-  count = var.use_ipv4 && ! var.private ? 1 : 0
+  count = var.use_ipv4 && ! var.azure_private ? 1 : 0
 
   name                           = "api-internal-v4"
-  resource_group_name            = var.resource_group_name
+  resource_group_name            = data.azurerm_resource_group.main.name
   protocol                       = "Tcp"
   backend_address_pool_id        = azurerm_lb_backend_address_pool.public_lb_pool_v4[0].id
   loadbalancer_id                = azurerm_lb.public.id
@@ -127,10 +127,10 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal_v4" {
 }
 
 resource "azurerm_lb_rule" "public_lb_rule_api_internal_v6" {
-  count = var.use_ipv6 && ! var.private ? 1 : 0
+  count = var.use_ipv6 && ! var.azure_private ? 1 : 0
 
   name                           = "api-internal-v6"
-  resource_group_name            = var.resource_group_name
+  resource_group_name            = data.azurerm_resource_group.main.name
   protocol                       = "Tcp"
   backend_address_pool_id        = azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id
   loadbalancer_id                = azurerm_lb.public.id
@@ -144,10 +144,10 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal_v6" {
 }
 
 resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v4" {
-  count = var.use_ipv4 && var.private && ! var.outbound_udr ? 1 : 0
+  count = var.use_ipv4 && var.azure_private && ! var.azure_outbound_user_defined_routing ? 1 : 0
 
   name                    = "outbound-rule-v4"
-  resource_group_name     = var.resource_group_name
+  resource_group_name     = data.azurerm_resource_group.main.name
   loadbalancer_id         = azurerm_lb.public.id
   backend_address_pool_id = azurerm_lb_backend_address_pool.public_lb_pool_v4[0].id
   protocol                = "All"
@@ -158,10 +158,10 @@ resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v4" {
 }
 
 resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v6" {
-  count = var.use_ipv6 && var.private && ! var.outbound_udr ? 1 : 0
+  count = var.use_ipv6 && var.azure_private && ! var.azure_outbound_user_defined_routing ? 1 : 0
 
   name                    = "outbound-rule-v6"
-  resource_group_name     = var.resource_group_name
+  resource_group_name     = data.azurerm_resource_group.main.name
   loadbalancer_id         = azurerm_lb.public.id
   backend_address_pool_id = azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id
   protocol                = "All"
@@ -172,10 +172,10 @@ resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v6" {
 }
 
 resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
-  count = var.private ? 0 : 1
+  count = var.azure_private ? 0 : 1
 
   name                = "api-internal-probe"
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
   interval_in_seconds = 5
   number_of_probes    = 2
   loadbalancer_id     = azurerm_lb.public.id
