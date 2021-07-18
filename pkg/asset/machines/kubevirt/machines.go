@@ -71,6 +71,7 @@ func provider(clusterID string, platform *kubevirt.Platform, pool *types.Machine
 		StorageClassName:           platform.StorageClass,
 		IgnitionSecretName:         userDataSecret,
 		NetworkName:                platform.NetworkName,
+		InterfaceBindingMethod:     platform.InterfaceBindingMethod,
 		PersistentVolumeAccessMode: platform.PersistentVolumeAccessMode,
 	}
 	return &spec

@@ -117,7 +117,7 @@ resource "kubevirt_virtual_machine" "bootstrap_vm" {
             }
             interface {
               name = "main"
-              interface_binding_method = "InterfaceBridge"
+              interface_binding_method = var.interface_binding_method
             }
           }
         }

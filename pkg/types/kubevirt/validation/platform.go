@@ -23,6 +23,11 @@ func ValidatePlatform(p *kubevirt.Platform, fldPath *field.Path, c *types.Instal
 		allErrs = append(allErrs, field.Required(fldPath.Child("networkName"), "networkName is required"))
 	}
 
+	if p.InterfaceBindingMethod != "" && p.InterfaceBindingMethod != "Bridge" && p.InterfaceBindingMethod != "SRIOV" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("interfaceBindingMethod"), p.InterfaceBindingMethod,
+			"interfaceBindingMethod must be either 'Bridge' or 'SRIOV'"))
+	}
+
 	if err := validate.IP(p.APIVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
 	} else if err := validateIPInMachineNetworkEntryList(c.MachineNetwork, p.APIVIP); err != nil {

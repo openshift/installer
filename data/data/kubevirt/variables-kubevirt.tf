@@ -5,7 +5,7 @@ variable "kubevirt_namespace" {
 
 variable "kubevirt_source_pvc_name" {
   type        = string
-  description = "The Persistant data volume which all the vms (workers/masters) should be cloned from"
+  description = "The Persistent data volume which all the vms (workers/masters) should be cloned from"
 }
 
 variable "kubevirt_master_storage" {
@@ -15,7 +15,7 @@ variable "kubevirt_master_storage" {
 
 variable "kubevirt_image_url" {
   type        = string
-  description = "The source image URL to be used to create the source persistant data volume (all the VMs are cloned from)"
+  description = "The source image URL to be used to create the source persistent data volume (all the VMs are cloned from)"
 }
 
 variable "kubevirt_master_memory" {
@@ -38,9 +38,14 @@ variable "kubevirt_network_name" {
   description = "The name of the sub network created in the infracluster which should be used by the tenantcluster resources"
 }
 
+variable "kubevirt_interface_binding_method" {
+  type        = string
+  description = "The interface binding method of the nodes of the tenantcluster"
+}
+
 variable "kubevirt_pv_access_mode" {
   type        = string
-  description = "The access mode which all the persistant volumes should be created with [ReadWriteOnce,ReadOnlyMany,ReadWriteMany]"
+  description = "The access mode which all the persistent volumes should be created with [ReadWriteOnce,ReadOnlyMany,ReadWriteMany]"
 }
 
 variable "kubevirt_labels" {

@@ -127,7 +127,7 @@ resource "kubevirt_virtual_machine" "master_vm" {
             }
             interface {
               name                     = "main"
-              interface_binding_method = "InterfaceBridge"
+              interface_binding_method = var.interface_binding_method
             }
           }
         }
