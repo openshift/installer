@@ -2,6 +2,7 @@
 # the installer layered on top of the cluster-native Linux installer image.
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.9 AS macbuilder
+ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN go generate ./data && \

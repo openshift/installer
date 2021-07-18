@@ -85,6 +85,7 @@ type bootkubeTemplateData struct {
 	PullSecretBase64           string
 	RootCaCert                 string
 	WorkerIgnConfig            string
+	IsOKD                      bool
 }
 
 type baremetalTemplateData struct {

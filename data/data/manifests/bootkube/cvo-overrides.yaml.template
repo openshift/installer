@@ -4,5 +4,10 @@ metadata:
   namespace: openshift-cluster-version
   name: version
 spec:
+{{- if .IsOKD }}
+  upstream: https://amd64.origin.releases.ci.openshift.org/graph
+  channel: stable-4
+{{- else }}
   channel: stable-4.8
+{{- end }}
   clusterID: {{.CVOClusterID}}
