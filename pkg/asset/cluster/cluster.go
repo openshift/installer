@@ -80,6 +80,9 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		if err := azure.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
+		if installConfig.Config.Platform.Azure.CloudName == typesazure.StackCloud {
+			platform = "azurestack"
+		}
 	}
 
 	tfvarsFiles := make([]*asset.File, 0, len(terraformVariables.Files())+len(stages))

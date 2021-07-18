@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
+	typesazure "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -35,6 +36,14 @@ func Destroy(dir string) (err error) {
 	}
 
 	tfPlatformVarsFileName := fmt.Sprintf(cluster.TfPlatformVarsFileName, platform)
+
+	// Azure Stack uses the Azure platform but has its own Terraform configuration.
+	// Set platform to azurestack after setting tfPlatformVarsFileName, because the
+	// tfvars file is still terraform.azure.auto.tfvars.json in the case of Azure Stack.
+	if platform == typesazure.Name && metadata.Azure.CloudName == typesazure.StackCloud {
+		platform = "azurestack"
+	}
+
 	varFiles := []string{cluster.TfVarsFileName, tfPlatformVarsFileName}
 	tfStages := platformstages.StagesForPlatform(platform)
 	for _, stage := range tfStages {
