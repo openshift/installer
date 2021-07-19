@@ -15,6 +15,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
   - [Custom Subnets](#custom-subnets)
   - [Additional Networks](#additional-networks)
   - [Additional Security Groups](#additional-security-groups)
+  - [Cloud Provider configuration](#cloud-provider-configuration)
   - [Further customization](#further-customization)
 
 ## Cluster-scoped properties
@@ -233,6 +234,32 @@ controlPlane:
 ```
 
 **NOTE:** The additional security groups attached to the Control Plane machine will also be attached to the bootstrap node.
+
+## Cloud Provider configuration
+
+You may want to modify cloud provider configuration in order to make it work with your OpenStack cloud. This is possible if you'll let the installer generate the manifests before running the installation:
+
+```sh
+openshift-install --dir <directory> create manifests
+```
+
+Then modify the manifest containing the [cloud provider configuration](https://v1-18.docs.kubernetes.io/docs/concepts/cluster-administration/cloud-providers/#cloud-conf):
+
+```sh
+vi <directory>/manifests/cloud-provider-config.yaml
+```
+
+As an example in order to tweak support for LoadBalancer Services you can modify options regarding Octavia configuration in the `[LoadBalancer]` section of `config` key. In particular:
+
+* `use-octavia = true` enables the Octavia integration.
+* `lb-provider = <"amphora" or "ovn">` lets you choose the Octavia provider to use when creating load balancers. Please note that setting "ovn" requires setting `lb-method = SOURCE_IP_PORT` as this is the only method supported by OVN.
+* `floating-network-id = <uuid>` is required to be set if your OpenStack cluster has multiple external networks. The network set here will be used by cloud provider to create floating IPs on.
+
+After saving the file you can continue the installation normally:
+
+```sh
+openshift-install --dir <directory> create cluster
+```
 
 ## Further customization
 
