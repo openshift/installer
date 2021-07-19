@@ -41,6 +41,7 @@ variable "kubevirt_network_name" {
 variable "kubevirt_interface_binding_method" {
   type        = string
   description = "The interface binding method of the nodes of the tenantcluster"
+  default     = "Bridge"
 }
 
 variable "kubevirt_pv_access_mode" {
