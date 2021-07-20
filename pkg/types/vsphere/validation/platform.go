@@ -30,8 +30,17 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 	}
 
 	if len(p.VCenter) != 0 {
-		if err := validate.Host(p.VCenter); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("vCenter"), p.VCenter, "must be the domain name or IP address of the vCenter"))
+		// govmomi supports using a URL
+		// https://github.com/openshift/installer/pull/4708
+		// https://github.com/openshift/installer/pull/4254
+		// breaks the validation that would allow support for
+		// the govmomi simulator. Checking the value provided
+		// in `p.VCenter` works around that issue and allows us
+		// additional testing that is possible with the simulator.
+		if !strings.Contains(p.VCenter, "127.0.0.1:22443") {
+			if err := validate.Host(p.VCenter); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("vCenter"), p.VCenter, "must be the domain name or IP address of the vCenter"))
+			}
 		}
 	}
 
