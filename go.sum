@@ -575,7 +575,6 @@ github.com/go-logr/logr v0.2.1/go.mod h1:z6/tIYblkpsD+a4lm/fGIIU9mZ+XfAiaFtq7xTg
 github.com/go-logr/logr v0.3.0/go.mod h1:z6/tIYblkpsD+a4lm/fGIIU9mZ+XfAiaFtq7xTgseGU=
 github.com/go-logr/logr v0.4.0 h1:K7/B1jt6fIBQVd4Owv2MqGQClcgf0R266+7C/QjRcLc=
 github.com/go-logr/logr v0.4.0/go.mod h1:z6/tIYblkpsD+a4lm/fGIIU9mZ+XfAiaFtq7xTgseGU=
-github.com/go-logr/zapr v0.2.0/go.mod h1:qhKdvif7YF5GI9NWEpyxTSSBdGmzkNguibrdCNVPunU=
 github.com/go-logr/zapr v0.4.0 h1:uc1uML3hRYL9/ZZPdgHS/n8Nzo+eaYL/Efxkkamf7OM=
 github.com/go-logr/zapr v0.4.0/go.mod h1:tabnROwaDl0UNxkVeFRbY8bwB37GwRv0P8lg6aAiEnk=
 github.com/go-martini/martini v0.0.0-20170121215854-22fa46961aab/go.mod h1:/P9AEU963A2AYjv4d1V5eVL1CQbEJq6aCNHDDjibzu8=
@@ -1459,14 +1458,13 @@ github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200701112720-3a7d727c9a
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200713133651-5c8a640669ac/go.mod h1:XVYX9JE339nKbDDa/W481XD+1GTeqeaBm8bDPr7WE7I=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200901173901-9056dbc8c9b9/go.mod h1:rcwAydGZX+z4l91wtOdbq+fqDwuo6iu0YuFik3UUc+8=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201002065957-9854f7420570/go.mod h1:7NRECVE26rvP1/fs1CbhfY5gsgnnFQNhb9txTFzWmUw=
-github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201027164920-70f2f92e64ab/go.mod h1:S38HjVtBmaX6PHq99updVereupkHcwcOEM5jq6rTILI=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201201000827-1117a4fc438c/go.mod h1:21N0wWjiTQypZ7WosEYhcGJHr9JoDR1RBFztE0NvdYM=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5 h1:75U75i/GfStAartlsP/F9v3Gv3MwzuLwqdLTjP1vPeE=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5/go.mod h1:/XjFaKnqBc8K/jcRXHO7tau39CmzNinqmpxYaQGRvnE=
 github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d h1:FD/0xn/h8Do//QkPGhsf1pgXkH8nUkfIUmQ16bRU6TQ=
 github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d/go.mod h1:hIEdP3ZudO/l2J8+gm8IFW0KMHn0YURvMSTZy9luK7w=
-github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20201214114543-e5aed9c73f1f h1:GLvV9l0Qtk8NfqrfDuanHPUyZB413vxp9nUUX1+oyfg=
-github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20201214114543-e5aed9c73f1f/go.mod h1:Moiq8vUJ4IdTaJBxIA756FFJ4GgVXZAiOds7lTpZ1kQ=
+github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20210719100556-9b8bc3666720 h1:+7K3weJLiXzIlUfdKbJ34QaAROrQMxXuEMi0ozmMyZY=
+github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20210719100556-9b8bc3666720/go.mod h1:jiZXnZ50S7oYVnLIKp9K2RExM2zTtPpoCVSGtsmotqc=
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603 h1:MC6BSZYxFPoqqKj9PdlGjHGVKcMsvn6Kv1NiVzQErZ8=
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603/go.mod h1:7pQ9Bzha+ug/5zd+0ufbDEcnn2OnNlPwRwYrzhXk4NM=
 github.com/openshift/cluster-api-provider-openstack v0.0.0-20210302164104-8498241fa4bd h1:5mq9/JftiO9u/RknQ5iR9Nkd09R1XFfUPS1nO11Wth0=
@@ -1492,7 +1490,6 @@ github.com/openshift/machine-api-operator v0.2.1-0.20200701225707-950912b03628/g
 github.com/openshift/machine-api-operator v0.2.1-0.20200722104429-f4f9b84df9b7/go.mod h1:XDsNRAVEJtkI00e51SAZ/PnqNJl1zv0rHXSdl9L1oOY=
 github.com/openshift/machine-api-operator v0.2.1-0.20200926044412-b7d860f8074c/go.mod h1:cp/wPVzxHZeLUjOLkNPNqrk4wyyW6HuHd3Kz9+hl5xw=
 github.com/openshift/machine-api-operator v0.2.1-0.20201002104344-6abfb5440597/go.mod h1:+oAfoCl+TUd2TM79/6NdqLpFUHIJpmqkKdmiHe2O7mw=
-github.com/openshift/machine-api-operator v0.2.1-0.20201111151924-77300d0c997a/go.mod h1:XQN83eD5YoXEkla3di+exKIpLYx/ApLAOe0EE66Q+hw=
 github.com/openshift/machine-api-operator v0.2.1-0.20201203125141-79567cb3368e/go.mod h1:Vxdx8K+8sbdcGozW86hSvcVl5JgJOqNFYhLRRhEM9HY=
 github.com/openshift/machine-api-operator v0.2.1-0.20210104142355-8e6ae0acdfcf/go.mod h1:U5eAHChde1XvtQy3s1Zcr7ll4X7heb0SzYpaiAwxmQc=
 github.com/openshift/machine-api-operator v0.2.1-0.20210504014029-a132ec00f7dd/go.mod h1:DFZBMPtC2TYZH5NE9+2JQIpbZAnruqc9F26QmbOm9pw=
@@ -1939,7 +1936,6 @@ go.uber.org/multierr v1.5.0/go.mod h1:FeouvMocqHpRaaGuG9EjoKcStLC43Zu/fmqdUMPcKY
 go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee h1:0mgffUl7nfd+FpvXMVz4IDEaUSmT1ysygQC7qYo7sG4=
 go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee/go.mod h1:vJERXedbb3MVM5f9Ejo0C68/HhF8uaILCdgjnY+goOA=
 go.uber.org/zap v0.0.0-20180814183419-67bc79d13d15/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
-go.uber.org/zap v1.8.0/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
 go.uber.org/zap v1.9.1/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
 go.uber.org/zap v1.10.0/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
 go.uber.org/zap v1.13.0/go.mod h1:zwrFLgMcdUuIBviXEYEH1YKNaOBnKXsx2IPda5bBwHM=

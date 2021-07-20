@@ -674,7 +674,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		labels := kubevirtutils.BuildLabels(clusterID.InfraID)
-		interfaceBindingMethod := "Interface" + installConfig.Config.Kubevirt.InterfaceBindingMethod
+		interfaceBindingMethod := "InterfaceBridge"
+		if installConfig.Config.Kubevirt.InterfaceBindingMethod != "" {
+			interfaceBindingMethod = "Interface" + installConfig.Config.Kubevirt.InterfaceBindingMethod
+		}
 		data, err := kubevirttfvars.TFVars(
 			kubevirttfvars.TFVarsSources{
 				MasterSpecs:            masterSpecs,
