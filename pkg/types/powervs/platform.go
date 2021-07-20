@@ -38,4 +38,10 @@ type Platform struct {
 	//
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty" validate:"omitempty,osimageuri,urlexist"`
+
+	// DefaultMachinePlatform is the default configuration used when
+	// installing on Power VS for machine pools which do not define their own
+	// platform configuration.
+	// +optional
+	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 }
