@@ -39,7 +39,9 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
       - [Using a Server Group](#using-a-server-group)
       - [Setting Nova Availability Zones](#setting-nova-availability-zones)
     - [Using a Custom External Load Balancer](#using-a-custom-external-load-balancer)
-    - [Refreshing a CA Certificate](#refreshing-a-ca-certificate)
+    - [Reconfiguring cloud provider](#reconfiguring-cloud-provider)
+      - [Modifying cloud provider options](#modifying-cloud-provider-options)
+      - [Refreshing a CA Certificate](#refreshing-a-ca-certificate)
   - [Reporting Issues](#reporting-issues)
 
 ## Reference Documents
@@ -646,13 +648,26 @@ set-cookie: 1e2670d92730b515ce3a1bb65da45062=9b714eb87e93cf34853e87a92d6894be; p
 cache-control: private
 ```
 
-### Refreshing a CA Certificate
+### Reconfiguring cloud provider
 
-If you ran the installer with a [custom CA certificate](#self-signed-openstack-ca-certificates), then this certificate can be changed while the cluster is running. To change your certificate, edit the value of the `ca-cert.pem` key in the `cloud-provider-config` configmap with a valid PEM certificate.
+If you need to update the OpenStack cloud provider configuration you can edit the ConfigMap containing it:
 
 ```sh
 oc edit configmap -n openshift-config cloud-provider-config
 ```
+
+**NOTE:** It can take a while to reconfigure the cluster depending on the size of it. The reconfiguration is completed once no node is getting `SchedulingDisabled` taint anymore.
+
+There are several things you can change:
+
+#### Modifying cloud provider options
+
+If you need to modify the direct cloud provider options, then edit the `config` key in the ConfigMap. A brief list of possible options is shown in [Cloud Provider configuration](./customization.md#cloud-provider-configuration) section.
+
+
+#### Refreshing a CA Certificate
+
+If you ran the installer with a [custom CA certificate](#self-signed-openstack-ca-certificates), then this certificate can be changed while the cluster is running. To change your certificate, edit the value of the `ca-cert.pem` key in the `cloud-provider-config` configmap with a valid PEM certificate.
 
 ## Reporting Issues
 
