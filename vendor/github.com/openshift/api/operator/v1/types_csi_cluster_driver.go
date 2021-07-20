@@ -41,6 +41,7 @@ type CSIDriverName string
 // and 0000_90_cluster_csi_driver_01_config.crd.yaml-merge-patch file is also updated with new driver name.
 const (
 	AWSEBSCSIDriver    CSIDriverName = "ebs.csi.aws.com"
+	AWSEFSCSIDriver    CSIDriverName = "efs.csi.aws.com"
 	AzureDiskCSIDriver CSIDriverName = "disk.csi.azure.com"
 	GCPPDCSIDriver     CSIDriverName = "pd.csi.storage.gke.io"
 	CinderCSIDriver    CSIDriverName = "cinder.csi.openstack.org"

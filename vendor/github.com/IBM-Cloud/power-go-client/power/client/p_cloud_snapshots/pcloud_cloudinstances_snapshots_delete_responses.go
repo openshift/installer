@@ -39,6 +39,13 @@ func (o *PcloudCloudinstancesSnapshotsDeleteReader) ReadResponse(response runtim
 		}
 		return nil, result
 
+	case 404:
+		result := NewPcloudCloudinstancesSnapshotsDeleteNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 410:
 		result := NewPcloudCloudinstancesSnapshotsDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -103,6 +110,35 @@ func (o *PcloudCloudinstancesSnapshotsDeleteBadRequest) Error() string {
 }
 
 func (o *PcloudCloudinstancesSnapshotsDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesSnapshotsDeleteNotFound creates a PcloudCloudinstancesSnapshotsDeleteNotFound with default headers values
+func NewPcloudCloudinstancesSnapshotsDeleteNotFound() *PcloudCloudinstancesSnapshotsDeleteNotFound {
+	return &PcloudCloudinstancesSnapshotsDeleteNotFound{}
+}
+
+/*PcloudCloudinstancesSnapshotsDeleteNotFound handles this case with default header values.
+
+Not Found
+*/
+type PcloudCloudinstancesSnapshotsDeleteNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudinstancesSnapshotsDeleteNotFound) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}][%d] pcloudCloudinstancesSnapshotsDeleteNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesSnapshotsDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

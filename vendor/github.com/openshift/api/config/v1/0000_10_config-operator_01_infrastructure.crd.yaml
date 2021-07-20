@@ -123,12 +123,13 @@ spec:
                   description: apiServerURL is a valid URI with scheme 'https', address and optionally a port (defaulting to 443).  apiServerURL can be used by components like the web console to tell users where to find the Kubernetes API.
                   type: string
                 controlPlaneTopology:
-                  description: controlPlaneTopology expresses the expectations for operands that normally run on control nodes. The default is 'HighlyAvailable', which represents the behavior operators have in a "normal" cluster. The 'SingleReplica' mode will be used in single-node deployments and the operators should not configure the operand for highly-available operation
+                  description: controlPlaneTopology expresses the expectations for operands that normally run on control nodes. The default is 'HighlyAvailable', which represents the behavior operators have in a "normal" cluster. The 'SingleReplica' mode will be used in single-node deployments and the operators should not configure the operand for highly-available operation The 'External' mode indicates that the control plane is hosted externally to the cluster and that its components are not visible within the cluster.
                   type: string
                   default: HighlyAvailable
                   enum:
                     - HighlyAvailable
                     - SingleReplica
+                    - External
                 etcdDiscoveryDomain:
                   description: 'etcdDiscoveryDomain is the domain used to fetch the SRV records for discovering etcd servers and clients. For more info: https://github.com/etcd-io/etcd/blob/329be66e8b3f9e2e6af83c123ff89297e49ebd15/Documentation/op-guide/clustering.md#dns-discovery deprecated: as of 4.7, this field is no longer set or honored.  It will be removed in a future release.'
                   type: string
@@ -142,6 +143,7 @@ spec:
                   enum:
                     - HighlyAvailable
                     - SingleReplica
+                    - External
                 platform:
                   description: "platform is the underlying infrastructure provider for the cluster. \n Deprecated: Use platformStatus.type instead."
                   type: string
@@ -268,6 +270,9 @@ spec:
                       description: IBMCloud contains settings specific to the IBMCloud infrastructure provider.
                       type: object
                       properties:
+                        cisInstanceCRN:
+                          description: CISInstanceCRN is the CRN of the Cloud Internet Services instance managing the DNS zone for the cluster's base domain
+                          type: string
                         location:
                           description: Location is where the cluster has been deployed
                           type: string

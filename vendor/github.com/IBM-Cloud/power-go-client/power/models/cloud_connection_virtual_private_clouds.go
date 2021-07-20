@@ -85,6 +85,10 @@ func (m *CloudConnectionVirtualPrivateClouds) UnmarshalBinary(b []byte) error {
 // swagger:model CloudConnectionVirtualPrivateCloud
 type CloudConnectionVirtualPrivateCloud struct {
 
+	// indicates if vpc uses classic architecture
+	// Required: true
+	ClassicAccess *bool `json:"classicAccess"`
+
 	// name for the vpc
 	// Required: true
 	Name *string `json:"name"`
@@ -102,6 +106,10 @@ type CloudConnectionVirtualPrivateCloud struct {
 func (m *CloudConnectionVirtualPrivateCloud) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateClassicAccess(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateName(formats); err != nil {
 		res = append(res, err)
 	}
@@ -117,6 +125,15 @@ func (m *CloudConnectionVirtualPrivateCloud) Validate(formats strfmt.Registry) e
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *CloudConnectionVirtualPrivateCloud) validateClassicAccess(formats strfmt.Registry) error {
+
+	if err := validate.Required("classicAccess", "body", m.ClassicAccess); err != nil {
+		return err
+	}
+
 	return nil
 }
 

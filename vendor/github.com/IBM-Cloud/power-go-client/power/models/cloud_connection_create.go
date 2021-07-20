@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
@@ -16,9 +18,6 @@ import (
 // CloudConnectionCreate cloud connection create
 // swagger:model CloudConnectionCreate
 type CloudConnectionCreate struct {
-
-	// classic
-	Classic *CloudConnectionEndpointClassic `json:"classic,omitempty"`
 
 	// enable global routing for this cloud connection (default=false)
 	GlobalRouting bool `json:"globalRouting,omitempty"`
@@ -32,19 +31,13 @@ type CloudConnectionCreate struct {
 
 	// speed of the cloud connection (speed in megabits per second)
 	// Required: true
+	// Enum: [50 100 200 500 1000 2000 5000 10000]
 	Speed *int64 `json:"speed"`
-
-	// vpc
-	Vpc *CloudConnectionEndpointVPC `json:"vpc,omitempty"`
 }
 
 // Validate validates this cloud connection create
 func (m *CloudConnectionCreate) Validate(formats strfmt.Registry) error {
 	var res []error
-
-	if err := m.validateClassic(formats); err != nil {
-		res = append(res, err)
-	}
 
 	if err := m.validateName(formats); err != nil {
 		res = append(res, err)
@@ -54,31 +47,9 @@ func (m *CloudConnectionCreate) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateVpc(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *CloudConnectionCreate) validateClassic(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Classic) { // not required
-		return nil
-	}
-
-	if m.Classic != nil {
-		if err := m.Classic.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("classic")
-			}
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -91,28 +62,35 @@ func (m *CloudConnectionCreate) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
+var cloudConnectionCreateTypeSpeedPropEnum []interface{}
+
+func init() {
+	var res []int64
+	if err := json.Unmarshal([]byte(`[50,100,200,500,1000,2000,5000,10000]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		cloudConnectionCreateTypeSpeedPropEnum = append(cloudConnectionCreateTypeSpeedPropEnum, v)
+	}
+}
+
+// prop value enum
+func (m *CloudConnectionCreate) validateSpeedEnum(path, location string, value int64) error {
+	if err := validate.Enum(path, location, value, cloudConnectionCreateTypeSpeedPropEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *CloudConnectionCreate) validateSpeed(formats strfmt.Registry) error {
 
 	if err := validate.Required("speed", "body", m.Speed); err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (m *CloudConnectionCreate) validateVpc(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Vpc) { // not required
-		return nil
-	}
-
-	if m.Vpc != nil {
-		if err := m.Vpc.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("vpc")
-			}
-			return err
-		}
+	// value enum
+	if err := m.validateSpeedEnum("speed", "body", *m.Speed); err != nil {
+		return err
 	}
 
 	return nil

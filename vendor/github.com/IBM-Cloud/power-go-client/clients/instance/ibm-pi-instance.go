@@ -45,7 +45,7 @@ func (f *IBMPIInstanceClient) Get(id, powerinstanceid string, timeout time.Durat
 // GetAll Information about all the PVM Instances for a Client
 func (f *IBMPIInstanceClient) GetAll(powerinstanceid string, timeout time.Duration) (*models.PVMInstances, error) {
 
-	params := p_cloud_p_vm_instances.NewPcloudPvminstancesGetallParamsWithTimeout(getTimeOut).WithCloudInstanceID(powerinstanceid)
+	params := p_cloud_p_vm_instances.NewPcloudPvminstancesGetallParamsWithTimeout(helpers.PIGetTimeOut).WithCloudInstanceID(powerinstanceid)
 	resp, err := f.session.Power.PCloudPVMInstances.PcloudPvminstancesGetall(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 	if err != nil || resp.Payload == nil {
 		return nil, fmt.Errorf("Failed to Get all PVM Instances of Power Instance %s :%s", powerinstanceid, err)

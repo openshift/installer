@@ -46,6 +46,13 @@ func (o *PcloudV2VolumesPostReader) ReadResponse(response runtime.ClientResponse
 		}
 		return nil, result
 
+	case 422:
+		result := NewPcloudV2VolumesPostUnprocessableEntity()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 500:
 		result := NewPcloudV2VolumesPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -134,6 +141,35 @@ func (o *PcloudV2VolumesPostConflict) Error() string {
 }
 
 func (o *PcloudV2VolumesPostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2VolumesPostUnprocessableEntity creates a PcloudV2VolumesPostUnprocessableEntity with default headers values
+func NewPcloudV2VolumesPostUnprocessableEntity() *PcloudV2VolumesPostUnprocessableEntity {
+	return &PcloudV2VolumesPostUnprocessableEntity{}
+}
+
+/*PcloudV2VolumesPostUnprocessableEntity handles this case with default header values.
+
+Unprocessable Entity
+*/
+type PcloudV2VolumesPostUnprocessableEntity struct {
+	Payload *models.Error
+}
+
+func (o *PcloudV2VolumesPostUnprocessableEntity) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes][%d] pcloudV2VolumesPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+
+func (o *PcloudV2VolumesPostUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

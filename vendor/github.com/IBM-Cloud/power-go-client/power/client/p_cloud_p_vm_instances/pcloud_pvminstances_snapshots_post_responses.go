@@ -39,6 +39,13 @@ func (o *PcloudPvminstancesSnapshotsPostReader) ReadResponse(response runtime.Cl
 		}
 		return nil, result
 
+	case 404:
+		result := NewPcloudPvminstancesSnapshotsPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 409:
 		result := NewPcloudPvminstancesSnapshotsPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -105,6 +112,35 @@ func (o *PcloudPvminstancesSnapshotsPostBadRequest) Error() string {
 }
 
 func (o *PcloudPvminstancesSnapshotsPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesSnapshotsPostNotFound creates a PcloudPvminstancesSnapshotsPostNotFound with default headers values
+func NewPcloudPvminstancesSnapshotsPostNotFound() *PcloudPvminstancesSnapshotsPostNotFound {
+	return &PcloudPvminstancesSnapshotsPostNotFound{}
+}
+
+/*PcloudPvminstancesSnapshotsPostNotFound handles this case with default header values.
+
+Not Found
+*/
+type PcloudPvminstancesSnapshotsPostNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudPvminstancesSnapshotsPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots][%d] pcloudPvminstancesSnapshotsPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesSnapshotsPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

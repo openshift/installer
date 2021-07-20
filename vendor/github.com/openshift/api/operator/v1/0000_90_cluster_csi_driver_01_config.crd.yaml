@@ -38,6 +38,7 @@ spec:
               name:
                 enum:
                 - ebs.csi.aws.com
+                - efs.csi.aws.com
                 - disk.csi.azure.com
                 - pd.csi.storage.gke.io
                 - cinder.csi.openstack.org

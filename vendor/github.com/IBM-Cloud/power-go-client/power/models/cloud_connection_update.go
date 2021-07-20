@@ -6,10 +6,13 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // CloudConnectionUpdate cloud connection update
@@ -17,7 +20,7 @@ import (
 type CloudConnectionUpdate struct {
 
 	// classic
-	Classic *CloudConnectionEndpointClassic `json:"classic,omitempty"`
+	Classic *CloudConnectionEndpointClassicUpdate `json:"classic,omitempty"`
 
 	// enable global routing for this cloud connection (default=false)
 	GlobalRouting *bool `json:"globalRouting,omitempty"`
@@ -29,6 +32,7 @@ type CloudConnectionUpdate struct {
 	Name *string `json:"name,omitempty"`
 
 	// speed of the cloud connection (speed in megabits per second)
+	// Enum: [50 100 200 500 1000 2000 5000 10000]
 	Speed *int64 `json:"speed,omitempty"`
 
 	// vpc
@@ -40,6 +44,10 @@ func (m *CloudConnectionUpdate) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateClassic(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSpeed(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -66,6 +74,40 @@ func (m *CloudConnectionUpdate) validateClassic(formats strfmt.Registry) error {
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+var cloudConnectionUpdateTypeSpeedPropEnum []interface{}
+
+func init() {
+	var res []int64
+	if err := json.Unmarshal([]byte(`[50,100,200,500,1000,2000,5000,10000]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		cloudConnectionUpdateTypeSpeedPropEnum = append(cloudConnectionUpdateTypeSpeedPropEnum, v)
+	}
+}
+
+// prop value enum
+func (m *CloudConnectionUpdate) validateSpeedEnum(path, location string, value int64) error {
+	if err := validate.Enum(path, location, value, cloudConnectionUpdateTypeSpeedPropEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *CloudConnectionUpdate) validateSpeed(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Speed) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateSpeedEnum("speed", "body", *m.Speed); err != nil {
+		return err
 	}
 
 	return nil

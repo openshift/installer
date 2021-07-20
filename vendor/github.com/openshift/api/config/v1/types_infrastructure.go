@@ -82,6 +82,8 @@ type InfrastructureStatus struct {
 	// The default is 'HighlyAvailable', which represents the behavior operators have in a "normal" cluster.
 	// The 'SingleReplica' mode will be used in single-node deployments
 	// and the operators should not configure the operand for highly-available operation
+	// The 'External' mode indicates that the control plane is hosted externally to the cluster and that
+	// its components are not visible within the cluster.
 	// +kubebuilder:default=HighlyAvailable
 	ControlPlaneTopology TopologyMode `json:"controlPlaneTopology"`
 
@@ -96,7 +98,7 @@ type InfrastructureStatus struct {
 }
 
 // TopologyMode defines the topology mode of the control/infra nodes.
-// +kubebuilder:validation:Enum=HighlyAvailable;SingleReplica
+// +kubebuilder:validation:Enum=HighlyAvailable;SingleReplica;External
 type TopologyMode string
 
 const (
@@ -105,6 +107,12 @@ const (
 
 	// "SingleReplica" is for operators to avoid spending resources for high-availability purpose.
 	SingleReplicaTopologyMode TopologyMode = "SingleReplica"
+
+	// "External" indicates that the component is running externally to the cluster. When specified
+	// as the control plane topology, operators should avoid scheduling workloads to masters or assume
+	// that any of the control plane components such as kubernetes API server or etcd are visible within
+	// the cluster.
+	ExternalTopologyMode TopologyMode = "External"
 )
 
 // PlatformType is a specific supported infrastructure provider.
@@ -147,6 +155,9 @@ const (
 
 	// EquinixMetalPlatformType represents Equinix Metal infrastructure.
 	EquinixMetalPlatformType PlatformType = "EquinixMetal"
+
+	// PowerVSPlatformType represents the IBM Power Virtual Systems offering (colo with IBM Cloud)
+	PowerVSPlatformType PlatformType = "PowerVS"
 )
 
 // IBMCloudProviderType is a specific supported IBM Cloud provider cluster type
@@ -215,6 +226,9 @@ type PlatformSpec struct {
 	// EquinixMetal contains settings specific to the Equinix Metal infrastructure provider.
 	// +optional
 	EquinixMetal *EquinixMetalPlatformSpec `json:"equinixMetal,omitempty"`
+
+	// PowerVS contains settings specific to the IBM Power Virtual Systems offering (colo with IBM Cloud)
+	PowerVS *PowerVSPlatformSpec `json:"powervs,omitempty"`
 }
 
 // PlatformStatus holds the current status specific to the underlying infrastructure provider
@@ -257,6 +271,11 @@ type PlatformStatus struct {
 	// Ovirt contains settings specific to the oVirt infrastructure provider.
 	// +optional
 	Ovirt *OvirtPlatformStatus `json:"ovirt,omitempty"`
+
+	// PowerVS contains settings specific to the Power Systems Virtual Server infrastructure
+	// provider, which is an offering inside of IBM Cloud.
+	// +optional
+	PowerVS *PowerVSPlatformStatus `json:"powervs,omitempty"`
 
 	// VSphere contains settings specific to the VSphere infrastructure provider.
 	// +optional
@@ -517,6 +536,10 @@ type IBMCloudPlatformStatus struct {
 
 	// ProviderType indicates the type of cluster that was created
 	ProviderType IBMCloudProviderType `json:"providerType,omitempty"`
+
+	// CISInstanceCRN is the CRN of the Cloud Internet Services instance managing
+	// the DNS zone for the cluster's base domain
+	CISInstanceCRN string `json:"cisInstanceCRN,omitempty"`
 }
 
 // KubevirtPlatformSpec holds the desired state of the kubevirt infrastructure provider.
@@ -551,6 +574,50 @@ type EquinixMetalPlatformStatus struct {
 	// ingressIP is an external IP which routes to the default ingress controller.
 	// The IP is a suitable target of a wildcard DNS record used to resolve default route host names.
 	IngressIP string `json:"ingressIP,omitempty"`
+}
+
+// PowervsServiceEndpoint store the configuration of a custom url to
+// override existing defaults of PowerVS Services.
+type PowerVSServiceEndpoint struct {
+	// name is the name of the PowerVS service.
+	// The list of all the service names can be found at https://cloud.ibm.com/docs/vpc?topic=vpc-service-endpoints-for-vpc
+	// Note that not all locations incude Power VS.
+	//
+	// +kubebuilder:validation:Pattern=`^[a-z0-9-]+$`
+	Name string `json:"name"`
+
+	// url is fully qualified URI with scheme https, that overrides the default generated
+	// endpoint for a client.
+	// This must be provided and cannot be empty.
+	//
+	// +kubebuilder:validation:Pattern=`^https://`
+	URL string `json:"url"`
+}
+
+// PowerVSPlatformSpec holds the desired state of the Power Systems Virtual Servers infrastructure provider.
+// This only includes fields that can be modified in the cluster.
+type PowerVSPlatformSpec struct {
+	// serviceEndpoints list contains custom endpoints which will override default
+	// service endpoint of PowerVS Services.
+	// There must be only one ServiceEndpoint for a service.
+	// +optional
+	// @TODO: Should this be a list, or would we only allow one?
+	ServiceEndpoints []PowerVSServiceEndpoint `json:"serviceEndpoints,omitempty"`
+}
+
+// PowerVSPlatformStatus holds the current status of the Power VS infrastructure provider.
+type PowerVSPlatformStatus struct {
+	// Region holds the default Power VS region for new Power VS resources created by the cluster.
+	Region string `json:"region"`
+
+	// Zone holds the default colo zone for the new Power VS resources created by the cluster.
+	// Note: Currently only single-zone OCP clusters are supported
+	Zone string `json:"zone"`
+
+	// ServiceEndpoints list contains custom endpoints which will override default
+	// service endpoint of Power VS Services.
+	// +optional
+	ServiceEndpoints []PowerVSServiceEndpoint `json:"serviceEndpoints,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

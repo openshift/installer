@@ -54,6 +54,9 @@ type CreateImage struct {
 	// Required: true
 	// Enum: [root-project url]
 	Source *string `json:"source"`
+
+	// Storage pool where the image will be loaded, used only when importing an image from cloud storage
+	StoragePool string `json:"storagePool,omitempty"`
 }
 
 // Validate validates this create image

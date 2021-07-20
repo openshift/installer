@@ -32,6 +32,13 @@ func (o *PcloudCloudconnectionsNetworksPutReader) ReadResponse(response runtime.
 		}
 		return result, nil
 
+	case 202:
+		result := NewPcloudCloudconnectionsNetworksPutAccepted()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return result, nil
+
 	case 400:
 		result := NewPcloudCloudconnectionsNetworksPutBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -81,6 +88,33 @@ func (o *PcloudCloudconnectionsNetworksPutOK) readResponse(response runtime.Clie
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsNetworksPutAccepted creates a PcloudCloudconnectionsNetworksPutAccepted with default headers values
+func NewPcloudCloudconnectionsNetworksPutAccepted() *PcloudCloudconnectionsNetworksPutAccepted {
+	return &PcloudCloudconnectionsNetworksPutAccepted{}
+}
+
+/*PcloudCloudconnectionsNetworksPutAccepted handles this case with default header values.
+
+Accepted
+*/
+type PcloudCloudconnectionsNetworksPutAccepted struct {
+	Payload models.Object
+}
+
+func (o *PcloudCloudconnectionsNetworksPutAccepted) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksPutAccepted  %+v", 202, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsNetworksPutAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	// response payload
+	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 

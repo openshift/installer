@@ -39,6 +39,13 @@ func (o *PcloudPvminstancesSnapshotsGetallReader) ReadResponse(response runtime.
 		}
 		return nil, result
 
+	case 404:
+		result := NewPcloudPvminstancesSnapshotsGetallNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 500:
 		result := NewPcloudPvminstancesSnapshotsGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -98,6 +105,35 @@ func (o *PcloudPvminstancesSnapshotsGetallBadRequest) Error() string {
 }
 
 func (o *PcloudPvminstancesSnapshotsGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesSnapshotsGetallNotFound creates a PcloudPvminstancesSnapshotsGetallNotFound with default headers values
+func NewPcloudPvminstancesSnapshotsGetallNotFound() *PcloudPvminstancesSnapshotsGetallNotFound {
+	return &PcloudPvminstancesSnapshotsGetallNotFound{}
+}
+
+/*PcloudPvminstancesSnapshotsGetallNotFound handles this case with default header values.
+
+Not Found
+*/
+type PcloudPvminstancesSnapshotsGetallNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots][%d] pcloudPvminstancesSnapshotsGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

@@ -2,6 +2,7 @@ package instance
 
 import (
 	"fmt"
+	"github.com/IBM-Cloud/power-go-client/errors"
 
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_system_pools"
@@ -27,7 +28,7 @@ func (f *IBMPISystemPoolClient) Get(powerinstanceid string) (models.SystemPools,
 	resp, err := f.session.Power.PCloudSystemPools.PcloudSystempoolsGet(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 
 	if err != nil || resp.Payload == nil {
-		return nil, fmt.Errorf("Failed to perform get operation... %s", err)
+		return nil, fmt.Errorf(errors.GetSystemPoolsOperationFailed, powerinstanceid, err)
 	}
 	return resp.Payload, nil
 }
