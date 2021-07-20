@@ -999,6 +999,7 @@ github.com/hashicorp/go-safetemp
 # github.com/hashicorp/go-uuid v1.0.2
 github.com/hashicorp/go-uuid
 # github.com/hashicorp/go-version v1.3.0
+## explicit
 github.com/hashicorp/go-version
 # github.com/hashicorp/golang-lru v0.5.4
 github.com/hashicorp/golang-lru
@@ -1989,11 +1990,16 @@ github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
 github.com/vmware/govmomi/session/cache
 github.com/vmware/govmomi/session/keepalive
+github.com/vmware/govmomi/simulator
+github.com/vmware/govmomi/simulator/esx
+github.com/vmware/govmomi/simulator/internal
+github.com/vmware/govmomi/simulator/vpx
 github.com/vmware/govmomi/task
 github.com/vmware/govmomi/vapi/internal
 github.com/vmware/govmomi/vapi/library
 github.com/vmware/govmomi/vapi/library/finder
 github.com/vmware/govmomi/vapi/rest
+github.com/vmware/govmomi/vapi/simulator
 github.com/vmware/govmomi/vapi/tags
 github.com/vmware/govmomi/vapi/vcenter
 github.com/vmware/govmomi/view

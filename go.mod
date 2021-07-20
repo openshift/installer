@@ -42,6 +42,7 @@ require (
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.13.0
 	github.com/hashicorp/go-plugin v1.3.0
+	github.com/hashicorp/go-version v1.3.0
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/terraform v0.13.4
 	github.com/hashicorp/terraform-plugin-sdk v1.16.0
