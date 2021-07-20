@@ -2,6 +2,7 @@
 locals {
   description = "Created By OpenShift Installer"
   prefix      = var.cluster_id
+  newbits     = tonumber(split("/", var.vpc_cidr_block)[1]) < 16 ? 19 - tonumber(split("/", var.vpc_cidr_block)[1]) : 3
 }
 
 resource "alicloud_vpc" "vpc" {
@@ -23,7 +24,7 @@ resource "alicloud_vswitch" "vswitchs" {
   vswitch_name = "${local.prefix}-vswitch-${count.index}"
   description  = local.description
   vpc_id       = alicloud_vpc.vpc.id
-  cidr_block   = var.vswitch_cidr_blocks[count.index]
+  cidr_block   = cidrsubnet(var.vpc_cidr_block, local.newbits, count.index)
   zone_id      = var.zone_ids[count.index]
   tags = merge(
     {

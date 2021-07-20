@@ -11,17 +11,12 @@ variable "zone_ids" {
   description = "The availability zones in which to create the masters and workers."
 }
 
-variable "resource_group_id" {
-  type = string
-}
-
 variable "vpc_cidr_block" {
   type = string
 }
-
-variable "vswitch_cidr_blocks" {
-  type        = list(string)
-  description = "A list of IPv4 CIDRs."
+ 
+variable "resource_group_id" {
+  type = string
 }
 
 variable "tags" {

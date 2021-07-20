@@ -20,15 +20,6 @@ variable "resource_group_id" {
   type = string
 }
 
-variable "vpc_cidr_block" {
-  type = string
-}
-
-variable "vswitch_cidr_blocks" {
-  type        = list(string)
-  description = "A list of IPv4 CIDRs."
-}
-
 variable "instance_type" {
   type        = string
   description = "The instance type of the master ECS."
@@ -69,12 +60,4 @@ EOF
 variable "ignition_bucket" {
   type = string
   description = "The name of the new OSS bucket."
-}
-
-variable "ignition_stub" {
-  type = string
-  description = <<EOF
-The stub ignition config that should be used to boot the bootstrap instance. This already points to the presigned URL for the OSS bucket
-specified in ignition_bucket.
-EOF
 }

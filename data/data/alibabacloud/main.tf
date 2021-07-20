@@ -16,14 +16,13 @@ provider "alicloud" {
 }
 
 module "vpc" {
-  source              = "./vpc"
-  cluster_id          = var.cluster_id
-  region_id           = var.region_id
-  zone_ids            = var.zone_ids
-  resource_group_id   = var.resource_group_id
-  vpc_cidr_block      = var.vpc_cidr_block
-  vswitch_cidr_blocks = var.vswitch_cidr_blocks
-  tags                = local.tags
+  source            = "./vpc"
+  cluster_id        = var.cluster_id
+  region_id         = var.region_id
+  zone_ids          = var.zone_ids
+  resource_group_id = var.resource_group_id
+  vpc_cidr_block    = var.machine_v4_cidrs[0]
+  tags              = local.tags
 }
 
 module "pvtz" {
@@ -66,9 +65,9 @@ module "bootstrap" {
   source               = "./bootstrap"
   cluster_id           = var.cluster_id
   resource_group_id    = var.resource_group_id
-  ignition             = var.ignition_bootstrap_file
+  ignition_file        = var.ignition_bootstrap_file
   ignition_bucket      = var.ignition_bucket
-  ignition_stub        = var.ignition_stub
+  ignition             = var.ignition_bootstrap
   vpc_id               = module.vpc.vpc_id
   vswitch_id           = module.vpc.vswitch_ids[0]
   slb_id               = module.vpc.slb_external_id

@@ -17,7 +17,7 @@ resource "alicloud_oss_bucket" "bucket" {
 resource "alicloud_oss_bucket_object" "ignition_file" {
   bucket = alicloud_oss_bucket.bucket.id
   key    = "bootstrap.ign"
-  source = var.ignition
+  source = var.ignition_file
   acl    = "private"
 }
 
@@ -116,7 +116,7 @@ resource "alicloud_instance" "bootstrap" {
   system_disk_category    = var.system_disk_category
   system_disk_size        = var.system_disk_size
 
-  user_data = var.ignition_stub
+  user_data = base64encode(var.ignition)
   key_name  = var.key_name
   tags = merge(
     {
