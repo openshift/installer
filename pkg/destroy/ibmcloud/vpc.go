@@ -10,7 +10,7 @@ import (
 
 const vpcTypeName = "vpc"
 
-// listVPCs lists subnets in the vpc
+// listVPCs lists VPCs
 func (o *ClusterUninstaller) listVPCs() (cloudResources, error) {
 	o.Logger.Debugf("Listing VPCs")
 	ctx, cancel := o.contextWithTimeout()

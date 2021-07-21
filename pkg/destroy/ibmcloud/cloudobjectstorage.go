@@ -8,6 +8,7 @@ import (
 )
 
 const cosTypeName = "cos instance"
+const cosResourceID = "dff97f5c-bc5e-4455-b470-411c3edbe49c"
 
 // listCOSInstances lists COS service instances
 func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
@@ -22,6 +23,7 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 
 	options := o.controllerSvc.NewListResourceInstancesOptions()
 	options.SetResourceGroupID(resourceGroupID)
+	options.SetResourceID(cosResourceID)
 	resources, _, err := o.controllerSvc.ListResourceInstancesWithContext(ctx, options)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to list COS instances")
@@ -29,8 +31,10 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 
 	result := []cloudResource{}
 	for _, instance := range resources.Resources {
-		cosInstanceName := fmt.Sprintf("%s-cos", o.InfraID)
-		if cosInstanceName == *instance.Name {
+		// Match the COS instances created by both the installer and the
+		// cluster-image-registry-operator.
+		if fmt.Sprintf("%s-cos", o.InfraID) == *instance.Name ||
+			fmt.Sprintf("%s-image-registry", o.InfraID) == *instance.Name {
 			result = append(result, cloudResource{
 				key:      *instance.ID,
 				name:     *instance.Name,
@@ -105,13 +109,16 @@ func (o *ClusterUninstaller) COSInstanceID() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(cosInstances.list()) == 0 {
-		return "", errors.Errorf("No COS instances found")
+	instanceList := cosInstances.list()
+	if len(instanceList) == 0 {
+		return "", errors.Errorf("COS instance not found")
 	}
-	if len(cosInstances.list()) > 1 {
-		return "", errors.Errorf("Too many COS instances found")
+
+	// Locate the installer's COS instance by name.
+	for _, instance := range instanceList {
+		if instance.name == fmt.Sprintf("%s-cos", o.InfraID) {
+			return instance.id, nil
+		}
 	}
-	cosInstanceID := cosInstances.list()[0].id
-	o.cosInstanceID = cosInstanceID
-	return cosInstanceID, nil
+	return "", errors.Errorf("COS instance not found")
 }

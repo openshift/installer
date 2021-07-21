@@ -32,18 +32,17 @@ var (
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
 type ClusterUninstaller struct {
-	ClusterName                      string
-	Context                          context.Context
-	Logger                           logrus.FieldLogger
-	InfraID                          string
-	AccountID                        string
-	BaseDomain                       string
-	CISInstanceCRN                   string
-	Region                           string
-	ResourceGroupName                string
-	UserProvidedSubnets              []string
-	UserProvidedVPC                  string
-	UserProvidedVPCResourceGroupName string
+	ClusterName         string
+	Context             context.Context
+	Logger              logrus.FieldLogger
+	InfraID             string
+	AccountID           string
+	BaseDomain          string
+	CISInstanceCRN      string
+	Region              string
+	ResourceGroupName   string
+	UserProvidedSubnets []string
+	UserProvidedVPC     string
 
 	managementSvc          *resourcemanagerv2.ResourceManagerV2
 	controllerSvc          *resourcecontrollerv2.ResourceControllerV2
@@ -62,19 +61,18 @@ type ClusterUninstaller struct {
 // New returns an IBMCloud destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	return &ClusterUninstaller{
-		ClusterName:                      metadata.ClusterName,
-		Context:                          context.Background(),
-		Logger:                           logger,
-		InfraID:                          metadata.InfraID,
-		AccountID:                        metadata.ClusterPlatformMetadata.IBMCloud.AccountID,
-		BaseDomain:                       metadata.ClusterPlatformMetadata.IBMCloud.BaseDomain,
-		CISInstanceCRN:                   metadata.ClusterPlatformMetadata.IBMCloud.CISInstanceCRN,
-		Region:                           metadata.ClusterPlatformMetadata.IBMCloud.Region,
-		ResourceGroupName:                metadata.ClusterPlatformMetadata.IBMCloud.ResourceGroupName,
-		UserProvidedSubnets:              metadata.ClusterPlatformMetadata.IBMCloud.Subnets,
-		UserProvidedVPC:                  metadata.ClusterPlatformMetadata.IBMCloud.VPC,
-		UserProvidedVPCResourceGroupName: metadata.ClusterPlatformMetadata.IBMCloud.ResourceGroupName,
-		pendingItemTracker:               newPendingItemTracker(),
+		ClusterName:         metadata.ClusterName,
+		Context:             context.Background(),
+		Logger:              logger,
+		InfraID:             metadata.InfraID,
+		AccountID:           metadata.ClusterPlatformMetadata.IBMCloud.AccountID,
+		BaseDomain:          metadata.ClusterPlatformMetadata.IBMCloud.BaseDomain,
+		CISInstanceCRN:      metadata.ClusterPlatformMetadata.IBMCloud.CISInstanceCRN,
+		Region:              metadata.ClusterPlatformMetadata.IBMCloud.Region,
+		ResourceGroupName:   metadata.ClusterPlatformMetadata.IBMCloud.ResourceGroupName,
+		UserProvidedSubnets: metadata.ClusterPlatformMetadata.IBMCloud.Subnets,
+		UserProvidedVPC:     metadata.ClusterPlatformMetadata.IBMCloud.VPC,
+		pendingItemTracker:  newPendingItemTracker(),
 	}, nil
 }
 

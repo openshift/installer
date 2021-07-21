@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/IBM/go-sdk-core/core"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
 )
