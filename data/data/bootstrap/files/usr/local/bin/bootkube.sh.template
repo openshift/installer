@@ -388,7 +388,7 @@ then
     record_service_stage_success
 fi
 
-REQUIRED_PODS="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+REQUIRED_PODS="openshift-kube-apiserver/no-such-pod,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
 if [ "$BOOTSTRAP_INPLACE" = true ]
 then
     REQUIRED_PODS=""
