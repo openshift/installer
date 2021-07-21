@@ -10,7 +10,7 @@ func TestCloudProviderConfig(t *testing.T) {
 	expectedConfig := `[global]
 version = 1.1.0
 [kubernetes]
-config-file = /mnt/etc/kubernetes/controller-manager-kubeconfig
+config-file = ""
 [provider]
 accountID = 1e1f75646aef447814a6d907cc83fb3c
 clusterID = ocp4-8pxks

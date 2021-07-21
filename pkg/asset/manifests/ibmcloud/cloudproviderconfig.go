@@ -34,7 +34,7 @@ func CloudProviderConfig(infraID string, accountID string) (string, error) {
 			Version: "1.1.0",
 		},
 		Kubernetes: kubernetes{
-			ConfigFile: "/mnt/etc/kubernetes/controller-manager-kubeconfig",
+			ConfigFile: "",
 		},
 		Provider: provider{
 			AccountID:                accountID,
@@ -54,7 +54,7 @@ func CloudProviderConfig(infraID string, accountID string) (string, error) {
 var configTmpl = `[global]
 version = {{.Global.Version}}
 [kubernetes]
-config-file = {{.Kubernetes.ConfigFile}}
+config-file = {{ if ne .Kubernetes.ConfigFile "" }}{{ .Kubernetes.ConfigFile }}{{ else }}""{{ end }}
 [provider]
 accountID = {{.Provider.AccountID}}
 clusterID = {{.Provider.ClusterID}}
