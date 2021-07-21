@@ -353,12 +353,6 @@ func TestValidateProvisioning(t *testing.T) {
 			expected: "Invalid value: \"192.168.111.192/23\": cannot overlap with machine network: 192.168.111.0/24 overlaps with 192.168.111.192/23",
 		},
 		{
-			name: "invalid_provisioning_interface",
-			platform: platform().
-				ProvisioningNetworkInterface("").build(),
-			expected: "Invalid value: \"\": no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts",
-		},
-		{
 			name: "valid_provisioningDHCPRange",
 			platform: platform().
 				ProvisioningDHCPRange("172.22.0.10,172.22.0.50").build(),
