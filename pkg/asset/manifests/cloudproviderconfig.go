@@ -141,6 +141,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			NetworkSecurityGroupName: nsg,
 			VirtualNetworkName:       vnet,
 			SubnetName:               subnet,
+			ResourceManagerEndpoint:  installConfig.Config.Azure.ARMEndpoint,
 			ARO:                      installConfig.Config.Azure.IsARO(),
 		}.JSON()
 		if err != nil {
