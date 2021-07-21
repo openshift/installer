@@ -2073,6 +2073,9 @@ func deleteFileSystem(ctx context.Context, client *efs.EFS, fsid string, logger 
 
 	_, err = client.DeleteFileSystemWithContext(ctx, &efs.DeleteFileSystemInput{FileSystemId: aws.String(fsid)})
 	if err != nil {
+		if err.(awserr.Error).Code() == efs.ErrCodeFileSystemNotFound {
+			return nil
+		}
 		return err
 	}
 
@@ -2130,6 +2133,10 @@ func deleteAccessPoint(ctx context.Context, client *efs.EFS, id string, logger l
 	logger = logger.WithField("AccessPoint ID", id)
 	_, err := client.DeleteAccessPointWithContext(ctx, &efs.DeleteAccessPointInput{AccessPointId: aws.String(id)})
 	if err != nil {
+		if err.(awserr.Error).Code() == efs.ErrCodeAccessPointNotFound {
+			return nil
+		}
+
 		return err
 	}
 
@@ -2141,6 +2148,9 @@ func deleteMountTarget(ctx context.Context, client *efs.EFS, id string, logger l
 	logger = logger.WithField("Mount Target ID", id)
 	_, err := client.DeleteMountTargetWithContext(ctx, &efs.DeleteMountTargetInput{MountTargetId: aws.String(id)})
 	if err != nil {
+		if err.(awserr.Error).Code() == efs.ErrCodeMountTargetNotFound {
+			return nil
+		}
 		return err
 	}
 
