@@ -1,8 +1,9 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
-	"strings"
+	"regexp"
 
 	"github.com/pkg/errors"
 )
@@ -26,8 +27,11 @@ func (o *ClusterUninstaller) listDNSRecords() (cloudResources, error) {
 		}
 
 		for _, record := range resources.Result {
-			if strings.Contains(*record.Name, o.ClusterName) ||
-				strings.Contains(*record.Content, o.ClusterName) {
+			// Match all of the cluster's DNS records
+			exp := fmt.Sprintf(`.*\Q%s.%s\E$`, o.ClusterName, o.BaseDomain)
+			nameMatches, _ := regexp.Match(exp, []byte(*record.Name))
+			contentMatches, _ := regexp.Match(exp, []byte(*record.Content))
+			if nameMatches || contentMatches {
 				result = append(result, cloudResource{
 					key:      *record.ID,
 					name:     *record.Name,

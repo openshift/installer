@@ -59,7 +59,7 @@ func (o *ClusterUninstaller) policyMatches(policy iampolicymanagementv1.Policy) 
 	onlyOneResource := len(policy.Resources) == 1
 	cosInstanceID, err := o.COSInstanceID()
 	if err != nil {
-		o.Logger.Warn("Unable to determine IAM policy match. Failed to obtain COS instance ID.", err)
+		o.Logger.Warn("Unable to determine IAM policy match. Failed to obtain COS instance ID. ", err)
 		return false
 	}
 	resourceMatches := len(policy.Resources[0].Attributes) == 3 &&

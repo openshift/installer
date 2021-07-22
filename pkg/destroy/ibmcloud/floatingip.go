@@ -69,11 +69,6 @@ func (o *ClusterUninstaller) deleteFloatingIP(item cloudResource) error {
 // destroyFloatingIPs removes all floating IP resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyFloatingIPs() error {
-	if o.UserProvidedVPC == "" {
-		o.Logger.Info("Skipping deletion of floating IPs with generated VPC")
-		return nil
-	}
-
 	found, err := o.listFloatingIPs()
 	if err != nil {
 		return err

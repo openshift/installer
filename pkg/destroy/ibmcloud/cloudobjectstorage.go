@@ -24,6 +24,7 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 	options := o.controllerSvc.NewListResourceInstancesOptions()
 	options.SetResourceGroupID(resourceGroupID)
 	options.SetResourceID(cosResourceID)
+	options.SetType("service_instance")
 	resources, _, err := o.controllerSvc.ListResourceInstancesWithContext(ctx, options)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to list COS instances")
@@ -117,6 +118,7 @@ func (o *ClusterUninstaller) COSInstanceID() (string, error) {
 	// Locate the installer's COS instance by name.
 	for _, instance := range instanceList {
 		if instance.name == fmt.Sprintf("%s-cos", o.InfraID) {
+			o.cosInstanceID = instance.id
 			return instance.id, nil
 		}
 	}

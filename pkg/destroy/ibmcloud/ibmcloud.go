@@ -99,6 +99,7 @@ func (o *ClusterUninstaller) destroyCluster() error {
 		{name: "Stop instances", execute: o.stopInstances},
 	}, {
 		{name: "Instances", execute: o.destroyInstances},
+		{name: "IAM Authorizations", execute: o.destroyIAMAuthorizations},
 	}, {
 		{name: "Load Balancers", execute: o.destroyLoadBalancers},
 	}, {
@@ -107,14 +108,14 @@ func (o *ClusterUninstaller) destroyCluster() error {
 		{name: "Images", execute: o.destroyImages},
 		{name: "Public Gateways", execute: o.destroyPublicGateways},
 		{name: "Security Groups", execute: o.destroySecurityGroups},
+	}, {
 		{name: "Floating IPs", execute: o.destroyFloatingIPs},
 	}, {
 		{name: "VPCs", execute: o.destroyVPCs},
 	}, {
-		{name: "IAM Authorizations", execute: o.destroyIAMAuthorizations},
-	}, {
 		{name: "Cloud Object Storage Instances", execute: o.destroyCOSInstances},
 		{name: "DNS Records", execute: o.destroyDNSRecords},
+		{name: "Resource Groups", execute: o.destroyResourceGroups},
 	}}
 
 	for _, stage := range stagedFuncs {
@@ -221,6 +222,10 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	// Get the Zone ID
 	options := o.zonesSvc.NewListZonesOptions()
 	resources, _, err := o.zonesSvc.ListZonesWithContext(o.Context, options)
+	if err != nil {
+		return err
+	}
+
 	zoneID := ""
 	for _, zone := range resources.Result {
 		if strings.Contains(o.BaseDomain, *zone.Name) {
@@ -240,7 +245,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	if err != nil {
 		return err
 	}
-	o.zonesSvc.Service.SetUserAgent(userAgentString)
+	o.dnsRecordsSvc.Service.SetUserAgent(userAgentString)
 
 	// VpcV1
 	o.vpcSvc, err = vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
