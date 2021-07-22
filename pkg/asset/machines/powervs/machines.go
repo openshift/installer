@@ -22,6 +22,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	platform := config.Platform.PowerVS
 	mpool := pool.Platform.PowerVS
+	//@TODO: clearly this needs to be set in the install config or through the rhcos pkg :D
+	mpool.ImageID = "rhcos-48-05132021-tier1"
 
 	total := int64(1)
 	if pool.Replicas != nil {
@@ -83,5 +85,5 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
 func ConfigMasters(machines []machineapi.Machine, clusterID string) {
-//TODO: Revisit this later if required, At the moment we don't know how to handle the ingress data.
+	//TODO: Revisit this later if required, At the moment we don't know how to handle the ingress data.
 }
