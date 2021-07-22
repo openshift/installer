@@ -84,3 +84,10 @@ resource "azurestack_availability_set" "master_availability_set" {
   location            = var.azure_region
   managed             = true
 }
+
+resource "azurestack_availability_set" "worker_availability_set" {
+  name                = "${var.cluster_id}-worker"
+  resource_group_name = data.azurestack_resource_group.main.name
+  location            = var.azure_region
+  managed             = true
+}
