@@ -126,6 +126,13 @@ func osImage(config *types.InstallConfig) (string, error) {
 		}
 		return "", fmt.Errorf("%s: No openstack build found", st.FormatPrefix(archName))
 	case azure.Name:
+		if config.Azure.CloudName == azure.StackCloud {
+			if a, ok := streamArch.Artifacts["azurestack"]; ok {
+				return rhcos.FindArtifactURL(a)
+			}
+			return "", fmt.Errorf("%s: No azurestack build found", st.FormatPrefix(archName))
+		}
+
 		ext := streamArch.RHELCoreOSExtensions
 		if ext == nil {
 			return "", fmt.Errorf("%s: No azure build found", st.FormatPrefix(archName))
