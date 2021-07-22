@@ -14,9 +14,10 @@ all:
 
     control_plane:
       cluster: "{{ ovirt_cluster }}"
-      memory: 16GiB
-      sockets: 4
-      cores: 1
+      memory: 12GiB
+      guarantee_memory: 12GiB
+      sockets: 1
+      cores: 4
       template: rhcos_tpl
       operating_system: "rhcos_x64"
       type: high_performance
@@ -37,9 +38,10 @@ all:
 
     compute:
       cluster: "{{ ovirt_cluster }}"
-      memory: 16GiB
-      sockets: 4
-      cores: 1
+      memory: 12GiB
+      guarantee_memory: 12GiB
+      sockets: 1
+      cores: 4
       template: worker_rhcos_tpl
       operating_system: "rhcos_x64"
       type: high_performance
