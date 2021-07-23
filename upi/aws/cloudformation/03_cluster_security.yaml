@@ -250,6 +250,26 @@ Resources:
       ToPort: 10259
       IpProtocol: tcp
 
+  MasterIngressCPC:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Cluster policy controller
+      FromPort: 10357
+      ToPort: 10357
+      IpProtocol: tcp
+
+  MasterIngressWorkerCPC:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Cluster policy controller
+      FromPort: 10357
+      ToPort: 10357
+      IpProtocol: tcp
+
   MasterIngressIngressServices:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:

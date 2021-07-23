@@ -289,6 +289,28 @@ resource "aws_security_group_rule" "master_ingress_kube_controller_manager_from_
   to_port   = 10257
 }
 
+resource "aws_security_group_rule" "master_ingress_cluster_policy_controller" {
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+  description       = local.description
+
+  protocol  = "tcp"
+  from_port = 10357
+  to_port   = 10357
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_cluster_policy_controller_from_worker" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.master.id
+  source_security_group_id = aws_security_group.worker.id
+  description              = local.description
+
+  protocol  = "tcp"
+  from_port = 10357
+  to_port   = 10357
+}
+
 resource "aws_security_group_rule" "master_ingress_kubelet_secure" {
   type              = "ingress"
   security_group_id = aws_security_group.master.id
