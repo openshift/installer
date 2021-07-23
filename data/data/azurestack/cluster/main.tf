@@ -47,4 +47,5 @@ module "dns" {
   resource_group_name             = var.resource_group_name
   base_domain_resource_group_name = var.azure_base_domain_resource_group_name
   private                         = var.azure_private
+  tags                            = local.tags
 }

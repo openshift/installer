@@ -24,7 +24,6 @@ variable "base_domain_resource_group_name" {
   type        = string
 }
 
-// TODO: This would be used by the CNAME record
 variable "elb_fqdn_v4" {
   description = "External API's LB fqdn for IPv4"
   type        = string
