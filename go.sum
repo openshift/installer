@@ -35,6 +35,7 @@ github.com/14rcole/gopopulate v0.0.0-20180821133914-b175b219e774/go.mod h1:6/0dY
 github.com/360EntSecGroup-Skylar/excelize v1.4.1/go.mod h1:vnax29X2usfl7HHkBrX5EvSCJcmH3dT9luvxzu8iGAE=
 github.com/AlecAivazis/survey/v2 v2.2.12 h1:5a07y93zA6SZ09gOa9wLVLznF5zTJMQ+pJ3cZK4IuO8=
 github.com/AlecAivazis/survey/v2 v2.2.12/go.mod h1:6d4saEvBsfSHXeN1a5OA5m2+HJ2LuVokllnC77pAIKI=
+github.com/Azure/azure-sdk-for-go v5.0.0-beta.0.20161118192335-3b1282355199+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v29.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v35.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v36.2.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
@@ -171,6 +172,8 @@ github.com/Masterminds/goutils v1.1.0/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy86
 github.com/Masterminds/semver v1.4.2/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
 github.com/Masterminds/semver v1.5.0/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
 github.com/Masterminds/sprig v2.20.0+incompatible/go.mod h1:y6hNFY5UBTIWBxnzTeuNhlNS5hqE0NB0E6fgfo2Br3o=
+github.com/Microsoft/azure-vhd-utils v0.0.0-20181115010904-44cbada2ece3 h1:gImoAO1xAcC1oDlYmD/X7dggsodGf2DFJOVE5m0ssms=
+github.com/Microsoft/azure-vhd-utils v0.0.0-20181115010904-44cbada2ece3/go.mod h1:u0H9gMieFLxkUy8RS0X8VbFWyPs2815qQAaitRbj6x0=
 github.com/Microsoft/go-winio v0.4.11/go.mod h1:VhR8bwka0BXejwEJY73c50VrPtXAaKcyvVC4A4RozmA=
 github.com/Microsoft/go-winio v0.4.13/go.mod h1:qXqCSQ3Xa7+6tgxaGTIe4Kpcdsi+P8jBhyzoq1bpyYA=
 github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5/go.mod h1:tTuCMEN+UleMWgg9dVx4Hu52b1bJo+59jBh3ajtinzw=
@@ -1427,6 +1430,8 @@ github.com/openshift/api v0.0.0-20210412212256-79bd8cfbbd59/go.mod h1:dZ4kytOo3s
 github.com/openshift/api v0.0.0-20210416115537-a60c0dc032fd/go.mod h1:dZ4kytOo3svxJHNYd0J55hwe/6IQG5gAUHUE0F3Jkio=
 github.com/openshift/api v0.0.0-20210622200201-7740bfb97397 h1:wp5My+8d2K2HIZw2yZblsIZawma5UrNQGPVcTev/HSA=
 github.com/openshift/api v0.0.0-20210622200201-7740bfb97397/go.mod h1:izBmoXbUu3z5kUa4FjZhvekTsyzIWiOoaIgJiZBBMQs=
+github.com/openshift/azure-sdk-for-go v4.0.0-beta.0.20160930180624-772f34e02704+incompatible h1:4AfrWnnXZYNWpK0bLUKi0gIKAY0PNhvL2pHdpPt2ctc=
+github.com/openshift/azure-sdk-for-go v4.0.0-beta.0.20160930180624-772f34e02704+incompatible/go.mod h1:BCauxNrp488JtVPoyUV50x+FYZp8HvYd7iCL9NfpWfc=
 github.com/openshift/baremetal-operator v0.0.0-20210706141527-5240e42f012a h1:7rEVkEhSyg7wxFsH5BWzG9svhlG3GSY+hhSGNjU20P8=
 github.com/openshift/baremetal-operator v0.0.0-20210706141527-5240e42f012a/go.mod h1:N80LeH5dJtqtrknj5vxwRaXyfF1UdxLm74B/QpH8QI0=
 github.com/openshift/baremetal-operator/apis v0.0.0-20210706141527-5240e42f012a h1:oXPw/sck0Lr0yAarZZCOCFE/3+9+UziPIIhREzhE2SU=
@@ -2395,6 +2400,7 @@ gopkg.in/square/go-jose.v2 v2.3.0/go.mod h1:M9dMgbHiYLoDGQrXy7OpJDJWiKiU//h+vD76
 gopkg.in/square/go-jose.v2 v2.3.1/go.mod h1:M9dMgbHiYLoDGQrXy7OpJDJWiKiU//h+vD76mk0e1AI=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 h1:uRGJdciOHaEIrze2W8Q3AKkepLTh2hOroT7a+7czfdQ=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWDmTeBkI65Dw0HsyUHuEVlX15mw=
+gopkg.in/urfave/cli.v1 v1.19.1/go.mod h1:vuBzUtMdQeixQj8LVd+/98pzhxNGQoyuPBlsXHOQNO0=
 gopkg.in/warnings.v0 v0.1.2/go.mod h1:jksf8JmL6Qr/oQM2OXTHunEvvTAsrWBLb6OOjuVWRNI=
 gopkg.in/yaml.v2 v2.0.0-20170812160011-eb3733d160e7/go.mod h1:JAlM8MvJe8wmxCU4Bli9HhUf9+ttbYbLASfIpnQbh74=
 gopkg.in/yaml.v2 v2.1.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=

@@ -18,6 +18,7 @@ require (
 	github.com/IBM/networking-go-sdk v0.14.0
 	github.com/IBM/platform-services-go-sdk v0.18.16
 	github.com/IBM/vpc-go-sdk v1.0.1
+	github.com/Microsoft/azure-vhd-utils v0.0.0-20181115010904-44cbada2ece3
 	github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667 // indirect
 	github.com/antchfx/xpath v1.1.2 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0
@@ -60,6 +61,7 @@ require (
 	github.com/mitchellh/cli v1.1.1
 	github.com/openshift-metal3/terraform-provider-ironic v0.2.6
 	github.com/openshift/api v0.0.0-20210622200201-7740bfb97397
+	github.com/openshift/azure-sdk-for-go v4.0.0-beta.0.20160930180624-772f34e02704+incompatible
 	github.com/openshift/client-go v0.0.0-20210409155308-a8e62c60e930
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5
