@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	azurestackdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
 	"github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
@@ -35,8 +36,10 @@ type ClusterUninstaller struct {
 	Authorizer      autorest.Authorizer
 	Environment     azureenv.Environment
 
-	InfraID           string
-	ResourceGroupName string
+	InfraID                     string
+	ResourceGroupName           string
+	ClusterName                 string
+	BaseDomainResourceGroupName string
 
 	Logger logrus.FieldLogger
 
@@ -89,14 +92,16 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	}
 
 	return &ClusterUninstaller{
-		SubscriptionID:    session.Credentials.SubscriptionID,
-		TenantID:          session.Credentials.TenantID,
-		GraphAuthorizer:   session.GraphAuthorizer,
-		Authorizer:        session.Authorizer,
-		Environment:       session.Environment,
-		InfraID:           metadata.InfraID,
-		ResourceGroupName: group,
-		Logger:            logger,
+		SubscriptionID:              session.Credentials.SubscriptionID,
+		TenantID:                    session.Credentials.TenantID,
+		GraphAuthorizer:             session.GraphAuthorizer,
+		Authorizer:                  session.Authorizer,
+		Environment:                 session.Environment,
+		InfraID:                     metadata.InfraID,
+		ResourceGroupName:           group,
+		Logger:                      logger,
+		BaseDomainResourceGroupName: metadata.Azure.BaseDomainResourceGroupName,
+		ClusterName:                 metadata.ClusterName,
 	}, nil
 }
 
@@ -116,7 +121,11 @@ func (o *ClusterUninstaller) Run() error {
 		waitCtx,
 		func(ctx context.Context) {
 			o.Logger.Debugf("deleting public records")
-			err = deletePublicRecords(ctx, o.zonesClient, o.recordsClient, o.privateZonesClient, o.privateRecordSetsClient, o.Logger, o.ResourceGroupName)
+			if o.Environment.Name == azure.StackCloud.Name() {
+				err = deleteAzureStackPublicRecords(ctx, o)
+			} else {
+				err = deletePublicRecords(ctx, o.zonesClient, o.recordsClient, o.privateZonesClient, o.privateRecordSetsClient, o.Logger, o.ResourceGroupName)
+			}
 			if err != nil {
 				o.Logger.Debug(err)
 				if isAuthError(err) {
@@ -191,6 +200,73 @@ func (o *ClusterUninstaller) Run() error {
 	if err != nil && err != context.Canceled {
 		errs = append(errs, errors.Wrap(err, "failed to delete application registrations and their service principals"))
 		o.Logger.Debug(err)
+	}
+
+	return utilerrors.NewAggregate(errs)
+}
+
+func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	defer cancel()
+
+	logger := o.Logger
+	rgName := o.BaseDomainResourceGroupName
+
+	dnsClient := azurestackdns.NewZonesClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
+	dnsClient.Authorizer = o.Authorizer
+
+	recordsClient := azurestackdns.NewRecordSetsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
+	recordsClient.Authorizer = o.Authorizer
+	clusterName := o.ClusterName
+
+	var errs []error
+
+	zonesPage, err := dnsClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
+	logger.Debug(err)
+	if err != nil {
+		if zonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
+			logger.Debug("already deleted the AzureStack zones")
+			return utilerrors.NewAggregate(errs)
+		}
+		errs = append(errs, errors.Wrap(err, "failed to list dns zone"))
+		if isAuthError(err) {
+			return err
+		}
+	}
+
+	allZones := sets.NewString()
+	for ; zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
+		if err != nil {
+			errs = append(errs, errors.Wrap(err, "failed to advance to next dns zone"))
+			continue
+		}
+		for _, zone := range zonesPage.Values() {
+			allZones.Insert(to.String(zone.Name))
+		}
+	}
+
+	clusterTag := fmt.Sprintf("kubernetes.io_cluster.%s", clusterName)
+	for _, zone := range allZones.List() {
+		for recordPages, err := recordsClient.ListByDNSZone(ctx, rgName, zone, to.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
+			if err != nil {
+				return err
+			}
+			for _, record := range recordPages.Values() {
+				metadata := to.StringMap(record.Metadata)
+				_, found := metadata[clusterTag]
+				if found {
+					resp, err := recordsClient.Delete(ctx, rgName, zone, to.String(record.Name), toAzureStackRecordType(to.String(record.Type)), "")
+					if err != nil {
+						if wasNotFound(resp.Response) {
+							logger.WithField("record", to.String(record.Name)).Debug("already deleted")
+							continue
+						}
+						return errors.Wrapf(err, "failed to delete record %s in zone %s", to.String(record.Name), zone)
+					}
+					logger.WithField("record", to.String(record.Name)).Info("deleted")
+				}
+			}
+		}
 	}
 
 	return utilerrors.NewAggregate(errs)
@@ -375,6 +451,10 @@ func groupFromID(id string) string {
 
 func toRecordType(t string) dns.RecordType {
 	return dns.RecordType(strings.TrimPrefix(t, "Microsoft.Network/dnszones/"))
+}
+
+func toAzureStackRecordType(t string) azurestackdns.RecordType {
+	return azurestackdns.RecordType(strings.TrimPrefix(t, "Microsoft.Network/dnszones/"))
 }
 
 func deleteResourceGroup(ctx context.Context, client resources.GroupsClient, logger logrus.FieldLogger, name string) error {
