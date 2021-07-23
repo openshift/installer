@@ -6,8 +6,8 @@ locals {
 resource "azurerm_lb" "internal" {
   sku                 = "Standard"
   name                = "${var.cluster_id}-internal"
-  resource_group_name = var.resource_group_name
-  location            = var.region
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.azure_region
 
   dynamic "frontend_ip_configuration" {
     for_each = [for ip in [
@@ -35,7 +35,7 @@ resource "azurerm_lb" "internal" {
 resource "azurerm_lb_backend_address_pool" "internal_lb_controlplane_pool_v4" {
   count = var.use_ipv4 ? 1 : 0
 
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
   loadbalancer_id     = azurerm_lb.internal.id
   name                = var.cluster_id
 }
@@ -43,7 +43,7 @@ resource "azurerm_lb_backend_address_pool" "internal_lb_controlplane_pool_v4" {
 resource "azurerm_lb_backend_address_pool" "internal_lb_controlplane_pool_v6" {
   count = var.use_ipv6 ? 1 : 0
 
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
   loadbalancer_id     = azurerm_lb.internal.id
   name                = "${var.cluster_id}-IPv6"
 }
@@ -52,7 +52,7 @@ resource "azurerm_lb_rule" "internal_lb_rule_api_internal_v4" {
   count = var.use_ipv4 ? 1 : 0
 
   name                           = "api-internal-v4"
-  resource_group_name            = var.resource_group_name
+  resource_group_name            = data.azurerm_resource_group.main.name
   protocol                       = "Tcp"
   backend_address_pool_id        = azurerm_lb_backend_address_pool.internal_lb_controlplane_pool_v4[0].id
   loadbalancer_id                = azurerm_lb.internal.id
@@ -69,7 +69,7 @@ resource "azurerm_lb_rule" "internal_lb_rule_api_internal_v6" {
   count = var.use_ipv6 ? 1 : 0
 
   name                           = "api-internal-v6"
-  resource_group_name            = var.resource_group_name
+  resource_group_name            = data.azurerm_resource_group.main.name
   protocol                       = "Tcp"
   backend_address_pool_id        = azurerm_lb_backend_address_pool.internal_lb_controlplane_pool_v6[0].id
   loadbalancer_id                = azurerm_lb.internal.id
@@ -86,7 +86,7 @@ resource "azurerm_lb_rule" "internal_lb_rule_sint_v4" {
   count = var.use_ipv4 ? 1 : 0
 
   name                           = "sint-v4"
-  resource_group_name            = var.resource_group_name
+  resource_group_name            = data.azurerm_resource_group.main.name
   protocol                       = "Tcp"
   backend_address_pool_id        = azurerm_lb_backend_address_pool.internal_lb_controlplane_pool_v4[0].id
   loadbalancer_id                = azurerm_lb.internal.id
@@ -103,7 +103,7 @@ resource "azurerm_lb_rule" "internal_lb_rule_sint_v6" {
   count = var.use_ipv6 ? 1 : 0
 
   name                           = "sint-v6"
-  resource_group_name            = var.resource_group_name
+  resource_group_name            = data.azurerm_resource_group.main.name
   protocol                       = "Tcp"
   backend_address_pool_id        = azurerm_lb_backend_address_pool.internal_lb_controlplane_pool_v6[0].id
   loadbalancer_id                = azurerm_lb.internal.id
@@ -118,7 +118,7 @@ resource "azurerm_lb_rule" "internal_lb_rule_sint_v6" {
 
 resource "azurerm_lb_probe" "internal_lb_probe_sint" {
   name                = "sint-probe"
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
   interval_in_seconds = 5
   number_of_probes    = 2
   loadbalancer_id     = azurerm_lb.internal.id
@@ -129,7 +129,7 @@ resource "azurerm_lb_probe" "internal_lb_probe_sint" {
 
 resource "azurerm_lb_probe" "internal_lb_probe_api_internal" {
   name                = "api-internal-probe"
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main.name
   interval_in_seconds = 5
   number_of_probes    = 2
   loadbalancer_id     = azurerm_lb.internal.id
