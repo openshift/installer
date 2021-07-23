@@ -23,6 +23,7 @@ type Auth struct {
 	TenantID       string `json:"azure_tenant_id,omitempty"`
 }
 
+// config is used by both Azure and Azure Stack terraform configs
 type config struct {
 	Auth                        `json:",inline"`
 	Environment                 string            `json:"azure_environment"`

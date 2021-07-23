@@ -134,3 +134,9 @@ This determined whether User defined routing will be used for egress to Internet
 When false, Standard LB will be used for egress to the Internet.
 EOF
 }
+
+variable "azure_image_path" {
+  type = string
+  default = ""
+  description = "A path on the host system to an Azure VHD. Used only for uploading RHCOS images to Azure Stack."
+}

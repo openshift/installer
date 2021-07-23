@@ -53,6 +53,7 @@ func resourceArmVHDBlob() *schema.Resource {
 			},
 			"source": {
 				Type:     schema.TypeString,
+				Required: true,
 				ForceNew: true,
 			},
 			"url": {
