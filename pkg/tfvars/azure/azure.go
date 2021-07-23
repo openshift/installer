@@ -2,12 +2,14 @@ package azure
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 
+	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
@@ -32,6 +34,7 @@ type config struct {
 	VolumeType                  string            `json:"azure_master_root_volume_type"`
 	VolumeSize                  int32             `json:"azure_master_root_volume_size"`
 	ImageURL                    string            `json:"azure_image_url,omitempty"`
+	ImagePath                   string            `json:"azure_image_path,omitempty"`
 	Region                      string            `json:"azure_region,omitempty"`
 	BaseDomainResourceGroupName string            `json:"azure_base_domain_resource_group_name,omitempty"`
 	ResourceGroupName           string            `json:"azure_resource_group_name"`
@@ -76,6 +79,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, errors.Wrap(err, "could not determine Azure environment to use for Terraform")
 	}
 
+	var imagePath string
+	if sources.CloudName == azure.StackCloud {
+		imagePath, err = checkImagePath(sources.ImageURL, sources.ARMEndpoint)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	cfg := &config{
 		Auth:                        sources.Auth,
 		Environment:                 environment,
@@ -86,6 +97,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterAvailabilityZones:     masterAvailabilityZones,
 		VolumeType:                  masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
+		ImagePath:                   imagePath,
 		ImageURL:                    sources.ImageURL,
 		Private:                     sources.Publish == types.InternalPublishingStrategy,
 		OutboundUDR:                 sources.OutboundType == azure.UserDefinedRoutingOutboundType,
@@ -118,4 +130,19 @@ func environment(cloudName azure.CloudEnvironment) (string, error) {
 	default:
 		return "", errors.Errorf("unsupported cloud name %q", cloudName)
 	}
+}
+
+func checkImagePath(imageURL, armEndpoint string) (string, error) {
+	storageBaseURL := strings.TrimPrefix(armEndpoint, "https://management.")
+
+	// If the URL for the image is in the ASH environment we don't want to upload a local VHD.
+	if strings.Contains(imageURL, storageBaseURL) {
+		return "", nil
+	}
+
+	cachedImage, err := cache.DownloadImageFile(imageURL)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to use cached Azure Stack RHCOS image")
+	}
+	return cachedImage, nil
 }
