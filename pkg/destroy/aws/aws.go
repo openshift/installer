@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/efs"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -733,6 +734,8 @@ func deleteARN(ctx context.Context, session *session.Session, arn arn.ARN, logge
 		return deleteRoute53(ctx, session, arn, logger)
 	case "s3":
 		return deleteS3(ctx, session, arn, logger)
+	case "elasticfilesystem":
+		return deleteElasticFileSystem(ctx, session, arn, logger)
 	default:
 		return errors.Errorf("unrecognized ARN service %s (%s)", arn.Service, arn)
 	}
@@ -2025,4 +2028,132 @@ func isBucketNotFound(err interface{}) bool {
 		}
 	}
 	return false
+}
+
+func deleteElasticFileSystem(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+	client := efs.New(session)
+
+	resourceType, id, err := splitSlash("resource", arn.Resource)
+	if err != nil {
+		return err
+	}
+
+	switch resourceType {
+	case "file-system":
+		return deleteFileSystem(ctx, client, id, logger)
+	default:
+		return errors.Errorf("unrecognized elastic file system resource type %s", resourceType)
+	}
+}
+
+func deleteFileSystem(ctx context.Context, client *efs.EFS, fsid string, logger logrus.FieldLogger) error {
+	logger = logger.WithField("Elastic FileSystem ID", fsid)
+
+	// Delete all MountTargets + AccessPoints under given FS ID
+	mountTargetIDs, err := getMountTargets(ctx, client, fsid)
+	if err != nil {
+		return err
+	}
+	for _, mt := range mountTargetIDs {
+		err := deleteMountTarget(ctx, client, mt, logger)
+		if err != nil {
+			return err
+		}
+	}
+	accessPointIDs, err := getAccessPoints(ctx, client, fsid)
+	if err != nil {
+		return err
+	}
+	for _, ap := range accessPointIDs {
+		err := deleteAccessPoint(ctx, client, ap, logger)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = client.DeleteFileSystemWithContext(ctx, &efs.DeleteFileSystemInput{FileSystemId: aws.String(fsid)})
+	if err != nil {
+		if err.(awserr.Error).Code() == efs.ErrCodeFileSystemNotFound {
+			return nil
+		}
+		return err
+	}
+
+	logger.Info("Deleted")
+	return nil
+}
+
+func getAccessPoints(ctx context.Context, client *efs.EFS, apID string) ([]string, error) {
+	var accessPointIDs []string
+	err := client.DescribeAccessPointsPagesWithContext(
+		ctx,
+		&efs.DescribeAccessPointsInput{FileSystemId: aws.String(apID)},
+		func(page *efs.DescribeAccessPointsOutput, lastPage bool) bool {
+			for _, ap := range page.AccessPoints {
+				apName := ap.AccessPointId
+				if apName == nil {
+					continue
+				}
+				accessPointIDs = append(accessPointIDs, *apName)
+			}
+			return !lastPage
+
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return accessPointIDs, nil
+}
+
+func getMountTargets(ctx context.Context, client *efs.EFS, fsid string) ([]string, error) {
+	var mountTargetIDs []string
+	// There is no DescribeMountTargetsPagesWithContext.
+	// Number of Mount Targets should be equal to nr. of subnets that can access the volume, i.e. relatively small.
+	rsp, err := client.DescribeMountTargetsWithContext(
+		ctx,
+		&efs.DescribeMountTargetsInput{FileSystemId: aws.String(fsid)},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, mt := range rsp.MountTargets {
+		mtName := mt.MountTargetId
+		if mtName == nil {
+			continue
+		}
+		mountTargetIDs = append(mountTargetIDs, *mtName)
+	}
+
+	return mountTargetIDs, nil
+}
+
+func deleteAccessPoint(ctx context.Context, client *efs.EFS, id string, logger logrus.FieldLogger) error {
+	logger = logger.WithField("AccessPoint ID", id)
+	_, err := client.DeleteAccessPointWithContext(ctx, &efs.DeleteAccessPointInput{AccessPointId: aws.String(id)})
+	if err != nil {
+		if err.(awserr.Error).Code() == efs.ErrCodeAccessPointNotFound {
+			return nil
+		}
+
+		return err
+	}
+
+	logger.Info("Deleted")
+	return nil
+}
+
+func deleteMountTarget(ctx context.Context, client *efs.EFS, id string, logger logrus.FieldLogger) error {
+	logger = logger.WithField("Mount Target ID", id)
+	_, err := client.DeleteMountTargetWithContext(ctx, &efs.DeleteMountTargetInput{MountTargetId: aws.String(id)})
+	if err != nil {
+		if err.(awserr.Error).Code() == efs.ErrCodeMountTargetNotFound {
+			return nil
+		}
+		return err
+	}
+
+	logger.Info("Deleted")
+	return nil
 }
