@@ -38,6 +38,10 @@ type Platform struct {
 	// Cluster is the name of the cluster virtual machines will be cloned into.
 	Cluster string `json:"cluster,omitempty"`
 
+	// ResourcePool is the absolute path of the resource pool where virtual machines will be
+	// created. The absolute path is of the form /<datacenter>/host/<cluster>/Resources/<resourcepool>.
+	ResourcePool string `json:"resourcePool,omitempty"`
+
 	// ClusterOSImage overrides the url provided in rhcos.json to download the RHCOS OVA
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
