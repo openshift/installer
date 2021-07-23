@@ -17,11 +17,43 @@ provider "azurestack" {
   tenant_id       = var.azure_tenant_id
 }
 
+data "azurestack_storage_account_sas" "ignition" {
+  connection_string = var.storage_account.primary_connection_string
+  https_only        = true
+
+  resource_types {
+    service   = false
+    container = false
+    object    = true
+  }
+
+  services {
+    blob  = true
+    queue = false
+    table = false
+    file  = false
+  }
+
+  start  = timestamp()
+  expiry = timeadd(timestamp(), "24h")
+
+  permissions {
+    read    = true
+    list    = true
+    create  = false
+    add     = false
+    delete  = false
+    process = false
+    write   = false
+    update  = false
+  }
+}
+
 resource "azurestack_storage_container" "ignition" {
   name                  = "ignition"
   resource_group_name   = var.resource_group_name
   storage_account_name  = var.storage_account.name
-  container_access_type = "blob"
+  container_access_type = "private"
 }
 
 resource "local_file" "ignition_bootstrap" {
@@ -40,7 +72,7 @@ resource "azurestack_storage_blob" "ignition" {
 
 data "ignition_config" "redirect" {
   replace {
-    source = azurestack_storage_blob.ignition.url
+    source = "${azurestack_storage_blob.ignition.url}${data.azurestack_storage_account_sas.ignition.sas}"
   }
 }
 
