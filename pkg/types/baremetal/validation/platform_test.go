@@ -393,6 +393,14 @@ func TestValidateProvisioning(t *testing.T) {
 				LibvirtURI("bad").build(),
 			expected: "invalid URI \"bad\"",
 		},
+		{
+			name: "ipv6_CIDR_too_large",
+			platform: platform().
+				ProvisioningNetworkCIDR("fd2e:6f44:5dd8:b856::/32").
+				ClusterProvisioningIP("fd2e:6f44:5dd8:b856::3").
+				BootstrapProvisioningIP("fd2e:6f44:5dd8:b856::2").build(),
+			expected: "provisioningNetworkCIDR mask must be greater than or equal to 64 for IPv6 networks",
+		},
 
 		// Disabled provisioning network
 		{
