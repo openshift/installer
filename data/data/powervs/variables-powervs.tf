@@ -1,37 +1,23 @@
 ################################################################
 # Configure the IBM Cloud provider
 ################################################################
-variable "ibmcloud_api_key" {
+variable "powervs_api_key" {
   type        = string
   description = "IBM Cloud API key associated with user's identity"
   default     = "<key>"
-
-  validation {
-    condition     = var.ibmcloud_api_key != "" && lower(var.ibmcloud_api_key) != "<key>"
-    error_message = "The ibmcloud_api_key is required and cannot be empty."
-  }
 }
 
-variable "ibmcloud_region" {
+variable "powervs_region" {
   type        = string
   description = "The IBM Cloud region where you want to create the resources"
-  default     = ""
-
-  validation {
-    condition     = var.ibmcloud_region != "" && lower(var.ibmcloud_region) != "<region>"
-    error_message = "The ibmcloud_region is required and cannot be empty."
-  }
+  default     = "eu-gb"
+  ##default     = "eu-gb"
 }
 
-variable "ibmcloud_zone" {
+variable "powervs_zone" {
   type        = string
   description = "The zone of an IBM Cloud region where you want to create Power System resources"
-  default     = ""
-
-  validation {
-    condition     = var.ibmcloud_zone != "" && lower(var.ibmcloud_zone) != "<zone>"
-    error_message = "The ibmcloud_zone is required and cannot be empty."
-  }
+  default     = "lon04"
 }
 
 variable "powervs_resource_group" {
@@ -43,7 +29,8 @@ variable "powervs_resource_group" {
 variable "powervs_cloud_instance_id" {
   type        = string
   description = "The cloud instance ID of your account"
-  default     = ""
+  ## TODO: erase default and set via install-config
+  default     = "powervs-ipi-lon04"
 }
 
 ################################################################
@@ -78,6 +65,7 @@ variable "powervs_image_name" {
 variable "powervs_network_name" {
   type        = string
   description = "Name of the network used by the all nodes in the cluster."
+  default     = "pvs-ipi-net"
 }
 
 variable "powervs_bootstrap_memory" {
@@ -134,14 +122,15 @@ variable "powervs_ssh_key" {
   default     = ""
 }
 
+## TODO: Set this in install-config instead
 variable "powervs_vpc_name" {
   type        = string
   description = "Name of the IBM Cloud Virtual Private Cloud (VPC) to setup the load balancer."
-  default     = ""
+  default     = "powervs-ipi"
 }
 
 variable "powervs_vpc_subnet_name" {
   type        = string
   description = "Name of the VPC subnet having DirectLink access to the PowerVS private network"
-  default     = ""
+  default     = "subnet2"
 }

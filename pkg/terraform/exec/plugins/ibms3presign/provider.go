@@ -9,7 +9,7 @@ import (
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		ResourcesMap: map[string]*schema.Resource{
-			"presign": resourcePresign(),
+			"ibms3presign": resourcePresign(),
 		},
 	}
 }

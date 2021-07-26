@@ -24,6 +24,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	mpool := pool.Platform.PowerVS
 	//@TODO: clearly this needs to be set in the install config or through the rhcos pkg :D
 	mpool.ImageID = "rhcos-48-05132021-tier1"
+	mpool.NetworkIDs = []string{"pvs-ipi-net"}
 
 	total := int64(1)
 	if pool.Replicas != nil {

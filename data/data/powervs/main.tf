@@ -1,9 +1,9 @@
 provider "ibm" {
-  ibmcloud_api_key      = var.ibmcloud_api_key
-  region                = var.ibmcloud_region
-  zone                  = var.ibmcloud_zone
+  ibmcloud_api_key      = var.powervs_api_key
+  region                = var.powervs_region
+  zone                  = var.powervs_zone
   iaas_classic_username = "apikey"
-  iaas_classic_api_key  = var.ibmcloud_api_key
+  iaas_classic_api_key  = var.powervs_api_key
 }
 
 resource "ibm_pi_key" "cluster_key" {
@@ -15,7 +15,7 @@ resource "ibm_pi_key" "cluster_key" {
 module "bootstrap" {
   source            = "./bootstrap"
   cloud_instance_id = var.powervs_cloud_instance_id
-  cluster_id        = var.powervs_cluster_id
+  cluster_id        = var.cluster_id
   resource_group    = var.powervs_resource_group
 
   cos_instance_location = var.powervs_cos_instance_location

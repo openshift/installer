@@ -14,7 +14,7 @@ data "ibm_pi_image" "bootstrap_image" {
 
 data "ignition_config" "bootstrap" {
   merge {
-    source  = presign.bootstrap_ignition.presigned_url
+    source  = ibms3presign.bootstrap_ignition.presigned_url
   }
 }
 
@@ -46,7 +46,7 @@ resource "ibm_resource_key" "cos_service_cred" {
   parameters           = { HMAC = true }
 }
 
-resource "presign" "bootstrap_ignition" {
+resource "ibms3presign" "bootstrap_ignition" {
   access_key_id = ibm_resource_key.cos_service_cred.credentials["cos_hmac_keys.access_key_id"]
   secret_access_key = ibm_resource_key.cos_service_cred.credentials["cos_hmac_keys.secret_access_key"]
   bucket_name = "${var.cluster_id}-bootstrap-ign"
