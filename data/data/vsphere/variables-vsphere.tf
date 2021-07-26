@@ -22,6 +22,11 @@ variable "vsphere_cluster" {
   description = "This is the name of the vSphere cluster."
 }
 
+variable "vsphere_resource_pool" {
+  type        = string
+  description = "This is the absolute path to the vSphere resource pool."
+}
+
 variable "vsphere_datacenter" {
   type        = string
   description = "This is the name of the vSphere data center."

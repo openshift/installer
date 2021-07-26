@@ -20,6 +20,7 @@ type config struct {
 	NumCPUs           int32            `json:"vsphere_control_plane_num_cpus"`
 	NumCoresPerSocket int32            `json:"vsphere_control_plane_cores_per_socket"`
 	Cluster           string           `json:"vsphere_cluster"`
+	ResourcePool      string           `json:"vsphere_resource_pool"`
 	Datacenter        string           `json:"vsphere_datacenter"`
 	Datastore         string           `json:"vsphere_datastore"`
 	Folder            string           `json:"vsphere_folder"`
@@ -64,6 +65,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		NumCPUs:           controlPlaneConfig.NumCPUs,
 		NumCoresPerSocket: controlPlaneConfig.NumCoresPerSocket,
 		Cluster:           sources.Cluster,
+		ResourcePool:      controlPlaneConfig.Workspace.ResourcePool,
 		Datacenter:        controlPlaneConfig.Workspace.Datacenter,
 		Datastore:         controlPlaneConfig.Workspace.Datastore,
 		Folder:            folderRelPath,

@@ -26,6 +26,10 @@ data "vsphere_compute_cluster" "cluster" {
   datacenter_id = data.vsphere_datacenter.datacenter.id
 }
 
+data "vsphere_resource_pool" "resource_pool" {
+  name = var.vsphere_resource_pool
+}
+
 data "vsphere_datastore" "datastore" {
   name          = var.vsphere_datastore
   datacenter_id = data.vsphere_datacenter.datacenter.id

@@ -1,5 +1,5 @@
 output "resource_pool" {
-  value = data.vsphere_compute_cluster.cluster.resource_pool_id
+  value = data.vsphere_resource_pool.resource_pool.id
 }
 
 output "datastore" {
