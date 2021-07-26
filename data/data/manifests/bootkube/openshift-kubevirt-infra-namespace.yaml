@@ -6,4 +6,3 @@ metadata:
     openshift.io/node-selector: ""
   labels:
     name: openshift-kubevirt-infra
-    openshift.io/run-level: "1"
