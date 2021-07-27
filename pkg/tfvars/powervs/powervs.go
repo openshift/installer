@@ -19,7 +19,7 @@ type config struct {
 	IBMCloud             `json:",inline"`
 	PowerVSResourceGroup string `json:"powervs_resource_group"`
 	ImageID              string `json:"powervs_image_name"`
-	NetworkIDs           string `json:"powervs_network_ids"`
+	NetworkIDs           string `json:"powervs_network_name"`
 	BootstrapMemory      string `json:"powervs_bootstrap_memory"`
 	BootstrapProcessors  string `json:"powervs_bootstrap_processors"`
 	MasterMemory         string `json:"powervs_master_memory"`
@@ -43,7 +43,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	//  --
 	cfg := &config{
 		IBMCloud:             sources.IBMCloud,
-		PowerVSResourceGroup: "powervs-ipi-resourcegroup",
+		PowerVSResourceGroup: "powervs-ipi-resource-group",
 		ImageID:              masterConfig.ImageID,
 		NetworkIDs:           masterConfig.NetworkIDs[0],
 		BootstrapMemory:      masterConfig.Memory,

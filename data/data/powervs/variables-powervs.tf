@@ -30,7 +30,7 @@ variable "powervs_cloud_instance_id" {
   type        = string
   description = "The cloud instance ID of your account"
   ## TODO: erase default and set via install-config
-  default     = "powervs-ipi-lon04"
+  default = "e449d86e-c3a0-4c07-959e-8557fdf55482"
 }
 
 ################################################################
@@ -107,19 +107,19 @@ variable "powervs_sys_type" {
 variable "powervs_base_domain" {
   type        = string
   description = "The base domain name of the cluster"
-  default     = ""
+  default     = "openshift-on-power.com"
 }
 
 variable "powervs_cluster_domain" {
   type        = string
   description = "The name of the cluster that all DNS records must belong to."
-  default     = ""
+  default     = "rdr-ipi"
 }
 
 variable "powervs_ssh_key" {
   type        = string
   description = "Public key for keypair used to access cluster."
-  default     = ""
+  default     = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDrgIZ+xyn6Hy0DD1UDVgeZjxIUvsdjVa8AyM0gfQlWZAUW7IyAfwpxyZ+To1h90ltINqjpkyiOdMLYkXvB40LCDlq9jR9B2X7cjAZD9ZGJLrWlTgqnSrTtKK5WIPkC5TYLczUGin1BuAxFUb2VAX83omSlVrObPK90JyqCgobh+j3uAZJXrs+5MEcJieobIbxdeLwujsRlC0vzF4fjngRgnWUNyVx04jztyWgAfU3ZrmgxO4+/2puHaPpouxbgUxDXdr+JtwXJ3/zeAO0Zjs1L9xawzbYua+oQD2o7OjM3uJ02wVAcMr/FX7nr4yvxyYOBglXWDEdL8OZtlGCmH1C3aDejsR1GeJikrHg+GhrZ+afRbZTMTlmeZeGOvDRCBgR8ZSqLLDcPOl/y1HFBL9/pQeBFRvEMz8NGncazdSvBHbeFT0XiyYTxXfJUi5cAFQn52tVohzAI4L5gS2WgrNo4jw4YhXcfSoxuhEwbZZtdbht0iQa83zev5+accrFYsW0= bpradipt@Pradiptas-MBP"
 }
 
 ## TODO: Set this in install-config instead
