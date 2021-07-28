@@ -102,9 +102,9 @@ module "dns" {
   }
   source = "./dns"
 
-  base_domain                = var.powervs_base_domain
+  base_domain                = var.base_domain
   cluster_id                 = var.cluster_id
-  cluster_domain             = var.powervs_cluster_domain
+  cluster_domain             = var.cluster_domain
   load_balancer_hostname     = module.loadbalancer.powervs_lb_hostname
   load_balancer_int_hostname = module.loadbalancer.powervs_lb_int_hostname
 }

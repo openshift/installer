@@ -116,18 +116,6 @@ variable "powervs_sys_type" {
   default     = "s922"
 }
 
-variable "powervs_base_domain" {
-  type        = string
-  description = "The base domain name of the cluster"
-  default     = "openshift-on-power.com"
-}
-
-variable "powervs_cluster_domain" {
-  type        = string
-  description = "The name of the cluster that all DNS records must belong to."
-  default     = "rdr-ipi"
-}
-
 variable "powervs_ssh_key" {
   type        = string
   description = "Public key for keypair used to access cluster."
