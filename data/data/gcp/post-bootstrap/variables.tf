@@ -31,7 +31,9 @@ variable "cluster_ip" {
 }
 
 variable "cluster_public_ip" {
-  type = string
+  type        = string
+  default     = null
+  description = "IP of the API load balancer; it is null with the internal publishing strategy."
 }
 
 variable "api_health_checks" {
