@@ -7,11 +7,23 @@ variable "powervs_api_key" {
   default     = "<key>"
 }
 
-variable "powervs_region" {
+variable "powervs_vpc_region" {
   type        = string
   description = "The IBM Cloud region where you want to create the resources"
   default     = "eu-gb"
   ##default     = "eu-gb"
+}
+
+variable "powervs_vpc_zone" {
+  type        = string
+  description = "The zone of an IBM Cloud region where you want to create Power System resources"
+  default     = "eu-gb-2"
+}
+
+variable "powervs_region" {
+  type        = string
+  description = "The IBM Cloud region where you want to create the resources"
+  default     = "lon"
 }
 
 variable "powervs_zone" {
