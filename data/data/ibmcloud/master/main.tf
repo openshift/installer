@@ -2,8 +2,8 @@ locals {
   prefix              = var.cluster_id
   port_kubernetes_api = 6443
   port_machine_config = 22623
-  subnet_count        = length(var.subnet_id_list)
-  zone_count          = length(var.zone_list)
+  subnet_count        = length(var.control_plane_subnet_id_list)
+  zone_count          = length(var.control_plane_subnet_zone_list)
 }
 
 ############################################
@@ -11,29 +11,25 @@ locals {
 ############################################
 
 resource "ibm_is_instance" "master_node" {
-  count = var.instance_count
-  depends_on = [
-    var.lb_kubernetes_api_private_id,
-    var.lb_kubernetes_api_public_id
-  ]
+  count = var.master_count
 
   name           = "${local.prefix}-master-${count.index}"
   image          = var.vsi_image_id
-  profile        = var.vsi_profile
+  profile        = var.ibmcloud_master_instance_type
   resource_group = var.resource_group_id
-  tags           = var.tags
+  tags           = local.tags
 
   primary_network_interface {
     name            = "eth0"
-    subnet          = var.subnet_id_list[count.index % local.subnet_count]
-    security_groups = var.security_group_id_list
+    subnet          = var.control_plane_subnet_id_list[count.index % local.subnet_count]
+    security_groups = var.control_plane_security_group_id_list
   }
 
   vpc  = var.vpc_id
-  zone = var.zone_list[count.index % local.zone_count]
+  zone = var.control_plane_subnet_zone_list[count.index % local.zone_count]
   keys = []
 
-  user_data = var.ignition
+  user_data = var.ignition_master
 }
 
 ############################################
@@ -41,7 +37,7 @@ resource "ibm_is_instance" "master_node" {
 ############################################
 
 resource "ibm_is_lb_pool_member" "kubernetes_api_public" {
-  count = var.public_endpoints ? var.instance_count : 0
+  count = local.public_endpoints ? var.master_count : 0
 
   lb             = var.lb_kubernetes_api_public_id
   pool           = var.lb_pool_kubernetes_api_public_id
@@ -50,7 +46,7 @@ resource "ibm_is_lb_pool_member" "kubernetes_api_public" {
 }
 
 resource "ibm_is_lb_pool_member" "kubernetes_api_private" {
-  count = var.instance_count
+  count = var.master_count
 
   lb             = var.lb_kubernetes_api_private_id
   pool           = var.lb_pool_kubernetes_api_private_id
@@ -59,7 +55,7 @@ resource "ibm_is_lb_pool_member" "kubernetes_api_private" {
 }
 
 resource "ibm_is_lb_pool_member" "machine_config" {
-  count = var.instance_count
+  count = var.master_count
 
   lb             = var.lb_kubernetes_api_private_id
   pool           = var.lb_pool_machine_config_id
