@@ -2041,6 +2041,8 @@ func deleteElasticFileSystem(ctx context.Context, session *session.Session, arn 
 	switch resourceType {
 	case "file-system":
 		return deleteFileSystem(ctx, client, id, logger)
+	case "access-point":
+		return deleteAccessPoint(ctx, client, id, logger)
 	default:
 		return errors.Errorf("unrecognized elastic file system resource type %s", resourceType)
 	}
