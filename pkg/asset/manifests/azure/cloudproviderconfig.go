@@ -29,6 +29,9 @@ type CloudProviderConfig struct {
 // managed resource names are matching the convention defined by capz
 func (params CloudProviderConfig) JSON() (string, error) {
 
+	// Config requires type *bool for excludeMasterFromStandardLB, so define a variable here to get an address in the config.
+	excludeMasterFromStandardLB := false
+
 	config := config{
 		authConfig: authConfig{
 			Cloud:                       params.CloudName.Name(),
@@ -59,7 +62,8 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		UseInstanceMetadata: true,
 		// default to standard load balancer, supports tcp resets on idle
 		// https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-tcp-reset
-		LoadBalancerSku: "standard",
+		LoadBalancerSku:             "standard",
+		ExcludeMasterFromStandardLB: &excludeMasterFromStandardLB,
 	}
 
 	if params.ARO {

@@ -54,7 +54,7 @@ func TestCloudProviderConfig(t *testing.T) {
 	"cloudProviderRateLimitBucketWrite": 0,
 	"useInstanceMetadata": true,
 	"loadBalancerSku": "standard",
-	"excludeMasterFromStandardLB": null,
+	"excludeMasterFromStandardLB": false,
 	"disableOutboundSNAT": null,
 	"maximumLoadBalancerRuleCount": 0
 }
