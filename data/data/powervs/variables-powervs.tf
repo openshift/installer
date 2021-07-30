@@ -134,3 +134,10 @@ variable "powervs_vpc_subnet_name" {
   description = "Name of the VPC subnet having DirectLink access to the PowerVS private network"
   default     = "subnet2"
 }
+
+## TODO: Pass the CIS CRN from the installer program, refer the IBM Cloud code to see the implementation.
+variable "powervs_cis_crn" {
+  type        = string
+  description = "The CRN of CIS instance to use."
+  default     = "crn:v1:bluemix:public:internet-svcs:global:a/65b64c1f1c29460e8c2e4bbfbd893c2c:453c4cff-2ee0-4309-95f1-2e9384d9bb96::"
+}
