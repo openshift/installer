@@ -37,7 +37,9 @@ var (
 	kubeMacPoolLabels     = map[string]string{"mutatevirtualmachines.kubemacpool.io": "allocate"}
 	hcoNamespace          = "openshift-cnv"
 	hcoCrName             = "kubevirt-hyperconverged"
+	kvCrName              = "kubevirt-kubevirt-hyperconverged"
 	hcoValidCr            = unstructured.Unstructured{}
+	kvValidCr             = unstructured.Unstructured{}
 	hcoInvalidCr          = unstructured.Unstructured{}
 )
 
@@ -256,6 +258,13 @@ func TestValidationForProvisioning(t *testing.T) {
 	t.Run("Feature gate is set", func(t *testing.T) {
 		client := mock.NewMockClient(mockCtrl)
 		client.EXPECT().GetHyperConverged(gomock.Any(), hcoCrName, hcoNamespace).Return(&hcoValidCr, nil).AnyTimes()
+		err := ValidateForProvisioning(client)
+		assert.Nil(t, err)
+	})
+
+	t.Run("HotplugVolumes is set", func(t *testing.T) {
+		client := mock.NewMockClient(mockCtrl)
+		client.EXPECT().GetKubeVirt(gomock.Any(), kvCrName, hcoNamespace).Return(&kvValidCr, nil).AnyTimes()
 		err := ValidateForProvisioning(client)
 		assert.Nil(t, err)
 	})

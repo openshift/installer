@@ -22,11 +22,10 @@ type config struct {
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
-	MasterSpecs            []*v1.KubevirtMachineProviderSpec
-	ImageURL               string
-	Namespace              string
-	InterfaceBindingMethod string
-	ResourcesLabels        map[string]string
+	MasterSpecs     []*v1.KubevirtMachineProviderSpec
+	ImageURL        string
+	Namespace       string
+	ResourcesLabels map[string]string
 }
 
 // TFVars generates kubevirt-specific Terraform variables.
@@ -43,7 +42,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Storage:                    masterSpec.RequestedStorage,
 		StorageClass:               masterSpec.StorageClassName,
 		NetworkName:                masterSpec.NetworkName,
-		InterfaceBindingMethod:     sources.InterfaceBindingMethod,
+		InterfaceBindingMethod:     masterSpec.InterfaceBindingMethod,
 		PersistentVolumeAccessMode: masterSpec.PersistentVolumeAccessMode,
 		ResourcesLabels:            sources.ResourcesLabels,
 	}

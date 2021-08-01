@@ -40,6 +40,7 @@ type Client interface {
 	GetNetworkAttachmentDefinition(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error)
 	CreateSelfSubjectAccessReview(ctx context.Context, reviewObj *authv1.SelfSubjectAccessReview) (*authv1.SelfSubjectAccessReview, error)
 	GetHyperConverged(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error)
+	GetKubeVirt(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error)
 }
 
 type client struct {
@@ -214,6 +215,15 @@ func (c *client) GetHyperConverged(ctx context.Context, name string, namespace s
 		Group:    "hco.kubevirt.io",
 		Version:  "v1beta1",
 		Resource: "hyperconvergeds",
+	}
+	return c.getResource(ctx, namespace, name, resource)
+}
+
+func (c *client) GetKubeVirt(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error) {
+	resource := schema.GroupVersionResource{
+		Group:    "kubevirt.io",
+		Version:  "v1",
+		Resource: "kubevirts",
 	}
 	return c.getResource(ctx, namespace, name, resource)
 }
