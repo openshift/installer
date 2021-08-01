@@ -59,6 +59,14 @@ type Machine struct {
 	Status MachineStatus `json:"status,omitempty"`
 }
 
+func (m *Machine) GetConditions() Conditions {
+	return m.Status.Conditions
+}
+
+func (m *Machine) SetConditions(conditions Conditions) {
+	m.Status.Conditions = conditions
+}
+
 // MachineSpec defines the desired state of Machine
 type MachineSpec struct {
 	// ObjectMeta will autopopulate the Node created. Use this to
@@ -165,6 +173,9 @@ type MachineStatus struct {
 	// One of: Failed, Provisioning, Provisioned, Running, Deleting
 	// +optional
 	Phase *string `json:"phase,omitempty"`
+
+	// Conditions defines the current state of the Machine
+	Conditions Conditions `json:"conditions,omitempty"`
 }
 
 // LastOperation represents the detail of the last performed operation on the MachineObject.
