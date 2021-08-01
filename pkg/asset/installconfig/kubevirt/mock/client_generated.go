@@ -232,15 +232,6 @@ func (mr *MockClientMockRecorder) CreateSelfSubjectAccessReview(ctx, reviewObj i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSelfSubjectAccessReview", reflect.TypeOf((*MockClient)(nil).CreateSelfSubjectAccessReview), ctx, reviewObj)
 }
 
-// GetHyperConverged mocks base method
-func (m *MockClient) GetHyperConverged(ctx context.Context, name, namespace string) (*unstructured.Unstructured, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetHyperConverged", ctx, name, namespace)
-	ret0, _ := ret[0].(*unstructured.Unstructured)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
 // GetKubeVirt mocks base method
 func (m *MockClient) GetKubeVirt(ctx context.Context, name, namespace string) (*unstructured.Unstructured, error) {
 	m.ctrl.T.Helper()
@@ -248,12 +239,6 @@ func (m *MockClient) GetKubeVirt(ctx context.Context, name, namespace string) (*
 	ret0, _ := ret[0].(*unstructured.Unstructured)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
-}
-
-// GetHyperConverged indicates an expected call of GetHyperConverged
-func (mr *MockClientMockRecorder) GetHyperConverged(ctx, name, namespace interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHyperConverged", reflect.TypeOf((*MockClient)(nil).GetHyperConverged), ctx, name, namespace)
 }
 
 // GetKubeVirt indicates an expected call of GetKubeVirt

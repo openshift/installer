@@ -3,6 +3,7 @@ package kubevirt
 
 import (
 	"encoding/json"
+
 	v1 "github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1"
 )
 

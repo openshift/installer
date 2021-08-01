@@ -39,7 +39,6 @@ type Client interface {
 	GetStorageClass(ctx context.Context, name string) (*storagev1.StorageClass, error)
 	GetNetworkAttachmentDefinition(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error)
 	CreateSelfSubjectAccessReview(ctx context.Context, reviewObj *authv1.SelfSubjectAccessReview) (*authv1.SelfSubjectAccessReview, error)
-	GetHyperConverged(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error)
 	GetKubeVirt(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error)
 }
 
@@ -210,19 +209,10 @@ func (c *client) CreateSelfSubjectAccessReview(ctx context.Context, reviewObj *a
 	return c.kubernetesClient.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, reviewObj, metav1.CreateOptions{})
 }
 
-func (c *client) GetHyperConverged(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error) {
-	resource := schema.GroupVersionResource{
-		Group:    "hco.kubevirt.io",
-		Version:  "v1beta1",
-		Resource: "hyperconvergeds",
-	}
-	return c.getResource(ctx, namespace, name, resource)
-}
-
 func (c *client) GetKubeVirt(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error) {
 	resource := schema.GroupVersionResource{
 		Group:    "kubevirt.io",
-		Version:  "v1",
+		Version:  "v1alpha3",
 		Resource: "kubevirts",
 	}
 	return c.getResource(ctx, namespace, name, resource)
