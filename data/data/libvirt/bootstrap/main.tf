@@ -1,3 +1,7 @@
+provider "libvirt" {
+  uri = var.libvirt_uri
+}
+
 resource "libvirt_volume" "bootstrap" {
   name           = "${var.cluster_id}-bootstrap"
   base_volume_id = var.base_volume_id
@@ -8,14 +12,14 @@ resource "libvirt_volume" "bootstrap" {
 
 resource "libvirt_ignition" "bootstrap" {
   name    = "${var.cluster_id}-bootstrap.ign"
-  content = var.ignition
+  content = var.ignition_bootstrap
   pool    = var.pool
 }
 
 resource "libvirt_domain" "bootstrap" {
   name = "${var.cluster_id}-bootstrap"
 
-  memory = var.bootstrap_memory
+  memory = var.libvirt_bootstrap_memory
 
   vcpu = "2"
 
@@ -37,7 +41,7 @@ resource "libvirt_domain" "bootstrap" {
   network_interface {
     network_id = var.network_id
     hostname   = "${var.cluster_id}-bootstrap.${var.cluster_domain}"
-    addresses  = var.addresses
+    addresses  = [var.libvirt_bootstrap_ip]
   }
 }
 
