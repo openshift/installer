@@ -39,7 +39,7 @@ require (
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gophercloud/gophercloud v0.17.0
-	github.com/gophercloud/utils v0.0.0-20210323225332-7b186010c04f
+	github.com/gophercloud/utils v0.0.0-20210530213738-7c693d7efe47
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.16.5
 	github.com/hashicorp/go-plugin v1.3.0
@@ -58,19 +58,19 @@ require (
 	github.com/masterzen/winrm v0.0.0-20190308153735-1d17eaf15943 // indirect
 	github.com/metal3-io/baremetal-operator v0.0.0-20210706141527-5240e42f012a
 	github.com/metal3-io/baremetal-operator/apis v0.0.0
-	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.1.1
-	github.com/openshift-metal3/terraform-provider-ironic v0.2.6
+	github.com/openshift-metal3/terraform-provider-ironic v0.2.7
 	github.com/openshift/api v0.0.0-20210622200201-7740bfb97397
 	github.com/openshift/client-go v0.0.0-20210409155308-a8e62c60e930
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
+	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20210721125909-21269ec276a2
 	github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5
 	github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d
 	github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20210719100556-9b8bc3666720
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210622084102-c4f9f269bcb7
 	github.com/openshift/library-go v0.0.0-20210408164723-7a65fdb398e2
-	github.com/openshift/machine-api-operator v0.2.1-0.20210505133115-b7ef098180db
+	github.com/openshift/machine-api-operator v0.2.1-0.20210513225032-5644b5803418
 	github.com/openshift/machine-config-operator v0.0.0
 	github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
 	github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210628083913-78ce17b16709
@@ -99,10 +99,10 @@ require (
 	github.com/vmware/govmomi v0.24.0
 	github.com/zclconf/go-cty v1.6.1
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
+	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/mod v0.4.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-	golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
+	golang.org/x/sys v0.0.0-20210423082822-04245dca01da
 	google.golang.org/api v0.33.0
 	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a
 	google.golang.org/grpc v1.32.0

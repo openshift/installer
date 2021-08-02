@@ -18,11 +18,12 @@ type provisionStateWorkflow struct {
 	wait   time.Duration
 
 	configDrive interface{}
+	deploySteps []nodes.DeployStep
 }
 
 // ChangeProvisionStateToTarget drives Ironic's state machine through the process to reach our desired end state. This requires multiple
 // possibly long-running steps.  If required, we'll build a config drive ISO for deployment.
-func ChangeProvisionStateToTarget(client *gophercloud.ServiceClient, uuid string, target nodes.TargetProvisionState, configDrive interface{}) error {
+func ChangeProvisionStateToTarget(client *gophercloud.ServiceClient, uuid string, target nodes.TargetProvisionState, configDrive interface{}, deploySteps []nodes.DeployStep) error {
 	// Run the provisionStateWorkflow - this could take a while
 	wf := provisionStateWorkflow{
 		target:      target,
@@ -30,6 +31,7 @@ func ChangeProvisionStateToTarget(client *gophercloud.ServiceClient, uuid string
 		wait:        5 * time.Second,
 		uuid:        uuid,
 		configDrive: configDrive,
+		deploySteps: deploySteps,
 	}
 
 	return wf.run()
@@ -111,8 +113,7 @@ func (workflow *provisionStateWorkflow) toClean() (bool, error) {
 		return true, err
 	}
 	if workflow.node.ProvisionState != string(nodes.Manageable) {
-		err = ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil)
-		if err != nil {
+		if err := ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil, nil); err != nil {
 			return true, err
 		}
 	}
@@ -151,7 +152,7 @@ func (workflow *provisionStateWorkflow) toInspect() (bool, error) {
 		return true, err
 	}
 	if workflow.node.ProvisionState != string(nodes.Manageable) {
-		if err := ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil); err != nil {
+		if err := ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil, nil); err != nil {
 			return true, err
 		}
 	}
@@ -278,6 +279,10 @@ func (workflow *provisionStateWorkflow) buildProvisionStateOpts(target nodes.Tar
 	// If we're deploying, then build a config drive to send to Ironic
 	if target == "active" {
 		opts.ConfigDrive = workflow.configDrive
+
+		if workflow.deploySteps != nil {
+			opts.DeploySteps = workflow.deploySteps
+		}
 	}
 	if target == "clean" {
 		opts.CleanSteps = []nodes.CleanStep{}
