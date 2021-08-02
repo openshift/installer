@@ -91,6 +91,10 @@ type bootkubeTemplateData struct {
 type baremetalTemplateData struct {
 	Baremetal                 *baremetal.Platform
 	ProvisioningOSDownloadURL string
+	IsoURL                    string
+	KernelURL                 string
+	InitramfsURL              string
+	RootfsURL                 string
 }
 
 type openshiftTemplateData struct {

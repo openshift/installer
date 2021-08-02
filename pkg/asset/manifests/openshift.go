@@ -255,13 +255,26 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		}
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
 	case baremetaltypes.Name:
+		osURL := string(*rhcosImage)
 		bmTemplateData := baremetalTemplateData{
-			Baremetal:                 installConfig.Config.Platform.BareMetal,
-			ProvisioningOSDownloadURL: string(*rhcosImage),
+			Baremetal: installConfig.Config.Platform.BareMetal,
+		}
+		URIs := strings.Split(osURL, ",")
+		for _, uri := range URIs {
+			if strings.Contains(uri, "iso") {
+				bmTemplateData.IsoURL = uri
+			} else if strings.Contains(uri, "rootfs") {
+				bmTemplateData.RootfsURL = uri
+			} else if strings.Contains(uri, "initramfs") {
+				bmTemplateData.InitramfsURL = uri
+			} else if strings.Contains(uri, "kernel") {
+				bmTemplateData.KernelURL = uri
+			} else if strings.Contains(osURL, ".qcow2") {
+				bmTemplateData.ProvisioningOSDownloadURL = uri
+			}
 		}
 		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
 	}
-
 	if platform == azuretypes.Name && installConfig.Config.Azure.IsARO() {
 		// config is used to created compatible secret to trigger azure cloud
 		// controller config merge behaviour

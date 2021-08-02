@@ -10,3 +10,8 @@ spec:
   provisioningDHCPRange: "{{.Baremetal.ProvisioningDHCPRange}}"
   provisioningOSDownloadURL: "{{.ProvisioningOSDownloadURL}}"
   watchAllNamespaces: false
+  preProvisioningOSDownloadURLs:
+    initramfsURL: "{{.InitramfsURL}}"
+    isoURL: "{{.IsoURL}}"
+    kernelURL: "{{.KernelURL}}"
+    rootfsURL: "{{.RootfsURL}}"

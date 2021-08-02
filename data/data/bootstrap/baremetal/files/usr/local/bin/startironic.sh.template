@@ -7,15 +7,16 @@ IRONIC_IMAGE=$(image_for ironic)
 IPA_DOWNLOADER_IMAGE=$(image_for ironic-ipa-downloader)
 COREOS_DOWNLOADER_IMAGE=$(image_for ironic-machine-os-downloader || image_for ironic-rhcos-downloader)
 
-# This image is templated in via the installer pkg/asset/ignition/bootstrap/bootstrap.go
+# This image is templated in via the installer pkg/asset/ignition/bootstrap/common.go
 RHCOS_BOOT_IMAGE_URL="{{.BootImage}}"
+RHCOS_LIVE_IMAGE_URL="{{.PlatformData.BareMetal.ClusterOSImage}}"
 
 # This DHCP range is used by dnsmasq to serve DHCP to the cluster. If empty
 # dnsmasq will only serve TFTP, and DHCP will be disabled.
 DHCP_RANGE="{{.PlatformData.BareMetal.ProvisioningDHCPRange}}"
 
 # Used by ironic to allow ssh to running IPA instances
-IRONIC_RAMDISK_SSH_KEY="{{.SSHKey}}"
+IRONIC_RAMDISK_SSH_KEY="$(echo -n "{{.SSHKey}}")"
 
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
@@ -114,12 +115,7 @@ podman run -d --net host --name coreos-downloader \
      --restart on-failure \
      --env CACHEURL=${CACHEURL} \
      --env IP_OPTIONS=${IP_OPTIONS} \
-     -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_BOOT_IMAGE_URL
-
-podman run -d --net host --name ipa-downloader \
-     --restart on-failure \
-     --env CACHEURL=${CACHEURL} \
-     -v $IRONIC_SHARED_VOLUME:/shared:z ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-live-images.sh $RHCOS_BOOT_IMAGE_URL
 
 # Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
 for port in 80 5050 6385 ; do
@@ -152,11 +148,26 @@ $IPTABLES -t raw -A DHCP_IRONIC -j DROP
 {{end}}
 
 # Wait for images to be downloaded/ready
-podman wait -i 1000ms ipa-downloader
+#podman wait -i 1000ms ipa-downloader
 podman wait -i 1000ms coreos-downloader
-while ! curl --fail http://localhost/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1; done
-while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
-while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
+
+# Embed agent ignition into the rhcos live iso
+sudo podman run -d --net host --privileged --name configure-coreos \
+     --restart on-failure \
+     --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
+     --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --entrypoint /bin/configure-coreos-ipa \
+     -v $AUTH_DIR:/auth:ro \
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
+
+sudo podman run -d --net host --privileged --name ironic-api \
+     --restart on-failure \
+     --env MARIADB_PASSWORD=$mariadb_password \
+     --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --env HTTP_BASIC_HTPASSWD=${IRONIC_HTPASSWD} \
+     --entrypoint /bin/runironic-api \
+     -v $AUTH_DIR:/auth:ro \
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 
 sudo podman run -d --net host --privileged --name ironic-conductor \
      --restart on-failure \
@@ -165,6 +176,7 @@ sudo podman run -d --net host --privileged --name ironic-conductor \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
      --env HTTP_BASIC_HTPASSWD=${IRONIC_HTPASSWD} \
+     --env IRONIC_KERNEL_PARAMS="${IRONIC_KERNEL_PARAMS}" \
      --entrypoint /bin/runironic-conductor \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
