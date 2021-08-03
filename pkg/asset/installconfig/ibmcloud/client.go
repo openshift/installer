@@ -287,7 +287,10 @@ func (c *Client) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet,
 func (c *Client) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error) {
 	listInstanceProfilesOptions := c.vpcAPI.NewListInstanceProfilesOptions()
 	profiles, _, err := c.vpcAPI.ListInstanceProfilesWithContext(ctx, listInstanceProfilesOptions)
-	return profiles.Profiles, err
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list vpc vsi profiles")
+	}
+	return profiles.Profiles, nil
 }
 
 // GetVPC gets a VPC by its ID.
