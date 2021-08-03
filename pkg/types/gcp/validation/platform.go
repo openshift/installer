@@ -38,7 +38,7 @@ var (
 		"southamerica-east1":      "São Paulo, Brazil",
 		"us-central1":             "Council Bluffs, Iowa, USA",
 		"us-east1":                "Moncks Corner, South Carolina, USA",
-		"us-east4":                "Ashburn, Northern Virginia, USA",
+		"us-east4":                "Ashburn, Virginia, USA",
 		"us-west1":                "The Dalles, Oregon, USA",
 		"us-west2":                "Los Angeles, California, USA",
 		"us-west3":                "Salt Lake City, Utah, USA",
