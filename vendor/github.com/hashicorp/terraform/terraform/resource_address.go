@@ -92,7 +92,7 @@ func (r *ResourceAddress) String() string {
 
 // HasResourceSpec returns true if the address has a resource spec, as
 // defined in the documentation:
-//    https://www.terraform.io/docs/internals/resource-addressing.html
+//    https://www.terraform.io/docs/cli/state/resource-addressing.html
 // In particular, this returns false if the address contains only
 // a module path, thus addressing the entire module.
 func (r *ResourceAddress) HasResourceSpec() bool {
@@ -461,7 +461,7 @@ func (addr *ResourceAddress) Contains(other *ResourceAddress) bool {
 // equality. Instead, it tests that the _specified_ parts of each
 // address match, treating any unspecified parts as wildcards.
 //
-// See also Contains, which takes a more heirarchical approach to comparing
+// See also Contains, which takes a more hierarchical approach to comparing
 // addresses.
 func (addr *ResourceAddress) Equals(raw interface{}) bool {
 	other, ok := raw.(*ResourceAddress)

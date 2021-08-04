@@ -22,12 +22,12 @@ import (
 	version "github.com/hashicorp/go-version"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/configs"
 	"github.com/hashicorp/terraform/configs/configschema"
 	"github.com/hashicorp/terraform/configs/hcl2shim"
 	"github.com/hashicorp/terraform/plans"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	tfversion "github.com/hashicorp/terraform/version"
 	"github.com/mitchellh/copystructure"
 	"github.com/zclconf/go-cty/cty"
@@ -1633,6 +1633,8 @@ type InstanceState struct {
 	// external client code. The value here must only contain Go primitives
 	// and collections.
 	Meta map[string]interface{} `json:"meta"`
+
+	ProviderMeta cty.Value
 
 	// Tainted is used to mark a resource for recreation.
 	Tainted bool `json:"tainted"`

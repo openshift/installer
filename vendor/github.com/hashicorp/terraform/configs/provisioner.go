@@ -31,6 +31,16 @@ func decodeProvisionerBlock(block *hcl.Block) (*Provisioner, hcl.Diagnostics) {
 	content, config, diags := block.Body.PartialContent(provisionerBlockSchema)
 	pv.Config = config
 
+	switch pv.Type {
+	case "chef", "habitat", "puppet", "salt-masterless":
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagWarning,
+			Summary:  fmt.Sprintf("The \"%s\" provisioner is deprecated", pv.Type),
+			Detail:   fmt.Sprintf("The \"%s\" provisioner is deprecated and will be removed from future versions of Terraform. Visit https://learn.hashicorp.com/collections/terraform/provision for alternatives to using provisioners that are a better fit for the Terraform workflow.", pv.Type),
+			Subject:  &pv.TypeRange,
+		})
+	}
+
 	if attr, exists := content.Attributes["when"]; exists {
 		expr, shimDiags := shimTraversalInString(attr.Expr, true)
 		diags = append(diags, shimDiags...)
@@ -147,8 +157,8 @@ func onlySelfRefs(body hcl.Body) hcl.Diagnostics {
 
 			if !valid {
 				diags = append(diags, &hcl.Diagnostic{
-					Severity: hcl.DiagWarning,
-					Summary:  "External references from destroy provisioners are deprecated",
+					Severity: hcl.DiagError,
+					Summary:  "Invalid reference from destroy provisioner",
 					Detail: "Destroy-time provisioners and their connection configurations may only " +
 						"reference attributes of the related resource, via 'self', 'count.index', " +
 						"or 'each.key'.\n\nReferences to other resources during the destroy phase " +

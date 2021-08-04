@@ -1,11 +1,11 @@
 package terraform
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/configs"
 	"github.com/hashicorp/terraform/dag"
 	"github.com/hashicorp/terraform/states"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // DestroyPlanGraphBuilder implements GraphBuilder and is responsible for
@@ -72,6 +72,14 @@ func (b *DestroyPlanGraphBuilder) Steps() []GraphTransformer {
 			State:           b.State,
 		},
 
+		&OutputTransformer{
+			Config:  b.Config,
+			Destroy: true,
+		},
+
+		// Attach the state
+		&AttachStateTransformer{State: b.State},
+
 		// Attach the configuration to any resources
 		&AttachResourceConfigTransformer{Config: b.Config},
 
@@ -89,8 +97,13 @@ func (b *DestroyPlanGraphBuilder) Steps() []GraphTransformer {
 		// created proper destroy ordering.
 		&TargetsTransformer{Targets: b.Targets},
 
-		// Single root
-		&RootTransformer{},
+		// Close opened plugin connections
+		&CloseProviderTransformer{},
+
+		// Close the root module
+		&CloseRootModuleTransformer{},
+
+		&TransitiveReductionTransformer{},
 	}
 
 	return steps

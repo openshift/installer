@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/backend"
 	"github.com/hashicorp/terraform/helper/wrappedstreams"
 	"github.com/hashicorp/terraform/repl"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 
 	"github.com/mitchellh/cli"
 )
@@ -21,11 +21,7 @@ type ConsoleCommand struct {
 }
 
 func (c *ConsoleCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, true)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	cmdFlags := c.Meta.extendedFlagSet("console")
 	cmdFlags.StringVar(&c.Meta.statePath, "state", DefaultStateFilename, "path")
 	cmdFlags.Usage = func() { c.Ui.Error(c.Help()) }
@@ -73,6 +69,9 @@ func (c *ConsoleCommand) Run(args []string) int {
 		return 1
 	}
 
+	// This is a read-only command
+	c.ignoreRemoteBackendVersionConflict(b)
+
 	// Build the operation
 	opReq := c.Operation(b)
 	opReq.ConfigDir = configPath
@@ -102,6 +101,7 @@ func (c *ConsoleCommand) Run(args []string) int {
 		return 1
 	}
 
+	// Successfully creating the context can result in a lock, so ensure we release it
 	defer func() {
 		err := opReq.StateLocker.Unlock(nil)
 		if err != nil {
@@ -206,5 +206,5 @@ Options:
 }
 
 func (c *ConsoleCommand) Synopsis() string {
-	return "Interactive console for Terraform interpolations"
+	return "Try Terraform expressions at an interactive command prompt"
 }

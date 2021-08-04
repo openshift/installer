@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/terraform-config-inspect/tfconfig"
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/configs"
 	"github.com/hashicorp/terraform/configs/configload"
 	"github.com/hashicorp/terraform/configs/configschema"
@@ -18,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform/internal/initwd"
 	"github.com/hashicorp/terraform/registry"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
 )
@@ -69,30 +69,6 @@ func (m *Meta) loadConfig(rootDir string) (*configs.Config, tfdiags.Diagnostics)
 	}
 
 	config, hclDiags := loader.LoadConfig(rootDir)
-	diags = diags.Append(hclDiags)
-	return config, diags
-}
-
-// loadConfigEarly is a variant of loadConfig that uses the special
-// "early config" loader that is more forgiving of unexpected constructs and
-// legacy syntax.
-//
-// Early-loaded config is not registered in the source code cache, so
-// diagnostics produced from it may render without source code snippets. In
-// practice this is not a big concern because the early config loader also
-// cannot generate detailed source locations, so it prefers to produce
-// diagnostics without explicit source location information and instead includes
-// approximate locations in the message text.
-//
-// Most callers should use loadConfig. This method exists to support early
-// initialization use-cases where the root module must be inspected in order
-// to determine what else needs to be installed before the full configuration
-// can be used
-func (m *Meta) loadConfigEarly(rootDir string) (*earlyconfig.Config, tfdiags.Diagnostics) {
-	var diags tfdiags.Diagnostics
-	rootDir = m.normalizePath(rootDir)
-
-	config, hclDiags := initwd.LoadConfig(rootDir, m.modulesDir())
 	diags = diags.Append(hclDiags)
 	return config, diags
 }
@@ -185,23 +161,6 @@ func (m *Meta) loadBackendConfig(rootDir string) (*configs.Backend, tfdiags.Diag
 		return nil, diags
 	}
 	return mod.Backend, nil
-}
-
-// loadValuesFile loads a file that defines a single map of key/value pairs.
-// This is the format used for "tfvars" files.
-func (m *Meta) loadValuesFile(filename string) (map[string]cty.Value, tfdiags.Diagnostics) {
-	var diags tfdiags.Diagnostics
-	filename = m.normalizePath(filename)
-
-	loader, err := m.initConfigLoader()
-	if err != nil {
-		diags = diags.Append(err)
-		return nil, diags
-	}
-
-	vals, hclDiags := loader.Parser().LoadValuesFile(filename)
-	diags = diags.Append(hclDiags)
-	return vals, diags
 }
 
 // loadHCLFile reads an arbitrary HCL file and returns the unprocessed body
