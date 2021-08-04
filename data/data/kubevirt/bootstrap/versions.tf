@@ -1,14 +1,14 @@
 terraform {
   required_version = ">= 1.0.0"
   required_providers {
-    azurestack = {
-      source = "openshift/local/azurestack"
-    }
     ignition = {
       source = "openshift/local/ignition"
     }
-    local = {
-      source = "openshift/local/local"
+    kubernetes = {
+      source = "openshift/local/kubernetes"
+    }
+    kubevirt = {
+      source = "openshift/local/kubevirt"
     }
   }
 }

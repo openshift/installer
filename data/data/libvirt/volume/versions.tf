@@ -1,8 +1,9 @@
 terraform {
   required_version = ">= 1.0.0"
   required_providers {
-    azurerm = {
-      source = "openshift/local/azurerm"
+    libvirt = {
+      source = "openshift/local/libvirt"
     }
   }
 }
+
