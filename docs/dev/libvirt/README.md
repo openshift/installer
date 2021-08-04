@@ -245,6 +245,8 @@ sudo resolvectl domain tt0 ~<baseDomain>
 Your cluster might run on a different network interface. To find which one it is, either check your `install-config.yaml`
 or run `nmcli` and find the interface that's running the `192.168.126.0/24` net.
 
+Please note that this is not persistent across libvirt network creation/deletion of the tt0 interface. Once the tt0 interface is deleted and recreated, it will need to be updated again with the proper resolver.
+
 #### Using NetworkManager DNS overlay
 
 1. Tell NetworkManager to use `dnsmasq`:
