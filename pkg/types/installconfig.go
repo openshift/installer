@@ -144,6 +144,7 @@ type InstallConfig struct {
 	// field must not be set.
 	// AWS: "Mint", "Passthrough", "Manual"
 	// Azure: "Mint", "Passthrough", "Manual"
+	// AzureStack: "Manual"
 	// GCP: "Mint", "Passthrough", "Manual"
 	// IBMCloud: "Manual"
 	// +optional
