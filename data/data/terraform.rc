@@ -1,0 +1,10 @@
+provider_installation {
+  filesystem_mirror {
+    path    = "plugins"
+    include = ["openshift/*/*"]
+  }
+  direct {
+    exclude = ["registry.terraform.io/*/*"]
+  }
+}
+

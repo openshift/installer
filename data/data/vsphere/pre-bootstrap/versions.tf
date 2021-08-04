@@ -4,6 +4,9 @@ terraform {
     vsphere = {
       source = "openshift/local/vsphere"
     }
+    vsphereprivate = {
+      source = "openshift/local/vsphereprivate"
+    }
   }
 }
 
