@@ -17,7 +17,7 @@ import (
 // Number of ports, routers, subnets and routers here don't include the constraints needed
 // for each machine, which are calculated later
 var minNetworkConstraint = buildNetworkConstraint(9, 0, 0, 0, 3, 60)
-var minNetworkConstraintWithKuryr = buildNetworkConstraint(1494, 1, 250, 250, 250, 1000)
+var minNetworkConstraintWithKuryr = buildNetworkConstraint(1494, 0, 249, 249, 250, 1000)
 
 func buildNetworkConstraint(ports, routers, subnets, networks, securityGroups, securityGroupRules int64) []quota.Constraint {
 	return []quota.Constraint{
@@ -57,9 +57,7 @@ func Constraints(ci *validation.CloudInfo, controlPlanes []machineapi.Machine, c
 	// If the cluster is using pre-provisioned networks, then the quota constraints should be
 	// null because the installer doesn't need to create any resources.
 	if ci.MachinesSubnet == nil {
-		if networkType != string(operv1.NetworkTypeKuryr) {
-			constraints = append(constraints, networkConstraint(1), routerConstraint(1), subnetConstraint(1))
-		}
+		constraints = append(constraints, networkConstraint(1), routerConstraint(1), subnetConstraint(1))
 	}
 
 	return aggregate(constraints)
