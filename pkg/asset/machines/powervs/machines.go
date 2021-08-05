@@ -73,7 +73,7 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 		ServiceInstanceID: mpool.ServiceInstance,
 		ImageID:           mpool.ImageID,
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
-		CredentialsSecret: &corev1.LocalObjectReference{Name: "powervs-credentials-secret"},
+		CredentialsSecret: &corev1.LocalObjectReference{Name: "powervs-credentials"},
 		SysType:           mpool.SysType,
 		ProcType:          mpool.ProcType,
 		Processors:        fmt.Sprintf("%f", mpool.Processors),
