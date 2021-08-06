@@ -25,7 +25,7 @@ func (a *pullSecret) Generate(asset.Parents) error {
 		{
 			Prompt: &survey.Password{
 				Message: "Pull Secret",
-				Help:    "The container registry pull secret for this cluster, as a single line of JSON (e.g. {\"auths\": {...}}).\n\nYou can get this secret from https://cloud.redhat.com/openshift/install/pull-secret",
+				Help:    "The container registry pull secret for this cluster, as a single line of JSON (e.g. {\"auths\": {...}}).\n\nYou can get this secret from https://console.redhat.com/openshift/install/pull-secret",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
 				return validate.ImagePullSecret(ans.(string))

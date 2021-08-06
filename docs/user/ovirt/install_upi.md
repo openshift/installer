@@ -461,7 +461,7 @@ $ openshift-install create install-config --dir $ASSETS_DIR
 used to expose the API interface (`https://api.ocp4.example.org:6443/`)
 and the newly created applications (e.g. `https://console-openshift-console.apps.ocp4.example.org`).
 
-You can obtain a new Pull secret from [here](https://cloud.redhat.com/openshift/install/pull-secret).
+You can obtain a new Pull secret from [here](https://console.redhat.com/openshift/install/pull-secret).
 
 The result of this first step is the creation of a `install-config.yaml` in the specified assets directory:
 
