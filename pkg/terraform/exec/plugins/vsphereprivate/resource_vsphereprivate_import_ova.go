@@ -93,10 +93,10 @@ func resourceVSpherePrivateImportOva() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			"thin": {
-				Type:        schema.TypeBool,
-				Description: "If set to True then the OVA will be imported as a Thin provisioned VMDK.",
-				Required:    true,
+			"diskType": {
+				Type:        schema.TypeString,
+				Description: "The name of the disk provisioning, for e.g eagerZeroedThick or thin, by default it will be thick.",
+				Required:    false,
 				ForceNew:    true,
 			},
 		},
@@ -356,10 +356,12 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 
 	var diskType types.OvfCreateImportSpecParamsDiskProvisioningType
 
-	if d.Get("thin").(bool) {
+	if d.Get("diskType").(string) == "thin" {
 		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeThin
-	} else {
+	} else if d.Get("diskType").(string) == "eagerZeroedThick" {
 		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeEagerZeroedThick
+	} else {
+		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeThick
 	}
 	// This is a very minimal spec for importing
 	// an OVF.

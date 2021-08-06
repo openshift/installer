@@ -26,7 +26,7 @@ type config struct {
 	Template          string `json:"vsphere_template"`
 	OvaFilePath       string `json:"vsphere_ova_filepath"`
 	PreexistingFolder bool   `json:"vsphere_preexisting_folder"`
-	Thin              bool   `json:"template_thin_vmdk"`
+	DiskType          string `json:"disk_type"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -37,7 +37,7 @@ type TFVarsSources struct {
 	Cluster             string
 	ImageURL            string
 	PreexistingFolder   bool
-	Thin                bool
+	DiskType            string
 }
 
 //TFVars generate vSphere-specific Terraform variables
@@ -70,7 +70,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Template:          controlPlaneConfig.Template,
 		OvaFilePath:       cachedImage,
 		PreexistingFolder: sources.PreexistingFolder,
-		Thin:              sources.Thin,
+		DiskType:          sources.DiskType,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

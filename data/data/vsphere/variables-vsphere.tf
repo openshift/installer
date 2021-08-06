@@ -76,7 +76,6 @@ variable "vsphere_control_plane_num_cpus" {
 variable "vsphere_control_plane_cores_per_socket" {
   type = number
 }
-
-variable "template_thin_vmdk" {
-  type = bool
+variable "disk_type" {
+  type = string
 }

@@ -50,7 +50,7 @@ resource "vsphereprivate_import_ova" "import" {
   network    = var.vsphere_network
   folder     = local.folder
   tag        = vsphere_tag.tag.id
-  thin       = var.template_thin_vmdk
+  diskType   = var.disk_type
 }
 
 resource "vsphere_tag_category" "category" {

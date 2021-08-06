@@ -48,6 +48,6 @@ type Platform struct {
 	// Network specifies the name of the network to be used by the cluster.
 	Network string `json:"network,omitempty"`
 
-	// Thin specifies if thin disks should be use instead of thick
-	Thin bool `json:"thin,omitempty"`
+	// Disk Type Thin specifies if thin disks should be use instead of thick
+	DiskType string `json:"diskType,omitempty"`
 }
