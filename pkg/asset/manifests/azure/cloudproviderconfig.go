@@ -12,8 +12,6 @@ type CloudProviderConfig struct {
 	CloudName                azure.CloudEnvironment
 	TenantID                 string
 	SubscriptionID           string
-	AADClientID              string
-	AADClientSecret          string
 	ResourceGroupName        string
 	GroupLocation            string
 	ResourcePrefix           string
@@ -71,9 +69,6 @@ func (params CloudProviderConfig) JSON() (string, error) {
 	}
 
 	if params.CloudName == azure.StackCloud {
-		config.authConfig.AADClientID = params.AADClientID
-		config.authConfig.AADClientSecret = params.AADClientSecret
-		config.authConfig.ResourceManagerEndpoint = params.ResourceManagerEndpoint
 		config.authConfig.UseManagedIdentityExtension = false
 		config.LoadBalancerSku = "basic"
 		config.UseInstanceMetadata = false
