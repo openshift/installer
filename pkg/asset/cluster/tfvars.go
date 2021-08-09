@@ -662,6 +662,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			powervstfvars.TFVarsSources{
 				MasterConfigs: masterConfigs,
 				IBMCloud:      ibmCloud,
+				SSHKey:        installConfig.Config.SSHKey,
 			},
 		)
 		if err != nil {
