@@ -67,7 +67,7 @@ Parameters:
     - "m5a.2xlarge"
     - "m5a.4xlarge"
     - "m5a.8xlarge"
-    - "m5a.10xlarge"
+    - "m5a.12xlarge"
     - "m5a.16xlarge"
     - "c4.2xlarge"
     - "c4.4xlarge"
