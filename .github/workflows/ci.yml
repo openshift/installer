@@ -1,7 +1,7 @@
 name: Power VS Verify
 
 on:
-  push:
+  pull_request:
     branches: [ add-ipi ]
 
 jobs:
