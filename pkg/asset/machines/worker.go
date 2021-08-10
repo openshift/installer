@@ -475,6 +475,14 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool := defaultPowerVSMachinePoolPlatform()
 			mpool.Set(ic.Platform.PowerVS.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.PowerVS)
+			// TODO: Temporary patch to bring up the worker nodes, later should be removed
+			hardcode := &powervstypes.MachinePool{
+				ServiceInstance: "e449d86e-c3a0-4c07-959e-8557fdf55482",
+				ImageID: "11b3470c-e747-4f92-ba70-428054ca4672",
+				KeyPairName: clusterID.InfraID+"-key",
+				NetworkIDs: []string{"daf2b616-542b-47ed-8cec-ceaec1e90f4d"},
+			}
+			mpool.Set(hardcode)
 			pool.Platform.PowerVS = &mpool
 			sets, err := powervs.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data", installConfig.Config.Platform.PowerVS.UserTags)
 			if err != nil {
