@@ -276,16 +276,7 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 		}
 
 		if foundDatastore && foundNetwork {
-<<<<<<< HEAD
-			importOvaParams.Host = hostObj
-			resourcePool, err := hostObj.ResourcePool(ctx)
-			if err != nil {
-				return nil, err
-			}
-			importOvaParams.ResourcePool = resourcePool
-=======
 			return importOvaParams, nil
->>>>>>> fe685880f (vsphereprivate_import_ova: Support resource pool)
 		}
 	}
 
