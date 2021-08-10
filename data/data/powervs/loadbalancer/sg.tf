@@ -7,6 +7,7 @@ data "ibm_is_vpc" "vpc" {
 
 resource "ibm_is_security_group" "ocp_security_group" {
   name = "${var.cluster_id}-ocp-sec-group"
+  resource_group = data.ibm_resource_group.resource_group.id
   vpc  = data.ibm_is_vpc.vpc.id
   tags = [var.cluster_id]
 }

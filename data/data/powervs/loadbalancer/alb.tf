@@ -5,8 +5,13 @@ locals {
   app_servers_count = length(var.master_ips)
 }
 
+data "ibm_resource_group" "resource_group" {
+  name = var.resource_group
+}
+
 resource "ibm_is_lb" "load_balancer" {
   name            = "${var.cluster_id}-loadbalancer"
+  resource_group = data.ibm_resource_group.resource_group.id
   subnets         = [var.vpc_subnet_id]
   security_groups = [ibm_is_security_group.ocp_security_group.id]
   tags            = [var.cluster_id, "${var.cluster_id}-loadbalancer"]
@@ -15,6 +20,7 @@ resource "ibm_is_lb" "load_balancer" {
 
 resource "ibm_is_lb" "load_balancer_int" {
   name            = "${var.cluster_id}-loadbalancer-int"
+  resource_group = data.ibm_resource_group.resource_group.id
   subnets         = [var.vpc_subnet_id]
   security_groups = [ibm_is_security_group.ocp_security_group.id]
   tags            = [var.cluster_id, "${var.cluster_id}-loadbalancer-int"]
