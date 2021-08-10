@@ -1,0 +1,32 @@
+name: Power VS Verify
+
+on:
+  push:
+    branches: [ add-ipi ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '1.16.6'
+
+    - name: Install dependencies
+      run: |
+        go version
+        go get -u golang.org/x/lint/golint
+
+    - name: Run go fmt & lint
+      run: |
+        go fmt -mod=mod ./...
+        git diff HEAD
+        if [ `git diff HEAD --name-only | wc -l` -gt 0 ]; then exit 1; fi
+        golint -set_exit_status=1 `go list -mod=readonly ./... | grep -v /vendor/`
+
+    - name: Build
+      run: |
+        go mod vendor
+        ./hack/build.sh
