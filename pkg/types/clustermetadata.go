@@ -72,6 +72,9 @@ func (cpm *ClusterPlatformMetadata) Platform() string {
 	if cpm.Ovirt != nil {
 		return ovirt.Name
 	}
+	if cpm.PowerVS != nil {
+		return powervs.Name
+	}
 	if cpm.VSphere != nil {
 		return vsphere.Name
 	}
