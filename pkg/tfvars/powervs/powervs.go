@@ -8,9 +8,9 @@ import (
 )
 
 type IBMCloud struct {
-	IBMCloudAPIKey      string `json:"powervs_api_key"`
-	IBMCloudRegion      string `json:"powervs_region"`
-	IBMCloudZone        string `json:"powervs_zone"`
+	IBMCloudAPIKey string `json:"powervs_api_key"`
+	IBMCloudRegion string `json:"powervs_region"`
+	IBMCloudZone   string `json:"powervs_zone"`
 }
 
 type config struct {

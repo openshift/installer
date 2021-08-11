@@ -653,9 +653,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		ibmCloud := powervstfvars.IBMCloud{
-			IBMCloudAPIKey:      session.Session.IAMToken,
-			IBMCloudRegion:      session.Session.Region,
-			IBMCloudZone:        session.Session.Zone,
+			IBMCloudAPIKey: session.Session.IAMToken,
+			IBMCloudRegion: session.Session.Region,
+			IBMCloudZone:   session.Session.Zone,
 		}
 
 		data, err = powervstfvars.TFVars(

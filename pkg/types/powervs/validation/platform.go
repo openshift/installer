@@ -1,7 +1,6 @@
 package validation
 
 import (
-
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/powervs"
@@ -21,7 +20,4 @@ func ValidatePlatform(p *powervs.Platform, fldPath *field.Path) field.ErrorList 
 	return allErrs
 }
 
-
-
 //var schemeRE = regexp.MustCompile("^([^:]+)://")
-

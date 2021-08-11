@@ -10,7 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
-    "github.com/openshift/installer/pkg/types/powervs"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -99,7 +99,7 @@ type MachinePoolPlatform struct {
 	// Ovirt is the configuration used when installing on oVirt.
 	Ovirt *ovirt.MachinePool `json:"ovirt,omitempty"`
 
-    // PowerVS is the configuration used when installing on IBM Power VS.
+	// PowerVS is the configuration used when installing on IBM Power VS.
 	PowerVS *powervs.MachinePool `json:"powervs,omitempty"`
 
 	// Kubevirt is the configuration used when installing on Kubevirt.
