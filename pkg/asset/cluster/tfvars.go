@@ -652,16 +652,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*powervsprovider.PowerVSMachineProviderConfig)
 		}
 
-		ibmCloud := powervstfvars.IBMCloud{
-			IBMCloudAPIKey: session.Session.IAMToken,
-			IBMCloudRegion: session.Session.Region,
-			IBMCloudZone:   session.Session.Zone,
-		}
-
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
 				MasterConfigs: masterConfigs,
-				IBMCloud:      ibmCloud,
+				PowerVSRegion: session.Session.Region,
+				APIKey:        session.Session.IAMToken,
 				SSHKey:        installConfig.Config.SSHKey,
 			},
 		)

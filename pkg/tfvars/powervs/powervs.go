@@ -7,15 +7,27 @@ import (
 	"github.com/openshift/cluster-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 )
 
-// IBMCloud stores information for accessing resources
-type IBMCloud struct {
-	IBMCloudAPIKey string `json:"powervs_api_key"`
-	IBMCloudRegion string `json:"powervs_region"`
-	IBMCloudZone   string `json:"powervs_zone"`
+// powervsRegionToVPCRegion based on:
+// https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server&locale=en#creating-service
+// https://github.com/ocp-power-automation/ocp4-upi-powervs/blob/master/docs/var.tfvars-doc.md
+var powervsRegionToIBMRegion = map[string]string{
+	"dal":     "us-south",
+	"us-east": "us-east",
+	"sao":     "br-sao",
+	"tor":     "ca-tor",
+	"mon":     "ca-mon",
+	"eu-de-1": "eu-de",
+	"eu-de-2": "eu-de",
+	"lon":     "eu-gb",
+	"syd":     "au-syd",
+	"tok":     "jp-tok",
+	"osa":     "jp-osa",
 }
 
 type config struct {
-	IBMCloud             `json:",inline"`
+	APIKey               string `json:"powervs_api_key"`
+	PowerVSRegion        string `json:"powervs_region"`
+	VPCRegion            string `json:"powervs_vpc_region"`
 	PowerVSResourceGroup string `json:"powervs_resource_group"`
 	SSHKey               string `json:"powervs_ssh_key"`
 	ImageID              string `json:"powervs_image_name"`
@@ -31,8 +43,9 @@ type config struct {
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
 	MasterConfigs []*v1alpha1.PowerVSMachineProviderConfig
-	IBMCloud      IBMCloud
+	APIKey        string
 	SSHKey        string
+	PowerVSRegion string
 }
 
 // TFVars generates Power VS-specific Terraform variables launching the cluster.
@@ -43,7 +56,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	//  -- change ImageID to ImageURL here?
 	//  --
 	cfg := &config{
-		IBMCloud:             sources.IBMCloud,
+		APIKey:               sources.APIKey,
+		PowerVSRegion:        sources.PowerVSRegion,
+		VPCRegion:            powervsRegionToIBMRegion[sources.PowerVSRegion],
 		PowerVSResourceGroup: "powervs-ipi-resource-group",
 		SSHKey:               sources.SSHKey,
 		ImageID:              masterConfig.ImageID,
