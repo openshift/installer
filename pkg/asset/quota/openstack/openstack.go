@@ -16,8 +16,8 @@ import (
 // https://github.com/openshift/installer/blob/master/docs/user/openstack/kuryr.md
 // Number of ports, routers, subnets and routers here don't include the constraints needed
 // for each machine, which are calculated later
-var minNetworkConstraint = buildNetworkConstraint(9, 0, 0, 0, 2, 56)
-var minNetworkConstraintWithKuryr = buildNetworkConstraint(1494, 0, 249, 249, 249, 996)
+var minNetworkConstraint = buildNetworkConstraint(8, 0, 0, 0, 2, 56)
+var minNetworkConstraintWithKuryr = buildNetworkConstraint(1493, 0, 249, 249, 249, 996)
 
 func buildNetworkConstraint(ports, routers, subnets, networks, securityGroups, securityGroupRules int64) []quota.Constraint {
 	return []quota.Constraint{
