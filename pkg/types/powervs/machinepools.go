@@ -48,6 +48,7 @@ type MachinePool struct {
 	SysType string `json:sysType"`
 }
 
+// Set stores values from required into a
 func (a *MachinePool) Set(required *MachinePool) {
 	if required == nil || a == nil {
 		return

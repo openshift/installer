@@ -1,4 +1,4 @@
-// Package aws contains AWS-specific structures for installer
+// Package powervs contains Power VS-specific structures for installer
 // configuration and management.
 package powervs
 

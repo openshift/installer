@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/cluster-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 )
 
+// IBMCloud stores information for accessing resources
 type IBMCloud struct {
 	IBMCloudAPIKey string `json:"powervs_api_key"`
 	IBMCloudRegion string `json:"powervs_region"`

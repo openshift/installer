@@ -27,13 +27,11 @@ type Session struct {
 // env IBMID & env IBMID_PASSWORD,
 // ~/.bluemix/config.json ? (see TODO below)
 // and, if no creds are found, asks for them
-
 /* @TODO: if you do an `ibmcloud login` (or in my case ibmcloud login --sso), you get
 //  a very nice creds file at ~/.bluemix/config.json, with an IAMToken. There's no username,
 //  though (just the account's owner id, but that's not the same). It may be necessary
 //  to use the IAMToken vs the password env var mentioned here:
 //  https://github.com/IBM-Cloud/power-go-client#ibm-cloud-sdk-for-power-cloud
-
 //  Yes, I think we'll need to use the IAMToken. There's a two-factor auth built into the ibmcloud login,
 //  so the password alone isn't enough. The IAMToken is generated as a result. So either:
      1) require the user has done this already and pull from the file
