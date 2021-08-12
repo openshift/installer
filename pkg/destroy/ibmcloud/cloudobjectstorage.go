@@ -3,6 +3,7 @@ package ibmcloud
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -118,8 +119,13 @@ func (o *ClusterUninstaller) COSInstanceID() (string, error) {
 	// Locate the installer's COS instance by name.
 	for _, instance := range instanceList {
 		if instance.name == fmt.Sprintf("%s-cos", o.InfraID) {
-			o.cosInstanceID = instance.id
-			return instance.id, nil
+                        split := strings.Split(instance.id, ":")
+                        if len(split) >= 8 { //CRN string
+                                o.cosInstanceID = split[7]
+                        } else {
+                                o.cosInstanceID = instance.id
+                        }
+                        return o.cosInstanceID, nil
 		}
 	}
 	return "", errors.Errorf("COS instance not found")

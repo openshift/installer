@@ -21,7 +21,7 @@ resource "ibm_iam_authorization_policy" "policy" {
   source_service_name         = "is"
   source_resource_type        = "image"
   target_service_name         = "cloud-object-storage"
-  target_resource_instance_id = var.cos_resource_instance_id
+  target_resource_instance_id = length(split(":", var.cos_resource_instance_id)) >= 8 ? "${element(split(":", var.cos_resource_instance_id),7)}" : var.cos_resource_instance_id
   roles                       = ["Reader"]
 }
 
