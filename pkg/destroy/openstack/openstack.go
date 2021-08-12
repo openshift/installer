@@ -89,30 +89,25 @@ func (o *ClusterUninstaller) Run() error {
 	// deleteFuncs contains the functions that will be launched as
 	// goroutines.
 	deleteFuncs := map[string]deleteFunc{
-		"deleteServers":          deleteServers,
-		"deleteServerGroups":     deleteServerGroups,
-		"deleteTrunks":           deleteTrunks,
-		"deleteLoadBalancers":    deleteLoadBalancers,
-		"deletePorts":            deletePorts,
-		"deleteSecurityGroups":   deleteSecurityGroups,
-		"clearRoutersInterfaces": clearRoutersInferfaces,
-		"deleteSubnets":          deleteSubnets,
-		"deleteSubnetPools":      deleteSubnetPools,
-		"deleteNetworks":         deleteNetworks,
-		"deleteContainers":       deleteContainers,
-		"deleteVolumes":          deleteVolumes,
-		"deleteShares":           deleteShares,
-		"deleteFloatingIPs":      deleteFloatingIPs,
-		"deleteImages":           deleteImages,
+		"deleteServers":         deleteServers,
+		"deleteServerGroups":    deleteServerGroups,
+		"deleteTrunks":          deleteTrunks,
+		"deleteLoadBalancers":   deleteLoadBalancers,
+		"deletePorts":           deletePorts,
+		"deleteSecurityGroups":  deleteSecurityGroups,
+		"clearRouterInterfaces": clearRouterInterfaces,
+		"deleteSubnets":         deleteSubnets,
+		"deleteSubnetPools":     deleteSubnetPools,
+		"deleteNetworks":        deleteNetworks,
+		"deleteContainers":      deleteContainers,
+		"deleteVolumes":         deleteVolumes,
+		"deleteShares":          deleteShares,
+		"deleteFloatingIPs":     deleteFloatingIPs,
+		"deleteImages":          deleteImages,
 	}
 	returnChannel := make(chan string)
 
 	opts := openstackdefaults.DefaultClientOpts(o.Cloud)
-
-	err := cleanCustomRouterRunner(opts, o.Filter, o.Logger)
-	if err != nil {
-		return err
-	}
 
 	// launch goroutines
 	for name, function := range deleteFuncs {
@@ -128,7 +123,7 @@ func (o *ClusterUninstaller) Run() error {
 	// we want to remove routers as the last thing as it requires detaching the
 	// FIPs and that will cause it impossible to track which FIPs are tied to
 	// LBs being deleted.
-	err = deleteRouterRunner(opts, o.Filter, o.Logger)
+	err := deleteRouterRunner(opts, o.Filter, o.Logger)
 	if err != nil {
 		return err
 	}
@@ -443,6 +438,7 @@ func updateFips(allFIPs []floatingips.FloatingIP, opts *clientconfig.ClientOpts,
 	}
 
 	for _, fip := range allFIPs {
+		logger.Printf("Updating FIP %s", fip.ID)
 		_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
 		if err != nil {
 			// Ignore the error if the resource cannot be found and return with an appropriate message if it's another type of error
@@ -515,38 +511,6 @@ func getRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fiel
 	return allRouters, nil
 }
 
-func clearRoutersInferfaces(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Clearing openstack routers interfaces")
-	defer logger.Debugf("Exiting clearing openstack routers interfaces")
-
-	conn, err := clientconfig.NewServiceClient("network", opts)
-	if err != nil {
-		return false, err
-	}
-
-	allRouters, err := getRouters(opts, filter, logger)
-	if err != nil {
-		logger.Error(err)
-		return false, nil
-	}
-
-	numberToClear := len(allRouters)
-	numberCleared := 0
-	for _, router := range allRouters {
-		removed, err := removeRouterInterfaces(conn, filter, router, logger)
-		if err != nil {
-			logger.Debug(err)
-			continue
-		}
-		if !removed {
-			continue
-		}
-
-		numberCleared++
-	}
-	return numberCleared == numberToClear, nil
-}
-
 func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
 	logger.Debug("Deleting openstack routers")
 	defer logger.Debugf("Exiting deleting openstack routers")
@@ -615,9 +579,51 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	return numberDeleted == numberToDelete, nil
 }
 
-func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debugf("Removing interfaces from custom router")
-	defer logger.Debug("Exiting removal of interfaces from custom router")
+func getRouterInterfaces(conn *gophercloud.ServiceClient, allNetworks []networks.Network, logger logrus.FieldLogger) ([]ports.Port, error) {
+	var routerPorts []ports.Port
+	for _, network := range allNetworks {
+		if len(network.Subnets) == 0 {
+			continue
+		}
+		subnet, err := subnets.Get(conn, network.Subnets[0]).Extract()
+		if err != nil {
+			logger.Debug(err)
+			return routerPorts, nil
+		}
+		portListOpts := ports.ListOpts{
+			FixedIPs: []ports.FixedIPOpts{
+				{
+					SubnetID: network.Subnets[0],
+				},
+				{
+					IPAddress: subnet.GatewayIP,
+				},
+			},
+		}
+
+		allPagesPort, err := ports.List(conn, portListOpts).AllPages()
+		if err != nil {
+			logger.Error(err)
+			return routerPorts, nil
+		}
+
+		routerPorts, err = ports.ExtractPorts(allPagesPort)
+		if err != nil {
+			logger.Error(err)
+			return routerPorts, nil
+		}
+
+		if len(routerPorts) != 0 {
+			logger.Debugf("Found Port %q connected to Router", routerPorts[0].ID)
+			return routerPorts, nil
+		}
+	}
+	return routerPorts, nil
+}
+
+func clearRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debugf("Removing interfaces from router")
+	defer logger.Debug("Exiting removal of interfaces from router")
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
@@ -629,32 +635,9 @@ func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, 
 	// are tagged with cluster-api-provider-openstack and should be excluded
 	// to ensure only the primary Network ports are filtered.
 	tags := filterTags(filter)
-	listOpts := ports.ListOpts{
-		Tags:        strings.Join(tags, ","),
-		DeviceOwner: "compute:nova",
-		NotTags:     "cluster-api-provider-openstack",
-	}
-
-	allPages, err := ports.List(conn, listOpts).AllPages()
-	if err != nil {
-		logger.Debug(err)
-		return false, nil
-	}
-
-	allServerPorts, err := ports.ExtractPorts(allPages)
-	if err != nil {
-		logger.Debug(err)
-		return false, nil
-	}
-
-	if len(allServerPorts) == 0 {
-		return true, nil
-	}
-
-	// Only proceed with clean up if is a provided Network
 	networkListOpts := networks.ListOpts{
-		NotTags: strings.Join(tags, ","),
-		ID:      allServerPorts[0].NetworkID,
+		Tags:    strings.Join(tags, ","),
+		NotTags: "cluster-api-provider-openstack",
 	}
 
 	allNetworksPages, err := networks.List(conn, networkListOpts).AllPages()
@@ -669,61 +652,26 @@ func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, 
 		return false, nil
 	}
 
-	if len(allNetworks) == 0 {
-		return true, nil
-	}
-
-	portListOpts := ports.ListOpts{
-		NetworkID: allServerPorts[0].NetworkID,
-	}
-
-	allPagesPort, err := ports.List(conn, portListOpts).AllPages()
-	if err != nil {
-		logger.Error(err)
-		return false, nil
-	}
-
-	allPrimayNetworkPorts, err := ports.ExtractPorts(allPagesPort)
-	if err != nil {
-		logger.Error(err)
-		return false, nil
-	}
-
-	// Discover router by interface from the primary Network
-	router, err := getRouterByPort(conn, allPrimayNetworkPorts)
+	// Identify router by checking any tagged Network that has a Subnet
+	// with GatewayIP set
+	routerPorts, err := getRouterInterfaces(conn, allNetworks, logger)
 	if err != nil {
 		logger.Debug(err)
 		return false, nil
 	}
-	if router.ID == "" {
+
+	if len(routerPorts) == 0 {
 		return true, nil
 	}
 
-	fipOpts := floatingips.ListOpts{
-		RouterID: router.ID,
-		Tags:     strings.Join(tags, ","),
-	}
-
-	fipPages, err := floatingips.List(conn, fipOpts).AllPages()
+	routerID := routerPorts[0].DeviceID
+	router, err := routers.Get(conn, routerID).Extract()
 	if err != nil {
 		logger.Error(err)
 		return false, nil
 	}
 
-	allFIPs, err := floatingips.ExtractFloatingIPs(fipPages)
-	if err != nil {
-		logger.Error(err)
-		return false, nil
-	}
-
-	// disassociate any fips created by Kuryr linked to the router
-	err = updateFips(allFIPs, opts, filter, logger)
-	if err != nil {
-		logger.Error(err)
-		return false, nil
-	}
-
-	removed, err := removeRouterInterfaces(conn, filter, router, logger)
+	removed, err := removeRouterInterfaces(conn, filter, *router, logger)
 	if err != nil {
 		logger.Debug(err)
 		return false, nil
@@ -766,15 +714,17 @@ func removeRouterInterfaces(client *gophercloud.ServiceClient, filter Filter, ro
 	clusterTag := "openshiftClusterID=" + filter["openshiftClusterID"]
 	clusterRouter := isClusterRouter(clusterTag, router.Tags)
 
+	numberToDelete := len(allPorts)
+	numberDeleted := 0
 	var customInterfaces []ports.Port
-	// map to keep track of whethere interface for subnet was already removed
+	// map to keep track of whether interface for subnet was already removed
 	removedSubnets := make(map[string]bool)
 	for _, port := range allPorts {
 		for _, IP := range port.FixedIPs {
-
 			// Skip removal if Router was not created by CNO or installer and
 			// interface is not handled by the Cluster
 			if !clusterRouter && !isClusterSubnet(allSubnets, IP.SubnetID) {
+				logger.Debugf("Found custom interface %q on Router %q", port.ID, router.ID)
 				customInterfaces = append(customInterfaces, port)
 				continue
 			}
@@ -794,11 +744,12 @@ func removeRouterInterfaces(client *gophercloud.ServiceClient, filter Filter, ro
 					logger.Debugf("Cannot find subnet %q. It's probably already been removed from router %q.", IP.SubnetID, router.ID)
 				}
 				removedSubnets[IP.SubnetID] = true
+				numberDeleted++
 			}
 		}
 	}
-	//Allow to remain attached only interfaces not Cluster tagged
-	return len(allPorts) == len(customInterfaces), nil
+	numberToDelete -= len(customInterfaces)
+	return numberToDelete == numberDeleted, nil
 }
 
 func isClusterRouter(clusterTag string, tags []string) bool {
@@ -1668,26 +1619,6 @@ func untagRunner(opts *clientconfig.ClientOpts, infraID string, logger logrus.Fi
 
 	err := wait.ExponentialBackoff(backoffSettings, func() (bool, error) {
 		return untagPrimaryNetwork(opts, infraID, logger)
-	})
-	if err != nil {
-		if err == wait.ErrWaitTimeout {
-			return err
-		}
-		return errors.Errorf("Unrecoverable error: %v", err)
-	}
-
-	return nil
-}
-
-func cleanCustomRouterRunner(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) error {
-	backoffSettings := wait.Backoff{
-		Duration: time.Second * 15,
-		Factor:   1.3,
-		Steps:    25,
-	}
-
-	err := wait.ExponentialBackoff(backoffSettings, func() (bool, error) {
-		return deleteCustomRouterInterfaces(opts, filter, logger)
 	})
 	if err != nil {
 		if err == wait.ErrWaitTimeout {
