@@ -31,7 +31,7 @@ done
 
 echo "Gathering bootstrap journals ..."
 mkdir -p "${ARTIFACTS}/bootstrap/journals"
-for service in release-image crio-configure bootkube kubelet crio approve-csr ironic master-bmh-update
+for service in release-image release-image-download crio-configure bootkube kubelet crio approve-csr ironic master-bmh-update
 do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/bootstrap/journals/${service}.log"
 done
