@@ -33,6 +33,7 @@ import (
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	"github.com/openshift/installer/pkg/gather/service"
+	"github.com/openshift/installer/pkg/metrics/gatherer"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
@@ -100,6 +101,7 @@ var (
 			// Long:  "",
 			PostRun: func(_ *cobra.Command, _ []string) {
 				ctx := context.Background()
+				metricName := gatherer.CurrentInvocationContext
 
 				cleanup := setupFileHook(rootOpts.dir)
 				defer cleanup()
@@ -108,12 +110,16 @@ var (
 				// directory is a bit cludgy when we already have them in memory.
 				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(rootOpts.dir, "auth", "kubeconfig"))
 				if err != nil {
+					gatherer.UpdateDurationMetricsWithError("ProvisioningFailed")
+					gatherer.LogError("ProvisioningFailed", metricName)
 					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 				}
 
 				timer.StartTimer("Bootstrap Complete")
+				errMsg := "BootstrapFailed"
 				if err := waitForBootstrapComplete(ctx, config); err != nil {
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
+						errMsg = "OperatorDegraded"
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
 					bundlePath, err2 := runGatherBootstrapCmd(rootOpts.dir)
@@ -125,9 +131,11 @@ var (
 					if err2 := service.AnalyzeGatherBundle(bundlePath); err2 != nil {
 						logrus.Error("Attempted to analyze the debug logs after installation failure: ", err2)
 					}
+					gatherer.UpdateDurationMetricsWithError(errMsg)
+					gatherer.LogError(errMsg, metricName)
 					logrus.Fatal("Bootstrap failed to complete")
 				}
-				timer.StopTimer("Bootstrap Complete")
+				durationBootstrapComplete := timer.StopTimer("Bootstrap Complete")
 				timer.StartTimer("Bootstrap Destroy")
 
 				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
@@ -140,7 +148,8 @@ var (
 						logrus.Fatal(err)
 					}
 				}
-				timer.StopTimer("Bootstrap Destroy")
+				durationBootstrapComplete += timer.StopTimer("Bootstrap Destroy")
+				gatherer.SetValue(gatherer.DurationBootstrapMetricName, durationBootstrapComplete.Minutes())
 
 				err = waitForInstallComplete(ctx, config, rootOpts.dir)
 				if err != nil {
@@ -150,8 +159,10 @@ var (
 					logTroubleshootingLink()
 					logrus.Fatal(err)
 				}
-				timer.StopTimer(timer.TotalTimeElapsed)
+				totalTime := timer.StopTimer(timer.TotalTimeElapsed)
 				timer.LogSummary()
+				gatherer.SetValue(gatherer.DurationProvisioningMetricName, totalTime.Minutes())
+				gatherer.SendPrometheusInvocationData(metricName)
 			},
 		},
 		assets: targetassets.Cluster,
@@ -261,15 +272,22 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 
 		cleanup := setupFileHook(rootOpts.dir)
 		defer cleanup()
+		gatherer.InitializeInvocationMetrics(gatherer.CreateCommandMetricName[cmd.Name()])
 
 		err := runner(rootOpts.dir)
 		if err != nil {
 			logrus.Fatal(err)
 		}
 		if cmd.Name() != "cluster" {
+			gatherer.SendPrometheusInvocationData(gatherer.CurrentInvocationContext)
 			logrus.Infof(logging.LogCreatedFiles(cmd.Name(), rootOpts.dir, targets))
+		} else {
+			if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
+				if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
+					gatherer.UpdateDurationMetrics(installConfig.(*installconfig.InstallConfig).Config.Platform.Name())
+				}
+			}
 		}
-
 	}
 }
 
@@ -344,7 +362,8 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 		version, err := discovery.ServerVersion()
 		if err == nil {
 			logrus.Infof("API %s up", version)
-			timer.StopTimer("API")
+			duration := timer.StopTimer("API")
+			gatherer.SetValue(gatherer.DurationAPIMetricName, duration.Minutes())
 			cancel()
 		} else {
 			lastErr = err
@@ -453,7 +472,8 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 					return false, nil
 				}
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) {
-					timer.StopTimer("Cluster Operators")
+					duration := timer.StopTimer("Cluster Operators")
+					gatherer.SetValue(gatherer.DurationOperatorsMetricName, duration.Minutes())
 					return true, nil
 				}
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, failing) {
@@ -473,6 +493,9 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 		logrus.Debug("Cluster is initialized")
 		return nil
 	}
+
+	gatherer.AddLabelValue(gatherer.CurrentInvocationContext, "result", "OperatorDegraded")
+	gatherer.AddLabelValue(gatherer.CurrentInvocationContext, "returnCode", "0")
 
 	if lastError != "" {
 		if err == wait.ErrWaitTimeout {

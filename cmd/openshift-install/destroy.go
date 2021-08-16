@@ -21,6 +21,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
+	"github.com/openshift/installer/pkg/metrics/gatherer"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 )
 
@@ -46,11 +47,14 @@ func newDestroyClusterCmd() *cobra.Command {
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
+			gatherer.InitializeInvocationMetrics(gatherer.DestroyMetricName)
 
 			err := runDestroyCmd(rootOpts.dir)
 			if err != nil {
+				gatherer.LogError("failed", gatherer.CurrentInvocationContext)
 				logrus.Fatal(err)
 			}
+			gatherer.SendPrometheusInvocationData(gatherer.CurrentInvocationContext)
 		},
 	}
 }
@@ -110,14 +114,17 @@ func newDestroyBootstrapCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
+			gatherer.InitializeInvocationMetrics(gatherer.DestroyMetricName)
 
 			timer.StartTimer(timer.TotalTimeElapsed)
 			err := bootstrap.Destroy(rootOpts.dir)
 			if err != nil {
+				gatherer.LogError("failed", gatherer.CurrentInvocationContext)
 				logrus.Fatal(err)
 			}
 			timer.StopTimer(timer.TotalTimeElapsed)
 			timer.LogSummary()
+			gatherer.SendPrometheusInvocationData(gatherer.CurrentInvocationContext)
 		},
 	}
 }

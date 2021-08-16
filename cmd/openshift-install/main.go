@@ -14,6 +14,7 @@ import (
 	"k8s.io/klog"
 	klogv2 "k8s.io/klog/v2"
 
+	"github.com/openshift/installer/pkg/metrics/gatherer"
 	"github.com/openshift/installer/pkg/terraform/exec/plugins"
 )
 
@@ -47,6 +48,7 @@ func main() {
 		}
 	}
 
+	gatherer.Initialize()
 	installerMain()
 }
 
