@@ -17,3 +17,17 @@ resource "azurestack_network_security_rule" "apiserver_in" {
   network_security_group_name = azurestack_network_security_group.cluster.name
   description                 = local.description
 }
+
+resource "azurestack_subnet_network_security_group_association" "master" {
+  count = var.azure_preexisting_network ? 0 : 1
+
+  subnet_id                 = azurestack_subnet.master_subnet[0].id
+  network_security_group_id = azurestack_network_security_group.cluster.id
+}
+
+resource "azurestack_subnet_network_security_group_association" "worker" {
+  count = var.azure_preexisting_network ? 0 : 1
+
+  subnet_id                 = azurestack_subnet.worker_subnet[0].id
+  network_security_group_id = azurestack_network_security_group.cluster.id
+}
