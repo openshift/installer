@@ -11,18 +11,18 @@ locals {
 resource "ibm_is_instance" "bootstrap_node" {
   name           = "${local.prefix}-bootstrap"
   image          = var.vsi_image_id
-  profile        = var.vsi_profile
+  profile        = var.ibmcloud_bootstrap_instance_type
   resource_group = var.resource_group_id
-  tags           = var.tags
+  tags           = local.tags
 
   primary_network_interface {
     name            = "eth0"
-    subnet          = var.subnet_id
-    security_groups = concat(var.security_group_id_list, [ibm_is_security_group.bootstrap.id])
+    subnet          = var.control_plane_subnet_id_list[0]
+    security_groups = concat(var.control_plane_security_group_id_list, [ibm_is_security_group.bootstrap.id])
   }
 
   vpc  = var.vpc_id
-  zone = var.zone
+  zone = var.control_plane_subnet_zone_list[0]
   keys = []
 
   # Use custom ignition config that pulls content from COS bucket
@@ -42,12 +42,12 @@ resource "ibm_is_instance" "bootstrap_node" {
 ############################################
 
 resource "ibm_is_floating_ip" "bootstrap_floatingip" {
-  count = var.public_endpoints ? 1 : 0
+  count = local.public_endpoints ? 1 : 0
 
   name           = "${local.prefix}-bootstrap-node-ip"
   resource_group = var.resource_group_id
   target         = ibm_is_instance.bootstrap_node.primary_network_interface.0.id
-  tags           = var.tags
+  tags           = local.tags
 }
 
 ############################################
@@ -57,7 +57,7 @@ resource "ibm_is_floating_ip" "bootstrap_floatingip" {
 resource "ibm_is_security_group" "bootstrap" {
   name           = "${local.prefix}-security-group-bootstrap"
   resource_group = var.resource_group_id
-  tags           = var.tags
+  tags           = local.tags
   vpc            = var.vpc_id
 }
 
@@ -65,7 +65,7 @@ resource "ibm_is_security_group" "bootstrap" {
 resource "ibm_is_security_group_rule" "bootstrap_ssh_inbound" {
   group     = ibm_is_security_group.bootstrap.id
   direction = "inbound"
-  remote    = var.public_endpoints ? "0.0.0.0/0" : var.security_group_id_list.0.id
+  remote    = local.public_endpoints ? "0.0.0.0/0" : var.control_plane_security_group_id_list.0.id
   tcp {
     port_min = 22
     port_max = 22
@@ -77,7 +77,7 @@ resource "ibm_is_security_group_rule" "bootstrap_ssh_inbound" {
 ############################################
 
 resource "ibm_is_lb_pool_member" "kubernetes_api_public" {
-  count = var.public_endpoints ? 1 : 0
+  count = local.public_endpoints ? 1 : 0
 
   lb             = var.lb_kubernetes_api_public_id
   pool           = var.lb_pool_kubernetes_api_public_id

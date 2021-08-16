@@ -18,14 +18,6 @@ output "control_plane_subnet_zone_list" {
   value = ibm_is_subnet.control_plane.*.zone
 }
 
-output "compute_subnet_id_list" {
-  value = ibm_is_subnet.compute.*.id
-}
-
-output "compute_subnet_zone_list" {
-  value = ibm_is_subnet.compute.*.zone
-}
-
 output "lb_kubernetes_api_public_hostname" {
   value = var.public_endpoints ? ibm_is_lb.kubernetes_api_public.0.hostname : ""
 }
@@ -61,10 +53,6 @@ output "lb_pool_kubernetes_api_private_id" {
 
 output "lb_pool_machine_config_id" {
   value = ibm_is_lb_pool.machine_config.id
-}
-
-output "vpc_crn" {
-  value = ibm_is_vpc.vpc.crn
 }
 
 output "vpc_id" {

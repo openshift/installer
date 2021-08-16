@@ -46,6 +46,7 @@ func GetDNSZone() (*Zone, error) {
 		}
 		options = append(options, option)
 	}
+	sort.Strings(options)
 
 	var zoneChoice string
 	if err := survey.AskOne(&survey.Select{
