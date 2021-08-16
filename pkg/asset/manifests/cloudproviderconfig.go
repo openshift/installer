@@ -171,7 +171,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		ibmcloudConfig, err := ibmcloudmanifests.CloudProviderConfig(clusterID.InfraID, accountID)
+		ibmcloudConfig, err := ibmcloudmanifests.CloudProviderConfig(clusterID.InfraID, accountID, installConfig.Config.IBMCloud.Region)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
