@@ -48,6 +48,9 @@ func validateUserTags(tags map[string]string, propagatingTags bool, fldPath *fie
 	if len(tags) == 0 {
 		return allErrs
 	}
+	if len(tags) > 8 {
+		allErrs = append(allErrs, field.Invalid(fldPath, len(tags), "number of user tags cannot be more than 8"))
+	}
 	for key, value := range tags {
 		if strings.EqualFold(key, "Name") {
 			allErrs = append(allErrs, field.Invalid(fldPath.Key(key), tags[key], "Name key is not allowed for user defined tags"))
