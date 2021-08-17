@@ -11,6 +11,9 @@ type Platform struct {
 	// Required for multi-zone regions.
 	Zone string `json:"zone"`
 
+	UserID string `json:"userid"`
+	APIKey string `json:"apikey"`
+
 	// Subnets specifies existing subnets (by ID) where cluster
 	// resources will be created.  Leave unset to have the installer
 	// create subnets in a new VPC on your behalf.

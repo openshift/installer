@@ -95,7 +95,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.BareMetal = platform.BareMetal
 	a.Config.Ovirt = platform.Ovirt
 	a.Config.Kubevirt = platform.Kubevirt
-
+	a.Config.PowerVS = platform.PowerVS
 	return a.finish("")
 }
 
