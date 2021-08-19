@@ -8,6 +8,6 @@ spec:
   upstream: https://amd64.origin.releases.ci.openshift.org/graph
   channel: stable-4
 {{- else }}
-  channel: stable-4.8
+  channel: stable-4.9
 {{- end }}
   clusterID: {{.CVOClusterID}}
