@@ -646,6 +646,49 @@ If you ran the installer with a [custom CA certificate](#self-signed-openstack-c
 oc edit configmap -n openshift-config cloud-provider-config
 ```
 
+### Enabling Octavia for Load Balancer Services
+
+As a day 2 operation, you can create load balancer service types and ingress controllers that have load balancers as backends by using Octavia. However, there are a few known issues to be aware of:
+* Only TCP traffic is supported.
+* Any standing Octavia load balancers and the floating IP addresses attached to them will not be deleted during a cluster delete operation, and must be deleted before hand.
+* The `manage-security-groups` property for the cloud provider config doesn't not apply for non-admin tenants.
+* The `loadBalancerSourceRanges` property for load balancer services is currently [not supported](https://bugzilla.redhat.com/show_bug.cgi?id=1980748).
+* The `loadBalancerIP` property for load balancer services is currently [not supported](https://bugzilla.redhat.com/show_bug.cgi?id=1997704).
+
+Enabling this service must only be done with non-kuryr deployments as a day 2 operation. To do this, edit the cloud provider config:
+
+```sh
+oc edit configmap -n openshift-config cloud-provider-config
+```
+
+If you are using the `amphora` driver, then you must add this to your cloud provider config:
+
+```
+[LoadBalancer]
+use-octavia = true
+lb-provider = amphora
+```
+
+If you are using the `ovn` driver, then you must add this to your cloud provider config:
+
+```
+[LoadBalancer]
+use-octavia = true
+lb-provider = ovn
+lb-method = SOURCE_IP_PORT
+```
+
+If you have multiple external networks, you must set the value of `floating-network-id` in your cloud provider config to the UUID of the external network you want Floating IPs to be created in:
+
+```
+[LoadBalancer]
+use-octavia = true
+lb-provider = amphora
+floating-network-id = < network uuid >
+```
+
+If you are using the OVN driver for Octavia, you must also modify the TCP ingress security group rules for the master and worker security groups to allow IPv4 traffic to ports `30000:32767` from `0.0.0.0/0`.
+
 ## Reporting Issues
 
 Please see the [Issue Tracker][issues_openstack] for current known issues.
