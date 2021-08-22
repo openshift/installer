@@ -39,7 +39,7 @@ The following `install-config.yaml` properties are available:
         The default is 10.128.0.0/14 with a host prefix of /23.
         * `cidr` (required [IP network](#ip-networks)): The IP block address pool.
         * `hostPrefix` (required integer): The prefix size to allocate to each node from the CIDR.
-        For example, 24 would allocate 2^8=256 adresses to each node. If this field is not used by the plugin, it can be left unset.
+        For example, 24 would allocate 2^8=256 addresses to each node. If this field is not used by the plugin, it can be left unset.
     * `machineNetwork` (optional array of objects): The IP address pools for machines.
         * `cidr` (required [IP network](#ip-networks)): The IP block address pool.
             The default is 10.0.0.0/16 for all platforms other than libvirt.
@@ -72,7 +72,7 @@ For example, 10.0.0.0/16 represents IP addresses 10.0.0.0 through 10.0.255.255.
 
 The following machine-pool properties are available:
 
-* `architecture` (optional string): Determines the instruction set architecture of the machines in the pool. Currently, heteregeneous clusters are not supported, so all pools must specify the same architecture.
+* `architecture` (optional string): Determines the instruction set architecture of the machines in the pool. Currently, heterogeneous clusters are not supported, so all pools must specify the same architecture.
     Valid values are `amd64` (the default).
 * `hyperthreading` (optional string): Determines the mode of hyperthreading that machines in the pool will utilize.
     Valid values are `Enabled` (the default) and `Disabled`.
