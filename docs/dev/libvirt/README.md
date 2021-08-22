@@ -113,7 +113,7 @@ First, you need to start the libvirtd TCP socket, which is managed by systemd:
 sudo systemctl start libvirtd-tcp.socket
 ```
 
-To make this change persistent accross reboots you can optionally enable it:
+To make this change persistent across reboots you can optionally enable it:
 
 ```sh
 sudo systemctl enable libvirtd-tcp.socket
@@ -415,7 +415,7 @@ FATA[0019] failed to run Terraform: exit status 1
 
 it is likely that your install configuration contains three backslashes after the protocol (e.g. `qemu+tcp:///...`), when it should only be two.
 
-### Random domain creation errors due to libvirt race conditon
+### Random domain creation errors due to libvirt race condition
 
 Depending on your libvirt version you might encounter [a race condition][bugzilla_libvirt_race] leading to an error similar to:
 

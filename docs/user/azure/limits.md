@@ -32,7 +32,7 @@ A public IP address is also created for the bootstrap machine during installatio
 ## Network Security Groups
 
 Each cluster creates network security groups for every subnet within the VNet. The default install creates network
-security groups for the control plane and for the compuete node subnets. The default limit of 5000 for new accounts
+security groups for the control plane and for the compute node subnets. The default limit of 5000 for new accounts
 allows for many clusters to be created. The network security groups which exist after the default install are:
 
 1. controlplane
@@ -94,13 +94,13 @@ By default, each cluster will create 3 network load balancers. The default limit
 3. external
   * Public IP address that load balances requests to port 6443 across control-plane nodes
 
-Additional Kuberntes LoadBalancer Service objects will create additional [load balancers][load-balancing]. 
+Additional Kubernetes LoadBalancer Service objects will create additional [load balancers][load-balancing]. 
 
 
 ## Increasing limits
 
 
-To increase a limit beyond the maximum, a suppport request will need to be filed.
+To increase a limit beyond the maximum, a support request will need to be filed.
 
 First, click on "help + support". It is located on the bottom left menu.
 

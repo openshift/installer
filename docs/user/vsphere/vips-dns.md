@@ -1,4 +1,4 @@
-# IP Adresses
+# IP Addresses
 
 An installer-provisioned vSphere installation requires two static IP addresses:
 
