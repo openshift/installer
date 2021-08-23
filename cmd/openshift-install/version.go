@@ -33,5 +33,6 @@ func runVersionCmd(cmd *cobra.Command, args []string) error {
 	if image, err := releaseimage.Default(); err == nil {
 		fmt.Printf("release image %s\n", image)
 	}
+	fmt.Printf("release architecture %s\n", version.DefaultArch())
 	return nil
 }
