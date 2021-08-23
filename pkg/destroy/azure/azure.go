@@ -160,6 +160,9 @@ func (o *ClusterUninstaller) Run() error {
 				if isAuthError(err) {
 					cancel()
 					errs = append(errs, errors.Wrap(err, "unable to authenticate when deleting resource group"))
+				} else if isResourceGroupBlockedError(err) {
+					cancel()
+					errs = append(errs, errors.Wrap(err, "unable to delete resource group, resources in the group are in use by others"))
 				}
 				return
 			}
@@ -497,6 +500,24 @@ func isAuthError(err error) bool {
 		switch statusCode := dErr.StatusCode.(type) {
 		case int:
 			if statusCode >= 400 && statusCode <= 403 {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func isResourceGroupBlockedError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var dErr autorest.DetailedError
+	if errors.As(err, &dErr) {
+		switch statusCode := dErr.StatusCode.(type) {
+		case int:
+			if statusCode == 409 {
 				return true
 			}
 		}

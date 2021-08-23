@@ -73,7 +73,7 @@ type Platform struct {
 	OutboundType OutboundType `json:"outboundType"`
 
 	// ResourceGroupName is the name of an already existing resource group where the cluster should be installed.
-	// This resource group should only be used for this specific cluster and the cluster components will assume assume
+	// This resource group should only be used for this specific cluster and the cluster components will assume
 	// ownership of all resources in the resource group. Destroying the cluster using installer will delete this
 	// resource group.
 	// This resource group must be empty with no other resources when trying to use it for creating a cluster.

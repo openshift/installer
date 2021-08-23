@@ -28,7 +28,7 @@ The following options are available when using Azure:
 
 ## Installing to Existing Resource Group
 
-The installer can use an existing resource group when provisioning an OpenShift cluster. This resource group should only be used for this specific cluster and the cluster components will assume assume ownership of all resources in the resource group. Destroying the cluster using installer will delete this resource group. This resource group must be empty with no other resources when trying to use it for creating a cluster.
+The installer can use an existing resource group when provisioning an OpenShift cluster. This resource group should only be used for this specific cluster and the cluster components will assume ownership of all resources in the resource group. Destroying the cluster using installer will delete this resource group. This resource group must be empty with no other resources when trying to use it for creating a cluster.
 
 If you're limiting the installer's Service Principal scope to the Resource Group defined with `resourceGroupName`, you will also need to ensure proper permissions for any other resource used by the installer in your environment such as Public DNS Zone, VNet, etc.
 
