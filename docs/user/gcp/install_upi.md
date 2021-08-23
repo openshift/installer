@@ -758,13 +758,13 @@ use the `--account` and `--project` parameters to perform these actions in the h
 $ oc -n openshift-ingress get service router-default
 NAME             TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)                      AGE
 router-default   LoadBalancer   172.30.18.154   35.233.157.184   80:32288/TCP,443:31215/TCP   98
-
-export ROUTER_IP=$(oc -n openshift-ingress get service router-default --no-headers | awk '{print $4}')
 ```
 
 ### Add the internal *.apps DNS record
 
 ```sh
+export ROUTER_IP=$(oc -n openshift-ingress get service router-default --no-headers | awk '{print $4}')
+
 if [ -f transaction.yaml ]; then rm transaction.yaml; fi
 gcloud dns record-sets transaction start --zone ${INFRA_ID}-private-zone
 gcloud dns record-sets transaction add ${ROUTER_IP} --name \*.apps.${CLUSTER_NAME}.${BASE_DOMAIN}. --ttl 300 --type A --zone ${INFRA_ID}-private-zone
