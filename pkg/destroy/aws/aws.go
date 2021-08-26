@@ -140,6 +140,8 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	}
 
 	switch o.Region {
+	case endpoints.CnNorth1RegionID, endpoints.CnNorthwest1RegionID:
+		break
 	case endpoints.UsGovEast1RegionID, endpoints.UsGovWest1RegionID:
 		if o.Region != endpoints.UsGovWest1RegionID {
 			tagClients = append(tagClients,
