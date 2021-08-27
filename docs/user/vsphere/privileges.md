@@ -45,8 +45,12 @@ openshift-cluster-level | True | vSphere vCenter Cluster
 openshift-datastore-level | False | vSphere vCenter Datastore
 ReadOnly | False | vSphere Switch
 openshift-portgroup-level | False | vSphere Port Group
+ReadOnly | True | vSphere vCenter Virtual Machine folder (Top Level)
 openshift-folder-level | True | vSphere vCenter Virtual Machine folder
 
+In a cascading folder organization you will need `Read-only` permissions from the top folder level.
+ 
+![Folder Tree Example](images/folder-permissions.png)
 
 ### Installer created virtual machine folder
 Role Name | Propagate | Entity
