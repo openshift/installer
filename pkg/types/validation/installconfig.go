@@ -124,7 +124,7 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	if _, ok := validPublishingStrategies[c.Publish]; !ok {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
 	}
-	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform.Name())...)
+	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform)...)
 
 	if c.Publish == types.InternalPublishingStrategy {
 		switch platformName := c.Platform.Name(); platformName {
@@ -567,20 +567,26 @@ var (
 	}()
 )
 
-func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Path, platform string) field.ErrorList {
+func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Path, platform types.Platform) field.ErrorList {
 	if mode == "" {
 		return nil
 	}
 	allErrs := field.ErrorList{}
+
+	allowedAzureModes := []types.CredentialsMode{types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode}
+	if platform.Azure != nil && platform.Azure.CloudName == azure.StackCloud {
+		allowedAzureModes = []types.CredentialsMode{types.ManualCredentialsMode}
+	}
+
 	// validPlatformCredentialsModes is a map from the platform name to a slice of credentials modes that are valid
 	// for the platform. If a platform name is not in the map, then the credentials mode cannot be set for that platform.
 	validPlatformCredentialsModes := map[string][]types.CredentialsMode{
 		aws.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
-		azure.Name:    {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
+		azure.Name:    allowedAzureModes,
 		gcp.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
 		ibmcloud.Name: {types.ManualCredentialsMode},
 	}
-	if validModes, ok := validPlatformCredentialsModes[platform]; ok {
+	if validModes, ok := validPlatformCredentialsModes[platform.Name()]; ok {
 		validModesSet := sets.NewString()
 		for _, m := range validModes {
 			validModesSet.Insert(string(m))
@@ -589,7 +595,7 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 			allErrs = append(allErrs, field.NotSupported(fldPath, mode, validModesSet.List()))
 		}
 	} else {
-		allErrs = append(allErrs, field.Invalid(fldPath, mode, fmt.Sprintf("cannot be set when using the %q platform", platform)))
+		allErrs = append(allErrs, field.Invalid(fldPath, mode, fmt.Sprintf("cannot be set when using the %q platform", platform.Name())))
 	}
 	return allErrs
 }

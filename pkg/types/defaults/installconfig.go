@@ -5,6 +5,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
+	"github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaldefaults "github.com/openshift/installer/pkg/types/baremetal/defaults"
 	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
@@ -75,6 +76,13 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	for i := range c.Compute {
 		SetMachinePoolDefaults(&c.Compute[i], c.Platform.Name())
 	}
+
+	if c.CredentialsMode == "" {
+		if c.Platform.Azure != nil && c.Platform.Azure.CloudName == azure.StackCloud {
+			c.CredentialsMode = types.ManualCredentialsMode
+		}
+	}
+
 	switch {
 	case c.Platform.AWS != nil:
 		awsdefaults.SetPlatformDefaults(c.Platform.AWS)
