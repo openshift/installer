@@ -3,6 +3,7 @@ package quota
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -122,6 +123,10 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		}
 		summarizeReport(reports)
 	case typesopenstack.Name:
+		if skip := os.Getenv("OPENSHIFT_INSTALL_SKIP_PREFLIGHT_VALIDATIONS"); skip == "1" {
+			logrus.Warnf("OVERRIDE: pre-flight validation disabled.")
+			return nil
+		}
 		ci, err := openstackvalidation.GetCloudInfo(ic.Config)
 		if err != nil {
 			return errors.Wrap(err, "failed to get cloud info")

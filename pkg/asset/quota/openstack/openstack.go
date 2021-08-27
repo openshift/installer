@@ -4,6 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/quota"
 	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
@@ -13,9 +14,10 @@ import (
 // These numbers should reflect what is documented here:
 // https://github.com/openshift/installer/tree/master/docs/user/openstack
 // https://github.com/openshift/installer/blob/master/docs/user/openstack/kuryr.md
-// Number or ports here don't include the constraints needed for each machine, which are calculated later
-var networkConstraint = buildNetworkConstraint(15, 1, 1, 1, 3, 60)
-var networkConstraintWithKuryr = buildNetworkConstraint(1500, 1, 250, 250, 250, 1000)
+// Number of ports, routers, subnets and routers here don't include the constraints needed
+// for each machine, which are calculated later
+var minNetworkConstraint = buildNetworkConstraint(4, 0, 0, 0, 2, 56)
+var minNetworkConstraintWithKuryr = buildNetworkConstraint(1490, 0, 249, 249, 249, 996)
 
 func buildNetworkConstraint(ports, routers, subnets, networks, securityGroups, securityGroupRules int64) []quota.Constraint {
 	return []quota.Constraint{
@@ -29,10 +31,10 @@ func buildNetworkConstraint(ports, routers, subnets, networks, securityGroups, s
 }
 
 func getNetworkConstraints(networkType string) []quota.Constraint {
-	if networkType == "kuryr" {
-		return networkConstraintWithKuryr
+	if networkType == string(operv1.NetworkTypeKuryr) {
+		return minNetworkConstraintWithKuryr
 	}
-	return networkConstraint
+	return minNetworkConstraint
 }
 
 // Constraints returns a list of quota constraints based on the InstallConfig.
@@ -50,9 +52,12 @@ func Constraints(ci *validation.CloudInfo, controlPlanes []machineapi.Machine, c
 		constraints = append(constraints, machineSetConstraints(ci, &computes[i], networkType)...)
 	}
 	constraints = append(constraints, instanceConstraint(int64(len(computes))))
+	constraints = append(constraints, getNetworkConstraints(networkType)...)
 
-	for _, constraint := range getNetworkConstraints(networkType) {
-		constraints = append(constraints, constraint)
+	// If the cluster is using pre-provisioned networks, then the quota constraints should be
+	// null because the installer doesn't need to create any resources.
+	if ci.MachinesSubnet == nil {
+		constraints = append(constraints, networkConstraint(1), routerConstraint(1), subnetConstraint(1))
 	}
 
 	return aggregate(constraints)
@@ -144,6 +149,18 @@ func instanceConstraint(count int64) quota.Constraint {
 
 func portConstraint(count int64) quota.Constraint {
 	return generateConstraint("Port", count)
+}
+
+func routerConstraint(count int64) quota.Constraint {
+	return generateConstraint("Router", count)
+}
+
+func networkConstraint(count int64) quota.Constraint {
+	return generateConstraint("Network", count)
+}
+
+func subnetConstraint(count int64) quota.Constraint {
+	return generateConstraint("Subnet", count)
 }
 
 func generateConstraint(name string, count int64) quota.Constraint {
