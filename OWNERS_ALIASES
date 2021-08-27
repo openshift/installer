@@ -14,7 +14,6 @@ aliases:
   installer-reviewers:
     - jhixson74
     - jstuever
-    - mtnbikenc
     - patrickdillon
     - e-tienne
     - rna-afk
@@ -42,12 +41,10 @@ aliases:
     - pierreprinetti
   vsphere-approvers:
     - dav1x
-    - mtnbikenc
     - jcpowermac
     - patrickdillon
     - jstuever
   vsphere-reviewers:
-    - mtnbikenc
     - jcpowermac
     - patrickdillon
     - jstuever
