@@ -14,7 +14,6 @@ aliases:
   installer-reviewers:
     - jhixson74
     - jstuever
-    - mtnbikenc
     - patrickdillon
   libvirt-approvers:
     - praveenkumar
@@ -40,11 +39,9 @@ aliases:
     - pierreprinetti
   vsphere-approvers:
     - dav1x
-    - mtnbikenc
     - jcpowermac
     - patrickdillon
   vsphere-reviewers:
-    - mtnbikenc
     - jcpowermac
     - patrickdillon
   baremetal-approvers:
