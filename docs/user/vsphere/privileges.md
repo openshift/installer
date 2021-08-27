@@ -52,15 +52,15 @@ In a cascading folder organization you will need  "`Read-only`" permissions with
  
 ![Folder Tree Example](images/folder-permissions.png)
 
-### Installer created virtual machine folder
+### Installer created virtual machine folder in vSphere vCenter
 Role Name | Propagate | Entity
 --- | --- | ---
-openshift-vcenter-level | False | vSphere vCenter
-openshift-datacenter-level | True | vSphere vCenter Datacenter
-openshift-cluster-level | True | vSphere vCenter Cluster
-openshift-datastore-level | False | vSphere vCenter Datastore
-ReadOnly | False | vSphere Switch
-openshift-portgroup-level | False | vSphere Port Group
+openshift-vcenter-level | False | vCenter
+openshift-datacenter-level | True | Datacenter
+openshift-cluster-level | True | Cluster
+openshift-datastore-level | False | Datastore
+ReadOnly | False | Switch
+openshift-portgroup-level | False | Port Group
 
 
 ## Walkthrough: Creating and Assigning Global Roles
