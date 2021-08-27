@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
@@ -51,6 +52,16 @@ func validInstallConfig() *types.InstallConfig {
 func validAWSPlatform() *aws.Platform {
 	return &aws.Platform{
 		Region: "us-east-1",
+	}
+}
+
+func validAzureStackPlatform() *azure.Platform {
+	return &azure.Platform{
+		Region:                      "test-region",
+		ARMEndpoint:                 "http://test-endpoint.com",
+		BaseDomainResourceGroupName: "test-basedomain-rg",
+		CloudName:                   azure.StackCloud,
+		OutboundType:                "Loadbalancer",
 	}
 }
 
@@ -1003,6 +1014,28 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^\Qplatform.ibmcloud.region: Required value: region must be specified\E$`,
+		},
+		{
+			name: "valid azurestack platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzureStackPlatform(),
+				}
+				return c
+			}(),
+		},
+		{
+			name: "invalid azurestack platform mint credentials mod",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzureStackPlatform(),
+				}
+				c.CredentialsMode = types.MintCredentialsMode
+				return c
+			}(),
+			expectedError: `^credentialsMode: Unsupported value: "Mint": supported values: "Manual"$`,
 		},
 		{
 			name: "release image source is not canonical",

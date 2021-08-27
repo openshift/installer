@@ -1,0 +1,99 @@
+{
+  "$schema" : "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion" : "1.0.0.0",
+  "parameters" : {
+    "baseName" : {
+      "type" : "string",
+      "minLength" : 1,
+      "metadata" : {
+        "description" : "Base name to be used in resource names (usually the cluster's Infra ID)"
+      }
+    }
+  },
+  "variables" : {
+    "location" : "[resourceGroup().location]",
+    "virtualNetworkName" : "[concat(parameters('baseName'), '-vnet')]",
+    "addressPrefix" : "10.0.0.0/16",
+    "masterSubnetName" : "[concat(parameters('baseName'), '-master-subnet')]",
+    "masterSubnetPrefix" : "10.0.0.0/24",
+    "nodeSubnetName" : "[concat(parameters('baseName'), '-worker-subnet')]",
+    "nodeSubnetPrefix" : "10.0.1.0/24",
+    "clusterNsgName" : "[concat(parameters('baseName'), '-nsg')]"
+  },
+  "resources" : [
+    {
+      "apiVersion" : "2017-10-01",
+      "type" : "Microsoft.Network/virtualNetworks",
+      "name" : "[variables('virtualNetworkName')]",
+      "location" : "[variables('location')]",
+      "dependsOn" : [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('clusterNsgName'))]"
+      ],
+      "properties" : {
+        "addressSpace" : {
+          "addressPrefixes" : [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets" : [
+          {
+            "name" : "[variables('masterSubnetName')]",
+            "properties" : {
+              "addressPrefix" : "[variables('masterSubnetPrefix')]",
+              "serviceEndpoints": [],
+              "networkSecurityGroup" : {
+                "id" : "[resourceId('Microsoft.Network/networkSecurityGroups', variables('clusterNsgName'))]"
+              }
+            }
+          },
+          {
+            "name" : "[variables('nodeSubnetName')]",
+            "properties" : {
+              "addressPrefix" : "[variables('nodeSubnetPrefix')]",
+              "serviceEndpoints": [],
+              "networkSecurityGroup" : {
+                "id" : "[resourceId('Microsoft.Network/networkSecurityGroups', variables('clusterNsgName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type" : "Microsoft.Network/networkSecurityGroups",
+      "name" : "[variables('clusterNsgName')]",
+      "apiVersion" : "2017-10-01",
+      "location" : "[variables('location')]",
+      "properties" : {
+        "securityRules" : [
+          {
+            "name" : "apiserver_in",
+            "properties" : {
+              "protocol" : "Tcp",
+              "sourcePortRange" : "*",
+              "destinationPortRange" : "6443",
+              "sourceAddressPrefix" : "*",
+              "destinationAddressPrefix" : "*",
+              "access" : "Allow",
+              "priority" : 101,
+              "direction" : "Inbound"
+            }
+          },
+          {
+            "name" : "ign_in",
+            "properties" : {
+              "protocol" : "*",
+              "sourcePortRange" : "*",
+              "destinationPortRange" : "22623",
+              "sourceAddressPrefix" : "*",
+              "destinationAddressPrefix" : "*",
+              "access" : "Allow",
+              "priority" : 102,
+              "direction" : "Inbound"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
