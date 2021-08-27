@@ -35,18 +35,18 @@ The easiest way to ensure proper permissions is to grant Global Permissions to t
 
 For more information, consult [vSphere Permissions and User Management Tasks][vsphere-perms]
 
-### Precreated virtual machine folder
+### Precreated virtual machine folder in vSphere vCenter
 
 Role Name | Propagate | Entity
 --- | --- | ---
-openshift-vcenter-level | False | vSphere vCenter
-ReadOnly | False | vSphere vCenter Datacenter
-openshift-cluster-level | True | vSphere vCenter Cluster
-openshift-datastore-level | False | vSphere vCenter Datastore
-ReadOnly | False | vSphere Switch
-openshift-portgroup-level | False | vSphere Port Group
-ReadOnly | True | vSphere vCenter Virtual Machine folder (Top Level)
-openshift-folder-level | True | vSphere vCenter Virtual Machine folder
+openshift-vcenter-level | False | vCenter
+ReadOnly | False | Datacenter
+openshift-cluster-level | True | Cluster
+openshift-datastore-level | False | Datastore
+ReadOnly | False | Switch
+openshift-portgroup-level | False | Port Group
+ReadOnly | True | Virtual Machine folder (Top Level)
+openshift-folder-level | True | Virtual Machine folder
 
 In a cascading folder organization you will need `Read-only` permissions from the top folder level.
  
