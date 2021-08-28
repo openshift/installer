@@ -274,8 +274,8 @@ func engineSetup() (Config, error) {
 	}
 	logrus.Debug("engine FQDN: ", engineConfig.FQDN)
 
-	// By default, we set Insecure true
-	engineConfig.Insecure = true
+	// By default, we set Insecure false
+	engineConfig.Insecure = false
 
 	// Set c.URL with the API endpoint
 	engineConfig.URL = fmt.Sprintf("https://%s/ovirt-engine/api", engineConfig.FQDN)
@@ -323,7 +323,7 @@ func engineSetup() (Config, error) {
 	} else {
 		err = showPEM(httpResource.saveFilePath)
 		if err != nil {
-			engineConfig.Insecure = true
+			engineConfig.Insecure = false
 		} else {
 			answer, err := askQuestionTrueOrFalse(
 				"Would you like to use the above certificate to connect to Engine? ",
@@ -361,7 +361,7 @@ func engineSetup() (Config, error) {
 	if !engineConfig.Insecure {
 		err = httpResource.addTrustBundle(engineConfig.CABundle, &engineConfig)
 		if err != nil {
-			engineConfig.Insecure = true
+			engineConfig.Insecure = false
 		}
 	}
 

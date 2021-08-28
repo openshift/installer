@@ -243,7 +243,7 @@ ovirt_fqdn: ovirt.example.com
 ovirt_pem_url: ""
 ovirt_username: admin@internal
 ovirt_password: super-secret-password
-ovirt_insecure: true
+ovirt_insecure: false
 ```
 
 Please note that this option is **not recommended** as it will allow a potential attacker to perform a Man-in-the-Middle attack and capture sensitive credentials on the network.
