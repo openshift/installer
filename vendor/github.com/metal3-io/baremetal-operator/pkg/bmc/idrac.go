@@ -1,7 +1,6 @@
 package bmc
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 
@@ -77,6 +76,10 @@ func (a *iDracAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interfa
 	return result
 }
 
+func (a *iDracAccessDetails) BIOSInterface() string {
+	return ""
+}
+
 func (a *iDracAccessDetails) BootInterface() string {
 	return "ipxe"
 }
@@ -106,8 +109,50 @@ func (a *iDracAccessDetails) SupportsSecureBoot() bool {
 }
 
 func (a *iDracAccessDetails) BuildBIOSSettings(firmwareConfig *metal3v1alpha1.FirmwareConfig) (settings []map[string]string, err error) {
-	if firmwareConfig != nil {
-		return nil, fmt.Errorf("firmware settings for %s are not supported", a.Driver())
+	if firmwareConfig == nil {
+		return nil, nil
 	}
-	return nil, nil
+
+	var value string
+
+	if firmwareConfig.VirtualizationEnabled != nil {
+		value = "Disabled"
+		if *firmwareConfig.VirtualizationEnabled {
+			value = "Enabled"
+		}
+		settings = append(settings,
+			map[string]string{
+				"name":  "ProcVirtualization",
+				"value": value,
+			},
+		)
+	}
+
+	if firmwareConfig.SimultaneousMultithreadingEnabled != nil {
+		value = "Disabled"
+		if *firmwareConfig.SimultaneousMultithreadingEnabled {
+			value = "Enabled"
+		}
+		settings = append(settings,
+			map[string]string{
+				"name":  "LogicalProc",
+				"value": value,
+			},
+		)
+	}
+
+	if firmwareConfig.SriovEnabled != nil {
+		value = "Disabled"
+		if *firmwareConfig.SriovEnabled {
+			value = "Enabled"
+		}
+		settings = append(settings,
+			map[string]string{
+				"name":  "SriovGlobalEnable",
+				"value": value,
+			},
+		)
+	}
+
+	return
 }

@@ -91,6 +91,10 @@ func (a *ipmiAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interfac
 	return result
 }
 
+func (a *ipmiAccessDetails) BIOSInterface() string {
+	return ""
+}
+
 func (a *ipmiAccessDetails) BootInterface() string {
 	return "ipxe"
 }

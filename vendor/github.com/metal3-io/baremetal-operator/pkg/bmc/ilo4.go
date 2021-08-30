@@ -72,6 +72,10 @@ func (a *iLOAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interface
 	return result
 }
 
+func (a *iLOAccessDetails) BIOSInterface() string {
+	return ""
+}
+
 func (a *iLOAccessDetails) BootInterface() string {
 	return "ilo-ipxe"
 }

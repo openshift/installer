@@ -69,6 +69,10 @@ func (a *redfishVirtualMediaAccessDetails) DriverInfo(bmcCreds Credentials) map[
 	return result
 }
 
+func (a *redfishVirtualMediaAccessDetails) BIOSInterface() string {
+	return ""
+}
+
 func (a *redfishVirtualMediaAccessDetails) BootInterface() string {
 	return "redfish-virtual-media"
 }

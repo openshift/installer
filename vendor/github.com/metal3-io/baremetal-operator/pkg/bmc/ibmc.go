@@ -81,6 +81,10 @@ func (a *ibmcAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interfac
 	return result
 }
 
+func (a *ibmcAccessDetails) BIOSInterface() string {
+	return ""
+}
+
 func (a *ibmcAccessDetails) BootInterface() string {
 	return "pxe"
 }

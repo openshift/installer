@@ -70,6 +70,10 @@ func (a *iRMCAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interfac
 	return result
 }
 
+func (a *iRMCAccessDetails) BIOSInterface() string {
+	return ""
+}
+
 func (a *iRMCAccessDetails) BootInterface() string {
 	return "pxe"
 }
@@ -83,7 +87,7 @@ func (a *iRMCAccessDetails) PowerInterface() string {
 }
 
 func (a *iRMCAccessDetails) RAIDInterface() string {
-	return "no-raid"
+	return "irmc"
 }
 
 func (a *iRMCAccessDetails) VendorInterface() string {
@@ -95,10 +99,6 @@ func (a *iRMCAccessDetails) SupportsSecureBoot() bool {
 }
 
 func (a *iRMCAccessDetails) BuildBIOSSettings(firmwareConfig *metal3v1alpha1.FirmwareConfig) (settings []map[string]string, err error) {
-	if firmwareConfig == nil {
-		return nil, nil
-	}
-
 	if firmwareConfig == nil {
 		return nil, nil
 	}
