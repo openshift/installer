@@ -263,8 +263,14 @@ func (c *Client) GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.Res
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
+	apikey, err := c.GetAuthenticatorAPIKeyDetails(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	options := c.managementAPI.NewListResourceGroupsOptions()
-	listResourceGroupsResponse, _, err := c.managementAPI.ListResourceGroups(options)
+	options.SetAccountID(*apikey.AccountID)
+	listResourceGroupsResponse, _, err := c.managementAPI.ListResourceGroupsWithContext(ctx, options)
 	if err != nil {
 		return nil, err
 	}
