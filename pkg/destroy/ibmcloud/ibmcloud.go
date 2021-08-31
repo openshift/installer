@@ -283,6 +283,7 @@ func (o *ClusterUninstaller) ResourceGroupID() (string, error) {
 	defer cancel()
 
 	options := o.managementSvc.NewListResourceGroupsOptions()
+	options.SetAccountID(o.AccountID)
 	options.SetName(o.ResourceGroupName)
 	resources, _, err := o.managementSvc.ListResourceGroupsWithContext(ctx, options)
 	if err != nil {
