@@ -15,6 +15,7 @@ func (o *ClusterUninstaller) listResourceGroups() (cloudResources, error) {
 	defer cancel()
 
 	options := o.managementSvc.NewListResourceGroupsOptions()
+	options.SetAccountID(o.AccountID)
 	resources, _, err := o.managementSvc.ListResourceGroupsWithContext(ctx, options)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to list resource groups")
