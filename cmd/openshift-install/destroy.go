@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -21,6 +20,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
+	quotaasset "github.com/openshift/installer/pkg/destroy/quota"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 	"github.com/openshift/installer/pkg/metrics/timer"
 )
@@ -40,8 +40,7 @@ func newDestroyCmd() *cobra.Command {
 }
 
 func newDestroyClusterCmd() *cobra.Command {
-	var reportQuota bool
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "cluster",
 		Short: "Destroy an OpenShift cluster",
 		Args:  cobra.ExactArgs(0),
@@ -49,16 +48,12 @@ func newDestroyClusterCmd() *cobra.Command {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
 
-			err := runDestroyCmd(rootOpts.dir, reportQuota)
+			err := runDestroyCmd(rootOpts.dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true")
 			if err != nil {
 				logrus.Fatal(err)
 			}
 		},
 	}
-	quotaFlag := "report-quota-footprint"
-	cmd.Flags().BoolVar(&reportQuota, quotaFlag, false, "Report the quota footprint that the cluster had.")
-	_ = cmd.Flags().MarkHidden(quotaFlag) // only error possible is the flag does not exist, but we just added it
-	return cmd
 }
 
 func runDestroyCmd(directory string, reportQuota bool) error {
@@ -73,8 +68,8 @@ func runDestroyCmd(directory string, reportQuota bool) error {
 	}
 
 	if reportQuota {
-		if err := cluster.WriteQuota(directory, quota); err != nil {
-			return errors.Wrap(err, "Failed to record quota")
+		if err := quotaasset.WriteQuota(directory, quota); err != nil {
+			return errors.Wrap(err, "failed to record quota")
 		}
 	}
 

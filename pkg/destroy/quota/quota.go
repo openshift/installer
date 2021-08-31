@@ -1,13 +1,12 @@
-package cluster
+package quota
 
 import (
 	"encoding/json"
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/pkg/errors"
-
 	"github.com/openshift/installer/pkg/types"
+	"github.com/pkg/errors"
 )
 
 const (
