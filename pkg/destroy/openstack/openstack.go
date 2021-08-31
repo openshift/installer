@@ -85,7 +85,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	// deleteFuncs contains the functions that will be launched as
 	// goroutines.
 	deleteFuncs := map[string]deleteFunc{
@@ -108,7 +108,6 @@ func (o *ClusterUninstaller) Run() error {
 	returnChannel := make(chan string)
 
 	opts := openstackdefaults.DefaultClientOpts(o.Cloud)
-
 	// launch goroutines
 	for name, function := range deleteFuncs {
 		go deleteRunner(name, function, opts, o.Filter, o.Logger, returnChannel)
@@ -125,16 +124,16 @@ func (o *ClusterUninstaller) Run() error {
 	// LBs being deleted.
 	err := deleteRouterRunner(opts, o.Filter, o.Logger)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// we need to untag the custom network if it was provided by the user
 	err = untagRunner(opts, o.InfraID, o.Logger)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return nil, nil
 }
 
 func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger, channel chan string) {

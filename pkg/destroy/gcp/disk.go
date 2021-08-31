@@ -3,14 +3,15 @@ package gcp
 import (
 	"fmt"
 
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
 
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )
 
 func (o *ClusterUninstaller) listDisks() ([]cloudResource, error) {
-	return o.listDisksWithFilter("items/*/disks(name,zone),nextPageToken", o.clusterLabelOrClusterIDFilter(), nil)
+	return o.listDisksWithFilter("items/*/disks(name,zone,type,sizeGb),nextPageToken", o.clusterLabelOrClusterIDFilter(), nil)
 }
 
 // listDisksWithFilter lists disks in the project that satisfy the filter criteria.
@@ -37,6 +38,16 @@ func (o *ClusterUninstaller) listDisksWithFilter(fields string, filter string, f
 						name:     item.Name,
 						typeName: "disk",
 						zone:     zone,
+						quota: []gcp.QuotaUsage{{
+							Metric: &gcp.Metric{
+								Service: gcp.ServiceComputeEngineAPI,
+								Limit:   getDiskLimit(item.Type),
+								Dimensions: map[string]string{
+									"region": getRegionFromZone(zone),
+								},
+							},
+							Amount: item.SizeGb,
+						}},
 					})
 				}
 			}

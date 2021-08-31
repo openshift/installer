@@ -3,9 +3,10 @@ package gcp
 import (
 	"fmt"
 
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
 
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )
 
@@ -38,6 +39,16 @@ func (o *ClusterUninstaller) listInstanceGroupsWithFilter(fields string, filter 
 						typeName: "instancegroup",
 						zone:     zoneName,
 						url:      item.SelfLink,
+						quota: []gcp.QuotaUsage{{
+							Metric: &gcp.Metric{
+								Service: gcp.ServiceComputeEngineAPI,
+								Limit:   "instance_groups",
+								Dimensions: map[string]string{
+									"region": getRegionFromZone(zoneName),
+								},
+							},
+							Amount: 1,
+						}},
 					})
 				}
 			}

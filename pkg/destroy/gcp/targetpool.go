@@ -1,9 +1,10 @@
 package gcp
 
 import (
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
 
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )
 
@@ -32,6 +33,13 @@ func (o *ClusterUninstaller) listTargetPoolsWithFilter(fields string, filter str
 					key:      item.Name,
 					name:     item.Name,
 					typeName: "targetpool",
+					quota: []gcp.QuotaUsage{{
+						Metric: &gcp.Metric{
+							Service: gcp.ServiceComputeEngineAPI,
+							Limit:   "target_pools",
+						},
+						Amount: 1,
+					}},
 				})
 			}
 		}

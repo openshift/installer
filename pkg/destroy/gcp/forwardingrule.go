@@ -1,14 +1,15 @@
 package gcp
 
 import (
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
 
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )
 
 func (o *ClusterUninstaller) listForwardingRules() ([]cloudResource, error) {
-	return o.listForwardingRulesWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+	return o.listForwardingRulesWithFilter("items(name,region,loadBalancingScheme),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listForwardingRulesWithFilter lists forwarding rules in the project that satisfy the filter criteria.
@@ -28,10 +29,25 @@ func (o *ClusterUninstaller) listForwardingRulesWithFilter(fields string, filter
 		for _, item := range list.Items {
 			if filterFunc == nil || filterFunc != nil && filterFunc(item) {
 				o.Logger.Debugf("Found forwarding rule: %s", item.Name)
+				var quota []gcp.QuotaUsage
+				switch item.LoadBalancingScheme {
+				case "EXTERNAL":
+					quota = []gcp.QuotaUsage{{
+						Metric: &gcp.Metric{
+							Service: gcp.ServiceComputeEngineAPI,
+							Limit:   "external_network_lb_forwarding_rules",
+							Dimensions: map[string]string{
+								"region": getNameFromURL("regions", item.Region),
+							},
+						},
+						Amount: 1,
+					}}
+				}
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
 					typeName: "forwardingrule",
+					quota:    quota,
 				})
 			}
 		}

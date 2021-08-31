@@ -1,9 +1,10 @@
 package gcp
 
 import (
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
 
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )
 
@@ -32,6 +33,13 @@ func (o *ClusterUninstaller) listRoutersWithFilter(fields string, filter string,
 					key:      item.Name,
 					name:     item.Name,
 					typeName: "router",
+					quota: []gcp.QuotaUsage{{
+						Metric: &gcp.Metric{
+							Service: gcp.ServiceComputeEngineAPI,
+							Limit:   "routers",
+						},
+						Amount: 1,
+					}},
 				})
 			}
 		}

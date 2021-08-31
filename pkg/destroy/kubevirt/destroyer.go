@@ -34,14 +34,14 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (uninstaller *ClusterUninstaller) Run() error {
+func (uninstaller *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	ctx := context.Background()
 	namespace := uninstaller.Metadata.Kubevirt.Namespace
 
 	listOpts := metav1.ListOptions{LabelSelector: apilabels.FormatLabels(uninstaller.Metadata.Kubevirt.Labels)}
 	kubevirtClient, err := ickubevirt.NewClient()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	deleteFuncs := []deleteFunc{uninstaller.deleteAllVMs, uninstaller.deleteAllDVs, uninstaller.deleteAllSecrets}
@@ -68,9 +68,9 @@ func (uninstaller *ClusterUninstaller) Run() error {
 		}
 	}
 	if resultMsg != "" {
-		return fmt.Errorf("destroy finished with errors: %s", resultMsg)
+		return nil, fmt.Errorf("destroy finished with errors: %s", resultMsg)
 	}
-	return nil
+	return nil, nil
 }
 
 func (uninstaller *ClusterUninstaller) deleteAllVMs(ctx context.Context, namespace string, listOpts metav1.ListOptions, kubevirtClient ickubevirt.Client) error {

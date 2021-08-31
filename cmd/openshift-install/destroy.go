@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -21,7 +22,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
-	timer "github.com/openshift/installer/pkg/metrics/timer"
+	"github.com/openshift/installer/pkg/metrics/timer"
 )
 
 func newDestroyCmd() *cobra.Command {
@@ -39,7 +40,8 @@ func newDestroyCmd() *cobra.Command {
 }
 
 func newDestroyClusterCmd() *cobra.Command {
-	return &cobra.Command{
+	var reportQuota bool
+	cmd := &cobra.Command{
 		Use:   "cluster",
 		Short: "Destroy an OpenShift cluster",
 		Args:  cobra.ExactArgs(0),
@@ -47,22 +49,33 @@ func newDestroyClusterCmd() *cobra.Command {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
 
-			err := runDestroyCmd(rootOpts.dir)
+			err := runDestroyCmd(rootOpts.dir, reportQuota)
 			if err != nil {
 				logrus.Fatal(err)
 			}
 		},
 	}
+	quotaFlag := "report-quota-footprint"
+	cmd.Flags().BoolVar(&reportQuota, quotaFlag, false, "Report the quota footprint that the cluster had.")
+	_ = cmd.Flags().MarkHidden(quotaFlag) // only error possible is the flag does not exist, but we just added it
+	return cmd
 }
 
-func runDestroyCmd(directory string) error {
+func runDestroyCmd(directory string, reportQuota bool) error {
 	timer.StartTimer(timer.TotalTimeElapsed)
 	destroyer, err := destroy.New(logrus.StandardLogger(), directory)
 	if err != nil {
 		return errors.Wrap(err, "Failed while preparing to destroy cluster")
 	}
-	if err := destroyer.Run(); err != nil {
+	quota, err := destroyer.Run()
+	if err != nil {
 		return errors.Wrap(err, "Failed to destroy cluster")
+	}
+
+	if reportQuota {
+		if err := cluster.WriteQuota(directory, quota); err != nil {
+			return errors.Wrap(err, "Failed to record quota")
+		}
 	}
 
 	store, err := assetstore.NewStore(directory)
