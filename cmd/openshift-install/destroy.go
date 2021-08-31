@@ -47,7 +47,7 @@ func newDestroyClusterCmd() *cobra.Command {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
 
-			err := runDestroyCmd(rootOpts.dir)
+			err := runDestroyCmd(rootOpts.dir, os.Getenv("REPORT_QUOTA_FOOTPRINT") == "true")
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -55,7 +55,7 @@ func newDestroyClusterCmd() *cobra.Command {
 	}
 }
 
-func runDestroyCmd(directory string) error {
+func runDestroyCmd(directory string, reportQuota bool) error {
 	timer.StartTimer(timer.TotalTimeElapsed)
 	destroyer, err := destroy.New(logrus.StandardLogger(), directory)
 	if err != nil {
