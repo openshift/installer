@@ -80,7 +80,11 @@ func getPISession() (*ibmpisession.IBMPISession, *UserCredentials, error) {
 		}
 	}
 
-	if apikey = os.Getenv("API_KEY"); len(apikey) == 0 {
+	// APIKeyEnvVars is a list of environment variable names containing an IBM Cloud API key
+	var APIKeyEnvVars = []string{"IC_API_KEY", "IBMCLOUD_API_KEY", "BM_API_KEY", "BLUEMIX_API_KEY"}
+	apikey = getEnv(APIKeyEnvVars)
+
+	if len(apikey) == 0 {
 		err := survey.Ask([]*survey.Question{
 			{
 				Prompt: &survey.Password{
@@ -114,4 +118,13 @@ func getPISession() (*ibmpisession.IBMPISession, *UserCredentials, error) {
 	s, err := ibmpisession.New(passwd, region, false, defSessionTimeout, id, zone)
 	uc := &UserCredentials{UserID: id, APIKey: apikey}
 	return s, uc, err
+}
+
+func getEnv(envs []string) string {
+	for _, k := range envs {
+		if v := os.Getenv(k); v != "" {
+			return v
+		}
+	}
+	return ""
 }
