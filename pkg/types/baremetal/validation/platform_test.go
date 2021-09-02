@@ -54,6 +54,13 @@ func TestValidatePlatform(t *testing.T) {
 			expected: "Invalid value: \"192.168.222.4\": IP expected to be in one of the machine networks: 192.168.111.0/24",
 		},
 		{
+			name: "identical_apivip_ingressvip",
+			platform: platform().
+				APIVIP("192.168.111.100").
+				IngressVIP("192.168.111.100").build(),
+			expected: "apiVIP and ingressVIP must not be set to the same value",
+		},
+		{
 			name: "invalid_hosts",
 			platform: platform().
 				Hosts().build(),

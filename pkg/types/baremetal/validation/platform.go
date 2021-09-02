@@ -62,6 +62,13 @@ func validateIPNotinMachineCIDR(ip string, n *types.Networking) error {
 	return nil
 }
 
+func validateAPIVIPIsDifferentFromINGRESSVIP(apiVIP string, ingressVIP string) error {
+	if apiVIP == ingressVIP {
+		return fmt.Errorf("apiVIP and ingressVIP must not be set to the same value")
+	}
+	return nil
+}
+
 func validateNoOverlapMachineCIDR(target *net.IPNet, n *types.Networking) error {
 	allIPv4 := ipnet.MustParseCIDR("0.0.0.0/0")
 	allIPv6 := ipnet.MustParseCIDR("::/0")
@@ -353,6 +360,10 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 
 	if err := validateHostsCount(p.Hosts, c); err != nil {
 		allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
+	}
+
+	if err := validateAPIVIPIsDifferentFromINGRESSVIP(p.APIVIP, p.IngressVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
 	}
 
 	allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
