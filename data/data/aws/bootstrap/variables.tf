@@ -1,3 +1,8 @@
+variable "control_plane_ips" {
+  type    = list(string)
+  default = null
+}
+
 variable "lb_target_group_arns" {
   type = list(string)
 }

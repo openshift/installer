@@ -92,3 +92,9 @@ conditional need to be recreated. See
 https://github.com/hashicorp/terraform/issues/12570
 EOF
 }
+
+variable "bootstrap_ip" {
+  type = string
+  description = "The ip of the bootstrap node. Used for log gathering but not for infrastructure provisioning."
+  default = null
+}
