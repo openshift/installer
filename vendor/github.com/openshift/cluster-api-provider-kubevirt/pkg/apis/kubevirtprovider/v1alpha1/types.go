@@ -35,6 +35,7 @@ type KubevirtMachineProviderSpec struct {
 	StorageClassName           string `json:"storageClassName,omitempty"`
 	IgnitionSecretName         string `json:"ignitionSecretName,omitempty"`
 	NetworkName                string `json:"networkName,omitempty"`
+	InterfaceBindingMethod     string `json:"interfaceBindingMethod,omitempty"`
 	PersistentVolumeAccessMode string `json:"persistentVolumeAccessMode,omitempty"`
 }
 

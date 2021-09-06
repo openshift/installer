@@ -16,6 +16,7 @@ type config struct {
 	Storage                    string            `json:"kubevirt_master_storage"`
 	StorageClass               string            `json:"kubevirt_storage_class"`
 	NetworkName                string            `json:"kubevirt_network_name"`
+	InterfaceBindingMethod     string            `json:"kubevirt_interface_binding_method"`
 	PersistentVolumeAccessMode string            `json:"kubevirt_pv_access_mode"`
 	ResourcesLabels            map[string]string `json:"kubevirt_labels"`
 }
@@ -32,7 +33,7 @@ type TFVarsSources struct {
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterSpec := sources.MasterSpecs[0]
 
-	// For optional parametes, set only if not nil
+	// For optional parameters, set only if not nil
 	cfg := config{
 		Namespace:                  sources.Namespace,
 		ImageURL:                   sources.ImageURL,
@@ -42,6 +43,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Storage:                    masterSpec.RequestedStorage,
 		StorageClass:               masterSpec.StorageClassName,
 		NetworkName:                masterSpec.NetworkName,
+		InterfaceBindingMethod:     masterSpec.InterfaceBindingMethod,
 		PersistentVolumeAccessMode: masterSpec.PersistentVolumeAccessMode,
 		ResourcesLabels:            sources.ResourcesLabels,
 	}

@@ -1685,6 +1685,10 @@ spec:
                       ingress controller.
                     format: ip
                     type: string
+                  interfaceBindingMethod:
+                    description: InterfaceBindingMethod is the the interface binding
+                      method of the nodes of the tenantcluster (Bridge | SRIOV).
+                    type: string
                   namespace:
                     description: Namespace is the namespace in the infra cluster,
                       which the control plane (master vms) and the compute (worker

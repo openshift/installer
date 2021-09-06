@@ -35,10 +35,10 @@ var (
 	invalidMachineCIDR    = "10.0.0.0/16"
 	namespaceStruct       = &corev1.Namespace{}
 	kubeMacPoolLabels     = map[string]string{"mutatevirtualmachines.kubemacpool.io": "allocate"}
-	hcoNamespace          = "openshift-cnv"
-	hcoCrName             = "kubevirt-hyperconverged"
-	hcoValidCr            = unstructured.Unstructured{}
-	hcoInvalidCr          = unstructured.Unstructured{}
+	kvNamespace           = "openshift-cnv"
+	kvCrName              = "kubevirt-kubevirt-hyperconverged"
+	kvValidCr             = unstructured.Unstructured{}
+	kvInvalidCr           = unstructured.Unstructured{}
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -234,62 +234,104 @@ func TestValidatePermissions(t *testing.T) {
 }
 
 func TestValidationForProvisioning(t *testing.T) {
-	createHcoObjects()
+	createKvObjects()
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	t.Run("Missing HyperConverged CR", func(t *testing.T) {
+	// HotplugVolumes feature is always enabled by HCO in version 4.8.0.
+	// For backward compitability, we are now checking that kubevirt CR is configured
+	// with hotPlugVolumes feature gate.
+	t.Run("Missing Kubevirt CR", func(t *testing.T) {
 		client := mock.NewMockClient(mockCtrl)
-		client.EXPECT().GetHyperConverged(gomock.Any(), hcoCrName, hcoNamespace).Return(nil, fmt.Errorf("test")).AnyTimes()
+		client.EXPECT().GetKubeVirt(gomock.Any(), kvCrName, kvNamespace).Return(nil, fmt.Errorf("test")).AnyTimes()
 		err := ValidateForProvisioning(client)
 		assert.NotNil(t, err)
 	})
 
-	t.Run("Feature gate not set", func(t *testing.T) {
+	t.Run("HotplugVolumes feature gate is NOT set on KubeVirt CR", func(t *testing.T) {
 		client := mock.NewMockClient(mockCtrl)
-		client.EXPECT().GetHyperConverged(gomock.Any(), hcoCrName, hcoNamespace).Return(&hcoInvalidCr, nil).AnyTimes()
+		client.EXPECT().GetKubeVirt(gomock.Any(), kvCrName, kvNamespace).Return(&kvInvalidCr, nil).AnyTimes()
 		err := ValidateForProvisioning(client)
 		assert.NotNil(t, err)
 	})
 
-	t.Run("Feature gate is set", func(t *testing.T) {
+	t.Run("HotplugVolumes feature gate is set on KubeVirt CR", func(t *testing.T) {
 		client := mock.NewMockClient(mockCtrl)
-		client.EXPECT().GetHyperConverged(gomock.Any(), hcoCrName, hcoNamespace).Return(&hcoValidCr, nil).AnyTimes()
+		client.EXPECT().GetKubeVirt(gomock.Any(), kvCrName, kvNamespace).Return(&kvValidCr, nil).AnyTimes()
 		err := ValidateForProvisioning(client)
 		assert.Nil(t, err)
 	})
 }
 
-func createHcoObjects() {
-	hcoValidCrJSON := `{
-							"apiVersion": "hco.kubevirt.io/v1beta1",
-							"kind": "HyperConverged",
-							"metadata": {
-								"name": "kubevirt-hyperconverged",
-								"namespace": "openshift-cnv"
+func createKvObjects() {
+	kvValidCrJSON := `{
+						  "apiVersion": "kubevirt.io/v1",
+						  "kind": "KubeVirt",
+						  "metadata": {
+							"name": "kubevirt-kubevirt-hyperconverged",
+							"namespace": "openshift-cnv"
+						  },
+						  "spec": {
+							"configuration": {
+							  "developerConfiguration": {
+								"featureGates": [
+								  "DataVolumes",
+								  "SRIOV",
+								  "LiveMigration",
+								  "CPUManager",
+								  "CPUNodeDiscovery",
+								  "Snapshot",
+								  "HotplugVolumes",
+								  "GPU",
+								  "HostDevices",
+								  "WithHostModelCPU",
+								  "HypervStrictCheck"
+								]
+							  }
 							},
-							"spec": {
-								"featureGates": {
-									"hotplugVolumes": true
-								}
-							}
-						}`
-	hcoInvalidCrJSON := `{
-							"apiVersion": "hco.kubevirt.io/v1beta1",
-							"kind": "HyperConverged",
-							"metadata": {
-								"name": "kubevirt-hyperconverged",
-								"namespace": "openshift-cnv"
-							},
-							"spec": {}
+							"customizeComponents": {},
+							"infra": {},
+							"uninstallStrategy": "BlockUninstallIfWorkloadsExist",
+							"workloadUpdateStrategy": {}
+						  }
 						}`
 
-	err := hcoValidCr.UnmarshalJSON([]byte(hcoValidCrJSON))
+	kvInvalidCrJSON := `{
+						  "apiVersion": "kubevirt.io/v1",
+						  "kind": "KubeVirt",
+						  "metadata": {
+							"name": "kubevirt-kubevirt-hyperconverged",
+							"namespace": "openshift-cnv"
+						  },
+						  "spec": {
+							"configuration": {
+							  "developerConfiguration": {
+								"featureGates": [
+								  "DataVolumes",
+								  "SRIOV",
+								  "LiveMigration",
+								  "CPUManager",
+								  "CPUNodeDiscovery",
+								  "Snapshot",
+								  "GPU",
+								  "HostDevices",
+								  "WithHostModelCPU",
+								  "HypervStrictCheck"
+								]
+							  }
+							},
+							"customizeComponents": {},
+							"infra": {},
+							"uninstallStrategy": "BlockUninstallIfWorkloadsExist",
+							"workloadUpdateStrategy": {}
+						  }
+						}`
+	err := kvValidCr.UnmarshalJSON([]byte(kvValidCrJSON))
 	if err != nil {
 		panic(err)
 	}
-	err = hcoInvalidCr.UnmarshalJSON([]byte(hcoInvalidCrJSON))
+	err = kvInvalidCr.UnmarshalJSON([]byte(kvInvalidCrJSON))
 	if err != nil {
 		panic(err)
 	}

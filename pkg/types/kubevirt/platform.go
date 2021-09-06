@@ -13,6 +13,10 @@ type Platform struct {
 	// NetworkName is the target network of all the network interfaces of the nodes.
 	NetworkName string `json:"networkName"`
 
+	// InterfaceBindingMethod is the the interface binding method of the nodes of the tenantcluster (Bridge | SRIOV).
+	// +optional
+	InterfaceBindingMethod string `json:"interfaceBindingMethod"`
+
 	// APIVIP is the virtual IP address for the api endpoint.
 	// +kubebuilder:validation:Format=ip
 	APIVIP string `json:"apiVIP"`

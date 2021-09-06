@@ -28,7 +28,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(clusterID, platform, pool, userDataSecret, osImage)
+	provider := provider(clusterID, platform, pool, userDataSecret, config)
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{
@@ -58,7 +58,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *kubevirt.Platform, pool *types.MachinePool, userDataSecret string, osImage string) *kubevirtprovider.KubevirtMachineProviderSpec {
+func provider(clusterID string, platform *kubevirt.Platform, pool *types.MachinePool, userDataSecret string, config *types.InstallConfig) *kubevirtprovider.KubevirtMachineProviderSpec {
+	interfaceBindingMethod := "InterfaceBridge"
+	if config.Kubevirt.InterfaceBindingMethod != "" {
+		interfaceBindingMethod = "Interface" + config.Kubevirt.InterfaceBindingMethod
+	}
 	spec := kubevirtprovider.KubevirtMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "kubevirtproviderconfig.openshift.io/v1alpha1",
@@ -71,6 +75,7 @@ func provider(clusterID string, platform *kubevirt.Platform, pool *types.Machine
 		StorageClassName:           platform.StorageClass,
 		IgnitionSecretName:         userDataSecret,
 		NetworkName:                platform.NetworkName,
+		InterfaceBindingMethod:     interfaceBindingMethod,
 		PersistentVolumeAccessMode: platform.PersistentVolumeAccessMode,
 	}
 	return &spec
