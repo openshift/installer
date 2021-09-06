@@ -18,4 +18,4 @@ Create a new operator asset, and render the Dependencies, Name, Load and Generat
  - Template files
 In the pkg/asset/manifests/content/openshift directory, place the templates golang variables. Then modify pkg/asset/manifests/openshift.go to expand the template. Expand templateData in template.go for filling up the template variables.
 
-[cvo-operators]: https://github.com/openshift/cluster-version-operator/tree/master/docs/dev/operators.md
+[cvo-operators]: https://github.com/openshift/enhancements/blob/master/dev-guide/cluster-version-operator/dev/operators.md
