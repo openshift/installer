@@ -590,6 +590,9 @@ func getRouterInterfaces(conn *gophercloud.ServiceClient, allNetworks []networks
 			logger.Debug(err)
 			return routerPorts, nil
 		}
+		if subnet.GatewayIP == "" {
+			continue
+		}
 		portListOpts := ports.ListOpts{
 			FixedIPs: []ports.FixedIPOpts{
 				{
@@ -630,14 +633,9 @@ func clearRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, logger 
 		return false, nil
 	}
 
-	// Find the machines Network by the master machines Ports.
-	// Any worker nodes ports, including the ones used for additionalNetworks,
-	// are tagged with cluster-api-provider-openstack and should be excluded
-	// to ensure only the primary Network ports are filtered.
 	tags := filterTags(filter)
 	networkListOpts := networks.ListOpts{
-		Tags:    strings.Join(tags, ","),
-		NotTags: "cluster-api-provider-openstack",
+		Tags: strings.Join(tags, ","),
 	}
 
 	allNetworksPages, err := networks.List(conn, networkListOpts).AllPages()
