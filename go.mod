@@ -32,10 +32,11 @@ require (
 	github.com/dmacvicar/terraform-provider-libvirt v0.6.4-0.20201216193629-2b60d7626ff8
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
+	github.com/go-logr/logr v1.1.0 // indirect
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/golang/mock v1.4.4
-	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.2
+	github.com/golang/protobuf v1.5.2
+	github.com/google/go-cmp v0.5.6
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gophercloud/gophercloud v0.17.0
@@ -61,7 +62,7 @@ require (
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.1.1
 	github.com/openshift-metal3/terraform-provider-ironic v0.2.6
-	github.com/openshift/api v0.0.0-20210622200201-7740bfb97397
+	github.com/openshift/api v0.0.0-20210907212721-c9d6fcc62893
 	github.com/openshift/client-go v0.0.0-20210409155308-a8e62c60e930
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5
@@ -100,20 +101,21 @@ require (
 	github.com/zclconf/go-cty v1.6.1
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
-	golang.org/x/mod v0.4.0 // indirect
+	golang.org/x/net v0.0.0-20210903162142-ad29c8ab022f // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-	golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
+	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/api v0.33.0
 	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a
 	google.golang.org/grpc v1.32.0
 	gopkg.in/ini.v1 v1.61.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.21.1
+	k8s.io/api v0.22.1
 	k8s.io/apiextensions-apiserver v0.21.0-rc.0
-	k8s.io/apimachinery v0.21.1
+	k8s.io/apimachinery v0.22.1
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
-	k8s.io/klog/v2 v2.8.0
+	k8s.io/klog/v2 v2.10.0
 	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
 	kubevirt.io/client-go v0.29.0
 	kubevirt.io/containerized-data-importer v1.10.9
@@ -127,6 +129,7 @@ replace (
 	cloud.google.com/go => cloud.google.com/go v0.57.0
 	github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
+	github.com/go-logr/logr => github.com/go-logr/logr v0.4.0
 	github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4 // Pin to fork with deduplicated rpc types v0.12.20-openshift-4
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift // Pin to fork with public rpc types
 	github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
