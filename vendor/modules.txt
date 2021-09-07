@@ -1012,6 +1012,7 @@ github.com/hashicorp/go-safetemp
 # github.com/hashicorp/go-uuid v1.0.2
 github.com/hashicorp/go-uuid
 # github.com/hashicorp/go-version v1.3.0
+## explicit
 github.com/hashicorp/go-version
 # github.com/hashicorp/golang-lru v0.5.4
 github.com/hashicorp/golang-lru
@@ -1422,7 +1423,7 @@ github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1
 ## explicit
 github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis
 github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1
-# github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20201214114543-e5aed9c73f1f
+# github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20210719100556-9b8bc3666720
 ## explicit
 github.com/openshift/cluster-api-provider-kubevirt/pkg/apis
 github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1

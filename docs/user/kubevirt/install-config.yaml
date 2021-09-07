@@ -30,6 +30,7 @@ platform:
     ingressVIP: Enter here the Ingress virtual IP
     namespace: Enter here the namespace to create the tenant cluster resources in
     networkName: Enter here the network (NAD name) to be used by the tenant cluster
+    interfaceBindingMethod: Enter here the interface binding method of the NAD to be used by the tenant cluster's nodes [Bridge|SRIOV]
     storageClass: Enter here the storage class used in the infra cluster
 publish: External
 pullSecret: Enter pullSecret here, You can get this secret from https://cloud.redhat.com/openshift/install/pull-secret

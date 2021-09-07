@@ -15,29 +15,33 @@ module "datavolume" {
 }
 
 module "masters" {
-  source         = "./masters"
-  master_count   = var.master_count
-  cluster_id     = var.cluster_id
-  ignition_data  = var.ignition_master
-  namespace      = var.kubevirt_namespace
-  storage        = var.kubevirt_master_storage
-  memory         = var.kubevirt_master_memory
-  cpu            = var.kubevirt_master_cpu
-  storage_class  = var.kubevirt_storage_class
-  network_name   = var.kubevirt_network_name
-  pv_access_mode = var.kubevirt_pv_access_mode
-  labels         = var.kubevirt_labels
-  pvc_name       = module.datavolume.pvc_name
+  source                   = "./masters"
+  master_count             = var.master_count
+  cluster_id               = var.cluster_id
+  ignition_data            = var.ignition_master
+  namespace                = var.kubevirt_namespace
+  storage                  = var.kubevirt_master_storage
+  memory                   = var.kubevirt_master_memory
+  cpu                      = var.kubevirt_master_cpu
+  storage_class            = var.kubevirt_storage_class
+  network_name             = var.kubevirt_network_name
+  interface_binding_method = var.kubevirt_interface_binding_method
+  pv_access_mode           = var.kubevirt_pv_access_mode
+  labels                   = var.kubevirt_labels
+  pvc_name                 = module.datavolume.pvc_name
+
 }
 
 module "bootstrap" {
-  source         = "./bootstrap"
-  cluster_id     = var.cluster_id
-  ignition_data  = var.ignition_bootstrap
-  namespace      = var.kubevirt_namespace
-  storage_class  = var.kubevirt_storage_class
-  network_name   = var.kubevirt_network_name
-  pv_access_mode = var.kubevirt_pv_access_mode
-  labels         = var.kubevirt_labels
-  pvc_name       = module.datavolume.pvc_name
+  source                   = "./bootstrap"
+  cluster_id               = var.cluster_id
+  ignition_data            = var.ignition_bootstrap
+  namespace                = var.kubevirt_namespace
+  storage_class            = var.kubevirt_storage_class
+  network_name             = var.kubevirt_network_name
+  interface_binding_method = var.kubevirt_interface_binding_method
+  pv_access_mode           = var.kubevirt_pv_access_mode
+  labels                   = var.kubevirt_labels
+  pvc_name                 = module.datavolume.pvc_name
+
 }

@@ -42,6 +42,7 @@ require (
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.16.5
 	github.com/hashicorp/go-plugin v1.3.0
+	github.com/hashicorp/go-version v1.3.0
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/terraform v0.13.4
 	github.com/hashicorp/terraform-plugin-sdk v1.16.0
@@ -64,7 +65,7 @@ require (
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5
 	github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d
-	github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20201214114543-e5aed9c73f1f
+	github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20210719100556-9b8bc3666720
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210622084102-c4f9f269bcb7
 	github.com/openshift/library-go v0.0.0-20210408164723-7a65fdb398e2

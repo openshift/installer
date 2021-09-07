@@ -6,8 +6,6 @@ package mock
 
 import (
 	context "context"
-	reflect "reflect"
-
 	dnsrecordsv1 "github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	iamidentityv1 "github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	resourcecontrollerv2 "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
@@ -15,32 +13,33 @@ import (
 	vpcv1 "github.com/IBM/vpc-go-sdk/vpcv1"
 	gomock "github.com/golang/mock/gomock"
 	ibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
+	reflect "reflect"
 )
 
-// MockAPI is a mock of API interface.
+// MockAPI is a mock of API interface
 type MockAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIMockRecorder
 }
 
-// MockAPIMockRecorder is the mock recorder for MockAPI.
+// MockAPIMockRecorder is the mock recorder for MockAPI
 type MockAPIMockRecorder struct {
 	mock *MockAPI
 }
 
-// NewMockAPI creates a new mock instance.
+// NewMockAPI creates a new mock instance
 func NewMockAPI(ctrl *gomock.Controller) *MockAPI {
 	mock := &MockAPI{ctrl: ctrl}
 	mock.recorder = &MockAPIMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
-// GetAuthenticatorAPIKeyDetails mocks base method.
+// GetAuthenticatorAPIKeyDetails mocks base method
 func (m *MockAPI) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAuthenticatorAPIKeyDetails", ctx)
@@ -49,13 +48,13 @@ func (m *MockAPI) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidenti
 	return ret0, ret1
 }
 
-// GetAuthenticatorAPIKeyDetails indicates an expected call of GetAuthenticatorAPIKeyDetails.
+// GetAuthenticatorAPIKeyDetails indicates an expected call of GetAuthenticatorAPIKeyDetails
 func (mr *MockAPIMockRecorder) GetAuthenticatorAPIKeyDetails(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticatorAPIKeyDetails", reflect.TypeOf((*MockAPI)(nil).GetAuthenticatorAPIKeyDetails), ctx)
 }
 
-// GetCISInstance mocks base method.
+// GetCISInstance mocks base method
 func (m *MockAPI) GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCISInstance", ctx, crnstr)
@@ -64,13 +63,13 @@ func (m *MockAPI) GetCISInstance(ctx context.Context, crnstr string) (*resourcec
 	return ret0, ret1
 }
 
-// GetCISInstance indicates an expected call of GetCISInstance.
+// GetCISInstance indicates an expected call of GetCISInstance
 func (mr *MockAPIMockRecorder) GetCISInstance(ctx, crnstr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCISInstance", reflect.TypeOf((*MockAPI)(nil).GetCISInstance), ctx, crnstr)
 }
 
-// GetDNSRecordsByName mocks base method.
+// GetDNSRecordsByName mocks base method
 func (m *MockAPI) GetDNSRecordsByName(ctx context.Context, crnstr, zoneID, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDNSRecordsByName", ctx, crnstr, zoneID, recordName)
@@ -79,13 +78,13 @@ func (m *MockAPI) GetDNSRecordsByName(ctx context.Context, crnstr, zoneID, recor
 	return ret0, ret1
 }
 
-// GetDNSRecordsByName indicates an expected call of GetDNSRecordsByName.
+// GetDNSRecordsByName indicates an expected call of GetDNSRecordsByName
 func (mr *MockAPIMockRecorder) GetDNSRecordsByName(ctx, crnstr, zoneID, recordName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSRecordsByName", reflect.TypeOf((*MockAPI)(nil).GetDNSRecordsByName), ctx, crnstr, zoneID, recordName)
 }
 
-// GetDNSZoneIDByName mocks base method.
+// GetDNSZoneIDByName mocks base method
 func (m *MockAPI) GetDNSZoneIDByName(ctx context.Context, name string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDNSZoneIDByName", ctx, name)
@@ -94,13 +93,13 @@ func (m *MockAPI) GetDNSZoneIDByName(ctx context.Context, name string) (string, 
 	return ret0, ret1
 }
 
-// GetDNSZoneIDByName indicates an expected call of GetDNSZoneIDByName.
+// GetDNSZoneIDByName indicates an expected call of GetDNSZoneIDByName
 func (mr *MockAPIMockRecorder) GetDNSZoneIDByName(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZoneIDByName", reflect.TypeOf((*MockAPI)(nil).GetDNSZoneIDByName), ctx, name)
 }
 
-// GetDNSZones mocks base method.
+// GetDNSZones mocks base method
 func (m *MockAPI) GetDNSZones(ctx context.Context) ([]ibmcloud.DNSZoneResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDNSZones", ctx)
@@ -109,13 +108,13 @@ func (m *MockAPI) GetDNSZones(ctx context.Context) ([]ibmcloud.DNSZoneResponse, 
 	return ret0, ret1
 }
 
-// GetDNSZones indicates an expected call of GetDNSZones.
+// GetDNSZones indicates an expected call of GetDNSZones
 func (mr *MockAPIMockRecorder) GetDNSZones(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZones", reflect.TypeOf((*MockAPI)(nil).GetDNSZones), ctx)
 }
 
-// GetEncryptionKey mocks base method.
+// GetEncryptionKey mocks base method
 func (m *MockAPI) GetEncryptionKey(ctx context.Context, keyCRN string) (*ibmcloud.EncryptionKeyResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEncryptionKey", ctx, keyCRN)
@@ -124,28 +123,13 @@ func (m *MockAPI) GetEncryptionKey(ctx context.Context, keyCRN string) (*ibmclou
 	return ret0, ret1
 }
 
-// GetEncryptionKey indicates an expected call of GetEncryptionKey.
+// GetEncryptionKey indicates an expected call of GetEncryptionKey
 func (mr *MockAPIMockRecorder) GetEncryptionKey(ctx, keyCRN interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEncryptionKey", reflect.TypeOf((*MockAPI)(nil).GetEncryptionKey), ctx, keyCRN)
 }
 
-// GetResourceGroup mocks base method.
-func (m *MockAPI) GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetResourceGroup", ctx, nameOrID)
-	ret0, _ := ret[0].(*resourcemanagerv2.ResourceGroup)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetResourceGroup indicates an expected call of GetResourceGroup.
-func (mr *MockAPIMockRecorder) GetResourceGroup(ctx, nameOrID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceGroup", reflect.TypeOf((*MockAPI)(nil).GetResourceGroup), ctx, nameOrID)
-}
-
-// GetResourceGroups mocks base method.
+// GetResourceGroups mocks base method
 func (m *MockAPI) GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetResourceGroups", ctx)
@@ -154,13 +138,28 @@ func (m *MockAPI) GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.Re
 	return ret0, ret1
 }
 
-// GetResourceGroups indicates an expected call of GetResourceGroups.
+// GetResourceGroups indicates an expected call of GetResourceGroups
 func (mr *MockAPIMockRecorder) GetResourceGroups(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceGroups", reflect.TypeOf((*MockAPI)(nil).GetResourceGroups), ctx)
 }
 
-// GetSubnet mocks base method.
+// GetResourceGroup mocks base method
+func (m *MockAPI) GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetResourceGroup", ctx, nameOrID)
+	ret0, _ := ret[0].(*resourcemanagerv2.ResourceGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetResourceGroup indicates an expected call of GetResourceGroup
+func (mr *MockAPIMockRecorder) GetResourceGroup(ctx, nameOrID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceGroup", reflect.TypeOf((*MockAPI)(nil).GetResourceGroup), ctx, nameOrID)
+}
+
+// GetSubnet mocks base method
 func (m *MockAPI) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSubnet", ctx, subnetID)
@@ -169,43 +168,13 @@ func (m *MockAPI) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet
 	return ret0, ret1
 }
 
-// GetSubnet indicates an expected call of GetSubnet.
+// GetSubnet indicates an expected call of GetSubnet
 func (mr *MockAPIMockRecorder) GetSubnet(ctx, subnetID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnet", reflect.TypeOf((*MockAPI)(nil).GetSubnet), ctx, subnetID)
 }
 
-// GetVPC mocks base method.
-func (m *MockAPI) GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVPC", ctx, vpcID)
-	ret0, _ := ret[0].(*vpcv1.VPC)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetVPC indicates an expected call of GetVPC.
-func (mr *MockAPIMockRecorder) GetVPC(ctx, vpcID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPC", reflect.TypeOf((*MockAPI)(nil).GetVPC), ctx, vpcID)
-}
-
-// GetVPCZonesForRegion mocks base method.
-func (m *MockAPI) GetVPCZonesForRegion(ctx context.Context, region string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVPCZonesForRegion", ctx, region)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetVPCZonesForRegion indicates an expected call of GetVPCZonesForRegion.
-func (mr *MockAPIMockRecorder) GetVPCZonesForRegion(ctx, region interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCZonesForRegion", reflect.TypeOf((*MockAPI)(nil).GetVPCZonesForRegion), ctx, region)
-}
-
-// GetVSIProfiles mocks base method.
+// GetVSIProfiles mocks base method
 func (m *MockAPI) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVSIProfiles", ctx)
@@ -214,8 +183,38 @@ func (m *MockAPI) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, 
 	return ret0, ret1
 }
 
-// GetVSIProfiles indicates an expected call of GetVSIProfiles.
+// GetVSIProfiles indicates an expected call of GetVSIProfiles
 func (mr *MockAPIMockRecorder) GetVSIProfiles(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVSIProfiles", reflect.TypeOf((*MockAPI)(nil).GetVSIProfiles), ctx)
+}
+
+// GetVPC mocks base method
+func (m *MockAPI) GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVPC", ctx, vpcID)
+	ret0, _ := ret[0].(*vpcv1.VPC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVPC indicates an expected call of GetVPC
+func (mr *MockAPIMockRecorder) GetVPC(ctx, vpcID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPC", reflect.TypeOf((*MockAPI)(nil).GetVPC), ctx, vpcID)
+}
+
+// GetVPCZonesForRegion mocks base method
+func (m *MockAPI) GetVPCZonesForRegion(ctx context.Context, region string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVPCZonesForRegion", ctx, region)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVPCZonesForRegion indicates an expected call of GetVPCZonesForRegion
+func (mr *MockAPIMockRecorder) GetVPCZonesForRegion(ctx, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCZonesForRegion", reflect.TypeOf((*MockAPI)(nil).GetVPCZonesForRegion), ctx, region)
 }

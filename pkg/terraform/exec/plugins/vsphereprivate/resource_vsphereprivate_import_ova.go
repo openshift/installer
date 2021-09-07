@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/pkg/errors"
@@ -12,6 +14,7 @@ import (
 	"github.com/vmware/govmomi/nfc"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/ovf"
+	"github.com/vmware/govmomi/task"
 	"github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -19,6 +22,12 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/vmware/govmomi/govc/importx"
+)
+
+const (
+	esxi67U3BuildNumber int    = 14320388
+	vmx15               string = "vmx-15"
+	vmx13               string = "vmx-13"
 )
 
 func resourceVSpherePrivateImportOva() *schema.Resource {
@@ -90,12 +99,13 @@ func resourceVSpherePrivateImportOva() *schema.Resource {
 
 // importOvaParams contains the vCenter objects required to import a OVA into vSphere.
 type importOvaParams struct {
-	ResourcePool *object.ResourcePool
-	Datacenter   *object.Datacenter
-	Datastore    *object.Datastore
-	Network      *object.Network
-	Host         *object.HostSystem
-	Folder       *object.Folder
+	ResourcePool    *object.ResourcePool
+	Datacenter      *object.Datacenter
+	Datastore       *object.Datastore
+	Network         *object.Network
+	Host            *object.HostSystem
+	Folder          *object.Folder
+	HardwareVersion string
 }
 
 func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, network, folder string) (*importOvaParams, error) {
@@ -176,6 +186,11 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 		return nil, errors.Errorf("failed to find a host in the cluster that contains the provided datastore")
 	}
 
+	v67, err := version.NewVersion("6.7")
+	if err != nil {
+		return nil, err
+	}
+
 	// Find all the HostSystem(s) under cluster
 	hosts, err := clusterComputeResource.Hosts(ctx)
 	if err != nil {
@@ -189,9 +204,36 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 	for _, hostObj := range hosts {
 		foundDatastore := false
 		foundNetwork := false
-		err := hostObj.Properties(ctx, hostObj.Reference(), []string{"network", "datastore", "runtime"}, &hostSystemManagedObject)
+		err := hostObj.Properties(ctx, hostObj.Reference(), []string{"config.product", "network", "datastore", "runtime"}, &hostSystemManagedObject)
 		if err != nil {
 			return nil, err
+		}
+
+		// If HardwareVersion is 13 there is no reason to continue checking
+		// There is a ESXi host that does not support hardware 15.
+		if importOvaParams.HardwareVersion != vmx13 {
+			esxiHostVersion, err := version.NewVersion(hostSystemManagedObject.Config.Product.Version)
+			if err != nil {
+				return nil, err
+			}
+
+			importOvaParams.HardwareVersion = vmx13
+			if esxiHostVersion.Equal(v67) {
+				build, err := strconv.Atoi(hostSystemManagedObject.Config.Product.Build)
+				if err != nil {
+					return nil, err
+				}
+				// This is the ESXi 6.7 U3 build number
+				// Anything less than this version is unsupported with the
+				// out-of-tree CSI.
+				// https://kb.vmware.com/s/article/2143838
+				// https://vsphere-csi-driver.sigs.k8s.io/supported_features_matrix.html
+				if build >= esxi67U3BuildNumber {
+					importOvaParams.HardwareVersion = vmx15
+				}
+			} else if esxiHostVersion.GreaterThan(v67) {
+				importOvaParams.HardwareVersion = vmx15
+			}
 		}
 
 		// Skip all hosts that are in maintenance mode.
@@ -219,9 +261,13 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 				return nil, err
 			}
 			importOvaParams.ResourcePool = resourcePool
-			return importOvaParams, nil
 		}
 	}
+
+	if importOvaParams.Datastore != nil && importOvaParams.Network != nil {
+		return importOvaParams, nil
+	}
+
 	return nil, errors.Errorf("failed to find a host in the cluster that contains the provided datastore and network")
 }
 
@@ -375,6 +421,22 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 	}
 	log.Printf("[DEBUG] %s: mark as template", vm.Name())
 
+	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.VirtualMachine.html#upgradeVirtualHardware
+	// "Upgrades this virtual machine's virtual hardware to the latest revision that is supported by the virtual machine's current host."
+	task, err := vm.UpgradeVM(ctx, importOvaParams.HardwareVersion)
+
+	if err != nil {
+		return errors.Errorf("failed to upgrade vm to: %s, %s", importOvaParams.HardwareVersion, err)
+	}
+
+	err = task.Wait(ctx)
+
+	if err != nil {
+		if !isAlreadyUpgraded(err) {
+			return errors.Errorf("failed to upgrade vm to: %s, %s", importOvaParams.HardwareVersion, err)
+		}
+	}
+
 	err = vm.MarkAsTemplate(ctx)
 	if err != nil {
 		return errors.Errorf("failed to mark vm as template: %s", err)
@@ -430,4 +492,17 @@ func resourceVSpherePrivateImportOvaDelete(d *schema.ResourceData, meta interfac
 	log.Printf("[DEBUG] %s: Delete complete", d.Get("name").(string))
 
 	return nil
+}
+
+// Using govc vm.upgrade as the example
+// If the hardware was already upgraded err is not nil
+// https://github.com/vmware/govmomi/blob/master/govc/vm/upgrade.go
+
+func isAlreadyUpgraded(err error) bool {
+	if fault, ok := err.(task.Error); ok {
+		_, ok = fault.Fault().(*types.AlreadyUpgraded)
+		return ok
+	}
+
+	return false
 }

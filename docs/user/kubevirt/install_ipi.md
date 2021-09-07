@@ -130,6 +130,7 @@ At this stage, as the Kubevirt provider defined a dev preview, the installer can
 >>> |namespace                   |string                        |Yes     |The namespace in the infra cluster, where the control plane (master vms) and the compute (worker vms) will be created in   |
 >>> |storageClass                |string                        |No      |The Storage Class used in the infra cluster   |
 >>> |networkName                 |string                        |Yes     |The target network of all the network interfaces of the nodes   |
+>>> |networkType                 |string                        |No      |The type of the network interfaces of the nodes of the tenantcluster ("Bridge" or "SRIOV"). Default: "Bridge".
 >>> |apiVIP                      |IPV4                          |Yes     |The virtual IP address for the api endpoint   |
 >>> |ingressVIP                  |IPV4                          |Yes     |An external IP which routes to the default ingress controller   |
 >>> |persistentVolumeAccessMode  |[ReadWriteMany,ReadWriteOnce] |No      |The access mode should be use with the persistent volumes   |

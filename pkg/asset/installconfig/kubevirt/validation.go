@@ -61,17 +61,17 @@ func ValidatePermissions(client Client, ic *types.InstallConfig) error {
 
 // ValidateForProvisioning is called by PlatformProvisionCheck
 func ValidateForProvisioning(client Client) error {
-	hcUnstructured, err := client.GetHyperConverged(context.Background(), "kubevirt-hyperconverged", "openshift-cnv")
+	kvUnstructured, err := client.GetKubeVirt(context.Background(), "kubevirt-kubevirt-hyperconverged", "openshift-cnv")
 	if err != nil {
-		return fmt.Errorf("failed to get resource openshift-cnv/kubevirt-hyperconverged, with error: %v", err)
+		return fmt.Errorf("failed to get resource openshift-cnv/kubevirt-kubevirt-hyperconverged, with error: %v", err)
 	}
 
-	enabled, found, err := unstructured.NestedBool(hcUnstructured.Object, "spec", "featureGates", "hotplugVolumes")
+	fgSlice, found, err := unstructured.NestedStringSlice(kvUnstructured.Object, "spec", "configuration", "developerConfiguration", "featureGates")
 	if err != nil {
-		return fmt.Errorf("failed to read boolean value 'spec.featureGates.hotplugVolumes' from resource openshift-cnv/kubevirt-hyperconverged, with error: %v", err)
+		return fmt.Errorf("failed to read list of enabled feature gates 'spec.configuration.developerConfiguration.featureGates' from KubeVirt resource openshift-cnv/kubevirt-kubevirt-hyperconverged, with error: %v", err)
 	}
 
-	if !found || !enabled {
+	if !found || !contains(fgSlice, "HotplugVolumes") {
 		return fmt.Errorf("feature gate hotplugVolumes is either missing or not set to true. Review resource openshift-cnv/kubevirt-hyperconverged. Follow Kubevirt CSI driver documentation for setting the feature gate (https://github.com/openshift/kubevirt-csi-driver)")
 	}
 
@@ -356,4 +356,13 @@ func createReviewObjs(namespace string) []authv1.SelfSubjectAccessReview {
 			},
 		},
 	}
+}
+
+func contains(slice []string, target string) bool {
+	for _, item := range slice {
+		if item == target {
+			return true
+		}
+	}
+	return false
 }

@@ -41,14 +41,19 @@ variable "network_name" {
   description = "The name of the sub network created in the infracluster which should be used by the tenantcluster resources"
 }
 
+variable "interface_binding_method" {
+  type        = string
+  description = "The interface binding method of the nodes of the tenantcluster"
+}
+
 variable "pv_access_mode" {
   type        = string
-  description = "The access mode which all the persistant volumes should be created with [ReadWriteOnce,ReadWriteMany]"
+  description = "The access mode which all the persistent volumes should be created with [ReadWriteOnce,ReadWriteMany]"
 }
 
 variable "pvc_name" {
   type        = string
-  description = "The Persistant data volume which all the vms (workers/masters) should be cloned from"
+  description = "The Persistent data volume which all the vms (workers/masters) should be cloned from"
 }
 
 variable "labels" {
