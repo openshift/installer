@@ -59,13 +59,6 @@ type Flavor struct {
 	Baremetal bool
 }
 
-// record stores the data from quota limits and usages.
-type record struct {
-	Service string
-	Name    string
-	Value   int64
-}
-
 var ci *CloudInfo
 
 // GetCloudInfo fetches and caches metadata from openstack
@@ -406,9 +399,10 @@ func (ci *CloudInfo) getVolumeTypes() ([]string, error) {
 	return types, nil
 }
 
-// loadLimits loads the consumer quota metric.
-func loadLimits(ci *CloudInfo) ([]record, error) {
-	var limits []record
+// loadQuotas loads the quota information for a project and provided services. It provides information
+// about the usage and limit for each resource quota.
+func loadQuotas(ci *CloudInfo) ([]quota.Quota, error) {
+	var quotas []quota.Quota
 
 	projectID, err := getProjectID(ci)
 	if err != nil {
@@ -419,74 +413,64 @@ func loadLimits(ci *CloudInfo) ([]record, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get compute quota records")
 	}
-	for _, r := range computeRecords {
-		limits = append(limits, r)
-	}
+	quotas = append(quotas, computeRecords...)
 
 	networkRecords, err := getNetworkLimits(ci, projectID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get network quota records")
 	}
-	for _, r := range networkRecords {
-		limits = append(limits, r)
-	}
+	quotas = append(quotas, networkRecords...)
 
-	return limits, nil
+	return quotas, nil
 }
 
-func getComputeLimits(ci *CloudInfo, projectID string) ([]record, error) {
+func getComputeLimits(ci *CloudInfo, projectID string) ([]quota.Quota, error) {
 	qs, err := computequotasets.GetDetail(ci.clients.computeClient, projectID).Extract()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get QuotaSets from OpenStack Compute API")
 	}
 
-	var records []record
-	addRecord := func(name string, quota computequotasets.QuotaDetail) {
-		qval := int64(quota.Limit - quota.InUse - quota.Reserved)
-		// -1 means unlimited in OpenStack so we will ignore that record.
-		if quota.Limit == -1 {
-			qval = -1
-		}
-		records = append(records, record{
-			Service: "compute",
-			Name:    name,
-			Value:   qval,
+	var quotas []quota.Quota
+	addQuota := func(name string, quotaDetail computequotasets.QuotaDetail) {
+		quotas = append(quotas, quota.Quota{
+			Service:   "compute",
+			Name:      name,
+			InUse:     int64(quotaDetail.InUse),
+			Limit:     int64(quotaDetail.Limit - quotaDetail.Reserved),
+			Unlimited: quotaDetail.Limit < 0,
 		})
 	}
-	addRecord("Cores", qs.Cores)
-	addRecord("Instances", qs.Instances)
-	addRecord("RAM", qs.RAM)
+	addQuota("Cores", qs.Cores)
+	addQuota("Instances", qs.Instances)
+	addQuota("RAM", qs.RAM)
 
-	return records, nil
+	return quotas, nil
 }
 
-func getNetworkLimits(ci *CloudInfo, projectID string) ([]record, error) {
+func getNetworkLimits(ci *CloudInfo, projectID string) ([]quota.Quota, error) {
 	qs, err := networkquotasets.GetDetail(ci.clients.networkClient, projectID).Extract()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get QuotaSets from OpenStack Network API")
 	}
 
-	var records []record
-	addRecord := func(name string, quota networkquotasets.QuotaDetail) {
-		qval := int64(quota.Limit - quota.Used - quota.Reserved)
-		// -1 means unlimited in OpenStack so we will ignore that record.
-		if quota.Limit == -1 {
-			qval = -1
-		}
-		records = append(records, record{
-			Service: "network",
-			Name:    name,
-			Value:   qval,
+	var quotas []quota.Quota
+	addQuota := func(name string, quotaDetail networkquotasets.QuotaDetail) {
+		quotas = append(quotas, quota.Quota{
+			Service:   "network",
+			Name:      name,
+			InUse:     int64(quotaDetail.Used),
+			Limit:     int64(quotaDetail.Limit - quotaDetail.Reserved),
+			Unlimited: quotaDetail.Limit < 0,
 		})
 	}
-	addRecord("Port", qs.Port)
-	addRecord("Router", qs.Router)
-	addRecord("Subnet", qs.Subnet)
-	addRecord("Network", qs.Network)
-	addRecord("SecurityGroup", qs.SecurityGroup)
-	addRecord("SecurityGroupRule", qs.SecurityGroupRule)
+	addQuota("Port", qs.Port)
+	addQuota("Router", qs.Router)
+	addQuota("Subnet", qs.Subnet)
+	addQuota("Network", qs.Network)
+	addQuota("SecurityGroup", qs.SecurityGroup)
+	addQuota("SecurityGroupRule", qs.SecurityGroupRule)
 
-	return records, nil
+	return quotas, nil
 }
 
 func getProjectID(ci *CloudInfo) (string, error) {
@@ -514,34 +498,6 @@ func getProjectID(ci *CloudInfo) (string, error) {
 	default:
 		return "", errors.Errorf("Unsupported AuthResult type: %T", authResult)
 	}
-}
-
-// loadQuotas loads the quota information for a project and provided services. It provides information
-// about the usage and limit for each resource quota.
-func loadQuotas(ci *CloudInfo) ([]quota.Quota, error) {
-	records, err := loadLimits(ci)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to load quota limits")
-	}
-	return newQuota(records), nil
-}
-
-func newQuota(limits []record) []quota.Quota {
-	var ret []quota.Quota
-	for _, limit := range limits {
-		isUnlimited := limit.Value == -1
-		q := quota.Quota{
-			Service: limit.Service,
-			Name:    limit.Name,
-			// Since limit.Value contains the actual
-			// available resources, we can set InUse to 0.
-			InUse:     0,
-			Limit:     limit.Value,
-			Unlimited: isUnlimited,
-		}
-		ret = append(ret, q)
-	}
-	return ret
 }
 
 // isUnauthorized checks if the error is unauthorized (http code 403)
