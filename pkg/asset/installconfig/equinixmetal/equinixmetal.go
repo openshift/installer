@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	DefaultFacility = "da11" // Dallas, TX, US
+	DefaultFacility = "sv15" // Dallas, TX, US
 	DefaultMetro    = "SV"   // Silicon Valley, US
 )
 
@@ -42,10 +42,18 @@ func Platform() (*equinixmetal.Platform, error) {
 		return nil, err
 	}
 
+	planSlug, err := selectPlan(client)
+	if err != nil {
+		return nil, err
+	}
+
 	return &equinixmetal.Platform{
 		Facility:  facilityCode,
 		Metro:     metroCode,
 		ProjectID: projectID,
+		DefaultMachinePlatform: &equinixmetal.MachinePool{
+			Plan: planSlug,
+		},
 	}, nil
 }
 
@@ -84,7 +92,7 @@ func selectProject(client *Client) (string, error) {
 }
 
 func selectFacility(client *Client) (string, error) {
-	var facilityID string
+	var facilityCode string
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
@@ -110,12 +118,12 @@ func selectFacility(client *Client) (string, error) {
 			},
 			Validate: survey.ComposeValidators(survey.Required),
 		},
-	}, &facilityID)
+	}, &facilityCode)
 
 	if err != nil {
 		return "", err
 	}
-	return facilityID, nil
+	return strings.Split(facilityCode, " ")[0], nil
 }
 
 func selectMetro(client *Client) (string, error) {
@@ -152,8 +160,42 @@ func selectMetro(client *Client) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return metroID, nil
+		return strings.Split(metroID, " ")[0], nil
 	*/
+}
+
+func selectPlan(client *Client) (string, error) {
+	var planCode string
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+
+	plans, err := client.ListPlans(ctx)
+
+	if err != nil {
+		return "", errors.Wrap(err, "failed to list Equinix Metal plans")
+	}
+
+	planNames := []string{}
+	for _, p := range plans {
+		planNames = append(planNames, p.Slug+" ("+p.Name+")")
+	}
+
+	err = survey.Ask([]*survey.Question{{
+		Prompt: &survey.Select{
+			Message: "Equinix Metal Plan Code",
+			Help:    "The Equinix Metal plan code to use for installation",
+			Options: planNames,
+		},
+		Validate: survey.ComposeValidators(survey.Required),
+	}}, &planCode)
+
+	if err != nil {
+		return "", err
+	}
+
+	parts := strings.Split(planCode, " ")
+	return parts[0], nil
 }
 
 func askForConfig() (*Config, error) {

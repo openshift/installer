@@ -41,6 +41,7 @@ variable "metal_facility" {
 }
 
 variable "metal_metro" {
+  default     = ""
   description = "Your metro"
 }
 

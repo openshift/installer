@@ -2,6 +2,14 @@ provider "packet" {
   auth_token = var.metal_auth_token
 }
 
+
+module "dns" {
+  source = "./dns"
+
+  cluster_name       = var.cluster_domain
+  cluster_basedomain = var.base_domain
+}
+
 module "bootstrap" {
   source     = "./bootstrap"
   project_id = var.metal_project_id
@@ -18,7 +26,7 @@ module "bootstrap" {
   //ocp_version_zstream = var.metal_ocp_version_zstream
   //depends              = [module.prepare_openshift.finished]
 
-  ip_addresses = module.dns.boostrap_a
+  ip_address = module.dns.bootstrap_a
 
   ignition = var.ignition_bootstrap
 }
@@ -49,12 +57,6 @@ module "master" {
   bootstrap_ip = module.bootstrap.lb_ip
 }
 
-module "dns" {
-  source = "./dns"
-
-  cluster_name       = var.cluster_name
-  cluster_basedomain = var.cluster_basedomain
-}
 /*
 module "prepare_openshift" {
 

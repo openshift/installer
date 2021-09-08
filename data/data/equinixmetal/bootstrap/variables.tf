@@ -34,7 +34,7 @@ variable "nodes" {
 }
 */
 
-variable "ip_addresses" {
-  description = "IP Reservation IPv4 addresses to assign to masters"
-  type        = list(string)
+variable "ip_address" {
+  description = "IP Reservation IPv4 addresses to assign to the bootstrap node"
+  type        = string
 }

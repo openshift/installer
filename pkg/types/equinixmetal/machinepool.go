@@ -20,4 +20,6 @@ func (p *MachinePool) Set(required *MachinePool) {
 	if required == nil || p == nil {
 		return
 	}
+	p.Plan = required.Plan
+	p.CustomData = required.CustomData
 }

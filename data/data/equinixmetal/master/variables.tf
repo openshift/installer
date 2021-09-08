@@ -5,7 +5,9 @@ variable "ignition" {
 
 
 variable "plan" {}
-variable "node_count" {}
+variable "node_count" {
+  type = number
+}
 variable "facility" { default = "" }
 variable "metro" { default = "" }
 variable "cluster_domain" {}

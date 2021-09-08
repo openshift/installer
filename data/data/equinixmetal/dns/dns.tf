@@ -11,7 +11,7 @@ provider "dns" {
 }
 
 locals {
-  basedomain = join(".", var.cluster_name, replace(var.cluster_basedomain, "${var.cluster_name}.", ""))
+  basedomain = join(".", [replace(var.cluster_name, ".${var.cluster_basedomain}", ""), var.cluster_basedomain])
 }
 
 data "dns_a_record_set" "bootstrap" {
@@ -47,9 +47,11 @@ data "dns_a_record_set" "lb" {
   host = "api-int.${local.basedomain}"
 }
 
+/*
+// *.apps is considered optional, don't validate it
 data "dns_a_record_set" "apps" {
   // TODO: validate that *.apps matches the lb
   // TODO: permit CNAME, dns_cname_record_set is valid 
   host = "*.apps.${local.basedomain}"
 }
-
+*/
