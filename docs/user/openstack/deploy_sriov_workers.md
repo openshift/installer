@@ -11,7 +11,7 @@
 ## Prerequisites
 
 Single Root I/O Virtualization (SR-IOV) networking in OpenShift can benefit applications
-that require high bandwidth and low latency. To plan an OpenStack deployment that uses SR-IOV network interface cards (NICs), refer to [the OSP 16.1 installation documentation](osp-sriov-install). you install an OpenShift cluster on OpenStack, make sure that the NICs that your OpenStack nodes use [are supported](supported-nics) for use with SR-IOV
+that require high bandwidth and low latency. To plan an OpenStack deployment that uses SR-IOV network interface cards (NICs), refer to [the OSP 16.1 installation documentation][osp-sriov-install]. you install an OpenShift cluster on OpenStack, make sure that the NICs that your OpenStack nodes use [are supported][supported-nics] for use with SR-IOV
 in OpenShift, and that your tenant has access to them. Your OpenStack cluster must meet the following quota requirements for each OpenShift node that has an attached SR-IOV NIC:
 
 - One instance from the RHOSP quota
@@ -19,7 +19,7 @@ in OpenShift, and that your tenant has access to them. Your OpenStack cluster mu
 - One port for each SR-IOV Virtual Function
 - A flavor with at least 16 GB memory, 4 vCPUs, and 25 GB storage space
 
-For all clusters that use single-root input/output virtualization (SR-IOV), RHOSP compute nodes require a flavor that supports [huge pages](huge-pages).
+For all clusters that use single-root input/output virtualization (SR-IOV), RHOSP compute nodes require a flavor that supports [huge pages][huge-pages].
 Deploying worker nodes with SR-IOV networks is supported as a post-install operation for both IPI and UPI workflows. After you verify that your OpenStack cluster can support SR-IOV in OpenShift and you install an OpenShift cluster that meets the [minimum requirements](README.md#openstack-requirements), use the following steps and examples to create worker nodes with SR-IOV NICs.
 
 ## Preparing your OpenShift Cluster to use SR-IOV Networks
@@ -95,9 +95,9 @@ spec:
         mode: 0644
 ```
 
-If you need to configure your deployment for real-time or low latency workloads, install the [performance addon operator](performance-addon-operator). If services on a node need to use the performance addon operator or DPDK, that node needs [additional configuration to support hugepages](huge-pages-perf-addon).
+If you need to configure your deployment for real-time or low latency workloads, install the [performance addon operator][performance-addon-operator]. If services on a node need to use the performance addon operator or DPDK, that node needs [additional configuration to support hugepages][huge-pages-perf-addon].
 
-After your OpenShift control plane is running, you must install the SR-IOV Network Operator. To install the Operator, you will need access to an account on your OpenShift cluster that has `cluster-admin` privileges. After you log in to the account, [install the Operator](sriov-operator). Then, [configure your SR-IOV network device](configure-sriov-network-device).
+After your OpenShift control plane is running, you must install the SR-IOV Network Operator. To install the Operator, you will need access to an account on your OpenShift cluster that has `cluster-admin` privileges. After you log in to the account, [install the Operator][sriov-operator]. Then, [configure your SR-IOV network device][configure-sriov-network-device].
 
 ## Creating SR-IOV Networks for Worker Nodes
 
@@ -115,7 +115,7 @@ openstack subnet create --network uplink --subnet-range <uplink_network_subnet_r
 
 ## Creating SR-IOV Worker Nodes in IPI
 
-You can create worker nodes as a post-IPI-install operation by using the machine API. To create a new set of worker nodes, [create a new machineSet in OpenShift](openstack-machine-sets).
+You can create worker nodes as a post-IPI-install operation by using the machine API. To create a new set of worker nodes, [create a new machineSet in OpenShift][openstack-machine-sets].
 
 ```sh
 oc get machineset -n openshift-machine-api <machineset_name> -o yaml > sriov_machineset.yaml
@@ -437,7 +437,7 @@ Finally, run the `compute-nodes.yaml` script as you normally would:
 ansible-playbook -i inventory.yaml compute-nodes.yaml
 ```
 
-Make sure to follow the documentation to [approve the CSRs](approve-csr-upi) for your worker nodes, and to [wait for the installation to complete](wait-for-install-complete) to finalize your deployment.
+Make sure to follow the documentation to [approve the CSRs][approve-csr-upi] for your worker nodes, and to [wait for the installation to complete][wait-for-install-complete] to finalize your deployment.
 
 [wait-for-install-complete]: install_upi.md#wait-for-the-openshift-installation-to-complete
 [approve-csr-upi]: install_upi.md#approve-the-worker-csrs
