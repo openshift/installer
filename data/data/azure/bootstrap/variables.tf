@@ -68,3 +68,29 @@ https://github.com/hashicorp/terraform/issues/12570
 EOF
 }
 
+variable "internal_lb_ip_v4_address" {
+  type = string
+  default = null
+}
+
+variable "virtual_network_id" {
+  description = "The ID for Virtual Network that will be linked to the Private DNS zone."
+  type = string
+  default = null
+}
+
+variable "worker_subnet_id" {
+  type = string
+  default = null
+}
+
+variable "public_lb_pip_v4_fqdn" {
+  type = string
+  default = null
+}
+
+variable "bootstrap_ip" {
+  type = string
+  description = "The ip of the bootstrap node. Used for log gathering but not for infrastructure provisioning."
+  default = null
+}

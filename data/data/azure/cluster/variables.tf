@@ -52,6 +52,11 @@ variable "master_subnet_id" {
   description = "The subnet ID for the bootstrap node."
 }
 
+variable "worker_subnet_id" {
+  type    = string
+  default = null
+}
+
 variable "nsg_name" {
   type        = string
   description = "The network security group for the subnet."
@@ -91,4 +96,15 @@ completely and therefore the `vnet/public-lb.tf`
 conditional need to be recreated. See
 https://github.com/hashicorp/terraform/issues/12570
 EOF
+}
+
+variable "bootstrap_ip" {
+  type = string
+  description = "The ip of the bootstrap node. Used for log gathering but not for infrastructure provisioning."
+  default = null
+}
+
+variable "control_plane_ips" {
+  type = list(string)
+  default = []
 }

@@ -58,10 +58,6 @@ output "identity" {
   value = azurerm_user_assigned_identity.main.id
 }
 
-output "subnet_id" {
-  value = local.master_subnet_id
-}
-
 output "storage_account" {
   value = azurerm_storage_account.cluster
 }
