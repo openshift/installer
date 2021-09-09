@@ -12,6 +12,7 @@ import (
 )
 
 // These numbers should reflect what is documented here:
+//
 // https://github.com/openshift/installer/tree/master/docs/user/openstack
 // https://github.com/openshift/installer/blob/master/docs/user/openstack/kuryr.md
 // Number of ports, routers, subnets and routers here don't include the constraints needed
