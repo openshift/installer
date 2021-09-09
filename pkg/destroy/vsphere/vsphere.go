@@ -197,14 +197,14 @@ func deleteTagCategory(ctx context.Context, client *rest.Client, categoryID stri
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run() (*installertypes.ClusterQuota, error) {
 	var folderList []types.ManagedObjectReference
 	var virtualMachineList []types.ManagedObjectReference
 
 	o.Logger.Debug("Find attached objects on tag")
 	tagAttachedObjects, err := getAttachedObjectsOnTag(context.TODO(), o.RestClient, o.InfraID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Seperate the objects attached to the tag based on type
@@ -224,19 +224,19 @@ func (o *ClusterUninstaller) Run() error {
 	// the parent to the VirtualMachines.
 	// If there are more or less fail with error message.
 	if len(folderList) > 1 {
-		return errors.Errorf("Expected 1 Folder per tag but got %d", len(folderList))
+		return nil, errors.Errorf("Expected 1 Folder per tag but got %d", len(folderList))
 	}
 
 	if len(virtualMachineList) > 0 {
 		o.Logger.Debug("Find VirtualMachine objects")
 		virtualMachineMoList, err := getVirtualMachineManagedObjects(context.TODO(), o.Client, virtualMachineList)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		o.Logger.Debug("Delete VirtualMachines")
 		err = deleteVirtualMachines(context.TODO(), o.Client, virtualMachineMoList, o.Logger)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	} else {
 		o.Logger.Debug("No VirtualMachines found")
@@ -247,14 +247,14 @@ func (o *ClusterUninstaller) Run() error {
 		folderMoList, err := getFolderManagedObjects(context.TODO(), o.Client, folderList)
 		if err != nil {
 			o.Logger.Errorln(err)
-			return err
+			return nil, err
 		}
 
 		o.Logger.Debug("Delete Folder")
 		err = deleteFolder(context.TODO(), o.Client, folderMoList, o.Logger)
 		if err != nil {
 			o.Logger.Errorln(err)
-			return err
+			return nil, err
 		}
 	} else {
 		o.Logger.Debug("No managed Folder found")
@@ -262,14 +262,14 @@ func (o *ClusterUninstaller) Run() error {
 
 	err = deleteStoragePolicy(context.TODO(), o.Client, o.InfraID, o.Logger)
 	if err != nil {
-		return errors.Errorf("error deleting storage policy: %v", err)
+		return nil, errors.Errorf("error deleting storage policy: %v", err)
 	}
 
 	o.Logger.Debug("Delete tag")
 	tagLogger := o.Logger.WithField("Tag", o.InfraID)
 	if err = deleteTag(context.TODO(), o.RestClient, o.InfraID); err != nil {
 		tagLogger.Errorln(err)
-		return err
+		return nil, err
 	}
 	tagLogger.Info("Destroyed")
 
@@ -277,9 +277,9 @@ func (o *ClusterUninstaller) Run() error {
 	tcLogger := o.Logger.WithField("TagCategory", "openshift-"+o.InfraID)
 	if err = deleteTagCategory(context.TODO(), o.RestClient, "openshift-"+o.InfraID); err != nil {
 		tcLogger.Errorln(err)
-		return err
+		return nil, err
 	}
 	tcLogger.Info("Destroyed")
 
-	return nil
+	return nil, nil
 }

@@ -21,10 +21,10 @@ type ClusterUninstaller struct {
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (uninstaller *ClusterUninstaller) Run() error {
+func (uninstaller *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	con, err := ovirt.NewConnection()
 	if err != nil {
-		return fmt.Errorf("failed to initialize connection to ovirt-engine's %s", err)
+		return nil, fmt.Errorf("failed to initialize connection to ovirt-engine's %s", err)
 	}
 	defer con.Close()
 
@@ -48,7 +48,7 @@ func (uninstaller *ClusterUninstaller) Run() error {
 		uninstaller.Logger.Errorf("Failed to removing Affinity Groups: %s", err)
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (uninstaller *ClusterUninstaller) removeVMs(con *ovirtsdk.Connection, tag string) error {

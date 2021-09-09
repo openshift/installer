@@ -20,22 +20,22 @@ type ClusterUninstaller struct {
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	o.Logger.Debug("Deleting bare metal resources")
 
 	// FIXME: close the connection
 	conn, err := libvirt.NewConnect(o.LibvirtURI)
 	if err != nil {
-		return errors.Wrap(err, "failed to connect to Libvirt daemon")
+		return nil, errors.Wrap(err, "failed to connect to Libvirt daemon")
 	}
 	err = o.deleteStoragePool(conn)
 	if err != nil {
-		return errors.Wrap(err, "failed to clean baremetal bootstrap storage pool")
+		return nil, errors.Wrap(err, "failed to clean baremetal bootstrap storage pool")
 	}
 
 	o.Logger.Debug("FIXME: delete resources!")
 
-	return nil
+	return nil, nil
 }
 
 // New returns bare metal Uninstaller from ClusterMetadata.

@@ -5,7 +5,7 @@ package libvirt
 import (
 	"strings"
 
-	libvirt "github.com/libvirt/libvirt-go"
+	"github.com/libvirt/libvirt-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -57,10 +57,10 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	conn, err := libvirt.NewConnect(o.LibvirtURI)
 	if err != nil {
-		return errors.Wrap(err, "failed to connect to Libvirt daemon")
+		return nil, errors.Wrap(err, "failed to connect to Libvirt daemon")
 	}
 
 	for _, del := range []deleteFunc{
@@ -70,11 +70,11 @@ func (o *ClusterUninstaller) Run() error {
 	} {
 		err = del(conn, o.Filter, o.Logger)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 // deleteDomains calls deleteDomainsSinglePass until it finds no

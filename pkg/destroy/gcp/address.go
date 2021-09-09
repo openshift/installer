@@ -1,14 +1,15 @@
 package gcp
 
 import (
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
 
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )
 
 func (o *ClusterUninstaller) listAddresses() ([]cloudResource, error) {
-	return o.listAddressesWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+	return o.listAddressesWithFilter("items(name,region,addressType),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listAddressesWithFilter lists addresses in the project that satisfy the filter criteria.
@@ -28,10 +29,24 @@ func (o *ClusterUninstaller) listAddressesWithFilter(fields string, filter strin
 		for _, item := range list.Items {
 			if filterFunc == nil || filterFunc != nil && filterFunc(item) {
 				o.Logger.Debugf("Found address: %s", item.Name)
+				var quota []gcp.QuotaUsage
+				if item.AddressType == "INTERNAL" {
+					quota = []gcp.QuotaUsage{{
+						Metric: &gcp.Metric{
+							Service: gcp.ServiceComputeEngineAPI,
+							Limit:   "internal_addresses",
+							Dimensions: map[string]string{
+								"region": getNameFromURL("regions", item.Region),
+							},
+						},
+						Amount: 1,
+					}}
+				}
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
 					typeName: "address",
+					quota:    quota,
 				})
 			}
 		}

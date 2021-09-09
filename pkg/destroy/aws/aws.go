@@ -109,9 +109,9 @@ func (o *ClusterUninstaller) validate() error {
 }
 
 // Run is the entrypoint to start the uninstall process
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	_, err := o.RunWithContext(context.Background())
-	return err
+	return nil, err
 }
 
 // RunWithContext runs the uninstall process with a context.

@@ -1,14 +1,15 @@
 package gcp
 
 import (
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
 
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )
 
 func (o *ClusterUninstaller) listSubnetworks() ([]cloudResource, error) {
-	return o.listSubnetworksWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+	return o.listSubnetworksWithFilter("items(name,network),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listSubnetworksWithFilter lists subnetworks in the project that satisfy the filter criteria.
@@ -32,6 +33,22 @@ func (o *ClusterUninstaller) listSubnetworksWithFilter(fields string, filter str
 					key:      item.Name,
 					name:     item.Name,
 					typeName: "subnetwork",
+					quota: []gcp.QuotaUsage{{
+						Metric: &gcp.Metric{
+							Service: gcp.ServiceComputeEngineAPI,
+							Limit:   "subnetworks",
+						},
+						Amount: 1,
+					}, {
+						Metric: &gcp.Metric{
+							Service: gcp.ServiceComputeEngineAPI,
+							Limit:   "subnet_ranges_per_vpc_network",
+							Dimensions: map[string]string{
+								"network_id": getNameFromURL("networks", item.Network),
+							},
+						},
+						Amount: 1,
+					}},
 				})
 			}
 		}
