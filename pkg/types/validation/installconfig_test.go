@@ -155,7 +155,7 @@ func validIPv6NetworkingConfig() *types.Networking {
 			},
 		},
 		ServiceNetwork: []ipnet.IPNet{
-			*ipnet.MustParseCIDR("ffd1::/48"),
+			*ipnet.MustParseCIDR("ffd1::/112"),
 		},
 		ClusterNetwork: []types.ClusterNetworkEntry{
 			{
@@ -171,24 +171,24 @@ func validDualStackNetworkingConfig() *types.Networking {
 		NetworkType: "OVNKubernetes",
 		MachineNetwork: []types.MachineNetworkEntry{
 			{
-				CIDR: *ipnet.MustParseCIDR("ffd0::/48"),
+				CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
 			},
 			{
-				CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
+				CIDR: *ipnet.MustParseCIDR("ffd0::/48"),
 			},
 		},
 		ServiceNetwork: []ipnet.IPNet{
-			*ipnet.MustParseCIDR("ffd1::/48"),
 			*ipnet.MustParseCIDR("172.30.0.0/16"),
+			*ipnet.MustParseCIDR("ffd1::/112"),
 		},
 		ClusterNetwork: []types.ClusterNetworkEntry{
 			{
-				CIDR:       *ipnet.MustParseCIDR("ffd2::/48"),
-				HostPrefix: 64,
-			},
-			{
 				CIDR:       *ipnet.MustParseCIDR("192.168.1.0/24"),
 				HostPrefix: 28,
+			},
+			{
+				CIDR:       *ipnet.MustParseCIDR("ffd2::/48"),
+				HostPrefix: 64,
 			},
 		},
 	}
@@ -1107,20 +1107,40 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Platform = types.Platform{None: &none.Platform{}}
 				c.Networking = validDualStackNetworkingConfig()
-				c.Networking.MachineNetwork = c.Networking.MachineNetwork[1:]
+				c.Networking.MachineNetwork = c.Networking.MachineNetwork[:1]
 				return c
 			}(),
-			expectedError: `Invalid value: "10.0.0.0": dual-stack IPv4/IPv6 requires an IPv6 address in this list`,
+			expectedError: `Invalid value: "10.0.0.0/16": dual-stack IPv4/IPv6 requires an IPv6 network in this list`,
 		},
 		{
-			name: "valid dual-stack configuration, machine has no IPv6 but is on AWS",
+			name: "invalid dual-stack configuration, IPv6-primary",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
 				c.Networking = validDualStackNetworkingConfig()
-				c.Networking.MachineNetwork = c.Networking.MachineNetwork[1:]
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					c.Networking.ServiceNetwork[1],
+					c.Networking.ServiceNetwork[0],
+				}
 				return c
 			}(),
-			expectedError: `Invalid value: "DualStack": dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address`,
+			expectedError: `Invalid value: "ffd1::/112, 172.30.0.0/16": IPv4 addresses must be listed before IPv6 addresses`,
+		},
+		{
+			name: "valid dual-stack configuration with mixed-order clusterNetworks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ClusterNetwork = append(c.Networking.ClusterNetwork,
+					types.ClusterNetworkEntry{
+						CIDR:       *ipnet.MustParseCIDR("192.168.2.0/24"),
+						HostPrefix: 28,
+					},
+				)
+				// ClusterNetwork is now "IPv4, IPv6, IPv4", which is allowed
+				return c
+			}(),
 		},
 		{
 			name: "invalid IPv6 hostprefix",
@@ -1132,6 +1152,17 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `Invalid value: 72: cluster network host subnetwork prefix must be 64 for IPv6 networks`,
+		},
+		{
+			name: "invalid IPv6 service network size",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validIPv6NetworkingConfig()
+				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("ffd1::/48")
+				return c
+			}(),
+			expectedError: `Invalid value: "ffd1::/48": subnet size for IPv6 service network should be /112`,
 		},
 
 		{
