@@ -154,6 +154,9 @@ func resourceIBMPIImageExists(d *schema.ResourceData, meta interface{}) (bool, e
 	if err != nil {
 		return false, err
 	}
+	if len(parts) < 2 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of powerInstanceID/ImageID", d.Id())
+	}
 	name := parts[1]
 	powerinstanceid := parts[0]
 	client := st.NewIBMPIImageClient(sess, powerinstanceid)

@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 )
 
@@ -182,10 +181,6 @@ func resourceIBMISLBListenerPolicyRuleValidator() *ResourceValidator {
 }
 
 func resourceIBMISLBListenerPolicyRuleCreate(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
 
 	//Read lb, listerner, policy IDs
 	var field string
@@ -207,16 +202,9 @@ func resourceIBMISLBListenerPolicyRuleCreate(d *schema.ResourceData, meta interf
 		field = n.(string)
 	}
 
-	if userDetails.generation == 1 {
-		err := classicLbListenerPolicyRuleCreate(d, meta, lbID, listenerID, policyID, condition, ty, value, field)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := lbListenerPolicyRuleCreate(d, meta, lbID, listenerID, policyID, condition, ty, value, field)
-		if err != nil {
-			return err
-		}
+	err = lbListenerPolicyRuleCreate(d, meta, lbID, listenerID, policyID, condition, ty, value, field)
+	if err != nil {
+		return err
 	}
 
 	return resourceIBMISLBListenerPolicyRuleRead(d, meta)
@@ -245,127 +233,6 @@ func getLbPolicyID(id string) (string, error) {
 		return parts[2], nil
 	} else {
 		return id, nil
-	}
-}
-
-func classicLbListenerPolicyRuleCreate(d *schema.ResourceData, meta interface{}, lbID, listenerID, policyID, condition, ty, value, field string) error {
-	sess, err := classicVpcSdkClient(meta)
-	if err != nil {
-		return err
-	}
-
-	options := &vpcclassicv1.CreateLoadBalancerListenerPolicyRuleOptions{
-		LoadBalancerID: &lbID,
-		ListenerID:     &listenerID,
-		PolicyID:       &policyID,
-		Condition:      &condition,
-		Type:           &ty,
-		Value:          &value,
-		Field:          &field,
-	}
-
-	isLBKey := "load_balancer_key_" + lbID
-	ibmMutexKV.Lock(isLBKey)
-	defer ibmMutexKV.Unlock(isLBKey)
-
-	_, err = isWaitForClassicLoadbalancerAvailable(sess, lbID, d.Timeout(schema.TimeoutCreate))
-	if err != nil {
-		return fmt.Errorf(
-			"LB-LP Error checking for load balancer (%s) is active: %s", lbID, err)
-	}
-
-	rule, response, err := sess.CreateLoadBalancerListenerPolicyRule(options)
-	if err != nil {
-		return fmt.Errorf("Error while creating lb listener policy for LB %s: Error %v Response %v", lbID, err, *response)
-	}
-
-	d.SetId(fmt.Sprintf("%s/%s/%s/%s", lbID, listenerID, policyID, *(rule.ID)))
-
-	_, err = isWaitForClassicLbListenerPolicyRuleAvailable(sess, d.Id(), d.Timeout(schema.TimeoutCreate))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func isWaitForClassicLoadbalancerAvailable(vpc *vpcclassicv1.VpcClassicV1, id string, timeout time.Duration) (interface{}, error) {
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"retry", isLBListenerPolicyRuleProvisioning, "create_pending", "update_pending", "maintenance_pending"},
-		Target:     []string{isLBProvisioningDone},
-		Refresh:    isLoadbalancerClassicRefreshFunc(vpc, id),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 10 * time.Second,
-	}
-
-	return stateConf.WaitForState()
-}
-
-func isLoadbalancerClassicRefreshFunc(vpc *vpcclassicv1.VpcClassicV1, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-
-		getLbOptions := &vpcclassicv1.GetLoadBalancerOptions{
-			ID: &id,
-		}
-
-		lb, _, err := vpc.GetLoadBalancer(getLbOptions)
-		if err != nil {
-			return nil, "", err
-		}
-
-		if *(lb.ProvisioningStatus) == isLBListenerPolicyAvailable || *lb.ProvisioningStatus == isLBListenerPolicyFailed {
-			return lb, isLBProvisioningDone, nil
-		}
-
-		return lb, isLBProvisioning, nil
-	}
-}
-
-func isWaitForClassicLbListenerPolicyRuleAvailable(vpc *vpcclassicv1.VpcClassicV1, id string, timeout time.Duration) (interface{}, error) {
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"retry", isLBListenerPolicyRuleProvisioning, "create_pending", "update_pending", "maintenance_pending"},
-		Target:     []string{isLBListenerPolicyProvisioningDone},
-		Refresh:    isLbListenerPolicyRuleClassicRefreshFunc(vpc, id),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 10 * time.Second,
-	}
-
-	return stateConf.WaitForState()
-}
-
-func isLbListenerPolicyRuleClassicRefreshFunc(vpc *vpcclassicv1.VpcClassicV1, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		parts, err := idParts(id)
-		if err != nil {
-			return nil, "", err
-		}
-
-		lbID := parts[0]
-		listenerID := parts[1]
-		policyID := parts[2]
-		ruleID := parts[3]
-
-		getLbListenerPolicyRuleOptions := &vpcclassicv1.GetLoadBalancerListenerPolicyRuleOptions{
-			LoadBalancerID: &lbID,
-			ListenerID:     &listenerID,
-			PolicyID:       &policyID,
-			ID:             &ruleID,
-		}
-
-		rule, _, err := vpc.GetLoadBalancerListenerPolicyRule(getLbListenerPolicyRuleOptions)
-
-		if err != nil {
-			return rule, "", err
-		}
-
-		if *rule.ProvisioningStatus == isLBListenerPolicyAvailable || *rule.ProvisioningStatus == isLBListenerPolicyFailed {
-			return rule, isLBListenerProvisioningDone, nil
-		}
-
-		return rule, *rule.ProvisioningStatus, nil
 	}
 }
 
@@ -500,11 +367,6 @@ func isLbListenerPolicyRuleRefreshFunc(vpc *vpcv1.VpcV1, id string) resource.Sta
 
 func resourceIBMISLBListenerPolicyRuleRead(d *schema.ResourceData, meta interface{}) error {
 
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
-
 	ID := d.Id()
 	parts, err := idParts(ID)
 	if err != nil {
@@ -516,69 +378,21 @@ func resourceIBMISLBListenerPolicyRuleRead(d *schema.ResourceData, meta interfac
 	policyID := parts[2]
 	ruleID := parts[3]
 
-	if userDetails.generation == 1 {
-		err := classicLbListenerPolicyRuleGet(d, meta, lbID, listenerID, policyID, ruleID)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := lbListenerPolicyRuleGet(d, meta, lbID, listenerID, policyID, ruleID)
-		if err != nil {
-			return err
-		}
+	err = lbListenerPolicyRuleGet(d, meta, lbID, listenerID, policyID, ruleID)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 
 func resourceIBMISLBListenerPolicyRuleExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return false, err
-	}
+
 	ID := d.Id()
-	if userDetails.generation == 1 {
-		exists, err := classicLbListenerPolicyRuleExists(d, meta, ID)
-		return exists, err
-	} else {
-		exists, err := lbListenerPolicyRuleExists(d, meta, ID)
-		return exists, err
-	}
-}
 
-func classicLbListenerPolicyRuleExists(d *schema.ResourceData, meta interface{}, ID string) (bool, error) {
-	sess, err := classicVpcSdkClient(meta)
-	if err != nil {
-		return false, err
-	}
+	exists, err := lbListenerPolicyRuleExists(d, meta, ID)
+	return exists, err
 
-	//Retrieve lbID, listenerID and policyID
-	parts, err := idParts(d.Id())
-	if err != nil {
-		return false, err
-	}
-
-	lbID := parts[0]
-	listenerID := parts[1]
-	policyID := parts[2]
-	ruleID := parts[3]
-
-	//populate lblistenerpolicyOPtions
-	getLbListenerPolicyRuleOptions := &vpcclassicv1.GetLoadBalancerListenerPolicyRuleOptions{
-		LoadBalancerID: &lbID,
-		ListenerID:     &listenerID,
-		PolicyID:       &policyID,
-		ID:             &ruleID,
-	}
-
-	//Getting lb listener policy
-	_, response, err := sess.GetLoadBalancerListenerPolicyRule(getLbListenerPolicyRuleOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			return false, nil
-		}
-		return false, fmt.Errorf("Error getting policy: %s\n%s", err, response)
-	}
-	return true, nil
 }
 
 func lbListenerPolicyRuleExists(d *schema.ResourceData, meta interface{}, ID string) (bool, error) {
@@ -618,11 +432,6 @@ func lbListenerPolicyRuleExists(d *schema.ResourceData, meta interface{}, ID str
 }
 func resourceIBMISLBListenerPolicyRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
-
 	parts, err := idParts(d.Id())
 	if err != nil {
 		return err
@@ -633,89 +442,12 @@ func resourceIBMISLBListenerPolicyRuleUpdate(d *schema.ResourceData, meta interf
 	policyID := parts[2]
 	ruleID := parts[3]
 
-	if userDetails.generation == 1 {
-
-		err := classicLbListenerPolicyRuleUpdate(d, meta, lbID, listenerID, policyID, ruleID)
-		if err != nil {
-			return err
-		}
-	} else {
-
-		err := lbListenerPolicyRuleUpdate(d, meta, lbID, listenerID, policyID, ruleID)
-		if err != nil {
-			return err
-		}
-	}
-
-	return resourceIBMISLBListenerPolicyRuleRead(d, meta)
-}
-
-func classicLbListenerPolicyRuleUpdate(d *schema.ResourceData, meta interface{}, lbID, listenerID, policyID, ID string) error {
-	sess, err := classicVpcSdkClient(meta)
+	err = lbListenerPolicyRuleUpdate(d, meta, lbID, listenerID, policyID, ruleID)
 	if err != nil {
 		return err
 	}
 
-	hasChanged := false
-	updatePolicyRuleOptions := vpcclassicv1.UpdateLoadBalancerListenerPolicyRuleOptions{}
-	updatePolicyRuleOptions.LoadBalancerID = &lbID
-	updatePolicyRuleOptions.ListenerID = &listenerID
-	updatePolicyRuleOptions.PolicyID = &policyID
-	updatePolicyRuleOptions.ID = &ID
-
-	loadBalancerListenerPolicyRulePatchModel := &vpcclassicv1.LoadBalancerListenerPolicyRulePatch{}
-
-	if d.HasChange(isLBListenerPolicyRulecondition) {
-		condition := d.Get(isLBListenerPolicyRulecondition).(string)
-		loadBalancerListenerPolicyRulePatchModel.Condition = &condition
-		hasChanged = true
-	}
-
-	if d.HasChange(isLBListenerPolicyRuletype) {
-		ty := d.Get(isLBListenerPolicyRuletype).(string)
-		loadBalancerListenerPolicyRulePatchModel.Type = &ty
-		hasChanged = true
-	}
-
-	if d.HasChange(isLBListenerPolicyRulevalue) {
-		value := d.Get(isLBListenerPolicyRulevalue).(string)
-		loadBalancerListenerPolicyRulePatchModel.Value = &value
-		hasChanged = true
-	}
-
-	if d.HasChange(isLBListenerPolicyRulefield) {
-		field := d.Get(isLBListenerPolicyRulefield).(string)
-		loadBalancerListenerPolicyRulePatchModel.Field = &field
-		hasChanged = true
-	}
-
-	isLBKey := "load_balancer_key_" + lbID
-	ibmMutexKV.Lock(isLBKey)
-	defer ibmMutexKV.Unlock(isLBKey)
-
-	if hasChanged {
-		loadBalancerListenerPolicyRulePatch, err := loadBalancerListenerPolicyRulePatchModel.AsPatch()
-		if err != nil {
-			return fmt.Errorf("Error calling asPatch for LoadBalancerListenerPolicyRulePatch: %s", err)
-		}
-		updatePolicyRuleOptions.LoadBalancerListenerPolicyRulePatch = loadBalancerListenerPolicyRulePatch
-
-		_, err = isWaitForClassicLoadbalancerAvailable(sess, lbID, d.Timeout(schema.TimeoutCreate))
-		if err != nil {
-			return fmt.Errorf(
-				"LB-LP Error checking for load balancer (%s) is active: %s", lbID, err)
-		}
-		_, response, err := sess.UpdateLoadBalancerListenerPolicyRule(&updatePolicyRuleOptions)
-		if err != nil {
-			return fmt.Errorf("Error Getting Instance: %s\n%s", err, response)
-		}
-
-		_, err = isWaitForClassicLbListenerPolicyRuleAvailable(sess, d.Id(), d.Timeout(schema.TimeoutCreate))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return resourceIBMISLBListenerPolicyRuleRead(d, meta)
 }
 
 func lbListenerPolicyRuleUpdate(d *schema.ResourceData, meta interface{}, lbID, listenerID, policyID, ID string) error {
@@ -788,11 +520,6 @@ func lbListenerPolicyRuleUpdate(d *schema.ResourceData, meta interface{}, lbID, 
 
 func resourceIBMISLBListenerPolicyRuleDelete(d *schema.ResourceData, meta interface{}) error {
 
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
-
 	//Retrieve lbId, listenerId and policyID
 	parts, err := idParts(d.Id())
 	if err != nil {
@@ -808,64 +535,14 @@ func resourceIBMISLBListenerPolicyRuleDelete(d *schema.ResourceData, meta interf
 	ibmMutexKV.Lock(isLBKey)
 	defer ibmMutexKV.Unlock(isLBKey)
 
-	if userDetails.generation == 1 {
-		err := classicLbListenerPolicyRuleDelete(d, meta, lbID, listenerID, policyID, ruleID)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := lbListenerPolicyRuleDelete(d, meta, lbID, listenerID, policyID, ruleID)
-		if err != nil {
-			return err
-		}
+	err = lbListenerPolicyRuleDelete(d, meta, lbID, listenerID, policyID, ruleID)
+	if err != nil {
+		return err
 	}
 
 	d.SetId("")
 	return nil
 
-}
-
-func classicLbListenerPolicyRuleDelete(d *schema.ResourceData, meta interface{}, lbID, listenerID, policyID, ID string) error {
-	sess, err := classicVpcSdkClient(meta)
-	if err != nil {
-		return err
-	}
-
-	//Getting rule optins
-	getLbListenerPolicyRuleOptions := &vpcclassicv1.GetLoadBalancerListenerPolicyRuleOptions{
-		LoadBalancerID: &lbID,
-		ListenerID:     &listenerID,
-		PolicyID:       &policyID,
-		ID:             &ID,
-	}
-
-	//Getting lb listener policy
-	_, response, err := sess.GetLoadBalancerListenerPolicyRule(getLbListenerPolicyRuleOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("Error in classicLbListenerPolicyGet : %s\n%s", err, response)
-	}
-
-	deleteLbListenerPolicyRuleOptions := &vpcclassicv1.DeleteLoadBalancerListenerPolicyRuleOptions{
-		LoadBalancerID: &lbID,
-		ListenerID:     &listenerID,
-		PolicyID:       &policyID,
-		ID:             &ID,
-	}
-
-	response, err = sess.DeleteLoadBalancerListenerPolicyRule(deleteLbListenerPolicyRuleOptions)
-
-	if err != nil {
-		return fmt.Errorf("Error in classicLbListenerPolicyRuleDelete: %s\n%s", err, response)
-	}
-	_, err = isWaitForLbListenerPolicyRuleClassicDeleted(sess, d.Id(), d.Timeout(schema.TimeoutDelete))
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func lbListenerPolicyRuleDelete(d *schema.ResourceData, meta interface{}, lbID, listenerID, policyID, ID string) error {
@@ -957,56 +634,6 @@ func isLbListenerPolicyRuleDeleteRefreshFunc(vpc *vpcv1.VpcV1, id string) resour
 	}
 }
 
-func classicVpcSdkClient(meta interface{}) (*vpcclassicv1.VpcClassicV1, error) {
-	sess, err := meta.(ClientSession).VpcClassicV1API()
-	return sess, err
-}
-
-func classicLbListenerPolicyRuleGet(d *schema.ResourceData, meta interface{}, lbID, listenerID, policyID, id string) error {
-	sess, err := classicVpcSdkClient(meta)
-	if err != nil {
-		return err
-	}
-
-	//Getting rule optins
-	getLbListenerPolicyRuleOptions := &vpcclassicv1.GetLoadBalancerListenerPolicyRuleOptions{
-		LoadBalancerID: &lbID,
-		ListenerID:     &listenerID,
-		PolicyID:       &policyID,
-		ID:             &id,
-	}
-
-	//Getting lb listener policy
-	rule, response, err := sess.GetLoadBalancerListenerPolicyRule(getLbListenerPolicyRuleOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("Error in classicLbListenerPolicyGet : %s\n%s", err, response)
-	}
-
-	d.Set(isLBListenerPolicyRuleLBID, lbID)
-	d.Set(isLBListenerPolicyRuleListenerID, listenerID)
-	d.Set(isLBListenerPolicyRulePolicyID, policyID)
-	d.Set(isLBListenerPolicyRuleid, id)
-	d.Set(isLBListenerPolicyRulecondition, rule.Condition)
-	d.Set(isLBListenerPolicyRuletype, rule.Type)
-	d.Set(isLBListenerPolicyRulevalue, rule.Value)
-	d.Set(isLBListenerPolicyRulefield, rule.Field)
-	d.Set(isLBListenerPolicyRuleStatus, rule.ProvisioningStatus)
-	getLoadBalancerOptions := &vpcclassicv1.GetLoadBalancerOptions{
-		ID: &lbID,
-	}
-	lb, response, err := sess.GetLoadBalancer(getLoadBalancerOptions)
-	if err != nil {
-		return fmt.Errorf("Error Getting Load Balancer : %s\n%s", err, response)
-	}
-	d.Set(RelatedCRN, *lb.CRN)
-
-	return nil
-}
-
 func lbListenerPolicyRuleGet(d *schema.ResourceData, meta interface{}, lbID, listenerID, policyID, id string) error {
 
 	sess, err := vpcSdkClient(meta)
@@ -1052,52 +679,4 @@ func lbListenerPolicyRuleGet(d *schema.ResourceData, meta interface{}, lbID, lis
 	d.Set(RelatedCRN, *lb.CRN)
 
 	return nil
-}
-
-func isWaitForLbListenerPolicyRuleClassicDeleted(vpc *vpcclassicv1.VpcClassicV1, id string, timeout time.Duration) (interface{}, error) {
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{isLBListenerPolicyRuleRetry, isLBListenerPolicyRuleDeleting, "delete_pending"},
-		Target:     []string{isLBListenerPolicyRuleDeleted, isLBListenerPolicyRuleFailed},
-		Refresh:    isLbListenerPolicyRuleClassicDeleteRefreshFunc(vpc, id),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 10 * time.Second,
-	}
-
-	return stateConf.WaitForState()
-}
-
-func isLbListenerPolicyRuleClassicDeleteRefreshFunc(vpc *vpcclassicv1.VpcClassicV1, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-
-		//Retrieve lbId and listenerId
-		parts, err := idParts(id)
-		if err != nil {
-			return nil, isLBListenerPolicyFailed, nil
-		}
-
-		lbID := parts[0]
-		listenerID := parts[1]
-		policyID := parts[2]
-		ruleID := parts[3]
-
-		getLbListenerPolicyRuleOptions := &vpcclassicv1.GetLoadBalancerListenerPolicyRuleOptions{
-			LoadBalancerID: &lbID,
-			ListenerID:     &listenerID,
-			PolicyID:       &policyID,
-			ID:             &ruleID,
-		}
-
-		//Getting lb listener policy
-		rule, response, err := vpc.GetLoadBalancerListenerPolicyRule(getLbListenerPolicyRuleOptions)
-		//failed := isLBListenerPolicyRuleFailed
-		if err != nil {
-			if response != nil && response.StatusCode == 404 {
-				return rule, isLBListenerPolicyRuleDeleted, nil
-			}
-			return nil, isLBListenerPolicyRuleFailed, err
-		}
-		return rule, isLBListenerPolicyRuleDeleting, err
-	}
 }

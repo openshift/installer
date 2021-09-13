@@ -227,7 +227,7 @@ type User_Customer struct {
 	// Whether or not a portal user has access to all hardware on their account.
 	HasFullHardwareAccessFlag *bool `json:"hasFullHardwareAccessFlag,omitempty" xmlrpc:"hasFullHardwareAccessFlag,omitempty"`
 
-	// Whether or not a portal user has access to all hardware on their account.
+	// Whether or not a portal user has access to all virtual guests on their account.
 	HasFullVirtualGuestAccessFlag *bool `json:"hasFullVirtualGuestAccessFlag,omitempty" xmlrpc:"hasFullVirtualGuestAccessFlag,omitempty"`
 
 	// no documentation yet

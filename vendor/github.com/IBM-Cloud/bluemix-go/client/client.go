@@ -91,7 +91,7 @@ func (c *Client) MakeRequest(r *rest.Request, respV interface{}) (*gohttp.Respon
 		return new(gohttp.Response), err
 	}
 	if err != nil {
-		if resp.StatusCode == 401 && c.TokenRefresher != nil {
+		if ( resp.StatusCode == 401 || resp.StatusCode == 403) && c.TokenRefresher != nil {
 			log.Println("Authentication failed. Trying token refresh")
 			c.headerLock.Lock()
 			defer c.headerLock.Unlock()

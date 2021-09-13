@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
+/*
+ * IBM OpenAPI SDK Code Generator Version: 3.31.0-902c9336-20210504-161156
+ */
+
 // Package directlinkv1 : Operations and models for the DirectLinkV1 service
 package directlinkv1
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"reflect"
+	"time"
 
-	"github.com/IBM/go-sdk-core/v4/core"
+	"github.com/IBM/go-sdk-core/v5/core"
 	common "github.com/IBM/networking-go-sdk/common"
 	"github.com/go-openapi/strfmt"
 )
@@ -118,25 +125,75 @@ func NewDirectLinkV1(options *DirectLinkV1Options) (service *DirectLinkV1, err e
 	return
 }
 
+// GetServiceURLForRegion returns the service URL to be used for the specified region
+func GetServiceURLForRegion(region string) (string, error) {
+	return "", fmt.Errorf("service does not support regional URLs")
+}
+
+// Clone makes a copy of "directLink" suitable for processing requests.
+func (directLink *DirectLinkV1) Clone() *DirectLinkV1 {
+	if core.IsNil(directLink) {
+		return nil
+	}
+	clone := *directLink
+	clone.Service = directLink.Service.Clone()
+	return &clone
+}
+
 // SetServiceURL sets the service URL
 func (directLink *DirectLinkV1) SetServiceURL(url string) error {
 	return directLink.Service.SetServiceURL(url)
+}
+
+// GetServiceURL returns the service URL
+func (directLink *DirectLinkV1) GetServiceURL() string {
+	return directLink.Service.GetServiceURL()
+}
+
+// SetDefaultHeaders sets HTTP headers to be sent in every request
+func (directLink *DirectLinkV1) SetDefaultHeaders(headers http.Header) {
+	directLink.Service.SetDefaultHeaders(headers)
+}
+
+// SetEnableGzipCompression sets the service's EnableGzipCompression field
+func (directLink *DirectLinkV1) SetEnableGzipCompression(enableGzip bool) {
+	directLink.Service.SetEnableGzipCompression(enableGzip)
+}
+
+// GetEnableGzipCompression returns the service's EnableGzipCompression field
+func (directLink *DirectLinkV1) GetEnableGzipCompression() bool {
+	return directLink.Service.GetEnableGzipCompression()
+}
+
+// EnableRetries enables automatic retries for requests invoked for this service instance.
+// If either parameter is specified as 0, then a default value is used instead.
+func (directLink *DirectLinkV1) EnableRetries(maxRetries int, maxRetryInterval time.Duration) {
+	directLink.Service.EnableRetries(maxRetries, maxRetryInterval)
+}
+
+// DisableRetries disables automatic retries for requests invoked for this service instance.
+func (directLink *DirectLinkV1) DisableRetries() {
+	directLink.Service.DisableRetries()
 }
 
 // ListGateways : List gateways
 // List all Direct Link gateways in this account.  Gateways in other accounts with connections to networks in this
 // account are also returned.
 func (directLink *DirectLinkV1) ListGateways(listGatewaysOptions *ListGatewaysOptions) (result *GatewayCollection, response *core.DetailedResponse, err error) {
+	return directLink.ListGatewaysWithContext(context.Background(), listGatewaysOptions)
+}
+
+// ListGatewaysWithContext is an alternate form of the ListGateways method which supports a Context parameter
+func (directLink *DirectLinkV1) ListGatewaysWithContext(ctx context.Context, listGatewaysOptions *ListGatewaysOptions) (result *GatewayCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listGatewaysOptions, "listGatewaysOptions")
 	if err != nil {
 		return
 	}
 
-	pathSegments := []string{"gateways"}
-	pathParameters := []string{}
-
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways`, nil)
 	if err != nil {
 		return
 	}
@@ -163,11 +220,13 @@ func (directLink *DirectLinkV1) ListGateways(listGatewaysOptions *ListGatewaysOp
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayCollection)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -175,6 +234,11 @@ func (directLink *DirectLinkV1) ListGateways(listGatewaysOptions *ListGatewaysOp
 // CreateGateway : Create gateway
 // Creates a Direct Link gateway based on the supplied template.
 func (directLink *DirectLinkV1) CreateGateway(createGatewayOptions *CreateGatewayOptions) (result *Gateway, response *core.DetailedResponse, err error) {
+	return directLink.CreateGatewayWithContext(context.Background(), createGatewayOptions)
+}
+
+// CreateGatewayWithContext is an alternate form of the CreateGateway method which supports a Context parameter
+func (directLink *DirectLinkV1) CreateGatewayWithContext(ctx context.Context, createGatewayOptions *CreateGatewayOptions) (result *Gateway, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createGatewayOptions, "createGatewayOptions cannot be nil")
 	if err != nil {
 		return
@@ -184,11 +248,10 @@ func (directLink *DirectLinkV1) CreateGateway(createGatewayOptions *CreateGatewa
 		return
 	}
 
-	pathSegments := []string{"gateways"}
-	pathParameters := []string{}
-
 	builder := core.NewRequestBuilder(core.POST)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways`, nil)
 	if err != nil {
 		return
 	}
@@ -221,11 +284,13 @@ func (directLink *DirectLinkV1) CreateGateway(createGatewayOptions *CreateGatewa
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGateway)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGateway)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -233,6 +298,11 @@ func (directLink *DirectLinkV1) CreateGateway(createGatewayOptions *CreateGatewa
 // DeleteGateway : Delete gateway
 // Delete a Direct Link gateway.
 func (directLink *DirectLinkV1) DeleteGateway(deleteGatewayOptions *DeleteGatewayOptions) (response *core.DetailedResponse, err error) {
+	return directLink.DeleteGatewayWithContext(context.Background(), deleteGatewayOptions)
+}
+
+// DeleteGatewayWithContext is an alternate form of the DeleteGateway method which supports a Context parameter
+func (directLink *DirectLinkV1) DeleteGatewayWithContext(ctx context.Context, deleteGatewayOptions *DeleteGatewayOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteGatewayOptions, "deleteGatewayOptions cannot be nil")
 	if err != nil {
 		return
@@ -242,11 +312,14 @@ func (directLink *DirectLinkV1) DeleteGateway(deleteGatewayOptions *DeleteGatewa
 		return
 	}
 
-	pathSegments := []string{"gateways"}
-	pathParameters := []string{*deleteGatewayOptions.ID}
+	pathParamsMap := map[string]string{
+		"id": *deleteGatewayOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -275,6 +348,11 @@ func (directLink *DirectLinkV1) DeleteGateway(deleteGatewayOptions *DeleteGatewa
 // GetGateway : Get gateway
 // Retrieve a Direct Link gateway.
 func (directLink *DirectLinkV1) GetGateway(getGatewayOptions *GetGatewayOptions) (result *Gateway, response *core.DetailedResponse, err error) {
+	return directLink.GetGatewayWithContext(context.Background(), getGatewayOptions)
+}
+
+// GetGatewayWithContext is an alternate form of the GetGateway method which supports a Context parameter
+func (directLink *DirectLinkV1) GetGatewayWithContext(ctx context.Context, getGatewayOptions *GetGatewayOptions) (result *Gateway, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getGatewayOptions, "getGatewayOptions cannot be nil")
 	if err != nil {
 		return
@@ -284,11 +362,14 @@ func (directLink *DirectLinkV1) GetGateway(getGatewayOptions *GetGatewayOptions)
 		return
 	}
 
-	pathSegments := []string{"gateways"}
-	pathParameters := []string{*getGatewayOptions.ID}
+	pathParamsMap := map[string]string{
+		"id": *getGatewayOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -315,11 +396,13 @@ func (directLink *DirectLinkV1) GetGateway(getGatewayOptions *GetGatewayOptions)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGateway)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGateway)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -327,6 +410,11 @@ func (directLink *DirectLinkV1) GetGateway(getGatewayOptions *GetGatewayOptions)
 // UpdateGateway : Update gateway
 // Update a Direct Link gateway.
 func (directLink *DirectLinkV1) UpdateGateway(updateGatewayOptions *UpdateGatewayOptions) (result *Gateway, response *core.DetailedResponse, err error) {
+	return directLink.UpdateGatewayWithContext(context.Background(), updateGatewayOptions)
+}
+
+// UpdateGatewayWithContext is an alternate form of the UpdateGateway method which supports a Context parameter
+func (directLink *DirectLinkV1) UpdateGatewayWithContext(ctx context.Context, updateGatewayOptions *UpdateGatewayOptions) (result *Gateway, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateGatewayOptions, "updateGatewayOptions cannot be nil")
 	if err != nil {
 		return
@@ -336,11 +424,14 @@ func (directLink *DirectLinkV1) UpdateGateway(updateGatewayOptions *UpdateGatewa
 		return
 	}
 
-	pathSegments := []string{"gateways"}
-	pathParameters := []string{*updateGatewayOptions.ID}
+	pathParamsMap := map[string]string{
+		"id": *updateGatewayOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -359,6 +450,9 @@ func (directLink *DirectLinkV1) UpdateGateway(updateGatewayOptions *UpdateGatewa
 	builder.AddQuery("version", fmt.Sprint(*directLink.Version))
 
 	body := make(map[string]interface{})
+	if updateGatewayOptions.AuthenticationKey != nil {
+		body["authentication_key"] = updateGatewayOptions.AuthenticationKey
+	}
 	if updateGatewayOptions.Global != nil {
 		body["global"] = updateGatewayOptions.Global
 	}
@@ -395,11 +489,13 @@ func (directLink *DirectLinkV1) UpdateGateway(updateGatewayOptions *UpdateGatewa
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGateway)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGateway)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -410,6 +506,11 @@ func (directLink *DirectLinkV1) UpdateGateway(updateGatewayOptions *UpdateGatewa
 // This API is only used for provider created Direct Link Connect gateways to approve or reject specific changes
 // initiated from a provider portal.
 func (directLink *DirectLinkV1) CreateGatewayAction(createGatewayActionOptions *CreateGatewayActionOptions) (result *Gateway, response *core.DetailedResponse, err error) {
+	return directLink.CreateGatewayActionWithContext(context.Background(), createGatewayActionOptions)
+}
+
+// CreateGatewayActionWithContext is an alternate form of the CreateGatewayAction method which supports a Context parameter
+func (directLink *DirectLinkV1) CreateGatewayActionWithContext(ctx context.Context, createGatewayActionOptions *CreateGatewayActionOptions) (result *Gateway, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createGatewayActionOptions, "createGatewayActionOptions cannot be nil")
 	if err != nil {
 		return
@@ -419,11 +520,14 @@ func (directLink *DirectLinkV1) CreateGatewayAction(createGatewayActionOptions *
 		return
 	}
 
-	pathSegments := []string{"gateways", "actions"}
-	pathParameters := []string{*createGatewayActionOptions.ID}
+	pathParamsMap := map[string]string{
+		"id": *createGatewayActionOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.POST)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{id}/actions`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -444,6 +548,9 @@ func (directLink *DirectLinkV1) CreateGatewayAction(createGatewayActionOptions *
 	body := make(map[string]interface{})
 	if createGatewayActionOptions.Action != nil {
 		body["action"] = createGatewayActionOptions.Action
+	}
+	if createGatewayActionOptions.AuthenticationKey != nil {
+		body["authentication_key"] = createGatewayActionOptions.AuthenticationKey
 	}
 	if createGatewayActionOptions.Global != nil {
 		body["global"] = createGatewayActionOptions.Global
@@ -472,11 +579,13 @@ func (directLink *DirectLinkV1) CreateGatewayAction(createGatewayActionOptions *
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGateway)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGateway)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -484,6 +593,11 @@ func (directLink *DirectLinkV1) CreateGatewayAction(createGatewayActionOptions *
 // ListGatewayCompletionNotice : Get completion notice
 // Retrieve a Direct Link Dedicated gateway's completion notice.
 func (directLink *DirectLinkV1) ListGatewayCompletionNotice(listGatewayCompletionNoticeOptions *ListGatewayCompletionNoticeOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
+	return directLink.ListGatewayCompletionNoticeWithContext(context.Background(), listGatewayCompletionNoticeOptions)
+}
+
+// ListGatewayCompletionNoticeWithContext is an alternate form of the ListGatewayCompletionNotice method which supports a Context parameter
+func (directLink *DirectLinkV1) ListGatewayCompletionNoticeWithContext(ctx context.Context, listGatewayCompletionNoticeOptions *ListGatewayCompletionNoticeOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listGatewayCompletionNoticeOptions, "listGatewayCompletionNoticeOptions cannot be nil")
 	if err != nil {
 		return
@@ -493,11 +607,14 @@ func (directLink *DirectLinkV1) ListGatewayCompletionNotice(listGatewayCompletio
 		return
 	}
 
-	pathSegments := []string{"gateways", "completion_notice"}
-	pathParameters := []string{*listGatewayCompletionNoticeOptions.ID}
+	pathParamsMap := map[string]string{
+		"id": *listGatewayCompletionNoticeOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{id}/completion_notice`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -527,6 +644,11 @@ func (directLink *DirectLinkV1) ListGatewayCompletionNotice(listGatewayCompletio
 // CreateGatewayCompletionNotice : Create completion notice
 // Upload a Direct Link Dedicated gateway completion notice.
 func (directLink *DirectLinkV1) CreateGatewayCompletionNotice(createGatewayCompletionNoticeOptions *CreateGatewayCompletionNoticeOptions) (response *core.DetailedResponse, err error) {
+	return directLink.CreateGatewayCompletionNoticeWithContext(context.Background(), createGatewayCompletionNoticeOptions)
+}
+
+// CreateGatewayCompletionNoticeWithContext is an alternate form of the CreateGatewayCompletionNotice method which supports a Context parameter
+func (directLink *DirectLinkV1) CreateGatewayCompletionNoticeWithContext(ctx context.Context, createGatewayCompletionNoticeOptions *CreateGatewayCompletionNoticeOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createGatewayCompletionNoticeOptions, "createGatewayCompletionNoticeOptions cannot be nil")
 	if err != nil {
 		return
@@ -540,11 +662,14 @@ func (directLink *DirectLinkV1) CreateGatewayCompletionNotice(createGatewayCompl
 		return
 	}
 
-	pathSegments := []string{"gateways", "completion_notice"}
-	pathParameters := []string{*createGatewayCompletionNoticeOptions.ID}
+	pathParamsMap := map[string]string{
+		"id": *createGatewayCompletionNoticeOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.PUT)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{id}/completion_notice`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -578,6 +703,11 @@ func (directLink *DirectLinkV1) CreateGatewayCompletionNotice(createGatewayCompl
 // ListGatewayLetterOfAuthorization : Get letter of authorization
 // Retrieve a Direct Link Dedicated gateway's Letter of Authorization.
 func (directLink *DirectLinkV1) ListGatewayLetterOfAuthorization(listGatewayLetterOfAuthorizationOptions *ListGatewayLetterOfAuthorizationOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
+	return directLink.ListGatewayLetterOfAuthorizationWithContext(context.Background(), listGatewayLetterOfAuthorizationOptions)
+}
+
+// ListGatewayLetterOfAuthorizationWithContext is an alternate form of the ListGatewayLetterOfAuthorization method which supports a Context parameter
+func (directLink *DirectLinkV1) ListGatewayLetterOfAuthorizationWithContext(ctx context.Context, listGatewayLetterOfAuthorizationOptions *ListGatewayLetterOfAuthorizationOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listGatewayLetterOfAuthorizationOptions, "listGatewayLetterOfAuthorizationOptions cannot be nil")
 	if err != nil {
 		return
@@ -587,11 +717,14 @@ func (directLink *DirectLinkV1) ListGatewayLetterOfAuthorization(listGatewayLett
 		return
 	}
 
-	pathSegments := []string{"gateways", "letter_of_authorization"}
-	pathParameters := []string{*listGatewayLetterOfAuthorizationOptions.ID}
+	pathParamsMap := map[string]string{
+		"id": *listGatewayLetterOfAuthorizationOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{id}/letter_of_authorization`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -622,6 +755,11 @@ func (directLink *DirectLinkV1) ListGatewayLetterOfAuthorization(listGatewayLett
 // Retrieve gateway statistics.  Specify statistic to retrieve using required `type` query parameter.  Currently data
 // retrieval is only supported for MACsec configurations.
 func (directLink *DirectLinkV1) GetGatewayStatistics(getGatewayStatisticsOptions *GetGatewayStatisticsOptions) (result *GatewayStatisticCollection, response *core.DetailedResponse, err error) {
+	return directLink.GetGatewayStatisticsWithContext(context.Background(), getGatewayStatisticsOptions)
+}
+
+// GetGatewayStatisticsWithContext is an alternate form of the GetGatewayStatistics method which supports a Context parameter
+func (directLink *DirectLinkV1) GetGatewayStatisticsWithContext(ctx context.Context, getGatewayStatisticsOptions *GetGatewayStatisticsOptions) (result *GatewayStatisticCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getGatewayStatisticsOptions, "getGatewayStatisticsOptions cannot be nil")
 	if err != nil {
 		return
@@ -631,11 +769,14 @@ func (directLink *DirectLinkV1) GetGatewayStatistics(getGatewayStatisticsOptions
 		return
 	}
 
-	pathSegments := []string{"gateways", "statistics"}
-	pathParameters := []string{*getGatewayStatisticsOptions.ID}
+	pathParamsMap := map[string]string{
+		"id": *getGatewayStatisticsOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{id}/statistics`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -663,11 +804,13 @@ func (directLink *DirectLinkV1) GetGatewayStatistics(getGatewayStatisticsOptions
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayStatisticCollection)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayStatisticCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -675,6 +818,11 @@ func (directLink *DirectLinkV1) GetGatewayStatistics(getGatewayStatisticsOptions
 // ListOfferingTypeLocations : List available locations
 // Retrieve the list of valid locations for the specified Direct Link offering.
 func (directLink *DirectLinkV1) ListOfferingTypeLocations(listOfferingTypeLocationsOptions *ListOfferingTypeLocationsOptions) (result *LocationCollection, response *core.DetailedResponse, err error) {
+	return directLink.ListOfferingTypeLocationsWithContext(context.Background(), listOfferingTypeLocationsOptions)
+}
+
+// ListOfferingTypeLocationsWithContext is an alternate form of the ListOfferingTypeLocations method which supports a Context parameter
+func (directLink *DirectLinkV1) ListOfferingTypeLocationsWithContext(ctx context.Context, listOfferingTypeLocationsOptions *ListOfferingTypeLocationsOptions) (result *LocationCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listOfferingTypeLocationsOptions, "listOfferingTypeLocationsOptions cannot be nil")
 	if err != nil {
 		return
@@ -684,11 +832,14 @@ func (directLink *DirectLinkV1) ListOfferingTypeLocations(listOfferingTypeLocati
 		return
 	}
 
-	pathSegments := []string{"offering_types", "locations"}
-	pathParameters := []string{*listOfferingTypeLocationsOptions.OfferingType}
+	pathParamsMap := map[string]string{
+		"offering_type": *listOfferingTypeLocationsOptions.OfferingType,
+	}
 
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/offering_types/{offering_type}/locations`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -715,11 +866,13 @@ func (directLink *DirectLinkV1) ListOfferingTypeLocations(listOfferingTypeLocati
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLocationCollection)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLocationCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -727,6 +880,11 @@ func (directLink *DirectLinkV1) ListOfferingTypeLocations(listOfferingTypeLocati
 // ListOfferingTypeLocationCrossConnectRouters : List routers
 // Retrieve location specific cross connect router information.  Only valid for offering_type=dedicated locations.
 func (directLink *DirectLinkV1) ListOfferingTypeLocationCrossConnectRouters(listOfferingTypeLocationCrossConnectRoutersOptions *ListOfferingTypeLocationCrossConnectRoutersOptions) (result *LocationCrossConnectRouterCollection, response *core.DetailedResponse, err error) {
+	return directLink.ListOfferingTypeLocationCrossConnectRoutersWithContext(context.Background(), listOfferingTypeLocationCrossConnectRoutersOptions)
+}
+
+// ListOfferingTypeLocationCrossConnectRoutersWithContext is an alternate form of the ListOfferingTypeLocationCrossConnectRouters method which supports a Context parameter
+func (directLink *DirectLinkV1) ListOfferingTypeLocationCrossConnectRoutersWithContext(ctx context.Context, listOfferingTypeLocationCrossConnectRoutersOptions *ListOfferingTypeLocationCrossConnectRoutersOptions) (result *LocationCrossConnectRouterCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listOfferingTypeLocationCrossConnectRoutersOptions, "listOfferingTypeLocationCrossConnectRoutersOptions cannot be nil")
 	if err != nil {
 		return
@@ -736,11 +894,15 @@ func (directLink *DirectLinkV1) ListOfferingTypeLocationCrossConnectRouters(list
 		return
 	}
 
-	pathSegments := []string{"offering_types", "locations", "cross_connect_routers"}
-	pathParameters := []string{*listOfferingTypeLocationCrossConnectRoutersOptions.OfferingType, *listOfferingTypeLocationCrossConnectRoutersOptions.LocationName}
+	pathParamsMap := map[string]string{
+		"offering_type": *listOfferingTypeLocationCrossConnectRoutersOptions.OfferingType,
+		"location_name": *listOfferingTypeLocationCrossConnectRoutersOptions.LocationName,
+	}
 
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/offering_types/{offering_type}/locations/{location_name}/cross_connect_routers`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -767,11 +929,13 @@ func (directLink *DirectLinkV1) ListOfferingTypeLocationCrossConnectRouters(list
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLocationCrossConnectRouterCollection)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLocationCrossConnectRouterCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -779,6 +943,11 @@ func (directLink *DirectLinkV1) ListOfferingTypeLocationCrossConnectRouters(list
 // ListOfferingTypeSpeeds : List speed options
 // List the available Direct Link speeds.
 func (directLink *DirectLinkV1) ListOfferingTypeSpeeds(listOfferingTypeSpeedsOptions *ListOfferingTypeSpeedsOptions) (result *OfferingSpeedCollection, response *core.DetailedResponse, err error) {
+	return directLink.ListOfferingTypeSpeedsWithContext(context.Background(), listOfferingTypeSpeedsOptions)
+}
+
+// ListOfferingTypeSpeedsWithContext is an alternate form of the ListOfferingTypeSpeeds method which supports a Context parameter
+func (directLink *DirectLinkV1) ListOfferingTypeSpeedsWithContext(ctx context.Context, listOfferingTypeSpeedsOptions *ListOfferingTypeSpeedsOptions) (result *OfferingSpeedCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listOfferingTypeSpeedsOptions, "listOfferingTypeSpeedsOptions cannot be nil")
 	if err != nil {
 		return
@@ -788,11 +957,14 @@ func (directLink *DirectLinkV1) ListOfferingTypeSpeeds(listOfferingTypeSpeedsOpt
 		return
 	}
 
-	pathSegments := []string{"offering_types", "speeds"}
-	pathParameters := []string{*listOfferingTypeSpeedsOptions.OfferingType}
+	pathParamsMap := map[string]string{
+		"offering_type": *listOfferingTypeSpeedsOptions.OfferingType,
+	}
 
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/offering_types/{offering_type}/speeds`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -819,11 +991,13 @@ func (directLink *DirectLinkV1) ListOfferingTypeSpeeds(listOfferingTypeSpeedsOpt
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOfferingSpeedCollection)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOfferingSpeedCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -832,16 +1006,20 @@ func (directLink *DirectLinkV1) ListOfferingTypeSpeeds(listOfferingTypeSpeedsOpt
 // Retrieve list of available Direct Link connect ports.  These ports can be used to create Direct Link connect
 // gateways.
 func (directLink *DirectLinkV1) ListPorts(listPortsOptions *ListPortsOptions) (result *PortCollection, response *core.DetailedResponse, err error) {
+	return directLink.ListPortsWithContext(context.Background(), listPortsOptions)
+}
+
+// ListPortsWithContext is an alternate form of the ListPorts method which supports a Context parameter
+func (directLink *DirectLinkV1) ListPortsWithContext(ctx context.Context, listPortsOptions *ListPortsOptions) (result *PortCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listPortsOptions, "listPortsOptions")
 	if err != nil {
 		return
 	}
 
-	pathSegments := []string{"ports"}
-	pathParameters := []string{}
-
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/ports`, nil)
 	if err != nil {
 		return
 	}
@@ -877,11 +1055,13 @@ func (directLink *DirectLinkV1) ListPorts(listPortsOptions *ListPortsOptions) (r
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPortCollection)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPortCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -889,6 +1069,11 @@ func (directLink *DirectLinkV1) ListPorts(listPortsOptions *ListPortsOptions) (r
 // GetPort : Get port
 // Retrieve Direct Link Connect provider port.
 func (directLink *DirectLinkV1) GetPort(getPortOptions *GetPortOptions) (result *Port, response *core.DetailedResponse, err error) {
+	return directLink.GetPortWithContext(context.Background(), getPortOptions)
+}
+
+// GetPortWithContext is an alternate form of the GetPort method which supports a Context parameter
+func (directLink *DirectLinkV1) GetPortWithContext(ctx context.Context, getPortOptions *GetPortOptions) (result *Port, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getPortOptions, "getPortOptions cannot be nil")
 	if err != nil {
 		return
@@ -898,11 +1083,14 @@ func (directLink *DirectLinkV1) GetPort(getPortOptions *GetPortOptions) (result 
 		return
 	}
 
-	pathSegments := []string{"ports"}
-	pathParameters := []string{*getPortOptions.ID}
+	pathParamsMap := map[string]string{
+		"id": *getPortOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/ports/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -929,11 +1117,13 @@ func (directLink *DirectLinkV1) GetPort(getPortOptions *GetPortOptions) (result 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPort)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPort)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -942,6 +1132,11 @@ func (directLink *DirectLinkV1) GetPort(getPortOptions *GetPortOptions) (result 
 // List a gateway's virtual connections.   For gateway in other account with virtual connections that connect to network
 // in this account.  Only virtual connections that connect to this account are returned.
 func (directLink *DirectLinkV1) ListGatewayVirtualConnections(listGatewayVirtualConnectionsOptions *ListGatewayVirtualConnectionsOptions) (result *GatewayVirtualConnectionCollection, response *core.DetailedResponse, err error) {
+	return directLink.ListGatewayVirtualConnectionsWithContext(context.Background(), listGatewayVirtualConnectionsOptions)
+}
+
+// ListGatewayVirtualConnectionsWithContext is an alternate form of the ListGatewayVirtualConnections method which supports a Context parameter
+func (directLink *DirectLinkV1) ListGatewayVirtualConnectionsWithContext(ctx context.Context, listGatewayVirtualConnectionsOptions *ListGatewayVirtualConnectionsOptions) (result *GatewayVirtualConnectionCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listGatewayVirtualConnectionsOptions, "listGatewayVirtualConnectionsOptions cannot be nil")
 	if err != nil {
 		return
@@ -951,11 +1146,14 @@ func (directLink *DirectLinkV1) ListGatewayVirtualConnections(listGatewayVirtual
 		return
 	}
 
-	pathSegments := []string{"gateways", "virtual_connections"}
-	pathParameters := []string{*listGatewayVirtualConnectionsOptions.GatewayID}
+	pathParamsMap := map[string]string{
+		"gateway_id": *listGatewayVirtualConnectionsOptions.GatewayID,
+	}
 
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{gateway_id}/virtual_connections`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -982,11 +1180,13 @@ func (directLink *DirectLinkV1) ListGatewayVirtualConnections(listGatewayVirtual
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayVirtualConnectionCollection)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayVirtualConnectionCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -994,6 +1194,11 @@ func (directLink *DirectLinkV1) ListGatewayVirtualConnections(listGatewayVirtual
 // CreateGatewayVirtualConnection : Create virtual connection
 // Create a virtual connection to the specified network.
 func (directLink *DirectLinkV1) CreateGatewayVirtualConnection(createGatewayVirtualConnectionOptions *CreateGatewayVirtualConnectionOptions) (result *GatewayVirtualConnection, response *core.DetailedResponse, err error) {
+	return directLink.CreateGatewayVirtualConnectionWithContext(context.Background(), createGatewayVirtualConnectionOptions)
+}
+
+// CreateGatewayVirtualConnectionWithContext is an alternate form of the CreateGatewayVirtualConnection method which supports a Context parameter
+func (directLink *DirectLinkV1) CreateGatewayVirtualConnectionWithContext(ctx context.Context, createGatewayVirtualConnectionOptions *CreateGatewayVirtualConnectionOptions) (result *GatewayVirtualConnection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createGatewayVirtualConnectionOptions, "createGatewayVirtualConnectionOptions cannot be nil")
 	if err != nil {
 		return
@@ -1003,11 +1208,14 @@ func (directLink *DirectLinkV1) CreateGatewayVirtualConnection(createGatewayVirt
 		return
 	}
 
-	pathSegments := []string{"gateways", "virtual_connections"}
-	pathParameters := []string{*createGatewayVirtualConnectionOptions.GatewayID}
+	pathParamsMap := map[string]string{
+		"gateway_id": *createGatewayVirtualConnectionOptions.GatewayID,
+	}
 
 	builder := core.NewRequestBuilder(core.POST)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{gateway_id}/virtual_connections`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -1050,11 +1258,13 @@ func (directLink *DirectLinkV1) CreateGatewayVirtualConnection(createGatewayVirt
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayVirtualConnection)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayVirtualConnection)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1062,6 +1272,11 @@ func (directLink *DirectLinkV1) CreateGatewayVirtualConnection(createGatewayVirt
 // DeleteGatewayVirtualConnection : Delete virtual connection
 // Delete the virtual connection.
 func (directLink *DirectLinkV1) DeleteGatewayVirtualConnection(deleteGatewayVirtualConnectionOptions *DeleteGatewayVirtualConnectionOptions) (response *core.DetailedResponse, err error) {
+	return directLink.DeleteGatewayVirtualConnectionWithContext(context.Background(), deleteGatewayVirtualConnectionOptions)
+}
+
+// DeleteGatewayVirtualConnectionWithContext is an alternate form of the DeleteGatewayVirtualConnection method which supports a Context parameter
+func (directLink *DirectLinkV1) DeleteGatewayVirtualConnectionWithContext(ctx context.Context, deleteGatewayVirtualConnectionOptions *DeleteGatewayVirtualConnectionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteGatewayVirtualConnectionOptions, "deleteGatewayVirtualConnectionOptions cannot be nil")
 	if err != nil {
 		return
@@ -1071,11 +1286,15 @@ func (directLink *DirectLinkV1) DeleteGatewayVirtualConnection(deleteGatewayVirt
 		return
 	}
 
-	pathSegments := []string{"gateways", "virtual_connections"}
-	pathParameters := []string{*deleteGatewayVirtualConnectionOptions.GatewayID, *deleteGatewayVirtualConnectionOptions.ID}
+	pathParamsMap := map[string]string{
+		"gateway_id": *deleteGatewayVirtualConnectionOptions.GatewayID,
+		"id":         *deleteGatewayVirtualConnectionOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{gateway_id}/virtual_connections/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -1104,6 +1323,11 @@ func (directLink *DirectLinkV1) DeleteGatewayVirtualConnection(deleteGatewayVirt
 // GetGatewayVirtualConnection : Get virtual connection
 // Retrieve a virtual connection.
 func (directLink *DirectLinkV1) GetGatewayVirtualConnection(getGatewayVirtualConnectionOptions *GetGatewayVirtualConnectionOptions) (result *GatewayVirtualConnection, response *core.DetailedResponse, err error) {
+	return directLink.GetGatewayVirtualConnectionWithContext(context.Background(), getGatewayVirtualConnectionOptions)
+}
+
+// GetGatewayVirtualConnectionWithContext is an alternate form of the GetGatewayVirtualConnection method which supports a Context parameter
+func (directLink *DirectLinkV1) GetGatewayVirtualConnectionWithContext(ctx context.Context, getGatewayVirtualConnectionOptions *GetGatewayVirtualConnectionOptions) (result *GatewayVirtualConnection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getGatewayVirtualConnectionOptions, "getGatewayVirtualConnectionOptions cannot be nil")
 	if err != nil {
 		return
@@ -1113,11 +1337,15 @@ func (directLink *DirectLinkV1) GetGatewayVirtualConnection(getGatewayVirtualCon
 		return
 	}
 
-	pathSegments := []string{"gateways", "virtual_connections"}
-	pathParameters := []string{*getGatewayVirtualConnectionOptions.GatewayID, *getGatewayVirtualConnectionOptions.ID}
+	pathParamsMap := map[string]string{
+		"gateway_id": *getGatewayVirtualConnectionOptions.GatewayID,
+		"id":         *getGatewayVirtualConnectionOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.GET)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{gateway_id}/virtual_connections/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -1144,11 +1372,13 @@ func (directLink *DirectLinkV1) GetGatewayVirtualConnection(getGatewayVirtualCon
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayVirtualConnection)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayVirtualConnection)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1156,6 +1386,11 @@ func (directLink *DirectLinkV1) GetGatewayVirtualConnection(getGatewayVirtualCon
 // UpdateGatewayVirtualConnection : Update virtual connection
 // Update a virtual connection.
 func (directLink *DirectLinkV1) UpdateGatewayVirtualConnection(updateGatewayVirtualConnectionOptions *UpdateGatewayVirtualConnectionOptions) (result *GatewayVirtualConnection, response *core.DetailedResponse, err error) {
+	return directLink.UpdateGatewayVirtualConnectionWithContext(context.Background(), updateGatewayVirtualConnectionOptions)
+}
+
+// UpdateGatewayVirtualConnectionWithContext is an alternate form of the UpdateGatewayVirtualConnection method which supports a Context parameter
+func (directLink *DirectLinkV1) UpdateGatewayVirtualConnectionWithContext(ctx context.Context, updateGatewayVirtualConnectionOptions *UpdateGatewayVirtualConnectionOptions) (result *GatewayVirtualConnection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateGatewayVirtualConnectionOptions, "updateGatewayVirtualConnectionOptions cannot be nil")
 	if err != nil {
 		return
@@ -1165,11 +1400,15 @@ func (directLink *DirectLinkV1) UpdateGatewayVirtualConnection(updateGatewayVirt
 		return
 	}
 
-	pathSegments := []string{"gateways", "virtual_connections"}
-	pathParameters := []string{*updateGatewayVirtualConnectionOptions.GatewayID, *updateGatewayVirtualConnectionOptions.ID}
+	pathParamsMap := map[string]string{
+		"gateway_id": *updateGatewayVirtualConnectionOptions.GatewayID,
+		"id":         *updateGatewayVirtualConnectionOptions.ID,
+	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
-	_, err = builder.ConstructHTTPURL(directLink.Service.Options.URL, pathSegments, pathParameters)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = directLink.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(directLink.Service.Options.URL, `/gateways/{gateway_id}/virtual_connections/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -1209,11 +1448,13 @@ func (directLink *DirectLinkV1) UpdateGatewayVirtualConnection(updateGatewayVirt
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayVirtualConnection)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGatewayVirtualConnection)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1221,28 +1462,34 @@ func (directLink *DirectLinkV1) UpdateGatewayVirtualConnection(updateGatewayVirt
 // CreateGatewayActionOptions : The CreateGatewayAction options.
 type CreateGatewayActionOptions struct {
 	// Direct Link Connect gateway identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// Action request.
-	Action *string `json:"action" validate:"required"`
+	Action *string `validate:"required"`
+
+	// The identity of the standard key to use for BGP MD5 authentication key.
+	// The key material that you provide must be base64 encoded and original string must be maximum 126 ASCII characters in
+	// length.
+	// To clear the optional `authentication_key` field patch its crn to `""`.
+	AuthenticationKey *GatewayActionTemplateAuthenticationKey
 
 	// Required for create_gateway_approve requests to select the gateway's routing option.  Gateways with global routing
 	// (`true`) can connect to networks outside of their associated region.
-	Global *bool `json:"global,omitempty"`
+	Global *bool
 
 	// Required for create_gateway_approve requests to select the gateway's metered billing option.  When `true` gateway
 	// usage is billed per gigabyte.  When `false` there is no per gigabyte usage charge, instead a flat rate is charged
 	// for the gateway.
-	Metered *bool `json:"metered,omitempty"`
+	Metered *bool
 
 	// Set for create_gateway_approve requests to select the gateway's resource group.  If unspecified on
 	// create_gateway_approve, the account's [default resource
 	// group](https://cloud.ibm.com/apidocs/resource-manager#introduction) is used.
-	ResourceGroup *ResourceGroupIdentity `json:"resource_group,omitempty"`
+	ResourceGroup *ResourceGroupIdentity
 
 	// Specify attribute updates being approved or rejected, update_attributes_approve and update_attributes_reject actions
 	// must provide an updates field that matches the gateway's current pending changes.
-	Updates []GatewayActionTemplateUpdatesItemIntf `json:"updates,omitempty"`
+	Updates []GatewayActionTemplateUpdatesItemIntf
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1279,6 +1526,12 @@ func (options *CreateGatewayActionOptions) SetAction(action string) *CreateGatew
 	return options
 }
 
+// SetAuthenticationKey : Allow user to set AuthenticationKey
+func (options *CreateGatewayActionOptions) SetAuthenticationKey(authenticationKey *GatewayActionTemplateAuthenticationKey) *CreateGatewayActionOptions {
+	options.AuthenticationKey = authenticationKey
+	return options
+}
+
 // SetGlobal : Allow user to set Global
 func (options *CreateGatewayActionOptions) SetGlobal(global bool) *CreateGatewayActionOptions {
 	options.Global = core.BoolPtr(global)
@@ -1312,13 +1565,13 @@ func (options *CreateGatewayActionOptions) SetHeaders(param map[string]string) *
 // CreateGatewayCompletionNoticeOptions : The CreateGatewayCompletionNotice options.
 type CreateGatewayCompletionNoticeOptions struct {
 	// Direct Link Dedicated gateway identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// Completion notice PDF file.
-	Upload io.ReadCloser `json:"upload,omitempty"`
+	Upload io.ReadCloser
 
 	// The content type of upload.
-	UploadContentType *string `json:"upload_content_type,omitempty"`
+	UploadContentType *string
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1358,7 +1611,7 @@ func (options *CreateGatewayCompletionNoticeOptions) SetHeaders(param map[string
 // CreateGatewayOptions : The CreateGateway options.
 type CreateGatewayOptions struct {
 	// The Direct Link Gateway template.
-	GatewayTemplate GatewayTemplateIntf `json:"GatewayTemplate" validate:"required"`
+	GatewayTemplate GatewayTemplateIntf `validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1386,18 +1639,18 @@ func (options *CreateGatewayOptions) SetHeaders(param map[string]string) *Create
 // CreateGatewayVirtualConnectionOptions : The CreateGatewayVirtualConnection options.
 type CreateGatewayVirtualConnectionOptions struct {
 	// Direct Link gateway identifier.
-	GatewayID *string `json:"gateway_id" validate:"required"`
+	GatewayID *string `validate:"required,ne="`
 
 	// The user-defined name for this virtual connection.  Virtual connection names are unique within a gateway.  This is
 	// the name of the virtual connection itself, the network being connected may have its own name attribute.
-	Name *string `json:"name" validate:"required"`
+	Name *string `validate:"required"`
 
 	// The type of virtual connection.
-	Type *string `json:"type" validate:"required"`
+	Type *string `validate:"required"`
 
 	// Unique identifier of the target network.  For type=vpc virtual connections this is the CRN of the target VPC.  This
 	// field does not apply to type=classic connections.
-	NetworkID *string `json:"network_id,omitempty"`
+	NetworkID *string
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1483,7 +1736,7 @@ func UnmarshalCrossConnectRouter(m map[string]json.RawMessage, result interface{
 // DeleteGatewayOptions : The DeleteGateway options.
 type DeleteGatewayOptions struct {
 	// Direct Link gateway identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1511,10 +1764,10 @@ func (options *DeleteGatewayOptions) SetHeaders(param map[string]string) *Delete
 // DeleteGatewayVirtualConnectionOptions : The DeleteGatewayVirtualConnection options.
 type DeleteGatewayVirtualConnectionOptions struct {
 	// Direct Link gateway identifier.
-	GatewayID *string `json:"gateway_id" validate:"required"`
+	GatewayID *string `validate:"required,ne="`
 
 	// The virtual connection identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1548,6 +1801,12 @@ func (options *DeleteGatewayVirtualConnectionOptions) SetHeaders(param map[strin
 
 // Gateway : gateway.
 type Gateway struct {
+	// The identity of the standard key to use for BGP MD5 authentication key.
+	// The key material that you provide must be base64 encoded and original string must be maximum 126 ASCII characters in
+	// length.
+	// To clear the optional `authentication_key` field patch its crn to `""`.
+	AuthenticationKey *GatewayAuthenticationKey `json:"authentication_key,omitempty"`
+
 	// Customer BGP ASN.
 	BgpAsn *int64 `json:"bgp_asn" validate:"required"`
 
@@ -1635,7 +1894,7 @@ type Gateway struct {
 	// Gateway speed in megabits per second.
 	SpeedMbps *int64 `json:"speed_mbps" validate:"required"`
 
-	// Gateway type. The list of enumerated values for this property may expand in the future. Code and processes using
+	// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
 	// this field  must tolerate unexpected values.
 	Type *string `json:"type" validate:"required"`
 
@@ -1681,8 +1940,8 @@ const (
 )
 
 // Constants associated with the Gateway.Type property.
-// Gateway type. The list of enumerated values for this property may expand in the future. Code and processes using this
-// field  must tolerate unexpected values.
+// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+// this field  must tolerate unexpected values.
 const (
 	Gateway_Type_Connect   = "connect"
 	Gateway_Type_Dedicated = "dedicated"
@@ -1691,6 +1950,10 @@ const (
 // UnmarshalGateway unmarshals an instance of Gateway from the specified map of raw messages.
 func UnmarshalGateway(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(Gateway)
+	err = core.UnmarshalModel(m, "authentication_key", &obj.AuthenticationKey, UnmarshalGatewayAuthenticationKey)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "bgp_asn", &obj.BgpAsn)
 	if err != nil {
 		return
@@ -1807,6 +2070,36 @@ func UnmarshalGateway(m map[string]json.RawMessage, result interface{}) (err err
 	return
 }
 
+// GatewayActionTemplateAuthenticationKey : The identity of the standard key to use for BGP MD5 authentication key. The key material that you provide must be
+// base64 encoded and original string must be maximum 126 ASCII characters in length. To clear the optional
+// `authentication_key` field patch its crn to `""`.
+type GatewayActionTemplateAuthenticationKey struct {
+	// The CRN of the [Key Protect Standard
+	// Key](https://cloud.ibm.com/docs/key-protect?topic=key-protect-getting-started-tutorial) or [Hyper Protect Crypto
+	// Service Standard Key](https://cloud.ibm.com/docs/hs-crypto?topic=hs-crypto-get-started) for this resource.
+	Crn *string `json:"crn" validate:"required"`
+}
+
+// NewGatewayActionTemplateAuthenticationKey : Instantiate GatewayActionTemplateAuthenticationKey (Generic Model Constructor)
+func (*DirectLinkV1) NewGatewayActionTemplateAuthenticationKey(crn string) (model *GatewayActionTemplateAuthenticationKey, err error) {
+	model = &GatewayActionTemplateAuthenticationKey{
+		Crn: core.StringPtr(crn),
+	}
+	err = core.ValidateStruct(model, "required parameters")
+	return
+}
+
+// UnmarshalGatewayActionTemplateAuthenticationKey unmarshals an instance of GatewayActionTemplateAuthenticationKey from the specified map of raw messages.
+func UnmarshalGatewayActionTemplateAuthenticationKey(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GatewayActionTemplateAuthenticationKey)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // GatewayActionTemplateUpdatesItem : GatewayActionTemplateUpdatesItem struct
 // Models which "extend" this model:
 // - GatewayActionTemplateUpdatesItemGatewayClientSpeedUpdate
@@ -1827,6 +2120,27 @@ type GatewayActionTemplateUpdatesItemIntf interface {
 func UnmarshalGatewayActionTemplateUpdatesItem(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(GatewayActionTemplateUpdatesItem)
 	err = core.UnmarshalPrimitive(m, "speed_mbps", &obj.SpeedMbps)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// GatewayAuthenticationKey : The identity of the standard key to use for BGP MD5 authentication key. The key material that you provide must be
+// base64 encoded and original string must be maximum 126 ASCII characters in length. To clear the optional
+// `authentication_key` field patch its crn to `""`.
+type GatewayAuthenticationKey struct {
+	// The CRN of the [Key Protect Standard
+	// Key](https://cloud.ibm.com/docs/key-protect?topic=key-protect-getting-started-tutorial) or [Hyper Protect Crypto
+	// Service Standard Key](https://cloud.ibm.com/docs/hs-crypto?topic=hs-crypto-get-started) for this resource.
+	Crn *string `json:"crn" validate:"required"`
+}
+
+// UnmarshalGatewayAuthenticationKey unmarshals an instance of GatewayAuthenticationKey from the specified map of raw messages.
+func UnmarshalGatewayAuthenticationKey(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GatewayAuthenticationKey)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
 	if err != nil {
 		return
 	}
@@ -2387,6 +2701,36 @@ func UnmarshalGatewayMacsecConfigTemplatePrimaryCak(m map[string]json.RawMessage
 	return
 }
 
+// GatewayPatchTemplateAuthenticationKey : The identity of the standard key to use for BGP MD5 authentication key. The key material that you provide must be
+// base64 encoded and original string must be maximum 126 ASCII characters in length. To clear the optional
+// `authentication_key` field patch its crn to `""`.
+type GatewayPatchTemplateAuthenticationKey struct {
+	// The CRN of the [Key Protect Standard
+	// Key](https://cloud.ibm.com/docs/key-protect?topic=key-protect-getting-started-tutorial) or [Hyper Protect Crypto
+	// Service Standard Key](https://cloud.ibm.com/docs/hs-crypto?topic=hs-crypto-get-started) for this resource.
+	Crn *string `json:"crn" validate:"required"`
+}
+
+// NewGatewayPatchTemplateAuthenticationKey : Instantiate GatewayPatchTemplateAuthenticationKey (Generic Model Constructor)
+func (*DirectLinkV1) NewGatewayPatchTemplateAuthenticationKey(crn string) (model *GatewayPatchTemplateAuthenticationKey, err error) {
+	model = &GatewayPatchTemplateAuthenticationKey{
+		Crn: core.StringPtr(crn),
+	}
+	err = core.ValidateStruct(model, "required parameters")
+	return
+}
+
+// UnmarshalGatewayPatchTemplateAuthenticationKey unmarshals an instance of GatewayPatchTemplateAuthenticationKey from the specified map of raw messages.
+func UnmarshalGatewayPatchTemplateAuthenticationKey(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GatewayPatchTemplateAuthenticationKey)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // GatewayPort : gateway port for type=connect gateways.
 type GatewayPort struct {
 	// Port Identifier.
@@ -2491,6 +2835,12 @@ func UnmarshalGatewayStatisticCollection(m map[string]json.RawMessage, result in
 // - GatewayTemplateGatewayTypeDedicatedTemplate
 // - GatewayTemplateGatewayTypeConnectTemplate
 type GatewayTemplate struct {
+	// The identity of the standard key to use for BGP MD5 authentication key.
+	// The key material that you provide must be base64 encoded and original string must be maximum 126 ASCII characters in
+	// length.
+	// To clear the optional `authentication_key` field patch its crn to `""`.
+	AuthenticationKey *GatewayTemplateAuthenticationKey `json:"authentication_key,omitempty"`
+
 	// BGP ASN.
 	BgpAsn *int64 `json:"bgp_asn" validate:"required"`
 
@@ -2539,7 +2889,7 @@ type GatewayTemplate struct {
 	// Gateway speed in megabits per second.
 	SpeedMbps *int64 `json:"speed_mbps" validate:"required"`
 
-	// Gateway type.
+	// Offering type.
 	Type *string `json:"type" validate:"required"`
 
 	// Carrier name.
@@ -2562,7 +2912,7 @@ type GatewayTemplate struct {
 }
 
 // Constants associated with the GatewayTemplate.Type property.
-// Gateway type.
+// Offering type.
 const (
 	GatewayTemplate_Type_Connect   = "connect"
 	GatewayTemplate_Type_Dedicated = "dedicated"
@@ -2579,6 +2929,10 @@ type GatewayTemplateIntf interface {
 // UnmarshalGatewayTemplate unmarshals an instance of GatewayTemplate from the specified map of raw messages.
 func UnmarshalGatewayTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(GatewayTemplate)
+	err = core.UnmarshalModel(m, "authentication_key", &obj.AuthenticationKey, UnmarshalGatewayTemplateAuthenticationKey)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "bgp_asn", &obj.BgpAsn)
 	if err != nil {
 		return
@@ -2640,6 +2994,36 @@ func UnmarshalGatewayTemplate(m map[string]json.RawMessage, result interface{}) 
 		return
 	}
 	err = core.UnmarshalModel(m, "port", &obj.Port, UnmarshalGatewayPortIdentity)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// GatewayTemplateAuthenticationKey : The identity of the standard key to use for BGP MD5 authentication key. The key material that you provide must be
+// base64 encoded and original string must be maximum 126 ASCII characters in length. To clear the optional
+// `authentication_key` field patch its crn to `""`.
+type GatewayTemplateAuthenticationKey struct {
+	// The CRN of the [Key Protect Standard
+	// Key](https://cloud.ibm.com/docs/key-protect?topic=key-protect-getting-started-tutorial) or [Hyper Protect Crypto
+	// Service Standard Key](https://cloud.ibm.com/docs/hs-crypto?topic=hs-crypto-get-started) for this resource.
+	Crn *string `json:"crn" validate:"required"`
+}
+
+// NewGatewayTemplateAuthenticationKey : Instantiate GatewayTemplateAuthenticationKey (Generic Model Constructor)
+func (*DirectLinkV1) NewGatewayTemplateAuthenticationKey(crn string) (model *GatewayTemplateAuthenticationKey, err error) {
+	model = &GatewayTemplateAuthenticationKey{
+		Crn: core.StringPtr(crn),
+	}
+	err = core.ValidateStruct(model, "required parameters")
+	return
+}
+
+// UnmarshalGatewayTemplateAuthenticationKey unmarshals an instance of GatewayTemplateAuthenticationKey from the specified map of raw messages.
+func UnmarshalGatewayTemplateAuthenticationKey(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GatewayTemplateAuthenticationKey)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
 	if err != nil {
 		return
 	}
@@ -2761,7 +3145,7 @@ func UnmarshalGatewayVirtualConnectionCollection(m map[string]json.RawMessage, r
 // GetGatewayOptions : The GetGateway options.
 type GetGatewayOptions struct {
 	// Direct Link gateway identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2789,10 +3173,10 @@ func (options *GetGatewayOptions) SetHeaders(param map[string]string) *GetGatewa
 // GetGatewayStatisticsOptions : The GetGatewayStatistics options.
 type GetGatewayStatisticsOptions struct {
 	// Direct Link Dedicated gateway identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// specify statistic to retrieve.
-	Type *string `json:"type" validate:"required"`
+	Type *string `validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2834,10 +3218,10 @@ func (options *GetGatewayStatisticsOptions) SetHeaders(param map[string]string) 
 // GetGatewayVirtualConnectionOptions : The GetGatewayVirtualConnection options.
 type GetGatewayVirtualConnectionOptions struct {
 	// Direct Link gateway identifier.
-	GatewayID *string `json:"gateway_id" validate:"required"`
+	GatewayID *string `validate:"required,ne="`
 
 	// The virtual connection identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2872,7 +3256,7 @@ func (options *GetGatewayVirtualConnectionOptions) SetHeaders(param map[string]s
 // GetPortOptions : The GetPort options.
 type GetPortOptions struct {
 	// The port identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2900,7 +3284,7 @@ func (options *GetPortOptions) SetHeaders(param map[string]string) *GetPortOptio
 // ListGatewayCompletionNoticeOptions : The ListGatewayCompletionNotice options.
 type ListGatewayCompletionNoticeOptions struct {
 	// Direct Link Dedicated gateway identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2928,7 +3312,7 @@ func (options *ListGatewayCompletionNoticeOptions) SetHeaders(param map[string]s
 // ListGatewayLetterOfAuthorizationOptions : The ListGatewayLetterOfAuthorization options.
 type ListGatewayLetterOfAuthorizationOptions struct {
 	// Direct Link Dedicated gateway identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2956,7 +3340,7 @@ func (options *ListGatewayLetterOfAuthorizationOptions) SetHeaders(param map[str
 // ListGatewayVirtualConnectionsOptions : The ListGatewayVirtualConnections options.
 type ListGatewayVirtualConnectionsOptions struct {
 	// Direct Link gateway identifier.
-	GatewayID *string `json:"gateway_id" validate:"required"`
+	GatewayID *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3002,10 +3386,10 @@ func (options *ListGatewaysOptions) SetHeaders(param map[string]string) *ListGat
 // ListOfferingTypeLocationCrossConnectRoutersOptions : The ListOfferingTypeLocationCrossConnectRouters options.
 type ListOfferingTypeLocationCrossConnectRoutersOptions struct {
 	// The Direct Link offering type.  Only value `"dedicated"` is supported for this API.
-	OfferingType *string `json:"offering_type" validate:"required"`
+	OfferingType *string `validate:"required,ne="`
 
 	// The name of the Direct Link location.
-	LocationName *string `json:"location_name" validate:"required"`
+	LocationName *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3046,7 +3430,7 @@ func (options *ListOfferingTypeLocationCrossConnectRoutersOptions) SetHeaders(pa
 // ListOfferingTypeLocationsOptions : The ListOfferingTypeLocations options.
 type ListOfferingTypeLocationsOptions struct {
 	// The Direct Link offering type.  Current supported values are `"dedicated"` and `"connect"`.
-	OfferingType *string `json:"offering_type" validate:"required"`
+	OfferingType *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3081,7 +3465,7 @@ func (options *ListOfferingTypeLocationsOptions) SetHeaders(param map[string]str
 // ListOfferingTypeSpeedsOptions : The ListOfferingTypeSpeeds options.
 type ListOfferingTypeSpeedsOptions struct {
 	// The Direct Link offering type.  Current supported values are `"dedicated"` and `"connect"`.
-	OfferingType *string `json:"offering_type" validate:"required"`
+	OfferingType *string `validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3116,13 +3500,13 @@ func (options *ListOfferingTypeSpeedsOptions) SetHeaders(param map[string]string
 // ListPortsOptions : The ListPorts options.
 type ListPortsOptions struct {
 	// A server-supplied token determining which resource to start the page on.
-	Start *string `json:"start,omitempty"`
+	Start *string
 
 	// The number of resources to return on a page.
-	Limit *int64 `json:"limit,omitempty"`
+	Limit *int64
 
 	// Direct Link location short name.
-	LocationName *string `json:"location_name,omitempty"`
+	LocationName *string
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3527,28 +3911,34 @@ func UnmarshalResourceGroupReference(m map[string]json.RawMessage, result interf
 // UpdateGatewayOptions : The UpdateGateway options.
 type UpdateGatewayOptions struct {
 	// Direct Link gateway identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
+
+	// The identity of the standard key to use for BGP MD5 authentication key.
+	// The key material that you provide must be base64 encoded and original string must be maximum 126 ASCII characters in
+	// length.
+	// To clear the optional `authentication_key` field patch its crn to `""`.
+	AuthenticationKey *GatewayPatchTemplateAuthenticationKey
 
 	// Gateways with global routing (`true`) can connect to networks outside of their associated region.
-	Global *bool `json:"global,omitempty"`
+	Global *bool
 
 	// Use this field during LOA rejection to provide the reason for the rejection.
 	//
 	// Only allowed for type=dedicated gateways.
-	LoaRejectReason *string `json:"loa_reject_reason,omitempty"`
+	LoaRejectReason *string
 
 	// MACsec configuration information.  When patching any macsec_config fields, no other fields may be specified in the
 	// patch request.  Contact IBM support for access to MACsec.
 	//
 	// A MACsec config cannot be added to a gateway created without MACsec.
-	MacsecConfig *GatewayMacsecConfigPatchTemplate `json:"macsec_config,omitempty"`
+	MacsecConfig *GatewayMacsecConfigPatchTemplate
 
 	// Metered billing option.  When `true` gateway usage is billed per gigabyte.  When `false` there is no per gigabyte
 	// usage charge, instead a flat rate is charged for the gateway.
-	Metered *bool `json:"metered,omitempty"`
+	Metered *bool
 
 	// The unique user-defined name for this gateway.
-	Name *string `json:"name,omitempty"`
+	Name *string
 
 	// Gateway operational status.
 	//
@@ -3556,10 +3946,10 @@ type UpdateGatewayOptions struct {
 	// When rejecting an LOA, provide reject reasoning in `loa_reject_reason`.
 	//
 	// Only allowed for type=dedicated gateways.
-	OperationalStatus *string `json:"operational_status,omitempty"`
+	OperationalStatus *string
 
 	// Gateway speed in megabits per second.
-	SpeedMbps *int64 `json:"speed_mbps,omitempty"`
+	SpeedMbps *int64
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3587,6 +3977,12 @@ func (*DirectLinkV1) NewUpdateGatewayOptions(id string) *UpdateGatewayOptions {
 // SetID : Allow user to set ID
 func (options *UpdateGatewayOptions) SetID(id string) *UpdateGatewayOptions {
 	options.ID = core.StringPtr(id)
+	return options
+}
+
+// SetAuthenticationKey : Allow user to set AuthenticationKey
+func (options *UpdateGatewayOptions) SetAuthenticationKey(authenticationKey *GatewayPatchTemplateAuthenticationKey) *UpdateGatewayOptions {
+	options.AuthenticationKey = authenticationKey
 	return options
 }
 
@@ -3641,19 +4037,19 @@ func (options *UpdateGatewayOptions) SetHeaders(param map[string]string) *Update
 // UpdateGatewayVirtualConnectionOptions : The UpdateGatewayVirtualConnection options.
 type UpdateGatewayVirtualConnectionOptions struct {
 	// Direct Link gateway identifier.
-	GatewayID *string `json:"gateway_id" validate:"required"`
+	GatewayID *string `validate:"required,ne="`
 
 	// The virtual connection identifier.
-	ID *string `json:"id" validate:"required"`
+	ID *string `validate:"required,ne="`
 
 	// The user-defined name for this virtual connection.  Virtual connection names are unique within a gateway.  This is
 	// the name of the virtual connection itself, the network being connected may have its own name attribute.
-	Name *string `json:"name,omitempty"`
+	Name *string
 
 	// Status of the virtual connection.  Virtual connections that span IBM Cloud Accounts are created in approval_pending
 	// status.  The owner of the target network can accept or reject connection requests by patching status to attached or
 	// rejected respectively.
-	Status *string `json:"status,omitempty"`
+	Status *string
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3866,6 +4262,8 @@ func UnmarshalGatewayChangeRequestGatewayClientGatewayUpdateAttributes(m map[str
 // GatewayTemplateGatewayTypeConnectTemplate : Gateway fields specific to type=connect gateway create.
 // This model "extends" GatewayTemplate
 type GatewayTemplateGatewayTypeConnectTemplate struct {
+	AuthenticationKey *GatewayTemplateAuthenticationKey `json:"authentication_key,omitempty"`
+
 	// BGP ASN.
 	BgpAsn *int64 `json:"bgp_asn" validate:"required"`
 
@@ -3907,14 +4305,12 @@ type GatewayTemplateGatewayTypeConnectTemplate struct {
 	// The unique user-defined name for this gateway.
 	Name *string `json:"name" validate:"required"`
 
-	// Resource group for this resource. If unspecified, the account's [default resource
-	// group](https://cloud.ibm.com/apidocs/resource-manager#introduction) is used.
 	ResourceGroup *ResourceGroupIdentity `json:"resource_group,omitempty"`
 
 	// Gateway speed in megabits per second.
 	SpeedMbps *int64 `json:"speed_mbps" validate:"required"`
 
-	// Gateway type.
+	// Offering type.
 	Type *string `json:"type" validate:"required"`
 
 	// Select Port Label for new type=connect gateway.
@@ -3922,7 +4318,7 @@ type GatewayTemplateGatewayTypeConnectTemplate struct {
 }
 
 // Constants associated with the GatewayTemplateGatewayTypeConnectTemplate.Type property.
-// Gateway type.
+// Offering type.
 const (
 	GatewayTemplateGatewayTypeConnectTemplate_Type_Connect   = "connect"
 	GatewayTemplateGatewayTypeConnectTemplate_Type_Dedicated = "dedicated"
@@ -3950,6 +4346,10 @@ func (*GatewayTemplateGatewayTypeConnectTemplate) isaGatewayTemplate() bool {
 // UnmarshalGatewayTemplateGatewayTypeConnectTemplate unmarshals an instance of GatewayTemplateGatewayTypeConnectTemplate from the specified map of raw messages.
 func UnmarshalGatewayTemplateGatewayTypeConnectTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(GatewayTemplateGatewayTypeConnectTemplate)
+	err = core.UnmarshalModel(m, "authentication_key", &obj.AuthenticationKey, UnmarshalGatewayTemplateAuthenticationKey)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "bgp_asn", &obj.BgpAsn)
 	if err != nil {
 		return
@@ -4001,6 +4401,8 @@ func UnmarshalGatewayTemplateGatewayTypeConnectTemplate(m map[string]json.RawMes
 // GatewayTemplateGatewayTypeDedicatedTemplate : Gateway fields specific to type=dedicated gateway create.
 // This model "extends" GatewayTemplate
 type GatewayTemplateGatewayTypeDedicatedTemplate struct {
+	AuthenticationKey *GatewayTemplateAuthenticationKey `json:"authentication_key,omitempty"`
+
 	// BGP ASN.
 	BgpAsn *int64 `json:"bgp_asn" validate:"required"`
 
@@ -4042,14 +4444,12 @@ type GatewayTemplateGatewayTypeDedicatedTemplate struct {
 	// The unique user-defined name for this gateway.
 	Name *string `json:"name" validate:"required"`
 
-	// Resource group for this resource. If unspecified, the account's [default resource
-	// group](https://cloud.ibm.com/apidocs/resource-manager#introduction) is used.
 	ResourceGroup *ResourceGroupIdentity `json:"resource_group,omitempty"`
 
 	// Gateway speed in megabits per second.
 	SpeedMbps *int64 `json:"speed_mbps" validate:"required"`
 
-	// Gateway type.
+	// Offering type.
 	Type *string `json:"type" validate:"required"`
 
 	// Carrier name.
@@ -4069,7 +4469,7 @@ type GatewayTemplateGatewayTypeDedicatedTemplate struct {
 }
 
 // Constants associated with the GatewayTemplateGatewayTypeDedicatedTemplate.Type property.
-// Gateway type.
+// Offering type.
 const (
 	GatewayTemplateGatewayTypeDedicatedTemplate_Type_Connect   = "connect"
 	GatewayTemplateGatewayTypeDedicatedTemplate_Type_Dedicated = "dedicated"
@@ -4100,6 +4500,10 @@ func (*GatewayTemplateGatewayTypeDedicatedTemplate) isaGatewayTemplate() bool {
 // UnmarshalGatewayTemplateGatewayTypeDedicatedTemplate unmarshals an instance of GatewayTemplateGatewayTypeDedicatedTemplate from the specified map of raw messages.
 func UnmarshalGatewayTemplateGatewayTypeDedicatedTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(GatewayTemplateGatewayTypeDedicatedTemplate)
+	err = core.UnmarshalModel(m, "authentication_key", &obj.AuthenticationKey, UnmarshalGatewayTemplateAuthenticationKey)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "bgp_asn", &obj.BgpAsn)
 	if err != nil {
 		return

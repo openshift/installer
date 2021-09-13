@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	homedir "github.com/mitchellh/go-homedir"
-	gouuid "github.com/satori/go.uuid"
 
 	"github.com/IBM-Cloud/bluemix-go/helpers"
 )
@@ -880,50 +879,12 @@ func validateIPVersion(v interface{}, k string) (ws []string, errors []error) {
 	return
 }
 
-func validateVPCIdentity(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
-	// We do not currently accept CRN or HRef
-	validators := []func(string) bool{isSecurityGroupAddress, isSecurityGroupCIDR,
-		isVPCIdentityByID}
-
-	for _, validator := range validators {
-		if validator(value) {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%q (%s) invalid vpc identity", k, value))
-	return
-}
-
-func validateResourceGroupId(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
-	_, err := gouuid.FromString(value)
-	if err != nil {
-		errors = append(errors, fmt.Errorf("%q contains an invalid resource group id, %q.", k, value))
-	}
-	return
-}
-
-func validateSecurityGroupId(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
-	_, err := gouuid.FromString(value)
-	if err != nil {
-		errors = append(errors, fmt.Errorf("%q contains an invalid security group id, %q.", k, value))
-	}
-	return
-}
-
 func isSecurityGroupAddress(s string) bool {
 	return net.ParseIP(s) != nil
 }
 
 func isSecurityGroupCIDR(s string) bool {
 	_, _, err := net.ParseCIDR(s)
-	return err == nil
-}
-
-func isSecurityGroupIdentityByID(s string) bool {
-	_, err := gouuid.FromString(s)
 	return err == nil
 }
 
@@ -934,25 +895,6 @@ func isSecurityGroupIdentityByCRN(s string) bool {
 
 func isSecurityGroupIdentityByHRef(s string) bool {
 	return validHRef.MatchString(s)
-}
-
-func isVPCIdentityByID(s string) bool {
-	_, err := gouuid.FromString(s)
-	return err == nil
-}
-
-func validateSecurityGroupRemote(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
-	validators := []func(string) bool{isSecurityGroupAddress, isSecurityGroupCIDR,
-		isSecurityGroupIdentityByID /*, isSecurityGroupIdentityByCRN, isSecurityGroupIdentityByHRef*/}
-
-	for _, validator := range validators {
-		if validator(value) {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%q (%s) invalid security group remote", k, value))
-	return
 }
 
 func validateGeneration(v interface{}, k string) (ws []string, errors []error) {

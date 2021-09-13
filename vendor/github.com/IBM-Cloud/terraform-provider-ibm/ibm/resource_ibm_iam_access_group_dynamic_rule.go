@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
 	"github.com/IBM-Cloud/bluemix-go/api/iamuum/iamuumv2"
 	"github.com/IBM-Cloud/bluemix-go/bmxerror"
-
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceIBMIAMDynamicRule() *schema.Resource {
@@ -237,6 +237,9 @@ func resourceIBMIAMDynamicRuleExists(d *schema.ResourceData, meta interface{}) (
 	parts, err := idParts(d.Id())
 	if err != nil {
 		return false, err
+	}
+	if len(parts) < 2 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of accessGroupID/RuleID", d.Id())
 	}
 	grpID := parts[0]
 	ruleID := parts[1]

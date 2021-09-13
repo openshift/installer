@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/IBM/go-sdk-core/core"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -98,7 +98,7 @@ func resourceIBMISEndpointGateway() *schema.Resource {
 				Type:             schema.TypeList,
 				Optional:         true,
 				Computed:         true,
-				Description:      "Endpoint gateway resource group",
+				Description:      "Endpoint gateway IPs",
 				DiffSuppressFunc: applyOnce,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -117,13 +117,17 @@ func resourceIBMISEndpointGateway() *schema.Resource {
 						isVirtualEndpointGatewayIPsSubnet: {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Computed:    true,
 							Description: "The Subnet id",
 						},
 						isVirtualEndpointGatewayIPsResourceType: {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The VPC Resource Type",
+							Description: "The VPE Resource Type",
+						},
+						isVirtualEndpointGatewayIPsAddress: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The IP Address",
 						},
 					},
 				},
@@ -398,6 +402,7 @@ func flattenIPs(ipsList []vpcv1.ReservedIPReference) interface{} {
 		ips[isVirtualEndpointGatewayIPsID] = *item.ID
 		ips[isVirtualEndpointGatewayIPsName] = *item.Name
 		ips[isVirtualEndpointGatewayIPsResourceType] = *item.ResourceType
+		ips[isVirtualEndpointGatewayIPsAddress] = *item.Address
 
 		ipsListOutput = append(ipsListOutput, ips)
 	}

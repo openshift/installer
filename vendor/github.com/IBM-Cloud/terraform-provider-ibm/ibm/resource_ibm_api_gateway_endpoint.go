@@ -172,6 +172,9 @@ func resourceIBMApiGatewayEndPointGet(d *schema.ResourceData, meta interface{}) 
 
 	parts := d.Id()
 	partslist := strings.Split(parts, "//")
+	if len(partslist) < 2 {
+		return fmt.Errorf("Incorrect ID %s: Id should be a combination of instanceCRN//artifactID", d.Id())
+	}
 
 	serviceInstanceCrn := partslist[0]
 	apiID := partslist[1]
@@ -406,6 +409,10 @@ func resourceIBMApiGatewayEndPointExists(d *schema.ResourceData, meta interface{
 
 	parts := d.Id()
 	partslist := strings.Split(parts, "//")
+	if len(partslist) < 2 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of instanceCRN//artifactID", d.Id())
+	}
+
 	serviceInstanceCrn := partslist[0]
 	apiID := partslist[1]
 

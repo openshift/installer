@@ -75,7 +75,9 @@ func dataSourceIBMISSecurityGroupTargetsRead(d *schema.ResourceData, meta interf
 
 	for {
 		listSecurityGroupTargetsOptions := sess.NewListSecurityGroupTargetsOptions(securityGroupID)
-
+		if start != "" {
+			listSecurityGroupTargetsOptions.Start = &start
+		}
 		groups, response, err := sess.ListSecurityGroupTargets(listSecurityGroupTargetsOptions)
 		if err != nil || groups == nil {
 			return fmt.Errorf("Error Getting InstanceGroup Managers %s\n%s", err, response)
@@ -97,12 +99,15 @@ func dataSourceIBMISSecurityGroupTargetsRead(d *schema.ResourceData, meta interf
 	for _, securityGroupTargetReferenceIntf := range allrecs {
 		securityGroupTargetReference := securityGroupTargetReferenceIntf.(*vpcv1.SecurityGroupTargetReference)
 		tr := map[string]interface{}{
-			"name":          *securityGroupTargetReference.Name,
-			"target":        *securityGroupTargetReference.ID,
-			"resource_type": *securityGroupTargetReference.ResourceType,
+			"name":   *securityGroupTargetReference.Name,
+			"target": *securityGroupTargetReference.ID,
+			// "resource_type": *securityGroupTargetReference.ResourceType,
 		}
 		if securityGroupTargetReference.Deleted != nil {
 			tr["more_info"] = *securityGroupTargetReference.Deleted.MoreInfo
+		}
+		if securityGroupTargetReference != nil && securityGroupTargetReference.ResourceType != nil {
+			tr["resource_type"] = *securityGroupTargetReference.ResourceType
 		}
 		targets = append(targets, tr)
 	}

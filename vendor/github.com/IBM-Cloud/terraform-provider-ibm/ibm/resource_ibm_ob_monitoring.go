@@ -9,10 +9,11 @@ import (
 	"strings"
 	"time"
 
-	v2 "github.com/IBM-Cloud/bluemix-go/api/container/containerv2"
-	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
+	v2 "github.com/IBM-Cloud/bluemix-go/api/container/containerv2"
+	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 )
 
 const (
@@ -209,6 +210,9 @@ func resourceIBMMonitoringRead(d *schema.ResourceData, meta interface{}) error {
 	parts, err := idParts(d.Id())
 	if err != nil {
 		return err
+	}
+	if len(parts) < 2 {
+		return fmt.Errorf("Incorrect ID %s: Id should be a combination of clusterNameorID/monitoringID", d.Id())
 	}
 	clusterName := parts[0]
 	monitoringID := parts[1]

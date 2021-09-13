@@ -306,6 +306,15 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 		for k, v := range service.DefaultHeaders {
 			req.Header.Add(k, strings.Join(v, ""))
 		}
+
+		// After adding the default headers, make one final check to see if the user
+		// specified the "Host" header within the default headers.
+		// This needs to be handled separately because it will be ignored by
+		// the Request.Write() method.
+		host := service.DefaultHeaders.Get("Host")
+		if host != "" {
+			req.Host = host
+		}
 	}
 
 	// Add the default User-Agent header if not already present.

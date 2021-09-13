@@ -95,7 +95,9 @@ func dataSourceIBMISInstanceGroupManagerPoliciesRead(d *schema.ResourceData, met
 			InstanceGroupID:        &instanceGroupID,
 			InstanceGroupManagerID: &instanceGroupManagerID,
 		}
-
+		if start != "" {
+			listInstanceGroupManagerPoliciesOptions.Start = &start
+		}
 		instanceGroupManagerPolicyCollection, response, err := sess.ListInstanceGroupManagerPolicies(&listInstanceGroupManagerPoliciesOptions)
 		if err != nil {
 			return fmt.Errorf("Error Getting InstanceGroup Manager Policies %s\n%s", err, response)

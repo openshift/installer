@@ -151,6 +151,9 @@ func resourceIBMPIKeyExists(d *schema.ResourceData, meta interface{}) (bool, err
 	if err != nil {
 		return false, err
 	}
+	if len(parts) < 2 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of powerInstanceID/keyName", d.Id())
+	}
 	name := parts[1]
 	powerinstanceid := parts[0]
 	client := st.NewIBMPIKeyClient(sess, powerinstanceid)

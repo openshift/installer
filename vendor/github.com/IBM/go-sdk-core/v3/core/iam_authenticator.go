@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -78,12 +77,10 @@ type IamAuthenticator struct {
 	tokenData *iamTokenData
 }
 
-var iamRequestTokenMutex sync.Mutex
-var iamNeedsRefreshMutex sync.Mutex
-
 // NewIamAuthenticator constructs a new IamAuthenticator instance.
 func NewIamAuthenticator(apikey string, url string, clientId string, clientSecret string,
 	disableSSLVerification bool, headers map[string]string) (*IamAuthenticator, error) {
+
 	authenticator := &IamAuthenticator{
 		ApiKey:                 apikey,
 		URL:                    url,
@@ -170,67 +167,22 @@ func (this IamAuthenticator) Validate() error {
 }
 
 // getToken: returns an access token to be used in an Authorization header.
-// Whenever a new token is needed (when a token doesn't yet exist, needs to be refreshed,
-// or the existing token has expired), a new access token is fetched from the token server.
+// Whenever a new token is needed (when a token doesn't yet exist, or the existing token has expired),
+// a new access token is fetched from the token server.
 func (authenticator *IamAuthenticator) getToken() (string, error) {
 	if authenticator.tokenData == nil || !authenticator.tokenData.isTokenValid() {
-		// synchronously request the token
-		err := authenticator.synchronizedRequestToken()
+		tokenResponse, err := authenticator.requestToken()
 		if err != nil {
 			return "", err
 		}
-	} else if authenticator.tokenData.needsRefresh() {
-		// If refresh needed, kick off a go routine in the background to get a new token
-		ch := make(chan error)
-		go func() {
-			ch <- authenticator.getTokenData()
-		}()
-		select {
-		case err := <-ch:
-			if err != nil {
-				return "", err
-			}
-		default:
+
+		authenticator.tokenData, err = newIamTokenData(tokenResponse)
+		if err != nil {
+			return "", err
 		}
 	}
 
-	// return an error if the access token is not valid or was not fetched
-	if authenticator.tokenData == nil || authenticator.tokenData.AccessToken == "" {
-		return "", fmt.Errorf("Error while trying to get access token")
-	}
-
 	return authenticator.tokenData.AccessToken, nil
-}
-
-// synchronizedRequestToken: synchronously checks if the current token in cache
-// is valid. If token is not valid or does not exist, it will fetch a new token
-// and set the tokenRefreshTime
-func (authenticator *IamAuthenticator) synchronizedRequestToken() error {
-	iamRequestTokenMutex.Lock()
-	defer iamRequestTokenMutex.Unlock()
-	// if cached token is still valid, then just continue to use it
-	if authenticator.tokenData != nil && authenticator.tokenData.isTokenValid() {
-		return nil
-	}
-
-	return authenticator.getTokenData()
-}
-
-// getTokenData: requests a new token from the access server and
-// unmarshals the token information to the tokenData cache. Returns
-// an error if the token was unable to be fetched, otherwise returns nil
-func (authenticator *IamAuthenticator) getTokenData() error {
-	tokenResponse, err := authenticator.requestToken()
-	if err != nil {
-		return err
-	}
-
-	authenticator.tokenData, err = newIamTokenData(tokenResponse)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // requestToken: fetches a new access token from the token server.
@@ -316,15 +268,10 @@ type iamTokenServerResponse struct {
 type iamTokenData struct {
 	AccessToken string
 	RefreshTime int64
-	Expiration  int64
 }
 
 // newIamTokenData: constructs a new IamTokenData instance from the specified IamTokenServerResponse instance.
 func newIamTokenData(tokenResponse *iamTokenServerResponse) (*iamTokenData, error) {
-
-	if tokenResponse == nil {
-		return nil, fmt.Errorf("Error while trying to parse access token!")
-	}
 	// Compute the adjusted refresh time (expiration time - 20% of timeToLive)
 	timeToLive := tokenResponse.ExpiresIn
 	expireTime := tokenResponse.Expiration
@@ -332,7 +279,6 @@ func newIamTokenData(tokenResponse *iamTokenServerResponse) (*iamTokenData, erro
 
 	tokenData := &iamTokenData{
 		AccessToken: tokenResponse.AccessToken,
-		Expiration:  expireTime,
 		RefreshTime: refreshTime,
 	}
 
@@ -341,25 +287,8 @@ func newIamTokenData(tokenResponse *iamTokenServerResponse) (*iamTokenData, erro
 
 // isTokenValid: returns true iff the IamTokenData instance represents a valid (non-expired) access token.
 func (this *iamTokenData) isTokenValid() bool {
-	if this.AccessToken != "" && GetCurrentTime() < this.Expiration {
+	if this.AccessToken != "" && GetCurrentTime() < this.RefreshTime {
 		return true
 	}
 	return false
-}
-
-// needsRefresh: synchronously returns true iff the currently stored access token should be refreshed. This method also
-// updates the refresh time if it determines the token needs refreshed to prevent other threads from
-// making multiple refresh calls.
-func (this *iamTokenData) needsRefresh() bool {
-	iamNeedsRefreshMutex.Lock()
-	defer iamNeedsRefreshMutex.Unlock()
-
-	// Advance refresh by one minute
-	if this.RefreshTime >= 0 && GetCurrentTime() > this.RefreshTime {
-		this.RefreshTime += 60
-		return true
-	}
-
-	return false
-
 }

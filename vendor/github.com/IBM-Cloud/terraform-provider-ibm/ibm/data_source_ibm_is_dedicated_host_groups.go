@@ -19,39 +19,6 @@ func dataSourceIbmIsDedicatedHostGroups() *schema.Resource {
 		Read: dataSourceIbmIsDedicatedHostGroupsRead,
 
 		Schema: map[string]*schema.Schema{
-			"first": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "A link to the first page of resources.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"href": &schema.Schema{
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The URL for a page of resources.",
-						},
-					},
-				},
-			},
-			"limit": &schema.Schema{
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The maximum number of resources that can be returned by the request.",
-			},
-			"next": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "A link to the next page of resources. This property is present for all pagesexcept the last page.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"href": &schema.Schema{
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The URL for a page of resources.",
-						},
-					},
-				},
-			},
 			"host_groups": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -194,40 +161,33 @@ func dataSourceIbmIsDedicatedHostGroupsRead(d *schema.ResourceData, meta interfa
 	}
 	listDedicatedHostGroupsOptions := &vpcv1.ListDedicatedHostGroupsOptions{}
 
-	dedicatedHostGroupCollection, response, err := vpcClient.ListDedicatedHostGroupsWithContext(context.TODO(), listDedicatedHostGroupsOptions)
-	if err != nil {
-		log.Printf("[DEBUG] ListDedicatedHostGroupsWithContext failed %s\n%s", err, response)
-		return err
+	start := ""
+	allrecs := []vpcv1.DedicatedHostGroup{}
+	for {
+		if start != "" {
+			listDedicatedHostGroupsOptions.Start = &start
+		}
+		listDedicatedHostGroupsOptions, response, err := vpcClient.ListDedicatedHostGroupsWithContext(context.TODO(), listDedicatedHostGroupsOptions)
+		if err != nil {
+			log.Printf("[DEBUG] ListDedicatedHostGroupsWithContext failed %s\n%s", err, response)
+			return err
+		}
+		start = GetNext(listDedicatedHostGroupsOptions.Next)
+		allrecs = append(allrecs, listDedicatedHostGroupsOptions.Groups...)
+		if start == "" {
+			break
+		}
 	}
 
-	if len(dedicatedHostGroupCollection.Groups) != 0 {
+	if len(allrecs) != 0 {
 
 		d.SetId(dataSourceIbmIsDedicatedHostGroupsID(d))
-
-		if dedicatedHostGroupCollection.First != nil {
-			err = d.Set("first", dataSourceDedicatedHostGroupCollectionFlattenFirst(*dedicatedHostGroupCollection.First))
-			if err != nil {
-				return fmt.Errorf("Error setting first %s", err)
-			}
+		err = d.Set("host_groups", dataSourceDedicatedHostGroupCollectionFlattenGroups(allrecs))
+		if err != nil {
+			return fmt.Errorf("Error setting groups %s", err)
 		}
 
-		if dedicatedHostGroupCollection.Groups != nil {
-			err = d.Set("host_groups", dataSourceDedicatedHostGroupCollectionFlattenGroups(dedicatedHostGroupCollection.Groups))
-			if err != nil {
-				return fmt.Errorf("Error setting groups %s", err)
-			}
-		}
-		if err = d.Set("limit", dedicatedHostGroupCollection.Limit); err != nil {
-			return fmt.Errorf("Error setting limit: %s", err)
-		}
-
-		if dedicatedHostGroupCollection.Next != nil {
-			err = d.Set("next", dataSourceDedicatedHostGroupCollectionFlattenNext(*dedicatedHostGroupCollection.Next))
-			if err != nil {
-				return fmt.Errorf("Error setting next %s", err)
-			}
-		}
-		if err = d.Set("total_count", dedicatedHostGroupCollection.TotalCount); err != nil {
+		if err = d.Set("total_count", len(allrecs)); err != nil {
 			return fmt.Errorf("Error setting total_count: %s", err)
 		}
 

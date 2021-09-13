@@ -150,6 +150,13 @@ func (r Account) DisableEuSupport() (err error) {
 	return
 }
 
+// Disables the VPN_CONFIG_REQUIRES_VPN_MANAGE attribute on the account. If the attribute does not exist for the account, it will be created and set to false.
+func (r Account) DisableVpnConfigRequiresVpnManageAttribute() (err error) {
+	var resp datatypes.Void
+	err = r.Session.DoRequest("SoftLayer_Account", "disableVpnConfigRequiresVpnManageAttribute", nil, &r.Options, &resp)
+	return
+}
+
 // This method will edit the account's information. Pass in a SoftLayer_Account template with the fields to be modified. Certain changes to the account will automatically create a ticket for manual review. This will be returned with the SoftLayer_Container_Account_Update_Response.<br> <br> The following fields are editable:<br> <br> <ul> <li>companyName</li> <li>firstName</li> <li>lastName</li> <li>address1</li> <li>address2</li> <li>city</li> <li>state</li> <li>country</li> <li>postalCode</li> <li>email</li> <li>officePhone</li> <li>alternatePhone</li> <li>faxPhone</li> <li>abuseEmails.email</li> <li>billingInfo.vatId</li> </ul>
 func (r Account) EditAccount(modifiedAccountInformation *datatypes.Account) (resp datatypes.Container_Account_Update_Response, err error) {
 	params := []interface{}{
@@ -167,6 +174,13 @@ func (r Account) EditAccount(modifiedAccountInformation *datatypes.Account) (res
 func (r Account) EnableEuSupport() (err error) {
 	var resp datatypes.Void
 	err = r.Session.DoRequest("SoftLayer_Account", "enableEuSupport", nil, &r.Options, &resp)
+	return
+}
+
+// Enables the VPN_CONFIG_REQUIRES_VPN_MANAGE attribute on the account. If the attribute does not exist for the account, it will be created and set to true.
+func (r Account) EnableVpnConfigRequiresVpnManageAttribute() (err error) {
+	var resp datatypes.Void
+	err = r.Session.DoRequest("SoftLayer_Account", "enableVpnConfigRequiresVpnManageAttribute", nil, &r.Options, &resp)
 	return
 }
 
@@ -678,7 +692,7 @@ func (r Account) GetDiskUsageMetricDataFromMetricTrackingObjectSystemByDate(star
 	return
 }
 
-// Returns a disk usage image based on disk usage specified by the input parameters.
+// [DEPRECATED] JpGraph has been removed, so this method is no longer functional.
 func (r Account) GetDiskUsageMetricImageByDate(startDateTime *datatypes.Time, endDateTime *datatypes.Time) (resp datatypes.Container_Account_Graph_Outputs, err error) {
 	params := []interface{}{
 		startDateTime,
@@ -2075,6 +2089,12 @@ func (r Account) GetVmWareActiveAccountLicenseKeys() (resp []string, err error) 
 // Retrieve An account's associated VPC configured virtual guest objects.
 func (r Account) GetVpcVirtualGuests() (resp []datatypes.Virtual_Guest, err error) {
 	err = r.Session.DoRequest("SoftLayer_Account", "getVpcVirtualGuests", nil, &r.Options, &resp)
+	return
+}
+
+// Retrieve
+func (r Account) GetVpnConfigRequiresVPNManageFlag() (resp bool, err error) {
+	err = r.Session.DoRequest("SoftLayer_Account", "getVpnConfigRequiresVPNManageFlag", nil, &r.Options, &resp)
 	return
 }
 

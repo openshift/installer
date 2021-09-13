@@ -66,7 +66,9 @@ func dataSourceIBMISSecurityGroupTargetRead(d *schema.ResourceData, meta interfa
 
 	for {
 		listSecurityGroupTargetsOptions := sess.NewListSecurityGroupTargetsOptions(securityGroupID)
-
+		if start != "" {
+			listSecurityGroupTargetsOptions.Start = &start
+		}
 		groups, response, err := sess.ListSecurityGroupTargets(listSecurityGroupTargetsOptions)
 		if err != nil {
 			return fmt.Errorf("Error Getting InstanceGroup Managers %s\n%s", err, response)
@@ -88,9 +90,12 @@ func dataSourceIBMISSecurityGroupTargetRead(d *schema.ResourceData, meta interfa
 		securityGroupTargetReference := securityGroupTargetReferenceIntf.(*vpcv1.SecurityGroupTargetReference)
 		if *securityGroupTargetReference.Name == name {
 			d.Set("target", *securityGroupTargetReference.ID)
-			d.Set("resource_type", *securityGroupTargetReference.ResourceType)
+			// d.Set("resource_type", *securityGroupTargetReference.ResourceType)
 			if securityGroupTargetReference.Deleted != nil {
 				d.Set("more_info", *securityGroupTargetReference.Deleted.MoreInfo)
+			}
+			if securityGroupTargetReference != nil && securityGroupTargetReference.ResourceType != nil {
+				d.Set("resource_type", *securityGroupTargetReference.ResourceType)
 			}
 			d.SetId(fmt.Sprintf("%s/%s", securityGroupID, *securityGroupTargetReference.ID))
 			return nil

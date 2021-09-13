@@ -189,9 +189,6 @@ func dataSourceIBMCISRateLimitRead(d *schema.ResourceData, meta interface{}) err
 	}
 	cisID := d.Get("cis_id").(string)
 	zoneID, _, err := convertTftoCisTwoVar(d.Get("domain_id").(string))
-	if err != nil {
-		return err
-	}
 	cisClient.Crn = core.StringPtr(cisID)
 	cisClient.ZoneIdentifier = core.StringPtr(zoneID)
 	opt := cisClient.NewListAllZoneRateLimitsOptions()

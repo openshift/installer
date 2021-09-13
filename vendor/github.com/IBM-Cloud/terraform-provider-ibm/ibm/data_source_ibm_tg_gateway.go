@@ -82,6 +82,42 @@ func dataSourceIBMTransitGateway() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						tgBaseConnectionId: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						tgLocalBgpAsn: {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						tgLocalGatewayIp: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						tgLocalTunnelIp: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						tgRemoteBgpAsn: {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						tgRemoteGatewayIp: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						tgRemoteTunnelIp: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						tgZone: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						tgMtu: {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
 						tgConectionCreatedAt: {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -182,6 +218,42 @@ func dataSourceIBMTransitGatewayConnectionsRead(d *schema.ResourceData, meta int
 		}
 		if instance.NetworkAccountID != nil {
 			tgConn[tgNetworkAccountID] = *instance.NetworkAccountID
+		}
+
+		if instance.BaseConnectionID != nil {
+			tgConn[tgBaseConnectionId] = *instance.BaseConnectionID
+		}
+
+		if instance.LocalBgpAsn != nil {
+			tgConn[tgLocalBgpAsn] = *instance.LocalBgpAsn
+		}
+
+		if instance.LocalGatewayIp != nil {
+			tgConn[tgLocalGatewayIp] = *instance.LocalGatewayIp
+		}
+
+		if instance.LocalTunnelIp != nil {
+			tgConn[tgLocalTunnelIp] = *instance.LocalTunnelIp
+		}
+
+		if instance.RemoteBgpAsn != nil {
+			tgConn[tgRemoteBgpAsn] = *instance.RemoteBgpAsn
+		}
+
+		if instance.RemoteGatewayIp != nil {
+			tgConn[tgRemoteGatewayIp] = *instance.RemoteGatewayIp
+		}
+
+		if instance.RemoteTunnelIp != nil {
+			tgConn[tgRemoteTunnelIp] = *instance.RemoteTunnelIp
+		}
+
+		if instance.Zone != nil {
+			tgConn[tgZone] = *instance.Zone.Name
+		}
+
+		if instance.Mtu != nil {
+			tgConn[tgMtu] = *instance.Mtu
 		}
 
 		if instance.CreatedAt != nil {

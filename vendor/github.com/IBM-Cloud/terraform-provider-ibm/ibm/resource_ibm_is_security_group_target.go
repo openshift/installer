@@ -134,7 +134,9 @@ func resourceIBMISSecurityGroupTargetRead(d *schema.ResourceData, meta interface
 
 	target := data.(*vpcv1.SecurityGroupTargetReference)
 	d.Set("name", *target.Name)
-	d.Set(isSecurityGroupResourceType, *target.ResourceType)
+	if target.ResourceType != nil && *target.ResourceType != "" {
+		d.Set(isSecurityGroupResourceType, *target.ResourceType)
+	}
 
 	return nil
 }

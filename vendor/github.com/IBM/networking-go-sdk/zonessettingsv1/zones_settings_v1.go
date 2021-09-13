@@ -2339,6 +2339,126 @@ func (zonesSettings *ZonesSettingsV1) UpdateHttp2WithContext(ctx context.Context
 	return
 }
 
+// GetHttp3 : Get http/3 setting
+// Get http/3 setting for a zone.
+func (zonesSettings *ZonesSettingsV1) GetHttp3(getHttp3Options *GetHttp3Options) (result *Http3Resp, response *core.DetailedResponse, err error) {
+	return zonesSettings.GetHttp3WithContext(context.Background(), getHttp3Options)
+}
+
+// GetHttp3WithContext is an alternate form of the GetHttp3 method which supports a Context parameter
+func (zonesSettings *ZonesSettingsV1) GetHttp3WithContext(ctx context.Context, getHttp3Options *GetHttp3Options) (result *Http3Resp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(getHttp3Options, "getHttp3Options")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn": *zonesSettings.Crn,
+		"zone_identifier": *zonesSettings.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/http3`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getHttp3Options.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("zones_settings", "V1", "GetHttp3")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = zonesSettings.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp3Resp)
+	if err != nil {
+		return
+	}
+	response.Result = result
+
+	return
+}
+
+// UpdateHttp3 : Update http/3 setting
+// Update http/3 setting for a zone.
+func (zonesSettings *ZonesSettingsV1) UpdateHttp3(updateHttp3Options *UpdateHttp3Options) (result *Http3Resp, response *core.DetailedResponse, err error) {
+	return zonesSettings.UpdateHttp3WithContext(context.Background(), updateHttp3Options)
+}
+
+// UpdateHttp3WithContext is an alternate form of the UpdateHttp3 method which supports a Context parameter
+func (zonesSettings *ZonesSettingsV1) UpdateHttp3WithContext(ctx context.Context, updateHttp3Options *UpdateHttp3Options) (result *Http3Resp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(updateHttp3Options, "updateHttp3Options")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn": *zonesSettings.Crn,
+		"zone_identifier": *zonesSettings.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/http3`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range updateHttp3Options.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("zones_settings", "V1", "UpdateHttp3")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updateHttp3Options.Value != nil {
+		body["value"] = updateHttp3Options.Value
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = zonesSettings.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp3Resp)
+	if err != nil {
+		return
+	}
+	response.Result = result
+
+	return
+}
+
 // GetIpv6 : Get IPv6 compatibility setting
 // Get IPv6 compatibility setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetIpv6(getIpv6Options *GetIpv6Options) (result *Ipv6Resp, response *core.DetailedResponse, err error) {
@@ -3998,6 +4118,24 @@ func (options *GetHttp2Options) SetHeaders(param map[string]string) *GetHttp2Opt
 	return options
 }
 
+/// GetHttp3Options : The GetHttp3 options.
+type GetHttp3Options struct {
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetHttp3Options : Instantiate GetHttp3Options
+func (*ZonesSettingsV1) NewGetHttp3Options() *GetHttp3Options {
+	return &GetHttp3Options{}
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetHttp3Options) SetHeaders(param map[string]string) *GetHttp3Options {
+	options.Headers = param
+	return options
+}
+
 // GetImageLoadOptimizationOptions : The GetImageLoadOptimization options.
 type GetImageLoadOptimizationOptions struct {
 
@@ -4434,6 +4572,44 @@ type Http2RespResult struct {
 // UnmarshalHttp2RespResult unmarshals an instance of Http2RespResult from the specified map of raw messages.
 func UnmarshalHttp2RespResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(Http2RespResult)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Http3RespResult : Container for response information.
+type Http3RespResult struct {
+	// ID.
+	ID *string `json:"id" validate:"required"`
+
+	// Value.
+	Value *string `json:"value" validate:"required"`
+
+	// Editable.
+	Editable *bool `json:"editable" validate:"required"`
+
+	// Modified date.
+	ModifiedOn *strfmt.DateTime `json:"modified_on" validate:"required"`
+}
+
+// UnmarshalHttp3RespResult unmarshals an instance of Http3RespResult from the specified map of raw messages.
+func UnmarshalHttp3RespResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Http3RespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		return
@@ -5745,6 +5921,39 @@ func (options *UpdateHttp2Options) SetHeaders(param map[string]string) *UpdateHt
 	return options
 }
 
+// UpdateHttp3Options : The UpdateHttp3 options.
+type UpdateHttp3Options struct {
+	// Value.
+	Value *string
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the UpdateHttp3Options.Value property.
+// Value.
+const (
+	UpdateHttp3Options_Value_Off = "off"
+	UpdateHttp3Options_Value_On = "on"
+)
+
+// NewUpdateHttp3Options : Instantiate UpdateHttp3Options
+func (*ZonesSettingsV1) NewUpdateHttp3Options() *UpdateHttp3Options {
+	return &UpdateHttp3Options{}
+}
+
+// SetValue : Allow user to set Value
+func (options *UpdateHttp3Options) SetValue(value string) *UpdateHttp3Options {
+	options.Value = core.StringPtr(value)
+	return options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateHttp3Options) SetHeaders(param map[string]string) *UpdateHttp3Options {
+	options.Headers = param
+	return options
+}
+
 // UpdateImageLoadOptimizationOptions : The UpdateImageLoadOptimization options.
 type UpdateImageLoadOptimizationOptions struct {
 	// Value.
@@ -6881,6 +7090,44 @@ type Http2Resp struct {
 func UnmarshalHttp2Resp(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(Http2Resp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalHttp2RespResult)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Http3Resp : HTTP3 Response.
+type Http3Resp struct {
+	// Container for response information.
+	Result *Http3RespResult `json:"result" validate:"required"`
+
+	// Was the get successful.
+	Success *bool `json:"success" validate:"required"`
+
+	// Array of errors encountered.
+	Errors [][]string `json:"errors" validate:"required"`
+
+	// Array of messages returned.
+	Messages [][]string `json:"messages" validate:"required"`
+}
+
+// UnmarshalHttp3Resp unmarshals an instance of Http3Resp from the specified map of raw messages.
+func UnmarshalHttp3Resp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Http3Resp)
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalHttp3RespResult)
 	if err != nil {
 		return
 	}

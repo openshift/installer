@@ -87,19 +87,22 @@ func resourceIBMISInstanceGroup() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				ValidateFunc: InvokeValidator("ibm_is_instance_group", "application_port"),
+				RequiredWith: []string{"load_balancer", "load_balancer_pool"},
 				Description:  "Used by the instance group when scaling up instances to supply the port for the load balancer pool member.",
 			},
 
 			"load_balancer": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "load balancer ID",
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"application_port", "load_balancer_pool"},
+				Description:  "load balancer ID",
 			},
 
 			"load_balancer_pool": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "load balancer pool ID",
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"application_port", "load_balancer"},
+				Description:  "load balancer pool ID",
 			},
 
 			"managers": {

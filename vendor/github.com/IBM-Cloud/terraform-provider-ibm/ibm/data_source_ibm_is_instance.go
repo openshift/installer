@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
@@ -16,7 +15,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/ScaleFT/sshkeys"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -349,6 +347,27 @@ func dataSourceIBMISInstance() *schema.Resource {
 				Description: "instance status",
 			},
 
+			isInstanceStatusReasons: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current status (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isInstanceStatusReasonsCode: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the status reason",
+						},
+
+						isInstanceStatusReasonsMessage: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the status reason",
+						},
+					},
+				},
+			},
+
 			ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -427,303 +446,14 @@ func dataSourceIBMISInstance() *schema.Resource {
 }
 
 func dataSourceIBMISInstanceRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+
+	name := d.Get(isInstanceName).(string)
+
+	err := instanceGetByName(d, meta, name)
 	if err != nil {
 		return err
-	}
-	name := d.Get(isInstanceName).(string)
-	if userDetails.generation == 1 {
-		err := classicInstanceGetByName(d, meta, name)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := instanceGetByName(d, meta, name)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
-}
-
-func classicInstanceGetByName(d *schema.ResourceData, meta interface{}, name string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	start := ""
-	allrecs := []vpcclassicv1.Instance{}
-	for {
-		listInstancesOptions := &vpcclassicv1.ListInstancesOptions{}
-		if start != "" {
-			listInstancesOptions.Start = &start
-		}
-		instances, response, err := sess.ListInstances(listInstancesOptions)
-		if err != nil {
-			return fmt.Errorf("Error Fetching Instances %s\n%s", err, response)
-		}
-		start = GetNext(instances.Next)
-		allrecs = append(allrecs, instances.Instances...)
-		if start == "" {
-			break
-		}
-	}
-	for _, instance := range allrecs {
-		if *instance.Name == name {
-			d.SetId(*instance.ID)
-			id := *instance.ID
-			d.Set(isInstanceName, *instance.Name)
-			if instance.Profile != nil {
-				d.Set(isInstanceProfile, *instance.Profile.Name)
-			}
-			cpuList := make([]map[string]interface{}, 0)
-			if instance.Vcpu != nil {
-				currentCPU := map[string]interface{}{}
-				currentCPU[isInstanceCPUArch] = *instance.Vcpu.Architecture
-				currentCPU[isInstanceCPUCount] = *instance.Vcpu.Count
-				cpuList = append(cpuList, currentCPU)
-			}
-			d.Set(isInstanceCPU, cpuList)
-
-			d.Set(isInstanceMemory, *instance.Memory)
-			gpuList := make([]map[string]interface{}, 0)
-			d.Set(isInstanceGpu, gpuList)
-
-			if instance.PrimaryNetworkInterface != nil {
-				primaryNicList := make([]map[string]interface{}, 0)
-				currentPrimNic := map[string]interface{}{}
-				currentPrimNic["id"] = *instance.PrimaryNetworkInterface.ID
-				currentPrimNic[isInstanceNicName] = *instance.PrimaryNetworkInterface.Name
-				currentPrimNic[isInstanceNicPrimaryIpv4Address] = *instance.PrimaryNetworkInterface.PrimaryIpv4Address
-				getnicoptions := &vpcclassicv1.GetInstanceNetworkInterfaceOptions{
-					InstanceID: &id,
-					ID:         instance.PrimaryNetworkInterface.ID,
-				}
-				insnic, response, err := sess.GetInstanceNetworkInterface(getnicoptions)
-				if err != nil {
-					return fmt.Errorf("Error getting network interfaces attached to the instance %s\n%s", err, response)
-				}
-				currentPrimNic[isInstanceNicSubnet] = *insnic.Subnet.ID
-				if len(insnic.SecurityGroups) != 0 {
-					secgrpList := []string{}
-					for i := 0; i < len(insnic.SecurityGroups); i++ {
-						secgrpList = append(secgrpList, string(*(insnic.SecurityGroups[i].ID)))
-					}
-					currentPrimNic[isInstanceNicSecurityGroups] = newStringSet(schema.HashString, secgrpList)
-				}
-
-				primaryNicList = append(primaryNicList, currentPrimNic)
-				d.Set(isInstancePrimaryNetworkInterface, primaryNicList)
-			}
-
-			if instance.NetworkInterfaces != nil {
-				interfacesList := make([]map[string]interface{}, 0)
-				for _, intfc := range instance.NetworkInterfaces {
-					if *intfc.ID != *instance.PrimaryNetworkInterface.ID {
-						currentNic := map[string]interface{}{}
-						currentNic["id"] = *intfc.ID
-						currentNic[isInstanceNicName] = *intfc.Name
-						currentNic[isInstanceNicPrimaryIpv4Address] = *intfc.PrimaryIpv4Address
-						getnicoptions := &vpcclassicv1.GetInstanceNetworkInterfaceOptions{
-							InstanceID: &id,
-							ID:         intfc.ID,
-						}
-						insnic, response, err := sess.GetInstanceNetworkInterface(getnicoptions)
-						if err != nil {
-							return fmt.Errorf("Error getting network interfaces attached to the instance %s\n%s", err, response)
-						}
-						currentNic[isInstanceNicSubnet] = *insnic.Subnet.ID
-						if len(insnic.SecurityGroups) != 0 {
-							secgrpList := []string{}
-							for i := 0; i < len(insnic.SecurityGroups); i++ {
-								secgrpList = append(secgrpList, string(*(insnic.SecurityGroups[i].ID)))
-							}
-							currentNic[isInstanceNicSecurityGroups] = newStringSet(schema.HashString, secgrpList)
-						}
-						interfacesList = append(interfacesList, currentNic)
-
-					}
-				}
-
-				d.Set(isInstanceNetworkInterfaces, interfacesList)
-			}
-
-			var rsaKey *rsa.PrivateKey
-			if instance.Image != nil {
-				d.Set(isInstanceImage, *instance.Image.ID)
-				image := *instance.Image.Name
-				res := strings.Contains(image, "windows")
-				if res {
-					if privatekey, ok := d.GetOk(isInstancePEM); ok {
-						keyFlag := privatekey.(string)
-						keybytes := []byte(keyFlag)
-
-						if keyFlag != "" {
-							block, err := pem.Decode(keybytes)
-							if block == nil {
-								return fmt.Errorf("Failed to load the private key from the given key contents. Instead of the key file path, please make sure the private key is pem format")
-							}
-							isEncrypted := false
-							switch block.Type {
-							case "RSA PRIVATE KEY":
-								isEncrypted = x509.IsEncryptedPEMBlock(block)
-							case "OPENSSH PRIVATE KEY":
-								var err error
-								isEncrypted, err = isOpenSSHPrivKeyEncrypted(block.Bytes)
-								if err != nil {
-									return fmt.Errorf("Failed to check if the provided open ssh key is encrypted or not %s", err)
-								}
-							default:
-								return fmt.Errorf("PEM and OpenSSH private key formats with RSA key type are supported, can not support this key file type: %s", err)
-							}
-							passphrase := ""
-							var privateKey interface{}
-							if isEncrypted {
-								if pass, ok := d.GetOk(isInstancePassphrase); ok {
-									passphrase = pass.(string)
-								} else {
-									return fmt.Errorf("Mandatory field 'passphrase' not provided")
-								}
-								var err error
-								privateKey, err = sshkeys.ParseEncryptedRawPrivateKey(keybytes, []byte(passphrase))
-								if err != nil {
-									return fmt.Errorf("Fail to decrypting the private key: %s", err)
-								}
-							} else {
-								var err error
-								privateKey, err = sshkeys.ParseEncryptedRawPrivateKey(keybytes, nil)
-								if err != nil {
-									return fmt.Errorf("Fail to decrypting the private key: %s", err)
-								}
-							}
-							var ok bool
-							rsaKey, ok = privateKey.(*rsa.PrivateKey)
-							if !ok {
-								return fmt.Errorf("Failed to convert to RSA private key")
-							}
-						}
-					}
-				}
-			}
-
-			getInstanceInitializationOptions := &vpcclassicv1.GetInstanceInitializationOptions{
-				ID: &id,
-			}
-			initParms, response, err := sess.GetInstanceInitialization(getInstanceInitializationOptions)
-			if err != nil {
-				return fmt.Errorf("Error Getting instance Initialization: %s\n%s", err, response)
-			}
-			if initParms.Keys != nil {
-				initKeyList := make([]map[string]interface{}, 0)
-				for _, key := range initParms.Keys {
-					key := key.(*vpcclassicv1.KeyReferenceInstanceInitializationContext)
-					initKey := map[string]interface{}{}
-					id := ""
-					if key.ID != nil {
-						id = *key.ID
-					}
-					initKey["id"] = id
-					name := ""
-					if key.Name != nil {
-						name = *key.Name
-					}
-					initKey["name"] = name
-					initKeyList = append(initKeyList, initKey)
-					break
-
-				}
-				d.Set(isInstanceInitKeys, initKeyList)
-			}
-			if initParms.Password != nil && initParms.Password.EncryptedPassword != nil {
-				ciphertext := *initParms.Password.EncryptedPassword
-				password := base64.StdEncoding.EncodeToString(ciphertext)
-				if rsaKey != nil {
-					rng := rand.Reader
-					clearPassword, err := rsa.DecryptOAEP(sha256.New(), rng, rsaKey, ciphertext, nil)
-					if err != nil {
-						return fmt.Errorf("Can not decrypt the password with the given key, %s", err)
-					}
-					password = string(clearPassword)
-				}
-				d.Set(isInstanceInitPassword, password)
-			}
-
-			d.Set(isInstanceStatus, *instance.Status)
-			d.Set(isInstanceVPC, *instance.VPC.ID)
-			d.Set(isInstanceZone, *instance.Zone.Name)
-
-			var volumes []string
-			volumes = make([]string, 0)
-			if instance.VolumeAttachments != nil {
-				for _, volume := range instance.VolumeAttachments {
-					if volume.Volume != nil && *volume.Volume.ID != *instance.BootVolumeAttachment.Volume.ID {
-						volumes = append(volumes, *volume.Volume.ID)
-					}
-				}
-			}
-			d.Set(isInstanceVolumes, newStringSet(schema.HashString, volumes))
-			if instance.VolumeAttachments != nil {
-				volList := make([]map[string]interface{}, 0)
-				for _, volume := range instance.VolumeAttachments {
-					vol := map[string]interface{}{}
-					if volume.Volume != nil {
-						vol["id"] = *volume.ID
-						vol["volume_id"] = *volume.Volume.ID
-						vol["name"] = *volume.Name
-						vol["volume_name"] = *volume.Volume.Name
-						vol["volume_crn"] = *volume.Volume.CRN
-						volList = append(volList, vol)
-					}
-				}
-				d.Set(isInstanceVolumeAttachments, volList)
-			}
-			if instance.BootVolumeAttachment != nil {
-				bootVolList := make([]map[string]interface{}, 0)
-				bootVol := map[string]interface{}{}
-				bootVol["id"] = *instance.BootVolumeAttachment.ID
-				bootVol["name"] = *instance.BootVolumeAttachment.Name
-				if instance.BootVolumeAttachment.Device != nil {
-					bootVol["device"] = *instance.BootVolumeAttachment.Device.ID
-				}
-				if instance.BootVolumeAttachment.Volume != nil {
-					bootVol["volume_name"] = *instance.BootVolumeAttachment.Volume.Name
-					bootVol["volume_id"] = *instance.BootVolumeAttachment.Volume.ID
-					bootVol["volume_crn"] = *instance.BootVolumeAttachment.Volume.CRN
-				}
-				bootVolList = append(bootVolList, bootVol)
-				d.Set(isInstanceBootVolume, bootVolList)
-			}
-			tags, err := GetTagsUsingCRN(meta, *instance.CRN)
-			if err != nil {
-				log.Printf(
-					"Error on get of resource vpc Instance (%s) tags: %s", d.Id(), err)
-			}
-			d.Set(isInstanceTags, tags)
-
-			controller, err := getBaseController(meta)
-			if err != nil {
-				return err
-			}
-			d.Set(ResourceControllerURL, controller+"/vpc/compute/vs")
-			d.Set(ResourceName, instance.Name)
-			d.Set(ResourceCRN, instance.CRN)
-			d.Set(ResourceStatus, instance.Status)
-			if instance.ResourceGroup != nil {
-				rsMangClient, err := meta.(ClientSession).ResourceManagementAPIv2()
-				if err != nil {
-					return err
-				}
-				grp, err := rsMangClient.ResourceGroup().Get(*instance.ResourceGroup.ID)
-				if err != nil {
-					return err
-				}
-				d.Set(ResourceGroupName, grp.Name)
-				d.Set(isInstanceResourceGroup, instance.ResourceGroup.ID)
-			}
-			return nil
-		}
-	}
-	return fmt.Errorf("No Instance found with name %s", name)
 }
 
 func instanceGetByName(d *schema.ResourceData, meta interface{}, name string) error {
@@ -936,6 +666,19 @@ func instanceGetByName(d *schema.ResourceData, meta interface{}, name string) er
 			}
 
 			d.Set(isInstanceStatus, *instance.Status)
+			//set the status reasons
+			if instance.StatusReasons != nil {
+				statusReasonsList := make([]map[string]interface{}, 0)
+				for _, sr := range instance.StatusReasons {
+					currentSR := map[string]interface{}{}
+					if sr.Code != nil && sr.Message != nil {
+						currentSR[isInstanceStatusReasonsCode] = *sr.Code
+						currentSR[isInstanceStatusReasonsMessage] = *sr.Message
+						statusReasonsList = append(statusReasonsList, currentSR)
+					}
+				}
+				d.Set(isInstanceStatusReasons, statusReasonsList)
+			}
 			d.Set(isInstanceVPC, *instance.VPC.ID)
 			d.Set(isInstanceZone, *instance.Zone.Name)
 

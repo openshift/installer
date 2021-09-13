@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.32.0-4c6a3129-20210514-210323
+ * IBM OpenAPI SDK Code Generator Version: 3.35.1-e449803c-20210628-211617
  */
 
 // Package vpcv1 : Operations and models for the VpcV1 service
@@ -37,7 +37,7 @@ import (
 // VpcV1 : The IBM Cloud Virtual Private Cloud (VPC) API can be used to programmatically provision and manage
 // infrastructure resources, including virtual server instances, subnets, volumes, and load balancers.
 //
-// Version: 2021-06-08
+// Version: 2021-06-29
 type VpcV1 struct {
 	Service *core.BaseService
 
@@ -121,7 +121,7 @@ func NewVpcV1(options *VpcV1Options) (service *VpcV1, err error) {
 	}
 
 	if options.Version == nil {
-		options.Version = core.StringPtr("2021-06-08")
+		options.Version = core.StringPtr("2021-06-29")
 	}
 
 	service = &VpcV1{
@@ -3698,6 +3698,12 @@ func (vpc *VpcV1) ListKeysWithContext(ctx context.Context, listKeysOptions *List
 
 	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
 	builder.AddQuery("generation", fmt.Sprint(*vpc.generation))
+	if listKeysOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listKeysOptions.Start))
+	}
+	if listKeysOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listKeysOptions.Limit))
+	}
 	if listKeysOptions.ResourceGroupID != nil {
 		builder.AddQuery("resource_group.id", fmt.Sprint(*listKeysOptions.ResourceGroupID))
 	}
@@ -4463,6 +4469,15 @@ func (vpc *VpcV1) ListInstancesWithContext(ctx context.Context, listInstancesOpt
 	}
 	if listInstancesOptions.VPCName != nil {
 		builder.AddQuery("vpc.name", fmt.Sprint(*listInstancesOptions.VPCName))
+	}
+	if listInstancesOptions.DedicatedHostID != nil {
+		builder.AddQuery("dedicated_host.id", fmt.Sprint(*listInstancesOptions.DedicatedHostID))
+	}
+	if listInstancesOptions.DedicatedHostCRN != nil {
+		builder.AddQuery("dedicated_host.crn", fmt.Sprint(*listInstancesOptions.DedicatedHostCRN))
+	}
+	if listInstancesOptions.DedicatedHostName != nil {
+		builder.AddQuery("dedicated_host.name", fmt.Sprint(*listInstancesOptions.DedicatedHostName))
 	}
 
 	request, err := builder.Build()
@@ -17445,15 +17460,15 @@ func (*VpcV1) NewAddEndpointGatewayIPOptions(endpointGatewayID string, id string
 }
 
 // SetEndpointGatewayID : Allow user to set EndpointGatewayID
-func (options *AddEndpointGatewayIPOptions) SetEndpointGatewayID(endpointGatewayID string) *AddEndpointGatewayIPOptions {
-	options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
-	return options
+func (_options *AddEndpointGatewayIPOptions) SetEndpointGatewayID(endpointGatewayID string) *AddEndpointGatewayIPOptions {
+	_options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *AddEndpointGatewayIPOptions) SetID(id string) *AddEndpointGatewayIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *AddEndpointGatewayIPOptions) SetID(id string) *AddEndpointGatewayIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -17487,21 +17502,21 @@ func (*VpcV1) NewAddInstanceNetworkInterfaceFloatingIPOptions(instanceID string,
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *AddInstanceNetworkInterfaceFloatingIPOptions) SetInstanceID(instanceID string) *AddInstanceNetworkInterfaceFloatingIPOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *AddInstanceNetworkInterfaceFloatingIPOptions) SetInstanceID(instanceID string) *AddInstanceNetworkInterfaceFloatingIPOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetNetworkInterfaceID : Allow user to set NetworkInterfaceID
-func (options *AddInstanceNetworkInterfaceFloatingIPOptions) SetNetworkInterfaceID(networkInterfaceID string) *AddInstanceNetworkInterfaceFloatingIPOptions {
-	options.NetworkInterfaceID = core.StringPtr(networkInterfaceID)
-	return options
+func (_options *AddInstanceNetworkInterfaceFloatingIPOptions) SetNetworkInterfaceID(networkInterfaceID string) *AddInstanceNetworkInterfaceFloatingIPOptions {
+	_options.NetworkInterfaceID = core.StringPtr(networkInterfaceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *AddInstanceNetworkInterfaceFloatingIPOptions) SetID(id string) *AddInstanceNetworkInterfaceFloatingIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *AddInstanceNetworkInterfaceFloatingIPOptions) SetID(id string) *AddInstanceNetworkInterfaceFloatingIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -17531,15 +17546,15 @@ func (*VpcV1) NewAddSecurityGroupNetworkInterfaceOptions(securityGroupID string,
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *AddSecurityGroupNetworkInterfaceOptions) SetSecurityGroupID(securityGroupID string) *AddSecurityGroupNetworkInterfaceOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *AddSecurityGroupNetworkInterfaceOptions) SetSecurityGroupID(securityGroupID string) *AddSecurityGroupNetworkInterfaceOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *AddSecurityGroupNetworkInterfaceOptions) SetID(id string) *AddSecurityGroupNetworkInterfaceOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *AddSecurityGroupNetworkInterfaceOptions) SetID(id string) *AddSecurityGroupNetworkInterfaceOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -17577,27 +17592,27 @@ func (*VpcV1) NewAddVPNGatewayConnectionLocalCIDROptions(vpnGatewayID string, id
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *AddVPNGatewayConnectionLocalCIDROptions) SetVPNGatewayID(vpnGatewayID string) *AddVPNGatewayConnectionLocalCIDROptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *AddVPNGatewayConnectionLocalCIDROptions) SetVPNGatewayID(vpnGatewayID string) *AddVPNGatewayConnectionLocalCIDROptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *AddVPNGatewayConnectionLocalCIDROptions) SetID(id string) *AddVPNGatewayConnectionLocalCIDROptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *AddVPNGatewayConnectionLocalCIDROptions) SetID(id string) *AddVPNGatewayConnectionLocalCIDROptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetCIDRPrefix : Allow user to set CIDRPrefix
-func (options *AddVPNGatewayConnectionLocalCIDROptions) SetCIDRPrefix(cidrPrefix string) *AddVPNGatewayConnectionLocalCIDROptions {
-	options.CIDRPrefix = core.StringPtr(cidrPrefix)
-	return options
+func (_options *AddVPNGatewayConnectionLocalCIDROptions) SetCIDRPrefix(cidrPrefix string) *AddVPNGatewayConnectionLocalCIDROptions {
+	_options.CIDRPrefix = core.StringPtr(cidrPrefix)
+	return _options
 }
 
 // SetPrefixLength : Allow user to set PrefixLength
-func (options *AddVPNGatewayConnectionLocalCIDROptions) SetPrefixLength(prefixLength string) *AddVPNGatewayConnectionLocalCIDROptions {
-	options.PrefixLength = core.StringPtr(prefixLength)
-	return options
+func (_options *AddVPNGatewayConnectionLocalCIDROptions) SetPrefixLength(prefixLength string) *AddVPNGatewayConnectionLocalCIDROptions {
+	_options.PrefixLength = core.StringPtr(prefixLength)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -17635,27 +17650,27 @@ func (*VpcV1) NewAddVPNGatewayConnectionPeerCIDROptions(vpnGatewayID string, id 
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *AddVPNGatewayConnectionPeerCIDROptions) SetVPNGatewayID(vpnGatewayID string) *AddVPNGatewayConnectionPeerCIDROptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *AddVPNGatewayConnectionPeerCIDROptions) SetVPNGatewayID(vpnGatewayID string) *AddVPNGatewayConnectionPeerCIDROptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *AddVPNGatewayConnectionPeerCIDROptions) SetID(id string) *AddVPNGatewayConnectionPeerCIDROptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *AddVPNGatewayConnectionPeerCIDROptions) SetID(id string) *AddVPNGatewayConnectionPeerCIDROptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetCIDRPrefix : Allow user to set CIDRPrefix
-func (options *AddVPNGatewayConnectionPeerCIDROptions) SetCIDRPrefix(cidrPrefix string) *AddVPNGatewayConnectionPeerCIDROptions {
-	options.CIDRPrefix = core.StringPtr(cidrPrefix)
-	return options
+func (_options *AddVPNGatewayConnectionPeerCIDROptions) SetCIDRPrefix(cidrPrefix string) *AddVPNGatewayConnectionPeerCIDROptions {
+	_options.CIDRPrefix = core.StringPtr(cidrPrefix)
+	return _options
 }
 
 // SetPrefixLength : Allow user to set PrefixLength
-func (options *AddVPNGatewayConnectionPeerCIDROptions) SetPrefixLength(prefixLength string) *AddVPNGatewayConnectionPeerCIDROptions {
-	options.PrefixLength = core.StringPtr(prefixLength)
-	return options
+func (_options *AddVPNGatewayConnectionPeerCIDROptions) SetPrefixLength(prefixLength string) *AddVPNGatewayConnectionPeerCIDROptions {
+	_options.PrefixLength = core.StringPtr(prefixLength)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -17778,6 +17793,18 @@ func UnmarshalAddressPrefixCollection(m map[string]json.RawMessage, result inter
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *AddressPrefixCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // AddressPrefixCollectionFirst : A link to the first page of resources.
 type AddressPrefixCollectionFirst struct {
 	// The URL for a page of resources.
@@ -17839,11 +17866,11 @@ func UnmarshalAddressPrefixPatch(m map[string]json.RawMessage, result interface{
 }
 
 // AsPatch returns a generic map representation of the AddressPrefixPatch
-func (addressPrefixPatch *AddressPrefixPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (addressPrefixPatch *AddressPrefixPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(addressPrefixPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -17921,27 +17948,27 @@ func (*VpcV1) NewCheckVPNGatewayConnectionLocalCIDROptions(vpnGatewayID string, 
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *CheckVPNGatewayConnectionLocalCIDROptions) SetVPNGatewayID(vpnGatewayID string) *CheckVPNGatewayConnectionLocalCIDROptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *CheckVPNGatewayConnectionLocalCIDROptions) SetVPNGatewayID(vpnGatewayID string) *CheckVPNGatewayConnectionLocalCIDROptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *CheckVPNGatewayConnectionLocalCIDROptions) SetID(id string) *CheckVPNGatewayConnectionLocalCIDROptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *CheckVPNGatewayConnectionLocalCIDROptions) SetID(id string) *CheckVPNGatewayConnectionLocalCIDROptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetCIDRPrefix : Allow user to set CIDRPrefix
-func (options *CheckVPNGatewayConnectionLocalCIDROptions) SetCIDRPrefix(cidrPrefix string) *CheckVPNGatewayConnectionLocalCIDROptions {
-	options.CIDRPrefix = core.StringPtr(cidrPrefix)
-	return options
+func (_options *CheckVPNGatewayConnectionLocalCIDROptions) SetCIDRPrefix(cidrPrefix string) *CheckVPNGatewayConnectionLocalCIDROptions {
+	_options.CIDRPrefix = core.StringPtr(cidrPrefix)
+	return _options
 }
 
 // SetPrefixLength : Allow user to set PrefixLength
-func (options *CheckVPNGatewayConnectionLocalCIDROptions) SetPrefixLength(prefixLength string) *CheckVPNGatewayConnectionLocalCIDROptions {
-	options.PrefixLength = core.StringPtr(prefixLength)
-	return options
+func (_options *CheckVPNGatewayConnectionLocalCIDROptions) SetPrefixLength(prefixLength string) *CheckVPNGatewayConnectionLocalCIDROptions {
+	_options.PrefixLength = core.StringPtr(prefixLength)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -17979,27 +18006,27 @@ func (*VpcV1) NewCheckVPNGatewayConnectionPeerCIDROptions(vpnGatewayID string, i
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *CheckVPNGatewayConnectionPeerCIDROptions) SetVPNGatewayID(vpnGatewayID string) *CheckVPNGatewayConnectionPeerCIDROptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *CheckVPNGatewayConnectionPeerCIDROptions) SetVPNGatewayID(vpnGatewayID string) *CheckVPNGatewayConnectionPeerCIDROptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *CheckVPNGatewayConnectionPeerCIDROptions) SetID(id string) *CheckVPNGatewayConnectionPeerCIDROptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *CheckVPNGatewayConnectionPeerCIDROptions) SetID(id string) *CheckVPNGatewayConnectionPeerCIDROptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetCIDRPrefix : Allow user to set CIDRPrefix
-func (options *CheckVPNGatewayConnectionPeerCIDROptions) SetCIDRPrefix(cidrPrefix string) *CheckVPNGatewayConnectionPeerCIDROptions {
-	options.CIDRPrefix = core.StringPtr(cidrPrefix)
-	return options
+func (_options *CheckVPNGatewayConnectionPeerCIDROptions) SetCIDRPrefix(cidrPrefix string) *CheckVPNGatewayConnectionPeerCIDROptions {
+	_options.CIDRPrefix = core.StringPtr(cidrPrefix)
+	return _options
 }
 
 // SetPrefixLength : Allow user to set PrefixLength
-func (options *CheckVPNGatewayConnectionPeerCIDROptions) SetPrefixLength(prefixLength string) *CheckVPNGatewayConnectionPeerCIDROptions {
-	options.PrefixLength = core.StringPtr(prefixLength)
-	return options
+func (_options *CheckVPNGatewayConnectionPeerCIDROptions) SetPrefixLength(prefixLength string) *CheckVPNGatewayConnectionPeerCIDROptions {
+	_options.PrefixLength = core.StringPtr(prefixLength)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18089,33 +18116,33 @@ func (*VpcV1) NewCreateDedicatedHostGroupOptions() *CreateDedicatedHostGroupOpti
 }
 
 // SetClass : Allow user to set Class
-func (options *CreateDedicatedHostGroupOptions) SetClass(class string) *CreateDedicatedHostGroupOptions {
-	options.Class = core.StringPtr(class)
-	return options
+func (_options *CreateDedicatedHostGroupOptions) SetClass(class string) *CreateDedicatedHostGroupOptions {
+	_options.Class = core.StringPtr(class)
+	return _options
 }
 
 // SetFamily : Allow user to set Family
-func (options *CreateDedicatedHostGroupOptions) SetFamily(family string) *CreateDedicatedHostGroupOptions {
-	options.Family = core.StringPtr(family)
-	return options
+func (_options *CreateDedicatedHostGroupOptions) SetFamily(family string) *CreateDedicatedHostGroupOptions {
+	_options.Family = core.StringPtr(family)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateDedicatedHostGroupOptions) SetName(name string) *CreateDedicatedHostGroupOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateDedicatedHostGroupOptions) SetName(name string) *CreateDedicatedHostGroupOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateDedicatedHostGroupOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateDedicatedHostGroupOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateDedicatedHostGroupOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateDedicatedHostGroupOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetZone : Allow user to set Zone
-func (options *CreateDedicatedHostGroupOptions) SetZone(zone ZoneIdentityIntf) *CreateDedicatedHostGroupOptions {
-	options.Zone = zone
-	return options
+func (_options *CreateDedicatedHostGroupOptions) SetZone(zone ZoneIdentityIntf) *CreateDedicatedHostGroupOptions {
+	_options.Zone = zone
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18141,9 +18168,9 @@ func (*VpcV1) NewCreateDedicatedHostOptions(dedicatedHostPrototype DedicatedHost
 }
 
 // SetDedicatedHostPrototype : Allow user to set DedicatedHostPrototype
-func (options *CreateDedicatedHostOptions) SetDedicatedHostPrototype(dedicatedHostPrototype DedicatedHostPrototypeIntf) *CreateDedicatedHostOptions {
-	options.DedicatedHostPrototype = dedicatedHostPrototype
-	return options
+func (_options *CreateDedicatedHostOptions) SetDedicatedHostPrototype(dedicatedHostPrototype DedicatedHostPrototypeIntf) *CreateDedicatedHostOptions {
+	_options.DedicatedHostPrototype = dedicatedHostPrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18184,33 +18211,33 @@ func (*VpcV1) NewCreateEndpointGatewayOptions(target EndpointGatewayTargetProtot
 }
 
 // SetTarget : Allow user to set Target
-func (options *CreateEndpointGatewayOptions) SetTarget(target EndpointGatewayTargetPrototypeIntf) *CreateEndpointGatewayOptions {
-	options.Target = target
-	return options
+func (_options *CreateEndpointGatewayOptions) SetTarget(target EndpointGatewayTargetPrototypeIntf) *CreateEndpointGatewayOptions {
+	_options.Target = target
+	return _options
 }
 
 // SetVPC : Allow user to set VPC
-func (options *CreateEndpointGatewayOptions) SetVPC(vpc VPCIdentityIntf) *CreateEndpointGatewayOptions {
-	options.VPC = vpc
-	return options
+func (_options *CreateEndpointGatewayOptions) SetVPC(vpc VPCIdentityIntf) *CreateEndpointGatewayOptions {
+	_options.VPC = vpc
+	return _options
 }
 
 // SetIps : Allow user to set Ips
-func (options *CreateEndpointGatewayOptions) SetIps(ips []EndpointGatewayReservedIPIntf) *CreateEndpointGatewayOptions {
-	options.Ips = ips
-	return options
+func (_options *CreateEndpointGatewayOptions) SetIps(ips []EndpointGatewayReservedIPIntf) *CreateEndpointGatewayOptions {
+	_options.Ips = ips
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateEndpointGatewayOptions) SetName(name string) *CreateEndpointGatewayOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateEndpointGatewayOptions) SetName(name string) *CreateEndpointGatewayOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateEndpointGatewayOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateEndpointGatewayOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateEndpointGatewayOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateEndpointGatewayOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18236,9 +18263,9 @@ func (*VpcV1) NewCreateFloatingIPOptions(floatingIPPrototype FloatingIPPrototype
 }
 
 // SetFloatingIPPrototype : Allow user to set FloatingIPPrototype
-func (options *CreateFloatingIPOptions) SetFloatingIPPrototype(floatingIPPrototype FloatingIPPrototypeIntf) *CreateFloatingIPOptions {
-	options.FloatingIPPrototype = floatingIPPrototype
-	return options
+func (_options *CreateFloatingIPOptions) SetFloatingIPPrototype(floatingIPPrototype FloatingIPPrototypeIntf) *CreateFloatingIPOptions {
+	_options.FloatingIPPrototype = floatingIPPrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18284,33 +18311,33 @@ func (*VpcV1) NewCreateFlowLogCollectorOptions(storageBucket CloudObjectStorageB
 }
 
 // SetStorageBucket : Allow user to set StorageBucket
-func (options *CreateFlowLogCollectorOptions) SetStorageBucket(storageBucket CloudObjectStorageBucketIdentityIntf) *CreateFlowLogCollectorOptions {
-	options.StorageBucket = storageBucket
-	return options
+func (_options *CreateFlowLogCollectorOptions) SetStorageBucket(storageBucket CloudObjectStorageBucketIdentityIntf) *CreateFlowLogCollectorOptions {
+	_options.StorageBucket = storageBucket
+	return _options
 }
 
 // SetTarget : Allow user to set Target
-func (options *CreateFlowLogCollectorOptions) SetTarget(target FlowLogCollectorTargetPrototypeIntf) *CreateFlowLogCollectorOptions {
-	options.Target = target
-	return options
+func (_options *CreateFlowLogCollectorOptions) SetTarget(target FlowLogCollectorTargetPrototypeIntf) *CreateFlowLogCollectorOptions {
+	_options.Target = target
+	return _options
 }
 
 // SetActive : Allow user to set Active
-func (options *CreateFlowLogCollectorOptions) SetActive(active bool) *CreateFlowLogCollectorOptions {
-	options.Active = core.BoolPtr(active)
-	return options
+func (_options *CreateFlowLogCollectorOptions) SetActive(active bool) *CreateFlowLogCollectorOptions {
+	_options.Active = core.BoolPtr(active)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateFlowLogCollectorOptions) SetName(name string) *CreateFlowLogCollectorOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateFlowLogCollectorOptions) SetName(name string) *CreateFlowLogCollectorOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateFlowLogCollectorOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateFlowLogCollectorOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateFlowLogCollectorOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateFlowLogCollectorOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18375,45 +18402,45 @@ func (*VpcV1) NewCreateIkePolicyOptions(authenticationAlgorithm string, dhGroup 
 }
 
 // SetAuthenticationAlgorithm : Allow user to set AuthenticationAlgorithm
-func (options *CreateIkePolicyOptions) SetAuthenticationAlgorithm(authenticationAlgorithm string) *CreateIkePolicyOptions {
-	options.AuthenticationAlgorithm = core.StringPtr(authenticationAlgorithm)
-	return options
+func (_options *CreateIkePolicyOptions) SetAuthenticationAlgorithm(authenticationAlgorithm string) *CreateIkePolicyOptions {
+	_options.AuthenticationAlgorithm = core.StringPtr(authenticationAlgorithm)
+	return _options
 }
 
 // SetDhGroup : Allow user to set DhGroup
-func (options *CreateIkePolicyOptions) SetDhGroup(dhGroup int64) *CreateIkePolicyOptions {
-	options.DhGroup = core.Int64Ptr(dhGroup)
-	return options
+func (_options *CreateIkePolicyOptions) SetDhGroup(dhGroup int64) *CreateIkePolicyOptions {
+	_options.DhGroup = core.Int64Ptr(dhGroup)
+	return _options
 }
 
 // SetEncryptionAlgorithm : Allow user to set EncryptionAlgorithm
-func (options *CreateIkePolicyOptions) SetEncryptionAlgorithm(encryptionAlgorithm string) *CreateIkePolicyOptions {
-	options.EncryptionAlgorithm = core.StringPtr(encryptionAlgorithm)
-	return options
+func (_options *CreateIkePolicyOptions) SetEncryptionAlgorithm(encryptionAlgorithm string) *CreateIkePolicyOptions {
+	_options.EncryptionAlgorithm = core.StringPtr(encryptionAlgorithm)
+	return _options
 }
 
 // SetIkeVersion : Allow user to set IkeVersion
-func (options *CreateIkePolicyOptions) SetIkeVersion(ikeVersion int64) *CreateIkePolicyOptions {
-	options.IkeVersion = core.Int64Ptr(ikeVersion)
-	return options
+func (_options *CreateIkePolicyOptions) SetIkeVersion(ikeVersion int64) *CreateIkePolicyOptions {
+	_options.IkeVersion = core.Int64Ptr(ikeVersion)
+	return _options
 }
 
 // SetKeyLifetime : Allow user to set KeyLifetime
-func (options *CreateIkePolicyOptions) SetKeyLifetime(keyLifetime int64) *CreateIkePolicyOptions {
-	options.KeyLifetime = core.Int64Ptr(keyLifetime)
-	return options
+func (_options *CreateIkePolicyOptions) SetKeyLifetime(keyLifetime int64) *CreateIkePolicyOptions {
+	_options.KeyLifetime = core.Int64Ptr(keyLifetime)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateIkePolicyOptions) SetName(name string) *CreateIkePolicyOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateIkePolicyOptions) SetName(name string) *CreateIkePolicyOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateIkePolicyOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateIkePolicyOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateIkePolicyOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateIkePolicyOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18439,9 +18466,9 @@ func (*VpcV1) NewCreateImageOptions(imagePrototype ImagePrototypeIntf) *CreateIm
 }
 
 // SetImagePrototype : Allow user to set ImagePrototype
-func (options *CreateImageOptions) SetImagePrototype(imagePrototype ImagePrototypeIntf) *CreateImageOptions {
-	options.ImagePrototype = imagePrototype
-	return options
+func (_options *CreateImageOptions) SetImagePrototype(imagePrototype ImagePrototypeIntf) *CreateImageOptions {
+	_options.ImagePrototype = imagePrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18482,21 +18509,21 @@ func (*VpcV1) NewCreateInstanceActionOptions(instanceID string, typeVar string) 
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *CreateInstanceActionOptions) SetInstanceID(instanceID string) *CreateInstanceActionOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *CreateInstanceActionOptions) SetInstanceID(instanceID string) *CreateInstanceActionOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetType : Allow user to set Type
-func (options *CreateInstanceActionOptions) SetType(typeVar string) *CreateInstanceActionOptions {
-	options.Type = core.StringPtr(typeVar)
-	return options
+func (_options *CreateInstanceActionOptions) SetType(typeVar string) *CreateInstanceActionOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
 }
 
 // SetForce : Allow user to set Force
-func (options *CreateInstanceActionOptions) SetForce(force bool) *CreateInstanceActionOptions {
-	options.Force = core.BoolPtr(force)
-	return options
+func (_options *CreateInstanceActionOptions) SetForce(force bool) *CreateInstanceActionOptions {
+	_options.Force = core.BoolPtr(force)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18537,21 +18564,21 @@ func (*VpcV1) NewCreateInstanceConsoleAccessTokenOptions(instanceID string, cons
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *CreateInstanceConsoleAccessTokenOptions) SetInstanceID(instanceID string) *CreateInstanceConsoleAccessTokenOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *CreateInstanceConsoleAccessTokenOptions) SetInstanceID(instanceID string) *CreateInstanceConsoleAccessTokenOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetConsoleType : Allow user to set ConsoleType
-func (options *CreateInstanceConsoleAccessTokenOptions) SetConsoleType(consoleType string) *CreateInstanceConsoleAccessTokenOptions {
-	options.ConsoleType = core.StringPtr(consoleType)
-	return options
+func (_options *CreateInstanceConsoleAccessTokenOptions) SetConsoleType(consoleType string) *CreateInstanceConsoleAccessTokenOptions {
+	_options.ConsoleType = core.StringPtr(consoleType)
+	return _options
 }
 
 // SetForce : Allow user to set Force
-func (options *CreateInstanceConsoleAccessTokenOptions) SetForce(force bool) *CreateInstanceConsoleAccessTokenOptions {
-	options.Force = core.BoolPtr(force)
-	return options
+func (_options *CreateInstanceConsoleAccessTokenOptions) SetForce(force bool) *CreateInstanceConsoleAccessTokenOptions {
+	_options.Force = core.BoolPtr(force)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18585,21 +18612,21 @@ func (*VpcV1) NewCreateInstanceGroupManagerActionOptions(instanceGroupID string,
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *CreateInstanceGroupManagerActionOptions) SetInstanceGroupID(instanceGroupID string) *CreateInstanceGroupManagerActionOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *CreateInstanceGroupManagerActionOptions) SetInstanceGroupID(instanceGroupID string) *CreateInstanceGroupManagerActionOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerID : Allow user to set InstanceGroupManagerID
-func (options *CreateInstanceGroupManagerActionOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *CreateInstanceGroupManagerActionOptions {
-	options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
-	return options
+func (_options *CreateInstanceGroupManagerActionOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *CreateInstanceGroupManagerActionOptions {
+	_options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
+	return _options
 }
 
 // SetInstanceGroupManagerActionPrototype : Allow user to set InstanceGroupManagerActionPrototype
-func (options *CreateInstanceGroupManagerActionOptions) SetInstanceGroupManagerActionPrototype(instanceGroupManagerActionPrototype InstanceGroupManagerActionPrototypeIntf) *CreateInstanceGroupManagerActionOptions {
-	options.InstanceGroupManagerActionPrototype = instanceGroupManagerActionPrototype
-	return options
+func (_options *CreateInstanceGroupManagerActionOptions) SetInstanceGroupManagerActionPrototype(instanceGroupManagerActionPrototype InstanceGroupManagerActionPrototypeIntf) *CreateInstanceGroupManagerActionOptions {
+	_options.InstanceGroupManagerActionPrototype = instanceGroupManagerActionPrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18629,15 +18656,15 @@ func (*VpcV1) NewCreateInstanceGroupManagerOptions(instanceGroupID string, insta
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *CreateInstanceGroupManagerOptions) SetInstanceGroupID(instanceGroupID string) *CreateInstanceGroupManagerOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *CreateInstanceGroupManagerOptions) SetInstanceGroupID(instanceGroupID string) *CreateInstanceGroupManagerOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerPrototype : Allow user to set InstanceGroupManagerPrototype
-func (options *CreateInstanceGroupManagerOptions) SetInstanceGroupManagerPrototype(instanceGroupManagerPrototype InstanceGroupManagerPrototypeIntf) *CreateInstanceGroupManagerOptions {
-	options.InstanceGroupManagerPrototype = instanceGroupManagerPrototype
-	return options
+func (_options *CreateInstanceGroupManagerOptions) SetInstanceGroupManagerPrototype(instanceGroupManagerPrototype InstanceGroupManagerPrototypeIntf) *CreateInstanceGroupManagerOptions {
+	_options.InstanceGroupManagerPrototype = instanceGroupManagerPrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18671,21 +18698,21 @@ func (*VpcV1) NewCreateInstanceGroupManagerPolicyOptions(instanceGroupID string,
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *CreateInstanceGroupManagerPolicyOptions) SetInstanceGroupID(instanceGroupID string) *CreateInstanceGroupManagerPolicyOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *CreateInstanceGroupManagerPolicyOptions) SetInstanceGroupID(instanceGroupID string) *CreateInstanceGroupManagerPolicyOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerID : Allow user to set InstanceGroupManagerID
-func (options *CreateInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *CreateInstanceGroupManagerPolicyOptions {
-	options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
-	return options
+func (_options *CreateInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *CreateInstanceGroupManagerPolicyOptions {
+	_options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
+	return _options
 }
 
 // SetInstanceGroupManagerPolicyPrototype : Allow user to set InstanceGroupManagerPolicyPrototype
-func (options *CreateInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerPolicyPrototype(instanceGroupManagerPolicyPrototype InstanceGroupManagerPolicyPrototypeIntf) *CreateInstanceGroupManagerPolicyOptions {
-	options.InstanceGroupManagerPolicyPrototype = instanceGroupManagerPolicyPrototype
-	return options
+func (_options *CreateInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerPolicyPrototype(instanceGroupManagerPolicyPrototype InstanceGroupManagerPolicyPrototypeIntf) *CreateInstanceGroupManagerPolicyOptions {
+	_options.InstanceGroupManagerPolicyPrototype = instanceGroupManagerPolicyPrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18739,51 +18766,51 @@ func (*VpcV1) NewCreateInstanceGroupOptions(instanceTemplate InstanceTemplateIde
 }
 
 // SetInstanceTemplate : Allow user to set InstanceTemplate
-func (options *CreateInstanceGroupOptions) SetInstanceTemplate(instanceTemplate InstanceTemplateIdentityIntf) *CreateInstanceGroupOptions {
-	options.InstanceTemplate = instanceTemplate
-	return options
+func (_options *CreateInstanceGroupOptions) SetInstanceTemplate(instanceTemplate InstanceTemplateIdentityIntf) *CreateInstanceGroupOptions {
+	_options.InstanceTemplate = instanceTemplate
+	return _options
 }
 
 // SetSubnets : Allow user to set Subnets
-func (options *CreateInstanceGroupOptions) SetSubnets(subnets []SubnetIdentityIntf) *CreateInstanceGroupOptions {
-	options.Subnets = subnets
-	return options
+func (_options *CreateInstanceGroupOptions) SetSubnets(subnets []SubnetIdentityIntf) *CreateInstanceGroupOptions {
+	_options.Subnets = subnets
+	return _options
 }
 
 // SetApplicationPort : Allow user to set ApplicationPort
-func (options *CreateInstanceGroupOptions) SetApplicationPort(applicationPort int64) *CreateInstanceGroupOptions {
-	options.ApplicationPort = core.Int64Ptr(applicationPort)
-	return options
+func (_options *CreateInstanceGroupOptions) SetApplicationPort(applicationPort int64) *CreateInstanceGroupOptions {
+	_options.ApplicationPort = core.Int64Ptr(applicationPort)
+	return _options
 }
 
 // SetLoadBalancer : Allow user to set LoadBalancer
-func (options *CreateInstanceGroupOptions) SetLoadBalancer(loadBalancer LoadBalancerIdentityIntf) *CreateInstanceGroupOptions {
-	options.LoadBalancer = loadBalancer
-	return options
+func (_options *CreateInstanceGroupOptions) SetLoadBalancer(loadBalancer LoadBalancerIdentityIntf) *CreateInstanceGroupOptions {
+	_options.LoadBalancer = loadBalancer
+	return _options
 }
 
 // SetLoadBalancerPool : Allow user to set LoadBalancerPool
-func (options *CreateInstanceGroupOptions) SetLoadBalancerPool(loadBalancerPool LoadBalancerPoolIdentityIntf) *CreateInstanceGroupOptions {
-	options.LoadBalancerPool = loadBalancerPool
-	return options
+func (_options *CreateInstanceGroupOptions) SetLoadBalancerPool(loadBalancerPool LoadBalancerPoolIdentityIntf) *CreateInstanceGroupOptions {
+	_options.LoadBalancerPool = loadBalancerPool
+	return _options
 }
 
 // SetMembershipCount : Allow user to set MembershipCount
-func (options *CreateInstanceGroupOptions) SetMembershipCount(membershipCount int64) *CreateInstanceGroupOptions {
-	options.MembershipCount = core.Int64Ptr(membershipCount)
-	return options
+func (_options *CreateInstanceGroupOptions) SetMembershipCount(membershipCount int64) *CreateInstanceGroupOptions {
+	_options.MembershipCount = core.Int64Ptr(membershipCount)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateInstanceGroupOptions) SetName(name string) *CreateInstanceGroupOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateInstanceGroupOptions) SetName(name string) *CreateInstanceGroupOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateInstanceGroupOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateInstanceGroupOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateInstanceGroupOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateInstanceGroupOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18828,39 +18855,39 @@ func (*VpcV1) NewCreateInstanceNetworkInterfaceOptions(instanceID string, subnet
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *CreateInstanceNetworkInterfaceOptions) SetInstanceID(instanceID string) *CreateInstanceNetworkInterfaceOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *CreateInstanceNetworkInterfaceOptions) SetInstanceID(instanceID string) *CreateInstanceNetworkInterfaceOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetSubnet : Allow user to set Subnet
-func (options *CreateInstanceNetworkInterfaceOptions) SetSubnet(subnet SubnetIdentityIntf) *CreateInstanceNetworkInterfaceOptions {
-	options.Subnet = subnet
-	return options
+func (_options *CreateInstanceNetworkInterfaceOptions) SetSubnet(subnet SubnetIdentityIntf) *CreateInstanceNetworkInterfaceOptions {
+	_options.Subnet = subnet
+	return _options
 }
 
 // SetAllowIPSpoofing : Allow user to set AllowIPSpoofing
-func (options *CreateInstanceNetworkInterfaceOptions) SetAllowIPSpoofing(allowIPSpoofing bool) *CreateInstanceNetworkInterfaceOptions {
-	options.AllowIPSpoofing = core.BoolPtr(allowIPSpoofing)
-	return options
+func (_options *CreateInstanceNetworkInterfaceOptions) SetAllowIPSpoofing(allowIPSpoofing bool) *CreateInstanceNetworkInterfaceOptions {
+	_options.AllowIPSpoofing = core.BoolPtr(allowIPSpoofing)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateInstanceNetworkInterfaceOptions) SetName(name string) *CreateInstanceNetworkInterfaceOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateInstanceNetworkInterfaceOptions) SetName(name string) *CreateInstanceNetworkInterfaceOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetPrimaryIpv4Address : Allow user to set PrimaryIpv4Address
-func (options *CreateInstanceNetworkInterfaceOptions) SetPrimaryIpv4Address(primaryIpv4Address string) *CreateInstanceNetworkInterfaceOptions {
-	options.PrimaryIpv4Address = core.StringPtr(primaryIpv4Address)
-	return options
+func (_options *CreateInstanceNetworkInterfaceOptions) SetPrimaryIpv4Address(primaryIpv4Address string) *CreateInstanceNetworkInterfaceOptions {
+	_options.PrimaryIpv4Address = core.StringPtr(primaryIpv4Address)
+	return _options
 }
 
 // SetSecurityGroups : Allow user to set SecurityGroups
-func (options *CreateInstanceNetworkInterfaceOptions) SetSecurityGroups(securityGroups []SecurityGroupIdentityIntf) *CreateInstanceNetworkInterfaceOptions {
-	options.SecurityGroups = securityGroups
-	return options
+func (_options *CreateInstanceNetworkInterfaceOptions) SetSecurityGroups(securityGroups []SecurityGroupIdentityIntf) *CreateInstanceNetworkInterfaceOptions {
+	_options.SecurityGroups = securityGroups
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18886,9 +18913,9 @@ func (*VpcV1) NewCreateInstanceOptions(instancePrototype InstancePrototypeIntf) 
 }
 
 // SetInstancePrototype : Allow user to set InstancePrototype
-func (options *CreateInstanceOptions) SetInstancePrototype(instancePrototype InstancePrototypeIntf) *CreateInstanceOptions {
-	options.InstancePrototype = instancePrototype
-	return options
+func (_options *CreateInstanceOptions) SetInstancePrototype(instancePrototype InstancePrototypeIntf) *CreateInstanceOptions {
+	_options.InstancePrototype = instancePrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18914,9 +18941,9 @@ func (*VpcV1) NewCreateInstanceTemplateOptions(instanceTemplatePrototype Instanc
 }
 
 // SetInstanceTemplatePrototype : Allow user to set InstanceTemplatePrototype
-func (options *CreateInstanceTemplateOptions) SetInstanceTemplatePrototype(instanceTemplatePrototype InstanceTemplatePrototypeIntf) *CreateInstanceTemplateOptions {
-	options.InstanceTemplatePrototype = instanceTemplatePrototype
-	return options
+func (_options *CreateInstanceTemplateOptions) SetInstanceTemplatePrototype(instanceTemplatePrototype InstanceTemplatePrototypeIntf) *CreateInstanceTemplateOptions {
+	_options.InstanceTemplatePrototype = instanceTemplatePrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -18953,27 +18980,27 @@ func (*VpcV1) NewCreateInstanceVolumeAttachmentOptions(instanceID string, volume
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *CreateInstanceVolumeAttachmentOptions) SetInstanceID(instanceID string) *CreateInstanceVolumeAttachmentOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *CreateInstanceVolumeAttachmentOptions) SetInstanceID(instanceID string) *CreateInstanceVolumeAttachmentOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetVolume : Allow user to set Volume
-func (options *CreateInstanceVolumeAttachmentOptions) SetVolume(volume VolumeAttachmentPrototypeVolumeIntf) *CreateInstanceVolumeAttachmentOptions {
-	options.Volume = volume
-	return options
+func (_options *CreateInstanceVolumeAttachmentOptions) SetVolume(volume VolumeAttachmentPrototypeVolumeIntf) *CreateInstanceVolumeAttachmentOptions {
+	_options.Volume = volume
+	return _options
 }
 
 // SetDeleteVolumeOnInstanceDelete : Allow user to set DeleteVolumeOnInstanceDelete
-func (options *CreateInstanceVolumeAttachmentOptions) SetDeleteVolumeOnInstanceDelete(deleteVolumeOnInstanceDelete bool) *CreateInstanceVolumeAttachmentOptions {
-	options.DeleteVolumeOnInstanceDelete = core.BoolPtr(deleteVolumeOnInstanceDelete)
-	return options
+func (_options *CreateInstanceVolumeAttachmentOptions) SetDeleteVolumeOnInstanceDelete(deleteVolumeOnInstanceDelete bool) *CreateInstanceVolumeAttachmentOptions {
+	_options.DeleteVolumeOnInstanceDelete = core.BoolPtr(deleteVolumeOnInstanceDelete)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateInstanceVolumeAttachmentOptions) SetName(name string) *CreateInstanceVolumeAttachmentOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateInstanceVolumeAttachmentOptions) SetName(name string) *CreateInstanceVolumeAttachmentOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19044,39 +19071,39 @@ func (*VpcV1) NewCreateIpsecPolicyOptions(authenticationAlgorithm string, encryp
 }
 
 // SetAuthenticationAlgorithm : Allow user to set AuthenticationAlgorithm
-func (options *CreateIpsecPolicyOptions) SetAuthenticationAlgorithm(authenticationAlgorithm string) *CreateIpsecPolicyOptions {
-	options.AuthenticationAlgorithm = core.StringPtr(authenticationAlgorithm)
-	return options
+func (_options *CreateIpsecPolicyOptions) SetAuthenticationAlgorithm(authenticationAlgorithm string) *CreateIpsecPolicyOptions {
+	_options.AuthenticationAlgorithm = core.StringPtr(authenticationAlgorithm)
+	return _options
 }
 
 // SetEncryptionAlgorithm : Allow user to set EncryptionAlgorithm
-func (options *CreateIpsecPolicyOptions) SetEncryptionAlgorithm(encryptionAlgorithm string) *CreateIpsecPolicyOptions {
-	options.EncryptionAlgorithm = core.StringPtr(encryptionAlgorithm)
-	return options
+func (_options *CreateIpsecPolicyOptions) SetEncryptionAlgorithm(encryptionAlgorithm string) *CreateIpsecPolicyOptions {
+	_options.EncryptionAlgorithm = core.StringPtr(encryptionAlgorithm)
+	return _options
 }
 
 // SetPfs : Allow user to set Pfs
-func (options *CreateIpsecPolicyOptions) SetPfs(pfs string) *CreateIpsecPolicyOptions {
-	options.Pfs = core.StringPtr(pfs)
-	return options
+func (_options *CreateIpsecPolicyOptions) SetPfs(pfs string) *CreateIpsecPolicyOptions {
+	_options.Pfs = core.StringPtr(pfs)
+	return _options
 }
 
 // SetKeyLifetime : Allow user to set KeyLifetime
-func (options *CreateIpsecPolicyOptions) SetKeyLifetime(keyLifetime int64) *CreateIpsecPolicyOptions {
-	options.KeyLifetime = core.Int64Ptr(keyLifetime)
-	return options
+func (_options *CreateIpsecPolicyOptions) SetKeyLifetime(keyLifetime int64) *CreateIpsecPolicyOptions {
+	_options.KeyLifetime = core.Int64Ptr(keyLifetime)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateIpsecPolicyOptions) SetName(name string) *CreateIpsecPolicyOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateIpsecPolicyOptions) SetName(name string) *CreateIpsecPolicyOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateIpsecPolicyOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateIpsecPolicyOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateIpsecPolicyOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateIpsecPolicyOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19120,27 +19147,27 @@ func (*VpcV1) NewCreateKeyOptions(publicKey string) *CreateKeyOptions {
 }
 
 // SetPublicKey : Allow user to set PublicKey
-func (options *CreateKeyOptions) SetPublicKey(publicKey string) *CreateKeyOptions {
-	options.PublicKey = core.StringPtr(publicKey)
-	return options
+func (_options *CreateKeyOptions) SetPublicKey(publicKey string) *CreateKeyOptions {
+	_options.PublicKey = core.StringPtr(publicKey)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateKeyOptions) SetName(name string) *CreateKeyOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateKeyOptions) SetName(name string) *CreateKeyOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateKeyOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateKeyOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateKeyOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateKeyOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetType : Allow user to set Type
-func (options *CreateKeyOptions) SetType(typeVar string) *CreateKeyOptions {
-	options.Type = core.StringPtr(typeVar)
-	return options
+func (_options *CreateKeyOptions) SetType(typeVar string) *CreateKeyOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19208,51 +19235,51 @@ func (*VpcV1) NewCreateLoadBalancerListenerOptions(loadBalancerID string, port i
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *CreateLoadBalancerListenerOptions) SetLoadBalancerID(loadBalancerID string) *CreateLoadBalancerListenerOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *CreateLoadBalancerListenerOptions) SetLoadBalancerID(loadBalancerID string) *CreateLoadBalancerListenerOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetPort : Allow user to set Port
-func (options *CreateLoadBalancerListenerOptions) SetPort(port int64) *CreateLoadBalancerListenerOptions {
-	options.Port = core.Int64Ptr(port)
-	return options
+func (_options *CreateLoadBalancerListenerOptions) SetPort(port int64) *CreateLoadBalancerListenerOptions {
+	_options.Port = core.Int64Ptr(port)
+	return _options
 }
 
 // SetProtocol : Allow user to set Protocol
-func (options *CreateLoadBalancerListenerOptions) SetProtocol(protocol string) *CreateLoadBalancerListenerOptions {
-	options.Protocol = core.StringPtr(protocol)
-	return options
+func (_options *CreateLoadBalancerListenerOptions) SetProtocol(protocol string) *CreateLoadBalancerListenerOptions {
+	_options.Protocol = core.StringPtr(protocol)
+	return _options
 }
 
 // SetAcceptProxyProtocol : Allow user to set AcceptProxyProtocol
-func (options *CreateLoadBalancerListenerOptions) SetAcceptProxyProtocol(acceptProxyProtocol bool) *CreateLoadBalancerListenerOptions {
-	options.AcceptProxyProtocol = core.BoolPtr(acceptProxyProtocol)
-	return options
+func (_options *CreateLoadBalancerListenerOptions) SetAcceptProxyProtocol(acceptProxyProtocol bool) *CreateLoadBalancerListenerOptions {
+	_options.AcceptProxyProtocol = core.BoolPtr(acceptProxyProtocol)
+	return _options
 }
 
 // SetCertificateInstance : Allow user to set CertificateInstance
-func (options *CreateLoadBalancerListenerOptions) SetCertificateInstance(certificateInstance CertificateInstanceIdentityIntf) *CreateLoadBalancerListenerOptions {
-	options.CertificateInstance = certificateInstance
-	return options
+func (_options *CreateLoadBalancerListenerOptions) SetCertificateInstance(certificateInstance CertificateInstanceIdentityIntf) *CreateLoadBalancerListenerOptions {
+	_options.CertificateInstance = certificateInstance
+	return _options
 }
 
 // SetConnectionLimit : Allow user to set ConnectionLimit
-func (options *CreateLoadBalancerListenerOptions) SetConnectionLimit(connectionLimit int64) *CreateLoadBalancerListenerOptions {
-	options.ConnectionLimit = core.Int64Ptr(connectionLimit)
-	return options
+func (_options *CreateLoadBalancerListenerOptions) SetConnectionLimit(connectionLimit int64) *CreateLoadBalancerListenerOptions {
+	_options.ConnectionLimit = core.Int64Ptr(connectionLimit)
+	return _options
 }
 
 // SetDefaultPool : Allow user to set DefaultPool
-func (options *CreateLoadBalancerListenerOptions) SetDefaultPool(defaultPool LoadBalancerPoolIdentityIntf) *CreateLoadBalancerListenerOptions {
-	options.DefaultPool = defaultPool
-	return options
+func (_options *CreateLoadBalancerListenerOptions) SetDefaultPool(defaultPool LoadBalancerPoolIdentityIntf) *CreateLoadBalancerListenerOptions {
+	_options.DefaultPool = defaultPool
+	return _options
 }
 
 // SetPolicies : Allow user to set Policies
-func (options *CreateLoadBalancerListenerOptions) SetPolicies(policies []LoadBalancerListenerPolicyPrototype) *CreateLoadBalancerListenerOptions {
-	options.Policies = policies
-	return options
+func (_options *CreateLoadBalancerListenerOptions) SetPolicies(policies []LoadBalancerListenerPolicyPrototype) *CreateLoadBalancerListenerOptions {
+	_options.Policies = policies
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19310,45 +19337,45 @@ func (*VpcV1) NewCreateLoadBalancerListenerPolicyOptions(loadBalancerID string, 
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *CreateLoadBalancerListenerPolicyOptions) SetLoadBalancerID(loadBalancerID string) *CreateLoadBalancerListenerPolicyOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyOptions) SetLoadBalancerID(loadBalancerID string) *CreateLoadBalancerListenerPolicyOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetListenerID : Allow user to set ListenerID
-func (options *CreateLoadBalancerListenerPolicyOptions) SetListenerID(listenerID string) *CreateLoadBalancerListenerPolicyOptions {
-	options.ListenerID = core.StringPtr(listenerID)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyOptions) SetListenerID(listenerID string) *CreateLoadBalancerListenerPolicyOptions {
+	_options.ListenerID = core.StringPtr(listenerID)
+	return _options
 }
 
 // SetAction : Allow user to set Action
-func (options *CreateLoadBalancerListenerPolicyOptions) SetAction(action string) *CreateLoadBalancerListenerPolicyOptions {
-	options.Action = core.StringPtr(action)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyOptions) SetAction(action string) *CreateLoadBalancerListenerPolicyOptions {
+	_options.Action = core.StringPtr(action)
+	return _options
 }
 
 // SetPriority : Allow user to set Priority
-func (options *CreateLoadBalancerListenerPolicyOptions) SetPriority(priority int64) *CreateLoadBalancerListenerPolicyOptions {
-	options.Priority = core.Int64Ptr(priority)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyOptions) SetPriority(priority int64) *CreateLoadBalancerListenerPolicyOptions {
+	_options.Priority = core.Int64Ptr(priority)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateLoadBalancerListenerPolicyOptions) SetName(name string) *CreateLoadBalancerListenerPolicyOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyOptions) SetName(name string) *CreateLoadBalancerListenerPolicyOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetRules : Allow user to set Rules
-func (options *CreateLoadBalancerListenerPolicyOptions) SetRules(rules []LoadBalancerListenerPolicyRulePrototype) *CreateLoadBalancerListenerPolicyOptions {
-	options.Rules = rules
-	return options
+func (_options *CreateLoadBalancerListenerPolicyOptions) SetRules(rules []LoadBalancerListenerPolicyRulePrototype) *CreateLoadBalancerListenerPolicyOptions {
+	_options.Rules = rules
+	return _options
 }
 
 // SetTarget : Allow user to set Target
-func (options *CreateLoadBalancerListenerPolicyOptions) SetTarget(target LoadBalancerListenerPolicyTargetPrototypeIntf) *CreateLoadBalancerListenerPolicyOptions {
-	options.Target = target
-	return options
+func (_options *CreateLoadBalancerListenerPolicyOptions) SetTarget(target LoadBalancerListenerPolicyTargetPrototypeIntf) *CreateLoadBalancerListenerPolicyOptions {
+	_options.Target = target
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19428,45 +19455,45 @@ func (*VpcV1) NewCreateLoadBalancerListenerPolicyRuleOptions(loadBalancerID stri
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *CreateLoadBalancerListenerPolicyRuleOptions) SetLoadBalancerID(loadBalancerID string) *CreateLoadBalancerListenerPolicyRuleOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyRuleOptions) SetLoadBalancerID(loadBalancerID string) *CreateLoadBalancerListenerPolicyRuleOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetListenerID : Allow user to set ListenerID
-func (options *CreateLoadBalancerListenerPolicyRuleOptions) SetListenerID(listenerID string) *CreateLoadBalancerListenerPolicyRuleOptions {
-	options.ListenerID = core.StringPtr(listenerID)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyRuleOptions) SetListenerID(listenerID string) *CreateLoadBalancerListenerPolicyRuleOptions {
+	_options.ListenerID = core.StringPtr(listenerID)
+	return _options
 }
 
 // SetPolicyID : Allow user to set PolicyID
-func (options *CreateLoadBalancerListenerPolicyRuleOptions) SetPolicyID(policyID string) *CreateLoadBalancerListenerPolicyRuleOptions {
-	options.PolicyID = core.StringPtr(policyID)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyRuleOptions) SetPolicyID(policyID string) *CreateLoadBalancerListenerPolicyRuleOptions {
+	_options.PolicyID = core.StringPtr(policyID)
+	return _options
 }
 
 // SetCondition : Allow user to set Condition
-func (options *CreateLoadBalancerListenerPolicyRuleOptions) SetCondition(condition string) *CreateLoadBalancerListenerPolicyRuleOptions {
-	options.Condition = core.StringPtr(condition)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyRuleOptions) SetCondition(condition string) *CreateLoadBalancerListenerPolicyRuleOptions {
+	_options.Condition = core.StringPtr(condition)
+	return _options
 }
 
 // SetType : Allow user to set Type
-func (options *CreateLoadBalancerListenerPolicyRuleOptions) SetType(typeVar string) *CreateLoadBalancerListenerPolicyRuleOptions {
-	options.Type = core.StringPtr(typeVar)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyRuleOptions) SetType(typeVar string) *CreateLoadBalancerListenerPolicyRuleOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
 }
 
 // SetValue : Allow user to set Value
-func (options *CreateLoadBalancerListenerPolicyRuleOptions) SetValue(value string) *CreateLoadBalancerListenerPolicyRuleOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyRuleOptions) SetValue(value string) *CreateLoadBalancerListenerPolicyRuleOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetField : Allow user to set Field
-func (options *CreateLoadBalancerListenerPolicyRuleOptions) SetField(field string) *CreateLoadBalancerListenerPolicyRuleOptions {
-	options.Field = core.StringPtr(field)
-	return options
+func (_options *CreateLoadBalancerListenerPolicyRuleOptions) SetField(field string) *CreateLoadBalancerListenerPolicyRuleOptions {
+	_options.Field = core.StringPtr(field)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19526,57 +19553,57 @@ func (*VpcV1) NewCreateLoadBalancerOptions(isPublic bool, subnets []SubnetIdenti
 }
 
 // SetIsPublic : Allow user to set IsPublic
-func (options *CreateLoadBalancerOptions) SetIsPublic(isPublic bool) *CreateLoadBalancerOptions {
-	options.IsPublic = core.BoolPtr(isPublic)
-	return options
+func (_options *CreateLoadBalancerOptions) SetIsPublic(isPublic bool) *CreateLoadBalancerOptions {
+	_options.IsPublic = core.BoolPtr(isPublic)
+	return _options
 }
 
 // SetSubnets : Allow user to set Subnets
-func (options *CreateLoadBalancerOptions) SetSubnets(subnets []SubnetIdentityIntf) *CreateLoadBalancerOptions {
-	options.Subnets = subnets
-	return options
+func (_options *CreateLoadBalancerOptions) SetSubnets(subnets []SubnetIdentityIntf) *CreateLoadBalancerOptions {
+	_options.Subnets = subnets
+	return _options
 }
 
 // SetListeners : Allow user to set Listeners
-func (options *CreateLoadBalancerOptions) SetListeners(listeners []LoadBalancerListenerPrototypeLoadBalancerContext) *CreateLoadBalancerOptions {
-	options.Listeners = listeners
-	return options
+func (_options *CreateLoadBalancerOptions) SetListeners(listeners []LoadBalancerListenerPrototypeLoadBalancerContext) *CreateLoadBalancerOptions {
+	_options.Listeners = listeners
+	return _options
 }
 
 // SetLogging : Allow user to set Logging
-func (options *CreateLoadBalancerOptions) SetLogging(logging *LoadBalancerLogging) *CreateLoadBalancerOptions {
-	options.Logging = logging
-	return options
+func (_options *CreateLoadBalancerOptions) SetLogging(logging *LoadBalancerLogging) *CreateLoadBalancerOptions {
+	_options.Logging = logging
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateLoadBalancerOptions) SetName(name string) *CreateLoadBalancerOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateLoadBalancerOptions) SetName(name string) *CreateLoadBalancerOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetPools : Allow user to set Pools
-func (options *CreateLoadBalancerOptions) SetPools(pools []LoadBalancerPoolPrototype) *CreateLoadBalancerOptions {
-	options.Pools = pools
-	return options
+func (_options *CreateLoadBalancerOptions) SetPools(pools []LoadBalancerPoolPrototype) *CreateLoadBalancerOptions {
+	_options.Pools = pools
+	return _options
 }
 
 // SetProfile : Allow user to set Profile
-func (options *CreateLoadBalancerOptions) SetProfile(profile LoadBalancerProfileIdentityIntf) *CreateLoadBalancerOptions {
-	options.Profile = profile
-	return options
+func (_options *CreateLoadBalancerOptions) SetProfile(profile LoadBalancerProfileIdentityIntf) *CreateLoadBalancerOptions {
+	_options.Profile = profile
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateLoadBalancerOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateLoadBalancerOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateLoadBalancerOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateLoadBalancerOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetSecurityGroups : Allow user to set SecurityGroups
-func (options *CreateLoadBalancerOptions) SetSecurityGroups(securityGroups []SecurityGroupIdentityIntf) *CreateLoadBalancerOptions {
-	options.SecurityGroups = securityGroups
-	return options
+func (_options *CreateLoadBalancerOptions) SetSecurityGroups(securityGroups []SecurityGroupIdentityIntf) *CreateLoadBalancerOptions {
+	_options.SecurityGroups = securityGroups
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19619,33 +19646,33 @@ func (*VpcV1) NewCreateLoadBalancerPoolMemberOptions(loadBalancerID string, pool
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *CreateLoadBalancerPoolMemberOptions) SetLoadBalancerID(loadBalancerID string) *CreateLoadBalancerPoolMemberOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *CreateLoadBalancerPoolMemberOptions) SetLoadBalancerID(loadBalancerID string) *CreateLoadBalancerPoolMemberOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetPoolID : Allow user to set PoolID
-func (options *CreateLoadBalancerPoolMemberOptions) SetPoolID(poolID string) *CreateLoadBalancerPoolMemberOptions {
-	options.PoolID = core.StringPtr(poolID)
-	return options
+func (_options *CreateLoadBalancerPoolMemberOptions) SetPoolID(poolID string) *CreateLoadBalancerPoolMemberOptions {
+	_options.PoolID = core.StringPtr(poolID)
+	return _options
 }
 
 // SetPort : Allow user to set Port
-func (options *CreateLoadBalancerPoolMemberOptions) SetPort(port int64) *CreateLoadBalancerPoolMemberOptions {
-	options.Port = core.Int64Ptr(port)
-	return options
+func (_options *CreateLoadBalancerPoolMemberOptions) SetPort(port int64) *CreateLoadBalancerPoolMemberOptions {
+	_options.Port = core.Int64Ptr(port)
+	return _options
 }
 
 // SetTarget : Allow user to set Target
-func (options *CreateLoadBalancerPoolMemberOptions) SetTarget(target LoadBalancerPoolMemberTargetPrototypeIntf) *CreateLoadBalancerPoolMemberOptions {
-	options.Target = target
-	return options
+func (_options *CreateLoadBalancerPoolMemberOptions) SetTarget(target LoadBalancerPoolMemberTargetPrototypeIntf) *CreateLoadBalancerPoolMemberOptions {
+	_options.Target = target
+	return _options
 }
 
 // SetWeight : Allow user to set Weight
-func (options *CreateLoadBalancerPoolMemberOptions) SetWeight(weight int64) *CreateLoadBalancerPoolMemberOptions {
-	options.Weight = core.Int64Ptr(weight)
-	return options
+func (_options *CreateLoadBalancerPoolMemberOptions) SetWeight(weight int64) *CreateLoadBalancerPoolMemberOptions {
+	_options.Weight = core.Int64Ptr(weight)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19735,51 +19762,51 @@ func (*VpcV1) NewCreateLoadBalancerPoolOptions(loadBalancerID string, algorithm 
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *CreateLoadBalancerPoolOptions) SetLoadBalancerID(loadBalancerID string) *CreateLoadBalancerPoolOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *CreateLoadBalancerPoolOptions) SetLoadBalancerID(loadBalancerID string) *CreateLoadBalancerPoolOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetAlgorithm : Allow user to set Algorithm
-func (options *CreateLoadBalancerPoolOptions) SetAlgorithm(algorithm string) *CreateLoadBalancerPoolOptions {
-	options.Algorithm = core.StringPtr(algorithm)
-	return options
+func (_options *CreateLoadBalancerPoolOptions) SetAlgorithm(algorithm string) *CreateLoadBalancerPoolOptions {
+	_options.Algorithm = core.StringPtr(algorithm)
+	return _options
 }
 
 // SetHealthMonitor : Allow user to set HealthMonitor
-func (options *CreateLoadBalancerPoolOptions) SetHealthMonitor(healthMonitor *LoadBalancerPoolHealthMonitorPrototype) *CreateLoadBalancerPoolOptions {
-	options.HealthMonitor = healthMonitor
-	return options
+func (_options *CreateLoadBalancerPoolOptions) SetHealthMonitor(healthMonitor *LoadBalancerPoolHealthMonitorPrototype) *CreateLoadBalancerPoolOptions {
+	_options.HealthMonitor = healthMonitor
+	return _options
 }
 
 // SetProtocol : Allow user to set Protocol
-func (options *CreateLoadBalancerPoolOptions) SetProtocol(protocol string) *CreateLoadBalancerPoolOptions {
-	options.Protocol = core.StringPtr(protocol)
-	return options
+func (_options *CreateLoadBalancerPoolOptions) SetProtocol(protocol string) *CreateLoadBalancerPoolOptions {
+	_options.Protocol = core.StringPtr(protocol)
+	return _options
 }
 
 // SetMembers : Allow user to set Members
-func (options *CreateLoadBalancerPoolOptions) SetMembers(members []LoadBalancerPoolMemberPrototype) *CreateLoadBalancerPoolOptions {
-	options.Members = members
-	return options
+func (_options *CreateLoadBalancerPoolOptions) SetMembers(members []LoadBalancerPoolMemberPrototype) *CreateLoadBalancerPoolOptions {
+	_options.Members = members
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateLoadBalancerPoolOptions) SetName(name string) *CreateLoadBalancerPoolOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateLoadBalancerPoolOptions) SetName(name string) *CreateLoadBalancerPoolOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetProxyProtocol : Allow user to set ProxyProtocol
-func (options *CreateLoadBalancerPoolOptions) SetProxyProtocol(proxyProtocol string) *CreateLoadBalancerPoolOptions {
-	options.ProxyProtocol = core.StringPtr(proxyProtocol)
-	return options
+func (_options *CreateLoadBalancerPoolOptions) SetProxyProtocol(proxyProtocol string) *CreateLoadBalancerPoolOptions {
+	_options.ProxyProtocol = core.StringPtr(proxyProtocol)
+	return _options
 }
 
 // SetSessionPersistence : Allow user to set SessionPersistence
-func (options *CreateLoadBalancerPoolOptions) SetSessionPersistence(sessionPersistence *LoadBalancerPoolSessionPersistencePrototype) *CreateLoadBalancerPoolOptions {
-	options.SessionPersistence = sessionPersistence
-	return options
+func (_options *CreateLoadBalancerPoolOptions) SetSessionPersistence(sessionPersistence *LoadBalancerPoolSessionPersistencePrototype) *CreateLoadBalancerPoolOptions {
+	_options.SessionPersistence = sessionPersistence
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19803,9 +19830,9 @@ func (*VpcV1) NewCreateNetworkACLOptions() *CreateNetworkACLOptions {
 }
 
 // SetNetworkACLPrototype : Allow user to set NetworkACLPrototype
-func (options *CreateNetworkACLOptions) SetNetworkACLPrototype(networkACLPrototype NetworkACLPrototypeIntf) *CreateNetworkACLOptions {
-	options.NetworkACLPrototype = networkACLPrototype
-	return options
+func (_options *CreateNetworkACLOptions) SetNetworkACLPrototype(networkACLPrototype NetworkACLPrototypeIntf) *CreateNetworkACLOptions {
+	_options.NetworkACLPrototype = networkACLPrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19835,15 +19862,15 @@ func (*VpcV1) NewCreateNetworkACLRuleOptions(networkACLID string, networkACLRule
 }
 
 // SetNetworkACLID : Allow user to set NetworkACLID
-func (options *CreateNetworkACLRuleOptions) SetNetworkACLID(networkACLID string) *CreateNetworkACLRuleOptions {
-	options.NetworkACLID = core.StringPtr(networkACLID)
-	return options
+func (_options *CreateNetworkACLRuleOptions) SetNetworkACLID(networkACLID string) *CreateNetworkACLRuleOptions {
+	_options.NetworkACLID = core.StringPtr(networkACLID)
+	return _options
 }
 
 // SetNetworkACLRulePrototype : Allow user to set NetworkACLRulePrototype
-func (options *CreateNetworkACLRuleOptions) SetNetworkACLRulePrototype(networkACLRulePrototype NetworkACLRulePrototypeIntf) *CreateNetworkACLRuleOptions {
-	options.NetworkACLRulePrototype = networkACLRulePrototype
-	return options
+func (_options *CreateNetworkACLRuleOptions) SetNetworkACLRulePrototype(networkACLRulePrototype NetworkACLRulePrototypeIntf) *CreateNetworkACLRuleOptions {
+	_options.NetworkACLRulePrototype = networkACLRulePrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19883,33 +19910,33 @@ func (*VpcV1) NewCreatePublicGatewayOptions(vpc VPCIdentityIntf, zone ZoneIdenti
 }
 
 // SetVPC : Allow user to set VPC
-func (options *CreatePublicGatewayOptions) SetVPC(vpc VPCIdentityIntf) *CreatePublicGatewayOptions {
-	options.VPC = vpc
-	return options
+func (_options *CreatePublicGatewayOptions) SetVPC(vpc VPCIdentityIntf) *CreatePublicGatewayOptions {
+	_options.VPC = vpc
+	return _options
 }
 
 // SetZone : Allow user to set Zone
-func (options *CreatePublicGatewayOptions) SetZone(zone ZoneIdentityIntf) *CreatePublicGatewayOptions {
-	options.Zone = zone
-	return options
+func (_options *CreatePublicGatewayOptions) SetZone(zone ZoneIdentityIntf) *CreatePublicGatewayOptions {
+	_options.Zone = zone
+	return _options
 }
 
 // SetFloatingIP : Allow user to set FloatingIP
-func (options *CreatePublicGatewayOptions) SetFloatingIP(floatingIP PublicGatewayFloatingIPPrototypeIntf) *CreatePublicGatewayOptions {
-	options.FloatingIP = floatingIP
-	return options
+func (_options *CreatePublicGatewayOptions) SetFloatingIP(floatingIP PublicGatewayFloatingIPPrototypeIntf) *CreatePublicGatewayOptions {
+	_options.FloatingIP = floatingIP
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreatePublicGatewayOptions) SetName(name string) *CreatePublicGatewayOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreatePublicGatewayOptions) SetName(name string) *CreatePublicGatewayOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreatePublicGatewayOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreatePublicGatewayOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreatePublicGatewayOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreatePublicGatewayOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19947,27 +19974,27 @@ func (*VpcV1) NewCreateSecurityGroupOptions(vpc VPCIdentityIntf) *CreateSecurity
 }
 
 // SetVPC : Allow user to set VPC
-func (options *CreateSecurityGroupOptions) SetVPC(vpc VPCIdentityIntf) *CreateSecurityGroupOptions {
-	options.VPC = vpc
-	return options
+func (_options *CreateSecurityGroupOptions) SetVPC(vpc VPCIdentityIntf) *CreateSecurityGroupOptions {
+	_options.VPC = vpc
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateSecurityGroupOptions) SetName(name string) *CreateSecurityGroupOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateSecurityGroupOptions) SetName(name string) *CreateSecurityGroupOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateSecurityGroupOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateSecurityGroupOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateSecurityGroupOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateSecurityGroupOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetRules : Allow user to set Rules
-func (options *CreateSecurityGroupOptions) SetRules(rules []SecurityGroupRulePrototypeIntf) *CreateSecurityGroupOptions {
-	options.Rules = rules
-	return options
+func (_options *CreateSecurityGroupOptions) SetRules(rules []SecurityGroupRulePrototypeIntf) *CreateSecurityGroupOptions {
+	_options.Rules = rules
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -19997,15 +20024,15 @@ func (*VpcV1) NewCreateSecurityGroupRuleOptions(securityGroupID string, security
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *CreateSecurityGroupRuleOptions) SetSecurityGroupID(securityGroupID string) *CreateSecurityGroupRuleOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *CreateSecurityGroupRuleOptions) SetSecurityGroupID(securityGroupID string) *CreateSecurityGroupRuleOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetSecurityGroupRulePrototype : Allow user to set SecurityGroupRulePrototype
-func (options *CreateSecurityGroupRuleOptions) SetSecurityGroupRulePrototype(securityGroupRulePrototype SecurityGroupRulePrototypeIntf) *CreateSecurityGroupRuleOptions {
-	options.SecurityGroupRulePrototype = securityGroupRulePrototype
-	return options
+func (_options *CreateSecurityGroupRuleOptions) SetSecurityGroupRulePrototype(securityGroupRulePrototype SecurityGroupRulePrototypeIntf) *CreateSecurityGroupRuleOptions {
+	_options.SecurityGroupRulePrototype = securityGroupRulePrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20035,15 +20062,15 @@ func (*VpcV1) NewCreateSecurityGroupTargetBindingOptions(securityGroupID string,
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *CreateSecurityGroupTargetBindingOptions) SetSecurityGroupID(securityGroupID string) *CreateSecurityGroupTargetBindingOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *CreateSecurityGroupTargetBindingOptions) SetSecurityGroupID(securityGroupID string) *CreateSecurityGroupTargetBindingOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *CreateSecurityGroupTargetBindingOptions) SetID(id string) *CreateSecurityGroupTargetBindingOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *CreateSecurityGroupTargetBindingOptions) SetID(id string) *CreateSecurityGroupTargetBindingOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20077,21 +20104,21 @@ func (*VpcV1) NewCreateSnapshotOptions(sourceVolume VolumeIdentityIntf) *CreateS
 }
 
 // SetSourceVolume : Allow user to set SourceVolume
-func (options *CreateSnapshotOptions) SetSourceVolume(sourceVolume VolumeIdentityIntf) *CreateSnapshotOptions {
-	options.SourceVolume = sourceVolume
-	return options
+func (_options *CreateSnapshotOptions) SetSourceVolume(sourceVolume VolumeIdentityIntf) *CreateSnapshotOptions {
+	_options.SourceVolume = sourceVolume
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateSnapshotOptions) SetName(name string) *CreateSnapshotOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateSnapshotOptions) SetName(name string) *CreateSnapshotOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateSnapshotOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateSnapshotOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateSnapshotOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateSnapshotOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20117,9 +20144,9 @@ func (*VpcV1) NewCreateSubnetOptions(subnetPrototype SubnetPrototypeIntf) *Creat
 }
 
 // SetSubnetPrototype : Allow user to set SubnetPrototype
-func (options *CreateSubnetOptions) SetSubnetPrototype(subnetPrototype SubnetPrototypeIntf) *CreateSubnetOptions {
-	options.SubnetPrototype = subnetPrototype
-	return options
+func (_options *CreateSubnetOptions) SetSubnetPrototype(subnetPrototype SubnetPrototypeIntf) *CreateSubnetOptions {
+	_options.SubnetPrototype = subnetPrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20157,27 +20184,27 @@ func (*VpcV1) NewCreateSubnetReservedIPOptions(subnetID string) *CreateSubnetRes
 }
 
 // SetSubnetID : Allow user to set SubnetID
-func (options *CreateSubnetReservedIPOptions) SetSubnetID(subnetID string) *CreateSubnetReservedIPOptions {
-	options.SubnetID = core.StringPtr(subnetID)
-	return options
+func (_options *CreateSubnetReservedIPOptions) SetSubnetID(subnetID string) *CreateSubnetReservedIPOptions {
+	_options.SubnetID = core.StringPtr(subnetID)
+	return _options
 }
 
 // SetAutoDelete : Allow user to set AutoDelete
-func (options *CreateSubnetReservedIPOptions) SetAutoDelete(autoDelete bool) *CreateSubnetReservedIPOptions {
-	options.AutoDelete = core.BoolPtr(autoDelete)
-	return options
+func (_options *CreateSubnetReservedIPOptions) SetAutoDelete(autoDelete bool) *CreateSubnetReservedIPOptions {
+	_options.AutoDelete = core.BoolPtr(autoDelete)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateSubnetReservedIPOptions) SetName(name string) *CreateSubnetReservedIPOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateSubnetReservedIPOptions) SetName(name string) *CreateSubnetReservedIPOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetTarget : Allow user to set Target
-func (options *CreateSubnetReservedIPOptions) SetTarget(target ReservedIPTargetPrototypeIntf) *CreateSubnetReservedIPOptions {
-	options.Target = target
-	return options
+func (_options *CreateSubnetReservedIPOptions) SetTarget(target ReservedIPTargetPrototypeIntf) *CreateSubnetReservedIPOptions {
+	_options.Target = target
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20203,9 +20230,9 @@ func (*VpcV1) NewCreateVolumeOptions(volumePrototype VolumePrototypeIntf) *Creat
 }
 
 // SetVolumePrototype : Allow user to set VolumePrototype
-func (options *CreateVolumeOptions) SetVolumePrototype(volumePrototype VolumePrototypeIntf) *CreateVolumeOptions {
-	options.VolumePrototype = volumePrototype
-	return options
+func (_options *CreateVolumeOptions) SetVolumePrototype(volumePrototype VolumePrototypeIntf) *CreateVolumeOptions {
+	_options.VolumePrototype = volumePrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20255,33 +20282,33 @@ func (*VpcV1) NewCreateVPCAddressPrefixOptions(vpcID string, cidr string, zone Z
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *CreateVPCAddressPrefixOptions) SetVPCID(vpcID string) *CreateVPCAddressPrefixOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *CreateVPCAddressPrefixOptions) SetVPCID(vpcID string) *CreateVPCAddressPrefixOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetCIDR : Allow user to set CIDR
-func (options *CreateVPCAddressPrefixOptions) SetCIDR(cidr string) *CreateVPCAddressPrefixOptions {
-	options.CIDR = core.StringPtr(cidr)
-	return options
+func (_options *CreateVPCAddressPrefixOptions) SetCIDR(cidr string) *CreateVPCAddressPrefixOptions {
+	_options.CIDR = core.StringPtr(cidr)
+	return _options
 }
 
 // SetZone : Allow user to set Zone
-func (options *CreateVPCAddressPrefixOptions) SetZone(zone ZoneIdentityIntf) *CreateVPCAddressPrefixOptions {
-	options.Zone = zone
-	return options
+func (_options *CreateVPCAddressPrefixOptions) SetZone(zone ZoneIdentityIntf) *CreateVPCAddressPrefixOptions {
+	_options.Zone = zone
+	return _options
 }
 
 // SetIsDefault : Allow user to set IsDefault
-func (options *CreateVPCAddressPrefixOptions) SetIsDefault(isDefault bool) *CreateVPCAddressPrefixOptions {
-	options.IsDefault = core.BoolPtr(isDefault)
-	return options
+func (_options *CreateVPCAddressPrefixOptions) SetIsDefault(isDefault bool) *CreateVPCAddressPrefixOptions {
+	_options.IsDefault = core.BoolPtr(isDefault)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateVPCAddressPrefixOptions) SetName(name string) *CreateVPCAddressPrefixOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateVPCAddressPrefixOptions) SetName(name string) *CreateVPCAddressPrefixOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20327,27 +20354,27 @@ func (*VpcV1) NewCreateVPCOptions() *CreateVPCOptions {
 }
 
 // SetAddressPrefixManagement : Allow user to set AddressPrefixManagement
-func (options *CreateVPCOptions) SetAddressPrefixManagement(addressPrefixManagement string) *CreateVPCOptions {
-	options.AddressPrefixManagement = core.StringPtr(addressPrefixManagement)
-	return options
+func (_options *CreateVPCOptions) SetAddressPrefixManagement(addressPrefixManagement string) *CreateVPCOptions {
+	_options.AddressPrefixManagement = core.StringPtr(addressPrefixManagement)
+	return _options
 }
 
 // SetClassicAccess : Allow user to set ClassicAccess
-func (options *CreateVPCOptions) SetClassicAccess(classicAccess bool) *CreateVPCOptions {
-	options.ClassicAccess = core.BoolPtr(classicAccess)
-	return options
+func (_options *CreateVPCOptions) SetClassicAccess(classicAccess bool) *CreateVPCOptions {
+	_options.ClassicAccess = core.BoolPtr(classicAccess)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateVPCOptions) SetName(name string) *CreateVPCOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateVPCOptions) SetName(name string) *CreateVPCOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetResourceGroup : Allow user to set ResourceGroup
-func (options *CreateVPCOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateVPCOptions {
-	options.ResourceGroup = resourceGroup
-	return options
+func (_options *CreateVPCOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreateVPCOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20414,39 +20441,39 @@ func (*VpcV1) NewCreateVPCRouteOptions(vpcID string, destination string, zone Zo
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *CreateVPCRouteOptions) SetVPCID(vpcID string) *CreateVPCRouteOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *CreateVPCRouteOptions) SetVPCID(vpcID string) *CreateVPCRouteOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetDestination : Allow user to set Destination
-func (options *CreateVPCRouteOptions) SetDestination(destination string) *CreateVPCRouteOptions {
-	options.Destination = core.StringPtr(destination)
-	return options
+func (_options *CreateVPCRouteOptions) SetDestination(destination string) *CreateVPCRouteOptions {
+	_options.Destination = core.StringPtr(destination)
+	return _options
 }
 
 // SetZone : Allow user to set Zone
-func (options *CreateVPCRouteOptions) SetZone(zone ZoneIdentityIntf) *CreateVPCRouteOptions {
-	options.Zone = zone
-	return options
+func (_options *CreateVPCRouteOptions) SetZone(zone ZoneIdentityIntf) *CreateVPCRouteOptions {
+	_options.Zone = zone
+	return _options
 }
 
 // SetAction : Allow user to set Action
-func (options *CreateVPCRouteOptions) SetAction(action string) *CreateVPCRouteOptions {
-	options.Action = core.StringPtr(action)
-	return options
+func (_options *CreateVPCRouteOptions) SetAction(action string) *CreateVPCRouteOptions {
+	_options.Action = core.StringPtr(action)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateVPCRouteOptions) SetName(name string) *CreateVPCRouteOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateVPCRouteOptions) SetName(name string) *CreateVPCRouteOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetNextHop : Allow user to set NextHop
-func (options *CreateVPCRouteOptions) SetNextHop(nextHop RouteNextHopPrototypeIntf) *CreateVPCRouteOptions {
-	options.NextHop = nextHop
-	return options
+func (_options *CreateVPCRouteOptions) SetNextHop(nextHop RouteNextHopPrototypeIntf) *CreateVPCRouteOptions {
+	_options.NextHop = nextHop
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20513,39 +20540,39 @@ func (*VpcV1) NewCreateVPCRoutingTableOptions(vpcID string) *CreateVPCRoutingTab
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *CreateVPCRoutingTableOptions) SetVPCID(vpcID string) *CreateVPCRoutingTableOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *CreateVPCRoutingTableOptions) SetVPCID(vpcID string) *CreateVPCRoutingTableOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateVPCRoutingTableOptions) SetName(name string) *CreateVPCRoutingTableOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateVPCRoutingTableOptions) SetName(name string) *CreateVPCRoutingTableOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetRouteDirectLinkIngress : Allow user to set RouteDirectLinkIngress
-func (options *CreateVPCRoutingTableOptions) SetRouteDirectLinkIngress(routeDirectLinkIngress bool) *CreateVPCRoutingTableOptions {
-	options.RouteDirectLinkIngress = core.BoolPtr(routeDirectLinkIngress)
-	return options
+func (_options *CreateVPCRoutingTableOptions) SetRouteDirectLinkIngress(routeDirectLinkIngress bool) *CreateVPCRoutingTableOptions {
+	_options.RouteDirectLinkIngress = core.BoolPtr(routeDirectLinkIngress)
+	return _options
 }
 
 // SetRouteTransitGatewayIngress : Allow user to set RouteTransitGatewayIngress
-func (options *CreateVPCRoutingTableOptions) SetRouteTransitGatewayIngress(routeTransitGatewayIngress bool) *CreateVPCRoutingTableOptions {
-	options.RouteTransitGatewayIngress = core.BoolPtr(routeTransitGatewayIngress)
-	return options
+func (_options *CreateVPCRoutingTableOptions) SetRouteTransitGatewayIngress(routeTransitGatewayIngress bool) *CreateVPCRoutingTableOptions {
+	_options.RouteTransitGatewayIngress = core.BoolPtr(routeTransitGatewayIngress)
+	return _options
 }
 
 // SetRouteVPCZoneIngress : Allow user to set RouteVPCZoneIngress
-func (options *CreateVPCRoutingTableOptions) SetRouteVPCZoneIngress(routeVPCZoneIngress bool) *CreateVPCRoutingTableOptions {
-	options.RouteVPCZoneIngress = core.BoolPtr(routeVPCZoneIngress)
-	return options
+func (_options *CreateVPCRoutingTableOptions) SetRouteVPCZoneIngress(routeVPCZoneIngress bool) *CreateVPCRoutingTableOptions {
+	_options.RouteVPCZoneIngress = core.BoolPtr(routeVPCZoneIngress)
+	return _options
 }
 
 // SetRoutes : Allow user to set Routes
-func (options *CreateVPCRoutingTableOptions) SetRoutes(routes []RoutePrototype) *CreateVPCRoutingTableOptions {
-	options.Routes = routes
-	return options
+func (_options *CreateVPCRoutingTableOptions) SetRoutes(routes []RoutePrototype) *CreateVPCRoutingTableOptions {
+	_options.Routes = routes
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20616,45 +20643,45 @@ func (*VpcV1) NewCreateVPCRoutingTableRouteOptions(vpcID string, routingTableID 
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *CreateVPCRoutingTableRouteOptions) SetVPCID(vpcID string) *CreateVPCRoutingTableRouteOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *CreateVPCRoutingTableRouteOptions) SetVPCID(vpcID string) *CreateVPCRoutingTableRouteOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetRoutingTableID : Allow user to set RoutingTableID
-func (options *CreateVPCRoutingTableRouteOptions) SetRoutingTableID(routingTableID string) *CreateVPCRoutingTableRouteOptions {
-	options.RoutingTableID = core.StringPtr(routingTableID)
-	return options
+func (_options *CreateVPCRoutingTableRouteOptions) SetRoutingTableID(routingTableID string) *CreateVPCRoutingTableRouteOptions {
+	_options.RoutingTableID = core.StringPtr(routingTableID)
+	return _options
 }
 
 // SetDestination : Allow user to set Destination
-func (options *CreateVPCRoutingTableRouteOptions) SetDestination(destination string) *CreateVPCRoutingTableRouteOptions {
-	options.Destination = core.StringPtr(destination)
-	return options
+func (_options *CreateVPCRoutingTableRouteOptions) SetDestination(destination string) *CreateVPCRoutingTableRouteOptions {
+	_options.Destination = core.StringPtr(destination)
+	return _options
 }
 
 // SetZone : Allow user to set Zone
-func (options *CreateVPCRoutingTableRouteOptions) SetZone(zone ZoneIdentityIntf) *CreateVPCRoutingTableRouteOptions {
-	options.Zone = zone
-	return options
+func (_options *CreateVPCRoutingTableRouteOptions) SetZone(zone ZoneIdentityIntf) *CreateVPCRoutingTableRouteOptions {
+	_options.Zone = zone
+	return _options
 }
 
 // SetAction : Allow user to set Action
-func (options *CreateVPCRoutingTableRouteOptions) SetAction(action string) *CreateVPCRoutingTableRouteOptions {
-	options.Action = core.StringPtr(action)
-	return options
+func (_options *CreateVPCRoutingTableRouteOptions) SetAction(action string) *CreateVPCRoutingTableRouteOptions {
+	_options.Action = core.StringPtr(action)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateVPCRoutingTableRouteOptions) SetName(name string) *CreateVPCRoutingTableRouteOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateVPCRoutingTableRouteOptions) SetName(name string) *CreateVPCRoutingTableRouteOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetNextHop : Allow user to set NextHop
-func (options *CreateVPCRoutingTableRouteOptions) SetNextHop(nextHop RouteNextHopPrototypeIntf) *CreateVPCRoutingTableRouteOptions {
-	options.NextHop = nextHop
-	return options
+func (_options *CreateVPCRoutingTableRouteOptions) SetNextHop(nextHop RouteNextHopPrototypeIntf) *CreateVPCRoutingTableRouteOptions {
+	_options.NextHop = nextHop
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20684,15 +20711,15 @@ func (*VpcV1) NewCreateVPNGatewayConnectionOptions(vpnGatewayID string, vpnGatew
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *CreateVPNGatewayConnectionOptions) SetVPNGatewayID(vpnGatewayID string) *CreateVPNGatewayConnectionOptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *CreateVPNGatewayConnectionOptions) SetVPNGatewayID(vpnGatewayID string) *CreateVPNGatewayConnectionOptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetVPNGatewayConnectionPrototype : Allow user to set VPNGatewayConnectionPrototype
-func (options *CreateVPNGatewayConnectionOptions) SetVPNGatewayConnectionPrototype(vpnGatewayConnectionPrototype VPNGatewayConnectionPrototypeIntf) *CreateVPNGatewayConnectionOptions {
-	options.VPNGatewayConnectionPrototype = vpnGatewayConnectionPrototype
-	return options
+func (_options *CreateVPNGatewayConnectionOptions) SetVPNGatewayConnectionPrototype(vpnGatewayConnectionPrototype VPNGatewayConnectionPrototypeIntf) *CreateVPNGatewayConnectionOptions {
+	_options.VPNGatewayConnectionPrototype = vpnGatewayConnectionPrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20718,9 +20745,9 @@ func (*VpcV1) NewCreateVPNGatewayOptions(vpnGatewayPrototype VPNGatewayPrototype
 }
 
 // SetVPNGatewayPrototype : Allow user to set VPNGatewayPrototype
-func (options *CreateVPNGatewayOptions) SetVPNGatewayPrototype(vpnGatewayPrototype VPNGatewayPrototypeIntf) *CreateVPNGatewayOptions {
-	options.VPNGatewayPrototype = vpnGatewayPrototype
-	return options
+func (_options *CreateVPNGatewayOptions) SetVPNGatewayPrototype(vpnGatewayPrototype VPNGatewayPrototypeIntf) *CreateVPNGatewayOptions {
+	_options.VPNGatewayPrototype = vpnGatewayPrototype
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -20975,6 +21002,18 @@ func UnmarshalDedicatedHostCollection(m map[string]json.RawMessage, result inter
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *DedicatedHostCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // DedicatedHostCollectionFirst : A link to the first page of resources.
 type DedicatedHostCollectionFirst struct {
 	// The URL for a page of resources.
@@ -21181,11 +21220,11 @@ func UnmarshalDedicatedHostDiskPatch(m map[string]json.RawMessage, result interf
 }
 
 // AsPatch returns a generic map representation of the DedicatedHostDiskPatch
-func (dedicatedHostDiskPatch *DedicatedHostDiskPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (dedicatedHostDiskPatch *DedicatedHostDiskPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(dedicatedHostDiskPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -21345,6 +21384,18 @@ func UnmarshalDedicatedHostGroupCollection(m map[string]json.RawMessage, result 
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *DedicatedHostGroupCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // DedicatedHostGroupCollectionFirst : A link to the first page of resources.
 type DedicatedHostGroupCollectionFirst struct {
 	// The URL for a page of resources.
@@ -21441,11 +21492,11 @@ func UnmarshalDedicatedHostGroupPatch(m map[string]json.RawMessage, result inter
 }
 
 // AsPatch returns a generic map representation of the DedicatedHostGroupPatch
-func (dedicatedHostGroupPatch *DedicatedHostGroupPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (dedicatedHostGroupPatch *DedicatedHostGroupPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(dedicatedHostGroupPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -21579,11 +21630,11 @@ func UnmarshalDedicatedHostPatch(m map[string]json.RawMessage, result interface{
 }
 
 // AsPatch returns a generic map representation of the DedicatedHostPatch
-func (dedicatedHostPatch *DedicatedHostPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (dedicatedHostPatch *DedicatedHostPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(dedicatedHostPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -21724,6 +21775,18 @@ func UnmarshalDedicatedHostProfileCollection(m map[string]json.RawMessage, resul
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *DedicatedHostProfileCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
 }
 
 // DedicatedHostProfileCollectionFirst : A link to the first page of resources.
@@ -22701,9 +22764,9 @@ func (*VpcV1) NewDeleteDedicatedHostGroupOptions(id string) *DeleteDedicatedHost
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteDedicatedHostGroupOptions) SetID(id string) *DeleteDedicatedHostGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteDedicatedHostGroupOptions) SetID(id string) *DeleteDedicatedHostGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -22729,9 +22792,9 @@ func (*VpcV1) NewDeleteDedicatedHostOptions(id string) *DeleteDedicatedHostOptio
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteDedicatedHostOptions) SetID(id string) *DeleteDedicatedHostOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteDedicatedHostOptions) SetID(id string) *DeleteDedicatedHostOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -22757,9 +22820,9 @@ func (*VpcV1) NewDeleteEndpointGatewayOptions(id string) *DeleteEndpointGatewayO
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteEndpointGatewayOptions) SetID(id string) *DeleteEndpointGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteEndpointGatewayOptions) SetID(id string) *DeleteEndpointGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -22785,9 +22848,9 @@ func (*VpcV1) NewDeleteFloatingIPOptions(id string) *DeleteFloatingIPOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteFloatingIPOptions) SetID(id string) *DeleteFloatingIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteFloatingIPOptions) SetID(id string) *DeleteFloatingIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -22813,9 +22876,9 @@ func (*VpcV1) NewDeleteFlowLogCollectorOptions(id string) *DeleteFlowLogCollecto
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteFlowLogCollectorOptions) SetID(id string) *DeleteFlowLogCollectorOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteFlowLogCollectorOptions) SetID(id string) *DeleteFlowLogCollectorOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -22841,9 +22904,9 @@ func (*VpcV1) NewDeleteIkePolicyOptions(id string) *DeleteIkePolicyOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteIkePolicyOptions) SetID(id string) *DeleteIkePolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteIkePolicyOptions) SetID(id string) *DeleteIkePolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -22869,9 +22932,9 @@ func (*VpcV1) NewDeleteImageOptions(id string) *DeleteImageOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteImageOptions) SetID(id string) *DeleteImageOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteImageOptions) SetID(id string) *DeleteImageOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -22897,9 +22960,9 @@ func (*VpcV1) NewDeleteInstanceGroupLoadBalancerOptions(instanceGroupID string) 
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *DeleteInstanceGroupLoadBalancerOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupLoadBalancerOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *DeleteInstanceGroupLoadBalancerOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupLoadBalancerOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -22933,21 +22996,21 @@ func (*VpcV1) NewDeleteInstanceGroupManagerActionOptions(instanceGroupID string,
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *DeleteInstanceGroupManagerActionOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupManagerActionOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *DeleteInstanceGroupManagerActionOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupManagerActionOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerID : Allow user to set InstanceGroupManagerID
-func (options *DeleteInstanceGroupManagerActionOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *DeleteInstanceGroupManagerActionOptions {
-	options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
-	return options
+func (_options *DeleteInstanceGroupManagerActionOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *DeleteInstanceGroupManagerActionOptions {
+	_options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteInstanceGroupManagerActionOptions) SetID(id string) *DeleteInstanceGroupManagerActionOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteInstanceGroupManagerActionOptions) SetID(id string) *DeleteInstanceGroupManagerActionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -22977,15 +23040,15 @@ func (*VpcV1) NewDeleteInstanceGroupManagerOptions(instanceGroupID string, id st
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *DeleteInstanceGroupManagerOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupManagerOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *DeleteInstanceGroupManagerOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupManagerOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteInstanceGroupManagerOptions) SetID(id string) *DeleteInstanceGroupManagerOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteInstanceGroupManagerOptions) SetID(id string) *DeleteInstanceGroupManagerOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23019,21 +23082,21 @@ func (*VpcV1) NewDeleteInstanceGroupManagerPolicyOptions(instanceGroupID string,
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *DeleteInstanceGroupManagerPolicyOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupManagerPolicyOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *DeleteInstanceGroupManagerPolicyOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupManagerPolicyOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerID : Allow user to set InstanceGroupManagerID
-func (options *DeleteInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *DeleteInstanceGroupManagerPolicyOptions {
-	options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
-	return options
+func (_options *DeleteInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *DeleteInstanceGroupManagerPolicyOptions {
+	_options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteInstanceGroupManagerPolicyOptions) SetID(id string) *DeleteInstanceGroupManagerPolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteInstanceGroupManagerPolicyOptions) SetID(id string) *DeleteInstanceGroupManagerPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23063,15 +23126,15 @@ func (*VpcV1) NewDeleteInstanceGroupMembershipOptions(instanceGroupID string, id
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *DeleteInstanceGroupMembershipOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupMembershipOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *DeleteInstanceGroupMembershipOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupMembershipOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteInstanceGroupMembershipOptions) SetID(id string) *DeleteInstanceGroupMembershipOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteInstanceGroupMembershipOptions) SetID(id string) *DeleteInstanceGroupMembershipOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23097,9 +23160,9 @@ func (*VpcV1) NewDeleteInstanceGroupMembershipsOptions(instanceGroupID string) *
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *DeleteInstanceGroupMembershipsOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupMembershipsOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *DeleteInstanceGroupMembershipsOptions) SetInstanceGroupID(instanceGroupID string) *DeleteInstanceGroupMembershipsOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23125,9 +23188,9 @@ func (*VpcV1) NewDeleteInstanceGroupOptions(id string) *DeleteInstanceGroupOptio
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteInstanceGroupOptions) SetID(id string) *DeleteInstanceGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteInstanceGroupOptions) SetID(id string) *DeleteInstanceGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23157,15 +23220,15 @@ func (*VpcV1) NewDeleteInstanceNetworkInterfaceOptions(instanceID string, id str
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *DeleteInstanceNetworkInterfaceOptions) SetInstanceID(instanceID string) *DeleteInstanceNetworkInterfaceOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *DeleteInstanceNetworkInterfaceOptions) SetInstanceID(instanceID string) *DeleteInstanceNetworkInterfaceOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteInstanceNetworkInterfaceOptions) SetID(id string) *DeleteInstanceNetworkInterfaceOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteInstanceNetworkInterfaceOptions) SetID(id string) *DeleteInstanceNetworkInterfaceOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23191,9 +23254,9 @@ func (*VpcV1) NewDeleteInstanceOptions(id string) *DeleteInstanceOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteInstanceOptions) SetID(id string) *DeleteInstanceOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteInstanceOptions) SetID(id string) *DeleteInstanceOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23219,9 +23282,9 @@ func (*VpcV1) NewDeleteInstanceTemplateOptions(id string) *DeleteInstanceTemplat
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteInstanceTemplateOptions) SetID(id string) *DeleteInstanceTemplateOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteInstanceTemplateOptions) SetID(id string) *DeleteInstanceTemplateOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23251,15 +23314,15 @@ func (*VpcV1) NewDeleteInstanceVolumeAttachmentOptions(instanceID string, id str
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *DeleteInstanceVolumeAttachmentOptions) SetInstanceID(instanceID string) *DeleteInstanceVolumeAttachmentOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *DeleteInstanceVolumeAttachmentOptions) SetInstanceID(instanceID string) *DeleteInstanceVolumeAttachmentOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteInstanceVolumeAttachmentOptions) SetID(id string) *DeleteInstanceVolumeAttachmentOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteInstanceVolumeAttachmentOptions) SetID(id string) *DeleteInstanceVolumeAttachmentOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23285,9 +23348,9 @@ func (*VpcV1) NewDeleteIpsecPolicyOptions(id string) *DeleteIpsecPolicyOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteIpsecPolicyOptions) SetID(id string) *DeleteIpsecPolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteIpsecPolicyOptions) SetID(id string) *DeleteIpsecPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23313,9 +23376,9 @@ func (*VpcV1) NewDeleteKeyOptions(id string) *DeleteKeyOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteKeyOptions) SetID(id string) *DeleteKeyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteKeyOptions) SetID(id string) *DeleteKeyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23345,15 +23408,15 @@ func (*VpcV1) NewDeleteLoadBalancerListenerOptions(loadBalancerID string, id str
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *DeleteLoadBalancerListenerOptions) SetLoadBalancerID(loadBalancerID string) *DeleteLoadBalancerListenerOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *DeleteLoadBalancerListenerOptions) SetLoadBalancerID(loadBalancerID string) *DeleteLoadBalancerListenerOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteLoadBalancerListenerOptions) SetID(id string) *DeleteLoadBalancerListenerOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteLoadBalancerListenerOptions) SetID(id string) *DeleteLoadBalancerListenerOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23387,21 +23450,21 @@ func (*VpcV1) NewDeleteLoadBalancerListenerPolicyOptions(loadBalancerID string, 
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *DeleteLoadBalancerListenerPolicyOptions) SetLoadBalancerID(loadBalancerID string) *DeleteLoadBalancerListenerPolicyOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *DeleteLoadBalancerListenerPolicyOptions) SetLoadBalancerID(loadBalancerID string) *DeleteLoadBalancerListenerPolicyOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetListenerID : Allow user to set ListenerID
-func (options *DeleteLoadBalancerListenerPolicyOptions) SetListenerID(listenerID string) *DeleteLoadBalancerListenerPolicyOptions {
-	options.ListenerID = core.StringPtr(listenerID)
-	return options
+func (_options *DeleteLoadBalancerListenerPolicyOptions) SetListenerID(listenerID string) *DeleteLoadBalancerListenerPolicyOptions {
+	_options.ListenerID = core.StringPtr(listenerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteLoadBalancerListenerPolicyOptions) SetID(id string) *DeleteLoadBalancerListenerPolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteLoadBalancerListenerPolicyOptions) SetID(id string) *DeleteLoadBalancerListenerPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23439,27 +23502,27 @@ func (*VpcV1) NewDeleteLoadBalancerListenerPolicyRuleOptions(loadBalancerID stri
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *DeleteLoadBalancerListenerPolicyRuleOptions) SetLoadBalancerID(loadBalancerID string) *DeleteLoadBalancerListenerPolicyRuleOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *DeleteLoadBalancerListenerPolicyRuleOptions) SetLoadBalancerID(loadBalancerID string) *DeleteLoadBalancerListenerPolicyRuleOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetListenerID : Allow user to set ListenerID
-func (options *DeleteLoadBalancerListenerPolicyRuleOptions) SetListenerID(listenerID string) *DeleteLoadBalancerListenerPolicyRuleOptions {
-	options.ListenerID = core.StringPtr(listenerID)
-	return options
+func (_options *DeleteLoadBalancerListenerPolicyRuleOptions) SetListenerID(listenerID string) *DeleteLoadBalancerListenerPolicyRuleOptions {
+	_options.ListenerID = core.StringPtr(listenerID)
+	return _options
 }
 
 // SetPolicyID : Allow user to set PolicyID
-func (options *DeleteLoadBalancerListenerPolicyRuleOptions) SetPolicyID(policyID string) *DeleteLoadBalancerListenerPolicyRuleOptions {
-	options.PolicyID = core.StringPtr(policyID)
-	return options
+func (_options *DeleteLoadBalancerListenerPolicyRuleOptions) SetPolicyID(policyID string) *DeleteLoadBalancerListenerPolicyRuleOptions {
+	_options.PolicyID = core.StringPtr(policyID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteLoadBalancerListenerPolicyRuleOptions) SetID(id string) *DeleteLoadBalancerListenerPolicyRuleOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteLoadBalancerListenerPolicyRuleOptions) SetID(id string) *DeleteLoadBalancerListenerPolicyRuleOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23485,9 +23548,9 @@ func (*VpcV1) NewDeleteLoadBalancerOptions(id string) *DeleteLoadBalancerOptions
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteLoadBalancerOptions) SetID(id string) *DeleteLoadBalancerOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteLoadBalancerOptions) SetID(id string) *DeleteLoadBalancerOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23521,21 +23584,21 @@ func (*VpcV1) NewDeleteLoadBalancerPoolMemberOptions(loadBalancerID string, pool
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *DeleteLoadBalancerPoolMemberOptions) SetLoadBalancerID(loadBalancerID string) *DeleteLoadBalancerPoolMemberOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *DeleteLoadBalancerPoolMemberOptions) SetLoadBalancerID(loadBalancerID string) *DeleteLoadBalancerPoolMemberOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetPoolID : Allow user to set PoolID
-func (options *DeleteLoadBalancerPoolMemberOptions) SetPoolID(poolID string) *DeleteLoadBalancerPoolMemberOptions {
-	options.PoolID = core.StringPtr(poolID)
-	return options
+func (_options *DeleteLoadBalancerPoolMemberOptions) SetPoolID(poolID string) *DeleteLoadBalancerPoolMemberOptions {
+	_options.PoolID = core.StringPtr(poolID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteLoadBalancerPoolMemberOptions) SetID(id string) *DeleteLoadBalancerPoolMemberOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteLoadBalancerPoolMemberOptions) SetID(id string) *DeleteLoadBalancerPoolMemberOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23565,15 +23628,15 @@ func (*VpcV1) NewDeleteLoadBalancerPoolOptions(loadBalancerID string, id string)
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *DeleteLoadBalancerPoolOptions) SetLoadBalancerID(loadBalancerID string) *DeleteLoadBalancerPoolOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *DeleteLoadBalancerPoolOptions) SetLoadBalancerID(loadBalancerID string) *DeleteLoadBalancerPoolOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteLoadBalancerPoolOptions) SetID(id string) *DeleteLoadBalancerPoolOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteLoadBalancerPoolOptions) SetID(id string) *DeleteLoadBalancerPoolOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23599,9 +23662,9 @@ func (*VpcV1) NewDeleteNetworkACLOptions(id string) *DeleteNetworkACLOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteNetworkACLOptions) SetID(id string) *DeleteNetworkACLOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteNetworkACLOptions) SetID(id string) *DeleteNetworkACLOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23631,15 +23694,15 @@ func (*VpcV1) NewDeleteNetworkACLRuleOptions(networkACLID string, id string) *De
 }
 
 // SetNetworkACLID : Allow user to set NetworkACLID
-func (options *DeleteNetworkACLRuleOptions) SetNetworkACLID(networkACLID string) *DeleteNetworkACLRuleOptions {
-	options.NetworkACLID = core.StringPtr(networkACLID)
-	return options
+func (_options *DeleteNetworkACLRuleOptions) SetNetworkACLID(networkACLID string) *DeleteNetworkACLRuleOptions {
+	_options.NetworkACLID = core.StringPtr(networkACLID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteNetworkACLRuleOptions) SetID(id string) *DeleteNetworkACLRuleOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteNetworkACLRuleOptions) SetID(id string) *DeleteNetworkACLRuleOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23665,9 +23728,9 @@ func (*VpcV1) NewDeletePublicGatewayOptions(id string) *DeletePublicGatewayOptio
 }
 
 // SetID : Allow user to set ID
-func (options *DeletePublicGatewayOptions) SetID(id string) *DeletePublicGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeletePublicGatewayOptions) SetID(id string) *DeletePublicGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23693,9 +23756,9 @@ func (*VpcV1) NewDeleteSecurityGroupOptions(id string) *DeleteSecurityGroupOptio
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteSecurityGroupOptions) SetID(id string) *DeleteSecurityGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteSecurityGroupOptions) SetID(id string) *DeleteSecurityGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23725,15 +23788,15 @@ func (*VpcV1) NewDeleteSecurityGroupRuleOptions(securityGroupID string, id strin
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *DeleteSecurityGroupRuleOptions) SetSecurityGroupID(securityGroupID string) *DeleteSecurityGroupRuleOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *DeleteSecurityGroupRuleOptions) SetSecurityGroupID(securityGroupID string) *DeleteSecurityGroupRuleOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteSecurityGroupRuleOptions) SetID(id string) *DeleteSecurityGroupRuleOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteSecurityGroupRuleOptions) SetID(id string) *DeleteSecurityGroupRuleOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23763,15 +23826,15 @@ func (*VpcV1) NewDeleteSecurityGroupTargetBindingOptions(securityGroupID string,
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *DeleteSecurityGroupTargetBindingOptions) SetSecurityGroupID(securityGroupID string) *DeleteSecurityGroupTargetBindingOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *DeleteSecurityGroupTargetBindingOptions) SetSecurityGroupID(securityGroupID string) *DeleteSecurityGroupTargetBindingOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteSecurityGroupTargetBindingOptions) SetID(id string) *DeleteSecurityGroupTargetBindingOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteSecurityGroupTargetBindingOptions) SetID(id string) *DeleteSecurityGroupTargetBindingOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23797,9 +23860,9 @@ func (*VpcV1) NewDeleteSnapshotOptions(id string) *DeleteSnapshotOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteSnapshotOptions) SetID(id string) *DeleteSnapshotOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteSnapshotOptions) SetID(id string) *DeleteSnapshotOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23825,9 +23888,9 @@ func (*VpcV1) NewDeleteSnapshotsOptions(sourceVolumeID string) *DeleteSnapshotsO
 }
 
 // SetSourceVolumeID : Allow user to set SourceVolumeID
-func (options *DeleteSnapshotsOptions) SetSourceVolumeID(sourceVolumeID string) *DeleteSnapshotsOptions {
-	options.SourceVolumeID = core.StringPtr(sourceVolumeID)
-	return options
+func (_options *DeleteSnapshotsOptions) SetSourceVolumeID(sourceVolumeID string) *DeleteSnapshotsOptions {
+	_options.SourceVolumeID = core.StringPtr(sourceVolumeID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23853,9 +23916,9 @@ func (*VpcV1) NewDeleteSubnetOptions(id string) *DeleteSubnetOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteSubnetOptions) SetID(id string) *DeleteSubnetOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteSubnetOptions) SetID(id string) *DeleteSubnetOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23885,15 +23948,15 @@ func (*VpcV1) NewDeleteSubnetReservedIPOptions(subnetID string, id string) *Dele
 }
 
 // SetSubnetID : Allow user to set SubnetID
-func (options *DeleteSubnetReservedIPOptions) SetSubnetID(subnetID string) *DeleteSubnetReservedIPOptions {
-	options.SubnetID = core.StringPtr(subnetID)
-	return options
+func (_options *DeleteSubnetReservedIPOptions) SetSubnetID(subnetID string) *DeleteSubnetReservedIPOptions {
+	_options.SubnetID = core.StringPtr(subnetID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteSubnetReservedIPOptions) SetID(id string) *DeleteSubnetReservedIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteSubnetReservedIPOptions) SetID(id string) *DeleteSubnetReservedIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23919,9 +23982,9 @@ func (*VpcV1) NewDeleteVolumeOptions(id string) *DeleteVolumeOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteVolumeOptions) SetID(id string) *DeleteVolumeOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteVolumeOptions) SetID(id string) *DeleteVolumeOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23951,15 +24014,15 @@ func (*VpcV1) NewDeleteVPCAddressPrefixOptions(vpcID string, id string) *DeleteV
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *DeleteVPCAddressPrefixOptions) SetVPCID(vpcID string) *DeleteVPCAddressPrefixOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *DeleteVPCAddressPrefixOptions) SetVPCID(vpcID string) *DeleteVPCAddressPrefixOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteVPCAddressPrefixOptions) SetID(id string) *DeleteVPCAddressPrefixOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteVPCAddressPrefixOptions) SetID(id string) *DeleteVPCAddressPrefixOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -23985,9 +24048,9 @@ func (*VpcV1) NewDeleteVPCOptions(id string) *DeleteVPCOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteVPCOptions) SetID(id string) *DeleteVPCOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteVPCOptions) SetID(id string) *DeleteVPCOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -24017,15 +24080,15 @@ func (*VpcV1) NewDeleteVPCRouteOptions(vpcID string, id string) *DeleteVPCRouteO
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *DeleteVPCRouteOptions) SetVPCID(vpcID string) *DeleteVPCRouteOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *DeleteVPCRouteOptions) SetVPCID(vpcID string) *DeleteVPCRouteOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteVPCRouteOptions) SetID(id string) *DeleteVPCRouteOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteVPCRouteOptions) SetID(id string) *DeleteVPCRouteOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -24055,15 +24118,15 @@ func (*VpcV1) NewDeleteVPCRoutingTableOptions(vpcID string, id string) *DeleteVP
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *DeleteVPCRoutingTableOptions) SetVPCID(vpcID string) *DeleteVPCRoutingTableOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *DeleteVPCRoutingTableOptions) SetVPCID(vpcID string) *DeleteVPCRoutingTableOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteVPCRoutingTableOptions) SetID(id string) *DeleteVPCRoutingTableOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteVPCRoutingTableOptions) SetID(id string) *DeleteVPCRoutingTableOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -24097,21 +24160,21 @@ func (*VpcV1) NewDeleteVPCRoutingTableRouteOptions(vpcID string, routingTableID 
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *DeleteVPCRoutingTableRouteOptions) SetVPCID(vpcID string) *DeleteVPCRoutingTableRouteOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *DeleteVPCRoutingTableRouteOptions) SetVPCID(vpcID string) *DeleteVPCRoutingTableRouteOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetRoutingTableID : Allow user to set RoutingTableID
-func (options *DeleteVPCRoutingTableRouteOptions) SetRoutingTableID(routingTableID string) *DeleteVPCRoutingTableRouteOptions {
-	options.RoutingTableID = core.StringPtr(routingTableID)
-	return options
+func (_options *DeleteVPCRoutingTableRouteOptions) SetRoutingTableID(routingTableID string) *DeleteVPCRoutingTableRouteOptions {
+	_options.RoutingTableID = core.StringPtr(routingTableID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteVPCRoutingTableRouteOptions) SetID(id string) *DeleteVPCRoutingTableRouteOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteVPCRoutingTableRouteOptions) SetID(id string) *DeleteVPCRoutingTableRouteOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -24141,15 +24204,15 @@ func (*VpcV1) NewDeleteVPNGatewayConnectionOptions(vpnGatewayID string, id strin
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *DeleteVPNGatewayConnectionOptions) SetVPNGatewayID(vpnGatewayID string) *DeleteVPNGatewayConnectionOptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *DeleteVPNGatewayConnectionOptions) SetVPNGatewayID(vpnGatewayID string) *DeleteVPNGatewayConnectionOptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteVPNGatewayConnectionOptions) SetID(id string) *DeleteVPNGatewayConnectionOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteVPNGatewayConnectionOptions) SetID(id string) *DeleteVPNGatewayConnectionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -24175,9 +24238,9 @@ func (*VpcV1) NewDeleteVPNGatewayOptions(id string) *DeleteVPNGatewayOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteVPNGatewayOptions) SetID(id string) *DeleteVPNGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteVPNGatewayOptions) SetID(id string) *DeleteVPNGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -24427,6 +24490,18 @@ func UnmarshalEndpointGatewayCollection(m map[string]json.RawMessage, result int
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *EndpointGatewayCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // EndpointGatewayCollectionFirst : A link to the first page of resources.
 type EndpointGatewayCollectionFirst struct {
 	// The URL for a page of resources.
@@ -24480,11 +24555,11 @@ func UnmarshalEndpointGatewayPatch(m map[string]json.RawMessage, result interfac
 }
 
 // AsPatch returns a generic map representation of the EndpointGatewayPatch
-func (endpointGatewayPatch *EndpointGatewayPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (endpointGatewayPatch *EndpointGatewayPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(endpointGatewayPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -24841,6 +24916,18 @@ func UnmarshalFloatingIPCollection(m map[string]json.RawMessage, result interfac
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *FloatingIPCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // FloatingIPCollectionFirst : A link to the first page of resources.
 type FloatingIPCollectionFirst struct {
 	// The URL for a page of resources.
@@ -24902,11 +24989,11 @@ func UnmarshalFloatingIPPatch(m map[string]json.RawMessage, result interface{}) 
 }
 
 // AsPatch returns a generic map representation of the FloatingIPPatch
-func (floatingIPPatch *FloatingIPPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (floatingIPPatch *FloatingIPPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(floatingIPPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -25317,6 +25404,18 @@ func UnmarshalFlowLogCollectorCollection(m map[string]json.RawMessage, result in
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *FlowLogCollectorCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // FlowLogCollectorCollectionFirst : A link to the first page of resources.
 type FlowLogCollectorCollectionFirst struct {
 	// The URL for a page of resources.
@@ -25377,11 +25476,11 @@ func UnmarshalFlowLogCollectorPatch(m map[string]json.RawMessage, result interfa
 }
 
 // AsPatch returns a generic map representation of the FlowLogCollectorPatch
-func (flowLogCollectorPatch *FlowLogCollectorPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (flowLogCollectorPatch *FlowLogCollectorPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(flowLogCollectorPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -25527,15 +25626,15 @@ func (*VpcV1) NewGetDedicatedHostDiskOptions(dedicatedHostID string, id string) 
 }
 
 // SetDedicatedHostID : Allow user to set DedicatedHostID
-func (options *GetDedicatedHostDiskOptions) SetDedicatedHostID(dedicatedHostID string) *GetDedicatedHostDiskOptions {
-	options.DedicatedHostID = core.StringPtr(dedicatedHostID)
-	return options
+func (_options *GetDedicatedHostDiskOptions) SetDedicatedHostID(dedicatedHostID string) *GetDedicatedHostDiskOptions {
+	_options.DedicatedHostID = core.StringPtr(dedicatedHostID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetDedicatedHostDiskOptions) SetID(id string) *GetDedicatedHostDiskOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetDedicatedHostDiskOptions) SetID(id string) *GetDedicatedHostDiskOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25561,9 +25660,9 @@ func (*VpcV1) NewGetDedicatedHostGroupOptions(id string) *GetDedicatedHostGroupO
 }
 
 // SetID : Allow user to set ID
-func (options *GetDedicatedHostGroupOptions) SetID(id string) *GetDedicatedHostGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetDedicatedHostGroupOptions) SetID(id string) *GetDedicatedHostGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25589,9 +25688,9 @@ func (*VpcV1) NewGetDedicatedHostOptions(id string) *GetDedicatedHostOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetDedicatedHostOptions) SetID(id string) *GetDedicatedHostOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetDedicatedHostOptions) SetID(id string) *GetDedicatedHostOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25617,9 +25716,9 @@ func (*VpcV1) NewGetDedicatedHostProfileOptions(name string) *GetDedicatedHostPr
 }
 
 // SetName : Allow user to set Name
-func (options *GetDedicatedHostProfileOptions) SetName(name string) *GetDedicatedHostProfileOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *GetDedicatedHostProfileOptions) SetName(name string) *GetDedicatedHostProfileOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25649,15 +25748,15 @@ func (*VpcV1) NewGetEndpointGatewayIPOptions(endpointGatewayID string, id string
 }
 
 // SetEndpointGatewayID : Allow user to set EndpointGatewayID
-func (options *GetEndpointGatewayIPOptions) SetEndpointGatewayID(endpointGatewayID string) *GetEndpointGatewayIPOptions {
-	options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
-	return options
+func (_options *GetEndpointGatewayIPOptions) SetEndpointGatewayID(endpointGatewayID string) *GetEndpointGatewayIPOptions {
+	_options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetEndpointGatewayIPOptions) SetID(id string) *GetEndpointGatewayIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetEndpointGatewayIPOptions) SetID(id string) *GetEndpointGatewayIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25683,9 +25782,9 @@ func (*VpcV1) NewGetEndpointGatewayOptions(id string) *GetEndpointGatewayOptions
 }
 
 // SetID : Allow user to set ID
-func (options *GetEndpointGatewayOptions) SetID(id string) *GetEndpointGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetEndpointGatewayOptions) SetID(id string) *GetEndpointGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25711,9 +25810,9 @@ func (*VpcV1) NewGetFloatingIPOptions(id string) *GetFloatingIPOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetFloatingIPOptions) SetID(id string) *GetFloatingIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetFloatingIPOptions) SetID(id string) *GetFloatingIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25739,9 +25838,9 @@ func (*VpcV1) NewGetFlowLogCollectorOptions(id string) *GetFlowLogCollectorOptio
 }
 
 // SetID : Allow user to set ID
-func (options *GetFlowLogCollectorOptions) SetID(id string) *GetFlowLogCollectorOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetFlowLogCollectorOptions) SetID(id string) *GetFlowLogCollectorOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25767,9 +25866,9 @@ func (*VpcV1) NewGetIkePolicyOptions(id string) *GetIkePolicyOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetIkePolicyOptions) SetID(id string) *GetIkePolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetIkePolicyOptions) SetID(id string) *GetIkePolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25795,9 +25894,9 @@ func (*VpcV1) NewGetImageOptions(id string) *GetImageOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetImageOptions) SetID(id string) *GetImageOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetImageOptions) SetID(id string) *GetImageOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25827,15 +25926,15 @@ func (*VpcV1) NewGetInstanceDiskOptions(instanceID string, id string) *GetInstan
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *GetInstanceDiskOptions) SetInstanceID(instanceID string) *GetInstanceDiskOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *GetInstanceDiskOptions) SetInstanceID(instanceID string) *GetInstanceDiskOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceDiskOptions) SetID(id string) *GetInstanceDiskOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceDiskOptions) SetID(id string) *GetInstanceDiskOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25869,21 +25968,21 @@ func (*VpcV1) NewGetInstanceGroupManagerActionOptions(instanceGroupID string, in
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *GetInstanceGroupManagerActionOptions) SetInstanceGroupID(instanceGroupID string) *GetInstanceGroupManagerActionOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *GetInstanceGroupManagerActionOptions) SetInstanceGroupID(instanceGroupID string) *GetInstanceGroupManagerActionOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerID : Allow user to set InstanceGroupManagerID
-func (options *GetInstanceGroupManagerActionOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *GetInstanceGroupManagerActionOptions {
-	options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
-	return options
+func (_options *GetInstanceGroupManagerActionOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *GetInstanceGroupManagerActionOptions {
+	_options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceGroupManagerActionOptions) SetID(id string) *GetInstanceGroupManagerActionOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceGroupManagerActionOptions) SetID(id string) *GetInstanceGroupManagerActionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25913,15 +26012,15 @@ func (*VpcV1) NewGetInstanceGroupManagerOptions(instanceGroupID string, id strin
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *GetInstanceGroupManagerOptions) SetInstanceGroupID(instanceGroupID string) *GetInstanceGroupManagerOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *GetInstanceGroupManagerOptions) SetInstanceGroupID(instanceGroupID string) *GetInstanceGroupManagerOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceGroupManagerOptions) SetID(id string) *GetInstanceGroupManagerOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceGroupManagerOptions) SetID(id string) *GetInstanceGroupManagerOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25955,21 +26054,21 @@ func (*VpcV1) NewGetInstanceGroupManagerPolicyOptions(instanceGroupID string, in
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *GetInstanceGroupManagerPolicyOptions) SetInstanceGroupID(instanceGroupID string) *GetInstanceGroupManagerPolicyOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *GetInstanceGroupManagerPolicyOptions) SetInstanceGroupID(instanceGroupID string) *GetInstanceGroupManagerPolicyOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerID : Allow user to set InstanceGroupManagerID
-func (options *GetInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *GetInstanceGroupManagerPolicyOptions {
-	options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
-	return options
+func (_options *GetInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *GetInstanceGroupManagerPolicyOptions {
+	_options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceGroupManagerPolicyOptions) SetID(id string) *GetInstanceGroupManagerPolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceGroupManagerPolicyOptions) SetID(id string) *GetInstanceGroupManagerPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -25999,15 +26098,15 @@ func (*VpcV1) NewGetInstanceGroupMembershipOptions(instanceGroupID string, id st
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *GetInstanceGroupMembershipOptions) SetInstanceGroupID(instanceGroupID string) *GetInstanceGroupMembershipOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *GetInstanceGroupMembershipOptions) SetInstanceGroupID(instanceGroupID string) *GetInstanceGroupMembershipOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceGroupMembershipOptions) SetID(id string) *GetInstanceGroupMembershipOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceGroupMembershipOptions) SetID(id string) *GetInstanceGroupMembershipOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26033,9 +26132,9 @@ func (*VpcV1) NewGetInstanceGroupOptions(id string) *GetInstanceGroupOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceGroupOptions) SetID(id string) *GetInstanceGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceGroupOptions) SetID(id string) *GetInstanceGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26061,9 +26160,9 @@ func (*VpcV1) NewGetInstanceInitializationOptions(id string) *GetInstanceInitial
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceInitializationOptions) SetID(id string) *GetInstanceInitializationOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceInitializationOptions) SetID(id string) *GetInstanceInitializationOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26097,21 +26196,21 @@ func (*VpcV1) NewGetInstanceNetworkInterfaceFloatingIPOptions(instanceID string,
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *GetInstanceNetworkInterfaceFloatingIPOptions) SetInstanceID(instanceID string) *GetInstanceNetworkInterfaceFloatingIPOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *GetInstanceNetworkInterfaceFloatingIPOptions) SetInstanceID(instanceID string) *GetInstanceNetworkInterfaceFloatingIPOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetNetworkInterfaceID : Allow user to set NetworkInterfaceID
-func (options *GetInstanceNetworkInterfaceFloatingIPOptions) SetNetworkInterfaceID(networkInterfaceID string) *GetInstanceNetworkInterfaceFloatingIPOptions {
-	options.NetworkInterfaceID = core.StringPtr(networkInterfaceID)
-	return options
+func (_options *GetInstanceNetworkInterfaceFloatingIPOptions) SetNetworkInterfaceID(networkInterfaceID string) *GetInstanceNetworkInterfaceFloatingIPOptions {
+	_options.NetworkInterfaceID = core.StringPtr(networkInterfaceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceNetworkInterfaceFloatingIPOptions) SetID(id string) *GetInstanceNetworkInterfaceFloatingIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceNetworkInterfaceFloatingIPOptions) SetID(id string) *GetInstanceNetworkInterfaceFloatingIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26141,15 +26240,15 @@ func (*VpcV1) NewGetInstanceNetworkInterfaceOptions(instanceID string, id string
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *GetInstanceNetworkInterfaceOptions) SetInstanceID(instanceID string) *GetInstanceNetworkInterfaceOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *GetInstanceNetworkInterfaceOptions) SetInstanceID(instanceID string) *GetInstanceNetworkInterfaceOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceNetworkInterfaceOptions) SetID(id string) *GetInstanceNetworkInterfaceOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceNetworkInterfaceOptions) SetID(id string) *GetInstanceNetworkInterfaceOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26175,9 +26274,9 @@ func (*VpcV1) NewGetInstanceOptions(id string) *GetInstanceOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceOptions) SetID(id string) *GetInstanceOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceOptions) SetID(id string) *GetInstanceOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26203,9 +26302,9 @@ func (*VpcV1) NewGetInstanceProfileOptions(name string) *GetInstanceProfileOptio
 }
 
 // SetName : Allow user to set Name
-func (options *GetInstanceProfileOptions) SetName(name string) *GetInstanceProfileOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *GetInstanceProfileOptions) SetName(name string) *GetInstanceProfileOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26231,9 +26330,9 @@ func (*VpcV1) NewGetInstanceTemplateOptions(id string) *GetInstanceTemplateOptio
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceTemplateOptions) SetID(id string) *GetInstanceTemplateOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceTemplateOptions) SetID(id string) *GetInstanceTemplateOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26263,15 +26362,15 @@ func (*VpcV1) NewGetInstanceVolumeAttachmentOptions(instanceID string, id string
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *GetInstanceVolumeAttachmentOptions) SetInstanceID(instanceID string) *GetInstanceVolumeAttachmentOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *GetInstanceVolumeAttachmentOptions) SetInstanceID(instanceID string) *GetInstanceVolumeAttachmentOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetInstanceVolumeAttachmentOptions) SetID(id string) *GetInstanceVolumeAttachmentOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetInstanceVolumeAttachmentOptions) SetID(id string) *GetInstanceVolumeAttachmentOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26297,9 +26396,9 @@ func (*VpcV1) NewGetIpsecPolicyOptions(id string) *GetIpsecPolicyOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetIpsecPolicyOptions) SetID(id string) *GetIpsecPolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetIpsecPolicyOptions) SetID(id string) *GetIpsecPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26325,9 +26424,9 @@ func (*VpcV1) NewGetKeyOptions(id string) *GetKeyOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetKeyOptions) SetID(id string) *GetKeyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetKeyOptions) SetID(id string) *GetKeyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26357,15 +26456,15 @@ func (*VpcV1) NewGetLoadBalancerListenerOptions(loadBalancerID string, id string
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *GetLoadBalancerListenerOptions) SetLoadBalancerID(loadBalancerID string) *GetLoadBalancerListenerOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *GetLoadBalancerListenerOptions) SetLoadBalancerID(loadBalancerID string) *GetLoadBalancerListenerOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetLoadBalancerListenerOptions) SetID(id string) *GetLoadBalancerListenerOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetLoadBalancerListenerOptions) SetID(id string) *GetLoadBalancerListenerOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26399,21 +26498,21 @@ func (*VpcV1) NewGetLoadBalancerListenerPolicyOptions(loadBalancerID string, lis
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *GetLoadBalancerListenerPolicyOptions) SetLoadBalancerID(loadBalancerID string) *GetLoadBalancerListenerPolicyOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *GetLoadBalancerListenerPolicyOptions) SetLoadBalancerID(loadBalancerID string) *GetLoadBalancerListenerPolicyOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetListenerID : Allow user to set ListenerID
-func (options *GetLoadBalancerListenerPolicyOptions) SetListenerID(listenerID string) *GetLoadBalancerListenerPolicyOptions {
-	options.ListenerID = core.StringPtr(listenerID)
-	return options
+func (_options *GetLoadBalancerListenerPolicyOptions) SetListenerID(listenerID string) *GetLoadBalancerListenerPolicyOptions {
+	_options.ListenerID = core.StringPtr(listenerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetLoadBalancerListenerPolicyOptions) SetID(id string) *GetLoadBalancerListenerPolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetLoadBalancerListenerPolicyOptions) SetID(id string) *GetLoadBalancerListenerPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26451,27 +26550,27 @@ func (*VpcV1) NewGetLoadBalancerListenerPolicyRuleOptions(loadBalancerID string,
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *GetLoadBalancerListenerPolicyRuleOptions) SetLoadBalancerID(loadBalancerID string) *GetLoadBalancerListenerPolicyRuleOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *GetLoadBalancerListenerPolicyRuleOptions) SetLoadBalancerID(loadBalancerID string) *GetLoadBalancerListenerPolicyRuleOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetListenerID : Allow user to set ListenerID
-func (options *GetLoadBalancerListenerPolicyRuleOptions) SetListenerID(listenerID string) *GetLoadBalancerListenerPolicyRuleOptions {
-	options.ListenerID = core.StringPtr(listenerID)
-	return options
+func (_options *GetLoadBalancerListenerPolicyRuleOptions) SetListenerID(listenerID string) *GetLoadBalancerListenerPolicyRuleOptions {
+	_options.ListenerID = core.StringPtr(listenerID)
+	return _options
 }
 
 // SetPolicyID : Allow user to set PolicyID
-func (options *GetLoadBalancerListenerPolicyRuleOptions) SetPolicyID(policyID string) *GetLoadBalancerListenerPolicyRuleOptions {
-	options.PolicyID = core.StringPtr(policyID)
-	return options
+func (_options *GetLoadBalancerListenerPolicyRuleOptions) SetPolicyID(policyID string) *GetLoadBalancerListenerPolicyRuleOptions {
+	_options.PolicyID = core.StringPtr(policyID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetLoadBalancerListenerPolicyRuleOptions) SetID(id string) *GetLoadBalancerListenerPolicyRuleOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetLoadBalancerListenerPolicyRuleOptions) SetID(id string) *GetLoadBalancerListenerPolicyRuleOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26497,9 +26596,9 @@ func (*VpcV1) NewGetLoadBalancerOptions(id string) *GetLoadBalancerOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetLoadBalancerOptions) SetID(id string) *GetLoadBalancerOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetLoadBalancerOptions) SetID(id string) *GetLoadBalancerOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26533,21 +26632,21 @@ func (*VpcV1) NewGetLoadBalancerPoolMemberOptions(loadBalancerID string, poolID 
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *GetLoadBalancerPoolMemberOptions) SetLoadBalancerID(loadBalancerID string) *GetLoadBalancerPoolMemberOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *GetLoadBalancerPoolMemberOptions) SetLoadBalancerID(loadBalancerID string) *GetLoadBalancerPoolMemberOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetPoolID : Allow user to set PoolID
-func (options *GetLoadBalancerPoolMemberOptions) SetPoolID(poolID string) *GetLoadBalancerPoolMemberOptions {
-	options.PoolID = core.StringPtr(poolID)
-	return options
+func (_options *GetLoadBalancerPoolMemberOptions) SetPoolID(poolID string) *GetLoadBalancerPoolMemberOptions {
+	_options.PoolID = core.StringPtr(poolID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetLoadBalancerPoolMemberOptions) SetID(id string) *GetLoadBalancerPoolMemberOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetLoadBalancerPoolMemberOptions) SetID(id string) *GetLoadBalancerPoolMemberOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26577,15 +26676,15 @@ func (*VpcV1) NewGetLoadBalancerPoolOptions(loadBalancerID string, id string) *G
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *GetLoadBalancerPoolOptions) SetLoadBalancerID(loadBalancerID string) *GetLoadBalancerPoolOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *GetLoadBalancerPoolOptions) SetLoadBalancerID(loadBalancerID string) *GetLoadBalancerPoolOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetLoadBalancerPoolOptions) SetID(id string) *GetLoadBalancerPoolOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetLoadBalancerPoolOptions) SetID(id string) *GetLoadBalancerPoolOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26611,9 +26710,9 @@ func (*VpcV1) NewGetLoadBalancerProfileOptions(name string) *GetLoadBalancerProf
 }
 
 // SetName : Allow user to set Name
-func (options *GetLoadBalancerProfileOptions) SetName(name string) *GetLoadBalancerProfileOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *GetLoadBalancerProfileOptions) SetName(name string) *GetLoadBalancerProfileOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26639,9 +26738,9 @@ func (*VpcV1) NewGetLoadBalancerStatisticsOptions(id string) *GetLoadBalancerSta
 }
 
 // SetID : Allow user to set ID
-func (options *GetLoadBalancerStatisticsOptions) SetID(id string) *GetLoadBalancerStatisticsOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetLoadBalancerStatisticsOptions) SetID(id string) *GetLoadBalancerStatisticsOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26667,9 +26766,9 @@ func (*VpcV1) NewGetNetworkACLOptions(id string) *GetNetworkACLOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetNetworkACLOptions) SetID(id string) *GetNetworkACLOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetNetworkACLOptions) SetID(id string) *GetNetworkACLOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26699,15 +26798,15 @@ func (*VpcV1) NewGetNetworkACLRuleOptions(networkACLID string, id string) *GetNe
 }
 
 // SetNetworkACLID : Allow user to set NetworkACLID
-func (options *GetNetworkACLRuleOptions) SetNetworkACLID(networkACLID string) *GetNetworkACLRuleOptions {
-	options.NetworkACLID = core.StringPtr(networkACLID)
-	return options
+func (_options *GetNetworkACLRuleOptions) SetNetworkACLID(networkACLID string) *GetNetworkACLRuleOptions {
+	_options.NetworkACLID = core.StringPtr(networkACLID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetNetworkACLRuleOptions) SetID(id string) *GetNetworkACLRuleOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetNetworkACLRuleOptions) SetID(id string) *GetNetworkACLRuleOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26733,9 +26832,9 @@ func (*VpcV1) NewGetOperatingSystemOptions(name string) *GetOperatingSystemOptio
 }
 
 // SetName : Allow user to set Name
-func (options *GetOperatingSystemOptions) SetName(name string) *GetOperatingSystemOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *GetOperatingSystemOptions) SetName(name string) *GetOperatingSystemOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26761,9 +26860,9 @@ func (*VpcV1) NewGetPublicGatewayOptions(id string) *GetPublicGatewayOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetPublicGatewayOptions) SetID(id string) *GetPublicGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetPublicGatewayOptions) SetID(id string) *GetPublicGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26789,9 +26888,9 @@ func (*VpcV1) NewGetRegionOptions(name string) *GetRegionOptions {
 }
 
 // SetName : Allow user to set Name
-func (options *GetRegionOptions) SetName(name string) *GetRegionOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *GetRegionOptions) SetName(name string) *GetRegionOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26821,15 +26920,15 @@ func (*VpcV1) NewGetRegionZoneOptions(regionName string, name string) *GetRegion
 }
 
 // SetRegionName : Allow user to set RegionName
-func (options *GetRegionZoneOptions) SetRegionName(regionName string) *GetRegionZoneOptions {
-	options.RegionName = core.StringPtr(regionName)
-	return options
+func (_options *GetRegionZoneOptions) SetRegionName(regionName string) *GetRegionZoneOptions {
+	_options.RegionName = core.StringPtr(regionName)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *GetRegionZoneOptions) SetName(name string) *GetRegionZoneOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *GetRegionZoneOptions) SetName(name string) *GetRegionZoneOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26859,15 +26958,15 @@ func (*VpcV1) NewGetSecurityGroupNetworkInterfaceOptions(securityGroupID string,
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *GetSecurityGroupNetworkInterfaceOptions) SetSecurityGroupID(securityGroupID string) *GetSecurityGroupNetworkInterfaceOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *GetSecurityGroupNetworkInterfaceOptions) SetSecurityGroupID(securityGroupID string) *GetSecurityGroupNetworkInterfaceOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetSecurityGroupNetworkInterfaceOptions) SetID(id string) *GetSecurityGroupNetworkInterfaceOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetSecurityGroupNetworkInterfaceOptions) SetID(id string) *GetSecurityGroupNetworkInterfaceOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26893,9 +26992,9 @@ func (*VpcV1) NewGetSecurityGroupOptions(id string) *GetSecurityGroupOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetSecurityGroupOptions) SetID(id string) *GetSecurityGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetSecurityGroupOptions) SetID(id string) *GetSecurityGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26925,15 +27024,15 @@ func (*VpcV1) NewGetSecurityGroupRuleOptions(securityGroupID string, id string) 
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *GetSecurityGroupRuleOptions) SetSecurityGroupID(securityGroupID string) *GetSecurityGroupRuleOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *GetSecurityGroupRuleOptions) SetSecurityGroupID(securityGroupID string) *GetSecurityGroupRuleOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetSecurityGroupRuleOptions) SetID(id string) *GetSecurityGroupRuleOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetSecurityGroupRuleOptions) SetID(id string) *GetSecurityGroupRuleOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26963,15 +27062,15 @@ func (*VpcV1) NewGetSecurityGroupTargetOptions(securityGroupID string, id string
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *GetSecurityGroupTargetOptions) SetSecurityGroupID(securityGroupID string) *GetSecurityGroupTargetOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *GetSecurityGroupTargetOptions) SetSecurityGroupID(securityGroupID string) *GetSecurityGroupTargetOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetSecurityGroupTargetOptions) SetID(id string) *GetSecurityGroupTargetOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetSecurityGroupTargetOptions) SetID(id string) *GetSecurityGroupTargetOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -26997,9 +27096,9 @@ func (*VpcV1) NewGetSnapshotOptions(id string) *GetSnapshotOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetSnapshotOptions) SetID(id string) *GetSnapshotOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetSnapshotOptions) SetID(id string) *GetSnapshotOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27025,9 +27124,9 @@ func (*VpcV1) NewGetSubnetNetworkACLOptions(id string) *GetSubnetNetworkACLOptio
 }
 
 // SetID : Allow user to set ID
-func (options *GetSubnetNetworkACLOptions) SetID(id string) *GetSubnetNetworkACLOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetSubnetNetworkACLOptions) SetID(id string) *GetSubnetNetworkACLOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27053,9 +27152,9 @@ func (*VpcV1) NewGetSubnetOptions(id string) *GetSubnetOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetSubnetOptions) SetID(id string) *GetSubnetOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetSubnetOptions) SetID(id string) *GetSubnetOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27081,9 +27180,9 @@ func (*VpcV1) NewGetSubnetPublicGatewayOptions(id string) *GetSubnetPublicGatewa
 }
 
 // SetID : Allow user to set ID
-func (options *GetSubnetPublicGatewayOptions) SetID(id string) *GetSubnetPublicGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetSubnetPublicGatewayOptions) SetID(id string) *GetSubnetPublicGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27113,15 +27212,15 @@ func (*VpcV1) NewGetSubnetReservedIPOptions(subnetID string, id string) *GetSubn
 }
 
 // SetSubnetID : Allow user to set SubnetID
-func (options *GetSubnetReservedIPOptions) SetSubnetID(subnetID string) *GetSubnetReservedIPOptions {
-	options.SubnetID = core.StringPtr(subnetID)
-	return options
+func (_options *GetSubnetReservedIPOptions) SetSubnetID(subnetID string) *GetSubnetReservedIPOptions {
+	_options.SubnetID = core.StringPtr(subnetID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetSubnetReservedIPOptions) SetID(id string) *GetSubnetReservedIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetSubnetReservedIPOptions) SetID(id string) *GetSubnetReservedIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27147,9 +27246,9 @@ func (*VpcV1) NewGetSubnetRoutingTableOptions(id string) *GetSubnetRoutingTableO
 }
 
 // SetID : Allow user to set ID
-func (options *GetSubnetRoutingTableOptions) SetID(id string) *GetSubnetRoutingTableOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetSubnetRoutingTableOptions) SetID(id string) *GetSubnetRoutingTableOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27175,9 +27274,9 @@ func (*VpcV1) NewGetVolumeOptions(id string) *GetVolumeOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetVolumeOptions) SetID(id string) *GetVolumeOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVolumeOptions) SetID(id string) *GetVolumeOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27203,9 +27302,9 @@ func (*VpcV1) NewGetVolumeProfileOptions(name string) *GetVolumeProfileOptions {
 }
 
 // SetName : Allow user to set Name
-func (options *GetVolumeProfileOptions) SetName(name string) *GetVolumeProfileOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *GetVolumeProfileOptions) SetName(name string) *GetVolumeProfileOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27235,15 +27334,15 @@ func (*VpcV1) NewGetVPCAddressPrefixOptions(vpcID string, id string) *GetVPCAddr
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *GetVPCAddressPrefixOptions) SetVPCID(vpcID string) *GetVPCAddressPrefixOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *GetVPCAddressPrefixOptions) SetVPCID(vpcID string) *GetVPCAddressPrefixOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetVPCAddressPrefixOptions) SetID(id string) *GetVPCAddressPrefixOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVPCAddressPrefixOptions) SetID(id string) *GetVPCAddressPrefixOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27269,9 +27368,9 @@ func (*VpcV1) NewGetVPCDefaultNetworkACLOptions(id string) *GetVPCDefaultNetwork
 }
 
 // SetID : Allow user to set ID
-func (options *GetVPCDefaultNetworkACLOptions) SetID(id string) *GetVPCDefaultNetworkACLOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVPCDefaultNetworkACLOptions) SetID(id string) *GetVPCDefaultNetworkACLOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27297,9 +27396,9 @@ func (*VpcV1) NewGetVPCDefaultRoutingTableOptions(id string) *GetVPCDefaultRouti
 }
 
 // SetID : Allow user to set ID
-func (options *GetVPCDefaultRoutingTableOptions) SetID(id string) *GetVPCDefaultRoutingTableOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVPCDefaultRoutingTableOptions) SetID(id string) *GetVPCDefaultRoutingTableOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27325,9 +27424,9 @@ func (*VpcV1) NewGetVPCDefaultSecurityGroupOptions(id string) *GetVPCDefaultSecu
 }
 
 // SetID : Allow user to set ID
-func (options *GetVPCDefaultSecurityGroupOptions) SetID(id string) *GetVPCDefaultSecurityGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVPCDefaultSecurityGroupOptions) SetID(id string) *GetVPCDefaultSecurityGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27353,9 +27452,9 @@ func (*VpcV1) NewGetVPCOptions(id string) *GetVPCOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetVPCOptions) SetID(id string) *GetVPCOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVPCOptions) SetID(id string) *GetVPCOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27385,15 +27484,15 @@ func (*VpcV1) NewGetVPCRouteOptions(vpcID string, id string) *GetVPCRouteOptions
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *GetVPCRouteOptions) SetVPCID(vpcID string) *GetVPCRouteOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *GetVPCRouteOptions) SetVPCID(vpcID string) *GetVPCRouteOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetVPCRouteOptions) SetID(id string) *GetVPCRouteOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVPCRouteOptions) SetID(id string) *GetVPCRouteOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27423,15 +27522,15 @@ func (*VpcV1) NewGetVPCRoutingTableOptions(vpcID string, id string) *GetVPCRouti
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *GetVPCRoutingTableOptions) SetVPCID(vpcID string) *GetVPCRoutingTableOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *GetVPCRoutingTableOptions) SetVPCID(vpcID string) *GetVPCRoutingTableOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetVPCRoutingTableOptions) SetID(id string) *GetVPCRoutingTableOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVPCRoutingTableOptions) SetID(id string) *GetVPCRoutingTableOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27465,21 +27564,21 @@ func (*VpcV1) NewGetVPCRoutingTableRouteOptions(vpcID string, routingTableID str
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *GetVPCRoutingTableRouteOptions) SetVPCID(vpcID string) *GetVPCRoutingTableRouteOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *GetVPCRoutingTableRouteOptions) SetVPCID(vpcID string) *GetVPCRoutingTableRouteOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetRoutingTableID : Allow user to set RoutingTableID
-func (options *GetVPCRoutingTableRouteOptions) SetRoutingTableID(routingTableID string) *GetVPCRoutingTableRouteOptions {
-	options.RoutingTableID = core.StringPtr(routingTableID)
-	return options
+func (_options *GetVPCRoutingTableRouteOptions) SetRoutingTableID(routingTableID string) *GetVPCRoutingTableRouteOptions {
+	_options.RoutingTableID = core.StringPtr(routingTableID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetVPCRoutingTableRouteOptions) SetID(id string) *GetVPCRoutingTableRouteOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVPCRoutingTableRouteOptions) SetID(id string) *GetVPCRoutingTableRouteOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27509,15 +27608,15 @@ func (*VpcV1) NewGetVPNGatewayConnectionOptions(vpnGatewayID string, id string) 
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *GetVPNGatewayConnectionOptions) SetVPNGatewayID(vpnGatewayID string) *GetVPNGatewayConnectionOptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *GetVPNGatewayConnectionOptions) SetVPNGatewayID(vpnGatewayID string) *GetVPNGatewayConnectionOptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *GetVPNGatewayConnectionOptions) SetID(id string) *GetVPNGatewayConnectionOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVPNGatewayConnectionOptions) SetID(id string) *GetVPNGatewayConnectionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27543,9 +27642,9 @@ func (*VpcV1) NewGetVPNGatewayOptions(id string) *GetVPNGatewayOptions {
 }
 
 // SetID : Allow user to set ID
-func (options *GetVPNGatewayOptions) SetID(id string) *GetVPNGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetVPNGatewayOptions) SetID(id string) *GetVPNGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -27730,6 +27829,18 @@ func UnmarshalIkePolicyCollection(m map[string]json.RawMessage, result interface
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *IkePolicyCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // IkePolicyIdentity : Identifies an IKE policy by a unique property.
 // Models which "extend" this model:
 // - IkePolicyIdentityByID
@@ -27835,11 +27946,11 @@ func UnmarshalIkePolicyPatch(m map[string]json.RawMessage, result interface{}) (
 }
 
 // AsPatch returns a generic map representation of the IkePolicyPatch
-func (ikePolicyPatch *IkePolicyPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (ikePolicyPatch *IkePolicyPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(ikePolicyPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -28107,6 +28218,18 @@ func UnmarshalIPsecPolicyCollection(m map[string]json.RawMessage, result interfa
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *IPsecPolicyCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // IPsecPolicyCollectionFirst : A link to the first page of resources.
 type IPsecPolicyCollectionFirst struct {
 	// The URL for a page of resources.
@@ -28249,11 +28372,11 @@ func UnmarshalIPsecPolicyPatch(m map[string]json.RawMessage, result interface{})
 }
 
 // AsPatch returns a generic map representation of the IPsecPolicyPatch
-func (iPsecPolicyPatch *IPsecPolicyPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (iPsecPolicyPatch *IPsecPolicyPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(iPsecPolicyPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -28598,6 +28721,18 @@ func UnmarshalImageCollection(m map[string]json.RawMessage, result interface{}) 
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ImageCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // ImageCollectionFirst : A link to the first page of resources.
 type ImageCollectionFirst struct {
 	// The URL for a page of resources.
@@ -28686,11 +28821,11 @@ type ImageFilePrototype struct {
 }
 
 // NewImageFilePrototype : Instantiate ImageFilePrototype (Generic Model Constructor)
-func (*VpcV1) NewImageFilePrototype(href string) (model *ImageFilePrototype, err error) {
-	model = &ImageFilePrototype{
+func (*VpcV1) NewImageFilePrototype(href string) (_model *ImageFilePrototype, err error) {
+	_model = &ImageFilePrototype{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -28766,11 +28901,11 @@ func UnmarshalImagePatch(m map[string]json.RawMessage, result interface{}) (err 
 }
 
 // AsPatch returns a generic map representation of the ImagePatch
-func (imagePatch *ImagePatch) AsPatch() (patch map[string]interface{}, err error) {
+func (imagePatch *ImagePatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(imagePatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -29007,6 +29142,9 @@ type Instance struct {
 	// The network interfaces for this virtual server instance, including the primary network interface.
 	NetworkInterfaces []NetworkInterfaceInstanceContextReference `json:"network_interfaces" validate:"required"`
 
+	// The placement restrictions for the virtual server instance.
+	PlacementTarget InstancePlacementTargetIntf `json:"placement_target,omitempty"`
+
 	// Primary network interface.
 	PrimaryNetworkInterface *NetworkInterfaceInstanceContextReference `json:"primary_network_interface" validate:"required"`
 
@@ -29106,6 +29244,10 @@ func UnmarshalInstance(m map[string]json.RawMessage, result interface{}) (err er
 		return
 	}
 	err = core.UnmarshalModel(m, "network_interfaces", &obj.NetworkInterfaces, UnmarshalNetworkInterfaceInstanceContextReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "placement_target", &obj.PlacementTarget, UnmarshalInstancePlacementTarget)
 	if err != nil {
 		return
 	}
@@ -29280,6 +29422,18 @@ func UnmarshalInstanceCollection(m map[string]json.RawMessage, result interface{
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *InstanceCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
 }
 
 // InstanceCollectionFirst : A link to the first page of resources.
@@ -29491,11 +29645,11 @@ func UnmarshalInstanceDiskPatch(m map[string]json.RawMessage, result interface{}
 }
 
 // AsPatch returns a generic map representation of the InstanceDiskPatch
-func (instanceDiskPatch *InstanceDiskPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (instanceDiskPatch *InstanceDiskPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(instanceDiskPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -29788,6 +29942,18 @@ func UnmarshalInstanceGroupCollection(m map[string]json.RawMessage, result inter
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *InstanceGroupCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
 }
 
 // InstanceGroupCollectionFirst : A link to the first page of resources.
@@ -30189,11 +30355,11 @@ func UnmarshalInstanceGroupManagerActionPatch(m map[string]json.RawMessage, resu
 }
 
 // AsPatch returns a generic map representation of the InstanceGroupManagerActionPatch
-func (instanceGroupManagerActionPatch *InstanceGroupManagerActionPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (instanceGroupManagerActionPatch *InstanceGroupManagerActionPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(instanceGroupManagerActionPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -30370,6 +30536,18 @@ func UnmarshalInstanceGroupManagerActionsCollection(m map[string]json.RawMessage
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *InstanceGroupManagerActionsCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // InstanceGroupManagerActionsCollectionFirst : A link to the first page of resources.
 type InstanceGroupManagerActionsCollectionFirst struct {
 	// The URL for a page of resources.
@@ -30448,6 +30626,18 @@ func UnmarshalInstanceGroupManagerCollection(m map[string]json.RawMessage, resul
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *InstanceGroupManagerCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
 }
 
 // InstanceGroupManagerCollectionFirst : A link to the first page of resources.
@@ -30537,11 +30727,11 @@ func UnmarshalInstanceGroupManagerPatch(m map[string]json.RawMessage, result int
 }
 
 // AsPatch returns a generic map representation of the InstanceGroupManagerPatch
-func (instanceGroupManagerPatch *InstanceGroupManagerPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (instanceGroupManagerPatch *InstanceGroupManagerPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(instanceGroupManagerPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -30684,6 +30874,18 @@ func UnmarshalInstanceGroupManagerPolicyCollection(m map[string]json.RawMessage,
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *InstanceGroupManagerPolicyCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // InstanceGroupManagerPolicyCollectionFirst : A link to the first page of resources.
 type InstanceGroupManagerPolicyCollectionFirst struct {
 	// The URL for a page of resources.
@@ -30760,11 +30962,11 @@ func UnmarshalInstanceGroupManagerPolicyPatch(m map[string]json.RawMessage, resu
 }
 
 // AsPatch returns a generic map representation of the InstanceGroupManagerPolicyPatch
-func (instanceGroupManagerPolicyPatch *InstanceGroupManagerPolicyPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (instanceGroupManagerPolicyPatch *InstanceGroupManagerPolicyPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(instanceGroupManagerPolicyPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -31048,11 +31250,11 @@ type InstanceGroupManagerScheduledActionGroupPrototype struct {
 }
 
 // NewInstanceGroupManagerScheduledActionGroupPrototype : Instantiate InstanceGroupManagerScheduledActionGroupPrototype (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerScheduledActionGroupPrototype(membershipCount int64) (model *InstanceGroupManagerScheduledActionGroupPrototype, err error) {
-	model = &InstanceGroupManagerScheduledActionGroupPrototype{
+func (*VpcV1) NewInstanceGroupManagerScheduledActionGroupPrototype(membershipCount int64) (_model *InstanceGroupManagerScheduledActionGroupPrototype, err error) {
+	_model = &InstanceGroupManagerScheduledActionGroupPrototype{
 		MembershipCount: core.Int64Ptr(membershipCount),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -31321,6 +31523,18 @@ func UnmarshalInstanceGroupMembershipCollection(m map[string]json.RawMessage, re
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *InstanceGroupMembershipCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // InstanceGroupMembershipCollectionFirst : A link to the first page of resources.
 type InstanceGroupMembershipCollectionFirst struct {
 	// The URL for a page of resources.
@@ -31373,11 +31587,11 @@ func UnmarshalInstanceGroupMembershipPatch(m map[string]json.RawMessage, result 
 }
 
 // AsPatch returns a generic map representation of the InstanceGroupMembershipPatch
-func (instanceGroupMembershipPatch *InstanceGroupMembershipPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (instanceGroupMembershipPatch *InstanceGroupMembershipPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(instanceGroupMembershipPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -31447,11 +31661,11 @@ func UnmarshalInstanceGroupPatch(m map[string]json.RawMessage, result interface{
 }
 
 // AsPatch returns a generic map representation of the InstanceGroupPatch
-func (instanceGroupPatch *InstanceGroupPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (instanceGroupPatch *InstanceGroupPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(instanceGroupPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -31600,11 +31814,11 @@ func UnmarshalInstancePatch(m map[string]json.RawMessage, result interface{}) (e
 }
 
 // AsPatch returns a generic map representation of the InstancePatch
-func (instancePatch *InstancePatch) AsPatch() (patch map[string]interface{}, err error) {
+func (instancePatch *InstancePatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(instancePatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -31644,6 +31858,77 @@ func UnmarshalInstancePatchProfile(m map[string]json.RawMessage, result interfac
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// InstancePlacementTarget : InstancePlacementTarget struct
+// Models which "extend" this model:
+// - InstancePlacementTargetDedicatedHostGroupReference
+// - InstancePlacementTargetDedicatedHostReference
+type InstancePlacementTarget struct {
+	// The CRN for this dedicated host group.
+	CRN *string `json:"crn,omitempty"`
+
+	// If present, this property indicates the referenced resource has been deleted and provides
+	// some supplementary information.
+	Deleted *DedicatedHostGroupReferenceDeleted `json:"deleted,omitempty"`
+
+	// The URL for this dedicated host group.
+	Href *string `json:"href,omitempty"`
+
+	// The unique identifier for this dedicated host group.
+	ID *string `json:"id,omitempty"`
+
+	// The unique user-defined name for this dedicated host group. If unspecified, the name will be a hyphenated list of
+	// randomly-selected words.
+	Name *string `json:"name,omitempty"`
+
+	// The type of resource referenced.
+	ResourceType *string `json:"resource_type,omitempty"`
+}
+
+// Constants associated with the InstancePlacementTarget.ResourceType property.
+// The type of resource referenced.
+const (
+	InstancePlacementTargetResourceTypeDedicatedHostGroupConst = "dedicated_host_group"
+)
+
+func (*InstancePlacementTarget) isaInstancePlacementTarget() bool {
+	return true
+}
+
+type InstancePlacementTargetIntf interface {
+	isaInstancePlacementTarget() bool
+}
+
+// UnmarshalInstancePlacementTarget unmarshals an instance of InstancePlacementTarget from the specified map of raw messages.
+func UnmarshalInstancePlacementTarget(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstancePlacementTarget)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDedicatedHostGroupReferenceDeleted)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		return
 	}
@@ -32646,13 +32931,14 @@ type InstanceStatusReason struct {
 // Constants associated with the InstanceStatusReason.Code property.
 // A snake case string succinctly identifying the status reason.
 const (
-	InstanceStatusReasonCodeCannotStartConst          = "cannot_start"
-	InstanceStatusReasonCodeCannotStartCapacityConst  = "cannot_start_capacity"
-	InstanceStatusReasonCodeCannotStartComputeConst   = "cannot_start_compute"
-	InstanceStatusReasonCodeCannotStartIPAddressConst = "cannot_start_ip_address"
-	InstanceStatusReasonCodeCannotStartNetworkConst   = "cannot_start_network"
-	InstanceStatusReasonCodeCannotStartStorageConst   = "cannot_start_storage"
-	InstanceStatusReasonCodeEncryptionKeyDeletedConst = "encryption_key_deleted"
+	InstanceStatusReasonCodeCannotStartConst             = "cannot_start"
+	InstanceStatusReasonCodeCannotStartCapacityConst     = "cannot_start_capacity"
+	InstanceStatusReasonCodeCannotStartComputeConst      = "cannot_start_compute"
+	InstanceStatusReasonCodeCannotStartIPAddressConst    = "cannot_start_ip_address"
+	InstanceStatusReasonCodeCannotStartNetworkConst      = "cannot_start_network"
+	InstanceStatusReasonCodeCannotStartStorageConst      = "cannot_start_storage"
+	InstanceStatusReasonCodeEncryptionKeyDeletedConst    = "encryption_key_deleted"
+	InstanceStatusReasonCodeStoppedForImageCreationConst = "stopped_for_image_creation"
 )
 
 // UnmarshalInstanceStatusReason unmarshals an instance of InstanceStatusReason from the specified map of raw messages.
@@ -32969,11 +33255,11 @@ func UnmarshalInstanceTemplatePatch(m map[string]json.RawMessage, result interfa
 }
 
 // AsPatch returns a generic map representation of the InstanceTemplatePatch
-func (instanceTemplatePatch *InstanceTemplatePatch) AsPatch() (patch map[string]interface{}, err error) {
+func (instanceTemplatePatch *InstanceTemplatePatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(instanceTemplatePatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -33284,14 +33570,72 @@ func UnmarshalKey(m map[string]json.RawMessage, result interface{}) (err error) 
 
 // KeyCollection : KeyCollection struct
 type KeyCollection struct {
+	// A link to the first page of resources.
+	First *PageLink `json:"first" validate:"required"`
+
 	// Collection of keys.
 	Keys []Key `json:"keys" validate:"required"`
+
+	// The maximum number of resources that can be returned by the request.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// A link to the next page of resources. This property is present for all pages
+	// except the last page.
+	Next *KeyCollectionNext `json:"next,omitempty"`
+
+	// The total number of resources across all pages.
+	TotalCount *int64 `json:"total_count" validate:"required"`
 }
 
 // UnmarshalKeyCollection unmarshals an instance of KeyCollection from the specified map of raw messages.
 func UnmarshalKeyCollection(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(KeyCollection)
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageLink)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "keys", &obj.Keys, UnmarshalKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalKeyCollectionNext)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *KeyCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
+// KeyCollectionNext : A link to the next page of resources. This property is present for all pages except the last page.
+type KeyCollectionNext struct {
+	// The URL for a page of resources.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalKeyCollectionNext unmarshals an instance of KeyCollectionNext from the specified map of raw messages.
+func UnmarshalKeyCollectionNext(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeyCollectionNext)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		return
 	}
@@ -33369,11 +33713,11 @@ func UnmarshalKeyPatch(m map[string]json.RawMessage, result interface{}) (err er
 }
 
 // AsPatch returns a generic map representation of the KeyPatch
-func (keyPatch *KeyPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (keyPatch *KeyPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(keyPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -33478,9 +33822,9 @@ func (*VpcV1) NewListDedicatedHostDisksOptions(dedicatedHostID string) *ListDedi
 }
 
 // SetDedicatedHostID : Allow user to set DedicatedHostID
-func (options *ListDedicatedHostDisksOptions) SetDedicatedHostID(dedicatedHostID string) *ListDedicatedHostDisksOptions {
-	options.DedicatedHostID = core.StringPtr(dedicatedHostID)
-	return options
+func (_options *ListDedicatedHostDisksOptions) SetDedicatedHostID(dedicatedHostID string) *ListDedicatedHostDisksOptions {
+	_options.DedicatedHostID = core.StringPtr(dedicatedHostID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -33514,27 +33858,27 @@ func (*VpcV1) NewListDedicatedHostGroupsOptions() *ListDedicatedHostGroupsOption
 }
 
 // SetStart : Allow user to set Start
-func (options *ListDedicatedHostGroupsOptions) SetStart(start string) *ListDedicatedHostGroupsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListDedicatedHostGroupsOptions) SetStart(start string) *ListDedicatedHostGroupsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListDedicatedHostGroupsOptions) SetLimit(limit int64) *ListDedicatedHostGroupsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListDedicatedHostGroupsOptions) SetLimit(limit int64) *ListDedicatedHostGroupsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListDedicatedHostGroupsOptions) SetResourceGroupID(resourceGroupID string) *ListDedicatedHostGroupsOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListDedicatedHostGroupsOptions) SetResourceGroupID(resourceGroupID string) *ListDedicatedHostGroupsOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetZoneName : Allow user to set ZoneName
-func (options *ListDedicatedHostGroupsOptions) SetZoneName(zoneName string) *ListDedicatedHostGroupsOptions {
-	options.ZoneName = core.StringPtr(zoneName)
-	return options
+func (_options *ListDedicatedHostGroupsOptions) SetZoneName(zoneName string) *ListDedicatedHostGroupsOptions {
+	_options.ZoneName = core.StringPtr(zoneName)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -33561,15 +33905,15 @@ func (*VpcV1) NewListDedicatedHostProfilesOptions() *ListDedicatedHostProfilesOp
 }
 
 // SetStart : Allow user to set Start
-func (options *ListDedicatedHostProfilesOptions) SetStart(start string) *ListDedicatedHostProfilesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListDedicatedHostProfilesOptions) SetStart(start string) *ListDedicatedHostProfilesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListDedicatedHostProfilesOptions) SetLimit(limit int64) *ListDedicatedHostProfilesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListDedicatedHostProfilesOptions) SetLimit(limit int64) *ListDedicatedHostProfilesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -33606,33 +33950,33 @@ func (*VpcV1) NewListDedicatedHostsOptions() *ListDedicatedHostsOptions {
 }
 
 // SetDedicatedHostGroupID : Allow user to set DedicatedHostGroupID
-func (options *ListDedicatedHostsOptions) SetDedicatedHostGroupID(dedicatedHostGroupID string) *ListDedicatedHostsOptions {
-	options.DedicatedHostGroupID = core.StringPtr(dedicatedHostGroupID)
-	return options
+func (_options *ListDedicatedHostsOptions) SetDedicatedHostGroupID(dedicatedHostGroupID string) *ListDedicatedHostsOptions {
+	_options.DedicatedHostGroupID = core.StringPtr(dedicatedHostGroupID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListDedicatedHostsOptions) SetStart(start string) *ListDedicatedHostsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListDedicatedHostsOptions) SetStart(start string) *ListDedicatedHostsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListDedicatedHostsOptions) SetLimit(limit int64) *ListDedicatedHostsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListDedicatedHostsOptions) SetLimit(limit int64) *ListDedicatedHostsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListDedicatedHostsOptions) SetResourceGroupID(resourceGroupID string) *ListDedicatedHostsOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListDedicatedHostsOptions) SetResourceGroupID(resourceGroupID string) *ListDedicatedHostsOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetZoneName : Allow user to set ZoneName
-func (options *ListDedicatedHostsOptions) SetZoneName(zoneName string) *ListDedicatedHostsOptions {
-	options.ZoneName = core.StringPtr(zoneName)
-	return options
+func (_options *ListDedicatedHostsOptions) SetZoneName(zoneName string) *ListDedicatedHostsOptions {
+	_options.ZoneName = core.StringPtr(zoneName)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -33681,27 +34025,27 @@ func (*VpcV1) NewListEndpointGatewayIpsOptions(endpointGatewayID string) *ListEn
 }
 
 // SetEndpointGatewayID : Allow user to set EndpointGatewayID
-func (options *ListEndpointGatewayIpsOptions) SetEndpointGatewayID(endpointGatewayID string) *ListEndpointGatewayIpsOptions {
-	options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
-	return options
+func (_options *ListEndpointGatewayIpsOptions) SetEndpointGatewayID(endpointGatewayID string) *ListEndpointGatewayIpsOptions {
+	_options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListEndpointGatewayIpsOptions) SetStart(start string) *ListEndpointGatewayIpsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListEndpointGatewayIpsOptions) SetStart(start string) *ListEndpointGatewayIpsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListEndpointGatewayIpsOptions) SetLimit(limit int64) *ListEndpointGatewayIpsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListEndpointGatewayIpsOptions) SetLimit(limit int64) *ListEndpointGatewayIpsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetSort : Allow user to set Sort
-func (options *ListEndpointGatewayIpsOptions) SetSort(sort string) *ListEndpointGatewayIpsOptions {
-	options.Sort = core.StringPtr(sort)
-	return options
+func (_options *ListEndpointGatewayIpsOptions) SetSort(sort string) *ListEndpointGatewayIpsOptions {
+	_options.Sort = core.StringPtr(sort)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -33735,27 +34079,27 @@ func (*VpcV1) NewListEndpointGatewaysOptions() *ListEndpointGatewaysOptions {
 }
 
 // SetName : Allow user to set Name
-func (options *ListEndpointGatewaysOptions) SetName(name string) *ListEndpointGatewaysOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *ListEndpointGatewaysOptions) SetName(name string) *ListEndpointGatewaysOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListEndpointGatewaysOptions) SetStart(start string) *ListEndpointGatewaysOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListEndpointGatewaysOptions) SetStart(start string) *ListEndpointGatewaysOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListEndpointGatewaysOptions) SetLimit(limit int64) *ListEndpointGatewaysOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListEndpointGatewaysOptions) SetLimit(limit int64) *ListEndpointGatewaysOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListEndpointGatewaysOptions) SetResourceGroupID(resourceGroupID string) *ListEndpointGatewaysOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListEndpointGatewaysOptions) SetResourceGroupID(resourceGroupID string) *ListEndpointGatewaysOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -33786,21 +34130,21 @@ func (*VpcV1) NewListFloatingIpsOptions() *ListFloatingIpsOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListFloatingIpsOptions) SetStart(start string) *ListFloatingIpsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListFloatingIpsOptions) SetStart(start string) *ListFloatingIpsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListFloatingIpsOptions) SetLimit(limit int64) *ListFloatingIpsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListFloatingIpsOptions) SetLimit(limit int64) *ListFloatingIpsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListFloatingIpsOptions) SetResourceGroupID(resourceGroupID string) *ListFloatingIpsOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListFloatingIpsOptions) SetResourceGroupID(resourceGroupID string) *ListFloatingIpsOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -33858,57 +34202,57 @@ func (*VpcV1) NewListFlowLogCollectorsOptions() *ListFlowLogCollectorsOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListFlowLogCollectorsOptions) SetStart(start string) *ListFlowLogCollectorsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListFlowLogCollectorsOptions) SetStart(start string) *ListFlowLogCollectorsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListFlowLogCollectorsOptions) SetLimit(limit int64) *ListFlowLogCollectorsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListFlowLogCollectorsOptions) SetLimit(limit int64) *ListFlowLogCollectorsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListFlowLogCollectorsOptions) SetResourceGroupID(resourceGroupID string) *ListFlowLogCollectorsOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListFlowLogCollectorsOptions) SetResourceGroupID(resourceGroupID string) *ListFlowLogCollectorsOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *ListFlowLogCollectorsOptions) SetName(name string) *ListFlowLogCollectorsOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *ListFlowLogCollectorsOptions) SetName(name string) *ListFlowLogCollectorsOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *ListFlowLogCollectorsOptions) SetVPCID(vpcID string) *ListFlowLogCollectorsOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *ListFlowLogCollectorsOptions) SetVPCID(vpcID string) *ListFlowLogCollectorsOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetVPCCRN : Allow user to set VPCCRN
-func (options *ListFlowLogCollectorsOptions) SetVPCCRN(vpcCRN string) *ListFlowLogCollectorsOptions {
-	options.VPCCRN = core.StringPtr(vpcCRN)
-	return options
+func (_options *ListFlowLogCollectorsOptions) SetVPCCRN(vpcCRN string) *ListFlowLogCollectorsOptions {
+	_options.VPCCRN = core.StringPtr(vpcCRN)
+	return _options
 }
 
 // SetVPCName : Allow user to set VPCName
-func (options *ListFlowLogCollectorsOptions) SetVPCName(vpcName string) *ListFlowLogCollectorsOptions {
-	options.VPCName = core.StringPtr(vpcName)
-	return options
+func (_options *ListFlowLogCollectorsOptions) SetVPCName(vpcName string) *ListFlowLogCollectorsOptions {
+	_options.VPCName = core.StringPtr(vpcName)
+	return _options
 }
 
 // SetTargetID : Allow user to set TargetID
-func (options *ListFlowLogCollectorsOptions) SetTargetID(targetID string) *ListFlowLogCollectorsOptions {
-	options.TargetID = core.StringPtr(targetID)
-	return options
+func (_options *ListFlowLogCollectorsOptions) SetTargetID(targetID string) *ListFlowLogCollectorsOptions {
+	_options.TargetID = core.StringPtr(targetID)
+	return _options
 }
 
 // SetTargetResourceType : Allow user to set TargetResourceType
-func (options *ListFlowLogCollectorsOptions) SetTargetResourceType(targetResourceType string) *ListFlowLogCollectorsOptions {
-	options.TargetResourceType = core.StringPtr(targetResourceType)
-	return options
+func (_options *ListFlowLogCollectorsOptions) SetTargetResourceType(targetResourceType string) *ListFlowLogCollectorsOptions {
+	_options.TargetResourceType = core.StringPtr(targetResourceType)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -33935,15 +34279,15 @@ func (*VpcV1) NewListIkePoliciesOptions() *ListIkePoliciesOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListIkePoliciesOptions) SetStart(start string) *ListIkePoliciesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListIkePoliciesOptions) SetStart(start string) *ListIkePoliciesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListIkePoliciesOptions) SetLimit(limit int64) *ListIkePoliciesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListIkePoliciesOptions) SetLimit(limit int64) *ListIkePoliciesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -33969,9 +34313,9 @@ func (*VpcV1) NewListIkePolicyConnectionsOptions(id string) *ListIkePolicyConnec
 }
 
 // SetID : Allow user to set ID
-func (options *ListIkePolicyConnectionsOptions) SetID(id string) *ListIkePolicyConnectionsOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *ListIkePolicyConnectionsOptions) SetID(id string) *ListIkePolicyConnectionsOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34015,33 +34359,33 @@ func (*VpcV1) NewListImagesOptions() *ListImagesOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListImagesOptions) SetStart(start string) *ListImagesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListImagesOptions) SetStart(start string) *ListImagesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListImagesOptions) SetLimit(limit int64) *ListImagesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListImagesOptions) SetLimit(limit int64) *ListImagesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListImagesOptions) SetResourceGroupID(resourceGroupID string) *ListImagesOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListImagesOptions) SetResourceGroupID(resourceGroupID string) *ListImagesOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *ListImagesOptions) SetName(name string) *ListImagesOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *ListImagesOptions) SetName(name string) *ListImagesOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetVisibility : Allow user to set Visibility
-func (options *ListImagesOptions) SetVisibility(visibility string) *ListImagesOptions {
-	options.Visibility = core.StringPtr(visibility)
-	return options
+func (_options *ListImagesOptions) SetVisibility(visibility string) *ListImagesOptions {
+	_options.Visibility = core.StringPtr(visibility)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34067,9 +34411,9 @@ func (*VpcV1) NewListInstanceDisksOptions(instanceID string) *ListInstanceDisksO
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *ListInstanceDisksOptions) SetInstanceID(instanceID string) *ListInstanceDisksOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *ListInstanceDisksOptions) SetInstanceID(instanceID string) *ListInstanceDisksOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34105,27 +34449,27 @@ func (*VpcV1) NewListInstanceGroupManagerActionsOptions(instanceGroupID string, 
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *ListInstanceGroupManagerActionsOptions) SetInstanceGroupID(instanceGroupID string) *ListInstanceGroupManagerActionsOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *ListInstanceGroupManagerActionsOptions) SetInstanceGroupID(instanceGroupID string) *ListInstanceGroupManagerActionsOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerID : Allow user to set InstanceGroupManagerID
-func (options *ListInstanceGroupManagerActionsOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *ListInstanceGroupManagerActionsOptions {
-	options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
-	return options
+func (_options *ListInstanceGroupManagerActionsOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *ListInstanceGroupManagerActionsOptions {
+	_options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListInstanceGroupManagerActionsOptions) SetStart(start string) *ListInstanceGroupManagerActionsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListInstanceGroupManagerActionsOptions) SetStart(start string) *ListInstanceGroupManagerActionsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListInstanceGroupManagerActionsOptions) SetLimit(limit int64) *ListInstanceGroupManagerActionsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListInstanceGroupManagerActionsOptions) SetLimit(limit int64) *ListInstanceGroupManagerActionsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34161,27 +34505,27 @@ func (*VpcV1) NewListInstanceGroupManagerPoliciesOptions(instanceGroupID string,
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *ListInstanceGroupManagerPoliciesOptions) SetInstanceGroupID(instanceGroupID string) *ListInstanceGroupManagerPoliciesOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *ListInstanceGroupManagerPoliciesOptions) SetInstanceGroupID(instanceGroupID string) *ListInstanceGroupManagerPoliciesOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerID : Allow user to set InstanceGroupManagerID
-func (options *ListInstanceGroupManagerPoliciesOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *ListInstanceGroupManagerPoliciesOptions {
-	options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
-	return options
+func (_options *ListInstanceGroupManagerPoliciesOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *ListInstanceGroupManagerPoliciesOptions {
+	_options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListInstanceGroupManagerPoliciesOptions) SetStart(start string) *ListInstanceGroupManagerPoliciesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListInstanceGroupManagerPoliciesOptions) SetStart(start string) *ListInstanceGroupManagerPoliciesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListInstanceGroupManagerPoliciesOptions) SetLimit(limit int64) *ListInstanceGroupManagerPoliciesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListInstanceGroupManagerPoliciesOptions) SetLimit(limit int64) *ListInstanceGroupManagerPoliciesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34213,21 +34557,21 @@ func (*VpcV1) NewListInstanceGroupManagersOptions(instanceGroupID string) *ListI
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *ListInstanceGroupManagersOptions) SetInstanceGroupID(instanceGroupID string) *ListInstanceGroupManagersOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *ListInstanceGroupManagersOptions) SetInstanceGroupID(instanceGroupID string) *ListInstanceGroupManagersOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListInstanceGroupManagersOptions) SetStart(start string) *ListInstanceGroupManagersOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListInstanceGroupManagersOptions) SetStart(start string) *ListInstanceGroupManagersOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListInstanceGroupManagersOptions) SetLimit(limit int64) *ListInstanceGroupManagersOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListInstanceGroupManagersOptions) SetLimit(limit int64) *ListInstanceGroupManagersOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34259,21 +34603,21 @@ func (*VpcV1) NewListInstanceGroupMembershipsOptions(instanceGroupID string) *Li
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *ListInstanceGroupMembershipsOptions) SetInstanceGroupID(instanceGroupID string) *ListInstanceGroupMembershipsOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *ListInstanceGroupMembershipsOptions) SetInstanceGroupID(instanceGroupID string) *ListInstanceGroupMembershipsOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListInstanceGroupMembershipsOptions) SetStart(start string) *ListInstanceGroupMembershipsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListInstanceGroupMembershipsOptions) SetStart(start string) *ListInstanceGroupMembershipsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListInstanceGroupMembershipsOptions) SetLimit(limit int64) *ListInstanceGroupMembershipsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListInstanceGroupMembershipsOptions) SetLimit(limit int64) *ListInstanceGroupMembershipsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34300,15 +34644,15 @@ func (*VpcV1) NewListInstanceGroupsOptions() *ListInstanceGroupsOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListInstanceGroupsOptions) SetStart(start string) *ListInstanceGroupsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListInstanceGroupsOptions) SetStart(start string) *ListInstanceGroupsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListInstanceGroupsOptions) SetLimit(limit int64) *ListInstanceGroupsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListInstanceGroupsOptions) SetLimit(limit int64) *ListInstanceGroupsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34338,15 +34682,15 @@ func (*VpcV1) NewListInstanceNetworkInterfaceFloatingIpsOptions(instanceID strin
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *ListInstanceNetworkInterfaceFloatingIpsOptions) SetInstanceID(instanceID string) *ListInstanceNetworkInterfaceFloatingIpsOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *ListInstanceNetworkInterfaceFloatingIpsOptions) SetInstanceID(instanceID string) *ListInstanceNetworkInterfaceFloatingIpsOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetNetworkInterfaceID : Allow user to set NetworkInterfaceID
-func (options *ListInstanceNetworkInterfaceFloatingIpsOptions) SetNetworkInterfaceID(networkInterfaceID string) *ListInstanceNetworkInterfaceFloatingIpsOptions {
-	options.NetworkInterfaceID = core.StringPtr(networkInterfaceID)
-	return options
+func (_options *ListInstanceNetworkInterfaceFloatingIpsOptions) SetNetworkInterfaceID(networkInterfaceID string) *ListInstanceNetworkInterfaceFloatingIpsOptions {
+	_options.NetworkInterfaceID = core.StringPtr(networkInterfaceID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34372,9 +34716,9 @@ func (*VpcV1) NewListInstanceNetworkInterfacesOptions(instanceID string) *ListIn
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *ListInstanceNetworkInterfacesOptions) SetInstanceID(instanceID string) *ListInstanceNetworkInterfacesOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *ListInstanceNetworkInterfacesOptions) SetInstanceID(instanceID string) *ListInstanceNetworkInterfacesOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34436,9 +34780,9 @@ func (*VpcV1) NewListInstanceVolumeAttachmentsOptions(instanceID string) *ListIn
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *ListInstanceVolumeAttachmentsOptions) SetInstanceID(instanceID string) *ListInstanceVolumeAttachmentsOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *ListInstanceVolumeAttachmentsOptions) SetInstanceID(instanceID string) *ListInstanceVolumeAttachmentsOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34471,6 +34815,15 @@ type ListInstancesOptions struct {
 	// Filters the collection to resources in the VPC with the exact specified name.
 	VPCName *string
 
+	// Filters the collection to instances on the dedicated host with the specified identifier.
+	DedicatedHostID *string
+
+	// Filters the collection to instances on the dedicated host with the specified CRN.
+	DedicatedHostCRN *string
+
+	// Filters the collection to instances on the dedicated host with the specified name.
+	DedicatedHostName *string
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -34481,45 +34834,63 @@ func (*VpcV1) NewListInstancesOptions() *ListInstancesOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListInstancesOptions) SetStart(start string) *ListInstancesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListInstancesOptions) SetStart(start string) *ListInstancesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListInstancesOptions) SetLimit(limit int64) *ListInstancesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListInstancesOptions) SetLimit(limit int64) *ListInstancesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListInstancesOptions) SetResourceGroupID(resourceGroupID string) *ListInstancesOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListInstancesOptions) SetResourceGroupID(resourceGroupID string) *ListInstancesOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *ListInstancesOptions) SetName(name string) *ListInstancesOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *ListInstancesOptions) SetName(name string) *ListInstancesOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *ListInstancesOptions) SetVPCID(vpcID string) *ListInstancesOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *ListInstancesOptions) SetVPCID(vpcID string) *ListInstancesOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetVPCCRN : Allow user to set VPCCRN
-func (options *ListInstancesOptions) SetVPCCRN(vpcCRN string) *ListInstancesOptions {
-	options.VPCCRN = core.StringPtr(vpcCRN)
-	return options
+func (_options *ListInstancesOptions) SetVPCCRN(vpcCRN string) *ListInstancesOptions {
+	_options.VPCCRN = core.StringPtr(vpcCRN)
+	return _options
 }
 
 // SetVPCName : Allow user to set VPCName
-func (options *ListInstancesOptions) SetVPCName(vpcName string) *ListInstancesOptions {
-	options.VPCName = core.StringPtr(vpcName)
-	return options
+func (_options *ListInstancesOptions) SetVPCName(vpcName string) *ListInstancesOptions {
+	_options.VPCName = core.StringPtr(vpcName)
+	return _options
+}
+
+// SetDedicatedHostID : Allow user to set DedicatedHostID
+func (_options *ListInstancesOptions) SetDedicatedHostID(dedicatedHostID string) *ListInstancesOptions {
+	_options.DedicatedHostID = core.StringPtr(dedicatedHostID)
+	return _options
+}
+
+// SetDedicatedHostCRN : Allow user to set DedicatedHostCRN
+func (_options *ListInstancesOptions) SetDedicatedHostCRN(dedicatedHostCRN string) *ListInstancesOptions {
+	_options.DedicatedHostCRN = core.StringPtr(dedicatedHostCRN)
+	return _options
+}
+
+// SetDedicatedHostName : Allow user to set DedicatedHostName
+func (_options *ListInstancesOptions) SetDedicatedHostName(dedicatedHostName string) *ListInstancesOptions {
+	_options.DedicatedHostName = core.StringPtr(dedicatedHostName)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34546,15 +34917,15 @@ func (*VpcV1) NewListIpsecPoliciesOptions() *ListIpsecPoliciesOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListIpsecPoliciesOptions) SetStart(start string) *ListIpsecPoliciesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListIpsecPoliciesOptions) SetStart(start string) *ListIpsecPoliciesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListIpsecPoliciesOptions) SetLimit(limit int64) *ListIpsecPoliciesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListIpsecPoliciesOptions) SetLimit(limit int64) *ListIpsecPoliciesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34580,9 +34951,9 @@ func (*VpcV1) NewListIpsecPolicyConnectionsOptions(id string) *ListIpsecPolicyCo
 }
 
 // SetID : Allow user to set ID
-func (options *ListIpsecPolicyConnectionsOptions) SetID(id string) *ListIpsecPolicyConnectionsOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *ListIpsecPolicyConnectionsOptions) SetID(id string) *ListIpsecPolicyConnectionsOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34593,6 +34964,12 @@ func (options *ListIpsecPolicyConnectionsOptions) SetHeaders(param map[string]st
 
 // ListKeysOptions : The ListKeys options.
 type ListKeysOptions struct {
+	// A server-supplied token determining what resource to start the page on.
+	Start *string
+
+	// The number of resources to return on a page.
+	Limit *int64
+
 	// Filters the collection to resources within one of the resource groups identified in a comma-separated list of
 	// resource group identifiers.
 	ResourceGroupID *string
@@ -34606,10 +34983,22 @@ func (*VpcV1) NewListKeysOptions() *ListKeysOptions {
 	return &ListKeysOptions{}
 }
 
+// SetStart : Allow user to set Start
+func (_options *ListKeysOptions) SetStart(start string) *ListKeysOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListKeysOptions) SetLimit(limit int64) *ListKeysOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListKeysOptions) SetResourceGroupID(resourceGroupID string) *ListKeysOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListKeysOptions) SetResourceGroupID(resourceGroupID string) *ListKeysOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34639,15 +35028,15 @@ func (*VpcV1) NewListLoadBalancerListenerPoliciesOptions(loadBalancerID string, 
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *ListLoadBalancerListenerPoliciesOptions) SetLoadBalancerID(loadBalancerID string) *ListLoadBalancerListenerPoliciesOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *ListLoadBalancerListenerPoliciesOptions) SetLoadBalancerID(loadBalancerID string) *ListLoadBalancerListenerPoliciesOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetListenerID : Allow user to set ListenerID
-func (options *ListLoadBalancerListenerPoliciesOptions) SetListenerID(listenerID string) *ListLoadBalancerListenerPoliciesOptions {
-	options.ListenerID = core.StringPtr(listenerID)
-	return options
+func (_options *ListLoadBalancerListenerPoliciesOptions) SetListenerID(listenerID string) *ListLoadBalancerListenerPoliciesOptions {
+	_options.ListenerID = core.StringPtr(listenerID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34681,21 +35070,21 @@ func (*VpcV1) NewListLoadBalancerListenerPolicyRulesOptions(loadBalancerID strin
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *ListLoadBalancerListenerPolicyRulesOptions) SetLoadBalancerID(loadBalancerID string) *ListLoadBalancerListenerPolicyRulesOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *ListLoadBalancerListenerPolicyRulesOptions) SetLoadBalancerID(loadBalancerID string) *ListLoadBalancerListenerPolicyRulesOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetListenerID : Allow user to set ListenerID
-func (options *ListLoadBalancerListenerPolicyRulesOptions) SetListenerID(listenerID string) *ListLoadBalancerListenerPolicyRulesOptions {
-	options.ListenerID = core.StringPtr(listenerID)
-	return options
+func (_options *ListLoadBalancerListenerPolicyRulesOptions) SetListenerID(listenerID string) *ListLoadBalancerListenerPolicyRulesOptions {
+	_options.ListenerID = core.StringPtr(listenerID)
+	return _options
 }
 
 // SetPolicyID : Allow user to set PolicyID
-func (options *ListLoadBalancerListenerPolicyRulesOptions) SetPolicyID(policyID string) *ListLoadBalancerListenerPolicyRulesOptions {
-	options.PolicyID = core.StringPtr(policyID)
-	return options
+func (_options *ListLoadBalancerListenerPolicyRulesOptions) SetPolicyID(policyID string) *ListLoadBalancerListenerPolicyRulesOptions {
+	_options.PolicyID = core.StringPtr(policyID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34721,9 +35110,9 @@ func (*VpcV1) NewListLoadBalancerListenersOptions(loadBalancerID string) *ListLo
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *ListLoadBalancerListenersOptions) SetLoadBalancerID(loadBalancerID string) *ListLoadBalancerListenersOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *ListLoadBalancerListenersOptions) SetLoadBalancerID(loadBalancerID string) *ListLoadBalancerListenersOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34753,15 +35142,15 @@ func (*VpcV1) NewListLoadBalancerPoolMembersOptions(loadBalancerID string, poolI
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *ListLoadBalancerPoolMembersOptions) SetLoadBalancerID(loadBalancerID string) *ListLoadBalancerPoolMembersOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *ListLoadBalancerPoolMembersOptions) SetLoadBalancerID(loadBalancerID string) *ListLoadBalancerPoolMembersOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetPoolID : Allow user to set PoolID
-func (options *ListLoadBalancerPoolMembersOptions) SetPoolID(poolID string) *ListLoadBalancerPoolMembersOptions {
-	options.PoolID = core.StringPtr(poolID)
-	return options
+func (_options *ListLoadBalancerPoolMembersOptions) SetPoolID(poolID string) *ListLoadBalancerPoolMembersOptions {
+	_options.PoolID = core.StringPtr(poolID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34787,9 +35176,9 @@ func (*VpcV1) NewListLoadBalancerPoolsOptions(loadBalancerID string) *ListLoadBa
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *ListLoadBalancerPoolsOptions) SetLoadBalancerID(loadBalancerID string) *ListLoadBalancerPoolsOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *ListLoadBalancerPoolsOptions) SetLoadBalancerID(loadBalancerID string) *ListLoadBalancerPoolsOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34816,15 +35205,15 @@ func (*VpcV1) NewListLoadBalancerProfilesOptions() *ListLoadBalancerProfilesOpti
 }
 
 // SetStart : Allow user to set Start
-func (options *ListLoadBalancerProfilesOptions) SetStart(start string) *ListLoadBalancerProfilesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListLoadBalancerProfilesOptions) SetStart(start string) *ListLoadBalancerProfilesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListLoadBalancerProfilesOptions) SetLimit(limit int64) *ListLoadBalancerProfilesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListLoadBalancerProfilesOptions) SetLimit(limit int64) *ListLoadBalancerProfilesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34851,15 +35240,15 @@ func (*VpcV1) NewListLoadBalancersOptions() *ListLoadBalancersOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListLoadBalancersOptions) SetStart(start string) *ListLoadBalancersOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListLoadBalancersOptions) SetStart(start string) *ListLoadBalancersOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListLoadBalancersOptions) SetLimit(limit int64) *ListLoadBalancersOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListLoadBalancersOptions) SetLimit(limit int64) *ListLoadBalancersOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34901,27 +35290,27 @@ func (*VpcV1) NewListNetworkACLRulesOptions(networkACLID string) *ListNetworkACL
 }
 
 // SetNetworkACLID : Allow user to set NetworkACLID
-func (options *ListNetworkACLRulesOptions) SetNetworkACLID(networkACLID string) *ListNetworkACLRulesOptions {
-	options.NetworkACLID = core.StringPtr(networkACLID)
-	return options
+func (_options *ListNetworkACLRulesOptions) SetNetworkACLID(networkACLID string) *ListNetworkACLRulesOptions {
+	_options.NetworkACLID = core.StringPtr(networkACLID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListNetworkACLRulesOptions) SetStart(start string) *ListNetworkACLRulesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListNetworkACLRulesOptions) SetStart(start string) *ListNetworkACLRulesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListNetworkACLRulesOptions) SetLimit(limit int64) *ListNetworkACLRulesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListNetworkACLRulesOptions) SetLimit(limit int64) *ListNetworkACLRulesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetDirection : Allow user to set Direction
-func (options *ListNetworkACLRulesOptions) SetDirection(direction string) *ListNetworkACLRulesOptions {
-	options.Direction = core.StringPtr(direction)
-	return options
+func (_options *ListNetworkACLRulesOptions) SetDirection(direction string) *ListNetworkACLRulesOptions {
+	_options.Direction = core.StringPtr(direction)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34952,21 +35341,21 @@ func (*VpcV1) NewListNetworkAclsOptions() *ListNetworkAclsOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListNetworkAclsOptions) SetStart(start string) *ListNetworkAclsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListNetworkAclsOptions) SetStart(start string) *ListNetworkAclsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListNetworkAclsOptions) SetLimit(limit int64) *ListNetworkAclsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListNetworkAclsOptions) SetLimit(limit int64) *ListNetworkAclsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListNetworkAclsOptions) SetResourceGroupID(resourceGroupID string) *ListNetworkAclsOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListNetworkAclsOptions) SetResourceGroupID(resourceGroupID string) *ListNetworkAclsOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -34993,15 +35382,15 @@ func (*VpcV1) NewListOperatingSystemsOptions() *ListOperatingSystemsOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListOperatingSystemsOptions) SetStart(start string) *ListOperatingSystemsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListOperatingSystemsOptions) SetStart(start string) *ListOperatingSystemsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListOperatingSystemsOptions) SetLimit(limit int64) *ListOperatingSystemsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListOperatingSystemsOptions) SetLimit(limit int64) *ListOperatingSystemsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35032,21 +35421,21 @@ func (*VpcV1) NewListPublicGatewaysOptions() *ListPublicGatewaysOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListPublicGatewaysOptions) SetStart(start string) *ListPublicGatewaysOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListPublicGatewaysOptions) SetStart(start string) *ListPublicGatewaysOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListPublicGatewaysOptions) SetLimit(limit int64) *ListPublicGatewaysOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListPublicGatewaysOptions) SetLimit(limit int64) *ListPublicGatewaysOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListPublicGatewaysOptions) SetResourceGroupID(resourceGroupID string) *ListPublicGatewaysOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListPublicGatewaysOptions) SetResourceGroupID(resourceGroupID string) *ListPublicGatewaysOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35072,9 +35461,9 @@ func (*VpcV1) NewListRegionZonesOptions(regionName string) *ListRegionZonesOptio
 }
 
 // SetRegionName : Allow user to set RegionName
-func (options *ListRegionZonesOptions) SetRegionName(regionName string) *ListRegionZonesOptions {
-	options.RegionName = core.StringPtr(regionName)
-	return options
+func (_options *ListRegionZonesOptions) SetRegionName(regionName string) *ListRegionZonesOptions {
+	_options.RegionName = core.StringPtr(regionName)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35124,21 +35513,21 @@ func (*VpcV1) NewListSecurityGroupNetworkInterfacesOptions(securityGroupID strin
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *ListSecurityGroupNetworkInterfacesOptions) SetSecurityGroupID(securityGroupID string) *ListSecurityGroupNetworkInterfacesOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *ListSecurityGroupNetworkInterfacesOptions) SetSecurityGroupID(securityGroupID string) *ListSecurityGroupNetworkInterfacesOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListSecurityGroupNetworkInterfacesOptions) SetStart(start string) *ListSecurityGroupNetworkInterfacesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListSecurityGroupNetworkInterfacesOptions) SetStart(start string) *ListSecurityGroupNetworkInterfacesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListSecurityGroupNetworkInterfacesOptions) SetLimit(limit int64) *ListSecurityGroupNetworkInterfacesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListSecurityGroupNetworkInterfacesOptions) SetLimit(limit int64) *ListSecurityGroupNetworkInterfacesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35164,9 +35553,9 @@ func (*VpcV1) NewListSecurityGroupRulesOptions(securityGroupID string) *ListSecu
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *ListSecurityGroupRulesOptions) SetSecurityGroupID(securityGroupID string) *ListSecurityGroupRulesOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *ListSecurityGroupRulesOptions) SetSecurityGroupID(securityGroupID string) *ListSecurityGroupRulesOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35198,21 +35587,21 @@ func (*VpcV1) NewListSecurityGroupTargetsOptions(securityGroupID string) *ListSe
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *ListSecurityGroupTargetsOptions) SetSecurityGroupID(securityGroupID string) *ListSecurityGroupTargetsOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *ListSecurityGroupTargetsOptions) SetSecurityGroupID(securityGroupID string) *ListSecurityGroupTargetsOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListSecurityGroupTargetsOptions) SetStart(start string) *ListSecurityGroupTargetsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListSecurityGroupTargetsOptions) SetStart(start string) *ListSecurityGroupTargetsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListSecurityGroupTargetsOptions) SetLimit(limit int64) *ListSecurityGroupTargetsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListSecurityGroupTargetsOptions) SetLimit(limit int64) *ListSecurityGroupTargetsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35252,39 +35641,39 @@ func (*VpcV1) NewListSecurityGroupsOptions() *ListSecurityGroupsOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListSecurityGroupsOptions) SetStart(start string) *ListSecurityGroupsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListSecurityGroupsOptions) SetStart(start string) *ListSecurityGroupsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListSecurityGroupsOptions) SetLimit(limit int64) *ListSecurityGroupsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListSecurityGroupsOptions) SetLimit(limit int64) *ListSecurityGroupsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListSecurityGroupsOptions) SetResourceGroupID(resourceGroupID string) *ListSecurityGroupsOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListSecurityGroupsOptions) SetResourceGroupID(resourceGroupID string) *ListSecurityGroupsOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *ListSecurityGroupsOptions) SetVPCID(vpcID string) *ListSecurityGroupsOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *ListSecurityGroupsOptions) SetVPCID(vpcID string) *ListSecurityGroupsOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetVPCCRN : Allow user to set VPCCRN
-func (options *ListSecurityGroupsOptions) SetVPCCRN(vpcCRN string) *ListSecurityGroupsOptions {
-	options.VPCCRN = core.StringPtr(vpcCRN)
-	return options
+func (_options *ListSecurityGroupsOptions) SetVPCCRN(vpcCRN string) *ListSecurityGroupsOptions {
+	_options.VPCCRN = core.StringPtr(vpcCRN)
+	return _options
 }
 
 // SetVPCName : Allow user to set VPCName
-func (options *ListSecurityGroupsOptions) SetVPCName(vpcName string) *ListSecurityGroupsOptions {
-	options.VPCName = core.StringPtr(vpcName)
-	return options
+func (_options *ListSecurityGroupsOptions) SetVPCName(vpcName string) *ListSecurityGroupsOptions {
+	_options.VPCName = core.StringPtr(vpcName)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35352,57 +35741,57 @@ func (*VpcV1) NewListSnapshotsOptions() *ListSnapshotsOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListSnapshotsOptions) SetStart(start string) *ListSnapshotsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListSnapshotsOptions) SetStart(start string) *ListSnapshotsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListSnapshotsOptions) SetLimit(limit int64) *ListSnapshotsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListSnapshotsOptions) SetLimit(limit int64) *ListSnapshotsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListSnapshotsOptions) SetResourceGroupID(resourceGroupID string) *ListSnapshotsOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListSnapshotsOptions) SetResourceGroupID(resourceGroupID string) *ListSnapshotsOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *ListSnapshotsOptions) SetName(name string) *ListSnapshotsOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *ListSnapshotsOptions) SetName(name string) *ListSnapshotsOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetSourceVolumeID : Allow user to set SourceVolumeID
-func (options *ListSnapshotsOptions) SetSourceVolumeID(sourceVolumeID string) *ListSnapshotsOptions {
-	options.SourceVolumeID = core.StringPtr(sourceVolumeID)
-	return options
+func (_options *ListSnapshotsOptions) SetSourceVolumeID(sourceVolumeID string) *ListSnapshotsOptions {
+	_options.SourceVolumeID = core.StringPtr(sourceVolumeID)
+	return _options
 }
 
 // SetSourceVolumeCRN : Allow user to set SourceVolumeCRN
-func (options *ListSnapshotsOptions) SetSourceVolumeCRN(sourceVolumeCRN string) *ListSnapshotsOptions {
-	options.SourceVolumeCRN = core.StringPtr(sourceVolumeCRN)
-	return options
+func (_options *ListSnapshotsOptions) SetSourceVolumeCRN(sourceVolumeCRN string) *ListSnapshotsOptions {
+	_options.SourceVolumeCRN = core.StringPtr(sourceVolumeCRN)
+	return _options
 }
 
 // SetSourceImageID : Allow user to set SourceImageID
-func (options *ListSnapshotsOptions) SetSourceImageID(sourceImageID string) *ListSnapshotsOptions {
-	options.SourceImageID = core.StringPtr(sourceImageID)
-	return options
+func (_options *ListSnapshotsOptions) SetSourceImageID(sourceImageID string) *ListSnapshotsOptions {
+	_options.SourceImageID = core.StringPtr(sourceImageID)
+	return _options
 }
 
 // SetSourceImageCRN : Allow user to set SourceImageCRN
-func (options *ListSnapshotsOptions) SetSourceImageCRN(sourceImageCRN string) *ListSnapshotsOptions {
-	options.SourceImageCRN = core.StringPtr(sourceImageCRN)
-	return options
+func (_options *ListSnapshotsOptions) SetSourceImageCRN(sourceImageCRN string) *ListSnapshotsOptions {
+	_options.SourceImageCRN = core.StringPtr(sourceImageCRN)
+	return _options
 }
 
 // SetSort : Allow user to set Sort
-func (options *ListSnapshotsOptions) SetSort(sort string) *ListSnapshotsOptions {
-	options.Sort = core.StringPtr(sort)
-	return options
+func (_options *ListSnapshotsOptions) SetSort(sort string) *ListSnapshotsOptions {
+	_options.Sort = core.StringPtr(sort)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35451,27 +35840,27 @@ func (*VpcV1) NewListSubnetReservedIpsOptions(subnetID string) *ListSubnetReserv
 }
 
 // SetSubnetID : Allow user to set SubnetID
-func (options *ListSubnetReservedIpsOptions) SetSubnetID(subnetID string) *ListSubnetReservedIpsOptions {
-	options.SubnetID = core.StringPtr(subnetID)
-	return options
+func (_options *ListSubnetReservedIpsOptions) SetSubnetID(subnetID string) *ListSubnetReservedIpsOptions {
+	_options.SubnetID = core.StringPtr(subnetID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListSubnetReservedIpsOptions) SetStart(start string) *ListSubnetReservedIpsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListSubnetReservedIpsOptions) SetStart(start string) *ListSubnetReservedIpsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListSubnetReservedIpsOptions) SetLimit(limit int64) *ListSubnetReservedIpsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListSubnetReservedIpsOptions) SetLimit(limit int64) *ListSubnetReservedIpsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetSort : Allow user to set Sort
-func (options *ListSubnetReservedIpsOptions) SetSort(sort string) *ListSubnetReservedIpsOptions {
-	options.Sort = core.StringPtr(sort)
-	return options
+func (_options *ListSubnetReservedIpsOptions) SetSort(sort string) *ListSubnetReservedIpsOptions {
+	_options.Sort = core.StringPtr(sort)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35508,33 +35897,33 @@ func (*VpcV1) NewListSubnetsOptions() *ListSubnetsOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListSubnetsOptions) SetStart(start string) *ListSubnetsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListSubnetsOptions) SetStart(start string) *ListSubnetsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListSubnetsOptions) SetLimit(limit int64) *ListSubnetsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListSubnetsOptions) SetLimit(limit int64) *ListSubnetsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListSubnetsOptions) SetResourceGroupID(resourceGroupID string) *ListSubnetsOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListSubnetsOptions) SetResourceGroupID(resourceGroupID string) *ListSubnetsOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetRoutingTableID : Allow user to set RoutingTableID
-func (options *ListSubnetsOptions) SetRoutingTableID(routingTableID string) *ListSubnetsOptions {
-	options.RoutingTableID = core.StringPtr(routingTableID)
-	return options
+func (_options *ListSubnetsOptions) SetRoutingTableID(routingTableID string) *ListSubnetsOptions {
+	_options.RoutingTableID = core.StringPtr(routingTableID)
+	return _options
 }
 
 // SetRoutingTableName : Allow user to set RoutingTableName
-func (options *ListSubnetsOptions) SetRoutingTableName(routingTableName string) *ListSubnetsOptions {
-	options.RoutingTableName = core.StringPtr(routingTableName)
-	return options
+func (_options *ListSubnetsOptions) SetRoutingTableName(routingTableName string) *ListSubnetsOptions {
+	_options.RoutingTableName = core.StringPtr(routingTableName)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35561,15 +35950,15 @@ func (*VpcV1) NewListVolumeProfilesOptions() *ListVolumeProfilesOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListVolumeProfilesOptions) SetStart(start string) *ListVolumeProfilesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListVolumeProfilesOptions) SetStart(start string) *ListVolumeProfilesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListVolumeProfilesOptions) SetLimit(limit int64) *ListVolumeProfilesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListVolumeProfilesOptions) SetLimit(limit int64) *ListVolumeProfilesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35602,27 +35991,27 @@ func (*VpcV1) NewListVolumesOptions() *ListVolumesOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListVolumesOptions) SetStart(start string) *ListVolumesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListVolumesOptions) SetStart(start string) *ListVolumesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListVolumesOptions) SetLimit(limit int64) *ListVolumesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListVolumesOptions) SetLimit(limit int64) *ListVolumesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *ListVolumesOptions) SetName(name string) *ListVolumesOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *ListVolumesOptions) SetName(name string) *ListVolumesOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetZoneName : Allow user to set ZoneName
-func (options *ListVolumesOptions) SetZoneName(zoneName string) *ListVolumesOptions {
-	options.ZoneName = core.StringPtr(zoneName)
-	return options
+func (_options *ListVolumesOptions) SetZoneName(zoneName string) *ListVolumesOptions {
+	_options.ZoneName = core.StringPtr(zoneName)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35654,21 +36043,21 @@ func (*VpcV1) NewListVPCAddressPrefixesOptions(vpcID string) *ListVPCAddressPref
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *ListVPCAddressPrefixesOptions) SetVPCID(vpcID string) *ListVPCAddressPrefixesOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *ListVPCAddressPrefixesOptions) SetVPCID(vpcID string) *ListVPCAddressPrefixesOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListVPCAddressPrefixesOptions) SetStart(start string) *ListVPCAddressPrefixesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListVPCAddressPrefixesOptions) SetStart(start string) *ListVPCAddressPrefixesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListVPCAddressPrefixesOptions) SetLimit(limit int64) *ListVPCAddressPrefixesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListVPCAddressPrefixesOptions) SetLimit(limit int64) *ListVPCAddressPrefixesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35703,27 +36092,27 @@ func (*VpcV1) NewListVPCRoutesOptions(vpcID string) *ListVPCRoutesOptions {
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *ListVPCRoutesOptions) SetVPCID(vpcID string) *ListVPCRoutesOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *ListVPCRoutesOptions) SetVPCID(vpcID string) *ListVPCRoutesOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetZoneName : Allow user to set ZoneName
-func (options *ListVPCRoutesOptions) SetZoneName(zoneName string) *ListVPCRoutesOptions {
-	options.ZoneName = core.StringPtr(zoneName)
-	return options
+func (_options *ListVPCRoutesOptions) SetZoneName(zoneName string) *ListVPCRoutesOptions {
+	_options.ZoneName = core.StringPtr(zoneName)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListVPCRoutesOptions) SetStart(start string) *ListVPCRoutesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListVPCRoutesOptions) SetStart(start string) *ListVPCRoutesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListVPCRoutesOptions) SetLimit(limit int64) *ListVPCRoutesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListVPCRoutesOptions) SetLimit(limit int64) *ListVPCRoutesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35759,27 +36148,27 @@ func (*VpcV1) NewListVPCRoutingTableRoutesOptions(vpcID string, routingTableID s
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *ListVPCRoutingTableRoutesOptions) SetVPCID(vpcID string) *ListVPCRoutingTableRoutesOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *ListVPCRoutingTableRoutesOptions) SetVPCID(vpcID string) *ListVPCRoutingTableRoutesOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetRoutingTableID : Allow user to set RoutingTableID
-func (options *ListVPCRoutingTableRoutesOptions) SetRoutingTableID(routingTableID string) *ListVPCRoutingTableRoutesOptions {
-	options.RoutingTableID = core.StringPtr(routingTableID)
-	return options
+func (_options *ListVPCRoutingTableRoutesOptions) SetRoutingTableID(routingTableID string) *ListVPCRoutingTableRoutesOptions {
+	_options.RoutingTableID = core.StringPtr(routingTableID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListVPCRoutingTableRoutesOptions) SetStart(start string) *ListVPCRoutingTableRoutesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListVPCRoutingTableRoutesOptions) SetStart(start string) *ListVPCRoutingTableRoutesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListVPCRoutingTableRoutesOptions) SetLimit(limit int64) *ListVPCRoutingTableRoutesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListVPCRoutingTableRoutesOptions) SetLimit(limit int64) *ListVPCRoutingTableRoutesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35815,27 +36204,27 @@ func (*VpcV1) NewListVPCRoutingTablesOptions(vpcID string) *ListVPCRoutingTables
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *ListVPCRoutingTablesOptions) SetVPCID(vpcID string) *ListVPCRoutingTablesOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *ListVPCRoutingTablesOptions) SetVPCID(vpcID string) *ListVPCRoutingTablesOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetStart : Allow user to set Start
-func (options *ListVPCRoutingTablesOptions) SetStart(start string) *ListVPCRoutingTablesOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListVPCRoutingTablesOptions) SetStart(start string) *ListVPCRoutingTablesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListVPCRoutingTablesOptions) SetLimit(limit int64) *ListVPCRoutingTablesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListVPCRoutingTablesOptions) SetLimit(limit int64) *ListVPCRoutingTablesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetIsDefault : Allow user to set IsDefault
-func (options *ListVPCRoutingTablesOptions) SetIsDefault(isDefault bool) *ListVPCRoutingTablesOptions {
-	options.IsDefault = core.BoolPtr(isDefault)
-	return options
+func (_options *ListVPCRoutingTablesOptions) SetIsDefault(isDefault bool) *ListVPCRoutingTablesOptions {
+	_options.IsDefault = core.BoolPtr(isDefault)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35871,27 +36260,27 @@ func (*VpcV1) NewListVpcsOptions() *ListVpcsOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListVpcsOptions) SetStart(start string) *ListVpcsOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListVpcsOptions) SetStart(start string) *ListVpcsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListVpcsOptions) SetLimit(limit int64) *ListVpcsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListVpcsOptions) SetLimit(limit int64) *ListVpcsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListVpcsOptions) SetResourceGroupID(resourceGroupID string) *ListVpcsOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListVpcsOptions) SetResourceGroupID(resourceGroupID string) *ListVpcsOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetClassicAccess : Allow user to set ClassicAccess
-func (options *ListVpcsOptions) SetClassicAccess(classicAccess bool) *ListVpcsOptions {
-	options.ClassicAccess = core.BoolPtr(classicAccess)
-	return options
+func (_options *ListVpcsOptions) SetClassicAccess(classicAccess bool) *ListVpcsOptions {
+	_options.ClassicAccess = core.BoolPtr(classicAccess)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35921,15 +36310,15 @@ func (*VpcV1) NewListVPNGatewayConnectionLocalCIDRsOptions(vpnGatewayID string, 
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *ListVPNGatewayConnectionLocalCIDRsOptions) SetVPNGatewayID(vpnGatewayID string) *ListVPNGatewayConnectionLocalCIDRsOptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *ListVPNGatewayConnectionLocalCIDRsOptions) SetVPNGatewayID(vpnGatewayID string) *ListVPNGatewayConnectionLocalCIDRsOptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *ListVPNGatewayConnectionLocalCIDRsOptions) SetID(id string) *ListVPNGatewayConnectionLocalCIDRsOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *ListVPNGatewayConnectionLocalCIDRsOptions) SetID(id string) *ListVPNGatewayConnectionLocalCIDRsOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35959,15 +36348,15 @@ func (*VpcV1) NewListVPNGatewayConnectionPeerCIDRsOptions(vpnGatewayID string, i
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *ListVPNGatewayConnectionPeerCIDRsOptions) SetVPNGatewayID(vpnGatewayID string) *ListVPNGatewayConnectionPeerCIDRsOptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *ListVPNGatewayConnectionPeerCIDRsOptions) SetVPNGatewayID(vpnGatewayID string) *ListVPNGatewayConnectionPeerCIDRsOptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *ListVPNGatewayConnectionPeerCIDRsOptions) SetID(id string) *ListVPNGatewayConnectionPeerCIDRsOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *ListVPNGatewayConnectionPeerCIDRsOptions) SetID(id string) *ListVPNGatewayConnectionPeerCIDRsOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -35996,15 +36385,15 @@ func (*VpcV1) NewListVPNGatewayConnectionsOptions(vpnGatewayID string) *ListVPNG
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *ListVPNGatewayConnectionsOptions) SetVPNGatewayID(vpnGatewayID string) *ListVPNGatewayConnectionsOptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *ListVPNGatewayConnectionsOptions) SetVPNGatewayID(vpnGatewayID string) *ListVPNGatewayConnectionsOptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetStatus : Allow user to set Status
-func (options *ListVPNGatewayConnectionsOptions) SetStatus(status string) *ListVPNGatewayConnectionsOptions {
-	options.Status = core.StringPtr(status)
-	return options
+func (_options *ListVPNGatewayConnectionsOptions) SetStatus(status string) *ListVPNGatewayConnectionsOptions {
+	_options.Status = core.StringPtr(status)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -36045,27 +36434,27 @@ func (*VpcV1) NewListVPNGatewaysOptions() *ListVPNGatewaysOptions {
 }
 
 // SetStart : Allow user to set Start
-func (options *ListVPNGatewaysOptions) SetStart(start string) *ListVPNGatewaysOptions {
-	options.Start = core.StringPtr(start)
-	return options
+func (_options *ListVPNGatewaysOptions) SetStart(start string) *ListVPNGatewaysOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListVPNGatewaysOptions) SetLimit(limit int64) *ListVPNGatewaysOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListVPNGatewaysOptions) SetLimit(limit int64) *ListVPNGatewaysOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetResourceGroupID : Allow user to set ResourceGroupID
-func (options *ListVPNGatewaysOptions) SetResourceGroupID(resourceGroupID string) *ListVPNGatewaysOptions {
-	options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return options
+func (_options *ListVPNGatewaysOptions) SetResourceGroupID(resourceGroupID string) *ListVPNGatewaysOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
 }
 
 // SetMode : Allow user to set Mode
-func (options *ListVPNGatewaysOptions) SetMode(mode string) *ListVPNGatewaysOptions {
-	options.Mode = core.StringPtr(mode)
-	return options
+func (_options *ListVPNGatewaysOptions) SetMode(mode string) *ListVPNGatewaysOptions {
+	_options.Mode = core.StringPtr(mode)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -36283,6 +36672,18 @@ func UnmarshalLoadBalancerCollection(m map[string]json.RawMessage, result interf
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *LoadBalancerCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
 }
 
 // LoadBalancerCollectionFirst : A link to the first page of resources.
@@ -36564,11 +36965,11 @@ func UnmarshalLoadBalancerListenerPatch(m map[string]json.RawMessage, result int
 }
 
 // AsPatch returns a generic map representation of the LoadBalancerListenerPatch
-func (loadBalancerListenerPatch *LoadBalancerListenerPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (loadBalancerListenerPatch *LoadBalancerListenerPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(loadBalancerListenerPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -36718,11 +37119,11 @@ func UnmarshalLoadBalancerListenerPolicyPatch(m map[string]json.RawMessage, resu
 }
 
 // AsPatch returns a generic map representation of the LoadBalancerListenerPolicyPatch
-func (loadBalancerListenerPolicyPatch *LoadBalancerListenerPolicyPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (loadBalancerListenerPolicyPatch *LoadBalancerListenerPolicyPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(loadBalancerListenerPolicyPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -36757,12 +37158,12 @@ const (
 )
 
 // NewLoadBalancerListenerPolicyPrototype : Instantiate LoadBalancerListenerPolicyPrototype (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerListenerPolicyPrototype(action string, priority int64) (model *LoadBalancerListenerPolicyPrototype, err error) {
-	model = &LoadBalancerListenerPolicyPrototype{
+func (*VpcV1) NewLoadBalancerListenerPolicyPrototype(action string, priority int64) (_model *LoadBalancerListenerPolicyPrototype, err error) {
+	_model = &LoadBalancerListenerPolicyPrototype{
 		Action:   core.StringPtr(action),
 		Priority: core.Int64Ptr(priority),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -37038,11 +37439,11 @@ func UnmarshalLoadBalancerListenerPolicyRulePatch(m map[string]json.RawMessage, 
 }
 
 // AsPatch returns a generic map representation of the LoadBalancerListenerPolicyRulePatch
-func (loadBalancerListenerPolicyRulePatch *LoadBalancerListenerPolicyRulePatch) AsPatch() (patch map[string]interface{}, err error) {
+func (loadBalancerListenerPolicyRulePatch *LoadBalancerListenerPolicyRulePatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(loadBalancerListenerPolicyRulePatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -37094,13 +37495,13 @@ const (
 )
 
 // NewLoadBalancerListenerPolicyRulePrototype : Instantiate LoadBalancerListenerPolicyRulePrototype (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerListenerPolicyRulePrototype(condition string, typeVar string, value string) (model *LoadBalancerListenerPolicyRulePrototype, err error) {
-	model = &LoadBalancerListenerPolicyRulePrototype{
+func (*VpcV1) NewLoadBalancerListenerPolicyRulePrototype(condition string, typeVar string, value string) (_model *LoadBalancerListenerPolicyRulePrototype, err error) {
+	_model = &LoadBalancerListenerPolicyRulePrototype{
 		Condition: core.StringPtr(condition),
 		Type:      core.StringPtr(typeVar),
 		Value:     core.StringPtr(value),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -37378,12 +37779,12 @@ const (
 )
 
 // NewLoadBalancerListenerPrototypeLoadBalancerContext : Instantiate LoadBalancerListenerPrototypeLoadBalancerContext (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerListenerPrototypeLoadBalancerContext(port int64, protocol string) (model *LoadBalancerListenerPrototypeLoadBalancerContext, err error) {
-	model = &LoadBalancerListenerPrototypeLoadBalancerContext{
+func (*VpcV1) NewLoadBalancerListenerPrototypeLoadBalancerContext(port int64, protocol string) (_model *LoadBalancerListenerPrototypeLoadBalancerContext, err error) {
+	_model = &LoadBalancerListenerPrototypeLoadBalancerContext{
 		Port:     core.Int64Ptr(port),
 		Protocol: core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -37488,11 +37889,11 @@ type LoadBalancerLoggingDatapath struct {
 }
 
 // NewLoadBalancerLoggingDatapath : Instantiate LoadBalancerLoggingDatapath (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerLoggingDatapath(active bool) (model *LoadBalancerLoggingDatapath, err error) {
-	model = &LoadBalancerLoggingDatapath{
+func (*VpcV1) NewLoadBalancerLoggingDatapath(active bool) (_model *LoadBalancerLoggingDatapath, err error) {
+	_model = &LoadBalancerLoggingDatapath{
 		Active: core.BoolPtr(active),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -37534,11 +37935,11 @@ func UnmarshalLoadBalancerPatch(m map[string]json.RawMessage, result interface{}
 }
 
 // AsPatch returns a generic map representation of the LoadBalancerPatch
-func (loadBalancerPatch *LoadBalancerPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (loadBalancerPatch *LoadBalancerPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(loadBalancerPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -37815,14 +38216,14 @@ const (
 )
 
 // NewLoadBalancerPoolHealthMonitorPatch : Instantiate LoadBalancerPoolHealthMonitorPatch (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolHealthMonitorPatch(delay int64, maxRetries int64, timeout int64, typeVar string) (model *LoadBalancerPoolHealthMonitorPatch, err error) {
-	model = &LoadBalancerPoolHealthMonitorPatch{
+func (*VpcV1) NewLoadBalancerPoolHealthMonitorPatch(delay int64, maxRetries int64, timeout int64, typeVar string) (_model *LoadBalancerPoolHealthMonitorPatch, err error) {
+	_model = &LoadBalancerPoolHealthMonitorPatch{
 		Delay:      core.Int64Ptr(delay),
 		MaxRetries: core.Int64Ptr(maxRetries),
 		Timeout:    core.Int64Ptr(timeout),
 		Type:       core.StringPtr(typeVar),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -37889,14 +38290,14 @@ const (
 )
 
 // NewLoadBalancerPoolHealthMonitorPrototype : Instantiate LoadBalancerPoolHealthMonitorPrototype (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolHealthMonitorPrototype(delay int64, maxRetries int64, timeout int64, typeVar string) (model *LoadBalancerPoolHealthMonitorPrototype, err error) {
-	model = &LoadBalancerPoolHealthMonitorPrototype{
+func (*VpcV1) NewLoadBalancerPoolHealthMonitorPrototype(delay int64, maxRetries int64, timeout int64, typeVar string) (_model *LoadBalancerPoolHealthMonitorPrototype, err error) {
+	_model = &LoadBalancerPoolHealthMonitorPrototype{
 		Delay:      core.Int64Ptr(delay),
 		MaxRetries: core.Int64Ptr(maxRetries),
 		Timeout:    core.Int64Ptr(timeout),
 		Type:       core.StringPtr(typeVar),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -37973,11 +38374,11 @@ type LoadBalancerPoolIdentityByName struct {
 }
 
 // NewLoadBalancerPoolIdentityByName : Instantiate LoadBalancerPoolIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolIdentityByName(name string) (model *LoadBalancerPoolIdentityByName, err error) {
-	model = &LoadBalancerPoolIdentityByName{
+func (*VpcV1) NewLoadBalancerPoolIdentityByName(name string) (_model *LoadBalancerPoolIdentityByName, err error) {
+	_model = &LoadBalancerPoolIdentityByName{
 		Name: core.StringPtr(name),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -38130,11 +38531,11 @@ func UnmarshalLoadBalancerPoolMemberPatch(m map[string]json.RawMessage, result i
 }
 
 // AsPatch returns a generic map representation of the LoadBalancerPoolMemberPatch
-func (loadBalancerPoolMemberPatch *LoadBalancerPoolMemberPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (loadBalancerPoolMemberPatch *LoadBalancerPoolMemberPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(loadBalancerPoolMemberPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -38154,12 +38555,12 @@ type LoadBalancerPoolMemberPrototype struct {
 }
 
 // NewLoadBalancerPoolMemberPrototype : Instantiate LoadBalancerPoolMemberPrototype (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolMemberPrototype(port int64, target LoadBalancerPoolMemberTargetPrototypeIntf) (model *LoadBalancerPoolMemberPrototype, err error) {
-	model = &LoadBalancerPoolMemberPrototype{
+func (*VpcV1) NewLoadBalancerPoolMemberPrototype(port int64, target LoadBalancerPoolMemberTargetPrototypeIntf) (_model *LoadBalancerPoolMemberPrototype, err error) {
+	_model = &LoadBalancerPoolMemberPrototype{
 		Port:   core.Int64Ptr(port),
 		Target: target,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -38446,11 +38847,11 @@ func UnmarshalLoadBalancerPoolPatch(m map[string]json.RawMessage, result interfa
 }
 
 // AsPatch returns a generic map representation of the LoadBalancerPoolPatch
-func (loadBalancerPoolPatch *LoadBalancerPoolPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (loadBalancerPoolPatch *LoadBalancerPoolPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(loadBalancerPoolPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -38520,13 +38921,13 @@ const (
 )
 
 // NewLoadBalancerPoolPrototype : Instantiate LoadBalancerPoolPrototype (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolPrototype(algorithm string, healthMonitor *LoadBalancerPoolHealthMonitorPrototype, protocol string) (model *LoadBalancerPoolPrototype, err error) {
-	model = &LoadBalancerPoolPrototype{
+func (*VpcV1) NewLoadBalancerPoolPrototype(algorithm string, healthMonitor *LoadBalancerPoolHealthMonitorPrototype, protocol string) (_model *LoadBalancerPoolPrototype, err error) {
+	_model = &LoadBalancerPoolPrototype{
 		Algorithm:     core.StringPtr(algorithm),
 		HealthMonitor: healthMonitor,
 		Protocol:      core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -38624,6 +39025,10 @@ func UnmarshalLoadBalancerPoolReferenceDeleted(m map[string]json.RawMessage, res
 
 // LoadBalancerPoolSessionPersistence : LoadBalancerPoolSessionPersistence struct
 type LoadBalancerPoolSessionPersistence struct {
+	// The session persistence cookie name. Applicable only for type `app_cookie`. Names starting with `IBM` are not
+	// allowed.
+	CookieName *string `json:"cookie_name,omitempty"`
+
 	// The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
 	// protocols.
 	Type *string `json:"type" validate:"required"`
@@ -38633,12 +39038,18 @@ type LoadBalancerPoolSessionPersistence struct {
 // The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
 // protocols.
 const (
-	LoadBalancerPoolSessionPersistenceTypeSourceIPConst = "source_ip"
+	LoadBalancerPoolSessionPersistenceTypeAppCookieConst  = "app_cookie"
+	LoadBalancerPoolSessionPersistenceTypeHTTPCookieConst = "http_cookie"
+	LoadBalancerPoolSessionPersistenceTypeSourceIPConst   = "source_ip"
 )
 
 // UnmarshalLoadBalancerPoolSessionPersistence unmarshals an instance of LoadBalancerPoolSessionPersistence from the specified map of raw messages.
 func UnmarshalLoadBalancerPoolSessionPersistence(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerPoolSessionPersistence)
+	err = core.UnmarshalPrimitive(m, "cookie_name", &obj.CookieName)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		return
@@ -38649,30 +39060,31 @@ func UnmarshalLoadBalancerPoolSessionPersistence(m map[string]json.RawMessage, r
 
 // LoadBalancerPoolSessionPersistencePatch : The session persistence configuration. Specify `null` to remove any existing session persistence configuration.
 type LoadBalancerPoolSessionPersistencePatch struct {
+	// The session persistence cookie name. Applicable only for type `app_cookie`. Names starting with `IBM` are not
+	// allowed.
+	CookieName *string `json:"cookie_name,omitempty"`
+
 	// The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
 	// protocols.
-	Type *string `json:"type" validate:"required"`
+	Type *string `json:"type,omitempty"`
 }
 
 // Constants associated with the LoadBalancerPoolSessionPersistencePatch.Type property.
 // The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
 // protocols.
 const (
-	LoadBalancerPoolSessionPersistencePatchTypeSourceIPConst = "source_ip"
+	LoadBalancerPoolSessionPersistencePatchTypeAppCookieConst  = "app_cookie"
+	LoadBalancerPoolSessionPersistencePatchTypeHTTPCookieConst = "http_cookie"
+	LoadBalancerPoolSessionPersistencePatchTypeSourceIPConst   = "source_ip"
 )
-
-// NewLoadBalancerPoolSessionPersistencePatch : Instantiate LoadBalancerPoolSessionPersistencePatch (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolSessionPersistencePatch(typeVar string) (model *LoadBalancerPoolSessionPersistencePatch, err error) {
-	model = &LoadBalancerPoolSessionPersistencePatch{
-		Type: core.StringPtr(typeVar),
-	}
-	err = core.ValidateStruct(model, "required parameters")
-	return
-}
 
 // UnmarshalLoadBalancerPoolSessionPersistencePatch unmarshals an instance of LoadBalancerPoolSessionPersistencePatch from the specified map of raw messages.
 func UnmarshalLoadBalancerPoolSessionPersistencePatch(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerPoolSessionPersistencePatch)
+	err = core.UnmarshalPrimitive(m, "cookie_name", &obj.CookieName)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		return
@@ -38683,6 +39095,10 @@ func UnmarshalLoadBalancerPoolSessionPersistencePatch(m map[string]json.RawMessa
 
 // LoadBalancerPoolSessionPersistencePrototype : LoadBalancerPoolSessionPersistencePrototype struct
 type LoadBalancerPoolSessionPersistencePrototype struct {
+	// The session persistence cookie name. Applicable only for type `app_cookie`. Names starting with `IBM` are not
+	// allowed.
+	CookieName *string `json:"cookie_name,omitempty"`
+
 	// The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
 	// protocols.
 	Type *string `json:"type" validate:"required"`
@@ -38692,21 +39108,27 @@ type LoadBalancerPoolSessionPersistencePrototype struct {
 // The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
 // protocols.
 const (
-	LoadBalancerPoolSessionPersistencePrototypeTypeSourceIPConst = "source_ip"
+	LoadBalancerPoolSessionPersistencePrototypeTypeAppCookieConst  = "app_cookie"
+	LoadBalancerPoolSessionPersistencePrototypeTypeHTTPCookieConst = "http_cookie"
+	LoadBalancerPoolSessionPersistencePrototypeTypeSourceIPConst   = "source_ip"
 )
 
 // NewLoadBalancerPoolSessionPersistencePrototype : Instantiate LoadBalancerPoolSessionPersistencePrototype (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolSessionPersistencePrototype(typeVar string) (model *LoadBalancerPoolSessionPersistencePrototype, err error) {
-	model = &LoadBalancerPoolSessionPersistencePrototype{
+func (*VpcV1) NewLoadBalancerPoolSessionPersistencePrototype(typeVar string) (_model *LoadBalancerPoolSessionPersistencePrototype, err error) {
+	_model = &LoadBalancerPoolSessionPersistencePrototype{
 		Type: core.StringPtr(typeVar),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
 // UnmarshalLoadBalancerPoolSessionPersistencePrototype unmarshals an instance of LoadBalancerPoolSessionPersistencePrototype from the specified map of raw messages.
 func UnmarshalLoadBalancerPoolSessionPersistencePrototype(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerPoolSessionPersistencePrototype)
+	err = core.UnmarshalPrimitive(m, "cookie_name", &obj.CookieName)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		return
@@ -38803,6 +39225,18 @@ func UnmarshalLoadBalancerProfileCollection(m map[string]json.RawMessage, result
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *LoadBalancerProfileCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
 }
 
 // LoadBalancerProfileCollectionFirst : A link to the first page of resources.
@@ -39151,6 +39585,18 @@ func UnmarshalNetworkACLCollection(m map[string]json.RawMessage, result interfac
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *NetworkACLCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // NetworkACLCollectionFirst : A link to the first page of resources.
 type NetworkACLCollectionFirst struct {
 	// The URL for a page of resources.
@@ -39246,11 +39692,11 @@ func UnmarshalNetworkACLPatch(m map[string]json.RawMessage, result interface{}) 
 }
 
 // AsPatch returns a generic map representation of the NetworkACLPatch
-func (networkACLPatch *NetworkACLPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (networkACLPatch *NetworkACLPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(networkACLPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -39610,6 +40056,18 @@ func UnmarshalNetworkACLRuleCollection(m map[string]json.RawMessage, result inte
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *NetworkACLRuleCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // NetworkACLRuleCollectionFirst : A link to the first page of resources.
 type NetworkACLRuleCollectionFirst struct {
 	// The URL for a page of resources.
@@ -39871,11 +40329,11 @@ func UnmarshalNetworkACLRulePatch(m map[string]json.RawMessage, result interface
 }
 
 // AsPatch returns a generic map representation of the NetworkACLRulePatch
-func (networkACLRulePatch *NetworkACLRulePatch) AsPatch() (patch map[string]interface{}, err error) {
+func (networkACLRulePatch *NetworkACLRulePatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(networkACLRulePatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -40299,6 +40757,18 @@ func UnmarshalNetworkInterfaceCollection(m map[string]json.RawMessage, result in
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *NetworkInterfaceCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // NetworkInterfaceCollectionFirst : A link to the first page of resources.
 type NetworkInterfaceCollectionFirst struct {
 	// The URL for a page of resources.
@@ -40443,11 +40913,11 @@ func UnmarshalNetworkInterfacePatch(m map[string]json.RawMessage, result interfa
 }
 
 // AsPatch returns a generic map representation of the NetworkInterfacePatch
-func (networkInterfacePatch *NetworkInterfacePatch) AsPatch() (patch map[string]interface{}, err error) {
+func (networkInterfacePatch *NetworkInterfacePatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(networkInterfacePatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -40474,11 +40944,11 @@ type NetworkInterfacePrototype struct {
 }
 
 // NewNetworkInterfacePrototype : Instantiate NetworkInterfacePrototype (Generic Model Constructor)
-func (*VpcV1) NewNetworkInterfacePrototype(subnet SubnetIdentityIntf) (model *NetworkInterfacePrototype, err error) {
-	model = &NetworkInterfacePrototype{
+func (*VpcV1) NewNetworkInterfacePrototype(subnet SubnetIdentityIntf) (_model *NetworkInterfacePrototype, err error) {
+	_model = &NetworkInterfacePrototype{
 		Subnet: subnet,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -40726,6 +41196,18 @@ func UnmarshalOperatingSystemCollection(m map[string]json.RawMessage, result int
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *OperatingSystemCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // OperatingSystemCollectionFirst : A link to the first page of resources.
 type OperatingSystemCollectionFirst struct {
 	// The URL for a page of resources.
@@ -40812,6 +41294,23 @@ func UnmarshalOperatingSystemReference(m map[string]json.RawMessage, result inte
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PageLink : PageLink struct
+type PageLink struct {
+	// The URL for a page of resources.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalPageLink unmarshals an instance of PageLink from the specified map of raw messages.
+func UnmarshalPageLink(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PageLink)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		return
 	}
@@ -40965,6 +41464,18 @@ func UnmarshalPublicGatewayCollection(m map[string]json.RawMessage, result inter
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *PublicGatewayCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
 }
 
 // PublicGatewayCollectionFirst : A link to the first page of resources.
@@ -41180,11 +41691,11 @@ func UnmarshalPublicGatewayPatch(m map[string]json.RawMessage, result interface{
 }
 
 // AsPatch returns a generic map representation of the PublicGatewayPatch
-func (publicGatewayPatch *PublicGatewayPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (publicGatewayPatch *PublicGatewayPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(publicGatewayPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -41373,15 +41884,15 @@ func (*VpcV1) NewRemoveEndpointGatewayIPOptions(endpointGatewayID string, id str
 }
 
 // SetEndpointGatewayID : Allow user to set EndpointGatewayID
-func (options *RemoveEndpointGatewayIPOptions) SetEndpointGatewayID(endpointGatewayID string) *RemoveEndpointGatewayIPOptions {
-	options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
-	return options
+func (_options *RemoveEndpointGatewayIPOptions) SetEndpointGatewayID(endpointGatewayID string) *RemoveEndpointGatewayIPOptions {
+	_options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *RemoveEndpointGatewayIPOptions) SetID(id string) *RemoveEndpointGatewayIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *RemoveEndpointGatewayIPOptions) SetID(id string) *RemoveEndpointGatewayIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -41415,21 +41926,21 @@ func (*VpcV1) NewRemoveInstanceNetworkInterfaceFloatingIPOptions(instanceID stri
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *RemoveInstanceNetworkInterfaceFloatingIPOptions) SetInstanceID(instanceID string) *RemoveInstanceNetworkInterfaceFloatingIPOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *RemoveInstanceNetworkInterfaceFloatingIPOptions) SetInstanceID(instanceID string) *RemoveInstanceNetworkInterfaceFloatingIPOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetNetworkInterfaceID : Allow user to set NetworkInterfaceID
-func (options *RemoveInstanceNetworkInterfaceFloatingIPOptions) SetNetworkInterfaceID(networkInterfaceID string) *RemoveInstanceNetworkInterfaceFloatingIPOptions {
-	options.NetworkInterfaceID = core.StringPtr(networkInterfaceID)
-	return options
+func (_options *RemoveInstanceNetworkInterfaceFloatingIPOptions) SetNetworkInterfaceID(networkInterfaceID string) *RemoveInstanceNetworkInterfaceFloatingIPOptions {
+	_options.NetworkInterfaceID = core.StringPtr(networkInterfaceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *RemoveInstanceNetworkInterfaceFloatingIPOptions) SetID(id string) *RemoveInstanceNetworkInterfaceFloatingIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *RemoveInstanceNetworkInterfaceFloatingIPOptions) SetID(id string) *RemoveInstanceNetworkInterfaceFloatingIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -41459,15 +41970,15 @@ func (*VpcV1) NewRemoveSecurityGroupNetworkInterfaceOptions(securityGroupID stri
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *RemoveSecurityGroupNetworkInterfaceOptions) SetSecurityGroupID(securityGroupID string) *RemoveSecurityGroupNetworkInterfaceOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *RemoveSecurityGroupNetworkInterfaceOptions) SetSecurityGroupID(securityGroupID string) *RemoveSecurityGroupNetworkInterfaceOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *RemoveSecurityGroupNetworkInterfaceOptions) SetID(id string) *RemoveSecurityGroupNetworkInterfaceOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *RemoveSecurityGroupNetworkInterfaceOptions) SetID(id string) *RemoveSecurityGroupNetworkInterfaceOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -41505,27 +42016,27 @@ func (*VpcV1) NewRemoveVPNGatewayConnectionLocalCIDROptions(vpnGatewayID string,
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *RemoveVPNGatewayConnectionLocalCIDROptions) SetVPNGatewayID(vpnGatewayID string) *RemoveVPNGatewayConnectionLocalCIDROptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *RemoveVPNGatewayConnectionLocalCIDROptions) SetVPNGatewayID(vpnGatewayID string) *RemoveVPNGatewayConnectionLocalCIDROptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *RemoveVPNGatewayConnectionLocalCIDROptions) SetID(id string) *RemoveVPNGatewayConnectionLocalCIDROptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *RemoveVPNGatewayConnectionLocalCIDROptions) SetID(id string) *RemoveVPNGatewayConnectionLocalCIDROptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetCIDRPrefix : Allow user to set CIDRPrefix
-func (options *RemoveVPNGatewayConnectionLocalCIDROptions) SetCIDRPrefix(cidrPrefix string) *RemoveVPNGatewayConnectionLocalCIDROptions {
-	options.CIDRPrefix = core.StringPtr(cidrPrefix)
-	return options
+func (_options *RemoveVPNGatewayConnectionLocalCIDROptions) SetCIDRPrefix(cidrPrefix string) *RemoveVPNGatewayConnectionLocalCIDROptions {
+	_options.CIDRPrefix = core.StringPtr(cidrPrefix)
+	return _options
 }
 
 // SetPrefixLength : Allow user to set PrefixLength
-func (options *RemoveVPNGatewayConnectionLocalCIDROptions) SetPrefixLength(prefixLength string) *RemoveVPNGatewayConnectionLocalCIDROptions {
-	options.PrefixLength = core.StringPtr(prefixLength)
-	return options
+func (_options *RemoveVPNGatewayConnectionLocalCIDROptions) SetPrefixLength(prefixLength string) *RemoveVPNGatewayConnectionLocalCIDROptions {
+	_options.PrefixLength = core.StringPtr(prefixLength)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -41563,27 +42074,27 @@ func (*VpcV1) NewRemoveVPNGatewayConnectionPeerCIDROptions(vpnGatewayID string, 
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *RemoveVPNGatewayConnectionPeerCIDROptions) SetVPNGatewayID(vpnGatewayID string) *RemoveVPNGatewayConnectionPeerCIDROptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *RemoveVPNGatewayConnectionPeerCIDROptions) SetVPNGatewayID(vpnGatewayID string) *RemoveVPNGatewayConnectionPeerCIDROptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *RemoveVPNGatewayConnectionPeerCIDROptions) SetID(id string) *RemoveVPNGatewayConnectionPeerCIDROptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *RemoveVPNGatewayConnectionPeerCIDROptions) SetID(id string) *RemoveVPNGatewayConnectionPeerCIDROptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetCIDRPrefix : Allow user to set CIDRPrefix
-func (options *RemoveVPNGatewayConnectionPeerCIDROptions) SetCIDRPrefix(cidrPrefix string) *RemoveVPNGatewayConnectionPeerCIDROptions {
-	options.CIDRPrefix = core.StringPtr(cidrPrefix)
-	return options
+func (_options *RemoveVPNGatewayConnectionPeerCIDROptions) SetCIDRPrefix(cidrPrefix string) *RemoveVPNGatewayConnectionPeerCIDROptions {
+	_options.CIDRPrefix = core.StringPtr(cidrPrefix)
+	return _options
 }
 
 // SetPrefixLength : Allow user to set PrefixLength
-func (options *RemoveVPNGatewayConnectionPeerCIDROptions) SetPrefixLength(prefixLength string) *RemoveVPNGatewayConnectionPeerCIDROptions {
-	options.PrefixLength = core.StringPtr(prefixLength)
-	return options
+func (_options *RemoveVPNGatewayConnectionPeerCIDROptions) SetPrefixLength(prefixLength string) *RemoveVPNGatewayConnectionPeerCIDROptions {
+	_options.PrefixLength = core.StringPtr(prefixLength)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -41617,21 +42128,21 @@ func (*VpcV1) NewReplaceLoadBalancerPoolMembersOptions(loadBalancerID string, po
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *ReplaceLoadBalancerPoolMembersOptions) SetLoadBalancerID(loadBalancerID string) *ReplaceLoadBalancerPoolMembersOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *ReplaceLoadBalancerPoolMembersOptions) SetLoadBalancerID(loadBalancerID string) *ReplaceLoadBalancerPoolMembersOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetPoolID : Allow user to set PoolID
-func (options *ReplaceLoadBalancerPoolMembersOptions) SetPoolID(poolID string) *ReplaceLoadBalancerPoolMembersOptions {
-	options.PoolID = core.StringPtr(poolID)
-	return options
+func (_options *ReplaceLoadBalancerPoolMembersOptions) SetPoolID(poolID string) *ReplaceLoadBalancerPoolMembersOptions {
+	_options.PoolID = core.StringPtr(poolID)
+	return _options
 }
 
 // SetMembers : Allow user to set Members
-func (options *ReplaceLoadBalancerPoolMembersOptions) SetMembers(members []LoadBalancerPoolMemberPrototype) *ReplaceLoadBalancerPoolMembersOptions {
-	options.Members = members
-	return options
+func (_options *ReplaceLoadBalancerPoolMembersOptions) SetMembers(members []LoadBalancerPoolMemberPrototype) *ReplaceLoadBalancerPoolMembersOptions {
+	_options.Members = members
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -41661,15 +42172,15 @@ func (*VpcV1) NewReplaceSubnetNetworkACLOptions(id string, networkACLIdentity Ne
 }
 
 // SetID : Allow user to set ID
-func (options *ReplaceSubnetNetworkACLOptions) SetID(id string) *ReplaceSubnetNetworkACLOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *ReplaceSubnetNetworkACLOptions) SetID(id string) *ReplaceSubnetNetworkACLOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetNetworkACLIdentity : Allow user to set NetworkACLIdentity
-func (options *ReplaceSubnetNetworkACLOptions) SetNetworkACLIdentity(networkACLIdentity NetworkACLIdentityIntf) *ReplaceSubnetNetworkACLOptions {
-	options.NetworkACLIdentity = networkACLIdentity
-	return options
+func (_options *ReplaceSubnetNetworkACLOptions) SetNetworkACLIdentity(networkACLIdentity NetworkACLIdentityIntf) *ReplaceSubnetNetworkACLOptions {
+	_options.NetworkACLIdentity = networkACLIdentity
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -41699,15 +42210,15 @@ func (*VpcV1) NewReplaceSubnetRoutingTableOptions(id string, routingTableIdentit
 }
 
 // SetID : Allow user to set ID
-func (options *ReplaceSubnetRoutingTableOptions) SetID(id string) *ReplaceSubnetRoutingTableOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *ReplaceSubnetRoutingTableOptions) SetID(id string) *ReplaceSubnetRoutingTableOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetRoutingTableIdentity : Allow user to set RoutingTableIdentity
-func (options *ReplaceSubnetRoutingTableOptions) SetRoutingTableIdentity(routingTableIdentity RoutingTableIdentityIntf) *ReplaceSubnetRoutingTableOptions {
-	options.RoutingTableIdentity = routingTableIdentity
-	return options
+func (_options *ReplaceSubnetRoutingTableOptions) SetRoutingTableIdentity(routingTableIdentity RoutingTableIdentityIntf) *ReplaceSubnetRoutingTableOptions {
+	_options.RoutingTableIdentity = routingTableIdentity
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -41851,6 +42362,18 @@ func UnmarshalReservedIPCollection(m map[string]json.RawMessage, result interfac
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ReservedIPCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // ReservedIPCollectionEndpointGatewayContext : ReservedIPCollectionEndpointGatewayContext struct
 type ReservedIPCollectionEndpointGatewayContext struct {
 	// A link to the first page of resources.
@@ -41895,6 +42418,18 @@ func UnmarshalReservedIPCollectionEndpointGatewayContext(m map[string]json.RawMe
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ReservedIPCollectionEndpointGatewayContext) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
 }
 
 // ReservedIPCollectionEndpointGatewayContextFirst : A link to the first page of resources.
@@ -41992,11 +42527,11 @@ func UnmarshalReservedIPPatch(m map[string]json.RawMessage, result interface{}) 
 }
 
 // AsPatch returns a generic map representation of the ReservedIPPatch
-func (reservedIPPatch *ReservedIPPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (reservedIPPatch *ReservedIPPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(reservedIPPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -42375,6 +42910,18 @@ func UnmarshalRouteCollection(m map[string]json.RawMessage, result interface{}) 
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *RouteCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // RouteCollectionFirst : A link to the first page of resources.
 type RouteCollectionFirst struct {
 	// The URL for a page of resources.
@@ -42543,11 +43090,11 @@ func UnmarshalRoutePatch(m map[string]json.RawMessage, result interface{}) (err 
 }
 
 // AsPatch returns a generic map representation of the RoutePatch
-func (routePatch *RoutePatch) AsPatch() (patch map[string]interface{}, err error) {
+func (routePatch *RoutePatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(routePatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -42595,12 +43142,12 @@ const (
 )
 
 // NewRoutePrototype : Instantiate RoutePrototype (Generic Model Constructor)
-func (*VpcV1) NewRoutePrototype(destination string, zone ZoneIdentityIntf) (model *RoutePrototype, err error) {
-	model = &RoutePrototype{
+func (*VpcV1) NewRoutePrototype(destination string, zone ZoneIdentityIntf) (_model *RoutePrototype, err error) {
+	_model = &RoutePrototype{
 		Destination: core.StringPtr(destination),
 		Zone:        zone,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -42864,6 +43411,18 @@ func UnmarshalRoutingTableCollection(m map[string]json.RawMessage, result interf
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *RoutingTableCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // RoutingTableCollectionFirst : A link to the first page of resources.
 type RoutingTableCollectionFirst struct {
 	// The URL for a page of resources.
@@ -43000,11 +43559,11 @@ func UnmarshalRoutingTablePatch(m map[string]json.RawMessage, result interface{}
 }
 
 // AsPatch returns a generic map representation of the RoutingTablePatch
-func (routingTablePatch *RoutingTablePatch) AsPatch() (patch map[string]interface{}, err error) {
+func (routingTablePatch *RoutingTablePatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(routingTablePatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -43205,6 +43764,18 @@ func UnmarshalSecurityGroupCollection(m map[string]json.RawMessage, result inter
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *SecurityGroupCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // SecurityGroupCollectionFirst : A link to the first page of resources.
 type SecurityGroupCollectionFirst struct {
 	// The URL for a page of resources.
@@ -43300,11 +43871,11 @@ func UnmarshalSecurityGroupPatch(m map[string]json.RawMessage, result interface{
 }
 
 // AsPatch returns a generic map representation of the SecurityGroupPatch
-func (securityGroupPatch *SecurityGroupPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (securityGroupPatch *SecurityGroupPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(securityGroupPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -43564,11 +44135,11 @@ func UnmarshalSecurityGroupRulePatch(m map[string]json.RawMessage, result interf
 }
 
 // AsPatch returns a generic map representation of the SecurityGroupRulePatch
-func (securityGroupRulePatch *SecurityGroupRulePatch) AsPatch() (patch map[string]interface{}, err error) {
+func (securityGroupRulePatch *SecurityGroupRulePatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(securityGroupRulePatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -43909,6 +44480,18 @@ func UnmarshalSecurityGroupTargetCollection(m map[string]json.RawMessage, result
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *SecurityGroupTargetCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // SecurityGroupTargetCollectionFirst : A link to the first page of resources.
 type SecurityGroupTargetCollectionFirst struct {
 	// The URL for a page of resources.
@@ -44036,15 +44619,15 @@ func (*VpcV1) NewSetSubnetPublicGatewayOptions(id string, publicGatewayIdentity 
 }
 
 // SetID : Allow user to set ID
-func (options *SetSubnetPublicGatewayOptions) SetID(id string) *SetSubnetPublicGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *SetSubnetPublicGatewayOptions) SetID(id string) *SetSubnetPublicGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetPublicGatewayIdentity : Allow user to set PublicGatewayIdentity
-func (options *SetSubnetPublicGatewayOptions) SetPublicGatewayIdentity(publicGatewayIdentity PublicGatewayIdentityIntf) *SetSubnetPublicGatewayOptions {
-	options.PublicGatewayIdentity = publicGatewayIdentity
-	return options
+func (_options *SetSubnetPublicGatewayOptions) SetPublicGatewayIdentity(publicGatewayIdentity PublicGatewayIdentityIntf) *SetSubnetPublicGatewayOptions {
+	_options.PublicGatewayIdentity = publicGatewayIdentity
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -44259,6 +44842,18 @@ func UnmarshalSnapshotCollection(m map[string]json.RawMessage, result interface{
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *SnapshotCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // SnapshotCollectionFirst : A link to the first page of resources.
 type SnapshotCollectionFirst struct {
 	// The URL for a page of resources.
@@ -44354,11 +44949,11 @@ func UnmarshalSnapshotPatch(m map[string]json.RawMessage, result interface{}) (e
 }
 
 // AsPatch returns a generic map representation of the SnapshotPatch
-func (snapshotPatch *SnapshotPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (snapshotPatch *SnapshotPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(snapshotPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -44627,6 +45222,18 @@ func UnmarshalSubnetCollection(m map[string]json.RawMessage, result interface{})
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *SubnetCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // SubnetCollectionFirst : A link to the first page of resources.
 type SubnetCollectionFirst struct {
 	// The URL for a page of resources.
@@ -44745,11 +45352,11 @@ func UnmarshalSubnetPatch(m map[string]json.RawMessage, result interface{}) (err
 }
 
 // AsPatch returns a generic map representation of the SubnetPatch
-func (subnetPatch *SubnetPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (subnetPatch *SubnetPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(subnetPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -44940,9 +45547,9 @@ func (*VpcV1) NewUnsetSubnetPublicGatewayOptions(id string) *UnsetSubnetPublicGa
 }
 
 // SetID : Allow user to set ID
-func (options *UnsetSubnetPublicGatewayOptions) SetID(id string) *UnsetSubnetPublicGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UnsetSubnetPublicGatewayOptions) SetID(id string) *UnsetSubnetPublicGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -44976,21 +45583,21 @@ func (*VpcV1) NewUpdateDedicatedHostDiskOptions(dedicatedHostID string, id strin
 }
 
 // SetDedicatedHostID : Allow user to set DedicatedHostID
-func (options *UpdateDedicatedHostDiskOptions) SetDedicatedHostID(dedicatedHostID string) *UpdateDedicatedHostDiskOptions {
-	options.DedicatedHostID = core.StringPtr(dedicatedHostID)
-	return options
+func (_options *UpdateDedicatedHostDiskOptions) SetDedicatedHostID(dedicatedHostID string) *UpdateDedicatedHostDiskOptions {
+	_options.DedicatedHostID = core.StringPtr(dedicatedHostID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateDedicatedHostDiskOptions) SetID(id string) *UpdateDedicatedHostDiskOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateDedicatedHostDiskOptions) SetID(id string) *UpdateDedicatedHostDiskOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetDedicatedHostDiskPatch : Allow user to set DedicatedHostDiskPatch
-func (options *UpdateDedicatedHostDiskOptions) SetDedicatedHostDiskPatch(dedicatedHostDiskPatch map[string]interface{}) *UpdateDedicatedHostDiskOptions {
-	options.DedicatedHostDiskPatch = dedicatedHostDiskPatch
-	return options
+func (_options *UpdateDedicatedHostDiskOptions) SetDedicatedHostDiskPatch(dedicatedHostDiskPatch map[string]interface{}) *UpdateDedicatedHostDiskOptions {
+	_options.DedicatedHostDiskPatch = dedicatedHostDiskPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45020,15 +45627,15 @@ func (*VpcV1) NewUpdateDedicatedHostGroupOptions(id string, dedicatedHostGroupPa
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateDedicatedHostGroupOptions) SetID(id string) *UpdateDedicatedHostGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateDedicatedHostGroupOptions) SetID(id string) *UpdateDedicatedHostGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetDedicatedHostGroupPatch : Allow user to set DedicatedHostGroupPatch
-func (options *UpdateDedicatedHostGroupOptions) SetDedicatedHostGroupPatch(dedicatedHostGroupPatch map[string]interface{}) *UpdateDedicatedHostGroupOptions {
-	options.DedicatedHostGroupPatch = dedicatedHostGroupPatch
-	return options
+func (_options *UpdateDedicatedHostGroupOptions) SetDedicatedHostGroupPatch(dedicatedHostGroupPatch map[string]interface{}) *UpdateDedicatedHostGroupOptions {
+	_options.DedicatedHostGroupPatch = dedicatedHostGroupPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45058,15 +45665,15 @@ func (*VpcV1) NewUpdateDedicatedHostOptions(id string, dedicatedHostPatch map[st
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateDedicatedHostOptions) SetID(id string) *UpdateDedicatedHostOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateDedicatedHostOptions) SetID(id string) *UpdateDedicatedHostOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetDedicatedHostPatch : Allow user to set DedicatedHostPatch
-func (options *UpdateDedicatedHostOptions) SetDedicatedHostPatch(dedicatedHostPatch map[string]interface{}) *UpdateDedicatedHostOptions {
-	options.DedicatedHostPatch = dedicatedHostPatch
-	return options
+func (_options *UpdateDedicatedHostOptions) SetDedicatedHostPatch(dedicatedHostPatch map[string]interface{}) *UpdateDedicatedHostOptions {
+	_options.DedicatedHostPatch = dedicatedHostPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45096,15 +45703,15 @@ func (*VpcV1) NewUpdateEndpointGatewayOptions(id string, endpointGatewayPatch ma
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateEndpointGatewayOptions) SetID(id string) *UpdateEndpointGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateEndpointGatewayOptions) SetID(id string) *UpdateEndpointGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetEndpointGatewayPatch : Allow user to set EndpointGatewayPatch
-func (options *UpdateEndpointGatewayOptions) SetEndpointGatewayPatch(endpointGatewayPatch map[string]interface{}) *UpdateEndpointGatewayOptions {
-	options.EndpointGatewayPatch = endpointGatewayPatch
-	return options
+func (_options *UpdateEndpointGatewayOptions) SetEndpointGatewayPatch(endpointGatewayPatch map[string]interface{}) *UpdateEndpointGatewayOptions {
+	_options.EndpointGatewayPatch = endpointGatewayPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45134,15 +45741,15 @@ func (*VpcV1) NewUpdateFloatingIPOptions(id string, floatingIPPatch map[string]i
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateFloatingIPOptions) SetID(id string) *UpdateFloatingIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateFloatingIPOptions) SetID(id string) *UpdateFloatingIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetFloatingIPPatch : Allow user to set FloatingIPPatch
-func (options *UpdateFloatingIPOptions) SetFloatingIPPatch(floatingIPPatch map[string]interface{}) *UpdateFloatingIPOptions {
-	options.FloatingIPPatch = floatingIPPatch
-	return options
+func (_options *UpdateFloatingIPOptions) SetFloatingIPPatch(floatingIPPatch map[string]interface{}) *UpdateFloatingIPOptions {
+	_options.FloatingIPPatch = floatingIPPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45172,15 +45779,15 @@ func (*VpcV1) NewUpdateFlowLogCollectorOptions(id string, flowLogCollectorPatch 
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateFlowLogCollectorOptions) SetID(id string) *UpdateFlowLogCollectorOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateFlowLogCollectorOptions) SetID(id string) *UpdateFlowLogCollectorOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetFlowLogCollectorPatch : Allow user to set FlowLogCollectorPatch
-func (options *UpdateFlowLogCollectorOptions) SetFlowLogCollectorPatch(flowLogCollectorPatch map[string]interface{}) *UpdateFlowLogCollectorOptions {
-	options.FlowLogCollectorPatch = flowLogCollectorPatch
-	return options
+func (_options *UpdateFlowLogCollectorOptions) SetFlowLogCollectorPatch(flowLogCollectorPatch map[string]interface{}) *UpdateFlowLogCollectorOptions {
+	_options.FlowLogCollectorPatch = flowLogCollectorPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45210,15 +45817,15 @@ func (*VpcV1) NewUpdateIkePolicyOptions(id string, ikePolicyPatch map[string]int
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateIkePolicyOptions) SetID(id string) *UpdateIkePolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateIkePolicyOptions) SetID(id string) *UpdateIkePolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetIkePolicyPatch : Allow user to set IkePolicyPatch
-func (options *UpdateIkePolicyOptions) SetIkePolicyPatch(ikePolicyPatch map[string]interface{}) *UpdateIkePolicyOptions {
-	options.IkePolicyPatch = ikePolicyPatch
-	return options
+func (_options *UpdateIkePolicyOptions) SetIkePolicyPatch(ikePolicyPatch map[string]interface{}) *UpdateIkePolicyOptions {
+	_options.IkePolicyPatch = ikePolicyPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45248,15 +45855,15 @@ func (*VpcV1) NewUpdateImageOptions(id string, imagePatch map[string]interface{}
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateImageOptions) SetID(id string) *UpdateImageOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateImageOptions) SetID(id string) *UpdateImageOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetImagePatch : Allow user to set ImagePatch
-func (options *UpdateImageOptions) SetImagePatch(imagePatch map[string]interface{}) *UpdateImageOptions {
-	options.ImagePatch = imagePatch
-	return options
+func (_options *UpdateImageOptions) SetImagePatch(imagePatch map[string]interface{}) *UpdateImageOptions {
+	_options.ImagePatch = imagePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45290,21 +45897,21 @@ func (*VpcV1) NewUpdateInstanceDiskOptions(instanceID string, id string, instanc
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *UpdateInstanceDiskOptions) SetInstanceID(instanceID string) *UpdateInstanceDiskOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *UpdateInstanceDiskOptions) SetInstanceID(instanceID string) *UpdateInstanceDiskOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateInstanceDiskOptions) SetID(id string) *UpdateInstanceDiskOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateInstanceDiskOptions) SetID(id string) *UpdateInstanceDiskOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetInstanceDiskPatch : Allow user to set InstanceDiskPatch
-func (options *UpdateInstanceDiskOptions) SetInstanceDiskPatch(instanceDiskPatch map[string]interface{}) *UpdateInstanceDiskOptions {
-	options.InstanceDiskPatch = instanceDiskPatch
-	return options
+func (_options *UpdateInstanceDiskOptions) SetInstanceDiskPatch(instanceDiskPatch map[string]interface{}) *UpdateInstanceDiskOptions {
+	_options.InstanceDiskPatch = instanceDiskPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45342,27 +45949,27 @@ func (*VpcV1) NewUpdateInstanceGroupManagerActionOptions(instanceGroupID string,
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *UpdateInstanceGroupManagerActionOptions) SetInstanceGroupID(instanceGroupID string) *UpdateInstanceGroupManagerActionOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *UpdateInstanceGroupManagerActionOptions) SetInstanceGroupID(instanceGroupID string) *UpdateInstanceGroupManagerActionOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerID : Allow user to set InstanceGroupManagerID
-func (options *UpdateInstanceGroupManagerActionOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *UpdateInstanceGroupManagerActionOptions {
-	options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
-	return options
+func (_options *UpdateInstanceGroupManagerActionOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *UpdateInstanceGroupManagerActionOptions {
+	_options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateInstanceGroupManagerActionOptions) SetID(id string) *UpdateInstanceGroupManagerActionOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateInstanceGroupManagerActionOptions) SetID(id string) *UpdateInstanceGroupManagerActionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetInstanceGroupManagerActionPatch : Allow user to set InstanceGroupManagerActionPatch
-func (options *UpdateInstanceGroupManagerActionOptions) SetInstanceGroupManagerActionPatch(instanceGroupManagerActionPatch map[string]interface{}) *UpdateInstanceGroupManagerActionOptions {
-	options.InstanceGroupManagerActionPatch = instanceGroupManagerActionPatch
-	return options
+func (_options *UpdateInstanceGroupManagerActionOptions) SetInstanceGroupManagerActionPatch(instanceGroupManagerActionPatch map[string]interface{}) *UpdateInstanceGroupManagerActionOptions {
+	_options.InstanceGroupManagerActionPatch = instanceGroupManagerActionPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45396,21 +46003,21 @@ func (*VpcV1) NewUpdateInstanceGroupManagerOptions(instanceGroupID string, id st
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *UpdateInstanceGroupManagerOptions) SetInstanceGroupID(instanceGroupID string) *UpdateInstanceGroupManagerOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *UpdateInstanceGroupManagerOptions) SetInstanceGroupID(instanceGroupID string) *UpdateInstanceGroupManagerOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateInstanceGroupManagerOptions) SetID(id string) *UpdateInstanceGroupManagerOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateInstanceGroupManagerOptions) SetID(id string) *UpdateInstanceGroupManagerOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetInstanceGroupManagerPatch : Allow user to set InstanceGroupManagerPatch
-func (options *UpdateInstanceGroupManagerOptions) SetInstanceGroupManagerPatch(instanceGroupManagerPatch map[string]interface{}) *UpdateInstanceGroupManagerOptions {
-	options.InstanceGroupManagerPatch = instanceGroupManagerPatch
-	return options
+func (_options *UpdateInstanceGroupManagerOptions) SetInstanceGroupManagerPatch(instanceGroupManagerPatch map[string]interface{}) *UpdateInstanceGroupManagerOptions {
+	_options.InstanceGroupManagerPatch = instanceGroupManagerPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45448,27 +46055,27 @@ func (*VpcV1) NewUpdateInstanceGroupManagerPolicyOptions(instanceGroupID string,
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *UpdateInstanceGroupManagerPolicyOptions) SetInstanceGroupID(instanceGroupID string) *UpdateInstanceGroupManagerPolicyOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *UpdateInstanceGroupManagerPolicyOptions) SetInstanceGroupID(instanceGroupID string) *UpdateInstanceGroupManagerPolicyOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetInstanceGroupManagerID : Allow user to set InstanceGroupManagerID
-func (options *UpdateInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *UpdateInstanceGroupManagerPolicyOptions {
-	options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
-	return options
+func (_options *UpdateInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerID(instanceGroupManagerID string) *UpdateInstanceGroupManagerPolicyOptions {
+	_options.InstanceGroupManagerID = core.StringPtr(instanceGroupManagerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateInstanceGroupManagerPolicyOptions) SetID(id string) *UpdateInstanceGroupManagerPolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateInstanceGroupManagerPolicyOptions) SetID(id string) *UpdateInstanceGroupManagerPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetInstanceGroupManagerPolicyPatch : Allow user to set InstanceGroupManagerPolicyPatch
-func (options *UpdateInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerPolicyPatch(instanceGroupManagerPolicyPatch map[string]interface{}) *UpdateInstanceGroupManagerPolicyOptions {
-	options.InstanceGroupManagerPolicyPatch = instanceGroupManagerPolicyPatch
-	return options
+func (_options *UpdateInstanceGroupManagerPolicyOptions) SetInstanceGroupManagerPolicyPatch(instanceGroupManagerPolicyPatch map[string]interface{}) *UpdateInstanceGroupManagerPolicyOptions {
+	_options.InstanceGroupManagerPolicyPatch = instanceGroupManagerPolicyPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45502,21 +46109,21 @@ func (*VpcV1) NewUpdateInstanceGroupMembershipOptions(instanceGroupID string, id
 }
 
 // SetInstanceGroupID : Allow user to set InstanceGroupID
-func (options *UpdateInstanceGroupMembershipOptions) SetInstanceGroupID(instanceGroupID string) *UpdateInstanceGroupMembershipOptions {
-	options.InstanceGroupID = core.StringPtr(instanceGroupID)
-	return options
+func (_options *UpdateInstanceGroupMembershipOptions) SetInstanceGroupID(instanceGroupID string) *UpdateInstanceGroupMembershipOptions {
+	_options.InstanceGroupID = core.StringPtr(instanceGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateInstanceGroupMembershipOptions) SetID(id string) *UpdateInstanceGroupMembershipOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateInstanceGroupMembershipOptions) SetID(id string) *UpdateInstanceGroupMembershipOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetInstanceGroupMembershipPatch : Allow user to set InstanceGroupMembershipPatch
-func (options *UpdateInstanceGroupMembershipOptions) SetInstanceGroupMembershipPatch(instanceGroupMembershipPatch map[string]interface{}) *UpdateInstanceGroupMembershipOptions {
-	options.InstanceGroupMembershipPatch = instanceGroupMembershipPatch
-	return options
+func (_options *UpdateInstanceGroupMembershipOptions) SetInstanceGroupMembershipPatch(instanceGroupMembershipPatch map[string]interface{}) *UpdateInstanceGroupMembershipOptions {
+	_options.InstanceGroupMembershipPatch = instanceGroupMembershipPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45546,15 +46153,15 @@ func (*VpcV1) NewUpdateInstanceGroupOptions(id string, instanceGroupPatch map[st
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateInstanceGroupOptions) SetID(id string) *UpdateInstanceGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateInstanceGroupOptions) SetID(id string) *UpdateInstanceGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetInstanceGroupPatch : Allow user to set InstanceGroupPatch
-func (options *UpdateInstanceGroupOptions) SetInstanceGroupPatch(instanceGroupPatch map[string]interface{}) *UpdateInstanceGroupOptions {
-	options.InstanceGroupPatch = instanceGroupPatch
-	return options
+func (_options *UpdateInstanceGroupOptions) SetInstanceGroupPatch(instanceGroupPatch map[string]interface{}) *UpdateInstanceGroupOptions {
+	_options.InstanceGroupPatch = instanceGroupPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45588,21 +46195,21 @@ func (*VpcV1) NewUpdateInstanceNetworkInterfaceOptions(instanceID string, id str
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *UpdateInstanceNetworkInterfaceOptions) SetInstanceID(instanceID string) *UpdateInstanceNetworkInterfaceOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *UpdateInstanceNetworkInterfaceOptions) SetInstanceID(instanceID string) *UpdateInstanceNetworkInterfaceOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateInstanceNetworkInterfaceOptions) SetID(id string) *UpdateInstanceNetworkInterfaceOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateInstanceNetworkInterfaceOptions) SetID(id string) *UpdateInstanceNetworkInterfaceOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetNetworkInterfacePatch : Allow user to set NetworkInterfacePatch
-func (options *UpdateInstanceNetworkInterfaceOptions) SetNetworkInterfacePatch(networkInterfacePatch map[string]interface{}) *UpdateInstanceNetworkInterfaceOptions {
-	options.NetworkInterfacePatch = networkInterfacePatch
-	return options
+func (_options *UpdateInstanceNetworkInterfaceOptions) SetNetworkInterfacePatch(networkInterfacePatch map[string]interface{}) *UpdateInstanceNetworkInterfaceOptions {
+	_options.NetworkInterfacePatch = networkInterfacePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45632,15 +46239,15 @@ func (*VpcV1) NewUpdateInstanceOptions(id string, instancePatch map[string]inter
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateInstanceOptions) SetID(id string) *UpdateInstanceOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateInstanceOptions) SetID(id string) *UpdateInstanceOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetInstancePatch : Allow user to set InstancePatch
-func (options *UpdateInstanceOptions) SetInstancePatch(instancePatch map[string]interface{}) *UpdateInstanceOptions {
-	options.InstancePatch = instancePatch
-	return options
+func (_options *UpdateInstanceOptions) SetInstancePatch(instancePatch map[string]interface{}) *UpdateInstanceOptions {
+	_options.InstancePatch = instancePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45670,15 +46277,15 @@ func (*VpcV1) NewUpdateInstanceTemplateOptions(id string, instanceTemplatePatch 
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateInstanceTemplateOptions) SetID(id string) *UpdateInstanceTemplateOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateInstanceTemplateOptions) SetID(id string) *UpdateInstanceTemplateOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetInstanceTemplatePatch : Allow user to set InstanceTemplatePatch
-func (options *UpdateInstanceTemplateOptions) SetInstanceTemplatePatch(instanceTemplatePatch map[string]interface{}) *UpdateInstanceTemplateOptions {
-	options.InstanceTemplatePatch = instanceTemplatePatch
-	return options
+func (_options *UpdateInstanceTemplateOptions) SetInstanceTemplatePatch(instanceTemplatePatch map[string]interface{}) *UpdateInstanceTemplateOptions {
+	_options.InstanceTemplatePatch = instanceTemplatePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45712,21 +46319,21 @@ func (*VpcV1) NewUpdateInstanceVolumeAttachmentOptions(instanceID string, id str
 }
 
 // SetInstanceID : Allow user to set InstanceID
-func (options *UpdateInstanceVolumeAttachmentOptions) SetInstanceID(instanceID string) *UpdateInstanceVolumeAttachmentOptions {
-	options.InstanceID = core.StringPtr(instanceID)
-	return options
+func (_options *UpdateInstanceVolumeAttachmentOptions) SetInstanceID(instanceID string) *UpdateInstanceVolumeAttachmentOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateInstanceVolumeAttachmentOptions) SetID(id string) *UpdateInstanceVolumeAttachmentOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateInstanceVolumeAttachmentOptions) SetID(id string) *UpdateInstanceVolumeAttachmentOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetVolumeAttachmentPatch : Allow user to set VolumeAttachmentPatch
-func (options *UpdateInstanceVolumeAttachmentOptions) SetVolumeAttachmentPatch(volumeAttachmentPatch map[string]interface{}) *UpdateInstanceVolumeAttachmentOptions {
-	options.VolumeAttachmentPatch = volumeAttachmentPatch
-	return options
+func (_options *UpdateInstanceVolumeAttachmentOptions) SetVolumeAttachmentPatch(volumeAttachmentPatch map[string]interface{}) *UpdateInstanceVolumeAttachmentOptions {
+	_options.VolumeAttachmentPatch = volumeAttachmentPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45756,15 +46363,15 @@ func (*VpcV1) NewUpdateIpsecPolicyOptions(id string, iPsecPolicyPatch map[string
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateIpsecPolicyOptions) SetID(id string) *UpdateIpsecPolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateIpsecPolicyOptions) SetID(id string) *UpdateIpsecPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetIPsecPolicyPatch : Allow user to set IPsecPolicyPatch
-func (options *UpdateIpsecPolicyOptions) SetIPsecPolicyPatch(iPsecPolicyPatch map[string]interface{}) *UpdateIpsecPolicyOptions {
-	options.IPsecPolicyPatch = iPsecPolicyPatch
-	return options
+func (_options *UpdateIpsecPolicyOptions) SetIPsecPolicyPatch(iPsecPolicyPatch map[string]interface{}) *UpdateIpsecPolicyOptions {
+	_options.IPsecPolicyPatch = iPsecPolicyPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45794,15 +46401,15 @@ func (*VpcV1) NewUpdateKeyOptions(id string, keyPatch map[string]interface{}) *U
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateKeyOptions) SetID(id string) *UpdateKeyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateKeyOptions) SetID(id string) *UpdateKeyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetKeyPatch : Allow user to set KeyPatch
-func (options *UpdateKeyOptions) SetKeyPatch(keyPatch map[string]interface{}) *UpdateKeyOptions {
-	options.KeyPatch = keyPatch
-	return options
+func (_options *UpdateKeyOptions) SetKeyPatch(keyPatch map[string]interface{}) *UpdateKeyOptions {
+	_options.KeyPatch = keyPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45836,21 +46443,21 @@ func (*VpcV1) NewUpdateLoadBalancerListenerOptions(loadBalancerID string, id str
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *UpdateLoadBalancerListenerOptions) SetLoadBalancerID(loadBalancerID string) *UpdateLoadBalancerListenerOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *UpdateLoadBalancerListenerOptions) SetLoadBalancerID(loadBalancerID string) *UpdateLoadBalancerListenerOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateLoadBalancerListenerOptions) SetID(id string) *UpdateLoadBalancerListenerOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateLoadBalancerListenerOptions) SetID(id string) *UpdateLoadBalancerListenerOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetLoadBalancerListenerPatch : Allow user to set LoadBalancerListenerPatch
-func (options *UpdateLoadBalancerListenerOptions) SetLoadBalancerListenerPatch(loadBalancerListenerPatch map[string]interface{}) *UpdateLoadBalancerListenerOptions {
-	options.LoadBalancerListenerPatch = loadBalancerListenerPatch
-	return options
+func (_options *UpdateLoadBalancerListenerOptions) SetLoadBalancerListenerPatch(loadBalancerListenerPatch map[string]interface{}) *UpdateLoadBalancerListenerOptions {
+	_options.LoadBalancerListenerPatch = loadBalancerListenerPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45888,27 +46495,27 @@ func (*VpcV1) NewUpdateLoadBalancerListenerPolicyOptions(loadBalancerID string, 
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *UpdateLoadBalancerListenerPolicyOptions) SetLoadBalancerID(loadBalancerID string) *UpdateLoadBalancerListenerPolicyOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *UpdateLoadBalancerListenerPolicyOptions) SetLoadBalancerID(loadBalancerID string) *UpdateLoadBalancerListenerPolicyOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetListenerID : Allow user to set ListenerID
-func (options *UpdateLoadBalancerListenerPolicyOptions) SetListenerID(listenerID string) *UpdateLoadBalancerListenerPolicyOptions {
-	options.ListenerID = core.StringPtr(listenerID)
-	return options
+func (_options *UpdateLoadBalancerListenerPolicyOptions) SetListenerID(listenerID string) *UpdateLoadBalancerListenerPolicyOptions {
+	_options.ListenerID = core.StringPtr(listenerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateLoadBalancerListenerPolicyOptions) SetID(id string) *UpdateLoadBalancerListenerPolicyOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateLoadBalancerListenerPolicyOptions) SetID(id string) *UpdateLoadBalancerListenerPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetLoadBalancerListenerPolicyPatch : Allow user to set LoadBalancerListenerPolicyPatch
-func (options *UpdateLoadBalancerListenerPolicyOptions) SetLoadBalancerListenerPolicyPatch(loadBalancerListenerPolicyPatch map[string]interface{}) *UpdateLoadBalancerListenerPolicyOptions {
-	options.LoadBalancerListenerPolicyPatch = loadBalancerListenerPolicyPatch
-	return options
+func (_options *UpdateLoadBalancerListenerPolicyOptions) SetLoadBalancerListenerPolicyPatch(loadBalancerListenerPolicyPatch map[string]interface{}) *UpdateLoadBalancerListenerPolicyOptions {
+	_options.LoadBalancerListenerPolicyPatch = loadBalancerListenerPolicyPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -45950,33 +46557,33 @@ func (*VpcV1) NewUpdateLoadBalancerListenerPolicyRuleOptions(loadBalancerID stri
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *UpdateLoadBalancerListenerPolicyRuleOptions) SetLoadBalancerID(loadBalancerID string) *UpdateLoadBalancerListenerPolicyRuleOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *UpdateLoadBalancerListenerPolicyRuleOptions) SetLoadBalancerID(loadBalancerID string) *UpdateLoadBalancerListenerPolicyRuleOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetListenerID : Allow user to set ListenerID
-func (options *UpdateLoadBalancerListenerPolicyRuleOptions) SetListenerID(listenerID string) *UpdateLoadBalancerListenerPolicyRuleOptions {
-	options.ListenerID = core.StringPtr(listenerID)
-	return options
+func (_options *UpdateLoadBalancerListenerPolicyRuleOptions) SetListenerID(listenerID string) *UpdateLoadBalancerListenerPolicyRuleOptions {
+	_options.ListenerID = core.StringPtr(listenerID)
+	return _options
 }
 
 // SetPolicyID : Allow user to set PolicyID
-func (options *UpdateLoadBalancerListenerPolicyRuleOptions) SetPolicyID(policyID string) *UpdateLoadBalancerListenerPolicyRuleOptions {
-	options.PolicyID = core.StringPtr(policyID)
-	return options
+func (_options *UpdateLoadBalancerListenerPolicyRuleOptions) SetPolicyID(policyID string) *UpdateLoadBalancerListenerPolicyRuleOptions {
+	_options.PolicyID = core.StringPtr(policyID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateLoadBalancerListenerPolicyRuleOptions) SetID(id string) *UpdateLoadBalancerListenerPolicyRuleOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateLoadBalancerListenerPolicyRuleOptions) SetID(id string) *UpdateLoadBalancerListenerPolicyRuleOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetLoadBalancerListenerPolicyRulePatch : Allow user to set LoadBalancerListenerPolicyRulePatch
-func (options *UpdateLoadBalancerListenerPolicyRuleOptions) SetLoadBalancerListenerPolicyRulePatch(loadBalancerListenerPolicyRulePatch map[string]interface{}) *UpdateLoadBalancerListenerPolicyRuleOptions {
-	options.LoadBalancerListenerPolicyRulePatch = loadBalancerListenerPolicyRulePatch
-	return options
+func (_options *UpdateLoadBalancerListenerPolicyRuleOptions) SetLoadBalancerListenerPolicyRulePatch(loadBalancerListenerPolicyRulePatch map[string]interface{}) *UpdateLoadBalancerListenerPolicyRuleOptions {
+	_options.LoadBalancerListenerPolicyRulePatch = loadBalancerListenerPolicyRulePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46006,15 +46613,15 @@ func (*VpcV1) NewUpdateLoadBalancerOptions(id string, loadBalancerPatch map[stri
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateLoadBalancerOptions) SetID(id string) *UpdateLoadBalancerOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateLoadBalancerOptions) SetID(id string) *UpdateLoadBalancerOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetLoadBalancerPatch : Allow user to set LoadBalancerPatch
-func (options *UpdateLoadBalancerOptions) SetLoadBalancerPatch(loadBalancerPatch map[string]interface{}) *UpdateLoadBalancerOptions {
-	options.LoadBalancerPatch = loadBalancerPatch
-	return options
+func (_options *UpdateLoadBalancerOptions) SetLoadBalancerPatch(loadBalancerPatch map[string]interface{}) *UpdateLoadBalancerOptions {
+	_options.LoadBalancerPatch = loadBalancerPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46052,27 +46659,27 @@ func (*VpcV1) NewUpdateLoadBalancerPoolMemberOptions(loadBalancerID string, pool
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *UpdateLoadBalancerPoolMemberOptions) SetLoadBalancerID(loadBalancerID string) *UpdateLoadBalancerPoolMemberOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *UpdateLoadBalancerPoolMemberOptions) SetLoadBalancerID(loadBalancerID string) *UpdateLoadBalancerPoolMemberOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetPoolID : Allow user to set PoolID
-func (options *UpdateLoadBalancerPoolMemberOptions) SetPoolID(poolID string) *UpdateLoadBalancerPoolMemberOptions {
-	options.PoolID = core.StringPtr(poolID)
-	return options
+func (_options *UpdateLoadBalancerPoolMemberOptions) SetPoolID(poolID string) *UpdateLoadBalancerPoolMemberOptions {
+	_options.PoolID = core.StringPtr(poolID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateLoadBalancerPoolMemberOptions) SetID(id string) *UpdateLoadBalancerPoolMemberOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateLoadBalancerPoolMemberOptions) SetID(id string) *UpdateLoadBalancerPoolMemberOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetLoadBalancerPoolMemberPatch : Allow user to set LoadBalancerPoolMemberPatch
-func (options *UpdateLoadBalancerPoolMemberOptions) SetLoadBalancerPoolMemberPatch(loadBalancerPoolMemberPatch map[string]interface{}) *UpdateLoadBalancerPoolMemberOptions {
-	options.LoadBalancerPoolMemberPatch = loadBalancerPoolMemberPatch
-	return options
+func (_options *UpdateLoadBalancerPoolMemberOptions) SetLoadBalancerPoolMemberPatch(loadBalancerPoolMemberPatch map[string]interface{}) *UpdateLoadBalancerPoolMemberOptions {
+	_options.LoadBalancerPoolMemberPatch = loadBalancerPoolMemberPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46106,21 +46713,21 @@ func (*VpcV1) NewUpdateLoadBalancerPoolOptions(loadBalancerID string, id string,
 }
 
 // SetLoadBalancerID : Allow user to set LoadBalancerID
-func (options *UpdateLoadBalancerPoolOptions) SetLoadBalancerID(loadBalancerID string) *UpdateLoadBalancerPoolOptions {
-	options.LoadBalancerID = core.StringPtr(loadBalancerID)
-	return options
+func (_options *UpdateLoadBalancerPoolOptions) SetLoadBalancerID(loadBalancerID string) *UpdateLoadBalancerPoolOptions {
+	_options.LoadBalancerID = core.StringPtr(loadBalancerID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateLoadBalancerPoolOptions) SetID(id string) *UpdateLoadBalancerPoolOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateLoadBalancerPoolOptions) SetID(id string) *UpdateLoadBalancerPoolOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetLoadBalancerPoolPatch : Allow user to set LoadBalancerPoolPatch
-func (options *UpdateLoadBalancerPoolOptions) SetLoadBalancerPoolPatch(loadBalancerPoolPatch map[string]interface{}) *UpdateLoadBalancerPoolOptions {
-	options.LoadBalancerPoolPatch = loadBalancerPoolPatch
-	return options
+func (_options *UpdateLoadBalancerPoolOptions) SetLoadBalancerPoolPatch(loadBalancerPoolPatch map[string]interface{}) *UpdateLoadBalancerPoolOptions {
+	_options.LoadBalancerPoolPatch = loadBalancerPoolPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46150,15 +46757,15 @@ func (*VpcV1) NewUpdateNetworkACLOptions(id string, networkACLPatch map[string]i
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateNetworkACLOptions) SetID(id string) *UpdateNetworkACLOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateNetworkACLOptions) SetID(id string) *UpdateNetworkACLOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetNetworkACLPatch : Allow user to set NetworkACLPatch
-func (options *UpdateNetworkACLOptions) SetNetworkACLPatch(networkACLPatch map[string]interface{}) *UpdateNetworkACLOptions {
-	options.NetworkACLPatch = networkACLPatch
-	return options
+func (_options *UpdateNetworkACLOptions) SetNetworkACLPatch(networkACLPatch map[string]interface{}) *UpdateNetworkACLOptions {
+	_options.NetworkACLPatch = networkACLPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46192,21 +46799,21 @@ func (*VpcV1) NewUpdateNetworkACLRuleOptions(networkACLID string, id string, net
 }
 
 // SetNetworkACLID : Allow user to set NetworkACLID
-func (options *UpdateNetworkACLRuleOptions) SetNetworkACLID(networkACLID string) *UpdateNetworkACLRuleOptions {
-	options.NetworkACLID = core.StringPtr(networkACLID)
-	return options
+func (_options *UpdateNetworkACLRuleOptions) SetNetworkACLID(networkACLID string) *UpdateNetworkACLRuleOptions {
+	_options.NetworkACLID = core.StringPtr(networkACLID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateNetworkACLRuleOptions) SetID(id string) *UpdateNetworkACLRuleOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateNetworkACLRuleOptions) SetID(id string) *UpdateNetworkACLRuleOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetNetworkACLRulePatch : Allow user to set NetworkACLRulePatch
-func (options *UpdateNetworkACLRuleOptions) SetNetworkACLRulePatch(networkACLRulePatch map[string]interface{}) *UpdateNetworkACLRuleOptions {
-	options.NetworkACLRulePatch = networkACLRulePatch
-	return options
+func (_options *UpdateNetworkACLRuleOptions) SetNetworkACLRulePatch(networkACLRulePatch map[string]interface{}) *UpdateNetworkACLRuleOptions {
+	_options.NetworkACLRulePatch = networkACLRulePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46236,15 +46843,15 @@ func (*VpcV1) NewUpdatePublicGatewayOptions(id string, publicGatewayPatch map[st
 }
 
 // SetID : Allow user to set ID
-func (options *UpdatePublicGatewayOptions) SetID(id string) *UpdatePublicGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdatePublicGatewayOptions) SetID(id string) *UpdatePublicGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetPublicGatewayPatch : Allow user to set PublicGatewayPatch
-func (options *UpdatePublicGatewayOptions) SetPublicGatewayPatch(publicGatewayPatch map[string]interface{}) *UpdatePublicGatewayOptions {
-	options.PublicGatewayPatch = publicGatewayPatch
-	return options
+func (_options *UpdatePublicGatewayOptions) SetPublicGatewayPatch(publicGatewayPatch map[string]interface{}) *UpdatePublicGatewayOptions {
+	_options.PublicGatewayPatch = publicGatewayPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46274,15 +46881,15 @@ func (*VpcV1) NewUpdateSecurityGroupOptions(id string, securityGroupPatch map[st
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateSecurityGroupOptions) SetID(id string) *UpdateSecurityGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateSecurityGroupOptions) SetID(id string) *UpdateSecurityGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetSecurityGroupPatch : Allow user to set SecurityGroupPatch
-func (options *UpdateSecurityGroupOptions) SetSecurityGroupPatch(securityGroupPatch map[string]interface{}) *UpdateSecurityGroupOptions {
-	options.SecurityGroupPatch = securityGroupPatch
-	return options
+func (_options *UpdateSecurityGroupOptions) SetSecurityGroupPatch(securityGroupPatch map[string]interface{}) *UpdateSecurityGroupOptions {
+	_options.SecurityGroupPatch = securityGroupPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46316,21 +46923,21 @@ func (*VpcV1) NewUpdateSecurityGroupRuleOptions(securityGroupID string, id strin
 }
 
 // SetSecurityGroupID : Allow user to set SecurityGroupID
-func (options *UpdateSecurityGroupRuleOptions) SetSecurityGroupID(securityGroupID string) *UpdateSecurityGroupRuleOptions {
-	options.SecurityGroupID = core.StringPtr(securityGroupID)
-	return options
+func (_options *UpdateSecurityGroupRuleOptions) SetSecurityGroupID(securityGroupID string) *UpdateSecurityGroupRuleOptions {
+	_options.SecurityGroupID = core.StringPtr(securityGroupID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateSecurityGroupRuleOptions) SetID(id string) *UpdateSecurityGroupRuleOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateSecurityGroupRuleOptions) SetID(id string) *UpdateSecurityGroupRuleOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetSecurityGroupRulePatch : Allow user to set SecurityGroupRulePatch
-func (options *UpdateSecurityGroupRuleOptions) SetSecurityGroupRulePatch(securityGroupRulePatch map[string]interface{}) *UpdateSecurityGroupRuleOptions {
-	options.SecurityGroupRulePatch = securityGroupRulePatch
-	return options
+func (_options *UpdateSecurityGroupRuleOptions) SetSecurityGroupRulePatch(securityGroupRulePatch map[string]interface{}) *UpdateSecurityGroupRuleOptions {
+	_options.SecurityGroupRulePatch = securityGroupRulePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46360,15 +46967,15 @@ func (*VpcV1) NewUpdateSnapshotOptions(id string, snapshotPatch map[string]inter
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateSnapshotOptions) SetID(id string) *UpdateSnapshotOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateSnapshotOptions) SetID(id string) *UpdateSnapshotOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetSnapshotPatch : Allow user to set SnapshotPatch
-func (options *UpdateSnapshotOptions) SetSnapshotPatch(snapshotPatch map[string]interface{}) *UpdateSnapshotOptions {
-	options.SnapshotPatch = snapshotPatch
-	return options
+func (_options *UpdateSnapshotOptions) SetSnapshotPatch(snapshotPatch map[string]interface{}) *UpdateSnapshotOptions {
+	_options.SnapshotPatch = snapshotPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46398,15 +47005,15 @@ func (*VpcV1) NewUpdateSubnetOptions(id string, subnetPatch map[string]interface
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateSubnetOptions) SetID(id string) *UpdateSubnetOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateSubnetOptions) SetID(id string) *UpdateSubnetOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetSubnetPatch : Allow user to set SubnetPatch
-func (options *UpdateSubnetOptions) SetSubnetPatch(subnetPatch map[string]interface{}) *UpdateSubnetOptions {
-	options.SubnetPatch = subnetPatch
-	return options
+func (_options *UpdateSubnetOptions) SetSubnetPatch(subnetPatch map[string]interface{}) *UpdateSubnetOptions {
+	_options.SubnetPatch = subnetPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46440,21 +47047,21 @@ func (*VpcV1) NewUpdateSubnetReservedIPOptions(subnetID string, id string, reser
 }
 
 // SetSubnetID : Allow user to set SubnetID
-func (options *UpdateSubnetReservedIPOptions) SetSubnetID(subnetID string) *UpdateSubnetReservedIPOptions {
-	options.SubnetID = core.StringPtr(subnetID)
-	return options
+func (_options *UpdateSubnetReservedIPOptions) SetSubnetID(subnetID string) *UpdateSubnetReservedIPOptions {
+	_options.SubnetID = core.StringPtr(subnetID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateSubnetReservedIPOptions) SetID(id string) *UpdateSubnetReservedIPOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateSubnetReservedIPOptions) SetID(id string) *UpdateSubnetReservedIPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetReservedIPPatch : Allow user to set ReservedIPPatch
-func (options *UpdateSubnetReservedIPOptions) SetReservedIPPatch(reservedIPPatch map[string]interface{}) *UpdateSubnetReservedIPOptions {
-	options.ReservedIPPatch = reservedIPPatch
-	return options
+func (_options *UpdateSubnetReservedIPOptions) SetReservedIPPatch(reservedIPPatch map[string]interface{}) *UpdateSubnetReservedIPOptions {
+	_options.ReservedIPPatch = reservedIPPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46484,15 +47091,15 @@ func (*VpcV1) NewUpdateVolumeOptions(id string, volumePatch map[string]interface
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateVolumeOptions) SetID(id string) *UpdateVolumeOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateVolumeOptions) SetID(id string) *UpdateVolumeOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetVolumePatch : Allow user to set VolumePatch
-func (options *UpdateVolumeOptions) SetVolumePatch(volumePatch map[string]interface{}) *UpdateVolumeOptions {
-	options.VolumePatch = volumePatch
-	return options
+func (_options *UpdateVolumeOptions) SetVolumePatch(volumePatch map[string]interface{}) *UpdateVolumeOptions {
+	_options.VolumePatch = volumePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46526,21 +47133,21 @@ func (*VpcV1) NewUpdateVPCAddressPrefixOptions(vpcID string, id string, addressP
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *UpdateVPCAddressPrefixOptions) SetVPCID(vpcID string) *UpdateVPCAddressPrefixOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *UpdateVPCAddressPrefixOptions) SetVPCID(vpcID string) *UpdateVPCAddressPrefixOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateVPCAddressPrefixOptions) SetID(id string) *UpdateVPCAddressPrefixOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateVPCAddressPrefixOptions) SetID(id string) *UpdateVPCAddressPrefixOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetAddressPrefixPatch : Allow user to set AddressPrefixPatch
-func (options *UpdateVPCAddressPrefixOptions) SetAddressPrefixPatch(addressPrefixPatch map[string]interface{}) *UpdateVPCAddressPrefixOptions {
-	options.AddressPrefixPatch = addressPrefixPatch
-	return options
+func (_options *UpdateVPCAddressPrefixOptions) SetAddressPrefixPatch(addressPrefixPatch map[string]interface{}) *UpdateVPCAddressPrefixOptions {
+	_options.AddressPrefixPatch = addressPrefixPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46570,15 +47177,15 @@ func (*VpcV1) NewUpdateVPCOptions(id string, vpcPatch map[string]interface{}) *U
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateVPCOptions) SetID(id string) *UpdateVPCOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateVPCOptions) SetID(id string) *UpdateVPCOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetVPCPatch : Allow user to set VPCPatch
-func (options *UpdateVPCOptions) SetVPCPatch(vpcPatch map[string]interface{}) *UpdateVPCOptions {
-	options.VPCPatch = vpcPatch
-	return options
+func (_options *UpdateVPCOptions) SetVPCPatch(vpcPatch map[string]interface{}) *UpdateVPCOptions {
+	_options.VPCPatch = vpcPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46612,21 +47219,21 @@ func (*VpcV1) NewUpdateVPCRouteOptions(vpcID string, id string, routePatch map[s
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *UpdateVPCRouteOptions) SetVPCID(vpcID string) *UpdateVPCRouteOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *UpdateVPCRouteOptions) SetVPCID(vpcID string) *UpdateVPCRouteOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateVPCRouteOptions) SetID(id string) *UpdateVPCRouteOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateVPCRouteOptions) SetID(id string) *UpdateVPCRouteOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetRoutePatch : Allow user to set RoutePatch
-func (options *UpdateVPCRouteOptions) SetRoutePatch(routePatch map[string]interface{}) *UpdateVPCRouteOptions {
-	options.RoutePatch = routePatch
-	return options
+func (_options *UpdateVPCRouteOptions) SetRoutePatch(routePatch map[string]interface{}) *UpdateVPCRouteOptions {
+	_options.RoutePatch = routePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46660,21 +47267,21 @@ func (*VpcV1) NewUpdateVPCRoutingTableOptions(vpcID string, id string, routingTa
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *UpdateVPCRoutingTableOptions) SetVPCID(vpcID string) *UpdateVPCRoutingTableOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *UpdateVPCRoutingTableOptions) SetVPCID(vpcID string) *UpdateVPCRoutingTableOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateVPCRoutingTableOptions) SetID(id string) *UpdateVPCRoutingTableOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateVPCRoutingTableOptions) SetID(id string) *UpdateVPCRoutingTableOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetRoutingTablePatch : Allow user to set RoutingTablePatch
-func (options *UpdateVPCRoutingTableOptions) SetRoutingTablePatch(routingTablePatch map[string]interface{}) *UpdateVPCRoutingTableOptions {
-	options.RoutingTablePatch = routingTablePatch
-	return options
+func (_options *UpdateVPCRoutingTableOptions) SetRoutingTablePatch(routingTablePatch map[string]interface{}) *UpdateVPCRoutingTableOptions {
+	_options.RoutingTablePatch = routingTablePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46712,27 +47319,27 @@ func (*VpcV1) NewUpdateVPCRoutingTableRouteOptions(vpcID string, routingTableID 
 }
 
 // SetVPCID : Allow user to set VPCID
-func (options *UpdateVPCRoutingTableRouteOptions) SetVPCID(vpcID string) *UpdateVPCRoutingTableRouteOptions {
-	options.VPCID = core.StringPtr(vpcID)
-	return options
+func (_options *UpdateVPCRoutingTableRouteOptions) SetVPCID(vpcID string) *UpdateVPCRoutingTableRouteOptions {
+	_options.VPCID = core.StringPtr(vpcID)
+	return _options
 }
 
 // SetRoutingTableID : Allow user to set RoutingTableID
-func (options *UpdateVPCRoutingTableRouteOptions) SetRoutingTableID(routingTableID string) *UpdateVPCRoutingTableRouteOptions {
-	options.RoutingTableID = core.StringPtr(routingTableID)
-	return options
+func (_options *UpdateVPCRoutingTableRouteOptions) SetRoutingTableID(routingTableID string) *UpdateVPCRoutingTableRouteOptions {
+	_options.RoutingTableID = core.StringPtr(routingTableID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateVPCRoutingTableRouteOptions) SetID(id string) *UpdateVPCRoutingTableRouteOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateVPCRoutingTableRouteOptions) SetID(id string) *UpdateVPCRoutingTableRouteOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetRoutePatch : Allow user to set RoutePatch
-func (options *UpdateVPCRoutingTableRouteOptions) SetRoutePatch(routePatch map[string]interface{}) *UpdateVPCRoutingTableRouteOptions {
-	options.RoutePatch = routePatch
-	return options
+func (_options *UpdateVPCRoutingTableRouteOptions) SetRoutePatch(routePatch map[string]interface{}) *UpdateVPCRoutingTableRouteOptions {
+	_options.RoutePatch = routePatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46766,21 +47373,21 @@ func (*VpcV1) NewUpdateVPNGatewayConnectionOptions(vpnGatewayID string, id strin
 }
 
 // SetVPNGatewayID : Allow user to set VPNGatewayID
-func (options *UpdateVPNGatewayConnectionOptions) SetVPNGatewayID(vpnGatewayID string) *UpdateVPNGatewayConnectionOptions {
-	options.VPNGatewayID = core.StringPtr(vpnGatewayID)
-	return options
+func (_options *UpdateVPNGatewayConnectionOptions) SetVPNGatewayID(vpnGatewayID string) *UpdateVPNGatewayConnectionOptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateVPNGatewayConnectionOptions) SetID(id string) *UpdateVPNGatewayConnectionOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateVPNGatewayConnectionOptions) SetID(id string) *UpdateVPNGatewayConnectionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetVPNGatewayConnectionPatch : Allow user to set VPNGatewayConnectionPatch
-func (options *UpdateVPNGatewayConnectionOptions) SetVPNGatewayConnectionPatch(vpnGatewayConnectionPatch map[string]interface{}) *UpdateVPNGatewayConnectionOptions {
-	options.VPNGatewayConnectionPatch = vpnGatewayConnectionPatch
-	return options
+func (_options *UpdateVPNGatewayConnectionOptions) SetVPNGatewayConnectionPatch(vpnGatewayConnectionPatch map[string]interface{}) *UpdateVPNGatewayConnectionOptions {
+	_options.VPNGatewayConnectionPatch = vpnGatewayConnectionPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -46810,15 +47417,15 @@ func (*VpcV1) NewUpdateVPNGatewayOptions(id string, vpnGatewayPatch map[string]i
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateVPNGatewayOptions) SetID(id string) *UpdateVPNGatewayOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateVPNGatewayOptions) SetID(id string) *UpdateVPNGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetVPNGatewayPatch : Allow user to set VPNGatewayPatch
-func (options *UpdateVPNGatewayOptions) SetVPNGatewayPatch(vpnGatewayPatch map[string]interface{}) *UpdateVPNGatewayOptions {
-	options.VPNGatewayPatch = vpnGatewayPatch
-	return options
+func (_options *UpdateVPNGatewayOptions) SetVPNGatewayPatch(vpnGatewayPatch map[string]interface{}) *UpdateVPNGatewayOptions {
+	_options.VPNGatewayPatch = vpnGatewayPatch
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -47027,6 +47634,18 @@ func UnmarshalVPCCollection(m map[string]json.RawMessage, result interface{}) (e
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *VPCCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // VPCCollectionFirst : A link to the first page of resources.
 type VPCCollectionFirst struct {
 	// The URL for a page of resources.
@@ -47122,11 +47741,11 @@ func UnmarshalVPCPatch(m map[string]json.RawMessage, result interface{}) (err er
 }
 
 // AsPatch returns a generic map representation of the VPCPatch
-func (vpcPatch *VPCPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (vpcPatch *VPCPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(vpcPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -47364,6 +47983,18 @@ func UnmarshalVPNGatewayCollection(m map[string]json.RawMessage, result interfac
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *VPNGatewayCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
 }
 
 // VPNGatewayCollectionFirst : A link to the first page of resources.
@@ -47778,11 +48409,11 @@ func UnmarshalVPNGatewayConnectionPatch(m map[string]json.RawMessage, result int
 }
 
 // AsPatch returns a generic map representation of the VPNGatewayConnectionPatch
-func (vpnGatewayConnectionPatch *VPNGatewayConnectionPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (vpnGatewayConnectionPatch *VPNGatewayConnectionPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(vpnGatewayConnectionPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -48077,11 +48708,11 @@ func UnmarshalVPNGatewayPatch(m map[string]json.RawMessage, result interface{}) 
 }
 
 // AsPatch returns a generic map representation of the VPNGatewayPatch
-func (vpnGatewayPatch *VPNGatewayPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (vpnGatewayPatch *VPNGatewayPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(vpnGatewayPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -48479,11 +49110,11 @@ func UnmarshalVolumeAttachmentPatch(m map[string]json.RawMessage, result interfa
 }
 
 // AsPatch returns a generic map representation of the VolumeAttachmentPatch
-func (volumeAttachmentPatch *VolumeAttachmentPatch) AsPatch() (patch map[string]interface{}, err error) {
+func (volumeAttachmentPatch *VolumeAttachmentPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(volumeAttachmentPatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -48501,11 +49132,11 @@ type VolumeAttachmentPrototypeInstanceByImageContext struct {
 }
 
 // NewVolumeAttachmentPrototypeInstanceByImageContext : Instantiate VolumeAttachmentPrototypeInstanceByImageContext (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentPrototypeInstanceByImageContext(volume *VolumePrototypeInstanceByImageContext) (model *VolumeAttachmentPrototypeInstanceByImageContext, err error) {
-	model = &VolumeAttachmentPrototypeInstanceByImageContext{
+func (*VpcV1) NewVolumeAttachmentPrototypeInstanceByImageContext(volume *VolumePrototypeInstanceByImageContext) (_model *VolumeAttachmentPrototypeInstanceByImageContext, err error) {
+	_model = &VolumeAttachmentPrototypeInstanceByImageContext{
 		Volume: volume,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -48541,11 +49172,11 @@ type VolumeAttachmentPrototypeInstanceByVolumeContext struct {
 }
 
 // NewVolumeAttachmentPrototypeInstanceByVolumeContext : Instantiate VolumeAttachmentPrototypeInstanceByVolumeContext (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentPrototypeInstanceByVolumeContext(volume VolumeAttachmentVolumePrototypeInstanceByVolumeContextIntf) (model *VolumeAttachmentPrototypeInstanceByVolumeContext, err error) {
-	model = &VolumeAttachmentPrototypeInstanceByVolumeContext{
+func (*VpcV1) NewVolumeAttachmentPrototypeInstanceByVolumeContext(volume VolumeAttachmentVolumePrototypeInstanceByVolumeContextIntf) (_model *VolumeAttachmentPrototypeInstanceByVolumeContext, err error) {
+	_model = &VolumeAttachmentPrototypeInstanceByVolumeContext{
 		Volume: volume,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -48581,11 +49212,11 @@ type VolumeAttachmentPrototypeInstanceContext struct {
 }
 
 // NewVolumeAttachmentPrototypeInstanceContext : Instantiate VolumeAttachmentPrototypeInstanceContext (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentPrototypeInstanceContext(volume VolumeAttachmentVolumePrototypeInstanceContextIntf) (model *VolumeAttachmentPrototypeInstanceContext, err error) {
-	model = &VolumeAttachmentPrototypeInstanceContext{
+func (*VpcV1) NewVolumeAttachmentPrototypeInstanceContext(volume VolumeAttachmentVolumePrototypeInstanceContextIntf) (_model *VolumeAttachmentPrototypeInstanceContext, err error) {
+	_model = &VolumeAttachmentPrototypeInstanceContext{
 		Volume: volume,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -48867,8 +49498,10 @@ func UnmarshalVolumeAttachmentReferenceVolumeContextDeleted(m map[string]json.Ra
 // Models which "extend" this model:
 // - VolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext
 type VolumeAttachmentVolumePrototypeInstanceByVolumeContext struct {
-	// The capacity of the volume in gigabytes. The specified minimum and maximum capacity values for creating or updating
-	// volumes may expand in the future.
+	// The capacity of the volume in gigabytes. The only allowed value is the source snapshot's `minimum_capacity`, but the
+	// allowed values are expected to expand in the future.
+	//
+	// If unspecified, the capacity will be the source snapshot's `minimum_capacity`.
 	Capacity *int64 `json:"capacity,omitempty"`
 
 	// The root key to use to wrap the data encryption key for the volume.
@@ -49055,6 +49688,18 @@ func UnmarshalVolumeCollection(m map[string]json.RawMessage, result interface{})
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *VolumeCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
+}
+
 // VolumeCollectionFirst : A link to the first page of resources.
 type VolumeCollectionFirst struct {
 	// The URL for a page of resources.
@@ -49150,11 +49795,11 @@ func UnmarshalVolumePatch(m map[string]json.RawMessage, result interface{}) (err
 }
 
 // AsPatch returns a generic map representation of the VolumePatch
-func (volumePatch *VolumePatch) AsPatch() (patch map[string]interface{}, err error) {
+func (volumePatch *VolumePatch) AsPatch() (_patch map[string]interface{}, err error) {
 	var jsonData []byte
 	jsonData, err = json.Marshal(volumePatch)
 	if err == nil {
-		err = json.Unmarshal(jsonData, &patch)
+		err = json.Unmarshal(jsonData, &_patch)
 	}
 	return
 }
@@ -49234,6 +49879,18 @@ func UnmarshalVolumeProfileCollection(m map[string]json.RawMessage, result inter
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *VolumeProfileCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
+		return nil, err
+	}
+	return start, nil
 }
 
 // VolumeProfileCollectionFirst : A link to the first page of resources.
@@ -49427,11 +50084,11 @@ type VolumePrototypeInstanceByImageContext struct {
 }
 
 // NewVolumePrototypeInstanceByImageContext : Instantiate VolumePrototypeInstanceByImageContext (Generic Model Constructor)
-func (*VpcV1) NewVolumePrototypeInstanceByImageContext(profile VolumeProfileIdentityIntf) (model *VolumePrototypeInstanceByImageContext, err error) {
-	model = &VolumePrototypeInstanceByImageContext{
+func (*VpcV1) NewVolumePrototypeInstanceByImageContext(profile VolumeProfileIdentityIntf) (_model *VolumePrototypeInstanceByImageContext, err error) {
+	_model = &VolumePrototypeInstanceByImageContext{
 		Profile: profile,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -49693,11 +50350,11 @@ type CertificateInstanceIdentityByCRN struct {
 }
 
 // NewCertificateInstanceIdentityByCRN : Instantiate CertificateInstanceIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewCertificateInstanceIdentityByCRN(crn string) (model *CertificateInstanceIdentityByCRN, err error) {
-	model = &CertificateInstanceIdentityByCRN{
+func (*VpcV1) NewCertificateInstanceIdentityByCRN(crn string) (_model *CertificateInstanceIdentityByCRN, err error) {
+	_model = &CertificateInstanceIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -49724,11 +50381,11 @@ type CloudObjectStorageBucketIdentityByName struct {
 }
 
 // NewCloudObjectStorageBucketIdentityByName : Instantiate CloudObjectStorageBucketIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewCloudObjectStorageBucketIdentityByName(name string) (model *CloudObjectStorageBucketIdentityByName, err error) {
-	model = &CloudObjectStorageBucketIdentityByName{
+func (*VpcV1) NewCloudObjectStorageBucketIdentityByName(name string) (_model *CloudObjectStorageBucketIdentityByName, err error) {
+	_model = &CloudObjectStorageBucketIdentityByName{
 		Name: core.StringPtr(name),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -49755,11 +50412,11 @@ type DedicatedHostGroupIdentityByCRN struct {
 }
 
 // NewDedicatedHostGroupIdentityByCRN : Instantiate DedicatedHostGroupIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewDedicatedHostGroupIdentityByCRN(crn string) (model *DedicatedHostGroupIdentityByCRN, err error) {
-	model = &DedicatedHostGroupIdentityByCRN{
+func (*VpcV1) NewDedicatedHostGroupIdentityByCRN(crn string) (_model *DedicatedHostGroupIdentityByCRN, err error) {
+	_model = &DedicatedHostGroupIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -49786,11 +50443,11 @@ type DedicatedHostGroupIdentityByHref struct {
 }
 
 // NewDedicatedHostGroupIdentityByHref : Instantiate DedicatedHostGroupIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewDedicatedHostGroupIdentityByHref(href string) (model *DedicatedHostGroupIdentityByHref, err error) {
-	model = &DedicatedHostGroupIdentityByHref{
+func (*VpcV1) NewDedicatedHostGroupIdentityByHref(href string) (_model *DedicatedHostGroupIdentityByHref, err error) {
+	_model = &DedicatedHostGroupIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -49817,11 +50474,11 @@ type DedicatedHostGroupIdentityByID struct {
 }
 
 // NewDedicatedHostGroupIdentityByID : Instantiate DedicatedHostGroupIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewDedicatedHostGroupIdentityByID(id string) (model *DedicatedHostGroupIdentityByID, err error) {
-	model = &DedicatedHostGroupIdentityByID{
+func (*VpcV1) NewDedicatedHostGroupIdentityByID(id string) (_model *DedicatedHostGroupIdentityByID, err error) {
+	_model = &DedicatedHostGroupIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -49848,11 +50505,11 @@ type DedicatedHostProfileIdentityByHref struct {
 }
 
 // NewDedicatedHostProfileIdentityByHref : Instantiate DedicatedHostProfileIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewDedicatedHostProfileIdentityByHref(href string) (model *DedicatedHostProfileIdentityByHref, err error) {
-	model = &DedicatedHostProfileIdentityByHref{
+func (*VpcV1) NewDedicatedHostProfileIdentityByHref(href string) (_model *DedicatedHostProfileIdentityByHref, err error) {
+	_model = &DedicatedHostProfileIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -49879,11 +50536,11 @@ type DedicatedHostProfileIdentityByName struct {
 }
 
 // NewDedicatedHostProfileIdentityByName : Instantiate DedicatedHostProfileIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewDedicatedHostProfileIdentityByName(name string) (model *DedicatedHostProfileIdentityByName, err error) {
-	model = &DedicatedHostProfileIdentityByName{
+func (*VpcV1) NewDedicatedHostProfileIdentityByName(name string) (_model *DedicatedHostProfileIdentityByName, err error) {
+	_model = &DedicatedHostProfileIdentityByName{
 		Name: core.StringPtr(name),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -50405,12 +51062,12 @@ type DedicatedHostPrototypeDedicatedHostByGroup struct {
 }
 
 // NewDedicatedHostPrototypeDedicatedHostByGroup : Instantiate DedicatedHostPrototypeDedicatedHostByGroup (Generic Model Constructor)
-func (*VpcV1) NewDedicatedHostPrototypeDedicatedHostByGroup(profile DedicatedHostProfileIdentityIntf, group DedicatedHostGroupIdentityIntf) (model *DedicatedHostPrototypeDedicatedHostByGroup, err error) {
-	model = &DedicatedHostPrototypeDedicatedHostByGroup{
+func (*VpcV1) NewDedicatedHostPrototypeDedicatedHostByGroup(profile DedicatedHostProfileIdentityIntf, group DedicatedHostGroupIdentityIntf) (_model *DedicatedHostPrototypeDedicatedHostByGroup, err error) {
+	_model = &DedicatedHostPrototypeDedicatedHostByGroup{
 		Profile: profile,
 		Group:   group,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -50467,12 +51124,12 @@ type DedicatedHostPrototypeDedicatedHostByZone struct {
 }
 
 // NewDedicatedHostPrototypeDedicatedHostByZone : Instantiate DedicatedHostPrototypeDedicatedHostByZone (Generic Model Constructor)
-func (*VpcV1) NewDedicatedHostPrototypeDedicatedHostByZone(profile DedicatedHostProfileIdentityIntf, zone ZoneIdentityIntf) (model *DedicatedHostPrototypeDedicatedHostByZone, err error) {
-	model = &DedicatedHostPrototypeDedicatedHostByZone{
+func (*VpcV1) NewDedicatedHostPrototypeDedicatedHostByZone(profile DedicatedHostProfileIdentityIntf, zone ZoneIdentityIntf) (_model *DedicatedHostPrototypeDedicatedHostByZone, err error) {
+	_model = &DedicatedHostPrototypeDedicatedHostByZone{
 		Profile: profile,
 		Zone:    zone,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -50521,11 +51178,11 @@ type EncryptionKeyIdentityByCRN struct {
 }
 
 // NewEncryptionKeyIdentityByCRN : Instantiate EncryptionKeyIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewEncryptionKeyIdentityByCRN(crn string) (model *EncryptionKeyIdentityByCRN, err error) {
-	model = &EncryptionKeyIdentityByCRN{
+func (*VpcV1) NewEncryptionKeyIdentityByCRN(crn string) (_model *EncryptionKeyIdentityByCRN, err error) {
+	_model = &EncryptionKeyIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -50602,11 +51259,11 @@ type EndpointGatewayReservedIPReservedIPPrototypeTargetContext struct {
 }
 
 // NewEndpointGatewayReservedIPReservedIPPrototypeTargetContext : Instantiate EndpointGatewayReservedIPReservedIPPrototypeTargetContext (Generic Model Constructor)
-func (*VpcV1) NewEndpointGatewayReservedIPReservedIPPrototypeTargetContext(subnet SubnetIdentityIntf) (model *EndpointGatewayReservedIPReservedIPPrototypeTargetContext, err error) {
-	model = &EndpointGatewayReservedIPReservedIPPrototypeTargetContext{
+func (*VpcV1) NewEndpointGatewayReservedIPReservedIPPrototypeTargetContext(subnet SubnetIdentityIntf) (_model *EndpointGatewayReservedIPReservedIPPrototypeTargetContext, err error) {
+	_model = &EndpointGatewayReservedIPReservedIPPrototypeTargetContext{
 		Subnet: subnet,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -50807,11 +51464,11 @@ type FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref st
 }
 
 // NewFloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref : Instantiate FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewFloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref(href string) (model *FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref, err error) {
-	model = &FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref{
+func (*VpcV1) NewFloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref(href string) (_model *FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref, err error) {
+	_model = &FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -50838,11 +51495,11 @@ type FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID stru
 }
 
 // NewFloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID : Instantiate FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewFloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID(id string) (model *FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID, err error) {
-	model = &FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID{
+func (*VpcV1) NewFloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID(id string) (_model *FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID, err error) {
+	_model = &FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -50869,11 +51526,11 @@ type FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref
 }
 
 // NewFloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref : Instantiate FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewFloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref(href string) (model *FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref, err error) {
-	model = &FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref{
+func (*VpcV1) NewFloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref(href string) (_model *FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref, err error) {
+	_model = &FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -50900,11 +51557,11 @@ type FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID s
 }
 
 // NewFloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID : Instantiate FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewFloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID(id string) (model *FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID, err error) {
-	model = &FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID{
+func (*VpcV1) NewFloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID(id string) (_model *FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID, err error) {
+	_model = &FloatingIPPatchTargetNetworkInterfaceIdentityNetworkInterfaceIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -50937,11 +51594,11 @@ type FloatingIPPrototypeFloatingIPByTarget struct {
 }
 
 // NewFloatingIPPrototypeFloatingIPByTarget : Instantiate FloatingIPPrototypeFloatingIPByTarget (Generic Model Constructor)
-func (*VpcV1) NewFloatingIPPrototypeFloatingIPByTarget(target FloatingIPByTargetNetworkInterfaceIdentityIntf) (model *FloatingIPPrototypeFloatingIPByTarget, err error) {
-	model = &FloatingIPPrototypeFloatingIPByTarget{
+func (*VpcV1) NewFloatingIPPrototypeFloatingIPByTarget(target FloatingIPByTargetNetworkInterfaceIdentityIntf) (_model *FloatingIPPrototypeFloatingIPByTarget, err error) {
+	_model = &FloatingIPPrototypeFloatingIPByTarget{
 		Target: target,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -50982,11 +51639,11 @@ type FloatingIPPrototypeFloatingIPByZone struct {
 }
 
 // NewFloatingIPPrototypeFloatingIPByZone : Instantiate FloatingIPPrototypeFloatingIPByZone (Generic Model Constructor)
-func (*VpcV1) NewFloatingIPPrototypeFloatingIPByZone(zone ZoneIdentityIntf) (model *FloatingIPPrototypeFloatingIPByZone, err error) {
-	model = &FloatingIPPrototypeFloatingIPByZone{
+func (*VpcV1) NewFloatingIPPrototypeFloatingIPByZone(zone ZoneIdentityIntf) (_model *FloatingIPPrototypeFloatingIPByZone, err error) {
+	_model = &FloatingIPPrototypeFloatingIPByZone{
 		Zone: zone,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -51547,11 +52204,11 @@ type IkePolicyIdentityByHref struct {
 }
 
 // NewIkePolicyIdentityByHref : Instantiate IkePolicyIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewIkePolicyIdentityByHref(href string) (model *IkePolicyIdentityByHref, err error) {
-	model = &IkePolicyIdentityByHref{
+func (*VpcV1) NewIkePolicyIdentityByHref(href string) (_model *IkePolicyIdentityByHref, err error) {
+	_model = &IkePolicyIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -51578,11 +52235,11 @@ type IkePolicyIdentityByID struct {
 }
 
 // NewIkePolicyIdentityByID : Instantiate IkePolicyIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewIkePolicyIdentityByID(id string) (model *IkePolicyIdentityByID, err error) {
-	model = &IkePolicyIdentityByID{
+func (*VpcV1) NewIkePolicyIdentityByID(id string) (_model *IkePolicyIdentityByID, err error) {
+	_model = &IkePolicyIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -51609,11 +52266,11 @@ type IPsecPolicyIdentityByHref struct {
 }
 
 // NewIPsecPolicyIdentityByHref : Instantiate IPsecPolicyIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewIPsecPolicyIdentityByHref(href string) (model *IPsecPolicyIdentityByHref, err error) {
-	model = &IPsecPolicyIdentityByHref{
+func (*VpcV1) NewIPsecPolicyIdentityByHref(href string) (_model *IPsecPolicyIdentityByHref, err error) {
+	_model = &IPsecPolicyIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -51640,11 +52297,11 @@ type IPsecPolicyIdentityByID struct {
 }
 
 // NewIPsecPolicyIdentityByID : Instantiate IPsecPolicyIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewIPsecPolicyIdentityByID(id string) (model *IPsecPolicyIdentityByID, err error) {
-	model = &IPsecPolicyIdentityByID{
+func (*VpcV1) NewIPsecPolicyIdentityByID(id string) (_model *IPsecPolicyIdentityByID, err error) {
+	_model = &IPsecPolicyIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -51671,11 +52328,11 @@ type ImageIdentityByCRN struct {
 }
 
 // NewImageIdentityByCRN : Instantiate ImageIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewImageIdentityByCRN(crn string) (model *ImageIdentityByCRN, err error) {
-	model = &ImageIdentityByCRN{
+func (*VpcV1) NewImageIdentityByCRN(crn string) (_model *ImageIdentityByCRN, err error) {
+	_model = &ImageIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -51702,11 +52359,11 @@ type ImageIdentityByHref struct {
 }
 
 // NewImageIdentityByHref : Instantiate ImageIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewImageIdentityByHref(href string) (model *ImageIdentityByHref, err error) {
-	model = &ImageIdentityByHref{
+func (*VpcV1) NewImageIdentityByHref(href string) (_model *ImageIdentityByHref, err error) {
+	_model = &ImageIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -51733,11 +52390,11 @@ type ImageIdentityByID struct {
 }
 
 // NewImageIdentityByID : Instantiate ImageIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewImageIdentityByID(id string) (model *ImageIdentityByID, err error) {
-	model = &ImageIdentityByID{
+func (*VpcV1) NewImageIdentityByID(id string) (_model *ImageIdentityByID, err error) {
+	_model = &ImageIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -51792,12 +52449,12 @@ type ImagePrototypeImageByFile struct {
 }
 
 // NewImagePrototypeImageByFile : Instantiate ImagePrototypeImageByFile (Generic Model Constructor)
-func (*VpcV1) NewImagePrototypeImageByFile(file *ImageFilePrototype, operatingSystem OperatingSystemIdentityIntf) (model *ImagePrototypeImageByFile, err error) {
-	model = &ImagePrototypeImageByFile{
+func (*VpcV1) NewImagePrototypeImageByFile(file *ImageFilePrototype, operatingSystem OperatingSystemIdentityIntf) (_model *ImagePrototypeImageByFile, err error) {
+	_model = &ImagePrototypeImageByFile{
 		File:            file,
 		OperatingSystem: operatingSystem,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -51860,11 +52517,11 @@ type ImagePrototypeImageBySourceVolume struct {
 }
 
 // NewImagePrototypeImageBySourceVolume : Instantiate ImagePrototypeImageBySourceVolume (Generic Model Constructor)
-func (*VpcV1) NewImagePrototypeImageBySourceVolume(sourceVolume VolumeIdentityIntf) (model *ImagePrototypeImageBySourceVolume, err error) {
-	model = &ImagePrototypeImageBySourceVolume{
+func (*VpcV1) NewImagePrototypeImageBySourceVolume(sourceVolume VolumeIdentityIntf) (_model *ImagePrototypeImageBySourceVolume, err error) {
+	_model = &ImagePrototypeImageBySourceVolume{
 		SourceVolume: sourceVolume,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -52262,13 +52919,13 @@ const (
 )
 
 // NewInstanceGroupManagerPolicyPrototypeInstanceGroupManagerTargetPolicyPrototype : Instantiate InstanceGroupManagerPolicyPrototypeInstanceGroupManagerTargetPolicyPrototype (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerPolicyPrototypeInstanceGroupManagerTargetPolicyPrototype(metricType string, metricValue int64, policyType string) (model *InstanceGroupManagerPolicyPrototypeInstanceGroupManagerTargetPolicyPrototype, err error) {
-	model = &InstanceGroupManagerPolicyPrototypeInstanceGroupManagerTargetPolicyPrototype{
+func (*VpcV1) NewInstanceGroupManagerPolicyPrototypeInstanceGroupManagerTargetPolicyPrototype(metricType string, metricValue int64, policyType string) (_model *InstanceGroupManagerPolicyPrototypeInstanceGroupManagerTargetPolicyPrototype, err error) {
+	_model = &InstanceGroupManagerPolicyPrototypeInstanceGroupManagerTargetPolicyPrototype{
 		MetricType:  core.StringPtr(metricType),
 		MetricValue: core.Int64Ptr(metricValue),
 		PolicyType:  core.StringPtr(policyType),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -52418,12 +53075,12 @@ const (
 )
 
 // NewInstanceGroupManagerPrototypeInstanceGroupManagerAutoScalePrototype : Instantiate InstanceGroupManagerPrototypeInstanceGroupManagerAutoScalePrototype (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerPrototypeInstanceGroupManagerAutoScalePrototype(managerType string, maxMembershipCount int64) (model *InstanceGroupManagerPrototypeInstanceGroupManagerAutoScalePrototype, err error) {
-	model = &InstanceGroupManagerPrototypeInstanceGroupManagerAutoScalePrototype{
+func (*VpcV1) NewInstanceGroupManagerPrototypeInstanceGroupManagerAutoScalePrototype(managerType string, maxMembershipCount int64) (_model *InstanceGroupManagerPrototypeInstanceGroupManagerAutoScalePrototype, err error) {
+	_model = &InstanceGroupManagerPrototypeInstanceGroupManagerAutoScalePrototype{
 		ManagerType:        core.StringPtr(managerType),
 		MaxMembershipCount: core.Int64Ptr(maxMembershipCount),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -52486,11 +53143,11 @@ const (
 )
 
 // NewInstanceGroupManagerPrototypeInstanceGroupManagerScheduledPrototype : Instantiate InstanceGroupManagerPrototypeInstanceGroupManagerScheduledPrototype (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerPrototypeInstanceGroupManagerScheduledPrototype(managerType string) (model *InstanceGroupManagerPrototypeInstanceGroupManagerScheduledPrototype, err error) {
-	model = &InstanceGroupManagerPrototypeInstanceGroupManagerScheduledPrototype{
+func (*VpcV1) NewInstanceGroupManagerPrototypeInstanceGroupManagerScheduledPrototype(managerType string) (_model *InstanceGroupManagerPrototypeInstanceGroupManagerScheduledPrototype, err error) {
+	_model = &InstanceGroupManagerPrototypeInstanceGroupManagerScheduledPrototype{
 		ManagerType: core.StringPtr(managerType),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -52717,11 +53374,11 @@ type InstancePatchProfileInstanceProfileIdentityByHref struct {
 }
 
 // NewInstancePatchProfileInstanceProfileIdentityByHref : Instantiate InstancePatchProfileInstanceProfileIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewInstancePatchProfileInstanceProfileIdentityByHref(href string) (model *InstancePatchProfileInstanceProfileIdentityByHref, err error) {
-	model = &InstancePatchProfileInstanceProfileIdentityByHref{
+func (*VpcV1) NewInstancePatchProfileInstanceProfileIdentityByHref(href string) (_model *InstancePatchProfileInstanceProfileIdentityByHref, err error) {
+	_model = &InstancePatchProfileInstanceProfileIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -52748,11 +53405,11 @@ type InstancePatchProfileInstanceProfileIdentityByName struct {
 }
 
 // NewInstancePatchProfileInstanceProfileIdentityByName : Instantiate InstancePatchProfileInstanceProfileIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewInstancePatchProfileInstanceProfileIdentityByName(name string) (model *InstancePatchProfileInstanceProfileIdentityByName, err error) {
-	model = &InstancePatchProfileInstanceProfileIdentityByName{
+func (*VpcV1) NewInstancePatchProfileInstanceProfileIdentityByName(name string) (_model *InstancePatchProfileInstanceProfileIdentityByName, err error) {
+	_model = &InstancePatchProfileInstanceProfileIdentityByName{
 		Name: core.StringPtr(name),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -52862,6 +53519,136 @@ func UnmarshalInstancePlacementTargetPrototypeDedicatedHostIdentity(m map[string
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// InstancePlacementTargetDedicatedHostGroupReference : InstancePlacementTargetDedicatedHostGroupReference struct
+// This model "extends" InstancePlacementTarget
+type InstancePlacementTargetDedicatedHostGroupReference struct {
+	// The CRN for this dedicated host group.
+	CRN *string `json:"crn" validate:"required"`
+
+	// If present, this property indicates the referenced resource has been deleted and provides
+	// some supplementary information.
+	Deleted *DedicatedHostGroupReferenceDeleted `json:"deleted,omitempty"`
+
+	// The URL for this dedicated host group.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this dedicated host group.
+	ID *string `json:"id" validate:"required"`
+
+	// The unique user-defined name for this dedicated host group. If unspecified, the name will be a hyphenated list of
+	// randomly-selected words.
+	Name *string `json:"name" validate:"required"`
+
+	// The type of resource referenced.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the InstancePlacementTargetDedicatedHostGroupReference.ResourceType property.
+// The type of resource referenced.
+const (
+	InstancePlacementTargetDedicatedHostGroupReferenceResourceTypeDedicatedHostGroupConst = "dedicated_host_group"
+)
+
+func (*InstancePlacementTargetDedicatedHostGroupReference) isaInstancePlacementTarget() bool {
+	return true
+}
+
+// UnmarshalInstancePlacementTargetDedicatedHostGroupReference unmarshals an instance of InstancePlacementTargetDedicatedHostGroupReference from the specified map of raw messages.
+func UnmarshalInstancePlacementTargetDedicatedHostGroupReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstancePlacementTargetDedicatedHostGroupReference)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDedicatedHostGroupReferenceDeleted)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// InstancePlacementTargetDedicatedHostReference : InstancePlacementTargetDedicatedHostReference struct
+// This model "extends" InstancePlacementTarget
+type InstancePlacementTargetDedicatedHostReference struct {
+	// The CRN for this dedicated host.
+	CRN *string `json:"crn" validate:"required"`
+
+	// If present, this property indicates the referenced resource has been deleted and provides
+	// some supplementary information.
+	Deleted *DedicatedHostReferenceDeleted `json:"deleted,omitempty"`
+
+	// The URL for this dedicated host.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this dedicated host.
+	ID *string `json:"id" validate:"required"`
+
+	// The unique user-defined name for this dedicated host. If unspecified, the name will be a hyphenated list of
+	// randomly-selected words.
+	Name *string `json:"name" validate:"required"`
+
+	// The type of resource referenced.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the InstancePlacementTargetDedicatedHostReference.ResourceType property.
+// The type of resource referenced.
+const (
+	InstancePlacementTargetDedicatedHostReferenceResourceTypeDedicatedHostConst = "dedicated_host"
+)
+
+func (*InstancePlacementTargetDedicatedHostReference) isaInstancePlacementTarget() bool {
+	return true
+}
+
+// UnmarshalInstancePlacementTargetDedicatedHostReference unmarshals an instance of InstancePlacementTargetDedicatedHostReference from the specified map of raw messages.
+func UnmarshalInstancePlacementTargetDedicatedHostReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstancePlacementTargetDedicatedHostReference)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDedicatedHostReferenceDeleted)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		return
 	}
@@ -53365,11 +54152,11 @@ type InstanceProfileIdentityByHref struct {
 }
 
 // NewInstanceProfileIdentityByHref : Instantiate InstanceProfileIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewInstanceProfileIdentityByHref(href string) (model *InstanceProfileIdentityByHref, err error) {
-	model = &InstanceProfileIdentityByHref{
+func (*VpcV1) NewInstanceProfileIdentityByHref(href string) (_model *InstanceProfileIdentityByHref, err error) {
+	_model = &InstanceProfileIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -53396,11 +54183,11 @@ type InstanceProfileIdentityByName struct {
 }
 
 // NewInstanceProfileIdentityByName : Instantiate InstanceProfileIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewInstanceProfileIdentityByName(name string) (model *InstanceProfileIdentityByName, err error) {
-	model = &InstanceProfileIdentityByName{
+func (*VpcV1) NewInstanceProfileIdentityByName(name string) (_model *InstanceProfileIdentityByName, err error) {
+	_model = &InstanceProfileIdentityByName{
 		Name: core.StringPtr(name),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -53854,13 +54641,13 @@ type InstancePrototypeInstanceByImage struct {
 }
 
 // NewInstancePrototypeInstanceByImage : Instantiate InstancePrototypeInstanceByImage (Generic Model Constructor)
-func (*VpcV1) NewInstancePrototypeInstanceByImage(image ImageIdentityIntf, primaryNetworkInterface *NetworkInterfacePrototype, zone ZoneIdentityIntf) (model *InstancePrototypeInstanceByImage, err error) {
-	model = &InstancePrototypeInstanceByImage{
+func (*VpcV1) NewInstancePrototypeInstanceByImage(image ImageIdentityIntf, primaryNetworkInterface *NetworkInterfacePrototype, zone ZoneIdentityIntf) (_model *InstancePrototypeInstanceByImage, err error) {
+	_model = &InstancePrototypeInstanceByImage{
 		Image:                   image,
 		PrimaryNetworkInterface: primaryNetworkInterface,
 		Zone:                    zone,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -53980,11 +54767,11 @@ type InstancePrototypeInstanceBySourceTemplate struct {
 }
 
 // NewInstancePrototypeInstanceBySourceTemplate : Instantiate InstancePrototypeInstanceBySourceTemplate (Generic Model Constructor)
-func (*VpcV1) NewInstancePrototypeInstanceBySourceTemplate(sourceTemplate InstanceTemplateIdentityIntf) (model *InstancePrototypeInstanceBySourceTemplate, err error) {
-	model = &InstancePrototypeInstanceBySourceTemplate{
+func (*VpcV1) NewInstancePrototypeInstanceBySourceTemplate(sourceTemplate InstanceTemplateIdentityIntf) (_model *InstancePrototypeInstanceBySourceTemplate, err error) {
+	_model = &InstancePrototypeInstanceBySourceTemplate{
 		SourceTemplate: sourceTemplate,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -54102,13 +54889,13 @@ type InstancePrototypeInstanceByVolume struct {
 }
 
 // NewInstancePrototypeInstanceByVolume : Instantiate InstancePrototypeInstanceByVolume (Generic Model Constructor)
-func (*VpcV1) NewInstancePrototypeInstanceByVolume(bootVolumeAttachment *VolumeAttachmentPrototypeInstanceByVolumeContext, primaryNetworkInterface *NetworkInterfacePrototype, zone ZoneIdentityIntf) (model *InstancePrototypeInstanceByVolume, err error) {
-	model = &InstancePrototypeInstanceByVolume{
+func (*VpcV1) NewInstancePrototypeInstanceByVolume(bootVolumeAttachment *VolumeAttachmentPrototypeInstanceByVolumeContext, primaryNetworkInterface *NetworkInterfacePrototype, zone ZoneIdentityIntf) (_model *InstancePrototypeInstanceByVolume, err error) {
+	_model = &InstancePrototypeInstanceByVolume{
 		BootVolumeAttachment:    bootVolumeAttachment,
 		PrimaryNetworkInterface: primaryNetworkInterface,
 		Zone:                    zone,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -54179,11 +54966,11 @@ type InstanceTemplateIdentityByCRN struct {
 }
 
 // NewInstanceTemplateIdentityByCRN : Instantiate InstanceTemplateIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewInstanceTemplateIdentityByCRN(crn string) (model *InstanceTemplateIdentityByCRN, err error) {
-	model = &InstanceTemplateIdentityByCRN{
+func (*VpcV1) NewInstanceTemplateIdentityByCRN(crn string) (_model *InstanceTemplateIdentityByCRN, err error) {
+	_model = &InstanceTemplateIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -54210,11 +54997,11 @@ type InstanceTemplateIdentityByHref struct {
 }
 
 // NewInstanceTemplateIdentityByHref : Instantiate InstanceTemplateIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewInstanceTemplateIdentityByHref(href string) (model *InstanceTemplateIdentityByHref, err error) {
-	model = &InstanceTemplateIdentityByHref{
+func (*VpcV1) NewInstanceTemplateIdentityByHref(href string) (_model *InstanceTemplateIdentityByHref, err error) {
+	_model = &InstanceTemplateIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -54241,11 +55028,11 @@ type InstanceTemplateIdentityByID struct {
 }
 
 // NewInstanceTemplateIdentityByID : Instantiate InstanceTemplateIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewInstanceTemplateIdentityByID(id string) (model *InstanceTemplateIdentityByID, err error) {
-	model = &InstanceTemplateIdentityByID{
+func (*VpcV1) NewInstanceTemplateIdentityByID(id string) (_model *InstanceTemplateIdentityByID, err error) {
+	_model = &InstanceTemplateIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -54314,13 +55101,13 @@ type InstanceTemplatePrototypeInstanceByImage struct {
 }
 
 // NewInstanceTemplatePrototypeInstanceByImage : Instantiate InstanceTemplatePrototypeInstanceByImage (Generic Model Constructor)
-func (*VpcV1) NewInstanceTemplatePrototypeInstanceByImage(image ImageIdentityIntf, primaryNetworkInterface *NetworkInterfacePrototype, zone ZoneIdentityIntf) (model *InstanceTemplatePrototypeInstanceByImage, err error) {
-	model = &InstanceTemplatePrototypeInstanceByImage{
+func (*VpcV1) NewInstanceTemplatePrototypeInstanceByImage(image ImageIdentityIntf, primaryNetworkInterface *NetworkInterfacePrototype, zone ZoneIdentityIntf) (_model *InstanceTemplatePrototypeInstanceByImage, err error) {
+	_model = &InstanceTemplatePrototypeInstanceByImage{
 		Image:                   image,
 		PrimaryNetworkInterface: primaryNetworkInterface,
 		Zone:                    zone,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -54440,11 +55227,11 @@ type InstanceTemplatePrototypeInstanceBySourceTemplate struct {
 }
 
 // NewInstanceTemplatePrototypeInstanceBySourceTemplate : Instantiate InstanceTemplatePrototypeInstanceBySourceTemplate (Generic Model Constructor)
-func (*VpcV1) NewInstanceTemplatePrototypeInstanceBySourceTemplate(sourceTemplate InstanceTemplateIdentityIntf) (model *InstanceTemplatePrototypeInstanceBySourceTemplate, err error) {
-	model = &InstanceTemplatePrototypeInstanceBySourceTemplate{
+func (*VpcV1) NewInstanceTemplatePrototypeInstanceBySourceTemplate(sourceTemplate InstanceTemplateIdentityIntf) (_model *InstanceTemplatePrototypeInstanceBySourceTemplate, err error) {
+	_model = &InstanceTemplatePrototypeInstanceBySourceTemplate{
 		SourceTemplate: sourceTemplate,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -54562,13 +55349,13 @@ type InstanceTemplatePrototypeInstanceByVolume struct {
 }
 
 // NewInstanceTemplatePrototypeInstanceByVolume : Instantiate InstanceTemplatePrototypeInstanceByVolume (Generic Model Constructor)
-func (*VpcV1) NewInstanceTemplatePrototypeInstanceByVolume(bootVolumeAttachment *VolumeAttachmentPrototypeInstanceByVolumeContext, primaryNetworkInterface *NetworkInterfacePrototype, zone ZoneIdentityIntf) (model *InstanceTemplatePrototypeInstanceByVolume, err error) {
-	model = &InstanceTemplatePrototypeInstanceByVolume{
+func (*VpcV1) NewInstanceTemplatePrototypeInstanceByVolume(bootVolumeAttachment *VolumeAttachmentPrototypeInstanceByVolumeContext, primaryNetworkInterface *NetworkInterfacePrototype, zone ZoneIdentityIntf) (_model *InstanceTemplatePrototypeInstanceByVolume, err error) {
+	_model = &InstanceTemplatePrototypeInstanceByVolume{
 		BootVolumeAttachment:    bootVolumeAttachment,
 		PrimaryNetworkInterface: primaryNetworkInterface,
 		Zone:                    zone,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55059,11 +55846,11 @@ type KeyIdentityByCRN struct {
 }
 
 // NewKeyIdentityByCRN : Instantiate KeyIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewKeyIdentityByCRN(crn string) (model *KeyIdentityByCRN, err error) {
-	model = &KeyIdentityByCRN{
+func (*VpcV1) NewKeyIdentityByCRN(crn string) (_model *KeyIdentityByCRN, err error) {
+	_model = &KeyIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55090,11 +55877,11 @@ type KeyIdentityByHref struct {
 }
 
 // NewKeyIdentityByHref : Instantiate KeyIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewKeyIdentityByHref(href string) (model *KeyIdentityByHref, err error) {
-	model = &KeyIdentityByHref{
+func (*VpcV1) NewKeyIdentityByHref(href string) (_model *KeyIdentityByHref, err error) {
+	_model = &KeyIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55121,11 +55908,11 @@ type KeyIdentityByID struct {
 }
 
 // NewKeyIdentityByID : Instantiate KeyIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewKeyIdentityByID(id string) (model *KeyIdentityByID, err error) {
-	model = &KeyIdentityByID{
+func (*VpcV1) NewKeyIdentityByID(id string) (_model *KeyIdentityByID, err error) {
+	_model = &KeyIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55153,11 +55940,11 @@ type KeyIdentityKeyIdentityByFingerprint struct {
 }
 
 // NewKeyIdentityKeyIdentityByFingerprint : Instantiate KeyIdentityKeyIdentityByFingerprint (Generic Model Constructor)
-func (*VpcV1) NewKeyIdentityKeyIdentityByFingerprint(fingerprint string) (model *KeyIdentityKeyIdentityByFingerprint, err error) {
-	model = &KeyIdentityKeyIdentityByFingerprint{
+func (*VpcV1) NewKeyIdentityKeyIdentityByFingerprint(fingerprint string) (_model *KeyIdentityKeyIdentityByFingerprint, err error) {
+	_model = &KeyIdentityKeyIdentityByFingerprint{
 		Fingerprint: core.StringPtr(fingerprint),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55266,11 +56053,11 @@ type LoadBalancerIdentityByCRN struct {
 }
 
 // NewLoadBalancerIdentityByCRN : Instantiate LoadBalancerIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerIdentityByCRN(crn string) (model *LoadBalancerIdentityByCRN, err error) {
-	model = &LoadBalancerIdentityByCRN{
+func (*VpcV1) NewLoadBalancerIdentityByCRN(crn string) (_model *LoadBalancerIdentityByCRN, err error) {
+	_model = &LoadBalancerIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55297,11 +56084,11 @@ type LoadBalancerIdentityByHref struct {
 }
 
 // NewLoadBalancerIdentityByHref : Instantiate LoadBalancerIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerIdentityByHref(href string) (model *LoadBalancerIdentityByHref, err error) {
-	model = &LoadBalancerIdentityByHref{
+func (*VpcV1) NewLoadBalancerIdentityByHref(href string) (_model *LoadBalancerIdentityByHref, err error) {
+	_model = &LoadBalancerIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55328,11 +56115,11 @@ type LoadBalancerIdentityByID struct {
 }
 
 // NewLoadBalancerIdentityByID : Instantiate LoadBalancerIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerIdentityByID(id string) (model *LoadBalancerIdentityByID, err error) {
-	model = &LoadBalancerIdentityByID{
+func (*VpcV1) NewLoadBalancerIdentityByID(id string) (_model *LoadBalancerIdentityByID, err error) {
+	_model = &LoadBalancerIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55432,12 +56219,12 @@ type LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirect
 }
 
 // NewLoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirectURLPrototype : Instantiate LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirectURLPrototype (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirectURLPrototype(httpStatusCode int64, url string) (model *LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirectURLPrototype, err error) {
-	model = &LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirectURLPrototype{
+func (*VpcV1) NewLoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirectURLPrototype(httpStatusCode int64, url string) (_model *LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirectURLPrototype, err error) {
+	_model = &LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirectURLPrototype{
 		HTTPStatusCode: core.Int64Ptr(httpStatusCode),
 		URL:            core.StringPtr(url),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55582,11 +56369,11 @@ type LoadBalancerPoolIdentityByHref struct {
 }
 
 // NewLoadBalancerPoolIdentityByHref : Instantiate LoadBalancerPoolIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolIdentityByHref(href string) (model *LoadBalancerPoolIdentityByHref, err error) {
-	model = &LoadBalancerPoolIdentityByHref{
+func (*VpcV1) NewLoadBalancerPoolIdentityByHref(href string) (_model *LoadBalancerPoolIdentityByHref, err error) {
+	_model = &LoadBalancerPoolIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55613,11 +56400,11 @@ type LoadBalancerPoolIdentityByID struct {
 }
 
 // NewLoadBalancerPoolIdentityByID : Instantiate LoadBalancerPoolIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolIdentityByID(id string) (model *LoadBalancerPoolIdentityByID, err error) {
-	model = &LoadBalancerPoolIdentityByID{
+func (*VpcV1) NewLoadBalancerPoolIdentityByID(id string) (_model *LoadBalancerPoolIdentityByID, err error) {
+	_model = &LoadBalancerPoolIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55646,11 +56433,11 @@ type LoadBalancerPoolMemberTargetPrototypeIP struct {
 }
 
 // NewLoadBalancerPoolMemberTargetPrototypeIP : Instantiate LoadBalancerPoolMemberTargetPrototypeIP (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolMemberTargetPrototypeIP(address string) (model *LoadBalancerPoolMemberTargetPrototypeIP, err error) {
-	model = &LoadBalancerPoolMemberTargetPrototypeIP{
+func (*VpcV1) NewLoadBalancerPoolMemberTargetPrototypeIP(address string) (_model *LoadBalancerPoolMemberTargetPrototypeIP, err error) {
+	_model = &LoadBalancerPoolMemberTargetPrototypeIP{
 		Address: core.StringPtr(address),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55801,11 +56588,11 @@ type LoadBalancerProfileIdentityByHref struct {
 }
 
 // NewLoadBalancerProfileIdentityByHref : Instantiate LoadBalancerProfileIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerProfileIdentityByHref(href string) (model *LoadBalancerProfileIdentityByHref, err error) {
-	model = &LoadBalancerProfileIdentityByHref{
+func (*VpcV1) NewLoadBalancerProfileIdentityByHref(href string) (_model *LoadBalancerProfileIdentityByHref, err error) {
+	_model = &LoadBalancerProfileIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55832,11 +56619,11 @@ type LoadBalancerProfileIdentityByName struct {
 }
 
 // NewLoadBalancerProfileIdentityByName : Instantiate LoadBalancerProfileIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerProfileIdentityByName(name string) (model *LoadBalancerProfileIdentityByName, err error) {
-	model = &LoadBalancerProfileIdentityByName{
+func (*VpcV1) NewLoadBalancerProfileIdentityByName(name string) (_model *LoadBalancerProfileIdentityByName, err error) {
+	_model = &LoadBalancerProfileIdentityByName{
 		Name: core.StringPtr(name),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55926,11 +56713,11 @@ type NetworkACLIdentityByCRN struct {
 }
 
 // NewNetworkACLIdentityByCRN : Instantiate NetworkACLIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLIdentityByCRN(crn string) (model *NetworkACLIdentityByCRN, err error) {
-	model = &NetworkACLIdentityByCRN{
+func (*VpcV1) NewNetworkACLIdentityByCRN(crn string) (_model *NetworkACLIdentityByCRN, err error) {
+	_model = &NetworkACLIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55957,11 +56744,11 @@ type NetworkACLIdentityByHref struct {
 }
 
 // NewNetworkACLIdentityByHref : Instantiate NetworkACLIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLIdentityByHref(href string) (model *NetworkACLIdentityByHref, err error) {
-	model = &NetworkACLIdentityByHref{
+func (*VpcV1) NewNetworkACLIdentityByHref(href string) (_model *NetworkACLIdentityByHref, err error) {
+	_model = &NetworkACLIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -55988,11 +56775,11 @@ type NetworkACLIdentityByID struct {
 }
 
 // NewNetworkACLIdentityByID : Instantiate NetworkACLIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLIdentityByID(id string) (model *NetworkACLIdentityByID, err error) {
-	model = &NetworkACLIdentityByID{
+func (*VpcV1) NewNetworkACLIdentityByID(id string) (_model *NetworkACLIdentityByID, err error) {
+	_model = &NetworkACLIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -56072,12 +56859,12 @@ type NetworkACLPrototypeNetworkACLBySourceNetworkACL struct {
 }
 
 // NewNetworkACLPrototypeNetworkACLBySourceNetworkACL : Instantiate NetworkACLPrototypeNetworkACLBySourceNetworkACL (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLPrototypeNetworkACLBySourceNetworkACL(vpc VPCIdentityIntf, sourceNetworkACL NetworkACLIdentityIntf) (model *NetworkACLPrototypeNetworkACLBySourceNetworkACL, err error) {
-	model = &NetworkACLPrototypeNetworkACLBySourceNetworkACL{
+func (*VpcV1) NewNetworkACLPrototypeNetworkACLBySourceNetworkACL(vpc VPCIdentityIntf, sourceNetworkACL NetworkACLIdentityIntf) (_model *NetworkACLPrototypeNetworkACLBySourceNetworkACL, err error) {
+	_model = &NetworkACLPrototypeNetworkACLBySourceNetworkACL{
 		VPC:              vpc,
 		SourceNetworkACL: sourceNetworkACL,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -56116,11 +56903,11 @@ type NetworkACLRuleBeforePatchNetworkACLRuleIdentityByHref struct {
 }
 
 // NewNetworkACLRuleBeforePatchNetworkACLRuleIdentityByHref : Instantiate NetworkACLRuleBeforePatchNetworkACLRuleIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLRuleBeforePatchNetworkACLRuleIdentityByHref(href string) (model *NetworkACLRuleBeforePatchNetworkACLRuleIdentityByHref, err error) {
-	model = &NetworkACLRuleBeforePatchNetworkACLRuleIdentityByHref{
+func (*VpcV1) NewNetworkACLRuleBeforePatchNetworkACLRuleIdentityByHref(href string) (_model *NetworkACLRuleBeforePatchNetworkACLRuleIdentityByHref, err error) {
+	_model = &NetworkACLRuleBeforePatchNetworkACLRuleIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -56147,11 +56934,11 @@ type NetworkACLRuleBeforePatchNetworkACLRuleIdentityByID struct {
 }
 
 // NewNetworkACLRuleBeforePatchNetworkACLRuleIdentityByID : Instantiate NetworkACLRuleBeforePatchNetworkACLRuleIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLRuleBeforePatchNetworkACLRuleIdentityByID(id string) (model *NetworkACLRuleBeforePatchNetworkACLRuleIdentityByID, err error) {
-	model = &NetworkACLRuleBeforePatchNetworkACLRuleIdentityByID{
+func (*VpcV1) NewNetworkACLRuleBeforePatchNetworkACLRuleIdentityByID(id string) (_model *NetworkACLRuleBeforePatchNetworkACLRuleIdentityByID, err error) {
+	_model = &NetworkACLRuleBeforePatchNetworkACLRuleIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -56178,11 +56965,11 @@ type NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByHref struct {
 }
 
 // NewNetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByHref : Instantiate NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByHref(href string) (model *NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByHref, err error) {
-	model = &NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByHref{
+func (*VpcV1) NewNetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByHref(href string) (_model *NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByHref, err error) {
+	_model = &NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -56209,11 +56996,11 @@ type NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByID struct {
 }
 
 // NewNetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByID : Instantiate NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByID(id string) (model *NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByID, err error) {
-	model = &NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByID{
+func (*VpcV1) NewNetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByID(id string) (_model *NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByID, err error) {
+	_model = &NetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -56683,15 +57470,15 @@ const (
 )
 
 // NewNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAll : Instantiate NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAll (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAll(action string, destination string, direction string, source string, protocol string) (model *NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAll, err error) {
-	model = &NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAll{
+func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAll(action string, destination string, direction string, source string, protocol string) (_model *NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAll, err error) {
+	_model = &NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAll{
 		Action:      core.StringPtr(action),
 		Destination: core.StringPtr(destination),
 		Direction:   core.StringPtr(direction),
 		Source:      core.StringPtr(source),
 		Protocol:    core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -56781,15 +57568,15 @@ const (
 )
 
 // NewNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmp : Instantiate NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmp (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmp(action string, destination string, direction string, source string, protocol string) (model *NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmp, err error) {
-	model = &NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmp{
+func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmp(action string, destination string, direction string, source string, protocol string) (_model *NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmp, err error) {
+	_model = &NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmp{
 		Action:      core.StringPtr(action),
 		Destination: core.StringPtr(destination),
 		Direction:   core.StringPtr(direction),
 		Source:      core.StringPtr(source),
 		Protocol:    core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -56893,15 +57680,15 @@ const (
 )
 
 // NewNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudp : Instantiate NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudp (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudp(action string, destination string, direction string, source string, protocol string) (model *NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudp, err error) {
-	model = &NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudp{
+func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudp(action string, destination string, direction string, source string, protocol string) (_model *NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudp, err error) {
+	_model = &NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudp{
 		Action:      core.StringPtr(action),
 		Destination: core.StringPtr(destination),
 		Direction:   core.StringPtr(direction),
 		Source:      core.StringPtr(source),
 		Protocol:    core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -57002,15 +57789,15 @@ const (
 )
 
 // NewNetworkACLRulePrototypeNetworkACLRuleProtocolAll : Instantiate NetworkACLRulePrototypeNetworkACLRuleProtocolAll (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLRuleProtocolAll(action string, destination string, direction string, source string, protocol string) (model *NetworkACLRulePrototypeNetworkACLRuleProtocolAll, err error) {
-	model = &NetworkACLRulePrototypeNetworkACLRuleProtocolAll{
+func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLRuleProtocolAll(action string, destination string, direction string, source string, protocol string) (_model *NetworkACLRulePrototypeNetworkACLRuleProtocolAll, err error) {
+	_model = &NetworkACLRulePrototypeNetworkACLRuleProtocolAll{
 		Action:      core.StringPtr(action),
 		Destination: core.StringPtr(destination),
 		Direction:   core.StringPtr(direction),
 		Source:      core.StringPtr(source),
 		Protocol:    core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -57106,15 +57893,15 @@ const (
 )
 
 // NewNetworkACLRulePrototypeNetworkACLRuleProtocolIcmp : Instantiate NetworkACLRulePrototypeNetworkACLRuleProtocolIcmp (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLRuleProtocolIcmp(action string, destination string, direction string, source string, protocol string) (model *NetworkACLRulePrototypeNetworkACLRuleProtocolIcmp, err error) {
-	model = &NetworkACLRulePrototypeNetworkACLRuleProtocolIcmp{
+func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLRuleProtocolIcmp(action string, destination string, direction string, source string, protocol string) (_model *NetworkACLRulePrototypeNetworkACLRuleProtocolIcmp, err error) {
+	_model = &NetworkACLRulePrototypeNetworkACLRuleProtocolIcmp{
 		Action:      core.StringPtr(action),
 		Destination: core.StringPtr(destination),
 		Direction:   core.StringPtr(direction),
 		Source:      core.StringPtr(source),
 		Protocol:    core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -57224,15 +58011,15 @@ const (
 )
 
 // NewNetworkACLRulePrototypeNetworkACLRuleProtocolTcpudp : Instantiate NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudp (Generic Model Constructor)
-func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLRuleProtocolTcpudp(action string, destination string, direction string, source string, protocol string) (model *NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudp, err error) {
-	model = &NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudp{
+func (*VpcV1) NewNetworkACLRulePrototypeNetworkACLRuleProtocolTcpudp(action string, destination string, direction string, source string, protocol string) (_model *NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudp, err error) {
+	_model = &NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudp{
 		Action:      core.StringPtr(action),
 		Destination: core.StringPtr(destination),
 		Direction:   core.StringPtr(direction),
 		Source:      core.StringPtr(source),
 		Protocol:    core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -57703,11 +58490,11 @@ type OperatingSystemIdentityByHref struct {
 }
 
 // NewOperatingSystemIdentityByHref : Instantiate OperatingSystemIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewOperatingSystemIdentityByHref(href string) (model *OperatingSystemIdentityByHref, err error) {
-	model = &OperatingSystemIdentityByHref{
+func (*VpcV1) NewOperatingSystemIdentityByHref(href string) (_model *OperatingSystemIdentityByHref, err error) {
+	_model = &OperatingSystemIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -57734,11 +58521,11 @@ type OperatingSystemIdentityByName struct {
 }
 
 // NewOperatingSystemIdentityByName : Instantiate OperatingSystemIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewOperatingSystemIdentityByName(name string) (model *OperatingSystemIdentityByName, err error) {
-	model = &OperatingSystemIdentityByName{
+func (*VpcV1) NewOperatingSystemIdentityByName(name string) (_model *OperatingSystemIdentityByName, err error) {
+	_model = &OperatingSystemIdentityByName{
 		Name: core.StringPtr(name),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -57853,11 +58640,11 @@ type PublicGatewayIdentityByCRN struct {
 }
 
 // NewPublicGatewayIdentityByCRN : Instantiate PublicGatewayIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewPublicGatewayIdentityByCRN(crn string) (model *PublicGatewayIdentityByCRN, err error) {
-	model = &PublicGatewayIdentityByCRN{
+func (*VpcV1) NewPublicGatewayIdentityByCRN(crn string) (_model *PublicGatewayIdentityByCRN, err error) {
+	_model = &PublicGatewayIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -57884,11 +58671,11 @@ type PublicGatewayIdentityByHref struct {
 }
 
 // NewPublicGatewayIdentityByHref : Instantiate PublicGatewayIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewPublicGatewayIdentityByHref(href string) (model *PublicGatewayIdentityByHref, err error) {
-	model = &PublicGatewayIdentityByHref{
+func (*VpcV1) NewPublicGatewayIdentityByHref(href string) (_model *PublicGatewayIdentityByHref, err error) {
+	_model = &PublicGatewayIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -57915,11 +58702,11 @@ type PublicGatewayIdentityByID struct {
 }
 
 // NewPublicGatewayIdentityByID : Instantiate PublicGatewayIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewPublicGatewayIdentityByID(id string) (model *PublicGatewayIdentityByID, err error) {
-	model = &PublicGatewayIdentityByID{
+func (*VpcV1) NewPublicGatewayIdentityByID(id string) (_model *PublicGatewayIdentityByID, err error) {
+	_model = &PublicGatewayIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58059,11 +58846,11 @@ type ResourceGroupIdentityByID struct {
 }
 
 // NewResourceGroupIdentityByID : Instantiate ResourceGroupIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewResourceGroupIdentityByID(id string) (model *ResourceGroupIdentityByID, err error) {
-	model = &ResourceGroupIdentityByID{
+func (*VpcV1) NewResourceGroupIdentityByID(id string) (_model *ResourceGroupIdentityByID, err error) {
+	_model = &ResourceGroupIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58116,11 +58903,11 @@ type RouteNextHopPrototypeRouteNextHopIP struct {
 }
 
 // NewRouteNextHopPrototypeRouteNextHopIP : Instantiate RouteNextHopPrototypeRouteNextHopIP (Generic Model Constructor)
-func (*VpcV1) NewRouteNextHopPrototypeRouteNextHopIP(address string) (model *RouteNextHopPrototypeRouteNextHopIP, err error) {
-	model = &RouteNextHopPrototypeRouteNextHopIP{
+func (*VpcV1) NewRouteNextHopPrototypeRouteNextHopIP(address string) (_model *RouteNextHopPrototypeRouteNextHopIP, err error) {
+	_model = &RouteNextHopPrototypeRouteNextHopIP{
 		Address: core.StringPtr(address),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58245,11 +59032,11 @@ type RoutingTableIdentityByHref struct {
 }
 
 // NewRoutingTableIdentityByHref : Instantiate RoutingTableIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewRoutingTableIdentityByHref(href string) (model *RoutingTableIdentityByHref, err error) {
-	model = &RoutingTableIdentityByHref{
+func (*VpcV1) NewRoutingTableIdentityByHref(href string) (_model *RoutingTableIdentityByHref, err error) {
+	_model = &RoutingTableIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58276,11 +59063,11 @@ type RoutingTableIdentityByID struct {
 }
 
 // NewRoutingTableIdentityByID : Instantiate RoutingTableIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewRoutingTableIdentityByID(id string) (model *RoutingTableIdentityByID, err error) {
-	model = &RoutingTableIdentityByID{
+func (*VpcV1) NewRoutingTableIdentityByID(id string) (_model *RoutingTableIdentityByID, err error) {
+	_model = &RoutingTableIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58307,11 +59094,11 @@ type SecurityGroupIdentityByCRN struct {
 }
 
 // NewSecurityGroupIdentityByCRN : Instantiate SecurityGroupIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupIdentityByCRN(crn string) (model *SecurityGroupIdentityByCRN, err error) {
-	model = &SecurityGroupIdentityByCRN{
+func (*VpcV1) NewSecurityGroupIdentityByCRN(crn string) (_model *SecurityGroupIdentityByCRN, err error) {
+	_model = &SecurityGroupIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58338,11 +59125,11 @@ type SecurityGroupIdentityByHref struct {
 }
 
 // NewSecurityGroupIdentityByHref : Instantiate SecurityGroupIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupIdentityByHref(href string) (model *SecurityGroupIdentityByHref, err error) {
-	model = &SecurityGroupIdentityByHref{
+func (*VpcV1) NewSecurityGroupIdentityByHref(href string) (_model *SecurityGroupIdentityByHref, err error) {
+	_model = &SecurityGroupIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58369,11 +59156,11 @@ type SecurityGroupIdentityByID struct {
 }
 
 // NewSecurityGroupIdentityByID : Instantiate SecurityGroupIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupIdentityByID(id string) (model *SecurityGroupIdentityByID, err error) {
-	model = &SecurityGroupIdentityByID{
+func (*VpcV1) NewSecurityGroupIdentityByID(id string) (_model *SecurityGroupIdentityByID, err error) {
+	_model = &SecurityGroupIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58432,12 +59219,12 @@ const (
 )
 
 // NewSecurityGroupRulePrototypeSecurityGroupRuleProtocolAll : Instantiate SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRulePrototypeSecurityGroupRuleProtocolAll(direction string, protocol string) (model *SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll, err error) {
-	model = &SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll{
+func (*VpcV1) NewSecurityGroupRulePrototypeSecurityGroupRuleProtocolAll(direction string, protocol string) (_model *SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll, err error) {
+	_model = &SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll{
 		Direction: core.StringPtr(direction),
 		Protocol:  core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58516,12 +59303,12 @@ const (
 )
 
 // NewSecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp : Instantiate SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp(direction string, protocol string) (model *SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp, err error) {
-	model = &SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp{
+func (*VpcV1) NewSecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp(direction string, protocol string) (_model *SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp, err error) {
+	_model = &SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp{
 		Direction: core.StringPtr(direction),
 		Protocol:  core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58608,12 +59395,12 @@ const (
 )
 
 // NewSecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp : Instantiate SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp(direction string, protocol string) (model *SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp, err error) {
-	model = &SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp{
+func (*VpcV1) NewSecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp(direction string, protocol string) (_model *SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp, err error) {
+	_model = &SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp{
 		Direction: core.StringPtr(direction),
 		Protocol:  core.StringPtr(protocol),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58662,11 +59449,11 @@ type SecurityGroupRuleRemotePatchCIDR struct {
 }
 
 // NewSecurityGroupRuleRemotePatchCIDR : Instantiate SecurityGroupRuleRemotePatchCIDR (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRuleRemotePatchCIDR(cidrBlock string) (model *SecurityGroupRuleRemotePatchCIDR, err error) {
-	model = &SecurityGroupRuleRemotePatchCIDR{
+func (*VpcV1) NewSecurityGroupRuleRemotePatchCIDR(cidrBlock string) (_model *SecurityGroupRuleRemotePatchCIDR, err error) {
+	_model = &SecurityGroupRuleRemotePatchCIDR{
 		CIDRBlock: core.StringPtr(cidrBlock),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58695,11 +59482,11 @@ type SecurityGroupRuleRemotePatchIP struct {
 }
 
 // NewSecurityGroupRuleRemotePatchIP : Instantiate SecurityGroupRuleRemotePatchIP (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRuleRemotePatchIP(address string) (model *SecurityGroupRuleRemotePatchIP, err error) {
-	model = &SecurityGroupRuleRemotePatchIP{
+func (*VpcV1) NewSecurityGroupRuleRemotePatchIP(address string) (_model *SecurityGroupRuleRemotePatchIP, err error) {
+	_model = &SecurityGroupRuleRemotePatchIP{
 		Address: core.StringPtr(address),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58777,11 +59564,11 @@ type SecurityGroupRuleRemotePrototypeCIDR struct {
 }
 
 // NewSecurityGroupRuleRemotePrototypeCIDR : Instantiate SecurityGroupRuleRemotePrototypeCIDR (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRuleRemotePrototypeCIDR(cidrBlock string) (model *SecurityGroupRuleRemotePrototypeCIDR, err error) {
-	model = &SecurityGroupRuleRemotePrototypeCIDR{
+func (*VpcV1) NewSecurityGroupRuleRemotePrototypeCIDR(cidrBlock string) (_model *SecurityGroupRuleRemotePrototypeCIDR, err error) {
+	_model = &SecurityGroupRuleRemotePrototypeCIDR{
 		CIDRBlock: core.StringPtr(cidrBlock),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -58810,11 +59597,11 @@ type SecurityGroupRuleRemotePrototypeIP struct {
 }
 
 // NewSecurityGroupRuleRemotePrototypeIP : Instantiate SecurityGroupRuleRemotePrototypeIP (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRuleRemotePrototypeIP(address string) (model *SecurityGroupRuleRemotePrototypeIP, err error) {
-	model = &SecurityGroupRuleRemotePrototypeIP{
+func (*VpcV1) NewSecurityGroupRuleRemotePrototypeIP(address string) (_model *SecurityGroupRuleRemotePrototypeIP, err error) {
+	_model = &SecurityGroupRuleRemotePrototypeIP{
 		Address: core.StringPtr(address),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59369,11 +60156,11 @@ type SnapshotIdentityByCRN struct {
 }
 
 // NewSnapshotIdentityByCRN : Instantiate SnapshotIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewSnapshotIdentityByCRN(crn string) (model *SnapshotIdentityByCRN, err error) {
-	model = &SnapshotIdentityByCRN{
+func (*VpcV1) NewSnapshotIdentityByCRN(crn string) (_model *SnapshotIdentityByCRN, err error) {
+	_model = &SnapshotIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59400,11 +60187,11 @@ type SnapshotIdentityByHref struct {
 }
 
 // NewSnapshotIdentityByHref : Instantiate SnapshotIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewSnapshotIdentityByHref(href string) (model *SnapshotIdentityByHref, err error) {
-	model = &SnapshotIdentityByHref{
+func (*VpcV1) NewSnapshotIdentityByHref(href string) (_model *SnapshotIdentityByHref, err error) {
+	_model = &SnapshotIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59431,11 +60218,11 @@ type SnapshotIdentityByID struct {
 }
 
 // NewSnapshotIdentityByID : Instantiate SnapshotIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewSnapshotIdentityByID(id string) (model *SnapshotIdentityByID, err error) {
-	model = &SnapshotIdentityByID{
+func (*VpcV1) NewSnapshotIdentityByID(id string) (_model *SnapshotIdentityByID, err error) {
+	_model = &SnapshotIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59462,11 +60249,11 @@ type SubnetIdentityByCRN struct {
 }
 
 // NewSubnetIdentityByCRN : Instantiate SubnetIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewSubnetIdentityByCRN(crn string) (model *SubnetIdentityByCRN, err error) {
-	model = &SubnetIdentityByCRN{
+func (*VpcV1) NewSubnetIdentityByCRN(crn string) (_model *SubnetIdentityByCRN, err error) {
+	_model = &SubnetIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59493,11 +60280,11 @@ type SubnetIdentityByHref struct {
 }
 
 // NewSubnetIdentityByHref : Instantiate SubnetIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewSubnetIdentityByHref(href string) (model *SubnetIdentityByHref, err error) {
-	model = &SubnetIdentityByHref{
+func (*VpcV1) NewSubnetIdentityByHref(href string) (_model *SubnetIdentityByHref, err error) {
+	_model = &SubnetIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59524,11 +60311,11 @@ type SubnetIdentityByID struct {
 }
 
 // NewSubnetIdentityByID : Instantiate SubnetIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewSubnetIdentityByID(id string) (model *SubnetIdentityByID, err error) {
-	model = &SubnetIdentityByID{
+func (*VpcV1) NewSubnetIdentityByID(id string) (_model *SubnetIdentityByID, err error) {
+	_model = &SubnetIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59590,12 +60377,12 @@ const (
 )
 
 // NewSubnetPrototypeSubnetByCIDR : Instantiate SubnetPrototypeSubnetByCIDR (Generic Model Constructor)
-func (*VpcV1) NewSubnetPrototypeSubnetByCIDR(vpc VPCIdentityIntf, ipv4CIDRBlock string) (model *SubnetPrototypeSubnetByCIDR, err error) {
-	model = &SubnetPrototypeSubnetByCIDR{
+func (*VpcV1) NewSubnetPrototypeSubnetByCIDR(vpc VPCIdentityIntf, ipv4CIDRBlock string) (_model *SubnetPrototypeSubnetByCIDR, err error) {
+	_model = &SubnetPrototypeSubnetByCIDR{
 		VPC:           vpc,
 		Ipv4CIDRBlock: core.StringPtr(ipv4CIDRBlock),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59687,13 +60474,13 @@ const (
 )
 
 // NewSubnetPrototypeSubnetByTotalCount : Instantiate SubnetPrototypeSubnetByTotalCount (Generic Model Constructor)
-func (*VpcV1) NewSubnetPrototypeSubnetByTotalCount(vpc VPCIdentityIntf, totalIpv4AddressCount int64, zone ZoneIdentityIntf) (model *SubnetPrototypeSubnetByTotalCount, err error) {
-	model = &SubnetPrototypeSubnetByTotalCount{
+func (*VpcV1) NewSubnetPrototypeSubnetByTotalCount(vpc VPCIdentityIntf, totalIpv4AddressCount int64, zone ZoneIdentityIntf) (_model *SubnetPrototypeSubnetByTotalCount, err error) {
+	_model = &SubnetPrototypeSubnetByTotalCount{
 		VPC:                   vpc,
 		TotalIpv4AddressCount: core.Int64Ptr(totalIpv4AddressCount),
 		Zone:                  zone,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59752,11 +60539,11 @@ type VPCIdentityByCRN struct {
 }
 
 // NewVPCIdentityByCRN : Instantiate VPCIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewVPCIdentityByCRN(crn string) (model *VPCIdentityByCRN, err error) {
-	model = &VPCIdentityByCRN{
+func (*VpcV1) NewVPCIdentityByCRN(crn string) (_model *VPCIdentityByCRN, err error) {
+	_model = &VPCIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59783,11 +60570,11 @@ type VPCIdentityByHref struct {
 }
 
 // NewVPCIdentityByHref : Instantiate VPCIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewVPCIdentityByHref(href string) (model *VPCIdentityByHref, err error) {
-	model = &VPCIdentityByHref{
+func (*VpcV1) NewVPCIdentityByHref(href string) (_model *VPCIdentityByHref, err error) {
+	_model = &VPCIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -59814,11 +60601,11 @@ type VPCIdentityByID struct {
 }
 
 // NewVPCIdentityByID : Instantiate VPCIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewVPCIdentityByID(id string) (model *VPCIdentityByID, err error) {
-	model = &VPCIdentityByID{
+func (*VpcV1) NewVPCIdentityByID(id string) (_model *VPCIdentityByID, err error) {
+	_model = &VPCIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -60096,14 +60883,14 @@ type VPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype struct
 }
 
 // NewVPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype : Instantiate VPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype (Generic Model Constructor)
-func (*VpcV1) NewVPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype(peerAddress string, psk string, localCIDRs []string, peerCIDRs []string) (model *VPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype, err error) {
-	model = &VPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype{
+func (*VpcV1) NewVPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype(peerAddress string, psk string, localCIDRs []string, peerCIDRs []string) (_model *VPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype, err error) {
+	_model = &VPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype{
 		PeerAddress: core.StringPtr(peerAddress),
 		Psk:         core.StringPtr(psk),
 		LocalCIDRs:  localCIDRs,
 		PeerCIDRs:   peerCIDRs,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -60845,8 +61632,10 @@ func UnmarshalVolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext(m ma
 // VolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext : VolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext struct
 // This model "extends" VolumeAttachmentVolumePrototypeInstanceByVolumeContext
 type VolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext struct {
-	// The capacity of the volume in gigabytes. The specified minimum and maximum capacity values for creating or updating
-	// volumes may expand in the future.
+	// The capacity of the volume in gigabytes. The only allowed value is the source snapshot's `minimum_capacity`, but the
+	// allowed values are expected to expand in the future.
+	//
+	// If unspecified, the capacity will be the source snapshot's `minimum_capacity`.
 	Capacity *int64 `json:"capacity,omitempty"`
 
 	// The root key to use to wrap the data encryption key for the volume.
@@ -60868,12 +61657,12 @@ type VolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstan
 }
 
 // NewVolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext : Instantiate VolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext(profile VolumeProfileIdentityIntf, sourceSnapshot SnapshotIdentityIntf) (model *VolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext, err error) {
-	model = &VolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext{
+func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext(profile VolumeProfileIdentityIntf, sourceSnapshot SnapshotIdentityIntf) (_model *VolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext, err error) {
+	_model = &VolumeAttachmentVolumePrototypeInstanceByVolumeContextVolumePrototypeInstanceByVolumeContext{
 		Profile:        profile,
 		SourceSnapshot: sourceSnapshot,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61042,11 +61831,11 @@ type VolumeIdentityByCRN struct {
 }
 
 // NewVolumeIdentityByCRN : Instantiate VolumeIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewVolumeIdentityByCRN(crn string) (model *VolumeIdentityByCRN, err error) {
-	model = &VolumeIdentityByCRN{
+func (*VpcV1) NewVolumeIdentityByCRN(crn string) (_model *VolumeIdentityByCRN, err error) {
+	_model = &VolumeIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61073,11 +61862,11 @@ type VolumeIdentityByHref struct {
 }
 
 // NewVolumeIdentityByHref : Instantiate VolumeIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewVolumeIdentityByHref(href string) (model *VolumeIdentityByHref, err error) {
-	model = &VolumeIdentityByHref{
+func (*VpcV1) NewVolumeIdentityByHref(href string) (_model *VolumeIdentityByHref, err error) {
+	_model = &VolumeIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61104,11 +61893,11 @@ type VolumeIdentityByID struct {
 }
 
 // NewVolumeIdentityByID : Instantiate VolumeIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewVolumeIdentityByID(id string) (model *VolumeIdentityByID, err error) {
-	model = &VolumeIdentityByID{
+func (*VpcV1) NewVolumeIdentityByID(id string) (_model *VolumeIdentityByID, err error) {
+	_model = &VolumeIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61135,11 +61924,11 @@ type VolumeProfileIdentityByHref struct {
 }
 
 // NewVolumeProfileIdentityByHref : Instantiate VolumeProfileIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewVolumeProfileIdentityByHref(href string) (model *VolumeProfileIdentityByHref, err error) {
-	model = &VolumeProfileIdentityByHref{
+func (*VpcV1) NewVolumeProfileIdentityByHref(href string) (_model *VolumeProfileIdentityByHref, err error) {
+	_model = &VolumeProfileIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61166,11 +61955,11 @@ type VolumeProfileIdentityByName struct {
 }
 
 // NewVolumeProfileIdentityByName : Instantiate VolumeProfileIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewVolumeProfileIdentityByName(name string) (model *VolumeProfileIdentityByName, err error) {
-	model = &VolumeProfileIdentityByName{
+func (*VpcV1) NewVolumeProfileIdentityByName(name string) (_model *VolumeProfileIdentityByName, err error) {
+	_model = &VolumeProfileIdentityByName{
 		Name: core.StringPtr(name),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61218,13 +62007,13 @@ type VolumePrototypeVolumeByCapacity struct {
 }
 
 // NewVolumePrototypeVolumeByCapacity : Instantiate VolumePrototypeVolumeByCapacity (Generic Model Constructor)
-func (*VpcV1) NewVolumePrototypeVolumeByCapacity(profile VolumeProfileIdentityIntf, zone ZoneIdentityIntf, capacity int64) (model *VolumePrototypeVolumeByCapacity, err error) {
-	model = &VolumePrototypeVolumeByCapacity{
+func (*VpcV1) NewVolumePrototypeVolumeByCapacity(profile VolumeProfileIdentityIntf, zone ZoneIdentityIntf, capacity int64) (_model *VolumePrototypeVolumeByCapacity, err error) {
+	_model = &VolumePrototypeVolumeByCapacity{
 		Profile:  profile,
 		Zone:     zone,
 		Capacity: core.Int64Ptr(capacity),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61275,11 +62064,11 @@ type ZoneIdentityByHref struct {
 }
 
 // NewZoneIdentityByHref : Instantiate ZoneIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewZoneIdentityByHref(href string) (model *ZoneIdentityByHref, err error) {
-	model = &ZoneIdentityByHref{
+func (*VpcV1) NewZoneIdentityByHref(href string) (_model *ZoneIdentityByHref, err error) {
+	_model = &ZoneIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61306,11 +62095,11 @@ type ZoneIdentityByName struct {
 }
 
 // NewZoneIdentityByName : Instantiate ZoneIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewZoneIdentityByName(name string) (model *ZoneIdentityByName, err error) {
-	model = &ZoneIdentityByName{
+func (*VpcV1) NewZoneIdentityByName(name string) (_model *ZoneIdentityByName, err error) {
+	_model = &ZoneIdentityByName{
 		Name: core.StringPtr(name),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61337,11 +62126,11 @@ type EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByHref struct 
 }
 
 // NewEndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByHref : Instantiate EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewEndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByHref(href string) (model *EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByHref, err error) {
-	model = &EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByHref{
+func (*VpcV1) NewEndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByHref(href string) (_model *EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByHref, err error) {
+	_model = &EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61372,11 +62161,11 @@ type EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByID struct {
 }
 
 // NewEndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByID : Instantiate EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewEndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByID(id string) (model *EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByID, err error) {
-	model = &EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByID{
+func (*VpcV1) NewEndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByID(id string) (_model *EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByID, err error) {
+	_model = &EndpointGatewayReservedIPReservedIPIdentityReservedIPIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61417,12 +62206,12 @@ const (
 )
 
 // NewEndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN : Instantiate EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewEndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN(resourceType string, crn string) (model *EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN, err error) {
-	model = &EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN{
+func (*VpcV1) NewEndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN(resourceType string, crn string) (_model *EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN, err error) {
+	_model = &EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN{
 		ResourceType: core.StringPtr(resourceType),
 		CRN:          core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61468,12 +62257,12 @@ const (
 )
 
 // NewEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName : Instantiate EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName(resourceType string, name string) (model *EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName, err error) {
-	model = &EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName{
+func (*VpcV1) NewEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName(resourceType string, name string) (_model *EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName, err error) {
+	_model = &EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName{
 		ResourceType: core.StringPtr(resourceType),
 		Name:         core.StringPtr(name),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61508,11 +62297,11 @@ type FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByCRN struct
 }
 
 // NewFlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByCRN : Instantiate FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByCRN(crn string) (model *FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByCRN, err error) {
-	model = &FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByCRN{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByCRN(crn string) (_model *FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByCRN, err error) {
+	_model = &FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61543,11 +62332,11 @@ type FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByHref struc
 }
 
 // NewFlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByHref : Instantiate FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByHref(href string) (model *FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByHref, err error) {
-	model = &FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByHref{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByHref(href string) (_model *FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByHref, err error) {
+	_model = &FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61578,11 +62367,11 @@ type FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByID struct 
 }
 
 // NewFlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByID : Instantiate FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByID(id string) (model *FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByID, err error) {
-	model = &FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByID{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByID(id string) (_model *FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByID, err error) {
+	_model = &FlowLogCollectorTargetPrototypeInstanceIdentityInstanceIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61613,11 +62402,11 @@ type FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIden
 }
 
 // NewFlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByHref : Instantiate FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByHref(href string) (model *FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByHref, err error) {
-	model = &FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByHref{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByHref(href string) (_model *FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByHref, err error) {
+	_model = &FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61648,11 +62437,11 @@ type FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIden
 }
 
 // NewFlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByID : Instantiate FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByID(id string) (model *FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByID, err error) {
-	model = &FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByID{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByID(id string) (_model *FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByID, err error) {
+	_model = &FlowLogCollectorTargetPrototypeNetworkInterfaceIdentityNetworkInterfaceIdentityNetworkInterfaceIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61683,11 +62472,11 @@ type FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByCRN struct {
 }
 
 // NewFlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByCRN : Instantiate FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByCRN(crn string) (model *FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByCRN, err error) {
-	model = &FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByCRN{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByCRN(crn string) (_model *FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByCRN, err error) {
+	_model = &FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61718,11 +62507,11 @@ type FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByHref struct {
 }
 
 // NewFlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByHref : Instantiate FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByHref(href string) (model *FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByHref, err error) {
-	model = &FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByHref{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByHref(href string) (_model *FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByHref, err error) {
+	_model = &FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61753,11 +62542,11 @@ type FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByID struct {
 }
 
 // NewFlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByID : Instantiate FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByID(id string) (model *FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByID, err error) {
-	model = &FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByID{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByID(id string) (_model *FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByID, err error) {
+	_model = &FlowLogCollectorTargetPrototypeSubnetIdentitySubnetIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61788,11 +62577,11 @@ type FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByCRN struct {
 }
 
 // NewFlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByCRN : Instantiate FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByCRN(crn string) (model *FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByCRN, err error) {
-	model = &FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByCRN{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByCRN(crn string) (_model *FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByCRN, err error) {
+	_model = &FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61823,11 +62612,11 @@ type FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByHref struct {
 }
 
 // NewFlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByHref : Instantiate FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByHref(href string) (model *FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByHref, err error) {
-	model = &FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByHref{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByHref(href string) (_model *FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByHref, err error) {
+	_model = &FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -61858,11 +62647,11 @@ type FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByID struct {
 }
 
 // NewFlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByID : Instantiate FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewFlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByID(id string) (model *FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByID, err error) {
-	model = &FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByID{
+func (*VpcV1) NewFlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByID(id string) (_model *FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByID, err error) {
+	_model = &FlowLogCollectorTargetPrototypeVPCIdentityVPCIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62322,11 +63111,11 @@ type InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByHref
 }
 
 // NewInstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByHref : Instantiate InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByHref (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByHref(href string) (model *InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByHref, err error) {
-	model = &InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByHref{
+func (*VpcV1) NewInstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByHref(href string) (_model *InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByHref, err error) {
+	_model = &InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62371,11 +63160,11 @@ type InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByID s
 }
 
 // NewInstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByID : Instantiate InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByID (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByID(id string) (model *InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByID, err error) {
-	model = &InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByID{
+func (*VpcV1) NewInstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByID(id string) (_model *InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByID, err error) {
+	_model = &InstanceGroupManagerScheduledActionManagerPrototypeAutoScalePrototypeByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62414,11 +63203,11 @@ type InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGrou
 }
 
 // NewInstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByCRN : Instantiate InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByCRN(crn string) (model *InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByCRN, err error) {
-	model = &InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByCRN{
+func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByCRN(crn string) (_model *InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByCRN, err error) {
+	_model = &InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62449,11 +63238,11 @@ type InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGrou
 }
 
 // NewInstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByHref : Instantiate InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByHref(href string) (model *InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByHref, err error) {
-	model = &InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByHref{
+func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByHref(href string) (_model *InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByHref, err error) {
+	_model = &InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62484,11 +63273,11 @@ type InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGrou
 }
 
 // NewInstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByID : Instantiate InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByID(id string) (model *InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByID, err error) {
-	model = &InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByID{
+func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByID(id string) (_model *InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByID, err error) {
+	_model = &InstancePlacementTargetPrototypeDedicatedHostGroupIdentityDedicatedHostGroupIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62519,11 +63308,11 @@ type InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityB
 }
 
 // NewInstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByCRN : Instantiate InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByCRN(crn string) (model *InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByCRN, err error) {
-	model = &InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByCRN{
+func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByCRN(crn string) (_model *InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByCRN, err error) {
+	_model = &InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62554,11 +63343,11 @@ type InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityB
 }
 
 // NewInstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByHref : Instantiate InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByHref(href string) (model *InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByHref, err error) {
-	model = &InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByHref{
+func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByHref(href string) (_model *InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByHref, err error) {
+	_model = &InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62589,11 +63378,11 @@ type InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityB
 }
 
 // NewInstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByID : Instantiate InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByID(id string) (model *InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByID, err error) {
-	model = &InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByID{
+func (*VpcV1) NewInstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByID(id string) (_model *InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByID, err error) {
+	_model = &InstancePlacementTargetPrototypeDedicatedHostIdentityDedicatedHostIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62624,11 +63413,11 @@ type LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPo
 }
 
 // NewLoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref : Instantiate LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref(href string) (model *LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref, err error) {
-	model = &LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref{
+func (*VpcV1) NewLoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref(href string) (_model *LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref, err error) {
+	_model = &LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62659,11 +63448,11 @@ type LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPo
 }
 
 // NewLoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID : Instantiate LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID(id string) (model *LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID, err error) {
-	model = &LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID{
+func (*VpcV1) NewLoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID(id string) (_model *LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID, err error) {
+	_model = &LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62694,11 +63483,11 @@ type LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalanc
 }
 
 // NewLoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref : Instantiate LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref(href string) (model *LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref, err error) {
-	model = &LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref{
+func (*VpcV1) NewLoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref(href string) (_model *LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref, err error) {
+	_model = &LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62729,11 +63518,11 @@ type LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalanc
 }
 
 // NewLoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID : Instantiate LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID(id string) (model *LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID, err error) {
-	model = &LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID{
+func (*VpcV1) NewLoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID(id string) (_model *LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID, err error) {
+	_model = &LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62764,11 +63553,11 @@ type LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByCRN 
 }
 
 // NewLoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByCRN : Instantiate LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByCRN(crn string) (model *LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByCRN, err error) {
-	model = &LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByCRN{
+func (*VpcV1) NewLoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByCRN(crn string) (_model *LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByCRN, err error) {
+	_model = &LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62799,11 +63588,11 @@ type LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByHref
 }
 
 // NewLoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByHref : Instantiate LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByHref(href string) (model *LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByHref, err error) {
-	model = &LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByHref{
+func (*VpcV1) NewLoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByHref(href string) (_model *LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByHref, err error) {
+	_model = &LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62834,11 +63623,11 @@ type LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByID s
 }
 
 // NewLoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByID : Instantiate LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByID(id string) (model *LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByID, err error) {
-	model = &LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByID{
+func (*VpcV1) NewLoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByID(id string) (_model *LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByID, err error) {
+	_model = &LoadBalancerPoolMemberTargetPrototypeInstanceIdentityInstanceIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62869,11 +63658,11 @@ type PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByAddre
 }
 
 // NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByAddress : Instantiate PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByAddress (Generic Model Constructor)
-func (*VpcV1) NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByAddress(address string) (model *PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByAddress, err error) {
-	model = &PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByAddress{
+func (*VpcV1) NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByAddress(address string) (_model *PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByAddress, err error) {
+	_model = &PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByAddress{
 		Address: core.StringPtr(address),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62904,11 +63693,11 @@ type PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByCRN s
 }
 
 // NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByCRN : Instantiate PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByCRN(crn string) (model *PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByCRN, err error) {
-	model = &PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByCRN{
+func (*VpcV1) NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByCRN(crn string) (_model *PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByCRN, err error) {
+	_model = &PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62939,11 +63728,11 @@ type PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByHref 
 }
 
 // NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByHref : Instantiate PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByHref(href string) (model *PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByHref, err error) {
-	model = &PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByHref{
+func (*VpcV1) NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByHref(href string) (_model *PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByHref, err error) {
+	_model = &PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -62974,11 +63763,11 @@ type PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByID st
 }
 
 // NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByID : Instantiate PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByID(id string) (model *PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByID, err error) {
-	model = &PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByID{
+func (*VpcV1) NewPublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByID(id string) (_model *PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByID, err error) {
+	_model = &PublicGatewayFloatingIPPrototypeFloatingIPIdentityFloatingIPIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63009,11 +63798,11 @@ type ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByCR
 }
 
 // NewReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByCRN : Instantiate ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByCRN(crn string) (model *ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByCRN, err error) {
-	model = &ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByCRN{
+func (*VpcV1) NewReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByCRN(crn string) (_model *ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByCRN, err error) {
+	_model = &ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63044,11 +63833,11 @@ type ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByHr
 }
 
 // NewReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByHref : Instantiate ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByHref(href string) (model *ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByHref, err error) {
-	model = &ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByHref{
+func (*VpcV1) NewReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByHref(href string) (_model *ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByHref, err error) {
+	_model = &ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63079,11 +63868,11 @@ type ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByID
 }
 
 // NewReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByID : Instantiate ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByID(id string) (model *ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByID, err error) {
-	model = &ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByID{
+func (*VpcV1) NewReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByID(id string) (_model *ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByID, err error) {
+	_model = &ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63114,11 +63903,11 @@ type RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdenti
 }
 
 // NewRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref : Instantiate RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref(href string) (model *RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref, err error) {
-	model = &RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref{
+func (*VpcV1) NewRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref(href string) (_model *RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref, err error) {
+	_model = &RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63149,11 +63938,11 @@ type RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdenti
 }
 
 // NewRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID : Instantiate RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID(id string) (model *RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID, err error) {
-	model = &RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID{
+func (*VpcV1) NewRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID(id string) (_model *RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID, err error) {
+	_model = &RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63184,11 +63973,11 @@ type SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN
 }
 
 // NewSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN : Instantiate SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN(crn string) (model *SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN, err error) {
-	model = &SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN{
+func (*VpcV1) NewSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN(crn string) (_model *SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN, err error) {
+	_model = &SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63219,11 +64008,11 @@ type SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHre
 }
 
 // NewSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref : Instantiate SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref(href string) (model *SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref, err error) {
-	model = &SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref{
+func (*VpcV1) NewSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref(href string) (_model *SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref, err error) {
+	_model = &SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63254,11 +64043,11 @@ type SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByID 
 }
 
 // NewSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByID : Instantiate SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByID(id string) (model *SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByID, err error) {
-	model = &SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByID{
+func (*VpcV1) NewSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByID(id string) (_model *SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByID, err error) {
+	_model = &SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63289,11 +64078,11 @@ type SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityB
 }
 
 // NewSecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN : Instantiate SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN(crn string) (model *SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN, err error) {
-	model = &SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN{
+func (*VpcV1) NewSecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN(crn string) (_model *SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN, err error) {
+	_model = &SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63324,11 +64113,11 @@ type SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityB
 }
 
 // NewSecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref : Instantiate SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref(href string) (model *SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref, err error) {
-	model = &SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref{
+func (*VpcV1) NewSecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref(href string) (_model *SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref, err error) {
+	_model = &SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63359,11 +64148,11 @@ type SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityB
 }
 
 // NewSecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByID : Instantiate SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewSecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByID(id string) (model *SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByID, err error) {
-	model = &SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByID{
+func (*VpcV1) NewSecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByID(id string) (_model *SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByID, err error) {
+	_model = &SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63394,11 +64183,11 @@ type VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByCRN struct {
 }
 
 // NewVolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByCRN : Instantiate VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByCRN(crn string) (model *VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByCRN, err error) {
-	model = &VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByCRN{
+func (*VpcV1) NewVolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByCRN(crn string) (_model *VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByCRN, err error) {
+	_model = &VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63429,11 +64218,11 @@ type VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByHref struct {
 }
 
 // NewVolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByHref : Instantiate VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByHref(href string) (model *VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByHref, err error) {
-	model = &VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByHref{
+func (*VpcV1) NewVolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByHref(href string) (_model *VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByHref, err error) {
+	_model = &VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63464,11 +64253,11 @@ type VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByID struct {
 }
 
 // NewVolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByID : Instantiate VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByID(id string) (model *VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByID, err error) {
-	model = &VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByID{
+func (*VpcV1) NewVolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByID(id string) (_model *VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByID, err error) {
+	_model = &VolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63515,12 +64304,12 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototyp
 }
 
 // NewVolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity : Instantiate VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity(profile VolumeProfileIdentityIntf, capacity int64) (model *VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity, err error) {
-	model = &VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity{
+func (*VpcV1) NewVolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity(profile VolumeProfileIdentityIntf, capacity int64) (_model *VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity, err error) {
+	_model = &VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity{
 		Profile:  profile,
 		Capacity: core.Int64Ptr(capacity),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63571,12 +64360,9 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototyp
 	// The profile to use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile" validate:"required"`
 
-	// The capacity of the volume in gigabytes.
+	// The capacity of the volume in gigabytes. The allowed values are expected to expand in the future.
 	//
-	// If this property is not provided, the `minimum_capacity` for the snapshot will be used as the capacity for the
-	// volume.
-	//
-	// The specified minimum and maximum capacity values for creating or updating volumes may expand in the future.
+	// If unspecified, the capacity will be the source snapshot's `minimum_capacity`.
 	Capacity *int64 `json:"capacity,omitempty"`
 
 	// The root key to use to wrap the data encryption key for the volume.
@@ -63589,12 +64375,12 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototyp
 }
 
 // NewVolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot : Instantiate VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot(profile VolumeProfileIdentityIntf, sourceSnapshot SnapshotIdentityIntf) (model *VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot, err error) {
-	model = &VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot{
+func (*VpcV1) NewVolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot(profile VolumeProfileIdentityIntf, sourceSnapshot SnapshotIdentityIntf) (_model *VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot, err error) {
+	_model = &VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot{
 		Profile:        profile,
 		SourceSnapshot: sourceSnapshot,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63645,11 +64431,11 @@ type VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityB
 }
 
 // NewVolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByCRN : Instantiate VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByCRN(crn string) (model *VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByCRN, err error) {
-	model = &VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByCRN{
+func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByCRN(crn string) (_model *VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByCRN, err error) {
+	_model = &VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByCRN{
 		CRN: core.StringPtr(crn),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63680,11 +64466,11 @@ type VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityB
 }
 
 // NewVolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByHref : Instantiate VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByHref(href string) (model *VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByHref, err error) {
-	model = &VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByHref{
+func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByHref(href string) (_model *VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByHref, err error) {
+	_model = &VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByHref{
 		Href: core.StringPtr(href),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63715,11 +64501,11 @@ type VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityB
 }
 
 // NewVolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByID : Instantiate VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByID(id string) (model *VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByID, err error) {
-	model = &VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByID{
+func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByID(id string) (_model *VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByID, err error) {
+	_model = &VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentityVolumeIdentityByID{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63766,12 +64552,12 @@ type VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContex
 }
 
 // NewVolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity : Instantiate VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity(profile VolumeProfileIdentityIntf, capacity int64) (model *VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity, err error) {
-	model = &VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity{
+func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity(profile VolumeProfileIdentityIntf, capacity int64) (_model *VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity, err error) {
+	_model = &VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity{
 		Profile:  profile,
 		Capacity: core.Int64Ptr(capacity),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63822,12 +64608,9 @@ type VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContex
 	// The profile to use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile" validate:"required"`
 
-	// The capacity of the volume in gigabytes.
+	// The capacity of the volume in gigabytes. The allowed values are expected to expand in the future.
 	//
-	// If this property is not provided, the `minimum_capacity` for the snapshot will be used as the capacity for the
-	// volume.
-	//
-	// The specified minimum and maximum capacity values for creating or updating volumes may expand in the future.
+	// If unspecified, the capacity will be the source snapshot's `minimum_capacity`.
 	Capacity *int64 `json:"capacity,omitempty"`
 
 	// The root key to use to wrap the data encryption key for the volume.
@@ -63840,12 +64623,12 @@ type VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContex
 }
 
 // NewVolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot : Instantiate VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot (Generic Model Constructor)
-func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot(profile VolumeProfileIdentityIntf, sourceSnapshot SnapshotIdentityIntf) (model *VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot, err error) {
-	model = &VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot{
+func (*VpcV1) NewVolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot(profile VolumeProfileIdentityIntf, sourceSnapshot SnapshotIdentityIntf) (_model *VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot, err error) {
+	_model = &VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot{
 		Profile:        profile,
 		SourceSnapshot: sourceSnapshot,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63903,11 +64686,11 @@ type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGrou
 }
 
 // NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup(group *InstanceGroupManagerScheduledActionGroupPrototype) (model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup, err error) {
-	model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup{
+func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup(group *InstanceGroupManagerScheduledActionGroupPrototype) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup, err error) {
+	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup{
 		Group: group,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -63957,11 +64740,11 @@ type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByMana
 }
 
 // NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager(manager InstanceGroupManagerScheduledActionManagerPrototypeIntf) (model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager, err error) {
-	model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager{
+func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager(manager InstanceGroupManagerScheduledActionManagerPrototypeIntf) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager, err error) {
+	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager{
 		Manager: manager,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -64010,11 +64793,11 @@ type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup s
 }
 
 // NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup(group *InstanceGroupManagerScheduledActionGroupPrototype) (model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup, err error) {
-	model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup{
+func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup(group *InstanceGroupManagerScheduledActionGroupPrototype) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup, err error) {
+	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup{
 		Group: group,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -64063,11 +64846,11 @@ type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager
 }
 
 // NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager(manager InstanceGroupManagerScheduledActionManagerPrototypeIntf) (model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager, err error) {
-	model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager{
+func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager(manager InstanceGroupManagerScheduledActionManagerPrototypeIntf) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager, err error) {
+	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager{
 		Manager: manager,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 

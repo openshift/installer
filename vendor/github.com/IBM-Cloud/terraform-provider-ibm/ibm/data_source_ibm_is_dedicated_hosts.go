@@ -342,39 +342,6 @@ func dataSourceIbmIsDedicatedHosts() *schema.Resource {
 					},
 				},
 			},
-			"first": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "A link to the first page of resources.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"href": &schema.Schema{
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The URL for a page of resources.",
-						},
-					},
-				},
-			},
-			"limit": &schema.Schema{
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The maximum number of resources that can be returned by the request.",
-			},
-			"next": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "A link to the next page of resources. This property is present for all pagesexcept the last page.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"href": &schema.Schema{
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The URL for a page of resources.",
-						},
-					},
-				},
-			},
 			"total_count": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -395,42 +362,34 @@ func dataSourceIbmIsDedicatedHostsRead(d *schema.ResourceData, meta interface{})
 		hostgroupid := hostgroupintf.(string)
 		listDedicatedHostsOptions.DedicatedHostGroupID = &hostgroupid
 	}
-
-	dedicatedHostCollection, response, err := vpcClient.ListDedicatedHostsWithContext(context.TODO(), listDedicatedHostsOptions)
-	if err != nil {
-		log.Printf("[DEBUG] ListDedicatedHostsWithContext failed %s\n%s", err, response)
-		return err
+	start := ""
+	allrecs := []vpcv1.DedicatedHost{}
+	for {
+		if start != "" {
+			listDedicatedHostsOptions.Start = &start
+		}
+		dedicatedHostCollection, response, err := vpcClient.ListDedicatedHostsWithContext(context.TODO(), listDedicatedHostsOptions)
+		if err != nil {
+			log.Printf("[DEBUG] ListDedicatedHostsWithContext failed %s\n%s", err, response)
+			return err
+		}
+		start = GetNext(dedicatedHostCollection.Next)
+		allrecs = append(allrecs, dedicatedHostCollection.DedicatedHosts...)
+		if start == "" {
+			break
+		}
 	}
 
-	if len(dedicatedHostCollection.DedicatedHosts) != 0 {
+	if len(allrecs) > 0 {
 
 		d.SetId(dataSourceIbmIsDedicatedHostsID(d))
 
-		if dedicatedHostCollection.DedicatedHosts != nil {
-			err = d.Set("dedicated_hosts", dataSourceDedicatedHostCollectionFlattenDedicatedHosts(dedicatedHostCollection.DedicatedHosts))
-			if err != nil {
-				return fmt.Errorf("Error setting dedicated_hosts %s", err)
-			}
+		err = d.Set("dedicated_hosts", dataSourceDedicatedHostCollectionFlattenDedicatedHosts(allrecs))
+		if err != nil {
+			return fmt.Errorf("Error setting dedicated_hosts %s", err)
 		}
 
-		if dedicatedHostCollection.First != nil {
-			err = d.Set("first", dataSourceDedicatedHostCollectionFlattenFirst(*dedicatedHostCollection.First))
-			if err != nil {
-				return fmt.Errorf("Error setting first %s", err)
-			}
-		}
-		if err = d.Set("limit", dedicatedHostCollection.Limit); err != nil {
-			return fmt.Errorf("Error setting limit: %s", err)
-		}
-
-		if dedicatedHostCollection.Next != nil {
-			err = d.Set("next", dataSourceDedicatedHostCollectionFlattenNext(*dedicatedHostCollection.Next))
-			if err != nil {
-				return fmt.Errorf("Error setting next %s", err)
-			}
-		}
-
-		if err = d.Set("total_count", dedicatedHostCollection.TotalCount); err != nil {
+		if err = d.Set("total_count", len(allrecs)); err != nil {
 			return fmt.Errorf("Error setting total_count: %s", err)
 		}
 	}

@@ -16,6 +16,7 @@ import (
 
 	// Added code for the Power Colo Offering
 
+	"github.com/IBM-Cloud/container-services-go-sdk/kubernetesserviceapiv1"
 	apigateway "github.com/IBM/apigateway-go-sdk/apigatewaycontrollerapiv1"
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
 	"github.com/IBM/container-registry-go-sdk/containerregistryv1"
@@ -31,6 +32,7 @@ import (
 	cisdnsrecordsv1 "github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	dns "github.com/IBM/networking-go-sdk/dnssvcsv1"
 	cisedgefunctionv1 "github.com/IBM/networking-go-sdk/edgefunctionsapiv1"
+	cisfiltersv1 "github.com/IBM/networking-go-sdk/filtersv1"
 	cisglbhealthcheckv1 "github.com/IBM/networking-go-sdk/globalloadbalancermonitorv1"
 	cisglbpoolv0 "github.com/IBM/networking-go-sdk/globalloadbalancerpoolsv0"
 	cisglbv1 "github.com/IBM/networking-go-sdk/globalloadbalancerv1"
@@ -58,10 +60,9 @@ import (
 	"github.com/IBM/push-notifications-go-sdk/pushservicev1"
 	schematicsv1 "github.com/IBM/schematics-go-sdk/schematicsv1"
 	"github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
-	vpcclassic "github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	vpc "github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/apache/openwhisk-client-go/whisk"
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	slsession "github.com/softlayer/softlayer-go/session"
 
 	bluemix "github.com/IBM-Cloud/bluemix-go"
@@ -100,8 +101,7 @@ const RetryAPIDelay = 5 * time.Second
 var BluemixRegion string
 
 var (
-	errEmptySoftLayerCredentials = errors.New("iaas_classic_username and iaas_classic_api_key must be provided. Please see the documentation on how to configure them")
-	errEmptyBluemixCredentials   = errors.New("ibmcloud_api_key or bluemix_api_key or iam_token and iam_refresh_token must be provided. Please see the documentation on how to configure it")
+	errEmptyBluemixCredentials = errors.New("ibmcloud_api_key or bluemix_api_key or iam_token and iam_refresh_token must be provided. Please see the documentation on how to configure it")
 )
 
 //UserConfig ...
@@ -208,7 +208,6 @@ type ClientSession interface {
 	CertificateManagerAPI() (certificatemanager.CertificateManagerServiceAPI, error)
 	keyProtectAPI() (*kp.Client, error)
 	keyManagementAPI() (*kp.Client, error)
-	VpcClassicV1API() (*vpcclassic.VpcClassicV1, error)
 	VpcV1API() (*vpc.VpcV1, error)
 	APIGateway() (*apigateway.ApiGatewayControllerApiV1, error)
 	PrivateDNSClientSession() (*dns.DnsSvcsV1, error)
@@ -247,6 +246,8 @@ type ClientSession interface {
 	ResourceControllerV2API() (*resourcecontroller.ResourceControllerV2, error)
 	SecretsManagerV1() (*secretsmanagerv1.SecretsManagerV1, error)
 	SchematicsV1() (*schematicsv1.SchematicsV1, error)
+	SatelliteClientSession() (*kubernetesserviceapiv1.KubernetesServiceApiV1, error)
+	CisFiltersSession() (*cisfiltersv1.FiltersV1, error)
 }
 
 type clientSession struct {
@@ -341,9 +342,6 @@ type clientSession struct {
 
 	appConfigurationClient    *appconfigurationv1.AppConfigurationV1
 	appConfigurationClientErr error
-
-	vpcClassicErr error
-	vpcClassicAPI *vpcclassic.VpcClassicV1
 
 	vpcErr error
 	vpcAPI *vpc.VpcV1
@@ -474,9 +472,17 @@ type clientSession struct {
 	schematicsClient    *schematicsv1.SchematicsV1
 	schematicsClientErr error
 
+	//Satellite service
+	satelliteClient    *kubernetesserviceapiv1.KubernetesServiceApiV1
+	satelliteClientErr error
+
 	//IAM Policy Management
 	iamPolicyManagementErr error
 	iamPolicyManagementAPI *iampolicymanagement.IamPolicyManagementV1
+
+	// CIS Filters options
+	cisFiltersClient *cisfiltersv1.FiltersV1
+	cisFiltersErr    error
 }
 
 func (session clientSession) CatalogManagementV1() (*catalogmanagementv1.CatalogManagementV1, error) {
@@ -632,10 +638,6 @@ func (sess clientSession) keyProtectAPI() (*kp.Client, error) {
 
 func (sess clientSession) keyManagementAPI() (*kp.Client, error) {
 	return sess.kmsAPI, sess.kmsErr
-}
-
-func (sess clientSession) VpcClassicV1API() (*vpcclassic.VpcClassicV1, error) {
-	return sess.vpcClassicAPI, sess.vpcClassicErr
 }
 
 func (sess clientSession) VpcV1API() (*vpc.VpcV1, error) {
@@ -876,6 +878,19 @@ func (session clientSession) SecretsManagerV1() (*secretsmanagerv1.SecretsManage
 
 var cloudEndpoint = "cloud.ibm.com"
 
+// Session to the Satellite client
+func (sess clientSession) SatelliteClientSession() (*kubernetesserviceapiv1.KubernetesServiceApiV1, error) {
+	return sess.satelliteClient, sess.satelliteClientErr
+}
+
+// CIS Filters
+func (sess clientSession) CisFiltersSession() (*cisfiltersv1.FiltersV1, error) {
+	if sess.cisFiltersErr != nil {
+		return sess.cisFiltersClient, sess.cisFiltersErr
+	}
+	return sess.cisFiltersClient.Clone(), nil
+}
+
 // ClientSession configures and returns a fully initialized ClientSession
 func (c *Config) ClientSession() (interface{}, error) {
 	sess, err := newSession(c)
@@ -922,7 +937,6 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.ibmpiConfigErr = errEmptyBluemixCredentials
 		session.userManagementErr = errEmptyBluemixCredentials
 		session.certManagementErr = errEmptyBluemixCredentials
-		session.vpcClassicErr = errEmptyBluemixCredentials
 		session.vpcErr = errEmptyBluemixCredentials
 		session.apigatewayErr = errEmptyBluemixCredentials
 		session.pDNSErr = errEmptyBluemixCredentials
@@ -956,7 +970,9 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.cisWAFRuleErr = errEmptyBluemixCredentials
 		session.iamIdentityErr = errEmptyBluemixCredentials
 		session.secretsManagerClientErr = errEmptyBluemixCredentials
+		session.cisFiltersErr = errEmptyBluemixCredentials
 		session.schematicsClientErr = errEmptyBluemixCredentials
+		session.satelliteClientErr = errEmptyBluemixCredentials
 		session.iamPolicyManagementErr = errEmptyBluemixCredentials
 
 		return session, nil
@@ -1021,6 +1037,7 @@ func (c *Config) ClientSession() (interface{}, error) {
 
 	if sess.SoftLayerSession != nil && sess.SoftLayerSession.IAMToken != "" {
 		sess.SoftLayerSession.IAMToken = sess.BluemixSession.Config.IAMAccessToken
+		sess.SoftLayerSession.IAMRefreshToken = sess.BluemixSession.Config.IAMRefreshToken
 	}
 
 	session.functionClient, session.functionConfigErr = FunctionClient(sess.BluemixSession.Config)
@@ -1120,9 +1137,17 @@ func (c *Config) ClientSession() (interface{}, error) {
 	var authenticator core.Authenticator
 
 	if c.BluemixAPIKey != "" {
+		iamURL := iamidentity.DefaultServiceURL
+		if c.Visibility == "private" || c.Visibility == "public-and-private" {
+			if c.Region == "us-south" || c.Region == "us-east" {
+				iamURL = contructEndpoint(fmt.Sprintf("private.%s.iam", c.Region), cloudEndpoint)
+			} else {
+				iamURL = contructEndpoint("private.iam", cloudEndpoint)
+			}
+		}
 		authenticator = &core.IamAuthenticator{
 			ApiKey: c.BluemixAPIKey,
-			URL:    envFallBack([]string{"IBMCLOUD_IAM_API_ENDPOINT"}, "https://iam.cloud.ibm.com") + "/identity/token",
+			URL:    envFallBack([]string{"IBMCLOUD_IAM_API_ENDPOINT"}, iamURL) + "/identity/token",
 		}
 	} else if strings.HasPrefix(sess.BluemixSession.Config.IAMAccessToken, "Bearer") {
 		authenticator = &core.BearerTokenAuthenticator{
@@ -1181,35 +1206,6 @@ func (c *Config) ClientSession() (interface{}, error) {
 		}
 	}
 	session.schematicsClient = schematicsClient
-
-	vpcclassicurl := contructEndpoint(fmt.Sprintf("%s.iaas", c.Region), fmt.Sprintf("%s/v1", cloudEndpoint))
-	if c.Visibility == "private" {
-		if c.Region == "us-south" || c.Region == "us-east" {
-			vpcclassicurl = contructEndpoint(fmt.Sprintf("%s.private.iaas", c.Region), fmt.Sprintf("%s/v1", cloudEndpoint))
-		} else {
-			session.vpcClassicErr = fmt.Errorf("VPC Classic supports private endpoints only in us-south and us-east")
-		}
-	}
-	if c.Visibility == "public-and-private" {
-		if c.Region == "us-south" || c.Region == "us-east" {
-			vpcclassicurl = contructEndpoint(fmt.Sprintf("%s.private.iaas", c.Region), fmt.Sprintf("%s/v1", cloudEndpoint))
-		} else {
-			vpcclassicurl = contructEndpoint(fmt.Sprintf("%s.iaas", c.Region), fmt.Sprintf("%s/v1", cloudEndpoint))
-		}
-	}
-	vpcclassicoptions := &vpcclassic.VpcClassicV1Options{
-		URL:           envFallBack([]string{"IBMCLOUD_IS_API_ENDPOINT"}, vpcclassicurl),
-		Authenticator: authenticator,
-	}
-	vpcclassicclient, err := vpcclassic.NewVpcClassicV1(vpcclassicoptions)
-	if err != nil {
-		session.vpcErr = fmt.Errorf("Error occured while configuring vpc classic service: %q", err)
-	}
-	if vpcclassicclient != nil && vpcclassicclient.Service != nil {
-		vpcclassicclient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
-	}
-
-	session.vpcClassicAPI = vpcclassicclient
 
 	vpcurl := contructEndpoint(fmt.Sprintf("%s.iaas", c.Region), fmt.Sprintf("%s/v1", cloudEndpoint))
 	if c.Visibility == "private" {
@@ -1532,6 +1528,7 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.cisLockdownErr = fmt.Errorf("CIS Service doesnt support private endpoints.")
 		session.cisRangeAppErr = fmt.Errorf("CIS Service doesnt support private endpoints.")
 		session.cisWAFRuleErr = fmt.Errorf("CIS Service doesnt support private endpoints.")
+		session.cisFiltersErr = fmt.Errorf("CIS Service doesnt support private endpoints.")
 	}
 	cisEndPoint := envFallBack([]string{"IBMCLOUD_CIS_API_ENDPOINT"}, cisURL)
 
@@ -1917,6 +1914,21 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.cisWAFRuleClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
 	}
 
+	// IBM Network CIS Filters
+	cisFiltersOpt := &cisfiltersv1.FiltersV1Options{
+		URL:           cisEndPoint,
+		Authenticator: authenticator,
+	}
+	session.cisFiltersClient, session.cisFiltersErr = cisfiltersv1.NewFiltersV1(cisFiltersOpt)
+	if session.cisFiltersErr != nil {
+		session.cisFiltersErr =
+			fmt.Errorf("Error occured while configuring CIS Filters : %s",
+				session.cisFiltersErr)
+	}
+	if session.cisFiltersClient != nil && session.cisFiltersClient.Service != nil {
+		session.cisFiltersClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
+	}
+
 	// iamIdenityURL := fmt.Sprintf("https://%s.iam.cloud.ibm.com/v1", c.Region)
 	iamURL := iamidentity.DefaultServiceURL
 	if c.Visibility == "private" || c.Visibility == "public-and-private" {
@@ -2066,6 +2078,23 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.secretsManagerClientErr = fmt.Errorf("Error occurred while configuring IBM Cloud Secrets Manager API service: %q", err)
 	}
 
+	containerEndpoint := kubernetesserviceapiv1.DefaultServiceURL
+	if c.Visibility == "private" || c.Visibility == "public-and-private" {
+		containerEndpoint = contructEndpoint(fmt.Sprintf("private.%s.containers", c.Region), fmt.Sprintf("%s/global", cloudEndpoint))
+	}
+
+	kubernetesServiceV1Options := &kubernetesserviceapiv1.KubernetesServiceApiV1Options{
+		URL:           envFallBack([]string{"IBMCLOUD_SATELLITE_API_ENDPOINT"}, containerEndpoint),
+		Authenticator: authenticator,
+	}
+
+	session.satelliteClient, err = kubernetesserviceapiv1.NewKubernetesServiceApiV1(kubernetesServiceV1Options)
+	if err != nil {
+		session.satelliteClientErr = fmt.Errorf("Error occured while configuring satellite client: %q", err)
+	}
+	// Enable retries for API calls
+	session.satelliteClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
+
 	return session, nil
 }
 
@@ -2091,6 +2120,7 @@ func newSession(c *Config) (*Session, error) {
 	if c.IAMToken != "" {
 		log.Println("Configuring SoftLayer Session with token")
 		softlayerSession.IAMToken = c.IAMToken
+		softlayerSession.IAMRefreshToken = c.IAMRefreshToken
 	}
 	if c.SoftLayerAPIKey != "" && c.SoftLayerUserName != "" {
 		log.Println("Configuring SoftLayer Session with API key")

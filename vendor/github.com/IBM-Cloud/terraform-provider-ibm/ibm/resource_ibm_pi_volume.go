@@ -15,6 +15,8 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	st "github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volumes"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 const (
@@ -65,7 +67,7 @@ func resourceIBMPIVolume() *schema.Resource {
 			},
 			helpers.PIVolumeType: {
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ValidateFunc: validateAllowedStringValue([]string{"ssd", "standard", "tier1", "tier3"}),
 				Description:  "Volume type",
 			},
@@ -73,9 +75,27 @@ func resourceIBMPIVolume() *schema.Resource {
 			helpers.PICloudInstanceId: {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: " Cloud Instance ID - This is the service_instance_id.",
+				Description: "Cloud Instance ID - This is the service_instance_id.",
 			},
 
+			"pi_affinity_policy": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Affinity policy for data volume being created",
+				ValidateFunc: InvokeValidator("ibm_pi_volume", "pi_affinity"),
+			},
+			"pi_affinity_volume": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "Volume (ID or Name) to base volume affinity policy against; ",
+				ConflictsWith: []string{"pi_affinity_instance"},
+			},
+			"pi_affinity_instance": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "PVM Instance (ID or Name) to base volume affinity policy against;",
+				ConflictsWith: []string{"pi_affinity_volume"},
+			},
 			// Computed Attributes
 
 			"volume_status": {
@@ -97,7 +117,22 @@ func resourceIBMPIVolume() *schema.Resource {
 		},
 	}
 }
+func resourceIBMPIVolumeValidator() *ResourceValidator {
 
+	validateSchema := make([]ValidateSchema, 1)
+
+	validateSchema = append(validateSchema,
+		ValidateSchema{
+			Identifier:                 "pi_affinity",
+			ValidateFunctionIdentifier: ValidateAllowedStringValue,
+			Type:                       TypeString,
+			Required:                   true,
+			AllowedValues:              "affinity, anti-affinity"})
+	ibmPIVolumeResourceValidator := ResourceValidator{
+		ResourceName: "ibm_pi_volume",
+		Schema:       validateSchema}
+	return &ibmPIVolumeResourceValidator
+}
 func resourceIBMPIVolumeCreate(d *schema.ResourceData, meta interface{}) error {
 	sess, err := meta.(ClientSession).IBMPISession()
 	if err != nil {
@@ -112,9 +147,31 @@ func resourceIBMPIVolumeCreate(d *schema.ResourceData, meta interface{}) error {
 		shared = v.(bool)
 	}
 	powerinstanceid := d.Get(helpers.PICloudInstanceId).(string)
+	body := models.CreateDataVolume{
+		Name:      &name,
+		DiskType:  volType,
+		Shareable: &shared,
+		Size:      &size,
+	}
+	if ap, ok := d.GetOk("pi_affinity_policy"); ok {
+		policy := ap.(string)
+		body.AffinityPolicy = &policy
+	}
+	if av, ok := d.GetOk("pi_affinity_volume"); ok {
+		afvol := av.(string)
+		body.AffinityVolume = &afvol
+	}
+	if ai, ok := d.GetOk("pi_affinity_instance"); ok {
+		afins := ai.(string)
+		body.AffinityPVMInstance = &afins
+	}
+	resquestParams := p_cloud_volumes.PcloudCloudinstancesVolumesPostParams{
+		Body:            &body,
+		CloudInstanceID: powerinstanceid,
+	}
 
 	client := st.NewIBMPIVolumeClient(sess, powerinstanceid)
-	vol, err := client.Create(name, size, volType, shared, powerinstanceid, volPostTimeOut)
+	vol, err := client.CreateVolume(&resquestParams, powerinstanceid, volPostTimeOut)
 	if err != nil {
 		return fmt.Errorf("Failed to Create the volume %v", err)
 	}
@@ -146,17 +203,17 @@ func resourceIBMPIVolumeRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.Set(helpers.PIVolumeName, vol.Name)
 	d.Set(helpers.PIVolumeSize, vol.Size)
-	if &vol.Shareable != nil {
+	if vol.Shareable != nil {
 		d.Set(helpers.PIVolumeShareable, vol.Shareable)
 	}
 	d.Set(helpers.PIVolumeType, vol.DiskType)
 	if &vol.State != nil {
 		d.Set("volume_status", vol.State)
 	}
-	if &vol.VolumeID != nil {
+	if vol.VolumeID != nil {
 		d.Set("volume_id", vol.VolumeID)
 	}
-	if &vol.DeleteOnTermination != nil {
+	if vol.DeleteOnTermination != nil {
 		d.Set("delete_on_termination", vol.DeleteOnTermination)
 	}
 	if &vol.Wwn != nil {
@@ -181,7 +238,17 @@ func resourceIBMPIVolumeUpdate(d *schema.ResourceData, meta interface{}) error {
 	if v, ok := d.GetOk(helpers.PIVolumeShareable); ok {
 		shareable = v.(bool)
 	}
-	volrequest, err := client.Update(parts[1], name, size, shareable, powerinstanceid, volPostTimeOut)
+
+	body := models.UpdateVolume{
+		Name:      &name,
+		Shareable: &shareable,
+		Size:      size,
+	}
+	updateParams := p_cloud_volumes.PcloudCloudinstancesVolumesPutParams{
+		Body:            &body,
+		CloudInstanceID: powerinstanceid,
+	}
+	volrequest, err := client.UpdateVolume(&updateParams, parts[1], powerinstanceid, volPostTimeOut)
 	if err != nil {
 		return err
 	}
@@ -203,7 +270,7 @@ func resourceIBMPIVolumeDelete(d *schema.ResourceData, meta interface{}) error {
 	powerinstanceid := parts[0]
 
 	client := st.NewIBMPIVolumeClient(sess, powerinstanceid)
-	voldeleteErr := client.Delete(parts[1], powerinstanceid, deleteTimeOut)
+	voldeleteErr := client.DeleteVolume(parts[1], powerinstanceid, deleteTimeOut)
 	if voldeleteErr != nil {
 		return voldeleteErr
 	}
@@ -224,7 +291,9 @@ func resourceIBMPIVolumeExists(d *schema.ResourceData, meta interface{}) (bool, 
 	if err != nil {
 		return false, err
 	}
-
+	if len(parts) < 2 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of powerInstanceID/VolumeID", d.Id())
+	}
 	powerinstanceid := parts[0]
 	client := st.NewIBMPIVolumeClient(sess, powerinstanceid)
 

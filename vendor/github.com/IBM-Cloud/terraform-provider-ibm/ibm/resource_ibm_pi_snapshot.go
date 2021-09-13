@@ -8,14 +8,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_p_vm_instances"
-	"github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
 	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	st "github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/helpers"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_p_vm_instances"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 func resourceIBMPISnapshot() *schema.Resource {
@@ -248,7 +248,9 @@ func resourceIBMPISnapshotExists(d *schema.ResourceData, meta interface{}) (bool
 	if err != nil {
 		return false, err
 	}
-
+	if len(parts) < 2 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of powerInstanceID/SnapshotID", d.Id())
+	}
 	powerinstanceid := parts[0]
 	client := st.NewIBMPISnapshotClient(sess, powerinstanceid)
 

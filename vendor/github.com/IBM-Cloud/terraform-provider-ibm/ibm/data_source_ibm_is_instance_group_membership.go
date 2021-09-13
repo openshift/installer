@@ -110,6 +110,9 @@ func dataSourceIBMISInstanceGroupMembershipRead(d *schema.ResourceData, meta int
 		listInstanceGroupMembershipsOptions := vpcv1.ListInstanceGroupMembershipsOptions{
 			InstanceGroupID: &instanceGroupID,
 		}
+		if start != "" {
+			listInstanceGroupMembershipsOptions.Start = &start
+		}
 		instanceGroupMembershipCollection, response, err := sess.ListInstanceGroupMemberships(&listInstanceGroupMembershipsOptions)
 		if err != nil || instanceGroupMembershipCollection == nil {
 			return fmt.Errorf("Error Getting InstanceGroup Membership Collection %s\n%s", err, response)

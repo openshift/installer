@@ -115,12 +115,44 @@ func resourceIBMContainerWorkerPool() *schema.Resource {
 				},
 			},
 
+			"worker_pool_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"labels": {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "list of labels to worker pool",
+			},
+			"taints": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "WorkerPool Taints",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Key for taint",
+						},
+						"value": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Value for taint.",
+						},
+						"effect": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Effect for taint. Accepted values are NoSchedule, PreferNoSchedule and NoExecute.",
+							ValidateFunc: InvokeValidator(
+								"ibm_container_worker_pool",
+								"worker_taints"),
+						},
+					},
+				},
 			},
 
 			"region": {
@@ -147,6 +179,20 @@ func resourceIBMContainerWorkerPool() *schema.Resource {
 	}
 }
 
+func resourceContainerWorkerPoolValidator() *ResourceValidator {
+	tainteffects := "NoSchedule,PreferNoSchedule,NoExecute"
+	validateSchema := make([]ValidateSchema, 1)
+	validateSchema = append(validateSchema,
+		ValidateSchema{
+			Identifier:                 "worker_taints",
+			ValidateFunctionIdentifier: ValidateAllowedStringValue,
+			Type:                       TypeString,
+			Required:                   true,
+			AllowedValues:              tainteffects})
+
+	containerWorkerPoolTaintsValidator := ResourceValidator{ResourceName: "ibm_container_worker_pool", Schema: validateSchema}
+	return &containerWorkerPoolTaintsValidator
+}
 func resourceIBMContainerWorkerPoolCreate(d *schema.ResourceData, meta interface{}) error {
 
 	csClient, err := meta.(ClientSession).ContainerAPI()
@@ -233,6 +279,7 @@ func resourceIBMContainerWorkerPoolRead(d *schema.ResourceData, meta interface{}
 	d.Set("worker_pool_name", workerPool.Name)
 	d.Set("machine_type", strings.Split(machineType, ".encrypted")[0])
 	d.Set("size_per_zone", workerPool.Size)
+	d.Set("worker_pool_id", workerPoolID)
 	hardware := workerPool.Isolation
 	switch strings.ToLower(hardware) {
 	case "":
@@ -307,6 +354,22 @@ func resourceIBMContainerWorkerPoolUpdate(d *schema.ResourceData, meta interface
 				"Error waiting for workers of worker pool (%s) of cluster (%s) to become ready: %s", workerPoolNameorID, clusterNameorID, err)
 		}
 	}
+	if d.HasChange("taints") {
+		taintParam := expandWorkerPoolTaints(d, meta, clusterNameorID, workerPoolNameorID)
+
+		targetEnv, err := getVpcClusterTargetHeader(d, meta)
+		if err != nil {
+			return err
+		}
+		ClusterClient, err := meta.(ClientSession).VpcContainerAPI()
+		if err != nil {
+			return err
+		}
+		err = ClusterClient.WorkerPools().UpdateWorkerPoolTaints(taintParam, targetEnv)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error updating the taints: %s", err)
+		}
+	}
 
 	return resourceIBMContainerWorkerPoolRead(d, meta)
 }
@@ -349,6 +412,9 @@ func resourceIBMContainerWorkerPoolExists(d *schema.ResourceData, meta interface
 	parts, err := idParts(d.Id())
 	if err != nil {
 		return false, err
+	}
+	if len(parts) < 2 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of clusterID/WorkerPoolID", d.Id())
 	}
 	cluster := parts[0]
 	workerPoolID := parts[1]

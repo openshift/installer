@@ -164,7 +164,7 @@ func (authenticator *CloudPakForDataAuthenticator) Validate() error {
 // 		Authorization: Bearer <bearer-token>
 //
 func (authenticator *CloudPakForDataAuthenticator) Authenticate(request *http.Request) error {
-	token, err := authenticator.getToken()
+	token, err := authenticator.GetToken()
 	if err != nil {
 		return err
 	}
@@ -189,10 +189,10 @@ func (authenticator *CloudPakForDataAuthenticator) setTokenData(tokenData *cp4dT
 	authenticator.tokenData = tokenData
 }
 
-// getToken: returns an access token to be used in an Authorization header.
+// GetToken: returns an access token to be used in an Authorization header.
 // Whenever a new token is needed (when a token doesn't yet exist, needs to be refreshed,
 // or the existing token has expired), a new access token is fetched from the token server.
-func (authenticator *CloudPakForDataAuthenticator) getToken() (string, error) {
+func (authenticator *CloudPakForDataAuthenticator) GetToken() (string, error) {
 	if authenticator.getTokenData() == nil || !authenticator.getTokenData().isTokenValid() {
 		// synchronously request the token
 		err := authenticator.synchronizedRequestToken()

@@ -17,16 +17,16 @@ func dataSourceIBMResourceGroup() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Description:   "Resource group name",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"is_default"},
+				Description:  "Resource group name",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"is_default", "name"},
 			},
 			"is_default": {
-				Description:   "Default Resource group",
-				Type:          schema.TypeBool,
-				Optional:      true,
-				ConflictsWith: []string{"name"},
+				Description:  "Default Resource group",
+				Type:         schema.TypeBool,
+				Optional:     true,
+				ExactlyOneOf: []string{"is_default", "name"},
 			},
 		},
 	}
@@ -62,7 +62,10 @@ func dataSourceIBMResourceGroupRead(d *schema.ResourceData, meta interface{}) er
 		grp, err = rsGroup.List(&resourceGroupQuery)
 
 		if err != nil {
-			return fmt.Errorf("Error retrieving default resource group: %s", err)
+			return fmt.Errorf("[ERROR] Error retrieving default resource group: %s", err)
+		}
+		if len(grp) < 1 {
+			return fmt.Errorf("[ERROR] No Default resource group found: %s", err)
 		}
 		d.SetId(grp[0].ID)
 
@@ -72,12 +75,10 @@ func dataSourceIBMResourceGroupRead(d *schema.ResourceData, meta interface{}) er
 		}
 		grp, err := rsGroup.FindByName(resourceGroupQuery, name)
 		if err != nil {
-			return fmt.Errorf("Error retrieving resource group %s: %s", name, err)
+			return fmt.Errorf("[ERROR] Error retrieving resource group %s: %s", name, err)
 		}
 		d.SetId(grp[0].ID)
 
-	} else {
-		return fmt.Errorf("Missing required properties. Need a resource group name, or the is_default true")
 	}
 
 	return nil

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 

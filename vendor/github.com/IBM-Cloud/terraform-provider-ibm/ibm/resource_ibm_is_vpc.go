@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -266,7 +265,7 @@ func resourceIBMISVPC() *schema.Resource {
 									isVPCSecurityGroupRuleIPVersion: {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "IP version: ipv4 or ipv6",
+										Description: "IP version: ipv4",
 									},
 
 									isVPCSecurityGroupRuleRemote: {
@@ -418,10 +417,6 @@ func resourceIBMISVPCValidator() *ResourceValidator {
 }
 
 func resourceIBMISVPCCreate(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
 
 	log.Printf("[DEBUG] VPC create")
 	name := d.Get(isVPCName).(string)
@@ -439,91 +434,11 @@ func resourceIBMISVPCCreate(d *schema.ResourceData, meta interface{}) error {
 	if grp, ok := d.GetOk(isVPCResourceGroup); ok {
 		rg = grp.(string)
 	}
-	if userDetails.generation == 1 {
-		err := classicVpcCreate(d, meta, name, apm, rg, isClassic)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := vpcCreate(d, meta, name, apm, rg, isClassic)
-		if err != nil {
-			return err
-		}
+	err := vpcCreate(d, meta, name, apm, rg, isClassic)
+	if err != nil {
+		return err
 	}
 	return resourceIBMISVPCRead(d, meta)
-}
-
-func classicVpcCreate(d *schema.ResourceData, meta interface{}, name, apm, rg string, isClassic bool) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	options := &vpcclassicv1.CreateVPCOptions{
-		Name: &name,
-	}
-	if rg != "" {
-		options.ResourceGroup = &vpcclassicv1.ResourceGroupIdentity{
-			ID: &rg,
-		}
-	}
-	if apm != "" {
-		options.AddressPrefixManagement = &apm
-	}
-	options.ClassicAccess = &isClassic
-
-	vpc, response, err := sess.CreateVPC(options)
-	if err != nil {
-		return fmt.Errorf("Error while creating VPC err %s\n%s", err, response)
-	}
-	d.SetId(*vpc.ID)
-	log.Printf("[INFO] VPC : %s", *vpc.ID)
-	_, err = isWaitForClassicVPCAvailable(sess, d.Id(), d.Timeout(schema.TimeoutCreate))
-	if err != nil {
-		return err
-	}
-	v := os.Getenv("IC_ENV_TAGS")
-	if _, ok := d.GetOk(isVPCTags); ok || v != "" {
-		oldList, newList := d.GetChange(isVPCTags)
-		err = UpdateTagsUsingCRN(oldList, newList, meta, *vpc.CRN)
-		if err != nil {
-			log.Printf(
-				"Error on create of resource vpc (%s) tags: %s", d.Id(), err)
-		}
-	}
-	return nil
-}
-
-func isWaitForClassicVPCAvailable(vpc *vpcclassicv1.VpcClassicV1, id string, timeout time.Duration) (interface{}, error) {
-	log.Printf("Waiting for VPC (%s) to be available.", id)
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{isVPCPending},
-		Target:     []string{isVPCAvailable, isVPCFailed},
-		Refresh:    isClassicVPCRefreshFunc(vpc, id),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 10 * time.Second,
-	}
-
-	return stateConf.WaitForState()
-}
-
-func isClassicVPCRefreshFunc(vpc *vpcclassicv1.VpcClassicV1, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		getvpcOptions := &vpcclassicv1.GetVPCOptions{
-			ID: &id,
-		}
-		vpc, response, err := vpc.GetVPC(getvpcOptions)
-		if err != nil {
-			return nil, isVPCFailed, fmt.Errorf("Error getting VPC : %s\n%s", err, response)
-		}
-
-		if *vpc.Status == isVPCAvailable || *vpc.Status == isVPCFailed {
-			return vpc, *vpc.Status, nil
-		}
-
-		return vpc, isVPCPending, nil
-	}
 }
 
 func vpcCreate(d *schema.ResourceData, meta interface{}, name, apm, rg string, isClassic bool) error {
@@ -613,242 +528,11 @@ func isVPCRefreshFunc(vpc *vpcv1.VpcV1, id string) resource.StateRefreshFunc {
 }
 
 func resourceIBMISVPCRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
 	id := d.Id()
-	if userDetails.generation == 1 {
-		err := classicVpcGet(d, meta, id)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := vpcGet(d, meta, id)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func classicVpcGet(d *schema.ResourceData, meta interface{}, id string) error {
-	sess, err := classicVpcClient(meta)
+	err := vpcGet(d, meta, id)
 	if err != nil {
 		return err
 	}
-	getvpcOptions := &vpcclassicv1.GetVPCOptions{
-		ID: &id,
-	}
-	vpc, response, err := sess.GetVPC(getvpcOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("Error getting VPC : %s\n%s", err, response)
-	}
-
-	d.Set(isVPCName, *vpc.Name)
-	d.Set(isVPCClassicAccess, *vpc.ClassicAccess)
-	d.Set(isVPCStatus, *vpc.Status)
-	if vpc.DefaultNetworkACL != nil {
-		log.Printf("[DEBUG] vpc default network acl is not null :%s", *vpc.DefaultNetworkACL.ID)
-		d.Set(isVPCDefaultNetworkACL, *vpc.DefaultNetworkACL.ID)
-	} else {
-		log.Printf("[DEBUG] vpc default network acl is  null")
-		d.Set(isVPCDefaultNetworkACL, nil)
-	}
-	if vpc.DefaultSecurityGroup != nil {
-		d.Set(isVPCDefaultSecurityGroup, *vpc.DefaultSecurityGroup.ID)
-	} else {
-		d.Set(isVPCDefaultSecurityGroup, nil)
-	}
-	tags, err := GetTagsUsingCRN(meta, *vpc.CRN)
-	if err != nil {
-		log.Printf(
-			"Error on get of resource vpc (%s) tags: %s", d.Id(), err)
-	}
-	d.Set(isVPCTags, tags)
-	controller, err := getBaseController(meta)
-	if err != nil {
-		return err
-	}
-	d.Set(isVPCCRN, *vpc.CRN)
-	d.Set(ResourceControllerURL, controller+"/vpc/network/vpcs")
-	d.Set(ResourceName, *vpc.Name)
-	d.Set(ResourceCRN, *vpc.CRN)
-	d.Set(ResourceStatus, *vpc.Status)
-	if vpc.ResourceGroup != nil {
-		d.Set(isVPCResourceGroup, *vpc.ResourceGroup.ID)
-		d.Set(ResourceGroupName, *vpc.ResourceGroup.ID)
-	}
-	//set the cse ip addresses info
-	if vpc.CseSourceIps != nil {
-		cseSourceIpsList := make([]map[string]interface{}, 0)
-		for _, sourceIP := range vpc.CseSourceIps {
-			currentCseSourceIp := map[string]interface{}{}
-			if sourceIP.IP != nil {
-				currentCseSourceIp["address"] = *sourceIP.IP.Address
-				currentCseSourceIp["zone_name"] = *sourceIP.Zone.Name
-				cseSourceIpsList = append(cseSourceIpsList, currentCseSourceIp)
-			}
-		}
-		d.Set(cseSourceAddresses, cseSourceIpsList)
-	}
-	// set the subnets list
-	start := ""
-	allrecs := []vpcclassicv1.Subnet{}
-	for {
-		options := &vpcclassicv1.ListSubnetsOptions{}
-		if start != "" {
-			options.Start = &start
-		}
-		s, response, err := sess.ListSubnets(options)
-		if err != nil {
-			return fmt.Errorf("Error Fetching subnets %s\n%s", err, response)
-		}
-		start = GetNext(s.Next)
-		allrecs = append(allrecs, s.Subnets...)
-		if start == "" {
-			break
-		}
-	}
-	subnetsInfo := make([]map[string]interface{}, 0)
-	for _, subnet := range allrecs {
-		if *subnet.VPC.ID == d.Id() {
-			l := map[string]interface{}{
-				"name":                    *subnet.Name,
-				"id":                      *subnet.ID,
-				"status":                  *subnet.Status,
-				"zone":                    *subnet.Zone.Name,
-				totalIPV4AddressCount:     *subnet.TotalIpv4AddressCount,
-				availableIPV4AddressCount: *subnet.AvailableIpv4AddressCount,
-			}
-			subnetsInfo = append(subnetsInfo, l)
-		}
-	}
-	d.Set(subnetsList, subnetsInfo)
-
-	//Set Security group list
-
-	listSgOptions := &vpcclassicv1.ListSecurityGroupsOptions{}
-	sgs, _, err := sess.ListSecurityGroups(listSgOptions)
-	if err != nil {
-		return err
-	}
-
-	securityGroupList := make([]map[string]interface{}, 0)
-
-	for _, group := range sgs.SecurityGroups {
-
-		if *group.VPC.ID == d.Id() {
-			g := make(map[string]interface{})
-
-			g[isVPCSecurityGroupName] = *group.Name
-			g[isVPCSecurityGroupID] = *group.ID
-
-			rules := make([]map[string]interface{}, 0)
-			for _, sgrule := range group.Rules {
-				switch reflect.TypeOf(sgrule).String() {
-				case "*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
-					{
-						rule := sgrule.(*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp)
-						r := make(map[string]interface{})
-						if rule.Code != nil {
-							r[isVPCSecurityGroupRuleCode] = int(*rule.Code)
-						}
-						if rule.Type != nil {
-							r[isVPCSecurityGroupRuleType] = int(*rule.Type)
-						}
-						r[isVPCSecurityGroupRuleDirection] = *rule.Direction
-						r[isVPCSecurityGroupRuleIPVersion] = *rule.IPVersion
-						if rule.Protocol != nil {
-							r[isVPCSecurityGroupRuleProtocol] = *rule.Protocol
-						}
-						r[isVPCSecurityGroupRuleID] = *rule.ID
-						remote, ok := rule.Remote.(*vpcclassicv1.SecurityGroupRuleRemote)
-						if ok {
-							if remote != nil && reflect.ValueOf(remote).IsNil() == false {
-								if remote.ID != nil {
-									r[isVPCSecurityGroupRuleRemote] = remote.ID
-								} else if remote.Address != nil {
-									r[isVPCSecurityGroupRuleRemote] = remote.Address
-								} else if remote.CIDRBlock != nil {
-									r[isVPCSecurityGroupRuleRemote] = remote.CIDRBlock
-								}
-							}
-						}
-
-						rules = append(rules, r)
-					}
-
-				case "*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
-					{
-						rule := sgrule.(*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolAll)
-						r := make(map[string]interface{})
-						r[isVPCSecurityGroupRuleDirection] = *rule.Direction
-						r[isVPCSecurityGroupRuleIPVersion] = *rule.IPVersion
-						if rule.Protocol != nil {
-							r[isVPCSecurityGroupRuleProtocol] = *rule.Protocol
-						}
-						r[isVPCSecurityGroupRuleID] = *rule.ID
-						remote, ok := rule.Remote.(*vpcclassicv1.SecurityGroupRuleRemote)
-						if ok {
-							if remote != nil && reflect.ValueOf(remote).IsNil() == false {
-								if remote.ID != nil {
-									r[isVPCSecurityGroupRuleRemote] = remote.ID
-								} else if remote.Address != nil {
-									r[isVPCSecurityGroupRuleRemote] = remote.Address
-								} else if remote.CIDRBlock != nil {
-									r[isVPCSecurityGroupRuleRemote] = remote.CIDRBlock
-								}
-							}
-						}
-						rules = append(rules, r)
-					}
-
-				case "*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
-					{
-						rule := sgrule.(*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
-						r := make(map[string]interface{})
-						r[isVPCSecurityGroupRuleDirection] = *rule.Direction
-						r[isVPCSecurityGroupRuleIPVersion] = *rule.IPVersion
-						if rule.PortMin != nil {
-							r[isVPCSecurityGroupRulePortMin] = int(*rule.PortMin)
-						}
-						if rule.PortMax != nil {
-							r[isVPCSecurityGroupRulePortMax] = int(*rule.PortMax)
-						}
-
-						if rule.Protocol != nil {
-							r[isVPCSecurityGroupRuleProtocol] = *rule.Protocol
-						}
-
-						r[isVPCSecurityGroupRuleID] = *rule.ID
-						remote, ok := rule.Remote.(*vpcclassicv1.SecurityGroupRuleRemote)
-						if ok {
-							if remote != nil && reflect.ValueOf(remote).IsNil() == false {
-								if remote.ID != nil {
-									r[isVPCSecurityGroupRuleRemote] = remote.ID
-								} else if remote.Address != nil {
-									r[isVPCSecurityGroupRuleRemote] = remote.Address
-								} else if remote.CIDRBlock != nil {
-									r[isVPCSecurityGroupRuleRemote] = remote.CIDRBlock
-								}
-							}
-						}
-
-						rules = append(rules, r)
-					}
-				}
-			}
-			g[isVPCSgRules] = rules
-			securityGroupList = append(securityGroupList, g)
-		}
-	}
-
-	d.Set(isVPCSecurityGroupList, securityGroupList)
 	return nil
 }
 
@@ -1077,10 +761,6 @@ func vpcGet(d *schema.ResourceData, meta interface{}, id string) error {
 }
 
 func resourceIBMISVPCUpdate(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
 	id := d.Id()
 
 	name := ""
@@ -1090,58 +770,11 @@ func resourceIBMISVPCUpdate(d *schema.ResourceData, meta interface{}) error {
 		name = d.Get(isVPCName).(string)
 		hasChanged = true
 	}
-	if userDetails.generation == 1 {
-		err := classicVpcUpdate(d, meta, id, name, hasChanged)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := vpcUpdate(d, meta, id, name, hasChanged)
-		if err != nil {
-			return err
-		}
-	}
-	return resourceIBMISVPCRead(d, meta)
-}
-
-func classicVpcUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasChanged bool) error {
-	sess, err := classicVpcClient(meta)
+	err := vpcUpdate(d, meta, id, name, hasChanged)
 	if err != nil {
 		return err
 	}
-	if d.HasChange(isVPCTags) {
-		getvpcOptions := &vpcclassicv1.GetVPCOptions{
-			ID: &id,
-		}
-		vpc, response, err := sess.GetVPC(getvpcOptions)
-		if err != nil {
-			return fmt.Errorf("Error getting VPC : %s\n%s", err, response)
-		}
-		oldList, newList := d.GetChange(isVPCTags)
-		err = UpdateTagsUsingCRN(oldList, newList, meta, *vpc.CRN)
-		if err != nil {
-			log.Printf(
-				"Error on update of resource vpc (%s) tags: %s", id, err)
-		}
-	}
-	if hasChanged {
-		updateVpcOptions := &vpcclassicv1.UpdateVPCOptions{
-			ID: &id,
-		}
-		vpcPatchModel := &vpcclassicv1.VPCPatch{
-			Name: &name,
-		}
-		vpcPatch, err := vpcPatchModel.AsPatch()
-		if err != nil {
-			return fmt.Errorf("Error calling asPatch for VPCPatch: %s", err)
-		}
-		updateVpcOptions.VPCPatch = vpcPatch
-		_, response, err := sess.UpdateVPC(updateVpcOptions)
-		if err != nil {
-			return fmt.Errorf("Error Updating VPC : %s\n%s", err, response)
-		}
-	}
-	return nil
+	return resourceIBMISVPCRead(d, meta)
 }
 
 func vpcUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasChanged bool) error {
@@ -1202,54 +835,8 @@ func vpcUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasCha
 }
 
 func resourceIBMISVPCDelete(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
 	id := d.Id()
-	if userDetails.generation == 1 {
-		err := classicVpcDelete(d, meta, id)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := vpcDelete(d, meta, id)
-		if err != nil {
-			return err
-		}
-	}
-	d.SetId("")
-	return nil
-}
-
-func classicVpcDelete(d *schema.ResourceData, meta interface{}, id string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-
-	getVpcOptions := &vpcclassicv1.GetVPCOptions{
-		ID: &id,
-	}
-	_, response, err := sess.GetVPC(getVpcOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			d.SetId("")
-			return nil
-		}
-
-		return fmt.Errorf("Error Getting VPC (%s): %s\n%s", id, err, response)
-
-	}
-
-	deletevpcOptions := &vpcclassicv1.DeleteVPCOptions{
-		ID: &id,
-	}
-	response, err = sess.DeleteVPC(deletevpcOptions)
-	if err != nil {
-		return fmt.Errorf("Error Deleting VPC : %s\n%s", err, response)
-	}
-	_, err = isWaitForClassicVPCDeleted(sess, id, d.Timeout(schema.TimeoutDelete))
+	err := vpcDelete(d, meta, id)
 	if err != nil {
 		return err
 	}
@@ -1290,39 +877,6 @@ func vpcDelete(d *schema.ResourceData, meta interface{}, id string) error {
 	return nil
 }
 
-func isWaitForClassicVPCDeleted(vpc *vpcclassicv1.VpcClassicV1, id string, timeout time.Duration) (interface{}, error) {
-	log.Printf("Waiting for VPC (%s) to be deleted.", id)
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"retry", isVPCDeleting},
-		Target:     []string{isVPCDeleted, isVPCFailed},
-		Refresh:    isClassicVPCDeleteRefreshFunc(vpc, id),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 10 * time.Second,
-	}
-
-	return stateConf.WaitForState()
-}
-
-func isClassicVPCDeleteRefreshFunc(vpc *vpcclassicv1.VpcClassicV1, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		log.Printf("[DEBUG] delete function here")
-		getvpcOptions := &vpcclassicv1.GetVPCOptions{
-			ID: &id,
-		}
-		vpc, response, err := vpc.GetVPC(getvpcOptions)
-		if err != nil {
-			if response != nil && response.StatusCode == 404 {
-				return vpc, isVPCDeleted, nil
-			}
-			return nil, isVPCFailed, fmt.Errorf("The VPC %s failed to delete: %s\n%s", id, err, response)
-		}
-
-		return vpc, isVPCDeleting, nil
-	}
-}
-
 func isWaitForVPCDeleted(vpc *vpcv1.VpcV1, id string, timeout time.Duration) (interface{}, error) {
 	log.Printf("Waiting for VPC (%s) to be deleted.", id)
 
@@ -1357,37 +911,9 @@ func isVPCDeleteRefreshFunc(vpc *vpcv1.VpcV1, id string) resource.StateRefreshFu
 }
 
 func resourceIBMISVPCExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return false, err
-	}
 	id := d.Id()
-	if userDetails.generation == 1 {
-		exists, err := classicVpcExists(d, meta, id)
-		return exists, err
-	} else {
-		exists, err := vpcExists(d, meta, id)
-		return exists, err
-	}
-}
-
-func classicVpcExists(d *schema.ResourceData, meta interface{}, id string) (bool, error) {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return false, err
-	}
-	getvpcOptions := &vpcclassicv1.GetVPCOptions{
-		ID: &id,
-	}
-	_, response, err := sess.GetVPC(getvpcOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			return false, nil
-		}
-		return false, fmt.Errorf("Error getting VPC: %s\n%s", err, response)
-	}
-
-	return true, nil
+	exists, err := vpcExists(d, meta, id)
+	return exists, err
 }
 
 func vpcExists(d *schema.ResourceData, meta interface{}, id string) (bool, error) {

@@ -6,7 +6,6 @@ package ibm
 import (
 	"fmt"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -152,50 +151,13 @@ func resourceIBMISSecurityGroupNetworkInterfaceAttachment() *schema.Resource {
 }
 
 func resourceIBMISSecurityGroupNetworkInterfaceAttachmentCreate(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
 	sgID := d.Get(isSGNICAGroupId).(string)
 	nicID := d.Get(isSGNICANicId).(string)
 
-	if userDetails.generation == 1 {
-		err := classicSgnicCreate(d, meta, sgID, nicID)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := sgnicCreate(d, meta, sgID, nicID)
-		if err != nil {
-			return err
-		}
-	}
-	return resourceIBMISSecurityGroupNetworkInterfaceAttachmentRead(d, meta)
-
-}
-
-func classicSgnicCreate(d *schema.ResourceData, meta interface{}, sgID, nicID string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	options := &vpcclassicv1.AddSecurityGroupNetworkInterfaceOptions{
-		SecurityGroupID: &sgID,
-		ID:              &nicID,
-	}
-	_, response, err := sess.AddSecurityGroupNetworkInterface(options)
-	if err != nil {
-		return fmt.Errorf("Error while creating SecurityGroup NetworkInterface Binding %s\n%s", err, response)
-	}
-	d.SetId(fmt.Sprintf("%s/%s", sgID, nicID))
-	return nil
-}
-
-func sgnicCreate(d *schema.ResourceData, meta interface{}, sgID, nicID string) error {
-	sess, err := vpcClient(meta)
-	if err != nil {
-		return err
-	}
 	options := &vpcv1.AddSecurityGroupNetworkInterfaceOptions{
 		SecurityGroupID: &sgID,
 		ID:              &nicID,
@@ -205,11 +167,12 @@ func sgnicCreate(d *schema.ResourceData, meta interface{}, sgID, nicID string) e
 		return fmt.Errorf("Error while creating SecurityGroup NetworkInterface Binding %s\n%s", err, response)
 	}
 	d.SetId(fmt.Sprintf("%s/%s", sgID, nicID))
-	return nil
+	return resourceIBMISSecurityGroupNetworkInterfaceAttachmentRead(d, meta)
+
 }
 
 func resourceIBMISSecurityGroupNetworkInterfaceAttachmentRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
@@ -219,85 +182,7 @@ func resourceIBMISSecurityGroupNetworkInterfaceAttachmentRead(d *schema.Resource
 	}
 	sgID := parts[0]
 	nicID := parts[1]
-	if userDetails.generation == 1 {
-		err := classicSgnicGet(d, meta, sgID, nicID)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := sgnicGet(d, meta, sgID, nicID)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
-func classicSgnicGet(d *schema.ResourceData, meta interface{}, sgID, nicID string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	getSecurityGroupNetworkInterfaceOptions := &vpcclassicv1.GetSecurityGroupNetworkInterfaceOptions{
-		SecurityGroupID: &sgID,
-		ID:              &nicID,
-	}
-	instanceNic, response, err := sess.GetSecurityGroupNetworkInterface(getSecurityGroupNetworkInterfaceOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("Error getting NetworkInterface(%s) for the SecurityGroup (%s) : %s\n%s", nicID, sgID, err, response)
-	}
-	d.Set(isSGNICAGroupId, sgID)
-	d.Set(isSGNICANicId, nicID)
-	d.Set(isSGNICAInstanceNwInterfaceID, *instanceNic.ID)
-	d.Set(isSGNICAName, *instanceNic.Name)
-	d.Set(isSGNICAPortSpeed, *instanceNic.PortSpeed)
-	d.Set(isSGNICAPrimaryIPV4Address, *instanceNic.PrimaryIpv4Address)
-	// d.Set(isSGNICAStatus, *instanceNic.Status)
-	d.Set(isSGNICAType, *instanceNic.Type)
-	if instanceNic.Subnet != nil {
-		d.Set(isSGNICASubnet, *instanceNic.Subnet.ID)
-	}
-	sgs := make([]map[string]interface{}, len(instanceNic.SecurityGroups))
-	for i, sgObj := range instanceNic.SecurityGroups {
-		sg := make(map[string]interface{})
-		sg[isSGNICASecurityGroupCRN] = *sgObj.CRN
-		sg[isSGNICASecurityGroupID] = *sgObj.ID
-		sg[isSGNICASecurityGroupName] = *sgObj.Name
-		sgs[i] = sg
-	}
-	d.Set(isSGNICASecurityGroups, sgs)
-
-	fps := make([]map[string]interface{}, len(instanceNic.FloatingIps))
-	for i, fpObj := range instanceNic.FloatingIps {
-		fp := make(map[string]interface{})
-		fp[isSGNICAFloatingIpCRN] = fpObj.CRN
-		fp[isSGNICAFloatingIpID] = *fpObj.ID
-		fp[isSGNICAFloatingIpName] = *fpObj.Name
-		fps[i] = fp
-	}
-	d.Set(isSGNICAFloatingIps, fps)
-
-	// d.Set(isSGNICASecondaryAddresses, *instanceNic.SecondaryAddresses)
-	getSecurityGroupOptions := &vpcclassicv1.GetSecurityGroupOptions{
-		ID: &sgID,
-	}
-	sg, response, err := sess.GetSecurityGroup(getSecurityGroupOptions)
-	if err != nil {
-		return fmt.Errorf("Error Getting Security Group : %s\n%s", err, response)
-	}
-	d.Set(RelatedCRN, *sg.CRN)
-	return nil
-}
-
-func sgnicGet(d *schema.ResourceData, meta interface{}, sgID, nicID string) error {
-	sess, err := vpcClient(meta)
-	if err != nil {
-		return err
-	}
 	getSecurityGroupNetworkInterfaceOptions := &vpcv1.GetSecurityGroupNetworkInterfaceOptions{
 		SecurityGroupID: &sgID,
 		ID:              &nicID,
@@ -354,7 +239,7 @@ func sgnicGet(d *schema.ResourceData, meta interface{}, sgID, nicID string) erro
 }
 
 func resourceIBMISSecurityGroupNetworkInterfaceAttachmentDelete(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
@@ -365,57 +250,6 @@ func resourceIBMISSecurityGroupNetworkInterfaceAttachmentDelete(d *schema.Resour
 
 	sgID := parts[0]
 	nicID := parts[1]
-	if userDetails.generation == 1 {
-		err := classicSgnicDelete(d, meta, sgID, nicID)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := sgnicDelete(d, meta, sgID, nicID)
-		if err != nil {
-			return err
-		}
-	}
-	d.SetId("")
-	return nil
-}
-
-func classicSgnicDelete(d *schema.ResourceData, meta interface{}, sgID, nicID string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-
-	getSecurityGroupNetworkInterfaceOptions := &vpcclassicv1.GetSecurityGroupNetworkInterfaceOptions{
-		SecurityGroupID: &sgID,
-		ID:              &nicID,
-	}
-	_, response, err := sess.GetSecurityGroupNetworkInterface(getSecurityGroupNetworkInterfaceOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("Error getting NetworkInterface(%s) for the SecurityGroup (%s) : %s\n%s", nicID, sgID, err, response)
-	}
-
-	removeSecurityGroupNetworkInterfaceOptions := &vpcclassicv1.RemoveSecurityGroupNetworkInterfaceOptions{
-		SecurityGroupID: &sgID,
-		ID:              &nicID,
-	}
-	response, err = sess.RemoveSecurityGroupNetworkInterface(removeSecurityGroupNetworkInterfaceOptions)
-	if err != nil {
-		return fmt.Errorf("Error Deleting NetworkInterface(%s) for the SecurityGroup (%s) : %s\n%s", nicID, sgID, err, response)
-	}
-	d.SetId("")
-	return nil
-}
-
-func sgnicDelete(d *schema.ResourceData, meta interface{}, sgID, nicID string) error {
-	sess, err := vpcClient(meta)
-	if err != nil {
-		return err
-	}
 
 	getSecurityGroupNetworkInterfaceOptions := &vpcv1.GetSecurityGroupNetworkInterfaceOptions{
 		SecurityGroupID: &sgID,
@@ -443,7 +277,7 @@ func sgnicDelete(d *schema.ResourceData, meta interface{}, sgID, nicID string) e
 }
 
 func resourceIBMISSecurityGroupNetworkInterfaceAttachmentExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+	sess, err := vpcClient(meta)
 	if err != nil {
 		return false, err
 	}
@@ -456,39 +290,6 @@ func resourceIBMISSecurityGroupNetworkInterfaceAttachmentExists(d *schema.Resour
 	}
 	sgID := parts[0]
 	nicID := parts[1]
-	if userDetails.generation == 1 {
-		exists, err := classicSgnicExists(d, meta, sgID, nicID)
-		return exists, err
-	} else {
-		exists, err := sgnicExists(d, meta, sgID, nicID)
-		return exists, err
-	}
-}
-
-func classicSgnicExists(d *schema.ResourceData, meta interface{}, sgID, nicID string) (bool, error) {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return false, err
-	}
-	getSecurityGroupNetworkInterfaceOptions := &vpcclassicv1.GetSecurityGroupNetworkInterfaceOptions{
-		SecurityGroupID: &sgID,
-		ID:              &nicID,
-	}
-	_, response, err := sess.GetSecurityGroupNetworkInterface(getSecurityGroupNetworkInterfaceOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			return false, nil
-		}
-		return false, fmt.Errorf("Error getting NetworkInterface(%s) for the SecurityGroup (%s) : %s\n%s", nicID, sgID, err, response)
-	}
-	return true, nil
-}
-
-func sgnicExists(d *schema.ResourceData, meta interface{}, sgID, nicID string) (bool, error) {
-	sess, err := vpcClient(meta)
-	if err != nil {
-		return false, err
-	}
 	getSecurityGroupNetworkInterfaceOptions := &vpcv1.GetSecurityGroupNetworkInterfaceOptions{
 		SecurityGroupID: &sgID,
 		ID:              &nicID,

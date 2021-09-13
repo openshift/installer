@@ -146,7 +146,7 @@ func (*IamAuthenticator) AuthenticationType() string {
 // 		Authorization: Bearer <bearer-token>
 //
 func (authenticator *IamAuthenticator) Authenticate(request *http.Request) error {
-	token, err := authenticator.getToken()
+	token, err := authenticator.GetToken()
 	if err != nil {
 		return err
 	}
@@ -201,10 +201,10 @@ func (this *IamAuthenticator) Validate() error {
 	return nil
 }
 
-// getToken: returns an access token to be used in an Authorization header.
+// GetToken: returns an access token to be used in an Authorization header.
 // Whenever a new token is needed (when a token doesn't yet exist, needs to be refreshed,
 // or the existing token has expired), a new access token is fetched from the token server.
-func (authenticator *IamAuthenticator) getToken() (string, error) {
+func (authenticator *IamAuthenticator) GetToken() (string, error) {
 	if authenticator.getTokenData() == nil || !authenticator.getTokenData().isTokenValid() {
 		// synchronously request the token
 		err := authenticator.synchronizedRequestToken()
