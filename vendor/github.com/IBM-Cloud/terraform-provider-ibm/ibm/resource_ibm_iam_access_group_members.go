@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/bluemix-go/api/iamuum/iamuumv2"
-	"github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/IBM-Cloud/bluemix-go/models"
+	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -82,7 +82,7 @@ func resourceIBMIAMAccessGroupMembersCreate(d *schema.ResourceData, meta interfa
 	services := expandStringList(d.Get("iam_service_ids").(*schema.Set).List())
 
 	if len(users) == 0 && len(services) == 0 {
-		return fmt.Errorf("Provide either `ibm_ids` or `iam_service_ids`")
+		return fmt.Errorf("ERROR] Provide either `ibm_ids` or `iam_service_ids`")
 
 	}
 
@@ -123,7 +123,7 @@ func resourceIBMIAMAccessGroupMembersRead(d *schema.ResourceData, meta interface
 
 	members, err := iamuumClient.AccessGroupMember().List(grpID)
 	if err != nil {
-		return fmt.Errorf("Error retrieving access group members: %s", err)
+		return fmt.Errorf("[ERROR] Error retrieving access group members: %s", err)
 	}
 
 	d.Set("access_group_id", grpID)
@@ -145,21 +145,35 @@ func resourceIBMIAMAccessGroupMembersRead(d *schema.ResourceData, meta interface
 		return err
 	}
 
-	iamClient, err := meta.(ClientSession).IAMAPI()
+	iamClient, err := meta.(ClientSession).IAMIdentityV1API()
 	if err != nil {
 		return err
 	}
 
-	boundTo := crn.New(userDetails.cloudName, userDetails.cloudType)
-	boundTo.ScopeType = crn.ScopeAccount
-	boundTo.Scope = userDetails.userAccount
+	start := ""
+	allrecs := []iamidentityv1.ServiceID{}
+	var pg int64 = 100
+	for {
+		listServiceIDOptions := iamidentityv1.ListServiceIdsOptions{
+			AccountID: &userDetails.userAccount,
+			Pagesize:  &pg,
+		}
+		if start != "" {
+			listServiceIDOptions.Pagetoken = &start
+		}
 
-	serviceIDs, err := iamClient.ServiceIds().List(boundTo.String())
-	if err != nil {
-		return err
+		serviceIDs, resp, err := iamClient.ListServiceIds(&listServiceIDOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error listing Service Ids %s %s", err, resp)
+		}
+		start = GetNextIAM(serviceIDs.Next)
+		allrecs = append(allrecs, serviceIDs.Serviceids...)
+		if start == "" {
+			break
+		}
 	}
 
-	d.Set("members", flattenAccessGroupMembers(members, res, serviceIDs))
+	d.Set("members", flattenAccessGroupMembers(members, res, allrecs))
 
 	return nil
 }
@@ -220,7 +234,7 @@ func resourceIBMIAMAccessGroupMembersUpdate(d *schema.ResourceData, meta interfa
 
 	}
 	if len(removeUsers) > 0 || len(removeServiceids) > 0 && !d.IsNewResource() {
-		iamClient, err := meta.(ClientSession).IAMAPI()
+		iamClient, err := meta.(ClientSession).IAMIdentityV1API()
 		if err != nil {
 			return err
 		}
@@ -237,11 +251,14 @@ func resourceIBMIAMAccessGroupMembersUpdate(d *schema.ResourceData, meta interfa
 		}
 
 		for _, s := range removeServiceids {
-			serviceID, err := iamClient.ServiceIds().Get(s)
-			if err != nil {
-				return err
+			getServiceIDOptions := iamidentityv1.GetServiceIDOptions{
+				ID: &s,
 			}
-			err = iamuumClient.AccessGroupMember().Remove(grpID, serviceID.IAMID)
+			serviceID, resp, err := iamClient.GetServiceID(&getServiceIDOptions)
+			if err != nil {
+				return fmt.Errorf("ERROR] Error Getting Service Ids %s %s", err, resp)
+			}
+			err = iamuumClient.AccessGroupMember().Remove(grpID, *serviceID.IamID)
 			if err != nil {
 				return err
 			}
@@ -293,7 +310,7 @@ func resourceIBMIAMAccessGroupMembersDelete(d *schema.ResourceData, meta interfa
 		if err != nil {
 			return err
 		}
-		err = iamuumClient.AccessGroupMember().Remove(grpID, serviceID.IAMID)
+		err = iamuumClient.AccessGroupMember().Remove(grpID, *serviceID.IamID)
 		if err != nil {
 			return err
 		}
@@ -325,16 +342,18 @@ func prepareMemberAddRequest(userIds, serviceIds []string) (req iamuumv2.AddGrou
 	return
 }
 
-func getServiceID(id string, meta interface{}) (models.ServiceID, error) {
-
-	iamClient, err := meta.(ClientSession).IAMAPI()
+func getServiceID(id string, meta interface{}) (iamidentityv1.ServiceID, error) {
+	serviceids := iamidentityv1.ServiceID{}
+	iamClient, err := meta.(ClientSession).IAMIdentityV1API()
 	if err != nil {
-		return models.ServiceID{}, err
+		return serviceids, err
 	}
-	serviceID, err := iamClient.ServiceIds().Get(id)
+	getServiceIDOptions := iamidentityv1.GetServiceIDOptions{
+		ID: &id,
+	}
+	serviceID, resp, err := iamClient.GetServiceID(&getServiceIDOptions)
 	if err != nil {
-		return models.ServiceID{}, err
+		return serviceids, fmt.Errorf("ERROR] Error Getting Service Ids %s %s", err, resp)
 	}
-
-	return serviceID, nil
+	return *serviceID, nil
 }

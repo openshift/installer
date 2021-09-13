@@ -983,6 +983,9 @@ type Hardware_Component_Firmware struct {
 	Revisions []Hardware_Component_Revision `json:"revisions,omitempty" xmlrpc:"revisions,omitempty"`
 
 	// no documentation yet
+	Severity *int `json:"severity,omitempty" xmlrpc:"severity,omitempty"`
+
+	// no documentation yet
 	Version *string `json:"version,omitempty" xmlrpc:"version,omitempty"`
 }
 

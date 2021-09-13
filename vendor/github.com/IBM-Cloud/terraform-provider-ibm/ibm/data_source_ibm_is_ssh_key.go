@@ -6,7 +6,6 @@ package ibm
 import (
 	"fmt"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -16,6 +15,12 @@ func dataSourceIBMISSSHKey() *schema.Resource {
 		Read: dataSourceIBMISSSHKeyRead,
 
 		Schema: map[string]*schema.Schema{
+			"resource_group": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Resource group ID",
+			},
+
 			isKeyName: {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -74,71 +79,13 @@ func dataSourceIBMISSSHKey() *schema.Resource {
 }
 
 func dataSourceIBMISSSHKeyRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+	name := d.Get(isKeyName).(string)
+
+	err := keyGetByName(d, meta, name)
 	if err != nil {
 		return err
-	}
-	name := d.Get(isKeyName).(string)
-	if userDetails.generation == 1 {
-		err := classicKeyGetByName(d, meta, name)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := keyGetByName(d, meta, name)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
-}
-
-func classicKeyGetByName(d *schema.ResourceData, meta interface{}, name string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	start := ""
-	allrecs := []vpcclassicv1.Key{}
-	for {
-		listKeysOptions := &vpcclassicv1.ListKeysOptions{}
-		if start != "" {
-			listKeysOptions.Start = &start
-		}
-		keys, response, err := sess.ListKeys(listKeysOptions)
-		if err != nil {
-			return fmt.Errorf("Error Fetching Keys %s\n%s", err, response)
-		}
-		start = GetNext(keys.Next)
-		allrecs = append(allrecs, keys.Keys...)
-		if start == "" {
-			break
-		}
-	}
-	for _, key := range allrecs {
-		if *key.Name == name {
-			d.SetId(*key.ID)
-			d.Set("name", *key.Name)
-			d.Set(isKeyType, *key.Type)
-			d.Set(isKeyFingerprint, *key.Fingerprint)
-			d.Set(isKeyLength, *key.Length)
-			controller, err := getBaseController(meta)
-			if err != nil {
-				return err
-			}
-			d.Set(ResourceControllerURL, controller+"/vpc/compute/sshKeys")
-			d.Set(ResourceName, *key.Name)
-			d.Set(ResourceCRN, *key.CRN)
-			if key.ResourceGroup != nil {
-				d.Set(ResourceGroupName, *key.ResourceGroup.ID)
-			}
-			if key.PublicKey != nil {
-				d.Set(isKeyPublicKey, *key.PublicKey)
-			}
-			return nil
-		}
-	}
-	return fmt.Errorf("No SSH Key found with name %s", name)
 }
 
 func keyGetByName(d *schema.ResourceData, meta interface{}, name string) error {
@@ -147,11 +94,32 @@ func keyGetByName(d *schema.ResourceData, meta interface{}, name string) error {
 		return err
 	}
 	listKeysOptions := &vpcv1.ListKeysOptions{}
-	keys, response, err := sess.ListKeys(listKeysOptions)
-	if err != nil {
-		return fmt.Errorf("Error Fetching Keys %s\n%s", err, response)
+
+	resourceGroup := ""
+	if rg, ok := d.GetOk("resource_group"); ok {
+		resourceGroup = rg.(string)
+		listKeysOptions.ResourceGroupID = &resourceGroup
 	}
-	for _, key := range keys.Keys {
+
+	start := ""
+	allrecs := []vpcv1.Key{}
+	for {
+		if start != "" {
+			listKeysOptions.Start = &start
+		}
+
+		keys, response, err := sess.ListKeys(listKeysOptions)
+		if err != nil {
+			return fmt.Errorf("Error fetching Keys %s\n%s", err, response)
+		}
+		start = GetNext(keys.Next)
+		allrecs = append(allrecs, keys.Keys...)
+		if start == "" {
+			break
+		}
+	}
+
+	for _, key := range allrecs {
 		if *key.Name == name {
 			d.SetId(*key.ID)
 			d.Set("name", *key.Name)

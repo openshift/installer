@@ -9,10 +9,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/IBM/platform-services-go-sdk/globaltaggingv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
+	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 )
 
 const (
@@ -22,7 +23,7 @@ const (
 	tagType      = "tag_type"
 	acccountID   = "acccount_id"
 	service      = "service"
-	crnRegex     = "^crn:.+:.+:.+:.+:.+:$"
+	crnRegex     = "^crn:v1(:[a-zA-Z0-9 \\-\\._~\\*\\+,;=!$&'\\(\\)\\/\\?#\\[\\]@]*){8}$|^[0-9]+$"
 )
 
 func resourceIBMResourceTag() *schema.Resource {
@@ -155,7 +156,7 @@ func resourceIBMResourceTagCreate(d *schema.ResourceData, meta interface{}) erro
 	if len(add) > 0 {
 		_, resp, err := gtClient.AttachTag(AttachTagOptions)
 		if err != nil {
-			return fmt.Errorf("Error attaching resource tags >>>>  %v : %s", resp, err)
+			return fmt.Errorf("Error attaching resource tags : %v\n%s", resp, err)
 		}
 	}
 
@@ -193,6 +194,9 @@ func resourceIBMResourceTagRead(d *schema.ResourceData, meta interface{}) error 
 		parts, err := vmIdParts(d.Id())
 		if err != nil {
 			return err
+		}
+		if len(parts) < 2 {
+			return fmt.Errorf("Incorrect ID %s: Id should be a combination of resourceID/resourceType", d.Id())
 		}
 		rID = parts[0]
 		rType = parts[1]

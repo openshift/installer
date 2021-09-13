@@ -648,13 +648,7 @@ func (r Product_Order) GetExternalPaymentAuthorizationReceipt(token *string, pay
 	return
 }
 
-// This method returns a collection of [[SoftLayer_Container_Product_Order_Network]] objects. This will contain the available networks that can be used when ordering services.
-//
-// If a location id is supplied, the list of networks will be trimmed down to only those that are available at that particular datacenter.
-//
-// If a package id is supplied, the list of public VLANs and subnets will be trimmed down to those that are available for that particular package.
-//
-// The account id is for internal use only and will be ignored when supplied by customers.
+// This method is deprecated and always returns nothing.
 func (r Product_Order) GetNetworks(locationId *int, packageId *int, accountId *int) (resp []datatypes.Container_Product_Order_Network, err error) {
 	params := []interface{}{
 		locationId,

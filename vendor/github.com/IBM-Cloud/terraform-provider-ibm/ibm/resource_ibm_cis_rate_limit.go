@@ -354,9 +354,6 @@ func resourceIBMCISRateLimitCreate(d *schema.ResourceData, meta interface{}) err
 
 	cisID := d.Get("cis_id").(string)
 	zoneID, _, err := convertTftoCisTwoVar(d.Get("domain_id").(string))
-	if err != nil {
-		return err
-	}
 	cisClient.Crn = core.StringPtr(cisID)
 	cisClient.ZoneIdentifier = core.StringPtr(zoneID)
 
@@ -483,10 +480,9 @@ func resourceIBMCISRateLimitUpdate(d *schema.ResourceData, meta interface{}) err
 		opt.SetMatch(match)
 
 		correlate, err := expandRateLimitCorrelate(d)
-		if err != nil {
-			return fmt.Errorf("Error in getting correlate from expandRateLimitCorrelate %s", err)
+		if err == nil {
+			opt.SetCorrelate(correlate)
 		}
-		opt.SetCorrelate(correlate)
 
 		byPass, err := expandRateLimitBypass(d)
 		if err != nil {

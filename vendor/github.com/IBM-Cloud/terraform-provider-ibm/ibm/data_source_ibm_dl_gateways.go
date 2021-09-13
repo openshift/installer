@@ -31,6 +31,11 @@ func dataSourceIBMDLGateways() *schema.Resource {
 							Computed:    true,
 							Description: "Id of the data source gateways",
 						},
+						dlAuthenticationKey: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "BGP MD5 authentication key",
+						},
 						dlBgpAsn: {
 							Type:        schema.TypeInt,
 							Computed:    true,
@@ -368,6 +373,11 @@ func dataSourceIBMDLGatewaysRead(d *schema.ResourceData, meta interface{}) error
 			gatewayChangeRequest := gatewayChangeRequestIntf.(*directlinkv1.GatewayChangeRequest)
 			gateway[dlChangeRequest] = *gatewayChangeRequest.Type
 		}
+
+		if instance.AuthenticationKey != nil {
+			gateway[dlAuthenticationKey] = *instance.AuthenticationKey.Crn
+		}
+
 		gateways = append(gateways, gateway)
 	}
 	d.SetId(dataSourceIBMDLGatewaysID(d))

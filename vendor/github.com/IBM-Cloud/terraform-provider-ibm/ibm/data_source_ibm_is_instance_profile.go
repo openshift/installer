@@ -4,7 +4,6 @@
 package ibm
 
 import (
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -369,41 +368,12 @@ func dataSourceIBMISInstanceProfile() *schema.Resource {
 }
 
 func dataSourceIBMISInstanceProfileRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
-	name := d.Get(isInstanceProfileName).(string)
-	if userDetails.generation == 1 {
-		err := classicInstanceProfileGet(d, meta, name)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := instanceProfileGet(d, meta, name)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
-func classicInstanceProfileGet(d *schema.ResourceData, meta interface{}, name string) error {
-	sess, err := classicVpcClient(meta)
+	name := d.Get(isInstanceProfileName).(string)
+	err := instanceProfileGet(d, meta, name)
 	if err != nil {
 		return err
 	}
-	getInstanceProfileOptions := &vpcclassicv1.GetInstanceProfileOptions{
-		Name: &name,
-	}
-	profile, _, err := sess.GetInstanceProfile(getInstanceProfileOptions)
-	if err != nil {
-		return err
-	}
-	// For lack of anything better, compose our id from profile name.
-	d.SetId(*profile.Name)
-	d.Set(isInstanceProfileName, *profile.Name)
-	d.Set(isInstanceProfileFamily, *profile.Family)
 	return nil
 }
 

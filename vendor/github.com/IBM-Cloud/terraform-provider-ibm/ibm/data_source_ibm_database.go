@@ -48,7 +48,7 @@ func dataSourceIBMDatabaseInstance() *schema.Resource {
 			},
 
 			"service": {
-				Description: "The name of the Cloud Internet database service",
+				Description: "The name of the Cloud Database service",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
@@ -563,7 +563,7 @@ func dataSourceIBMDatabaseInstanceRead(d *schema.ResourceData, meta interface{})
 	}
 	rsCatRepo := rsCatClient.ResourceCatalog()
 
-	if service, ok := d.GetOk("database"); ok {
+	if service, ok := d.GetOk("service"); ok {
 
 		serviceOff, err := rsCatRepo.FindByName(service.(string), true)
 		if err != nil {

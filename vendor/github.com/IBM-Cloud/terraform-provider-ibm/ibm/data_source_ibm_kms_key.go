@@ -24,17 +24,27 @@ func dataSourceIBMKMSkey() *schema.Resource {
 				Required:    true,
 				Description: "Key protect or hpcs instance GUID",
 			},
+			"limit": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Limit till the keys to be fetched",
+			},
+			"key_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"alias", "key_name", "key_id"},
+			},
 			"key_name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "The name of the key to be fetched",
-				ExactlyOneOf: []string{"alias", "key_name"},
+				ExactlyOneOf: []string{"alias", "key_name", "key_id"},
 			},
 			"alias": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "The alias associated with the key",
-				ExactlyOneOf: []string{"alias", "key_name"},
+				ExactlyOneOf: []string{"alias", "key_name", "key_id"},
 			},
 			"endpoint_type": {
 				Type:         schema.TypeString,
@@ -96,6 +106,11 @@ func dataSourceIBMKMSkey() *schema.Resource {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
+												"crn": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Cloud Resource Name (CRN) that uniquely identifies your cloud resources.",
+												},
 												"updated_by": {
 													Type:     schema.TypeString,
 													Computed: true,
@@ -127,6 +142,11 @@ func dataSourceIBMKMSkey() *schema.Resource {
 												"creation_date": {
 													Type:     schema.TypeString,
 													Computed: true,
+												},
+												"crn": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Cloud Resource Name (CRN) that uniquely identifies your cloud resources.",
 												},
 												"updated_by": {
 													Type:     schema.TypeString,
@@ -211,30 +231,72 @@ func dataSourceIBMKMSKeyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	api.Config.InstanceID = instanceID
+	var totalKeys []kp.Key
 
 	if v, ok := d.GetOk("key_name"); ok {
-		keys, err := api.GetKeys(context.Background(), 0, 0)
-		if err != nil {
-			return fmt.Errorf(
-				"Get Keys failed with error: %s", err)
+		limit := d.Get("limit")
+		limitVal := limit.(int)
+		offset := 0
+		//default page size of API is 200 as stated
+		pageSize := 200
+
+		// when the limit is not passed, the api works in default way to avoid backward compatibility issues
+
+		if limitVal == 0 {
+			keys, err := api.GetKeys(context.Background(), 0, offset)
+			if err != nil {
+				return fmt.Errorf(
+					"Get Keys failed with error: %s", err)
+			}
+			retreivedKeys := keys.Keys
+			totalKeys = append(totalKeys, retreivedKeys...)
+		} else {
+			// when the limit is passed by the user
+			for {
+				if offset < limitVal {
+					if (limitVal - offset) < pageSize {
+						keys, err := api.GetKeys(context.Background(), (limitVal - offset), offset)
+						if err != nil {
+							return fmt.Errorf(
+								"Get Keys failed with error: %s", err)
+						}
+						retreivedKeys := keys.Keys
+						totalKeys = append(totalKeys, retreivedKeys...)
+						break
+					} else {
+						keys, err := api.GetKeys(context.Background(), pageSize, offset)
+						if err != nil {
+							return fmt.Errorf(
+								"Get Keys failed with error: %s", err)
+						}
+						numOfKeysFetched := keys.Metadata.NumberOfKeys
+						retreivedKeys := keys.Keys
+						totalKeys = append(totalKeys, retreivedKeys...)
+						if numOfKeysFetched < pageSize || offset+pageSize == limitVal {
+							break
+						}
+
+						offset = offset + pageSize
+					}
+				}
+			}
 		}
-		retreivedKeys := keys.Keys
-		if len(retreivedKeys) == 0 {
+
+		if len(totalKeys) == 0 {
 			return fmt.Errorf("No keys in instance  %s", instanceID)
 		}
 		var keyName string
 		var matchKeys []kp.Key
 		if v.(string) != "" {
 			keyName = v.(string)
-			for _, keyData := range retreivedKeys {
+			for _, keyData := range totalKeys {
 				if keyData.Name == keyName {
 					matchKeys = append(matchKeys, keyData)
 				}
 			}
 		} else {
-			matchKeys = retreivedKeys
+			matchKeys = totalKeys
 		}
-
 		if len(matchKeys) == 0 {
 			return fmt.Errorf("No keys with name %s in instance  %s", keyName, instanceID)
 		}
@@ -264,8 +326,36 @@ func dataSourceIBMKMSKeyRead(d *schema.ResourceData, meta interface{}) error {
 		d.SetId(instanceID)
 		d.Set("keys", keyMap)
 		d.Set("instance_id", instanceID)
+	} else if v, ok := d.GetOk("key_id"); ok {
+		key, err := api.GetKey(context.Background(), v.(string))
+		if err != nil {
+			return fmt.Errorf(
+				"Get Keys failed with error: %s", err)
+		}
+		keyMap := make([]map[string]interface{}, 0, 1)
+		keyInstance := make(map[string]interface{})
+		keyInstance["id"] = key.ID
+		keyInstance["name"] = key.Name
+		keyInstance["crn"] = key.CRN
+		keyInstance["standard_key"] = key.Extractable
+		keyInstance["aliases"] = key.Aliases
+		keyInstance["key_ring_id"] = key.KeyRingID
+		policies, err := api.GetPolicies(context.Background(), key.ID)
+		if err != nil {
+			return fmt.Errorf("Failed to read policies: %s", err)
+		}
+		if len(policies) == 0 {
+			log.Printf("No Policy Configurations read\n")
+		} else {
+			keyInstance["policies"] = flattenKeyPolicies(policies)
+		}
+		keyMap = append(keyMap, keyInstance)
+
+		d.SetId(instanceID)
+		d.Set("keys", keyMap)
+		d.Set("instance_id", instanceID)
 	} else {
-		aliasName := d.Get("alias_name").(string)
+		aliasName := d.Get("alias").(string)
 		key, err := api.GetKey(context.Background(), aliasName)
 		if err != nil {
 			return fmt.Errorf(

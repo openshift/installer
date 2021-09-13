@@ -289,6 +289,10 @@ func resourceIBMPrivateDNSGLBExists(d *schema.ResourceData, meta interface{}) (b
 		return false, err
 	}
 	idset := strings.Split(d.Id(), "/")
+	if len(idset) < 3 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of InstanceID/zoneID/glbID", d.Id())
+	}
+
 	getlbOptions := sess.NewGetLoadBalancerOptions(idset[0], idset[1], idset[2])
 	_, detail, err := sess.GetLoadBalancer(getlbOptions)
 	if err != nil {

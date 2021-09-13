@@ -214,6 +214,9 @@ func resourceIBMPrivateDNSZoneExists(d *schema.ResourceData, meta interface{}) (
 	}
 
 	idSet := strings.Split(d.Id(), "/")
+	if len(idSet) < 2 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of InstanceID/zoneID", d.Id())
+	}
 	getZoneOptions := sess.NewGetDnszoneOptions(idSet[0], idSet[1])
 	_, response, err := sess.GetDnszone(getZoneOptions)
 	if err != nil {

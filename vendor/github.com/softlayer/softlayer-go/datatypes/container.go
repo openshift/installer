@@ -2882,7 +2882,7 @@ type Container_Network_Media_Transcode_Preset_Element_Option struct {
 	Value *string `json:"value,omitempty" xmlrpc:"value,omitempty"`
 }
 
-// no documentation yet
+// This datatype is deprecated and will be removed in API version 3.2.
 type Container_Network_Message_Delivery_Email struct {
 	Entity
 
@@ -3623,6 +3623,11 @@ type Container_Product_Item_Discount_Program struct {
 type Container_Product_Order struct {
 	Entity
 
+	// Used to identify which items on an order belong in the same cluster.
+	ClusterIdentifier *string `json:"clusterIdentifier,omitempty" xmlrpc:"clusterIdentifier,omitempty"`
+
+	HostId *int `json:"hostId,omitempty" xmlrpc:"hostId,omitempty"`
+
 	// Flag for identifying an order for Big Data Deployment.
 	BigDataOrderFlag *bool `json:"bigDataOrderFlag,omitempty" xmlrpc:"bigDataOrderFlag,omitempty"`
 
@@ -4150,7 +4155,7 @@ type Container_Product_Order_MultiConfiguration_Tornado struct {
 	Container_Product_Order_MultiConfiguration
 }
 
-// This type contains the structure of network-related objects that may be specified when ordering services.
+// (DEPRECATED) This type contains the structure of network-related objects that may be specified when ordering services.
 type Container_Product_Order_Network struct {
 	Entity
 
@@ -5963,6 +5968,23 @@ type Container_Utility_Network_Subnet_Mask_Generic_Detail struct {
 
 	// The subnet mask.
 	Mask *string `json:"mask,omitempty" xmlrpc:"mask,omitempty"`
+}
+
+// The SoftLayer_Container_Virtual_ConsoleData data type contains information used to access a VSIs console
+type Container_Virtual_ConsoleData struct {
+	Entity
+
+	// The websocket host address used to access the console
+	WebsocketHost *string `json:"websocketHost,omitempty" xmlrpc:"websocketHost,omitempty"`
+
+	// The path to the websocket
+	WebsocketPath *string `json:"websocketPath,omitempty" xmlrpc:"websocketPath,omitempty"`
+
+	// The websocket port used to access the console
+	WebsocketPort *string `json:"websocketPort,omitempty" xmlrpc:"websocketPort,omitempty"`
+
+	// The token used to authenticate with the console websocket
+	WebsocketToken *string `json:"websocketToken,omitempty" xmlrpc:"websocketToken,omitempty"`
 }
 
 // This data type represents the structure to hold the allocation properties of a [[SoftLayer_Virtual_DedicatedHost]].

@@ -312,6 +312,11 @@ func resourceIBMCOSBucket() *schema.Resource {
 					},
 				},
 			},
+			"hard_quota": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "sets a maximum amount of storage (in bytes) available for a bucket",
+			},
 			"force_delete": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -596,6 +601,11 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 	bucketName = d.Get("bucket_name").(string)
 	updateBucketConfigOptions.Bucket = &bucketName
 
+	if d.HasChange("hard_quota") {
+		hasChanged = true
+		updateBucketConfigOptions.HardQuota = aws.Int64(int64(d.Get("hard_quota").(int)))
+	}
+
 	if d.HasChange("allowed_ip") {
 		firewall := &resourceconfigurationv1.Firewall{}
 		var ips = make([]string, 0)
@@ -798,6 +808,9 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 		}
 		if bucketPtr.MetricsMonitoring != nil {
 			d.Set("metrics_monitoring", flattenMetricsMonitor(bucketPtr.MetricsMonitoring))
+		}
+		if bucketPtr.HardQuota != nil {
+			d.Set("hard_quota", bucketPtr.HardQuota)
 		}
 	}
 	// Read the lifecycle configuration (archive & expiration)

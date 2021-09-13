@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/IBM-Cloud/container-services-go-sdk/kubernetesserviceapiv1"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/ibm-cos-sdk-go-config/resourceconfigurationv1"
 	"github.com/IBM/ibm-cos-sdk-go/service/s3"
@@ -39,6 +40,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/api/schematics"
 	"github.com/IBM-Cloud/bluemix-go/api/usermanagement/usermanagementv2"
 	"github.com/IBM-Cloud/bluemix-go/models"
+	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 )
 
 const (
@@ -1280,7 +1282,7 @@ func contains(s []int, e int) bool {
 	return false
 }
 
-func flattenMembersData(list []models.AccessGroupMemberV2, users []usermanagementv2.UserInfo, serviceids []models.ServiceID) ([]string, []string) {
+func flattenMembersData(list []models.AccessGroupMemberV2, users []usermanagementv2.UserInfo, serviceids []iamidentityv1.ServiceID) ([]string, []string) {
 	var ibmid []string
 	var serviceid []string
 	for _, m := range list {
@@ -1294,8 +1296,8 @@ func flattenMembersData(list []models.AccessGroupMemberV2, users []usermanagemen
 		} else {
 
 			for _, srid := range serviceids {
-				if srid.IAMID == m.ID {
-					serviceid = append(serviceid, srid.UUID)
+				if *srid.IamID == m.ID {
+					serviceid = append(serviceid, *srid.ID)
 					break
 				}
 			}
@@ -1306,7 +1308,7 @@ func flattenMembersData(list []models.AccessGroupMemberV2, users []usermanagemen
 	return ibmid, serviceid
 }
 
-func flattenAccessGroupMembers(list []models.AccessGroupMemberV2, users []usermanagementv2.UserInfo, serviceids []models.ServiceID) []map[string]interface{} {
+func flattenAccessGroupMembers(list []models.AccessGroupMemberV2, users []usermanagementv2.UserInfo, serviceids []iamidentityv1.ServiceID) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(list))
 	for _, m := range list {
 		var value, vtype string
@@ -1322,8 +1324,8 @@ func flattenAccessGroupMembers(list []models.AccessGroupMemberV2, users []userma
 
 			vtype = iamuumv1.AccessGroupMemberService
 			for _, srid := range serviceids {
-				if srid.IAMID == m.ID {
-					value = srid.UUID
+				if *srid.IamID == m.ID {
+					value = *srid.ID
 					break
 				}
 			}
@@ -1357,7 +1359,7 @@ func flattenServiceIds(services []string, meta interface{}) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		serviceids[i] = serviceID.IAMID
+		serviceids[i] = *serviceID.IamID
 	}
 	return serviceids, nil
 }
@@ -2088,6 +2090,20 @@ func GetNext(next interface{}) string {
 	return q.Get("start")
 }
 
+// GetNextIAM ...
+func GetNextIAM(next interface{}) string {
+	if reflect.ValueOf(next).IsNil() {
+		return ""
+	}
+
+	u, err := url.Parse(reflect.ValueOf(next).Elem().String())
+	if err != nil {
+		return ""
+	}
+	q := u.Query()
+	return q.Get("pagetoken")
+}
+
 /* Return the default resource group */
 func defaultResourceGroup(meta interface{}) (string, error) {
 	rsMangClient, err := meta.(ClientSession).ResourceManagementAPIv2()
@@ -2153,6 +2169,33 @@ func IgnoreSystemLabels(labels map[string]string) map[string]string {
 	}
 
 	return result
+}
+
+// expandCosConfig ..
+func expandCosConfig(cos []interface{}) *kubernetesserviceapiv1.COSBucket {
+	if len(cos) == 0 || cos[0] == nil {
+		return &kubernetesserviceapiv1.COSBucket{}
+	}
+	in := cos[0].(map[string]interface{})
+	obj := &kubernetesserviceapiv1.COSBucket{
+		Bucket:   ptrToString(in["bucket"].(string)),
+		Endpoint: ptrToString(in["endpoint"].(string)),
+		Region:   ptrToString(in["region"].(string)),
+	}
+	return obj
+}
+
+// expandCosCredentials ..
+func expandCosCredentials(cos []interface{}) *kubernetesserviceapiv1.COSAuthorization {
+	if len(cos) == 0 || cos[0] == nil {
+		return &kubernetesserviceapiv1.COSAuthorization{}
+	}
+	in := cos[0].(map[string]interface{})
+	obj := &kubernetesserviceapiv1.COSAuthorization{
+		AccessKeyID:     ptrToString(in["access_key-id"].(string)),
+		SecretAccessKey: ptrToString(in["secret_access_key"].(string)),
+	}
+	return obj
 }
 
 // flattenHostLabels ..
@@ -2463,6 +2506,67 @@ func getIBMUniqueId(accountID, userEmail string, meta interface{}) (string, erro
 	return "", fmt.Errorf("User %s is not found under account %s", userEmail, accountID)
 }
 
+func immutableResourceCustomizeDiff(resourceList []string, diff *schema.ResourceDiff) error {
+
+	for _, rName := range resourceList {
+		if diff.Id() != "" && diff.HasChange(rName) && rName != sateLocZone {
+			return fmt.Errorf("'%s' attribute is immutable and can't be changed", rName)
+		}
+		if diff.Id() != "" && diff.HasChange(rName) && rName == sateLocZone {
+			o, n := diff.GetChange(rName)
+			old := o.(string)
+			new := n.(string)
+			if len(old) > 0 && old != new {
+				if !(rName == sateLocZone && strings.Contains(old, new)) {
+					return fmt.Errorf("'%s' attribute is immutable and can't be changed from %s to %s", rName, old, new)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func flattenSatelliteWorkerPoolZones(zones *schema.Set) []kubernetesserviceapiv1.SatelliteCreateWorkerPoolZone {
+	zoneList := make([]kubernetesserviceapiv1.SatelliteCreateWorkerPoolZone, zones.Len())
+	for i, v := range zones.List() {
+		data := v.(map[string]interface{})
+		if v, ok := data["id"]; ok && v.(string) != "" {
+			zoneList[i].ID = sl.String(v.(string))
+		}
+	}
+
+	return zoneList
+}
+
+func flattenSatelliteWorkerPools(list []kubernetesserviceapiv1.GetWorkerPoolResponse) []map[string]interface{} {
+	workerPools := make([]map[string]interface{}, len(list))
+	for i, workerPool := range list {
+		l := map[string]interface{}{
+			"id":                         *workerPool.ID,
+			"name":                       *workerPool.PoolName,
+			"isolation":                  *workerPool.Isolation,
+			"flavour":                    *workerPool.Flavor,
+			"size_per_zone":              *workerPool.WorkerCount,
+			"state":                      *workerPool.Lifecycle.ActualState,
+			"default_worker_pool_labels": workerPool.Labels,
+			"host_labels":                workerPool.HostLabels,
+		}
+		zones := workerPool.Zones
+		zonesConfig := make([]map[string]interface{}, len(zones))
+		for j, zone := range zones {
+			z := map[string]interface{}{
+				"zone":         *zone.ID,
+				"worker_count": int(*zone.WorkerCount),
+			}
+			zonesConfig[j] = z
+		}
+		l["zones"] = zonesConfig
+		workerPools[i] = l
+	}
+
+	return workerPools
+}
+
 func flattenWorkerPoolHostLabels(hostLabels map[string]string) *schema.Set {
 	mapped := make([]string, len(hostLabels))
 	idx := 0
@@ -2472,4 +2576,19 @@ func flattenWorkerPoolHostLabels(hostLabels map[string]string) *schema.Set {
 	}
 
 	return newStringSet(schema.HashString, mapped)
+}
+
+// KMS Private Endpoint
+func updatePrivateURL(kpURL string) (string, error) {
+	var kmsEndpointURL string
+	if !strings.Contains(kpURL, "private") {
+		kmsEndpURL := strings.SplitAfter(kpURL, "https://")
+		if len(kmsEndpURL) == 2 {
+			kmsEndpointURL = kmsEndpURL[0] + "private." + kmsEndpURL[1] + "/api/v2/"
+
+		} else {
+			return "", fmt.Errorf("Error in Kms EndPoint URL ")
+		}
+	}
+	return kmsEndpointURL, nil
 }

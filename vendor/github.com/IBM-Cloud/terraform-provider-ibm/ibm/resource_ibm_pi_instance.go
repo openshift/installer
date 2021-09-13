@@ -58,10 +58,17 @@ func resourceIBMPIInstance() *schema.Resource {
 				Computed:    true,
 				Description: "PI instance status",
 			},
+			"pi_migratable": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "set to true to enable migration of the PI instance",
+			},
 			"migratable": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "set to true to enable migration of the PI instance",
+				Deprecated:  "This field is deprecated, Use pi_migratable instead.",
 			},
 			"min_processors": {
 				Type:        schema.TypeFloat,
@@ -105,6 +112,13 @@ func resourceIBMPIInstance() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Base64 encoded data to be passed in for invoking a cloud init script",
+			},
+
+			"pi_storage_type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Storage type for server deployment",
 			},
 
 			"addresses": {
@@ -300,6 +314,10 @@ func resourceIBMPIInstanceCreate(d *schema.ResourceData, meta interface{}) error
 	if r, ok := d.GetOk(helpers.PIInstanceReplicationScheme); ok {
 		replicationNamingScheme = r.(string)
 	}
+	var migratable bool
+	if m, ok := d.GetOk("pi_migratable"); ok {
+		migratable = m.(bool)
+	}
 	imageid := d.Get(helpers.PIInstanceImageName).(string)
 	processortype := d.Get(helpers.PIInstanceProcType).(string)
 
@@ -340,6 +358,7 @@ func resourceIBMPIInstanceCreate(d *schema.ResourceData, meta interface{}) error
 		ReplicantNamingScheme:   ptrToString(replicationNamingScheme),
 		ReplicantAffinityPolicy: ptrToString(replicationpolicy),
 		Networks:                buildPVMNetworks(networks),
+		Migratable:              &migratable,
 	}
 	if len(volids) > 0 {
 		body.VolumeIds = volids
@@ -352,6 +371,10 @@ func resourceIBMPIInstanceCreate(d *schema.ResourceData, meta interface{}) error
 	if a, ok := d.GetOk(helpers.PIVirtualCoresAssigned); ok {
 		assignedVirtualCores = int64(a.(int))
 		body.VirtualCores = &models.VirtualCores{Assigned: &assignedVirtualCores}
+	}
+
+	if st, ok := d.GetOk("pi_storage_type"); ok {
+		body.StorageType = st.(string)
 	}
 
 	client := st.NewIBMPIInstanceClient(sess, powerinstanceid)
@@ -413,13 +436,16 @@ func resourceIBMPIInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.Set(helpers.PIInstanceProcType, powervmdata.ProcType)
 	if powervmdata.Migratable != nil {
-		d.Set("migratable", powervmdata.Migratable)
+		d.Set("pi_migratable", powervmdata.Migratable)
 	}
 	if &powervmdata.Minproc != nil {
 		d.Set("min_processors", powervmdata.Minproc)
 	}
 	if &powervmdata.Progress != nil {
 		d.Set(helpers.PIInstanceProgress, powervmdata.Progress)
+	}
+	if &powervmdata.StorageType != nil {
+		d.Set("pi_storage_type", powervmdata.StorageType)
 	}
 	d.Set(helpers.PICloudInstanceId, powerinstanceid)
 	if powervmdata.PvmInstanceID != nil {
@@ -608,7 +634,7 @@ func resourceIBMPIInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
-	if d.HasChange(helpers.PIInstanceMemory) || d.HasChange(helpers.PIInstanceProcessors) {
+	if d.HasChange(helpers.PIInstanceMemory) || d.HasChange(helpers.PIInstanceProcessors) || d.HasChange("pi_migratable") {
 
 		maxMemLpar := d.Get("max_memory").(float64)
 		maxCPULpar := d.Get("max_processors").(float64)
@@ -648,6 +674,10 @@ func resourceIBMPIInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 				ServerName: name,
 			}
 			body.VirtualCores = &models.VirtualCores{Assigned: &assignedVirtualCores}
+			if m, ok := d.GetOk("pi_migratable"); ok {
+				migratable := m.(bool)
+				body.Migratable = &migratable
+			}
 
 			_, err = client.Update(parts[1], powerinstanceid, &p_cloud_p_vm_instances.PcloudPvminstancesPutParams{Body: body}, updateTimeOut)
 			if err != nil {

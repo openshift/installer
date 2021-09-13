@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -96,87 +95,11 @@ func dataSourceIBMISPublicGateway() *schema.Resource {
 }
 
 func dataSourceIBMISPublicGatewayRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
-	name := d.Get(isPublicGatewayName).(string)
-	if userDetails.generation == 1 {
-		err := classicPublicGatewayGet(d, meta, name)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := publicGatewayGet(d, meta, name)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func classicPublicGatewayGet(d *schema.ResourceData, meta interface{}, name string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	start := ""
-	allrecs := []vpcclassicv1.PublicGateway{}
-	for {
-		listPublicGatewaysOptions := &vpcclassicv1.ListPublicGatewaysOptions{}
-		if start != "" {
-			listPublicGatewaysOptions.Start = &start
-		}
-		publicgws, response, err := sess.ListPublicGateways(listPublicGatewaysOptions)
-		if err != nil {
-			return fmt.Errorf("Error Fetching public gateways %s\n%s", err, response)
-		}
-		start = GetNext(publicgws.Next)
-		allrecs = append(allrecs, publicgws.PublicGateways...)
-		if start == "" {
-			break
-		}
-	}
-	for _, publicgw := range allrecs {
-		if *publicgw.Name == name {
-			d.SetId(*publicgw.ID)
-			d.Set(isPublicGatewayName, *publicgw.Name)
-			if publicgw.FloatingIP != nil {
-				floatIP := map[string]interface{}{
-					"id":                             *publicgw.FloatingIP.ID,
-					isPublicGatewayFloatingIPAddress: *publicgw.FloatingIP.Address,
-				}
-				d.Set(isPublicGatewayFloatingIP, floatIP)
-
-			}
-			d.Set(isPublicGatewayStatus, *publicgw.Status)
-			d.Set(isPublicGatewayZone, *publicgw.Zone.Name)
-			d.Set(isPublicGatewayVPC, *publicgw.VPC.ID)
-			tags, err := GetTagsUsingCRN(meta, *publicgw.CRN)
-			if err != nil {
-				log.Printf(
-					"Error on get of vpc public gateway (%s) tags: %s", *publicgw.ID, err)
-			}
-			d.Set(isPublicGatewayTags, tags)
-			controller, err := getBaseController(meta)
-			if err != nil {
-				return err
-			}
-			d.Set(ResourceControllerURL, controller+"/vpc/network/publicGateways")
-			d.Set(ResourceName, *publicgw.Name)
-			d.Set(ResourceCRN, *publicgw.CRN)
-			d.Set(ResourceStatus, *publicgw.Status)
-			return nil
-		}
-	}
-	return fmt.Errorf("No Public Gateway found with name %s", name)
-}
-
-func publicGatewayGet(d *schema.ResourceData, meta interface{}, name string) error {
 	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
+	name := d.Get(isPublicGatewayName).(string)
 	rgroup := ""
 	if rg, ok := d.GetOk(isPublicGatewayResourceGroup); ok {
 		rgroup = rg.(string)

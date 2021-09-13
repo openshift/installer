@@ -1150,9 +1150,21 @@ func (r Virtual_Guest) GetBootOrder() (resp string, err error) {
 	return
 }
 
+// Retrieve A virtual guest's browser access logs.
+func (r Virtual_Guest) GetBrowserConsoleAccessLogs() (resp []datatypes.Virtual_BrowserConsoleAccessLog, err error) {
+	err = r.Session.DoRequest("SoftLayer_Virtual_Guest", "getBrowserConsoleAccessLogs", nil, &r.Options, &resp)
+	return
+}
+
 // Gets the console access logs for a computing instance
 func (r Virtual_Guest) GetConsoleAccessLog() (resp []datatypes.Network_Logging_Syslog, err error) {
 	err = r.Session.DoRequest("SoftLayer_Virtual_Guest", "getConsoleAccessLog", nil, &r.Options, &resp)
+	return
+}
+
+// Retrieve A container for a guest's console data
+func (r Virtual_Guest) GetConsoleData() (resp datatypes.Container_Virtual_ConsoleData, err error) {
+	err = r.Session.DoRequest("SoftLayer_Virtual_Guest", "getConsoleData", nil, &r.Options, &resp)
 	return
 }
 
@@ -1339,6 +1351,12 @@ func (r Virtual_Guest) GetGpuType() (resp string, err error) {
 // Retrieve
 func (r Virtual_Guest) GetGuestBootParameter() (resp datatypes.Virtual_Guest_Boot_Parameter, err error) {
 	err = r.Session.DoRequest("SoftLayer_Virtual_Guest", "getGuestBootParameter", nil, &r.Options, &resp)
+	return
+}
+
+// Retrieve The object's function.
+func (r Virtual_Guest) GetHardwareFunctionDescription() (resp string, err error) {
+	err = r.Session.DoRequest("SoftLayer_Virtual_Guest", "getHardwareFunctionDescription", nil, &r.Options, &resp)
 	return
 }
 

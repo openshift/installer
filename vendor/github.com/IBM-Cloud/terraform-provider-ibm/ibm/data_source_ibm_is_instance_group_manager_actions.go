@@ -165,7 +165,9 @@ func dataSourceIBMISInstanceGroupManagerActionsRead(d *schema.ResourceData, meta
 			InstanceGroupID:        &instanceGroupID,
 			InstanceGroupManagerID: &instanceGroupManagerID,
 		}
-
+		if start != "" {
+			listInstanceGroupManagerActionsOptions.Start = &start
+		}
 		instanceGroupManagerActionsCollection, response, err := sess.ListInstanceGroupManagerActions(&listInstanceGroupManagerActionsOptions)
 		if err != nil {
 			return fmt.Errorf("error Getting InstanceGroup Manager Actions %s\n%s", err, response)

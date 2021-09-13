@@ -121,6 +121,7 @@ func resourceIBMEventStreamsTopicCreate(d *schema.ResourceData, meta interface{}
 	err = adminClient.CreateTopic(topicName, &topicDetail, false)
 	if err != nil {
 		log.Printf("[DEBUG] resourceIBMEventStreamsTopicCreate CreateTopic err %s", err)
+		return err
 	}
 	log.Printf("[INFO] resourceIBMEventStreamsTopicCreate CreateTopic: topic is %s, detail is %v", topicName, topicDetail)
 	d.SetId(getTopicID(instanceCRN, topicName))

@@ -9,7 +9,6 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -143,68 +142,12 @@ func resourceIBMISSecurityGroupValidator() *ResourceValidator {
 }
 
 func resourceIBMISSecurityGroupCreate(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
-	vpc := d.Get(isSecurityGroupVPC).(string)
-	if userDetails.generation == 1 {
-		err := classicSgCreate(d, meta, vpc)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := sgCreate(d, meta, vpc)
-		if err != nil {
-			return err
-		}
-	}
-	return resourceIBMISSecurityGroupRead(d, meta)
-}
-
-func classicSgCreate(d *schema.ResourceData, meta interface{}, vpc string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	createSecurityGroupOptions := &vpcclassicv1.CreateSecurityGroupOptions{
-		VPC: &vpcclassicv1.VPCIdentity{
-			ID: &vpc,
-		},
-	}
-	var rg, name string
-	if grp, ok := d.GetOk(isSecurityGroupResourceGroup); ok {
-		rg = grp.(string)
-		createSecurityGroupOptions.ResourceGroup = &vpcclassicv1.ResourceGroupIdentity{
-			ID: &rg,
-		}
-	}
-	if nm, ok := d.GetOk(isSecurityGroupName); ok {
-		name = nm.(string)
-		createSecurityGroupOptions.Name = &name
-	}
-
-	sg, response, err := sess.CreateSecurityGroup(createSecurityGroupOptions)
-	if err != nil {
-		return fmt.Errorf("Error while creating Security Group %s\n%s", err, response)
-	}
-	d.SetId(*sg.ID)
-	v := os.Getenv("IC_ENV_TAGS")
-	if _, ok := d.GetOk(isSecurityGroupTags); ok || v != "" {
-		oldList, newList := d.GetChange(isSecurityGroupTags)
-		err = UpdateTagsUsingCRN(oldList, newList, meta, *sg.CRN)
-		if err != nil {
-			log.Printf("Error while creating Security Group tags %s\n%s", *sg.ID, err)
-		}
-	}
-	return nil
-}
-
-func sgCreate(d *schema.ResourceData, meta interface{}, vpc string) error {
 	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
+	vpc := d.Get(isSecurityGroupVPC).(string)
+
 	createSecurityGroupOptions := &vpcv1.CreateSecurityGroupOptions{
 		VPC: &vpcv1.VPCIdentity{
 			ID: &vpc,
@@ -235,171 +178,16 @@ func sgCreate(d *schema.ResourceData, meta interface{}, vpc string) error {
 				"Error while creating Security Group tags : %s\n%s", *sg.ID, err)
 		}
 	}
-	return nil
+	return resourceIBMISSecurityGroupRead(d, meta)
 }
 
 func resourceIBMISSecurityGroupRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
-	id := d.Id()
-	if userDetails.generation == 1 {
-		err := classicSgGet(d, meta, id)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := sgGet(d, meta, id)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func classicSgGet(d *schema.ResourceData, meta interface{}, id string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	getSecurityGroupOptions := &vpcclassicv1.GetSecurityGroupOptions{
-		ID: &id,
-	}
-	group, response, err := sess.GetSecurityGroup(getSecurityGroupOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("Error getting Security Group : %s\n%s", err, response)
-	}
-	tags, err := GetTagsUsingCRN(meta, *group.CRN)
-	if err != nil {
-		log.Printf(
-			"Error getting Security Group tags : %s\n%s", d.Id(), err)
-	}
-	d.Set(isSecurityGroupTags, tags)
-	d.Set(isSecurityGroupCRN, *group.CRN)
-	d.Set(isSecurityGroupName, *group.Name)
-	d.Set(isSecurityGroupVPC, *group.VPC.ID)
-	rules := make([]map[string]interface{}, 0)
-	if len(group.Rules) > 0 {
-		for _, rule := range group.Rules {
-			switch reflect.TypeOf(rule).String() {
-			case "*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
-				{
-					rule := rule.(*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp)
-					r := make(map[string]interface{})
-					if rule.Code != nil {
-						r[isSecurityGroupRuleCode] = int(*rule.Code)
-					}
-					if rule.Type != nil {
-						r[isSecurityGroupRuleType] = int(*rule.Type)
-					}
-					r[isSecurityGroupRuleDirection] = *rule.Direction
-					r[isSecurityGroupRuleIPVersion] = *rule.IPVersion
-					if rule.Protocol != nil {
-						r[isSecurityGroupRuleProtocol] = *rule.Protocol
-					}
-					remote, ok := rule.Remote.(*vpcclassicv1.SecurityGroupRuleRemote)
-					if ok {
-						if remote != nil && reflect.ValueOf(remote).IsNil() == false {
-							if remote.ID != nil {
-								r[isSecurityGroupRuleRemote] = remote.ID
-							} else if remote.Address != nil {
-								r[isSecurityGroupRuleRemote] = remote.Address
-							} else if remote.CIDRBlock != nil {
-								r[isSecurityGroupRuleRemote] = remote.CIDRBlock
-							}
-						}
-					}
-					rules = append(rules, r)
-				}
-			case "*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
-				{
-					rule := rule.(*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolAll)
-					r := make(map[string]interface{})
-					r[isSecurityGroupRuleDirection] = *rule.Direction
-					r[isSecurityGroupRuleIPVersion] = *rule.IPVersion
-					if rule.Protocol != nil {
-						r[isSecurityGroupRuleProtocol] = *rule.Protocol
-					}
-					remote, ok := rule.Remote.(*vpcclassicv1.SecurityGroupRuleRemote)
-					if ok {
-						if remote != nil && reflect.ValueOf(remote).IsNil() == false {
-							if remote.ID != nil {
-								r[isSecurityGroupRuleRemote] = remote.ID
-							} else if remote.Address != nil {
-								r[isSecurityGroupRuleRemote] = remote.Address
-							} else if remote.CIDRBlock != nil {
-								r[isSecurityGroupRuleRemote] = remote.CIDRBlock
-							}
-						}
-					}
-					rules = append(rules, r)
-				}
-			case "*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
-				{
-					rule := rule.(*vpcclassicv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
-					r := make(map[string]interface{})
-					if rule.PortMin != nil {
-						r[isSecurityGroupRulePortMin] = int(*rule.PortMin)
-					}
-					if rule.PortMax != nil {
-						r[isSecurityGroupRulePortMax] = int(*rule.PortMax)
-					}
-					r[isSecurityGroupRuleDirection] = *rule.Direction
-					r[isSecurityGroupRuleIPVersion] = *rule.IPVersion
-					if rule.Protocol != nil {
-						r[isSecurityGroupRuleProtocol] = *rule.Protocol
-					}
-					remote, ok := rule.Remote.(*vpcclassicv1.SecurityGroupRuleRemote)
-					if ok {
-						if remote != nil && reflect.ValueOf(remote).IsNil() == false {
-							if remote.ID != nil {
-								r[isSecurityGroupRuleRemote] = remote.ID
-							} else if remote.Address != nil {
-								r[isSecurityGroupRuleRemote] = remote.Address
-							} else if remote.CIDRBlock != nil {
-								r[isSecurityGroupRuleRemote] = remote.CIDRBlock
-							}
-						}
-					}
-					rules = append(rules, r)
-				}
-			}
-		}
-	}
-	d.Set(isSecurityGroupRules, rules)
-	d.SetId(*group.ID)
-	if group.ResourceGroup != nil {
-		d.Set(isSecurityGroupResourceGroup, group.ResourceGroup.ID)
-		rsMangClient, err := meta.(ClientSession).ResourceManagementAPIv2()
-		if err != nil {
-			return err
-		}
-		grp, err := rsMangClient.ResourceGroup().Get(*group.ResourceGroup.ID)
-		if err != nil {
-			return err
-		}
-		d.Set(ResourceGroupName, grp.Name)
-	}
-	controller, err := getBaseController(meta)
-	if err != nil {
-		return err
-	}
-	d.Set(ResourceControllerURL, controller+"/vpc/network/securityGroups")
-	d.Set(ResourceName, *group.Name)
-	d.Set(ResourceCRN, *group.CRN)
-	return nil
-}
-
-func sgGet(d *schema.ResourceData, meta interface{}, id string) error {
 	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
+	id := d.Id()
+
 	getSecurityGroupOptions := &vpcv1.GetSecurityGroupOptions{
 		ID: &id,
 	}
@@ -525,7 +313,7 @@ func sgGet(d *schema.ResourceData, meta interface{}, id string) error {
 }
 
 func resourceIBMISSecurityGroupUpdate(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
@@ -548,50 +336,7 @@ func resourceIBMISSecurityGroupUpdate(d *schema.ResourceData, meta interface{}) 
 	} else {
 		return resourceIBMISSecurityGroupRead(d, meta)
 	}
-	if userDetails.generation == 1 {
-		err := classicSgUpdate(d, meta, id, name, hasChanged)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := sgUpdate(d, meta, id, name, hasChanged)
-		if err != nil {
-			return err
-		}
-	}
-	return resourceIBMISSecurityGroupRead(d, meta)
-}
 
-func classicSgUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasChanged bool) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	if hasChanged {
-		updateSecurityGroupOptions := &vpcclassicv1.UpdateSecurityGroupOptions{
-			ID: &id,
-		}
-		securityGroupPatchModel := &vpcclassicv1.SecurityGroupPatch{
-			Name: &name,
-		}
-		securityGroupPatch, err := securityGroupPatchModel.AsPatch()
-		if err != nil {
-			return fmt.Errorf("Error calling asPatch for SecurityGroupPatch: %s", err)
-		}
-		updateSecurityGroupOptions.SecurityGroupPatch = securityGroupPatch
-		_, response, err := sess.UpdateSecurityGroup(updateSecurityGroupOptions)
-		if err != nil {
-			return fmt.Errorf("Error Updating Security Group : %s\n%s", err, response)
-		}
-	}
-	return nil
-}
-
-func sgUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasChanged bool) error {
-	sess, err := vpcClient(meta)
-	if err != nil {
-		return err
-	}
 	if hasChanged {
 		updateSecurityGroupOptions := &vpcv1.UpdateSecurityGroupOptions{
 			ID: &id,
@@ -609,63 +354,16 @@ func sgUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasChan
 			return fmt.Errorf("Error Updating Security Group : %s\n%s", err, response)
 		}
 	}
-	return nil
+	return resourceIBMISSecurityGroupRead(d, meta)
 }
 
 func resourceIBMISSecurityGroupDelete(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
-	id := d.Id()
-	if userDetails.generation == 1 {
-		err := classicSgDelete(d, meta, id)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := sgDelete(d, meta, id)
-		if err != nil {
-			return err
-		}
-	}
-	d.SetId("")
-	return nil
-}
-
-func classicSgDelete(d *schema.ResourceData, meta interface{}, id string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	getSecurityGroupOptions := &vpcclassicv1.GetSecurityGroupOptions{
-		ID: &id,
-	}
-	_, response, err := sess.GetSecurityGroup(getSecurityGroupOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("Error Getting Security Group (%s): %s\n%s", id, err, response)
-	}
-
-	deleteSecurityGroupOptions := &vpcclassicv1.DeleteSecurityGroupOptions{
-		ID: &id,
-	}
-	response, err = sess.DeleteSecurityGroup(deleteSecurityGroupOptions)
-	if err != nil {
-		return fmt.Errorf("Error Deleting Security Group : %s\n%s", err, response)
-	}
-	d.SetId("")
-	return nil
-}
-
-func sgDelete(d *schema.ResourceData, meta interface{}, id string) error {
 	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
+	id := d.Id()
+
 	getSecurityGroupOptions := &vpcv1.GetSecurityGroupOptions{
 		ID: &id,
 	}
@@ -676,6 +374,44 @@ func sgDelete(d *schema.ResourceData, meta interface{}, id string) error {
 			return nil
 		}
 		return fmt.Errorf("Error Getting Security Group (%s): %s\n%s", id, err, response)
+	}
+
+	start := ""
+	allrecs := []vpcv1.SecurityGroupTargetReferenceIntf{}
+
+	for {
+		listSecurityGroupTargetsOptions := sess.NewListSecurityGroupTargetsOptions(id)
+
+		groups, response, err := sess.ListSecurityGroupTargets(listSecurityGroupTargetsOptions)
+		if err != nil || groups == nil {
+			return fmt.Errorf("Error Getting Security Group Targets %s\n%s", err, response)
+		}
+		if *groups.TotalCount == int64(0) {
+			break
+		}
+
+		start = GetNext(groups.Next)
+		allrecs = append(allrecs, groups.Targets...)
+
+		if start == "" {
+			break
+		}
+
+	}
+
+	for _, securityGroupTargetReferenceIntf := range allrecs {
+		if securityGroupTargetReferenceIntf != nil {
+			securityGroupTargetReference := securityGroupTargetReferenceIntf.(*vpcv1.SecurityGroupTargetReference)
+			if securityGroupTargetReference != nil && securityGroupTargetReference.ID != nil {
+
+				deleteSecurityGroupTargetBindingOptions := sess.NewDeleteSecurityGroupTargetBindingOptions(id, *securityGroupTargetReference.ID)
+				response, err = sess.DeleteSecurityGroupTargetBinding(deleteSecurityGroupTargetBindingOptions)
+				if err != nil {
+					return fmt.Errorf("Error Deleting Security Group Targets : %s\n%s", err, response)
+				}
+
+			}
+		}
 	}
 
 	deleteSecurityGroupOptions := &vpcv1.DeleteSecurityGroupOptions{
@@ -690,43 +426,12 @@ func sgDelete(d *schema.ResourceData, meta interface{}, id string) error {
 }
 
 func resourceIBMISSecurityGroupExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return false, err
-	}
-	id := d.Id()
-	if userDetails.generation == 1 {
-		exists, err := classicSgExists(d, meta, id)
-		return exists, err
-	} else {
-		exists, err := sgExists(d, meta, id)
-		return exists, err
-	}
-}
-
-func classicSgExists(d *schema.ResourceData, meta interface{}, id string) (bool, error) {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return false, err
-	}
-	getSecurityGroupOptions := &vpcclassicv1.GetSecurityGroupOptions{
-		ID: &id,
-	}
-	_, response, err := sess.GetSecurityGroup(getSecurityGroupOptions)
-	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			return false, nil
-		}
-		return false, fmt.Errorf("Error getting Security Group: %s\n%s", err, response)
-	}
-	return true, nil
-}
-
-func sgExists(d *schema.ResourceData, meta interface{}, id string) (bool, error) {
 	sess, err := vpcClient(meta)
 	if err != nil {
 		return false, err
 	}
+	id := d.Id()
+
 	getSecurityGroupOptions := &vpcv1.GetSecurityGroupOptions{
 		ID: &id,
 	}
@@ -752,7 +457,7 @@ func makeIBMISSecurityRuleSchema() map[string]*schema.Schema {
 		isSecurityGroupRuleIPVersion: {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "IP version: ipv4 or ipv6",
+			Description: "IP version: ipv4",
 		},
 
 		isSecurityGroupRuleRemote: {

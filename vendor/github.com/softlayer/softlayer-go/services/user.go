@@ -487,7 +487,7 @@ func (r User_Customer) GetHasFullHardwareAccessFlag() (resp bool, err error) {
 	return
 }
 
-// Retrieve Whether or not a portal user has access to all hardware on their account.
+// Retrieve Whether or not a portal user has access to all virtual guests on their account.
 func (r User_Customer) GetHasFullVirtualGuestAccessFlag() (resp bool, err error) {
 	err = r.Session.DoRequest("SoftLayer_User_Customer", "getHasFullVirtualGuestAccessFlag", nil, &r.Options, &resp)
 	return
@@ -2950,7 +2950,7 @@ func (r User_Customer_OpenIdConnect) GetHasFullHardwareAccessFlag() (resp bool, 
 	return
 }
 
-// Retrieve Whether or not a portal user has access to all hardware on their account.
+// Retrieve Whether or not a portal user has access to all virtual guests on their account.
 func (r User_Customer_OpenIdConnect) GetHasFullVirtualGuestAccessFlag() (resp bool, err error) {
 	err = r.Session.DoRequest("SoftLayer_User_Customer_OpenIdConnect", "getHasFullVirtualGuestAccessFlag", nil, &r.Options, &resp)
 	return

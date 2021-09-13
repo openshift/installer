@@ -7,12 +7,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"log"
 	"net/url"
 	"reflect"
 	"time"
-
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
 	"github.com/IBM/platform-services-go-sdk/enterprisemanagementv1"
 )

@@ -53,6 +53,12 @@ func resourceIbmIamApiKey() *schema.Resource {
 				Optional:    true,
 				Description: "Send true or false to set whether the API key value is retrievable in the future by using the Get details of an API key request. If you create an API key for a user, you must specify `false` or omit the value. We don't allow storing of API keys for users.",
 			},
+			"file": &schema.Schema{
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: applyOnce,
+				Description:      "File where api key is to be stored",
+			},
 			"entity_lock": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -159,7 +165,7 @@ func resourceIbmIamApiKeyRead(d *schema.ResourceData, meta interface{}) error {
 	getApiKeyOptions.SetID(d.Id())
 
 	apiKey, response, err := iamIdentityClient.GetAPIKey(getApiKeyOptions)
-	if err != nil {
+	if err != nil || apiKey == nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
 			return nil
@@ -180,9 +186,6 @@ func resourceIbmIamApiKeyRead(d *schema.ResourceData, meta interface{}) error {
 	if err = d.Set("account_id", apiKey.AccountID); err != nil {
 		return fmt.Errorf("Error setting account_id: %s", err)
 	}
-	if err = d.Set("apikey", apiKey.Apikey); err != nil {
-		return fmt.Errorf("Error setting apikey: %s", err)
-	}
 	if err = d.Set("locked", apiKey.Locked); err != nil {
 		return fmt.Errorf("Error setting entity_lock: %s", err)
 	}
@@ -194,9 +197,6 @@ func resourceIbmIamApiKeyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	if err = d.Set("crn", apiKey.CRN); err != nil {
 		return fmt.Errorf("Error setting crn: %s", err)
-	}
-	if err = d.Set("locked", apiKey.Locked); err != nil {
-		return fmt.Errorf("Error setting locked: %s", err)
 	}
 	if err = d.Set("created_at", apiKey.CreatedAt.String()); err != nil {
 		return fmt.Errorf("Error setting created_at: %s", err)

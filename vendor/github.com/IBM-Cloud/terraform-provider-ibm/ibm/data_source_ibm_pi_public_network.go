@@ -70,11 +70,8 @@ func dataSourceIBMPIPublicNetworksRead(d *schema.ResourceData, meta interface{})
 	networkC := instance.NewIBMPINetworkClient(sess, powerinstanceid)
 	networkdata, err := networkC.GetPublic(powerinstanceid, getTimeOut)
 
-	if err != nil {
-		return err
-	}
-	if len(networkdata.Networks) < 1 {
-		return fmt.Errorf("No Public Network Found in %s", powerinstanceid)
+	if err != nil || networkdata == nil || len(networkdata.Networks) < 1 {
+		return fmt.Errorf("Error getting public network or no public network found in %s", powerinstanceid)
 	}
 	d.SetId(*networkdata.Networks[0].NetworkID)
 	if networkdata.Networks[0].Type != nil {

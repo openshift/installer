@@ -67,7 +67,6 @@ const (
 	isInstanceTemplateNicPortSpeed            = "port_speed"
 	isInstanceTemplateNicAllowIPSpoofing      = "allow_ip_spoofing"
 	isInstanceTemplateNicPrimaryIpv4Address   = "primary_ipv4_address"
-	isInstanceTemplateNicPrimaryIpv6Address   = "primary_ipv6_address"
 	isInstanceTemplateNicSecondaryAddress     = "secondary_addresses"
 	isInstanceTemplateNicSecurityGroups       = "security_groups"
 	isInstanceTemplateNicSubnet               = "subnet"

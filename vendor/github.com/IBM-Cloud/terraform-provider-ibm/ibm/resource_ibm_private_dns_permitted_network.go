@@ -182,6 +182,10 @@ func resourceIBMPrivateDNSPermittedNetworkExists(d *schema.ResourceData, meta in
 	}
 
 	idSet := strings.Split(d.Id(), "/")
+	if len(idSet) < 3 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of InstanceID/zoneID/permittedNetworkID", d.Id())
+	}
+
 	mk := "private_dns_permitted_network_" + idSet[0] + idSet[1]
 	ibmMutexKV.Lock(mk)
 	defer ibmMutexKV.Unlock(mk)

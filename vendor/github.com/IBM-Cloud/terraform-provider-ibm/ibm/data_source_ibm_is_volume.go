@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -102,6 +101,12 @@ func dataSourceIBMISVolume() *schema.Resource {
 				Description: "Tags for the volume instance",
 			},
 
+			isVolumeSourceSnapshot: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Identifier of the snapshot from which this volume was cloned",
+			},
+
 			ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -148,88 +153,14 @@ func dataSourceIBMISVolumeValidator() *ResourceValidator {
 }
 
 func dataSourceIBMISVolumeRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+
+	name := d.Get(isVolumeName).(string)
+
+	err := volumeGet(d, meta, name)
 	if err != nil {
 		return err
-	}
-	name := d.Get(isVolumeName).(string)
-	if userDetails.generation == 1 {
-		err := classicVolumeGet(d, meta, name)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := volumeGet(d, meta, name)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
-}
-
-func classicVolumeGet(d *schema.ResourceData, meta interface{}, name string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	zone := ""
-	if zname, ok := d.GetOk(isVolumeZone); ok {
-		zone = zname.(string)
-	}
-	start := ""
-	allrecs := []vpcclassicv1.Volume{}
-	for {
-		listVolumesOptions := &vpcclassicv1.ListVolumesOptions{}
-		if start != "" {
-			listVolumesOptions.Start = &start
-		}
-		if zone != "" {
-			listVolumesOptions.ZoneName = &zone
-		}
-		listVolumesOptions.Name = &name
-		vols, response, err := sess.ListVolumes(listVolumesOptions)
-		if err != nil {
-			return fmt.Errorf("Error Fetching volumes %s\n%s", err, response)
-		}
-		start = GetNext(vols.Next)
-		allrecs = append(allrecs, vols.Volumes...)
-		if start == "" {
-			break
-		}
-	}
-	for _, vol := range allrecs {
-		d.SetId(*vol.ID)
-		d.Set(isVolumeName, *vol.Name)
-		d.Set(isVolumeProfileName, *vol.Profile.Name)
-		d.Set(isVolumeZone, *vol.Zone.Name)
-		if vol.EncryptionKey != nil {
-			d.Set(isVolumeEncryptionKey, *vol.EncryptionKey.CRN)
-		}
-		d.Set(isVolumeIops, *vol.Iops)
-		d.Set(isVolumeCapacity, *vol.Capacity)
-		d.Set(isVolumeCrn, *vol.CRN)
-		d.Set(isVolumeStatus, *vol.Status)
-		tags, err := GetTagsUsingCRN(meta, *vol.CRN)
-		if err != nil {
-			log.Printf(
-				"Error on get of resource vpc volume (%s) tags: %s", d.Id(), err)
-		}
-		d.Set(isVolumeTags, tags)
-		controller, err := getBaseController(meta)
-		if err != nil {
-			return err
-		}
-		d.Set(ResourceControllerURL, controller+"/vpc/storage/storageVolumes")
-		d.Set(ResourceName, *vol.Name)
-		d.Set(ResourceCRN, *vol.CRN)
-		d.Set(ResourceStatus, *vol.Status)
-		if vol.ResourceGroup != nil {
-			d.Set(ResourceGroupName, *vol.ResourceGroup.ID)
-			d.Set(isVolumeResourceGroup, *vol.ResourceGroup.ID)
-		}
-		return nil
-	}
-	return fmt.Errorf("No Volume found with name %s", name)
 }
 
 func volumeGet(d *schema.ResourceData, meta interface{}, name string) error {
@@ -269,6 +200,9 @@ func volumeGet(d *schema.ResourceData, meta interface{}, name string) error {
 		d.Set(isVolumeZone, *vol.Zone.Name)
 		if vol.EncryptionKey != nil {
 			d.Set(isVolumeEncryptionKey, vol.EncryptionKey.CRN)
+		}
+		if vol.SourceSnapshot != nil {
+			d.Set(isVolumeSourceSnapshot, *vol.SourceSnapshot.ID)
 		}
 		d.Set(isVolumeIops, *vol.Iops)
 		d.Set(isVolumeCapacity, *vol.Capacity)

@@ -6,7 +6,7 @@ package ibm
 import (
 	"fmt"
 
-	"github.com/IBM-Cloud/bluemix-go/crn"
+	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -35,6 +35,7 @@ func dataSourceIBMIAMServiceID() *schema.Resource {
 							Description: "bound to of the serviceID",
 							Type:        schema.TypeString,
 							Computed:    true,
+							Deprecated:  "bound_to attribute in service_ids list has been deprecated",
 						},
 
 						"crn": {
@@ -74,10 +75,7 @@ func dataSourceIBMIAMServiceID() *schema.Resource {
 }
 
 func dataSourceIBMIAMServiceIDRead(d *schema.ResourceData, meta interface{}) error {
-	iamClient, err := meta.(ClientSession).IAMAPI()
-	if err != nil {
-		return err
-	}
+
 	name := d.Get("name").(string)
 
 	userDetails, err := meta.(ClientSession).BluemixUserDetails()
@@ -85,30 +83,49 @@ func dataSourceIBMIAMServiceIDRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	boundTo := crn.New(userDetails.cloudName, userDetails.cloudType)
-	boundTo.ScopeType = crn.ScopeAccount
-	boundTo.Scope = userDetails.userAccount
-
-	serviceIDS, err := iamClient.ServiceIds().FindByName(boundTo.String(), name)
+	iamClient, err := meta.(ClientSession).IAMIdentityV1API()
 	if err != nil {
 		return err
 	}
 
-	if len(serviceIDS) == 0 {
-		return fmt.Errorf("No serviceID found with name [%s]", name)
+	start := ""
+	allrecs := []iamidentityv1.ServiceID{}
+	var pg int64 = 100
+	for {
+		listServiceIDOptions := iamidentityv1.ListServiceIdsOptions{
+			AccountID: &userDetails.userAccount,
+			Pagesize:  &pg,
+			Name:      &name,
+		}
+		if start != "" {
+			listServiceIDOptions.Pagetoken = &start
+		}
+
+		serviceIDs, resp, err := iamClient.ListServiceIds(&listServiceIDOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error listing Service Ids %s %s", err, resp)
+		}
+		start = GetNextIAM(serviceIDs.Next)
+		allrecs = append(allrecs, serviceIDs.Serviceids...)
+		if start == "" {
+			break
+		}
+	}
+	if len(allrecs) == 0 {
+		return fmt.Errorf("[ERROR] No serviceID found with name [%s]", name)
 
 	}
 
-	serviceIDListMap := make([]map[string]interface{}, 0, len(serviceIDS))
-	for _, serviceID := range serviceIDS {
+	serviceIDListMap := make([]map[string]interface{}, 0, len(allrecs))
+	for _, serviceID := range allrecs {
 		l := map[string]interface{}{
-			"id":          serviceID.UUID,
-			"bound_to":    serviceID.BoundTo,
-			"version":     serviceID.Version,
+			"id": serviceID.ID,
+			// "bound_to":    serviceID.BoundTo,
+			"version":     serviceID.EntityTag,
 			"description": serviceID.Description,
 			"crn":         serviceID.CRN,
 			"locked":      serviceID.Locked,
-			"iam_id":      serviceID.IAMID,
+			"iam_id":      serviceID.IamID,
 		}
 		serviceIDListMap = append(serviceIDListMap, l)
 	}

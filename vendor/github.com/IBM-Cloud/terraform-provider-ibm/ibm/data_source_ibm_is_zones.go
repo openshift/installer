@@ -6,7 +6,6 @@ package ibm
 import (
 	"time"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -41,47 +40,9 @@ func dataSourceIBMISZones() *schema.Resource {
 }
 
 func dataSourceIBMISZonesRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
-	regionName := d.Get(isZoneRegion).(string)
-	if userDetails.generation == 1 {
-		err := classicZonesList(d, meta, regionName)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := zonesList(d, meta, regionName)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
-func classicZonesList(d *schema.ResourceData, meta interface{}, regionName string) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	listRegionZonesOptions := &vpcclassicv1.ListRegionZonesOptions{
-		RegionName: &regionName,
-	}
-	availableZones, _, err := sess.ListRegionZones(listRegionZonesOptions)
-	if err != nil {
-		return err
-	}
-	names := make([]string, 0)
-	status := d.Get(isZoneStatus).(string)
-	for _, zone := range availableZones.Zones {
-		if status == "" || *zone.Status == status {
-			names = append(names, *zone.Name)
-		}
-	}
-	d.SetId(dataSourceIBMISZonesId(d))
-	d.Set(isZoneNames, names)
-	return nil
+	regionName := d.Get(isZoneRegion).(string)
+	return zonesList(d, meta, regionName)
 }
 
 func zonesList(d *schema.ResourceData, meta interface{}, regionName string) error {

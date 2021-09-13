@@ -6,6 +6,7 @@ package ibm
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 
@@ -27,13 +28,23 @@ func dataSourceIBMKMSkeys() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Description:   "The name of the key to be fetched",
-				ConflictsWith: []string{"alias"},
+				ConflictsWith: []string{"alias", "key_id"},
+			},
+			"limit": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Limit till the keys to be fetched",
 			},
 			"alias": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Description:   "The name of the key to be fetched",
-				ConflictsWith: []string{"key_name"},
+				ConflictsWith: []string{"key_name", "key_id"},
+			},
+			"key_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"alias", "key_name"},
 			},
 			"endpoint_type": {
 				Type:         schema.TypeString,
@@ -211,46 +222,114 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	api.Config.InstanceID = instanceID
+	var totalKeys []kp.Key
 	if v, ok := d.GetOk("alias"); ok {
 		aliasName := v.(string)
 		key, err := api.GetKey(context.Background(), aliasName)
 		if err != nil {
 			return fmt.Errorf(
 				"Get Keys failed with error: %s", err)
-		} else {
-			keyMap := make([]map[string]interface{}, 0, 1)
-			keyInstance := make(map[string]interface{})
-			keyInstance["id"] = key.ID
-			keyInstance["name"] = key.Name
-			keyInstance["crn"] = key.CRN
-			keyInstance["standard_key"] = key.Extractable
-			keyInstance["aliases"] = key.Aliases
-			keyInstance["key_ring_id"] = key.KeyRingID
-			keyMap = append(keyMap, keyInstance)
-			d.Set("keys", keyMap)
-
 		}
-	} else {
-		keys, err := api.GetKeys(context.Background(), 100, 0)
+		keyMap := make([]map[string]interface{}, 0, 1)
+		keyInstance := make(map[string]interface{})
+		keyInstance["id"] = key.ID
+		keyInstance["name"] = key.Name
+		keyInstance["crn"] = key.CRN
+		keyInstance["standard_key"] = key.Extractable
+		keyInstance["aliases"] = key.Aliases
+		keyInstance["key_ring_id"] = key.KeyRingID
+		keyMap = append(keyMap, keyInstance)
+		d.Set("keys", keyMap)
+
+	} else if v, ok := d.GetOk("key_id"); ok {
+		key, err := api.GetKey(context.Background(), v.(string))
 		if err != nil {
 			return fmt.Errorf(
 				"Get Keys failed with error: %s", err)
 		}
-		retreivedKeys := keys.Keys
-		if len(retreivedKeys) == 0 {
-			return fmt.Errorf("No keys in instance  %s", instanceID)
+		keyMap := make([]map[string]interface{}, 0, 1)
+		keyInstance := make(map[string]interface{})
+		keyInstance["id"] = key.ID
+		keyInstance["name"] = key.Name
+		keyInstance["crn"] = key.CRN
+		keyInstance["standard_key"] = key.Extractable
+		keyInstance["aliases"] = key.Aliases
+		keyInstance["key_ring_id"] = key.KeyRingID
+		policies, err := api.GetPolicies(context.Background(), key.ID)
+		if err != nil {
+			return fmt.Errorf("Failed to read policies: %s", err)
+		}
+		if len(policies) == 0 {
+			log.Printf("No Policy Configurations read\n")
+		} else {
+			keyInstance["policies"] = flattenKeyPolicies(policies)
+		}
+		keyMap = append(keyMap, keyInstance)
+
+		d.SetId(instanceID)
+		d.Set("keys", keyMap)
+		d.Set("instance_id", instanceID)
+	} else {
+		limit := d.Get("limit")
+		limitVal := limit.(int)
+		offset := 0
+		//default page size of API is 200 as stated
+		pageSize := 200
+
+		// when the limit is not passed, the api works in default way to avoid backward compatibility issues
+
+		if limitVal == 0 {
+			{
+				keys, err := api.GetKeys(context.Background(), 0, offset)
+				if err != nil {
+					return fmt.Errorf(
+						"Get Keys failed with error: %s", err)
+				}
+				retreivedKeys := keys.Keys
+				totalKeys = append(totalKeys, retreivedKeys...)
+			}
+		} else {
+			// when the limit is passed by the user
+			for {
+				if offset < limitVal {
+					if (limitVal - offset) < pageSize {
+						keys, err := api.GetKeys(context.Background(), (limitVal - offset), offset)
+						if err != nil {
+							return fmt.Errorf(
+								"Get Keys failed with error: %s", err)
+						}
+						retreivedKeys := keys.Keys
+						totalKeys = append(totalKeys, retreivedKeys...)
+						break
+					} else {
+						keys, err := api.GetKeys(context.Background(), pageSize, offset)
+						if err != nil {
+							return fmt.Errorf(
+								"Get Keys failed with error: %s", err)
+						}
+						numOfKeysFetched := keys.Metadata.NumberOfKeys
+						retreivedKeys := keys.Keys
+						totalKeys = append(totalKeys, retreivedKeys...)
+						if numOfKeysFetched < pageSize || offset+pageSize == limitVal {
+							break
+						}
+
+						offset = offset + pageSize
+					}
+				}
+			}
 		}
 		var keyName string
 		var matchKeys []kp.Key
 		if v, ok := d.GetOk("key_name"); ok {
 			keyName = v.(string)
-			for _, keyData := range retreivedKeys {
+			for _, keyData := range totalKeys {
 				if keyData.Name == keyName {
 					matchKeys = append(matchKeys, keyData)
 				}
 			}
 		} else {
-			matchKeys = retreivedKeys
+			matchKeys = totalKeys
 		}
 
 		if len(matchKeys) == 0 {

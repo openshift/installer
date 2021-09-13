@@ -19,11 +19,13 @@ type ContainerServiceAPI interface {
 	Monitoring() Monitoring
 	Logging() Logging
 	Clusters() Clusters
+	VPCs() VPCs
 	WorkerPools() WorkerPool
 	Albs() Alb
 	Workers() Workers
 	Kms() Kms
 	Ingresses() Ingress
+	Subnets() Subnets
 
 	//TODO Add other services
 }
@@ -76,6 +78,11 @@ func (c *csService) Clusters() Clusters {
 	return newClusterAPI(c.Client)
 }
 
+//VPCs implements Cluster VPCs API
+func (c *csService) VPCs() VPCs {
+	return newVPCsAPI(c.Client)
+}
+
 //Monitor implements Monitor API
 func (c *csService) Monitoring() Monitoring {
 	return newMonitoringAPI(c.Client)
@@ -105,4 +112,9 @@ func (c *csService) Kms() Kms {
 //Workers implements Cluster Workers API
 func (c *csService) Workers() Workers {
 	return newWorkerAPI(c.Client)
+}
+
+//Subnets implements Cluster Subnets API
+func (c *csService) Subnets() Subnets {
+	return newSubnetsAPI(c.Client)
 }

@@ -198,7 +198,7 @@ github.com/ChrisTrenkamp/goxpath/tree/xmltree/xmlbuilder
 github.com/ChrisTrenkamp/goxpath/tree/xmltree/xmlele
 github.com/ChrisTrenkamp/goxpath/tree/xmltree/xmlnode
 github.com/ChrisTrenkamp/goxpath/xconst
-# github.com/IBM-Cloud/bluemix-go v0.0.0-20210611051827-cdc80c935c05
+# github.com/IBM-Cloud/bluemix-go v0.0.0-20210706092416-dc4055f8e0ea
 ## explicit
 github.com/IBM-Cloud/bluemix-go
 github.com/IBM-Cloud/bluemix-go/api/account/accountv1
@@ -236,6 +236,9 @@ github.com/IBM-Cloud/bluemix-go/rest
 github.com/IBM-Cloud/bluemix-go/session
 github.com/IBM-Cloud/bluemix-go/trace
 github.com/IBM-Cloud/bluemix-go/utils
+# github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20210705152127-41ca00fc9a62
+github.com/IBM-Cloud/container-services-go-sdk/common
+github.com/IBM-Cloud/container-services-go-sdk/kubernetesserviceapiv1
 # github.com/IBM-Cloud/power-go-client v1.0.55
 github.com/IBM-Cloud/power-go-client/clients/instance
 github.com/IBM-Cloud/power-go-client/helpers
@@ -267,7 +270,7 @@ github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
 github.com/IBM-Cloud/power-go-client/power/models
 github.com/IBM-Cloud/power-go-client/utils
-# github.com/IBM-Cloud/terraform-provider-ibm v1.26.2 => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
+# github.com/IBM-Cloud/terraform-provider-ibm v1.26.2 => github.com/openshift/terraform-provider-ibm v1.29.0-openshift-1
 ## explicit
 github.com/IBM-Cloud/terraform-provider-ibm/ibm
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/internal/hashcode
@@ -282,13 +285,11 @@ github.com/IBM/appconfiguration-go-admin-sdk/common
 # github.com/IBM/container-registry-go-sdk v0.0.13
 github.com/IBM/container-registry-go-sdk/common
 github.com/IBM/container-registry-go-sdk/containerregistryv1
-# github.com/IBM/go-sdk-core v1.1.0
-github.com/IBM/go-sdk-core/core
-# github.com/IBM/go-sdk-core/v3 v3.3.1
+# github.com/IBM/go-sdk-core/v3 v3.2.4
 github.com/IBM/go-sdk-core/v3/core
 # github.com/IBM/go-sdk-core/v4 v4.10.0
 github.com/IBM/go-sdk-core/v4/core
-# github.com/IBM/go-sdk-core/v5 v5.4.3
+# github.com/IBM/go-sdk-core/v5 v5.5.1
 ## explicit
 github.com/IBM/go-sdk-core/v5/core
 # github.com/IBM/ibm-cos-sdk-go v1.7.0
@@ -334,10 +335,15 @@ github.com/IBM/ibm-cos-sdk-go/service/s3
 # github.com/IBM/ibm-cos-sdk-go-config v1.2.0
 github.com/IBM/ibm-cos-sdk-go-config/common
 github.com/IBM/ibm-cos-sdk-go-config/resourceconfigurationv1
+# github.com/IBM/ibm-hpcs-tke-sdk v0.0.0-20210723145459-a232c3f3ac91
+github.com/IBM/ibm-hpcs-tke-sdk/common
+github.com/IBM/ibm-hpcs-tke-sdk/ep11cmds
+github.com/IBM/ibm-hpcs-tke-sdk/rest
+github.com/IBM/ibm-hpcs-tke-sdk/tkesdk
 # github.com/IBM/keyprotect-go-client v0.7.0
 github.com/IBM/keyprotect-go-client
 github.com/IBM/keyprotect-go-client/iam
-# github.com/IBM/networking-go-sdk v0.14.0
+# github.com/IBM/networking-go-sdk v0.19.0
 ## explicit
 github.com/IBM/networking-go-sdk/cachingapiv1
 github.com/IBM/networking-go-sdk/cisipapiv1
@@ -349,6 +355,7 @@ github.com/IBM/networking-go-sdk/dnsrecordbulkv1
 github.com/IBM/networking-go-sdk/dnsrecordsv1
 github.com/IBM/networking-go-sdk/dnssvcsv1
 github.com/IBM/networking-go-sdk/edgefunctionsapiv1
+github.com/IBM/networking-go-sdk/filtersv1
 github.com/IBM/networking-go-sdk/globalloadbalancermonitorv1
 github.com/IBM/networking-go-sdk/globalloadbalancerpoolsv0
 github.com/IBM/networking-go-sdk/globalloadbalancerv1
@@ -385,11 +392,12 @@ github.com/IBM/schematics-go-sdk/schematicsv1
 # github.com/IBM/secrets-manager-go-sdk v0.1.19
 github.com/IBM/secrets-manager-go-sdk/common
 github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1
-# github.com/IBM/vpc-go-sdk v1.0.1 => github.com/IBM/vpc-go-sdk v0.7.0
+# github.com/IBM/vpc-go-sdk v1.0.1 => github.com/IBM/vpc-go-sdk v0.8.0
 ## explicit
 github.com/IBM/vpc-go-sdk/common
-github.com/IBM/vpc-go-sdk/vpcclassicv1
 github.com/IBM/vpc-go-sdk/vpcv1
+# github.com/Logicalis/asn1 v0.0.0-20190312173541-d60463189a56
+github.com/Logicalis/asn1
 # github.com/MakeNowJust/heredoc v1.0.0
 github.com/MakeNowJust/heredoc
 # github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667
@@ -772,6 +780,8 @@ github.com/gofrs/uuid
 # github.com/gogo/protobuf v1.3.2
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
+# github.com/golang-jwt/jwt v3.2.1+incompatible
+github.com/golang-jwt/jwt
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
 # github.com/golang/mock v1.4.4
@@ -779,7 +789,7 @@ github.com/golang/groupcache/lru
 github.com/golang/mock/gomock
 github.com/golang/mock/mockgen
 github.com/golang/mock/mockgen/model
-# github.com/golang/protobuf v1.4.3
+# github.com/golang/protobuf v1.5.2
 ## explicit
 github.com/golang/protobuf/internal/gengogrpc
 github.com/golang/protobuf/proto
@@ -796,7 +806,7 @@ github.com/golang/protobuf/ptypes/wrappers
 github.com/golang/snappy
 # github.com/google/btree v1.0.0
 github.com/google/btree
-# github.com/google/go-cmp v0.5.2
+# github.com/google/go-cmp v0.5.5
 ## explicit
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
@@ -1527,7 +1537,7 @@ github.com/shurcooL/vfsgen
 ## explicit
 github.com/sirupsen/logrus
 github.com/sirupsen/logrus/hooks/test
-# github.com/softlayer/softlayer-go v1.0.3
+# github.com/softlayer/softlayer-go v1.0.3 => github.com/IBM-Cloud/softlayer-go v1.0.3-tf
 github.com/softlayer/softlayer-go/config
 github.com/softlayer/softlayer-go/datatypes
 github.com/softlayer/softlayer-go/filter
@@ -2078,13 +2088,14 @@ go.starlark.net/resolve
 go.starlark.net/starlark
 go.starlark.net/starlarkstruct
 go.starlark.net/syntax
-# golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+# golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 ## explicit
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/cast5
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
+golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/internal/subtle
@@ -2112,7 +2123,7 @@ golang.org/x/lint/golint
 ## explicit
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
+# golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/html
@@ -2134,7 +2145,7 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
+# golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -2144,7 +2155,7 @@ golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 golang.org/x/term
-# golang.org/x/text v0.3.5
+# golang.org/x/text v0.3.6
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -2341,7 +2352,7 @@ google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
 google.golang.org/grpc/test/bufconn
-# google.golang.org/protobuf v1.25.0
+# google.golang.org/protobuf v1.26.0
 google.golang.org/protobuf/cmd/protoc-gen-go/internal_gengo
 google.golang.org/protobuf/compiler/protogen
 google.golang.org/protobuf/encoding/protojson
@@ -2356,13 +2367,12 @@ google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
 google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldsort
 google.golang.org/protobuf/internal/filedesc
 google.golang.org/protobuf/internal/filetype
 google.golang.org/protobuf/internal/flags
 google.golang.org/protobuf/internal/genid
 google.golang.org/protobuf/internal/impl
-google.golang.org/protobuf/internal/mapsort
+google.golang.org/protobuf/internal/order
 google.golang.org/protobuf/internal/pragma
 google.golang.org/protobuf/internal/set
 google.golang.org/protobuf/internal/strs
@@ -2929,7 +2939,7 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
 # cloud.google.com/go => cloud.google.com/go v0.57.0
-# github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
+# github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.29.0-openshift-1
 # github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb
 # github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
@@ -2952,13 +2962,14 @@ sigs.k8s.io/yaml
 # sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20210302164104-8498241fa4bd
 # sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.9.0-alpha.1
 # sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
-# github.com/IBM/vpc-go-sdk => github.com/IBM/vpc-go-sdk v0.7.0
+# github.com/IBM/vpc-go-sdk => github.com/IBM/vpc-go-sdk v0.8.0
 # github.com/apparentlymart/go-cidr => github.com/apparentlymart/go-cidr v1.0.1
 # github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.32.3
 # github.com/go-openapi/errors => github.com/go-openapi/errors v0.19.2
 # github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.4
 # github.com/go-openapi/validate => github.com/go-openapi/validate v0.19.8
 # github.com/hashicorp/go-plugin => github.com/hashicorp/go-plugin v1.2.2
+# github.com/softlayer/softlayer-go => github.com/IBM-Cloud/softlayer-go v1.0.3-tf
 # github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.7
 # google.golang.org/api => google.golang.org/api v0.25.0
 # google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013

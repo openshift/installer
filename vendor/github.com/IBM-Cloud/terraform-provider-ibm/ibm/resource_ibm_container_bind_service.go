@@ -183,6 +183,9 @@ func resourceIBMContainerBindServiceRead(d *schema.ResourceData, meta interface{
 	if err != nil {
 		return err
 	}
+	if len(parts) < 3 {
+		return fmt.Errorf("Incorrect ID %s: Id should be a combination of clusterNameID/serviceInstanceNameID/namespaceID", d.Id())
+	}
 	clusterNameID := parts[0]
 	serviceInstanceNameID := parts[1]
 	namespaceID := parts[2]
@@ -200,6 +203,7 @@ func resourceIBMContainerBindServiceRead(d *schema.ResourceData, meta interface{
 
 	d.Set("service_instance_name", boundService.ServiceName)
 	d.Set("service_instance_id", boundService.ServiceID)
+	d.Set("cluster_name_id", clusterNameID)
 	//d.Set(key, boundService.ServiceKeyName)
 	//d.Set(key, boundService.ServiceName)
 	return nil

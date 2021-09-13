@@ -128,6 +128,9 @@ func dataSourceIBMISInstanceGroupManagersRead(d *schema.ResourceData, meta inter
 		listInstanceGroupManagerOptions := vpcv1.ListInstanceGroupManagersOptions{
 			InstanceGroupID: &instanceGroupID,
 		}
+		if start != "" {
+			listInstanceGroupManagerOptions.Start = &start
+		}
 		instanceGroupManagerCollections, response, err := sess.ListInstanceGroupManagers(&listInstanceGroupManagerOptions)
 		if err != nil {
 			return fmt.Errorf("Error Getting InstanceGroup Managers %s\n%s", err, response)

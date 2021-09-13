@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -375,57 +374,10 @@ func dataSourceIBMISInstanceProfiles() *schema.Resource {
 }
 
 func dataSourceIBMISInstanceProfilesRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+	err := instanceProfilesList(d, meta)
 	if err != nil {
 		return err
 	}
-	if userDetails.generation == 1 {
-		err := classicInstanceProfilesList(d, meta)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := instanceProfilesList(d, meta)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func classicInstanceProfilesList(d *schema.ResourceData, meta interface{}) error {
-	sess, err := classicVpcClient(meta)
-	if err != nil {
-		return err
-	}
-	start := ""
-	allrecs := []vpcclassicv1.InstanceProfile{}
-	for {
-		listInstanceProfilesOptions := &vpcclassicv1.ListInstanceProfilesOptions{}
-		if start != "" {
-			listInstanceProfilesOptions.Start = &start
-		}
-		availableProfiles, response, err := sess.ListInstanceProfiles(listInstanceProfilesOptions)
-		if err != nil {
-			return fmt.Errorf("Error Fetching Instance Profiles %s\n%s", err, response)
-		}
-		start = GetNext(availableProfiles.Next)
-		allrecs = append(allrecs, availableProfiles.Profiles...)
-		if start == "" {
-			break
-		}
-	}
-	profilesInfo := make([]map[string]interface{}, 0)
-	for _, profile := range allrecs {
-
-		l := map[string]interface{}{
-			"name":   *profile.Name,
-			"family": *profile.Family,
-		}
-		profilesInfo = append(profilesInfo, l)
-	}
-	d.SetId(dataSourceIBMISInstanceProfilesID(d))
-	d.Set(isInstanceProfiles, profilesInfo)
 	return nil
 }
 

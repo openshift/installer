@@ -6,7 +6,6 @@ package ibm
 import (
 	"fmt"
 
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -66,72 +65,28 @@ func dataSourceIBMISImage() *schema.Resource {
 				Computed:    true,
 				Description: "The type of encryption used on the image",
 			},
+			"source_volume": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Source volume id of the image",
+			},
 		},
 	}
 }
 
 func dataSourceIBMISImageRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
+
 	name := d.Get("name").(string)
 	var visibility string
 	if v, ok := d.GetOk("visibility"); ok {
 		visibility = v.(string)
 	}
-	if userDetails.generation == 1 {
-		err := classicImageGet(d, meta, name, visibility)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := imageGet(d, meta, name, visibility)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
-func classicImageGet(d *schema.ResourceData, meta interface{}, name, visibility string) error {
-	sess, err := classicVpcClient(meta)
+	err := imageGet(d, meta, name, visibility)
 	if err != nil {
 		return err
 	}
-	start := ""
-	allrecs := []vpcclassicv1.Image{}
-	for {
-		listImagesOptions := &vpcclassicv1.ListImagesOptions{}
-		if start != "" {
-			listImagesOptions.Start = &start
-		}
-		if visibility != "" {
-			listImagesOptions.Visibility = &visibility
-		}
-		availableImages, response, err := sess.ListImages(listImagesOptions)
-		if err != nil {
-			return fmt.Errorf("Error Fetching Images %s\n%s", err, response)
-		}
-		start = GetNext(availableImages.Next)
-		allrecs = append(allrecs, availableImages.Images...)
-		if start == "" {
-			break
-		}
-	}
-	for _, image := range allrecs {
-		if *image.Name == name {
-			d.SetId(*image.ID)
-			d.Set("status", *image.Status)
-			d.Set("name", *image.Name)
-			d.Set("visibility", *image.Visibility)
-			d.Set("os", *image.OperatingSystem.Name)
-			d.Set("architecture", *image.OperatingSystem.Architecture)
-			d.Set("crn", *image.CRN)
-			return nil
-		}
-	}
-	return fmt.Errorf("No Image found with name %s", name)
+	return nil
 }
 
 func imageGet(d *schema.ResourceData, meta interface{}, name, visibility string) error {
@@ -180,6 +135,9 @@ func imageGet(d *schema.ResourceData, meta interface{}, name, visibility string)
 			}
 			if image.File != nil && image.File.Checksums != nil {
 				d.Set(isImageCheckSum, *image.File.Checksums.Sha256)
+			}
+			if image.SourceVolume != nil {
+				d.Set("source_volume", *image.SourceVolume.ID)
 			}
 			return nil
 		}

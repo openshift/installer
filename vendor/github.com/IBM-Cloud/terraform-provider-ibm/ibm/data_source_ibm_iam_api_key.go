@@ -72,11 +72,6 @@ func dataSourceIbmIamApiKey() *schema.Resource {
 				Computed:    true,
 				Description: "ID of the account that this API key authenticates for.",
 			},
-			"apikey": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The API key value. This property only contains the API key value for the following cases: create an API key, update a service ID API key that stores the API key value as retrievable, or get a service ID API key that stores the API key value as retrievable. All other operations don't return the API key value, for example all user API key related operations, except for create, don't contain the API key value.",
-			},
 		},
 	}
 }
@@ -128,9 +123,6 @@ func dataSourceIbmIamApiKeyRead(d *schema.ResourceData, meta interface{}) error 
 	}
 	if err = d.Set("account_id", apiKey.AccountID); err != nil {
 		return fmt.Errorf("Error setting account_id: %s", err)
-	}
-	if err = d.Set("apikey", apiKey.Apikey); err != nil {
-		return fmt.Errorf("Error setting apikey: %s", err)
 	}
 
 	return nil

@@ -455,6 +455,9 @@ func resourceIBMPrivateDNSGLBMonitorExists(d *schema.ResourceData, meta interfac
 	}
 
 	idset := strings.Split(d.Id(), "/")
+	if len(idset) < 2 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of InstanceID/monitorID", d.Id())
+	}
 
 	getMonitorOptions := sess.NewGetMonitorOptions(idset[0], idset[1])
 	response, detail, err := sess.GetMonitor(getMonitorOptions)

@@ -59,6 +59,7 @@ const (
 	dlGatewayProvisioning          = "configuring"
 	dlGatewayProvisioningDone      = "provisioned"
 	dlGatewayProvisioningRejected  = "create_rejected"
+	dlAuthenticationKey            = "authentication_key"
 )
 
 func resourceIBMDLGateway() *schema.Resource {
@@ -83,6 +84,12 @@ func resourceIBMDLGateway() *schema.Resource {
 		),
 
 		Schema: map[string]*schema.Schema{
+			dlAuthenticationKey: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "BGP MD5 authentication key",
+			},
 			dlBgpAsn: {
 				Type:        schema.TypeInt,
 				Required:    true,
@@ -502,6 +509,12 @@ func resourceIBMdlGatewayCreate(d *schema.ResourceData, meta interface{}) error 
 			}
 			gatewayDedicatedTemplateModel.MacsecConfig = gatewayMacsecConfigTemplateModel
 		}
+
+		if authKeyCrn, ok := d.GetOk(dlAuthenticationKey); ok {
+			authKeyCrnStr := authKeyCrn.(string)
+			gatewayDedicatedTemplateModel.AuthenticationKey = &directlinkv1.GatewayTemplateAuthenticationKey{Crn: &authKeyCrnStr}
+		}
+
 		createGatewayOptionsModel.GatewayTemplate = gatewayDedicatedTemplateModel
 
 	} else if dtype == "connect" {
@@ -532,6 +545,12 @@ func resourceIBMdlGatewayCreate(d *schema.ResourceData, meta interface{}) error 
 				gatewayConnectTemplateModel.ResourceGroup = &directlinkv1.ResourceGroupIdentity{ID: &resourceGroup}
 
 			}
+
+			if authKeyCrn, ok := d.GetOk(dlAuthenticationKey); ok {
+				authKeyCrnStr := authKeyCrn.(string)
+				gatewayConnectTemplateModel.AuthenticationKey = &directlinkv1.GatewayTemplateAuthenticationKey{Crn: &authKeyCrnStr}
+			}
+
 			createGatewayOptionsModel.GatewayTemplate = gatewayConnectTemplateModel
 
 		} else {
@@ -664,6 +683,9 @@ func resourceIBMdlGatewayRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	if instance.CreatedAt != nil {
 		d.Set(dlCreatedAt, instance.CreatedAt.String())
+	}
+	if instance.AuthenticationKey != nil {
+		d.Set(dlAuthenticationKey, *instance.AuthenticationKey.Crn)
 	}
 	if dtype == "dedicated" {
 		if instance.MacsecConfig != nil {
@@ -834,6 +856,13 @@ func resourceIBMdlGatewayUpdate(d *schema.ResourceData, meta interface{}) error 
 		metered := d.Get(dlMetered).(bool)
 		updateGatewayOptionsModel.Metered = &metered
 	}
+	if d.HasChange(dlAuthenticationKey) {
+		authenticationKeyCrn := d.Get(dlAuthenticationKey).(string)
+		authenticationKeyPatchTemplate := new(directlinkv1.GatewayPatchTemplateAuthenticationKey)
+		authenticationKeyPatchTemplate.Crn = &authenticationKeyCrn
+		updateGatewayOptionsModel = updateGatewayOptionsModel.SetAuthenticationKey(authenticationKeyPatchTemplate)
+	}
+
 	if dtype == "dedicated" {
 		if d.HasChange(dlMacSecConfig) && !d.IsNewResource() {
 			// Construct an instance of the GatewayMacsecConfigTemplate model

@@ -8,10 +8,11 @@ import (
 	"strings"
 	"time"
 
-	v1 "github.com/IBM-Cloud/bluemix-go/api/container/containerv1"
-	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
+	v1 "github.com/IBM-Cloud/bluemix-go/api/container/containerv1"
+	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 )
 
 func resourceIBMContainerWorkerPoolZoneAttachment() *schema.Resource {
@@ -279,6 +280,9 @@ func resourceIBMContainerWorkerPoolZoneAttachmentExists(d *schema.ResourceData, 
 	parts, err := idParts(d.Id())
 	if err != nil {
 		return false, err
+	}
+	if len(parts) < 3 {
+		return false, fmt.Errorf("Incorrect ID %s: Id should be a combination of clusterID/WorkerPoolID/ZoneID", d.Id())
 	}
 	cluster := parts[0]
 	workerPoolID := parts[1]

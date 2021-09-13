@@ -49,7 +49,7 @@ func dataSourceIBMISEndpointGateway() *schema.Resource {
 			isVirtualEndpointGatewayIPs: {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Endpoint gateway resource group",
+				Description: "Endpoint gateway IPs",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						isVirtualEndpointGatewayIPsID: {
@@ -66,6 +66,11 @@ func dataSourceIBMISEndpointGateway() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Endpoint gateway IP resource type",
+						},
+						isVirtualEndpointGatewayIPsAddress: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Endpoint gateway IP Address",
 						},
 					},
 				},

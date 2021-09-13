@@ -83,7 +83,7 @@ func dataSourceIBMPINetworksRead(d *schema.ResourceData, meta interface{}) error
 	networkC := instance.NewIBMPINetworkClient(sess, powerinstanceid)
 	networkdata, err := networkC.Get(d.Get(helpers.PINetworkName).(string), powerinstanceid, getTimeOut)
 
-	if err != nil {
+	if err != nil || networkdata == nil {
 		return err
 	}
 

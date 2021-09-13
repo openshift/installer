@@ -4,7 +4,6 @@
 package ibm
 
 import (
-	"github.com/IBM/vpc-go-sdk/vpcclassicv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -36,41 +35,13 @@ func dataSourceIBMISVolumeProfile() *schema.Resource {
 }
 
 func dataSourceIBMISVolumeProfileRead(d *schema.ResourceData, meta interface{}) error {
-	userDetails, err := meta.(ClientSession).BluemixUserDetails()
-	if err != nil {
-		return err
-	}
-	name := d.Get(isVolumeProfile).(string)
-	if userDetails.generation == 1 {
-		err := classicVolumeProfileGet(d, meta, name)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := volumeProfileGet(d, meta, name)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
-func classicVolumeProfileGet(d *schema.ResourceData, meta interface{}, name string) error {
-	sess, err := classicVpcClient(meta)
+	name := d.Get(isVolumeProfile).(string)
+
+	err := volumeProfileGet(d, meta, name)
 	if err != nil {
 		return err
 	}
-	getVolumeProfileOptions := &vpcclassicv1.GetVolumeProfileOptions{
-		Name: &name,
-	}
-	profile, _, err := sess.GetVolumeProfile(getVolumeProfileOptions)
-	if err != nil {
-		return err
-	}
-	// For lack of anything better, compose our id from profile name.
-	d.SetId(*profile.Name)
-	d.Set(isVolumeProfile, *profile.Name)
-	d.Set(isVolumeProfileFamily, *profile.Family)
 	return nil
 }
 

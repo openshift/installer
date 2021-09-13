@@ -234,6 +234,11 @@ func dataSourceIBMCosBucket() *schema.Resource {
 					},
 				},
 			},
+			"hard_quota": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "sets a maximum amount of storage (in bytes) available for a bucket",
+			},
 		},
 	}
 }
@@ -366,6 +371,9 @@ func dataSourceIBMCosBucketRead(d *schema.ResourceData, meta interface{}) error 
 		}
 		if bucketPtr.MetricsMonitoring != nil {
 			d.Set("metrics_monitoring", flattenMetricsMonitor(bucketPtr.MetricsMonitoring))
+		}
+		if bucketPtr.HardQuota != nil {
+			d.Set("hard_quota", bucketPtr.HardQuota)
 		}
 
 	}

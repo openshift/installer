@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"strings"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	homedir "github.com/mitchellh/go-homedir"
 
@@ -154,7 +157,23 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 		}
 		if network {
 			// For the Network config we need to gather the certs so we must override the admin value
-			calicoConfigFilePath, clusterKeyDetails, err := csAPI.StoreConfigDetail(name, configDir, admin || true, network, targetEnv)
+			var calicoConfigFilePath string
+			var clusterKeyDetails v1.ClusterKeyInfo
+			err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+				var err error
+				calicoConfigFilePath, clusterKeyDetails, err = csAPI.StoreConfigDetail(name, configDir, admin || true, network, targetEnv)
+				if err != nil {
+					log.Printf("[DEBUG] Failed to fetch cluster config err %s", err)
+					if strings.Contains(err.Error(), "Could not login to openshift account runtime error:") {
+						return resource.RetryableError(err)
+					}
+					return resource.NonRetryableError(err)
+				}
+				return nil
+			})
+			if isResourceTimeoutError(err) {
+				calicoConfigFilePath, clusterKeyDetails, err = csAPI.StoreConfigDetail(name, configDir, admin || true, network, targetEnv)
+			}
 			if err != nil {
 				return fmt.Errorf("Error downloading the cluster config [%s]: %s", name, err)
 			}
@@ -167,7 +186,22 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 			d.Set("config_file_path", clusterKeyDetails.FilePath)
 
 		} else {
-			clusterKeyDetails, err := csAPI.GetClusterConfigDetail(name, configDir, admin, targetEnv)
+			var clusterKeyDetails v1.ClusterKeyInfo
+			err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+				var err error
+				clusterKeyDetails, err = csAPI.GetClusterConfigDetail(name, configDir, admin, targetEnv)
+				if err != nil {
+					log.Printf("[DEBUG] Failed to fetch cluster config err %s", err)
+					if strings.Contains(err.Error(), "Could not login to openshift account runtime error:") {
+						return resource.RetryableError(err)
+					}
+					return resource.NonRetryableError(err)
+				}
+				return nil
+			})
+			if isResourceTimeoutError(err) {
+				clusterKeyDetails, err = csAPI.GetClusterConfigDetail(name, configDir, admin, targetEnv)
+			}
 			if err != nil {
 				return fmt.Errorf("Error downloading the cluster config [%s]: %s", name, err)
 			}

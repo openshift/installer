@@ -73,6 +73,11 @@ func dataSourceIBMDLGateway() *schema.Resource {
 				},
 			},
 
+			dlAuthenticationKey: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "BGP MD5 authentication key",
+			},
 			dlBgpAsn: {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -454,6 +459,10 @@ func dataSourceIBMDLGatewayRead(d *schema.ResourceData, meta interface{}) error 
 			if instance.ResourceGroup != nil {
 				rg := instance.ResourceGroup
 				d.Set(dlResourceGroup, *rg.ID)
+			}
+
+			if instance.AuthenticationKey != nil {
+				d.Set(dlAuthenticationKey, *instance.AuthenticationKey.Crn)
 			}
 
 		}
