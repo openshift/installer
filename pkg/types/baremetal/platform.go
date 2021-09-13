@@ -39,6 +39,7 @@ type Host struct {
 	HardwareProfile string           `json:"hardwareProfile"`
 	RootDeviceHints *RootDeviceHints `json:"rootDeviceHints,omitempty"`
 	BootMode        BootMode         `json:"bootMode,omitempty"`
+	NetworkConfig   string           `json:"networkConfig,omitempty"`
 }
 
 // IsMaster checks if the current host is a master

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
+	"github.com/ghodss/yaml"
 	"github.com/go-playground/validator/v10"
 	"github.com/metal3-io/baremetal-operator/pkg/bmc"
 	"github.com/pkg/errors"
@@ -325,6 +326,18 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 	return nil
 }
 
+// ensure that the NetworkConfig field contains a valid Yaml string
+func validateNetworkConfig(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
+	for idx, host := range hosts {
+		networkConfig := make(map[string]interface{})
+		err := yaml.Unmarshal([]byte(host.NetworkConfig), &networkConfig)
+		if err != nil {
+			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("networkConfig"), host.NetworkConfig, fmt.Sprintf("Not a valid yaml: %s", err.Error())))
+		}
+	}
+	return
+}
+
 // ensure that the bootMode field contains a valid value
 func validateBootMode(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
 	for idx, host := range hosts {
@@ -404,6 +417,7 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 	allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
 
 	allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
+	allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath.Child("Hosts"))...)
 
 	return allErrs
 }
