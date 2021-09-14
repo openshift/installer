@@ -2,6 +2,7 @@ package ibmcloud
 
 import (
 	"bytes"
+	"fmt"
 	"text/template"
 )
 
@@ -24,11 +25,14 @@ type provider struct {
 	AccountID                string `gcfg:"accountID"`
 	ClusterID                string `gcfg:"clusterID"`
 	ClusterDefaultProvider   string `gcfg:"cluster-default-provider"`
+	Region                   string `gcfg:"region"`
+	G2CredentialsFilePath    string `gcfg:"g2Credentials"`
+	G2VPCName                string `gcfg:"g2VpcName"`
 	G2WorkerServiceAccountID string `gcfg:"g2workerServiceAccountID"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBMCloud platform.
-func CloudProviderConfig(infraID string, accountID string) (string, error) {
+func CloudProviderConfig(infraID string, accountID string, region string) (string, error) {
 	config := &config{
 		Global: global{
 			Version: "1.1.0",
@@ -40,6 +44,9 @@ func CloudProviderConfig(infraID string, accountID string) (string, error) {
 			AccountID:                accountID,
 			ClusterID:                infraID,
 			ClusterDefaultProvider:   "g2",
+			Region:                   region,
+			G2CredentialsFilePath:    "/etc/vpc/ibmcloud_api_key",
+			G2VPCName:                fmt.Sprintf("%s-vpc", infraID),
 			G2WorkerServiceAccountID: accountID,
 		},
 	}
@@ -59,6 +66,9 @@ config-file = {{ if ne .Kubernetes.ConfigFile "" }}{{ .Kubernetes.ConfigFile }}{
 accountID = {{.Provider.AccountID}}
 clusterID = {{.Provider.ClusterID}}
 cluster-default-provider = {{.Provider.ClusterDefaultProvider}}
+region = {{.Provider.Region}}
+g2Credentials = {{.Provider.G2CredentialsFilePath}}
+g2VpcName = {{.Provider.G2VPCName}}
 g2workerServiceAccountID = {{.Provider.G2WorkerServiceAccountID}}
 
 `

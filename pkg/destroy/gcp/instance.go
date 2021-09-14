@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
 
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )
 
@@ -25,12 +26,12 @@ func (o *ClusterUninstaller) getInstanceNameAndZone(instanceURL string) (string,
 }
 
 func (o *ClusterUninstaller) listInstances() ([]cloudResource, error) {
-	byName, err := o.listInstancesWithFilter("items/*/instances(name,zone,status),nextPageToken", o.clusterIDFilter(), nil)
+	byName, err := o.listInstancesWithFilter("items/*/instances(name,zone,status,machineType),nextPageToken", o.clusterIDFilter(), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	byLabel, err := o.listInstancesWithFilter("items/*/instances(name,zone,status),nextPageToken", o.clusterLabelFilter(), nil)
+	byLabel, err := o.listInstancesWithFilter("items/*/instances(name,zone,status,machineType),nextPageToken", o.clusterLabelFilter(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +63,16 @@ func (o *ClusterUninstaller) listInstancesWithFilter(fields string, filter strin
 						status:   item.Status,
 						typeName: "instance",
 						zone:     zoneName,
+						quota: []gcp.QuotaUsage{{
+							Metric: &gcp.Metric{
+								Service: gcp.ServiceComputeEngineAPI,
+								Limit:   "cpus",
+								Dimensions: map[string]string{
+									"region": getRegionFromZone(zoneName),
+								},
+							},
+							Amount: o.cpusByMachineType[getNameFromURL("machineTypes", item.MachineType)],
+						}},
 					})
 				}
 			}
@@ -144,6 +155,8 @@ func (o *ClusterUninstaller) stopInstances() error {
 	}
 	for _, item := range found {
 		if item.status != "TERMINATED" {
+			// we record instance quota when we delete the instance, not when we terminate it
+			item.quota = nil
 			o.insertPendingItems("stopinstance", []cloudResource{item})
 		}
 	}

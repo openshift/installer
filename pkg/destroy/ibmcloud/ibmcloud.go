@@ -77,18 +77,18 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	err := o.loadSDKServices()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = o.destroyCluster()
 	if err != nil {
-		return errors.Wrap(err, "failed to destroy cluster")
+		return nil, errors.Wrap(err, "failed to destroy cluster")
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (o *ClusterUninstaller) destroyCluster() error {

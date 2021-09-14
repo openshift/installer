@@ -445,7 +445,7 @@ error: internal error: Failed to initialize a valid firewall backend
 
 please check out [this thread on superuser][arch_firewall_superuser].
 
-### Github Issue Tracker
+### GitHub Issue Tracker
 
 You might find other reports of your problem in the [Issues tab for this repository][issues_libvirt] where we ask you to provide any additional information.
 If your issue is not reported, please do.

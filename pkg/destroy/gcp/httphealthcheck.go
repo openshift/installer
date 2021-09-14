@@ -1,9 +1,10 @@
 package gcp
 
 import (
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
 
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )
 
@@ -32,6 +33,13 @@ func (o *ClusterUninstaller) listHTTPHealthChecksWithFilter(fields string, filte
 					key:      item.Name,
 					name:     item.Name,
 					typeName: "httphealthcheck",
+					quota: []gcp.QuotaUsage{{
+						Metric: &gcp.Metric{
+							Service: gcp.ServiceComputeEngineAPI,
+							Limit:   "health_checks",
+						},
+						Amount: 1,
+					}},
 				})
 			}
 		}

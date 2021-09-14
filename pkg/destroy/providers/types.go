@@ -9,7 +9,7 @@ import (
 // Destroyer allows multiple implementations of destroy
 // for different platforms.
 type Destroyer interface {
-	Run() error
+	Run() (*types.ClusterQuota, error)
 }
 
 // NewFunc is an interface for creating platform-specific destroyers.

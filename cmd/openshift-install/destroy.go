@@ -20,8 +20,9 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
+	quotaasset "github.com/openshift/installer/pkg/destroy/quota"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
-	timer "github.com/openshift/installer/pkg/metrics/timer"
+	"github.com/openshift/installer/pkg/metrics/timer"
 )
 
 func newDestroyCmd() *cobra.Command {
@@ -47,7 +48,7 @@ func newDestroyClusterCmd() *cobra.Command {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
 
-			err := runDestroyCmd(rootOpts.dir)
+			err := runDestroyCmd(rootOpts.dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true")
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -55,14 +56,21 @@ func newDestroyClusterCmd() *cobra.Command {
 	}
 }
 
-func runDestroyCmd(directory string) error {
+func runDestroyCmd(directory string, reportQuota bool) error {
 	timer.StartTimer(timer.TotalTimeElapsed)
 	destroyer, err := destroy.New(logrus.StandardLogger(), directory)
 	if err != nil {
 		return errors.Wrap(err, "Failed while preparing to destroy cluster")
 	}
-	if err := destroyer.Run(); err != nil {
+	quota, err := destroyer.Run()
+	if err != nil {
 		return errors.Wrap(err, "Failed to destroy cluster")
+	}
+
+	if reportQuota {
+		if err := quotaasset.WriteQuota(directory, quota); err != nil {
+			return errors.Wrap(err, "failed to record quota")
+		}
 	}
 
 	store, err := assetstore.NewStore(directory)

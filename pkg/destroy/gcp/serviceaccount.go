@@ -3,10 +3,11 @@ package gcp
 import (
 	"fmt"
 
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	iam "google.golang.org/api/iam/v1"
+	"google.golang.org/api/iam/v1"
 )
 
 // listServiceAccounts retrieves all service accounts with a display name prefixed with the cluster's
@@ -26,6 +27,13 @@ func (o *ClusterUninstaller) listServiceAccounts() ([]cloudResource, error) {
 			name:     item.Name,
 			url:      item.Email,
 			typeName: "serviceaccount",
+			quota: []gcp.QuotaUsage{{
+				Metric: &gcp.Metric{
+					Service: gcp.ServiceIAMAPI,
+					Limit:   "quota/service-account-count",
+				},
+				Amount: 1,
+			}},
 		})
 	}
 	return result, nil

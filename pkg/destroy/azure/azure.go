@@ -106,7 +106,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	var errs []error
 	var err error
 
@@ -205,7 +205,7 @@ func (o *ClusterUninstaller) Run() error {
 		o.Logger.Debug(err)
 	}
 
-	return utilerrors.NewAggregate(errs)
+	return nil, utilerrors.NewAggregate(errs)
 }
 
 func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) error {

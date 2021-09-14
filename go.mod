@@ -35,6 +35,7 @@ require (
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
+	github.com/google/go-cmp v0.5.2
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gophercloud/gophercloud v0.17.0
