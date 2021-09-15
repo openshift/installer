@@ -1,10 +1,16 @@
 locals {
   # NOTE: Defined in ./vpc.tf
-  # prefix = var.cluster_id
+  # prefix     = var.cluster_id
+
+  subnet_cidr_blocks = concat(ibm_is_subnet.control_plane.*.ipv4_cidr_block, ibm_is_subnet.compute.*.ipv4_cidr_block)
 }
 
-# NOTE: Security group quota
+# NOTE: Security group rules enforces network access based on OCP requirements
+# https://docs.openshift.com/container-platform/4.8/installing/installing_platform_agnostic/installing-platform-agnostic.html#installation-network-connectivity-user-infra_installing-platform-agnostic
+
+# NOTE: Security group limitations
 # 5 per network interface (NIC) on a virtual server instance
+# 5 remote rules per security group
 
 ############################################
 # Security group (Cluster-wide)
@@ -110,10 +116,13 @@ resource "ibm_is_security_group_rule" "openshift_network_kube_default_ports_inbo
 }
 
 # Kubernetes node ports - TCP
+# Allows access to node ports from within VPC subnets to accommodate CCM LBs
 resource "ibm_is_security_group_rule" "openshift_network_node_ports_tcp_inbound" {
+  count = length(local.subnet_cidr_blocks)
+
   group     = ibm_is_security_group.openshift_network.id
   direction = "inbound"
-  remote    = ibm_is_security_group.openshift_network.id
+  remote    = local.subnet_cidr_blocks[count.index]
   tcp {
     port_min = 30000
     port_max = 32767
@@ -121,10 +130,13 @@ resource "ibm_is_security_group_rule" "openshift_network_node_ports_tcp_inbound"
 }
 
 # Kubernetes node ports - UDP
+# Allows access to node ports from within VPC subnets to accommodate CCM LBs
 resource "ibm_is_security_group_rule" "openshift_network_node_ports_udp_inbound" {
+  count = length(local.subnet_cidr_blocks)
+
   group     = ibm_is_security_group.openshift_network.id
   direction = "inbound"
-  remote    = ibm_is_security_group.openshift_network.id
+  remote    = local.subnet_cidr_blocks[count.index]
   udp {
     port_min = 30000
     port_max = 32767

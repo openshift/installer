@@ -50,13 +50,14 @@ aliases:
   baremetal-approvers:
     - dhellmann
     - hardys
+    - kirankt
     - stbenjam
   baremetal-reviewers:
+    - ardaguclu
     - celebdor
     - dhellmann
-    - markmc
-    - russellb
     - hardys
+    - kirankt
     - stbenjam
   aws-approvers:
     - jstuever
