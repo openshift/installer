@@ -19,7 +19,7 @@ IRONIC_RAMDISK_SSH_KEY="{{.SSHKey}}"
 
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
-for name in ironic-api ironic-conductor ironic-inspector ironic-deploy-ramdisk-logs ironic-inspector-ramdisk-logs dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
+for name in ironic-api ironic-conductor ironic-inspector ironic-ramdisk-logs dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
     podman ps | grep -w "$name$" && podman kill $name
     podman ps --all | grep -w "$name$" && podman rm $name -f
 done
@@ -189,15 +189,10 @@ sudo podman run -d --net host --privileged --name ironic-api \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 
-sudo podman run -d --name ironic-deploy-ramdisk-logs \
+sudo podman run -d --name ironic-ramdisk-logs \
      --restart on-failure \
      --entrypoint /bin/runlogwatch.sh \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
-
-podman run -d --name ironic-inspector-ramdisk-logs \
-     --restart on-failure \
-     --entrypoint /bin/runlogwatch.sh \
-     -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_IMAGE}"
 
 set +x
 AUTH_DIR=/opt/metal3/auth
@@ -221,7 +216,7 @@ while true; do
       done
 
       echo "Stopping provisioning services..."
-      podman stop ironic-api ironic-conductor ironic-inspector ironic-deploy-ramdisk-logs ironic-inspector-ramdisk-logs $dnsmasq_container_name httpd mariadb
+      podman stop ironic-api ironic-conductor ironic-inspector ironic-ramdisk-logs $dnsmasq_container_name httpd mariadb
       exit 0
     fi
 
