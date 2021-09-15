@@ -525,6 +525,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		data, err = baremetaltfvars.TFVars(
+			*installConfig.Config.ControlPlane.Replicas,
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
 			installConfig.Config.Platform.BareMetal.APIVIP,
 			imageCacheIP,
