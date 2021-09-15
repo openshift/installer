@@ -60,32 +60,135 @@ func TestValidatePlatform(t *testing.T) {
 			expected: "bare metal hosts are missing",
 		},
 		{
-			name: "toofew_hosts",
+			name: "toofew_masters_norole",
 			config: installConfig().
 				BareMetalPlatform(
 					platform().Hosts(
-						host1())).
+						host1(),
+						host2().Role("worker"))).
 				ControlPlane(
 					machinePool().Replicas(3)).
 				Compute(
-					machinePool().Replicas(2),
+					machinePool().Replicas(1)).build(),
+			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured ControlPlane replicas \\(3\\)",
+		},
+		{
+			name: "toofew_masters",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().Hosts(
+						host1().Role("master"),
+						host2().Role("worker"))).
+				ControlPlane(
+					machinePool().Replicas(3)).
+				Compute(
+					machinePool().Replicas(1)).build(),
+			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured ControlPlane replicas \\(3\\)",
+		},
+		{
+			name: "toofew_workers",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().Hosts(
+						host1().Role("master"),
+						host2().Role("worker"))).
+				ControlPlane(
+					machinePool().Replicas(1)).
+				Compute(
 					machinePool().Replicas(3)).build(),
-			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured ControlPlane and Compute replicas \\(8\\)",
+			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured Compute replicas \\(3\\)",
 		},
 		{
 			name: "enough_hosts",
 			config: installConfig().
 				BareMetalPlatform(
 					platform().Hosts(
-						host1(),
-						host2())).
+						host1().Role("master"),
+						host2().Role("worker"))).
 				ControlPlane(
+					machinePool().Replicas(1)).
+				Compute(
+					machinePool().Replicas(1)).build(),
+		},
+		{
+			name: "enough_hosts_norole",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().Hosts(
+						host1(),
+						host2(),
+						host3())).
+				ControlPlane(
+					machinePool().Replicas(1)).
+				Compute(
 					machinePool().Replicas(2)).build(),
 		},
 		{
+			name: "enough_hosts_mixed",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().Hosts(
+						host1().Role("master"),
+						host2(),
+						host3(),
+						host4().Role("worker"))).
+				ControlPlane(
+					machinePool().Replicas(2)).
+				Compute(
+					machinePool().Replicas(2)).build(),
+		},
+		{
+			name: "not_enough_hosts_norole",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().Hosts(
+						host1(),
+						host2(),
+						host3())).
+				ControlPlane(
+					machinePool().Replicas(2)).
+				Compute(
+					machinePool().Replicas(2)).build(),
+			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured Compute replicas \\(2\\)",
+		},
+		{
+			name: "more_than_enough_hosts",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().Hosts(
+						host1().Role("master"),
+						host2().Role("master"),
+						host3(),
+						host4().Role("worker"),
+						host5().Role("worker"))).
+				ControlPlane(
+					machinePool().Replicas(1)).
+				Compute(
+					machinePool().Replicas(1)).build(),
+		},
+		{
+			name: "not_enough_workers_norole",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().Hosts(
+						host1(),
+						host2(),
+						host3().Role("master"),
+						host4().Role("master"),
+						host5().Role("master"))).
+				ControlPlane(
+					machinePool().Replicas(3)).
+				Compute(
+					machinePool().Replicas(2)).build(),
+			expected: "baremetal.Hosts: Required value: not enough hosts found \\(0\\) to support all the configured Compute replicas \\(2\\)",
+		},
+		{
 			name: "missing_name",
-			platform: platform().
-				Hosts(host1().Name("")).build(),
+			config: installConfig().
+				BareMetalPlatform(
+					platform().Hosts(
+						host1().Name(""))).
+				ControlPlane(machinePool().Replicas(1)).build(),
 			expected: "baremetal.hosts\\[0\\].Name: Required value: missing Name",
 		},
 		{
@@ -490,6 +593,48 @@ func host2() *hostBuilder {
 	}
 }
 
+func host3() *hostBuilder {
+	return &hostBuilder{
+		baremetal.Host{
+			Name:           "host3",
+			BootMACAddress: "CA:FE:CA:FE:00:02",
+			BMC: baremetal.BMC{
+				Username: "root",
+				Password: "password",
+				Address:  "ipmi://192.168.111.3",
+			},
+		},
+	}
+}
+
+func host4() *hostBuilder {
+	return &hostBuilder{
+		baremetal.Host{
+			Name:           "host4",
+			BootMACAddress: "CA:FE:CA:FE:00:03",
+			BMC: baremetal.BMC{
+				Username: "root",
+				Password: "password",
+				Address:  "ipmi://192.168.111.4",
+			},
+		},
+	}
+}
+
+func host5() *hostBuilder {
+	return &hostBuilder{
+		baremetal.Host{
+			Name:           "host5",
+			BootMACAddress: "CA:FE:CA:FE:00:04",
+			BMC: baremetal.BMC{
+				Username: "root",
+				Password: "password",
+				Address:  "ipmi://192.168.111.5",
+			},
+		},
+	}
+}
+
 func (hb *hostBuilder) build() *baremetal.Host {
 	return &hb.Host
 }
@@ -521,6 +666,11 @@ func (hb *hostBuilder) BMCUsername(value string) *hostBuilder {
 
 func (hb *hostBuilder) BMCPassword(value string) *hostBuilder {
 	hb.Host.BMC.Password = value
+	return hb
+}
+
+func (hb *hostBuilder) Role(value string) *hostBuilder {
+	hb.Host.Role = value
 	return hb
 }
 

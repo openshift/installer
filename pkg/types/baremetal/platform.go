@@ -36,6 +36,16 @@ type Host struct {
 	BootMode        BootMode         `json:"bootMode,omitempty"`
 }
 
+// IsMaster checks if the current host is a master
+func (h *Host) IsMaster() bool {
+	return h.Role == "master"
+}
+
+// IsWorker checks if the current host is a worker
+func (h *Host) IsWorker() bool {
+	return h.Role == "worker"
+}
+
 // ProvisioningNetwork determines how we will use the provisioning network.
 // +kubebuilder:validation:Enum="";Managed;Unmanaged;Disabled
 type ProvisioningNetwork string
