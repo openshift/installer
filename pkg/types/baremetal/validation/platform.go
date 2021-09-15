@@ -12,6 +12,7 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -270,21 +271,56 @@ func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 	return platformErrs
 }
 
+// ensure that the number of hosts is enough to cover the ControlPlane
+// and Compute replicas. Hosts without role will be considered eligible
+// for the ControlPlane or Compute requirements.
 func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallConfig) error {
 
-	hostsNum := int64(len(hosts))
-	counter := int64(0)
+	numRequiredMasters := int64(0)
+	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
+		numRequiredMasters += *installConfig.ControlPlane.Replicas
+	}
 
+	numRequiredWorkers := int64(0)
 	for _, worker := range installConfig.Compute {
 		if worker.Replicas != nil {
-			counter += *worker.Replicas
+			numRequiredWorkers += *worker.Replicas
 		}
 	}
-	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
-		counter += *installConfig.ControlPlane.Replicas
+
+	numMasters := int64(0)
+	numWorkers := int64(0)
+
+	for _, h := range hosts {
+		// The first N hosts, not explicitly tagged with the worker role,
+		// are considered eligible as master
+		if numMasters < numRequiredMasters {
+			if !h.IsWorker() {
+				numMasters++
+			} else {
+				numWorkers++
+			}
+		} else {
+			// The remaining hosts, not explicitly tagged with the master role,
+			// are considered eligible as worker
+			if !h.IsMaster() {
+				numWorkers++
+			} else {
+				numMasters++
+			}
+		}
 	}
-	if hostsNum < counter {
-		return fmt.Errorf("not enough hosts found (%v) to support all the configured ControlPlane and Compute replicas (%v)", hostsNum, counter)
+
+	if numMasters < numRequiredMasters {
+		return fmt.Errorf("not enough hosts found (%v) to support all the configured ControlPlane replicas (%v)", numMasters, numRequiredMasters)
+	}
+
+	if numMasters > numRequiredMasters {
+		logrus.Warn("Found more hosts configured as master than required")
+	}
+
+	if numWorkers < numRequiredWorkers {
+		return fmt.Errorf("not enough hosts found (%v) to support all the configured Compute replicas (%v)", numWorkers, numRequiredWorkers)
 	}
 
 	return nil
