@@ -76,6 +76,8 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	logrus.Infof("Creating infrastructure resources...")
 	switch platform {
+	// @TODO Power VS : Is there anything we might need to do before the terraform spins up? Maybe we could
+	// use this to create the service instance, network, etc,. while we wait for the TF implementation work?
 	case typesaws.Name:
 		if err := aws.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
 			return err

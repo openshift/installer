@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -47,6 +48,7 @@ var (
 		ibmcloud.Name,
 		kubevirt.Name,
 		none.Name,
+		powervs.Name,
 	}
 
 	// OKD is a setting to enable community-only modifications
@@ -200,6 +202,10 @@ type Platform struct {
 	// +optional
 	OpenStack *openstack.Platform `json:"openstack,omitempty"`
 
+	// PowerVS is the configuration used when installing on Power VS.
+	// +optional
+	PowerVS *powervs.Platform `json:"powervs,omitempty"`
+
 	// VSphere is the configuration used when installing on vSphere.
 	// +optional
 	VSphere *vsphere.Platform `json:"vsphere,omitempty"`
@@ -240,6 +246,8 @@ func (p *Platform) Name() string {
 		return vsphere.Name
 	case p.Ovirt != nil:
 		return ovirt.Name
+	case p.PowerVS != nil:
+		return powervs.Name
 	case p.Kubevirt != nil:
 		return kubevirt.Name
 	default:

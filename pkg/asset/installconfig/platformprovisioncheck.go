@@ -13,6 +13,7 @@ import (
 	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	osconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -24,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -112,6 +114,11 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		}
 	case ovirt.Name:
 		err = ovirtconfig.ValidateForProvisioning(ic.Config)
+		if err != nil {
+			return err
+		}
+	case powervs.Name:
+		err = powervsconfig.ValidateForProvisioning()
 		if err != nil {
 			return err
 		}

@@ -13,6 +13,7 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20191115210519-2b2be6cc8ed4 // indirect
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20190607011252-c5096ec8773d // indirect
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20210611051827-cdc80c935c05
+	github.com/IBM-Cloud/power-go-client v1.0.72
 	github.com/IBM-Cloud/terraform-provider-ibm v1.26.2
 	github.com/IBM/go-sdk-core/v5 v5.4.3
 	github.com/IBM/networking-go-sdk v0.14.0
@@ -69,6 +70,7 @@ require (
 	github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20210719100556-9b8bc3666720
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210817084941-2262c7c6cece
+	github.com/openshift/cluster-api-provider-powervs v0.0.2-0.20210928133618-8eb5ebcb07a1
 	github.com/openshift/library-go v0.0.0-20210408164723-7a65fdb398e2
 	github.com/openshift/machine-api-operator v0.2.1-0.20210505133115-b7ef098180db
 	github.com/openshift/machine-config-operator v0.0.0
@@ -133,6 +135,7 @@ replace (
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210706141527-5240e42f012a // Use OpenShift fork
 	github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20210706141527-5240e42f012a // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
+	github.com/openshift/api => github.com/openshift-powervs/api v0.0.0-20210729234416-b883aff9d9db
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c // Pin client-go
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 // Pin MCO so it doesn't get downgraded
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20210622193531-7d13cfbb1a8c // Pin to openshift fork with tag v2.67.0-openshift-1
@@ -165,3 +168,5 @@ replace (
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 	google.golang.org/grpc => google.golang.org/grpc v1.29.1
 )
+
+replace github.com/openshift/machine-api-operator => github.com/openshift-powervs/machine-api-operator v0.2.1-0.20210809115935-a9fd8f5d2767

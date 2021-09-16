@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -158,6 +159,16 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return rhcos.FindArtifactURL(a)
 		}
 		return "", fmt.Errorf("%s: No vmware build found", st.FormatPrefix(archName))
+	case powervs.Name:
+		// Check for image URL override
+		if config.Platform.PowerVS.ClusterOSImage != "" {
+			return config.Platform.PowerVS.ClusterOSImage, nil
+		}
+
+		if a, ok := streamArch.Artifacts["powervs"]; ok {
+			return rhcos.FindArtifactURL(a)
+		}
+		return "", fmt.Errorf("%s: No Power VS build found", st.FormatPrefix(archName))
 	case none.Name:
 		return "", nil
 	default:

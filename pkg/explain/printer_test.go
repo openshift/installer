@@ -114,6 +114,9 @@ func Test_PrintFields(t *testing.T) {
     ovirt <object>
       Ovirt is the configuration used when installing on oVirt.
 
+    powervs <object>
+      PowerVS is the configuration used when installing on Power VS.
+
     vsphere <object>
       VSphere is the configuration used when installing on vSphere.`,
 	}, {
