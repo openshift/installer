@@ -12,6 +12,7 @@ import (
 	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -22,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -61,6 +63,9 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		}
 	case ibmcloud.Name:
 		_, err = ibmcloudconfig.NewClient()
+		// meh ... is there a way to name this session ibmcloud? but have the installconfig Name as powervs?
+	case powervs.Name:
+		_, err = powervsconfig.GetSession()
 		if err != nil {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}

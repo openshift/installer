@@ -236,8 +236,10 @@ github.com/IBM-Cloud/bluemix-go/rest
 github.com/IBM-Cloud/bluemix-go/session
 github.com/IBM-Cloud/bluemix-go/trace
 github.com/IBM-Cloud/bluemix-go/utils
-# github.com/IBM-Cloud/power-go-client v1.0.55
+# github.com/IBM-Cloud/power-go-client v1.0.56
+## explicit
 github.com/IBM-Cloud/power-go-client/clients/instance
+github.com/IBM-Cloud/power-go-client/errors
 github.com/IBM-Cloud/power-go-client/helpers
 github.com/IBM-Cloud/power-go-client/ibmpisession
 github.com/IBM-Cloud/power-go-client/power/client
@@ -1394,7 +1396,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/openshift-metal3/terraform-provider-ironic v0.2.6
 ## explicit
 github.com/openshift-metal3/terraform-provider-ironic/ironic
-# github.com/openshift/api v0.0.0-20210622200201-7740bfb97397
+# github.com/openshift/api v0.0.0-20210622200201-7740bfb97397 => github.com/openshift-powervs/api v0.0.0-20210729234416-b883aff9d9db
 ## explicit
 github.com/openshift/api/config/v1
 github.com/openshift/api/operator/v1
@@ -1437,6 +1439,10 @@ github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig
 ## explicit
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
+# github.com/openshift/cluster-api-provider-powervs v0.0.2-0.20210621075832-a5ccc9c865e7
+## explicit
+github.com/openshift/cluster-api-provider-powervs/pkg/apis
+github.com/openshift/cluster-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1
 # github.com/openshift/custom-resource-status v0.0.0-20190822192428-e62f2f3b79f3
 github.com/openshift/custom-resource-status/conditions/v1
 # github.com/openshift/library-go v0.0.0-20210408164723-7a65fdb398e2
@@ -2938,6 +2944,7 @@ sigs.k8s.io/yaml
 # github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210706141527-5240e42f012a
 # github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20210706141527-5240e42f012a
 # github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
+# github.com/openshift/api => github.com/openshift-powervs/api v0.0.0-20210729234416-b883aff9d9db
 # github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c
 # github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 # github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20210622193531-7d13cfbb1a8c

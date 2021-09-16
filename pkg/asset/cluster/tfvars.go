@@ -15,6 +15,7 @@ import (
 	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+	powervsprovider "github.com/openshift/cluster-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -32,6 +33,7 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
@@ -46,6 +48,7 @@ import (
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
+	powervstfvars "github.com/openshift/installer/pkg/tfvars/powervs"
 	vspheretfvars "github.com/openshift/installer/pkg/tfvars/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -58,6 +61,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -633,6 +637,51 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
 			Data:     data,
 		})
+	case powervs.Name:
+		// @TODO: Can we just use the install config for all these values?
+		session, err := powervsconfig.GetSession()
+		if err != nil {
+			return err
+		}
+
+		masters, err := mastersAsset.Machines()
+		if err != nil {
+			return err
+		}
+
+		// Get CISInstanceCRN from InstallConfig metadata
+		crn, err := installConfig.PowerVS.CISInstanceCRN(ctx)
+		if err != nil {
+			return err
+		}
+
+		masterConfigs := make([]*powervsprovider.PowerVSMachineProviderConfig, len(masters))
+		for i, m := range masters {
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*powervsprovider.PowerVSMachineProviderConfig)
+		}
+
+		data, err = powervstfvars.TFVars(
+			powervstfvars.TFVarsSources{
+				MasterConfigs:        masterConfigs,
+				PowerVSZone:          session.Session.Zone,
+				APIKey:               session.Session.IAMToken,
+				SSHKey:               installConfig.Config.SSHKey,
+				PowerVSResourceGroup: installConfig.Config.PowerVS.PowerVSResourceGroup,
+				NetworkName:          installConfig.Config.PowerVS.PVSNetworkName,
+				ImageName:            installConfig.Config.PowerVS.ImageName,
+				CISInstanceCRN:       crn,
+				VPCSubnetName:        installConfig.Config.PowerVS.Subnets[0],
+				VPCName:              installConfig.Config.PowerVS.VPC,
+			},
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Data:     data,
+		})
+
 	case vsphere.Name:
 		controlPlanes, err := mastersAsset.Machines()
 		if err != nil {
