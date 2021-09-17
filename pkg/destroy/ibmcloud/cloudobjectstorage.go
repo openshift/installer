@@ -56,6 +56,7 @@ func (o *ClusterUninstaller) deleteCOSInstance(item cloudResource) error {
 	defer cancel()
 
 	options := o.controllerSvc.NewDeleteResourceInstanceOptions(item.id)
+	options.SetRecursive(true)
 	details, err := o.controllerSvc.DeleteResourceInstanceWithContext(ctx, options)
 
 	if err != nil && details != nil && details.StatusCode == http.StatusNotFound {

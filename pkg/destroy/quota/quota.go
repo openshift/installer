@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 // WriteQuota writes the cluster quota footprint into the asset directory.
 func WriteQuota(dir string, quota *types.ClusterQuota) error {
 	path := filepath.Join(dir, quotaFileName)
+	logrus.Infof("Writing quota footprint to %s", path)
 
 	raw, err := json.Marshal(quota)
 	if err != nil {
