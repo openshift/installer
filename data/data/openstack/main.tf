@@ -30,7 +30,6 @@ module "bootstrap" {
   source = "./bootstrap"
 
   cluster_id         = var.cluster_id
-  extra_tags         = var.openstack_extra_tags
   base_image_id      = data.openstack_images_image_v2.base_image.id
   flavor_name        = var.openstack_master_flavor_name
   ignition           = var.ignition_bootstrap

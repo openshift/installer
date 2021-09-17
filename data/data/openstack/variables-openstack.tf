@@ -252,18 +252,6 @@ EOF
 
 }
 
-variable "openstack_extra_tags" {
-  type = map(string)
-  default = {}
-
-  description = <<EOF
-(optional) Extra tags to be applied to created resources.
-
-Example: `{ "key" = "value", "foo" = "bar" }`
-EOF
-
-}
-
 variable "openstack_master_extra_sg_ids" {
   type    = list(string)
   default = []
