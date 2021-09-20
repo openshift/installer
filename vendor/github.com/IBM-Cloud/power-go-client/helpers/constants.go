@@ -54,6 +54,10 @@ const (
 	PIVolumePool              = "pi_volume_pool"
 	PIAffinityPolicy          = "pi_volume_affinity_policy"
 	PIAffinityVolume          = "pi_volume_affinity"
+	PIAffinityInstance        = "pi_volume_affinity_instance"
+	PIAffinityDiskCount       = "pi_volume_disk_count"
+	PIStoragePoolValue        = "pi_storage_pool_type"
+	PIStoragePoolName         = "pi_storage_pool_name"
 
 	// IBM PI Snapshots
 
@@ -62,6 +66,15 @@ const (
 	PISnapshotStatus   = "pi_snap_shot_status"
 	PISnapshotAction   = "pi_snap_shot_action"
 	PISnapshotComplete = "pi_snap_shot_complete"
+
+	// IBM PI SAP Profile
+
+	PISAPProfileID        = "pi_sap_profile_id"
+	PISAPProfile          = "pi_sap_profile"
+	PISAPProfileMemory    = "pi_sap_profile_memory"
+	PISAPProfileCertified = "pi_sap_profile_certified"
+	PISAPProfileType      = "pi_sap_profile_type"
+	PISAPProfileCores     = "pi_sap_profile_cores"
 
 	// IBM PI Image
 

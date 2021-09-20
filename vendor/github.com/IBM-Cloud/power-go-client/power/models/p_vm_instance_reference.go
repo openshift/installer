@@ -107,6 +107,9 @@ type PVMInstanceReference struct {
 	// Required: true
 	Status *string `json:"status"`
 
+	// Storage Pool where server is deployed
+	StoragePool string `json:"storagePool,omitempty"`
+
 	// System type used to host the instance
 	SysType string `json:"sysType,omitempty"`
 

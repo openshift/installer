@@ -2,6 +2,7 @@ package instance
 
 import (
 	"fmt"
+	"github.com/IBM-Cloud/power-go-client/errors"
 	"time"
 
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
@@ -29,7 +30,7 @@ func (f *IBMPINetworkClient) Get(id, powerinstanceid string, timeout time.Durati
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksGet(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 
 	if err != nil || resp == nil || resp.Payload == nil {
-		return nil, fmt.Errorf("Failed to Get PI Network %s :%s", id, err)
+		return nil, fmt.Errorf(errors.GetNetworkOperationFailed, id, err)
 	}
 	return resp.Payload, nil
 }
@@ -61,7 +62,7 @@ func (f *IBMPINetworkClient) Create(name string, networktype string, cidr string
 	_, resp, err := f.session.Power.PCloudNetworks.PcloudNetworksPost(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 
 	if err != nil || resp == nil || resp.Payload == nil {
-		return nil, nil, fmt.Errorf("Failed to Create PI Network %s :%s", name, err)
+		return nil, nil, fmt.Errorf(errors.CreateNetworkOperationFailed, name, err)
 	}
 
 	return resp.Payload, nil, nil
@@ -121,7 +122,7 @@ func (f *IBMPINetworkClient) CreatePort(id string, powerinstanceid string, netwo
 	params := p_cloud_networks.NewPcloudNetworksPortsPostParamsWithTimeout(timeout).WithCloudInstanceID(powerinstanceid).WithNetworkID(id).WithBody(networkportdef.Body)
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksPortsPost(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 	if err != nil || resp == nil || resp.Payload == nil {
-		return nil, fmt.Errorf("Failed to create the network port for network %s cloudinstance id [%s]", id, powerinstanceid)
+		return nil, fmt.Errorf(errors.CreateNetworkPortOperationFailed, id, err)
 	}
 	return resp.Payload, nil
 }
@@ -151,7 +152,7 @@ func (f *IBMPINetworkClient) AttachPort(powerinstanceid, networkID, portID, desc
 	params := p_cloud_networks.NewPcloudNetworksPortsPutParamsWithTimeout(timeout).WithCloudInstanceID(powerinstanceid).WithNetworkID(networkID).WithPortID(portID).WithBody(&body)
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksPortsPut(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 	if err != nil || resp == nil || resp.Payload == nil {
-		return nil, fmt.Errorf("Failed to attach the port [%s] to network %s the pvminstance [%s]", portID, networkID, pvminstanceid)
+		return nil, fmt.Errorf(errors.AttachNetworkPortOperationFailed, portID, networkID, err)
 	}
 	return resp.Payload, nil
 }

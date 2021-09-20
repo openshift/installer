@@ -344,6 +344,35 @@ func (a *Client) PcloudPvminstancesVolumesSetbootPut(params *PcloudPvminstancesV
 }
 
 /*
+PcloudV2PvminstancesVolumesPost attaches all volumes to a p VM instance
+*/
+func (a *Client) PcloudV2PvminstancesVolumesPost(params *PcloudV2PvminstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2PvminstancesVolumesPostAccepted, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPcloudV2PvminstancesVolumesPostParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "pcloud.v2.pvminstances.volumes.post",
+		Method:             "POST",
+		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PcloudV2PvminstancesVolumesPostReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*PcloudV2PvminstancesVolumesPostAccepted), nil
+
+}
+
+/*
 PcloudV2VolumesClonePost creates a volume clone for specified volumes
 */
 func (a *Client) PcloudV2VolumesClonePost(params *PcloudV2VolumesClonePostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumesClonePostAccepted, error) {

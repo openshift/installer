@@ -20,7 +20,7 @@ type CloudConnectionEndpointClassic struct {
 	Enabled bool `json:"enabled"`
 
 	// gre
-	Gre *CloudConnectionEndpointGRE `json:"gre,omitempty"`
+	Gre *CloudConnectionGRETunnel `json:"gre,omitempty"`
 }
 
 // Validate validates this cloud connection endpoint classic
