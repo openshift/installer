@@ -354,9 +354,10 @@ func TestValidateProvisioning(t *testing.T) {
 			expected: "Invalid value: \"192.168.128.1\": \"192.168.128.1\" is not in the provisioning network",
 		},
 		{
-			name:     "invalid_provisioning_network_overlapping_CIDR",
-			platform: platform().ProvisioningNetworkCIDR("192.168.111.192/23").build(),
-			expected: "Invalid value: \"192.168.111.192/23\": cannot overlap with machine network: 192.168.111.0/24 overlaps with 192.168.111.192/23",
+			name: "invalid_provisioning_network_overlapping_CIDR",
+			platform: platform().
+				ProvisioningNetworkCIDR("192.168.110.0/23").build(),
+			expected: "Invalid value: \"192.168.110.0/23\": cannot overlap with machine network: 192.168.111.0/24 overlaps with 192.168.110.0/23",
 		},
 		{
 			name: "valid_provisioningDHCPRange",
@@ -398,6 +399,48 @@ func TestValidateProvisioning(t *testing.T) {
 			platform: platform().
 				LibvirtURI("bad").build(),
 			expected: "invalid URI \"bad\"",
+		},
+		{
+			name:     "valid_provisioning_network_ipv4",
+			platform: platform().ProvisioningNetworkCIDR("172.22.0.0/24").build(),
+			expected: "",
+		},
+		{
+			name:     "invalid_provisioning_network_need_network_address",
+			platform: platform().ProvisioningNetworkCIDR("172.22.0.2/24").build(),
+			expected: "provisioningNetworkCIDR has host bits set, expected 172.22.0.0/24",
+		},
+		{
+			name: "valid_provisioning_network_ipv6",
+			platform: platform().
+				ProvisioningNetworkCIDR("fd00:0111:0::/64").
+				ClusterProvisioningIP("fd00:0111::3").
+				BootstrapProvisioningIP("fd00:0111::2").build(),
+			expected: "",
+		},
+		{
+			name: "valid_provisioning_network_ipv6_long",
+			platform: platform().
+				ProvisioningNetworkCIDR("fd00:0111:0000:0000:0000:0000:0000:0000/64").
+				ClusterProvisioningIP("fd00:0111:0000:0000:0000:0000:0000:0003").
+				BootstrapProvisioningIP("fd00:0111:0000:0000:0000:0000:0000:0002").build(),
+			expected: "",
+		},
+		{
+			name: "valid_provisioning_network_ipv6_mixed",
+			platform: platform().
+				ProvisioningNetworkCIDR("fd00:0111::/64").
+				ClusterProvisioningIP("fd00:0111:0000:0000:0000:0000:0000:0003").
+				BootstrapProvisioningIP("fd00:0111:0000:0000:0000:0000:0000:0002").build(),
+			expected: "",
+		},
+		{
+			name: "invalid_provisioning_network_need_network_address_ipv6",
+			platform: platform().
+				ProvisioningNetworkCIDR("fd00:0111:0::1/64").
+				ClusterProvisioningIP("fd00:0111::3").
+				BootstrapProvisioningIP("fd00:0111::2").build(),
+			expected: "provisioningNetworkCIDR has host bits set, expected fd00:111::/64",
 		},
 		{
 			name: "ipv6_CIDR_too_large",
