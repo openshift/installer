@@ -18,6 +18,9 @@ ExecStart=/usr/bin/hyperkube \
     --container-runtime=remote \
     --container-runtime-endpoint=/var/run/crio/crio.sock \
     --runtime-request-timeout=${KUBELET_RUNTIME_REQUEST_TIMEOUT} \
+{{- if .UseIPv6ForNodeIP }}
+    --node-ip=:: \
+{{- end}}
     --pod-manifest-path=/etc/kubernetes/manifests \
     --minimum-container-ttl-duration=6m0s \
     --cluster-domain=cluster.local \
