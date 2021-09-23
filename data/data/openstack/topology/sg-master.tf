@@ -62,7 +62,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
   description       = local.description
 }
 
-resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_api" {
   direction      = "ingress"
   ethertype      = "IPv4"
   protocol       = "tcp"
@@ -239,3 +239,35 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
   description       = local.description
 }
 
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_http" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 80
+  port_range_max    = 80
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 443
+  port_range_max    = 443
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_router" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 1936
+  port_range_max    = 1936
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
+}
