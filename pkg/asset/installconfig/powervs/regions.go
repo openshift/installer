@@ -16,7 +16,7 @@ func knownRegions() map[string]string {
 	regions := make(map[string]string)
 
 	for _, region := range rhcos.PowerVSRegions {
-		regions[region["name"]] = region["description"]
+		regions[region.Name] = region.Description
 	}
 	return regions
 }
@@ -32,7 +32,7 @@ func IsKnownRegion(region string) bool {
 
 // Todo(cklokman): Need some form of error handing in this function...
 func knownZones(region string) []string {
-	return rhcos.PowerVSZones[region]
+	return rhcos.PowerVSZones[region].Zones
 }
 
 // IsKnownZone return true is a specified zone is Known to the installer.

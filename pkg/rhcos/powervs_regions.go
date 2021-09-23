@@ -2,69 +2,74 @@ package rhcos
 
 // TODO(cklokman): This entire file should be programatically generated similar to aws
 
-// PowerVSZones holds the zones cooresponding to each region found in PowerVS Regions
-// TODO(cklokman): These are fictional zones for testing
-var PowerVSZones = map[string][]string{
-	"eu-de": []string{
-		"eu-de-1",
-		"eu-de-2",
-	},
-	"dal": []string{"dal12"},
-	"lon": []string{
-		"lon04",
-		"lon06",
-	},
-	"mon":     []string{"mon01"},
-	"osa":     []string{"osa21"},
-	"syd":     []string{"syd04"},
-	"sao":     []string{"sao01"},
-	"tor":     []string{"tor01"},
-	"tok":     []string{"tok04"},
-	"us-east": []string{"us-east"},
+// PowerVSRegion describes resources associated with a region in powervs.
+type PowerVSRegion struct {
+	Name        string
+	Description string
+	VPCRegion   string
+	Zones       []string
 }
 
 // PowerVSRegions holds the regions for IBM Power VS, and descriptions used during the survey
-// TODO(cklokman): These are fictional regtions for testing
-var PowerVSRegions = []map[string]string{
-	map[string]string{
-		"name":        "dal",
-		"description": "Dallas, USA",
+var PowerVSRegions = map[string]PowerVSRegion{
+	"dal": PowerVSRegion{
+		Name:        "dal",
+		Description: "Dallas, USA",
+		VPCRegion:   "us-south",
+		Zones:       []string{"dal12"},
 	},
-	map[string]string{
-		"name":        "eu-de",
-		"description": "Frankfurt, Germany",
+	"eu-de": PowerVSRegion{
+		Name:        "eu-de",
+		Description: "Frankfurt, Germany",
+		VPCRegion:   "eu-de",
+		Zones: []string{
+			"eu-de-1",
+			"eu-de-2",
+		},
 	},
-	map[string]string{
-		"name":        "lon",
-		"description": "London, UK.",
+	"lon": PowerVSRegion{
+		Name:        "lon",
+		Description: "London, UK.",
+		VPCRegion:   "eu-gb",
+		Zones: []string{
+			"lon04",
+			"lon06",
+		},
 	},
-	map[string]string{
-		"name":        "mon",
-		"description": "Montreal, Canada",
+	"osa": PowerVSRegion{
+		Name:        "osa",
+		Description: "Osaka, Japan",
+		VPCRegion:   "jp-osa",
+		Zones:       []string{"osa21"},
 	},
-
-	map[string]string{
-		"name":        "osa",
-		"description": "Osaka, Japan",
+	"syd": PowerVSRegion{
+		Name:        "syd",
+		Description: "Sydney, Australia",
+		VPCRegion:   "au-syd",
+		Zones:       []string{"syd04"},
 	},
-	map[string]string{
-		"name":        "syd",
-		"description": "Sydney, Australia",
+	"sao": PowerVSRegion{
+		Name:        "sao",
+		Description: "São Paulo, Brazil",
+		VPCRegion:   "br-sao",
+		Zones:       []string{"sao01"},
 	},
-	map[string]string{
-		"name":        "sao",
-		"description": "São Paulo, Brazil",
+	"tor": PowerVSRegion{
+		Name:        "tor",
+		Description: "Toronto, Canada",
+		VPCRegion:   "ca-tor",
+		Zones:       []string{"tor01"},
 	},
-	map[string]string{
-		"name":        "tor",
-		"description": "Toronto, Canada",
+	"tok": PowerVSRegion{
+		Name:        "tok",
+		Description: "Tokyo, Japan",
+		VPCRegion:   "jp-tok",
+		Zones:       []string{"tok04"},
 	},
-	map[string]string{
-		"name":        "tok",
-		"description": "Tokyo, Japan",
-	},
-	map[string]string{
-		"name":        "us-east",
-		"description": "Washington DC, USA",
+	"us-east": PowerVSRegion{
+		Name:        "us-east",
+		Description: "Washington DC, USA",
+		VPCRegion:   "us-east",
+		Zones:       []string{"us-east"},
 	},
 }

@@ -3,26 +3,13 @@ package powervs
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/openshift/cluster-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
+	"github.com/openshift/installer/pkg/rhcos"
 )
-
-// powervsRegionToVPCRegion based on:
-// https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server&locale=en#creating-service
-// https://github.com/ocp-power-automation/ocp4-upi-powervs/blob/master/docs/var.tfvars-doc.md
-var powervsRegionToIBMRegion = map[string]string{
-	"dal":     "us-south",
-	"us-east": "us-east",
-	"sao":     "br-sao",
-	"tor":     "ca-tor",
-	"mon":     "ca-mon",
-	"eu-de-1": "eu-de",
-	"eu-de-2": "eu-de",
-	"lon":     "eu-gb",
-	"syd":     "au-syd",
-	"tok":     "jp-tok",
-	"osa":     "jp-osa",
-}
 
 type config struct {
 	ServiceInstanceID    string `json:"powervs_cloud_instance_id"`
@@ -31,6 +18,7 @@ type config struct {
 	PowerVSRegion        string `json:"powervs_region"`
 	PowerVSZone          string `json:"powervs_zone"`
 	VPCRegion            string `json:"powervs_vpc_region"`
+	VPCZone              string `json:"powervs_vpx_zone"`
 	PowerVSResourceGroup string `json:"powervs_resource_group"`
 	CISInstanceCRN       string `json:"powervs_cis_crn"`
 	ImageName            string `json:"powervs_image_name"`
@@ -52,10 +40,12 @@ type TFVarsSources struct {
 	MasterConfigs        []*v1alpha1.PowerVSMachineProviderConfig
 	APIKey               string
 	SSHKey               string
-	PowerVSZone          string
+	Region               string
+	Zone                 string
 	NetworkName          string
 	ImageName            string
 	PowerVSResourceGroup string
+	VPCZone              string
 	CISInstanceCRN       string
 	VPCName              string
 	VPCSubnetName        string
@@ -64,6 +54,15 @@ type TFVarsSources struct {
 // TFVars generates Power VS-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterConfig := sources.MasterConfigs[0]
+	// TODO(mjturek): Allow user to specify vpcRegion in install config like we're doing for vpcZone
+	vpcRegion := rhcos.PowerVSRegions[sources.Region].VPCRegion
+
+	vpcZone := sources.VPCZone
+	if vpcZone == "" {
+		// Randomly select a zone in the VPC region.
+		rand.Seed(time.Now().UnixNano())
+		vpcZone = fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(3)+1)
+	}
 
 	//@TODO: Add resource group to platform
 	cfg := &config{
@@ -73,6 +72,10 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PowerVSRegion:        masterConfig.Region,
 		PowerVSZone:          sources.PowerVSZone,
 		VPCRegion:            powervsRegionToIBMRegion[masterConfig.Region],
+		PowerVSRegion:        sources.Region,
+		PowerVSZone:          sources.Zone,
+		VPCRegion:            vpcRegion,
+		VPCZone:              vpcZone,
 		PowerVSResourceGroup: sources.PowerVSResourceGroup,
 		CISInstanceCRN:       sources.CISInstanceCRN,
 		ImageName:            sources.ImageName,

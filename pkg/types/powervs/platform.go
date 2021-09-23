@@ -20,6 +20,12 @@ type Platform struct {
 	// Required for multi-zone regions.
 	Zone string `json:"zone"`
 
+	// Zone in the region used to create VPC resources. Leave unset
+	// to allow installer to randomly select a zone.
+	//
+	// +optional
+	VPCZone string `json:"vpcRegion,omitempty"`
+
 	// UserID is the login for the user's IBM Cloud account.
 	UserID string `json:"userID"`
 

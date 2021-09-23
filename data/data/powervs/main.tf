@@ -2,12 +2,14 @@ provider "ibm" {
   alias            = "vpc"
   ibmcloud_api_key = var.powervs_api_key
   region           = var.powervs_vpc_region
+  zone             = var.powervs_vpc_zone
 }
 
 provider "ibm" {
   alias            = "powervs"
   ibmcloud_api_key = var.powervs_api_key
   region           = var.powervs_region
+  zone             = var.powervs_zone
 }
 
 resource "ibm_pi_key" "cluster_key" {

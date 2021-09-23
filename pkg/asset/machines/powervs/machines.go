@@ -85,7 +85,6 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 			APIVersion: powervsprovider.GroupVersion.String(),
 		},
 		ObjectMeta:        metav1.ObjectMeta{},
-		Region:            platform.Region,
 		ServiceInstanceID: platform.ServiceInstanceID,
 		ImageID:           mpool.ImageID,
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
