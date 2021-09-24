@@ -1038,6 +1038,7 @@ func validateAwsEcsPlacementStrategy(stratType, stratField string) error {
 func validateAwsEmrEbsVolumeType() schema.SchemaValidateFunc {
 	return validation.StringInSlice([]string{
 		"gp2",
+		"gp3",
 		"io1",
 		"standard",
 		"st1",

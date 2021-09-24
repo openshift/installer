@@ -8,7 +8,7 @@ locals {
   description = "Created By OpenShift Installer"
 
   public_endpoints = var.aws_publish_strategy == "External" ? true : false
-  volume_type      = "gp2"
+  volume_type      = "gp3"
   volume_size      = 30
   volume_iops      = local.volume_type == "io1" ? 100 : 0
 }
