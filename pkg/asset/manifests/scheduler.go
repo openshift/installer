@@ -14,7 +14,8 @@ import (
 )
 
 var (
-	schedulerCfgFilename = filepath.Join(manifestDir, "cluster-scheduler-02-config.yml")
+	// SchedulerCfgFilename is the path of the Scheduler Config file
+	SchedulerCfgFilename = filepath.Join(manifestDir, "cluster-scheduler-02-config.yml")
 )
 
 // Scheduler generates the cluster-scheduler-*.yml files.
@@ -80,7 +81,7 @@ func (s *Scheduler) Generate(dependencies asset.Parents) error {
 
 	s.FileList = []*asset.File{
 		{
-			Filename: schedulerCfgFilename,
+			Filename: SchedulerCfgFilename,
 			Data:     configData,
 		},
 	}
