@@ -39,6 +39,10 @@ variable "masters_count" {
   type = string
 }
 
+variable "masters_schedulable" {
+  type = bool
+}
+
 variable "api_int_ip" {
   type = string
 }
