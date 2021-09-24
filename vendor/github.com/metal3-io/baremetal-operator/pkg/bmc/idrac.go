@@ -1,11 +1,8 @@
 package bmc
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
-
-	metal3v1alpha1 "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 )
 
 func init() {
@@ -90,9 +87,7 @@ func (a *iDracAccessDetails) PowerInterface() string {
 }
 
 func (a *iDracAccessDetails) RAIDInterface() string {
-	// Disabled RAID in OpenShift because we are not ready to support it
-	//return "idrac-wsman"
-	return "no-raid"
+	return "idrac-wsman"
 }
 
 func (a *iDracAccessDetails) VendorInterface() string {
@@ -103,11 +98,4 @@ func (a *iDracAccessDetails) VendorInterface() string {
 // by default.
 func (a *iDracAccessDetails) SupportsSecureBoot() bool {
 	return false
-}
-
-func (a *iDracAccessDetails) BuildBIOSSettings(firmwareConfig *metal3v1alpha1.FirmwareConfig) (settings []map[string]string, err error) {
-	if firmwareConfig != nil {
-		return nil, fmt.Errorf("firmware settings for %s are not supported", a.Driver())
-	}
-	return nil, nil
 }
