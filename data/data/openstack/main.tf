@@ -83,6 +83,7 @@ module "topology" {
   external_network    = var.openstack_external_network
   external_network_id = var.openstack_external_network_id
   masters_count       = var.master_count
+  masters_schedulable = var.masters_schedulable
   api_floating_ip     = var.openstack_api_floating_ip
   ingress_floating_ip = var.openstack_ingress_floating_ip
   api_int_ip          = var.openstack_api_int_ip

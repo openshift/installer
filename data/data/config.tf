@@ -32,6 +32,17 @@ EOF
 
 }
 
+variable "masters_schedulable" {
+  type = bool
+
+  default = false
+
+  description = <<EOF
+Whether master nodes are schedulables.
+EOF
+
+}
+
 variable "base_domain" {
   type = string
 
