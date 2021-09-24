@@ -85,6 +85,9 @@ type OvirtMachineProviderSpec struct {
 	// Hugepages is the size of a VM's hugepages to use in KiBs.
 	// Only 2048 and 1048576 supported.
 	Hugepages int32 `json:"hugepages,omitempty"`
+
+	// GuaranteedMemoryMB is the size of a VM's guaranteed memory in MiBs.
+	GuaranteedMemoryMB int32 `json:"guaranteed_memory_mb,omitempty"`
 }
 
 // CPU defines the VM cpu, made of (Sockets * Cores * Threads)
@@ -154,40 +157,6 @@ type OvirtMachineProviderStatus struct {
 	// InstanceState is the provisioning state of the oVirt Instance.
 	// +optional
 	InstanceState *string `json:"instanceState,omitempty"`
-
-	// Conditions is a set of conditions associated with the Machine to indicate
-	// errors or other status
-	Conditions []OvirtMachineProviderCondition `json:"conditions,omitempty"`
-}
-
-// OvirtMachineProviderConditionType is a valid value for OvirtMachineProviderCondition.Type
-type OvirtMachineProviderConditionType string
-
-// Valid conditions for an oVirt machine instance
-const (
-	// MachineCreated indicates whether the machine has been created or not. If not,
-	// it should include a reason and message for the failure.
-	MachineCreated OvirtMachineProviderConditionType = "MachineCreated"
-)
-
-// OvirtMachineProviderCondition is a condition in a OvirtMachineProviderStatus
-type OvirtMachineProviderCondition struct {
-	// Type is the type of the condition.
-	Type OvirtMachineProviderConditionType `json:"type"`
-	// Status is the status of the condition.
-	Status corev1.ConditionStatus `json:"status"`
-	// LastProbeTime is the last time we probed the condition.
-	// +optional
-	LastProbeTime metav1.Time `json:"lastProbeTime,omitempty"`
-	// LastTransitionTime is the last time the condition transitioned from one status to another.
-	// +optional
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
-	// Reason is a unique, one-word, CamelCase reason for the condition's last transition.
-	// +optional
-	Reason string `json:"reason,omitempty"`
-	// Message is a human-readable message indicating details about last transition.
-	// +optional
-	Message string `json:"message,omitempty"`
 }
 
 func init() {
