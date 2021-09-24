@@ -67,6 +67,10 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		return errors.New("cluster cannot be created with platform set to 'none'")
 	}
 
+	if installConfig.Config.BootstrapInPlace != nil {
+		return errors.New("cluster cannot be created with bootstrapInPlace set")
+	}
+
 	platform := installConfig.Config.Platform.Name()
 	stages := platformstages.StagesForPlatform(platform)
 
