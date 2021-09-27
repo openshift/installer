@@ -235,7 +235,7 @@ This step allows installer and users to resolve cluster-internal hostnames from 
 
 If your system is using `systemd-resolved` (the default since Fedora 33), then you can setup DNS without using `dnsmasq`.
 
-Just point `resovectl` to use `192.168.126.1` for your `baseDomain`. Replace `baseDomain` in the example accordingly.
+Just point `resolvectl` to use `192.168.126.1` for your `baseDomain`. Replace `baseDomain` in the example accordingly.
 
 ```sh
 sudo resolvectl dns tt0 192.168.126.1
