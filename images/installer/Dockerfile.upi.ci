@@ -22,6 +22,7 @@ RUN sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.micros
 
 RUN sh -c 'echo -e "[google-cloud-sdk]\nname=Google Cloud SDK\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=0\ngpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-sdk.repo'
 
+RUN yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
       azure-cli \

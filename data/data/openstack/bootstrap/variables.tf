@@ -3,35 +3,23 @@ variable "base_image_id" {
   description = "The identifier of the Glance image for the bootstrap node."
 }
 
-variable "extra_tags" {
-  type    = map(string)
-  default = {}
-
-  description = <<EOF
-(optional) Extra tags to be applied to created resources.
-
-Example: `{ "key" = "value", "foo" = "bar" }`
-EOF
-
-}
-
 variable "cluster_id" {
-  type = string
+  type        = string
   description = "The identifier for the cluster."
 }
 
 variable "ignition" {
-  type = string
+  type        = string
   description = "The content of the bootstrap ignition file."
 }
 
 variable "bootstrap_shim_ignition" {
-  type = string
+  type        = string
   description = "The content of the ignition file with user ca bundle."
 }
 
 variable "flavor_name" {
-  type = string
+  type        = string
   description = "The Nova flavor for the bootstrap node."
 }
 
@@ -40,7 +28,7 @@ variable "api_int_ip" {
 }
 
 variable "external_network" {
-  type = string
+  type    = string
   default = ""
 }
 
@@ -65,26 +53,26 @@ variable "master_port_ids" {
 }
 
 variable "root_volume_size" {
-  type = number
+  type        = number
   description = "The size of the volume in gigabytes for the root block device."
 }
 
 variable "root_volume_type" {
-  type = string
+  type        = string
   description = "The type of volume for the root block device."
 }
 
 variable "zone" {
-  type = string
+  type        = string
   description = "Availability Zone to schedule the bootstrap node onto."
 }
 
 variable "root_volume_zone" {
-  type = string
+  type        = string
   description = "Availability Zone to schedule the bootstrap root volume onto."
 }
 
 variable "additional_network_ids" {
-  type = list(string)
+  type        = list(string)
   description = "IDs of additional networks for the bootstrap node."
 }

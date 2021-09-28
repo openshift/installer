@@ -33,7 +33,7 @@ require (
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-playground/validator/v10 v10.2.0
-	github.com/golang/mock v1.4.4
+	github.com/golang/mock v1.5.0
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-cmp v0.5.2
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
@@ -68,7 +68,7 @@ require (
 	github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d
 	github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20210719100556-9b8bc3666720
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
-	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210622084102-c4f9f269bcb7
+	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210817084941-2262c7c6cece
 	github.com/openshift/library-go v0.0.0-20210408164723-7a65fdb398e2
 	github.com/openshift/machine-api-operator v0.2.1-0.20210505133115-b7ef098180db
 	github.com/openshift/machine-config-operator v0.0.0
@@ -100,9 +100,8 @@ require (
 	github.com/zclconf/go-cty v1.6.1
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
-	golang.org/x/mod v0.4.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-	golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
+	golang.org/x/sys v0.0.0-20210603125802-9665404d3644
 	google.golang.org/api v0.33.0
 	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a
 	google.golang.org/grpc v1.32.0
