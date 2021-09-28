@@ -83,7 +83,7 @@
         ],
         "loadBalancingRules" : [
           {
-            "name" : "api-internal",
+            "name" : "api-public",
             "properties" : {
               "frontendIPConfiguration" : {
                 "id" :"[concat(variables('masterLoadBalancerID'), '/frontendIPConfigurations/public-lb-ip')]"
@@ -97,7 +97,69 @@
               "frontendPort" : 6443,
               "backendPort" : 6443,
               "probe" : {
-                "id" : "[concat(variables('masterLoadBalancerID'), '/probes/api-internal-probe')]"
+                "id" : "[concat(variables('masterLoadBalancerID'), '/probes/api-public-probe')]"
+              }
+            }
+          }
+        ],
+        "probes" : [
+          {
+            "name" : "api-public-probe",
+            "properties" : {
+              "protocol" : "Tcp",
+              "port" : 6443,
+              "intervalInSeconds" : 10,
+              "numberOfProbes" : 3
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion" : "2017-10-01",
+      "type" : "Microsoft.Network/loadBalancers",
+      "name" : "[variables('internalLoadBalancerName')]",
+      "location" : "[variables('location')]",
+      "sku": {
+        "name": "[variables('skuName')]"
+      },
+      "properties" : {
+        "frontendIPConfigurations" : [
+          {
+            "name" : "internal-lb-ip",
+            "properties" : {
+              "privateIPAllocationMethod" : "Dynamic",
+              "subnet" : {
+                "id" : "[variables('masterSubnetRef')]"
+              },
+              "privateIPAddressVersion" : "IPv4"
+            }
+          }
+        ],
+        "backendAddressPools" : [
+          {
+            "name" : "internal-lb-backend"
+          }
+        ],
+        "loadBalancingRules" : [
+          {
+            "name" : "api-internal",
+            "properties" : {
+              "frontendIPConfiguration" : {
+                "id" : "[concat(variables('internalLoadBalancerID'), '/frontendIPConfigurations/internal-lb-ip')]"
+              },
+              "frontendPort" : 6443,
+              "backendPort" : 6443,
+              "enableFloatingIP" : false,
+              "idleTimeoutInMinutes" : 30,
+              "protocol" : "Tcp",
+              "enableTcpReset" : false,
+              "loadDistribution" : "Default",
+              "backendAddressPool" : {
+                "id" : "[concat(variables('internalLoadBalancerID'), '/backendAddressPools/internal-lb-backend')]"
+              },
+              "probe" : {
+                "id" : "[concat(variables('internalLoadBalancerID'), '/probes/api-internal-probe')]"
               }
             }
           },
@@ -105,7 +167,7 @@
             "name" : "sint",
             "properties" : {
               "frontendIPConfiguration" : {
-                "id" : "[concat(variables('masterLoadBalancerID'), '/frontendIPConfigurations/public-lb-ip')]"
+                "id" : "[concat(variables('internalLoadBalancerID'), '/frontendIPConfigurations/internal-lb-ip')]"
               },
               "frontendPort" : 22623,
               "backendPort" : 22623,
@@ -115,10 +177,10 @@
               "enableTcpReset" : false,
               "loadDistribution" : "Default",
               "backendAddressPool" : {
-                "id" : "[concat(variables('masterLoadBalancerID'), '/backendAddressPools/', variables('masterLoadBalancerName'))]"
+                "id" : "[concat(variables('internalLoadBalancerID'), '/backendAddressPools/internal-lb-backend')]"
               },
               "probe" : {
-                "id" : "[concat(variables('masterLoadBalancerID'), '/probes/sint-probe')]"
+                "id" : "[concat(variables('internalLoadBalancerID'), '/probes/sint-probe')]"
               }
             }
           }
