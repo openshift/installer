@@ -11,6 +11,7 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
+	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1"
 	kubevirtprovider "github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1"
 	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
@@ -413,28 +414,22 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			APIKey: client.Authenticator.ApiKey,
 		}
 
-		// TODO: IBM: Get master and worker machine info
-		// masters, err := mastersAsset.Machines()
-		// if err != nil {
-		// 	return err
-		// }
-		// masterConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(masters))
-		// for i, m := range masters {
-		// 	masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
-		// }
-		// workers, err := workersAsset.MachineSets()
-		// if err != nil {
-		// 	return err
-		// }
-		// workerConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(workers))
-		// for i, w := range workers {
-		// 	workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
-		// }
-
-		// TODO: IBM: Fetch config from masterConfig instead
-		zones, err := client.GetVPCZonesForRegion(ctx, installConfig.Config.Platform.IBMCloud.Region)
+		// Get master and worker machine info
+		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
+		}
+		masterConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(masters))
+		for i, m := range masters {
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
+		}
+		workers, err := workersAsset.MachineSets()
+		if err != nil {
+			return err
+		}
+		workerConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(workers))
+		for i, w := range workers {
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
 		}
 
 		// Get CISInstanceCRN from InstallConfig metadata
@@ -447,14 +442,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			ibmcloudtfvars.TFVarsSources{
 				Auth:              auth,
 				CISInstanceCRN:    crn,
+				ImageURL:          string(*rhcosImage),
+				MasterConfigs:     masterConfigs,
 				PublishStrategy:   installConfig.Config.Publish,
 				ResourceGroupName: installConfig.Config.Platform.IBMCloud.ResourceGroupName,
-
-				// TODO: IBM: Fetch config from masterConfig instead
-				Region:                  installConfig.Config.Platform.IBMCloud.Region,
-				MachineType:             "bx2d-4x16",
-				MasterAvailabilityZones: zones,
-				ImageURL:                string(*rhcosImage),
+				WorkerConfigs:     workerConfigs,
 			},
 		)
 		if err != nil {
