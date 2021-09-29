@@ -21,7 +21,7 @@
     "masterLoadBalancerName" : "[concat(parameters('baseName'))]",
     "masterLoadBalancerID" : "[resourceId('Microsoft.Network/loadBalancers', variables('masterLoadBalancerName'))]",
     "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-avset')]",
-    "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal-lb')]",
+    "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal')]",
     "internalLoadBalancerID" : "[resourceId('Microsoft.Network/loadBalancers', variables('internalLoadBalancerName'))]",
     "skuName": "Basic"
   },
@@ -138,7 +138,7 @@
         ],
         "backendAddressPools" : [
           {
-            "name" : "internal-lb-backend"
+            "name" : "[variables('internalLoadBalancerName')]"
           }
         ],
         "loadBalancingRules" : [
@@ -156,7 +156,7 @@
               "enableTcpReset" : false,
               "loadDistribution" : "Default",
               "backendAddressPool" : {
-                "id" : "[concat(variables('internalLoadBalancerID'), '/backendAddressPools/internal-lb-backend')]"
+                "id" : "[concat(variables('internalLoadBalancerID'), '/backendAddressPools/', variables('internalLoadBalancerName'))]"
               },
               "probe" : {
                 "id" : "[concat(variables('internalLoadBalancerID'), '/probes/api-internal-probe')]"
@@ -177,7 +177,7 @@
               "enableTcpReset" : false,
               "loadDistribution" : "Default",
               "backendAddressPool" : {
-                "id" : "[concat(variables('internalLoadBalancerID'), '/backendAddressPools/internal-lb-backend')]"
+                "id" : "[concat(variables('internalLoadBalancerID'), '/backendAddressPools/', variables('internalLoadBalancerName'))]"
               },
               "probe" : {
                 "id" : "[concat(variables('internalLoadBalancerID'), '/probes/sint-probe')]"
