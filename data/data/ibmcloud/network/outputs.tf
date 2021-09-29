@@ -3,7 +3,7 @@
 #######################################
 
 output "cos_resource_instance_crn" {
-  value = ibm_resource_instance.cos.id
+  value = ibm_resource_instance.cos.crn
 }
 
 output "lb_kubernetes_api_public_id" {

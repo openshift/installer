@@ -41,7 +41,7 @@ module "image" {
   region                    = var.ibmcloud_region
   resource_group_id         = local.resource_group_id
   tags                      = local.tags
-  cos_resource_instance_crn = ibm_resource_instance.cos.id
+  cos_resource_instance_crn = ibm_resource_instance.cos.crn
 }
 
 ############################################
