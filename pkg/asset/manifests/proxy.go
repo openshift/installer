@@ -59,7 +59,7 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 			Name: "cluster",
 			// not namespaced
 		},
-		Spec = configv1.ProxySpec{},
+		Spec: configv1.ProxySpec{},
 	}
 
 	if installConfig.Config.AdditionalTrustBundle != "" {
