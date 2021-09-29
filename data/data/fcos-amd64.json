@@ -1,147 +1,147 @@
 {
     "amis": {
         "af-south-1": {
-            "hvm": "ami-0e78e6cb9666e4866"
+            "hvm": "ami-0b748e75910222d2c"
         },
         "ap-east-1": {
-            "hvm": "ami-09585374e960d19e7"
+            "hvm": "ami-076284674f886a387"
         },
         "ap-northeast-1": {
-            "hvm": "ami-07d0591c7f35e1c50"
+            "hvm": "ami-05dff05740dee546a"
         },
         "ap-northeast-2": {
-            "hvm": "ami-06b9ade598c46aad5"
+            "hvm": "ami-0a3b8e1a51b8dd0ba"
         },
         "ap-northeast-3": {
-            "hvm": "ami-0e660991a6256edf8"
+            "hvm": "ami-0bf2922ccbfd6aba5"
         },
         "ap-south-1": {
-            "hvm": "ami-0de887f898b8b9edf"
+            "hvm": "ami-0d208b223dfd615cc"
         },
         "ap-southeast-1": {
-            "hvm": "ami-03c5b518d836e0f10"
+            "hvm": "ami-058483b94486e7bcd"
         },
         "ap-southeast-2": {
-            "hvm": "ami-02126f543e5642165"
+            "hvm": "ami-070beb6cb872ca125"
         },
         "ca-central-1": {
-            "hvm": "ami-04053e5d27a0fed44"
+            "hvm": "ami-04bf3ac40bcc0bcb8"
         },
         "eu-central-1": {
-            "hvm": "ami-0352f1e0f3e503d23"
+            "hvm": "ami-04520793404d11329"
         },
         "eu-north-1": {
-            "hvm": "ami-0f859448095dc6195"
+            "hvm": "ami-0313aa7a489c3f092"
         },
         "eu-south-1": {
-            "hvm": "ami-07990eb903597defa"
+            "hvm": "ami-0258ea5c31d0243fb"
         },
         "eu-west-1": {
-            "hvm": "ami-052aea8dab8614f0b"
+            "hvm": "ami-0231d530c7816ceee"
         },
         "eu-west-2": {
-            "hvm": "ami-080a4f7c443bbc5a3"
+            "hvm": "ami-018f227c99cab4a55"
         },
         "eu-west-3": {
-            "hvm": "ami-03190e74e2b49cb29"
+            "hvm": "ami-049b895302b6bc877"
         },
         "me-south-1": {
-            "hvm": "ami-0f764a1c27bfceed9"
+            "hvm": "ami-0f6b55cd167ebf160"
         },
         "sa-east-1": {
-            "hvm": "ami-0d92d7edb61886f94"
+            "hvm": "ami-0da8571381b98ff4a"
         },
         "us-east-1": {
-            "hvm": "ami-08e8ce95b14176032"
+            "hvm": "ami-09a8c278a7eec012d"
         },
         "us-east-2": {
-            "hvm": "ami-08b1cffdb1cc1e8ea"
+            "hvm": "ami-0d9fa07517a576552"
         },
         "us-west-1": {
-            "hvm": "ami-0dd2cb185e6859e3b"
+            "hvm": "ami-08c65639becf2dab6"
         },
         "us-west-2": {
-            "hvm": "ami-076e11761838586ea"
+            "hvm": "ami-0e0fe648f85a617fe"
         }
     },
     "azure": {
-        "image": "fedora-coreos-34.20210626.3.1-azure.x86_64.vhd",
-        "url": "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/34.20210626.3.1/x86_64/fedora-coreos-34.20210626.3.1-azure.x86_64.vhd.xz"
+        "image": "fedora-coreos-34.20210904.3.0-azure.x86_64.vhd",
+        "url": "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/34.20210904.3.0/x86_64/fedora-coreos-34.20210904.3.0-azure.x86_64.vhd.xz"
     },
-    "baseURI": "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/34.20210626.3.1/x86_64/",
-    "buildid": "34.20210626.3.1",
+    "baseURI": "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/34.20210904.3.0/x86_64/",
+    "buildid": "34.20210904.3.0",
     "gcp": {
         "family": "fedora-coreos-stable",
-        "image": "fedora-coreos-34-20210626-3-1-gcp-x86-64",
+        "image": "fedora-coreos-34-20210904-3-0-gcp-x86-64",
         "project": "fedora-coreos-cloud",
-        "url": "https://storage.googleapis.com/fedora-coreos-cloud-image-uploads/image-import/fedora-coreos-34-20210626-3-1-gcp-x86-64.tar.gz"
+        "url": "https://storage.googleapis.com/fedora-coreos-cloud-image-uploads/image-import/fedora-coreos-34-20210904-3-0-gcp-x86-64.tar.gz"
     },
     "images": {
         "aws": {
-            "path": "fedora-coreos-34.20210626.3.1-aws.x86_64.vmdk.xz",
-            "sha256": "1f5d995f4b2d45eb05d7c3060a52c77cc411412fa2e2d9e0bdeadd98f8ca40b5",
-            "size": 764419208,
-            "uncompressed-sha256": "b84880acccfb8e5fb3b7b3343ed7f7b2aaff023960b581fe6229b446b1332664",
-            "uncompressed-size": 782960128
+            "path": "fedora-coreos-34.20210904.3.0-aws.x86_64.vmdk.xz",
+            "sha256": "bd5c1a76dfbfe23de8bb2f8876e66c62b4cbe9e936432ac489223c4841a1f637",
+            "size": 786601020,
+            "uncompressed-sha256": "9ccd6db005c1734447ff9b50688565e99d16da61f57e194dc2c9ebf828a019f8",
+            "uncompressed-size": 804143104
         },
         "azure": {
-            "path": "fedora-coreos-34.20210626.3.1-azure.x86_64.vhd.xz",
-            "sha256": "e89e4e43e16ccc60f6ad52ebcd3430d9d1a50d6f2750d6c19788d0d820e07e6d",
-            "size": 617702724,
-            "uncompressed-sha256": "62085a62b381964f88a56df976d8305c03c0d73e37510723587d031792ddcc30",
+            "path": "fedora-coreos-34.20210904.3.0-azure.x86_64.vhd.xz",
+            "sha256": "b048d7129cbd0c07a6643f0e78c322c701fe1750db0ff8d39cccf8f181e1deb1",
+            "size": 641026692,
+            "uncompressed-sha256": "e1b37d3373f70857ade1bd6d9d5751cdbe4084e4ac4d1e5f5a5148b31eed1fbc",
             "uncompressed-size": 10737418752
         },
         "gcp": {
-            "path": "fedora-coreos-34.20210626.3.1-gcp.x86_64.tar.gz",
-            "sha256": "425b3ddf913151f118852394f5c33ecd2445294c4f9dac81a5a9f0b34c2cb476",
-            "size": 764052202,
-            "uncompressed-sha256": "20fe4983e19ee4dc62e17b8710f60259cf2c9e3f739f76482d1412138c292524",
-            "uncompressed-size": 1520087040
+            "path": "fedora-coreos-34.20210904.3.0-gcp.x86_64.tar.gz",
+            "sha256": "b8e8aea3b2214c340f00643adb5f2b53e57d515b95ced792eeaafec74d4c7e03",
+            "size": 784952711,
+            "uncompressed-sha256": "4de96b8a0a475841d3a3d195f0abe8a3eb37b527d08fb73c5bf7ad1cf7e594c9",
+            "uncompressed-size": 1554995200
         },
         "initramfs": {
-            "path": "fedora-coreos-34.20210626.3.1-live-initramfs.x86_64.img",
-            "sha256": "6bd515d56bb32d169d241a8b667a18ea87093e704996abc59ae0786912935578"
+            "path": "fedora-coreos-34.20210904.3.0-live-initramfs.x86_64.img",
+            "sha256": "e07b073ba026ca16d00fd61ea0049b2f0e299c9c97d068b8c8a8b4ea4fa786f7"
         },
         "iso": {
-            "path": "fedora-coreos-34.20210626.3.1-live.x86_64.iso",
-            "sha256": "3ab9eee817051825ff7963de24dcd31a807f620f27cb6eb23ad71c598b60d0d4"
+            "path": "fedora-coreos-34.20210904.3.0-live.x86_64.iso",
+            "sha256": "a04c7d9f36c1ba02dde1269da73b01e68f8479c9f1f1c7aeb4b6bb3c154b8069"
         },
         "kernel": {
-            "path": "fedora-coreos-34.20210626.3.1-live-kernel-x86_64",
-            "sha256": "e4b5cac76b9f5991a488f2f8d178d82f70cce3457f62986c0136ba19a0463aa5"
+            "path": "fedora-coreos-34.20210904.3.0-live-kernel-x86_64",
+            "sha256": "1f62afb48c611eb246f7535a3ef3d23f5b0ae93041de5d37fb4618d52bc8c35a"
         },
         "metal": {
-            "path": "fedora-coreos-34.20210626.3.1-metal.x86_64.raw.xz",
-            "sha256": "33e57b0df4001d86fd7e186d20e07bf951f6f6a053177ef3c7a31b1484d5bc8b",
-            "size": 617740724,
-            "uncompressed-sha256": "9ada6809945fc972757aa8c16ed55c2c2e137c557cb4e7d580dde6f2b3748e5c",
-            "uncompressed-size": 2515533824
+            "path": "fedora-coreos-34.20210904.3.0-metal.x86_64.raw.xz",
+            "sha256": "0adba96aaca9893027270b680e6b41310b3e7789b62219368b1b477695a6376e",
+            "size": 638641864,
+            "uncompressed-sha256": "0fa2607c0382e26e753b0fb5197e89ea5068fd9f4b30404aa80073a07ea0b3d2",
+            "uncompressed-size": 2561671168
         },
         "openstack": {
-            "path": "fedora-coreos-34.20210626.3.1-openstack.x86_64.qcow2.xz",
-            "sha256": "65706172925a57dbd3fd9dc63b846ce41c83aa0ae34159701d2050faba4921ca",
-            "size": 615544348,
-            "uncompressed-sha256": "c2364a4ddb747d23263dec398d956799d2362983fb8fc257a5ab1d87b604683d",
-            "uncompressed-size": 1525415936
+            "path": "fedora-coreos-34.20210904.3.0-openstack.x86_64.qcow2.xz",
+            "sha256": "a3a0d6780ffd2ca6b1c50932a8d1560119d6ad7a370ddd0767ef95a824f35ca2",
+            "size": 636147752,
+            "uncompressed-sha256": "124dd1e47514b3c7d4c966af5e9f9aacddda8be0732c800e0f9cd8a1c1b7ad16",
+            "uncompressed-size": 1560084480
         },
         "ostree": {
-            "path": "fedora-coreos-34.20210626.3.1-ostree.x86_64.tar",
-            "sha256": "01765707f0282e1fd13da15a16332fa83b2c3b6bcfcd24433b22737cea736cc1",
-            "size": 695080960
+            "path": "fedora-coreos-34.20210904.3.0-ostree.x86_64.tar",
+            "sha256": "f46d6cf9ec49637a9f1a9445d99abf60c51bc0a7d21c1202da1a6fe7f141d0d0",
+            "size": 713881600
         },
         "qemu": {
-            "path": "fedora-coreos-34.20210626.3.1-qemu.x86_64.qcow2.xz",
-            "sha256": "f1e6984e356822f419c217c95a58fb059c8629e3fa1989278d3e7c1a68cf32d2",
-            "size": 618039340,
-            "uncompressed-sha256": "acecea6dd7b6d99a554cd381c15390a41affbde46ee16c8eb9a66e7aa7653f7f",
-            "uncompressed-size": 1526661120
+            "path": "fedora-coreos-34.20210904.3.0-qemu.x86_64.qcow2.xz",
+            "sha256": "58e9e841a42944c616925deaa11849881c9cfc47e7d2116bc3c2c9985fea632a",
+            "size": 634204192,
+            "uncompressed-sha256": "0accb5cae1a1bf68ca0f63df55eb31beec518b64d239b121b0348447d124763b",
+            "uncompressed-size": 1561395200
         },
         "vmware": {
-            "path": "fedora-coreos-34.20210626.3.1-vmware.x86_64.ova",
-            "sha256": "39847867bd44d26529a9927cb654ecfe110e765dd03ef24320c8d357091e8664",
-            "size": 782970880
+            "path": "fedora-coreos-34.20210904.3.0-vmware.x86_64.ova",
+            "sha256": "b873c30de26007b91afefa2a0643ed283402816af453a6ad1bb647947bfb4839",
+            "size": 804157440
         }
     },
-    "ostree-commit": "252fffde6f56d183a3c51c05a0c602b61011f6cb4de23a58313ba3b0023dc360",
-    "ostree-version": "34.20210626.3.1"
+    "ostree-commit": "45e0f7e030762d03f5fb4584463cc0b81a320e641ef5e8403a9651231d2a555b",
+    "ostree-version": "34.20210904.3.0"
 }
