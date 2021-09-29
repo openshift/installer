@@ -14,7 +14,7 @@ variable "control_plane_subnet_zone_list" {
   type = list(string)
 }
 
-variable "cos_resource_instance_id" {
+variable "cos_resource_instance_crn" {
   type    = string
   default = ""
 }

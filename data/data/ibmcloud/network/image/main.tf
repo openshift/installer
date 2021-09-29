@@ -4,7 +4,7 @@ locals {
 
 resource "ibm_cos_bucket" "images" {
   bucket_name          = "${local.prefix}-vsi-image"
-  resource_instance_id = var.cos_resource_instance_id
+  resource_instance_id = var.cos_resource_instance_crn
   region_location      = var.region
   storage_class        = "smart"
 }
@@ -21,7 +21,7 @@ resource "ibm_iam_authorization_policy" "policy" {
   source_service_name         = "is"
   source_resource_type        = "image"
   target_service_name         = "cloud-object-storage"
-  target_resource_instance_id = length(split(":", var.cos_resource_instance_id)) >= 8 ? "${element(split(":", var.cos_resource_instance_id),7)}" : var.cos_resource_instance_id
+  target_resource_instance_id = "${element(split(":", var.cos_resource_instance_crn),7)}"
   roles                       = ["Reader"]
 }
 

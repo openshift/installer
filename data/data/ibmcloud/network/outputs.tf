@@ -2,7 +2,7 @@
 # Network module outputs
 #######################################
 
-output "cos_resource_instance_id" {
+output "cos_resource_instance_crn" {
   value = ibm_resource_instance.cos.id
 }
 

@@ -4,7 +4,7 @@
 
 resource "ibm_cos_bucket" "bootstrap_ignition" {
   bucket_name          = "${local.prefix}-bootstrap-ignition"
-  resource_instance_id = var.cos_resource_instance_id
+  resource_instance_id = var.cos_resource_instance_crn
   region_location      = var.ibmcloud_region
   storage_class        = "smart"
 }
