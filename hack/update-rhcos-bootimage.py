@@ -23,6 +23,16 @@ with urllib.request.urlopen(args.meta) as f:
     string_f = codecs.getreader('utf-8')(f)  # support for Python < 3.6
     meta = json.load(string_f)
 newmeta = {}
+
+# x86_64 boot image bumps should contain more than just the ostree tarball and
+# qemu qcow2 image. check the contents of the images dict for well known artifacts.
+if args.arch == 'amd64':
+    for k in ['aws', 'gcp', 'metal', 'metal4k']:
+        if k not in meta['images'].keys():
+            raise SystemExit("You appear to be missing most of the x86_64 boot "
+                             + "image artifacts. Check the meta.json for this "
+                             + "RHCOS version. Also check that boot images were "
+                             + "enabled in the RHCOS build pipeline.")
 for k in ['images', 'buildid', 'oscontainer',
           'ostree-commit', 'ostree-version',
           'azure', 'gcp']:
