@@ -12,7 +12,6 @@ RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/4.10:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
-COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos.json /var/cache/
 
 RUN dnf upgrade -y && \
     dnf install --setopt=tsflags=nodocs -y \
