@@ -59,20 +59,19 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 			Name: "cluster",
 			// not namespaced
 		},
+		Spec = configv1.ProxySpec{},
+	}
+
+	if installConfig.Config.AdditionalTrustBundle != "" {
+		p.Config.Spec.TrustedCA = configv1.ConfigMapNameReference{
+			Name: additionalTrustBundleConfigMapName,
+		}
 	}
 
 	if installConfig.Config.Proxy != nil {
-		p.Config.Spec = configv1.ProxySpec{
-			HTTPProxy:  installConfig.Config.Proxy.HTTPProxy,
-			HTTPSProxy: installConfig.Config.Proxy.HTTPSProxy,
-			NoProxy:    installConfig.Config.Proxy.NoProxy,
-		}
-
-		if installConfig.Config.AdditionalTrustBundle != "" {
-			p.Config.Spec.TrustedCA = configv1.ConfigMapNameReference{
-				Name: additionalTrustBundleConfigMapName,
-			}
-		}
+		p.Config.Spec.HTTPProxy = installConfig.Config.Proxy.HTTPProxy
+		p.Config.Spec.HTTPSProxy = installConfig.Config.Proxy.HTTPSProxy
+		p.Config.Spec.NoProxy = installConfig.Config.Proxy.NoProxy
 	}
 
 	if p.Config.Spec.HTTPProxy != "" || p.Config.Spec.HTTPSProxy != "" {
