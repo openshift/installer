@@ -47,7 +47,7 @@
     "masterSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('masterSubnetName'))]",
     "masterLoadBalancerName" : "[concat(parameters('baseName'))]",
     "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-avset')]",
-    "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal-lb')]",
+    "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal')]",
     "sshKeyPath" : "/home/core/.ssh/authorized_keys",
     "clusterNsgName" : "[concat(parameters('baseName'), '-nsg')]",
     "imageName" : "[concat(parameters('baseName'), '-image')]",
@@ -97,6 +97,9 @@
               "loadBalancerBackendAddressPools" : [
                 {
                   "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('masterLoadBalancerName'), '/backendAddressPools/', variables('masterLoadBalancerName'))]"
+                },
+                {
+                  "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('internalLoadBalancerName'), '/backendAddressPools/', variables('internalLoadBalancerName'))]"
                 }
               ]
             }
