@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/x509"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -31,7 +30,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/logging"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
-	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -128,19 +126,6 @@ var (
 					logrus.Fatal("Bootstrap failed to complete")
 				}
 				timer.StopTimer("Bootstrap Complete")
-				timer.StartTimer("Bootstrap Destroy")
-
-				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
-					logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, not destroying bootstrap resources. " +
-						"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
-				} else {
-					logrus.Info("Destroying the bootstrap resources...")
-					err = destroybootstrap.Destroy(rootOpts.dir)
-					if err != nil {
-						logrus.Fatal(err)
-					}
-				}
-				timer.StopTimer("Bootstrap Destroy")
 
 				err = waitForInstallComplete(ctx, config, rootOpts.dir)
 				if err != nil {
@@ -148,7 +133,16 @@ var (
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
 					logTroubleshootingLink()
-					logrus.Fatal(err)
+
+					bundlePath, err2 := runGatherBootstrapCmd(rootOpts.dir)
+					if err2 != nil {
+						logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
+					}
+					logrus.Error("Installation failed to complete: ", err)
+					logrus.Error(err.Error())
+					if err2 := service.AnalyzeGatherBundle(bundlePath); err2 != nil {
+						logrus.Error("Attempted to analyze the debug logs after installation failure: ", err2)
+					}
 				}
 				timer.StopTimer(timer.TotalTimeElapsed)
 				timer.LogSummary()
