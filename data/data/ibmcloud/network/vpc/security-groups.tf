@@ -231,6 +231,17 @@ resource "ibm_is_security_group_rule" "control_plane_kube_default_ports_inbound"
   }
 }
 
+# Cluster policy controller port
+resource "ibm_is_security_group_rule" "control_plane_cluster_policy_controller_ports_inbound" {
+  group     = ibm_is_security_group.control_plane.id
+  direction = "inbound"
+  remote    = ibm_is_security_group.control_plane.id
+  tcp {
+    port_min = 10357
+    port_max = 10357
+  }
+}
+
 # Kubernetes API - inbound
 resource "ibm_is_security_group_rule" "control_plane_kubernetes_api_inbound" {
   group     = ibm_is_security_group.control_plane.id

@@ -54,6 +54,12 @@ resource "google_compute_firewall" "control_plane" {
     ports    = ["10257"]
   }
 
+  # cluster policy controller
+  allow {
+    protocol = "tcp"
+    ports    = ["10357"]
+  }
+
   # kube scheduler
   allow {
     protocol = "tcp"

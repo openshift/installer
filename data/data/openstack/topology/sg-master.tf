@@ -182,6 +182,17 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller
   description       = local.description
 }
 
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_cluster_policy_controller" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 10357
+  port_range_max    = 10357
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
+}
+
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure" {
   direction         = "ingress"
   ethertype         = "IPv4"
