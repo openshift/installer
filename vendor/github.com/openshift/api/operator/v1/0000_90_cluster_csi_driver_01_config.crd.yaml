@@ -41,7 +41,6 @@ spec:
                 - ebs.csi.aws.com
                 - efs.csi.aws.com
                 - disk.csi.azure.com
-                - file.csi.azure.com
                 - pd.csi.storage.gke.io
                 - cinder.csi.openstack.org
                 - csi.vsphere.vmware.com
@@ -49,8 +48,6 @@ spec:
                 - csi.ovirt.org
                 - csi.kubevirt.io
                 - csi.shared-resources.openshift.io
-                - diskplugin.csi.alibabacloud.com
-                - vpc.block.csi.ibm.io
                 type: string
             type: object
           spec:

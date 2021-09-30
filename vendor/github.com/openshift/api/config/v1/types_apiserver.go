@@ -97,10 +97,9 @@ type Audit struct {
 	// HTTP payloads for read requests (get, list).
 	// - None: no requests are logged at all, not even oauthaccesstokens and oauthauthorizetokens.
 	//
-	// Warning: It is not recommended to disable audit logging by using the `None` profile unless you
-	// are fully aware of the risks of not logging data that can be beneficial when troubleshooting issues.
-	// If you disable audit logging and a support situation arises, you might need to enable audit logging
-	// and reproduce the issue in order to troubleshoot properly.
+	// Warning: to raise a Red Hat support request, it is required to set this to Default,
+	// WriteRequestBodies, or AllRequestBodies to generate audit log events that can be
+	// analyzed by support.
 	//
 	// If unset, the 'Default' profile is used as the default.
 	//

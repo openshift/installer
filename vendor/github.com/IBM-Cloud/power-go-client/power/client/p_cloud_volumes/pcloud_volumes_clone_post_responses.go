@@ -39,6 +39,13 @@ func (o *PcloudVolumesClonePostReader) ReadResponse(response runtime.ClientRespo
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudVolumesClonePostUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 409:
 		result := NewPcloudVolumesClonePostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -105,6 +112,35 @@ func (o *PcloudVolumesClonePostBadRequest) Error() string {
 }
 
 func (o *PcloudVolumesClonePostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudVolumesClonePostUnauthorized creates a PcloudVolumesClonePostUnauthorized with default headers values
+func NewPcloudVolumesClonePostUnauthorized() *PcloudVolumesClonePostUnauthorized {
+	return &PcloudVolumesClonePostUnauthorized{}
+}
+
+/*PcloudVolumesClonePostUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudVolumesClonePostUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudVolumesClonePostUnauthorized) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/clone][%d] pcloudVolumesClonePostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudVolumesClonePostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

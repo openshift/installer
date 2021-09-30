@@ -45,7 +45,6 @@ const (
 	AWSEBSCSIDriver          CSIDriverName = "ebs.csi.aws.com"
 	AWSEFSCSIDriver          CSIDriverName = "efs.csi.aws.com"
 	AzureDiskCSIDriver       CSIDriverName = "disk.csi.azure.com"
-	AzureFileCSIDriver       CSIDriverName = "file.csi.azure.com"
 	GCPPDCSIDriver           CSIDriverName = "pd.csi.storage.gke.io"
 	CinderCSIDriver          CSIDriverName = "cinder.csi.openstack.org"
 	VSphereCSIDriver         CSIDriverName = "csi.vsphere.vmware.com"
@@ -53,8 +52,6 @@ const (
 	OvirtCSIDriver           CSIDriverName = "csi.ovirt.org"
 	KubevirtCSIDriver        CSIDriverName = "csi.kubevirt.io"
 	SharedResourcesCSIDriver CSIDriverName = "csi.shared-resources.openshift.io"
-	AlibabaDiskCSIDriver     CSIDriverName = "diskplugin.csi.alibabacloud.com"
-	IBMVPCBlockCSIDriver     CSIDriverName = "vpc.block.csi.ibm.io"
 )
 
 // ClusterCSIDriverSpec is the desired behavior of CSI driver operator

@@ -39,6 +39,13 @@ func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallReader) ReadResponse(re
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 500:
 		result := NewPcloudCloudconnectionsVirtualprivatecloudsGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -98,6 +105,35 @@ func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallBadRequest) Error() str
 }
 
 func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized creates a PcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized with default headers values
+func NewPcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized() *PcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized {
+	return &PcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized{}
+}
+
+/*PcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections-virtual-private-clouds][%d] pcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

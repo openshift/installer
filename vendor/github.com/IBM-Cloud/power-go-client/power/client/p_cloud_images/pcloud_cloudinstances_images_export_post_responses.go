@@ -39,6 +39,13 @@ func (o *PcloudCloudinstancesImagesExportPostReader) ReadResponse(response runti
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudCloudinstancesImagesExportPostUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudCloudinstancesImagesExportPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -103,6 +110,35 @@ func (o *PcloudCloudinstancesImagesExportPostBadRequest) Error() string {
 }
 
 func (o *PcloudCloudinstancesImagesExportPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesImagesExportPostUnauthorized creates a PcloudCloudinstancesImagesExportPostUnauthorized with default headers values
+func NewPcloudCloudinstancesImagesExportPostUnauthorized() *PcloudCloudinstancesImagesExportPostUnauthorized {
+	return &PcloudCloudinstancesImagesExportPostUnauthorized{}
+}
+
+/*PcloudCloudinstancesImagesExportPostUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudCloudinstancesImagesExportPostUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudinstancesImagesExportPostUnauthorized) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudCloudinstancesImagesExportPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudCloudinstancesImagesExportPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

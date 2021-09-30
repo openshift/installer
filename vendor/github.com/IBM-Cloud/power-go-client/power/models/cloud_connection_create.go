@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
@@ -18,7 +20,7 @@ import (
 type CloudConnectionCreate struct {
 
 	// classic
-	Classic *CloudConnectionEndpointClassic `json:"classic,omitempty"`
+	Classic *CloudConnectionEndpointClassicUpdate `json:"classic,omitempty"`
 
 	// enable global routing for this cloud connection (default=false)
 	GlobalRouting bool `json:"globalRouting,omitempty"`
@@ -32,7 +34,11 @@ type CloudConnectionCreate struct {
 
 	// speed of the cloud connection (speed in megabits per second)
 	// Required: true
+	// Enum: [50 100 200 500 1000 2000 5000 10000]
 	Speed *int64 `json:"speed"`
+
+	// list of subnets to attach to cloud connection
+	Subnets []string `json:"subnets"`
 
 	// vpc
 	Vpc *CloudConnectionEndpointVPC `json:"vpc,omitempty"`
@@ -91,9 +97,34 @@ func (m *CloudConnectionCreate) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
+var cloudConnectionCreateTypeSpeedPropEnum []interface{}
+
+func init() {
+	var res []int64
+	if err := json.Unmarshal([]byte(`[50,100,200,500,1000,2000,5000,10000]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		cloudConnectionCreateTypeSpeedPropEnum = append(cloudConnectionCreateTypeSpeedPropEnum, v)
+	}
+}
+
+// prop value enum
+func (m *CloudConnectionCreate) validateSpeedEnum(path, location string, value int64) error {
+	if err := validate.Enum(path, location, value, cloudConnectionCreateTypeSpeedPropEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *CloudConnectionCreate) validateSpeed(formats strfmt.Registry) error {
 
 	if err := validate.Required("speed", "body", m.Speed); err != nil {
+		return err
+	}
+
+	// value enum
+	if err := m.validateSpeedEnum("speed", "body", *m.Speed); err != nil {
 		return err
 	}
 

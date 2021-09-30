@@ -19,9 +19,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -59,26 +57,6 @@ func LoadStrategy(path string, local, remote func(string) ([]byte, error)) func(
 		if err != nil {
 			return nil, err
 		}
-
-		if strings.HasPrefix(pth, `file://`) {
-			if runtime.GOOS == "windows" {
-				// support for canonical file URIs on windows.
-				// Zero tolerance here for dodgy URIs.
-				u, _ := url.Parse(upth)
-				if u.Host != "" {
-					// assume UNC name (volume share)
-					// file://host/share/folder\... ==> \\host\share\path\folder
-					// NOTE: UNC port not yet supported
-					upth = strings.Join([]string{`\`, u.Host, u.Path}, `\`)
-				} else {
-					// file:///c:/folder/... ==> just remove the leading slash
-					upth = strings.TrimPrefix(upth, `file:///`)
-				}
-			} else {
-				upth = strings.TrimPrefix(upth, `file://`)
-			}
-		}
-
 		return local(filepath.FromSlash(upth))
 	}
 }
@@ -86,7 +64,7 @@ func LoadStrategy(path string, local, remote func(string) ([]byte, error)) func(
 func loadHTTPBytes(timeout time.Duration) func(path string) ([]byte, error) {
 	return func(path string) ([]byte, error) {
 		client := &http.Client{Timeout: timeout}
-		req, err := http.NewRequest("GET", path, nil) // nolint: noctx
+		req, err := http.NewRequest("GET", path, nil)
 		if err != nil {
 			return nil, err
 		}

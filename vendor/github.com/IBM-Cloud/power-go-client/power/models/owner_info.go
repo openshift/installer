@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"strconv"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
@@ -41,9 +43,12 @@ type OwnerInfo struct {
 	// Required: true
 	Name *string `json:"name"`
 
-	// Array of Soft Layer IDs
-	// Required: true
+	// (deprecated - replaced by softlayerSubscriptions) Array of Soft Layer IDs
 	SoftlayerIds []string `json:"softlayerIDs"`
+
+	// Array of softlayer subscriptions
+	// Required: true
+	SoftlayerSubscriptions []*SoftlayerSubscription `json:"softlayerSubscriptions"`
 
 	// User id of user
 	// Required: true
@@ -78,7 +83,7 @@ func (m *OwnerInfo) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateSoftlayerIds(formats); err != nil {
+	if err := m.validateSoftlayerSubscriptions(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -146,10 +151,26 @@ func (m *OwnerInfo) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *OwnerInfo) validateSoftlayerIds(formats strfmt.Registry) error {
+func (m *OwnerInfo) validateSoftlayerSubscriptions(formats strfmt.Registry) error {
 
-	if err := validate.Required("softlayerIDs", "body", m.SoftlayerIds); err != nil {
+	if err := validate.Required("softlayerSubscriptions", "body", m.SoftlayerSubscriptions); err != nil {
 		return err
+	}
+
+	for i := 0; i < len(m.SoftlayerSubscriptions); i++ {
+		if swag.IsZero(m.SoftlayerSubscriptions[i]) { // not required
+			continue
+		}
+
+		if m.SoftlayerSubscriptions[i] != nil {
+			if err := m.SoftlayerSubscriptions[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("softlayerSubscriptions" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

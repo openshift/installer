@@ -39,6 +39,13 @@ func (o *PcloudTasksGetReader) ReadResponse(response runtime.ClientResponse, con
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudTasksGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudTasksGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -105,6 +112,35 @@ func (o *PcloudTasksGetBadRequest) Error() string {
 }
 
 func (o *PcloudTasksGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTasksGetUnauthorized creates a PcloudTasksGetUnauthorized with default headers values
+func NewPcloudTasksGetUnauthorized() *PcloudTasksGetUnauthorized {
+	return &PcloudTasksGetUnauthorized{}
+}
+
+/*PcloudTasksGetUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudTasksGetUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudTasksGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudTasksGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

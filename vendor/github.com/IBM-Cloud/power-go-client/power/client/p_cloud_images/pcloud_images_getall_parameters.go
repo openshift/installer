@@ -67,6 +67,11 @@ type PcloudImagesGetallParams struct {
 
 	*/
 	Sap *bool
+	/*Vtl
+	  Include VTL images with get available stock images
+
+	*/
+	Vtl *bool
 
 	timeout    time.Duration
 	Context    context.Context
@@ -117,6 +122,17 @@ func (o *PcloudImagesGetallParams) SetSap(sap *bool) {
 	o.Sap = sap
 }
 
+// WithVtl adds the vtl to the pcloud images getall params
+func (o *PcloudImagesGetallParams) WithVtl(vtl *bool) *PcloudImagesGetallParams {
+	o.SetVtl(vtl)
+	return o
+}
+
+// SetVtl adds the vtl to the pcloud images getall params
+func (o *PcloudImagesGetallParams) SetVtl(vtl *bool) {
+	o.Vtl = vtl
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *PcloudImagesGetallParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -135,6 +151,22 @@ func (o *PcloudImagesGetallParams) WriteToRequest(r runtime.ClientRequest, reg s
 		qSap := swag.FormatBool(qrSap)
 		if qSap != "" {
 			if err := r.SetQueryParam("sap", qSap); err != nil {
+				return err
+			}
+		}
+
+	}
+
+	if o.Vtl != nil {
+
+		// query param vtl
+		var qrVtl bool
+		if o.Vtl != nil {
+			qrVtl = *o.Vtl
+		}
+		qVtl := swag.FormatBool(qrVtl)
+		if qVtl != "" {
+			if err := r.SetQueryParam("vtl", qVtl); err != nil {
 				return err
 			}
 		}

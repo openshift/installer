@@ -120,7 +120,7 @@ func (a *Client) PcloudCloudconnectionsGetall(params *PcloudCloudconnectionsGeta
 /*
 PcloudCloudconnectionsNetworksDelete deletes a network from a cloud connection
 */
-func (a *Client) PcloudCloudconnectionsNetworksDelete(params *PcloudCloudconnectionsNetworksDeleteParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudconnectionsNetworksDeleteOK, error) {
+func (a *Client) PcloudCloudconnectionsNetworksDelete(params *PcloudCloudconnectionsNetworksDeleteParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudconnectionsNetworksDeleteOK, *PcloudCloudconnectionsNetworksDeleteAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudconnectionsNetworksDeleteParams()
@@ -140,45 +140,22 @@ func (a *Client) PcloudCloudconnectionsNetworksDelete(params *PcloudCloudconnect
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return result.(*PcloudCloudconnectionsNetworksDeleteOK), nil
-
-}
-
-/*
-PcloudCloudconnectionsNetworksGet gets information about a cloud connections attached network
-*/
-func (a *Client) PcloudCloudconnectionsNetworksGet(params *PcloudCloudconnectionsNetworksGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudconnectionsNetworksGetOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewPcloudCloudconnectionsNetworksGetParams()
+	switch value := result.(type) {
+	case *PcloudCloudconnectionsNetworksDeleteOK:
+		return value, nil, nil
+	case *PcloudCloudconnectionsNetworksDeleteAccepted:
+		return nil, value, nil
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "pcloud.cloudconnections.networks.get",
-		Method:             "GET",
-		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &PcloudCloudconnectionsNetworksGetReader{formats: a.formats},
-		AuthInfo:           authInfo,
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*PcloudCloudconnectionsNetworksGetOK), nil
+	return nil, nil, nil
 
 }
 
 /*
 PcloudCloudconnectionsNetworksPut adds a network to the cloud connection
 */
-func (a *Client) PcloudCloudconnectionsNetworksPut(params *PcloudCloudconnectionsNetworksPutParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudconnectionsNetworksPutOK, error) {
+func (a *Client) PcloudCloudconnectionsNetworksPut(params *PcloudCloudconnectionsNetworksPutParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudconnectionsNetworksPutOK, *PcloudCloudconnectionsNetworksPutAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudconnectionsNetworksPutParams()
@@ -198,9 +175,15 @@ func (a *Client) PcloudCloudconnectionsNetworksPut(params *PcloudCloudconnection
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return result.(*PcloudCloudconnectionsNetworksPutOK), nil
+	switch value := result.(type) {
+	case *PcloudCloudconnectionsNetworksPutOK:
+		return value, nil, nil
+	case *PcloudCloudconnectionsNetworksPutAccepted:
+		return nil, value, nil
+	}
+	return nil, nil, nil
 
 }
 
@@ -277,7 +260,7 @@ func (a *Client) PcloudCloudconnectionsPut(params *PcloudCloudconnectionsPutPara
 }
 
 /*
-PcloudCloudconnectionsVirtualprivatecloudsGetall gets all cloud connections in this cloud instance
+PcloudCloudconnectionsVirtualprivatecloudsGetall gets all virtual private cloud connections in this cloud instance
 */
 func (a *Client) PcloudCloudconnectionsVirtualprivatecloudsGetall(params *PcloudCloudconnectionsVirtualprivatecloudsGetallParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudconnectionsVirtualprivatecloudsGetallOK, error) {
 	// TODO: Validate the params before sending

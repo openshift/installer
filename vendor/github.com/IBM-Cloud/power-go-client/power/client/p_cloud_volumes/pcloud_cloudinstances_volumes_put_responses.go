@@ -39,6 +39,13 @@ func (o *PcloudCloudinstancesVolumesPutReader) ReadResponse(response runtime.Cli
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudCloudinstancesVolumesPutUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 409:
 		result := NewPcloudCloudinstancesVolumesPutConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -112,6 +119,35 @@ func (o *PcloudCloudinstancesVolumesPutBadRequest) Error() string {
 }
 
 func (o *PcloudCloudinstancesVolumesPutBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesVolumesPutUnauthorized creates a PcloudCloudinstancesVolumesPutUnauthorized with default headers values
+func NewPcloudCloudinstancesVolumesPutUnauthorized() *PcloudCloudinstancesVolumesPutUnauthorized {
+	return &PcloudCloudinstancesVolumesPutUnauthorized{}
+}
+
+/*PcloudCloudinstancesVolumesPutUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudCloudinstancesVolumesPutUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudinstancesVolumesPutUnauthorized) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}][%d] pcloudCloudinstancesVolumesPutUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudCloudinstancesVolumesPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

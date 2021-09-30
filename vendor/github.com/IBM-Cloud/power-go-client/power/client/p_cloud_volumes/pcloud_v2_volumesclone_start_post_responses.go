@@ -32,6 +32,13 @@ func (o *PcloudV2VolumescloneStartPostReader) ReadResponse(response runtime.Clie
 		}
 		return result, nil
 
+	case 401:
+		result := NewPcloudV2VolumescloneStartPostUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudV2VolumescloneStartPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -71,6 +78,35 @@ func (o *PcloudV2VolumescloneStartPostOK) Error() string {
 func (o *PcloudV2VolumescloneStartPostOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.VolumesClone)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2VolumescloneStartPostUnauthorized creates a PcloudV2VolumescloneStartPostUnauthorized with default headers values
+func NewPcloudV2VolumescloneStartPostUnauthorized() *PcloudV2VolumescloneStartPostUnauthorized {
+	return &PcloudV2VolumescloneStartPostUnauthorized{}
+}
+
+/*PcloudV2VolumescloneStartPostUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudV2VolumescloneStartPostUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudV2VolumescloneStartPostUnauthorized) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/start][%d] pcloudV2VolumescloneStartPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudV2VolumescloneStartPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

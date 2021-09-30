@@ -32,6 +32,13 @@ func (o *PcloudSystempoolsGetReader) ReadResponse(response runtime.ClientRespons
 		}
 		return result, nil
 
+	case 401:
+		result := NewPcloudSystempoolsGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 500:
 		result := NewPcloudSystempoolsGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -65,6 +72,35 @@ func (o *PcloudSystempoolsGetOK) readResponse(response runtime.ClientResponse, c
 
 	// response payload
 	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudSystempoolsGetUnauthorized creates a PcloudSystempoolsGetUnauthorized with default headers values
+func NewPcloudSystempoolsGetUnauthorized() *PcloudSystempoolsGetUnauthorized {
+	return &PcloudSystempoolsGetUnauthorized{}
+}
+
+/*PcloudSystempoolsGetUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudSystempoolsGetUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudSystempoolsGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudSystempoolsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 

@@ -32,6 +32,13 @@ func (o *PcloudStoragecapacityTypesGetallReader) ReadResponse(response runtime.C
 		}
 		return result, nil
 
+	case 401:
+		result := NewPcloudStoragecapacityTypesGetallUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 500:
 		result := NewPcloudStoragecapacityTypesGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -64,6 +71,35 @@ func (o *PcloudStoragecapacityTypesGetallOK) Error() string {
 func (o *PcloudStoragecapacityTypesGetallOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.StorageTypesCapacity)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudStoragecapacityTypesGetallUnauthorized creates a PcloudStoragecapacityTypesGetallUnauthorized with default headers values
+func NewPcloudStoragecapacityTypesGetallUnauthorized() *PcloudStoragecapacityTypesGetallUnauthorized {
+	return &PcloudStoragecapacityTypesGetallUnauthorized{}
+}
+
+/*PcloudStoragecapacityTypesGetallUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudStoragecapacityTypesGetallUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudStoragecapacityTypesGetallUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-types][%d] pcloudStoragecapacityTypesGetallUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudStoragecapacityTypesGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

@@ -39,6 +39,13 @@ func (o *PcloudNetworksPutReader) ReadResponse(response runtime.ClientResponse, 
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudNetworksPutUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 422:
 		result := NewPcloudNetworksPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -105,6 +112,35 @@ func (o *PcloudNetworksPutBadRequest) Error() string {
 }
 
 func (o *PcloudNetworksPutBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudNetworksPutUnauthorized creates a PcloudNetworksPutUnauthorized with default headers values
+func NewPcloudNetworksPutUnauthorized() *PcloudNetworksPutUnauthorized {
+	return &PcloudNetworksPutUnauthorized{}
+}
+
+/*PcloudNetworksPutUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudNetworksPutUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudNetworksPutUnauthorized) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudNetworksPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

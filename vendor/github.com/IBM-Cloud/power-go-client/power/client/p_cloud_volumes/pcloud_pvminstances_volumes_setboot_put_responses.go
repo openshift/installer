@@ -39,6 +39,13 @@ func (o *PcloudPvminstancesVolumesSetbootPutReader) ReadResponse(response runtim
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudPvminstancesVolumesSetbootPutUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudPvminstancesVolumesSetbootPutNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -103,6 +110,35 @@ func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) Error() string {
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesVolumesSetbootPutUnauthorized creates a PcloudPvminstancesVolumesSetbootPutUnauthorized with default headers values
+func NewPcloudPvminstancesVolumesSetbootPutUnauthorized() *PcloudPvminstancesVolumesSetbootPutUnauthorized {
+	return &PcloudPvminstancesVolumesSetbootPutUnauthorized{}
+}
+
+/*PcloudPvminstancesVolumesSetbootPutUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudPvminstancesVolumesSetbootPutUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

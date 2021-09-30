@@ -39,6 +39,13 @@ func (o *PcloudEventsGetReader) ReadResponse(response runtime.ClientResponse, co
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudEventsGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudEventsGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -105,6 +112,35 @@ func (o *PcloudEventsGetBadRequest) Error() string {
 }
 
 func (o *PcloudEventsGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudEventsGetUnauthorized creates a PcloudEventsGetUnauthorized with default headers values
+func NewPcloudEventsGetUnauthorized() *PcloudEventsGetUnauthorized {
+	return &PcloudEventsGetUnauthorized{}
+}
+
+/*PcloudEventsGetUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudEventsGetUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudEventsGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudEventsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

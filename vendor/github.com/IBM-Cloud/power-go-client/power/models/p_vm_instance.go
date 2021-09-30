@@ -41,6 +41,9 @@ type PVMInstance struct {
 	// Required: true
 	ImageID *string `json:"imageID"`
 
+	// The VTL license repository capacity TB value
+	LicenseRepositoryCapacity int64 `json:"licenseRepositoryCapacity,omitempty"`
+
 	// Maximum amount of memory that can be allocated (in GB, for resize)
 	Maxmem float64 `json:"maxmem,omitempty"`
 
@@ -70,16 +73,19 @@ type PVMInstance struct {
 	// OS system information (usually version and build)
 	OperatingSystem string `json:"operatingSystem,omitempty"`
 
-	// Type of the OS [aix, ibmi, redhat, sles]
+	// Type of the OS [aix, ibmi, redhat, sles, vtl]
 	// Required: true
 	OsType *string `json:"osType"`
 
 	// VM pinning policy to use [none, soft, hard]
 	PinPolicy string `json:"pinPolicy,omitempty"`
 
+	// The placement group of the server
+	PlacementGroup *string `json:"placementGroup,omitempty"`
+
 	// Processor type (dedicated, shared, capped)
 	// Required: true
-	// Enum: [dedicated shared capped]
+	// Enum: [dedicated shared capped ]
 	ProcType *string `json:"procType"`
 
 	// Number of processors allocated
@@ -109,6 +115,12 @@ type PVMInstance struct {
 	// The status of the instance
 	// Required: true
 	Status *string `json:"status"`
+
+	// Storage Pool where server is deployed
+	StoragePool string `json:"storagePool,omitempty"`
+
+	// Indicates if all volumes attached to the server must reside in the same storage pool
+	StoragePoolAffinity *bool `json:"storagePoolAffinity,omitempty"`
 
 	// Storage type where server is deployed
 	// Required: true
@@ -375,7 +387,7 @@ var pVmInstanceTypeProcTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["dedicated","shared","capped"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["dedicated","shared","capped",""]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -393,6 +405,9 @@ const (
 
 	// PVMInstanceProcTypeCapped captures enum value "capped"
 	PVMInstanceProcTypeCapped string = "capped"
+
+	// PVMInstanceProcType captures enum value ""
+	PVMInstanceProcType string = ""
 )
 
 // prop value enum

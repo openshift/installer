@@ -32,8 +32,22 @@ func (o *PcloudCloudconnectionsNetworksDeleteReader) ReadResponse(response runti
 		}
 		return result, nil
 
+	case 202:
+		result := NewPcloudCloudconnectionsNetworksDeleteAccepted()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return result, nil
+
 	case 400:
 		result := NewPcloudCloudconnectionsNetworksDeleteBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
+	case 401:
+		result := NewPcloudCloudconnectionsNetworksDeleteUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -87,6 +101,33 @@ func (o *PcloudCloudconnectionsNetworksDeleteOK) readResponse(response runtime.C
 	return nil
 }
 
+// NewPcloudCloudconnectionsNetworksDeleteAccepted creates a PcloudCloudconnectionsNetworksDeleteAccepted with default headers values
+func NewPcloudCloudconnectionsNetworksDeleteAccepted() *PcloudCloudconnectionsNetworksDeleteAccepted {
+	return &PcloudCloudconnectionsNetworksDeleteAccepted{}
+}
+
+/*PcloudCloudconnectionsNetworksDeleteAccepted handles this case with default header values.
+
+Accepted
+*/
+type PcloudCloudconnectionsNetworksDeleteAccepted struct {
+	Payload models.Object
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteAccepted) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksDeleteAccepted  %+v", 202, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	// response payload
+	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudCloudconnectionsNetworksDeleteBadRequest creates a PcloudCloudconnectionsNetworksDeleteBadRequest with default headers values
 func NewPcloudCloudconnectionsNetworksDeleteBadRequest() *PcloudCloudconnectionsNetworksDeleteBadRequest {
 	return &PcloudCloudconnectionsNetworksDeleteBadRequest{}
@@ -105,6 +146,35 @@ func (o *PcloudCloudconnectionsNetworksDeleteBadRequest) Error() string {
 }
 
 func (o *PcloudCloudconnectionsNetworksDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsNetworksDeleteUnauthorized creates a PcloudCloudconnectionsNetworksDeleteUnauthorized with default headers values
+func NewPcloudCloudconnectionsNetworksDeleteUnauthorized() *PcloudCloudconnectionsNetworksDeleteUnauthorized {
+	return &PcloudCloudconnectionsNetworksDeleteUnauthorized{}
+}
+
+/*PcloudCloudconnectionsNetworksDeleteUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudCloudconnectionsNetworksDeleteUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteUnauthorized) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

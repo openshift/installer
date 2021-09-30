@@ -39,6 +39,13 @@ func (o *PcloudSapGetReader) ReadResponse(response runtime.ClientResponse, consu
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudSapGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudSapGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -105,6 +112,35 @@ func (o *PcloudSapGetBadRequest) Error() string {
 }
 
 func (o *PcloudSapGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudSapGetUnauthorized creates a PcloudSapGetUnauthorized with default headers values
+func NewPcloudSapGetUnauthorized() *PcloudSapGetUnauthorized {
+	return &PcloudSapGetUnauthorized{}
+}
+
+/*PcloudSapGetUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudSapGetUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudSapGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}][%d] pcloudSapGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudSapGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

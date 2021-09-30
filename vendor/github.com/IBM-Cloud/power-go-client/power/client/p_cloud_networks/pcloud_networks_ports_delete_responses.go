@@ -39,6 +39,13 @@ func (o *PcloudNetworksPortsDeleteReader) ReadResponse(response runtime.ClientRe
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudNetworksPortsDeleteUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 410:
 		result := NewPcloudNetworksPortsDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -103,6 +110,35 @@ func (o *PcloudNetworksPortsDeleteBadRequest) Error() string {
 }
 
 func (o *PcloudNetworksPortsDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudNetworksPortsDeleteUnauthorized creates a PcloudNetworksPortsDeleteUnauthorized with default headers values
+func NewPcloudNetworksPortsDeleteUnauthorized() *PcloudNetworksPortsDeleteUnauthorized {
+	return &PcloudNetworksPortsDeleteUnauthorized{}
+}
+
+/*PcloudNetworksPortsDeleteUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudNetworksPortsDeleteUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudNetworksPortsDeleteUnauthorized) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudNetworksPortsDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
