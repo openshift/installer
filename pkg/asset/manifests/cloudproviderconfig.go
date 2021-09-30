@@ -14,6 +14,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	ibmcloudmanifests "github.com/openshift/installer/pkg/asset/manifests/ibmcloud"
@@ -169,7 +170,21 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		ibmcloudConfig, err := ibmcloudmanifests.CloudProviderConfig(clusterID.InfraID, accountID, installConfig.Config.IBMCloud.Region)
+		controlPlaneZones := installConfig.Config.ControlPlane.Platform.IBMCloud.Zones
+		if len(controlPlaneZones) < 1 {
+			controlPlaneZones, err = ibmcloudmachines.AvailabilityZones(installConfig.Config.IBMCloud.Region)
+			if err != nil {
+				return errors.Wrap(err, "could not create cloud provider config")
+			}
+		}
+		computeZones := installConfig.Config.Compute[0].Platform.IBMCloud.Zones
+		if len(computeZones) < 1 {
+			computeZones, err = ibmcloudmachines.AvailabilityZones(installConfig.Config.IBMCloud.Region)
+			if err != nil {
+				return errors.Wrap(err, "could not create cloud provider config")
+			}
+		}
+		ibmcloudConfig, err := ibmcloudmanifests.CloudProviderConfig(clusterID.InfraID, accountID, installConfig.Config.IBMCloud.Region, controlPlaneZones, computeZones)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
