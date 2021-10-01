@@ -20,12 +20,12 @@ const (
 
 var (
 	ctrlPlaneFlavorMinimums = flavorRequirements{
-		RAM:   16,
+		RAM:   16384,
 		VCPUs: 4,
 		Disk:  minimumStorage,
 	}
 	computeFlavorMinimums = flavorRequirements{
-		RAM:   8,
+		RAM:   8192,
 		VCPUs: 2,
 		Disk:  minimumStorage,
 	}
@@ -144,7 +144,7 @@ func validateFlavor(flavorName string, ci *CloudInfo, req flavorRequirements, fl
 
 	errs := []string{}
 	if flavor.RAM < req.RAM {
-		errs = append(errs, fmt.Sprintf("Must have minimum of %d GB RAM, had %d GB", req.RAM, flavor.RAM))
+		errs = append(errs, fmt.Sprintf("Must have minimum of %d MB RAM, had %d MB", req.RAM, flavor.RAM))
 	}
 	if flavor.VCPUs < req.VCPUs {
 		errs = append(errs, fmt.Sprintf("Must have minimum of %d VCPUs, had %d", req.VCPUs, flavor.VCPUs))
