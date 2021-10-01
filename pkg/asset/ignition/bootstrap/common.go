@@ -97,6 +97,7 @@ type Common struct {
 func (a *Common) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&baremetal.IronicCreds{},
+		&CVOIgnore{},
 		&installconfig.InstallConfig{},
 		&kubeconfig.AdminInternalClient{},
 		&kubeconfig.Kubelet{},
@@ -486,6 +487,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 		&machines.Worker{},
 		&mcign.MasterIgnitionCustomizations{},
 		&mcign.WorkerIgnitionCustomizations{},
+		&CVOIgnore{}, // this must come after manifests.Manifests so that it replaces cvo-overrides.yaml
 	} {
 		dependencies.Get(asset)
 
