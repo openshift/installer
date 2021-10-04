@@ -9,6 +9,7 @@ import (
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
+	"github.com/ghodss/yaml"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	kubevirtprovider "github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1"
 	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"
@@ -20,6 +21,7 @@ import (
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -30,6 +32,7 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcospkg "github.com/openshift/installer/pkg/rhcos"
@@ -71,8 +74,8 @@ const (
 	tfvarsAssetName = "Terraform Variables"
 )
 
-// TerraformVariables depends on InstallConfig and
-// Ignition to generate the terrafor.tfvars.
+// TerraformVariables depends on InstallConfig, Manifests,
+// and Ignition to generate the terrafor.tfvars.
 type TerraformVariables struct {
 	FileList []*asset.File
 }
@@ -97,6 +100,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&machines.Worker{},
 		&baremetalbootstrap.IronicCreds{},
 		&installconfig.PlatformProvisionCheck{},
+		&manifests.Manifests{},
 	}
 }
 
@@ -109,10 +113,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	masterIgnAsset := &machine.Master{}
 	mastersAsset := &machines.Master{}
 	workersAsset := &machines.Worker{}
+	manifestsAsset := &manifests.Manifests{}
 	rhcosImage := new(rhcos.Image)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
 	ironicCreds := &baremetalbootstrap.IronicCreds{}
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage, ironicCreds)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosBootstrapImage, ironicCreds)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -145,6 +150,19 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	}
 
 	masterCount := len(mastersAsset.MachineFiles)
+	mastersSchedulable := false
+	for _, f := range manifestsAsset.Files() {
+		if f.Filename == manifests.SchedulerCfgFilename {
+			schedulerConfig := configv1.Scheduler{}
+			err = yaml.Unmarshal(f.Data, &schedulerConfig)
+			if err != nil {
+				return errors.Wrapf(err, "failed to unmarshall %s", manifests.SchedulerCfgFilename)
+			}
+			mastersSchedulable = schedulerConfig.Spec.MastersSchedulable
+			break
+		}
+	}
+
 	data, err := tfvars.TFVars(
 		clusterID.InfraID,
 		installConfig.Config.ClusterDomain(),
@@ -156,6 +174,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		bootstrapIgn,
 		masterIgn,
 		masterCount,
+		mastersSchedulable,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to get Terraform variables")
