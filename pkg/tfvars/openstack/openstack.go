@@ -4,6 +4,7 @@ package openstack
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"path/filepath"
 
@@ -12,12 +13,16 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	installconfig_openstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
+	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types"
 	types_openstack "github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/pkg/errors"
+	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
@@ -48,7 +53,59 @@ type config struct {
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy) ([]byte, error) {
+func TFVars(
+	installConfig *installconfig.InstallConfig,
+	mastersAsset *machines.Master,
+	_ *machines.Worker,
+	rhcosImage string,
+	clusterID *installconfig.ClusterID,
+	bootstrapIgn string,
+) ([]byte, error) {
+	cloud, err := installconfig_openstack.GetSession(installConfig.Config.Platform.OpenStack.Cloud)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get cloud config for openstack")
+	}
+	var caCert string
+	// Get the ca-cert-bundle key if there is a value for cacert in clouds.yaml
+	if caPath := cloud.CloudConfig.CACertFile; caPath != "" {
+		caFile, err := ioutil.ReadFile(caPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read clouds.yaml ca-cert from disk: %w", err)
+		}
+		caCert = string(caFile)
+	}
+
+	masters, err := mastersAsset.Machines()
+	if err != nil {
+		return nil, err
+	}
+
+	var masterSpecs []*openstackprovider.OpenstackProviderSpec
+	for _, master := range masters {
+		masterSpecs = append(masterSpecs, master.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec))
+	}
+	return tfVars(
+		masterSpecs,
+		installConfig.Config.Platform.OpenStack.Cloud,
+		installConfig.Config.Platform.OpenStack.ExternalNetwork,
+		installConfig.Config.Platform.OpenStack.ExternalDNS,
+		installConfig.Config.Platform.OpenStack.APIFloatingIP,
+		installConfig.Config.Platform.OpenStack.IngressFloatingIP,
+		installConfig.Config.Platform.OpenStack.APIVIP,
+		installConfig.Config.Platform.OpenStack.IngressVIP,
+		rhcosImage,
+		installConfig.Config.Platform.OpenStack.ClusterOSImageProperties,
+		clusterID.InfraID,
+		caCert,
+		bootstrapIgn,
+		installConfig.Config.ControlPlane.Platform.OpenStack,
+		installConfig.Config.OpenStack.DefaultMachinePlatform,
+		installConfig.Config.Platform.OpenStack.MachinesSubnet,
+		installConfig.Config.Proxy,
+	)
+}
+
+func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy) ([]byte, error) {
 	zones := []string{}
 	seen := map[string]bool{}
 	for _, config := range masterConfigs {
