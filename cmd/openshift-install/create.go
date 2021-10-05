@@ -158,6 +158,10 @@ var (
 	}
 
 	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeIgnitionConfigTarget}
+
+	createClusterOpts struct {
+		hideLoginInfo bool
+	}
 )
 
 // clusterCreateError defines a custom error type that would help identify where the error occurs
@@ -217,6 +221,7 @@ func newCreateCmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
+	cmd.PersistentFlags().BoolVar(&createClusterOpts.hideLoginInfo, "hide-login-info", false, "Do not print login password after the installation is complete, but the file name where it's stored")
 
 	for _, t := range targets {
 		t.command.Args = cobra.ExactArgs(0)
@@ -552,7 +557,11 @@ func logComplete(directory, consoleURL string) error {
 	logrus.Info("Install complete!")
 	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=%s'", kubeconfig)
 	logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
-	logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
+	if !createClusterOpts.hideLoginInfo {
+		logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
+	} else {
+		logrus.Infof("Login to the console with user: %q, and password from %s", "kubeadmin", pwFile)
+	}
 	return nil
 }
 
