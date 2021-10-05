@@ -364,3 +364,13 @@ variable "openstack_master_root_volume_availability_zones" {
   default     = [""]
   description = "List of availability Zones to Schedule the masters root volumes on."
 }
+
+variable "openstack_worker_server_group_names" {
+  type        = set(string)
+  description = "Names of the server groups for the worker nodes."
+}
+
+variable "openstack_worker_server_group_policy" {
+  type        = string
+  description = "Policy of the server groups for the worker nodes."
+}

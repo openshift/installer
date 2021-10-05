@@ -22,3 +22,8 @@ const (
 // +kubebuilder:validation:Enum="";affinity;soft-affinity;anti-affinity;soft-anti-affinity
 // +optional
 type ServerGroupPolicy string
+
+// IsSet returns true when p is not the empty string.
+func (p ServerGroupPolicy) IsSet() bool {
+	return p != SGPolicyUnset
+}
