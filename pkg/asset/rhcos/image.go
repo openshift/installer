@@ -40,7 +40,7 @@ func (i *Image) Name() string {
 	return "Image"
 }
 
-// Dependencies returns no dependencies.
+// Dependencies returns dependencies used by the RHCOS asset.
 func (i *Image) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
