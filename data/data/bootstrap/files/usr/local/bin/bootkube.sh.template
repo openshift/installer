@@ -428,10 +428,16 @@ else
     then
         record_service_stage_start "cvo-overrides"
         # remove overrides for installer manifests and restore any user-supplied overrides
-        oc patch clusterversion.config.openshift.io version \
-            --kubeconfig=/opt/openshift/auth/kubeconfig \
-            --type=merge \
-            --patch-file=/opt/openshift/original_cvo_overrides.patch
+        echo "Restoring CVO overrides"
+        until \
+            oc patch clusterversion.config.openshift.io version \
+                --kubeconfig=/opt/openshift/auth/kubeconfig \
+                --type=merge \
+                --patch-file=/opt/openshift/original_cvo_overrides.patch
+        do
+            sleep 10
+            echo "Trying again to restore CVO overrides"
+        done
         touch cvo-overrides.done
         record_service_stage_success
     fi
