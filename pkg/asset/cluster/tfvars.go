@@ -603,6 +603,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
 			Data:     data,
 		})
+	//case powervs.Name:
+	// @TODO: Omitting for now to keep PRs seperate as this will pull in
+	// installconfig, types, and assets
+
 	case vsphere.Name:
 		controlPlanes, err := mastersAsset.Machines()
 		if err != nil {
