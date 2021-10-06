@@ -35,13 +35,13 @@ resource "ibm_resource_instance" "cos" {
 module "image" {
   source = "./image"
 
-  name                     = "${var.cluster_id}-rhcos"
-  image_filepath           = var.ibmcloud_image_filepath
-  cluster_id               = var.cluster_id
-  region                   = var.ibmcloud_region
-  resource_group_id        = local.resource_group_id
-  tags                     = local.tags
-  cos_resource_instance_id = ibm_resource_instance.cos.id
+  name                      = "${var.cluster_id}-rhcos"
+  image_filepath            = var.ibmcloud_image_filepath
+  cluster_id                = var.cluster_id
+  region                    = var.ibmcloud_region
+  resource_group_id         = local.resource_group_id
+  tags                      = local.tags
+  cos_resource_instance_crn = ibm_resource_instance.cos.crn
 }
 
 ############################################

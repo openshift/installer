@@ -68,7 +68,7 @@ func (o *ClusterUninstaller) policyMatches(policy iampolicymanagementv1.Policy) 
 		*policy.Resources[0].Attributes[1].Name == "serviceName" &&
 		*policy.Resources[0].Attributes[1].Value == "cloud-object-storage" &&
 		*policy.Resources[0].Attributes[2].Name == "serviceInstance" &&
-		strings.Contains(*policy.Resources[0].Attributes[2].Value, cosInstanceID) &&
+		strings.Contains(cosInstanceID, *policy.Resources[0].Attributes[2].Value) &&
 		*policy.Resources[0].Attributes[2].Operator == "stringEquals"
 
 	return onlyOneSubject && onlyOneResource && subjectMatches && resourceMatches

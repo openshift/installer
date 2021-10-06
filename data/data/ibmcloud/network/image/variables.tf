@@ -22,6 +22,6 @@ variable "tags" {
   type = list(string)
 }
 
-variable "cos_resource_instance_id" {
+variable "cos_resource_instance_crn" {
   type = string
 }
