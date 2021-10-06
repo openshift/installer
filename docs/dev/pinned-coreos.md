@@ -24,7 +24,7 @@ that data into the cluster as well.
 To update the bootimage for one or more architectures, use e.g.
 
 ```
-$ plume cosa2stream --target data/data/rhcos-stream.json --distro rhcos  x86_64=48.83.202102230316-0 s390x=47.83.202102090311-0 ppc64le=47.83.202102091015-0 --url https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases
+$ plume cosa2stream --target data/data/rhcos-stream.json --distro rhcos  x86_64=48.83.202102230316-0 s390x=47.83.202102090311-0 ppc64le=47.83.202102091015-0 --url https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases --no-signatures
 ```
 
 For more information on this command, see:
