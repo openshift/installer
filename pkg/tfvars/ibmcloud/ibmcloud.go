@@ -3,6 +3,8 @@ package ibmcloud
 import (
 	"encoding/json"
 
+	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1"
+
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
@@ -30,18 +32,11 @@ type config struct {
 type TFVarsSources struct {
 	Auth              Auth
 	CISInstanceCRN    string
+	ImageURL          string
+	MasterConfigs     []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	PublishStrategy   types.PublishingStrategy
 	ResourceGroupName string
-
-	// TODO: IBM: Fetch config from masterConfig instead
-	MachineType             string
-	MasterAvailabilityZones []string
-	Region                  string
-	ImageURL                string
-
-	// TODO: IBM: Future support
-	// MasterConfigs      []*ibmcloudprovider.ibmcloudMachineProviderSpec
-	// WorkerConfigs      []*ibmcloudprovider.ibmcloudMachineProviderSpec
+	WorkerConfigs     []*ibmcloudprovider.IBMCloudMachineProviderSpec
 }
 
 // TFVars generates ibmcloud-specific Terraform variables launching the cluster.
@@ -51,33 +46,26 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to use cached ibmcloud image")
 	}
 
-	// TODO: IBM: Future support
-	// masterConfig := sources.MasterConfigs[0]
+	masterConfig := sources.MasterConfigs[0]
 	// workerConfig := sources.WorkerConfigs[0]
-	// masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
-	// for i, c := range sources.MasterConfigs {
-	// 	masterAvailabilityZones[i] = c.Zone
-	// }
+	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
+	for i, c := range sources.MasterConfigs {
+		masterAvailabilityZones[i] = c.Zone
+	}
 
 	cfg := &config{
-		Auth:              sources.Auth,
-		CISInstanceCRN:    sources.CISInstanceCRN,
-		PublishStrategy:   string(sources.PublishStrategy),
-		ResourceGroupName: sources.ResourceGroupName,
-
-		// TODO: IBM: Fetch config from masterConfig instead
-		BootstrapInstanceType:   sources.MachineType,
-		MasterAvailabilityZones: sources.MasterAvailabilityZones,
-		MasterInstanceType:      sources.MachineType,
-		Region:                  sources.Region,
+		Auth:                    sources.Auth,
+		BootstrapInstanceType:   masterConfig.Profile,
+		CISInstanceCRN:          sources.CISInstanceCRN,
 		ImageFilePath:           cachedImage,
+		MasterAvailabilityZones: masterAvailabilityZones,
+		MasterInstanceType:      masterConfig.Profile,
+		PublishStrategy:         string(sources.PublishStrategy),
+		Region:                  masterConfig.Region,
+		ResourceGroupName:       sources.ResourceGroupName,
 
 		// TODO: IBM: Future support
 		// ExtraTags:               masterConfig.Tags,
-		// Region:                  masterConfig.Region,
-		// BootstrapInstanceType:   masterConfig.MachineType,
-		// MasterInstanceType:      masterConfig.MachineType,
-		// MasterAvailabilityZones: masterAvailabilityZones,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
