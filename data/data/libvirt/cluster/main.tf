@@ -8,31 +8,16 @@ resource "libvirt_pool" "storage_pool" {
   path = "/var/lib/libvirt/openshift-images/${var.cluster_id}"
 }
 
-module "volume" {
-  source = "./volume"
-
-  cluster_id = var.cluster_id
-  image      = var.os_image
-  pool       = libvirt_pool.storage_pool.name
-}
-
-module "bootstrap" {
-  source = "./bootstrap"
-
-  cluster_domain   = var.cluster_domain
-  addresses        = [var.libvirt_bootstrap_ip]
-  base_volume_id   = module.volume.coreos_base_volume_id
-  cluster_id       = var.cluster_id
-  ignition         = var.ignition_bootstrap
-  network_id       = libvirt_network.net.id
-  pool             = libvirt_pool.storage_pool.name
-  bootstrap_memory = var.libvirt_bootstrap_memory
+resource "libvirt_volume" "coreos_base" {
+  name   = "${var.cluster_id}-base"
+  source = var.os_image
+  pool   = libvirt_pool.storage_pool.name
 }
 
 resource "libvirt_volume" "master" {
   count          = var.master_count
   name           = "${var.cluster_id}-master-${count.index}"
-  base_volume_id = module.volume.coreos_base_volume_id
+  base_volume_id = libvirt_volume.coreos_base.id
   pool           = libvirt_pool.storage_pool.name
   size           = var.libvirt_master_size
 }
@@ -145,4 +130,3 @@ data "libvirt_network_dnsmasq_options_template" "options" {
   option_name  = var.libvirt_dnsmasq_options[count.index]["option_name"]
   option_value = var.libvirt_dnsmasq_options[count.index]["option_value"]
 }
-
