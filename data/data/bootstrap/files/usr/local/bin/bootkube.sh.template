@@ -420,22 +420,22 @@ then
     fi
 fi
 
-if [ ! -f cvo-overrides.done ]
-then
-    record_service_stage_start "cvo-overrides"
-    # remove overrides for installer manifests and restore any user-supplied overrides
-    oc patch clusterversion.config.openshift.io version \
-        --kubeconfig=/opt/openshift/auth/kubeconfig \
-        --type=merge \
-        --patch-file=/opt/openshift/original_cvo_overrides.patch
-    touch cvo-overrides.done
-    record_service_stage_success
-fi
-
 if [ "$BOOTSTRAP_INPLACE" = true ]
 then
     . /usr/local/bin/bootstrap-in-place.sh "${CLUSTER_BOOTSTRAP_IMAGE}"
 else
+    if [ ! -f cvo-overrides.done ]
+    then
+        record_service_stage_start "cvo-overrides"
+        # remove overrides for installer manifests and restore any user-supplied overrides
+        oc patch clusterversion.config.openshift.io version \
+            --kubeconfig=/opt/openshift/auth/kubeconfig \
+            --type=merge \
+            --patch-file=/opt/openshift/original_cvo_overrides.patch
+        touch cvo-overrides.done
+        record_service_stage_success
+    fi
+
     rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
     if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
