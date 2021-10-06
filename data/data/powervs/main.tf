@@ -1,7 +1,8 @@
 provider "ibm" {
-  alias = "vpc"
-  ibmcloud_api_key      = var.powervs_api_key
-  region                = var.powervs_vpc_region
+  alias            = "vpc"
+  ibmcloud_api_key = var.powervs_api_key
+  region           = var.powervs_vpc_region
+  zone             = var.powervs_vpc_zone
 }
 
 provider "ibm" {
@@ -11,7 +12,7 @@ provider "ibm" {
 }
 
 resource "ibm_pi_key" "cluster_key" {
-  provider = ibm.powervs
+  provider             = ibm.powervs
   pi_key_name          = "${var.cluster_id}-key"
   pi_ssh_key           = var.powervs_ssh_key
   pi_cloud_instance_id = var.powervs_cloud_instance_id
@@ -62,18 +63,18 @@ module "master" {
 
 data "ibm_is_subnet" "vpc_subnet" {
   provider = ibm.vpc
-  name = var.powervs_vpc_subnet_name
+  name     = var.powervs_vpc_subnet_name
 }
 
 data "ibm_pi_image" "boot_image" {
-  provider = ibm.powervs
-  pi_image_name    = var.powervs_image_name
+  provider             = ibm.powervs
+  pi_image_name        = var.powervs_image_name
   pi_cloud_instance_id = var.powervs_cloud_instance_id
 }
 
 data "ibm_pi_network" "pvs_net" {
-  provider = ibm.powervs
-  pi_network_name = var.powervs_network_name
+  provider             = ibm.powervs
+  pi_network_name      = var.powervs_network_name
   pi_cloud_instance_id = var.powervs_cloud_instance_id
 }
 
@@ -83,12 +84,12 @@ module "loadbalancer" {
   }
   source = "./loadbalancer"
 
-  cluster_id    = var.cluster_id
-  vpc_name      = var.powervs_vpc_name
-  vpc_subnet_id = data.ibm_is_subnet.vpc_subnet.id
-  bootstrap_ip  = module.bootstrap.bootstrap_ip
-  master_ips = module.master.master_ips
-  resource_group    = var.powervs_resource_group
+  cluster_id     = var.cluster_id
+  vpc_name       = var.powervs_vpc_name
+  vpc_subnet_id  = data.ibm_is_subnet.vpc_subnet.id
+  bootstrap_ip   = module.bootstrap.bootstrap_ip
+  master_ips     = module.master.master_ips
+  resource_group = var.powervs_resource_group
 }
 
 

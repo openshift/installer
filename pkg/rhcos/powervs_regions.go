@@ -1,70 +1,86 @@
 package rhcos
 
-// TODO(cklokman): This entire file should be programatically generated similar to aws
+// Since there is no API to query these, we have to hard-code them here.
 
-// PowerVSZones holds the zones cooresponding to each region found in PowerVS Regions
-// TODO(cklokman): These are fictional zones for testing
-var PowerVSZones = map[string][]string{
-	"eu-de": []string{
-		"eu-de-1",
-		"eu-de-2",
-	},
-	"dal": []string{"dal12"},
-	"lon": []string{
-		"lon04",
-		"lon06",
-	},
-	"mon":     []string{"mon01"},
-	"osa":     []string{"osa21"},
-	"syd":     []string{"syd04"},
-	"sao":     []string{"sao01"},
-	"tor":     []string{"tor01"},
-	"tok":     []string{"tok04"},
-	"us-east": []string{"us-east"},
+// PowerVSRegion describes resources associated with a region in Power VS.
+// We're using a few items from the IBM Cloud VPC offering. The region names
+// for VPC are different so another function of this is to correlate those.
+type PowerVSRegion struct {
+	Name        string
+	Description string
+	VPCRegion   string
+	Zones       []string
 }
 
 // PowerVSRegions holds the regions for IBM Power VS, and descriptions used during the survey
-// TODO(cklokman): These are fictional regtions for testing
-var PowerVSRegions = []map[string]string{
-	map[string]string{
-		"name":        "dal",
-		"description": "Dallas, USA",
+var PowerVSRegions = map[string]PowerVSRegion{
+	"dal": {
+		Name:        "dal",
+		Description: "Dallas, USA",
+		VPCRegion:   "us-south",
+		Zones:       []string{"dal12"},
 	},
-	map[string]string{
-		"name":        "eu-de",
-		"description": "Frankfurt, Germany",
+	"eu-de": {
+		Name:        "eu-de",
+		Description: "Frankfurt, Germany",
+		VPCRegion:   "eu-de",
+		Zones: []string{
+			"eu-de-1",
+			"eu-de-2",
+		},
 	},
-	map[string]string{
-		"name":        "lon",
-		"description": "London, UK.",
+	"lon": {
+		Name:        "lon",
+		Description: "London, UK.",
+		VPCRegion:   "eu-gb",
+		Zones: []string{
+			"lon04",
+			"lon06",
+		},
 	},
-	map[string]string{
-		"name":        "mon",
-		"description": "Montreal, Canada",
+	"osa": {
+		Name:        "osa",
+		Description: "Osaka, Japan",
+		VPCRegion:   "jp-osa",
+		Zones:       []string{"osa21"},
 	},
+	"syd": {
+		Name:        "syd",
+		Description: "Sydney, Australia",
+		VPCRegion:   "au-syd",
+		Zones:       []string{"syd04"},
+	},
+	"sao": {
+		Name:        "sao",
+		Description: "São Paulo, Brazil",
+		VPCRegion:   "br-sao",
+		Zones:       []string{"sao01"},
+	},
+	"tor": {
+		Name:        "tor",
+		Description: "Toronto, Canada",
+		VPCRegion:   "ca-tor",
+		Zones:       []string{"tor01"},
+	},
+	"tok": {
+		Name:        "tok",
+		Description: "Tokyo, Japan",
+		VPCRegion:   "jp-tok",
+		Zones:       []string{"tok04"},
+	},
+	"us-east": {
+		Name:        "us-east",
+		Description: "Washington DC, USA",
+		VPCRegion:   "us-east",
+		Zones:       []string{"us-east"},
+	},
+}
 
-	map[string]string{
-		"name":        "osa",
-		"description": "Osaka, Japan",
-	},
-	map[string]string{
-		"name":        "syd",
-		"description": "Sydney, Australia",
-	},
-	map[string]string{
-		"name":        "sao",
-		"description": "São Paulo, Brazil",
-	},
-	map[string]string{
-		"name":        "tor",
-		"description": "Toronto, Canada",
-	},
-	map[string]string{
-		"name":        "tok",
-		"description": "Tokyo, Japan",
-	},
-	map[string]string{
-		"name":        "us-east",
-		"description": "Washington DC, USA",
-	},
+// PowerVSZones retrieves a slice of all zones in Power VS
+func PowerVSZones() []string {
+	var zones []string
+	for _, r := range PowerVSRegions {
+		zones = append(zones, r.Zones...)
+	}
+	return zones
 }

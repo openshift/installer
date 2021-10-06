@@ -5,9 +5,9 @@
 ## And since they're optional, use the count = construct to conditionally create them if the tf
 ## vars are unset.
 
-# Note, the following are incomplete placeholders to be tested and reviewed later when the TF
-support for these has been added to the ibmcloud terraform provider (which is now forked into
-https://github.com/openshift/terraform-provider-ibm)
+## Note, the following are incomplete placeholders to be tested and reviewed later when the TF
+## support for these has been added to the ibmcloud terraform provider (which is now forked into
+## https://github.com/openshift/terraform-provider-ibm)
 
 #resource "ibm_direct_link" "ocp_direct_link" {
 # TODO
@@ -15,8 +15,8 @@ https://github.com/openshift/terraform-provider-ibm)
 
 #resource "ibm_pi_network" "ocp_network" {
 #  provider             = ibm.powervs
-#  count                = var.powervs_network_id == "" ? 1 : 0
-#  pi_network_name      = "pvs_net_${var.cluster_id}"
+#  count                = var.powervs_network_name == "" ? 1 : 0
+#  pi_network_name      = "pvs-net-${var.cluster_id}"
 #  pi_cloud_instance_id = "powervs_cloud_instance_id"
 #  pi_network_type      = "dhcp"
 #  pi_cidr              = "192.168.0.0/24"

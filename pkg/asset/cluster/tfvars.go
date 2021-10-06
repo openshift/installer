@@ -610,49 +610,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
 			Data:     data,
 		})
-	case powervs.Name:
-		session, err := powervsconfig.GetSession()
-		if err != nil {
-			return err
-		}
-
-		masters, err := mastersAsset.Machines()
-		if err != nil {
-			return err
-		}
-
-		// Get CISInstanceCRN from InstallConfig metadata
-		crn, err := installConfig.PowerVS.CISInstanceCRN(ctx)
-		if err != nil {
-			return err
-		}
-
-		masterConfigs := make([]*powervsprovider.PowerVSMachineProviderConfig, len(masters))
-		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*powervsprovider.PowerVSMachineProviderConfig)
-		}
-
-		data, err = powervstfvars.TFVars(
-			powervstfvars.TFVarsSources{
-				MasterConfigs:        masterConfigs,
-				PowerVSZone:          session.Session.Zone,
-				APIKey:               session.Session.IAMToken,
-				SSHKey:               installConfig.Config.SSHKey,
-				PowerVSResourceGroup: installConfig.Config.PowerVS.PowerVSResourceGroup,
-				NetworkName:          installConfig.Config.PowerVS.PVSNetworkName,
-				ImageName:            installConfig.Config.PowerVS.ImageName,
-				CISInstanceCRN:       crn,
-				VPCSubnetName:        installConfig.Config.PowerVS.Subnets[0],
-				VPCName:              installConfig.Config.PowerVS.VPC,
-			},
-		)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
-		}
-		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
-			Data:     data,
-		})
+	//case powervs.Name:
+	// @TODO: Omitting for now to keep PRs seperate as this will pull in
+	// installconfig, types, and assets
 
 	case vsphere.Name:
 		controlPlanes, err := mastersAsset.Machines()

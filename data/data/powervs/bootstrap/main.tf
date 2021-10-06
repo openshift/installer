@@ -14,7 +14,7 @@ data "ibm_pi_image" "bootstrap_image" {
 
 data "ignition_config" "bootstrap" {
   merge {
-    source  = ibms3presign.bootstrap_ignition.presigned_url
+    source = ibms3presign.bootstrap_ignition.presigned_url
   }
 }
 
@@ -47,12 +47,12 @@ resource "ibm_resource_key" "cos_service_cred" {
 }
 
 resource "ibms3presign" "bootstrap_ignition" {
-  access_key_id = ibm_resource_key.cos_service_cred.credentials["cos_hmac_keys.access_key_id"]
+  access_key_id     = ibm_resource_key.cos_service_cred.credentials["cos_hmac_keys.access_key_id"]
   secret_access_key = ibm_resource_key.cos_service_cred.credentials["cos_hmac_keys.secret_access_key"]
-  bucket_name = "${var.cluster_id}-bootstrap-ign"
-  key = "bootstrap.ign"
-  region_location = ibm_cos_bucket.ignition.region_location
-  storage_class = ibm_cos_bucket.ignition.storage_class
+  bucket_name       = "${var.cluster_id}-bootstrap-ign"
+  key               = "bootstrap.ign"
+  region_location   = ibm_cos_bucket.ignition.region_location
+  storage_class     = ibm_cos_bucket.ignition.storage_class
 }
 
 # Place the bootstrap ignition file in the ignition COS bucket
