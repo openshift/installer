@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
+	"github.com/ghodss/yaml"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
+	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1"
 	kubevirtprovider "github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1"
 	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
@@ -20,8 +21,8 @@ import (
 	"github.com/sirupsen/logrus"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
-	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -30,9 +31,9 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
-	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcospkg "github.com/openshift/installer/pkg/rhcos"
@@ -74,8 +75,8 @@ const (
 	tfvarsAssetName = "Terraform Variables"
 )
 
-// TerraformVariables depends on InstallConfig and
-// Ignition to generate the terrafor.tfvars.
+// TerraformVariables depends on InstallConfig, Manifests,
+// and Ignition to generate the terrafor.tfvars.
 type TerraformVariables struct {
 	FileList []*asset.File
 }
@@ -100,6 +101,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&machines.Worker{},
 		&baremetalbootstrap.IronicCreds{},
 		&installconfig.PlatformProvisionCheck{},
+		&manifests.Manifests{},
 	}
 }
 
@@ -112,10 +114,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	masterIgnAsset := &machine.Master{}
 	mastersAsset := &machines.Master{}
 	workersAsset := &machines.Worker{}
+	manifestsAsset := &manifests.Manifests{}
 	rhcosImage := new(rhcos.Image)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
 	ironicCreds := &baremetalbootstrap.IronicCreds{}
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage, ironicCreds)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosBootstrapImage, ironicCreds)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -148,6 +151,19 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	}
 
 	masterCount := len(mastersAsset.MachineFiles)
+	mastersSchedulable := false
+	for _, f := range manifestsAsset.Files() {
+		if f.Filename == manifests.SchedulerCfgFilename {
+			schedulerConfig := configv1.Scheduler{}
+			err = yaml.Unmarshal(f.Data, &schedulerConfig)
+			if err != nil {
+				return errors.Wrapf(err, "failed to unmarshall %s", manifests.SchedulerCfgFilename)
+			}
+			mastersSchedulable = schedulerConfig.Spec.MastersSchedulable
+			break
+		}
+	}
+
 	data, err := tfvars.TFVars(
 		clusterID.InfraID,
 		installConfig.Config.ClusterDomain(),
@@ -159,6 +175,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		bootstrapIgn,
 		masterIgn,
 		masterCount,
+		mastersSchedulable,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to get Terraform variables")
@@ -413,28 +430,22 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			APIKey: client.Authenticator.ApiKey,
 		}
 
-		// TODO: IBM: Get master and worker machine info
-		// masters, err := mastersAsset.Machines()
-		// if err != nil {
-		// 	return err
-		// }
-		// masterConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(masters))
-		// for i, m := range masters {
-		// 	masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
-		// }
-		// workers, err := workersAsset.MachineSets()
-		// if err != nil {
-		// 	return err
-		// }
-		// workerConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(workers))
-		// for i, w := range workers {
-		// 	workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
-		// }
-
-		// TODO: IBM: Fetch config from masterConfig instead
-		zones, err := client.GetVPCZonesForRegion(ctx, installConfig.Config.Platform.IBMCloud.Region)
+		// Get master and worker machine info
+		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
+		}
+		masterConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(masters))
+		for i, m := range masters {
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
+		}
+		workers, err := workersAsset.MachineSets()
+		if err != nil {
+			return err
+		}
+		workerConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(workers))
+		for i, w := range workers {
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
 		}
 
 		// Get CISInstanceCRN from InstallConfig metadata
@@ -447,14 +458,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			ibmcloudtfvars.TFVarsSources{
 				Auth:              auth,
 				CISInstanceCRN:    crn,
+				ImageURL:          string(*rhcosImage),
+				MasterConfigs:     masterConfigs,
 				PublishStrategy:   installConfig.Config.Publish,
 				ResourceGroupName: installConfig.Config.Platform.IBMCloud.ResourceGroupName,
-
-				// TODO: IBM: Fetch config from masterConfig instead
-				Region:                  installConfig.Config.Platform.IBMCloud.Region,
-				MachineType:             "bx2d-4x16",
-				MasterAvailabilityZones: zones,
-				ImageURL:                string(*rhcosImage),
+				WorkerConfigs:     workerConfigs,
 			},
 		)
 		if err != nil {
@@ -497,47 +505,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case openstack.Name:
-		cloud, err := openstackconfig.GetSession(installConfig.Config.Platform.OpenStack.Cloud)
-		if err != nil {
-			return errors.Wrap(err, "failed to get cloud config for openstack")
-		}
-		var caCert string
-		// Get the ca-cert-bundle key if there is a value for cacert in clouds.yaml
-		if caPath := cloud.CloudConfig.CACertFile; caPath != "" {
-			caFile, err := ioutil.ReadFile(caPath)
-			if err != nil {
-				return errors.Wrap(err, "failed to read clouds.yaml ca-cert from disk")
-			}
-			caCert = string(caFile)
-		}
-
-		masters, err := mastersAsset.Machines()
-		if err != nil {
-			return err
-		}
-
-		var masterSpecs []*openstackprovider.OpenstackProviderSpec
-		for _, master := range masters {
-			masterSpecs = append(masterSpecs, master.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec))
-		}
 		data, err = openstacktfvars.TFVars(
-			masterSpecs,
-			installConfig.Config.Platform.OpenStack.Cloud,
-			installConfig.Config.Platform.OpenStack.ExternalNetwork,
-			installConfig.Config.Platform.OpenStack.ExternalDNS,
-			installConfig.Config.Platform.OpenStack.APIFloatingIP,
-			installConfig.Config.Platform.OpenStack.IngressFloatingIP,
-			installConfig.Config.Platform.OpenStack.APIVIP,
-			installConfig.Config.Platform.OpenStack.IngressVIP,
+			installConfig,
+			mastersAsset,
+			workersAsset,
 			string(*rhcosImage),
-			installConfig.Config.Platform.OpenStack.ClusterOSImageProperties,
-			clusterID.InfraID,
-			caCert,
+			clusterID,
 			bootstrapIgn,
-			installConfig.Config.ControlPlane.Platform.OpenStack,
-			installConfig.Config.OpenStack.DefaultMachinePlatform,
-			installConfig.Config.Platform.OpenStack.MachinesSubnet,
-			installConfig.Config.Proxy,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

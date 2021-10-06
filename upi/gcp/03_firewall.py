@@ -62,6 +62,9 @@ def GenerateConfig(context):
             },{
                 'IPProtocol': 'tcp',
                 'ports': ['22623']
+            },{
+                'IPProtocol': 'tcp',
+                'ports': ['10357']
             }],
             'sourceTags': [
                 context.properties['infra_id'] + '-master',

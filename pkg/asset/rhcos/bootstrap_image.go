@@ -31,13 +31,15 @@ func (i *BootstrapImage) Name() string {
 func (i *BootstrapImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		new(Image),
 	}
 }
 
 // Generate the RHCOS Bootstrap image location.
 func (i *BootstrapImage) Generate(p asset.Parents) error {
 	ic := &installconfig.InstallConfig{}
-	p.Get(ic)
+	rhcosImage := new(Image)
+	p.Get(ic, rhcosImage)
 	config := ic.Config
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
@@ -73,11 +75,7 @@ func (i *BootstrapImage) Generate(p asset.Parents) error {
 		return fmt.Errorf("%s: No qemu build found", st.FormatPrefix(archName))
 	default:
 		// other platforms use the same image for all nodes
-		u, err := osImage(config)
-		if err != nil {
-			return err
-		}
-		*i = BootstrapImage(u)
+		*i = BootstrapImage(string(*rhcosImage))
 		return nil
 	}
 }

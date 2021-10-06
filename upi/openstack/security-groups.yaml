@@ -142,6 +142,14 @@
       port_range_min: 10257
       port_range_max: 10257
 
+  - name: 'Create master-sg rule "cluster policy controller"'
+    os_security_group_rule:
+      security_group: "{{ os_sg_master }}"
+      protocol: tcp
+      remote_ip_prefix: "{{ os_subnet_range }}"
+      port_range_min: 10357
+      port_range_max: 10357
+
   - name: 'Create master-sg rule "master ingress kubelet secure"'
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"

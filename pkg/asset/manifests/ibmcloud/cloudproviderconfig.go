@@ -3,6 +3,8 @@ package ibmcloud
 import (
 	"bytes"
 	"fmt"
+	"sort"
+	"strings"
 	"text/template"
 )
 
@@ -29,10 +31,11 @@ type provider struct {
 	G2CredentialsFilePath    string `gcfg:"g2Credentials"`
 	G2VPCName                string `gcfg:"g2VpcName"`
 	G2WorkerServiceAccountID string `gcfg:"g2workerServiceAccountID"`
+	G2VPCSubnetNames         string `gcfg:"g2VpcSubnetNames"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBMCloud platform.
-func CloudProviderConfig(infraID string, accountID string, region string) (string, error) {
+func CloudProviderConfig(infraID string, accountID string, region string, controlPlaneZones []string, computeZones []string) (string, error) {
 	config := &config{
 		Global: global{
 			Version: "1.1.0",
@@ -48,6 +51,7 @@ func CloudProviderConfig(infraID string, accountID string, region string) (strin
 			G2CredentialsFilePath:    "/etc/vpc/ibmcloud_api_key",
 			G2VPCName:                fmt.Sprintf("%s-vpc", infraID),
 			G2WorkerServiceAccountID: accountID,
+			G2VPCSubnetNames:         getVpcSubnetNames(infraID, controlPlaneZones, computeZones),
 		},
 	}
 	buf := &bytes.Buffer{}
@@ -56,6 +60,22 @@ func CloudProviderConfig(infraID string, accountID string, region string) (strin
 		return "", err
 	}
 	return buf.String(), nil
+}
+
+// Generate a string of Subnet names for Control Plane and Compute based off the cluster name
+func getVpcSubnetNames(infraID string, controlPlaneZones []string, computeZones []string) string {
+	var subnetNames []string
+
+	for cpIndex := range controlPlaneZones {
+		// Add Control Plane subnet
+		subnetNames = append(subnetNames, fmt.Sprintf("%s-subnet-control-plane-%s", infraID, controlPlaneZones[cpIndex]))
+	}
+	for comIndex := range computeZones {
+		// Add Compute subnet
+		subnetNames = append(subnetNames, fmt.Sprintf("%s-subnet-compute-%s", infraID, computeZones[comIndex]))
+	}
+	sort.Strings(subnetNames)
+	return strings.Join(subnetNames, ",")
 }
 
 var configTmpl = `[global]
@@ -70,5 +90,6 @@ region = {{.Provider.Region}}
 g2Credentials = {{.Provider.G2CredentialsFilePath}}
 g2VpcName = {{.Provider.G2VPCName}}
 g2workerServiceAccountID = {{.Provider.G2WorkerServiceAccountID}}
+g2VpcSubnetNames = {{.Provider.G2VPCSubnetNames}}
 
 `

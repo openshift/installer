@@ -80,9 +80,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		}
 
 		provider = providerConfigs[zone]
-		if role == "master" {
-			provider.ServerGroupName = clusterID + "-master"
-		}
 
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
@@ -147,6 +144,10 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		})
 	}
 
+	serverGroupName := clusterID + "-" + role
+	if az != "" {
+		serverGroupName += "-" + az
+	}
 	spec := openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: openstackprovider.SchemeGroupVersion.String(),
@@ -160,6 +161,7 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		PrimarySubnet:    platform.MachinesSubnet,
 		AvailabilityZone: az,
 		SecurityGroups:   securityGroups,
+		ServerGroupName:  serverGroupName,
 		Trunk:            trunkSupport,
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
