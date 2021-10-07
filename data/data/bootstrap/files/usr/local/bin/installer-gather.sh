@@ -59,6 +59,11 @@ do
     sudo podman inspect "${container_id}" >& "${ARTIFACTS}/bootstrap/pods/${container_name}-${container_id}.inspect"
 done
 
+echo "Gathering bootstrap rpm-ostree info ..."
+mkdir -p "${ARTIFACTS}/bootstrap/rpm-ostree"
+sudo rpm-ostree status >& "${ARTIFACTS}/bootstrap/rpm-ostree/status"
+sudo rpm-ostree ex history >& "${ARTIFACTS}/bootstrap/rpm-ostree/history"
+
 echo "Gathering rendered assets..."
 mkdir -p "${ARTIFACTS}/rendered-assets"
 sudo cp -r /var/opt/openshift/ "${ARTIFACTS}/rendered-assets"

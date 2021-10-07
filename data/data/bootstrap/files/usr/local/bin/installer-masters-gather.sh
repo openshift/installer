@@ -49,5 +49,10 @@ do
     podman inspect "${container_id}" >& "${ARTIFACTS}/containers/${container_name}-${container_id}.inspect"
 done
 
+echo "Gathering master rpm-ostree info ..."
+mkdir -p "${ARTIFACTS}/rpm-ostree"
+sudo rpm-ostree status >& "${ARTIFACTS}/rpm-ostree/status"
+sudo rpm-ostree ex history >& "${ARTIFACTS}/rpm-ostree/history"
+
 echo "Waiting for logs ..."
 while wait -n; do jobs; done
