@@ -56,7 +56,6 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 - [Deploying OpenShift bare-metal workers](deploy_baremetal_workers.md)
 - [Deploying OpenShift single root I/O virtualization (SRIOV) workers](deploy_sriov_workers.md)
 - [Provider Networks](provider_networks.md)
-- [How to set affinity rules for workers at install-time](affinity.md)
 
 ## OpenStack Requirements
 
@@ -520,6 +519,8 @@ To define a MachineSet with multiple networks, the `primarySubnet` value in the 
  After you set the subnet, add all of the networks that you want to attach to your machines to the `Networks` list in `providerSpec`. You must also add the network that the primary subnet is part of to this list.
 
 #### Using a Server Group
+
+The `serverGroupID` property of the `MachineSet` resource is used to create machines in that OpenStack server group. The server group must exist in OpenStack before you can apply the new `MachineSet` resource.
 
 In order to hint the Nova scheduler to spread the Machines across different
 hosts, first create a Server Group with the [desired
