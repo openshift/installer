@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"path/filepath"
 	"sort"
 
@@ -171,9 +172,14 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		})
 	case ibmcloud.Name:
 		config.Spec.PlatformSpec.Type = configv1.IBMCloudPlatformType
+		cisInstanceCRN, err := installConfig.IBMCloud.CISInstanceCRN(context.TODO())
+		if err != nil {
+			return errors.Wrap(err, "cannot retrieve IBM Cloud Internet Services instance CRN")
+		}
 		config.Status.PlatformStatus.IBMCloud = &configv1.IBMCloudPlatformStatus{
 			Location:          installConfig.Config.Platform.IBMCloud.Region,
 			ResourceGroupName: installConfig.Config.Platform.IBMCloud.ClusterResourceGroupName(clusterID.InfraID),
+			CISInstanceCRN:    cisInstanceCRN,
 		}
 	case libvirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.LibvirtPlatformType
