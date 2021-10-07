@@ -52,6 +52,6 @@ func InstanceClasses(region string, arch types.Architecture) []string {
 	case types.ArchitectureARM64:
 		return []string{"m6g"}
 	default:
-		return []string{"m5", "m4"}
+		return []string{"m5"}
 	}
 }
