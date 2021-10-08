@@ -20,12 +20,16 @@ type Platform struct {
 	// Required for multi-zone regions.
 	Zone string `json:"zone"`
 
+	// Zone in the region used to create VPC resources. Leave unset
+	// to allow installer to randomly select a zone.
+	//
+	// +optional
+	VPCZone string `json:"vpcRegion,omitempty"`
+
 	// UserID is the login for the user's IBM Cloud account.
 	UserID string `json:"userID"`
 
 	// APIKey is the API key for the user's IBM Cloud account.
-	//
-	// +optional
 	APIKey string `json:"APIKey,omitempty"`
 
 	// SSHKeyName is the name of an SSH key stored in the Service Instance.
@@ -33,13 +37,12 @@ type Platform struct {
 
 	// VPC is a VPC inside IBM Cloud. Needed in order to create VPC Load Balancers.
 	//
-	// @TODO: make this +optional when we have TF support
+	// +optional
 	VPC string `json:"vpc,omitempty"`
 
 	// Subnets specifies existing subnets (by ID) where cluster
 	// resources will be created.  Leave unset to have the installer
 	// create subnets in a new VPC on your behalf.
-	// @TODO: Rename VPCSubnetID & make into string
 	//
 	// @TODO: make this +optional when we have TF support
 	Subnets []string `json:"subnets,omitempty"`
@@ -71,18 +74,11 @@ type Platform struct {
 	// @TODO: make this +optional when we have TF support
 	ImageName string `json:"imageName,omitempty"`
 
-	// BootstrapOSImage is a URL to override the default OS image
+	// ClusterOSImage is a URL to override the default OS image
 	// for the bootstrap node. The URL must contain a sha256 hash of the image
 	// e.g https://mirror.example.com/images/image.ova.gz?sha256=a07bd...
 	//
-	// @TODO: make this +optional when we have TF support
-	BootstrapOSImage string `json:"bootstrapOSImage,omitempty"`
-
-	// ClusterOSImage is a URL to override the default OS image
-	// for cluster nodes. The URL must contain a sha256 hash of the image
-	// e.g https://mirror.example.com/images/powervs.ova.gz?sha256=3b5a8...
-	//
-	// @TODO: make this +optional when we have TF support
+	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
 	// DefaultMachinePlatform is the default configuration used when
