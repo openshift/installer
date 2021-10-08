@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -204,6 +205,13 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			APIServerInternalIP: installConfig.Config.Ovirt.APIVIP,
 			IngressIP:           installConfig.Config.Ovirt.IngressVIP,
 		}
+	case powervs.Name:
+		config.Spec.PlatformSpec.Type = configv1.PowerVSPlatformType
+		config.Status.PlatformStatus.PowerVS = &configv1.PowerVSPlatformStatus{
+			Region: installConfig.Config.Platform.PowerVS.Region,
+			Zone:   installConfig.Config.Platform.PowerVS.Zone,
+		}
+
 	default:
 		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
 	}

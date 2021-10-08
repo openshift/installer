@@ -16,6 +16,7 @@ import (
 	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	icpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
@@ -34,6 +35,7 @@ type InstallConfig struct {
 	AWS      *aws.Metadata        `json:"aws,omitempty"`
 	Azure    *icazure.Metadata    `json:"azure,omitempty"`
 	IBMCloud *icibmcloud.Metadata `json:"ibmcloud,omitempty"`
+	PowerVS  *icpowervs.Metadata  `json:"powervs,omitempty"`
 }
 
 var _ asset.WritableAsset = (*InstallConfig)(nil)
@@ -93,7 +95,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.IBMCloud = platform.IBMCloud
 	a.Config.BareMetal = platform.BareMetal
 	a.Config.Ovirt = platform.Ovirt
-
+	a.Config.PowerVS = platform.PowerVS
 	return a.finish("")
 }
 
@@ -149,6 +151,9 @@ func (a *InstallConfig) finish(filename string) error {
 	}
 	if a.Config.IBMCloud != nil {
 		a.IBMCloud = icibmcloud.NewMetadata(a.Config.BaseDomain)
+	}
+	if a.Config.PowerVS != nil {
+		a.PowerVS = icpowervs.NewMetadata(a.Config.BaseDomain)
 	}
 	if err := validation.ValidateInstallConfig(a.Config).ToAggregate(); err != nil {
 		if filename == "" {

@@ -17,6 +17,7 @@ import (
 	libvirtconfig "github.com/openshift/installer/pkg/asset/installconfig/libvirt"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -28,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -96,6 +98,11 @@ func (a *platform) Generate(asset.Parents) error {
 		}
 	case vsphere.Name:
 		a.VSphere, err = vsphereconfig.Platform()
+		if err != nil {
+			return err
+		}
+	case powervs.Name:
+		a.PowerVS, err = powervsconfig.Platform()
 		if err != nil {
 			return err
 		}

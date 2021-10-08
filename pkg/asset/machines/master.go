@@ -18,6 +18,8 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+	powervsapi "github.com/openshift/cluster-api-provider-powervs/pkg/apis"
+	powervsprovider "github.com/openshift/cluster-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	vsphereapi "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
@@ -45,6 +47,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/ovirt"
+	"github.com/openshift/installer/pkg/asset/machines/powervs"
 	"github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
@@ -60,6 +63,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -386,6 +390,19 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		vsphere.ConfigMasters(machines, clusterID.InfraID)
+	case powervstypes.Name:
+		mpool := defaultPowerVSMachinePoolPlatform()
+		mpool.Set(ic.Platform.PowerVS.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.PowerVS)
+		// Only the service instance is guaranteed to exist and be passed via the install config
+		// The other two, we should standardize a name including the cluster id. At this point, all
+		// we have are names.
+		pool.Platform.PowerVS = &mpool
+		machines, err = powervs.Machines(clusterID.InfraID, ic, &pool, "master", "master-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
+		}
+		powervs.ConfigMasters(machines, clusterID.InfraID)
 	case nonetypes.Name:
 	default:
 		return fmt.Errorf("invalid Platform")
@@ -515,6 +532,7 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
 	vsphereapi.AddToScheme(scheme)
+	powervsapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
 		azureprovider.SchemeGroupVersion,
@@ -525,6 +543,7 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 		openstackprovider.SchemeGroupVersion,
 		vsphereprovider.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
+		powervsprovider.GroupVersion,
 	)
 
 	machines := []machineapi.Machine{}
