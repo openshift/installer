@@ -6,10 +6,10 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	powervsprovider "github.com/openshift/cluster-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/powervs"
-	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -85,7 +85,6 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 			APIVersion: powervsprovider.GroupVersion.String(),
 		},
 		ObjectMeta:        metav1.ObjectMeta{},
-		Region:            platform.Region,
 		ServiceInstanceID: platform.ServiceInstanceID,
 		ImageID:           mpool.ImageID,
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},

@@ -14,7 +14,7 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20191115210519-2b2be6cc8ed4 // indirect
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20190607011252-c5096ec8773d // indirect
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20210611051827-cdc80c935c05
-	github.com/IBM-Cloud/power-go-client v1.0.56
+	github.com/IBM-Cloud/power-go-client v1.0.72
 	github.com/IBM-Cloud/terraform-provider-ibm v1.26.2
 	github.com/IBM/go-sdk-core/v5 v5.4.3
 	github.com/IBM/networking-go-sdk v0.14.0
@@ -164,3 +164,5 @@ replace (
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 	google.golang.org/grpc => google.golang.org/grpc v1.29.1
 )
+
+replace github.com/openshift/machine-api-operator => github.com/openshift-powervs/machine-api-operator v0.2.1-0.20210809115935-a9fd8f5d2767
