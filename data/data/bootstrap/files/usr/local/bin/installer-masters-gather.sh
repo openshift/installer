@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Get target architecture
+arch=$(uname -m)
+
 if test "x${1}" = 'x--id'
 then
 	GATHER_ID="${2}"
@@ -53,6 +56,16 @@ echo "Gathering master rpm-ostree info ..."
 mkdir -p "${ARTIFACTS}/rpm-ostree"
 sudo rpm-ostree status >& "${ARTIFACTS}/rpm-ostree/status"
 sudo rpm-ostree ex history >& "${ARTIFACTS}/rpm-ostree/history"
+
+# Collect system information specific to IBM Linux Z (s390x) systems. The dbginfo
+# script is available by default as part of the s390-utils rpm package
+if [ "$arch" == "s390x" ]
+then
+    echo "Gathering dbginfo for the s390x system"
+    mkdir -p "${ARTIFACTS}/node-dbginfo"
+    /usr/sbin/dbginfo.sh -d "${ARTIFACTS}/node-dbginfo"
+    find "${ARTIFACTS}/node-dbginfo" -print0 | xargs -0 chmod a+r
+fi
 
 echo "Waiting for logs ..."
 while wait -n; do jobs; done
