@@ -82,13 +82,11 @@ aliases:
     - rgolangh
     - Gal-Zaidman
     - eslutsky
-    - dougsland
     - janosdebugs
   ovirt-reviewers:
     - rgolangh
     - Gal-Zaidman
     - eslutsky
-    - dougsland
     - janosdebugs
   kubevirt-approvers:
     - nirarg
