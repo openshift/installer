@@ -45,6 +45,13 @@ func TestValidateMachinePool(t *testing.T) {
 				MemoryMiB: -1,
 			},
 			expectedErrMsg: `^test-path\.memoryMB: Invalid value: -1: memory size must be positive$`,
+		}, {
+			name: "less CPUs than cores per socket",
+			pool: &vsphere.MachinePool{
+				NumCPUs:           1,
+				NumCoresPerSocket: 8,
+			},
+			expectedErrMsg: `^test-path\.coresPerSocket: Invalid value: 8: cores per socket must be less than number of CPUs$`,
 		},
 	}
 	for _, tc := range cases {
