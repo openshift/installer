@@ -11,6 +11,7 @@ import (
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/go-playground/validator/v10"
+	"github.com/metal3-io/baremetal-operator/pkg/bmc"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -294,7 +295,14 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 func validateBootMode(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
 	for idx, host := range hosts {
 		switch host.BootMode {
-		case "", baremetal.UEFI, baremetal.UEFISecureBoot, baremetal.Legacy:
+		case "", baremetal.UEFI, baremetal.Legacy:
+		case baremetal.UEFISecureBoot:
+			accessDetails, err := bmc.NewAccessDetails(host.BMC.Address, host.BMC.DisableCertificateVerification)
+			if err == nil && !accessDetails.SupportsSecureBoot() {
+				msg := fmt.Sprintf("driver %s does not support UEFI secure boot", accessDetails.Driver())
+				errors = append(errors, field.Invalid(fldPath.Index(idx).Child("bootMode"), host.BootMode, msg))
+			}
+			// if access details cannot be constructed, this should be reported elsewhere
 		default:
 			valid := []string{string(baremetal.UEFI), string(baremetal.UEFISecureBoot), string(baremetal.Legacy)}
 			errors = append(errors, field.NotSupported(fldPath.Index(idx).Child("bootMode"), host.BootMode, valid))

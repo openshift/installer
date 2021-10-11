@@ -125,8 +125,14 @@ func TestValidatePlatform(t *testing.T) {
 		{
 			name: "uefi_secure_boot_mode",
 			platform: platform().
-				Hosts(host1().BootMode("UEFISecureBoot")).build(),
+				Hosts(host1().BMCAddress("redfish://example.com/redfish/v1").BootMode("UEFISecureBoot")).build(),
 			expected: "",
+		},
+		{
+			name: "unsupported_uefi_secure_boot_mode",
+			platform: platform().
+				Hosts(host1().BootMode("UEFISecureBoot")).build(),
+			expected: "baremetal.Hosts\\[0\\].bootMode: Invalid value: \"UEFISecureBoot\": driver ipmi does not support UEFI secure boot",
 		},
 		{
 			name: "legacy_boot_mode",
