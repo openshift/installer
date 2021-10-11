@@ -7,6 +7,7 @@ output "control_plane_security_group_id_list" {
     ibm_is_security_group.cluster_wide.id,
     ibm_is_security_group.openshift_network.id,
     ibm_is_security_group.control_plane.id,
+    ibm_is_security_group.control_plane_internal.id,
   ]
 }
 

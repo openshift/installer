@@ -138,6 +138,7 @@ func getSecurityGroupNames(clusterID string, role string) ([]string, error) {
 			fmt.Sprintf("%s-security-group-cluster-wide", clusterID),
 			fmt.Sprintf("%s-security-group-openshift-network", clusterID),
 			fmt.Sprintf("%s-security-group-control-plane", clusterID),
+			fmt.Sprintf("%s-security-group-control-plane-internal", clusterID),
 		}, nil
 	case "worker":
 		return []string{

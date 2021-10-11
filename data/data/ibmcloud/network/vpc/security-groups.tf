@@ -209,11 +209,18 @@ resource "ibm_is_security_group" "control_plane" {
   vpc            = ibm_is_vpc.vpc.id
 }
 
+resource "ibm_is_security_group" "control_plane_internal" {
+  name           = "${local.prefix}-security-group-control-plane-internal"
+  resource_group = var.resource_group_id
+  tags           = var.tags
+  vpc            = ibm_is_vpc.vpc.id
+}
+
 # etcd
-resource "ibm_is_security_group_rule" "control_plane_etcd_inbound" {
-  group     = ibm_is_security_group.control_plane.id
+resource "ibm_is_security_group_rule" "control_plane_internal_etcd_inbound" {
+  group     = ibm_is_security_group.control_plane_internal.id
   direction = "inbound"
-  remote    = ibm_is_security_group.control_plane.id
+  remote    = ibm_is_security_group.control_plane_internal.id
   tcp {
     port_min = 2379
     port_max = 2380
@@ -221,10 +228,10 @@ resource "ibm_is_security_group_rule" "control_plane_etcd_inbound" {
 }
 
 # Kubernetes default ports
-resource "ibm_is_security_group_rule" "control_plane_kube_default_ports_inbound" {
-  group     = ibm_is_security_group.control_plane.id
+resource "ibm_is_security_group_rule" "control_plane_internal_kube_default_ports_inbound" {
+  group     = ibm_is_security_group.control_plane_internal.id
   direction = "inbound"
-  remote    = ibm_is_security_group.control_plane.id
+  remote    = ibm_is_security_group.control_plane_internal.id
   tcp {
     port_min = 10257
     port_max = 10259
@@ -232,10 +239,10 @@ resource "ibm_is_security_group_rule" "control_plane_kube_default_ports_inbound"
 }
 
 # Cluster policy controller port
-resource "ibm_is_security_group_rule" "control_plane_cluster_policy_controller_ports_inbound" {
-  group     = ibm_is_security_group.control_plane.id
+resource "ibm_is_security_group_rule" "control_plane_internal_cluster_policy_controller_ports_inbound" {
+  group     = ibm_is_security_group.control_plane_internal.id
   direction = "inbound"
-  remote    = ibm_is_security_group.control_plane.id
+  remote    = ibm_is_security_group.control_plane_internal.id
   tcp {
     port_min = 10357
     port_max = 10357
