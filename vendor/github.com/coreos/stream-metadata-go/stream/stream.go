@@ -17,6 +17,7 @@ type Stream struct {
 // Metadata for a release or stream
 type Metadata struct {
 	LastModified string `json:"last-modified"`
+	Generator    string `json:"generator,omitempty"`
 }
 
 // Arch contains release details for a particular hardware architecture
@@ -51,20 +52,27 @@ type Artifact struct {
 
 // Images contains images available in cloud providers
 type Images struct {
-	Aws *AwsImage `json:"aws,omitempty"`
-	Gcp *GcpImage `json:"gcp,omitempty"`
+	Aliyun *ReplicatedImage `json:"aliyun,omitempty"`
+	Aws    *AwsImage        `json:"aws,omitempty"`
+	Gcp    *GcpImage        `json:"gcp,omitempty"`
 }
 
-// AwsImage represents an image across all AWS regions
-type AwsImage struct {
-	Regions map[string]AwsRegionImage `json:"regions,omitempty"`
+// ReplicatedImage represents an image in all regions of an AWS-like cloud
+type ReplicatedImage struct {
+	Regions map[string]RegionImage `json:"regions,omitempty"`
 }
 
-// AwsRegionImage represents an image in one AWS region
-type AwsRegionImage struct {
+// RegionImage represents an image in a single region of an AWS-like cloud
+type RegionImage struct {
 	Release string `json:"release"`
 	Image   string `json:"image"`
 }
+
+// AwsImage is a typedef for backwards compatibility.
+type AwsImage = ReplicatedImage
+
+// AwsRegionImage is a typedef for backwards compatibility.
+type AwsRegionImage = RegionImage
 
 // GcpImage represents a GCP cloud image
 type GcpImage struct {

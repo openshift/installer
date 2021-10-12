@@ -20,6 +20,10 @@ cloud.google.com/go/storage
 github.com/AlecAivazis/survey/v2
 github.com/AlecAivazis/survey/v2/core
 github.com/AlecAivazis/survey/v2/terminal
+# github.com/AliyunContainerService/cluster-api-provider-alibabacloud v0.1.0-alpha.4
+## explicit
+github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis
+github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis/alibabacloudprovider/v1beta1
 # github.com/Azure/azure-sdk-for-go v51.2.0+incompatible
 ## explicit
 github.com/Azure/azure-sdk-for-go/profiles/2017-03-09/resources/mgmt/resources
@@ -394,6 +398,10 @@ github.com/IBM/vpc-go-sdk/vpcv1
 github.com/MakeNowJust/heredoc
 # github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667
 ## explicit
+# github.com/PaesslerAG/gval v1.0.0
+github.com/PaesslerAG/gval
+# github.com/PaesslerAG/jsonpath v0.1.1
+github.com/PaesslerAG/jsonpath
 # github.com/PuerkitoBio/purell v1.1.1
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
@@ -404,6 +412,112 @@ github.com/ScaleFT/sshkeys
 github.com/Shopify/sarama
 # github.com/agext/levenshtein v1.2.3
 github.com/agext/levenshtein
+# github.com/alibabacloud-go/cs-20151215/v2 v2.4.4
+github.com/alibabacloud-go/cs-20151215/v2/client
+# github.com/alibabacloud-go/darabonba-openapi v0.1.5
+github.com/alibabacloud-go/darabonba-openapi/client
+# github.com/alibabacloud-go/debug v0.0.0-20190504072949-9472017b5c68
+github.com/alibabacloud-go/debug/debug
+# github.com/alibabacloud-go/endpoint-util v1.1.0
+github.com/alibabacloud-go/endpoint-util/service
+# github.com/alibabacloud-go/openapi-util v0.0.7
+github.com/alibabacloud-go/openapi-util/service
+# github.com/alibabacloud-go/tea v1.1.15
+github.com/alibabacloud-go/tea/tea
+github.com/alibabacloud-go/tea/utils
+# github.com/alibabacloud-go/tea-roa v1.2.8
+github.com/alibabacloud-go/tea-roa/client
+# github.com/alibabacloud-go/tea-roa-utils v1.1.5
+github.com/alibabacloud-go/tea-roa-utils/service
+# github.com/alibabacloud-go/tea-rpc v1.1.8
+github.com/alibabacloud-go/tea-rpc/client
+# github.com/alibabacloud-go/tea-rpc-utils v1.1.2
+github.com/alibabacloud-go/tea-rpc-utils/service
+# github.com/alibabacloud-go/tea-utils v1.3.9
+github.com/alibabacloud-go/tea-utils/service
+# github.com/aliyun/alibaba-cloud-sdk-go v1.61.1154
+## explicit
+github.com/aliyun/alibaba-cloud-sdk-go/sdk
+github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth
+github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials
+github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials/provider
+github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/signers
+github.com/aliyun/alibaba-cloud-sdk-go/sdk/endpoints
+github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors
+github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests
+github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses
+github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils
+github.com/aliyun/alibaba-cloud-sdk-go/services/adb
+github.com/aliyun/alibaba-cloud-sdk-go/services/alidns
+github.com/aliyun/alibaba-cloud-sdk-go/services/alikafka
+github.com/aliyun/alibaba-cloud-sdk-go/services/bssopenapi
+github.com/aliyun/alibaba-cloud-sdk-go/services/cassandra
+github.com/aliyun/alibaba-cloud-sdk-go/services/cbn
+github.com/aliyun/alibaba-cloud-sdk-go/services/cdn
+github.com/aliyun/alibaba-cloud-sdk-go/services/cloudapi
+github.com/aliyun/alibaba-cloud-sdk-go/services/cms
+github.com/aliyun/alibaba-cloud-sdk-go/services/cr
+github.com/aliyun/alibaba-cloud-sdk-go/services/cr_ee
+github.com/aliyun/alibaba-cloud-sdk-go/services/cs
+github.com/aliyun/alibaba-cloud-sdk-go/services/dcdn
+github.com/aliyun/alibaba-cloud-sdk-go/services/ddosbgp
+github.com/aliyun/alibaba-cloud-sdk-go/services/ddoscoo
+github.com/aliyun/alibaba-cloud-sdk-go/services/dds
+github.com/aliyun/alibaba-cloud-sdk-go/services/drds
+github.com/aliyun/alibaba-cloud-sdk-go/services/eci
+github.com/aliyun/alibaba-cloud-sdk-go/services/ecs
+github.com/aliyun/alibaba-cloud-sdk-go/services/edas
+github.com/aliyun/alibaba-cloud-sdk-go/services/elasticsearch
+github.com/aliyun/alibaba-cloud-sdk-go/services/emr
+github.com/aliyun/alibaba-cloud-sdk-go/services/ess
+github.com/aliyun/alibaba-cloud-sdk-go/services/gpdb
+github.com/aliyun/alibaba-cloud-sdk-go/services/hbase
+github.com/aliyun/alibaba-cloud-sdk-go/services/location
+github.com/aliyun/alibaba-cloud-sdk-go/services/market
+github.com/aliyun/alibaba-cloud-sdk-go/services/maxcompute
+github.com/aliyun/alibaba-cloud-sdk-go/services/ots
+github.com/aliyun/alibaba-cloud-sdk-go/services/polardb
+github.com/aliyun/alibaba-cloud-sdk-go/services/pvtz
+github.com/aliyun/alibaba-cloud-sdk-go/services/r-kvstore
+github.com/aliyun/alibaba-cloud-sdk-go/services/ram
+github.com/aliyun/alibaba-cloud-sdk-go/services/rds
+github.com/aliyun/alibaba-cloud-sdk-go/services/resourcemanager
+github.com/aliyun/alibaba-cloud-sdk-go/services/slb
+github.com/aliyun/alibaba-cloud-sdk-go/services/sls
+github.com/aliyun/alibaba-cloud-sdk-go/services/smartag
+github.com/aliyun/alibaba-cloud-sdk-go/services/sts
+github.com/aliyun/alibaba-cloud-sdk-go/services/tag
+github.com/aliyun/alibaba-cloud-sdk-go/services/vpc
+github.com/aliyun/alibaba-cloud-sdk-go/services/yundun_bastionhost
+github.com/aliyun/alibaba-cloud-sdk-go/services/yundun_dbaudit
+# github.com/aliyun/aliyun-datahub-sdk-go v0.1.5
+github.com/aliyun/aliyun-datahub-sdk-go/datahub
+github.com/aliyun/aliyun-datahub-sdk-go/datahub/pbmodel
+github.com/aliyun/aliyun-datahub-sdk-go/datahub/util
+# github.com/aliyun/aliyun-log-go-sdk v0.1.21
+github.com/aliyun/aliyun-log-go-sdk
+# github.com/aliyun/aliyun-mns-go-sdk v0.0.0-20210305050620-d1b5875bda58
+github.com/aliyun/aliyun-mns-go-sdk
+# github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
+## explicit
+github.com/aliyun/aliyun-oss-go-sdk/oss
+# github.com/aliyun/aliyun-tablestore-go-sdk v4.1.3+incompatible
+github.com/aliyun/aliyun-tablestore-go-sdk/tablestore
+github.com/aliyun/aliyun-tablestore-go-sdk/tablestore/otsprotocol
+github.com/aliyun/aliyun-tablestore-go-sdk/tablestore/search
+# github.com/aliyun/credentials-go v1.1.2
+github.com/aliyun/credentials-go/credentials
+github.com/aliyun/credentials-go/credentials/request
+github.com/aliyun/credentials-go/credentials/response
+github.com/aliyun/credentials-go/credentials/utils
+# github.com/aliyun/fc-go-sdk v0.0.0-20200925033337-c013428cbe21
+github.com/aliyun/fc-go-sdk
+# github.com/aliyun/terraform-provider-alicloud v1.132.0
+## explicit
+github.com/aliyun/terraform-provider-alicloud/alicloud
+github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity
+# github.com/andybalholm/brotli v1.0.1
+github.com/andybalholm/brotli
 # github.com/antchfx/xpath v1.1.2
 ## explicit
 # github.com/apache/openwhisk-client-go v0.0.0-20200201143223-a804fb82d105
@@ -639,6 +753,8 @@ github.com/btubbs/datetime
 # github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a
 ## explicit
 github.com/c4milo/gotoolkit
+# github.com/cenkalti/backoff v2.2.1+incompatible
+github.com/cenkalti/backoff
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
 # github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
@@ -667,7 +783,7 @@ github.com/coreos/ignition/v2/config/util
 github.com/coreos/ignition/v2/config/v3_1/types
 github.com/coreos/ignition/v2/config/v3_2/types
 github.com/coreos/ignition/v2/config/validate
-# github.com/coreos/stream-metadata-go v0.0.0-20210225230131-70edb9eb47b3
+# github.com/coreos/stream-metadata-go v0.1.3
 ## explicit
 github.com/coreos/stream-metadata-go/arch
 github.com/coreos/stream-metadata-go/stream
@@ -682,6 +798,14 @@ github.com/coreos/vcontext/validate
 github.com/davecgh/go-spew/spew
 # github.com/dchest/bcrypt_pbkdf v0.0.0-20150205184540-83f37f9c154a
 github.com/dchest/bcrypt_pbkdf
+# github.com/deckarep/golang-set v1.7.1
+github.com/deckarep/golang-set
+# github.com/denverdino/aliyungo v0.0.0-20210518071019-eb3bbb144d8a
+github.com/denverdino/aliyungo/cdn
+github.com/denverdino/aliyungo/common
+github.com/denverdino/aliyungo/cs
+github.com/denverdino/aliyungo/ecs
+github.com/denverdino/aliyungo/util
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
 # github.com/dimchansky/utfbom v1.1.1
@@ -725,6 +849,11 @@ github.com/gammazero/workerpool
 github.com/ghodss/yaml
 # github.com/go-errors/errors v1.0.1
 github.com/go-errors/errors
+# github.com/go-kit/kit v0.10.0
+github.com/go-kit/kit/log
+github.com/go-kit/kit/log/level
+# github.com/go-logfmt/logfmt v0.5.0
+github.com/go-logfmt/logfmt
 # github.com/go-logr/logr v0.4.0
 github.com/go-logr/logr
 # github.com/go-openapi/analysis v0.19.5
@@ -769,12 +898,18 @@ github.com/go-stack/stack
 github.com/gobuffalo/flect
 # github.com/gofrs/uuid v3.2.0+incompatible
 github.com/gofrs/uuid
+# github.com/gogap/errors v0.0.0-20160523102334-149c546090d0
+github.com/gogap/errors
+# github.com/gogap/stack v0.0.0-20150131034635-fef68dddd4f8
+github.com/gogap/stack
 # github.com/gogo/protobuf v1.3.2
+github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
+github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
 github.com/golang/groupcache/lru
-# github.com/golang/mock v1.5.0
+# github.com/golang/mock v1.6.0
 ## explicit
 github.com/golang/mock/gomock
 github.com/golang/mock/mockgen
@@ -810,6 +945,8 @@ github.com/google/gofuzz
 github.com/google/gofuzz/bytesource
 # github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible
 ## explicit
+# github.com/google/renameio v1.0.0
+github.com/google/renameio
 # github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 github.com/google/shlex
 # github.com/google/uuid v1.2.0
@@ -1272,10 +1409,13 @@ github.com/keybase/go-crypto/openpgp/errors
 github.com/keybase/go-crypto/openpgp/packet
 github.com/keybase/go-crypto/openpgp/s2k
 github.com/keybase/go-crypto/rsa
-# github.com/klauspost/compress v1.11.0
+# github.com/klauspost/compress v1.11.8
+github.com/klauspost/compress/flate
 github.com/klauspost/compress/fse
+github.com/klauspost/compress/gzip
 github.com/klauspost/compress/huff0
 github.com/klauspost/compress/snappy
+github.com/klauspost/compress/zlib
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/kr/fs v0.1.0
@@ -1320,13 +1460,11 @@ github.com/mattn/go-colorable
 github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/metal3-io/baremetal-operator v0.0.0-20210706141527-5240e42f012a => github.com/openshift/baremetal-operator v0.0.0-20210706141527-5240e42f012a
-## explicit
-github.com/metal3-io/baremetal-operator/pkg/bmc
-github.com/metal3-io/baremetal-operator/pkg/hardware
-# github.com/metal3-io/baremetal-operator/apis v0.0.0 => github.com/openshift/baremetal-operator/apis v0.0.0-20210706141527-5240e42f012a
+# github.com/metal3-io/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d => github.com/openshift/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d
 ## explicit
 github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1
+github.com/metal3-io/baremetal-operator/pkg/bmc
+github.com/metal3-io/baremetal-operator/pkg/hardware
 # github.com/metal3-io/cluster-api-provider-baremetal v0.0.0 => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
 ## explicit
 github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis
@@ -1465,7 +1603,7 @@ github.com/pborman/uuid
 github.com/pelletier/go-toml
 # github.com/peterbourgon/diskv v2.0.1+incompatible
 github.com/peterbourgon/diskv
-# github.com/pierrec/lz4 v2.5.2+incompatible
+# github.com/pierrec/lz4 v2.6.1+incompatible
 github.com/pierrec/lz4
 github.com/pierrec/lz4/internal/xxh32
 # github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
@@ -1514,13 +1652,15 @@ github.com/satori/go.uuid
 # github.com/satori/uuid v1.2.0
 ## explicit
 github.com/satori/uuid
+# github.com/shopspring/decimal v1.2.0
+github.com/shopspring/decimal
 # github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 ## explicit
 github.com/shurcooL/httpfs/vfsutil
 # github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 ## explicit
 github.com/shurcooL/vfsgen
-# github.com/sirupsen/logrus v1.7.0
+# github.com/sirupsen/logrus v1.8.1
 ## explicit
 github.com/sirupsen/logrus
 github.com/sirupsen/logrus/hooks/test
@@ -1956,6 +2096,8 @@ github.com/terraform-providers/terraform-provider-local/local
 # github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 ## explicit
 github.com/terraform-providers/terraform-provider-random/random
+# github.com/tjfoc/gmsm v1.3.2
+github.com/tjfoc/gmsm/sm3
 # github.com/tombuildsstuff/giovanni v0.15.1
 github.com/tombuildsstuff/giovanni/storage/2019-12-12/blob/accounts
 github.com/tombuildsstuff/giovanni/storage/2019-12-12/blob/blobs
@@ -1978,6 +2120,12 @@ github.com/ulikunitz/xz
 github.com/ulikunitz/xz/internal/hash
 github.com/ulikunitz/xz/internal/xlog
 github.com/ulikunitz/xz/lzma
+# github.com/valyala/bytebufferpool v1.0.0
+github.com/valyala/bytebufferpool
+# github.com/valyala/fasthttp v1.22.0
+github.com/valyala/fasthttp
+github.com/valyala/fasthttp/fasthttputil
+github.com/valyala/fasthttp/stackless
 # github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 ## explicit
 github.com/vincent-petithory/dataurl
@@ -2026,6 +2174,9 @@ github.com/vmware/govmomi/vim25/soap
 github.com/vmware/govmomi/vim25/types
 github.com/vmware/govmomi/vim25/xml
 github.com/vmware/govmomi/vmdk
+# github.com/wxnacy/wgo v1.0.4
+## explicit
+github.com/wxnacy/wgo/arrays
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
 # github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
@@ -2123,6 +2274,7 @@ golang.org/x/net/idna
 golang.org/x/net/internal/socks
 golang.org/x/net/internal/timeseries
 golang.org/x/net/proxy
+golang.org/x/net/publicsuffix
 golang.org/x/net/trace
 golang.org/x/net/websocket
 # golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
@@ -2132,7 +2284,7 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
+# golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -2340,7 +2492,7 @@ google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
 google.golang.org/grpc/test/bufconn
-# google.golang.org/protobuf v1.26.0
+# google.golang.org/protobuf v1.27.1
 google.golang.org/protobuf/cmd/protoc-gen-go/internal_gengo
 google.golang.org/protobuf/compiler/protogen
 google.golang.org/protobuf/encoding/protojson
@@ -2425,6 +2577,10 @@ gopkg.in/jcmturner/gokrb5.v7/types
 # gopkg.in/jcmturner/rpc.v1 v1.1.0
 gopkg.in/jcmturner/rpc.v1/mstypes
 gopkg.in/jcmturner/rpc.v1/ndr
+# gopkg.in/natefinch/lumberjack.v2 v2.0.0
+gopkg.in/natefinch/lumberjack.v2
+# gopkg.in/resty.v1 v1.12.0
+gopkg.in/resty.v1
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit
 gopkg.in/yaml.v2
@@ -2930,13 +3086,13 @@ sigs.k8s.io/structured-merge-diff/v4/value
 sigs.k8s.io/yaml
 # cloud.google.com/go => cloud.google.com/go v0.57.0
 # github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
+# github.com/Sirupsen/logrus v0.0.0-20181010200618-458213699411 => github.com/sirupsen/logrus v0.0.0-20181010200618-458213699411
 # github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb
 # github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
 # github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
 # github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
-# github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210706141527-5240e42f012a
-# github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20210706141527-5240e42f012a
+# github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210527161605-4e331bfd4b1d
 # github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
 # github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c
 # github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
