@@ -3,7 +3,9 @@ package aws
 
 import (
 	"encoding/json"
+	"fmt"
 
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 
@@ -132,11 +134,17 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		WorkerIAMRoleName:       sources.WorkerIAMRoleName,
 	}
 
-	stubIgn, err := generateIgnitionShim(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle)
+	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundle(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create stub Ignition config for bootstrap")
 	}
-	cfg.BootstrapIgnitionStub = stubIgn
+
+	// Check the size of the raw ignition stub is less than 16KB for aws user-data
+	// see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-add-user-data.html
+	if len(stubIgn) > 16000 {
+		return nil, fmt.Errorf("rendered bootstrap ignition shim exceeds the 16KB limit for AWS user data -- try reducing the size of your CA cert bundle")
+	}
+	cfg.BootstrapIgnitionStub = string(stubIgn)
 
 	if len(sources.PublicSubnets) == 0 {
 		if cfg.VPC != "" {
