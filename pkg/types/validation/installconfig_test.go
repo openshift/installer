@@ -648,7 +648,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.APIVIP = "ffd0::"
 				return c
 			}(),
-			expectedError: `networking.baremetal.apiVIP: Invalid value: "ffd0::": VIP for the API must be in IPv4 network for dual-stack IPv4/IPv6`,
+			expectedError: `networking.baremetal.apiVIP: Invalid value: "ffd0::": VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6`,
 		},
 		{
 			name: "baremetal Ingress VIP not an IP",

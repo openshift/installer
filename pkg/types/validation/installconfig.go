@@ -224,11 +224,13 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		case p.Azure != nil && experimentalDualStackEnabled:
 			logrus.Warnf("Using experimental Azure dual-stack support")
 		case p.BareMetal != nil:
-			// VIP for API should belong to IPv4 family in Bare Metal dual-stack
-			// Because primary network should also be IPv4.
-			apiVIP := net.ParseIP(p.BareMetal.APIVIP)
-			if apiVIP.To4() == nil {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "baremetal", "apiVIP"), p.BareMetal.APIVIP, "VIP for the API must be in IPv4 network for dual-stack IPv4/IPv6"))
+			apiVIPIPFamily := corev1.IPv6Protocol
+			if net.ParseIP(p.BareMetal.APIVIP).To4() != nil {
+				apiVIPIPFamily = corev1.IPv4Protocol
+			}
+
+			if apiVIPIPFamily != presence["machineNetwork"].Primary {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "baremetal", "apiVIP"), p.BareMetal.APIVIP, "VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6"))
 			}
 		case p.None != nil:
 		default:
