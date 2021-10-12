@@ -23,22 +23,22 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	platform := config.Platform.PowerVS
 	mpool := pool.Platform.PowerVS
 
+	var (
+		image, network string
+	)
+
 	// Only the service instance is guaranteed to exist and be passed via the install config
 	// The other two, we should standardize a name including the cluster id.
 
-	if platform.SSHKeyName != "" {
-		mpool.KeyPairName = platform.SSHKeyName
-	} else {
-		mpool.KeyPairName = fmt.Sprintf("%s-key", clusterID)
-	}
-	if platform.PVSNetworkID != "" {
-		mpool.NetworkIDs = append([]string{platform.PVSNetworkID})
-	}
 	if platform.ClusterOSImage != "" {
-		mpool.ImageID = platform.ClusterOSImage
+		image = platform.ClusterOSImage
+	} else {
+		image = fmt.Sprintf("rhcos-%s", clusterID)
 	}
-	if mpool.ImageID == "" {
-		mpool.ImageID = fmt.Sprintf("rhcos-%s", clusterID)
+	if platform.PVSNetworkName != "" {
+		network = platform.PVSNetworkName
+	} else {
+		network = fmt.Sprintf("pvs-net-%s", clusterID)
 	}
 
 	total := int64(1)
@@ -47,7 +47,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
-		provider, err := provider(clusterID, platform, mpool, userDataSecret, platform.UserTags)
+		provider, err := provider(clusterID, platform, mpool, userDataSecret, image, network)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -76,7 +76,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *powervs.Platform, mpool *powervs.MachinePool, userDataSecret string, userTags map[string]string) (*powervsprovider.PowerVSMachineProviderConfig, error) {
+func provider(clusterID string, platform *powervs.Platform, mpool *powervs.MachinePool, userDataSecret string, image string, network string) (*powervsprovider.PowerVSMachineProviderConfig, error) {
+
+	if clusterID == "" || platform == nil || mpool == nil || userDataSecret == "" || image == "" || network == "" {
+		return nil, fmt.Errorf("invalid value passed to provider")
+	}
 
 	//Setting only the mandatory parameters
 	config := &powervsprovider.PowerVSMachineProviderConfig{
@@ -86,15 +90,15 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 		},
 		ObjectMeta:        metav1.ObjectMeta{},
 		ServiceInstanceID: platform.ServiceInstanceID,
-		ImageID:           mpool.ImageID,
+		Image:             powervsprovider.PowerVSResourceReference{Name: &image},
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "powervs-credentials"},
 		SysType:           mpool.SysType,
 		ProcType:          mpool.ProcType,
 		Processors:        fmt.Sprintf("%f", mpool.Processors),
 		Memory:            fmt.Sprintf("%d", mpool.Memory),
-		NetworkIDs:        mpool.NetworkIDs,
-		KeyPairName:       &mpool.KeyPairName,
+		Network:           powervsprovider.PowerVSResourceReference{Name: &network},
+		KeyPairName:       fmt.Sprintf("%s-key", clusterID),
 	}
 	return config, nil
 }

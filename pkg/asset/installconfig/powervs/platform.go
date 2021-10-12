@@ -16,7 +16,6 @@ func Platform() (*powervs.Platform, error) {
 
 	var p powervs.Platform
 	if osOverride := os.Getenv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE"); len(osOverride) != 0 {
-		p.BootstrapOSImage = osOverride
 		p.ClusterOSImage = osOverride
 	}
 
