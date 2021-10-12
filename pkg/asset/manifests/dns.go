@@ -18,6 +18,7 @@ import (
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/types"
+	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -81,6 +82,18 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
+	case alibabacloudtypes.Name:
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+			config.Spec.PublicZone = &configv1.DNSZone{
+				ID:   installConfig.Config.BaseDomain,
+				Tags: map[string]string{"type": "public"},
+			}
+		}
+		// On Alibaba Cloud can be fetched using `ID` as a pre-determined private zone name
+		config.Spec.PrivateZone = &configv1.DNSZone{
+			ID:   installConfig.Config.ClusterDomain(),
+			Tags: map[string]string{"type": "private"},
+		}
 	case awstypes.Name:
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 			sess, err := installConfig.AWS.Session(context.TODO())
