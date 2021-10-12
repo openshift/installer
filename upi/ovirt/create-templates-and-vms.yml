@@ -6,28 +6,6 @@
   tasks:
   - import_tasks: common-auth.yml
 
-  - name: Check local image existance
-    stat:
-      get_mime: no
-      get_checksum: no
-      get_attributes: no
-      path: "{{ rhcos.local_image_path }}"
-    register: image_stats
-    loop:
-    - "{{ rhcos.local_cmp_image_path }}"
-    - "{{ rhcos.local_image_path }}"
-
-  - name: Download RHCOS image
-    get_url:
-      url: "{{ rhcos.image_url }}"
-      dest: "{{ rhcos.local_cmp_image_path}}"
-      force: no
-    when: not image_stats.results[1].stat.exists
-
-  - name: Extract RHCOS image
-    shell: "gunzip -c {{ rhcos.local_cmp_image_path }} > {{ rhcos.local_image_path }}"
-    when: not image_stats.results[0].stat.exists
-
   - name: Get templates info
     ovirt_template_info:
       auth: "{{ ovirt_auth }}"
@@ -46,23 +24,50 @@
         }}
     with_items: "{{ templates_info.results }}"
 
-  - name: Create templates
-    include_role:
-      name: ovirt.image-template
-    vars:
-      qcow_url: "file://{{ rhcos.local_image_path }}"
-      image_path: "{{ rhcos.local_image_path }}"
-      template_cluster: "{{ item.cluster }}"
-      template_name: "{{ item.template }}"
-      template_memory_guaranteed: "{{ item.memory_guaranteed | default(omit) }}"
-      template_disk_storage: "{{ item.disks.0.storage_domain }}"
-      template_operating_system: "{{ item.operating_system }}"
-      template_seal: no
-    loop:
-    - "{{ control_plane }}"
-    - "{{ compute }}"
-    when: item.template not in templates_list
+  - name: Create rhcos template
+    when: templates_list | length < 2
+    block:
+    - name: Check local image existance
+      stat:
+        get_mime: no
+        get_checksum: no
+        get_attributes: no
+        path: "{{ rhcos.local_image_path }}"
+      register: image_stats
+      loop:
+      - "{{ rhcos.local_cmp_image_path }}"
+      - "{{ rhcos.local_image_path }}"
+
+    - name: Download RHCOS image
+      when: not image_stats.results[1].stat.exists
+      get_url:
+        url: "{{ rhcos.image_url }}"
+        dest: "{{ rhcos.local_cmp_image_path}}"
+        force: no
+
+    - name: Extract RHCOS image
+      shell: "gunzip -c {{ rhcos.local_cmp_image_path }} > {{ rhcos.local_image_path }}"
+      when: not image_stats.results[0].stat.exists
+
+    - name: Create templates
+      include_role:
+        name: ovirt.ovirt.image_template
+      vars:
+        qcow_url: "file://{{ rhcos.local_image_path }}"
+        image_path: "{{ rhcos.local_image_path }}"
+        template_cluster: "{{ item.cluster }}"
+        template_name: "{{ item.disks.0.name }}"
+        template_memory_guaranteed: "{{ item.memory_guaranteed | default(omit) }}"
+        template_disk_storage: "{{ item.disks.0.storage_domain }}"
+        template_disk_size: "{{ item.disks.0.size }}"
+        template_disk_interface: "{{ item.disks.0.interface }}"
+        template_operating_system: "{{ item.operating_system }}"
+        template_seal: no
+      loop:
+      - "{{ control_plane }}"
+      - "{{ compute }}"
+      when: item.template not in templates_list
 
   - name: Create VMs infra
     include_role:
-      name: ovirt.vm-infra
+      name: ovirt.ovirt.vm_infra
