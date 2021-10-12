@@ -1,0 +1,68 @@
+package bootstrap
+
+import (
+	"bytes"
+	"encoding/pem"
+	"fmt"
+
+	ignutil "github.com/coreos/ignition/v2/config/util"
+	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"github.com/openshift/installer/pkg/asset/ignition"
+	"github.com/vincent-petithory/dataurl"
+)
+
+// parseCertificateBundle loads each certificate in the bundle to the Ingition
+// carrier type, ignoring any invisible character before, after and in between
+// certificates.
+func parseCertificateBundle(userCA []byte) ([]igntypes.Resource, error) {
+	userCA = bytes.TrimSpace(userCA)
+
+	var carefs []igntypes.Resource
+	for len(userCA) > 0 {
+		var block *pem.Block
+		block, userCA = pem.Decode(userCA)
+		if block == nil {
+			return nil, fmt.Errorf("unable to parse certificate, please check the certificates")
+		}
+
+		carefs = append(carefs, igntypes.Resource{Source: ignutil.StrToPtr(dataurl.EncodeBytes(pem.EncodeToMemory(block)))})
+
+		userCA = bytes.TrimSpace(userCA)
+	}
+
+	return carefs, nil
+}
+
+// GenerateIgnitionShimWithCertBundle is used to generate an ignition file that contains a user ca bundle
+// in its Security section.
+func GenerateIgnitionShimWithCertBundle(bootstrapConfigURL string, userCA string) ([]byte, error) {
+	ign := igntypes.Config{
+		Ignition: igntypes.Ignition{
+			Version: igntypes.MaxVersion.String(),
+			Config: igntypes.IgnitionConfig{
+				Replace: igntypes.Resource{
+					Source: ignutil.StrToPtr(bootstrapConfigURL),
+				},
+			},
+		},
+	}
+
+	carefs, err := parseCertificateBundle([]byte(userCA))
+	if err != nil {
+		return nil, err
+	}
+	if len(carefs) > 0 {
+		ign.Ignition.Security = igntypes.Security{
+			TLS: igntypes.TLS{
+				CertificateAuthorities: carefs,
+			},
+		}
+	}
+
+	data, err := ignition.Marshal(ign)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}

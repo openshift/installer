@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -29,11 +30,12 @@ const (
 
 // InstallConfig generates the install-config.yaml file.
 type InstallConfig struct {
-	Config   *types.InstallConfig `json:"config"`
-	File     *asset.File          `json:"file"`
-	AWS      *aws.Metadata        `json:"aws,omitempty"`
-	Azure    *icazure.Metadata    `json:"azure,omitempty"`
-	IBMCloud *icibmcloud.Metadata `json:"ibmcloud,omitempty"`
+	Config       *types.InstallConfig   `json:"config"`
+	File         *asset.File            `json:"file"`
+	AWS          *aws.Metadata          `json:"aws,omitempty"`
+	Azure        *icazure.Metadata      `json:"azure,omitempty"`
+	IBMCloud     *icibmcloud.Metadata   `json:"ibmcloud,omitempty"`
+	AlibabaCloud *alibabacloud.Metadata `json:"alibabacloud,omitempty"`
 }
 
 var _ asset.WritableAsset = (*InstallConfig)(nil)
@@ -83,6 +85,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		},
 	}
 
+	a.Config.AlibabaCloud = platform.AlibabaCloud
 	a.Config.AWS = platform.AWS
 	a.Config.Libvirt = platform.Libvirt
 	a.Config.None = platform.None
@@ -144,6 +147,9 @@ func (a *InstallConfig) finish(filename string) error {
 	if a.Config.AWS != nil {
 		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.Subnets, a.Config.AWS.ServiceEndpoints)
 	}
+	if a.Config.AlibabaCloud != nil {
+		a.AlibabaCloud = alibabacloud.NewMetadata(a.Config.AlibabaCloud.Region)
+	}
 	if a.Config.Azure != nil {
 		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint)
 	}
@@ -173,6 +179,13 @@ func (a *InstallConfig) finish(filename string) error {
 }
 
 func (a *InstallConfig) platformValidation() error {
+	if a.Config.Platform.AlibabaCloud != nil {
+		client, err := a.AlibabaCloud.Client()
+		if err != nil {
+			return err
+		}
+		return alibabacloud.Validate(client, a.Config)
+	}
 	if a.Config.Platform.Azure != nil {
 		client, err := a.Azure.Client()
 		if err != nil {

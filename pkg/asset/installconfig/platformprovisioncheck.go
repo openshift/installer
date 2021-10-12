@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/asset"
+	alibabacloudconfig "github.com/openshift/installer/pkg/asset/installconfig/alibabacloud"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	bmconfig "github.com/openshift/installer/pkg/asset/installconfig/baremetal"
@@ -13,6 +14,7 @@ import (
 	osconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -101,6 +103,15 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		}
 	case ovirt.Name:
 		err = ovirtconfig.ValidateForProvisioning(ic.Config)
+		if err != nil {
+			return err
+		}
+	case alibabacloud.Name:
+		client, err := ic.AlibabaCloud.Client()
+		if err != nil {
+			return err
+		}
+		err = alibabacloudconfig.ValidateForProvisioning(client, ic.Config, ic.AlibabaCloud)
 		if err != nil {
 			return err
 		}
