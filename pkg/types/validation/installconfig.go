@@ -232,6 +232,15 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 			if apiVIPIPFamily != presence["machineNetwork"].Primary {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "baremetal", "apiVIP"), p.BareMetal.APIVIP, "VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6"))
 			}
+
+			ingressVIPIPFamily := corev1.IPv6Protocol
+			if net.ParseIP(p.BareMetal.IngressVIP).To4() != nil {
+				ingressVIPIPFamily = corev1.IPv4Protocol
+			}
+
+			if ingressVIPIPFamily != presence["machineNetwork"].Primary {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "baremetal", "ingressVIP"), p.BareMetal.IngressVIP, "VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6"))
+			}
 		case p.None != nil:
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", "dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address"))
