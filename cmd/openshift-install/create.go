@@ -380,7 +380,8 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) *clusterCreateError {
 	timeout := 30 * time.Minute
 	untilTime := time.Now().Add(timeout)
-	logrus.Infof("Waiting up to %v (until %v) for bootstrapping to complete...", timeout, time.Format(untilTime))
+	logrus.Infof("Waiting up to %v (until %v) for bootstrapping to complete...",
+		timeout, untilTime.Format(time.Kitchen))
 
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
