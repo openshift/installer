@@ -663,6 +663,19 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^\[platform\.baremetal\.ingressVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.ingressVIP: Invalid value: "test": IP expected to be in one of the machine networks: 10.0.0.0/16]$`,
 		},
 		{
+			name: "baremetal Ingress VIP set to an incorrect IP Family",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = validDualStackNetworkingConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIP = "ffd0::"
+				return c
+			}(),
+			expectedError: `networking.baremetal.ingressVIP: Invalid value: "ffd0::": VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6`,
+		},
+		{
 			name: "baremetal Ingress VIP set to an incorrect value",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
