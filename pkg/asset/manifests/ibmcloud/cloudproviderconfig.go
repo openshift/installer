@@ -29,13 +29,14 @@ type provider struct {
 	ClusterDefaultProvider   string `gcfg:"cluster-default-provider"`
 	Region                   string `gcfg:"region"`
 	G2CredentialsFilePath    string `gcfg:"g2Credentials"`
+	G2ResourceGroupName      string `gcfg:"g2ResourceGroupName"`
 	G2VPCName                string `gcfg:"g2VpcName"`
 	G2WorkerServiceAccountID string `gcfg:"g2workerServiceAccountID"`
 	G2VPCSubnetNames         string `gcfg:"g2VpcSubnetNames"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBMCloud platform.
-func CloudProviderConfig(infraID string, accountID string, region string, controlPlaneZones []string, computeZones []string) (string, error) {
+func CloudProviderConfig(infraID string, accountID string, region string, resourceGroupName string, controlPlaneZones []string, computeZones []string) (string, error) {
 	config := &config{
 		Global: global{
 			Version: "1.1.0",
@@ -49,6 +50,7 @@ func CloudProviderConfig(infraID string, accountID string, region string, contro
 			ClusterDefaultProvider:   "g2",
 			Region:                   region,
 			G2CredentialsFilePath:    "/etc/vpc/ibmcloud_api_key",
+			G2ResourceGroupName:      resourceGroupName,
 			G2VPCName:                fmt.Sprintf("%s-vpc", infraID),
 			G2WorkerServiceAccountID: accountID,
 			G2VPCSubnetNames:         getVpcSubnetNames(infraID, controlPlaneZones, computeZones),
@@ -88,6 +90,7 @@ clusterID = {{.Provider.ClusterID}}
 cluster-default-provider = {{.Provider.ClusterDefaultProvider}}
 region = {{.Provider.Region}}
 g2Credentials = {{.Provider.G2CredentialsFilePath}}
+g2ResourceGroupName = {{.Provider.G2ResourceGroupName}}
 g2VpcName = {{.Provider.G2VPCName}}
 g2workerServiceAccountID = {{.Provider.G2WorkerServiceAccountID}}
 g2VpcSubnetNames = {{.Provider.G2VPCSubnetNames}}

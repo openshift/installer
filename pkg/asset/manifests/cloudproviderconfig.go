@@ -191,7 +191,8 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			}
 		}
 
-		ibmcloudConfig, err := ibmcloudmanifests.CloudProviderConfig(clusterID.InfraID, accountID, installConfig.Config.IBMCloud.Region, controlPlane.Zones, compute.Zones)
+		resourceGroupName := installConfig.Config.Platform.IBMCloud.ClusterResourceGroupName(clusterID.InfraID)
+		ibmcloudConfig, err := ibmcloudmanifests.CloudProviderConfig(clusterID.InfraID, accountID, installConfig.Config.IBMCloud.Region, resourceGroupName, controlPlane.Zones, compute.Zones)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
