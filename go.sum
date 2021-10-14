@@ -1526,8 +1526,8 @@ github.com/ory/dockertest v3.3.4+incompatible/go.mod h1:1vX4m9wsvi00u5bseYwXaSnh
 github.com/ostreedev/ostree-go v0.0.0-20190702140239-759a8c1ac913/go.mod h1:J6OG6YJVEWopen4avK3VNQSnALmmjvniMmni/YFYAwc=
 github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c h1:2SbYZedeIawU8sGFnohfrdEcEMBA4V8SDouG6hly+H4=
 github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
-github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210628083913-78ce17b16709 h1:y2MAdgeZ/csROLXpyKQ3Ykw9clPdqj12PQ1mSHmhwtw=
-github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210628083913-78ce17b16709/go.mod h1:wnTGn9+USQJ51TMV5brymzjxUfmYmnOQZuNfYeuqky8=
+github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20211019085223-db1ac552ec57 h1:hBk5iVZY3EXE53s48+hyI03E0gNl7jaxsNxTc35ClGc=
+github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20211019085223-db1ac552ec57/go.mod h1:wnTGn9+USQJ51TMV5brymzjxUfmYmnOQZuNfYeuqky8=
 github.com/oxtoacart/bpool v0.0.0-20150712133111-4e1c5567d7c2/go.mod h1:L3UMQOThbttwfYRNFOWLLVXMhk5Lkio4GGOtw5UrxS0=
 github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db h1:9uViuKtx1jrlXLBW/pMnhOfzn3iSEdLase/But/IZRU=

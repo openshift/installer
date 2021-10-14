@@ -8,8 +8,10 @@ package ovirt
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -134,17 +136,7 @@ func resourceOvirtImageTransferCreate(d *schema.ResourceData, meta interface{}) 
 	log.Printf("starting a transfer for disk id: %s", diskID)
 
 	// initialize an image transfer
-	transferService, err := UploadToDisk(conn, sourceFile, diskID, alias, uploadSize, correlationID)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("finalizing...")
-	finalizeRequest := transferService.Finalize()
-	finalizeRequest.Query("correlation_id", correlationID)
-	_, err = finalizeRequest.Send()
-
-	if err != nil {
+	if _, err := UploadToDisk(conn, sourceFile, diskID, alias, uploadSize, correlationID); err != nil {
 		return err
 	}
 
@@ -193,7 +185,6 @@ func UploadToDisk(conn *ovirtsdk4.Connection, sourceFile *os.File, diskID string
 		log.Printf("failed to initialize an image transfer for image (%v) : %s", transfer, err)
 		return nil, err
 	}
-	log.Printf("transfer response: %v", transferRes)
 	transfer = transferRes.MustImageTransfer()
 	transferService := imageTransfersService.ImageTransferService(transfer.MustId())
 	for {
@@ -217,11 +208,152 @@ func UploadToDisk(conn *ovirtsdk4.Connection, sourceFile *os.File, diskID string
 		log.Printf("failed writing to create a PUT request %s", err)
 		return nil, err
 	}
-	_, err = client.Do(putRequest)
-	if err != nil {
-		return nil, err
+	response, err := client.Do(putRequest)
+	if response != nil {
+		defer func() {
+			_ = response.Body.Close()
+		}()
 	}
-	return transferService, nil
+	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Minute)
+	defer cancel()
+	if err != nil {
+		log.Printf("Failed to upload disk image, aborting image transfer... (%v)", err)
+		cancelImageTransfer(transferService, correlationID, ctx)
+		return transferService, err
+	}
+	responseBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Printf("Failed to read response body from ImageIO API (%v)", err)
+		cancelImageTransfer(transferService, correlationID, ctx)
+		return transferService, fmt.Errorf("failed to read response from ImageIO API (%w)", err)
+	}
+	if response.StatusCode < 200 || response.StatusCode > 299 {
+		cancelImageTransfer(transferService, correlationID, ctx)
+		log.Printf("Unexpected HTTP status code from ImageIO API: %d (%s)", response.StatusCode, responseBody)
+	}
+
+	client.CloseIdleConnections()
+
+	return transferService, finalizeImageTransfer(conn, transferService, ctx, diskID)
+}
+
+func finalizeImageTransfer(
+	conn *ovirtsdk4.Connection,
+	transferService *ovirtsdk4.ImageTransferService,
+	ctx context.Context,
+	diskID string,
+) error {
+	if _, err := transferService.Finalize().Send(); err != nil {
+		return fmt.Errorf("failed to finalize image transfer (%w)", err)
+	}
+	var notFoundError *ovirtsdk4.NotFoundError
+	if err := waitForImageTransferState(
+		ctx,
+		transferService,
+		ovirtsdk4.IMAGETRANSFERPHASE_FINISHED_SUCCESS,
+		[]ovirtsdk4.ImageTransferPhase{
+			ovirtsdk4.IMAGETRANSFERPHASE_FINISHED_FAILURE,
+			ovirtsdk4.IMAGETRANSFERPHASE_PAUSED_SYSTEM,
+		},
+	); err != nil {
+		// If it's a not found error we fall back to checking the disk status below. This is used for <4.4.7
+		// where the transfer is removed immediately after finalizing.
+		if !errors.As(err, &notFoundError) {
+			return err
+		}
+	}
+	for {
+		log.Printf("Waiting for disk to become OK...")
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("timeout while waiting for disk to become OK")
+		case <-time.After(time.Second * 5):
+		}
+		req, err := conn.SystemService().DisksService().DiskService(diskID).Get().Send()
+		if err != nil {
+			if errors.As(err, &notFoundError) {
+				return fmt.Errorf("upload failed, disk %s removed (%v)", diskID, err)
+			}
+			log.Printf("failed to fetch disk %s (%v)", diskID, err)
+			continue
+		}
+		switch req.MustDisk().MustStatus() {
+		case ovirtsdk4.DISKSTATUS_OK:
+			return nil
+		case ovirtsdk4.DISKSTATUS_ILLEGAL:
+			return fmt.Errorf("upload failed, disk is in %s status", req.MustDisk().MustStatus())
+		}
+	}
+}
+
+func cancelImageTransfer(
+	transferService *ovirtsdk4.ImageTransferService,
+	correlationID string,
+	ctx context.Context,
+) {
+	if _, e2 := transferService.Cancel().Query("correlation_id", correlationID).Send(); e2 != nil {
+		log.Printf("failed to cancel image upload (%v)", e2)
+		return
+	}
+	if e2 := waitForImageTransferState(
+		ctx,
+		transferService,
+		ovirtsdk4.IMAGETRANSFERPHASE_FINISHED_FAILURE,
+		[]ovirtsdk4.ImageTransferPhase{
+			ovirtsdk4.IMAGETRANSFERPHASE_FINISHED_SUCCESS,
+			ovirtsdk4.IMAGETRANSFERPHASE_PAUSED_SYSTEM,
+		},
+	); e2 != nil {
+		log.Printf("failed to wait for canceled image upload to enter failure state (%v)", e2)
+	}
+}
+
+func waitForImageTransferState(
+	ctx context.Context,
+	transferService *ovirtsdk4.ImageTransferService,
+	waitForPhase ovirtsdk4.ImageTransferPhase,
+	disallowedPhases []ovirtsdk4.ImageTransferPhase,
+) error {
+	log.Printf("Waiting for image transfer to enter %s state...", waitForPhase)
+	var notFoundError *ovirtsdk4.NotFoundError
+	for {
+		log.Printf("Waiting for image transfer to enter finished state...")
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("timeout while trying to finalize transfer")
+		case <-time.After(time.Second * 5):
+		}
+		req, err := transferService.Get().Send()
+		if err != nil {
+			if errors.As(err, &notFoundError) {
+				// Return the error directly and let the calling party deal with it.
+				// This is the case on <4.4.7, where the transfer is removed immediately.
+				return err
+			} else {
+				log.Printf("Error while fetching image transfer (%v)", err)
+				continue
+			}
+		}
+		imageTransfer, ok := req.ImageTransfer()
+		if !ok {
+			return fmt.Errorf("image transfer no longer exists (possibly deleted by engine?) (%v)", err)
+		}
+
+		log.Printf("Image transfer is in %s state.", req.MustImageTransfer().MustPhase())
+		if imageTransfer.MustPhase() == waitForPhase {
+			log.Printf("Image transfer finished.")
+			break
+		}
+		for _, phase := range disallowedPhases {
+			if req.MustImageTransfer().MustPhase() == phase {
+				return fmt.Errorf(
+					"image transfer is in an incorrect state: %s",
+					req.MustImageTransfer().MustPhase(),
+				)
+			}
+		}
+	}
+	return nil
 }
 
 func detectUploadUrl(transfer *ovirtsdk4.ImageTransfer) (string, error) {
