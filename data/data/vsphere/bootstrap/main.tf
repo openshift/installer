@@ -2,7 +2,14 @@ locals {
   description = "Created By OpenShift Installer"
 }
 
-resource "vsphere_virtual_machine" "vm" {
+provider "vsphere" {
+  user                 = var.vsphere_username
+  password             = var.vsphere_password
+  vsphere_server       = var.vsphere_url
+  allow_unverified_ssl = false
+}
+
+resource "vsphere_virtual_machine" "vm_bootstrap" {
   name             = "${var.cluster_id}-bootstrap"
   resource_pool_id = var.resource_pool
   datastore_id     = var.datastore
@@ -32,7 +39,7 @@ resource "vsphere_virtual_machine" "vm" {
   }
 
   extra_config = {
-    "guestinfo.ignition.config.data"          = base64encode(var.ignition)
+    "guestinfo.ignition.config.data"          = base64encode(var.ignition_bootstrap)
     "guestinfo.ignition.config.data.encoding" = "base64"
     "guestinfo.hostname"                      = "${var.cluster_id}-bootstrap"
   }
