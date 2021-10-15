@@ -1038,7 +1038,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^credentialsMode: Unsupported value: "Mint": supported values: "Manual"$`,
 		},
 		{
-			name: "release image source is not canonical",
+			name: "release image source is not valid",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.ImageContentSources = []types.ImageContentSource{{
@@ -1046,10 +1046,10 @@ func TestValidateInstallConfig(t *testing.T) {
 				}}
 				return c
 			}(),
-			expectedError: `^imageContentSources\[0\]\.source: Invalid value: "ocp/release-x\.y": failed to parse: repository name must be canonical$`,
+			expectedError: `^imageContentSources\[0\]\.source: Invalid value: "ocp/release-x\.y": the repository provided is invalid$`,
 		},
 		{
-			name: "release image source's mirror is not canonical",
+			name: "release image source's mirror is not valid",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.ImageContentSources = []types.ImageContentSource{{
@@ -1058,7 +1058,18 @@ func TestValidateInstallConfig(t *testing.T) {
 				}}
 				return c
 			}(),
-			expectedError: `^imageContentSources\[0\]\.mirrors\[0\]: Invalid value: "ocp/openshift-x\.y": failed to parse: repository name must be canonical$`,
+			expectedError: `^imageContentSources\[0\]\.mirrors\[0\]: Invalid value: "ocp/openshift-x.y": the repository provided is invalid$`,
+		},
+		{
+			name: "release image source's mirror is valid",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageContentSources = []types.ImageContentSource{{
+					Source:  "q.io/ocp/release-x.y",
+					Mirrors: []string{"mirror.example.com:5000"},
+				}}
+				return c
+			}(),
 		},
 		{
 			name: "release image source is not repository but reference by digest",
