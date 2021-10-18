@@ -3,6 +3,7 @@ package installconfig
 import (
 	"context"
 	"os"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -123,8 +124,12 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 
 	config := &types.InstallConfig{}
-	if err := yaml.Unmarshal(file.Data, config); err != nil {
-		return false, errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
+	if err := yaml.UnmarshalStrict(file.Data, config, yaml.DisallowUnknownFields); err != nil {
+		if strings.Contains(err.Error(), "unknown field") {
+			err = errors.Wrapf(err, "failed to parse first occurence of unknown field")
+		}
+		err = errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
+		return false, err
 	}
 	a.Config = config
 
