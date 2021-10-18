@@ -160,6 +160,7 @@ set the following:
 listen_tls = 0
 listen_tcp = 1
 auth_tcp = "none"
+auth_tls = "none"
 tcp_port = "16509"
 ```
 
