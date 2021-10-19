@@ -88,18 +88,6 @@ aliases:
     - Gal-Zaidman
     - eslutsky
     - janosdebugs
-  kubevirt-approvers:
-    - nirarg
-    - bardielle
-    - ravidbro
-    - rgolangh
-    - chenyosef
-  kubevirt-reviewers:
-    - nirarg
-    - bardielle
-    - ravidbro
-    - rgolangh
-    - chenyosef
   ibmcloud-approvers:
     - bobbyradford
     - hasueki

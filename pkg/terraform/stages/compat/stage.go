@@ -9,12 +9,10 @@ import (
 
 	"github.com/openshift/installer/pkg/terraform"
 	gatherbaremetal "github.com/openshift/installer/pkg/terraform/gather/baremetal"
-	gatherkubevirt "github.com/openshift/installer/pkg/terraform/gather/kubevirt"
 	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
 	gatherovirt "github.com/openshift/installer/pkg/terraform/gather/ovirt"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
-	kubevirttypes "github.com/openshift/installer/pkg/types/kubevirt"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 )
@@ -98,16 +96,6 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 			return
 		}
 		masters, err = gatherovirt.ControlPlaneIPs(tfstate)
-		if err != nil {
-			logrus.Error(err)
-		}
-
-	case kubevirttypes.Name:
-		bootstrap, err = gatherkubevirt.BootstrapIP(tfstate)
-		if err != nil {
-			return
-		}
-		masters, err = gatherkubevirt.ControlPlaneIPs(tfstate)
 		if err != nil {
 			logrus.Error(err)
 		}

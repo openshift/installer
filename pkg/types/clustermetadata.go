@@ -6,7 +6,6 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
@@ -36,7 +35,6 @@ type ClusterPlatformMetadata struct {
 	BareMetal *baremetal.Metadata `json:"baremetal,omitempty"`
 	Ovirt     *ovirt.Metadata     `json:"ovirt,omitempty"`
 	VSphere   *vsphere.Metadata   `json:"vsphere,omitempty"`
-	Kubevirt  *kubevirt.Metadata  `json:"kubevirt,omitempty"`
 }
 
 // Platform returns a string representation of the platform
@@ -72,9 +70,6 @@ func (cpm *ClusterPlatformMetadata) Platform() string {
 	}
 	if cpm.VSphere != nil {
 		return vsphere.Name
-	}
-	if cpm.Kubevirt != nil {
-		return kubevirt.Name
 	}
 	return ""
 }

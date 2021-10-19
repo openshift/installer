@@ -37,7 +37,6 @@ var (
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
-		&bootkube.KubevirtInfraNamespace{},
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},

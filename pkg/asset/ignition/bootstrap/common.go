@@ -641,8 +641,6 @@ func apiVIP(p *types.Platform) string {
 		return p.VSphere.APIVIP
 	case p.Ovirt != nil:
 		return p.Ovirt.APIVIP
-	case p.Kubevirt != nil:
-		return p.Kubevirt.APIVIP
 	default:
 		return ""
 	}

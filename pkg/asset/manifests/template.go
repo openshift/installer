@@ -51,12 +51,6 @@ type OvirtCredsSecretData struct {
 	Base64encodeCABundle string
 }
 
-// KubevirtCredsSecretData holds the encoded kubeconfig for the infra cluster.
-// It is used to generated cloud-creds secret.
-type KubevirtCredsSecretData struct {
-	Base64encodedKubeconfig string
-}
-
 type cloudCredsSecretData struct {
 	AWS       *AwsCredsSecretData
 	Azure     *AzureCredsSecretData
@@ -65,7 +59,6 @@ type cloudCredsSecretData struct {
 	OpenStack *OpenStackCredsSecretData
 	VSphere   *VSphereCredsSecretData
 	Ovirt     *OvirtCredsSecretData
-	Kubevirt  *KubevirtCredsSecretData
 }
 
 type bootkubeTemplateData struct {

@@ -9,13 +9,11 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
-	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -88,16 +86,6 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 		}
 	case ibmcloud.Name:
 		// TODO: IBM[#90]: platformpermscheck
-	case kubevirt.Name:
-		client, err := kubevirtconfig.NewClient()
-		if err != nil {
-			return err
-		}
-
-		err = kubevirtconfig.ValidatePermissions(client, ic.Config)
-		if err != nil {
-			return errors.Wrap(err, "Kubevirt permissions validation failed")
-		}
 	case azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name:
 		// no permissions to check
 	default:

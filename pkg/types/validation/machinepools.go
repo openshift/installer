@@ -16,8 +16,6 @@ import (
 	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	ibmcloudvalidation "github.com/openshift/installer/pkg/types/ibmcloud/validation"
-	"github.com/openshift/installer/pkg/types/kubevirt"
-	kubevirtvalidation "github.com/openshift/installer/pkg/types/kubevirt/validation"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	libvirtvalidation "github.com/openshift/installer/pkg/types/libvirt/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -118,9 +116,6 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	}
 	if p.Ovirt != nil {
 		validate(ovirt.Name, p.Ovirt, func(f *field.Path) field.ErrorList { return ovirtvalidation.ValidateMachinePool(p.Ovirt, f) })
-	}
-	if p.Kubevirt != nil {
-		validate(kubevirt.Name, p.Kubevirt, func(f *field.Path) field.ErrorList { return kubevirtvalidation.ValidateMachinePool(p.Kubevirt, f) })
 	}
 	if p.OpenStack != nil {
 		validate(openstack.Name, p.OpenStack, func(f *field.Path) field.ErrorList {

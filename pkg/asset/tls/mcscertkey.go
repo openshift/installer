@@ -8,7 +8,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
-	kubevirttypes "github.com/openshift/installer/pkg/types/kubevirt"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -61,9 +60,6 @@ func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
 			cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.VSphere.APIVIP)}
 			cfg.DNSNames = append(cfg.DNSNames, installConfig.Config.VSphere.APIVIP)
 		}
-	case kubevirttypes.Name:
-		cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.Kubevirt.APIVIP)}
-		cfg.DNSNames = []string{hostname, installConfig.Config.Kubevirt.APIVIP}
 	default:
 		cfg.DNSNames = []string{hostname}
 	}

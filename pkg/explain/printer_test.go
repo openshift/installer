@@ -99,9 +99,6 @@ func Test_PrintFields(t *testing.T) {
     ibmcloud <object>
       IBMCloud is the configuration used when installing on IBM Cloud.
 
-    kubevirt <object>
-      Kubevirt is the configuration used when installing on kubevirt.
-
     libvirt <object>
       Libvirt is the configuration used when installing on libvirt.
 
