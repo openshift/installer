@@ -1,8 +1,3 @@
-variable "ignition" {
-  type    = string
-  default = ""
-}
-
 variable "resource_pool" {
   type = string
 }
@@ -33,10 +28,6 @@ variable "guest_id" {
 
 variable "tags" {
   type = list
-}
-
-variable "cluster_id" {
-  type = string
 }
 
 variable "thin_disk" {

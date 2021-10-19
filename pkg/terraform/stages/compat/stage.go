@@ -12,13 +12,11 @@ import (
 	gatherkubevirt "github.com/openshift/installer/pkg/terraform/gather/kubevirt"
 	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
 	gatherovirt "github.com/openshift/installer/pkg/terraform/gather/ovirt"
-	gathervsphere "github.com/openshift/installer/pkg/terraform/gather/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	kubevirttypes "github.com/openshift/installer/pkg/types/kubevirt"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // PlatformStages are the stages to run to provision the infrastructure used the legacy compat procedures.
@@ -104,15 +102,6 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 			logrus.Error(err)
 		}
 
-	case vspheretypes.Name:
-		bootstrap, err = gathervsphere.BootstrapIP(config, tfstate)
-		if err != nil {
-			return
-		}
-		masters, err = gathervsphere.ControlPlaneIPs(config, tfstate)
-		if err != nil {
-			logrus.Error(err)
-		}
 	case kubevirttypes.Name:
 		bootstrap, err = gatherkubevirt.BootstrapIP(tfstate)
 		if err != nil {
