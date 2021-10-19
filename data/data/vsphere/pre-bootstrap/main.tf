@@ -80,4 +80,3 @@ resource "vsphere_folder" "folder" {
   datacenter_id = data.vsphere_datacenter.datacenter.id
   tags          = [vsphere_tag.tag.id]
 }
-

@@ -41,16 +41,32 @@ func WithCustomDestroy(destroy DestroyFunc) StageOption {
 	}
 }
 
+// WithNormalExtractHostAddresses returns an option for specifying that a split stage should use the normal extract host addresses process.
+func WithNormalExtractHostAddresses() StageOption {
+	return WithCustomExtractHostAddresses(normalExtractHostAddresses)
+}
+
+// WithCustomExtractHostAddresses returns an option for specifying that a split stage should use a custom extract host addresses process.
+func WithCustomExtractHostAddresses(extractHostAddresses ExtractFunc) StageOption {
+	return func(s *SplitStage) {
+		s.extractHostAddresses = extractHostAddresses
+	}
+}
+
 // SplitStage is a split stage.
 type SplitStage struct {
 	platform             string
 	name                 string
 	destroyWithBootstrap bool
 	destroy              DestroyFunc
+	extractHostAddresses ExtractFunc
 }
 
 // DestroyFunc is a function for destroying the stage.
 type DestroyFunc func(s SplitStage, directory string, extraArgs []string) error
+
+// ExtractFunc is a function for extracting host addresses.
+type ExtractFunc func(s SplitStage, directory string, ic *types.InstallConfig) (string, int, []string, error)
 
 // Name implements pkg/terraform/Stage.Name
 func (s SplitStage) Name() string {
@@ -78,7 +94,14 @@ func (s SplitStage) Destroy(directory string, extraArgs []string) error {
 }
 
 // ExtractHostAddresses implements pkg/terraform/Stage.ExtractHostAddresses
-func (s SplitStage) ExtractHostAddresses(directory string, _ *types.InstallConfig) (string, int, []string, error) {
+func (s SplitStage) ExtractHostAddresses(directory string, ic *types.InstallConfig) (string, int, []string, error) {
+	if s.extractHostAddresses != nil {
+		return s.extractHostAddresses(s, directory, ic)
+	}
+	return normalExtractHostAddresses(s, directory, ic)
+}
+
+func normalExtractHostAddresses(s SplitStage, directory string, _ *types.InstallConfig) (string, int, []string, error) {
 	outputsFilePath := filepath.Join(directory, s.OutputsFilename())
 	if _, err := os.Stat(outputsFilePath); err != nil {
 		return "", 0, nil, errors.Wrapf(err, "could not find outputs file %q", outputsFilePath)

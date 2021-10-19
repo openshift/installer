@@ -97,3 +97,19 @@ func ControlPlaneIPs(config *installertypes.InstallConfig, tfs *terraform.State)
 	}
 	return masters, utilerrors.NewAggregate(errs)
 }
+
+// HostIP returns the ip address for a host
+func HostIP(config *installertypes.InstallConfig, moid string) (string, error) {
+	client, _, err := vspheretypes.CreateVSphereClients(context.TODO(), config.VSphere.VCenter, config.VSphere.Username, config.VSphere.Password)
+	if err != nil {
+		return "", err
+	}
+
+	var errs []error
+	ip, err := waitForVirtualMachineIP(client, moid)
+	if err != nil {
+		errs = append(errs, errors.Wrapf(err, "failed to lookup ipv4 address from given moid %s", moid))
+	}
+
+	return ip, nil
+}
