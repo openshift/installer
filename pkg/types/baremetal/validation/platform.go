@@ -413,6 +413,14 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.ClusterProvisioningIP)))
 		}
 
+		// Ensure provisioningNetworkCIDR does not have any host bits set
+		expectedIP := p.ProvisioningNetworkCIDR.IP.Mask(p.ProvisioningNetworkCIDR.Mask)
+		expectedLen, _ := p.ProvisioningNetworkCIDR.Mask.Size()
+		if !p.ProvisioningNetworkCIDR.IP.Equal(expectedIP) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR,
+				fmt.Sprintf("provisioningNetworkCIDR has host bits set, expected %s/%d", expectedIP, expectedLen)))
+		}
+
 		if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, err.Error()))
 		}
