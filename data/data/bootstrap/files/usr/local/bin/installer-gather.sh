@@ -3,6 +3,9 @@
 # shellcheck disable=SC1091
 . /usr/local/bin/bootstrap-cluster-gather.sh
 
+# Get target architecture
+arch=$(uname -m)
+
 if test "x${1}" = 'x--id'
 then
 	GATHER_ID="${2}"
@@ -75,6 +78,16 @@ find "${ARTIFACTS}/rendered-assets" -name "*secret*" -print0 | xargs -0 rm -rf
 find "${ARTIFACTS}/rendered-assets" -name "*kubeconfig*" -print0 | xargs -0 rm
 find "${ARTIFACTS}/rendered-assets" -name "*.key" -print0 | xargs -0 rm
 find "${ARTIFACTS}/rendered-assets" -name ".kube" -print0 | xargs -0 rm -rf
+
+# Collect system information specific to IBM Linux Z (s390x) systems. The dbginfo
+# script is available by default as part of the s390-utils rpm package
+if [ "$arch" == "s390x" ]
+then
+    echo "Gathering dbginfo for the 390x system"
+    mkdir -p "${ARTIFACTS}/node-dbginfo"
+    sudo /usr/sbin/dbginfo.sh -d "${ARTIFACTS}/node-dbginfo"
+    sudo chown -R "${USER}":"${USER}" "${ARTIFACTS}/node-dbginfo"
+fi
 
 # Collect cluster data
 GATHER_KUBECONFIG="/opt/openshift/auth/kubeconfig"
