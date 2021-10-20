@@ -154,6 +154,10 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 				return errors.Wrap(err, "could not serialize Azure Stack endpoints")
 			}
 			cm.Data[cloudProviderEndpointsKey] = string(b)
+
+			if trustBundle := installConfig.Config.AdditionalTrustBundle; trustBundle != "" {
+				cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
+			}
 		}
 	case gcptypes.Name:
 		subnet := fmt.Sprintf("%s-worker-subnet", clusterID.InfraID)
