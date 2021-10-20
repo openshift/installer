@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: openshift-kubevirt-infra
-  annotations:
-    openshift.io/node-selector: ""
-  labels:
-    name: openshift-kubevirt-infra

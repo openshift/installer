@@ -31,8 +31,6 @@ import (
 	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	ibmcloudvalidation "github.com/openshift/installer/pkg/types/ibmcloud/validation"
-	"github.com/openshift/installer/pkg/types/kubevirt"
-	kubevirtvalidation "github.com/openshift/installer/pkg/types/kubevirt/validation"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	libvirtvalidation "github.com/openshift/installer/pkg/types/libvirt/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -476,11 +474,6 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 	if platform.Ovirt != nil {
 		validate(ovirt.Name, platform.Ovirt, func(f *field.Path) field.ErrorList {
 			return ovirtvalidation.ValidatePlatform(platform.Ovirt, f)
-		})
-	}
-	if platform.Kubevirt != nil {
-		validate(kubevirt.Name, platform.Kubevirt, func(f *field.Path) field.ErrorList {
-			return kubevirtvalidation.ValidatePlatform(platform.Kubevirt, f, c)
 		})
 	}
 	return allErrs

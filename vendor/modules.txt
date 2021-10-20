@@ -700,9 +700,6 @@ github.com/eapache/go-resiliency/breaker
 github.com/eapache/go-xerial-snappy
 # github.com/eapache/queue v1.1.0
 github.com/eapache/queue
-# github.com/emicklei/go-restful v2.14.2+incompatible
-github.com/emicklei/go-restful
-github.com/emicklei/go-restful/log
 # github.com/evanphx/json-patch v4.11.0+incompatible
 github.com/evanphx/json-patch
 # github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d
@@ -1250,10 +1247,6 @@ github.com/json-iterator/go
 github.com/jstemmer/go-junit-report
 github.com/jstemmer/go-junit-report/formatter
 github.com/jstemmer/go-junit-report/parser
-# github.com/k8snetworkplumbingwg/network-attachment-definition-client v0.0.0-20191119172530-79f836b90111
-## explicit
-github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io
-github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1
 # github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 github.com/kardianos/osext
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
@@ -1284,16 +1277,6 @@ github.com/kr/fs
 github.com/kr/pretty
 # github.com/kr/text v0.2.0
 github.com/kr/text
-# github.com/kubevirt/terraform-provider-kubevirt v0.0.0-00010101000000-000000000000 => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
-## explicit
-github.com/kubevirt/terraform-provider-kubevirt/kubevirt
-github.com/kubevirt/terraform-provider-kubevirt/kubevirt/client
-github.com/kubevirt/terraform-provider-kubevirt/kubevirt/schema/datavolume
-github.com/kubevirt/terraform-provider-kubevirt/kubevirt/schema/k8s
-github.com/kubevirt/terraform-provider-kubevirt/kubevirt/schema/virtualmachine
-github.com/kubevirt/terraform-provider-kubevirt/kubevirt/schema/virtualmachineinstance
-github.com/kubevirt/terraform-provider-kubevirt/kubevirt/utils
-github.com/kubevirt/terraform-provider-kubevirt/kubevirt/utils/patch
 # github.com/leodido/go-urn v1.2.1
 github.com/leodido/go-urn
 # github.com/libvirt/libvirt-go v5.10.0+incompatible
@@ -1421,11 +1404,6 @@ github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1
 ## explicit
 github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis
 github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1
-# github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20210719100556-9b8bc3666720
-## explicit
-github.com/openshift/cluster-api-provider-kubevirt/pkg/apis
-github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1
-github.com/openshift/cluster-api-provider-kubevirt/pkg/utils
 # github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 ## explicit
 github.com/openshift/cluster-api-provider-libvirt/pkg/apis
@@ -1434,8 +1412,6 @@ github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig
 ## explicit
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
-# github.com/openshift/custom-resource-status v0.0.0-20190822192428-e62f2f3b79f3
-github.com/openshift/custom-resource-status/conditions/v1
 # github.com/openshift/library-go v0.0.0-20210408164723-7a65fdb398e2
 ## explicit
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
@@ -2736,7 +2712,6 @@ k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/scheme
 k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1
 k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1beta1
 # k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
-k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/proto/validation
 # k8s.io/kubectl v0.21.0 => k8s.io/kubectl v0.21.0-rc.0
@@ -2769,14 +2744,6 @@ k8s.io/utils/exec
 k8s.io/utils/integer
 k8s.io/utils/pointer
 k8s.io/utils/trace
-# kubevirt.io/client-go v0.29.0 => kubevirt.io/client-go v0.29.0
-## explicit
-kubevirt.io/client-go/api/v1
-kubevirt.io/client-go/precond
-# kubevirt.io/containerized-data-importer v1.10.9
-## explicit
-kubevirt.io/containerized-data-importer/pkg/apis/core
-kubevirt.io/containerized-data-importer/pkg/apis/core/v1alpha1
 # sigs.k8s.io/cluster-api-provider-aws v0.0.0 => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80
 ## explicit
 sigs.k8s.io/cluster-api-provider-aws/pkg/apis
@@ -2934,7 +2901,6 @@ sigs.k8s.io/yaml
 # github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
 # github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
-# github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
 # github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210706141527-5240e42f012a
 # github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20210706141527-5240e42f012a
 # github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
@@ -2947,7 +2913,6 @@ sigs.k8s.io/yaml
 # k8s.io/client-go => k8s.io/client-go v0.22.0
 # k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 # k8s.io/kubectl => k8s.io/kubectl v0.21.0-rc.0
-# kubevirt.io/client-go => kubevirt.io/client-go v0.29.0
 # sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80
 # sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f
 # sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20210302164104-8498241fa4bd

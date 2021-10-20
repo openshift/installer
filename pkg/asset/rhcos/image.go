@@ -20,7 +20,6 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -114,7 +113,7 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return rhcos.FindArtifactURL(a)
 		}
 		return "", fmt.Errorf("%s: No qemu build found", st.FormatPrefix(archName))
-	case ovirt.Name, kubevirt.Name, openstack.Name:
+	case ovirt.Name, openstack.Name:
 		op := config.Platform.OpenStack
 		if op != nil {
 			if oi := op.ClusterOSImage; oi != "" {

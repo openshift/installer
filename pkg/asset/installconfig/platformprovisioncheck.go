@@ -10,7 +10,6 @@ import (
 	bmconfig "github.com/openshift/installer/pkg/asset/installconfig/baremetal"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
-	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	osconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
@@ -19,7 +18,6 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -98,15 +96,6 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		}
 	case vsphere.Name:
 		err = vsconfig.ValidateForProvisioning(ic.Config)
-		if err != nil {
-			return err
-		}
-	case kubevirt.Name:
-		client, err := kubevirtconfig.NewClient()
-		if err != nil {
-			return err
-		}
-		err = kubevirtconfig.ValidateForProvisioning(client)
 		if err != nil {
 			return err
 		}

@@ -4,9 +4,7 @@ import (
 	survey "github.com/AlecAivazis/survey/v2"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/kubevirt"
 )
 
 type networking struct {
@@ -26,21 +24,6 @@ func (a *networking) Dependencies() []asset.Asset {
 func (a *networking) Generate(parents asset.Parents) error {
 	platform := &platform{}
 	parents.Get(platform)
-
-	switch platform.CurrentName() {
-	case kubevirt.Name:
-		selectedCIDR, err := selectMachineNetworkCIDR()
-		if err != nil {
-			return err
-		}
-		CIDR, err := ipnet.ParseCIDR(selectedCIDR)
-		if err != nil {
-			return err
-		}
-		a.machineNetwork = []types.MachineNetworkEntry{
-			{CIDR: *CIDR},
-		}
-	}
 	return nil
 }
 

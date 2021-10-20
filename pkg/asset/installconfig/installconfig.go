@@ -14,7 +14,6 @@ import (
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
-	ickubevirt "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
@@ -94,7 +93,6 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.IBMCloud = platform.IBMCloud
 	a.Config.BareMetal = platform.BareMetal
 	a.Config.Ovirt = platform.Ovirt
-	a.Config.Kubevirt = platform.Kubevirt
 
 	return a.finish("")
 }
@@ -207,13 +205,6 @@ func (a *InstallConfig) platformValidation() error {
 	}
 	if a.Config.Platform.OpenStack != nil {
 		return icopenstack.Validate(a.Config)
-	}
-	if a.Config.Platform.Kubevirt != nil {
-		client, err := ickubevirt.NewClient()
-		if err != nil {
-			return err
-		}
-		return ickubevirt.Validate(a.Config, client)
 	}
 	return field.ErrorList{}.ToAggregate()
 }
