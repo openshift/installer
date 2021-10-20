@@ -22,8 +22,8 @@ func Validate(ic *types.InstallConfig) error {
 	}
 
 	p := ic.Platform.VSphere
-	if err2 := validation.ValidatePlatform(p, field.NewPath("platform").Child("vsphere")); err2 != nil {
-		return err2.ToAggregate()
+	if errs := validation.ValidatePlatform(p, field.NewPath("platform").Child("vsphere")); len(errs) != 0 {
+		return errs.ToAggregate()
 	}
 
 	vim25Client, _, err := vspheretypes.CreateVSphereClients(context.TODO(),
