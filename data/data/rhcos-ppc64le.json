@@ -1,61 +1,68 @@
 {
-    "baseURI": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202107010047-0/ppc64le/",
-    "buildid": "49.84.202107010047-0",
+    "baseURI": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.10-ppc64le/410.84.202110141003-0/ppc64le/",
+    "buildid": "410.84.202110141003-0",
     "images": {
         "live-initramfs": {
-            "path": "rhcos-49.84.202107010047-0-live-initramfs.ppc64le.img",
-            "sha256": "79e42469694b273fce31a54e6790e4c594619577693e1b34621f1675a33538e8"
+            "path": "rhcos-410.84.202110141003-0-live-initramfs.ppc64le.img",
+            "sha256": "b400c6e4460384fcb6d8b1c22af37e748002ea901111a0c2c95a1553f0c1a59b"
         },
         "live-iso": {
-            "path": "rhcos-49.84.202107010047-0-live.ppc64le.iso",
-            "sha256": "0f6418dc5eb43b0f12da60cf583ce19cbbf85f421c0d35b0be85c33161ab8e87"
+            "path": "rhcos-410.84.202110141003-0-live.ppc64le.iso",
+            "sha256": "042c76b4deef740b0121615b785e268943a32ca4a3fa6bbd3ecfd2e192a54c0e"
         },
         "live-kernel": {
-            "path": "rhcos-49.84.202107010047-0-live-kernel-ppc64le",
-            "sha256": "ae1165bb13992f9b6543e2c8baa0f1f10460d84db740d1876c8f4f9226cb9a6d"
+            "path": "rhcos-410.84.202110141003-0-live-kernel-ppc64le",
+            "sha256": "d2f8f29ef59b87de2cbd7df8be60c06620bc90e88f4a722bb8278333d76ca3f8"
         },
         "live-rootfs": {
-            "path": "rhcos-49.84.202107010047-0-live-rootfs.ppc64le.img",
-            "sha256": "6c3a9728fd82b09d11778370b68ae0875502a84d3ccbea5a0e1a9c69d855c08b"
+            "path": "rhcos-410.84.202110141003-0-live-rootfs.ppc64le.img",
+            "sha256": "a30ac171e4afea05934943f7f6a9ea3089fbfc3e48ccd26fd051d1626adaa0bc"
         },
         "metal": {
-            "path": "rhcos-49.84.202107010047-0-metal.ppc64le.raw.gz",
-            "sha256": "f08f36d75aa726dbb6dd1cd5f1c0ef561174c7f5324f3fba2cd8ff52187bc242",
-            "size": 988450954,
-            "uncompressed-sha256": "3d268c733b48b884f4215bb1f4e53883dd460b2a3eedd0e02e5b4e5800dafcc6",
-            "uncompressed-size": 4126146560
+            "path": "rhcos-410.84.202110141003-0-metal.ppc64le.raw.gz",
+            "sha256": "29635abc26733df1c4062e3b8e40b4ac7fe145fadca52aa4942a3da69c08c025",
+            "size": 988920762,
+            "uncompressed-sha256": "f0e4e91113f3a3f49e9a50102719349380539117c4b77b40e17262a72ee9a11c",
+            "uncompressed-size": 4145020928
         },
         "metal4k": {
-            "path": "rhcos-49.84.202107010047-0-metal4k.ppc64le.raw.gz",
-            "sha256": "fc64722125fa0db0eb534db6af8a9ebcfff3c1bd6bf34482041ab09191e83f5d",
-            "size": 988748793,
-            "uncompressed-sha256": "662cf671d988c6b7feb48413384630596ebc0b33bfbbbfae8bef5d03ad494d4e",
-            "uncompressed-size": 4126146560
+            "path": "rhcos-410.84.202110141003-0-metal4k.ppc64le.raw.gz",
+            "sha256": "f9cb41f107454afeb3f1ff5b033f5199b851cbf8da46bcb9c2c352915f48dde6",
+            "size": 989080701,
+            "uncompressed-sha256": "9548d02f75f2c113e5748ef6a36cd22a71db8b18980d7245b86b8d971ef1a9ff",
+            "uncompressed-size": 4145020928
         },
         "openstack": {
-            "path": "rhcos-49.84.202107010047-0-openstack.ppc64le.qcow2.gz",
-            "sha256": "e30fc32cdf50ff02a72feb71cd3f4e9c92f1b038aef506d6e8396dbbf841d085",
-            "size": 986664044,
-            "uncompressed-sha256": "9d1dc160337cda643805c96109f086015f111d46e7982b9f21cf49276cab3fb5",
-            "uncompressed-size": 2665480192
+            "path": "rhcos-410.84.202110141003-0-openstack.ppc64le.qcow2.gz",
+            "sha256": "72fe3f6493bf28c9ddf93a411e7a6abc41efe62cccf9c5ada9d2045a2a6965a1",
+            "size": 987058966,
+            "uncompressed-sha256": "71c8617bd859cb76cb3156f15c9f5eadf4137d45c8875ff1e4f121bcad2ffca9",
+            "uncompressed-size": 2678128640
         },
         "ostree": {
-            "path": "rhcos-49.84.202107010047-0-ostree.ppc64le.tar",
-            "sha256": "2387066fe638c276c2ec89e2a4ab66a526bb70cc039fecadd4d9ed563df7e8cf",
-            "size": 909711360
+            "path": "rhcos-410.84.202110141003-0-ostree.ppc64le.ociarchive",
+            "sha256": "ea529c1015b7007932f1817f760661051cc5140ed309d7d6544d8f206f735529",
+            "size": 884873728
+        },
+        "powervs": {
+            "path": "rhcos-410.84.202110141003-0-powervs.ppc64le.ova.gz",
+            "sha256": "4183be3411d1cd18342aa419ba580641db62350c81606e0ce15f775ccddf0104",
+            "size": 984252473,
+            "uncompressed-sha256": "6bce093bb2bf2ca47a3dc2842fdfe52d602d1f6ba1cdde265a79b2417864acda",
+            "uncompressed-size": 2539479040
         },
         "qemu": {
-            "path": "rhcos-49.84.202107010047-0-qemu.ppc64le.qcow2.gz",
-            "sha256": "9145e08f39baf2df968ea6803303ccb1fc2941f8eae60d41ba91c9016e13ba33",
-            "size": 987690835,
-            "uncompressed-sha256": "b3822dd7eddcf2faf4028c6a6cfa7fcfaf56153d2da6bd47c462705f90887871",
-            "uncompressed-size": 2702639104
+            "path": "rhcos-410.84.202110141003-0-qemu.ppc64le.qcow2.gz",
+            "sha256": "0e9ef571b9db6ab323acba214dd187483b7ceb79e90d0a8b9e3d848e37b59c99",
+            "size": 987990578,
+            "uncompressed-sha256": "addfbbc135ba0c5bd652761ac1f526a029b68d41ef0c2176a12dba13a4969f14",
+            "uncompressed-size": 2715484160
         }
     },
     "oscontainer": {
-        "digest": "sha256:cbb5ff0ef87cf99ec4873720bc350e09c699e5a533a8bef95a7805042da5254e",
+        "digest": "sha256:a66024be0bab105d01f827b73e0845f02343a4a26e39335b7c18fd1ec8668a40",
         "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
     },
-    "ostree-commit": "63a0c41848555ff81ef062bfbfbd8c467979c2a3c4889bdf2b61eb83069efb90",
-    "ostree-version": "49.84.202107010047-0"
+    "ostree-commit": "be8c62bde741a4f7cac0bdce002348a685ffa1480f3fd8ca0145f6185f7ec6ac",
+    "ostree-version": "410.84.202110141003-0"
 }
