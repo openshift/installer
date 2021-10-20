@@ -1,10 +1,10 @@
 package powervs
 
 import (
-        "encoding/json"
-        "io/ioutil"
-	"path/filepath"
+	"encoding/json"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
@@ -29,12 +29,12 @@ type Session struct {
 	Session *ibmpisession.IBMPISession
 }
 
-// piSessionVars is an object that holds the variables required to create an ibmpisession object
+// PISessionVars is an object that holds the variables required to create an ibmpisession object
 type PISessionVars struct {
-	ID	string `json:"id,omitempty"`
-	ApiKey 	string `json:"apikey,omitempty"`
-	Region 	string `json:"region,omitempty"`
-	Zone 	string `json:"zone,omitempty"`
+	ID     string `json:"id,omitempty"`
+	APIKey string `json:"apikey,omitempty"`
+	Region string `json:"region,omitempty"`
+	Zone   string `json:"zone,omitempty"`
 }
 
 // GetSession returns an IBM Cloud session by using credentials found in default locations in order:
@@ -62,7 +62,7 @@ func GetSession() (*Session, error) {
 }
 
 var (
-        defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".powervs", "config.json")
+	defaultAuthFilePath    = filepath.Join(os.Getenv("HOME"), ".powervs", "config.json")
 	defaultBluemixFilePath = filepath.Join(os.Getenv("HOME"), ".bluemix", "config.json")
 )
 
@@ -73,10 +73,10 @@ func getPISession() (*ibmpisession.IBMPISession, error) {
 
 	// First grab variables from the installer written authFilePath
 	logrus.Debug("Gathering variables from AuthFile")
-	err = getPISessionVarsFromAuthFile( &pisv )
+	err = getPISessionVarsFromAuthFile(&pisv)
 	if err != nil {
-                return nil, err
-        }
+		return nil, err
+	}
 
 	// Second grab variables from files
 
@@ -85,162 +85,161 @@ func getPISession() (*ibmpisession.IBMPISession, error) {
 	// zone cannot be found in this file
 	// username cannot be found in this file
 	// apikey cannot be found in this file, iamtoken is not the apikey we need
-	
+
 	// Third grab variables from the users enviornment
 	logrus.Debug("Gathering variables from user enviornment")
-	err = getPISessionVarsFromEnv( &pisv )
-	if err != nil {
-                return nil, err
-        }
-
-	// Fourth prompt the user for the remaining variables
-	logrus.Debug("Gathering variables from user")
-	err = getPISessionVarsFromUser( &pisv )
-	if err != nil {
-                return nil, err
-        }
-	
-	// Save variables to disk
-	err = savePISessionVars( &pisv )
-	if err != nil {
-                return nil, err
-        }
-	
-	// This is needed by ibmcloud code to gather dns information later
-	os.Setenv("IC_API_KEY", pisv.ApiKey)
-	// We are using the iamtoken field to hold the api key
-	iamtoken := pisv.ApiKey
-	
-	s, err := ibmpisession.New( iamtoken, pisv.Region, false, defSessionTimeout, pisv.ID, pisv.Zone )
+	err = getPISessionVarsFromEnv(&pisv)
 	if err != nil {
 		return nil, err
 	}
-	
+
+	// Fourth prompt the user for the remaining variables
+	logrus.Debug("Gathering variables from user")
+	err = getPISessionVarsFromUser(&pisv)
+	if err != nil {
+		return nil, err
+	}
+
+	// Save variables to disk
+	err = savePISessionVars(&pisv)
+	if err != nil {
+		return nil, err
+	}
+
+	// This is needed by ibmcloud code to gather dns information later
+	os.Setenv("IC_API_KEY", pisv.APIKey)
+	// We are using the iamtoken field to hold the api key
+	iamtoken := pisv.APIKey
+
+	s, err := ibmpisession.New(iamtoken, pisv.Region, false, defSessionTimeout, pisv.ID, pisv.Zone)
+	if err != nil {
+		return nil, err
+	}
+
 	return s, err
-	
+
 }
 
-func getPISessionVarsFromAuthFile( pisv *PISessionVars ) error {
+func getPISessionVarsFromAuthFile(pisv *PISessionVars) error {
 
 	authFilePath := defaultAuthFilePath
-        if f := os.Getenv( "POWERVS_AUTH_FILEPATH" ); len(f) > 0 {
-                authFilePath = f
-        }
-	
+	if f := os.Getenv("POWERVS_AUTH_FILEPATH"); len(f) > 0 {
+		authFilePath = f
+	}
+
 	// Check if AuthFile exists, return if it does not
-	if _, err := os.Stat( authFilePath ); os.IsNotExist(err) {
+	if _, err := os.Stat(authFilePath); os.IsNotExist(err) {
 		return nil
 	}
-	
-	content, err := ioutil.ReadFile( authFilePath )
+
+	content, err := ioutil.ReadFile(authFilePath)
 	if err != nil {
 		return err
 	}
-	
+
 	err = json.Unmarshal(content, pisv)
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
-func getPISessionVarsFromEnv( pisv *PISessionVars ) error {
-	
-	if len( pisv.ID ) == 0 {
+func getPISessionVarsFromEnv(pisv *PISessionVars) error {
+
+	if len(pisv.ID) == 0 {
 		pisv.ID = os.Getenv("IBMID")
 	}
-	
-	if len( pisv.ApiKey ) == 0 {
-	        // APIKeyEnvVars is a list of environment variable names containing an IBM Cloud API key
-        	var APIKeyEnvVars = []string{"IC_API_KEY", "IBMCLOUD_API_KEY", "BM_API_KEY", "BLUEMIX_API_KEY"}
-        	pisv.ApiKey = getEnv(APIKeyEnvVars)
+
+	if len(pisv.APIKey) == 0 {
+		// APIKeyEnvVars is a list of environment variable names containing an IBM Cloud API key
+		var APIKeyEnvVars = []string{"IC_API_KEY", "IBMCLOUD_API_KEY", "BM_API_KEY", "BLUEMIX_API_KEY"}
+		pisv.APIKey = getEnv(APIKeyEnvVars)
 	}
 
-	if len( pisv.Region ) == 0 {
+	if len(pisv.Region) == 0 {
 		var regionEnvVars = []string{"IBMCLOUD_REGION", "IC_REGION"}
-        	pisv.Region = getEnv(regionEnvVars)
-	}	
-	
-	if len( pisv.Zone ) == 0 {
-		var zoneEnvVars = []string{"IBMCLOUD_ZONE"}
-	        pisv.Zone = getEnv(zoneEnvVars)
+		pisv.Region = getEnv(regionEnvVars)
 	}
-	
+
+	if len(pisv.Zone) == 0 {
+		var zoneEnvVars = []string{"IBMCLOUD_ZONE"}
+		pisv.Zone = getEnv(zoneEnvVars)
+	}
+
 	return nil
 }
 
-func getPISessionVarsFromUser( pisv *PISessionVars ) error {
+func getPISessionVarsFromUser(pisv *PISessionVars) error {
 	var err error
 
-	if len( pisv.ID ) == 0 {
+	if len(pisv.ID) == 0 {
 		err = survey.Ask([]*survey.Question{
-                        {
-                                Prompt: &survey.Input{
-                                        Message: "IBM Cloud User ID",
-                                        Help:    "The login for \nhttps://cloud.ibm.com/",
-                                },
-                        },
-                }, &pisv.ID)
-                if err != nil {
-                        return errors.New("Error saving the IBM Cloud User ID")
-                }
-		
-	}
-	
-	if len( pisv.ApiKey ) == 0 {
-                err = survey.Ask([]*survey.Question{
-                        {
-                                Prompt: &survey.Password{
-                                        Message: "IBM Cloud API Key",
-                                        Help:    "The api key installation.\nhttps://cloud.ibm.com/iam/apikeys",
-                                },
-                        },
-                }, &pisv.ApiKey)
-                if err != nil {
-                        return errors.New("Error saving the API Key")
-                }
-	
-	}
-	
-	if len( pisv.Region ) == 0 {
-		pisv.Region, err = GetRegion()
-                if err != nil {
-                        return err
-                }
-		
+			{
+				Prompt: &survey.Input{
+					Message: "IBM Cloud User ID",
+					Help:    "The login for \nhttps://cloud.ibm.com/",
+				},
+			},
+		}, &pisv.ID)
+		if err != nil {
+			return errors.New("Error saving the IBM Cloud User ID")
+		}
+
 	}
 
-        if len( pisv.Zone ) == 0 {
-                pisv.Zone, err = GetZone(pisv.Region)
-                if err != nil {
-                        return err
-                }
-        }	
-	
+	if len(pisv.APIKey) == 0 {
+		err = survey.Ask([]*survey.Question{
+			{
+				Prompt: &survey.Password{
+					Message: "IBM Cloud API Key",
+					Help:    "The api key installation.\nhttps://cloud.ibm.com/iam/apikeys",
+				},
+			},
+		}, &pisv.APIKey)
+		if err != nil {
+			return errors.New("Error saving the API Key")
+		}
+
+	}
+
+	if len(pisv.Region) == 0 {
+		pisv.Region, err = GetRegion()
+		if err != nil {
+			return err
+		}
+
+	}
+
+	if len(pisv.Zone) == 0 {
+		pisv.Zone, err = GetZone(pisv.Region)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func savePISessionVars( pisv *PISessionVars) error {
-	
+func savePISessionVars(pisv *PISessionVars) error {
+
 	authFilePath := defaultAuthFilePath
-        if f := os.Getenv( "POWERVS_AUTH_FILEPATH" ); len(f) > 0 {
-                authFilePath = f
-        }
+	if f := os.Getenv("POWERVS_AUTH_FILEPATH"); len(f) > 0 {
+		authFilePath = f
+	}
 
-        jsonVars, err := json.Marshal( *pisv )
+	jsonVars, err := json.Marshal(*pisv)
 	if err != nil {
-                return err
-        }
+		return err
+	}
 
-        err = os.MkdirAll(filepath.Dir(authFilePath), 0700)
-        if err != nil {
-                return err
-        }
+	err = os.MkdirAll(filepath.Dir(authFilePath), 0700)
+	if err != nil {
+		return err
+	}
 	logrus.Debug("Saving variables to ", authFilePath)
-        return ioutil.WriteFile(authFilePath, jsonVars, 0600)
+	return ioutil.WriteFile(authFilePath, jsonVars, 0600)
 }
-
 
 func getEnv(envs []string) string {
 	for _, k := range envs {
