@@ -4,7 +4,7 @@ package vsphere
 import (
 	"fmt"
 
-	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
