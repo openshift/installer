@@ -445,7 +445,8 @@ func (DNSStatus) SwaggerDoc() map[string]string {
 
 var map_ForwardPlugin = map[string]string{
 	"":          "ForwardPlugin defines a schema for configuring the CoreDNS forward plugin.",
-	"upstreams": "upstreams is a list of resolvers to forward name queries for subdomains of Zones. Upstreams are randomized when more than 1 upstream is specified. Each instance of CoreDNS performs health checking of Upstreams. When a healthy upstream returns an error during the exchange, another resolver is tried from Upstreams. Each upstream is represented by an IP address or IP:port if the upstream listens on a port other than 53.\n\nA maximum of 15 upstreams is allowed per ForwardPlugin.",
+	"upstreams": "upstreams is a list of resolvers to forward name queries for subdomains of Zones. Each instance of CoreDNS performs health checking of Upstreams. When a healthy upstream returns an error during the exchange, another resolver is tried from Upstreams. The Upstreams are selected in the order specified in Policy. Each upstream is represented by an IP address or IP:port if the upstream listens on a port other than 53.\n\nA maximum of 15 upstreams is allowed per ForwardPlugin.",
+	"policy":    "policy is used to determine the order in which upstream servers are selected for querying. Any one of the following values may be specified:\n\n* \"Random\" picks a random upstream server for each query. * \"RoundRobin\" picks upstream servers in a round-robin order, moving to the next server for each new query. * \"Sequential\" tries querying upstream servers in a sequential order until one responds, starting with the first server for each new query.\n\nThe default value is \"Random\"",
 }
 
 func (ForwardPlugin) SwaggerDoc() map[string]string {
@@ -559,6 +560,15 @@ var map_GCPLoadBalancerParameters = map[string]string{
 
 func (GCPLoadBalancerParameters) SwaggerDoc() map[string]string {
 	return map_GCPLoadBalancerParameters
+}
+
+var map_HTTPCompressionPolicy = map[string]string{
+	"":          "httpCompressionPolicy turns on compression for the specified MIME types.\n\nThis field is optional, and its absence implies that compression should not be enabled globally in HAProxy.\n\nIf httpCompressionPolicy exists, compression should be enabled only for the specified MIME types.",
+	"mimeTypes": "mimeTypes is a list of MIME types that should have compression applied. This list can be empty, in which case the ingress controller does not apply compression.\n\nNote: Not all MIME types benefit from compression, but HAProxy will still use resources to try to compress if instructed to.  Generally speaking, text (html, css, js, etc.) formats benefit from compression, but formats that are already compressed (image, audio, video, etc.) benefit little in exchange for the time and cpu spent on compressing again. See https://joehonton.medium.com/the-gzip-penalty-d31bd697f1a2",
+}
+
+func (HTTPCompressionPolicy) SwaggerDoc() map[string]string {
+	return map_HTTPCompressionPolicy
 }
 
 var map_HostNetworkStrategy = map[string]string{
@@ -676,6 +686,7 @@ var map_IngressControllerSpec = map[string]string{
 	"httpEmptyRequestsPolicy":    "httpEmptyRequestsPolicy describes how HTTP connections should be handled if the connection times out before a request is received. Allowed values for this field are \"Respond\" and \"Ignore\".  If the field is set to \"Respond\", the ingress controller sends an HTTP 400 or 408 response, logs the connection (if access logging is enabled), and counts the connection in the appropriate metrics.  If the field is set to \"Ignore\", the ingress controller closes the connection without sending a response, logging the connection, or incrementing metrics.  The default value is \"Respond\".\n\nTypically, these connections come from load balancers' health probes or Web browsers' speculative connections (\"preconnect\") and can be safely ignored.  However, these requests may also be caused by network errors, and so setting this field to \"Ignore\" may impede detection and diagnosis of problems.  In addition, these requests may be caused by port scans, in which case logging empty requests may aid in detecting intrusion attempts.",
 	"tuningOptions":              "tuningOptions defines parameters for adjusting the performance of ingress controller pods. All fields are optional and will use their respective defaults if not set. See specific tuningOptions fields for more details.\n\nSetting fields within tuningOptions is generally not recommended. The default values are suitable for most configurations.",
 	"unsupportedConfigOverrides": "unsupportedConfigOverrides allows specifying unsupported configuration options.  Its use is unsupported.",
+	"httpCompression":            "httpCompression defines a policy for HTTP traffic compression. By default, there is no HTTP compression.",
 }
 
 func (IngressControllerSpec) SwaggerDoc() map[string]string {
@@ -784,10 +795,11 @@ func (RouteAdmissionPolicy) SwaggerDoc() map[string]string {
 }
 
 var map_SyslogLoggingDestinationParameters = map[string]string{
-	"":         "SyslogLoggingDestinationParameters describes parameters for the Syslog logging destination type.",
-	"address":  "address is the IP address of the syslog endpoint that receives log messages.",
-	"port":     "port is the UDP port number of the syslog endpoint that receives log messages.",
-	"facility": "facility specifies the syslog facility of log messages.\n\nIf this field is empty, the facility is \"local1\".",
+	"":          "SyslogLoggingDestinationParameters describes parameters for the Syslog logging destination type.",
+	"address":   "address is the IP address of the syslog endpoint that receives log messages.",
+	"port":      "port is the UDP port number of the syslog endpoint that receives log messages.",
+	"facility":  "facility specifies the syslog facility of log messages.\n\nIf this field is empty, the facility is \"local1\".",
+	"maxLength": "maxLength is the maximum length of the syslog message\n\nIf this field is empty, the maxLength is set to \"1024\".",
 }
 
 func (SyslogLoggingDestinationParameters) SwaggerDoc() map[string]string {

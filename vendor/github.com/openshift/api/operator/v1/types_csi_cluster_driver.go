@@ -52,7 +52,7 @@ const (
 	ManilaCSIDriver          CSIDriverName = "manila.csi.openstack.org"
 	OvirtCSIDriver           CSIDriverName = "csi.ovirt.org"
 	KubevirtCSIDriver        CSIDriverName = "csi.kubevirt.io"
-	SharedResourcesCSIDriver CSIDriverName = "csi.shared-resources.openshift.io"
+	SharedResourcesCSIDriver CSIDriverName = "csi.sharedresource.openshift.io"
 	AlibabaDiskCSIDriver     CSIDriverName = "diskplugin.csi.alibabacloud.com"
 	IBMVPCBlockCSIDriver     CSIDriverName = "vpc.block.csi.ibm.io"
 )
