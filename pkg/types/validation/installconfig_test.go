@@ -638,6 +638,19 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^platform\.baremetal\.apiVIP: Invalid value: "10\.1\.0\.5": IP expected to be in one of the machine networks: 10.0.0.0/16$`,
 		},
 		{
+			name: "baremetal API VIP set to an incorrect IP Family",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = validDualStackNetworkingConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIP = "ffd0::"
+				return c
+			}(),
+			expectedError: `networking.baremetal.apiVIP: Invalid value: "ffd0::": VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6`,
+		},
+		{
 			name: "baremetal Ingress VIP not an IP",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -648,6 +661,19 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^\[platform\.baremetal\.ingressVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.ingressVIP: Invalid value: "test": IP expected to be in one of the machine networks: 10.0.0.0/16]$`,
+		},
+		{
+			name: "baremetal Ingress VIP set to an incorrect IP Family",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = validDualStackNetworkingConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIP = "ffd0::"
+				return c
+			}(),
+			expectedError: `networking.baremetal.ingressVIP: Invalid value: "ffd0::": VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6`,
 		},
 		{
 			name: "baremetal Ingress VIP set to an incorrect value",
