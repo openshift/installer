@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	streamJSON = "data/data/rhcos-stream.json"
+	// FIXME - Add an OKD conditional here
+	streamJSON = "data/data/coreos/rhcos.json"
 	dest       = "bin/manifests/coreos-bootimages.yaml"
 )
 
