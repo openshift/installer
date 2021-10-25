@@ -5,7 +5,6 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
-	"github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaldefaults "github.com/openshift/installer/pkg/types/baremetal/defaults"
 	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
@@ -14,6 +13,7 @@ import (
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	ovirtdefaults "github.com/openshift/installer/pkg/types/ovirt/defaults"
+	"github.com/openshift/installer/pkg/types/validation"
 	vspheredefaults "github.com/openshift/installer/pkg/types/vsphere/defaults"
 )
 
@@ -77,7 +77,11 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	}
 
 	if c.CredentialsMode == "" {
-		if c.Platform.Azure != nil && c.Platform.Azure.CloudName == azure.StackCloud {
+		validModes := validation.ValidCredentialModesFor(c.Platform)
+
+		// CredentialsMode for ManualCredentialMode-only platforms should be explicitly set
+		// in order to not create cluster credentials and execute other manual-mode logic.
+		if len(validModes) == 1 && validModes[0] == types.ManualCredentialsMode {
 			c.CredentialsMode = types.ManualCredentialsMode
 		}
 	}

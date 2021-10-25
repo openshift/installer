@@ -583,20 +583,7 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 	}
 	allErrs := field.ErrorList{}
 
-	allowedAzureModes := []types.CredentialsMode{types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode}
-	if platform.Azure != nil && platform.Azure.CloudName == azure.StackCloud {
-		allowedAzureModes = []types.CredentialsMode{types.ManualCredentialsMode}
-	}
-
-	// validPlatformCredentialsModes is a map from the platform name to a slice of credentials modes that are valid
-	// for the platform. If a platform name is not in the map, then the credentials mode cannot be set for that platform.
-	validPlatformCredentialsModes := map[string][]types.CredentialsMode{
-		aws.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
-		azure.Name:    allowedAzureModes,
-		gcp.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
-		ibmcloud.Name: {types.ManualCredentialsMode},
-	}
-	if validModes, ok := validPlatformCredentialsModes[platform.Name()]; ok {
+	if validModes := ValidCredentialModesFor(platform); validModes != nil {
 		validModesSet := sets.NewString()
 		for _, m := range validModes {
 			validModesSet.Insert(string(m))
@@ -608,6 +595,28 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 		allErrs = append(allErrs, field.Invalid(fldPath, mode, fmt.Sprintf("cannot be set when using the %q platform", platform.Name())))
 	}
 	return allErrs
+}
+
+// ValidCredentialModesFor accepts a platform type and returns a slice of credentials modes that are valid
+// for the platform. If a platform does not support setting the credentials mode, returns nil.
+func ValidCredentialModesFor(platform types.Platform) []types.CredentialsMode {
+	allowedAzureModes := []types.CredentialsMode{types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode}
+	if platform.Azure != nil && platform.Azure.CloudName == azure.StackCloud {
+		allowedAzureModes = []types.CredentialsMode{types.ManualCredentialsMode}
+	}
+
+	validPlatformCredentialsModes := map[string][]types.CredentialsMode{
+		aws.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
+		azure.Name:    allowedAzureModes,
+		gcp.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
+		ibmcloud.Name: {types.ManualCredentialsMode},
+	}
+
+	if validModes, ok := validPlatformCredentialsModes[platform.Name()]; ok {
+		return validModes
+	}
+
+	return nil
 }
 
 // validateURI checks if the given url is of the right format. It also checks if the scheme of the uri

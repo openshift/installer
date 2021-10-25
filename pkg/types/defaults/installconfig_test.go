@@ -57,6 +57,16 @@ func defaultAzureInstallConfig() *types.InstallConfig {
 	return c
 }
 
+func defaultAzureStackInstallConfig() *types.InstallConfig {
+	c := defaultInstallConfig()
+	c.Platform.Azure = &azure.Platform{
+		CloudName: azure.StackCloud,
+	}
+	azuredefaults.SetPlatformDefaults(c.Platform.Azure)
+	c.CredentialsMode = types.ManualCredentialsMode
+	return c
+}
+
 func defaultLibvirtInstallConfig() *types.InstallConfig {
 	c := defaultInstallConfig()
 	c.Networking.MachineNetwork[0].CIDR = *libvirtdefaults.DefaultMachineCIDR
@@ -120,6 +130,17 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 				},
 			},
 			expected: defaultAzureInstallConfig(),
+		},
+		{
+			name: "empty Azure Stack",
+			config: &types.InstallConfig{
+				Platform: types.Platform{
+					Azure: &azure.Platform{
+						CloudName: azure.StackCloud,
+					},
+				},
+			},
+			expected: defaultAzureStackInstallConfig(),
 		},
 		{
 			name: "empty Libvirt",
