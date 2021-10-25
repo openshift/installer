@@ -6,6 +6,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/availabilityzones"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumetypes"
+	"github.com/gophercloud/gophercloud/openstack/common/extensions"
 	computequotasets "github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/quotasets"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	tokensv2 "github.com/gophercloud/gophercloud/openstack/identity/v2/tokens"
@@ -26,20 +27,22 @@ import (
 	"github.com/openshift/installer/pkg/quota"
 	"github.com/openshift/installer/pkg/types"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/types/openstack/validation/networkextensions"
 )
 
 // CloudInfo caches data fetched from the user's openstack cloud
 type CloudInfo struct {
-	APIFIP          *floatingips.FloatingIP
-	ExternalNetwork *networks.Network
-	Flavors         map[string]Flavor
-	IngressFIP      *floatingips.FloatingIP
-	MachinesSubnet  *subnets.Subnet
-	OSImage         *images.Image
-	ComputeZones    []string
-	VolumeZones     []string
-	VolumeTypes     []string
-	Quotas          []quota.Quota
+	APIFIP            *floatingips.FloatingIP
+	ExternalNetwork   *networks.Network
+	Flavors           map[string]Flavor
+	IngressFIP        *floatingips.FloatingIP
+	MachinesSubnet    *subnets.Subnet
+	OSImage           *images.Image
+	ComputeZones      []string
+	VolumeZones       []string
+	VolumeTypes       []string
+	NetworkExtensions []extensions.Extension
+	Quotas            []quota.Quota
 
 	clients *clients
 }
@@ -215,6 +218,11 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 			return nil
 		}
 		return errors.Wrap(err, "failed to load Quota")
+	}
+
+	ci.NetworkExtensions, err = networkextensions.Get(ci.clients.networkClient)
+	if err != nil {
+		return errors.Wrap(err, "failed to fetch network extensions")
 	}
 
 	return nil
