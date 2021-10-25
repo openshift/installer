@@ -43,11 +43,11 @@ func TestMastersSelectionByRole(t *testing.T) {
 			expectedHosts: []string{"master-0", "master-1"},
 		},
 		{
-			scenario:                "mixed-order",
+			scenario:                "filter-all-workers",
 			numControlPlaneReplicas: 1,
 			platformHosts: platformHosts(
-				host("worker-0", "worker"),
 				host("master-0", "master"),
+				host("worker-0", "worker"),
 				host("worker-1", "worker"),
 			),
 			expectedHosts: []string{"master-0"},
@@ -56,8 +56,8 @@ func TestMastersSelectionByRole(t *testing.T) {
 			scenario:                "hosts-norole",
 			numControlPlaneReplicas: 2,
 			platformHosts: platformHosts(
-				host("master-0", ""),
 				host("worker-0", "worker"),
+				host("master-0", ""),
 				host("master-1", ""),
 			),
 			expectedHosts: []string{"master-0", "master-1"},
@@ -73,7 +73,17 @@ func TestMastersSelectionByRole(t *testing.T) {
 			expectedHosts: []string{"master-0", "master-1", "master-2"},
 		},
 		{
-			scenario:                "more-hosts-than-required",
+			scenario:                "more-masters-than-required",
+			numControlPlaneReplicas: 2,
+			platformHosts: platformHosts(
+				host("master-0", "master"),
+				host("master-1", "master"),
+				host("master-2", "master"),
+			),
+			expectedHosts: []string{"master-0", "master-1"},
+		},
+		{
+			scenario:                "more-hosts-than-required-mixed",
 			numControlPlaneReplicas: 2,
 			platformHosts: platformHosts(
 				host("master-0", "master"),
@@ -93,27 +103,17 @@ func TestMastersSelectionByRole(t *testing.T) {
 			expectedHosts: []string{"master-0", "master-1"},
 		},
 		{
-			scenario:                "more-hosts-than-required-mixed",
+			scenario:                "more-hosts-than-required-mixed-again",
 			numControlPlaneReplicas: 2,
 			platformHosts: platformHosts(
 				host("worker-0", "worker"),
-				host("master-0", ""),
 				host("worker-1", "worker"),
-				host("master-1", ""),
 				host("worker-2", "worker"),
+				host("master-0", ""),
+				host("master-1", ""),
 				host("master-2", ""),
 			),
 			expectedHosts: []string{"master-0", "master-1"},
-		},
-		{
-			scenario:                "more-masters-than-required",
-			numControlPlaneReplicas: 1,
-			platformHosts: platformHosts(
-				host("server-0", ""),
-				host("server-1", ""),
-				host("server-2", "master"),
-			),
-			expectedHosts: []string{"server-0"},
 		},
 	}
 

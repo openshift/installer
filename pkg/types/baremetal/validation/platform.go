@@ -300,31 +300,22 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 	numWorkers := int64(0)
 
 	for _, h := range hosts {
-		// The first N hosts, not explicitly tagged with the worker role,
-		// are considered eligible as master
-		if numMasters < numRequiredMasters {
-			if !h.IsWorker() {
-				numMasters++
-			} else {
-				numWorkers++
-			}
+		if h.IsMaster() {
+			numMasters++
+		} else if h.IsWorker() {
+			numWorkers++
 		} else {
-			// The remaining hosts, not explicitly tagged with the master role,
-			// are considered eligible as worker
-			if !h.IsMaster() {
-				numWorkers++
-			} else {
+			logrus.Warn(fmt.Sprintf("Host %s hasn't any role configured", h.Name))
+			if numMasters < numRequiredMasters {
 				numMasters++
+			} else if numWorkers < numRequiredWorkers {
+				numWorkers++
 			}
 		}
 	}
 
 	if numMasters < numRequiredMasters {
 		return fmt.Errorf("not enough hosts found (%v) to support all the configured ControlPlane replicas (%v)", numMasters, numRequiredMasters)
-	}
-
-	if numMasters > numRequiredMasters {
-		logrus.Warn("Found more hosts configured as master than required")
 	}
 
 	if numWorkers < numRequiredWorkers {

@@ -1,6 +1,7 @@
 package baremetal
 
 import (
+	"fmt"
 	"testing"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
@@ -59,7 +60,7 @@ func TestHosts(t *testing.T) {
 				hosts(host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned()).build(),
 		},
 		{
-			Scenario: "3-hosts-3-machines",
+			Scenario: "3-hosts-3-machines-norole-all",
 			Machines: machines(
 				machine("machine-0"),
 				machine("machine-1"),
@@ -113,19 +114,46 @@ func TestHosts(t *testing.T) {
 				hostType("master-0").bmc("usr0", "pwd0"),
 				hostType("master-1").bmc("usr1", "pwd1"),
 				hostType("master-2").bmc("usr2", "pwd2"),
-				hostType("master-3").bmc("usr3", "pwd3")),
+				hostType("worker-0").bmc("wrk0", "pwd0")),
 
 			ExpectedSetting: settings().
 				secrets(
 					secret("master-0-bmc-secret").data("usr0", "pwd0"),
 					secret("master-1-bmc-secret").data("usr1", "pwd1"),
 					secret("master-2-bmc-secret").data("usr2", "pwd2"),
-					secret("master-3-bmc-secret").data("usr3", "pwd3")).
+					secret("worker-0-bmc-secret").data("wrk0", "pwd0")).
 				hosts(
 					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-3")).build(),
+					host("worker-0")).build(),
+		},
+		{
+			Scenario: "5-hosts-3-machines",
+			Machines: machines(
+				machine("machine-0"),
+				machine("machine-1"),
+				machine("machine-2")),
+			Config: configHosts(
+				hostType("master-0").bmc("usr0", "pwd0").role("master"),
+				hostType("master-1").bmc("usr1", "pwd1").role("master"),
+				hostType("master-2").bmc("usr2", "pwd2").role("master"),
+				hostType("worker-0").bmc("wrk0", "pwd0").role("worker"),
+				hostType("worker-1").bmc("wrk1", "pwd1").role("worker")),
+
+			ExpectedSetting: settings().
+				secrets(
+					secret("master-0-bmc-secret").data("usr0", "pwd0"),
+					secret("master-1-bmc-secret").data("usr1", "pwd1"),
+					secret("master-2-bmc-secret").data("usr2", "pwd2"),
+					secret("worker-0-bmc-secret").data("wrk0", "pwd0"),
+					secret("worker-1-bmc-secret").data("wrk1", "pwd1")).
+				hosts(
+					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("worker-0"),
+					host("worker-1")).build(),
 		},
 		{
 			Scenario: "5-hosts-3-machines-mixed",
@@ -134,71 +162,73 @@ func TestHosts(t *testing.T) {
 				machine("machine-1"),
 				machine("machine-2")),
 			Config: configHosts(
-				hostType("master-0").bmc("usr0", "pwd0").role("master"),
-				hostType("worker-0").bmc("wrk0", "pwd0").role("worker"),
 				hostType("master-1").bmc("usr1", "pwd1").role("master"),
+				hostType("worker-0").bmc("wrk0", "pwd0").role("worker"),
 				hostType("worker-1").bmc("wrk1", "pwd1").role("worker"),
-				hostType("master-2").bmc("usr2", "pwd2").role("master")),
+				hostType("master-0").bmc("usr0", "pwd0"),
+				hostType("master-2").bmc("usr2", "pwd2")),
 
 			ExpectedSetting: settings().
 				secrets(
-					secret("master-0-bmc-secret").data("usr0", "pwd0"),
-					secret("worker-0-bmc-secret").data("wrk0", "pwd0"),
 					secret("master-1-bmc-secret").data("usr1", "pwd1"),
+					secret("worker-0-bmc-secret").data("wrk0", "pwd0"),
 					secret("worker-1-bmc-secret").data("wrk1", "pwd1"),
+					secret("master-0-bmc-secret").data("usr0", "pwd0"),
 					secret("master-2-bmc-secret").data("usr2", "pwd2")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("master-1").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("worker-0"),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("worker-1"),
+					host("master-0").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned()).build(),
 		},
 		{
-			Scenario: "5-hosts-3-machines-mixed-norole",
+			Scenario: "4-hosts-3-machines-norole-master",
 			Machines: machines(
 				machine("machine-0"),
 				machine("machine-1"),
 				machine("machine-2")),
 			Config: configHosts(
-				hostType("master-0").bmc("usr0", "pwd0"),
 				hostType("worker-0").bmc("wrk0", "pwd0").role("worker"),
-				hostType("master-1").bmc("usr1", "pwd1").role("master"),
-				hostType("worker-1").bmc("wrk1", "pwd1").role("worker"),
+				hostType("master-0").bmc("usr0", "pwd0"),
+				hostType("master-1").bmc("usr1", "pwd1"),
 				hostType("master-2").bmc("usr2", "pwd2")),
 
 			ExpectedSetting: settings().
 				secrets(
-					secret("master-0-bmc-secret").data("usr0", "pwd0"),
 					secret("worker-0-bmc-secret").data("wrk0", "pwd0"),
+					secret("master-0-bmc-secret").data("usr0", "pwd0"),
 					secret("master-1-bmc-secret").data("usr1", "pwd1"),
-					secret("worker-1-bmc-secret").data("wrk1", "pwd1"),
 					secret("master-2-bmc-secret").data("usr2", "pwd2")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("worker-0"),
+					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("worker-1"),
 					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned()).build(),
 		},
 		{
-			Scenario: "3-hosts-mixed",
+			Scenario: "4-hosts-3-machines-norole-worker",
 			Machines: machines(
-				machine("machine-0")),
+				machine("machine-0"),
+				machine("machine-1"),
+				machine("machine-2")),
 			Config: configHosts(
-				hostType("server-0").bmc("usr0", "pwd0"),
-				hostType("server-1").bmc("usr1", "pwd1"),
-				hostType("server-2").bmc("usr2", "pwd2").role("master")),
+				hostType("master-0").bmc("usr0", "pwd0").role("master"),
+				hostType("master-1").bmc("usr1", "pwd1").role("master"),
+				hostType("master-2").bmc("usr2", "pwd2").role("master"),
+				hostType("worker-0").bmc("wrk0", "pwd0")),
 
 			ExpectedSetting: settings().
 				secrets(
-					secret("server-0-bmc-secret").data("usr0", "pwd0"),
-					secret("server-1-bmc-secret").data("usr1", "pwd1"),
-					secret("server-2-bmc-secret").data("usr2", "pwd2")).
+					secret("master-0-bmc-secret").data("usr0", "pwd0"),
+					secret("master-1-bmc-secret").data("usr1", "pwd1"),
+					secret("master-2-bmc-secret").data("usr2", "pwd2"),
+					secret("worker-0-bmc-secret").data("wrk0", "pwd0")).
 				hosts(
-					host("server-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("server-1"),
-					host("server-2")).build(),
+					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("worker-0")).build(),
 		},
 	}
 
@@ -211,7 +241,13 @@ func TestHosts(t *testing.T) {
 			}
 
 			if tc.ExpectedSetting != nil {
-				assert.Equal(t, tc.ExpectedSetting, settings)
+				for i, h := range tc.ExpectedSetting.Hosts {
+					assert.Equal(t, h, settings.Hosts[i], fmt.Sprintf("%s and %s are not equal", h.Name, settings.Hosts[i].Name))
+				}
+
+				for i, s := range tc.ExpectedSetting.Secrets {
+					assert.Equal(t, s, settings.Secrets[i], s.Name, fmt.Sprintf("%s and %s are not equal", s.Name, settings.Secrets[i].Name))
+				}
 			}
 		})
 	}
