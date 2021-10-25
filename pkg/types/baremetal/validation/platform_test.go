@@ -64,8 +64,8 @@ func TestValidatePlatform(t *testing.T) {
 			config: installConfig().
 				BareMetalPlatform(
 					platform().Hosts(
-						host1(),
-						host2().Role("worker"))).
+						host1().Role("worker"),
+						host2())).
 				ControlPlane(
 					machinePool().Replicas(3)).
 				Compute(
@@ -129,9 +129,9 @@ func TestValidatePlatform(t *testing.T) {
 				BareMetalPlatform(
 					platform().Hosts(
 						host1().Role("master"),
-						host2(),
+						host2().Role("worker"),
 						host3(),
-						host4().Role("worker"))).
+						host4())).
 				ControlPlane(
 					machinePool().Replicas(2)).
 				Compute(
@@ -158,29 +158,28 @@ func TestValidatePlatform(t *testing.T) {
 					platform().Hosts(
 						host1().Role("master"),
 						host2().Role("master"),
-						host3(),
+						host3().Role("worker"),
 						host4().Role("worker"),
-						host5().Role("worker"))).
+						host5())).
 				ControlPlane(
 					machinePool().Replicas(1)).
 				Compute(
 					machinePool().Replicas(1)).build(),
 		},
 		{
-			name: "not_enough_workers_norole",
+			name: "norole_for_workers",
 			config: installConfig().
 				BareMetalPlatform(
 					platform().Hosts(
-						host1(),
-						host2(),
+						host1().Role("master"),
+						host2().Role("master"),
 						host3().Role("master"),
-						host4().Role("master"),
-						host5().Role("master"))).
+						host4(),
+						host5())).
 				ControlPlane(
 					machinePool().Replicas(3)).
 				Compute(
 					machinePool().Replicas(2)).build(),
-			expected: "baremetal.Hosts: Required value: not enough hosts found \\(0\\) to support all the configured Compute replicas \\(2\\)",
 		},
 		{
 			name: "missing_name",
