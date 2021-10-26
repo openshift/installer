@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/types/openstack/validation/networkextensions"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,9 +29,13 @@ func Validate(ic *types.InstallConfig) error {
 		return nil
 	}
 
+	if err := ValidateCloud(ci); err != nil {
+		return err
+	}
+
 	allErrs := field.ErrorList{}
 
-	// Validate platform platform
+	// Validate platform
 	allErrs = append(allErrs, validation.ValidatePlatform(ic.Platform.OpenStack, ic.Networking, ci)...)
 
 	// Validate control plane
@@ -69,4 +74,9 @@ func defaultOpenStackMachinePoolPlatform() openstack.MachinePool {
 	return openstack.MachinePool{
 		Zones: []string{""},
 	}
+}
+
+// ValidateCloud checks OpenStack requirements, regardless of the InstallConfig.
+func ValidateCloud(ci *validation.CloudInfo) error {
+	return networkextensions.Validate(ci.NetworkExtensions)
 }

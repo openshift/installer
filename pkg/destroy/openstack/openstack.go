@@ -1,12 +1,14 @@
 package openstack
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/types/openstack/validation/networkextensions"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/snapshots"
@@ -86,6 +88,14 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
+	opts := openstackdefaults.DefaultClientOpts(o.Cloud)
+
+	// Check that the cloud has the minimum requirements for the destroy
+	// script to work properly.
+	if err := validateCloud(opts, o.Logger); err != nil {
+		return nil, err
+	}
+
 	// deleteFuncs contains the functions that will be launched as
 	// goroutines.
 	deleteFuncs := map[string]deleteFunc{
@@ -107,7 +117,6 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	}
 	returnChannel := make(chan string)
 
-	opts := openstackdefaults.DefaultClientOpts(o.Cloud)
 	// launch goroutines
 	for name, function := range deleteFuncs {
 		go deleteRunner(name, function, opts, o.Filter, o.Logger, returnChannel)
@@ -1691,4 +1700,27 @@ func untagPrimaryNetwork(opts *clientconfig.ClientOpts, infraID string, logger l
 	}
 
 	return true, nil
+}
+
+// validateCloud checks that the target cloud fulfills the minimum requirements
+// for destroy to function.
+func validateCloud(opts *clientconfig.ClientOpts, logger logrus.FieldLogger) error {
+	logger.Debug("Validating the cloud")
+
+	// A lack of support for network tagging can lead the Installer to
+	// delete unmanaged resources.
+	//
+	// See https://bugzilla.redhat.com/show_bug.cgi?id=2013877
+	logger.Debug("Validating network extensions")
+	conn, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		return fmt.Errorf("failed to build the network client: %w", err)
+	}
+
+	availableExtensions, err := networkextensions.Get(conn)
+	if err != nil {
+		return fmt.Errorf("failed to fetch network extensions: %w", err)
+	}
+
+	return networkextensions.Validate(availableExtensions)
 }
