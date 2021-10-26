@@ -21,6 +21,7 @@ type Finder interface {
 	Folder(ctx context.Context, path string) (*object.Folder, error)
 	NetworkList(ctx context.Context, path string) ([]object.NetworkReference, error)
 	Network(ctx context.Context, path string) (object.NetworkReference, error)
+	ResourcePool(ctx context.Context, path string) (*object.ResourcePool, error)
 }
 
 // NewFinder creates a new client that conforms with the Finder interface and returns a

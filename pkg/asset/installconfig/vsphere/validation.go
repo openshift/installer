@@ -130,7 +130,7 @@ func resourcePoolExists(finder Finder, ic *types.InstallConfig, fldPath *field.P
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
-	if _, err = finder.ResourcePool(ctx, cfg.ResourcePool); err != nil {
+	if _, err := finder.ResourcePool(ctx, cfg.ResourcePool); err != nil {
 		return append(allErrs, field.Invalid(fldPath, cfg.ResourcePool, err.Error()))
 	}
 	return nil
