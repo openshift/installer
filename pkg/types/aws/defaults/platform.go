@@ -40,7 +40,7 @@ func InstanceClass(region string, arch types.Architecture) string {
 }
 
 // InstanceClasses returns a list of instance "class", in decreasing priority order, which we should use for a given
-// region. Default is m5 then m4 unless a region override is defined in defaultMachineClass.
+// region. Default is m6i then m5 unless a region override is defined in defaultMachineClass.
 func InstanceClasses(region string, arch types.Architecture) []string {
 	if classesForArch, ok := defaultMachineClass[arch]; ok {
 		if classes, ok := classesForArch[region]; ok {
@@ -52,6 +52,6 @@ func InstanceClasses(region string, arch types.Architecture) []string {
 	case types.ArchitectureARM64:
 		return []string{"m6g"}
 	default:
-		return []string{"m5"}
+		return []string{"m6i", "m5"}
 	}
 }
