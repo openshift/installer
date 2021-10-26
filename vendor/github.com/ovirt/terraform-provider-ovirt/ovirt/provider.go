@@ -48,7 +48,7 @@ func (c *providerContext) Provider() terraform.ResourceProvider {
 				Type:        schema.TypeBool,
 				Required:    false,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OVIRT_INSECURE", ""),
+				DefaultFunc: schema.EnvDefaultFunc("OVIRT_INSECURE", false),
 				Description: "Skip certificate verification",
 				Sensitive:   false,
 			},
