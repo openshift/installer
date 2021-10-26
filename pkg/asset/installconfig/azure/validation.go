@@ -329,15 +329,18 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group has conflicting tags %s", strings.Join(conflictingTagKeys, ", "))))
 	}
 
-	ids, err := client.ListResourceIDsByGroup(context.TODO(), platform.ResourceGroupName)
-	if err != nil {
-		return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), errors.Wrap(err, "failed to list resources in the resource group")))
-	}
-	if l := len(ids); l > 0 {
-		if len(ids) > 2 {
-			ids = ids[:2]
+	// ARO provisions Azure resources before resolving the asset graph.
+	if !platform.IsARO() {
+		ids, err := client.ListResourceIDsByGroup(context.TODO(), platform.ResourceGroupName)
+		if err != nil {
+			return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), errors.Wrap(err, "failed to list resources in the resource group")))
 		}
-		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group must be empty but it has %d resources like %s ...", l, strings.Join(ids, ", "))))
+		if l := len(ids); l > 0 {
+			if len(ids) > 2 {
+				ids = ids[:2]
+			}
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group must be empty but it has %d resources like %s ...", l, strings.Join(ids, ", "))))
+		}
 	}
 	return allErrs
 }
