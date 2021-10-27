@@ -3,7 +3,6 @@ package aws
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
@@ -11,7 +10,6 @@ import (
 	configaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/types/aws/defaults"
 )
 
 type config struct {
@@ -114,15 +112,13 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, errors.New("EBS IOPS must be configured for the io1 root volume")
 	}
 
-	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region, sources.Architecture)
-
 	cfg := &config{
 		CustomEndpoints:         endpoints,
 		Region:                  masterConfig.Placement.Region,
 		ExtraTags:               tags,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		WorkerAvailabilityZones: workerAvailabilityZones,
-		BootstrapInstanceType:   fmt.Sprintf("%s.large", instanceClass),
+		BootstrapInstanceType:   masterConfig.InstanceType,
 		MasterInstanceType:      masterConfig.InstanceType,
 		Size:                    *rootVolume.EBS.VolumeSize,
 		Type:                    *rootVolume.EBS.VolumeType,
