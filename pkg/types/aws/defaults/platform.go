@@ -22,23 +22,6 @@ var (
 func SetPlatformDefaults(p *aws.Platform) {
 }
 
-// InstanceClass returns the instance "class" we should use for a given
-// region. Default is m5 unless a region override is defined in defaultMachineClass.
-func InstanceClass(region string, arch types.Architecture) string {
-	if classesForArch, ok := defaultMachineClass[arch]; ok {
-		if classes, ok := classesForArch[region]; ok {
-			return classes[0]
-		}
-	}
-
-	switch arch {
-	case types.ArchitectureARM64:
-		return "m6g"
-	default:
-		return "m5"
-	}
-}
-
 // InstanceClasses returns a list of instance "class", in decreasing priority order, which we should use for a given
 // region. Default is m6i then m5 unless a region override is defined in defaultMachineClass.
 func InstanceClasses(region string, arch types.Architecture) []string {
