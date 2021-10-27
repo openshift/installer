@@ -553,6 +553,18 @@ func validateImageContentSources(groups []types.ImageContentSource, fldPath *fie
 func validateNamedRepository(r string) error {
 	ref, err := dockerref.ParseNamed(r)
 	if err != nil {
+		// If a mirror name is provided without the named reference,
+		// then the name is not considered canonical and will cause
+		// an error. e.g. registry.lab.redhat.com:5000 will result
+		// in an error. Instead we will check whether the input is
+		// a valid hostname as a workaround.
+		if err == dockerref.ErrNameNotCanonical {
+			_, err := url.ParseRequestURI(r)
+			if err != nil {
+				return fmt.Errorf("the repository provided is invalid")
+			}
+			return nil
+		}
 		return errors.Wrap(err, "failed to parse")
 	}
 	if !dockerref.IsNameOnly(ref) {
