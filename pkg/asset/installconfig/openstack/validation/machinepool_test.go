@@ -67,7 +67,7 @@ func validMpoolCloudInfo() *CloudInfo {
 			validCtrlPlaneFlavor: {
 				Flavor: flavors.Flavor{
 					Name:  validCtrlPlaneFlavor,
-					RAM:   16,
+					RAM:   16384,
 					Disk:  25,
 					VCPUs: 4,
 				},
@@ -75,7 +75,7 @@ func validMpoolCloudInfo() *CloudInfo {
 			validComputeFlavor: {
 				Flavor: flavors.Flavor{
 					Name:  validComputeFlavor,
-					RAM:   8,
+					RAM:   8192,
 					Disk:  25,
 					VCPUs: 2,
 				},
@@ -83,7 +83,7 @@ func validMpoolCloudInfo() *CloudInfo {
 			invalidCtrlPlaneFlavor: {
 				Flavor: flavors.Flavor{
 					Name:  invalidCtrlPlaneFlavor,
-					RAM:   8, // too low
+					RAM:   8192, // too low
 					Disk:  25,
 					VCPUs: 2, // too low
 				},
@@ -91,7 +91,7 @@ func validMpoolCloudInfo() *CloudInfo {
 			invalidComputeFlavor: {
 				Flavor: flavors.Flavor{
 					Name:  invalidComputeFlavor,
-					RAM:   8,
+					RAM:   8192,
 					Disk:  10, // too low
 					VCPUs: 2,
 				},
@@ -99,9 +99,9 @@ func validMpoolCloudInfo() *CloudInfo {
 			baremetalFlavor: {
 				Flavor: flavors.Flavor{
 					Name:  baremetalFlavor,
-					RAM:   8,  // too low
-					Disk:  10, // too low
-					VCPUs: 2,  // too low
+					RAM:   8192, // too low
+					Disk:  10,   // too low
+					VCPUs: 2,    // too low
 				},
 				Baremetal: true,
 			},
@@ -218,7 +218,7 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			}(),
 			cloudInfo:      validMpoolCloudInfo(),
 			expectedError:  true,
-			expectedErrMsg: "controlPlane.platform.openstack.type: Invalid value: \"invalid-control-plane-flavor\": Flavor did not meet the following minimum requirements: Must have minimum of 16 GB RAM, had 8 GB; Must have minimum of 4 VCPUs, had 2",
+			expectedErrMsg: "controlPlane.platform.openstack.type: Invalid value: \"invalid-control-plane-flavor\": Flavor did not meet the following minimum requirements: Must have minimum of 16384 MB RAM, had 8192 MB; Must have minimum of 4 VCPUs, had 2",
 		},
 		{
 			name:         "invalid compute flavorName",
