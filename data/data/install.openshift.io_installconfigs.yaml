@@ -2492,6 +2492,99 @@ spec:
                   vCenter:
                     description: VCenter is the domain name or IP address of the vCenter.
                     type: string
+                  vcenters:
+                    description: VCenters slice is the configuration for the use of
+                      Regions and Zones. Also deploying openshift cluster virtual
+                      machines in multiple datacenters and clusters.
+                    items:
+                      description: VCenter stores the vCenter connection fields and
+                        the Region slice that is used to create virtual machines in
+                        various datacenters and clusters
+                      properties:
+                        password:
+                          description: Password is the password for the user to use
+                            to connect to the vCenter.
+                          type: string
+                        port:
+                          description: Port is the vCenter API TCP port that the vCenter
+                            SDK clients connect to.
+                          type: integer
+                        regions:
+                          description: Regions slice is the configuration of the vCenter
+                            datacenter and Zones that will be used in deployment of
+                            virtual machines, cloud provider and tags.
+                          items:
+                            description: Region stores the name of the region, the
+                              datacenter that defines the region and the Zones that
+                              are a part of a particular region.
+                            properties:
+                              datacenter:
+                                description: Datacenter is the name of the datacenter
+                                  to use in the vCenter.
+                                type: string
+                              name:
+                                description: Name is the region name that will be
+                                  used for cloud provider and tag
+                                type: string
+                              zones:
+                                description: Zones slice is the configuration of the
+                                  vCenter Resource Pool (optionally), Cluster, Network
+                                  and Datastore to deploy virtual machines.
+                                items:
+                                  description: Zone stores the name of the zone, the
+                                    cluster associated with the zone. ResourcePool,
+                                    Network and Datastore is provided for virtual
+                                    machine deployment.
+                                  properties:
+                                    cluster:
+                                      description: Cluster is the name of the cluster
+                                        virtual machines will be cloned into.
+                                      type: string
+                                    datastore:
+                                      description: Datastore is the default datastore
+                                        to use for provisioning volumes.
+                                      type: string
+                                    name:
+                                      description: Name is the zone name that will
+                                        be used for the cloud provider and tag
+                                      type: string
+                                    network:
+                                      description: Network specifies the name of the
+                                        network to be used by the cluster.
+                                      type: string
+                                    resourcePool:
+                                      description: ResourcePool is the name of the
+                                        already configured Resource Pool to use when
+                                        deploying virtual machines.
+                                      type: string
+                                  required:
+                                  - cluster
+                                  - datastore
+                                  - name
+                                  - network
+                                  type: object
+                                type: array
+                            required:
+                            - datacenter
+                            - name
+                            - zones
+                            type: object
+                          type: array
+                        server:
+                          description: Server is the domain name or IP address of
+                            the vCenter.
+                          type: string
+                        user:
+                          description: User is the name of the user to use to connect
+                            to the vCenter.
+                          type: string
+                      required:
+                      - password
+                      - regions
+                      - server
+                      - user
+                      type: object
+                    type: array
                 required:
                 - datacenter
                 - defaultDatastore

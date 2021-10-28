@@ -18,6 +18,46 @@ var (
 	validCIDR = "10.0.0.0/16"
 )
 
+func validIPIZoningInstallConfig() *types.InstallConfig {
+	return &types.InstallConfig{
+		Networking: &types.Networking{
+			MachineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR(validCIDR)},
+			},
+		},
+		Publish: types.ExternalPublishingStrategy,
+		Platform: types.Platform{
+			VSphere: &vsphere.Platform{
+				Cluster:          "valid_cluster",
+				Datacenter:       "valid_dc",
+				DefaultDatastore: "valid_ds",
+				Network:          "valid_network",
+				Password:         "valid_password",
+				Username:         "valid_username",
+				VCenter:          "valid-vcenter",
+				APIVIP:           "192.168.111.0",
+				IngressVIP:       "192.168.111.1",
+				VCenters: []vsphere.VCenter{{
+					Server:   "valid-vcenter",
+					Password: "valid_password",
+					User:     "valid_username",
+					Regions: []vsphere.Region{{
+						Name:       "valid_region_name",
+						Datacenter: "valid_dc",
+						Zones: []vsphere.Zone{{
+							Name:         "valid_zone_name",
+							Cluster:      "valid_cluster",
+							Network:      "valid_network",
+							ResourcePool: "valid_rp",
+							Datastore:    "valid_ds",
+						}},
+					}},
+				}},
+			},
+		},
+	}
+}
+
 func validIPIInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{
@@ -51,6 +91,10 @@ func TestValidate(t *testing.T) {
 	}{{
 		name:             "valid IPI install config",
 		installConfig:    validIPIInstallConfig(),
+		validationMethod: validateProvisioning,
+	}, {
+		name:             "valid IPI zoning install config",
+		installConfig:    validIPIZoningInstallConfig(),
 		validationMethod: validateProvisioning,
 	}, {
 		name: "invalid IPI - no network",

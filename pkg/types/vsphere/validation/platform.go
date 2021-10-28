@@ -35,6 +35,11 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 		}
 	}
 
+	// validate zoning
+	if len(p.VCenters) != 0 {
+		allErrs = append(allErrs, validateZoning(p, fldPath)...)
+	}
+
 	// If all VIPs are empty, skip IP validation.  All VIPs are required to be defined together.
 	if strings.Join([]string{p.APIVIP, p.IngressVIP}, "") != "" {
 		allErrs = append(allErrs, validateVIPs(p, fldPath)...)
@@ -66,6 +71,74 @@ func ValidateForProvisioning(p *vsphere.Platform, fldPath *field.Path) field.Err
 	}
 
 	allErrs = append(allErrs, validateVIPs(p, fldPath)...)
+	return allErrs
+}
+
+func validateZoning(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	vCentersFieldPath := fldPath.Child("vcenters")
+	regionsFieldPath := vCentersFieldPath.Child("regions")
+	zonesFieldPath := regionsFieldPath.Child("zones")
+
+	// Check if the VCenters slice has entries
+	if len(p.VCenters) != 0 {
+		// We currently do not support more than one vCenter
+		if len(p.VCenters) > 1 {
+			allErrs = append(allErrs, field.Required(vCentersFieldPath, "must specify a single VCenters entry."))
+		}
+
+		for _, v := range p.VCenters {
+			if len(v.Server) != 0 {
+				if err := validate.Host(v.Server); err != nil {
+					allErrs = append(allErrs, field.Invalid(vCentersFieldPath.Child("server"), v.Server, "must be the domain name or IP address of the vCenter"))
+				}
+			}
+			if v.Port != 0 {
+				allErrs = append(allErrs, field.Required(vCentersFieldPath.Child("port"), "is currently not supported"))
+			}
+			if len(v.Server) == 0 {
+				allErrs = append(allErrs, field.Required(vCentersFieldPath.Child("server"), "must specify the name of the vCenter"))
+			}
+			if len(v.User) == 0 {
+				allErrs = append(allErrs, field.Required(vCentersFieldPath.Child("username"), "must specify the username"))
+			}
+			if len(v.Password) == 0 {
+				allErrs = append(allErrs, field.Required(vCentersFieldPath.Child("password"), "must specify the password"))
+			}
+			if len(v.Regions) == 0 {
+				allErrs = append(allErrs, field.Required(regionsFieldPath, "must specify the regions"))
+			} else {
+				for _, r := range v.Regions {
+					if len(r.Datacenter) == 0 {
+						allErrs = append(allErrs, field.Required(regionsFieldPath.Child("datacenter"), "must specify the datacenter"))
+					}
+					if len(r.Name) == 0 {
+						allErrs = append(allErrs, field.Required(regionsFieldPath.Child("name"), "must specify the region name"))
+					}
+					if len(r.Zones) == 0 {
+						allErrs = append(allErrs, field.Required(zonesFieldPath, "must specify the zones"))
+					} else {
+						for _, z := range r.Zones {
+							if len(z.Datastore) == 0 {
+								allErrs = append(allErrs, field.Required(zonesFieldPath.Child("datastore"), "must specify the datastore"))
+							}
+							if len(z.Network) == 0 {
+								allErrs = append(allErrs, field.Required(zonesFieldPath.Child("network"), "must specify a network"))
+							}
+							if len(z.Cluster) == 0 {
+								allErrs = append(allErrs, field.Required(zonesFieldPath.Child("cluster"), "must specify a cluster"))
+							}
+							if len(z.Name) == 0 {
+								allErrs = append(allErrs, field.Required(zonesFieldPath.Child("name"), "must specify a zone name"))
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return allErrs
 }
 
