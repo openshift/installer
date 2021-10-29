@@ -1,5 +1,5 @@
 resource "alicloud_security_group" "sg_worker" {
-  name        = "${local.prefix}-sg_worker"
+  name        = "${local.prefix}-sg-worker"
   description = local.description
   vpc_id      = alicloud_vpc.vpc.id
   tags = merge(

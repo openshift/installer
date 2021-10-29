@@ -79,7 +79,20 @@ func provider(clusterID string,
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create alibabacloudprovider.Tag from Tags")
 	}
-
+	sgTags := []alibabacloudprovider.ResourceTagReference{
+		{
+			Tags: append(tags, alibabacloudprovider.Tag{
+				Key:   "Name",
+				Value: fmt.Sprintf("%s-sg-%s", clusterID, role),
+			}),
+		},
+	}
+	vSwitchTags := alibabacloudprovider.ResourceTagReference{
+		Tags: append(tags, alibabacloudprovider.Tag{
+			Key:   "Name",
+			Value: fmt.Sprintf("%s-vswitch-%s", clusterID, az),
+		}),
+	}
 	return &alibabacloudprovider.AlibabaCloudMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "alibabacloudmachineproviderconfig.openshift.io/v1beta1",
@@ -95,6 +108,11 @@ func provider(clusterID string,
 		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret:  &corev1.LocalObjectReference{Name: "alibabacloud-credentials"},
 		Tags:               tags,
+		InstanceName:       fmt.Sprintf("%s-%s", clusterID, role),
+		IoOptimized:        "optimized",
+		RAMRoleName:        fmt.Sprintf("%s-role-%s", clusterID, role),
+		SecurityGroups:     sgTags,
+		VSwitch:            &vSwitchTags,
 	}, nil
 }
 

@@ -96,5 +96,5 @@ type DataDisk struct {
 // Tag  The tags of ECS Instance
 type Tag struct {
 	Value string `name:"value"`
-	Key   string `name:"Key"`
+	Key   string `name:"key"`
 }

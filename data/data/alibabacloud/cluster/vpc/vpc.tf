@@ -21,14 +21,14 @@ resource "alicloud_vpc" "vpc" {
 resource "alicloud_vswitch" "vswitchs" {
   count = length(var.zone_ids)
 
-  vswitch_name = "${local.prefix}-vswitch-${count.index}"
+  vswitch_name = "${local.prefix}-vswitch-${var.zone_ids[count.index]}"
   description  = local.description
   vpc_id       = alicloud_vpc.vpc.id
   cidr_block   = cidrsubnet(var.vpc_cidr_block, local.newbits, count.index)
   zone_id      = var.zone_ids[count.index]
   tags = merge(
     {
-      "Name" = "${local.prefix}-vswitch"
+      "Name" = "${local.prefix}-vswitch-${var.zone_ids[count.index]}"
     },
     var.tags,
   )
