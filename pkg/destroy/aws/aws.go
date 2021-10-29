@@ -587,14 +587,33 @@ type iamUserSearch struct {
 	unmatched map[string]struct{}
 }
 
+func (search *iamUserSearch) getClusterNameFromTag() (string, error) {
+	var err error
+	k8sTagNamePrefix := "kubernetes.io/cluster/"
+	for _, filter := range search.filters {
+		for filterKey, _ := range filter {
+			if strings.HasPrefix(filterKey, k8sTagNamePrefix) {
+				return strings.Split(filterKey, "/")[2], nil
+			}
+		}
+	}
+	return "", errors.Wrapf(err, "tag '%s' not found on filters %v", k8sTagNamePrefix, search.filters)
+}
+
 func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 	if search.unmatched == nil {
 		search.unmatched = map[string]struct{}{}
 	}
 
+	// Every user should have the clusterName as prefix in IPI? If yes, just check it instead make n*user api calls
+	clusterName, err := search.getClusterNameFromTag()
+	if err != nil {
+		clusterName = ""
+	}
+
 	arns := []string{}
 	var lastError error
-	err := search.client.ListUsersPagesWithContext(
+	err = search.client.ListUsersPagesWithContext(
 		ctx,
 		&iam.ListUsersInput{},
 		func(results *iam.ListUsersOutput, lastPage bool) bool {
@@ -602,8 +621,10 @@ func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 				if _, ok := search.unmatched[*user.Arn]; ok {
 					continue
 				}
-
-				// Unfortunately user.Tags is empty from ListUsers, so we need to query each one
+				// Unfortunately user.Tags is empty from ListUsers, so we are filtering by userName prefix as clusterName when it's available
+				if (clusterName != "") && (!strings.HasPrefix(*user.UserName, clusterName)) {
+					continue
+				}
 				response, err := search.client.GetUserWithContext(ctx, &iam.GetUserInput{UserName: aws.String(*user.UserName)})
 				if err != nil {
 					if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
