@@ -92,3 +92,36 @@ aliases:
   ibmcloud-reviewers:
     - bobbyradford
     - hasueki
+  # Keep in sync with the `coreos-approvers` and `coreos-reviewers` lists in https://github.com/openshift/release/blob/master/OWNERS_ALIASES
+  coreos-approvers:
+    - miabbott
+    - cgwalters
+    - bgilbert
+    - dustymabe
+    - mike-nguyen
+    - jlebon
+    - ashcrow
+    - lucab
+    - sohankunkerkar
+    - travier
+    - saqibali-2k
+    - HuijingHei
+    - jmarrero
+    - aaradhak
+    - ravanelli
+  coreos-reviewers:
+    - miabbott
+    - cgwalters
+    - bgilbert
+    - dustymabe
+    - mike-nguyen
+    - jlebon
+    - ashcrow
+    - lucab
+    - sohankunkerkar
+    - travier
+    - saqibali-2k
+    - HuijingHei
+    - jmarrero
+    - aaradhak
+    - ravanelli

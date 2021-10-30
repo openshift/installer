@@ -31,17 +31,6 @@ For more information on this command, see:
 
 - https://github.com/coreos/coreos-assembler/pull/2000 
 - https://github.com/coreos/coreos-assembler/pull/2052
-
-### Updating pinned legacy metadata
-
-To update the legacy metadata, use:
-
-```
-./hack/update-rhcos-bootimage.py https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.6/46.82.202008260918-0/x86_64/meta.json amd64
-```
-
-This will hopefully be removed soon.
-
 ### Origin of stream metadata
 
 
