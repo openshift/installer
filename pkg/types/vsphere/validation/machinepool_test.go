@@ -52,6 +52,14 @@ func TestValidateMachinePool(t *testing.T) {
 				NumCoresPerSocket: 8,
 			},
 			expectedErrMsg: `^test-path\.coresPerSocket: Invalid value: 8: cores per socket must be less than number of CPUs$`,
+		}, {
+			name: "invalid zone name",
+			pool: &vsphere.MachinePool{
+				Zones: []string{
+					"Zone%^@112233",
+				},
+			},
+			expectedErrMsg: `^test-path.zones: Invalid value: \[\]string{"Zone%\^@112233"}: cluster name must begin with a lower-case letter$`,
 		},
 	}
 	for _, tc := range cases {

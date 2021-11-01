@@ -23,6 +23,11 @@ type MachinePool struct {
 	//
 	// +optional
 	OSDisk `json:"osDisk"`
+
+	// Zones defines available zones
+	//
+	// +omitempty
+	Zones []string `json:"zones,omitempty"`
 }
 
 // OSDisk defines the disk for a virtual machine.

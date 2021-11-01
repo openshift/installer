@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"github.com/openshift/installer/pkg/validate"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -23,6 +24,14 @@ func ValidateMachinePool(p *vsphere.MachinePool, fldPath *field.Path) field.Erro
 	}
 	if p.NumCoresPerSocket >= 0 && p.NumCPUs >= 0 && p.NumCoresPerSocket > p.NumCPUs {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), p.NumCoresPerSocket, "cores per socket must be less than number of CPUs"))
+	}
+	if len(p.Zones) > 0 {
+		for _, zone := range p.Zones {
+			err := validate.ClusterName1035(zone)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), p.Zones, err.Error()))
+			}
+		}
 	}
 	return allErrs
 }
