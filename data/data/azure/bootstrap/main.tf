@@ -57,14 +57,9 @@ resource "azurerm_storage_container" "ignition" {
   container_access_type = "private"
 }
 
-resource "local_file" "ignition_bootstrap" {
-  content  = var.ignition_bootstrap
-  filename = "${path.module}/ignition_bootstrap.ign"
-}
-
 resource "azurerm_storage_blob" "ignition" {
   name                   = "bootstrap.ign"
-  source                 = local_file.ignition_bootstrap.filename
+  source                 = var.ignition_bootstrap_file
   storage_account_name   = var.storage_account.name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "Block"
