@@ -39,6 +39,13 @@ func (o *PcloudNetworksGetallReader) ReadResponse(response runtime.ClientRespons
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudNetworksGetallUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 500:
 		result := NewPcloudNetworksGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -98,6 +105,35 @@ func (o *PcloudNetworksGetallBadRequest) Error() string {
 }
 
 func (o *PcloudNetworksGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudNetworksGetallUnauthorized creates a PcloudNetworksGetallUnauthorized with default headers values
+func NewPcloudNetworksGetallUnauthorized() *PcloudNetworksGetallUnauthorized {
+	return &PcloudNetworksGetallUnauthorized{}
+}
+
+/*PcloudNetworksGetallUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudNetworksGetallUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudNetworksGetallUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksGetallUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudNetworksGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

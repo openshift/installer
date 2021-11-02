@@ -5,32 +5,35 @@ import "time"
 const (
 	// IBM PI Instance
 
-	PIInstanceName            = "pi_instance_name"
-	PIInstanceDate            = "pi_creation_date"
-	PIInstanceSSHKeyName      = "pi_key_pair_name"
-	PIInstanceImageName       = "pi_image_id"
-	PIInstanceProcessors      = "pi_processors"
-	PIInstanceProcType        = "pi_proc_type"
-	PIInstanceMemory          = "pi_memory"
-	PIInstanceSystemType      = "pi_sys_type"
-	PIInstanceId              = "pi_instance_id"
-	PIInstanceDiskSize        = "pi_disk_size"
-	PIInstanceStatus          = "pi_instance_status"
-	PIInstanceMinProc         = "pi_minproc"
-	PIInstanceVolumeIds       = "pi_volume_ids"
-	PIInstanceNetworkIds      = "pi_network_ids"
-	PIInstancePublicNetwork   = "pi_public_network"
-	PIInstanceMigratable      = "pi_migratable"
-	PICloudInstanceId         = "pi_cloud_instance_id"
-	PICloudInstanceSubnetName = "pi_cloud_instance_subnet_name"
-	PIInstanceMimMem          = "pi_minmem"
-	PIInstanceMaxProc         = "pi_maxproc"
-	PIInstanceMaxMem          = "pi_maxmem"
-	PIInstanceReboot          = "pi_reboot"
-	PITenantId                = "pi_tenant_id"
-	PIVirtualCoresAssigned    = "pi_virtual_cores_assigned"
-	PIVirtualCoresMax         = "pi_virtual_cores_max"
-	PIVirtualCoresMin         = "pi_virutal_cores_min"
+	PIInstanceName                = "pi_instance_name"
+	PIInstanceDate                = "pi_creation_date"
+	PIInstanceSSHKeyName          = "pi_key_pair_name"
+	PIInstanceImageName           = "pi_image_id"
+	PIInstanceProcessors          = "pi_processors"
+	PIInstanceProcType            = "pi_proc_type"
+	PIInstanceMemory              = "pi_memory"
+	PIInstanceSystemType          = "pi_sys_type"
+	PIInstanceId                  = "pi_instance_id"
+	PIInstanceDiskSize            = "pi_disk_size"
+	PIInstanceStatus              = "pi_instance_status"
+	PIInstanceMinProc             = "pi_minproc"
+	PIInstanceVolumeIds           = "pi_volume_ids"
+	PIInstanceNetworkIds          = "pi_network_ids"
+	PIInstancePublicNetwork       = "pi_public_network"
+	PIInstanceMigratable          = "pi_migratable"
+	PICloudInstanceId             = "pi_cloud_instance_id"
+	PICloudInstanceSubnetName     = "pi_cloud_instance_subnet_name"
+	PIInstanceMimMem              = "pi_minmem"
+	PIInstanceMaxProc             = "pi_maxproc"
+	PIInstanceMaxMem              = "pi_maxmem"
+	PIInstanceReboot              = "pi_reboot"
+	PITenantId                    = "pi_tenant_id"
+	PIVirtualCoresAssigned        = "pi_virtual_cores_assigned"
+	PIVirtualCoresMax             = "pi_virtual_cores_max"
+	PIVirtualCoresMin             = "pi_virtual_cores_min"
+	PIInstancePVMNetwork          = "pi_instance_pvm_network"
+	PIInstanceStoragePool         = "pi_instance_storage_pool"
+	PIInstanceStorageAffinityPool = "pi_instance_storage_affinity_pool"
 
 	PIInstanceHealthStatus      = "pi_health_status"
 	PIInstanceReplicants        = "pi_replicants"
@@ -54,6 +57,10 @@ const (
 	PIVolumePool              = "pi_volume_pool"
 	PIAffinityPolicy          = "pi_volume_affinity_policy"
 	PIAffinityVolume          = "pi_volume_affinity"
+	PIAffinityInstance        = "pi_volume_affinity_instance"
+	PIAffinityDiskCount       = "pi_volume_disk_count"
+	PIStoragePoolValue        = "pi_storage_pool_type"
+	PIStoragePoolName         = "pi_storage_pool_name"
 
 	// IBM PI Snapshots
 
@@ -62,6 +69,20 @@ const (
 	PISnapshotStatus   = "pi_snap_shot_status"
 	PISnapshotAction   = "pi_snap_shot_action"
 	PISnapshotComplete = "pi_snap_shot_complete"
+
+	// IBM PI SAP Profile
+
+	PISAPProfileID        = "pi_sap_profile_id"
+	PISAPProfile          = "pi_sap_profile"
+	PISAPProfileMemory    = "pi_sap_profile_memory"
+	PISAPProfileCertified = "pi_sap_profile_certified"
+	PISAPProfileType      = "pi_sap_profile_type"
+	PISAPProfileCores     = "pi_sap_profile_cores"
+
+	// IBM PI Clone Volume
+	PIVolumeCloneStatus  = "pi_volume_clone_status"
+	PIVolumeClonePercent = "pi_volume_clone_percent"
+	PIVolumeCloneFailure = "pi_volume_clone_failure"
 
 	// IBM PI Image
 
@@ -124,6 +145,25 @@ const (
 	PIInstanceCaptureCloudStorageRegion    = "pi_capture_cloud_storage_region"
 	PIInstanceCaptureCloudStorageAccessKey = "pi_capture_cloud_storage_access_key"
 	PIInstanceCaptureCloudStorageSecretKey = "pi_capture_cloud_storage_secret_key"
+
+	// IBM PI Cloud Connections
+
+	PICloudConnectionsName         = "pi_cloud_connection_name"
+	PICloudConnectionStatus        = "pi_cloud_connection_status"
+	PICloudConnectionMetered       = "pi_cloud_connection_metered"
+	PICloudConnectionUserIPAddress = "pi_cloud_connection_user_ip_address"
+	PICloudConnectionIBMIPAddress  = "pi_cloud_connection_ibm_ip_address"
+	PICloudConnectionSpeed         = "pi_cloud_connection_speed"
+	PICloudConnectionPort          = "pi_cloud_connection_port"
+	PICloudConnectionGlobalRouting = "pi_global_routing"
+	PICloudConnectionId            = "pi_cloud_connection_id"
+	PICloudConnectionClassic       = "pi_cloud_connection_classic"
+
+	// IBM PI Placement Groups
+
+	PIPlacementGroupName   = "pi_placement_group_name"
+	PIPlacementGroupPolicy = "pi_placement_group_policy"
+	PIPlacementGroupID     = "pi_placement_group_id"
 
 	// Status For all the resources
 

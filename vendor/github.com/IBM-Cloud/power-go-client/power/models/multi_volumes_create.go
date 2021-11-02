@@ -19,15 +19,21 @@ import (
 // swagger:model MultiVolumesCreate
 type MultiVolumesCreate struct {
 
-	// PVM Instance (ID or Name)to base volume affinity policy against; required if affinityPolicy is provided and affinityVolume is not provided
+	// PVM Instance (ID or Name)to base volume affinity policy against; required if requesting affinity and affinityVolume is not provided
 	AffinityPVMInstance *string `json:"affinityPVMInstance,omitempty"`
 
-	// Affinity policy for data volume being created; requires affinityPVMInstance or affinityVolume to be specified; ignored if volumePool provided
+	// Affinity policy for data volume being created; ignored if volumePool provided; for policy affinity requires one of affinityPVMInstance or affinityVolume to be specified; for policy anti-affinity requires one of antiAffinityPVMInstances or antiAffinityVolumes to be specified
 	// Enum: [affinity anti-affinity]
 	AffinityPolicy *string `json:"affinityPolicy,omitempty"`
 
-	// Volume (ID or Name) to base volume affinity policy against; required if affinityPolicy is provided and affinityPVMInstance is not provided
+	// Volume (ID or Name) to base volume affinity policy against; required if requesting affinity and affinityPVMInstance is not provided
 	AffinityVolume *string `json:"affinityVolume,omitempty"`
+
+	// List of pvmInstances to base volume anti-affinity policy against; required if requesting anti-affinity and antiAffinityVolumes is not provided
+	AntiAffinityPVMInstances []string `json:"antiAffinityPVMInstances"`
+
+	// List of volumes to base volume anti-affinity policy against; required if requesting anti-affinity and antiAffinityPVMInstances is not provided
+	AntiAffinityVolumes []string `json:"antiAffinityVolumes"`
 
 	// Number of volumes to create
 	Count int64 `json:"count,omitempty"`

@@ -19,6 +19,9 @@ import (
 // swagger:model PVMInstanceUpdate
 type PVMInstanceUpdate struct {
 
+	// The VTL license repository capacity TB value
+	LicenseRepositoryCapacity int64 `json:"licenseRepositoryCapacity,omitempty"`
+
 	// Amount of memory allocated (in GB)
 	Memory float64 `json:"memory,omitempty"`
 
@@ -43,6 +46,9 @@ type PVMInstanceUpdate struct {
 
 	// The pvm instance Software Licenses
 	SoftwareLicenses *SoftwareLicenses `json:"softwareLicenses,omitempty"`
+
+	// Indicates if all volumes attached to the server must reside in the same storage pool
+	StoragePoolAffinity *bool `json:"storagePoolAffinity,omitempty"`
 
 	// The pvm instance virtual CPU information
 	VirtualCores *VirtualCores `json:"virtualCores,omitempty"`

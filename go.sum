@@ -115,11 +115,13 @@ github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3
 github.com/Djarvur/go-err113 v0.0.0-20200410182137-af658d038157/go.mod h1:4UJr5HIiMZrwgkSPdsjy2uOQExX/WEILpIrO9UPGuXs=
 github.com/Djarvur/go-err113 v0.0.0-20200511133814-5174e21577d5/go.mod h1:4UJr5HIiMZrwgkSPdsjy2uOQExX/WEILpIrO9UPGuXs=
 github.com/Djarvur/go-err113 v0.1.0/go.mod h1:4UJr5HIiMZrwgkSPdsjy2uOQExX/WEILpIrO9UPGuXs=
+github.com/IBM-Cloud/bluemix-go v0.0.0-20200921095234-26d1d0148c62/go.mod h1:gPJbH1etcDj7qS/hBRiLuYW9CY0bRcostSKusa51xR0=
 github.com/IBM-Cloud/bluemix-go v0.0.0-20210611051827-cdc80c935c05 h1:b/epmuvf99xhUlf81l0r/ciONJSjoUs78t+BC7lCcvI=
 github.com/IBM-Cloud/bluemix-go v0.0.0-20210611051827-cdc80c935c05/go.mod h1:kqTYO0mts71aa8PVwviaKlCKYud/NbEkFIqU8aHH3/g=
 github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.5.3/go.mod h1:RiUvKuHKTBmBApDMUQzBL14pQUGKcx/IioKQPIcRQjs=
-github.com/IBM-Cloud/power-go-client v1.0.55 h1:XoRU8FWYY8NUKau1nkErkf2FHAUbFEbbXtbLTvaGp9c=
 github.com/IBM-Cloud/power-go-client v1.0.55/go.mod h1:I4r5tCrA8mV5GFqGAJG4/Tn+/JpR+XLnDCLLNVKJxuI=
+github.com/IBM-Cloud/power-go-client v1.0.72 h1:5qoU8JPnFL5dRVR6oimGtAlcnSSDrD9KWs8Co9hAdMs=
+github.com/IBM-Cloud/power-go-client v1.0.72/go.mod h1:I4r5tCrA8mV5GFqGAJG4/Tn+/JpR+XLnDCLLNVKJxuI=
 github.com/IBM/apigateway-go-sdk v0.0.0-20210714141226-a5d5d49caaca h1:crniVcf+YcmgF03NmmfonXwSQ73oJF+IohFYBwknMxs=
 github.com/IBM/apigateway-go-sdk v0.0.0-20210714141226-a5d5d49caaca/go.mod h1:IjXrnOcTe92Q4pEBHmui3H/GM1hw5Pd0zXA5cw5/iZU=
 github.com/IBM/appconfiguration-go-admin-sdk v0.1.0 h1:9rdOk32VQFnMqsBB7cTpkZbD7/b0EnwrU3VNN8vuUYc=
@@ -1458,6 +1460,8 @@ github.com/openshift/cluster-api-provider-openstack v0.0.0-20210302164104-849824
 github.com/openshift/cluster-api-provider-openstack v0.0.0-20210302164104-8498241fa4bd/go.mod h1:ONl4R7ziQtgnsBjR59fcZbOLjBEPVeZ69C1TPKevynw=
 github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210817084941-2262c7c6cece h1:w32C7hy52lkIpDvJqz/tRyYCIZmhE/8bSIVt+L0c9Mg=
 github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210817084941-2262c7c6cece/go.mod h1:lrKTKMpd3OERMlQgVJi6VKcE57EvtUORGSFIoE7BEAs=
+github.com/openshift/cluster-api-provider-powervs v0.0.2-0.20210928133618-8eb5ebcb07a1 h1:fFRg32p+RR2Li1ynhl74RtSvEFstYEQ+QQufdE6plx8=
+github.com/openshift/cluster-api-provider-powervs v0.0.2-0.20210928133618-8eb5ebcb07a1/go.mod h1:J5ynCgpZbdXNBPF9ukQXWeEt5ruMn8BEPSq/h55NfLo=
 github.com/openshift/cluster-autoscaler-operator v0.0.0-20190521201101-62768a6ba480/go.mod h1:/XmV44Fh28Vo3Ye93qFrxAbcFJ/Uy+7LPD+jGjmfJYc=
 github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift h1:CuH9qNELLH3y0QoSaLchdG+7We75AO4kNBy6P3+oLug=
 github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift/go.mod h1:t62Xy+m7Zjq5tA2vrs8Wuo/TQ0sc9Mx9MjXL3+7MHBQ=
@@ -1560,6 +1564,7 @@ github.com/posener/complete v1.2.3 h1:NP0eAhjcjImqslEwo/1hq7gpajME0fTLTezBKDqfXq
 github.com/posener/complete v1.2.3/go.mod h1:WZIdtGGp+qx0sLrYKtIRAruyNpv6hFCicSgv7Sy7s/s=
 github.com/posener/complete/v2 v2.0.1-alpha.12/go.mod h1://JlL91cS2JV7rOl6LVHrRqBXoBUecJu3ILQPgbJiMQ=
 github.com/posener/script v1.0.4/go.mod h1:Rg3ijooqulo05aGLyGsHoLmIOUzHUVK19WVgrYBPU/E=
+github.com/ppc64le-cloud/powervs-utils v0.0.0-20210415051532-4cdd6a79c8fa/go.mod h1:KImYgHmvBVtAczNhyDBDSN54PGIdz0+QiPVQMmObEQY=
 github.com/pquerna/cachecontrol v0.0.0-20171018203845-0dec1b30a021/go.mod h1:prYjPmNq4d1NPVmpShWobRqXY3q7Vp+80DqgxxUrUIA=
 github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35/go.mod h1:prYjPmNq4d1NPVmpShWobRqXY3q7Vp+80DqgxxUrUIA=
 github.com/pquerna/ffjson v0.0.0-20181028064349-e517b90714f7/go.mod h1:YARuvh7BUWHNhzDq2OM5tzR2RiCcN2D7sapiKyCel/M=

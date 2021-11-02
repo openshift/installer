@@ -17,27 +17,24 @@ import (
 // swagger:model CloudConnectionGRETunnel
 type CloudConnectionGRETunnel struct {
 
-	// gre network in CIDR notation (192.168.0.0/24)
-	// Required: true
-	Cidr *string `json:"cidr"`
-
 	// gre destination IP address
 	// Required: true
 	DestIPAddress *string `json:"destIPAddress"`
 
 	// gre auto-assigned source IP address
-	SourceIPAddress string `json:"sourceIPAddress,omitempty"`
+	// Required: true
+	SourceIPAddress *string `json:"sourceIPAddress"`
 }
 
 // Validate validates this cloud connection g r e tunnel
 func (m *CloudConnectionGRETunnel) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateCidr(formats); err != nil {
+	if err := m.validateDestIPAddress(formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.validateDestIPAddress(formats); err != nil {
+	if err := m.validateSourceIPAddress(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -47,18 +44,18 @@ func (m *CloudConnectionGRETunnel) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *CloudConnectionGRETunnel) validateCidr(formats strfmt.Registry) error {
+func (m *CloudConnectionGRETunnel) validateDestIPAddress(formats strfmt.Registry) error {
 
-	if err := validate.Required("cidr", "body", m.Cidr); err != nil {
+	if err := validate.Required("destIPAddress", "body", m.DestIPAddress); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (m *CloudConnectionGRETunnel) validateDestIPAddress(formats strfmt.Registry) error {
+func (m *CloudConnectionGRETunnel) validateSourceIPAddress(formats strfmt.Registry) error {
 
-	if err := validate.Required("destIPAddress", "body", m.DestIPAddress); err != nil {
+	if err := validate.Required("sourceIPAddress", "body", m.SourceIPAddress); err != nil {
 		return err
 	}
 

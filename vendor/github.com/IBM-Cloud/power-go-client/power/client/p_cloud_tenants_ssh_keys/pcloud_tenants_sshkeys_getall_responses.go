@@ -39,6 +39,13 @@ func (o *PcloudTenantsSshkeysGetallReader) ReadResponse(response runtime.ClientR
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudTenantsSshkeysGetallUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudTenantsSshkeysGetallNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -105,6 +112,35 @@ func (o *PcloudTenantsSshkeysGetallBadRequest) Error() string {
 }
 
 func (o *PcloudTenantsSshkeysGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTenantsSshkeysGetallUnauthorized creates a PcloudTenantsSshkeysGetallUnauthorized with default headers values
+func NewPcloudTenantsSshkeysGetallUnauthorized() *PcloudTenantsSshkeysGetallUnauthorized {
+	return &PcloudTenantsSshkeysGetallUnauthorized{}
+}
+
+/*PcloudTenantsSshkeysGetallUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudTenantsSshkeysGetallUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudTenantsSshkeysGetallUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysGetallUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

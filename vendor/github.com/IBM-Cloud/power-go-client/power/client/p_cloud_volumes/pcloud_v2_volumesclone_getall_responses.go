@@ -39,6 +39,13 @@ func (o *PcloudV2VolumescloneGetallReader) ReadResponse(response runtime.ClientR
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudV2VolumescloneGetallUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudV2VolumescloneGetallNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -105,6 +112,35 @@ func (o *PcloudV2VolumescloneGetallBadRequest) Error() string {
 }
 
 func (o *PcloudV2VolumescloneGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2VolumescloneGetallUnauthorized creates a PcloudV2VolumescloneGetallUnauthorized with default headers values
+func NewPcloudV2VolumescloneGetallUnauthorized() *PcloudV2VolumescloneGetallUnauthorized {
+	return &PcloudV2VolumescloneGetallUnauthorized{}
+}
+
+/*PcloudV2VolumescloneGetallUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudV2VolumescloneGetallUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudV2VolumescloneGetallUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudV2VolumescloneGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

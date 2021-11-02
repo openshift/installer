@@ -39,6 +39,13 @@ func (o *PcloudV2VolumescloneDeleteReader) ReadResponse(response runtime.ClientR
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudV2VolumescloneDeleteUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudV2VolumescloneDeleteNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -103,6 +110,35 @@ func (o *PcloudV2VolumescloneDeleteBadRequest) Error() string {
 }
 
 func (o *PcloudV2VolumescloneDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2VolumescloneDeleteUnauthorized creates a PcloudV2VolumescloneDeleteUnauthorized with default headers values
+func NewPcloudV2VolumescloneDeleteUnauthorized() *PcloudV2VolumescloneDeleteUnauthorized {
+	return &PcloudV2VolumescloneDeleteUnauthorized{}
+}
+
+/*PcloudV2VolumescloneDeleteUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudV2VolumescloneDeleteUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudV2VolumescloneDeleteUnauthorized) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudV2VolumescloneDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

@@ -2,6 +2,7 @@ package instance
 
 import (
 	"fmt"
+	"github.com/IBM-Cloud/power-go-client/errors"
 
 	"github.com/IBM-Cloud/power-go-client/helpers"
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
@@ -30,7 +31,7 @@ func (f *IBMPIImageClient) Get(id, powerinstanceid string) (*models.Image, error
 	resp, err := f.session.Power.PCloudImages.PcloudCloudinstancesImagesGet(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 
 	if err != nil || resp == nil || resp.Payload == nil {
-		return nil, fmt.Errorf("Failed to Get PI Image %s :%s", id, err)
+		return nil, fmt.Errorf(errors.GetImageOperationFailed, id, err)
 	}
 	return resp.Payload, nil
 }
@@ -59,7 +60,7 @@ func (f *IBMPIImageClient) Create(name, imageid string, powerinstanceid string) 
 	params := p_cloud_images.NewPcloudCloudinstancesImagesPostParamsWithTimeout(helpers.PICreateTimeOut).WithCloudInstanceID(powerinstanceid).WithBody(&body)
 	_, result, err := f.session.Power.PCloudImages.PcloudCloudinstancesImagesPost(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 	if err != nil || result == nil || result.Payload == nil {
-		return nil, fmt.Errorf("Failed to Create Image of the PVM instance %s : %s", powerinstanceid, err)
+		return nil, fmt.Errorf(errors.CreateImageOperationFailed, powerinstanceid, err)
 	}
 	return result.Payload, nil
 

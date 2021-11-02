@@ -39,6 +39,13 @@ func (o *PcloudTenantsSshkeysDeleteReader) ReadResponse(response runtime.ClientR
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudTenantsSshkeysDeleteUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 410:
 		result := NewPcloudTenantsSshkeysDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -103,6 +110,35 @@ func (o *PcloudTenantsSshkeysDeleteBadRequest) Error() string {
 }
 
 func (o *PcloudTenantsSshkeysDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTenantsSshkeysDeleteUnauthorized creates a PcloudTenantsSshkeysDeleteUnauthorized with default headers values
+func NewPcloudTenantsSshkeysDeleteUnauthorized() *PcloudTenantsSshkeysDeleteUnauthorized {
+	return &PcloudTenantsSshkeysDeleteUnauthorized{}
+}
+
+/*PcloudTenantsSshkeysDeleteUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudTenantsSshkeysDeleteUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudTenantsSshkeysDeleteUnauthorized) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

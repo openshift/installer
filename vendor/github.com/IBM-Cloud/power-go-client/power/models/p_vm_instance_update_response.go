@@ -19,6 +19,9 @@ import (
 // swagger:model PVMInstanceUpdateResponse
 type PVMInstanceUpdateResponse struct {
 
+	// The VTL license repository capacity TB value
+	LicenseRepositoryCapacity int64 `json:"licenseRepositoryCapacity,omitempty"`
+
 	// Amount of memory allocated (in GB)
 	Memory float64 `json:"memory,omitempty"`
 

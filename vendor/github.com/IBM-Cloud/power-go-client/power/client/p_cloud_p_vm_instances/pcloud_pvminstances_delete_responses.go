@@ -39,6 +39,13 @@ func (o *PcloudPvminstancesDeleteReader) ReadResponse(response runtime.ClientRes
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudPvminstancesDeleteUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudPvminstancesDeleteNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -110,6 +117,35 @@ func (o *PcloudPvminstancesDeleteBadRequest) Error() string {
 }
 
 func (o *PcloudPvminstancesDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesDeleteUnauthorized creates a PcloudPvminstancesDeleteUnauthorized with default headers values
+func NewPcloudPvminstancesDeleteUnauthorized() *PcloudPvminstancesDeleteUnauthorized {
+	return &PcloudPvminstancesDeleteUnauthorized{}
+}
+
+/*PcloudPvminstancesDeleteUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudPvminstancesDeleteUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudPvminstancesDeleteUnauthorized) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudPvminstancesDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

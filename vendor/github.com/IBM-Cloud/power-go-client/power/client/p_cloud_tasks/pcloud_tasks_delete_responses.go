@@ -39,6 +39,20 @@ func (o *PcloudTasksDeleteReader) ReadResponse(response runtime.ClientResponse, 
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudTasksDeleteUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
+	case 404:
+		result := NewPcloudTasksDeleteNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 410:
 		result := NewPcloudTasksDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -103,6 +117,64 @@ func (o *PcloudTasksDeleteBadRequest) Error() string {
 }
 
 func (o *PcloudTasksDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTasksDeleteUnauthorized creates a PcloudTasksDeleteUnauthorized with default headers values
+func NewPcloudTasksDeleteUnauthorized() *PcloudTasksDeleteUnauthorized {
+	return &PcloudTasksDeleteUnauthorized{}
+}
+
+/*PcloudTasksDeleteUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudTasksDeleteUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudTasksDeleteUnauthorized) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudTasksDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTasksDeleteNotFound creates a PcloudTasksDeleteNotFound with default headers values
+func NewPcloudTasksDeleteNotFound() *PcloudTasksDeleteNotFound {
+	return &PcloudTasksDeleteNotFound{}
+}
+
+/*PcloudTasksDeleteNotFound handles this case with default header values.
+
+Not Found
+*/
+type PcloudTasksDeleteNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudTasksDeleteNotFound) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudTasksDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

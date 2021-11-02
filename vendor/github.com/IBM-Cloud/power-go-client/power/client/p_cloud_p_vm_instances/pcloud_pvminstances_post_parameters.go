@@ -65,7 +65,7 @@ for the pcloud pvminstances post operation typically these are written to a http
 type PcloudPvminstancesPostParams struct {
 
 	/*Body
-	  Parameters for the creation of a new tenant
+	  Parameters for the creation of a new Power VM Instance
 
 	*/
 	Body *models.PVMInstanceCreate

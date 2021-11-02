@@ -321,7 +321,7 @@ func (a *Client) PcloudPvminstancesNetworksGetall(params *PcloudPvminstancesNetw
 }
 
 /*
-PcloudPvminstancesNetworksPost performs network addition deletion and listing
+PcloudPvminstancesNetworksPost performs network addition
 */
 func (a *Client) PcloudPvminstancesNetworksPost(params *PcloudPvminstancesNetworksPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPvminstancesNetworksPostCreated, error) {
 	// TODO: Validate the params before sending

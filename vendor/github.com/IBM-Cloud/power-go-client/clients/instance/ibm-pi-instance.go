@@ -37,7 +37,7 @@ func (f *IBMPIInstanceClient) Get(id, powerinstanceid string, timeout time.Durat
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesGetParamsWithTimeout(helpers.PIGetTimeOut).WithCloudInstanceID(powerinstanceid).WithPvmInstanceID(id)
 	resp, err := f.session.Power.PCloudPVMInstances.PcloudPvminstancesGet(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 	if err != nil || resp.Payload == nil {
-		return nil, fmt.Errorf("Failed to Get PVM Instance %s :%s", id, err)
+		return nil, fmt.Errorf("Failed to Get PVM Instance %s :%v", id, err)
 	}
 	return resp.Payload, nil
 }
@@ -45,10 +45,10 @@ func (f *IBMPIInstanceClient) Get(id, powerinstanceid string, timeout time.Durat
 // GetAll Information about all the PVM Instances for a Client
 func (f *IBMPIInstanceClient) GetAll(powerinstanceid string, timeout time.Duration) (*models.PVMInstances, error) {
 
-	params := p_cloud_p_vm_instances.NewPcloudPvminstancesGetallParamsWithTimeout(getTimeOut).WithCloudInstanceID(powerinstanceid)
+	params := p_cloud_p_vm_instances.NewPcloudPvminstancesGetallParamsWithTimeout(helpers.PIGetTimeOut).WithCloudInstanceID(powerinstanceid)
 	resp, err := f.session.Power.PCloudPVMInstances.PcloudPvminstancesGetall(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 	if err != nil || resp.Payload == nil {
-		return nil, fmt.Errorf("Failed to Get all PVM Instances of Power Instance %s :%s", powerinstanceid, err)
+		return nil, fmt.Errorf("Failed to Get all PVM Instances of Power Instance %s :%v", powerinstanceid, err)
 	}
 	return resp.Payload, nil
 }
@@ -60,7 +60,7 @@ func (f *IBMPIInstanceClient) Create(powerdef *p_cloud_p_vm_instances.PcloudPvmi
 	postok, postcreated, postAccepted, err := f.session.Power.PCloudPVMInstances.PcloudPvminstancesPost(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to Create PVM Instance :%s", err)
+		return nil, fmt.Errorf("Failed to Create PVM Instance :%v", err)
 	}
 
 	if postok != nil && len(postok.Payload) > 0 {
@@ -163,7 +163,7 @@ func (f *IBMPIInstanceClient) GetSnapShotVM(powerinstanceid, pvminstanceid strin
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesSnapshotsGetallParamsWithTimeout(helpers.PICreateTimeOut).WithCloudInstanceID(powerinstanceid).WithPvmInstanceID(pvminstanceid)
 	resp, err := f.session.Power.PCloudPVMInstances.PcloudPvminstancesSnapshotsGetall(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 	if err != nil || resp.Payload == nil {
-		return nil, fmt.Errorf("Failed to Get the snapshot for the pvminstance [%s]: %s", pvminstanceid, err)
+		return nil, fmt.Errorf("Failed to Get the snapshot for the pvminstance [%s]: %v", pvminstanceid, err)
 	}
 	return resp.Payload, nil
 
@@ -174,7 +174,7 @@ func (f *IBMPIInstanceClient) RestoreSnapShotVM(powerinstanceid, pvminstanceid, 
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesSnapshotsRestorePostParamsWithTimeout(helpers.PICreateTimeOut).WithCloudInstanceID(powerinstanceid).WithPvmInstanceID(pvminstanceid).WithSnapshotID(snapshotid).WithRestoreFailAction(&restoreAction).WithBody(restoreparams.Body)
 	resp, err := f.session.Power.PCloudPVMInstances.PcloudPvminstancesSnapshotsRestorePost(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 	if err != nil || resp == nil || resp.Payload == nil {
-		return nil, fmt.Errorf("Failed to restrore the snapshot for the pvminstance [%s]: %s", pvminstanceid, err)
+		return nil, fmt.Errorf("Failed to restrore the snapshot for the pvminstance [%s]: %v", pvminstanceid, err)
 	}
 	return resp.Payload, nil
 }
@@ -186,7 +186,7 @@ func (f *IBMPIInstanceClient) AddNetwork(powerinstanceid, pvminstanceid string, 
 	resp, err := f.session.Power.PCloudPVMInstances.PcloudPvminstancesNetworksPost(params, ibmpisession.NewAuth(f.session, powerinstanceid))
 
 	if err != nil || resp.Payload.NetworkID == "" {
-		return nil, fmt.Errorf("Failed to attach the network to the pvminstanceid %s : %s", pvminstanceid, err)
+		return nil, fmt.Errorf("Failed to attach the network to the pvminstanceid %s : %v", pvminstanceid, err)
 	}
 	return resp.Payload, nil
 }

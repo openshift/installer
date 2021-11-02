@@ -39,6 +39,13 @@ func (o *PcloudCloudinstancesStockimagesGetallReader) ReadResponse(response runt
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudCloudinstancesStockimagesGetallUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 404:
 		result := NewPcloudCloudinstancesStockimagesGetallNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -105,6 +112,35 @@ func (o *PcloudCloudinstancesStockimagesGetallBadRequest) Error() string {
 }
 
 func (o *PcloudCloudinstancesStockimagesGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesStockimagesGetallUnauthorized creates a PcloudCloudinstancesStockimagesGetallUnauthorized with default headers values
+func NewPcloudCloudinstancesStockimagesGetallUnauthorized() *PcloudCloudinstancesStockimagesGetallUnauthorized {
+	return &PcloudCloudinstancesStockimagesGetallUnauthorized{}
+}
+
+/*PcloudCloudinstancesStockimagesGetallUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudCloudinstancesStockimagesGetallUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudinstancesStockimagesGetallUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images][%d] pcloudCloudinstancesStockimagesGetallUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudCloudinstancesStockimagesGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

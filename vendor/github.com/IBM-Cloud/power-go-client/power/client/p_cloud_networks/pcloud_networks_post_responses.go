@@ -46,6 +46,13 @@ func (o *PcloudNetworksPostReader) ReadResponse(response runtime.ClientResponse,
 		}
 		return nil, result
 
+	case 401:
+		result := NewPcloudNetworksPostUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+
 	case 409:
 		result := NewPcloudNetworksPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -148,6 +155,35 @@ func (o *PcloudNetworksPostBadRequest) Error() string {
 }
 
 func (o *PcloudNetworksPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudNetworksPostUnauthorized creates a PcloudNetworksPostUnauthorized with default headers values
+func NewPcloudNetworksPostUnauthorized() *PcloudNetworksPostUnauthorized {
+	return &PcloudNetworksPostUnauthorized{}
+}
+
+/*PcloudNetworksPostUnauthorized handles this case with default header values.
+
+Unauthorized
+*/
+type PcloudNetworksPostUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *PcloudNetworksPostUnauthorized) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudNetworksPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

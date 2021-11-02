@@ -45,6 +45,9 @@ type PVMInstanceReference struct {
 	// Required: true
 	ImageID *string `json:"imageID"`
 
+	// The VTL license repository capacity TB value
+	LicenseRepositoryCapacity int64 `json:"licenseRepositoryCapacity,omitempty"`
+
 	// Maximum amount of memory that can be allocated (in GB, for resize)
 	Maxmem float64 `json:"maxmem,omitempty"`
 
@@ -67,7 +70,7 @@ type PVMInstanceReference struct {
 	// OS system information (usually version and build)
 	OperatingSystem string `json:"operatingSystem,omitempty"`
 
-	// Type of the OS [aix, ibmi, redhat, sles]
+	// Type of the OS [aix, ibmi, redhat, sles, vtl]
 	// Required: true
 	OsType *string `json:"osType"`
 
@@ -106,6 +109,15 @@ type PVMInstanceReference struct {
 	// The status of the instance
 	// Required: true
 	Status *string `json:"status"`
+
+	// Storage Pool where server is deployed
+	StoragePool string `json:"storagePool,omitempty"`
+
+	// Indicates if all volumes attached to the server must reside in the same storage pool
+	StoragePoolAffinity *bool `json:"storagePoolAffinity,omitempty"`
+
+	// Storage type of the deployment storage pool
+	StorageType string `json:"storageType,omitempty"`
 
 	// System type used to host the instance
 	SysType string `json:"sysType,omitempty"`
