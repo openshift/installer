@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
-	vsphereapis "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +62,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*vsphereapis.VSphereMachineProviderSpec, error) {
+func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*machineapi.VSphereMachineProviderSpec, error) {
 	folder := fmt.Sprintf("/%s/vm/%s", platform.Datacenter, clusterID)
 	resourcePool := fmt.Sprintf("/%s/host/%s/Resources", platform.Datacenter, platform.Cluster)
 	if platform.Folder != "" {
@@ -73,22 +72,22 @@ func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.Machi
 		resourcePool = platform.ResourcePool
 	}
 
-	return &vsphereapis.VSphereMachineProviderSpec{
+	return &machineapi.VSphereMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: vsphereapis.SchemeGroupVersion.String(),
+			APIVersion: machineapi.SchemeGroupVersion.String(),
 			Kind:       "VSphereMachineProviderSpec",
 		},
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "vsphere-cloud-credentials"},
 		Template:          osImage,
-		Network: vsphereapis.NetworkSpec{
-			Devices: []vsphereapis.NetworkDeviceSpec{
+		Network: machineapi.NetworkSpec{
+			Devices: []machineapi.NetworkDeviceSpec{
 				{
 					NetworkName: platform.Network,
 				},
 			},
 		},
-		Workspace: &vsphereapis.Workspace{
+		Workspace: &machineapi.Workspace{
 			Server:       platform.VCenter,
 			Datacenter:   platform.Datacenter,
 			Datastore:    platform.DefaultDatastore,

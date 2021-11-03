@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"strings"
 
-	vsphereapis "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	"github.com/pkg/errors"
 
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -33,7 +33,7 @@ type config struct {
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
-	ControlPlaneConfigs []*vsphereapis.VSphereMachineProviderSpec
+	ControlPlaneConfigs []*machineapi.VSphereMachineProviderSpec
 	Username            string
 	Password            string
 	Cluster             string
