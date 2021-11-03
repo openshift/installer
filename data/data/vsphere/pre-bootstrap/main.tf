@@ -35,10 +35,12 @@ for each network
 */
 
 data "vsphere_datacenter" "datacenter" {
+  //for_each = dc_zone
   name = var.vsphere_datacenter
 }
 
 data "vsphere_compute_cluster" "cluster" {
+  //for_each = zone
   name          = var.vsphere_cluster
   datacenter_id = data.vsphere_datacenter.datacenter.id
 }
@@ -48,16 +50,20 @@ data "vsphere_resource_pool" "resource_pool" {
 }
 
 data "vsphere_datastore" "datastore" {
+
+  //for_each zone
   name          = var.vsphere_datastore
   datacenter_id = data.vsphere_datacenter.datacenter.id
 }
 
 data "vsphere_network" "network" {
+  // for_each zone
   name          = var.vsphere_network
   datacenter_id = data.vsphere_datacenter.datacenter.id
 }
 
 data "vsphere_virtual_machine" "template" {
+  // for_each zone
   name          = vsphereprivate_import_ova.import.name
   datacenter_id = data.vsphere_datacenter.datacenter.id
 }
@@ -74,6 +80,46 @@ resource "vsphereprivate_import_ova" "import" {
   tag           = vsphere_tag.tag.id
   disk_type     = var.vsphere_disk_type
 }
+
+resource "vsphere_tag_category" "region-category" {
+  count = 0
+
+  name        = "openshift-region"
+  description = "Added by openshift-install do not remove"
+  cardinality = "SINGLE"
+
+  // TODO: make sure the types are correct
+  associable_types = [
+    "VirtualMachine",
+    "ResourcePool",
+    "Folder",
+    "Datastore",
+    "StoragePod",
+    "Datacenter",
+    "Cluster"
+  ]
+}
+
+resource "vsphere_tag_category" "zone-category" {
+  count = 0
+
+  name        = "openshift-zone"
+  description = "Added by openshift-install do not remove"
+  cardinality = "SINGLE"
+
+  // TODO: make sure the types are correct
+  associable_types = [
+    "VirtualMachine",
+    "ResourcePool",
+    "Folder",
+    "Datastore",
+    "StoragePod",
+    "Datacenter",
+    "Cluster"
+  ]
+}
+
+
 
 resource "vsphere_tag_category" "category" {
   name        = "openshift-${var.cluster_id}"
