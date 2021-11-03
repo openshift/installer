@@ -17,6 +17,23 @@ provider "vsphereprivate" {
   allow_unverified_ssl = false
 }
 
+/*
+Create tag cat:
+openshift-region
+openshift-zone
+
+Create tag for each region
+Create tag for each zone
+
+
+for each datacenter
+for each cluster
+  import ova
+for each datastore
+for each network
+
+*/
+
 data "vsphere_datacenter" "datacenter" {
   name = var.vsphere_datacenter
 }

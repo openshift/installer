@@ -672,6 +672,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		// Set this flag to use an existing folder specified in the install-config. Otherwise, create one.
 		preexistingFolder := installConfig.Config.Platform.VSphere.Folder != ""
 
+		/* TODO:
+		 * controlplaneconfigs will be resolved with machine change
+		 * Will needs regions and zones in TFVarsSources
+		 *
+		 * if VCenters is defined use the server, username, password from there
+		 * ignore platform.VCenter
+
+
+		 */
+
 		data, err = vspheretfvars.TFVars(
 			vspheretfvars.TFVarsSources{
 				ControlPlaneConfigs: controlPlaneConfigs,

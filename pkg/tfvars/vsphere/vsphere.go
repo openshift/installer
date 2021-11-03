@@ -44,7 +44,9 @@ type TFVarsSources struct {
 
 //TFVars generate vSphere-specific Terraform variables
 func TFVars(sources TFVarsSources) ([]byte, error) {
-	controlPlaneConfig := sources.ControlPlaneConfigs[0]
+
+	// TODO: This needs to be the slice
+	controlPlaneConfig := sources.ControlPlaneConfigs
 
 	cachedImage, err := cache.DownloadImageFile(sources.ImageURL)
 	if err != nil {
@@ -54,23 +56,26 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	// The vSphere provider needs the relativepath of the folder,
 	// so get the relPath from the absolute path. Absolute path is always of the form
 	// /<datacenter>/vm/<folder_path> so we can split on "vm/".
-	folderRelPath := strings.SplitAfterN(controlPlaneConfig.Workspace.Folder, "vm/", 2)[1]
+	folderRelPath := strings.SplitAfterN(controlPlaneConfig[0].Workspace.Folder, "vm/", 2)[1]
 
+	// TODO: do not break existing install
 	cfg := &config{
-		VSphereURL:        controlPlaneConfig.Workspace.Server,
+		VSphereURL:        controlPlaneConfig[0].Workspace.Server,
 		VSphereUsername:   sources.Username,
 		VSpherePassword:   sources.Password,
-		MemoryMiB:         controlPlaneConfig.MemoryMiB,
-		DiskGiB:           controlPlaneConfig.DiskGiB,
-		NumCPUs:           controlPlaneConfig.NumCPUs,
-		NumCoresPerSocket: controlPlaneConfig.NumCoresPerSocket,
+		MemoryMiB:         controlPlaneConfig[0].MemoryMiB,
+		DiskGiB:           controlPlaneConfig[0].DiskGiB,
+		NumCPUs:           controlPlaneConfig[0].NumCPUs,
+		NumCoresPerSocket: controlPlaneConfig[0].NumCoresPerSocket,
 		Cluster:           sources.Cluster,
-		ResourcePool:      controlPlaneConfig.Workspace.ResourcePool,
-		Datacenter:        controlPlaneConfig.Workspace.Datacenter,
-		Datastore:         controlPlaneConfig.Workspace.Datastore,
+		ResourcePool:      controlPlaneConfig[0].Workspace.ResourcePool,
+		Datacenter:        controlPlaneConfig[0].Workspace.Datacenter,
+		Datastore:         controlPlaneConfig[0].Workspace.Datastore,
 		Folder:            folderRelPath,
-		Network:           controlPlaneConfig.Network.Devices[0].NetworkName,
-		Template:          controlPlaneConfig.Template,
+		Network:           controlPlaneConfig[0].Network.Devices[0].NetworkName,
+
+		// TODO: change me...
+		Template:          controlPlaneConfig[0].Template,
 		OvaFilePath:       cachedImage,
 		PreexistingFolder: sources.PreexistingFolder,
 		DiskType:          sources.DiskType,
