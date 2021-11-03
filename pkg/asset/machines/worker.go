@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	alibabacloudapi "github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis"
+	alibabacloudprovider "github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis/alibabacloudprovider/v1beta1"
 	"github.com/ghodss/yaml"
 	baremetalapi "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis"
 	baremetalprovider "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
@@ -36,6 +38,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
@@ -49,6 +52,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -83,6 +87,14 @@ func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 			Type: "gp2",
 			Size: 120,
 		},
+	}
+}
+
+func defaultAlibabaCloudMachinePoolPlatform() alibabacloudtypes.MachinePool {
+	return alibabacloudtypes.MachinePool{
+		InstanceType:       "ecs.g6.large",
+		SystemDiskCategory: alibabacloudtypes.DefaultDiskCategory,
+		SystemDiskSize:     120,
 	}
 }
 
@@ -223,6 +235,26 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			machineConfigs = append(machineConfigs, ignFIPS)
 		}
 		switch ic.Platform.Name() {
+		case alibabacloudtypes.Name:
+			mpool := defaultAlibabaCloudMachinePoolPlatform()
+			mpool.ImageID = string(*rhcosImage)
+			mpool.Set(ic.Platform.AlibabaCloud.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.AlibabaCloud)
+			if len(mpool.Zones) == 0 {
+				azs, err := alibabacloud.GetAvailabilityZones(ic.Platform.AlibabaCloud.Region)
+				if err != nil {
+					return errors.Wrap(err, "failed to fetch availability zones")
+				}
+				mpool.Zones = azs
+			}
+			pool.Platform.AlibabaCloud = &mpool
+			sets, err := alibabacloud.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data", installConfig.Config.Platform.AlibabaCloud.Tags)
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		case awstypes.Name:
 			subnets := map[string]string{}
 			if len(ic.Platform.AWS.Subnets) > 0 {
@@ -506,6 +538,7 @@ func (w *Worker) Load(f asset.FileFetcher) (found bool, err error) {
 // MachineSets returns MachineSet manifest structures.
 func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 	scheme := runtime.NewScheme()
+	alibabacloudapi.AddToScheme(scheme)
 	awsapi.AddToScheme(scheme)
 	azureapi.AddToScheme(scheme)
 	baremetalapi.AddToScheme(scheme)
@@ -516,6 +549,7 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 	ovirtproviderapi.AddToScheme(scheme)
 	vsphereproviderapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
+		alibabacloudprovider.SchemeGroupVersion,
 		awsprovider.SchemeGroupVersion,
 		azureprovider.SchemeGroupVersion,
 		baremetalprovider.SchemeGroupVersion,

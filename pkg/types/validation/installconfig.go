@@ -21,6 +21,8 @@ import (
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
+	alibabacloudvalidation "github.com/openshift/installer/pkg/types/alibabacloud/validation"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -458,6 +460,11 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 		}
 		allErrs = append(allErrs, validation(fldPath.Child(n))...)
 	}
+	if platform.AlibabaCloud != nil {
+		validate(alibabacloud.Name, platform.AlibabaCloud, func(f *field.Path) field.ErrorList {
+			return alibabacloudvalidation.ValidatePlatform(platform.AlibabaCloud, f)
+		})
+	}
 	if platform.AWS != nil {
 		validate(aws.Name, platform.AWS, func(f *field.Path) field.ErrorList { return awsvalidation.ValidatePlatform(platform.AWS, f) })
 	}
@@ -603,10 +610,11 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 	// validPlatformCredentialsModes is a map from the platform name to a slice of credentials modes that are valid
 	// for the platform. If a platform name is not in the map, then the credentials mode cannot be set for that platform.
 	validPlatformCredentialsModes := map[string][]types.CredentialsMode{
-		aws.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
-		azure.Name:    allowedAzureModes,
-		gcp.Name:      {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
-		ibmcloud.Name: {types.ManualCredentialsMode},
+		alibabacloud.Name: {types.ManualCredentialsMode},
+		aws.Name:          {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
+		azure.Name:        allowedAzureModes,
+		gcp.Name:          {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
+		ibmcloud.Name:     {types.ManualCredentialsMode},
 	}
 	if validModes, ok := validPlatformCredentialsModes[platform.Name()]; ok {
 		validModesSet := sets.NewString()

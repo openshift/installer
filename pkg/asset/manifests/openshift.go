@@ -105,7 +105,6 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodeSecretAccessKey: base64.StdEncoding.EncodeToString([]byte(creds.SecretAccessKey)),
 			},
 		}
-
 	case azuretypes.Name:
 		resourceGroupName := installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID)
 		session, err := installConfig.Azure.Session()

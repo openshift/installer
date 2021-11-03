@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
   name: installconfigs.install.openshift.io
 spec:
@@ -77,6 +77,39 @@ spec:
                   description: Platform is configuration for machine pool specific
                     to the platform.
                   properties:
+                    alibabacloud:
+                      description: AlibabaCloud is the configuration used when installing
+                        on Alibaba Cloud.
+                      properties:
+                        imageID:
+                          description: ImageID is the Image ID that should be used
+                            to create ECS instance. If set, the ImageID should belong
+                            to the same region as the cluster.
+                          type: string
+                        instanceType:
+                          description: InstanceType defines the ECS instance type.
+                            eg. ecs.g6.large
+                          type: string
+                        systemDiskCategory:
+                          description: SystemDiskCategory defines the category of
+                            the system disk.
+                          enum:
+                          - ""
+                          - cloud_efficiency
+                          - cloud_essd
+                          type: string
+                        systemDiskSize:
+                          description: SystemDiskSize defines the size of the system
+                            disk in gibibytes (GiB).
+                          minimum: 120
+                          type: integer
+                        zones:
+                          description: Zones is list of availability zones that can
+                            be used. eg. ["cn-hangzhou-i", "cn-hangzhou-h", "cn-hangzhou-j"]
+                          items:
+                            type: string
+                          type: array
+                      type: object
                     aws:
                       description: AWS is the configuration used when installing on
                         AWS.
@@ -487,6 +520,39 @@ spec:
                 description: Platform is configuration for machine pool specific to
                   the platform.
                 properties:
+                  alibabacloud:
+                    description: AlibabaCloud is the configuration used when installing
+                      on Alibaba Cloud.
+                    properties:
+                      imageID:
+                        description: ImageID is the Image ID that should be used to
+                          create ECS instance. If set, the ImageID should belong to
+                          the same region as the cluster.
+                        type: string
+                      instanceType:
+                        description: InstanceType defines the ECS instance type. eg.
+                          ecs.g6.large
+                        type: string
+                      systemDiskCategory:
+                        description: SystemDiskCategory defines the category of the
+                          system disk.
+                        enum:
+                        - ""
+                        - cloud_efficiency
+                        - cloud_essd
+                        type: string
+                      systemDiskSize:
+                        description: SystemDiskSize defines the size of the system
+                          disk in gibibytes (GiB).
+                        minimum: 120
+                        type: integer
+                      zones:
+                        description: Zones is list of availability zones that can
+                          be used. eg. ["cn-hangzhou-i", "cn-hangzhou-h", "cn-hangzhou-j"]
+                        items:
+                          type: string
+                        type: array
+                    type: object
                   aws:
                     description: AWS is the configuration used when installing on
                       AWS.
@@ -877,7 +943,7 @@ spec:
               values. For all other platforms, the field must not be set. AWS: \"Mint\",
               \"Passthrough\", \"Manual\" Azure: \"Mint\", \"Passthrough\", \"Manual\"
               AzureStack: \"Manual\" GCP: \"Mint\", \"Passthrough\", \"Manual\" IBMCloud:
-              \"Manual\""
+              \"Manual\" AlibabaCloud: \"Manual\""
             enum:
             - ""
             - Mint
@@ -1018,6 +1084,63 @@ spec:
             description: Platform is the configuration for the specific platform upon
               which to perform the installation.
             properties:
+              alibabacloud:
+                description: AlibabaCloud is the configuration used when installing
+                  on Alibaba Cloud.
+                properties:
+                  defaultMachinePlatform:
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on Alibaba Cloud for machine pools which
+                      do not define their own platform configuration.
+                    properties:
+                      imageID:
+                        description: ImageID is the Image ID that should be used to
+                          create ECS instance. If set, the ImageID should belong to
+                          the same region as the cluster.
+                        type: string
+                      instanceType:
+                        description: InstanceType defines the ECS instance type. eg.
+                          ecs.g6.large
+                        type: string
+                      systemDiskCategory:
+                        description: SystemDiskCategory defines the category of the
+                          system disk.
+                        enum:
+                        - ""
+                        - cloud_efficiency
+                        - cloud_essd
+                        type: string
+                      systemDiskSize:
+                        description: SystemDiskSize defines the size of the system
+                          disk in gibibytes (GiB).
+                        minimum: 120
+                        type: integer
+                      zones:
+                        description: Zones is list of availability zones that can
+                          be used. eg. ["cn-hangzhou-i", "cn-hangzhou-h", "cn-hangzhou-j"]
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  region:
+                    description: Region specifies the Alibaba Cloud region where the
+                      cluster will be created.
+                    type: string
+                  resourceGroupID:
+                    description: ResourceGroupID is the ID of an already existing
+                      resource group where the cluster should be installed.
+                    type: string
+                  tags:
+                    additionalProperties:
+                      type: string
+                    description: Tags additional keys and values that the installer
+                      will add as tags to all resources that it creates. Resources
+                      created by the cluster itself may not include these tags.
+                    type: object
+                required:
+                - region
+                - resourceGroupID
+                type: object
               aws:
                 description: AWS is the configuration used when installing on AWS.
                 properties:

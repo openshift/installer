@@ -2,6 +2,7 @@ package platform
 
 import (
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/stages/alibabacloud"
 	"github.com/openshift/installer/pkg/terraform/stages/aws"
 	"github.com/openshift/installer/pkg/terraform/stages/azure"
 	"github.com/openshift/installer/pkg/terraform/stages/compat"
@@ -9,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/terraform/stages/ibmcloud"
 	"github.com/openshift/installer/pkg/terraform/stages/libvirt"
 	"github.com/openshift/installer/pkg/terraform/stages/vsphere"
+	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
@@ -20,6 +22,8 @@ import (
 // StagesForPlatform returns the terraform stages to run to provision the infrastructure for the specified platform.
 func StagesForPlatform(platform string) []terraform.Stage {
 	switch platform {
+	case alibabacloudtypes.Name:
+		return alibabacloud.PlatformStages
 	case awstypes.Name:
 		return aws.PlatformStages
 	case azuretypes.Name:

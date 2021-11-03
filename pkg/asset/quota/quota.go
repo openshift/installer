@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/quota"
 	quotaaws "github.com/openshift/installer/pkg/quota/aws"
 	quotagcp "github.com/openshift/installer/pkg/quota/gcp"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -140,7 +141,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 			return summarizeFailingReport(reports)
 		}
 		summarizeReport(reports)
-	case azure.Name, baremetal.Name, ibmcloud.Name, libvirt.Name, none.Name, ovirt.Name, vsphere.Name:
+	case alibabacloud.Name, azure.Name, baremetal.Name, ibmcloud.Name, libvirt.Name, none.Name, ovirt.Name, vsphere.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
