@@ -591,7 +591,7 @@ func (search *iamUserSearch) getClusterNameFromTag() (string, error) {
 	var err error
 	k8sTagNamePrefix := "kubernetes.io/cluster/"
 	for _, filter := range search.filters {
-		for filterKey, _ := range filter {
+		for filterKey := range filter {
 			if strings.HasPrefix(filterKey, k8sTagNamePrefix) {
 				return strings.Split(filterKey, "/")[2], nil
 			}
