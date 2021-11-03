@@ -1560,7 +1560,6 @@ github.com/openshift/library-go/pkg/route/routeapihelpers
 ## explicit
 github.com/openshift/machine-api-operator/pkg/apis/machine
 github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
-github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1
 # github.com/openshift/machine-config-operator v0.0.0 => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 ## explicit
