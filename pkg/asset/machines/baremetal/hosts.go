@@ -5,7 +5,7 @@ import (
 
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
 
-	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 

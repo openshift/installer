@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	clusterapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
+	clusterapi "github.com/openshift/api/machine/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 

@@ -4,8 +4,8 @@ package gcp
 import (
 	"fmt"
 
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
-	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

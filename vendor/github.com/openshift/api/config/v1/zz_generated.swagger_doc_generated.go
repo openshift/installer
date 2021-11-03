@@ -1567,6 +1567,7 @@ var map_OpenIDClaims = map[string]string{
 	"preferredUsername": "preferredUsername is the list of claims whose values should be used as the preferred username. If unspecified, the preferred username is determined from the value of the sub claim",
 	"name":              "name is the list of claims whose values should be used as the display name. Optional. If unspecified, no display name is set for the identity",
 	"email":             "email is the list of claims whose values should be used as the email address. Optional. If unspecified, no email is set for the identity",
+	"groups":            "groups is the list of claims value of which should be used to synchronize groups from the OIDC provider to OpenShift for the user. If multiple claims are specified, the first one with a non-empty value is used.",
 }
 
 func (OpenIDClaims) SwaggerDoc() map[string]string {
@@ -1729,7 +1730,7 @@ var map_ProxySpec = map[string]string{
 	"":                   "ProxySpec contains cluster proxy creation configuration.",
 	"httpProxy":          "httpProxy is the URL of the proxy for HTTP requests.  Empty means unset and will not result in an env var.",
 	"httpsProxy":         "httpsProxy is the URL of the proxy for HTTPS requests.  Empty means unset and will not result in an env var.",
-	"noProxy":            "noProxy is a comma-separated list of hostnames and/or CIDRs for which the proxy should not be used. Empty means unset and will not result in an env var.",
+	"noProxy":            "noProxy is a comma-separated list of hostnames and/or CIDRs and/or IPs for which the proxy should not be used. Empty means unset and will not result in an env var.",
 	"readinessEndpoints": "readinessEndpoints is a list of endpoints used to verify readiness of the proxy.",
 	"trustedCA":          "trustedCA is a reference to a ConfigMap containing a CA certificate bundle. The trustedCA field should only be consumed by a proxy validator. The validator is responsible for reading the certificate bundle from the required key \"ca-bundle.crt\", merging it with the system default trust bundle, and writing the merged trust bundle to a ConfigMap named \"trusted-ca-bundle\" in the \"openshift-config-managed\" namespace. Clients that expect to make proxy connections must use the trusted-ca-bundle for all HTTPS requests to the proxy, and may use the trusted-ca-bundle for non-proxy HTTPS requests as well.\n\nThe namespace for the ConfigMap referenced by trustedCA is \"openshift-config\". Here is an example ConfigMap (in yaml):\n\napiVersion: v1 kind: ConfigMap metadata:\n name: user-ca-bundle\n namespace: openshift-config\n data:\n   ca-bundle.crt: |",
 }

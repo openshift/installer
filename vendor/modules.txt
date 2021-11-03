@@ -1374,9 +1374,10 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/openshift-metal3/terraform-provider-ironic v0.2.6
 ## explicit
 github.com/openshift-metal3/terraform-provider-ironic/ironic
-# github.com/openshift/api v0.0.0-20210924154557-a4f696157341
+# github.com/openshift/api v0.0.0-20211021122928-16dd969d5550
 ## explicit
 github.com/openshift/api/config/v1
+github.com/openshift/api/machine/v1beta1
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
 github.com/openshift/api/route/v1

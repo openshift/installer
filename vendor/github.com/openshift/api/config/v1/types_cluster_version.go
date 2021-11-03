@@ -331,7 +331,7 @@ type ConditionalUpdate struct {
 	// +listType=map
 	// +listMapKey=name
 	// +required
-	Risks []ConditionalUpdateRisk `json:"risks"`
+	Risks []ConditionalUpdateRisk `json:"risks" patchStrategy:"merge" patchMergeKey:"name"`
 
 	// conditions represents the observations of the conditional update's
 	// current status. Known types are:
