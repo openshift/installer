@@ -2,6 +2,7 @@ package vsphere
 
 import (
 	"encoding/json"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -9,6 +10,7 @@ import (
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 type config struct {
@@ -29,6 +31,8 @@ type config struct {
 	OvaFilePath       string           `json:"vsphere_ova_filepath"`
 	PreexistingFolder bool             `json:"vsphere_preexisting_folder"`
 	DiskType          vsphere.DiskType `json:"vsphere_disk_type"`
+
+	VCenters *[]vspheretypes.VCenter `json:"vsphere_vcenters"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -40,10 +44,13 @@ type TFVarsSources struct {
 	ImageURL            string
 	PreexistingFolder   bool
 	DiskType            vsphere.DiskType
+	InstallConfig       *installconfig.InstallConfig
 }
 
 //TFVars generate vSphere-specific Terraform variables
 func TFVars(sources TFVarsSources) ([]byte, error) {
+
+	platform := sources.InstallConfig.Config.VSphere
 
 	// TODO: This needs to be the slice
 	controlPlaneConfig := sources.ControlPlaneConfigs
@@ -79,6 +86,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		OvaFilePath:       cachedImage,
 		PreexistingFolder: sources.PreexistingFolder,
 		DiskType:          sources.DiskType,
+		VCenters:          &platform.VCenters,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

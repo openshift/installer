@@ -1,6 +1,28 @@
 locals {
   folder      = var.vsphere_preexisting_folder ? var.vsphere_folder : vsphere_folder.folder[0].path
   description = "Created By OpenShift Installer"
+  vcenter_region_zone_flatten = flatten([
+
+    for v in var.vsphere_vcenters : [
+      for r in v.regions : [
+        for z in r.zones : {
+          region         = r.name
+          zone           = z.name
+          datacenter     = r.datacenter
+          cluster        = z.cluster
+          datastore      = z.datastore
+          network        = z.network
+          vsphere_server = v.server
+          user           = v.user
+          password       = v.password
+        }
+      ]
+    ]
+  ])
+
+  vcenter_region_zone_map = {
+    for obj in local.vcenter_region_zone_flatten : "${obj.vsphere_server}-${obj.region}-${obj.zone}" => obj
+  }
 }
 
 provider "vsphere" {
@@ -17,22 +39,74 @@ provider "vsphereprivate" {
   allow_unverified_ssl = false
 }
 
-/*
-Create tag cat:
-openshift-region
-openshift-zone
 
-Create tag for each region
-Create tag for each zone
+//// Zoning
+
+data "vsphere_datacenter" "datacenter_zoning" {
+  for_each = local.vcenter_region_zone_map
+  name     = each.value.datacenter
+}
+
+data "vsphere_compute_cluster" "cluster_zoning" {
+  for_each      = local.vcenter_region_zone_map
+  name          = each.value.cluster
+  datacenter_id = data.vsphere_datacenter.datacenter_zoning[each.key].id
+}
+
+data "vsphere_datastore" "datastore_zoning" {
+
+  for_each      = local.vcenter_region_zone_map
+  name          = each.value.datastore
+  datacenter_id = data.vsphere_datacenter.datacenter_zoning[each.key].id
+}
+
+data "vsphere_network" "network_zoning" {
+  for_each      = local.vcenter_region_zone_map
+  name          = each.value.network
+  datacenter_id = data.vsphere_datacenter.datacenter_zoning[each.key].id
+}
+
+resource "vsphere_tag_category" "region_tag_category" {
+  name        = "openshift-region"
+  description = "Added by openshift-install do not remove"
+  cardinality = "SINGLE"
+
+  associable_types = [
+    "Datacenter"
+  ]
+}
+
+resource "vsphere_tag_category" "zone_tag_category" {
+  name        = "openshift-zone"
+  description = "Added by openshift-install do not remove"
+  cardinality = "SINGLE"
+
+  associable_types = [
+    "Cluster"
+  ]
+}
+
+resource "vsphere_tag" "region_tags" {
+  for_each    = { for k, v in local.vcenter_region_zone_map : k => v.region }
+  name        = each.value
+  category_id = vsphere_tag_category.region_tag_category.id
+  description = "Added by openshift-install do not remove"
+}
+
+resource "vsphere_tag" "zone_tags" {
+  for_each    = { for k, v in local.vcenter_region_zone_map : k => v.zone }
+  name        = each.value
+  category_id = vsphere_tag_category.zone_tag_category.id
+  description = "Added by openshift-install do not remove"
+}
+
+//// End Zoning
 
 
-for each datacenter
-for each cluster
-  import ova
-for each datastore
-for each network
 
-*/
+
+
+
 
 data "vsphere_datacenter" "datacenter" {
   //for_each = dc_zone

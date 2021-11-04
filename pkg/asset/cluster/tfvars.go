@@ -691,6 +691,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageURL:            string(*rhcosImage),
 				PreexistingFolder:   preexistingFolder,
 				DiskType:            installConfig.Config.Platform.VSphere.DiskType,
+				InstallConfig:       installConfig,
 			},
 		)
 		if err != nil {
