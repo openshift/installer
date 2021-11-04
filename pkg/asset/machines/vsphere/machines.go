@@ -3,7 +3,6 @@ package vsphere
 
 import (
 	"fmt"
-
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -22,15 +21,36 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if poolPlatform := pool.Platform.Name(); poolPlatform != vsphere.Name {
 		return nil, fmt.Errorf("non-VSphere machine-pool: %q", poolPlatform)
 	}
+	var machines []machineapi.Machine
 	platform := config.Platform.VSphere
 	mpool := pool.Platform.VSphere
+
+	azs := mpool.Zones
+	numOfAZs := int32(len(azs))
+	definedZones := make(map[string]*vsphere.Platform)
+
+	if numOfAZs > 0 {
+		zones, err := getDefinedZones(platform)
+		if err != nil {
+			return machines, err
+		}
+		definedZones = zones
+	}
 
 	total := int64(1)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	var machines []machineapi.Machine
+
 	for idx := int64(0); idx < total; idx++ {
+		if numOfAZs > 0 {
+			desiredZone := mpool.Zones[int(idx)%len(mpool.Zones)]
+			if _, exists := definedZones[desiredZone]; !exists {
+				return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
+			}
+			platform = definedZones[desiredZone]
+		}
+
 		provider, err := provider(clusterID, platform, mpool, osImage, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
