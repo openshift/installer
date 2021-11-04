@@ -28,6 +28,7 @@ aliases:
     - mandre
     - mdbooth
     - pierreprinetti
+    - stephenfin
   openstack-reviewers:
     - EmilienM
     - adduarte
@@ -35,6 +36,7 @@ aliases:
     - mandre
     - mdbooth
     - pierreprinetti
+    - stephenfin
   vsphere-approvers:
     - dav1x
     - jcpowermac
