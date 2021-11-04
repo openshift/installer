@@ -181,12 +181,25 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case vspheretypes.Name:
-		cloudCreds = cloudCredsSecretData{
-			VSphere: &VSphereCredsSecretData{
+		vsphereCredentials := make([]*VSphereCredsSecretData,0)
+		if installConfig.Config.VSphere.VCenter != "" {
+			vsphereCredentials = append(vsphereCredentials, &VSphereCredsSecretData{
 				VCenter:              installConfig.Config.VSphere.VCenter,
 				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Username)),
 				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Password)),
-			},
+			})
+		}
+		if len(installConfig.Config.VSphere.VCenters) > 0{
+			for _, vcenter := range installConfig.Config.VSphere.VCenters {
+				vsphereCredentials = append(vsphereCredentials, &VSphereCredsSecretData{
+					VCenter:              vcenter.Server,
+					Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(vcenter.User)),
+					Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(vcenter.Password)),
+				})
+			}
+		}
+		cloudCreds = cloudCredsSecretData{
+			VSphere: vsphereCredentials,
 		}
 	case ovirttypes.Name:
 		conf, err := ovirt.NewConfig()
