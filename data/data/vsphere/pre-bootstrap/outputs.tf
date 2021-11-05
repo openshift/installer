@@ -45,5 +45,3 @@ output "cluster_id" {
 output "tags" {
   value = [vsphere_tag.tag.id]
 }
-
-
