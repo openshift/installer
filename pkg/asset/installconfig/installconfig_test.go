@@ -178,6 +178,21 @@ metadata:
 			expectedError: true,
 		},
 		{
+			name: "unknown field",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  aws:
+    region: us-east-1
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+wrong_key: wrong_value 
+`,
+			expectedError: true,
+		},
+		{
 			name: "old valid InstallConfig",
 			data: `
 apiVersion: v1beta3
@@ -188,8 +203,6 @@ platform:
   aws:
     region: us-east-1
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
-network:
-  type: OpenShiftSDN
 `,
 			expectedFound: true,
 			expectedConfig: &types.InstallConfig{
