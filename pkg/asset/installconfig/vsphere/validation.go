@@ -41,7 +41,9 @@ func Validate(ic *types.InstallConfig) error {
 func validateResources(finder Finder, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 	p := ic.Platform.VSphere
-	allErrs = append(allErrs, validateNetwork(finder, p, field.NewPath("platform").Child("vsphere").Child("network"))...)
+	if p.Network != "" {
+		allErrs = append(allErrs, validateNetwork(finder, p, field.NewPath("platform").Child("vsphere").Child("network"))...)
+	}
 	return allErrs.ToAggregate()
 }
 
