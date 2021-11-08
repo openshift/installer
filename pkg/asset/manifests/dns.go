@@ -28,6 +28,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -158,7 +159,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		config.Spec.PrivateZone = &configv1.DNSZone{
 			ID: zoneID,
 		}
-	case libvirttypes.Name, openstacktypes.Name, baremetaltypes.Name, nonetypes.Name, vspheretypes.Name, ovirttypes.Name:
+	case libvirttypes.Name, openstacktypes.Name, baremetaltypes.Name, nonetypes.Name, vspheretypes.Name, ovirttypes.Name, powervstypes.Name:
 	default:
 		return errors.New("invalid Platform")
 	}

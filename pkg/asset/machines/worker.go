@@ -21,6 +21,8 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+	powervsapi "github.com/openshift/cluster-api-provider-powervs/pkg/apis"
+	powervsprovider "github.com/openshift/cluster-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	vsphereproviderapi "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
@@ -48,6 +50,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/ovirt"
+	"github.com/openshift/installer/pkg/asset/machines/powervs"
 	"github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
@@ -64,6 +67,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -160,6 +164,15 @@ func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
 		OSDisk: vspheretypes.OSDisk{
 			DiskSizeGB: 120,
 		},
+	}
+}
+
+func defaultPowerVSMachinePoolPlatform() powervstypes.MachinePool {
+	return powervstypes.MachinePool{
+		Memory:     32,
+		Processors: 0.5,
+		ProcType:   "shared",
+		SysType:    "s922",
 	}
 }
 
@@ -462,6 +475,18 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+		case powervstypes.Name:
+			mpool := defaultPowerVSMachinePoolPlatform()
+			mpool.Set(ic.Platform.PowerVS.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.PowerVS)
+			pool.Platform.PowerVS = &mpool
+			sets, err := powervs.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data", installConfig.Config.Platform.PowerVS.UserTags)
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects for powervs provider")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		case nonetypes.Name:
 		default:
 			return fmt.Errorf("invalid Platform")
@@ -548,6 +573,7 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
 	vsphereproviderapi.AddToScheme(scheme)
+	powervsapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		alibabacloudprovider.SchemeGroupVersion,
 		awsprovider.SchemeGroupVersion,
@@ -559,6 +585,7 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 		openstackprovider.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
 		vsphereprovider.SchemeGroupVersion,
+		powervsprovider.GroupVersion,
 	)
 
 	machineSets := []machineapi.MachineSet{}

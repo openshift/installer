@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
 func TestMasterGenerateMachineConfigs(t *testing.T) {
@@ -189,6 +190,57 @@ spec:
 				assert.Equal(t, 0, len(master.MachineConfigFiles), "expected no machine config files")
 			}
 		})
+	}
+}
+
+func TestPowerVSMaster(t *testing.T) {
+	t.Log("Testing powerVS platform master")
+	parents := asset.Parents{}
+	parents.Add(
+		&installconfig.ClusterID{
+			UUID:    "test-uuid",
+			InfraID: "test-infra-id",
+		},
+		&installconfig.InstallConfig{
+			Config: &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				SSHKey:     "dummy ssh key",
+				BaseDomain: "test-domain",
+				Platform: types.Platform{
+					PowerVS: &powervstypes.Platform{},
+				},
+				ControlPlane: &types.MachinePool{
+					Hyperthreading: types.HyperthreadingEnabled,
+					Replicas:       pointer.Int64Ptr(1),
+					Platform: types.MachinePoolPlatform{
+						PowerVS: &powervstypes.MachinePool{
+							ServiceInstance: "dummy-service-instance",
+							ImageID:         "dummy-image-id",
+							NetworkIDs:      []string{"dummy-network"},
+							KeyPairName:     "dummy-keypair",
+						},
+					},
+				},
+			},
+		},
+		(*rhcos.Image)(pointer.StringPtr("test-image")),
+		&machine.Master{
+			File: &asset.File{
+				Filename: "master-ignition",
+				Data:     []byte("test-ignition"),
+			},
+		},
+	)
+	master := &Master{}
+	if err := master.Generate(parents); err != nil {
+		t.Fatalf("failed to generate master machines: %v", err)
+	}
+
+	_, err := master.Machines()
+	if err != nil {
+		t.Fatalf("failed to get master machine set: %v", err)
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -36,6 +37,7 @@ type ClusterPlatformMetadata struct {
 	IBMCloud     *ibmcloud.Metadata     `json:"ibmcloud,omitempty"`
 	BareMetal    *baremetal.Metadata    `json:"baremetal,omitempty"`
 	Ovirt        *ovirt.Metadata        `json:"ovirt,omitempty"`
+	PowerVS      *powervs.Metadata      `json:"powervs,omitempty"`
 	VSphere      *vsphere.Metadata      `json:"vsphere,omitempty"`
 }
 
@@ -72,6 +74,9 @@ func (cpm *ClusterPlatformMetadata) Platform() string {
 	}
 	if cpm.Ovirt != nil {
 		return ovirt.Name
+	}
+	if cpm.PowerVS != nil {
+		return powervs.Name
 	}
 	if cpm.VSphere != nil {
 		return vsphere.Name

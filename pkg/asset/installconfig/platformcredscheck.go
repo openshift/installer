@@ -11,6 +11,7 @@ import (
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -21,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -52,6 +54,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "creating AlibabaCloud Cloud session")
 		}
+
 	case aws.Name:
 		_, err := ic.AWS.Session(ctx)
 		if err != nil {
@@ -64,6 +67,8 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		}
 	case ibmcloud.Name:
 		_, err = ibmcloudconfig.NewClient()
+	case powervs.Name:
+		_, err = powervsconfig.GetSession()
 		if err != nil {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}
