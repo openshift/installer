@@ -2110,6 +2110,10 @@ spec:
                             type: integer
                         type: object
                     type: object
+                  diskType:
+                    description: Disk Type Thin specifies if thin disks should be
+                      use instead of thick
+                    type: string
                   folder:
                     description: Folder is the absolute path of the folder that will
                       be used and/or created for virtual machines. The absolute path
@@ -2132,9 +2136,6 @@ spec:
                     type: string
                   vCenter:
                     description: VCenter is the domain name or IP address of the vCenter.
-                    type: string
-                  diskType:
-                    description: DiskType is the name of the disk provisioning type for vsphere, for e.g eagerZeroedThick or thin, by default it will be thick.
                     type: string
                 required:
                 - datacenter

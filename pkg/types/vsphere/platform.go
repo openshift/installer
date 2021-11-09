@@ -1,6 +1,20 @@
 package vsphere
 
-// Platform stores any global configuration used for vsphere platforms.
+// DiskType is a disk provisioning type for vsphere.
+type DiskType string
+
+const (
+	// DiskTypeThin uses Thin disk type for vsphere in the cluster.
+	DiskTypeThin DiskType = "thin"
+
+	// DiskTypeThick uses Thick disk type for vsphere in the cluster.
+	DiskTypeThick DiskType = "thick"
+
+	// DiskTypeEagerZeroedThick uses EagerZeroedThick disk type for vsphere in the cluster.
+	DiskTypeEagerZeroedThick DiskType = "eagerZeroedThick"
+)
+
+// Platform stores any global configuration used for vsphere platforms
 type Platform struct {
 	// VCenter is the domain name or IP address of the vCenter.
 	VCenter string `json:"vCenter"`
@@ -49,5 +63,5 @@ type Platform struct {
 	Network string `json:"network,omitempty"`
 
 	// Disk Type Thin specifies if thin disks should be use instead of thick
-	DiskType string `json:"diskType,omitempty"`
+	DiskType DiskType `json:"diskType,omitempty"`
 }

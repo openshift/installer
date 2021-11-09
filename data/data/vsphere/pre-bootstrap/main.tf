@@ -50,7 +50,7 @@ resource "vsphereprivate_import_ova" "import" {
   network    = var.vsphere_network
   folder     = local.folder
   tag        = vsphere_tag.tag.id
-  diskType   = var.disk_type
+  disk_type  = var.vsphere_disk_type
 }
 
 resource "vsphere_tag_category" "category" {
