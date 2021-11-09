@@ -11,13 +11,22 @@ variable "powervs_vpc_region" {
   type        = string
   description = "The IBM Cloud region where you want to create the resources"
   default     = "eu-gb"
-  ##default     = "eu-gb"
+}
+
+variable "powervs_vpc_zone" {
+  type        = string
+  description = "The IBM Cloud zone associated with the VPC region you're using"
 }
 
 variable "powervs_region" {
   type        = string
   description = "The IBM Cloud region where you want to create the resources"
   default     = "lon"
+}
+
+variable "powervs_zone" {
+  type        = string
+  description = "The IBM Cloud zone associated with the region you're using"
 }
 
 variable "powervs_resource_group" {

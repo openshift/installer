@@ -4,6 +4,8 @@ import (
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	"testing"
 
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
+
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
@@ -252,7 +254,7 @@ func TestComputeIsNotModified(t *testing.T) {
 }
 
 func TestPowerVSWorker(t *testing.T) {
-	t.Log("Testing powerVS platform worker")
+	t.Log("Testing Power VS platform worker")
 	parents := asset.Parents{}
 	parents.Add(
 		&installconfig.ClusterID{
@@ -276,7 +278,7 @@ func TestPowerVSWorker(t *testing.T) {
 						Platform: types.MachinePoolPlatform{
 							PowerVS: &powervstypes.MachinePool{
 								ServiceInstance: "dummy-service-instance",
-								ImageID:         "dummy-image-id",
+								ImageName:       "dummy-image-name",
 								NetworkIDs:      []string{"dummy-network"},
 								KeyPairName:     "dummy-keypair",
 							},

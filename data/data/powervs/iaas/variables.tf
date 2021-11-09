@@ -17,8 +17,8 @@ variable "powervs_region" {
 }
 
 variable "cluster_id" {
-    type    = string
-    default = ""
+  type    = string
+  default = ""
 }
 
 variable "service_tags" {

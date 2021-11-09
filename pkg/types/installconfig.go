@@ -49,6 +49,7 @@ var (
 		baremetal.Name,
 		ibmcloud.Name,
 		none.Name,
+		powervs.Name,
 	}
 
 	// OKD is a setting to enable community-only modifications
