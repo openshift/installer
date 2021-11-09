@@ -76,4 +76,7 @@ variable "vsphere_control_plane_num_cpus" {
 variable "vsphere_control_plane_cores_per_socket" {
   type = number
 }
-
+variable "vsphere_disk_type" {
+  type    = string
+  default = "eagerZeroedThick"
+}
