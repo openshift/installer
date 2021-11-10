@@ -1,3 +1,4 @@
+//go:build ibmcloud
 // +build ibmcloud
 
 package types
