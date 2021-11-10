@@ -74,7 +74,7 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 
 		var dhcpAllowList []string
 		for _, host := range config.Hosts {
-			if host.Role == "master" {
+			if host.IsMaster() {
 				dhcpAllowList = append(dhcpAllowList, host.BootMACAddress)
 			}
 		}
