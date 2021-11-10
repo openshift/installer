@@ -63,7 +63,7 @@ of this method of installation.
 
 ## Prerequisites
 
-The file `inventory.yaml` contains the variables most likely to need customisation.
+The file `inventory.yaml` contains the variables most likely to need customization.
 **NOTE**: some of the default pods (e.g. the `openshift-router`) require at least two nodes so that is the effective minimum.
 
 The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi-reqs]:
@@ -580,7 +580,7 @@ Possible choices include:
 * Swift (see Example 1 below);
 * Glance (see Example 2 below);
 * Amazon S3;
-* Internal web server inside your organisation;
+* Internal web server inside your organization;
 * A throwaway Nova server in `$INFRA_ID-nodes` hosting a static web server exposing the file.
 
 In this guide, we will assume the file is at the following URL:
@@ -932,7 +932,7 @@ csr-lrtlk   15m    system:serviceaccount:openshift-machine-config-operator:node-
 csr-wkm94   16m    system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
 ```
 
-You should inspect each pending CSR and verify that it comes from a node you recognise:
+You should inspect each pending CSR and verify that it comes from a node you recognize:
 
 ```sh
 $ oc describe csr csr-88jp8

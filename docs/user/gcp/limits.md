@@ -55,7 +55,7 @@ A standard OpenShift installation creates 2 forwarding rules.
 A standard OpenShift installation creates 3 in-use global IP addresses.  
 
 ### Networks
-A standard OpenShift instlalation creates 2 networks.
+A standard OpenShift installation creates 2 networks.
 
 ### Routers
 A standard OpenShift installation creates 1 router.

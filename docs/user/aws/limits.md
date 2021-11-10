@@ -42,7 +42,7 @@ For multiple clusters, a higher limit will likely be required (and will certainl
 
 ### Example: Using North Virginia (us-east-1)
 
-North Virginia (us-east-1) has six availablity zones, so a higher limit is required unless you configure your cluster to use fewer zones.
+North Virginia (us-east-1) has six availability zones, so a higher limit is required unless you configure your cluster to use fewer zones.
 To support the default, all-zone installation, please submit a limit increase for VPC Elastic IPs similar to the following in the support dashboard (to create more than one cluster, a higher limit will be necessary):
 
 ![Increase Elastic IP limit in AWS](images/support_increase_elastic_ip.png)
