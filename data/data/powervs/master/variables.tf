@@ -7,7 +7,7 @@ variable "key_id" {}
 
 variable "cloud_instance_id" {}
 variable "resource_group" {}
-variable "image_name" {}
+variable "image_id" {}
 variable "network_name" {}
 variable "proc_type" {}
 variable "sys_type" {}

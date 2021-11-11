@@ -7,11 +7,6 @@ data "ibm_pi_network" "network" {
   pi_cloud_instance_id = var.cloud_instance_id
 }
 
-data "ibm_pi_image" "master_image" {
-  pi_image_name        = var.image_name
-  pi_cloud_instance_id = var.cloud_instance_id
-}
-
 # Create the master instances
 resource "ibm_pi_instance" "master" {
   count                = var.instance_count
@@ -19,7 +14,7 @@ resource "ibm_pi_instance" "master" {
   pi_processors        = var.processors
   pi_instance_name     = "${var.cluster_id}-master-${count.index}"
   pi_proc_type         = var.proc_type
-  pi_image_id          = data.ibm_pi_image.master_image.id
+  pi_image_id          = var.image_id
   pi_sys_type          = var.sys_type
   pi_cloud_instance_id = var.cloud_instance_id
   pi_network_ids       = [data.ibm_pi_network.network.id]

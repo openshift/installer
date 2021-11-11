@@ -37,7 +37,7 @@ module "bootstrap" {
   sys_type     = var.powervs_sys_type
   proc_type    = var.powervs_proc_type
   key_id       = ibm_pi_key.cluster_key.key_id
-  image_name   = var.powervs_image_name
+  image_id     = ibm_pi_image.boot_image.image_id
   network_name = var.powervs_network_name
 }
 
@@ -57,7 +57,7 @@ module "master" {
   sys_type     = var.powervs_sys_type
   proc_type    = var.powervs_proc_type
   key_id       = ibm_pi_key.cluster_key.key_id
-  image_name   = var.powervs_image_name
+  image_id     = ibm_pi_image.boot_image.image_id
   network_name = var.powervs_network_name
 }
 
@@ -66,10 +66,15 @@ data "ibm_is_subnet" "vpc_subnet" {
   name     = var.powervs_vpc_subnet_name
 }
 
-data "ibm_pi_image" "boot_image" {
-  provider             = ibm.powervs
-  pi_image_name        = var.powervs_image_name
-  pi_cloud_instance_id = var.powervs_cloud_instance_id
+resource "ibm_pi_image" "boot_image" {
+  provider                  = ibm.powervs
+  pi_image_name             = "${var.cluster_id}-boot-image"
+  pi_cloud_instance_id      = var.powervs_cloud_instance_id
+  pi_image_bucket_name      = "rhcos-powervs-images-${var.powervs_vpc_region}"
+  pi_image_bucket_access    = "public"
+  pi_image_bucket_region    = var.powervs_vpc_region
+  pi_image_bucket_file_name = var.powervs_image_bucket_file_name
+  pi_image_storage_type     = var.powervs_image_storage_type
 }
 
 data "ibm_pi_network" "pvs_net" {

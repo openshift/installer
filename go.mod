@@ -13,11 +13,11 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/Azure/go-ntlmssp v0.0.0-20191115210519-2b2be6cc8ed4 // indirect
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20190607011252-c5096ec8773d // indirect
-	github.com/IBM-Cloud/bluemix-go v0.0.0-20210611051827-cdc80c935c05
+	github.com/IBM-Cloud/bluemix-go v0.0.0-20210706092416-dc4055f8e0ea
 	github.com/IBM-Cloud/power-go-client v1.0.72
 	github.com/IBM-Cloud/terraform-provider-ibm v1.26.2
-	github.com/IBM/go-sdk-core/v5 v5.4.3
-	github.com/IBM/networking-go-sdk v0.14.0
+	github.com/IBM/go-sdk-core/v5 v5.5.1
+	github.com/IBM/networking-go-sdk v0.19.0
 	github.com/IBM/platform-services-go-sdk v0.18.16
 	github.com/IBM/vpc-go-sdk v1.0.1
 	github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667 // indirect
@@ -102,7 +102,7 @@ require (
 	github.com/vmware/govmomi v0.24.0
 	github.com/wxnacy/wgo v1.0.4
 	github.com/zclconf/go-cty v1.6.1
-	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
@@ -126,7 +126,7 @@ require (
 
 replace (
 	cloud.google.com/go => cloud.google.com/go v0.57.0
-	github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
+	github.com/IBM-Cloud/terraform-provider-ibm => github.com/yussufsh/terraform-provider-ibm v1.89.0
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
 	github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4 // Pin to fork with deduplicated rpc types v0.12.20-openshift-4
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift // Pin to fork with public rpc types
@@ -152,7 +152,7 @@ replace (
 // Prevent the following modules from upgrading version as result of terraform-provider-kubernetes module
 // The following modules need to be locked to compile correctly with terraform-provider-azure, terraform-provider-google, and terraform-provider-ibm
 replace (
-	github.com/IBM/vpc-go-sdk => github.com/IBM/vpc-go-sdk v0.7.0
+	github.com/IBM/vpc-go-sdk => github.com/IBM/vpc-go-sdk v0.8.0
 	github.com/apparentlymart/go-cidr => github.com/apparentlymart/go-cidr v1.0.1
 	github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.32.3
 	github.com/go-openapi/errors => github.com/go-openapi/errors v0.19.2
@@ -166,3 +166,7 @@ replace (
 )
 
 replace github.com/openshift/machine-api-operator => github.com/openshift-powervs/machine-api-operator v0.2.1-0.20210809115935-a9fd8f5d2767
+
+replace github.com/IBM-Cloud/power-go-client => github.com/yussufsh/power-go-client v1.99.4
+
+replace github.com/softlayer/softlayer-go => github.com/IBM-Cloud/softlayer-go v1.0.3-tf
