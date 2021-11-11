@@ -104,29 +104,25 @@ func getNetworkMoID(vcenter, username, password, datacenter, cluster, network st
 	}
 
 	finder := find.NewFinder(client)
-	path := fmt.Sprintf("/%s/host/*", datacenter)
-	ccrs, err := finder.ClusterComputeResourceList(context.TODO(), path)
+	path := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
+	ccr, err := finder.ClusterComputeResource(context.TODO(), path)
 	if err != nil {
-		return "", errors.Wrap(err, "could not list vSphere clusters")
+		return "", errors.Wrapf(err, "could not find vSphere cluster")
 	}
 
-	var ccrmo mo.ClusterComputeResource
-	for _, ccr := range ccrs {
-		if ccr.Name() == cluster {
-			err := ccr.Properties(context.TODO(), ccr.Reference(), []string{"network"}, &ccrmo)
-			if err != nil {
-				return "", errors.Wrap(err, "could not get properties of cluster")
-			}
-			for _, net := range ccrmo.Network {
-				netObj := object.NewNetwork(client, net)
-				name, err := netObj.ObjectName(context.TODO())
-				if err != nil {
-					return "", errors.Wrap(err, "could not get network name")
-				}
-				if name == network {
-					return net.Value, nil
-				}
-			}
+	var ccrMo mo.ClusterComputeResource
+	err = ccr.Properties(context.TODO(), ccr.Reference(), []string{"network"}, &ccrMo)
+	if err != nil {
+		return "", errors.Wrap(err, "could not get properties of cluster")
+	}
+	for _, net := range ccrMo.Network {
+		netObj := object.NewNetwork(client, net)
+		name, err := netObj.ObjectName(context.TODO())
+		if err != nil {
+			return "", errors.Wrap(err, "could not get network name")
+		}
+		if name == network {
+			return net.Value, nil
 		}
 	}
 
