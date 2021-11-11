@@ -12,7 +12,7 @@ example.
 * the following binaries installed and in $PATH:
   * [openshift-install][openshiftinstall]
     * It is recommended that the OpenShift installer CLI version is the same of the cluster being deployed. The version used in this example is 4.3.0 GA.
-  * [az (Azure CLI)][azurecli] installed and aunthenticated
+  * [az (Azure CLI)][azurecli] installed and authenticated
     * Commands flags and structure may vary between `az` versions. The recommended version used in this example is 2.0.80.
   * python3
   * [jq][jqjson]
@@ -455,7 +455,7 @@ csr-wpvxq   19m    system:serviceaccount:openshift-machine-config-operator:node-
 csr-xpp49   19m    system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
 ```
 
-You should inspect each pending CSR with the `oc describe csr <name>` command and verify that it comes from a node you recognise. If it does, they can be approved:
+You should inspect each pending CSR with the `oc describe csr <name>` command and verify that it comes from a node you recognize. If it does, they can be approved:
 
 ```console
 $ oc adm certificate approve csr-8bppf csr-dj2w4 csr-ph8s8

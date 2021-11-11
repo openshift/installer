@@ -97,7 +97,7 @@ This directory contains all the operators or their operands running on the boots
 For each container the directory has two files,
 
 * `<human readable id>.log`, which contains the log of the container.
-* `<human readable id>.inspect`, which containts the information about the container like the image, volume mounts, arguments etc.
+* `<human readable id>.inspect`, which contains the information about the container like the image, volume mounts, arguments etc.
 
 #### directory: bootstrap/journals
 
@@ -107,7 +107,7 @@ The journals directory contains the logs for *important* systemd units. These un
 * `crio-configure.log` and `crio.log`, these units are responsible for configuring the CRI-O on the bootstrap host and CRI-O daemon respectively.
 * `kubelet.log`, the kubelet service is responsible for running the kubelet on the bootstrap host. The kubelet on the bootstrap host is responsible for running the static pods for etcd, bootstrap-kube-controlplane and various other operators in bootstrap mode.
 * `approve-csr.log`, the approve-csr unit is responsible for allowing control-plane machines to join OpenShift cluster. This unit performs the job of in-cluster approver while the bootstrapping is in progress.
-* `bootkube.log`, the bootkube service is the unit that performs the bootstrapping of OpenShift clusters using all the operators. This service is respnsible for running all the required steps to bootstrap the API and then wait for success.
+* `bootkube.log`, the bootkube service is the unit that performs the bootstrapping of OpenShift clusters using all the operators. This service is responsible for running all the required steps to bootstrap the API and then wait for success.
 
 There might also be other services that are important for some platforms like OpenStack, that will have logs in this directory.
 
@@ -118,7 +118,7 @@ The pods directory contains the information and logs from all the render command
 For each container the directory has two files,
 
 * `<human readable id>.log`, which contains the log of the container.
-* `<human readable id>.inspect`, which containts the information about the container like the image, volume mounts, arguments etc.
+* `<human readable id>.inspect`, which contains the information about the container like the image, volume mounts, arguments etc.
 
 ### directory: resources
 
@@ -216,4 +216,4 @@ control-plane
 3 directories, 0 files
 ```
 
-The troubleshooting would require the logs of the installer gathering the log bundle, which are easily availble in `.openshift_install.log`.
+The troubleshooting would require the logs of the installer gathering the log bundle, which are easily available in `.openshift_install.log`.

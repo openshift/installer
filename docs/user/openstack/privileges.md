@@ -1,6 +1,6 @@
 # Required Privileges
 
-In order to succesfully deploy an OpenShift cluster on OpenStack, the user passed to the installer needs a particular set of permissions in a given project. Our recommendation is to create a user in the project that you intend to install your cluster onto with the role *member*. In the event that you want to customize the permissions for a more restricted install, the following use cases can accomodate them.
+In order to successfully deploy an OpenShift cluster on OpenStack, the user passed to the installer needs a particular set of permissions in a given project. Our recommendation is to create a user in the project that you intend to install your cluster onto with the role *member*. In the event that you want to customize the permissions for a more restricted install, the following use cases can accommodate them.
 
 ## Bring Your Own Networks
 

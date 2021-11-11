@@ -284,7 +284,7 @@ The Ignition config created by the OpenShift Installer cannot be used directly b
 
 The hostname of each control plane and worker machine must be resolvable from all nodes within the cluster.
 
-Preferrably, the hostname and IP address will be set via DHCP.
+Preferably, the hostname and IP address will be set via DHCP.
 
 If you need to manually set a hostname and/or configure a static IP address, you can pass a custom networking command-line `ip=` parameter to Afterburn for configuration. In order to do so, set the vApp property `guestinfo.afterburn.initrd.network-kargs` to the `ip` parameter using this format: `ip=<ip_address>::<gateway>:<netmask>:<hostname>:<iface>:<protocol>:<dns_address>`, e.g. `ip=10.0.0.2::10.0.0.2:255.255.255.0:compute-1:ens192:none:8.8.8.8`
 

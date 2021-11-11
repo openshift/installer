@@ -13,6 +13,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/metal3-io/baremetal-operator/pkg/bmc"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -278,21 +279,47 @@ func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 	return platformErrs
 }
 
+// ensure that the number of hosts is enough to cover the ControlPlane
+// and Compute replicas. Hosts without role will be considered eligible
+// for the ControlPlane or Compute requirements.
 func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallConfig) error {
 
-	hostsNum := int64(len(hosts))
-	counter := int64(0)
+	numRequiredMasters := int64(0)
+	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
+		numRequiredMasters += *installConfig.ControlPlane.Replicas
+	}
 
+	numRequiredWorkers := int64(0)
 	for _, worker := range installConfig.Compute {
 		if worker.Replicas != nil {
-			counter += *worker.Replicas
+			numRequiredWorkers += *worker.Replicas
 		}
 	}
-	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
-		counter += *installConfig.ControlPlane.Replicas
+
+	numMasters := int64(0)
+	numWorkers := int64(0)
+
+	for _, h := range hosts {
+		if h.IsMaster() {
+			numMasters++
+		} else if h.IsWorker() {
+			numWorkers++
+		} else {
+			logrus.Warn(fmt.Sprintf("Host %s hasn't any role configured", h.Name))
+			if numMasters < numRequiredMasters {
+				numMasters++
+			} else if numWorkers < numRequiredWorkers {
+				numWorkers++
+			}
+		}
 	}
-	if hostsNum < counter {
-		return fmt.Errorf("not enough hosts found (%v) to support all the configured ControlPlane and Compute replicas (%v)", hostsNum, counter)
+
+	if numMasters < numRequiredMasters {
+		return fmt.Errorf("not enough hosts found (%v) to support all the configured ControlPlane replicas (%v)", numMasters, numRequiredMasters)
+	}
+
+	if numWorkers < numRequiredWorkers {
+		return fmt.Errorf("not enough hosts found (%v) to support all the configured Compute replicas (%v)", numWorkers, numRequiredWorkers)
 	}
 
 	return nil

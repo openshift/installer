@@ -25,6 +25,11 @@ const (
 	Legacy         BootMode = "legacy"
 )
 
+const (
+	masterRole string = "master"
+	workerRole string = "worker"
+)
+
 // Host stores all the configuration data for a baremetal host.
 type Host struct {
 	Name            string           `json:"name,omitempty" validate:"required,uniqueField"`
@@ -34,6 +39,23 @@ type Host struct {
 	HardwareProfile string           `json:"hardwareProfile"`
 	RootDeviceHints *RootDeviceHints `json:"rootDeviceHints,omitempty"`
 	BootMode        BootMode         `json:"bootMode,omitempty"`
+}
+
+// IsMaster checks if the current host is a master
+func (h *Host) IsMaster() bool {
+	return h.Role == masterRole
+}
+
+// IsWorker checks if the current host is a worker
+func (h *Host) IsWorker() bool {
+	return h.Role == workerRole
+}
+
+var sortIndex = map[string]int{masterRole: -1, workerRole: 0, "": 1}
+
+// CompareByRole allows to compare two hosts by the Role
+func (h *Host) CompareByRole(k *Host) bool {
+	return sortIndex[h.Role] < sortIndex[k.Role]
 }
 
 // ProvisioningNetwork determines how we will use the provisioning network.

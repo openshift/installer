@@ -2,7 +2,7 @@
 
 OpenShift has support for bare metal deployments with either [User
 provided infrastructure (UPI)](install_upi.md), or [Installer-provided
-instrastructure (IPI)](install_ipi.md).
+infrastructure (IPI)](install_ipi.md).
 
 The following is a summary of key differences:
 

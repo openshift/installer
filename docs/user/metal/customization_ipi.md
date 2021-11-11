@@ -57,7 +57,7 @@ and TFTP server in the cluster to support provisioning. Much of this can
 be customized.
 
 
-* `provisioningNetorkCIDR` (optional string): Override the default provisioning network.
+* `provisioningNetworkCIDR` (optional string): Override the default provisioning network.
 * `bootstrapProvisioningIP` (optional string): Override the bootstrap
     provisioning IP. If unspecified, uses the 2nd address in the
     provisioning network's subnet.
