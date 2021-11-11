@@ -566,9 +566,14 @@ func validateNamedRepository(r string) error {
 		// in an error. Instead we will check whether the input is
 		// a valid hostname as a workaround.
 		if err == dockerref.ErrNameNotCanonical {
-			_, err := url.ParseRequestURI(r)
+			// If the hostname string contains a port, lets attempt
+			// to split them
+			host, _, err := net.SplitHostPort(r)
 			if err != nil {
-				return fmt.Errorf("the repository provided is invalid")
+				host = r
+			}
+			if err = validate.Host(host); err != nil {
+				return errors.Wrap(err, "the repository provided is invalid")
 			}
 			return nil
 		}
