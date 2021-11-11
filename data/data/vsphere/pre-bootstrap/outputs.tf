@@ -11,7 +11,7 @@ output "folder" {
 }
 
 output "network" {
-  value = data.vsphere_network.network.id
+  value = var.vsphere_network
 }
 
 output "datacenter" {

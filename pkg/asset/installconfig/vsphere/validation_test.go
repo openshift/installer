@@ -121,8 +121,8 @@ func TestValidate(t *testing.T) {
 	vsphereClient.EXPECT().Datacenter(gomock.Any(), "./valid_dc").Return(&object.Datacenter{Common: object.Common{InventoryPath: "valid_dc"}}, nil).AnyTimes()
 	vsphereClient.EXPECT().Datacenter(gomock.Any(), gomock.Not("./valid_dc")).Return(nil, fmt.Errorf("404")).AnyTimes()
 
-	vsphereClient.EXPECT().Network(gomock.Any(), "valid_dc/network/valid_network").Return(nil, nil).AnyTimes()
-	vsphereClient.EXPECT().Network(gomock.Any(), gomock.Not("valid_dc/network/valid_network")).Return(nil, fmt.Errorf("404")).AnyTimes()
+	vsphereClient.EXPECT().NetworkList(gomock.Any(), "valid_dc/network/valid_network").Return(nil, nil).AnyTimes()
+	vsphereClient.EXPECT().NetworkList(gomock.Any(), gomock.Not("valid_dc/network/valid_network")).Return(nil, fmt.Errorf("404")).AnyTimes()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.validationMethod(vsphereClient, test.installConfig)

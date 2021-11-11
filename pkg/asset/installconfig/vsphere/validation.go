@@ -110,7 +110,7 @@ func validateNetwork(finder Finder, p *vsphere.Platform, fldPath *field.Path) fi
 		return field.ErrorList{field.Invalid(fldPath, p.Datacenter, err.Error())}
 	}
 	networkPath := fmt.Sprintf("%s/network/%s", dataCenter.InventoryPath, p.Network)
-	_, err = finder.Network(ctx, networkPath)
+	_, err = finder.NetworkList(ctx, networkPath)
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, p.Network, "unable to find network provided")}
 	}

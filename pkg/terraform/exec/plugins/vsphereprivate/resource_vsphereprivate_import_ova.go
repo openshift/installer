@@ -172,16 +172,12 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 
 	// Find the network object using the provided network name
 	for _, networkMoRef := range ccrMo.Network {
-		networkObj := object.NewNetwork(client, networkMoRef)
-		networkObjectName, err := networkObj.ObjectName(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if network == networkObjectName {
-			importOvaParams.Network = networkObj
+		if networkMoRef.Value == network {
+			importOvaParams.Network = object.NewNetwork(client, networkMoRef)
 			break
 		}
 	}
+
 	if importOvaParams.Network == nil {
 		return nil, errors.Errorf("failed to find a host in the cluster that contains the provided network")
 	}
