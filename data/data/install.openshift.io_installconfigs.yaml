@@ -2269,6 +2269,10 @@ spec:
                             type: integer
                         type: object
                     type: object
+                  diskType:
+                    description: Disk Type Thin specifies if thin disks should be
+                      use instead of thick
+                    type: string
                   folder:
                     description: Folder is the absolute path of the folder that will
                       be used and/or created for virtual machines. The absolute path

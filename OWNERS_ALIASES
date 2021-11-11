@@ -27,6 +27,7 @@ aliases:
     - mandre
     - mdbooth
     - pierreprinetti
+    - stephenfin
   openstack-reviewers:
     - EmilienM
     - adduarte

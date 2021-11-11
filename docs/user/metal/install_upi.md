@@ -1,5 +1,7 @@
 # Install: BareMetal User Provided Infrastructure
 
+The upstream project that provides management of bare metal hosts is [metal.equinix.com][equinix-metal].
+
 The steps for performing a UPI-based install are outlined here. Several [Terraform][upi-metal-example] templates are provided as an example to help model your own.
 
 ## Table of contents
@@ -224,11 +226,11 @@ INFO Waiting up to 30m0s for the cluster to initialize...
 
 ## Example Bare-Metal UPI deployment
 
-Terraform [templates][upi-metal-example] provides an example of using OpenShift Installer to create an bare-metal UPI OpenShift cluster on Packet.net
+Terraform [templates][upi-metal-example] provides an example of using OpenShift Installer to create an bare-metal UPI OpenShift cluster on [Equinix Metal][equinix-metal].
 
 ### Overview
 
-* Compute: Uses Packet.net to deploy bare-metal machines.
+* Compute: Uses [Equinix Metal][equinix-metal] to deploy bare-metal machines.
     Uses [matchbox] to serve PXE scripts and Ignition configs for bootstrap, control plane and worker machines.
     Uses `public` IPv4 addresses for each machine, so that all the machines are accessible on the internet.
 
@@ -274,7 +276,7 @@ Use the bootstrap [monitoring](#monitor-for-bootstrap-complete) to track when cl
 terraform apply -auto-approve -var=bootstrap_dns="false"
 ```
 
-NOTE: The bootstrap resources like the bootstrap machines currently cannot be removed using terraform. You can use the Packet.net console to remove the bootstrap machine. All the resources will be cleaned up by `terraform destroy`
+NOTE: The bootstrap resources like the bootstrap machines currently cannot be removed using terraform. You can use the [Equinix Metal console][equinix-metal-console] to remove the bootstrap machine. All the resources will be cleaned up by `terraform destroy`
 
 ### Approving server certificates for nodes
 
@@ -312,6 +314,8 @@ terraform destroy -auto-approve
 [coreos-installer-args]: https://github.com/coreos/coreos-installer#kernel-command-line-options-for-coreos-installer-running-in-the-initramfs
 [coreos-installer]: https://github.com/coreos/coreos-installer#coreos-installer
 [csr-requests]: https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/#requesting-a-certificate
+[equinix-metal]: https://metal.equinix.com
+[equinix-metal-console]: https://console.equinix.com
 [etcd-ports]: https://github.com/openshift/origin/pull/21520
 [machine-config-server]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfigServer.md
 [matchbox]: https://github.com/coreos/matchbox

@@ -117,6 +117,7 @@ func validBareMetalPlatform() *baremetal.Platform {
 		Hosts: []*baremetal.Host{
 			{
 				Name:           "host1",
+				Role:           "master",
 				BootMACAddress: "CA:FE:CA:FE:00:00",
 				BMC: baremetal.BMC{
 					Username: "root",
@@ -126,6 +127,7 @@ func validBareMetalPlatform() *baremetal.Platform {
 			},
 			{
 				Name:           "host2",
+				Role:           "worker",
 				BootMACAddress: "CA:FE:CA:FE:00:01",
 				BMC: baremetal.BMC{
 					Username: "root",

@@ -532,6 +532,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		data, err = baremetaltfvars.TFVars(
+			*installConfig.Config.ControlPlane.Replicas,
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
 			installConfig.Config.Platform.BareMetal.APIVIP,
 			imageCacheIP,
@@ -677,6 +678,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				Cluster:             installConfig.Config.VSphere.Cluster,
 				ImageURL:            string(*rhcosImage),
 				PreexistingFolder:   preexistingFolder,
+				DiskType:            installConfig.Config.Platform.VSphere.DiskType,
 			},
 		)
 		if err != nil {
