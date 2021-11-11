@@ -592,7 +592,7 @@ github.com/awalterschulze/gographviz/internal/errors
 github.com/awalterschulze/gographviz/internal/lexer
 github.com/awalterschulze/gographviz/internal/parser
 github.com/awalterschulze/gographviz/internal/token
-# github.com/aws/aws-sdk-go v1.35.20 => github.com/aws/aws-sdk-go v1.32.3
+# github.com/aws/aws-sdk-go v1.35.37 => github.com/aws/aws-sdk-go v1.35.37
 ## explicit; go 1.11
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
@@ -1231,7 +1231,7 @@ github.com/gregjones/httpcache/diskcache
 github.com/h2non/filetype/matchers
 github.com/h2non/filetype/matchers/isobmff
 github.com/h2non/filetype/types
-# github.com/hashicorp/aws-sdk-go-base v0.4.0
+# github.com/hashicorp/aws-sdk-go-base v0.5.0
 ## explicit; go 1.13
 github.com/hashicorp/aws-sdk-go-base
 # github.com/hashicorp/errwrap v1.0.0
@@ -1877,14 +1877,15 @@ github.com/stretchr/testify/assert
 # github.com/terraform-provider-openstack/terraform-provider-openstack v1.37.0
 ## explicit; go 1.15
 github.com/terraform-provider-openstack/terraform-provider-openstack/openstack
-# github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200807230610-d5346d47e3af => github.com/openshift/terraform-provider-aws v1.60.1-0.20210622193531-7d13cfbb1a8c
-## explicit; go 1.13
+# github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20211207215258-c9b9d0b9dc46 => github.com/openshift/terraform-provider-aws v1.60.1-0.20211207215258-c9b9d0b9dc46
+## explicit; go 1.14
 github.com/terraform-providers/terraform-provider-aws/aws
-github.com/terraform-providers/terraform-provider-aws/aws/internal/flatmap
 github.com/terraform-providers/terraform-provider-aws/aws/internal/keyvaluetags
 github.com/terraform-providers/terraform-provider-aws/aws/internal/naming
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/apigatewayv2/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/batch/equivalency
+github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ec2
+github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ec2/finder
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ec2/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ecs/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/eks/token
@@ -1893,6 +1894,7 @@ github.com/terraform-providers/terraform-provider-aws/aws/internal/service/iam/w
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/kms/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/secretsmanager/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/servicediscovery/waiter
+github.com/terraform-providers/terraform-provider-aws/aws/internal/service/sfn/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/workspaces/waiter
 # github.com/terraform-providers/terraform-provider-azurerm v1.44.1-0.20200911233120-57b2bfc9d42c => github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4
 ## explicit; go 1.13
@@ -3313,7 +3315,7 @@ sigs.k8s.io/yaml
 # github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c
 # github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 # github.com/spf13/afero => github.com/spf13/afero v1.2.2
-# github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20210622193531-7d13cfbb1a8c
+# github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20211207215258-c9b9d0b9dc46
 # github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4
 # github.com/terraform-providers/terraform-provider-azurestack => github.com/openshift/terraform-provider-azurestack v0.10.0-openshift
 # github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
