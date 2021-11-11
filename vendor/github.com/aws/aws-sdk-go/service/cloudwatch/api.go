@@ -246,7 +246,7 @@ func (c *CloudWatch) DeleteDashboardsRequest(input *DeleteDashboardsInput) (req 
 
 // DeleteDashboards API operation for Amazon CloudWatch.
 //
-// Deletes all dashboards that you specify. You may specify up to 100 dashboards
+// Deletes all dashboards that you specify. You can specify up to 100 dashboards
 // to delete. If there is an error during this call, no dashboards are deleted.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -335,8 +335,7 @@ func (c *CloudWatch) DeleteInsightRulesRequest(input *DeleteInsightRulesInput) (
 // Permanently deletes the specified Contributor Insights rules.
 //
 // If you create a rule, delete it, and then re-create it with the same name,
-// historical data from the first time the rule was created may or may not be
-// available.
+// historical data from the first time the rule was created might not be available.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -700,6 +699,10 @@ func (c *CloudWatch) DescribeAlarmsForMetricRequest(input *DescribeAlarmsForMetr
 // Retrieves the alarms for the specified metric. To filter the results, specify
 // a statistic, period, or unit.
 //
+// This operation retrieves only standard alarms that are based on the specified
+// metric. It does not return alarms based on math expressions that use the
+// specified metric, or composite alarms that use the specified metric.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -865,8 +868,7 @@ func (c *CloudWatch) DescribeInsightRulesRequest(input *DescribeInsightRulesInpu
 
 // DescribeInsightRules API operation for Amazon CloudWatch.
 //
-// Returns a list of all the Contributor Insights rules in your account. All
-// rules in your account are returned with a single operation.
+// Returns a list of all the Contributor Insights rules in your account.
 //
 // For more information about Contributor Insights, see Using Contributor Insights
 // to Analyze High-Cardinality Data (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContributorInsights.html).
@@ -1420,7 +1422,7 @@ func (c *CloudWatch) GetInsightRuleReportRequest(input *GetInsightRuleReportInpu
 //    point.
 //
 //    * MaxContributorValue -- the value of the top contributor for each data
-//    point. The identity of the contributor may change for each data point
+//    point. The identity of the contributor might change for each data point
 //    in the graph. If this rule aggregates by COUNT, the top contributor for
 //    each data point is the contributor with the most occurrences in that period.
 //    If the rule aggregates by SUM, the top contributor is the contributor
@@ -1569,9 +1571,9 @@ func (c *CloudWatch) GetMetricDataRequest(input *GetMetricDataInput) (req *reque
 // If you omit Unit in your request, all data that was collected with any unit
 // is returned, along with the corresponding units that were specified when
 // the data was reported to CloudWatch. If you specify a unit, the operation
-// returns only data data that was collected with that unit specified. If you
-// specify a unit that does not match the data collected, the results of the
-// operation are null. CloudWatch does not perform unit conversions.
+// returns only data that was collected with that unit specified. If you specify
+// a unit that does not match the data collected, the results of the operation
+// are null. CloudWatch does not perform unit conversions.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2091,9 +2093,13 @@ func (c *CloudWatch) ListMetricsRequest(input *ListMetricsInput) (req *request.R
 // Up to 500 results are returned for any one call. To retrieve additional results,
 // use the returned token with subsequent calls.
 //
-// After you create a metric, allow up to fifteen minutes before the metric
-// appears. Statistics about the metric, however, are available sooner using
-// GetMetricData (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
+// After you create a metric, allow up to 15 minutes before the metric appears.
+// You can see statistics about the metric sooner by using GetMetricData (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
+// or GetMetricStatistics (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html).
+//
+// ListMetrics doesn't return information about metrics if those metrics haven't
+// reported data in the past two weeks. To retrieve those metrics, use GetMetricData
+// (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
 // or GetMetricStatistics (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -2630,8 +2636,7 @@ func (c *CloudWatch) PutInsightRuleRequest(input *PutInsightRuleInput) (req *req
 // Analyze High-Cardinality Data (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContributorInsights.html).
 //
 // If you create a rule, delete it, and then re-create it with the same name,
-// historical data from the first time the rule was created may or may not be
-// available.
+// historical data from the first time the rule was created might not be available.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2866,6 +2871,10 @@ func (c *CloudWatch) PutMetricDataRequest(input *PutMetricDataInput) (req *reque
 // information about specifying dimensions, see Publishing Metrics (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/publishingMetrics.html)
 // in the Amazon CloudWatch User Guide.
 //
+// You specify the time stamp to be associated with each data point. You can
+// specify time stamps that are as much as two weeks before the current date,
+// and as much as 2 hours after the current day and time.
+//
 // Data points with time stamps from 24 hours ago or longer can take at least
 // 48 hours to become available for GetMetricData (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
 // or GetMetricStatistics (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html)
@@ -2982,8 +2991,8 @@ func (c *CloudWatch) SetAlarmStateRequest(input *SetAlarmStateInput) (req *reque
 // DescribeAlarmHistory (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarmHistory.html).
 //
 // If you use SetAlarmState on a composite alarm, the composite alarm is not
-// guaranteed to return to its actual state. It will return to its actual state
-// only once any of its children alarms change state. It is also re-evaluated
+// guaranteed to return to its actual state. It returns to its actual state
+// only once any of its children alarms change state. It is also reevaluated
 // if you update its configuration.
 //
 // If an alarm triggers EC2 Auto Scaling policies or application Auto Scaling
@@ -3076,7 +3085,7 @@ func (c *CloudWatch) TagResourceRequest(input *TagResourceInput) (req *request.R
 // Contributor Insights rules.
 //
 // Tags can help you organize and categorize your resources. You can also use
-// them to scope user permissions, by granting a user permission to access or
+// them to scope user permissions by granting a user permission to access or
 // change only resources with certain tag values.
 //
 // Tags don't have any semantic meaning to AWS and are interpreted strictly
@@ -4321,8 +4330,8 @@ type DescribeAlarmsInput struct {
 	// is not returned.
 	//
 	// If you specify ChildrenOfAlarmName, you cannot specify any other parameters
-	// in the request except for MaxRecords and NextToken. If you do so, you will
-	// receive a validation error.
+	// in the request except for MaxRecords and NextToken. If you do so, you receive
+	// a validation error.
 	//
 	// Only the Alarm Name, ARN, StateValue (OK/ALARM/INSUFFICIENT_DATA), and StateUpdatedTimestamp
 	// information are returned by this operation when you use this parameter. To
@@ -4344,8 +4353,8 @@ type DescribeAlarmsInput struct {
 	// alarm that you specify in ParentsOfAlarmName is not returned.
 	//
 	// If you specify ParentsOfAlarmName, you cannot specify any other parameters
-	// in the request except for MaxRecords and NextToken. If you do so, you will
-	// receive a validation error.
+	// in the request except for MaxRecords and NextToken. If you do so, you receive
+	// a validation error.
 	//
 	// Only the Alarm Name and ARN are returned by this operation when you use this
 	// parameter. To get complete information about these alarms, perform another
@@ -4623,11 +4632,12 @@ func (s *DescribeAnomalyDetectorsOutput) SetNextToken(v string) *DescribeAnomaly
 type DescribeInsightRulesInput struct {
 	_ struct{} `type:"structure"`
 
-	// This parameter is not currently used. Reserved for future use. If it is used
-	// in the future, the maximum value may be different.
+	// The maximum number of results to return in one operation. If you omit this
+	// parameter, the default of 500 is used.
 	MaxResults *int64 `min:"1" type:"integer"`
 
-	// Reserved for future use.
+	// Include this value, if it was returned by the previous operation, to get
+	// the next set of rules.
 	NextToken *string `type:"string"`
 }
 
@@ -4672,7 +4682,8 @@ type DescribeInsightRulesOutput struct {
 	// The rules returned by the operation.
 	InsightRules []*InsightRule `type:"list"`
 
-	// Reserved for future use.
+	// If this parameter is present, it is a token that marks the start of the next
+	// batch of returned results.
 	NextToken *string `type:"string"`
 }
 
@@ -4698,16 +4709,21 @@ func (s *DescribeInsightRulesOutput) SetNextToken(v string) *DescribeInsightRule
 	return s
 }
 
-// Expands the identity of a metric.
+// A dimension is a name/value pair that is part of the identity of a metric.
+// You can assign up to 10 dimensions to a metric. Because dimensions are part
+// of the unique identifier for a metric, whenever you add a unique name/value
+// pair to one of your metrics, you are creating a new variation of that metric.
 type Dimension struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the dimension.
+	// The name of the dimension. Dimension names cannot contain blank spaces or
+	// non-ASCII characters.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
 
-	// The value representing the dimension measurement.
+	// The value of the dimension. Dimension values cannot contain blank spaces
+	// or non-ASCII characters.
 	//
 	// Value is a required field
 	Value *string `min:"1" type:"string" required:"true"`
@@ -5142,7 +5158,7 @@ type GetInsightRuleReportInput struct {
 	//    point.
 	//
 	//    * MaxContributorValue -- the value of the top contributor for each data
-	//    point. The identity of the contributor may change for each data point
+	//    point. The identity of the contributor might change for each data point
 	//    in the graph. If this rule aggregates by COUNT, the top contributor for
 	//    each data point is the contributor with the most occurrences in that period.
 	//    If the rule aggregates by SUM, the top contributor is the contributor
@@ -5373,8 +5389,8 @@ type GetMetricDataInput struct {
 	// MetricDataQueries is a required field
 	MetricDataQueries []*MetricDataQuery `type:"list" required:"true"`
 
-	// Include this value, if it was returned by the previous call, to get the next
-	// set of data points.
+	// Include this value, if it was returned by the previous GetMetricData operation,
+	// to get the next set of data points.
 	NextToken *string `type:"string"`
 
 	// The order in which data points should be returned. TimestampDescending returns
@@ -5496,7 +5512,7 @@ type GetMetricDataOutput struct {
 	_ struct{} `type:"structure"`
 
 	// Contains a message about this GetMetricData operation, if the operation results
-	// in such a message. An example of a message that may be returned is Maximum
+	// in such a message. An example of a message that might be returned is Maximum
 	// number of allowed metrics exceeded. If there is a message, as much of the
 	// operation as possible is still executed.
 	//
@@ -5640,9 +5656,9 @@ type GetMetricStatisticsInput struct {
 	// The unit for a given metric. If you omit Unit, all data that was collected
 	// with any unit is returned, along with the corresponding units that were specified
 	// when the data was reported to CloudWatch. If you specify a unit, the operation
-	// returns only data data that was collected with that unit specified. If you
-	// specify a unit that does not match the data collected, the results of the
-	// operation are null. CloudWatch does not perform unit conversions.
+	// returns only data that was collected with that unit specified. If you specify
+	// a unit that does not match the data collected, the results of the operation
+	// are null. CloudWatch does not perform unit conversions.
 	Unit *string `type:"string" enum:"StandardUnit"`
 }
 
@@ -5880,7 +5896,7 @@ func (s *GetMetricWidgetImageInput) SetOutputFormat(v string) *GetMetricWidgetIm
 type GetMetricWidgetImageOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The image of the graph, in the output format specified.
+	// The image of the graph, in the output format specified. The output is base64-encoded.
 	//
 	// MetricWidgetImage is automatically base64 encoded/decoded by the SDK.
 	MetricWidgetImage []byte `type:"blob"`
@@ -6251,18 +6267,30 @@ func (s *ListDashboardsOutput) SetNextToken(v string) *ListDashboardsOutput {
 type ListMetricsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The dimensions to filter against.
+	// The dimensions to filter against. Only the dimensions that match exactly
+	// will be returned.
 	Dimensions []*DimensionFilter `type:"list"`
 
-	// The name of the metric to filter against.
+	// The name of the metric to filter against. Only the metrics with names that
+	// match exactly will be returned.
 	MetricName *string `min:"1" type:"string"`
 
-	// The namespace to filter against.
+	// The metric namespace to filter against. Only the namespace that matches exactly
+	// will be returned.
 	Namespace *string `min:"1" type:"string"`
 
 	// The token returned by a previous call to indicate that there is more data
 	// available.
 	NextToken *string `type:"string"`
+
+	// To filter the results to show only metrics that have had data points published
+	// in the past three hours, specify this parameter with a value of PT3H. This
+	// is the only valid value for this parameter.
+	//
+	// The results that are returned are an approximation of the value you specify.
+	// There is a low probability that the returned results include metrics with
+	// last published data as much as 40 minutes more than the specified time interval.
+	RecentlyActive *string `type:"string" enum:"RecentlyActive"`
 }
 
 // String returns the string representation
@@ -6325,10 +6353,16 @@ func (s *ListMetricsInput) SetNextToken(v string) *ListMetricsInput {
 	return s
 }
 
+// SetRecentlyActive sets the RecentlyActive field's value.
+func (s *ListMetricsInput) SetRecentlyActive(v string) *ListMetricsInput {
+	s.RecentlyActive = &v
+	return s
+}
+
 type ListMetricsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The metrics.
+	// The metrics that match your request.
 	Metrics []*Metric `type:"list"`
 
 	// The token that marks the start of the next batch of returned results.
@@ -6366,7 +6400,7 @@ type ListTagsForResourceInput struct {
 	//
 	// The ARN format of a Contributor Insights rule is arn:aws:cloudwatch:Region:account-id:insight-rule:insight-rule-name
 	//
-	// For more information on ARN format, see Resource Types Defined by Amazon
+	// For more information about ARN format, see Resource Types Defined by Amazon
 	// CloudWatch (https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazoncloudwatch.html#amazoncloudwatch-resources-for-iam-policies)
 	// in the Amazon Web Services General Reference.
 	//
@@ -6589,7 +6623,7 @@ type MetricAlarm struct {
 	// An array of MetricDataQuery structures, used in an alarm based on a metric
 	// math expression. Each structure either retrieves a metric or performs a math
 	// expression. One item in the Metrics array is the math expression that the
-	// alarm watches. This expression by designated by having ReturnValue set to
+	// alarm watches. This expression by designated by having ReturnData set to
 	// true.
 	Metrics []*MetricDataQuery `type:"list"`
 
@@ -7251,9 +7285,9 @@ type MetricStat struct {
 	// In a Get operation, if you omit Unit then all data that was collected with
 	// any unit is returned, along with the corresponding units that were specified
 	// when the data was reported to CloudWatch. If you specify a unit, the operation
-	// returns only data data that was collected with that unit specified. If you
-	// specify a unit that does not match the data collected, the results of the
-	// operation are null. CloudWatch does not perform unit conversions.
+	// returns only data that was collected with that unit specified. If you specify
+	// a unit that does not match the data collected, the results of the operation
+	// are null. CloudWatch does not perform unit conversions.
 	Unit *string `type:"string" enum:"StandardUnit"`
 }
 
@@ -7379,8 +7413,6 @@ type PutAnomalyDetectorInput struct {
 	// the model. You can specify as many as 10 time ranges.
 	//
 	// The configuration can also include the time zone to use for the metric.
-	//
-	// You can in
 	Configuration *AnomalyDetectorConfiguration `type:"structure"`
 
 	// The metric dimensions to create the anomaly detection model for.
@@ -7512,8 +7544,7 @@ type PutCompositeAlarmInput struct {
 	// The description for the composite alarm.
 	AlarmDescription *string `type:"string"`
 
-	// The name for the composite alarm. This name must be unique within your AWS
-	// account.
+	// The name for the composite alarm. This name must be unique within the Region.
 	//
 	// AlarmName is a required field
 	AlarmName *string `min:"1" type:"string" required:"true"`
@@ -7767,7 +7798,7 @@ type PutDashboardOutput struct {
 	//
 	// If this result includes only warning messages, then the input was valid enough
 	// for the dashboard to be created or modified, but some elements of the dashboard
-	// may not render.
+	// might not render.
 	//
 	// If this result includes error messages, the input was not valid and the operation
 	// failed.
@@ -7928,7 +7959,7 @@ type PutMetricAlarmInput struct {
 	// The description for the alarm.
 	AlarmDescription *string `type:"string"`
 
-	// The name for the alarm. This name must be unique within your AWS account.
+	// The name for the alarm. This name must be unique within the Region.
 	//
 	// AlarmName is a required field
 	AlarmName *string `min:"1" type:"string" required:"true"`
@@ -8009,8 +8040,8 @@ type PutMetricAlarmInput struct {
 	// expression.
 	//
 	// One item in the Metrics array is the expression that the alarm watches. You
-	// designate this expression by setting ReturnValue to true for this object
-	// in the array. For more information, see MetricDataQuery (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDataQuery.html).
+	// designate this expression by setting ReturnData to true for this object in
+	// the array. For more information, see MetricDataQuery (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDataQuery.html).
 	//
 	// If you use the Metrics parameter, you cannot include the MetricName, Dimensions,
 	// Period, Namespace, Statistic, or ExtendedStatistic parameters of PutMetricAlarm
@@ -8045,7 +8076,7 @@ type PutMetricAlarmInput struct {
 	// a metric that does not have sub-minute resolution, the alarm still attempts
 	// to gather data at the period rate that you specify. In this case, it does
 	// not receive data for the attempts that do not correspond to a one-minute
-	// data resolution, and the alarm may often lapse into INSUFFICENT_DATA status.
+	// data resolution, and the alarm might often lapse into INSUFFICENT_DATA status.
 	// Specifying 10 or 30 also sets this alarm as a high-resolution alarm, which
 	// has a higher charge than other alarms. For more information about pricing,
 	// see Amazon CloudWatch Pricing (https://aws.amazon.com/cloudwatch/pricing/).
@@ -8064,7 +8095,7 @@ type PutMetricAlarmInput struct {
 	// as many as 50 tags with an alarm.
 	//
 	// Tags can help you organize and categorize your resources. You can also use
-	// them to scope user permissions, by granting a user permission to access or
+	// them to scope user permissions by granting a user permission to access or
 	// change only resources with certain tag values.
 	Tags []*Tag `type:"list"`
 
@@ -8098,12 +8129,12 @@ type PutMetricAlarmInput struct {
 	// Percent, are aggregated separately.
 	//
 	// If you don't specify Unit, CloudWatch retrieves all unit types that have
-	// been published for the metric and attempts to evaluate the alarm. Usually
-	// metrics are published with only one unit, so the alarm will work as intended.
+	// been published for the metric and attempts to evaluate the alarm. Usually,
+	// metrics are published with only one unit, so the alarm works as intended.
 	//
 	// However, if the metric is published with multiple types of units and you
-	// don't specify a unit, the alarm's behavior is not defined and will behave
-	// un-predictably.
+	// don't specify a unit, the alarm's behavior is not defined and it behaves
+	// predictably.
 	//
 	// We recommend omitting Unit so that you don't inadvertently specify an incorrect
 	// unit that is not published for this metric. Doing so causes the alarm to
@@ -8485,8 +8516,7 @@ func (s *Range) SetStartTime(v time.Time) *Range {
 type SetAlarmStateInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name for the alarm. This name must be unique within the AWS account.
-	// The maximum length is 255 characters.
+	// The name of the alarm.
 	//
 	// AlarmName is a required field
 	AlarmName *string `min:"1" type:"string" required:"true"`
@@ -8726,7 +8756,7 @@ type TagResourceInput struct {
 	//
 	// The ARN format of a Contributor Insights rule is arn:aws:cloudwatch:Region:account-id:insight-rule:insight-rule-name
 	//
-	// For more information on ARN format, see Resource Types Defined by Amazon
+	// For more information about ARN format, see Resource Types Defined by Amazon
 	// CloudWatch (https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazoncloudwatch.html#amazoncloudwatch-resources-for-iam-policies)
 	// in the Amazon Web Services General Reference.
 	//
@@ -8813,7 +8843,7 @@ type UntagResourceInput struct {
 	//
 	// The ARN format of a Contributor Insights rule is arn:aws:cloudwatch:Region:account-id:insight-rule:insight-rule-name
 	//
-	// For more information on ARN format, see Resource Types Defined by Amazon
+	// For more information about ARN format, see Resource Types Defined by Amazon
 	// CloudWatch (https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazoncloudwatch.html#amazoncloudwatch-resources-for-iam-policies)
 	// in the Amazon Web Services General Reference.
 	//
@@ -8889,6 +8919,14 @@ const (
 	AlarmTypeMetricAlarm = "MetricAlarm"
 )
 
+// AlarmType_Values returns all elements of the AlarmType enum
+func AlarmType_Values() []string {
+	return []string{
+		AlarmTypeCompositeAlarm,
+		AlarmTypeMetricAlarm,
+	}
+}
+
 const (
 	// AnomalyDetectorStateValuePendingTraining is a AnomalyDetectorStateValue enum value
 	AnomalyDetectorStateValuePendingTraining = "PENDING_TRAINING"
@@ -8899,6 +8937,15 @@ const (
 	// AnomalyDetectorStateValueTrained is a AnomalyDetectorStateValue enum value
 	AnomalyDetectorStateValueTrained = "TRAINED"
 )
+
+// AnomalyDetectorStateValue_Values returns all elements of the AnomalyDetectorStateValue enum
+func AnomalyDetectorStateValue_Values() []string {
+	return []string{
+		AnomalyDetectorStateValuePendingTraining,
+		AnomalyDetectorStateValueTrainedInsufficientData,
+		AnomalyDetectorStateValueTrained,
+	}
+}
 
 const (
 	// ComparisonOperatorGreaterThanOrEqualToThreshold is a ComparisonOperator enum value
@@ -8923,6 +8970,19 @@ const (
 	ComparisonOperatorGreaterThanUpperThreshold = "GreaterThanUpperThreshold"
 )
 
+// ComparisonOperator_Values returns all elements of the ComparisonOperator enum
+func ComparisonOperator_Values() []string {
+	return []string{
+		ComparisonOperatorGreaterThanOrEqualToThreshold,
+		ComparisonOperatorGreaterThanThreshold,
+		ComparisonOperatorLessThanThreshold,
+		ComparisonOperatorLessThanOrEqualToThreshold,
+		ComparisonOperatorLessThanLowerOrGreaterThanUpperThreshold,
+		ComparisonOperatorLessThanLowerThreshold,
+		ComparisonOperatorGreaterThanUpperThreshold,
+	}
+}
+
 const (
 	// HistoryItemTypeConfigurationUpdate is a HistoryItemType enum value
 	HistoryItemTypeConfigurationUpdate = "ConfigurationUpdate"
@@ -8934,6 +8994,27 @@ const (
 	HistoryItemTypeAction = "Action"
 )
 
+// HistoryItemType_Values returns all elements of the HistoryItemType enum
+func HistoryItemType_Values() []string {
+	return []string{
+		HistoryItemTypeConfigurationUpdate,
+		HistoryItemTypeStateUpdate,
+		HistoryItemTypeAction,
+	}
+}
+
+const (
+	// RecentlyActivePt3h is a RecentlyActive enum value
+	RecentlyActivePt3h = "PT3H"
+)
+
+// RecentlyActive_Values returns all elements of the RecentlyActive enum
+func RecentlyActive_Values() []string {
+	return []string{
+		RecentlyActivePt3h,
+	}
+}
+
 const (
 	// ScanByTimestampDescending is a ScanBy enum value
 	ScanByTimestampDescending = "TimestampDescending"
@@ -8941,6 +9022,14 @@ const (
 	// ScanByTimestampAscending is a ScanBy enum value
 	ScanByTimestampAscending = "TimestampAscending"
 )
+
+// ScanBy_Values returns all elements of the ScanBy enum
+func ScanBy_Values() []string {
+	return []string{
+		ScanByTimestampDescending,
+		ScanByTimestampAscending,
+	}
+}
 
 const (
 	// StandardUnitSeconds is a StandardUnit enum value
@@ -9025,6 +9114,39 @@ const (
 	StandardUnitNone = "None"
 )
 
+// StandardUnit_Values returns all elements of the StandardUnit enum
+func StandardUnit_Values() []string {
+	return []string{
+		StandardUnitSeconds,
+		StandardUnitMicroseconds,
+		StandardUnitMilliseconds,
+		StandardUnitBytes,
+		StandardUnitKilobytes,
+		StandardUnitMegabytes,
+		StandardUnitGigabytes,
+		StandardUnitTerabytes,
+		StandardUnitBits,
+		StandardUnitKilobits,
+		StandardUnitMegabits,
+		StandardUnitGigabits,
+		StandardUnitTerabits,
+		StandardUnitPercent,
+		StandardUnitCount,
+		StandardUnitBytesSecond,
+		StandardUnitKilobytesSecond,
+		StandardUnitMegabytesSecond,
+		StandardUnitGigabytesSecond,
+		StandardUnitTerabytesSecond,
+		StandardUnitBitsSecond,
+		StandardUnitKilobitsSecond,
+		StandardUnitMegabitsSecond,
+		StandardUnitGigabitsSecond,
+		StandardUnitTerabitsSecond,
+		StandardUnitCountSecond,
+		StandardUnitNone,
+	}
+}
+
 const (
 	// StateValueOk is a StateValue enum value
 	StateValueOk = "OK"
@@ -9035,6 +9157,15 @@ const (
 	// StateValueInsufficientData is a StateValue enum value
 	StateValueInsufficientData = "INSUFFICIENT_DATA"
 )
+
+// StateValue_Values returns all elements of the StateValue enum
+func StateValue_Values() []string {
+	return []string{
+		StateValueOk,
+		StateValueAlarm,
+		StateValueInsufficientData,
+	}
+}
 
 const (
 	// StatisticSampleCount is a Statistic enum value
@@ -9053,6 +9184,17 @@ const (
 	StatisticMaximum = "Maximum"
 )
 
+// Statistic_Values returns all elements of the Statistic enum
+func Statistic_Values() []string {
+	return []string{
+		StatisticSampleCount,
+		StatisticAverage,
+		StatisticSum,
+		StatisticMinimum,
+		StatisticMaximum,
+	}
+}
+
 const (
 	// StatusCodeComplete is a StatusCode enum value
 	StatusCodeComplete = "Complete"
@@ -9063,3 +9205,12 @@ const (
 	// StatusCodePartialData is a StatusCode enum value
 	StatusCodePartialData = "PartialData"
 )
+
+// StatusCode_Values returns all elements of the StatusCode enum
+func StatusCode_Values() []string {
+	return []string{
+		StatusCodeComplete,
+		StatusCodeInternalError,
+		StatusCodePartialData,
+	}
+}

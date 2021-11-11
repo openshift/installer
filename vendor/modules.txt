@@ -616,7 +616,9 @@ github.com/aws/aws-sdk-go/aws/session
 github.com/aws/aws-sdk-go/aws/signer/v4
 github.com/aws/aws-sdk-go/internal/context
 github.com/aws/aws-sdk-go/internal/ini
-github.com/aws/aws-sdk-go/internal/s3err
+github.com/aws/aws-sdk-go/internal/s3shared
+github.com/aws/aws-sdk-go/internal/s3shared/arn
+github.com/aws/aws-sdk-go/internal/s3shared/s3err
 github.com/aws/aws-sdk-go/internal/sdkio
 github.com/aws/aws-sdk-go/internal/sdkmath
 github.com/aws/aws-sdk-go/internal/sdkrand
@@ -754,7 +756,6 @@ github.com/aws/aws-sdk-go/service/route53
 github.com/aws/aws-sdk-go/service/route53domains
 github.com/aws/aws-sdk-go/service/route53resolver
 github.com/aws/aws-sdk-go/service/s3
-github.com/aws/aws-sdk-go/service/s3/internal/arn
 github.com/aws/aws-sdk-go/service/s3/s3iface
 github.com/aws/aws-sdk-go/service/s3/s3manager
 github.com/aws/aws-sdk-go/service/s3control
@@ -3325,7 +3326,7 @@ sigs.k8s.io/yaml
 # sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 # github.com/IBM/vpc-go-sdk => github.com/IBM/vpc-go-sdk v0.7.0
 # github.com/apparentlymart/go-cidr => github.com/apparentlymart/go-cidr v1.0.1
-# github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.32.3
+# github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.35.37
 # github.com/go-openapi/errors => github.com/go-openapi/errors v0.19.2
 # github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.4
 # github.com/go-openapi/validate => github.com/go-openapi/validate v0.19.8
