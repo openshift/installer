@@ -359,6 +359,9 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.BareMetal)
 		pool.Platform.BareMetal = &mpool
 
+		// Use managed user data secret, since we always have up to date images
+		// available in the cluster
+		masterUserDataSecretName = "master-user-data-managed"
 		machines, err = baremetal.Machines(clusterID.InfraID, ic, &pool, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
