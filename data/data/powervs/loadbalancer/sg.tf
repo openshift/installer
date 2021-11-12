@@ -1,5 +1,5 @@
 locals {
-  tcp_ports = [22623, 6443]
+  tcp_ports = [22623, 6443, 22]
 }
 data "ibm_is_vpc" "vpc" {
   name = var.vpc_name
