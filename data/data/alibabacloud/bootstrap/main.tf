@@ -95,7 +95,7 @@ resource "alicloud_ram_role_policy_attachment" "attach" {
 }
 
 resource "alicloud_security_group" "sg_bootstrap" {
-  resource_group_id = var.ali_resource_group_id
+  resource_group_id = var.resource_group_id
   name              = "${local.prefix}_sg_bootstrap"
   description       = local.description
   vpc_id            = var.vpc_id
@@ -130,7 +130,7 @@ resource "alicloud_security_group_rule" "sg_rule_journald_gateway" {
 }
 
 resource "alicloud_instance" "bootstrap" {
-  resource_group_id = var.ali_resource_group_id
+  resource_group_id = var.resource_group_id
 
   host_name                  = "${local.prefix}-bootstrap"
   instance_name              = "${local.prefix}-bootstrap"

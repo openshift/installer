@@ -15,13 +15,19 @@ provider "alicloud" {
   region     = var.ali_region_id
 }
 
+module "resource_group" {
+  source            = "./resourcegroup"
+  cluster_id        = var.cluster_id
+  resource_group_id = var.ali_resource_group_id
+}
+
 module "vpc" {
   source              = "./vpc"
   cluster_id          = var.cluster_id
   region_id           = var.ali_region_id
   zone_ids            = var.ali_zone_ids
   nat_gateway_zone_id = var.ali_nat_gateway_zone_id
-  resource_group_id   = var.ali_resource_group_id
+  resource_group_id   = module.resource_group.resource_group_id
   vpc_cidr_block      = var.machine_v4_cidrs[0]
   tags                = local.tags
 }
@@ -29,7 +35,7 @@ module "vpc" {
 module "dns" {
   source            = "./dns"
   cluster_id        = var.cluster_id
-  resource_group_id = var.ali_resource_group_id
+  resource_group_id = module.resource_group.resource_group_id
   vpc_id            = module.vpc.vpc_id
   cluster_domain    = var.cluster_domain
   base_domain       = var.base_domain
@@ -49,7 +55,7 @@ module "ram" {
 module "master" {
   source               = "./master"
   cluster_id           = var.cluster_id
-  resource_group_id    = var.ali_resource_group_id
+  resource_group_id    = module.resource_group.resource_group_id
   vpc_id               = module.vpc.vpc_id
   vswitch_ids          = module.vpc.vswitch_ids
   sg_id                = module.vpc.sg_master_id
