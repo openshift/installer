@@ -464,7 +464,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 	}
 	if platform.AlibabaCloud != nil {
 		validate(alibabacloud.Name, platform.AlibabaCloud, func(f *field.Path) field.ErrorList {
-			return alibabacloudvalidation.ValidatePlatform(platform.AlibabaCloud, f)
+			return alibabacloudvalidation.ValidatePlatform(platform.AlibabaCloud, network, f)
 		})
 	}
 	if platform.AWS != nil {
