@@ -3,8 +3,9 @@ locals {
   prefix      = var.cluster_id
   tags = merge(
     {
-      "OCP"                                     = "ISV Integration",
-      "kubernetes.io/cluster/${var.cluster_id}" = "owned"
+      "GISV"                                      = "ocp",
+      "sigs.k8s.io/cloud-provider-alibaba/origin" = "ocp",
+      "kubernetes.io/cluster/${var.cluster_id}"   = "owned"
     },
     var.ali_extra_tags,
   )
