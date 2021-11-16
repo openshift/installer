@@ -30,6 +30,12 @@
         "description" : "SSH RSA public key file as a string"
       }
     },
+    "privateDNSZoneName" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Name of the private DNS zone the master nodes are going to be attached to"
+      }
+    },
     "masterVMSize" : {
       "type" : "string",
       "defaultValue" : "Standard_D8s_v3",
