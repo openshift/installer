@@ -366,7 +366,6 @@ az deployment group create -g $RESOURCE_GROUP \
   --template-file "05_masters.json" \
   --parameters masterIgnition="$MASTER_IGNITION" \
   --parameters sshKeyData="$SSH_KEY" \
-  --parameters privateDNSZoneName="${CLUSTER_NAME}.${BASE_DOMAIN}" \
   --parameters baseName="$INFRA_ID"
 ```
 
