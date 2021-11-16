@@ -328,7 +328,9 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 	discovery := client.Discovery()
 
 	apiTimeout := 20 * time.Minute
-	logrus.Infof("Waiting up to %v for the Kubernetes API at %s...", apiTimeout, config.Host)
+	untilTime := time.Now().Add(apiTimeout)
+	logrus.Infof("Waiting up to %v (until %v) for the Kubernetes API at %s...",
+		apiTimeout, untilTime.Format(time.Kitchen), config.Host)
 
 	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
 	defer cancel()
@@ -377,7 +379,9 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 // completed.
 func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) *clusterCreateError {
 	timeout := 30 * time.Minute
-	logrus.Infof("Waiting up to %v for bootstrapping to complete...", timeout)
+	untilTime := time.Now().Add(timeout)
+	logrus.Infof("Waiting up to %v (until %v) for bootstrapping to complete...",
+		timeout, untilTime.Format(time.Kitchen))
 
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -428,7 +432,9 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 		}
 	}
 
-	logrus.Infof("Waiting up to %v for the cluster at %s to initialize...", timeout, config.Host)
+	untilTime := time.Now().Add(timeout)
+	logrus.Infof("Waiting up to %v (until %v) for the cluster at %s to initialize...",
+		timeout, untilTime.Format(time.Kitchen), config.Host)
 	cc, err := configclient.NewForConfig(config)
 	if err != nil {
 		return errors.Wrap(err, "failed to create a config client")
@@ -497,7 +503,10 @@ func waitForConsole(ctx context.Context, config *rest.Config) (string, error) {
 	}
 
 	consoleRouteTimeout := 10 * time.Minute
-	logrus.Infof("Waiting up to %v for the openshift-console route to be created...", consoleRouteTimeout)
+	untilTime := time.Now().Add(consoleRouteTimeout)
+	logrus.Infof("Waiting up to %v (until %v) for the openshift-console route to be created...",
+		consoleRouteTimeout, untilTime.Format(time.Kitchen))
+
 	consoleRouteContext, cancel := context.WithTimeout(ctx, consoleRouteTimeout)
 	defer cancel()
 	// Poll quickly but only log when the response
