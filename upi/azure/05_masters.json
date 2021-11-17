@@ -32,6 +32,7 @@
     },
     "privateDNSZoneName" : {
       "type" : "string",
+      "defaultValue" : "privateDNSZone",
       "metadata" : {
         "description" : "Name of the private DNS zone the master nodes are going to be attached to"
       }
@@ -171,46 +172,6 @@
       }
     },
     {
-      "apiVersion": "2018-09-01",
-      "type": "Microsoft.Network/privateDnsZones/SRV",
-      "name": "[concat(parameters('privateDNSZoneName'), '/_etcd-server-ssl._tcp')]",
-      "location" : "[variables('location')]",
-      "properties": {
-        "ttl": 60,
-        "copy": [{
-          "name": "srvRecords",
-          "count": "[length(variables('vmNames'))]",
-          "input": {
-            "priority": 0,
-            "weight" : 10,
-            "port" : 2380,
-            "target" : "[concat('etcd-', copyIndex('srvRecords'), '.', parameters('privateDNSZoneName'))]"
-          }
-        }]
-      }
-    },
-    {
-      "apiVersion": "2018-09-01",
-      "type": "Microsoft.Network/privateDnsZones/A",
-      "copy" : {
-        "name" : "dnsCopy",
-        "count" : "[length(variables('vmNames'))]"
-      },
-      "name": "[concat(parameters('privateDNSZoneName'), '/etcd-', copyIndex())]",
-      "location" : "[variables('location')]",
-      "dependsOn" : [
-        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmNames')[copyIndex()], '-nic'))]"
-      ],
-      "properties": {
-        "ttl": 60,
-        "aRecords": [
-          {
-            "ipv4Address": "[reference(concat(variables('vmNames')[copyIndex()], '-nic')).ipConfigurations[0].properties.privateIPAddress]"
-          }
-        ]
-      }
-    },
-    {
       "apiVersion" : "2018-06-01",
       "type" : "Microsoft.Compute/virtualMachines",
       "copy" : {
@@ -224,11 +185,9 @@
         "userAssignedIdentities" : {
           "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/', variables('identityName'))]" : {}
         }
-      },
+     },
       "dependsOn" : [
-        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmNames')[copyIndex()], '-nic'))]",
-        "[concat('Microsoft.Network/privateDnsZones/', parameters('privateDNSZoneName'), '/A/etcd-', copyIndex())]",
-        "[concat('Microsoft.Network/privateDnsZones/', parameters('privateDNSZoneName'), '/SRV/_etcd-server-ssl._tcp')]"
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmNames')[copyIndex()], '-nic'))]"
       ],
       "properties" : {
         "hardwareProfile" : {
