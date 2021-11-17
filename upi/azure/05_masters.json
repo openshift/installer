@@ -24,13 +24,6 @@
         "description" : "Number of OpenShift masters to deploy"
       }
     },
-    "privateDNSZoneName" : {
-      "type" : "string",
-      "defaultValue" : "privateDNSZone",
-      "metadata" : {
-        "description" : "Name of the private DNS zone the master nodes are going to be attached to"
-      }
-    },
     "sshKeyData" : {
       "type" : "securestring",
       "metadata" : {
