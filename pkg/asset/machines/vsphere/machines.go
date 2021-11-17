@@ -69,6 +69,9 @@ func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.Machi
 	if platform.Folder != "" {
 		folder = platform.Folder
 	}
+	if platform.ResourcePool != "" {
+		resourcePool = platform.ResourcePool
+	}
 
 	return &vsphereapis.VSphereMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{

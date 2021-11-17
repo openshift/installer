@@ -2160,6 +2160,11 @@ spec:
                     description: Password is the password for the user to use to connect
                       to the vCenter.
                     type: string
+                  resourcePool:
+                    description: ResourcePool is the absolute path of the resource
+                      pool where virtual machines will be created. The absolute path
+                      is of the form /<datacenter>/host/<cluster>/Resources/<resourcepool>.
+                    type: string
                   username:
                     description: Username is the name of the user to use to connect
                       to the vCenter.

@@ -728,7 +728,19 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.VSphere.Folder = "my-folder"
 				return c
 			}(),
-			expectedError: `^platform\.vsphere.folder: Invalid value: \"my-folder\": folder must be absolute path: expected prefix /test-datacenter/vm/$`,
+			expectedError: `^platform\.vsphere\.folder: Invalid value: \"my-folder\": folder must be absolute path: expected prefix /test-datacenter/vm/$`,
+		},
+		{
+			name: "invalid vsphere resource pool",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.ResourcePool = "my-resource-pool"
+				return c
+			}(),
+			expectedError: `^platform\.vsphere\.resourcePool: Invalid value: \"my-resource-pool\": resourcePool must be absolute path: expected prefix /test-datacenter/host/<cluster>/Resources/$`,
 		},
 		{
 			name: "empty proxy settings",
