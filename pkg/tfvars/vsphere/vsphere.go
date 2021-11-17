@@ -3,10 +3,6 @@ package vsphere
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/object"
-	"github.com/vmware/govmomi/vim25/mo"
 	"strings"
 
 	vsphereapis "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
@@ -64,9 +60,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	// Must use the Managed Object ID for a port group (e.g. dvportgroup-5258)
 	// instead of the name since port group names aren't always unique in vSphere.
 	// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
-	networkID, err := getNetworkMoID(controlPlaneConfig.Workspace.Server,
+	vim25Client, _, err := vsphere.CreateVSphereClients(context.TODO(),
+		controlPlaneConfig.Workspace.Server,
 		sources.Username,
-		sources.Password,
+		sources.Password)
+	finder := vsphere.NewFinder(vim25Client)
+	networkUtil := vsphere.NewNetworkUtil(vim25Client)
+	networkID, err := vsphere.GetNetworkMoID(networkUtil,
+		finder,
 		controlPlaneConfig.Workspace.Datacenter,
 		sources.Cluster,
 		controlPlaneConfig.Network.Devices[0].NetworkName)
@@ -95,36 +96,4 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
-}
-
-func getNetworkMoID(vcenter, username, password, datacenter, cluster, network string) (string, error) {
-	client, _, err := vsphere.CreateVSphereClients(context.TODO(), vcenter, username, password)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to setup vSphere client")
-	}
-
-	finder := find.NewFinder(client)
-	path := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
-	ccr, err := finder.ClusterComputeResource(context.TODO(), path)
-	if err != nil {
-		return "", errors.Wrapf(err, "could not find vSphere cluster")
-	}
-
-	var ccrMo mo.ClusterComputeResource
-	err = ccr.Properties(context.TODO(), ccr.Reference(), []string{"network"}, &ccrMo)
-	if err != nil {
-		return "", errors.Wrap(err, "could not get properties of cluster")
-	}
-	for _, net := range ccrMo.Network {
-		netObj := object.NewNetwork(client, net)
-		name, err := netObj.ObjectName(context.TODO())
-		if err != nil {
-			return "", errors.Wrap(err, "could not get network name")
-		}
-		if name == network {
-			return net.Value, nil
-		}
-	}
-
-	return "", errors.Errorf("could not find a network %s in cluster %s", network, cluster)
 }
