@@ -369,10 +369,10 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 
 	if d.Get("disk_type") == "thin" {
 		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeThin
-	} else if d.Get("disk_type") == "thick" {
-		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeThick
-	} else {
+	} else if d.Get("disk_type") == "eagerZeroedThick" {
 		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeEagerZeroedThick
+	} else {
+		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeThick
 	}
 	// This is a very minimal spec for importing
 	// an OVF.
