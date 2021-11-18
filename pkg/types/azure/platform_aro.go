@@ -1,3 +1,4 @@
+//go:build aro
 // +build aro
 
 package azure

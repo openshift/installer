@@ -1,7 +1,7 @@
 # This Dockerfile is a used by CI to publish an installer image for creating libvirt clusters
 # It builds an image containing openshift-install and nss-wrapper for remote deployments, as well as the google cloud-sdk for nested GCE environments.
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.10 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.17-openshift-4.10 AS builder
 ARG TAGS="libvirt"
 RUN yum install -y libvirt-devel && \
     yum clean all && rm -rf /var/cache/yum/*

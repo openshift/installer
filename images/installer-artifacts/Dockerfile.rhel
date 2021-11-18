@@ -1,14 +1,14 @@
 # This Dockerfile builds an image containing Mac and Linux/AMD64 versions of
 # the installer layered on top of the cluster-native Linux installer image.
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.10 AS macbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.17-openshift-4.10 AS macbuilder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN go generate ./data && \
     SKIP_GENERATION=y GOOS=darwin GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.10 AS linuxbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.17-openshift-4.10 AS linuxbuilder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN go generate ./data && \

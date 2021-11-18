@@ -1,3 +1,4 @@
+//go:build tools
 // +build tools
 
 // Official workaround to track tool dependencies with go modules:

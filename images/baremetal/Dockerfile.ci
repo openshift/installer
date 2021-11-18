@@ -1,7 +1,7 @@
 # This Dockerfile is a used by CI to publish an installer image
 # It builds an image containing openshift-install.
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.10 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.17-openshift-4.10 AS builder
 ARG TAGS="libvirt baremetal"
 RUN dnf install -y libvirt-devel-6.0.0 && \
     dnf clean all && rm -rf /var/cache/yum/*
