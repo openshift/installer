@@ -105,7 +105,7 @@ func GetClusterNetworks(networkIdentifier NetworkIdentifier, finder Finder, data
 }
 
 // GetNetworkMoID returns the unique Managed Object ID for given network name inside of the given Datacenter
-// and Cluster. The given NetworkIdentifier and Finder are used to query vSphere API. 
+// and Cluster. The given NetworkIdentifier and Finder are used to query vSphere API.
 func GetNetworkMoID(networkIdentifier NetworkIdentifier, finder Finder, datacenter, cluster, network string) (string, error) {
 	networks, err := GetClusterNetworks(networkIdentifier, finder, datacenter, cluster)
 	if err != nil {
