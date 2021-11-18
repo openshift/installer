@@ -170,7 +170,7 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 		return nil, err
 	}
 
-	// Find the network object using the provided network name
+	// Find the network object in the list of networks inside cluster
 	for _, networkMoRef := range ccrMo.Network {
 		if networkMoRef.Value == network {
 			importOvaParams.Network = object.NewNetwork(client, networkMoRef)
