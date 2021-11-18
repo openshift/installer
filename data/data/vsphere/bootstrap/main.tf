@@ -24,7 +24,7 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
   wait_for_guest_net_routable = false
 
   network_interface {
-    network_id = var.network
+    network_id = var.vsphere_network
   }
 
   disk {
