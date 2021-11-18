@@ -3,15 +3,15 @@
 # It builds an image containing binaries like jq, terraform, awscli, oc, etc. to allow bringing up UPI infrastructure.
 # It also contains the `upi` directory that contains various terraform and cloud formation templates that are used to create infrastructure resources.
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.8 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.10 AS builder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/4.8:cli as cli
+FROM registry.ci.openshift.org/ocp/4.10:cli as cli
 
-FROM registry.ci.openshift.org/ocp/4.8:base
+FROM registry.ci.openshift.org/ocp/4.10:base
 COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
