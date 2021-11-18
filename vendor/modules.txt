@@ -1540,7 +1540,7 @@ github.com/openshift/cluster-api/pkg/apis/machine/v1beta1
 ## explicit
 github.com/openshift/cluster-api-provider-gcp/pkg/apis
 github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1
-# github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d
+# github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20211008100740-4d7907adbd6b
 ## explicit
 github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis
 github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1
