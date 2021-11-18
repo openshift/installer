@@ -34,7 +34,7 @@
       "type" : "string",
       "defaultValue" : "",
       "metadata" : {
-        "description" : "Name of the private DNS zone the master nodes are going to be attached to"
+        "description" : "unused"
       }
     },
     "masterVMSize" : {
