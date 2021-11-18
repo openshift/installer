@@ -41,14 +41,6 @@ resource "alicloud_pvtz_zone_record" "pvtz_record_api_int" {
   ttl     = 60
 }
 
-resource "alicloud_pvtz_zone_record" "pvtz_record_apps" {
-  zone_id = alicloud_pvtz_zone.pvtz.id
-  type    = "A"
-  rr      = "*.apps"
-  value   = var.slb_internal_ip
-  ttl     = 60
-}
-
 resource "alicloud_pvtz_zone_record" "pvtz_record_api" {
   zone_id = alicloud_pvtz_zone.pvtz.id
   type    = "A"
