@@ -26,8 +26,9 @@
     },
     "sshKeyData" : {
       "type" : "securestring",
+      "defaultValue" : "Unused",
       "metadata" : {
-        "description" : "SSH RSA public key file as a string"
+        "description" : "Unused"
       }
     },
     "nodeVMSize" : {
@@ -182,17 +183,10 @@
                 "osProfile" : {
                   "computerName" : "[variables('vmNames')[copyIndex()]]",
                   "adminUsername" : "capi",
+                  "adminPassword" : "NotActuallyApplied!",
                   "customData" : "[parameters('workerIgnition')]",
                   "linuxConfiguration" : {
-                    "disablePasswordAuthentication" : true,
-                    "ssh" : {
-                      "publicKeys" : [
-                        {
-                          "path" : "[variables('sshKeyPath')]",
-                          "keyData" : "[parameters('sshKeyData')]"
-                        }
-                      ]
-                    }
+                    "disablePasswordAuthentication" : false
                   }
                 },
                 "storageProfile" : {
