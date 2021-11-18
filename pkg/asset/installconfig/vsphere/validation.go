@@ -118,7 +118,7 @@ func validateNetwork(finder vspheretypes.Finder, networkIdentifier vspheretypes.
 }
 
 // resourcePoolExists returns an error if a resourcePool is specified in the vSphere platform but a resourcePool with that name is not found in the datacenter.
-func resourcePoolExists(finder Finder, ic *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+func resourcePoolExists(finder vspheretypes.Finder, ic *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	cfg := ic.VSphere
 
