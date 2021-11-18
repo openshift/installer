@@ -34,8 +34,8 @@ func Validate(ic *types.InstallConfig) error {
 		return errors.New(field.InternalError(field.NewPath("platform", "vsphere"), errors.Wrapf(err, "unable to connect to vCenter %s.", p.VCenter)).Error())
 	}
 	finder := vspheretypes.NewFinder(vim25Client)
-	networkIdUtil := vspheretypes.NewNetworkUtil(vim25Client)
-	return validateResources(finder, networkIdUtil, ic)
+	networkIDUtil := vspheretypes.NewNetworkUtil(vim25Client)
+	return validateResources(finder, networkIDUtil, ic)
 }
 
 func validateResources(finder vspheretypes.Finder, networkIdentifier vspheretypes.NetworkIdentifier, ic *types.InstallConfig) error {

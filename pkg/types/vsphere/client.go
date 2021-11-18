@@ -60,6 +60,7 @@ type NetworkUtil struct {
 	client *vim25.Client
 }
 
+// GetNetworkName returns the name of a vSphere network given its Managed Object reference.
 func (n *NetworkUtil) GetNetworkName(ref types.ManagedObjectReference) (string, error) {
 	netObj := object.NewNetwork(n.client, ref)
 	name, err := netObj.ObjectName(context.TODO())
@@ -69,6 +70,7 @@ func (n *NetworkUtil) GetNetworkName(ref types.ManagedObjectReference) (string, 
 	return name, nil
 }
 
+// GetNetworks returns a slice of Managed Object references for the given vSphere Cluster.
 func (n *NetworkUtil) GetNetworks(ccr *object.ClusterComputeResource) ([]types.ManagedObjectReference, error) {
 	var ccrMo mo.ClusterComputeResource
 	err := ccr.Properties(context.TODO(), ccr.Reference(), []string{"network"}, &ccrMo)
@@ -78,10 +80,13 @@ func (n *NetworkUtil) GetNetworks(ccr *object.ClusterComputeResource) ([]types.M
 	return ccrMo.Network, nil
 }
 
+// NewNetworkUtil constructs a new NetworkUtil with the given vSphere client.
 func NewNetworkUtil(client *vim25.Client) NetworkIdentifier {
 	return &NetworkUtil{client: client}
 }
 
+// GetClusterNetworks returns a slice of Managed Object references for vSphere networks in the given Datacenter
+// and Cluster. The given NetworkIdentifier and Finder are used to query vSphere API.
 func GetClusterNetworks(networkIdentifier NetworkIdentifier, finder Finder, datacenter, cluster string) ([]types.ManagedObjectReference, error) {
 	// Get vSphere Cluster resource in the given Datacenter.
 	path := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
@@ -99,6 +104,8 @@ func GetClusterNetworks(networkIdentifier NetworkIdentifier, finder Finder, data
 	return networks, nil
 }
 
+// GetNetworkMoID returns the unique Managed Object ID for given network name inside of the given Datacenter
+// and Cluster. The given NetworkIdentifier and Finder are used to query vSphere API. 
 func GetNetworkMoID(networkIdentifier NetworkIdentifier, finder Finder, datacenter, cluster, network string) (string, error) {
 	networks, err := GetClusterNetworks(networkIdentifier, finder, datacenter, cluster)
 	if err != nil {
