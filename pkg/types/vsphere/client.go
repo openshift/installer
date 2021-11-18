@@ -82,16 +82,29 @@ func NewNetworkUtil(client *vim25.Client) NetworkIdentifier {
 	return &NetworkUtil{client: client}
 }
 
-func GetNetworkMoID(networkIdentifier NetworkIdentifier, finder Finder, datacenter, cluster, network string) (string, error) {
+func GetClusterNetworks(networkIdentifier NetworkIdentifier, finder Finder, datacenter, cluster string) ([]types.ManagedObjectReference, error) {
 	// Get vSphere Cluster resource in the given Datacenter.
 	path := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
 	ccr, err := finder.ClusterComputeResource(context.TODO(), path)
 	if err != nil {
-		return "", errors.Wrapf(err, "could not find vSphere cluster")
+		return nil, errors.Wrapf(err, "could not find vSphere cluster")
 	}
 
 	// Get list of Networks inside vSphere Cluster
 	networks, err := networkIdentifier.GetNetworks(ccr)
+	if err != nil {
+		return nil, err
+	}
+
+	return networks, nil
+}
+
+func GetNetworkMoID(networkIdentifier NetworkIdentifier, finder Finder, datacenter, cluster, network string) (string, error) {
+	networks, err := GetClusterNetworks(networkIdentifier, finder, datacenter, cluster)
+	if err != nil {
+		return "", err
+	}
+
 	for _, net := range networks {
 		name, err := networkIdentifier.GetNetworkName(net)
 		if err != nil {

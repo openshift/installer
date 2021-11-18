@@ -67,7 +67,7 @@ func Platform() (*vsphere.Platform, error) {
 		return nil, err
 	}
 
-	network, err := getNetwork(ctx, dcPath, finder, vCenter.Client)
+	network, err := getNetwork(ctx, dc, cluster, finder, vCenter.Client)
 	if err != nil {
 		return nil, err
 	}
@@ -289,11 +289,13 @@ func getDataStore(ctx context.Context, path string, finder vspheretypes.Finder, 
 	return selectedDataStore, nil
 }
 
-func getNetwork(ctx context.Context, path string, finder vspheretypes.Finder, client *vim25.Client) (string, error) {
+func getNetwork(ctx context.Context, datacenter string, cluster string, finder vspheretypes.Finder, client *vim25.Client) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	networks, err := finder.NetworkList(ctx, formatPath(path))
+	// Get a list of networks from the previously selected Datacenter and Cluster
+	networkIdentifier := vspheretypes.NewNetworkUtil(client)
+	networks, err := vspheretypes.GetClusterNetworks(networkIdentifier, finder, datacenter, cluster)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to list networks")
 	}
@@ -302,10 +304,14 @@ func getNetwork(ctx context.Context, path string, finder vspheretypes.Finder, cl
 	if len(networks) == 0 {
 		return "", errors.New("did not find any networks")
 	}
+
 	if len(networks) == 1 {
-		n := networks[0].(networkNamer)
-		logrus.Infof("Defaulting to only available network: %s", n.Name())
-		return n.Name(), nil
+		n, err := networkIdentifier.GetNetworkName(networks[0])
+		if err != nil {
+			return "", errors.Wrap(err, "unable to get network name")
+		}
+		logrus.Infof("Defaulting to only available network: %s", n)
+		return n, nil
 	}
 
 	validNetworkTypes := sets.NewString(
@@ -317,8 +323,12 @@ func getNetwork(ctx context.Context, path string, finder vspheretypes.Finder, cl
 	var networkChoices []string
 	for _, network := range networks {
 		if validNetworkTypes.Has(network.Reference().Type) {
-			n := network.(networkNamer)
-			networkChoices = append(networkChoices, n.Name())
+			// TODO Below results in an API call. Can it be eliminated somehow?
+			n, err := networkIdentifier.GetNetworkName(network)
+			if err != nil {
+				return "", errors.Wrap(err, "unable to get network name")
+			}
+			networkChoices = append(networkChoices, n)
 		}
 	}
 	if len(networkChoices) == 0 {
