@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/vmware/govmomi/object"
-	types2 "github.com/vmware/govmomi/vim25/types"
+	vim25types "github.com/vmware/govmomi/vim25/types"
 
 	"github.com/golang/mock/gomock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -147,7 +147,7 @@ func TestValidateResources(t *testing.T) {
 	ccr := object.ClusterComputeResource{}
 	ccr.InventoryPath = "valid_cluster"
 
-	networks := []types2.ManagedObjectReference{
+	networks := []vim25types.ManagedObjectReference{
 		{
 			Value: "valid",
 		},
