@@ -40,7 +40,35 @@ type OAuthSpec struct {
 	// templates allow you to customize pages like the login page.
 	// +optional
 	Templates OAuthTemplates `json:"templates"`
+	// audit specifies what should be audited in the context of OAuthServer. By
+	// default the Audit is turned on.
+	// +optional
+	// +kubebuilder:default:={"profile":"WriteLoginEvents"}
+	Audit OAuthAudit `json:"audit"`
 }
+
+// OAuthAudit specifies the Audit profile in use.
+type OAuthAudit struct {
+	// profile is a simple drop in profile type that can be turned off by
+	// setting it to "None" or it can be turned on by setting it to
+	// "WriteLoginEvents". By default the profile is set to "WriteLoginEvents".
+	// +kubebuilder:default:="WriteLoginEvents"
+	Profile OAuthAuditProfileType `json:"profile,omitempty"`
+}
+
+// OAuthAuditProfileType defines a simple audit profile, which can turn OAuth
+// authentication audit logging on or off.
+// +kubebuilder:validation:Enum=None;WriteLoginEvents
+type OAuthAuditProfileType string
+
+const (
+	// "None" disables audit logs.
+	OAuthNoneAuditProfileType AuditProfileType = "None"
+
+	// "WriteLoginEvents" logs login and login failure events.
+	// This is the default.
+	OAuthWriteLoginEventsProfileType AuditProfileType = "WriteLoginEvents"
+)
 
 // OAuthStatus shows current known state of OAuth server in the cluster
 type OAuthStatus struct {

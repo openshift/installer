@@ -174,7 +174,27 @@ type Image struct {
 	Version string `json:"version"`
 	// ResourceID specifies an image to use by ID
 	ResourceID string `json:"resourceID"`
+	// Type identifies the source of the image and related information, such as purchase plans.
+	// Valid values are "ID", "MarketplaceWithPlan", "MarketplaceNoPlan", and omitted, which
+	// means no opinion and the platform chooses a good default which may change over time.
+	// Currently that default is "MarketplaceNoPlan" if publisher data is supplied, or "ID" if not.
+	// For more information about purchase plans, see:
+	// https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cli-ps-findimage#check-the-purchase-plan-information
+	// +optional
+	Type AzureImageType `json:"type,omitempty"`
 }
+
+// AzureImageType provides an enumeration for the valid image types.
+type AzureImageType string
+
+const (
+	// AzureImageTypeID specifies that the image should be referenced by its resource ID.
+	AzureImageTypeID AzureImageType = "ID"
+	// AzureImageTypeMarketplaceNoPlan are images available from the marketplace that do not require a purchase plan.
+	AzureImageTypeMarketplaceNoPlan AzureImageType = "MarketplaceNoPlan"
+	// AzureImageTypeMarketplaceWithPlan require a purchase plan. Upstream these images are referred to as "ThirdParty."
+	AzureImageTypeMarketplaceWithPlan AzureImageType = "MarketplaceWithPlan"
+)
 
 type OSDisk struct {
 	// OSType is the operating system type of the OS disk. Possible values include "Linux" and "Windows".

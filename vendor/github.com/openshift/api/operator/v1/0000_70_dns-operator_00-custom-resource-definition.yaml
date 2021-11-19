@@ -38,6 +38,14 @@ spec:
               description: spec is the specification of the desired behavior of the DNS.
               type: object
               properties:
+                logLevel:
+                  description: 'logLevel describes the desired logging verbosity for CoreDNS. Any one of the following values may be specified: * Normal logs errors from upstream resolvers. * Debug logs errors, NXDOMAIN responses, and NODATA responses. * Trace logs errors and all responses.  Setting logLevel: Trace will produce extremely verbose logs. Valid values are: "Normal", "Debug", "Trace". Defaults to "Normal".'
+                  type: string
+                  default: Normal
+                  enum:
+                    - Normal
+                    - Debug
+                    - Trace
                 managementState:
                   description: managementState indicates whether the DNS operator should manage cluster DNS
                   type: string
@@ -74,6 +82,14 @@ spec:
                           value:
                             description: Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.
                             type: string
+                operatorLogLevel:
+                  description: 'operatorLogLevel controls the logging level of the DNS Operator. Valid values are: "Normal", "Debug", "Trace". Defaults to "Normal". setting operatorLogLevel: Trace will produce extremely verbose logs.'
+                  type: string
+                  default: Normal
+                  enum:
+                    - Normal
+                    - Debug
+                    - Trace
                 servers:
                   description: "servers is a list of DNS resolvers that provide name query delegation for one or more subdomains outside the scope of the cluster domain. If servers consists of more than one Server, longest suffix match will be used to determine the Server. \n For example, if there are two Servers, one for \"foo.com\" and another for \"a.foo.com\", and the name query is for \"www.a.foo.com\", it will be routed to the Server with Zone \"a.foo.com\". \n If this field is nil, no servers are created."
                   type: array
