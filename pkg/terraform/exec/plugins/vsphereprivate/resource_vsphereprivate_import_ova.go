@@ -102,8 +102,8 @@ func resourceVSpherePrivateImportOva() *schema.Resource {
 			},
 			"disk_type": {
 				Type:        schema.TypeString,
-				Description: "The name of the disk provisioning, for e.g eagerZeroedThick or thin, by default it will be thick.",
-				Required:    true,
+				Description: "The name of the disk provisioning type for vsphere, it can be defined as thin, thick or eagerZeroedThick, by default it will be undefined.",
+				Required:    false,
 				ForceNew:    true,
 			},
 		},
@@ -365,22 +365,19 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 		Network: importOvaParams.Network.Reference(),
 	}}
 
-	var diskType types.OvfCreateImportSpecParamsDiskProvisioningType
-
+	cisp := types.OvfCreateImportSpecParams{
+		EntityName:     d.Get("name").(string),
+		NetworkMapping: networkMappings,
+	}
 	if d.Get("disk_type") == "thin" {
-		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeThin
+		cisp.DiskProvisioning = string(types.OvfCreateImportSpecParamsDiskProvisioningTypeThin)
+	} else if d.Get("disk_type") == "thick" {
+		cisp.DiskProvisioning = string(types.OvfCreateImportSpecParamsDiskProvisioningTypeThick)
 	} else if d.Get("disk_type") == "eagerZeroedThick" {
-		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeEagerZeroedThick
-	} else {
-		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeThick
+		cisp.DiskProvisioning = string(types.OvfCreateImportSpecParamsDiskProvisioningTypeEagerZeroedThick)
 	}
 	// This is a very minimal spec for importing
 	// an OVF.
-	cisp := types.OvfCreateImportSpecParams{
-		DiskProvisioning: string(diskType),
-		EntityName:       d.Get("name").(string),
-		NetworkMapping:   networkMappings,
-	}
 
 	m := ovf.NewManager(client)
 	spec, err := m.CreateImportSpec(ctx,

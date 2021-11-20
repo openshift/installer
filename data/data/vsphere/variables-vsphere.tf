@@ -83,5 +83,4 @@ variable "vsphere_control_plane_cores_per_socket" {
 }
 variable "vsphere_disk_type" {
   type    = string
-  default = "thick"
 }
