@@ -2141,8 +2141,14 @@ spec:
                         type: object
                     type: object
                   diskType:
-                    description: Disk Type Thin specifies if thin disks should be
-                      use instead of thick
+                    description: DiskType is the name of the disk provisioning type
+                      for vsphere, it can be defined as thin, thick, eagerZeroedThick,
+                      or let it undefined as the value is not required.
+                    enum:
+                    - ""
+                    - thin
+                    - thick
+                    - eagerZeroedThick
                     type: string
                   folder:
                     description: Folder is the absolute path of the folder that will

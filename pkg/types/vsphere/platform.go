@@ -1,16 +1,17 @@
 package vsphere
 
 // DiskType is a disk provisioning type for vsphere.
+// +kubebuilder:validation:Enum="";thin;thick;eagerZeroedThick
 type DiskType string
 
 const (
-	// DiskTypeThin uses Thin disk type for vsphere in the cluster.
+	// DiskTypeThin uses Thin disk provisioning type for vsphere in the cluster.
 	DiskTypeThin DiskType = "thin"
 
-	// DiskTypeThick uses Thick disk type for vsphere in the cluster.
+	// DiskTypeThick uses Thick disk provisioning type for vsphere in the cluster.
 	DiskTypeThick DiskType = "thick"
 
-	// DiskTypeEagerZeroedThick uses EagerZeroedThick disk type for vsphere in the cluster.
+	// DiskTypeEagerZeroedThick uses EagerZeroedThick disk provisioning type for vsphere in the cluster.
 	DiskTypeEagerZeroedThick DiskType = "eagerZeroedThick"
 )
 
@@ -66,6 +67,8 @@ type Platform struct {
 	// Network specifies the name of the network to be used by the cluster.
 	Network string `json:"network,omitempty"`
 
-	// Disk Type Thin specifies if thin disks should be use instead of thick
+	// DiskType is the name of the disk provisioning type
+	// for vsphere, it can be defined as thin, thick, eagerZeroedThick,
+	// or let it undefined as the value is not required.
 	DiskType DiskType `json:"diskType,omitempty"`
 }
