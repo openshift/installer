@@ -166,11 +166,11 @@ func TestValidateResources(t *testing.T) {
 	vsphereClient.EXPECT().ClusterComputeResource(gomock.Any(), "/valid_dc/host/valid_cluster").Return(&ccr, nil).AnyTimes()
 	vsphereClient.EXPECT().ClusterComputeResource(gomock.Any(), gomock.Not("/valid_dc/host/valid_cluster")).Return(nil, fmt.Errorf("404")).AnyTimes()
 
-	networkIdentifier.EXPECT().GetNetworks(&ccr).Return(networks, nil).AnyTimes()
-	networkIdentifier.EXPECT().GetNetworkName(networks[0]).Return("valid_network", nil).AnyTimes()
-	networkIdentifier.EXPECT().GetNetworkName(networks[1]).Return("other_network", nil).AnyTimes()
-	networkIdentifier.EXPECT().GetNetworkName(gomock.Not(networks[0])).Return("", fmt.Errorf("404")).AnyTimes()
-	networkIdentifier.EXPECT().GetNetworkName(gomock.Not(networks[1])).Return("", fmt.Errorf("404")).AnyTimes()
+	networkIdentifier.EXPECT().GetNetworks(gomock.Any(), &ccr).Return(networks, nil).AnyTimes()
+	networkIdentifier.EXPECT().GetNetworkName(gomock.Any(), networks[0]).Return("valid_network", nil).AnyTimes()
+	networkIdentifier.EXPECT().GetNetworkName(gomock.Any(), networks[1]).Return("other_network", nil).AnyTimes()
+	networkIdentifier.EXPECT().GetNetworkName(gomock.Any(), gomock.Not(networks[0])).Return("", fmt.Errorf("404")).AnyTimes()
+	networkIdentifier.EXPECT().GetNetworkName(gomock.Any(), gomock.Not(networks[1])).Return("", fmt.Errorf("404")).AnyTimes()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

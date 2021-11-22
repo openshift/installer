@@ -51,8 +51,8 @@ func CreateVSphereClients(ctx context.Context, vcenter, username, password strin
 // Object ID. Note that this interface is mocked as well.
 // See also go:generate at top of file.
 type NetworkIdentifier interface {
-	GetNetworkName(ref types.ManagedObjectReference) (string, error)
-	GetNetworks(ccr *object.ClusterComputeResource) ([]types.ManagedObjectReference, error)
+	GetNetworkName(ctx context.Context, ref types.ManagedObjectReference) (string, error)
+	GetNetworks(ctx context.Context, ccr *object.ClusterComputeResource) ([]types.ManagedObjectReference, error)
 }
 
 // NetworkUtil is the runtime implementation of NetworkIdentifier.
@@ -61,9 +61,12 @@ type NetworkUtil struct {
 }
 
 // GetNetworkName returns the name of a vSphere network given its Managed Object reference.
-func (n *NetworkUtil) GetNetworkName(ref types.ManagedObjectReference) (string, error) {
+func (n *NetworkUtil) GetNetworkName(ctx context.Context, ref types.ManagedObjectReference) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+
 	netObj := object.NewNetwork(n.client, ref)
-	name, err := netObj.ObjectName(context.TODO())
+	name, err := netObj.ObjectName(ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "could not get network name")
 	}
@@ -71,9 +74,12 @@ func (n *NetworkUtil) GetNetworkName(ref types.ManagedObjectReference) (string, 
 }
 
 // GetNetworks returns a slice of Managed Object references for the given vSphere Cluster.
-func (n *NetworkUtil) GetNetworks(ccr *object.ClusterComputeResource) ([]types.ManagedObjectReference, error) {
+func (n *NetworkUtil) GetNetworks(ctx context.Context, ccr *object.ClusterComputeResource) ([]types.ManagedObjectReference, error) {
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
 	var ccrMo mo.ClusterComputeResource
-	err := ccr.Properties(context.TODO(), ccr.Reference(), []string{"network"}, &ccrMo)
+
+	err := ccr.Properties(ctx, ccr.Reference(), []string{"network"}, &ccrMo)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get properties of cluster")
 	}
@@ -87,7 +93,10 @@ func NewNetworkUtil(client *vim25.Client) NetworkIdentifier {
 
 // GetClusterNetworks returns a slice of Managed Object references for vSphere networks in the given Datacenter
 // and Cluster. The given NetworkIdentifier and Finder are used to query vSphere API.
-func GetClusterNetworks(networkIdentifier NetworkIdentifier, finder Finder, datacenter, cluster string) ([]types.ManagedObjectReference, error) {
+func GetClusterNetworks(ctx context.Context, networkIdentifier NetworkIdentifier, finder Finder, datacenter, cluster string) ([]types.ManagedObjectReference, error) {
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+
 	// Get vSphere Cluster resource in the given Datacenter.
 	path := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
 	ccr, err := finder.ClusterComputeResource(context.TODO(), path)
@@ -96,7 +105,7 @@ func GetClusterNetworks(networkIdentifier NetworkIdentifier, finder Finder, data
 	}
 
 	// Get list of Networks inside vSphere Cluster
-	networks, err := networkIdentifier.GetNetworks(ccr)
+	networks, err := networkIdentifier.GetNetworks(ctx, ccr)
 	if err != nil {
 		return nil, err
 	}
@@ -106,14 +115,17 @@ func GetClusterNetworks(networkIdentifier NetworkIdentifier, finder Finder, data
 
 // GetNetworkMoID returns the unique Managed Object ID for given network name inside of the given Datacenter
 // and Cluster. The given NetworkIdentifier and Finder are used to query vSphere API.
-func GetNetworkMoID(networkIdentifier NetworkIdentifier, finder Finder, datacenter, cluster, network string) (string, error) {
-	networks, err := GetClusterNetworks(networkIdentifier, finder, datacenter, cluster)
+func GetNetworkMoID(ctx context.Context, networkIdentifier NetworkIdentifier, finder Finder, datacenter, cluster, network string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+
+	networks, err := GetClusterNetworks(ctx, networkIdentifier, finder, datacenter, cluster)
 	if err != nil {
 		return "", err
 	}
 
 	for _, net := range networks {
-		name, err := networkIdentifier.GetNetworkName(net)
+		name, err := networkIdentifier.GetNetworkName(ctx, net)
 		if err != nil {
 			return "", errors.Wrap(err, "could not get network name")
 		}

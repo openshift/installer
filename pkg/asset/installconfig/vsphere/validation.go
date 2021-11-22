@@ -110,7 +110,7 @@ func validateNetwork(finder vspheretypes.Finder, networkIdentifier vspheretypes.
 		return field.ErrorList{field.Invalid(fldPath, p.Datacenter, err.Error())}
 	}
 
-	_, err = vspheretypes.GetNetworkMoID(networkIdentifier, finder, dataCenter.Name(), p.Cluster, p.Network)
+	_, err = vspheretypes.GetNetworkMoID(ctx, networkIdentifier, finder, dataCenter.Name(), p.Cluster, p.Network)
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, p.Network, err.Error())}
 	}

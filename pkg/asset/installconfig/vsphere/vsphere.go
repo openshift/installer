@@ -295,7 +295,7 @@ func getNetwork(ctx context.Context, datacenter string, cluster string, finder v
 
 	// Get a list of networks from the previously selected Datacenter and Cluster
 	networkIdentifier := vspheretypes.NewNetworkUtil(client)
-	networks, err := vspheretypes.GetClusterNetworks(networkIdentifier, finder, datacenter, cluster)
+	networks, err := vspheretypes.GetClusterNetworks(ctx, networkIdentifier, finder, datacenter, cluster)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to list networks")
 	}
@@ -306,7 +306,7 @@ func getNetwork(ctx context.Context, datacenter string, cluster string, finder v
 	}
 
 	if len(networks) == 1 {
-		n, err := networkIdentifier.GetNetworkName(networks[0])
+		n, err := networkIdentifier.GetNetworkName(ctx, networks[0])
 		if err != nil {
 			return "", errors.Wrap(err, "unable to get network name")
 		}
@@ -324,7 +324,7 @@ func getNetwork(ctx context.Context, datacenter string, cluster string, finder v
 	for _, network := range networks {
 		if validNetworkTypes.Has(network.Reference().Type) {
 			// TODO Below results in an API call. Can it be eliminated somehow?
-			n, err := networkIdentifier.GetNetworkName(network)
+			n, err := networkIdentifier.GetNetworkName(ctx, network)
 			if err != nil {
 				return "", errors.Wrap(err, "unable to get network name")
 			}

@@ -37,33 +37,33 @@ func (m *MockNetworkIdentifier) EXPECT() *MockNetworkIdentifierMockRecorder {
 }
 
 // GetNetworkName mocks base method.
-func (m *MockNetworkIdentifier) GetNetworkName(ref types.ManagedObjectReference) (string, error) {
+func (m *MockNetworkIdentifier) GetNetworkName(ctx context.Context, ref types.ManagedObjectReference) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNetworkName", ref)
+	ret := m.ctrl.Call(m, "GetNetworkName", ctx, ref)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetNetworkName indicates an expected call of GetNetworkName.
-func (mr *MockNetworkIdentifierMockRecorder) GetNetworkName(ref interface{}) *gomock.Call {
+func (mr *MockNetworkIdentifierMockRecorder) GetNetworkName(ctx, ref interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkName", reflect.TypeOf((*MockNetworkIdentifier)(nil).GetNetworkName), ref)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkName", reflect.TypeOf((*MockNetworkIdentifier)(nil).GetNetworkName), ctx, ref)
 }
 
 // GetNetworks mocks base method.
-func (m *MockNetworkIdentifier) GetNetworks(ccr *object.ClusterComputeResource) ([]types.ManagedObjectReference, error) {
+func (m *MockNetworkIdentifier) GetNetworks(ctx context.Context, ccr *object.ClusterComputeResource) ([]types.ManagedObjectReference, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNetworks", ccr)
+	ret := m.ctrl.Call(m, "GetNetworks", ctx, ccr)
 	ret0, _ := ret[0].([]types.ManagedObjectReference)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetNetworks indicates an expected call of GetNetworks.
-func (mr *MockNetworkIdentifierMockRecorder) GetNetworks(ccr interface{}) *gomock.Call {
+func (mr *MockNetworkIdentifierMockRecorder) GetNetworks(ctx, ccr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworks", reflect.TypeOf((*MockNetworkIdentifier)(nil).GetNetworks), ccr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworks", reflect.TypeOf((*MockNetworkIdentifier)(nil).GetNetworks), ctx, ccr)
 }
 
 // MockFinder is a mock of Finder interface.

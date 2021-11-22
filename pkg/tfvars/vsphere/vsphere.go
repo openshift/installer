@@ -66,7 +66,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		sources.Password)
 	finder := vsphere.NewFinder(vim25Client)
 	networkUtil := vsphere.NewNetworkUtil(vim25Client)
-	networkID, err := vsphere.GetNetworkMoID(networkUtil,
+	networkID, err := vsphere.GetNetworkMoID(context.TODO(),
+		networkUtil,
 		finder,
 		controlPlaneConfig.Workspace.Datacenter,
 		sources.Cluster,
