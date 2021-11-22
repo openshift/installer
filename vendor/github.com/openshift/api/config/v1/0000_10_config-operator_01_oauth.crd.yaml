@@ -36,6 +36,19 @@ spec:
               description: spec holds user settable values for configuration
               type: object
               properties:
+                audit:
+                  description: audit specifies what should be audited in the context of OAuthServer. By default the Audit is turned on.
+                  type: object
+                  default:
+                    profile: WriteLoginEvents
+                  properties:
+                    profile:
+                      description: profile is a simple drop in profile type that can be turned off by setting it to "None" or it can be turned on by setting it to "WriteLoginEvents". By default the profile is set to "WriteLoginEvents".
+                      type: string
+                      default: WriteLoginEvents
+                      enum:
+                        - None
+                        - WriteLoginEvents
                 identityProviders:
                   description: identityProviders is an ordered list of ways for a user to identify themselves. When this list is empty, no identities are provisioned for users.
                   type: array

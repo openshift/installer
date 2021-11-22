@@ -70,7 +70,41 @@ type DNSSpec struct {
 	// DNS
 	// +optional
 	ManagementState ManagementState `json:"managementState,omitempty"`
+
+	// operatorLogLevel controls the logging level of the DNS Operator.
+	// Valid values are: "Normal", "Debug", "Trace".
+	// Defaults to "Normal".
+	// setting operatorLogLevel: Trace will produce extremely verbose logs.
+	// +optional
+	// +kubebuilder:default=Normal
+	OperatorLogLevel DNSLogLevel `json:"operatorLogLevel,omitempty"`
+
+	// logLevel describes the desired logging verbosity for CoreDNS.
+	// Any one of the following values may be specified:
+	// * Normal logs errors from upstream resolvers.
+	// * Debug logs errors, NXDOMAIN responses, and NODATA responses.
+	// * Trace logs errors and all responses.
+	//  Setting logLevel: Trace will produce extremely verbose logs.
+	// Valid values are: "Normal", "Debug", "Trace".
+	// Defaults to "Normal".
+	// +optional
+	// +kubebuilder:default=Normal
+	LogLevel DNSLogLevel `json:"logLevel,omitempty"`
 }
+
+// +kubebuilder:validation:Enum:=Normal;Debug;Trace
+type DNSLogLevel string
+
+var (
+	// Normal is the default.  Normal, working log information, everything is fine, but helpful notices for auditing or common operations.  In kube, this is probably glog=2.
+	DNSLogLevelNormal DNSLogLevel = "Normal"
+
+	// Debug is used when something went wrong.  Even common operations may be logged, and less helpful but more quantity of notices.  In kube, this is probably glog=4.
+	DNSLogLevelDebug DNSLogLevel = "Debug"
+
+	// Trace is used when something went really badly and even more verbose logs are needed.  Logging every function call as part of a common operation, to tracing execution of a query.  In kube, this is probably glog=6.
+	DNSLogLevelTrace DNSLogLevel = "Trace"
+)
 
 // Server defines the schema for a server that runs per instance of CoreDNS.
 type Server struct {

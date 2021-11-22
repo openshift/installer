@@ -119,7 +119,7 @@ var FeatureSets = map[FeatureSet]*FeatureGateEnabledDisabled{
 		with("CSIMigrationGCE").            // sig-storage, fbertina, Kubernetes feature gate
 		with("CSIMigrationAzureDisk").      // sig-storage, fbertina, Kubernetes feature gate
 		with("CSIMigrationAzureFile").      // sig-storage, fbertina, Kubernetes feature gate
-		with("CSIMigrationVSphere").        // sig-storage, fbertina, Kubernetes feature gate
+		with("CSIMigrationvSphere").        // sig-storage, fbertina, Kubernetes feature gate
 		with("ExternalCloudProvider").      // sig-cloud-provider, jspeed, OCP specific
 		with("InsightsOperatorPullingSCA"). // insights-operator/ccx, tremes, OCP specific
 		with("CSIDriverSharedResource").    // sig-build, adkaplan, OCP specific

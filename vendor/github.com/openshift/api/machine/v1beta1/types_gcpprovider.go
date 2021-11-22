@@ -5,6 +5,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// GCPHostMaintenanceType is a type representing acceptable values for OnHostMaintenance field in GCPMachineProviderSpec
+type GCPHostMaintenanceType string
+
+const (
+	// MigrateHostMaintenanceType [default] - causes Compute Engine to live migrate an instance when there is a maintenance event.
+	MigrateHostMaintenanceType GCPHostMaintenanceType = "Migrate"
+	// TerminateHostMaintenanceType - stops an instance instead of migrating it.
+	TerminateHostMaintenanceType GCPHostMaintenanceType = "Terminate"
+)
+
+// GCPHostMaintenanceType is a type representing acceptable values for RestartPolicy field in GCPMachineProviderSpec
+type GCPRestartPolicyType string
+
+const (
+	// Restart an instance if an instance crashes or the underlying infrastructure provider stops the instance as part of a maintenance event.
+	RestartPolicyAlways GCPRestartPolicyType = "Always"
+	// Do not restart an instance if an instance crashes or the underlying infrastructure provider stops the instance as part of a maintenance event.
+	RestartPolicyNever GCPRestartPolicyType = "Never"
+)
+
 // GCPMachineProviderSpec is the type that will be embedded in a Machine.Spec.ProviderSpec field
 // for an GCP virtual machine. It is used by the GCP machine actuator to create a single Machine.
 // Compatibility level 2: Stable within a major release for a minimum of 9 months or 3 minor releases (whichever is longer).
@@ -54,9 +74,27 @@ type GCPMachineProviderSpec struct {
 	// ProjectID is the project in which the GCP machine provider will create the VM.
 	// +optional
 	ProjectID string `json:"projectID,omitempty"`
-	// Preemptible indicates if created instance is preemptible
+	// GPUs is a list of GPUs to be attached to the VM.
+	// +optional
+	GPUs []GCPGPUConfig `json:"gpus,omitempty"`
+	// Preemptible indicates if created instance is preemptible.
 	// +optional
 	Preemptible bool `json:"preemptible,omitempty"`
+	// OnHostMaintenance determines the behavior when a maintenance event occurs that might cause the instance to reboot.
+	// This is required to be set to "Terminate" if you want to provision machine with attached GPUs.
+	// Otherwise, allowed values are "Migrate" and "Terminate".
+	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is "Migrate".
+	// +kubebuilder:validation:Enum=Migrate;Terminate;
+	// +optional
+	OnHostMaintenance GCPHostMaintenanceType `json:"onHostMaintenance,omitempty"`
+	// RestartPolicy determines the behavior when an instance crashes or the underlying infrastructure provider stops the instance as part of a maintenance event (default "Always").
+	// Cannot be "Always" with preemptible instances.
+	// Otherwise, allowed values are "Always" and "Never".
+	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is "Always".
+	// RestartPolicy represents AutomaticRestart in GCP compute api
+	// +kubebuilder:validation:Enum=Always;Never;
+	// +optional
+	RestartPolicy GCPRestartPolicyType `json:"restartPolicy,omitempty"`
 }
 
 // GCPDisk describes disks for GCP.
@@ -132,6 +170,16 @@ type GCPKMSKeyReference struct {
 	ProjectID string `json:"projectID,omitempty"`
 	// Location is the GCP location in which the Key Ring exists.
 	Location string `json:"location"`
+}
+
+// GCPGPUConfig describes type and count of GPUs attached to the instance on GCP.
+type GCPGPUConfig struct {
+	// Count is the number of GPUs to be attached to an instance.
+	Count int32 `json:"count"`
+	// Type is the type of GPU to be attached to an instance.
+	// Supported GPU types are: nvidia-tesla-k80, nvidia-tesla-p100, nvidia-tesla-v100, nvidia-tesla-p4, nvidia-tesla-t4
+	// +kubebuilder:validation:Pattern=`^nvidia-tesla-(k80|p100|v100|p4|t4)$`
+	Type string `json:"type"`
 }
 
 // GCPMachineProviderStatus is the type that will be embedded in a Machine.Status.ProviderStatus field.
