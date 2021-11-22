@@ -31,7 +31,6 @@ type MachinePool struct {
 
 	// SystemDiskCategory defines the category of the system disk.
 	//
-	// +kubebuilder:validation:Type=DiskCategory
 	// +optional
 	SystemDiskCategory DiskCategory `json:"systemDiskCategory,omitempty"`
 
