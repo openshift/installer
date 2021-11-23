@@ -5,41 +5,43 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 )
 
-// IDFromName is a convienience function that returns a flavor's ID given its
-// name.
+// IDFromName is a convenience function that returns a flavor's ID given its
+// name. Errors when the number of items found is not one.
 func IDFromName(client *gophercloud.ServiceClient, name string) (string, error) {
-	count := 0
-	id := ""
-	allPages, err := flavors.ListDetail(client, nil).AllPages()
+	IDs, err := IDsFromName(client, name)
 	if err != nil {
 		return "", err
 	}
 
-	all, err := flavors.ExtractFlavors(allPages)
+	switch count := len(IDs); count {
+	case 0:
+		return "", &gophercloud.ErrResourceNotFound{Name: name, ResourceType: "flavor"}
+	case 1:
+		return IDs[0], nil
+	default:
+		return "", &gophercloud.ErrMultipleResourcesFound{Name: name, Count: count, ResourceType: "flavor"}
+	}
+}
+
+// IDsFromName returns zero or more IDs corresponding to a name. The returned
+// error is only non-nil in case of failure.
+func IDsFromName(client *gophercloud.ServiceClient, name string) ([]string, error) {
+	pages, err := flavors.ListDetail(client, nil).AllPages()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	for _, f := range all {
-		if f.Name == name {
-			count++
-			id = f.ID
+	all, err := flavors.ExtractFlavors(pages)
+	if err != nil {
+		return nil, err
+	}
+
+	IDs := make([]string, 0, len(all))
+	for _, s := range all {
+		if s.Name == name {
+			IDs = append(IDs, s.ID)
 		}
 	}
 
-	switch count {
-	case 0:
-		err := &gophercloud.ErrResourceNotFound{}
-		err.ResourceType = "flavor"
-		err.Name = name
-		return "", err
-	case 1:
-		return id, nil
-	default:
-		err := &gophercloud.ErrMultipleResourcesFound{}
-		err.ResourceType = "flavor"
-		err.Name = name
-		err.Count = count
-		return "", err
-	}
+	return IDs, nil
 }
