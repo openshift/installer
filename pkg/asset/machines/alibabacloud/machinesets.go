@@ -8,9 +8,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
-	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 )
 
 // MachineSets returns a list of machinesets for a machinepool.

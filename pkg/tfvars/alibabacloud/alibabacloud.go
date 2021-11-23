@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	alibabacloudprovider "github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis/alibabacloudprovider/v1beta1"
+	alibabacloudprovider "github.com/openshift/cluster-api-provider-alibaba/pkg/apis/alibabacloudprovider/v1beta1"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
@@ -70,8 +70,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		BootstrapInstanceType: masterConfig.InstanceType,
 		MasterInstanceType:    masterConfig.InstanceType,
 		ImageID:               masterConfig.ImageID,
-		SystemDiskSize:        masterConfig.SystemDiskSize,
-		SystemDiskCategory:    masterConfig.SystemDiskCategory,
+		SystemDiskSize:        masterConfig.SystemDisk.Size,
+		SystemDiskCategory:    masterConfig.SystemDisk.Category,
 		ExtraTags:             tags,
 		IgnitionBucket:        sources.IgnitionBucket,
 	}
