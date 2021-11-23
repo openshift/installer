@@ -42,8 +42,7 @@ variable "system_disk_size" {
 
 variable "system_disk_category" {
   type        = string
-  description = "The system disk category of the master ECS.Valid values are cloud_efficiency, cloud_ssd, cloud_essd. Default value is cloud_essd."
-  default     = "cloud_essd"
+  description = "The system disk category of the master ECS. Valid values are cloud_efficiency, cloud_ssd, cloud_essd."
 }
 
 variable "role_name" {
@@ -57,6 +56,5 @@ variable "user_data_ign" {
 
 variable "tags" {
   type        = map(string)
-  default     = {}
   description = "Tags to be applied to created resources."
 }

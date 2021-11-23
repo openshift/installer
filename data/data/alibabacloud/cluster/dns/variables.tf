@@ -40,6 +40,5 @@ variable "master_ips" {
 
 variable "tags" {
   type        = map(string)
-  default     = {}
   description = "Tags to be applied to created resources."
 }

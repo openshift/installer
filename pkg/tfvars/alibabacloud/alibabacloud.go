@@ -27,7 +27,7 @@ type config struct {
 	ImageID               string            `json:"ali_image_id"`
 	SystemDiskSize        int               `json:"ali_system_disk_size"`
 	SystemDiskCategory    string            `json:"ali_system_disk_category"`
-	ExtraTags             map[string]string `json:"ali_extra_tags,omitempty"`
+	ExtraTags             map[string]string `json:"ali_extra_tags"`
 	IgnitionBucket        string            `json:"ali_ignition_bucket"`
 	BootstrapIgnitionStub string            `json:"ali_bootstrap_stub_ignition"`
 }
