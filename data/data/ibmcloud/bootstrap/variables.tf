@@ -2,6 +2,11 @@
 # Bootstrap module variables
 #######################################
 
+variable "control_plane_dedicated_host_id_list" {
+  type    = list(string)
+  default = []
+}
+
 variable "control_plane_security_group_id_list" {
   type = list(string)
 }

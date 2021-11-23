@@ -99,7 +99,6 @@ func (o *ClusterUninstaller) destroyCluster() error {
 		{name: "Stop instances", execute: o.stopInstances},
 	}, {
 		{name: "Instances", execute: o.destroyInstances},
-		{name: "IAM Authorizations", execute: o.destroyIAMAuthorizations},
 	}, {
 		{name: "Load Balancers", execute: o.destroyLoadBalancers},
 	}, {
@@ -111,10 +110,13 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "Floating IPs", execute: o.destroyFloatingIPs},
 	}, {
+		{name: "Dedicated Hosts", execute: o.destroyDedicatedHosts},
 		{name: "VPCs", execute: o.destroyVPCs},
 	}, {
 		{name: "Cloud Object Storage Instances", execute: o.destroyCOSInstances},
+		{name: "Dedicated Host Groups", execute: o.destroyDedicatedHostGroups},
 		{name: "DNS Records", execute: o.destroyDNSRecords},
+		{name: "IAM Authorizations", execute: o.destroyIAMAuthorizations},
 		{name: "Resource Groups", execute: o.destroyResourceGroups},
 	}}
 

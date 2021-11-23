@@ -23,6 +23,8 @@ import (
 type API interface {
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
+	GetDedicatedHostByName(ctx context.Context, name string, region string) (*vpcv1.DedicatedHost, error)
+	GetDedicatedHostProfiles(ctx context.Context, region string) ([]vpcv1.DedicatedHostProfile, error)
 	GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error)
 	GetDNSZoneIDByName(ctx context.Context, name string) (string, error)
 	GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error)
@@ -143,6 +145,44 @@ func (c *Client) GetCISInstance(ctx context.Context, crnstr string) (*resourceco
 	}
 
 	return resourceInstance, nil
+}
+
+// GetDedicatedHostByName gets dedicated host by name.
+func (c *Client) GetDedicatedHostByName(ctx context.Context, name string, region string) (*vpcv1.DedicatedHost, error) {
+	err := c.setVPCServiceURLForRegion(ctx, region)
+	if err != nil {
+		return nil, err
+	}
+
+	options := c.vpcAPI.NewListDedicatedHostsOptions()
+	dhosts, _, err := c.vpcAPI.ListDedicatedHostsWithContext(ctx, options)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list dedicated hosts")
+	}
+
+	for _, dhost := range dhosts.DedicatedHosts {
+		if *dhost.Name == name {
+			return &dhost, nil
+		}
+	}
+
+	return nil, fmt.Errorf("dedicated host %q not found", name)
+}
+
+// GetDedicatedHostProfiles gets a list of profiles supported in a region.
+func (c *Client) GetDedicatedHostProfiles(ctx context.Context, region string) ([]vpcv1.DedicatedHostProfile, error) {
+	err := c.setVPCServiceURLForRegion(ctx, region)
+	if err != nil {
+		return nil, err
+	}
+
+	profilesOptions := c.vpcAPI.NewListDedicatedHostProfilesOptions()
+	profiles, _, err := c.vpcAPI.ListDedicatedHostProfilesWithContext(ctx, profilesOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles.Profiles, nil
 }
 
 // GetDNSRecordsByName gets DNS records in specific Cloud Internet Services instance
@@ -387,5 +427,18 @@ func (c *Client) loadVPCV1API() error {
 		return err
 	}
 	c.vpcAPI = vpcService
+	return nil
+}
+
+func (c *Client) setVPCServiceURLForRegion(ctx context.Context, region string) error {
+	regionOptions := c.vpcAPI.NewGetRegionOptions(region)
+	vpcRegion, _, err := c.vpcAPI.GetRegionWithContext(ctx, regionOptions)
+	if err != nil {
+		return err
+	}
+	err = c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *vpcRegion.Endpoint))
+	if err != nil {
+		return err
+	}
 	return nil
 }

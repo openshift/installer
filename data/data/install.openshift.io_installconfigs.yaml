@@ -292,6 +292,25 @@ spec:
                                 managed encryption key will be used.
                               type: string
                           type: object
+                        dedicatedHosts:
+                          description: DedicatedHosts is the configuration for the
+                            machine's dedicated host and profile.
+                          items:
+                            description: DedicatedHost stores the configuration for
+                              the machine's dedicated host platform.
+                            properties:
+                              name:
+                                description: Name is the name of the dedicated host
+                                  to provision the machine on. If specified, machines
+                                  will be created on pre-existing dedicated host.
+                                type: string
+                              profile:
+                                description: Profile is the profile ID for the dedicated
+                                  host. If specified, new dedicated host will be created
+                                  for machines.
+                                type: string
+                            type: object
+                          type: array
                         type:
                           description: InstanceType is the VSI machine profile.
                           type: string
@@ -733,6 +752,25 @@ spec:
                               managed encryption key will be used.
                             type: string
                         type: object
+                      dedicatedHosts:
+                        description: DedicatedHosts is the configuration for the machine's
+                          dedicated host and profile.
+                        items:
+                          description: DedicatedHost stores the configuration for
+                            the machine's dedicated host platform.
+                          properties:
+                            name:
+                              description: Name is the name of the dedicated host
+                                to provision the machine on. If specified, machines
+                                will be created on pre-existing dedicated host.
+                              type: string
+                            profile:
+                              description: Profile is the profile ID for the dedicated
+                                host. If specified, new dedicated host will be created
+                                for machines.
+                              type: string
+                          type: object
+                        type: array
                       type:
                         description: InstanceType is the VSI machine profile.
                         type: string
@@ -1699,6 +1737,25 @@ spec:
                               managed encryption key will be used.
                             type: string
                         type: object
+                      dedicatedHosts:
+                        description: DedicatedHosts is the configuration for the machine's
+                          dedicated host and profile.
+                        items:
+                          description: DedicatedHost stores the configuration for
+                            the machine's dedicated host platform.
+                          properties:
+                            name:
+                              description: Name is the name of the dedicated host
+                                to provision the machine on. If specified, machines
+                                will be created on pre-existing dedicated host.
+                              type: string
+                            profile:
+                              description: Profile is the profile ID for the dedicated
+                                host. If specified, new dedicated host will be created
+                                for machines.
+                              type: string
+                          type: object
+                        type: array
                       type:
                         description: InstanceType is the VSI machine profile.
                         type: string

@@ -10,10 +10,6 @@ variable "public_endpoints" {
   type = bool
 }
 
-variable "region" {
-  type = string
-}
-
 variable "resource_group_id" {
   type = string
 }
@@ -22,6 +18,10 @@ variable "tags" {
   type = list(string)
 }
 
-variable "zone_list" {
+variable "zones_master" {
+  type = list(string)
+}
+
+variable "zones_worker" {
   type = list(string)
 }

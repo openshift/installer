@@ -103,7 +103,9 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 		validate(gcp.Name, p.GCP, func(f *field.Path) field.ErrorList { return validateGCPMachinePool(platform, p, pool, f) })
 	}
 	if p.IBMCloud != nil {
-		validate(ibmcloud.Name, p.IBMCloud, func(f *field.Path) field.ErrorList { return ibmcloudvalidation.ValidateMachinePool(p.IBMCloud, f) })
+		validate(ibmcloud.Name, p.IBMCloud, func(f *field.Path) field.ErrorList {
+			return ibmcloudvalidation.ValidateMachinePool(platform.IBMCloud, p.IBMCloud, f)
+		})
 	}
 	if p.Libvirt != nil {
 		validate(libvirt.Name, p.Libvirt, func(f *field.Path) field.ErrorList { return libvirtvalidation.ValidateMachinePool(p.Libvirt, f) })
