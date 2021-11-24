@@ -35,7 +35,7 @@ variable "master_count" {
 }
 
 variable "master_ips" {
-  type = map(string)
+  type = list(string)
 }
 
 variable "tags" {

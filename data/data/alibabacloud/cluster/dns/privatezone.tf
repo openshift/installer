@@ -54,7 +54,7 @@ resource "alicloud_pvtz_zone_record" "pvtz_record_masters" {
 
   zone_id = alicloud_pvtz_zone.pvtz.id
   type    = "A"
-  rr      = "master${reverse(split("-", keys(var.master_ips)[count.index]))[0]}"
-  value   = var.master_ips[keys(var.master_ips)[count.index]]
+  rr      = "master${count.index}"
+  value   = var.master_ips[count.index]
   ttl     = 60
 }
