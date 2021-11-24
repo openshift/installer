@@ -5,7 +5,7 @@ set -ex
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}
 
-minimum_go_version=1.16
+minimum_go_version=1.17
 current_go_version=$(go version | cut -d " " -f 3)
 
 if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version")" ]; then
@@ -41,12 +41,6 @@ esac
 
 if (echo "${TAGS}" | grep -q 'libvirt')
 then
-	export CGO_ENABLED=1
-fi
-if test "$(go env GOARCH)" = "arm64"
-then
-	# https://github.com/golang/go/issues/40492
-	LDFLAGS="${LDFLAGS} -linkmode external"
 	export CGO_ENABLED=1
 fi
 
