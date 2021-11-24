@@ -29,19 +29,8 @@ func Platform() (*alibabacloud.Platform, error) {
 		return nil, err
 	}
 
-	client, err = NewClient(region)
-	if err != nil {
-		return nil, err
-	}
-
-	resourceGroup, err := selectResourceGroup(client)
-	if err != nil {
-		return nil, err
-	}
-
 	return &alibabacloud.Platform{
-		Region:          region,
-		ResourceGroupID: resourceGroup,
+		Region: region,
 	}, nil
 }
 
@@ -95,39 +84,4 @@ func selectRegion(client *Client) (string, error) {
 		return "", err
 	}
 	return selectedRegion, nil
-}
-
-func selectResourceGroup(client *Client) (string, error) {
-	groupsResponse, err := client.ListResourceGroups()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to list resource groups")
-	}
-
-	groups := groupsResponse.ResourceGroups.ResourceGroup
-
-	if len(groups) == 0 {
-		return "", errors.Wrap(err, "resource group not found")
-	}
-
-	var options []string
-	names := make(map[string]string)
-
-	for _, group := range groups {
-		option := fmt.Sprintf("%s (%s)", group.Name, group.Id)
-		names[option] = group.Id
-		options = append(options, option)
-	}
-	sort.Strings(options)
-
-	var selectedResourceGroup string
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Select{
-				Message: "Resource Group",
-				Help:    "The resource group where the cluster will be provisioned.",
-				Options: options,
-			},
-		},
-	}, &selectedResourceGroup)
-	return names[selectedResourceGroup], err
 }

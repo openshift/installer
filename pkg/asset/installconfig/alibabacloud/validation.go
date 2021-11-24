@@ -33,7 +33,10 @@ func Validate(client *Client, ic *types.InstallConfig) error {
 func validatePlatform(client *Client, ic *types.InstallConfig, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
+	if ic.AlibabaCloud.ResourceGroupID != "" {
+		allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
+	}
+
 	if ic.Platform.AlibabaCloud.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(client, ic, path.Child("defaultMachinePlatform"), ic.Platform.AlibabaCloud.DefaultMachinePlatform, nil)...)
 	}
