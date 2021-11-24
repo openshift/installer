@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -55,24 +56,100 @@ func validateMachinePool(client API, platform *ibmcloud.Platform, machinePool *i
 	allErrs := field.ErrorList{}
 
 	if machinePool.InstanceType != "" {
-		allErrs = append(allErrs, validateMachinePoolType(client, machinePool.InstanceType, path)...)
+		allErrs = append(allErrs, validateMachinePoolType(client, machinePool.InstanceType, path.Child("type"))...)
 	}
 
 	if len(machinePool.Zones) > 0 {
-		allErrs = append(allErrs, validateMachinePoolZones(client, platform.Region, machinePool.Zones, path)...)
+		allErrs = append(allErrs, validateMachinePoolZones(client, platform.Region, machinePool.Zones, path.Child("zones"))...)
 	}
 
 	if machinePool.BootVolume != nil {
-		allErrs = append(allErrs, validateMachinePoolBootVolume(client, *machinePool.BootVolume, path)...)
+		allErrs = append(allErrs, validateMachinePoolBootVolume(client, *machinePool.BootVolume, path.Child("bootVolume"))...)
+	}
+
+	if len(machinePool.DedicatedHosts) > 0 {
+		allErrs = append(allErrs, validateMachinePoolDedicatedHosts(client, machinePool.DedicatedHosts, machinePool.InstanceType, machinePool.Zones, platform.Region, path.Child("dedicatedHosts"))...)
 	}
 
 	return allErrs
 }
 
+func validateMachinePoolDedicatedHosts(client API, dhosts []ibmcloud.DedicatedHost, machineType string, zones []string, region string, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Get list of supported profiles in region
+	dhostProfiles, err := client.GetDedicatedHostProfiles(context.TODO(), region)
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(path, err))
+	}
+
+	for i, dhost := range dhosts {
+		if dhost.Name != "" {
+			// Check if host with name exists
+			dh, err := client.GetDedicatedHostByName(context.TODO(), dhost.Name, region)
+			if err != nil {
+				allErrs = append(allErrs, field.InternalError(path.Index(i).Child("name"), err))
+			}
+
+			if dh != nil {
+				// Check if instance is provisionable on host
+				if !*dh.InstancePlacementEnabled || !*dh.Provisionable {
+					allErrs = append(allErrs, field.Invalid(path.Index(i).Child("name"), dhost.Name, "dedicated host is unable to provision instances"))
+				}
+
+				// Check if host is in zone
+				if *dh.Zone.Name != zones[i] {
+					allErrs = append(allErrs, field.Invalid(path.Index(i).Child("name"), dhost.Name, fmt.Sprintf("dedicated host not in zone %s", zones[i])))
+				}
+
+				// Check if host profile supports machine type
+				if !isInstanceProfileInList(machineType, dh.SupportedInstanceProfiles) {
+					allErrs = append(allErrs, field.Invalid(path.Index(i).Child("name"), dhost.Name, fmt.Sprintf("dedicated host does not support machine type %s", machineType)))
+				}
+			}
+		} else {
+			// Check if host profile is supported in region
+			if !isDedicatedHostProfileInList(dhost.Profile, dhostProfiles) {
+				allErrs = append(allErrs, field.Invalid(path.Index(i).Child("profile"), dhost.Profile, fmt.Sprintf("dedicated host profile not supported in region %s", region)))
+			}
+
+			// Check if host profile supports machine type
+			for _, profile := range dhostProfiles {
+				if *profile.Name == dhost.Profile {
+					if !isInstanceProfileInList(machineType, profile.SupportedInstanceProfiles) {
+						allErrs = append(allErrs, field.Invalid(path.Index(i).Child("profile"), dhost.Profile, fmt.Sprintf("dedicated host profile does not support machine type %s", machineType)))
+						break
+					}
+				}
+			}
+		}
+	}
+
+	return allErrs
+}
+
+func isInstanceProfileInList(profile string, list []vpcv1.InstanceProfileReference) bool {
+	for _, each := range list {
+		if *each.Name == profile {
+			return true
+		}
+	}
+	return false
+}
+
+func isDedicatedHostProfileInList(profile string, list []vpcv1.DedicatedHostProfile) bool {
+	for _, each := range list {
+		if *each.Name == profile {
+			return true
+		}
+	}
+	return false
+}
+
 func validateMachinePoolType(client API, machineType string, path *field.Path) field.ErrorList {
 	vsiProfiles, err := client.GetVSIProfiles(context.TODO())
 	if err != nil {
-		return field.ErrorList{field.InternalError(path.Child("type"), err)}
+		return field.ErrorList{field.InternalError(path, err)}
 	}
 
 	for _, profile := range vsiProfiles {
@@ -81,19 +158,19 @@ func validateMachinePoolType(client API, machineType string, path *field.Path) f
 		}
 	}
 
-	return field.ErrorList{field.NotFound(path.Child("type"), machineType)}
+	return field.ErrorList{field.NotFound(path, machineType)}
 }
 
 func validateMachinePoolZones(client API, region string, zones []string, path *field.Path) field.ErrorList {
 	regionalZones, err := client.GetVPCZonesForRegion(context.TODO(), region)
 	if err != nil {
-		return field.ErrorList{field.InternalError(path.Child("zones"), err)}
+		return field.ErrorList{field.InternalError(path, err)}
 	}
 
 	for idx, zone := range zones {
 		validZones := sets.NewString(regionalZones...)
 		if !validZones.Has(zone) {
-			return field.ErrorList{field.Invalid(path.Child("zones").Index(idx), zone, fmt.Sprintf("zone must be in region %q", region))}
+			return field.ErrorList{field.Invalid(path.Index(idx), zone, fmt.Sprintf("zone must be in region %q", region))}
 		}
 	}
 	return nil
@@ -109,11 +186,11 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 	// Make sure the encryptionKey exists
 	key, err := client.GetEncryptionKey(context.TODO(), bootVolume.EncryptionKey)
 	if err != nil {
-		return field.ErrorList{field.InternalError(path.Child("bootVolume").Child("encryptionKey"), err)}
+		return field.ErrorList{field.InternalError(path.Child("encryptionKey"), err)}
 	}
 
 	if key == nil {
-		return field.ErrorList{field.NotFound(path.Child("bootVolume").Child("encryptionKey"), bootVolume.EncryptionKey)}
+		return field.ErrorList{field.NotFound(path.Child("encryptionKey"), bootVolume.EncryptionKey)}
 	}
 
 	return allErrs

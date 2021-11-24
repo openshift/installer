@@ -98,12 +98,25 @@ func provider(clusterID string,
 		return nil, err
 	}
 
+	var dedicatedHost string
+	if len(mpool.DedicatedHosts) == len(mpool.Zones) {
+		if mpool.DedicatedHosts[azIdx].Name != "" {
+			dedicatedHost = mpool.DedicatedHosts[azIdx].Name
+		} else {
+			dedicatedHost, err = getDedicatedHostNameForZone(clusterID, role, az)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return &ibmcloudprovider.IBMCloudMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "ibmcloudproviderconfig.openshift.io/v1beta1",
 			Kind:       "IBMCloudMachineProviderSpec",
 		},
 		VPC:           vpc,
+		DedicatedHost: dedicatedHost,
 		Tags:          []ibmcloudprovider.TagSpecs{},
 		Image:         fmt.Sprintf("%s-rhcos", clusterID),
 		Profile:       mpool.InstanceType,
@@ -118,6 +131,17 @@ func provider(clusterID string,
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "ibmcloud-credentials"},
 		// TODO: IBM: Boot volume encryption key
 	}, nil
+}
+
+func getDedicatedHostNameForZone(clusterID string, role string, zone string) (string, error) {
+	switch role {
+	case "master":
+		return fmt.Sprintf("%s-dhost-control-plane-%s", clusterID, zone), nil
+	case "worker":
+		return fmt.Sprintf("%s-dhost-compute-%s", clusterID, zone), nil
+	default:
+		return "", fmt.Errorf("invalid machine role %v", role)
+	}
 }
 
 func getSubnetName(clusterID string, role string, zone string) (string, error) {

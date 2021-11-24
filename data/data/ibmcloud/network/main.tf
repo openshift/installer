@@ -60,6 +60,21 @@ module "cis" {
 }
 
 ############################################
+# Dedicated Host module
+############################################
+
+module "dhost" {
+  source = "./dhost"
+
+  cluster_id             = var.cluster_id
+  dedicated_hosts_master = var.ibmcloud_master_dedicated_hosts
+  dedicated_hosts_worker = var.ibmcloud_worker_dedicated_hosts
+  resource_group_id      = local.resource_group_id
+  zones_master           = distinct(var.ibmcloud_master_availability_zones)
+  zones_worker           = distinct(var.ibmcloud_worker_availability_zones)
+}
+
+############################################
 # VPC module
 ############################################
 
@@ -69,7 +84,7 @@ module "vpc" {
   cluster_id        = var.cluster_id
   public_endpoints  = local.public_endpoints
   resource_group_id = local.resource_group_id
-  region            = var.ibmcloud_region
   tags              = local.tags
-  zone_list         = distinct(var.ibmcloud_master_availability_zones)
+  zones_master      = distinct(var.ibmcloud_master_availability_zones)
+  zones_worker      = distinct(var.ibmcloud_worker_availability_zones)
 }

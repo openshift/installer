@@ -12,6 +12,10 @@ type MachinePool struct {
 	// BootVolume is the configuration for the machine's boot volume.
 	// +optional
 	BootVolume *BootVolume `json:"bootVolume,omitempty"`
+
+	// DedicatedHosts is the configuration for the machine's dedicated host and profile.
+	// +optional
+	DedicatedHosts []DedicatedHost `json:"dedicatedHosts,omitempty"`
 }
 
 // BootVolume stores the configuration for an individual machine's boot volume.
@@ -21,6 +25,19 @@ type BootVolume struct {
 	// provider managed encryption key will be used.
 	// +optional
 	EncryptionKey string `json:"encryptionKey,omitempty"`
+}
+
+// DedicatedHost stores the configuration for the machine's dedicated host platform.
+type DedicatedHost struct {
+	// Name is the name of the dedicated host to provision the machine on. If
+	// specified, machines will be created on pre-existing dedicated host.
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// Profile is the profile ID for the dedicated host. If specified, new
+	// dedicated host will be created for machines.
+	// +optional
+	Profile string `json:"profile,omitempty"`
 }
 
 // Set sets the values from `required` to `a`.
@@ -44,5 +61,9 @@ func (a *MachinePool) Set(required *MachinePool) {
 		if required.BootVolume.EncryptionKey != "" {
 			a.BootVolume.EncryptionKey = required.BootVolume.EncryptionKey
 		}
+	}
+
+	if len(required.DedicatedHosts) > 0 {
+		a.DedicatedHosts = required.DedicatedHosts
 	}
 }

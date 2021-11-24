@@ -21,6 +21,8 @@ resource "ibm_is_instance" "bootstrap_node" {
     security_groups = concat(var.control_plane_security_group_id_list, [ibm_is_security_group.bootstrap.id])
   }
 
+  dedicated_host = length(var.control_plane_dedicated_host_id_list) > 0 ? var.control_plane_dedicated_host_id_list[0] : null
+
   vpc  = var.vpc_id
   zone = var.control_plane_subnet_zone_list[0]
   keys = []
