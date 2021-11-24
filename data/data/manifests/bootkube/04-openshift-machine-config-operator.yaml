@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: openshift-machine-config-operator
-  labels:
-    name: openshift-machine-config-operator
-    openshift.io/run-level: "1"

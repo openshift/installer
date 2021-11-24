@@ -35,7 +35,6 @@ var (
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.CVOOverrides{},
 		&bootkube.KubeSystemConfigmapRootCA{},
-		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
