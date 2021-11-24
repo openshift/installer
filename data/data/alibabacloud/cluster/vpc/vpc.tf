@@ -2,7 +2,7 @@
 locals {
   description = "Created By OpenShift Installer"
   prefix      = var.cluster_id
-  newbits     = tonumber(split("/", var.vpc_cidr_block)[1]) < 16 ? 20 - tonumber(split("/", var.vpc_cidr_block)[1]) : 4
+  newbits     = max(4, 20 - tonumber(split("/", var.vpc_cidr_block)[1]))
 }
 
 resource "alicloud_vpc" "vpc" {
