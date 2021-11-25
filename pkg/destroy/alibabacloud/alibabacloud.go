@@ -1146,19 +1146,14 @@ func (o *ClusterUninstaller) detachPolicy(policyName string, policyType string, 
 
 func (o *ClusterUninstaller) deletePrivateZones() (err error) {
 	clusterDomain := o.ClusterDomain
-	o.Logger.Debug("Start to search private zones")
-	zones, err := o.listPrivateZone(clusterDomain)
+	zoneID, err := o.getPrivateZoneID()
 	if err != nil {
 		return err
 	}
-	if len(zones) == 0 {
+	if zoneID == "" {
 		return nil
 	}
-	if len(zones) > 1 {
-		return errors.Wrap(err, fmt.Sprintf("matched to multiple private zones by clustedomain %q", clusterDomain))
-	}
 
-	zoneID := zones[0].ZoneId
 	err = o.bindZoneVpc(zoneID)
 	if err != nil {
 		return err
@@ -1214,6 +1209,23 @@ func (o *ClusterUninstaller) deletePrivateZones() (err error) {
 	return nil
 }
 
+func (o *ClusterUninstaller) getPrivateZoneID() (zoneID string, err error) {
+	clusterDomain := o.ClusterDomain
+	o.Logger.Debug("Start to search private zones")
+	zones, err := o.listPrivateZone(clusterDomain)
+	if err != nil {
+		return "", err
+	}
+	if len(zones) == 0 {
+		return "", nil
+	}
+	if len(zones) > 1 {
+		return "", errors.Wrap(err, fmt.Sprintf("matched to multiple private zones by clusterdomain %q", clusterDomain))
+	}
+
+	return zones[0].ZoneId, nil
+}
+
 func (o *ClusterUninstaller) deletePrivateZone(zoneID string) (err error) {
 	o.Logger.Debugf("Start to delete private zone %q", zoneID)
 	request := pvtz.CreateDeleteZoneRequest()
@@ -1243,11 +1255,29 @@ func (o *ClusterUninstaller) listPrivateZone(clusterDomain string) ([]pvtz.Zone,
 	return response.Zones.Zone, nil
 }
 
+func (o *ClusterUninstaller) listPrivateZoneRecords(zoneID string) ([]pvtz.Record, error) {
+	request := pvtz.CreateDescribeZoneRecordsRequest()
+	request.Lang = "en"
+	request.ZoneId = zoneID
+
+	response, err := o.pvtzClient.DescribeZoneRecords(request)
+	if err != nil {
+		return nil, err
+	}
+	return response.Records.Record, nil
+}
+
 func (o *ClusterUninstaller) deleteDNSRecords() (err error) {
 	o.Logger.Debug("Start to search DNS records")
 
 	// Get the base domain from the cluster domain. the format of cluster domain is '<cluster name>.<base domain>'.
-	baseDomain := strings.Join(strings.Split(o.ClusterDomain, ".")[1:], ".")
+	domainParts := strings.Split(o.ClusterDomain, ".")
+	if len(domainParts) < 2 {
+		return errors.New("could not determine cluster name from cluster domain")
+	}
+	clusterName := domainParts[0]
+	baseDomain := strings.Join(domainParts[1:], ".")
+
 	domains, err := o.listDomain(baseDomain)
 	if err != nil {
 		return
@@ -1256,21 +1286,50 @@ func (o *ClusterUninstaller) deleteDNSRecords() (err error) {
 		return
 	}
 
-	records, err := o.listRecord(baseDomain)
+	recordSetKey := func(recordType string, rr string) string {
+		return fmt.Sprintf("%s %s", recordType, rr)
+	}
+
+	// Get the parsing record of privatezone and delete the record in publiczone
+	// When the user manually deletes the private zone and records, it may cause the public records to be leaked.
+	privateZoneID, err := o.getPrivateZoneID()
 	if err != nil {
 		return
 	}
-	if len(records) == 0 {
+	if privateZoneID == "" {
+		o.Logger.Info("The private zone ID is not obtained, and the DNS public records cannot be deleted")
+		return nil
+	}
+
+	privateRecords := map[string]bool{}
+	records, err := o.listPrivateZoneRecords(privateZoneID)
+	if err != nil {
+		return
+	}
+	for _, record := range records {
+		key := recordSetKey(record.Type, fmt.Sprintf("%s.%s", record.Rr, clusterName))
+		privateRecords[key] = true
+	}
+
+	publicRecords, err := o.listRecord(baseDomain)
+	if err != nil {
+		return
+	}
+	if len(publicRecords) == 0 {
 		return
 	}
 
+	var lastErr error
 	o.Logger.Debug("Start to delete DNS records")
-	for _, record := range records {
-		err = o.deleteRecord(record.RecordId)
-		if err != nil {
-			err = errors.Wrap(err, fmt.Sprintf("DNS record %q", record.RecordId))
-			o.Logger.Info(err)
-			return
+	for _, record := range publicRecords {
+		key := recordSetKey(record.Type, record.RR)
+		if privateRecords[key] {
+			err = o.deleteRecord(record.RecordId)
+			if err != nil {
+				privateRecords[key] = false
+				lastErr = errors.Wrap(err, fmt.Sprintf("DNS record %q", record.RecordId))
+				o.Logger.Info(lastErr)
+			}
 		}
 	}
 
@@ -1283,18 +1342,20 @@ func (o *ClusterUninstaller) deleteDNSRecords() (err error) {
 			if err != nil {
 				return false, err
 			}
-
-			if len(records) == 0 {
-				return true, nil
+			for _, record := range records {
+				key := recordSetKey(record.Type, record.RR)
+				if privateRecords[key] {
+					return false, nil
+				}
 			}
-			return false, nil
+			return true, nil
 		},
 	)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return lastErr
 }
 
 func (o *ClusterUninstaller) deleteRecord(recordID string) error {
