@@ -119,7 +119,8 @@ func provider(clusterID string,
 func tagsFromResourceTags(clusterID string, resourceTags map[string]string) ([]alibabacloudprovider.Tag, error) {
 	tags := []alibabacloudprovider.Tag{
 		{Key: fmt.Sprintf("kubernetes.io/cluster/%s", clusterID), Value: "owned"},
-		{Key: "OCP", Value: "ISV Integration"},
+		{Key: "GISV", Value: "ocp"},
+		{Key: "sigs.k8s.io/cloud-provider-alibaba/origin", Value: "ocp"},
 	}
 	forbiddenTags := sets.NewString()
 	for idx := range tags {
