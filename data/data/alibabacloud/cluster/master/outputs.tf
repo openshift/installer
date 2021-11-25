@@ -3,5 +3,5 @@ output "master_ecs_ids" {
 }
 
 output "master_ecs_private_ips" {
-  value = { for ecs in data.alicloud_instances.master_data.instances : ecs.name => ecs.private_ip }
+  value = data.alicloud_instances.master_data.instances.*.private_ip
 }

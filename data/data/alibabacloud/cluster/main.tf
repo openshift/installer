@@ -41,8 +41,6 @@ module "dns" {
   base_domain       = var.base_domain
   slb_external_ip   = module.vpc.slb_external_ip
   slb_internal_ip   = module.vpc.slb_internal_ip
-  master_count      = length(var.ali_zone_ids)
-  master_ips        = module.master.master_ecs_private_ips
   tags              = local.tags
 }
 

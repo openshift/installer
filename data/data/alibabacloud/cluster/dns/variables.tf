@@ -30,14 +30,6 @@ variable "slb_internal_ip" {
   description = "Internal SLB IP address."
 }
 
-variable "master_count" {
-  type = number
-}
-
-variable "master_ips" {
-  type = map(string)
-}
-
 variable "tags" {
   type        = map(string)
   default     = {}
