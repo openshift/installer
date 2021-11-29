@@ -4,8 +4,8 @@ package alibabacloud
 import (
 	"fmt"
 
-	alibabacloudprovider "github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis/alibabacloudprovider/v1beta1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	alibabacloudprovider "github.com/openshift/cluster-api-provider-alibaba/pkg/apis/alibabacloudprovider/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,7 +79,7 @@ func provider(clusterID string,
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create alibabacloudprovider.Tag from Tags")
 	}
-	sgTags := []alibabacloudprovider.ResourceTagReference{
+	sgResourceRef := []alibabacloudprovider.AlibabaResourceReference{
 		{
 			Tags: append(tags, alibabacloudprovider.Tag{
 				Key:   "Name",
@@ -87,7 +87,7 @@ func provider(clusterID string,
 			}),
 		},
 	}
-	vSwitchTags := alibabacloudprovider.ResourceTagReference{
+	vSwitchResourceRef := alibabacloudprovider.AlibabaResourceReference{
 		Tags: append(tags, alibabacloudprovider.Tag{
 			Key:   "Name",
 			Value: fmt.Sprintf("%s-vswitch-%s", clusterID, az),
@@ -98,21 +98,20 @@ func provider(clusterID string,
 			APIVersion: "alibabacloudmachineproviderconfig.openshift.io/v1beta1",
 			Kind:       "AlibabaCloudMachineProviderConfig",
 		},
-		ImageID:            mpool.ImageID,
-		InstanceType:       mpool.InstanceType,
-		SystemDiskCategory: string(mpool.SystemDiskCategory),
-		SystemDiskSize:     mpool.SystemDiskSize,
-		RegionID:           platform.Region,
-		ResourceGroupID:    platform.ResourceGroupID,
-		ZoneID:             az,
-		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},
-		CredentialsSecret:  &corev1.LocalObjectReference{Name: "alibabacloud-credentials"},
-		Tags:               tags,
-		InstanceName:       fmt.Sprintf("%s-%s", clusterID, role),
-		IoOptimized:        "optimized",
-		RAMRoleName:        fmt.Sprintf("%s-role-%s", clusterID, role),
-		SecurityGroups:     sgTags,
-		VSwitch:            &vSwitchTags,
+		ImageID:      mpool.ImageID,
+		InstanceType: mpool.InstanceType,
+		SystemDisk: alibabacloudprovider.SystemDiskProperties{
+			Category: string(mpool.SystemDiskCategory),
+			Size:     mpool.SystemDiskSize,
+		},
+		RegionID:          platform.Region,
+		ResourceGroupID:   platform.ResourceGroupID,
+		ZoneID:            az,
+		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
+		CredentialsSecret: &corev1.LocalObjectReference{Name: "alibabacloud-credentials"},
+		Tags:              tags,
+		SecurityGroups:    sgResourceRef,
+		VSwitch:           vSwitchResourceRef,
 	}, nil
 }
 

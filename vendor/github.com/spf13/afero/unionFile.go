@@ -186,22 +186,25 @@ func (f *UnionFile) Readdir(c int) (ofi []os.FileInfo, err error) {
 		}
 		f.files = append(f.files, merged...)
 	}
-	files := f.files[f.off:]
 
-	if c <= 0 {
-		return files, nil
+	if c <= 0 && len(f.files) == 0 {
+		return f.files, nil
 	}
 
-	if len(files) == 0 {
+	if f.off >= len(f.files) {
 		return nil, io.EOF
 	}
 
-	if c > len(files) {
-		c = len(files)
+	if c <= 0 {
+		return f.files[f.off:], nil
+	}
+
+	if c > len(f.files) {
+		c = len(f.files)
 	}
 
 	defer func() { f.off += c }()
-	return files[:c], nil
+	return f.files[f.off:c], nil
 }
 
 func (f *UnionFile) Readdirnames(c int) ([]string, error) {
