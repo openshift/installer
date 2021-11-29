@@ -1533,8 +1533,8 @@ github.com/openshift/cluster-api-provider-alibaba v0.0.0-20211123142315-d16daa4e
 github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80 h1:fFHoy/1QCLUcfo/NceEM8jGY2Tafl1BmyLa7tReN328=
 github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80/go.mod h1:JV7aXj/LZ8B4MwIQdhGxpTO2PCG8+7UKFd6FaOZCSzA=
 github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f/go.mod h1:GR+ocB8I+Z7JTSBdO+DMu/diBfH66lRlRpnc1KWysUM=
-github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d h1:6+XwaVvSMPHm3nFdZW3g+iXiOHpf0Y2ajY5/Zr66Dt0=
-github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d/go.mod h1:S+wtA0Rm2FZ5ccC9zNQXUWUDesR6Jsdn5eb6HjAR+Gs=
+github.com/openshift/cluster-api-provider-baremetal v0.0.0-20200323172559-7d335b32a0eb h1:nwd4ckZkzvhjk5kaL5RnjgZSyE1w6fHmAXZt1lxjoiw=
+github.com/openshift/cluster-api-provider-baremetal v0.0.0-20200323172559-7d335b32a0eb/go.mod h1:S+wtA0Rm2FZ5ccC9zNQXUWUDesR6Jsdn5eb6HjAR+Gs=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200701112720-3a7d727c9a10/go.mod h1:wgkZrOlcIMWTzo8khB4Js2PoDJDlIUUdzCBm7BuDdqw=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200713133651-5c8a640669ac/go.mod h1:XVYX9JE339nKbDDa/W481XD+1GTeqeaBm8bDPr7WE7I=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200901173901-9056dbc8c9b9/go.mod h1:rcwAydGZX+z4l91wtOdbq+fqDwuo6iu0YuFik3UUc+8=
