@@ -17,7 +17,7 @@ limitations under the License.
 package apis
 
 import (
-	"github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
+	"github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
 )
 
 func init() {
