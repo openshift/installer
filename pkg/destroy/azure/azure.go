@@ -469,7 +469,7 @@ func deleteResourceGroup(ctx context.Context, client resources.GroupsClient, log
 
 	delFuture, err := client.Delete(ctx, name)
 	if err != nil {
-		if wasNotFound(delFuture.Response()) {
+		if delFuture.FutureAPI != nil && wasNotFound(delFuture.FutureAPI.Response()) {
 			logger.Debug("already deleted")
 			return nil
 		}
