@@ -87,8 +87,9 @@ resource "alicloud_slb_listener" "listener_internal_22623" {
   sticky_session_type       = "insert"
   cookie_timeout            = 86400
   health_check              = "on"
-  health_check_type         = "tcp"
-  health_check_connect_port = 22623
+  health_check_type         = "http"
+  health_check_uri          = "/healthz"
+  health_check_connect_port = 22624
   healthy_threshold         = 2
   unhealthy_threshold       = 2
   health_check_timeout      = 10
