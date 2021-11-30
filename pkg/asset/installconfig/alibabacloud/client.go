@@ -225,6 +225,7 @@ func (client *Client) ListPrivateZoneRegions() (response *pvtz.DescribeRegionsRe
 func (client *Client) ListDNSDomain(baseDomain string) (response *alidns.DescribeDomainsResponse, err error) {
 	request := alidns.CreateDescribeDomainsRequest()
 	request.KeyWord = baseDomain
+	request.SearchMode = "EXACT"
 	response = &alidns.DescribeDomainsResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
@@ -237,6 +238,7 @@ func (client *Client) ListPrivateZones(zoneName string) (response *pvtz.Describe
 	request := pvtz.CreateDescribeZonesRequest()
 	request.Lang = "en"
 	request.Keyword = zoneName
+	request.SearchMode = "EXACT"
 	response = &pvtz.DescribeZonesResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
