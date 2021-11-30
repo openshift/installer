@@ -17,7 +17,7 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string, resourceTags map[string]string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string, resourceTags map[string]string, vswitchMaps map[string]string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != alibabacloud.Name {
 		return nil, fmt.Errorf("non-AlibabaCloud configuration: %q", configPlatform)
 	}
@@ -35,8 +35,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
-		azIndex := int(idx) % len(azs)
-		provider, err := provider(clusterID, platform, mpool, azIndex, role, userDataSecret, resourceTags)
+		zoneID := azs[int(idx)%len(azs)]
+		vswitchID := vswitchMaps[zoneID]
+		provider, err := provider(clusterID, platform, mpool, zoneID, role, userDataSecret, resourceTags, vswitchID)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -69,12 +70,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 func provider(clusterID string,
 	platform *alibabacloud.Platform,
 	mpool *alibabacloud.MachinePool,
-	azIdx int,
+	zoneID string,
 	role string,
 	userDataSecret string,
 	resourceTags map[string]string,
+	vswitchID string,
 ) (*alibabacloudprovider.AlibabaCloudMachineProviderConfig, error) {
-	az := mpool.Zones[azIdx]
 	tags, err := tagsFromResourceTags(clusterID, resourceTags)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create alibabacloudprovider.Tag from Tags")
@@ -87,13 +88,7 @@ func provider(clusterID string,
 			}),
 		},
 	}
-	vSwitchResourceRef := alibabacloudprovider.AlibabaResourceReference{
-		Tags: append(tags, alibabacloudprovider.Tag{
-			Key:   "Name",
-			Value: fmt.Sprintf("%s-vswitch-%s", clusterID, az),
-		}),
-	}
-	return &alibabacloudprovider.AlibabaCloudMachineProviderConfig{
+	config := &alibabacloudprovider.AlibabaCloudMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "alibabacloudmachineproviderconfig.openshift.io/v1beta1",
 			Kind:       "AlibabaCloudMachineProviderConfig",
@@ -106,13 +101,21 @@ func provider(clusterID string,
 		},
 		RegionID:          platform.Region,
 		ResourceGroupID:   platform.ResourceGroupID,
-		ZoneID:            az,
+		ZoneID:            zoneID,
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "alibabacloud-credentials"},
 		Tags:              tags,
+		RAMRoleName:       fmt.Sprintf("%s-role-%s", clusterID, role),
 		SecurityGroups:    sgResourceRef,
-		VSwitch:           vSwitchResourceRef,
-	}, nil
+	}
+	config.VSwitch = alibabacloudprovider.AlibabaResourceReference{
+		ID: vswitchID,
+		Tags: append(tags, alibabacloudprovider.Tag{
+			Key:   "Name",
+			Value: fmt.Sprintf("%s-vswitch-%s", clusterID, zoneID),
+		}),
+	}
+	return config, nil
 }
 
 func tagsFromResourceTags(clusterID string, resourceTags map[string]string) ([]alibabacloudprovider.Tag, error) {

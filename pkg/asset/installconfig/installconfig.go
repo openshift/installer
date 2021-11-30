@@ -153,7 +153,7 @@ func (a *InstallConfig) finish(filename string) error {
 		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.Subnets, a.Config.AWS.ServiceEndpoints)
 	}
 	if a.Config.AlibabaCloud != nil {
-		a.AlibabaCloud = alibabacloud.NewMetadata(a.Config.AlibabaCloud.Region)
+		a.AlibabaCloud = alibabacloud.NewMetadata(a.Config.AlibabaCloud.Region, a.Config.AlibabaCloud.VSwitchIDs)
 	}
 	if a.Config.Azure != nil {
 		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint)

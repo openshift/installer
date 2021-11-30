@@ -24,9 +24,11 @@ module "resource_group" {
 
 module "vpc" {
   source              = "./vpc"
+  vpc_id              = var.ali_vpc_id
+  vswitch_ids         = var.ali_vswitch_ids
   cluster_id          = var.cluster_id
   region_id           = var.ali_region_id
-  zone_ids            = var.ali_zone_ids
+  zone_ids            = distinct(var.ali_zone_ids)
   nat_gateway_zone_id = var.ali_nat_gateway_zone_id
   resource_group_id   = module.resource_group.resource_group_id
   vpc_cidr_block      = var.machine_v4_cidrs[0]
@@ -36,6 +38,7 @@ module "vpc" {
 module "dns" {
   source            = "./dns"
   cluster_id        = var.cluster_id
+  private_zone_id   = var.ali_private_zone_id
   resource_group_id = module.resource_group.resource_group_id
   vpc_id            = module.vpc.vpc_id
   cluster_domain    = var.cluster_domain
@@ -56,10 +59,12 @@ module "master" {
   cluster_id           = var.cluster_id
   resource_group_id    = module.resource_group.resource_group_id
   vpc_id               = module.vpc.vpc_id
-  vswitch_ids          = module.vpc.vswitch_ids
+  zone_ids             = var.ali_zone_ids
+  az_to_vswitch_id     = module.vpc.az_to_vswitch_id
   sg_id                = module.vpc.sg_master_id
   slb_ids              = module.vpc.slb_ids
   instance_type        = var.ali_master_instance_type
+  instance_count       = var.master_count
   image_id             = var.ali_image_id
   system_disk_size     = var.ali_system_disk_size
   system_disk_category = var.ali_system_disk_category

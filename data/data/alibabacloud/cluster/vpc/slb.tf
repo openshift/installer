@@ -42,7 +42,7 @@ resource "alicloud_slb_load_balancer" "slb_internal" {
   resource_group_id  = var.resource_group_id
   load_balancer_name = "${local.prefix}-slb-internal"
   address_type       = "intranet"
-  vswitch_id         = alicloud_vswitch.vswitchs[0].id
+  vswitch_id         = local.vswitch_ids[0]
   load_balancer_spec = "slb.s2.small"
   tags = merge(
     {

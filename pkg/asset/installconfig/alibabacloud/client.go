@@ -246,13 +246,51 @@ func (client *Client) ListDNSDomain(baseDomain string) (response *alidns.Describ
 	return
 }
 
+// ListPrivateZonesByName gets the list of privatezones with the specified name.
+func (client *Client) ListPrivateZonesByName(zoneName string) (response *pvtz.DescribeZonesResponse, err error) {
+	return client.ListPrivateZones(zoneName, "")
+}
+
+// ListPrivateZonesByVPC gets the list of privatezones attached to the specified VPC.
+func (client *Client) ListPrivateZonesByVPC(queryVpcID string) (response *pvtz.DescribeZonesResponse, err error) {
+	return client.ListPrivateZones("", queryVpcID)
+}
+
 // ListPrivateZones gets the list of privatzones.
-func (client *Client) ListPrivateZones(zoneName string) (response *pvtz.DescribeZonesResponse, err error) {
+func (client *Client) ListPrivateZones(zoneName string, queryVpcID string) (response *pvtz.DescribeZonesResponse, err error) {
 	request := pvtz.CreateDescribeZonesRequest()
 	request.Lang = "en"
-	request.Keyword = zoneName
 	request.SearchMode = "EXACT"
+	request.Keyword = zoneName
+	request.QueryVpcId = queryVpcID
+
 	response = &pvtz.DescribeZonesResponse{
+		BaseResponse: &responses.BaseResponse{},
+	}
+	err = client.doActionWithSetDomain(request, response)
+	return
+}
+
+// ListVpcs gets the list of VPCs.
+func (client *Client) ListVpcs(vpcID string) (response *vpc.DescribeVpcsResponse, err error) {
+	request := vpc.CreateDescribeVpcsRequest()
+	request.RegionId = client.RegionID
+	request.VpcId = vpcID
+
+	response = &vpc.DescribeVpcsResponse{
+		BaseResponse: &responses.BaseResponse{},
+	}
+	err = client.doActionWithSetDomain(request, response)
+	return
+}
+
+// ListVSwitches gets the list of VSwitches.
+func (client *Client) ListVSwitches(vswitchID string) (response *vpc.DescribeVSwitchesResponse, err error) {
+	request := vpc.CreateDescribeVSwitchesRequest()
+	request.RegionId = client.RegionID
+	request.VSwitchId = vswitchID
+
+	response = &vpc.DescribeVSwitchesResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
 	err = client.doActionWithSetDomain(request, response)

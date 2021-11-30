@@ -1,9 +1,13 @@
 output "vpc_id" {
-  value = alicloud_vpc.vpc.id
+  value = local.vpc_id
 }
 
 output "vswitch_ids" {
-  value = alicloud_vswitch.vswitchs.*.id
+  value = local.vswitch_ids
+}
+
+output "az_to_vswitch_id" {
+  value = zipmap(data.alicloud_vswitches.vswitches.vswitches.*.zone_id, data.alicloud_vswitches.vswitches.vswitches.*.id)
 }
 
 output "gw_id" {

@@ -8,7 +8,7 @@ data "alicloud_instances" "master_data" {
 }
 
 resource "alicloud_instance" "master" {
-  count             = length(var.vswitch_ids)
+  count             = var.instance_count
   resource_group_id = var.resource_group_id
 
   host_name                  = "${local.prefix}-master-${count.index}"
@@ -17,7 +17,7 @@ resource "alicloud_instance" "master" {
   image_id                   = var.image_id
   internet_max_bandwidth_out = 0
 
-  vswitch_id      = var.vswitch_ids[count.index]
+  vswitch_id      = var.az_to_vswitch_id[var.zone_ids[count.index]]
   security_groups = [var.sg_id]
   role_name       = var.role_name
 

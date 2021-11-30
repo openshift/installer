@@ -238,19 +238,39 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			if err != nil {
 				return err
 			}
+			vswitchMaps, err := installConfig.AlibabaCloud.VSwitchMaps()
+			if err != nil {
+				return errors.Wrap(err, "failed to get VSwitchs map")
+			}
+
 			mpool := alibabacloudtypes.DefaultWorkerMachinePoolPlatform()
 			mpool.ImageID = string(*rhcosImage)
 			mpool.Set(ic.Platform.AlibabaCloud.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.AlibabaCloud)
 			if len(mpool.Zones) == 0 {
-				azs, err := client.GetAvailableZonesByInstanceType(mpool.InstanceType)
-				if err != nil || len(azs) == 0 {
-					return errors.Wrap(err, "failed to fetch availability zones")
+				if len(vswitchMaps) > 0 {
+					for zone := range vswitchMaps {
+						mpool.Zones = append(mpool.Zones, zone)
+					}
+				} else {
+					azs, err := client.GetAvailableZonesByInstanceType(mpool.InstanceType)
+					if err != nil || len(azs) == 0 {
+						return errors.Wrap(err, "failed to fetch availability zones")
+					}
+					mpool.Zones = azs
 				}
-				mpool.Zones = azs
 			}
+
 			pool.Platform.AlibabaCloud = &mpool
-			sets, err := alibabacloud.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data", installConfig.Config.Platform.AlibabaCloud.Tags)
+			sets, err := alibabacloud.MachineSets(
+				clusterID.InfraID,
+				ic,
+				&pool,
+				"worker",
+				"worker-user-data",
+				installConfig.Config.Platform.AlibabaCloud.Tags,
+				vswitchMaps,
+			)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

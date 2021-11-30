@@ -11,9 +11,21 @@ variable "ali_region_id" {
   description = "The target Alibaba Cloud region for the cluster."
 }
 
+variable "ali_vpc_id" {
+  type = string
+}
+
+variable "ali_vswitch_ids" {
+  type = list(string)
+}
+
+variable "ali_private_zone_id" {
+  type = string
+}
+
 variable "ali_zone_ids" {
   type        = list(string)
-  description = "The availability zones in which to create the masters."
+  description = "The availability zones in which to create the masters. The length of this list must match master_count."
 }
 
 variable "ali_nat_gateway_zone_id" {

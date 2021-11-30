@@ -17,8 +17,36 @@ func ValidatePlatform(p *alibabacloud.Platform, n *types.Networking, fldPath *fi
 		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "region must be specified"))
 	}
 
+	if p.PrivateZoneID != "" {
+		if p.VpcID == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("vpcID"), "when using existing privatezones, an existing VPC must be used"))
+		}
+	}
+
+	if len(p.VSwitchIDs) > 0 {
+		allErrs = append(allErrs, validateVSwitches(p, fldPath)...)
+	}
+
 	allErrs = append(allErrs, validateMetadataServerIP(n)...)
 
+	return allErrs
+}
+
+func validateVSwitches(p *alibabacloud.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if p.VpcID == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("vpcID"), "when using existing VSwitches, an existing VPC must be used"))
+	}
+
+	vswitchIDs := map[string]bool{}
+	for idx, vswitchID := range p.VSwitchIDs {
+		if vswitchIDs[vswitchID] {
+			allErrs = append(allErrs, field.Duplicate(fldPath.Child("vswitchIDs").Index(idx), vswitchID))
+		} else {
+			vswitchIDs[vswitchID] = true
+		}
+	}
 	return allErrs
 }
 

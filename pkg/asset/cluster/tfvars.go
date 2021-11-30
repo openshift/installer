@@ -729,9 +729,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		natGatewayZoneID := natGatewayZones.Zones[0].ZoneId
 
+		vswitchIDs := []string{}
+		if len(installConfig.Config.AlibabaCloud.VSwitchIDs) > 0 {
+			vswitchIDs = installConfig.Config.AlibabaCloud.VSwitchIDs
+		}
 		data, err := alibabacloudtfvars.TFVars(
 			alibabacloudtfvars.TFVarsSources{
 				Auth:                  auth,
+				VpcID:                 installConfig.Config.AlibabaCloud.VpcID,
+				VSwitchIDs:            vswitchIDs,
+				PrivateZoneID:         installConfig.Config.AlibabaCloud.PrivateZoneID,
 				ResourceGroupID:       installConfig.Config.AlibabaCloud.ResourceGroupID,
 				BaseDomain:            installConfig.Config.BaseDomain,
 				NatGatewayZoneID:      natGatewayZoneID,

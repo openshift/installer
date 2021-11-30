@@ -6,6 +6,14 @@ variable "region_id" {
   type = string
 }
 
+variable "vpc_id" {
+  type = string
+}
+
+variable "vswitch_ids" {
+  type = list(string)
+}
+
 variable "zone_ids" {
   type        = list(string)
   description = "The availability zones in which to create the masters."
