@@ -12,8 +12,10 @@ aliases:
   installer-reviewers:
     - jhixson74
     - jstuever
+    - kirankt
     - patrickdillon
     - rna-afk
+    - squidboylan
   libvirt-approvers:
     - praveenkumar
     - cfergeau
