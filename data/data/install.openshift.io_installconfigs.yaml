@@ -1486,6 +1486,8 @@ spec:
                           type: string
                         name:
                           type: string
+                        networkConfig:
+                          type: string
                         role:
                           type: string
                         rootDeviceHints:

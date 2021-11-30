@@ -262,6 +262,39 @@ func TestValidatePlatform(t *testing.T) {
 			platform: platform().ProvisioningNetwork("Invalid").build(),
 			expected: `Unsupported value: "Invalid": supported values: "Disabled", "Managed", "Unmanaged"`,
 		},
+		{
+			name:     "networkConfig_invalid",
+			platform: platform().Hosts(host1().NetworkConfig("Not a valid yaml content")).build(),
+			expected: ".*Invalid value.*Not a valid yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type map\\[string\\]interface \\{\\}",
+		},
+		{
+			name: "networkConfig_valid_yml",
+			platform: platform().Hosts(host1().NetworkConfig(`
+interfaces:
+- name: eth1
+  type: ethernet
+  state: up
+- name: linux-br0
+  type: linux-bridge
+  state: up
+  bridge:
+    options:
+      group-forward-mask: 0
+      mac-ageing-time: 300
+      multicast-snooping: true
+      stp:
+        enabled: true
+        forward-delay: 15
+        hello-time: 2
+        max-age: 20
+        priority: 32768
+      port:
+        - name: eth1
+          stp-hairpin-mode: false
+          stp-path-cost: 100
+          stp-priority: 32`)).build(),
+			expected: "",
+		},
 	}
 
 	for _, tc := range cases {
@@ -728,6 +761,11 @@ func (hb *hostBuilder) BMCPassword(value string) *hostBuilder {
 
 func (hb *hostBuilder) Role(value string) *hostBuilder {
 	hb.Host.Role = value
+	return hb
+}
+
+func (hb *hostBuilder) NetworkConfig(value string) *hostBuilder {
+	hb.Host.NetworkConfig = value
 	return hb
 }
 

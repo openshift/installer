@@ -233,6 +233,7 @@ should be used to build the cluster. The number of assets must be at least great
 | `bootMACAddress` | | The MAC address of the NIC the host will use to boot on the provisioning network. It must be unique. |
 | `rootDeviceHints` | | How to choose the target disk for the OS during provisioning - for more details see [upstream docs](https://github.com/metal3-io/baremetal-operator/blob/master/docs/api.md). |
 | `bootMode` | `UEFI` | Choose `legacy` (BIOS) or `UEFI` mode for booting. Use `UEFISecureBoot` to enable UEFI and secure boot on the server. Only some drivers support UEFI secure boot (notably, IPMI does not). |
+| `networkConfig` | | Yaml string describing the desired host networking settings. Must be compatible with NMState (for more details see https://nmstate.io/) |
 
 The `bmc` parameter for each host is a set of values for accessing the
 baseboard management controller in the host.
