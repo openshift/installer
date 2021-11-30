@@ -6,9 +6,7 @@ type Platform struct {
 	Region string `json:"region"`
 
 	// ResourceGroupID is the ID of an already existing resource group where the cluster should be installed.
-	// This resource group must be empty with no other resources when trying to use it for creating a cluster.
-	// If empty, a new resource group will created for the cluster.
-	// Destroying the cluster using installer will delete this resource group.
+	// If empty, the installer will create a new resource group for the cluster.
 	// +optional
 	ResourceGroupID string `json:"resourceGroupID,omitempty"`
 
