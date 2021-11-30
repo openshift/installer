@@ -39,6 +39,9 @@ func validateWorkerMachinePool(pool *openstack.MachinePool, fldPath *field.Path)
 }
 
 func validateDefaultMachinePool(pool *openstack.MachinePool, fldPath *field.Path) field.ErrorList {
+	if pool == nil {
+		return nil
+	}
 	var errs field.ErrorList
 	if pool.ServerGroupPolicy != openstack.SGPolicyUnset {
 		errs = append(errs, field.Invalid(fldPath.Child("serverGroupPolicy"), pool.ServerGroupPolicy, "server group policy cannot be set as default because compute machines do not support it"))

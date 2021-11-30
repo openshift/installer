@@ -54,6 +54,11 @@ func TestValidateDefaultMachinePool(t *testing.T) {
 		checks      []checkFunc
 	}{
 		{
+			"absent",
+			nil,
+			check(noError),
+		},
+		{
 			"empty",
 			testMachinePool(),
 			check(noError),
