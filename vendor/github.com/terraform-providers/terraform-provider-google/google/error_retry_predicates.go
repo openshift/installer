@@ -190,6 +190,17 @@ func isSqlOperationInProgressError(err error) (bool, string) {
 	return false, ""
 }
 
+// Retry if operation returns a 403 with the message for
+// exceeding the quota limit for 'OperationReadGroup'
+func isOperationReadQuotaError(err error) (bool, string) {
+	if gerr, ok := err.(*googleapi.Error); ok {
+		if gerr.Code == 403 && strings.Contains(gerr.Body, "Quota exceeded for quota group") {
+			return true, "Waiting for quota to refresh"
+		}
+	}
+	return false, ""
+}
+
 // Retry if Monitoring operation returns a 429 with a specific message for
 // concurrent operations.
 func isMonitoringConcurrentEditError(err error) (bool, string) {
