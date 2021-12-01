@@ -347,49 +347,80 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 	}
 	numberToDelete := len(allPorts)
 	numberDeleted := 0
-	for _, port := range allPorts {
-		listOpts := floatingips.ListOpts{
-			PortID: port.ID,
-		}
-		allPages, err := floatingips.List(conn, listOpts).AllPages()
-		if err != nil {
-			logger.Error(err)
-			return false, nil
-		}
-		allFIPs, err := floatingips.ExtractFloatingIPs(allPages)
-		if err != nil {
-			logger.Error(err)
-			return false, nil
-		}
-		// If a user provisioned floating ip was used, it needs to be dissociated.
-		// Any floating Ip's associated with ports that are going to be deleted will be dissociated.
-		for _, fip := range allFIPs {
-			logger.Debugf("Dissociating Floating IP %q", fip.ID)
-			_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
-			if err != nil {
-				// Ignore the error if the floating ip cannot be found and return with an appropriate message if it's another type of error
-				var gerr gophercloud.ErrDefault404
-				if !errors.As(err, &gerr) {
-					// Just log the error and move on to the next port
-					logger.Errorf("While deleting port %q, the update of the floating IP %q failed with error: %v", port.ID, fip.ID, err)
-					continue
-				}
-				logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", fip.ID)
-			}
-		}
 
-		logger.Debugf("Deleting Port %q", port.ID)
-		err = ports.Delete(conn, port.ID).ExtractErr()
-		if err != nil {
-			// This can fail when port is still in use so return/retry
-			// Just log the error and move on to the next port
-			logger.Debugf("Deleting Port %q failed with error: %v", port.ID, err)
-			// Try to delete associated trunk
-			deleteAssociatedTrunk(conn, logger, port.ID)
-			continue
-		}
-		numberDeleted++
+	// Prefetch list of FIPs to save list calls for each port
+	allPages, err = floatingips.List(conn, floatingips.ListOpts{}).AllPages()
+	if err != nil {
+		logger.Error(err)
+		return false, nil
 	}
+	allFIPs, err := floatingips.ExtractFloatingIPs(allPages)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	// Organize FIPs for easy lookup
+	fipByPort := make(map[string]floatingips.FloatingIP)
+	for _, fip := range allFIPs {
+		fipByPort[fip.PortID] = fip
+	}
+
+	deletePortsWorker := func(portsChannel <-chan ports.Port, deletedChannel chan<- int) {
+		localDeleted := 0
+		for port := range portsChannel {
+			// If a user provisioned floating ip was used, it needs to be dissociated.
+			// Any floating Ip's associated with ports that are going to be deleted will be dissociated.
+			if fip, ok := fipByPort[port.ID]; ok {
+				logger.Debugf("Dissociating Floating IP %q", fip.ID)
+				_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
+				if err != nil {
+					// Ignore the error if the floating ip cannot be found and return with an appropriate message if it's another type of error
+					var gerr gophercloud.ErrDefault404
+					if !errors.As(err, &gerr) {
+						// Just log the error and move on to the next port
+						logger.Errorf("While deleting port %q, the update of the floating IP %q failed with error: %v", port.ID, fip.ID, err)
+						continue
+					}
+					logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", fip.ID)
+				}
+			}
+
+			logger.Debugf("Deleting Port %q", port.ID)
+			err = ports.Delete(conn, port.ID).ExtractErr()
+			if err != nil {
+				// This can fail when port is still in use so return/retry
+				// Just log the error and move on to the next port
+				logger.Debugf("Deleting Port %q failed with error: %v", port.ID, err)
+				// Try to delete associated trunk
+				deleteAssociatedTrunk(conn, logger, port.ID)
+				continue
+			}
+			localDeleted++
+		}
+		deletedChannel <- localDeleted
+	}
+
+	const workersNumber = 10
+	portsChannel := make(chan ports.Port, workersNumber)
+	deletedChannel := make(chan int, workersNumber)
+
+	// start worker goroutines
+	for i := 0; i < workersNumber; i++ {
+		go deletePortsWorker(portsChannel, deletedChannel)
+	}
+
+	// feed worker goroutines with ports
+	for _, port := range allPorts {
+		portsChannel <- port
+	}
+	close(portsChannel)
+
+	// wait for them to finish and accumulate number of ports deleted by each
+	for i := 0; i < workersNumber; i++ {
+		numberDeleted += <-deletedChannel
+	}
+
 	return numberDeleted == numberToDelete, nil
 }
 
