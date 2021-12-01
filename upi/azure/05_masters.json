@@ -26,8 +26,9 @@
     },
     "sshKeyData" : {
       "type" : "securestring",
+      "defaultValue" : "Unused",
       "metadata" : {
-        "description" : "SSH RSA public key file as a string"
+        "description" : "Unused"
       }
     },
     "privateDNSZoneName" : {
@@ -237,17 +238,10 @@
         "osProfile" : {
           "computerName" : "[variables('vmNames')[copyIndex()]]",
           "adminUsername" : "core",
+          "adminPassword" : "NotActuallyApplied!",
           "customData" : "[parameters('masterIgnition')]",
           "linuxConfiguration" : {
-            "disablePasswordAuthentication" : true,
-            "ssh" : {
-              "publicKeys" : [
-                {
-                  "path" : "[variables('sshKeyPath')]",
-                  "keyData" : "[parameters('sshKeyData')]"
-                }
-              ]
-            }
+            "disablePasswordAuthentication" : false
           }
         },
         "storageProfile" : {

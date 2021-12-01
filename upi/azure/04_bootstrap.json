@@ -18,8 +18,9 @@
     },
     "sshKeyData" : {
       "type" : "securestring",
+      "defaultValue" : "Unused",
       "metadata" : {
-        "description" : "SSH RSA public key file as a string."
+        "description" : "Unused"
       }
     },
     "bootstrapVMSize" : {
@@ -184,17 +185,10 @@
         "osProfile" : {
           "computerName" : "[variables('vmName')]",
           "adminUsername" : "core",
+          "adminPassword" : "NotActuallyApplied!",
           "customData" : "[parameters('bootstrapIgnition')]",
           "linuxConfiguration" : {
-            "disablePasswordAuthentication" : true,
-            "ssh" : {
-              "publicKeys" : [
-                {
-                  "path" : "[variables('sshKeyPath')]",
-                  "keyData" : "[parameters('sshKeyData')]"
-                }
-              ]
-            }
+            "disablePasswordAuthentication" : false
           }
         },
         "storageProfile" : {
