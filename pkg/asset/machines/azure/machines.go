@@ -105,7 +105,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		managedIdentity = ""
 	}
 
-	return &machineapi.AzureMachineProviderSpec{
+	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "AzureMachineProviderSpec",
@@ -131,7 +131,13 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		ResourceGroup:        rg,
 		NetworkResourceGroup: networkResourceGroup,
 		PublicLoadBalancer:   publicLB,
-	}, nil
+	}
+
+	if platform.CloudName == azure.StackCloud {
+		spec.AvailabilitySet = fmt.Sprintf("%s-cluster", clusterID)
+	}
+
+	return spec, nil
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines

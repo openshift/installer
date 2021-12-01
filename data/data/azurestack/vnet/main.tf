@@ -78,8 +78,8 @@ resource "azurestack_image" "cluster" {
   }
 }
 
-resource "azurestack_availability_set" "master_availability_set" {
-  name                = "${var.cluster_id}-master"
+resource "azurestack_availability_set" "cluster_availability_set" {
+  name                = "${var.cluster_id}-cluster"
   resource_group_name = data.azurestack_resource_group.main.name
   location            = var.azure_region
   managed             = true
