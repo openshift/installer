@@ -180,7 +180,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 func (o *ClusterUninstaller) destroyCluster() error {
 	stagedFuncs := [][]struct {
 		name    string
-		execute func() error
+		execute func(logrus.FieldLogger) error
 	}{
 		{
 			{name: "DNS records", execute: o.deleteDNSRecords},
@@ -237,16 +237,17 @@ func (o *ClusterUninstaller) destroyCluster() error {
 
 func (o *ClusterUninstaller) executeStageFunction(f struct {
 	name    string
-	execute func() error
+	execute func(logrus.FieldLogger) error
 }, errCh chan error, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	err := wait.PollImmediateInfinite(
 		time.Second*10,
 		func() (bool, error) {
-			ferr := f.execute()
+			stageLogger := o.Logger.WithField("stage", f.name)
+			ferr := f.execute(stageLogger)
 			if ferr != nil {
-				o.Logger.Debugf("%s: %v", f.name, ferr)
+				stageLogger.WithError(ferr).Debugf("Error executing stage")
 				return false, nil
 			}
 			return true, nil
@@ -317,8 +318,11 @@ func (o *ClusterUninstaller) tidyResourceByArn(resourceArns []ResourceArn) {
 	}
 }
 
-func (o *ClusterUninstaller) deleteResourceGroup() (err error) {
+func (o *ClusterUninstaller) deleteResourceGroup(logger logrus.FieldLogger) (err error) {
 	resourceGroupName := fmt.Sprintf("%s-rg", o.InfraID)
+	logger = logger.WithField("name", resourceGroupName)
+	logger.Debug("Searching resource groups")
+
 	response, err := o.listResourceGroups()
 	if err != nil {
 		return err
@@ -330,13 +334,11 @@ func (o *ClusterUninstaller) deleteResourceGroup() (err error) {
 			resourceGroupID = resourceGroup.Id
 		}
 	}
-
 	if resourceGroupID == "" {
 		return
 	}
 
-	o.Logger.Debugf("Start to delete resource group %q", resourceGroupID)
-	err = o.deleteResourceGroupByID(resourceGroupID)
+	err = o.deleteResourceGroupByID(resourceGroupID, logger)
 	if err != nil {
 		return err
 	}
@@ -358,10 +360,12 @@ func (o *ClusterUninstaller) deleteResourceGroup() (err error) {
 		},
 	)
 
+	logger.Info("Resource group deleted")
 	return
 }
 
-func (o *ClusterUninstaller) deleteResourceGroupByID(resourceGroupID string) (err error) {
+func (o *ClusterUninstaller) deleteResourceGroupByID(resourceGroupID string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("resourceGroupID", resourceGroupID).Debug("Deleting")
 	request := resourcemanager.CreateDeleteResourceGroupRequest()
 	request.Scheme = "https"
 	request.ResourceGroupId = resourceGroupID
@@ -376,17 +380,19 @@ func (o *ClusterUninstaller) listResourceGroups() (response *resourcemanager.Lis
 	return
 }
 
-func (o *ClusterUninstaller) deleteBucket() (err error) {
+func (o *ClusterUninstaller) deleteBucket(logger logrus.FieldLogger) (err error) {
 	bucketName := fmt.Sprintf("%s-bootstrap", o.InfraID)
+	logger = logger.WithField("bucketName", bucketName)
+	logger.Debug("Searching OSS bucket")
+
 	result, err := o.ossClient.ListBuckets(oss.Prefix(bucketName))
 	if err != nil || len(result.Buckets) == 0 {
 		return
 	}
 
-	o.Logger.Debugf("Start to delete buckets %q", bucketName)
-
 	keys := []string{fmt.Sprintf("kubernetes.io/cluster/%s", o.InfraID)}
 	arns := []string{fmt.Sprintf("arn:acs:oss:%s:*:bucket/%s", o.Region, bucketName)}
+	logger.WithField("tags", keys).Debug("Unbinding tags for OSS bucket")
 	err = o.unTagResource(&keys, &arns)
 	if err != nil {
 		return err
@@ -397,11 +403,12 @@ func (o *ClusterUninstaller) deleteBucket() (err error) {
 		return err
 	}
 
-	err = o.deleteObjects(bucket)
+	err = o.deleteObjects(bucket, logger)
 	if err != nil {
 		return err
 	}
 
+	logger.Debug("Deleting OSS bucket")
 	err = o.ossClient.DeleteBucket(bucketName)
 	if err != nil {
 		return err
@@ -422,10 +429,12 @@ func (o *ClusterUninstaller) deleteBucket() (err error) {
 		},
 	)
 
+	logger.Info("OSS bucket deleted")
 	return
 }
 
-func (o *ClusterUninstaller) deleteObjects(bucket *oss.Bucket) (err error) {
+func (o *ClusterUninstaller) deleteObjects(bucket *oss.Bucket, logger logrus.FieldLogger) (err error) {
+	logger.Debug("Searching OSS bucket objects")
 	result, err := bucket.ListObjectsV2()
 	if err != nil {
 		return err
@@ -434,13 +443,16 @@ func (o *ClusterUninstaller) deleteObjects(bucket *oss.Bucket) (err error) {
 		return
 	}
 
-	o.Logger.Debugf("Start to delete objects of buckets %s", bucket.BucketName)
 	var keys []string
-
 	for _, object := range result.Objects {
 		keys = append(keys, object.Key)
 	}
-	bucket.DeleteObjects(keys)
+	logger = logger.WithField("objects", keys)
+	logger.Debug("Deleting bucket objects")
+	_, err = bucket.DeleteObjects(keys)
+	if err != nil {
+		return err
+	}
 
 	err = wait.Poll(
 		1*time.Second,
@@ -456,10 +468,11 @@ func (o *ClusterUninstaller) deleteObjects(bucket *oss.Bucket) (err error) {
 			return false, nil
 		},
 	)
+	logger.Debug("OSS bucket objects deleted")
 	return
 }
 
-func (o *ClusterUninstaller) deleteSlbs() (err error) {
+func (o *ClusterUninstaller) deleteSlbs(logger logrus.FieldLogger) (err error) {
 	if len(o.TagResources.slbs) <= 0 {
 		return nil
 	}
@@ -469,17 +482,20 @@ func (o *ClusterUninstaller) deleteSlbs() (err error) {
 		slbIDs = append(slbIDs, slbArn.ResourceID)
 	}
 
-	o.Logger.Debugf("Start to delete SLBs %q", slbIDs)
+	logger.WithField("SLBs", slbIDs).Debug("Deleting")
 	for _, slbID := range slbIDs {
-		err = o.setSlbModificationProtection(slbID)
+		slbLogger := logger.WithField("slbID", slbID)
+		err = o.setSlbModificationProtection(slbID, slbLogger)
 		if err != nil {
 			return err
 		}
-		err = o.setSlbDeleteProtection(slbID)
+
+		err = o.setSlbDeleteProtection(slbID, slbLogger)
 		if err != nil {
 			return err
 		}
-		err = o.deleteSlb(slbID)
+
+		err = o.deleteSlb(slbID, slbLogger)
 		if err != nil {
 			return err
 		}
@@ -499,6 +515,8 @@ func (o *ClusterUninstaller) deleteSlbs() (err error) {
 			return false, nil
 		},
 	)
+
+	logger.Info("SLB instances deleted")
 	return
 }
 
@@ -509,7 +527,8 @@ func (o *ClusterUninstaller) listSlb(slbIDs []string) (response *slb.DescribeLoa
 	return
 }
 
-func (o *ClusterUninstaller) setSlbModificationProtection(slbID string) (err error) {
+func (o *ClusterUninstaller) setSlbModificationProtection(slbID string, logger logrus.FieldLogger) (err error) {
+	logger.Debug("Turn off the modification protection")
 	request := slb.CreateSetLoadBalancerModificationProtectionRequest()
 	request.LoadBalancerId = slbID
 	request.ModificationProtectionStatus = "NonProtection"
@@ -517,7 +536,8 @@ func (o *ClusterUninstaller) setSlbModificationProtection(slbID string) (err err
 	return
 }
 
-func (o *ClusterUninstaller) setSlbDeleteProtection(slbID string) (err error) {
+func (o *ClusterUninstaller) setSlbDeleteProtection(slbID string, logger logrus.FieldLogger) (err error) {
+	logger.Debug("Turn off the deletion protection")
 	request := slb.CreateSetLoadBalancerDeleteProtectionRequest()
 	request.LoadBalancerId = slbID
 	request.DeleteProtection = "off"
@@ -525,15 +545,15 @@ func (o *ClusterUninstaller) setSlbDeleteProtection(slbID string) (err error) {
 	return
 }
 
-func (o *ClusterUninstaller) deleteSlb(slbID string) (err error) {
-	o.Logger.Debugf("Start to delete SLB %q", slbID)
+func (o *ClusterUninstaller) deleteSlb(slbID string, logger logrus.FieldLogger) (err error) {
+	logger.Debug("Deleting")
 	request := slb.CreateDeleteLoadBalancerRequest()
 	request.LoadBalancerId = slbID
 	_, err = o.slbClient.DeleteLoadBalancer(request)
 	return
 }
 
-func (o *ClusterUninstaller) deleteVSwitchs() (err error) {
+func (o *ClusterUninstaller) deleteVSwitchs(logger logrus.FieldLogger) (err error) {
 	if len(o.TagResources.vSwitchs) <= 0 {
 		return nil
 	}
@@ -543,13 +563,13 @@ func (o *ClusterUninstaller) deleteVSwitchs() (err error) {
 		vSwitchIDs = append(vSwitchIDs, vSwitchArn.ResourceID)
 	}
 
-	o.Logger.Debugf("Start to delete VSwitchs %q", vSwitchIDs)
+	logger.WithField("vSwitchIDs", vSwitchIDs).Debug("Deleting VSwitches")
 	for _, vSwitchID := range vSwitchIDs {
 		err = wait.Poll(
 			5*time.Second,
 			30*time.Second,
 			func() (bool, error) {
-				err = o.deleteVSwitch(vSwitchID)
+				err = o.deleteVSwitch(vSwitchID, logger)
 				if err == nil {
 					return true, nil
 				}
@@ -562,6 +582,7 @@ func (o *ClusterUninstaller) deleteVSwitchs() (err error) {
 		if err != nil {
 			return err
 		}
+		logger.WithField("vSwitchID", vSwitchID).Debug("Deleted")
 	}
 
 	err = wait.Poll(
@@ -578,6 +599,8 @@ func (o *ClusterUninstaller) deleteVSwitchs() (err error) {
 			return false, nil
 		},
 	)
+
+	logger.Info("VSwitches deleted")
 	return
 }
 
@@ -588,15 +611,15 @@ func (o *ClusterUninstaller) listVSwitch(vSwitchIDs []string) (response *vpc.Des
 	return
 }
 
-func (o *ClusterUninstaller) deleteVSwitch(vSwitchID string) (err error) {
-	o.Logger.Debugf("Start to delete VSwitch %q", vSwitchID)
+func (o *ClusterUninstaller) deleteVSwitch(vSwitchID string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("vSwitchID", vSwitchID).Debug("Deleting")
 	request := vpc.CreateDeleteVSwitchRequest()
 	request.VSwitchId = vSwitchID
 	_, err = o.vpcClient.DeleteVSwitch(request)
 	return
 }
 
-func (o *ClusterUninstaller) deleteVpcs() (err error) {
+func (o *ClusterUninstaller) deleteVpcs(logger logrus.FieldLogger) (err error) {
 	if len(o.TagResources.vpcs) <= 0 {
 		return nil
 	}
@@ -606,13 +629,13 @@ func (o *ClusterUninstaller) deleteVpcs() (err error) {
 		vpcIDs = append(vpcIDs, vpcArn.ResourceID)
 	}
 
-	o.Logger.Debugf("Start to delete VPCs %q", vpcIDs)
+	logger.WithField("vpcIDs", vpcIDs).Debug("Deleting VPCs")
 	for _, vpcID := range vpcIDs {
 		err = wait.Poll(
 			5*time.Second,
 			30*time.Second,
 			func() (bool, error) {
-				err = o.deleteVpc(vpcID)
+				err = o.deleteVpc(vpcID, logger)
 				if err == nil {
 					return true, nil
 				}
@@ -625,6 +648,7 @@ func (o *ClusterUninstaller) deleteVpcs() (err error) {
 		if err != nil {
 			return err
 		}
+		logger.WithField("vpcID", vpcID).Debug("Deleted")
 	}
 
 	err = wait.Poll(
@@ -642,11 +666,12 @@ func (o *ClusterUninstaller) deleteVpcs() (err error) {
 		},
 	)
 
+	logger.Info("VPCs deleted")
 	return
 }
 
-func (o *ClusterUninstaller) deleteVpc(vpcID string) (err error) {
-	o.Logger.Debugf("Start to delete VPC %q", vpcID)
+func (o *ClusterUninstaller) deleteVpc(vpcID string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("vpcID", vpcID).Debug("Deleting")
 	request := vpc.CreateDeleteVpcRequest()
 	request.VpcId = vpcID
 	_, err = o.vpcClient.DeleteVpc(request)
@@ -660,7 +685,7 @@ func (o *ClusterUninstaller) listVpc(vpcIDs []string) (response *vpc.DescribeVpc
 	return
 }
 
-func (o *ClusterUninstaller) deleteEips() (err error) {
+func (o *ClusterUninstaller) deleteEips(logger logrus.FieldLogger) (err error) {
 	if len(o.TagResources.eips) <= 0 {
 		return nil
 	}
@@ -670,9 +695,9 @@ func (o *ClusterUninstaller) deleteEips() (err error) {
 		eipIDs = append(eipIDs, eipArn.ResourceID)
 	}
 
-	o.Logger.Debugf("Start to delete EIPs %q", eipIDs)
+	logger.WithField("eipIDs", eipIDs).Debug("Deleting EIPs")
 	for _, eipID := range eipIDs {
-		err = o.deleteEip(eipID)
+		err = o.deleteEip(eipID, logger)
 		if err != nil {
 			return err
 		}
@@ -691,6 +716,7 @@ func (o *ClusterUninstaller) deleteEips() (err error) {
 			return false, nil
 		},
 	)
+	logger.Info("EIPs deleted")
 	return err
 }
 
@@ -701,15 +727,15 @@ func (o *ClusterUninstaller) listEip(eipIDs []string) (response *vpc.DescribeEip
 	return response, err
 }
 
-func (o *ClusterUninstaller) deleteEip(eipID string) (err error) {
-	o.Logger.Debugf("Start to delete EIP %q", eipID)
+func (o *ClusterUninstaller) deleteEip(eipID string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("eipID", eipID).Debug("Deleting")
 	request := vpc.CreateReleaseEipAddressRequest()
 	request.AllocationId = eipID
 	_, err = o.vpcClient.ReleaseEipAddress(request)
 	return
 }
 
-func (o *ClusterUninstaller) deleteNatGateways() (err error) {
+func (o *ClusterUninstaller) deleteNatGateways(logger logrus.FieldLogger) (err error) {
 	if len(o.TagResources.natgateways) <= 0 {
 		return nil
 	}
@@ -719,9 +745,9 @@ func (o *ClusterUninstaller) deleteNatGateways() (err error) {
 		natGatewayIDs = append(natGatewayIDs, natGatewayArn.ResourceID)
 	}
 
-	o.Logger.Debugf("Start to delete NAT gateways %q", natGatewayIDs)
+	logger.WithField("natGatewayIDs", natGatewayIDs).Debug("Deleting NAT gateways")
 	for _, natGatewayID := range natGatewayIDs {
-		err = o.deleteNatGateway(natGatewayID)
+		err = o.deleteNatGateway(natGatewayID, logger)
 		if err != nil {
 			return err
 		}
@@ -742,7 +768,9 @@ func (o *ClusterUninstaller) deleteNatGateways() (err error) {
 		if err != nil {
 			return err
 		}
+		logger.WithField("natGatewayID", natGatewayID).Debug("Deleted")
 	}
+	logger.Info("NAT gateways deleted")
 	return
 }
 
@@ -753,8 +781,8 @@ func (o *ClusterUninstaller) listNatGateways(natGatewayID string) (response *vpc
 	return
 }
 
-func (o *ClusterUninstaller) deleteNatGateway(natGatewayID string) (err error) {
-	o.Logger.Debugf("Start to delete NAT gateway %q", natGatewayID)
+func (o *ClusterUninstaller) deleteNatGateway(natGatewayID string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("natGatewayID", natGatewayID).Debug("Deleting")
 	request := vpc.CreateDeleteNatGatewayRequest()
 	request.NatGatewayId = natGatewayID
 	request.Force = "true"
@@ -762,7 +790,7 @@ func (o *ClusterUninstaller) deleteNatGateway(natGatewayID string) (err error) {
 	return
 }
 
-func (o *ClusterUninstaller) deleteSecurityGroups() (err error) {
+func (o *ClusterUninstaller) deleteSecurityGroups(logger logrus.FieldLogger) (err error) {
 	if len(o.TagResources.securityGroups) <= 0 {
 		return nil
 	}
@@ -772,10 +800,9 @@ func (o *ClusterUninstaller) deleteSecurityGroups() (err error) {
 		securityGroupIDs = append(securityGroupIDs, securityGroupArn.ResourceID)
 	}
 
-	o.Logger.Debugf("Start to delete security groups %q", securityGroupIDs)
-
+	logger.WithField("securityGroupIDs", securityGroupIDs).Debug("Revoking dependency for security groups")
 	for _, securityGroupID := range securityGroupIDs {
-		err = o.deleteSecurityGroupRules(securityGroupID)
+		err = o.deleteSecurityGroupRules(securityGroupID, logger)
 		if err != nil {
 			return err
 		}
@@ -799,12 +826,13 @@ func (o *ClusterUninstaller) deleteSecurityGroups() (err error) {
 		return err
 	}
 
+	logger.WithField("securityGroupIDs", securityGroupIDs).Debug("Deleting security groups")
 	for _, securityGroupID := range securityGroupIDs {
 		err = wait.Poll(
 			5*time.Second,
 			30*time.Second,
 			func() (bool, error) {
-				err = o.deleteSecurityGroup(securityGroupID)
+				err = o.deleteSecurityGroup(securityGroupID, logger)
 				if err == nil {
 					return true, nil
 				}
@@ -817,6 +845,7 @@ func (o *ClusterUninstaller) deleteSecurityGroups() (err error) {
 		if err != nil {
 			return err
 		}
+		logger.WithField("securityGroupID", securityGroupID).Debug("Deleted")
 	}
 
 	err = wait.Poll(
@@ -834,19 +863,20 @@ func (o *ClusterUninstaller) deleteSecurityGroups() (err error) {
 		},
 	)
 
+	logger.Info("Security groups deleted")
 	return
 }
 
-func (o *ClusterUninstaller) deleteSecurityGroup(securityGroupID string) (err error) {
-	o.Logger.Debugf("Start to delete security group %q", securityGroupID)
+func (o *ClusterUninstaller) deleteSecurityGroup(securityGroupID string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("securityGroupID", securityGroupID).Debug("Deleting")
 	request := ecs.CreateDeleteSecurityGroupRequest()
 	request.SecurityGroupId = securityGroupID
 	_, err = o.ecsClient.DeleteSecurityGroup(request)
 	return
 }
 
-func (o *ClusterUninstaller) deleteSecurityGroupRules(securityGroupID string) (err error) {
-	o.Logger.Debugf("Start to delete security group %q rules ", securityGroupID)
+func (o *ClusterUninstaller) deleteSecurityGroupRules(securityGroupID string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("securityGroupID", securityGroupID).Debug("Revoking")
 	response, err := o.getSecurityGroup(securityGroupID)
 	if err != nil {
 		return err
@@ -907,7 +937,8 @@ func (o *ClusterUninstaller) listEcsInstance(instanceIDs []string) (response *ec
 	return
 }
 
-func (o *ClusterUninstaller) modifyDeletionProtection(instanceID string) (err error) {
+func (o *ClusterUninstaller) modifyDeletionProtection(instanceID string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("ecsID", instanceID).Debug("Turn off the deletion protection")
 	request := ecs.CreateModifyInstanceAttributeRequest()
 	request.InstanceId = instanceID
 	request.DeletionProtection = "false"
@@ -915,14 +946,14 @@ func (o *ClusterUninstaller) modifyDeletionProtection(instanceID string) (err er
 	return
 }
 
-func (o *ClusterUninstaller) modifyECSInstancesDeletionProtection(instanceIDs []string) (err error) {
+func (o *ClusterUninstaller) modifyECSInstancesDeletionProtection(instanceIDs []string, logger logrus.FieldLogger) (err error) {
 	response, err := o.listEcsInstance(instanceIDs)
 	if err != nil {
 		return err
 	}
 	for _, instance := range response.Instances.Instance {
 		if instance.DeletionProtection {
-			err := o.modifyDeletionProtection(instance.InstanceId)
+			err := o.modifyDeletionProtection(instance.InstanceId, logger)
 			if err != nil {
 				return err
 			}
@@ -931,7 +962,7 @@ func (o *ClusterUninstaller) modifyECSInstancesDeletionProtection(instanceIDs []
 	return
 }
 
-func (o *ClusterUninstaller) deleteEcsInstances() (err error) {
+func (o *ClusterUninstaller) deleteEcsInstances(logger logrus.FieldLogger) (err error) {
 	if len(o.TagResources.ecsInstances) <= 0 {
 		return nil
 	}
@@ -941,13 +972,12 @@ func (o *ClusterUninstaller) deleteEcsInstances() (err error) {
 		instanceIDs = append(instanceIDs, instanceArn.ResourceID)
 	}
 
-	o.Logger.Debugf("Start to check and turn off ECS instances %q deletion protection", instanceIDs)
-	err = o.modifyECSInstancesDeletionProtection(instanceIDs)
+	err = o.modifyECSInstancesDeletionProtection(instanceIDs, logger)
 	if err != nil {
 		return err
 	}
 
-	o.Logger.Debugf("Start to delete ECS instances %q", instanceIDs)
+	logger.WithField("ecsIDs", instanceIDs).Debug("Deleting ECS instances")
 	request := ecs.CreateDeleteInstancesRequest()
 	request.InstanceId = &instanceIDs
 	request.Force = "true"
@@ -970,6 +1000,8 @@ func (o *ClusterUninstaller) deleteEcsInstances() (err error) {
 			return false, nil
 		},
 	)
+
+	logger.Info("ECS instances deleted")
 	return
 }
 
@@ -990,7 +1022,7 @@ func (o *ClusterUninstaller) listTagResources(tags map[string]string) (tagResour
 		return nil, err
 	}
 
-	o.Logger.Debugf("Retrieving cloud resources by tag %s", tagsString)
+	o.Logger.WithField("tags", string(tagsString)).Debug("Retrieving cloud resources")
 
 	request := tag.CreateListTagResourcesRequest()
 	request.PageSize = "1000"
@@ -1004,7 +1036,6 @@ func (o *ClusterUninstaller) listTagResources(tags map[string]string) (tagResour
 }
 
 func (o *ClusterUninstaller) unTagResource(keys *[]string, arns *[]string) (err error) {
-	o.Logger.Debugf("Untag cloud resources %q with tags %q", arns, keys)
 	request := tag.CreateUntagResourcesRequest()
 	request.TagKey = keys
 	request.ResourceARN = arns
@@ -1012,31 +1043,33 @@ func (o *ClusterUninstaller) unTagResource(keys *[]string, arns *[]string) (err 
 	return
 }
 
-func (o *ClusterUninstaller) deleteRAMRoles() (err error) {
+func (o *ClusterUninstaller) deleteRAMRoles(logger logrus.FieldLogger) (err error) {
 	roles := []string{"bootstrap", "master", "worker"}
 
 	for _, role := range roles {
 		roleName := fmt.Sprintf("%s-role-%s", o.InfraID, role)
 		policyName := fmt.Sprintf("%s-policy-%s", o.InfraID, role)
 
-		err = o.detachRAMPolicy(policyName)
+		err = o.detachRAMPolicy(policyName, logger)
 		if err != nil {
 			return err
 		}
-		err = o.deletePolicyByName(policyName)
+		err = o.deletePolicyByName(policyName, logger)
 		if err != nil {
 			return err
 		}
-		err = o.deleteRAMRole(roleName)
+		err = o.deleteRAMRole(roleName, logger)
 		if err != nil && !strings.Contains(err.Error(), "EntityNotExist.Role") {
 			return err
 		}
 	}
+
+	logger.Info("RAM roles deleted")
 	return nil
 }
 
-func (o *ClusterUninstaller) deleteRAMRole(roleName string) (err error) {
-	o.Logger.Debugf("Start to search and delete RAM role %q", roleName)
+func (o *ClusterUninstaller) deleteRAMRole(roleName string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("roleName", roleName).Debugf("Deleting")
 	request := ram.CreateDeleteRoleRequest()
 	request.Scheme = "https"
 	request.RoleName = roleName
@@ -1044,8 +1077,8 @@ func (o *ClusterUninstaller) deleteRAMRole(roleName string) (err error) {
 	return
 }
 
-func (o *ClusterUninstaller) deletePolicyByName(policyName string) (err error) {
-	err = o.deletePolicy(policyName)
+func (o *ClusterUninstaller) deletePolicyByName(policyName string, logger logrus.FieldLogger) (err error) {
+	err = o.deletePolicy(policyName, logger)
 	if err != nil && !strings.Contains(err.Error(), "EntityNotExist.Policy") {
 		return err
 	}
@@ -1076,8 +1109,8 @@ func (o *ClusterUninstaller) getPolicy(policyName string) (response *ram.GetPoli
 	return
 }
 
-func (o *ClusterUninstaller) deletePolicy(policyName string) (err error) {
-	o.Logger.Debugf("Start to search and delete RAM policy %q", policyName)
+func (o *ClusterUninstaller) deletePolicy(policyName string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("policyName", policyName).Debug("Deleting")
 	request := ram.CreateDeletePolicyRequest()
 	request.Scheme = "https"
 	request.PolicyName = policyName
@@ -1085,8 +1118,8 @@ func (o *ClusterUninstaller) deletePolicy(policyName string) (err error) {
 	return
 }
 
-func (o *ClusterUninstaller) detachRAMPolicy(policyName string) (err error) {
-	o.Logger.Debugf("Start to search RAM policy %q attachments", policyName)
+func (o *ClusterUninstaller) detachRAMPolicy(policyName string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("policyName", policyName).Debug("Searching RAM policy")
 	attachmentsResponse, err := o.listPolicyAttachments(policyName)
 	if err != nil {
 		return err
@@ -1095,9 +1128,8 @@ func (o *ClusterUninstaller) detachRAMPolicy(policyName string) (err error) {
 		return nil
 	}
 
-	o.Logger.Debugf("Start to detach RAM policy %q", policyName)
 	for _, a := range attachmentsResponse.PolicyAttachments.PolicyAttachment {
-		err = o.detachPolicy(a.PolicyName, a.PolicyType, a.PrincipalName, a.PrincipalType, a.ResourceGroupId)
+		err = o.detachPolicy(a.PolicyName, a.PolicyType, a.PrincipalName, a.PrincipalType, a.ResourceGroupId, logger)
 		if err != nil {
 			return err
 		}
@@ -1117,6 +1149,7 @@ func (o *ClusterUninstaller) detachRAMPolicy(policyName string) (err error) {
 			return false, nil
 		},
 	)
+	logger.WithField("policyName", policyName).Debug("Policy detached")
 	return
 }
 
@@ -1131,8 +1164,8 @@ func (o *ClusterUninstaller) listPolicyAttachments(policyName string) (response 
 	return response, nil
 }
 
-func (o *ClusterUninstaller) detachPolicy(policyName string, policyType string, principalName string, principalType string, resourceGroupID string) (err error) {
-	o.Logger.Debugf("Start to detach RAM policy %q with %q", policyName, principalName)
+func (o *ClusterUninstaller) detachPolicy(policyName string, policyType string, principalName string, principalType string, resourceGroupID string, logger logrus.FieldLogger) (err error) {
+	logger.WithFields(logrus.Fields{"policyName": policyName, "principalName": principalName}).Debug("Detaching policy for RAM role")
 	request := resourcemanager.CreateDetachPolicyRequest()
 	request.Scheme = "https"
 	request.PolicyName = policyName
@@ -1144,8 +1177,9 @@ func (o *ClusterUninstaller) detachPolicy(policyName string, policyType string, 
 	return
 }
 
-func (o *ClusterUninstaller) deletePrivateZones() (err error) {
+func (o *ClusterUninstaller) deletePrivateZones(logger logrus.FieldLogger) (err error) {
 	clusterDomain := o.ClusterDomain
+	logger.WithField("clusterDomain", clusterDomain).Debug("Searching private zone")
 	zoneID, err := o.getPrivateZoneID()
 	if err != nil {
 		return err
@@ -1154,7 +1188,7 @@ func (o *ClusterUninstaller) deletePrivateZones() (err error) {
 		return nil
 	}
 
-	err = o.bindZoneVpc(zoneID)
+	err = o.bindZoneVpc(zoneID, logger)
 	if err != nil {
 		return err
 	}
@@ -1179,9 +1213,8 @@ func (o *ClusterUninstaller) deletePrivateZones() (err error) {
 		return
 	}
 
-	o.Logger.Debug("Start to delete private zones")
 	// Delete a private zone does not require delete the record in advance
-	err = o.deletePrivateZone(zoneID)
+	err = o.deletePrivateZone(zoneID, logger)
 	if err != nil {
 		return err
 	}
@@ -1206,12 +1239,12 @@ func (o *ClusterUninstaller) deletePrivateZones() (err error) {
 		return err
 	}
 
+	logger.Info("Private zones deleted")
 	return nil
 }
 
 func (o *ClusterUninstaller) getPrivateZoneID() (zoneID string, err error) {
 	clusterDomain := o.ClusterDomain
-	o.Logger.Debug("Start to search private zones")
 	zones, err := o.listPrivateZone(clusterDomain)
 	if err != nil {
 		return "", err
@@ -1226,16 +1259,16 @@ func (o *ClusterUninstaller) getPrivateZoneID() (zoneID string, err error) {
 	return zones[0].ZoneId, nil
 }
 
-func (o *ClusterUninstaller) deletePrivateZone(zoneID string) (err error) {
-	o.Logger.Debugf("Start to delete private zone %q", zoneID)
+func (o *ClusterUninstaller) deletePrivateZone(zoneID string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("zoneID", zoneID).Debug("Deleting private zone")
 	request := pvtz.CreateDeleteZoneRequest()
 	request.ZoneId = zoneID
 	_, err = o.pvtzClient.DeleteZone(request)
 	return
 }
 
-func (o *ClusterUninstaller) bindZoneVpc(zoneID string) (err error) {
-	o.Logger.Debugf("Start to unbind/bind private zone %q with vpc", zoneID)
+func (o *ClusterUninstaller) bindZoneVpc(zoneID string, logger logrus.FieldLogger) (err error) {
+	logger.WithField("zoneID", zoneID).Debug("Unbinding private zone with vpc")
 	request := pvtz.CreateBindZoneVpcRequest()
 	request.ZoneId = zoneID
 	_, err = o.pvtzClient.BindZoneVpc(request)
@@ -1267,8 +1300,8 @@ func (o *ClusterUninstaller) listPrivateZoneRecords(zoneID string) ([]pvtz.Recor
 	return response.Records.Record, nil
 }
 
-func (o *ClusterUninstaller) deleteDNSRecords() (err error) {
-	o.Logger.Debug("Start to search DNS records")
+func (o *ClusterUninstaller) deleteDNSRecords(logger logrus.FieldLogger) (err error) {
+	logger.Debug("Searching DNS records")
 
 	// Get the base domain from the cluster domain. the format of cluster domain is '<cluster name>.<base domain>'.
 	domainParts := strings.Split(o.ClusterDomain, ".")
@@ -1320,11 +1353,11 @@ func (o *ClusterUninstaller) deleteDNSRecords() (err error) {
 	}
 
 	var lastErr error
-	o.Logger.Debug("Start to delete DNS records")
 	for _, record := range publicRecords {
+		recordLogger := logger.WithFields(logrus.Fields{"recordID": record.RecordId, "domain": baseDomain, "rr": record.RR})
 		key := recordSetKey(record.Type, record.RR)
 		if privateRecords[key] {
-			err = o.deleteRecord(record.RecordId)
+			err = o.deleteRecord(record.RecordId, recordLogger)
 			if err != nil {
 				privateRecords[key] = false
 				lastErr = errors.Wrap(err, fmt.Sprintf("DNS record %q", record.RecordId))
@@ -1355,11 +1388,12 @@ func (o *ClusterUninstaller) deleteDNSRecords() (err error) {
 		return err
 	}
 
+	logger.Debug("Public DNS records deleted")
 	return lastErr
 }
 
-func (o *ClusterUninstaller) deleteRecord(recordID string) error {
-	o.Logger.Debugf("Start to delete DNS record %q", recordID)
+func (o *ClusterUninstaller) deleteRecord(recordID string, logger logrus.FieldLogger) error {
+	logger.Debug("Deleting")
 	request := alidns.CreateDeleteDomainRecordRequest()
 	request.Scheme = "https"
 	request.RecordId = recordID
