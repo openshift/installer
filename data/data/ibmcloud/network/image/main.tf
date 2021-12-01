@@ -14,7 +14,6 @@ resource "ibm_cos_bucket_object" "file" {
   bucket_location = ibm_cos_bucket.images.region_location
   content_file    = var.image_filepath
   key             = basename(var.image_filepath)
-  etag            = filemd5(var.image_filepath)
 }
 
 resource "ibm_iam_authorization_policy" "policy" {
