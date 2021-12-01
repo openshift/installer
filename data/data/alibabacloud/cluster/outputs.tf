@@ -19,5 +19,5 @@ output "sg_master_id" {
 }
 
 output "control_plane_ips" {
-  value = values(module.master.master_ecs_private_ips)
+  value = module.master.master_ecs_private_ips
 }
