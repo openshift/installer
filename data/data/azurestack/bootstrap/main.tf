@@ -70,12 +70,6 @@ resource "azurestack_storage_blob" "ignition" {
   type                   = "block"
 }
 
-data "ignition_config" "redirect" {
-  replace {
-    source = "${azurestack_storage_blob.ignition.url}${data.azurestack_storage_account_sas.ignition.sas}"
-  }
-}
-
 resource "azurestack_public_ip" "bootstrap_public_ip_v4" {
   count = var.azure_private ? 0 : 1
 
@@ -125,7 +119,10 @@ resource "azurestack_virtual_machine" "bootstrap" {
     # isn't installed in RHCOS. As a result, this password is never set. It is
     # included here because it is required by the Azure ARM API.
     admin_password = "NotActuallyApplied!"
-    custom_data    = base64encode(data.ignition_config.redirect.rendered)
+
+    custom_data = base64encode(replace(var.azure_bootstrap_ignition_stub,
+      var.azure_bootstrap_ignition_url_placeholder,
+    "${azurestack_storage_blob.ignition.url}${data.azurestack_storage_account_sas.ignition.sas}"))
   }
 
   os_profile_linux_config {

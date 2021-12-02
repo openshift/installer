@@ -63,8 +63,20 @@ variable "azure_image_url" {
 
 variable "azure_arm_endpoint" {
   type        = string
-  default     = ""
   description = "The endpoint for the Azure API. Only used when installing to Azure Stack"
+}
+
+variable "azure_bootstrap_ignition_stub" {
+  type        = string
+  description = "The bootstrap ignition stub. Only used when installing to Azure Stack"
+}
+
+variable "azure_bootstrap_ignition_url_placeholder" {
+  type        = string
+  description = <<EOF
+The placeholder value in the bootstrap ignition to be replaced with the ignition URL.
+Only used when installing to Azure Stack
+EOF
 }
 
 variable "azure_subscription_id" {
