@@ -1,10 +1,11 @@
 #!/bin/sh
 
 if [ "$IS_CONTAINER" != "" ]; then
-  set -x
+  set -xe
   go generate ./pkg/types/installconfig.go
-  go generate ./pkg/rhcos/ami.go
-  set +x
+  # See https://github.com/openshift/installer/pull/5447#discussion_r762340594
+  # go generate ./pkg/rhcos/ami.go
+  set +ex
   git diff --exit-code
 else
   podman run --rm \
