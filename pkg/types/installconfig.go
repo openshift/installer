@@ -281,8 +281,8 @@ type Networking struct {
 
 	// Deprecated types, scheduled to be removed
 
-	// Deprecated name for MachineCIDRs. If set, MachineCIDRs must
-	// be empty or the first index must match.
+	// Deprecated way to configure an IP address pool for machines.
+	// Replaced by MachineNetwork which allows for multiple pools.
 	// +optional
 	DeprecatedMachineCIDR *ipnet.IPNet `json:"machineCIDR,omitempty"`
 
@@ -290,7 +290,8 @@ type Networking struct {
 	// +optional
 	DeprecatedType string `json:"type,omitempty"`
 
-	// Deprecated name for ServiceNetwork
+	// Deprecated way to configure an IP address pool for services.
+	// Replaced by ServiceNetwork which allows for multiple pools.
 	// +optional
 	DeprecatedServiceCIDR *ipnet.IPNet `json:"serviceCIDR,omitempty"`
 
