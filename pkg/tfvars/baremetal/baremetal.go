@@ -9,8 +9,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/metal3-io/baremetal-operator/pkg/bmc"
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
+	"github.com/metal3-io/baremetal-operator/pkg/hardwareutils/bmc"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/pkg/errors"
