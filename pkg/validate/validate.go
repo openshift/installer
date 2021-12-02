@@ -18,6 +18,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
+// IBMCloudClusterNameMaxLength is the maximum allowed length for a cluster name on IBM Cloud
+const IBMCloudClusterNameMaxLength = 32
+
 var (
 	// DockerBridgeCIDR is the network range that is used by default network for docker.
 	DockerBridgeCIDR = func() *net.IPNet {
@@ -145,6 +148,11 @@ func ClusterName(v string) error {
 		return err
 	}
 	return validateSubdomain(v)
+}
+
+// ClusterNameIBMMaxLength checks if the given string meets the length restrictions for IBM Cloud
+func ClusterNameIBMMaxLength(v string) error {
+	return ClusterNameMaxLength(v, IBMCloudClusterNameMaxLength)
 }
 
 // SubnetCIDR checks if the given IP net is a valid CIDR.

@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
+	"strings"
 	"testing"
 
 	"github.com/pborman/uuid"
@@ -258,6 +259,20 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^metadata.name: Invalid value: "bad-name-": a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '\.', and must start and end with an alphanumeric character \(e\.g\. 'example\.com', regex used for validation is '\[a-z0-9]\(\[-a-z0-9]\*\[a-z0-9]\)\?\(\\\.\[a-z0-9]\(\[-a-z0-9]\*\[a-z0-9]\)\?\)\*'\)$`,
+		},
+		{
+			name: "invalid ibmcloud name",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ObjectMeta.Name = strings.Repeat("abc", 11)
+				c.Platform = types.Platform{
+					IBMCloud: &ibmcloud.Platform{
+						Region: "us-south",
+					},
+				}
+				return c
+			}(),
+			expectedError: `^metadata.name: Invalid value: "` + strings.Repeat("abc", 11) + `": must be no more than 32 characters$`,
 		},
 		{
 			name: "invalid ssh key",

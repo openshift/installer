@@ -90,6 +90,27 @@ func TestClusterName1035(t *testing.T) {
 	}
 }
 
+func TestClusterNameIBMMaxLength(t *testing.T) {
+	cases := []struct {
+		name        string
+		clusterName string
+		valid       bool
+	}{
+		{"max size", "abcdefghijklmnopqrstuvwxyz012345", true},
+		{"too long", "abcdefghijklmnopqrstuvwxyz0123456", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ClusterNameIBMMaxLength(tc.clusterName)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestVCenter(t *testing.T) {
 	cases := []struct {
 		name        string

@@ -87,6 +87,13 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		// FIX-ME: As soon bz#1915122 get resolved remove the limitation of 14 chars for the clustername
 		nameErr = validate.ClusterNameMaxLength(c.ObjectMeta.Name, 14)
 	}
+	if c.Platform.IBMCloud != nil {
+		ibmNameErr := validate.ClusterNameIBMMaxLength(c.ObjectMeta.Name)
+		// Override cluster name error if name does not meet IBM Cloud restrictions
+		if ibmNameErr != nil {
+			nameErr = ibmNameErr
+		}
+	}
 	if nameErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, nameErr.Error()))
 	}
