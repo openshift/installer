@@ -1,5 +1,7 @@
 locals {
   description = "Created By OpenShift Installer"
+  bootstrap_key = keys(var.vcenter_region_zone_map)[0]
+  region = var.vcenter_region_zone_map[local.bootstrap_key].region
 }
 
 provider "vsphere" {
@@ -11,12 +13,14 @@ provider "vsphere" {
 
 resource "vsphere_virtual_machine" "vm_bootstrap" {
   name             = "${var.cluster_id}-bootstrap"
-  resource_pool_id = var.resource_pool
-  datastore_id     = var.datastore
+  resource_pool_id = var.cluster[local.bootstrap_key].resource_pool_id
+  datastore_id     = var.datastore[local.bootstrap_key].id
   num_cpus         = 4
   memory           = 16384
-  guest_id         = var.guest_id
-  folder           = var.folder
+  guest_id         = var.template[local.bootstrap_key].guest_id
+
+
+  folder           = var.folder[local.region]
   enable_disk_uuid = "true"
   annotation       = local.description
 
@@ -24,18 +28,18 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
   wait_for_guest_net_routable = false
 
   network_interface {
-    network_id = var.network
+    network_id = var.template[local.bootstrap_key].network_interfaces.0.network_id
   }
 
   disk {
     label            = "disk0"
     size             = 120
-    eagerly_scrub    = var.scrub_disk
-    thin_provisioned = var.thin_disk
+    eagerly_scrub    = var.template[local.bootstrap_key].disks.0.eagerly_scrub
+    thin_provisioned = var.template[local.bootstrap_key].disks.0.thin_provisioned
   }
 
   clone {
-    template_uuid = var.template
+    template_uuid = var.template[local.bootstrap_key].id
   }
 
   extra_config = {

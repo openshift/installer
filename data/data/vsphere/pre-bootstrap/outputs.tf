@@ -1,37 +1,29 @@
-output "resource_pool" {
-  value = data.vsphere_resource_pool.resource_pool.id
+output "datacenter" {
+  value = data.vsphere_datacenter.datacenter_zoning
 }
 
 output "datastore" {
-  value = data.vsphere_datastore.datastore.id
+  value = data.vsphere_datastore.datastore_zoning
+}
+
+output "cluster" {
+  value = data.vsphere_compute_cluster.cluster_zoning
 }
 
 output "folder" {
-  value = local.folder
+  value = local.folders
 }
 
-output "network" {
-  value = data.vsphere_network.network.id
-}
-
-output "datacenter" {
-  value = data.vsphere_datacenter.datacenter.id
+output "ovaimport" {
+  value = vsphereprivate_import_ova.import
 }
 
 output "template" {
-  value = data.vsphere_virtual_machine.template.id
+  value = data.vsphere_virtual_machine.template
 }
 
-output "guest_id" {
-  value = data.vsphere_virtual_machine.template.guest_id
-}
-
-output "thin_disk" {
-  value = data.vsphere_virtual_machine.template.disks.0.thin_provisioned
-}
-
-output "scrub_disk" {
-  value = data.vsphere_virtual_machine.template.disks.0.eagerly_scrub
+output "tags" {
+  value = [vsphere_tag.tag.id]
 }
 
 output "cluster_domain" {
@@ -42,6 +34,6 @@ output "cluster_id" {
   value = var.cluster_id
 }
 
-output "tags" {
-  value = [vsphere_tag.tag.id]
+output "vcenter_region_zone_map" {
+  value = local.vcenter_region_zone_map
 }

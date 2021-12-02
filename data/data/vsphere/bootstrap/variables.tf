@@ -1,39 +1,39 @@
-variable "resource_pool" {
-  type = string
-}
-
-variable "folder" {
-  type = string
+variable "datacenter" {
+  type = map 
 }
 
 variable "datastore" {
-  type = string
+  type = map 
 }
 
-variable "network" {
-  type = string
+variable "cluster" {
+  type = map 
 }
 
-variable "datacenter" {
-  type = string
+variable "folder" {
+  type = map 
+}
+
+variable "ovaimport" {
+  type = map 
 }
 
 variable "template" {
-  type = string
-}
-
-variable "guest_id" {
-  type = string
+  type = map 
 }
 
 variable "tags" {
-  type = list
+  type = list 
 }
 
-variable "thin_disk" {
-  type = bool
+variable "cluster_domain" {
+  type = string 
 }
 
-variable "scrub_disk" {
-  type = bool
+variable "cluster_id" {
+type = string
+}
+
+variable "vcenter_region_zone_map" {
+  type = map 
 }

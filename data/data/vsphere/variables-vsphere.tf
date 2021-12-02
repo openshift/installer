@@ -85,3 +85,8 @@ variable "vsphere_disk_type" {
   type    = string
   default = "thick"
 }
+
+variable "vsphere_vcenters" {
+ type = list
+ default = []
+}
