@@ -1,5 +1,4 @@
 locals {
-  folders = { for k, v in vsphere_folder.folder : k => v.path }
   vcenter_region_zone_flatten = flatten([
     for v in var.vsphere_vcenters : [
       for r in v.regions : [
@@ -22,11 +21,21 @@ locals {
     for obj in local.vcenter_region_zone_flatten : "${obj.vsphere_server}-${obj.region}-${obj.zone}" => obj
   }
 
-/*
-  region_map = {
-    for obj in local.vcenter_region_zone_flatten : "${obj.vsphere_server}-${obj.region}-${obj.zone}" => obj.
+  vcenter_region_flatten = flatten([
+    for v in var.vsphere_vcenters : [
+      for r in v.regions : {
+        region         = r.name
+        datacenter     = r.datacenter
+        vsphere_server = v.server
+        user           = v.user
+        password       = v.password
+      }
+    ]
+  ])
+
+  vcenter_region_map = {
+    for obj in local.vcenter_region_flatten : "${obj.vsphere_server}-${obj.region}" => obj
   }
-*/
 }
 
 provider "vsphere" {
@@ -42,31 +51,27 @@ provider "vsphereprivate" {
   allow_unverified_ssl = false
 }
 
-
-// TODO: can we keep this consistant?
-// with local.vcenter_region_zone_map
-
 data "vsphere_datacenter" "datacenter_zoning" {
-  for_each = var.regions_map
+  for_each      = local.vcenter_region_map
   name     = each.value.datacenter
 }
 
 data "vsphere_compute_cluster" "cluster_zoning" {
   for_each      = local.vcenter_region_zone_map
   name          = each.value.cluster
-  datacenter_id = data.vsphere_datacenter.datacenter_zoning[each.value.region].id
+  datacenter_id = data.vsphere_datacenter.datacenter_zoning["${each.value.vsphere_server}-${each.value.region}"].id
 }
 
 data "vsphere_datastore" "datastore_zoning" {
   for_each      = local.vcenter_region_zone_map
   name          = each.value.datastore
-  datacenter_id = data.vsphere_datacenter.datacenter_zoning[each.value.region].id
+  datacenter_id = data.vsphere_datacenter.datacenter_zoning["${each.value.vsphere_server}-${each.value.region}"].id
 }
 
 data "vsphere_virtual_machine" "template" {
   for_each      = local.vcenter_region_zone_map
   name          = vsphereprivate_import_ova.import[each.key].name
-  datacenter_id = data.vsphere_datacenter.datacenter_zoning[each.value.region].id
+  datacenter_id = data.vsphere_datacenter.datacenter_zoning["${each.value.vsphere_server}-${each.value.region}"].id
 }
 
 resource "vsphereprivate_import_ova" "import" {
@@ -81,8 +86,6 @@ resource "vsphereprivate_import_ova" "import" {
   folder     = local.folders[each.value.region]
   tag        = vsphere_tag.tag.id
 }
-
-
 
 resource "vsphere_tag_category" "region_tag_category" {
   name        = "openshift-region"
@@ -105,26 +108,26 @@ resource "vsphere_tag_category" "zone_tag_category" {
 }
 
 resource "vsphere_tag" "regions_tags" {
-  for_each    = var.regions_map
-  name        = each.key
+  for_each    = local.vcenter_region_map
+  name        = each.key.region
   category_id = vsphere_tag_category.region_tag_category.id
   description = "Added by openshift-install do not remove"
 }
 
-resource "vsphere_tag" "zones_tags" {
-  for_each    = var.zones_map
-  name        = each.key
-  category_id = vsphere_tag_category.zone_tag_category.id
-  description = "Added by openshift-install do not remove"
-}
-
 resource "vsphereprivate_tag_attach" "regions_datacenters" {
-  for_each = var.regions_map
+  for_each    = local.vcenter_region_map
 
   objectid   = data.vsphere_datacenter.datacenter_zoning[each.key].id
   objecttype = "Datacenter"
 
   tagid = vsphere_tag.regions_tags[each.key].id
+}
+
+resource "vsphere_tag" "zones_tags" {
+  for_each = local.vcenter_region_zone_map
+  name        = each.value.zone
+  category_id = vsphere_tag_category.zone_tag_category.id
+  description = "Added by openshift-install do not remove"
 }
 
 resource "vsphereprivate_tag_attach" "zones_clusters" {
@@ -133,9 +136,8 @@ resource "vsphereprivate_tag_attach" "zones_clusters" {
   objectid   = data.vsphere_compute_cluster.cluster_zoning[each.key].id
   objecttype = "ClusterComputeResource"
 
-  tagid = vsphere_tag.zones_tags[each.value.zone].id
+  tagid = vsphere_tag.zones_tags[each.key].id
 }
-
 
 resource "vsphere_tag_category" "category" {
   name        = "openshift-${var.cluster_id}"
@@ -157,11 +159,19 @@ resource "vsphere_tag" "tag" {
   description = "Added by openshift-install do not remove"
 }
 
-resource "vsphere_folder" "folder" {
-  for_each = var.regions_map
+resource "vsphere_folder" "vm_folders" {
+  for_each = local.vcenter_region_map
 
-  path          = "${var.vsphere_folder}-${each.value.name}"
+  path          = "${var.vsphere_folder}-${each.value.region}"
   type          = "vm"
   datacenter_id = data.vsphere_datacenter.datacenter_zoning[each.key].id
   tags          = [vsphere_tag.tag.id]
 }
+
+data "vsphere_folder" "folder" {
+  for_each = local.vcenter_region_zone_map
+  path = "${each.value.datacenter}/vm/${var.vsphere_folder}-${each.value.region}"
+}
+
+
+

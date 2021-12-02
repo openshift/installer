@@ -1,6 +1,7 @@
 locals {
   description = "Created By OpenShift Installer"
   zone_keys = keys(var.vcenter_region_zone_map)
+
 }
 
 provider "vsphere" {
@@ -16,9 +17,8 @@ resource "vsphere_virtual_machine" "vm_master" {
 
   name                 = "${var.cluster_id}-master-${count.index}"
 
-// TODO: This will need to change to whatever is defined in
-// in the new platform vcenters,region,zone section
-
+  // TODO: This needs to be changed to a correct existing resource pool
+  // TODO: as defined
   resource_pool_id     = var.cluster[local.zone_keys[count.index]].resource_pool_id
   datastore_id         = var.datastore[local.zone_keys[count.index]].id
 
@@ -28,9 +28,8 @@ resource "vsphere_virtual_machine" "vm_master" {
 
   guest_id             = var.template[local.zone_keys[count.index]].guest_id
 
-// TODO: Change the key if possible.
 
-  folder               = "test-cluster-v79xn-us-east-2"
+  folder               = var.folder[local.zone_keys[count.index]].path
   enable_disk_uuid     = "true"
   annotation           = local.description
 
@@ -40,12 +39,12 @@ resource "vsphere_virtual_machine" "vm_master" {
   network_interface {
 
 // TODO: don't do this...Use Robert's fix
+// TODO: unless we cheat ;-)
     network_id = var.template[local.zone_keys[count.index]].network_interfaces.0.network_id
   }
 
   disk {
     label            = "disk0"
-// This needs to come from the machinepool
     size             = var.vsphere_control_plane_disk_gib
     eagerly_scrub    = var.template[local.zone_keys[count.index]].disks.0.eagerly_scrub
     thin_provisioned = var.template[local.zone_keys[count.index]].disks.0.thin_provisioned

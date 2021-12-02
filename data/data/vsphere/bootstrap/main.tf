@@ -20,7 +20,7 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
   guest_id         = var.template[local.bootstrap_key].guest_id
 
 
-  folder           = var.folder[local.region]
+  folder           = var.folder[local.bootstrap_key].path
   enable_disk_uuid = "true"
   annotation       = local.description
 

@@ -11,7 +11,7 @@ output "cluster" {
 }
 
 output "folder" {
-  value = local.folders
+  value = data.vsphere_folder.folder
 }
 
 output "ovaimport" {
