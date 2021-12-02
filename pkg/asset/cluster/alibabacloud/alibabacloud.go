@@ -8,8 +8,7 @@ import (
 // Metadata converts an install configuration to Alibaba Cloud metadata.
 func Metadata(config *types.InstallConfig) *alibabacloud.Metadata {
 	return &alibabacloud.Metadata{
-		Region:          config.Platform.AlibabaCloud.Region,
-		ResourceGroupID: config.Platform.AlibabaCloud.ResourceGroupID,
-		ClusterDomain:   config.ClusterDomain(),
+		Region:        config.Platform.AlibabaCloud.Region,
+		ClusterDomain: config.ClusterDomain(),
 	}
 }
