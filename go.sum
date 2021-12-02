@@ -1602,6 +1602,8 @@ github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2 h1:HxvKVrzgLpfuz
 github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2/go.mod h1:LnGKkV2HJUeJrIMMPK+/Ka6F+5JIy45mbEj9VpoHHqc=
 github.com/openshift/terraform-provider-vsphere v1.24.3-openshift h1:tG83XgfFwH4OLONUeEsxh8JPG9QRrqKLoPzkPmLye/Y=
 github.com/openshift/terraform-provider-vsphere v1.24.3-openshift/go.mod h1:FgcsrcPpnjLUO4XWpudYiBho9ETIXYRxVXWV7R3Iz6k=
+github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20211201190933-7b79c6d1afc8 h1:0cPSCz8rgQKLRIQDdKxpWTQ19nMlzXphqxuMw2j4nz0=
+github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20211201190933-7b79c6d1afc8/go.mod h1:QxehqxV8Swl+O2JXJUdS6orHYJXWUEr4HFfYH5JV9ew=
 github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492/go.mod h1:Ngi6UdF0k5OKD5t5wlmGhe/EDKPoUM3BXZSSfIuJbis=
 github.com/opentracing/basictracer-go v1.0.0/go.mod h1:QfBfYuafItcjQuMwinw9GhYKwFXS9KnPs5lxoYwgW74=
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
@@ -1880,8 +1882,6 @@ github.com/terraform-provider-openstack/terraform-provider-openstack v1.37.0 h1:
 github.com/terraform-provider-openstack/terraform-provider-openstack v1.37.0/go.mod h1:tPCEc/DdR9fVX9rmcJiqa85oTG7BUb5Xc0bSY/aOTf8=
 github.com/terraform-providers/terraform-provider-azuread v0.9.0 h1:XLzFgVHakq6qjJ2L0o/tN2yHu/hT4vIW9sKtejr7gPs=
 github.com/terraform-providers/terraform-provider-azuread v0.9.0/go.mod h1:sSDzB/8CD639+yWo5lZf+NJvGSYQBSS6z+GoET9IrzE=
-github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160 h1:Ghc1PD9TckxsdyP1BG+dM8q84cNNyL93qRmYq/PVNow=
-github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160/go.mod h1:QxehqxV8Swl+O2JXJUdS6orHYJXWUEr4HFfYH5JV9ew=
 github.com/terraform-providers/terraform-provider-ignition v1.2.1 h1:dlRZGcokysc9Z2gTVm+neSghAMv9/2WA/pYiGZ6JHCg=
 github.com/terraform-providers/terraform-provider-ignition v1.2.1/go.mod h1:tUlGVBhkz+z79iffnt7vKISS199MdPd85+l6SNpoS/s=
 github.com/terraform-providers/terraform-provider-local v1.4.0 h1:n0CNTMjBfCC5R6LMyuqxJRlgWPUqx0mvSU+ZIhg8EN0=
