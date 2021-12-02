@@ -23,12 +23,17 @@ module "resource_group" {
 }
 
 module "vpc" {
-  source              = "./vpc"
-  vpc_id              = var.ali_vpc_id
-  vswitch_ids         = var.ali_vswitch_ids
-  cluster_id          = var.cluster_id
-  region_id           = var.ali_region_id
-  zone_ids            = distinct(var.ali_zone_ids)
+  source      = "./vpc"
+  vpc_id      = var.ali_vpc_id
+  vswitch_ids = var.ali_vswitch_ids
+  cluster_id  = var.cluster_id
+  region_id   = var.ali_region_id
+  zone_ids = distinct(
+    concat(
+      var.ali_master_availability_zone_ids,
+      var.ali_worker_availability_zone_ids,
+    ),
+  )
   nat_gateway_zone_id = var.ali_nat_gateway_zone_id
   resource_group_id   = module.resource_group.resource_group_id
   vpc_cidr_block      = var.machine_v4_cidrs[0]
@@ -59,7 +64,7 @@ module "master" {
   cluster_id           = var.cluster_id
   resource_group_id    = module.resource_group.resource_group_id
   vpc_id               = module.vpc.vpc_id
-  zone_ids             = var.ali_zone_ids
+  zone_ids             = var.ali_master_availability_zone_ids
   az_to_vswitch_id     = module.vpc.az_to_vswitch_id
   sg_id                = module.vpc.sg_master_id
   slb_ids              = module.vpc.slb_ids
