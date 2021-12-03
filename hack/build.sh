@@ -16,11 +16,11 @@ fi
 # build terraform binaries before setting environment variables since it messes up make
 # XXX: need to figure out a good way of determining of dependencies have changed
 #env TFBINDIR="${PWD}/pkg/terraform/exec/plugins/bin" make -j $(nproc) -C terraform all
-#if [ ! -f "${PWD}/terraform/bin.tbz2" ]; then
-#	env TFBINDIR="${PWD}/terraform/bin" make -j $(nproc) -C terraform all
-#	tar -C "${PWD}/terraform" -cjvf terraform/bin.tbz2 bin
-#	cp "${PWD}/terraform/bin.tbz2" "${PWD}/pkg/terraform/bin.tbz2"
-#fi
+if [ ! -f "${PWD}/terraform/bin.tbz2" ]; then
+	env TFBINDIR="${PWD}/terraform/bin" make -j $(nproc) -C terraform all
+	tar -C "${PWD}/terraform" -cjvf terraform/bin.tbz2 bin
+	cp "${PWD}/terraform/bin.tbz2" "${PWD}/pkg/terraform/bin.tbz2"
+fi
 
 MODE="${MODE:-release}"
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
