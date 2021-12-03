@@ -1,16 +1,14 @@
 package terraform
 
 import (
+	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/data"
-	"github.com/openshift/installer/pkg/lineprinter"
-	texec "github.com/openshift/installer/pkg/terraform/exec"
 	prov "github.com/openshift/installer/pkg/terraform/providers"
 )
 
@@ -54,22 +52,20 @@ func unpackAndInit(dir string, platform string, target string, providers []prov.
 		return errors.Wrap(err, "failed to setup embedded Terraform plugins")
 	}
 
-	lpDebug := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Debug}).Print}
-	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
-	defer lpDebug.Close()
-	defer lpError.Close()
-
-	os.Setenv("TF_CLI_CONFIG_FILE", filepath.Join(dir, "terraform.rc"))
-	os.Setenv("TERRAFORM_LOCK_FILE_PATH", dir)
-
-	args := []string{
-		fmt.Sprintf("-plugin-dir=%s", filepath.Join(dir, "plugins")),
+	tf, err := newTFExec(dir)
+	if err != nil {
+		return errors.Wrap(err, "failed to create a new tfexec")
 	}
-	args = append(args, dir)
-	if exitCode := texec.Init(dir, args, lpDebug, lpError); exitCode != 0 {
-		return errors.New("failed to initialize Terraform")
-	}
-	return nil
+
+	// Explicitly specify the CLI config file to use so that we control the providers that are used.
+	tf.SetEnv(map[string]string{
+		"TF_CLI_CONFIG_FILE": filepath.Join(dir, "terraform.rc"),
+	})
+
+	return errors.Wrap(
+		tf.Init(context.Background(), tfexec.PluginDir(filepath.Join(dir, "plugins"))),
+		"failed doing terraform init",
+	)
 }
 
 func setupEmbeddedPlugins(dir string, providers []prov.Provider) error {

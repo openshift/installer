@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/terraform"
@@ -30,7 +31,10 @@ var PlatformStages = []terraform.Stage{
 	),
 }
 
-func removeFromLoadBalancers(s stages.SplitStage, directory string, extraArgs []string) error {
-	_, err := terraform.Apply(directory, gcptypes.Name, s, append(extraArgs, "-var=gcp_bootstrap_lb=false")...)
+// XXX: extraOpts is of type tfexec.DestroyOption, but really should be
+// tfexec.ApplyOption. Maybe we should provide custom Init/Apply/Destroy
+// function options?
+func removeFromLoadBalancers(s stages.SplitStage, directory string, extraOpts []tfexec.DestroyOption) error {
+	_, err := terraform.Apply(directory, gcptypes.Name, s, tfexec.Var("gcp_bootstrap_lb=false"))
 	return errors.Wrap(err, "failed disabling bootstrap load balancing")
 }

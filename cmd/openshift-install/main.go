@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -13,8 +12,6 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/klog"
 	klogv2 "k8s.io/klog/v2"
-
-	"github.com/openshift/installer/pkg/terraform/exec/plugins"
 )
 
 var (
@@ -37,15 +34,6 @@ func main() {
 	klogv2.InitFlags(&fsv2)
 	fsv2.Set("stderrthreshold", "4")
 	klogv2.SetOutput(ioutil.Discard)
-
-	if len(os.Args) > 0 {
-		base := filepath.Base(os.Args[0])
-		cname := strings.TrimSuffix(base, filepath.Ext(base))
-		if pluginRunner, ok := plugins.KnownPlugins[cname]; ok {
-			pluginRunner()
-			return
-		}
-	}
 
 	installerMain()
 }

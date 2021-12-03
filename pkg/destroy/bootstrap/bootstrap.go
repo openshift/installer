@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
@@ -63,16 +64,16 @@ func Destroy(dir string) (err error) {
 			return err
 		}
 
-		extraArgs := make([]string, len(varFiles))
+		extraOpts := make([]tfexec.DestroyOption, len(varFiles))
 		for i, filename := range varFiles {
 			allowMissing := filename == cluster.TfPlatformVarsFileName // platform may not need platform-specific Terraform variables
 			if err := copyToTemp(filename, dir, tempDir, allowMissing); err != nil {
 				return err
 			}
-			extraArgs[i] = fmt.Sprintf("-var-file=%s", filepath.Join(tempDir, filename))
+			extraOpts[i] = tfexec.VarFile(filepath.Join(tempDir, filename))
 		}
 
-		if err := stage.Destroy(tempDir, extraArgs); err != nil {
+		if err := stage.Destroy(tempDir, extraOpts); err != nil {
 			return err
 		}
 
