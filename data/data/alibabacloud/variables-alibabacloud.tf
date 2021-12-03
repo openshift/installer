@@ -47,8 +47,7 @@ variable "ali_system_disk_size" {
 
 variable "ali_system_disk_category" {
   type        = string
-  description = "The system disk category of the master ECS.Valid values are cloud_efficiency, cloud_ssd, cloud_essd. Default value is cloud_essd."
-  default     = "cloud_essd"
+  description = "The system disk category of the master ECS. Valid values are cloud_efficiency, cloud_ssd, cloud_essd."
 }
 
 variable "ali_extra_tags" {
@@ -59,7 +58,6 @@ variable "ali_extra_tags" {
 
 Example: `{ "key" = "value", "foo" = "bar" }`
 EOF
-  default = {}
 }
 
 variable "ali_ignition_bucket" {

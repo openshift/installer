@@ -26,6 +26,5 @@ variable "resource_group_id" {
 
 variable "tags" {
   type        = map(string)
-  default     = {}
   description = "Tags to be applied to created resources."
 }
