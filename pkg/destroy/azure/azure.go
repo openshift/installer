@@ -468,17 +468,11 @@ func deleteResourceGroup(ctx context.Context, client resources.GroupsClient, log
 	defer cancel()
 
 	delFuture, err := client.Delete(ctx, name)
-	if err != nil {
-		if wasNotFound(delFuture.Response()) {
-			logger.Debug("already deleted")
-			return nil
-		}
-		return err
+	if err == nil {
+		err = delFuture.WaitForCompletionRef(ctx, client.Client)
 	}
-
-	err = delFuture.WaitForCompletionRef(ctx, client.Client)
 	if err != nil {
-		if wasNotFound(delFuture.Response()) {
+		if isNotFoundError(err) {
 			logger.Debug("already deleted")
 			return nil
 		}
@@ -490,6 +484,23 @@ func deleteResourceGroup(ctx context.Context, client resources.GroupsClient, log
 
 func wasNotFound(resp *http.Response) bool {
 	return resp != nil && resp.StatusCode == http.StatusNotFound
+}
+
+func isNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var dErr autorest.DetailedError
+	if errors.As(err, &dErr) {
+		switch statusCode := dErr.StatusCode.(type) {
+		case int:
+			if statusCode == http.StatusNotFound {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func isAuthError(err error) bool {
