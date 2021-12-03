@@ -1945,7 +1945,7 @@ github.com/terraform-providers/terraform-provider-azurerm/version
 ## explicit
 github.com/terraform-providers/terraform-provider-azurestack/azurestack
 github.com/terraform-providers/terraform-provider-azurestack/azurestack/helpers/azure
-# github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
+# github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160 => github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20211201190933-7b79c6d1afc8
 ## explicit
 github.com/terraform-providers/terraform-provider-google/google
 github.com/terraform-providers/terraform-provider-google/version
