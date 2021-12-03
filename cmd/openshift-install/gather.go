@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
+	"github.com/openshift/installer/pkg/terraform"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
 )
 
@@ -59,6 +60,9 @@ func newGatherBootstrapCmd() *cobra.Command {
 		Use:   "bootstrap",
 		Short: "Gather debugging data for a failing-to-bootstrap control plane",
 		Args:  cobra.ExactArgs(0),
+		PreRun: func(_ *cobra.Command, _ []string) {
+			terraform.PluginInit()
+		},
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()

@@ -34,6 +34,7 @@ import (
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
+	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
@@ -96,6 +97,9 @@ var (
 		command: &cobra.Command{
 			Use:   "cluster",
 			Short: "Create an OpenShift cluster",
+			PreRun: func(_ *cobra.Command, _ []string) {
+				terraform.PluginInit()
+			},
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 			PostRun: func(_ *cobra.Command, _ []string) {

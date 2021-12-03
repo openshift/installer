@@ -23,6 +23,7 @@ import (
 	quotaasset "github.com/openshift/installer/pkg/destroy/quota"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 	"github.com/openshift/installer/pkg/metrics/timer"
+	"github.com/openshift/installer/pkg/terraform"
 )
 
 func newDestroyCmd() *cobra.Command {
@@ -115,6 +116,9 @@ func newDestroyBootstrapCmd() *cobra.Command {
 		Use:   "bootstrap",
 		Short: "Destroy the bootstrap resources",
 		Args:  cobra.ExactArgs(0),
+		PreRun: func(_ *cobra.Command, _ []string) {
+			terraform.PluginInit()
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
