@@ -2,138 +2,89 @@
 package exec
 
 import (
-	"bufio"
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"io"
-	"io/ioutil"
-	"log"
 	"os"
-	"os/signal"
 	"path/filepath"
-
-	"github.com/hashicorp/go-plugin"
-	"github.com/hashicorp/logutils"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
-	"github.com/hashicorp/terraform/command"
-	"github.com/mitchellh/cli"
 )
 
-type cmdFunc func(command.Meta) cli.Command
-
-var commands = map[string]cmdFunc{
-	"apply": func(meta command.Meta) cli.Command {
-		return &command.ApplyCommand{Meta: meta}
-	},
-	"destroy": func(meta command.Meta) cli.Command {
-		return &command.ApplyCommand{Meta: meta, Destroy: true}
-	},
-	"init": func(meta command.Meta) cli.Command {
-		return &command.InitCommand{Meta: meta}
-	},
+func getPluginPath() string {
+	userCacheDir, _ := os.UserCacheDir()
+	return filepath.Join(userCacheDir, "openshift-installer", "terraform")
 }
 
-func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int {
-	lf := ioutil.Discard
-	if level := logging.LogLevel(); level != "" {
-		lf = &logutils.LevelFilter{
-			Levels:   logging.ValidLevels,
-			MinLevel: logutils.LogLevel(level),
-			Writer:   stdout,
-		}
-	}
-	log.SetOutput(lf)
-	defer log.SetOutput(os.Stderr)
+func getPluginBinPath() string {
+	return filepath.Join(getPluginPath(), "bin")
+}
 
-	// Make sure we clean up any managed plugins at the end of this
-	defer plugin.CleanupClients()
-
-	sdCh, cancel := makeShutdownCh()
-	defer cancel()
-
-	pluginDirs, err := globalPluginDirs(dir)
+func getTerraformPath() string {
+	terraformPath := filepath.Join(getPluginBinPath(), "terraform")
+	_, err := os.Stat(terraformPath)
 	if err != nil {
-		fmt.Fprintf(stderr, "Error discovering plugin directories for Terraform: %v", err)
-		return 1
-	}
-	meta := command.Meta{
-		Color:            false,
-		GlobalPluginDirs: pluginDirs,
-		Ui: &supressedUI{
-			Ui: &cli.BasicUi{
-				Writer:      stdout,
-				ErrorWriter: stderr,
-			},
-		},
-
-		OverrideDataDir: filepath.Join(dir, ".terraform"),
-
-		ShutdownCh: sdCh,
+		panic(fmt.Sprintf("Failed to find terraform: %s", err))
 	}
 
-	f := commands[cmd]
-
-	oldStderr := os.Stderr
-	outR, outW, err := os.Pipe()
-	if err != nil {
-		fmt.Fprintf(stderr, "error creating Pipe: %v", err)
-		return 1
-	}
-	os.Stderr = outW
-	go func() {
-		scanner := bufio.NewScanner(outR)
-		for scanner.Scan() {
-			fmt.Fprintf(lf, "%s\n", scanner.Bytes())
-		}
-	}()
-	defer func() {
-		outW.Close()
-		os.Stderr = oldStderr
-	}()
-	return f(meta).Run(args)
+	return terraformPath
 }
 
 // Apply is wrapper around `terraform apply` subcommand.
-func Apply(datadir string, args []string, stdout, stderr io.Writer) int {
-	return runner("apply", datadir, args, stdout, stderr)
+func Apply(datadir string, stdout, stderr io.Writer, opts ...tfexec.ApplyOption) int {
+	tfPath := getTerraformPath()
+	tf, err := tfexec.NewTerraform(datadir, tfPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "Failed: new terraform: %s\n", err)
+	}
+
+	tf.SetStdout(stdout)
+	tf.SetStderr(stderr)
+
+	err = tf.Apply(context.Background(), opts...)
+	if err != nil {
+		fmt.Fprintf(stderr, "Failed: terraform apply: %s\n", err)
+		return 1
+	}
+
+	return 0
 }
 
 // Destroy is wrapper around `terraform destroy` subcommand.
-func Destroy(datadir string, args []string, stdout, stderr io.Writer) int {
-	return runner("destroy", datadir, args, stdout, stderr)
+func Destroy(datadir string, stdout, stderr io.Writer, opts ...tfexec.DestroyOption) int {
+	tfPath := getTerraformPath()
+	tf, err := tfexec.NewTerraform(datadir, tfPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "Failed: new terraform: %s\n", err)
+	}
+
+	tf.SetStdout(stdout)
+	tf.SetStderr(stderr)
+
+	err = tf.Destroy(context.Background(), opts...)
+	if err != nil {
+		fmt.Fprintf(stderr, "Failed: terraform destroy: %s\n", err)
+		return 1
+	}
+
+	return 0
 }
 
 // Init is wrapper around `terraform init` subcommand.
-func Init(datadir string, args []string, stdout, stderr io.Writer) int {
-	return runner("init", datadir, args, stdout, stderr)
-}
+func Init(datadir string, stdout, stderr io.Writer, opts ...tfexec.InitOption) int {
+	tfPath := getTerraformPath()
+	tf, err := tfexec.NewTerraform(datadir, tfPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "Failed: new terraform: %s\n", err)
+	}
 
-// makeShutdownCh creates an interrupt listener and returns a channel.
-// A message will be sent on the channel for every interrupt received.
-func makeShutdownCh() (<-chan struct{}, func()) {
-	resultCh := make(chan struct{})
-	signalCh := make(chan os.Signal, 4)
+	tf.SetStdout(stdout)
+	tf.SetStderr(stderr)
 
-	handle := []os.Signal{}
-	handle = append(handle, ignoreSignals...)
-	handle = append(handle, forwardSignals...)
+	err = tf.Init(context.Background(), opts...)
+	if err != nil {
+		fmt.Fprintf(stderr, "Failed: terraform init: %s\n", err)
+		return 1
+	}
 
-	signal.Notify(signalCh, handle...)
-	go func() {
-		for {
-			<-signalCh
-			resultCh <- struct{}{}
-		}
-	}()
-
-	return resultCh, func() { signal.Reset(handle...) }
-}
-
-// suppressedUI suppresses the Ui's warnings from error to
-// info.
-type supressedUI struct {
-	cli.Ui
-}
-
-func (sui *supressedUI) Warn(msg string) {
-	sui.Ui.Info(msg)
+	return 0
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
@@ -106,15 +107,16 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		}
 		defer os.RemoveAll(tmpDir)
 
-		var extraArgs []string
+		var extraOpts []tfexec.ApplyOption
 		for _, file := range tfvarsFiles {
 			if err := ioutil.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0600); err != nil {
 				return err
 			}
-			extraArgs = append(extraArgs, fmt.Sprintf("-var-file=%s", filepath.Join(tmpDir, file.Filename)))
+			extraOpts = append(extraOpts, tfexec.VarFile(filepath.Join(tmpDir, file.Filename)))
+
 		}
 
-		outputs, err := c.applyTerraform(tmpDir, platform, stage, extraArgs)
+		outputs, err := c.applyTerraform(tmpDir, platform, stage, extraOpts...)
 		if err != nil {
 			return err
 		}
@@ -144,11 +146,11 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 	return false, nil
 }
 
-func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform.Stage, extraArgs []string) (*asset.File, error) {
+func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform.Stage, opts ...tfexec.ApplyOption) (*asset.File, error) {
 	timer.StartTimer(stage.Name())
 	defer timer.StopTimer(stage.Name())
 
-	stateFile, err := terraform.Apply(tmpDir, platform, stage, extraArgs...)
+	stateFile, err := terraform.Apply(tmpDir, platform, stage, opts...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create cluster")
 		if stateFile == "" {
