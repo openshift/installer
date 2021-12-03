@@ -12,7 +12,7 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/ghodss/yaml"
 	"github.com/go-playground/validator/v10"
-	"github.com/metal3-io/baremetal-operator/pkg/bmc"
+	"github.com/metal3-io/baremetal-operator/pkg/hardwareutils/bmc"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
