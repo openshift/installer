@@ -1,3 +1,6 @@
+# URGENT! ART metadata configuration has a different number of FROMs
+# than this Dockerfile. ART will be unable to build your component or
+# reconcile this Dockerfile until that disparity is addressed.
 # This Dockerfile builds an image containing Mac and Linux/AMD64 versions of
 # the installer layered on top of the cluster-native Linux installer image.
 
