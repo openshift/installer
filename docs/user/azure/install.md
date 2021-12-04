@@ -58,5 +58,5 @@ The OpenShift console is available via the kubeadmin login provided by the insta
 
 ![OpenShift web console](images/install_console.png)
 
-[cloud-install]: https://cloud.redhat.com/openshift/create
+[cloud-install]: https://console.redhat.com/openshift/create
 [rhcos]: https://github.com/openshift/os
