@@ -80,6 +80,9 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		if p.ARMEndpoint != "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), fmt.Sprintf("ARM endpoint must not be set when the cloud name is %s", cloud)))
 		}
+		if p.ClusterOSImage != "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), fmt.Sprintf("clusterOSImage must not be set when the cloud name is %s", cloud)))
+		}
 	}
 
 	return allErrs

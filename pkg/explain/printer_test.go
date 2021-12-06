@@ -156,6 +156,9 @@ func Test_PrintFields(t *testing.T) {
       Valid Values: "","AzurePublicCloud","AzureUSGovernmentCloud","AzureChinaCloud","AzureGermanCloud","AzureStackCloud"
       cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK with the appropriate Azure API endpoints. If empty, the value is equal to "AzurePublicCloud".
 
+    clusterOSImage <string>
+      ClusterOSImage is the url of a storage blob in the Azure Stack environment containing an RHCOS VHD. This field is required for Azure Stack and not applicable to Azure.
+
     computeSubnet <string>
       ComputeSubnet specifies an existing subnet for use by compute nodes
 

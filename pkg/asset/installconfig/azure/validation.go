@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -41,6 +42,13 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateNetworks(client, ic.Azure, ic.Networking.MachineNetwork, field.NewPath("platform").Child("azure"))...)
 	allErrs = append(allErrs, validateRegion(client, field.NewPath("platform").Child("azure").Child("region"), ic.Azure)...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
+	if ic.Azure.CloudName == aztypes.StackCloud && ic.Azure.ClusterOSImage != "" {
+		StorageEndpointSuffix, err := client.GetStorageEndpointSuffix(context.TODO())
+		if err != nil {
+			return err
+		}
+		allErrs = append(allErrs, validateAzureStackClusterOSImage(StorageEndpointSuffix, ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
+	}
 	return allErrs.ToAggregate()
 }
 
@@ -274,6 +282,9 @@ func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 func ValidateForProvisioning(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validateResourceGroup(client, field.NewPath("platform").Child("azure"), ic.Azure)...)
+	if ic.Azure.CloudName == aztypes.StackCloud {
+		allErrs = append(allErrs, checkAzureStackClusterOSImageSet(ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
+	}
 	return allErrs.ToAggregate()
 }
 
@@ -316,6 +327,27 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 			ids = ids[:2]
 		}
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group must be empty but it has %d resources like %s ...", l, strings.Join(ids, ", "))))
+	}
+	return allErrs
+}
+
+func checkAzureStackClusterOSImageSet(ClusterOSImage string, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+	if ClusterOSImage == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), "clusterOSImage must be set when installing on Azure Stack"))
+	}
+	return allErrs
+}
+
+func validateAzureStackClusterOSImage(StorageEndpointSuffix string, ClusterOSImage string, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+	imageParsedURL, err := url.Parse(ClusterOSImage)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), ClusterOSImage, fmt.Errorf("clusterOSImage URL is invalid: %w", err).Error()))
+	}
+	// If the URL for the image isn't in the Azure Stack environment we can't use it.
+	if !strings.HasSuffix(imageParsedURL.Host, StorageEndpointSuffix) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), ClusterOSImage, "clusterOSImage must be in the Azure Stack environment"))
 	}
 	return allErrs
 }
