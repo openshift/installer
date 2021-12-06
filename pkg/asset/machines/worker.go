@@ -88,14 +88,6 @@ func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 	}
 }
 
-func defaultAlibabaCloudMachinePoolPlatform() alibabacloudtypes.MachinePool {
-	return alibabacloudtypes.MachinePool{
-		InstanceType:       "ecs.g6.large",
-		SystemDiskCategory: alibabacloudtypes.DefaultDiskCategory,
-		SystemDiskSize:     120,
-	}
-}
-
 func defaultLibvirtMachinePoolPlatform() libvirttypes.MachinePool {
 	return libvirttypes.MachinePool{}
 }
@@ -234,13 +226,17 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 		switch ic.Platform.Name() {
 		case alibabacloudtypes.Name:
-			mpool := defaultAlibabaCloudMachinePoolPlatform()
+			client, err := installConfig.AlibabaCloud.Client()
+			if err != nil {
+				return err
+			}
+			mpool := alibabacloudtypes.DefaultWorkerMachinePoolPlatform()
 			mpool.ImageID = string(*rhcosImage)
 			mpool.Set(ic.Platform.AlibabaCloud.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.AlibabaCloud)
 			if len(mpool.Zones) == 0 {
-				azs, err := alibabacloud.GetAvailabilityZones(ic.Platform.AlibabaCloud.Region)
-				if err != nil {
+				azs, err := client.GetAvailableZonesByInstanceType(mpool.InstanceType)
+				if err != nil || len(azs) == 0 {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
 				mpool.Zones = azs
