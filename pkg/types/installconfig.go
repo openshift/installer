@@ -45,7 +45,6 @@ var (
 	// to the user in the interactive wizard.
 	HiddenPlatformNames = []string{
 		baremetal.Name,
-		ibmcloud.Name,
 		none.Name,
 	}
 
