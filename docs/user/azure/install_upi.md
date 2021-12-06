@@ -48,7 +48,6 @@ Some data from the install configuration file will be used on later steps. Expor
 ```sh
 export CLUSTER_NAME=`yq -r .metadata.name install-config.yaml`
 export AZURE_REGION=`yq -r .platform.azure.region install-config.yaml`
-export SSH_KEY=`yq -r .sshKey install-config.yaml | xargs`
 export BASE_DOMAIN=`yq -r .baseDomain install-config.yaml`
 export BASE_DOMAIN_RESOURCE_GROUP=`yq -r .platform.azure.baseDomainResourceGroupName install-config.yaml`
 ```
@@ -349,7 +348,6 @@ export BOOTSTRAP_IGNITION=`jq -rcnM --arg v "3.1.0" --arg url $BOOTSTRAP_URL '{i
 az deployment group create -g $RESOURCE_GROUP \
   --template-file "04_bootstrap.json" \
   --parameters bootstrapIgnition="$BOOTSTRAP_IGNITION" \
-  --parameters sshKeyData="$SSH_KEY" \
   --parameters baseName="$INFRA_ID"
 ```
 
@@ -365,7 +363,6 @@ export MASTER_IGNITION=`cat master.ign | base64 | tr -d '\n'`
 az deployment group create -g $RESOURCE_GROUP \
   --template-file "05_masters.json" \
   --parameters masterIgnition="$MASTER_IGNITION" \
-  --parameters sshKeyData="$SSH_KEY" \
   --parameters privateDNSZoneName="${CLUSTER_NAME}.${BASE_DOMAIN}" \
   --parameters baseName="$INFRA_ID"
 ```
@@ -430,7 +427,6 @@ export WORKER_IGNITION=`cat worker.ign | base64 | tr -d '\n'`
 az deployment group create -g $RESOURCE_GROUP \
   --template-file "06_workers.json" \
   --parameters workerIgnition="$WORKER_IGNITION" \
-  --parameters sshKeyData="$SSH_KEY" \
   --parameters baseName="$INFRA_ID"
 ```
 
