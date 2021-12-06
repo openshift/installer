@@ -1,6 +1,5 @@
 /*
 
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -182,7 +181,7 @@ const (
 	// StatePreparing means we are removing existing configuration and set new configuration to the host
 	StatePreparing ProvisioningState = "preparing"
 
-	// StateReady means the host can be consumed
+	// StateReady is a deprecated name for StateAvailable
 	StateReady ProvisioningState = "ready"
 
 	// StateAvailable means the host can be consumed
@@ -276,7 +275,10 @@ type SoftwareRAIDVolume struct {
 // RAIDConfig contains the configuration that are required to config RAID in Bare Metal server
 type RAIDConfig struct {
 	// The list of logical disks for hardware RAID, if rootDeviceHints isn't used, first volume is root volume.
-	HardwareRAIDVolumes []HardwareRAIDVolume `json:"hardwareRAIDVolumes,omitempty"`
+	// You can set the value of this field to `[]` to clear all the hardware RAID configurations.
+	// +optional
+	// +nullable
+	HardwareRAIDVolumes []HardwareRAIDVolume `json:"hardwareRAIDVolumes"`
 
 	// The list of logical disks for software RAID, if rootDeviceHints isn't used, first volume is root volume.
 	// If HardwareRAIDVolumes is set this item will be invalid.
@@ -285,8 +287,11 @@ type RAIDConfig struct {
 	// If there are two, the first one has to be a RAID-1, while the RAID level for the second one can be 0, 1, or 1+0.
 	// As the first RAID device will be the deployment device,
 	// enforcing a RAID-1 reduces the risk of ending up with a non-booting node in case of a disk failure.
+	// Software RAID will always be deleted.
 	// +kubebuilder:validation:MaxItems=2
-	SoftwareRAIDVolumes []SoftwareRAIDVolume `json:"softwareRAIDVolumes,omitempty"`
+	// +optional
+	// +nullable
+	SoftwareRAIDVolumes []SoftwareRAIDVolume `json:"softwareRAIDVolumes"`
 }
 
 // FirmwareConfig contains the configuration that you want to configure BIOS settings in Bare metal server
@@ -361,13 +366,19 @@ type BareMetalHostSpec struct {
 	// data to be passed to the host before it boots.
 	UserData *corev1.SecretReference `json:"userData,omitempty"`
 
+	// PreprovisioningNetworkDataName is the name of the Secret in the
+	// local namespace containing network configuration (e.g content of
+	// network_data.json) which is passed to the preprovisioning image, and to
+	// the Config Drive if not overridden by specifying NetworkData.
+	PreprovisioningNetworkDataName string `json:"preprovisioningNetworkDataName,omitempty"`
+
 	// NetworkData holds the reference to the Secret containing network
-	// configuration (e.g content of network_data.json which is passed
-	// to Config Drive).
+	// configuration (e.g content of network_data.json) which is passed
+	// to the Config Drive.
 	NetworkData *corev1.SecretReference `json:"networkData,omitempty"`
 
 	// MetaData holds the reference to the Secret containing host metadata
-	// (e.g. meta_data.json which is passed to Config Drive).
+	// (e.g. meta_data.json) which is passed to the Config Drive.
 	MetaData *corev1.SecretReference `json:"metaData,omitempty"`
 
 	// Description is a human-entered text used to help identify the host
@@ -385,6 +396,10 @@ type BareMetalHostSpec struct {
 	// +kubebuilder:default:=metadata
 	// +kubebuilder:validation:Optional
 	AutomatedCleaningMode AutomatedCleaningMode `json:"automatedCleaningMode,omitempty"`
+
+	// A custom deploy procedure.
+	// +optional
+	CustomDeploy *CustomDeploy `json:"customDeploy,omitempty"`
 }
 
 // AutomatedCleaningMode is the interface to enable/disable automated cleaning
@@ -432,6 +447,18 @@ type Image struct {
 	// are not required and if specified will be ignored.
 	// +kubebuilder:validation:Enum=raw;qcow2;vdi;vmdk;live-iso
 	DiskFormat *string `json:"format,omitempty"`
+}
+
+func (image *Image) IsLiveISO() bool {
+	return image != nil && image.DiskFormat != nil && *image.DiskFormat == "live-iso"
+}
+
+// Custom deploy is a description of a customized deploy process.
+type CustomDeploy struct {
+	// Custom deploy method name.
+	// This name is specific to the deploy ramdisk used. If you don't have
+	// a custom deploy ramdisk, you shouldn't use CustomDeploy.
+	Method string `json:"method"`
 }
 
 // FIXME(dhellmann): We probably want some other module to own these
@@ -740,6 +767,9 @@ type ProvisionStatus struct {
 
 	// The Bios set by the user
 	Firmware *FirmwareConfig `json:"firmware,omitempty"`
+
+	// Custom deploy procedure applied to the host.
+	CustomDeploy *CustomDeploy `json:"customDeploy,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -755,6 +785,7 @@ type ProvisionStatus struct {
 // +kubebuilder:printcolumn:name="Hardware_Profile",type="string",JSONPath=".status.hardwareProfile",description="The type of hardware detected",priority=1
 // +kubebuilder:printcolumn:name="Online",type="string",JSONPath=".spec.online",description="Whether the host is online or not"
 // +kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.errorType",description="Type of the most recent error"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of BaremetalHost"
 // +kubebuilder:object:root=true
 type BareMetalHost struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -869,6 +900,11 @@ func (host *BareMetalHost) NeedsProvisioning() bool {
 		// The host is not supposed to be powered on.
 		return false
 	}
+
+	return host.hasNewImage() || host.hasNewCustomDeploy()
+}
+
+func (host *BareMetalHost) hasNewImage() bool {
 	if host.Spec.Image == nil {
 		// Without an image, there is nothing to provision.
 		return false
@@ -879,6 +915,22 @@ func (host *BareMetalHost) NeedsProvisioning() bool {
 	}
 	if host.Status.Provisioning.Image.URL == "" {
 		// We have an image set, but not provisioned.
+		return true
+	}
+	return false
+}
+
+func (host *BareMetalHost) hasNewCustomDeploy() bool {
+	if host.Spec.CustomDeploy == nil {
+		return false
+	}
+	if host.Spec.CustomDeploy.Method == "" {
+		return false
+	}
+	if host.Status.Provisioning.CustomDeploy == nil {
+		return true
+	}
+	if host.Status.Provisioning.CustomDeploy.Method != host.Spec.CustomDeploy.Method {
 		return true
 	}
 	return false

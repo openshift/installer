@@ -47,7 +47,7 @@ func TestHosts(t *testing.T) {
 			Config:   configHosts(hostType("master-0").bmc("usr0", "pwd0").role("master")),
 
 			ExpectedSetting: settings().
-				secrets(secret("master-0-bmc-secret").data("usr0", "pwd0")).
+				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
 				hosts(host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned()).build(),
 		},
 		{
@@ -56,8 +56,26 @@ func TestHosts(t *testing.T) {
 			Config:   configHosts(hostType("master-0").bmc("usr0", "pwd0")),
 
 			ExpectedSetting: settings().
-				secrets(secret("master-0-bmc-secret").data("usr0", "pwd0")).
+				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
 				hosts(host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned()).build(),
+		},
+		{
+			Scenario: "network-config",
+			Machines: machines(machine("machine-0")),
+			Config: configHosts(
+				hostType("master-0").
+					bmc("usr0", "pwd0").
+					networkConfig("interface:")),
+
+			ExpectedSetting: settings().
+				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
+				networkConfigSecrets(secret("master-0-network-config-secret").nmstate("interface:")).
+				hosts(
+					host("master-0").
+						consumerRef("machine-0").
+						annotation("baremetalhost.metal3.io/paused", "").
+						preprovisioningNetworkDataName("master-0-network-config-secret").
+						externallyProvisioned()).build(),
 		},
 		{
 			Scenario: "3-hosts-3-machines-norole-all",
@@ -72,9 +90,9 @@ func TestHosts(t *testing.T) {
 
 			ExpectedSetting: settings().
 				secrets(
-					secret("master-0-bmc-secret").data("usr0", "pwd0"),
-					secret("master-1-bmc-secret").data("usr1", "pwd1"),
-					secret("master-2-bmc-secret").data("usr2", "pwd2")).
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
 					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
@@ -94,10 +112,10 @@ func TestHosts(t *testing.T) {
 
 			ExpectedSetting: settings().
 				secrets(
-					secret("master-0-bmc-secret").data("usr0", "pwd0"),
-					secret("master-1-bmc-secret").data("usr1", "pwd1"),
-					secret("master-2-bmc-secret").data("usr2", "pwd2"),
-					secret("master-3-bmc-secret").data("usr3", "pwd3")).
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
+					secret("master-3-bmc-secret").creds("usr3", "pwd3")).
 				hosts(
 					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
@@ -118,10 +136,10 @@ func TestHosts(t *testing.T) {
 
 			ExpectedSetting: settings().
 				secrets(
-					secret("master-0-bmc-secret").data("usr0", "pwd0"),
-					secret("master-1-bmc-secret").data("usr1", "pwd1"),
-					secret("master-2-bmc-secret").data("usr2", "pwd2"),
-					secret("worker-0-bmc-secret").data("wrk0", "pwd0")).
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
+					secret("worker-0-bmc-secret").creds("wrk0", "pwd0")).
 				hosts(
 					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
@@ -143,11 +161,11 @@ func TestHosts(t *testing.T) {
 
 			ExpectedSetting: settings().
 				secrets(
-					secret("master-0-bmc-secret").data("usr0", "pwd0"),
-					secret("master-1-bmc-secret").data("usr1", "pwd1"),
-					secret("master-2-bmc-secret").data("usr2", "pwd2"),
-					secret("worker-0-bmc-secret").data("wrk0", "pwd0"),
-					secret("worker-1-bmc-secret").data("wrk1", "pwd1")).
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
+					secret("worker-0-bmc-secret").creds("wrk0", "pwd0"),
+					secret("worker-1-bmc-secret").creds("wrk1", "pwd1")).
 				hosts(
 					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
@@ -170,11 +188,11 @@ func TestHosts(t *testing.T) {
 
 			ExpectedSetting: settings().
 				secrets(
-					secret("master-1-bmc-secret").data("usr1", "pwd1"),
-					secret("worker-0-bmc-secret").data("wrk0", "pwd0"),
-					secret("worker-1-bmc-secret").data("wrk1", "pwd1"),
-					secret("master-0-bmc-secret").data("usr0", "pwd0"),
-					secret("master-2-bmc-secret").data("usr2", "pwd2")).
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("worker-0-bmc-secret").creds("wrk0", "pwd0"),
+					secret("worker-1-bmc-secret").creds("wrk1", "pwd1"),
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
 					host("master-1").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("worker-0"),
@@ -196,10 +214,10 @@ func TestHosts(t *testing.T) {
 
 			ExpectedSetting: settings().
 				secrets(
-					secret("worker-0-bmc-secret").data("wrk0", "pwd0"),
-					secret("master-0-bmc-secret").data("usr0", "pwd0"),
-					secret("master-1-bmc-secret").data("usr1", "pwd1"),
-					secret("master-2-bmc-secret").data("usr2", "pwd2")).
+					secret("worker-0-bmc-secret").creds("wrk0", "pwd0"),
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
 					host("worker-0"),
 					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
@@ -220,10 +238,10 @@ func TestHosts(t *testing.T) {
 
 			ExpectedSetting: settings().
 				secrets(
-					secret("master-0-bmc-secret").data("usr0", "pwd0"),
-					secret("master-1-bmc-secret").data("usr1", "pwd1"),
-					secret("master-2-bmc-secret").data("usr2", "pwd2"),
-					secret("worker-0-bmc-secret").data("wrk0", "pwd0")).
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
+					secret("worker-0-bmc-secret").creds("wrk0", "pwd0")).
 				hosts(
 					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
 					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
@@ -247,6 +265,10 @@ func TestHosts(t *testing.T) {
 
 				for i, s := range tc.ExpectedSetting.Secrets {
 					assert.Equal(t, s, settings.Secrets[i], s.Name, fmt.Sprintf("%s and %s are not equal", s.Name, settings.Secrets[i].Name))
+				}
+
+				for i, s := range tc.ExpectedSetting.NetworkConfigSecrets {
+					assert.Equal(t, s, settings.NetworkConfigSecrets[i], s.Name, fmt.Sprintf("%s and %s are not equal", s.Name, settings.NetworkConfigSecrets[i].Name))
 				}
 			}
 		})
@@ -315,6 +337,11 @@ func (htb *hostTypeBuilder) bmc(user, password string) *hostTypeBuilder {
 		Username: user,
 		Password: password,
 	}
+	return htb
+}
+
+func (htb *hostTypeBuilder) networkConfig(config string) *hostTypeBuilder {
+	htb.NetworkConfig = config
 	return htb
 }
 
@@ -409,6 +436,11 @@ func (hb *hostBuilder) consumerRef(name string) *hostBuilder {
 	return hb
 }
 
+func (hb *hostBuilder) preprovisioningNetworkDataName(secretName string) *hostBuilder {
+	hb.Spec.PreprovisioningNetworkDataName = secretName
+	return hb
+}
+
 type secretBuilder struct {
 	corev1.Secret
 }
@@ -428,10 +460,17 @@ func secret(name string) *secretBuilder {
 	}
 }
 
-func (sb *secretBuilder) data(user, password string) *secretBuilder {
+func (sb *secretBuilder) creds(user, password string) *secretBuilder {
 	sb.Data = map[string][]byte{
 		"username": []byte(user),
 		"password": []byte(password),
+	}
+	return sb
+}
+
+func (sb *secretBuilder) nmstate(config string) *secretBuilder {
+	sb.Data = map[string][]byte{
+		"nmstate": []byte(config),
 	}
 	return sb
 }
@@ -448,6 +487,14 @@ func (hsb *hostSettingsBuilder) secrets(builders ...*secretBuilder) *hostSetting
 	hsb.Secrets = []corev1.Secret{}
 	for _, sb := range builders {
 		hsb.Secrets = append(hsb.Secrets, *sb.build())
+	}
+	return hsb
+}
+
+func (hsb *hostSettingsBuilder) networkConfigSecrets(builders ...*secretBuilder) *hostSettingsBuilder {
+	hsb.Secrets = []corev1.Secret{}
+	for _, sb := range builders {
+		hsb.NetworkConfigSecrets = append(hsb.NetworkConfigSecrets, *sb.build())
 	}
 	return hsb
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	baremetalapi "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis"
 	baremetalprovider "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
@@ -24,6 +25,7 @@ import (
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
@@ -76,6 +78,10 @@ type Master struct {
 	// controllers on hosts.
 	SecretFiles []*asset.File
 
+	// NetworkConfigSecretFiles is used by the baremetal platform to
+	// store the networking configuration per host
+	NetworkConfigSecretFiles []*asset.File
+
 	// HostFiles is the list of baremetal hosts provided in the
 	// installer configuration.
 	HostFiles []*asset.File
@@ -87,6 +93,11 @@ const (
 	// secretFileName is the format string for constructing the Secret
 	// filenames for baremetal clusters.
 	secretFileName = "99_openshift-cluster-api_host-bmc-secrets-%s.yaml"
+
+	// networkConfigSecretFileName is the format string for constructing
+	// the networking configuration Secret filenames for baremetal
+	// clusters.
+	networkConfigSecretFileName = "99_openshift-cluster-api_host-network-config-secrets-%s.yaml"
 
 	// hostFileName is the format string for constucting the Host
 	// filenames for baremetal clusters.
@@ -102,9 +113,10 @@ const (
 )
 
 var (
-	secretFileNamePattern        = fmt.Sprintf(secretFileName, "*")
-	hostFileNamePattern          = fmt.Sprintf(hostFileName, "*")
-	masterMachineFileNamePattern = fmt.Sprintf(masterMachineFileName, "*")
+	secretFileNamePattern              = fmt.Sprintf(secretFileName, "*")
+	networkConfigSecretFileNamePattern = fmt.Sprintf(networkConfigSecretFileName, "*")
+	hostFileNamePattern                = fmt.Sprintf(hostFileName, "*")
+	masterMachineFileNamePattern       = fmt.Sprintf(masterMachineFileName, "*")
 
 	_ asset.WritableAsset = (*Master)(nil)
 )
@@ -352,39 +364,24 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to assemble host data")
 		}
 
-		if len(hostSettings.Hosts) > 0 {
-			m.HostFiles = make([]*asset.File, len(hostSettings.Hosts))
-			padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(hostSettings.Hosts))))
-			for i, host := range hostSettings.Hosts {
-				data, err := yaml.Marshal(host)
-				if err != nil {
-					return errors.Wrapf(err, "marshal host %d", i)
-				}
-
-				padded := fmt.Sprintf(padFormat, i)
-				m.HostFiles[i] = &asset.File{
-					Filename: filepath.Join(directory, fmt.Sprintf(hostFileName, padded)),
-					Data:     data,
-				}
-			}
+		hosts, err := createHostAssetFiles(hostSettings.Hosts, hostFileName)
+		if err != nil {
+			return err
 		}
+		m.HostFiles = append(m.HostFiles, hosts...)
 
-		if len(hostSettings.Secrets) > 0 {
-			m.SecretFiles = make([]*asset.File, len(hostSettings.Secrets))
-			padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(hostSettings.Secrets))))
-			for i, secret := range hostSettings.Secrets {
-				data, err := yaml.Marshal(secret)
-				if err != nil {
-					return errors.Wrapf(err, "marshal secret %d", i)
-				}
-
-				padded := fmt.Sprintf(padFormat, i)
-				m.SecretFiles[i] = &asset.File{
-					Filename: filepath.Join(directory, fmt.Sprintf(secretFileName, padded)),
-					Data:     data,
-				}
-			}
+		secrets, err := createSecretAssetFiles(hostSettings.Secrets, secretFileName)
+		if err != nil {
+			return err
 		}
+		m.SecretFiles = append(m.SecretFiles, secrets...)
+
+		networkSecrets, err := createSecretAssetFiles(hostSettings.NetworkConfigSecrets, networkConfigSecretFileName)
+		if err != nil {
+			return err
+		}
+		m.NetworkConfigSecretFiles = append(m.NetworkConfigSecretFiles, networkSecrets...)
+
 	case ovirttypes.Name:
 		mpool := defaultOvirtMachinePoolPlatform()
 		mpool.VMType = ovirttypes.VMTypeHighPerformance
@@ -483,6 +480,7 @@ func (m *Master) Files() []*asset.File {
 	// Hosts refer to secrets, so place the secrets before the hosts
 	// to avoid unnecessary reconciliation errors.
 	files = append(files, m.SecretFiles...)
+	files = append(files, m.NetworkConfigSecretFiles...)
 	// Machines are linked to hosts via the machineRef, so we create
 	// the hosts first to ensure if the operator starts trying to
 	// reconcile a machine it can pick up the related host.
@@ -514,6 +512,12 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, err
 	}
 	m.SecretFiles = fileList
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, networkConfigSecretFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	m.NetworkConfigSecretFiles = fileList
 
 	fileList, err = f.FetchByPattern(filepath.Join(directory, hostFileNamePattern))
 	if err != nil {
@@ -605,4 +609,43 @@ func IsMachineManifest(file *asset.File) bool {
 	} else {
 		return matched
 	}
+}
+
+func createSecretAssetFiles(resources []corev1.Secret, fileName string) ([]*asset.File, error) {
+
+	var objects []interface{}
+	for _, r := range resources {
+		objects = append(objects, r)
+	}
+
+	return createAssetFiles(objects, fileName)
+}
+
+func createHostAssetFiles(resources []baremetalhost.BareMetalHost, fileName string) ([]*asset.File, error) {
+
+	var objects []interface{}
+	for _, r := range resources {
+		objects = append(objects, r)
+	}
+
+	return createAssetFiles(objects, fileName)
+}
+
+func createAssetFiles(objects []interface{}, fileName string) ([]*asset.File, error) {
+
+	assetFiles := make([]*asset.File, len(objects))
+	padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(objects))))
+	for i, obj := range objects {
+		data, err := yaml.Marshal(obj)
+		if err != nil {
+			return nil, errors.Wrapf(err, "marshal resource %d", i)
+		}
+		padded := fmt.Sprintf(padFormat, i)
+		assetFiles[i] = &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(fileName, padded)),
+			Data:     data,
+		}
+	}
+
+	return assetFiles, nil
 }
