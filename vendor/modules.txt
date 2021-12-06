@@ -2364,9 +2364,6 @@ github.com/vmware/govmomi/vim25/soap
 github.com/vmware/govmomi/vim25/types
 github.com/vmware/govmomi/vim25/xml
 github.com/vmware/govmomi/vmdk
-# github.com/wxnacy/wgo v1.0.4
-## explicit
-github.com/wxnacy/wgo/arrays
 # github.com/xanzy/ssh-agent v0.2.1
 ## explicit
 github.com/xanzy/ssh-agent
