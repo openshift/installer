@@ -36,6 +36,7 @@ var (
 		aws.Name,
 		azure.Name,
 		gcp.Name,
+		ibmcloud.Name,
 		openstack.Name,
 		ovirt.Name,
 		vsphere.Name,
