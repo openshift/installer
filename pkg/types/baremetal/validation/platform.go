@@ -360,6 +360,21 @@ func validateBootMode(hosts []*baremetal.Host, fldPath *field.Path) (errors fiel
 	return
 }
 
+// validateProvisioningNetworkDisabledSupported validates hosts bmc address support provisioning network is disabled
+func validateProvisioningNetworkDisabledSupported(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
+	for idx, host := range hosts {
+		accessDetails, err := bmc.NewAccessDetails(host.BMC.Address, host.BMC.DisableCertificateVerification)
+		if err != nil {
+			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("BMC"), host.BMC.Address, err.Error()))
+		} else if accessDetails.RequiresProvisioningNetwork() {
+			msg := fmt.Sprintf("driver %s requires provisioning network", accessDetails.Driver())
+			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("BMC"), host.BMC.Address, msg))
+		}
+	}
+
+	return
+}
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -433,6 +448,8 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 	// will be run on the external network. Users must provide IP's on the
 	// machine networks to host those services.
 	case baremetal.DisabledProvisioningNetwork:
+		allErrs = validateProvisioningNetworkDisabledSupported(p.Hosts, fldPath.Child("Hosts"))
+
 		// If set, ensure bootstrapProvisioningIP is in one of the machine networks
 		if p.BootstrapProvisioningIP != "" {
 			if err := validateIPinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {

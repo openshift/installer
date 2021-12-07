@@ -630,6 +630,17 @@ func TestValidateProvisioning(t *testing.T) {
 				ClusterProvisioningIP("192.168.0.2").build(),
 			expected: "Invalid value: \"192.168.0.2\": provisioning network is disabled, IP expected to be in one of the machine networks: 192.168.111.0/24",
 		},
+		{
+			name:   "not_supported_bmc_driver_provisioning_network_disabled",
+			config: installConfig().Network(networking().Network("192.168.111.0/24")).build(),
+			platform: platform().
+				ProvisioningNetwork(baremetal.DisabledProvisioningNetwork).
+				ClusterProvisioningIP("192.168.111.2").
+				BootstrapProvisioningIP("192.168.111.3").
+				Hosts(host1().BMCAddress("ipmi://192.168.111.1")).
+				build(),
+			expected: "baremetal.Hosts\\[0\\].BMC: Invalid value: \"ipmi://192.168.111.1\": driver ipmi requires provisioning network",
+		},
 	}
 
 	for _, tc := range cases {
