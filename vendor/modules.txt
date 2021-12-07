@@ -1689,7 +1689,7 @@ github.com/opencontainers/go-digest
 ## explicit
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift-metal3/terraform-provider-ironic v0.2.6
+# github.com/openshift-metal3/terraform-provider-ironic v0.2.7
 ## explicit; go 1.13
 github.com/openshift-metal3/terraform-provider-ironic/ironic
 # github.com/openshift/api v0.0.0-20211119153416-313e51eab8c8
@@ -2445,7 +2445,7 @@ golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/knownhosts
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/lint v0.0.0-20200302205851-738671d3881b
+# golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 ## explicit; go 1.11
 golang.org/x/lint
 golang.org/x/lint/golint
