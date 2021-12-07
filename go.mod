@@ -51,7 +51,7 @@ require (
 	github.com/metal3-io/baremetal-operator/apis v0.0.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0
 	github.com/mitchellh/cli v1.1.2
-	github.com/openshift-metal3/terraform-provider-ironic v0.2.6
+	github.com/openshift-metal3/terraform-provider-ironic v0.2.7
 	github.com/openshift/api v0.0.0-20211119153416-313e51eab8c8
 	github.com/openshift/client-go v0.0.0-20211025111749-96ca2abfc56c
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
@@ -85,7 +85,7 @@ require (
 	github.com/vmware/govmomi v0.24.0
 	github.com/zclconf/go-cty v1.8.1
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
+	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
 	google.golang.org/api v0.44.0
