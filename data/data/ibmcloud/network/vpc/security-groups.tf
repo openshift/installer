@@ -17,7 +17,7 @@ locals {
 ############################################
 
 resource "ibm_is_security_group" "cluster_wide" {
-  name           = "${local.prefix}-security-group-cluster-wide"
+  name           = "${local.prefix}-sg-cluster-wide"
   resource_group = var.resource_group_id
   tags           = var.tags
   vpc            = ibm_is_vpc.vpc.id
@@ -76,7 +76,7 @@ resource "ibm_is_security_group_rule" "cluster_wide_outbound" {
 ############################################
 
 resource "ibm_is_security_group" "openshift_network" {
-  name           = "${local.prefix}-security-group-openshift-network"
+  name           = "${local.prefix}-sg-openshift-net"
   resource_group = var.resource_group_id
   tags           = var.tags
   vpc            = ibm_is_vpc.vpc.id
@@ -148,7 +148,7 @@ resource "ibm_is_security_group_rule" "openshift_network_node_ports_udp_inbound"
 ############################################
 
 resource "ibm_is_security_group" "kubernetes_api_lb" {
-  name           = "${local.prefix}-security-group-kubernetes-api-lb"
+  name           = "${local.prefix}-sg-kube-api-lb"
   resource_group = var.resource_group_id
   tags           = var.tags
   vpc            = ibm_is_vpc.vpc.id
@@ -203,14 +203,14 @@ resource "ibm_is_security_group_rule" "kubernetes_api_lb_machine_config_outbound
 ############################################
 
 resource "ibm_is_security_group" "control_plane" {
-  name           = "${local.prefix}-security-group-control-plane"
+  name           = "${local.prefix}-sg-control-plane"
   resource_group = var.resource_group_id
   tags           = var.tags
   vpc            = ibm_is_vpc.vpc.id
 }
 
 resource "ibm_is_security_group" "control_plane_internal" {
-  name           = "${local.prefix}-security-group-control-plane-internal"
+  name           = "${local.prefix}-sg-cp-internal"
   resource_group = var.resource_group_id
   tags           = var.tags
   vpc            = ibm_is_vpc.vpc.id
