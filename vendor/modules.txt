@@ -1752,8 +1752,8 @@ github.com/openshift/cluster-api/pkg/apis/machine/v1beta1
 ## explicit; go 1.16
 github.com/openshift/cluster-api-provider-alibaba/pkg/apis
 github.com/openshift/cluster-api-provider-alibaba/pkg/apis/alibabacloudprovider/v1beta1
-# github.com/openshift/cluster-api-provider-baremetal v0.0.0-20200323172559-7d335b32a0eb
-## explicit
+# github.com/openshift/cluster-api-provider-baremetal v0.0.0-20210924143856-c2d3ece4da38
+## explicit; go 1.16
 github.com/openshift/cluster-api-provider-baremetal/pkg/apis
 github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1
 # github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20211008100740-4d7907adbd6b

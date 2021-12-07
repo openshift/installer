@@ -1529,6 +1529,7 @@ github.com/openshift/api v0.0.0-20210331193751-3acddb19d360/go.mod h1:dZ4kytOo3s
 github.com/openshift/api v0.0.0-20210412212256-79bd8cfbbd59/go.mod h1:dZ4kytOo3svxJHNYd0J55hwe/6IQG5gAUHUE0F3Jkio=
 github.com/openshift/api v0.0.0-20210416115537-a60c0dc032fd/go.mod h1:dZ4kytOo3svxJHNYd0J55hwe/6IQG5gAUHUE0F3Jkio=
 github.com/openshift/api v0.0.0-20210730095913-85e1d547cdee/go.mod h1:ntkQrC1Z6AxxkhDlVpDVjkD+pzdwVUalWyfH40rSyyM=
+github.com/openshift/api v0.0.0-20210816181336-8ff39b776da3/go.mod h1:x81TFA31x1OMT9SYWukQqJ/KbmeveRN6fo+XeGRK8g0=
 github.com/openshift/api v0.0.0-20211025104849-a11323ccb6ea/go.mod h1:RsQCVJu4qhUawxxDP7pGlwU3IA4F01wYm3qKEu29Su8=
 github.com/openshift/api v0.0.0-20211108165917-be1be0e89115/go.mod h1:RsQCVJu4qhUawxxDP7pGlwU3IA4F01wYm3qKEu29Su8=
 github.com/openshift/api v0.0.0-20211119153416-313e51eab8c8 h1:FBV3/2ac0uE3MGExSzx/TqJKWNpNjHrpxRBIbmxI654=
@@ -1557,13 +1558,14 @@ github.com/openshift/cluster-api-provider-alibaba v0.0.0-20211123142315-d16daa4e
 github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80 h1:fFHoy/1QCLUcfo/NceEM8jGY2Tafl1BmyLa7tReN328=
 github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80/go.mod h1:JV7aXj/LZ8B4MwIQdhGxpTO2PCG8+7UKFd6FaOZCSzA=
 github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f/go.mod h1:GR+ocB8I+Z7JTSBdO+DMu/diBfH66lRlRpnc1KWysUM=
-github.com/openshift/cluster-api-provider-baremetal v0.0.0-20200323172559-7d335b32a0eb h1:nwd4ckZkzvhjk5kaL5RnjgZSyE1w6fHmAXZt1lxjoiw=
-github.com/openshift/cluster-api-provider-baremetal v0.0.0-20200323172559-7d335b32a0eb/go.mod h1:S+wtA0Rm2FZ5ccC9zNQXUWUDesR6Jsdn5eb6HjAR+Gs=
+github.com/openshift/cluster-api-provider-baremetal v0.0.0-20210924143856-c2d3ece4da38 h1:Q6VimHTiOuMXtSstyXMa3/GC7Pdx8CphdKEmiB7tQHQ=
+github.com/openshift/cluster-api-provider-baremetal v0.0.0-20210924143856-c2d3ece4da38/go.mod h1:TyotVVwHJhqcDfX/0MkCjLOh7y6+RshdurRIboZ0/Hk=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200701112720-3a7d727c9a10/go.mod h1:wgkZrOlcIMWTzo8khB4Js2PoDJDlIUUdzCBm7BuDdqw=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200713133651-5c8a640669ac/go.mod h1:XVYX9JE339nKbDDa/W481XD+1GTeqeaBm8bDPr7WE7I=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200901173901-9056dbc8c9b9/go.mod h1:rcwAydGZX+z4l91wtOdbq+fqDwuo6iu0YuFik3UUc+8=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201002065957-9854f7420570/go.mod h1:7NRECVE26rvP1/fs1CbhfY5gsgnnFQNhb9txTFzWmUw=
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201201000827-1117a4fc438c/go.mod h1:21N0wWjiTQypZ7WosEYhcGJHr9JoDR1RBFztE0NvdYM=
+github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20210615203611-a02074e8d5bb/go.mod h1:KLZ9LTM+EPEny4VXWNbBkJndhfKakmlqafeOfC0jxXA=
 github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20211008100740-4d7907adbd6b h1:atciNID+jTAqvQT0t/hAE+KVFLCxv2asXGih2py2dpg=
 github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20211008100740-4d7907adbd6b/go.mod h1:xkkPB22FMQyrv3G0HLobylRsosJP4Voi8Yojg5WEYrs=
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603 h1:MC6BSZYxFPoqqKj9PdlGjHGVKcMsvn6Kv1NiVzQErZ8=
@@ -1593,6 +1595,7 @@ github.com/openshift/machine-api-operator v0.2.1-0.20200926044412-b7d860f8074c/g
 github.com/openshift/machine-api-operator v0.2.1-0.20201002104344-6abfb5440597/go.mod h1:+oAfoCl+TUd2TM79/6NdqLpFUHIJpmqkKdmiHe2O7mw=
 github.com/openshift/machine-api-operator v0.2.1-0.20210104142355-8e6ae0acdfcf/go.mod h1:U5eAHChde1XvtQy3s1Zcr7ll4X7heb0SzYpaiAwxmQc=
 github.com/openshift/machine-api-operator v0.2.1-0.20210504014029-a132ec00f7dd/go.mod h1:DFZBMPtC2TYZH5NE9+2JQIpbZAnruqc9F26QmbOm9pw=
+github.com/openshift/machine-api-operator v0.2.1-0.20210820103535-d50698c302f5/go.mod h1:ko7xmso6c25h9UL6Ai0I5l+6OgyVf+ebinAYXnwlGNg=
 github.com/openshift/machine-api-operator v0.2.1-0.20211102083422-ee77ca7b9fd1/go.mod h1:8kWuB/zhnlBsNOyD1yz0epINZX5IodG3Z4iDwQrYKx0=
 github.com/openshift/machine-api-operator v0.2.1-0.20211111133920-c8bba3e64310/go.mod h1:8kWuB/zhnlBsNOyD1yz0epINZX5IodG3Z4iDwQrYKx0=
 github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 h1:C4gCipkWTDp0B9jb0wZdLgB+HWC7EzVVwQOeNaKnTRA=
@@ -2639,6 +2642,7 @@ k8s.io/code-generator v0.21.0-beta.1/go.mod h1:IpCUojpiKp25KNB3/UbEeElznqpQUMvhA
 k8s.io/code-generator v0.21.0-rc.0/go.mod h1:hUlps5+9QaTrKx+jiM4rmq7YmH8wPOIko64uZCHDh6Q=
 k8s.io/code-generator v0.21.0/go.mod h1:hUlps5+9QaTrKx+jiM4rmq7YmH8wPOIko64uZCHDh6Q=
 k8s.io/code-generator v0.22.0-rc.0/go.mod h1:eV77Y09IopzeXOJzndrDyCI88UBok2h6WxAlBwpxa+o=
+k8s.io/code-generator v0.22.0/go.mod h1:eV77Y09IopzeXOJzndrDyCI88UBok2h6WxAlBwpxa+o=
 k8s.io/code-generator v0.22.1/go.mod h1:eV77Y09IopzeXOJzndrDyCI88UBok2h6WxAlBwpxa+o=
 k8s.io/code-generator v0.22.2/go.mod h1:eV77Y09IopzeXOJzndrDyCI88UBok2h6WxAlBwpxa+o=
 k8s.io/component-base v0.18.0-beta.2/go.mod h1:HVk5FpRnyzQ/MjBr9//e/yEBjTVa2qjGXCTuUzcD7ks=

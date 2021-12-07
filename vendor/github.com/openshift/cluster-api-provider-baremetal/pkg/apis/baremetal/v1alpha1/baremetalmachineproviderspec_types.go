@@ -29,13 +29,15 @@ import (
 
 // BareMetalMachineProviderSpec holds data that the actuator needs to provision
 // and manage a Machine.
-// +k8s:openapi-gen=true
 type BareMetalMachineProviderSpec struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// Image is the image to be provisioned.
-	Image Image `json:"image"`
+	Image Image `json:"image,omitempty"`
+
+	// Custom Deploy Procedure
+	CustomDeploy CustomDeploy `json:"customDeploy,omitempty"`
 
 	// UserData references the Secret that holds user data needed by the bare metal
 	// operator. The Namespace is optional; it will default to the Machine's
@@ -74,14 +76,22 @@ type Image struct {
 	Checksum string `json:"checksum"`
 }
 
+// Custom deploy is a description of a customized deploy process.
+type CustomDeploy struct {
+	// Custom deploy method name.
+	// This name is specific to the deploy ramdisk used. If you don't have
+	// a custom deploy ramdisk, you shouldn't use CustomDeploy.
+	Method string `json:"method"`
+}
+
 // IsValid returns an error if the object is not valid, otherwise nil. The
 // string representation of the error is suitable for human consumption.
 func (s *BareMetalMachineProviderSpec) IsValid() error {
 	missing := []string{}
-	if s.Image.URL == "" {
+	if s.CustomDeploy.Method == "" && s.Image.URL == "" {
 		missing = append(missing, "Image.URL")
 	}
-	if s.Image.Checksum == "" {
+	if s.CustomDeploy.Method == "" && s.Image.Checksum == "" {
 		missing = append(missing, "Image.Checksum")
 	}
 	if len(missing) > 0 {
