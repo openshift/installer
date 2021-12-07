@@ -277,9 +277,5 @@ func Host(v string) error {
 	if proxyIP != nil {
 		return nil
 	}
-	re := regexp.MustCompile("^[a-z]")
-	if !re.MatchString(v) {
-		return errors.New("domain name must begin with a lower-case letter")
-	}
 	return validateSubdomain(v)
 }
