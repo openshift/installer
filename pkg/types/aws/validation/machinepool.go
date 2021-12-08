@@ -17,8 +17,8 @@ var (
 		types.ArchitectureARM64: true,
 	}
 
-	// ValidArchitectureValues lists the supported arches for AWS
-	ValidArchitectureValues = func() []string {
+	// validArchitectureValues lists the supported arches for AWS
+	validArchitectureValues = func() []string {
 		v := make([]string, 0, len(validArchitectures))
 		for m := range validArchitectures {
 			v = append(v, string(m))
@@ -66,7 +66,7 @@ func ValidateMachinePoolArchitecture(pool *types.MachinePool, fldPath *field.Pat
 	allErrs := field.ErrorList{}
 
 	if !validArchitectures[pool.Architecture] {
-		allErrs = append(allErrs, field.NotSupported(fldPath, pool.Architecture, ValidArchitectureValues))
+		allErrs = append(allErrs, field.NotSupported(fldPath, pool.Architecture, validArchitectureValues))
 	}
 	return allErrs
 }
