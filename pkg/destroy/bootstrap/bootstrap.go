@@ -41,7 +41,7 @@ func Destroy(dir string) (err error) {
 	// Set platform to azurestack after setting tfPlatformVarsFileName, because the
 	// tfvars file is still terraform.azure.auto.tfvars.json in the case of Azure Stack.
 	if platform == typesazure.Name && metadata.Azure.CloudName == typesazure.StackCloud {
-		platform = "azurestack"
+		platform = typesazure.StackTerraformName
 	}
 
 	varFiles := []string{cluster.TfVarsFileName, tfPlatformVarsFileName}

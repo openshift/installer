@@ -72,6 +72,11 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	platform := installConfig.Config.Platform.Name()
+
+	if azure := installConfig.Config.Platform.Azure; azure != nil && azure.CloudName == typesazure.StackCloud {
+		platform = typesazure.StackTerraformName
+	}
+
 	stages := platformstages.StagesForPlatform(platform)
 
 	logrus.Infof("Creating infrastructure resources...")
@@ -80,12 +85,9 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		if err := aws.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
-	case typesazure.Name:
+	case typesazure.Name, typesazure.StackTerraformName:
 		if err := azure.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
 			return err
-		}
-		if installConfig.Config.Platform.Azure.CloudName == typesazure.StackCloud {
-			platform = "azurestack"
 		}
 	}
 
