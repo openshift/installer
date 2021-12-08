@@ -229,7 +229,7 @@ done
 Create a blob storage container and upload the generated `bootstrap.ign` file:
 
 ```sh
-az storage container create --name files --account-name ${CLUSTER_NAME}sa --public-access blob
+az storage container create --name files --account-name ${CLUSTER_NAME}sa
 az storage blob upload --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -f "bootstrap.ign" -n "bootstrap.ign"
 ```
 
@@ -342,7 +342,8 @@ Copy the [`04_bootstrap.json`](../../../upi/azure/04_bootstrap.json) ARM templat
 Create the deployment using the `az` client:
 
 ```sh
-export BOOTSTRAP_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -n "bootstrap.ign" -o tsv`
+bootstrap_url_expiry=`date -u -d "10 hours" '+%Y-%m-%dT%H:%MZ'`
+export BOOTSTRAP_URL=`az storage blob generate-sas -c 'files' -n 'bootstrap.ign' --https-only --full-uri --permissions r --expiry $bootstrap_url_expiry --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -o tsv`
 export BOOTSTRAP_IGNITION=`jq -rcnM --arg v "3.1.0" --arg url $BOOTSTRAP_URL '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 | tr -d '\n'`
 
 az deployment group create -g $RESOURCE_GROUP \
