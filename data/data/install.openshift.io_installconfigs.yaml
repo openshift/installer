@@ -1078,8 +1078,8 @@ spec:
                   type: object
                 type: array
               machineCIDR:
-                description: Deprecated name for MachineCIDRs. If set, MachineCIDRs
-                  must be empty or the first index must match.
+                description: Deprecated way to configure an IP address pool for machines.
+                  Replaced by MachineNetwork which allows for multiple pools.
                 type: Any
               machineNetwork:
                 description: MachineNetwork is the list of IP address pools for machines.
@@ -1105,7 +1105,8 @@ spec:
                   is OpenShiftSDN
                 type: string
               serviceCIDR:
-                description: Deprecated name for ServiceNetwork
+                description: Deprecated way to configure an IP address pool for services.
+                  Replaced by ServiceNetwork which allows for multiple pools.
                 type: Any
               serviceNetwork:
                 description: 'ServiceNetwork is the list of IP address pools for services.
