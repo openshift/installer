@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Update bootstrap node with latest content. Required for OKD as it starts with FCOS image
+# and needs to be updated to the machine-os-content used by masters / nodes.
+
+# shellcheck disable=SC1091
+. /usr/local/bin/bootstrap-service-record.sh
+
+if [[ -f /var/opt/install-dir/bootstrap.ign ]]; then
+  record_service_stage_start "pivot-agent-to-fcos"
+  # Write image + ignition to disk in assisted-installer flow
+  echo "Executing coreos-installer with the following options: install -i /var/opt/install-dir/bootstrap.ign {{.BootstrapInPlace.InstallationDisk}}"
+  coreos-installer install --copy-network -i /var/opt/install-dir/bootstrap.ign {{.BootstrapInPlace.InstallationDisk}}
+  record_service_stage_success
+  record_service_stage_start "reboot"
+  echo "Going to reboot"
+  reboot
+  record_service_stage_success
+fi

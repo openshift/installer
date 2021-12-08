@@ -14,9 +14,22 @@ record_service_stage_success
 
 if [ ! -f coreos-installer.done ]; then
   record_service_stage_start "coreos-installer"
+  {{ if .IsOKD -}}
+
+  # Delete bootstrap manifests
+  rm -rf /etc/kubernetes/manifests/*
+
+  # Apply new ignition using start --once-from. This doesn't require a full disk, but may
+  # leave some bootstrap files around
+  machine-config-daemon start --node-name $(hostname) --root-mount / --skip-reboot --once-from /opt/openshift/master.ign
+  # FIXME: original master ignition doesn't get merged in by `bootstrap-in-place`
+  machine-config-daemon start --node-name $(hostname) --root-mount / --skip-reboot --once-from /opt/openshift/original-master.ign
+
+  {{ else }}
   # Write image + ignition to disk
   echo "Executing coreos-installer with the following options: install -i /opt/openshift/master.ign {{.BootstrapInPlace.InstallationDisk}}"
   coreos-installer install -i /opt/openshift/master.ign {{.BootstrapInPlace.InstallationDisk}}
+  {{end -}}
 
   touch coreos-installer.done
   record_service_stage_success
