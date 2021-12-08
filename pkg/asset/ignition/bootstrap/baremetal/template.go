@@ -1,6 +1,7 @@
 package baremetal
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net"
 	"strings"
@@ -46,11 +47,25 @@ type TemplateData struct {
 
 	// BaremetalIntrospectionEndpointOverride contains the url for the baremetal introspection endpoint
 	BaremetalIntrospectionEndpointOverride string
+
+	// ClusterOSImage contains 4 URLs to download RHCOS live iso, kernel, rootfs and initramfs
+	ClusterOSImage string
+
+	// API VIP for use by ironic during bootstrap.
+	APIVIP string
+
+	// Hosts is the information needed to create the objects in Ironic.
+	Hosts []*baremetal.Host
+
+	// Pull secret for Ironic agent.
+	PullSecretBase64 string
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
-func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry, ironicUsername, ironicPassword string) *TemplateData {
+func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry, ironicUsername, ironicPassword string, pullSecret string) *TemplateData {
 	var templateData TemplateData
+
+	templateData.Hosts = config.Hosts
 
 	templateData.ProvisioningIP = config.BootstrapProvisioningIP
 	templateData.BaremetalEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "6385"))
@@ -97,6 +112,9 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 
 	templateData.IronicUsername = ironicUsername
 	templateData.IronicPassword = ironicPassword
+	templateData.ClusterOSImage = config.ClusterOSImage
+	templateData.APIVIP = config.APIVIP
+	templateData.PullSecretBase64 = base64.StdEncoding.EncodeToString([]byte(pullSecret))
 
 	return &templateData
 }
