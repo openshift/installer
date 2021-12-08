@@ -364,7 +364,6 @@ export MASTER_IGNITION=`cat master.ign | base64 | tr -d '\n'`
 az deployment group create -g $RESOURCE_GROUP \
   --template-file "05_masters.json" \
   --parameters masterIgnition="$MASTER_IGNITION" \
-  --parameters privateDNSZoneName="${CLUSTER_NAME}.${BASE_DOMAIN}" \
   --parameters baseName="$INFRA_ID"
 ```
 
