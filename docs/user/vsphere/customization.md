@@ -19,7 +19,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `cpus` (optional integer): The total number of virtual processor cores to assign a vm.
 * `coresPerSocket` (optional integer): The number of cores per socket in a vm. The number of vCPUs on the vm will be cpus/coresPerSocket (default is 1).
 * `memoryMB` (optional integer): The size of a VM's memory in megabytes.
-* `disk_type` (optional string): DiskType is the name of the disk provisioning type for vsphere, for e.g thick or thin, by default it will be eagerZeroedThick.
+* `disk_type` (optional string): DiskType is the name of the disk provisioning type, valid values are thin, thick, and eagerZeroedThick. When not specified, it will be set according to the default storage policy of vsphere.
 
 ## Examples
 
