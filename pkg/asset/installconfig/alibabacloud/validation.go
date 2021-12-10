@@ -109,7 +109,7 @@ func ValidateForProvisioning(client *Client, ic *types.InstallConfig, metadata *
 
 func validateClusterName(client *Client, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	namePath := field.NewPath("matedata").Child("name")
+	namePath := field.NewPath("metadata").Child("name")
 
 	zoneName := ic.ClusterDomain()
 	response, err := client.ListPrivateZones(zoneName)
@@ -117,7 +117,7 @@ func validateClusterName(client *Client, ic *types.InstallConfig) field.ErrorLis
 		allErrs = append(allErrs, field.InternalError(namePath, err))
 	}
 	if response.TotalItems > 0 {
-		allErrs = append(allErrs, field.Invalid(namePath, ic.ClusterName, fmt.Sprintf("cluster name is unavailable, private zone name %s already exists", zoneName)))
+		allErrs = append(allErrs, field.Invalid(namePath, ic.ObjectMeta.Name, fmt.Sprintf("cluster name is unavailable, private zone name %s already exists", zoneName)))
 	}
 	return allErrs
 }
