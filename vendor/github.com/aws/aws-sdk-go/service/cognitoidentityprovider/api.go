@@ -383,9 +383,9 @@ func (c *CognitoIdentityProvider) AdminCreateUserRequest(input *AdminCreateUserI
 // If MessageAction is not set, the default is to send a welcome message via
 // email or phone (SMS).
 //
-// This message is based on a template that you configured in your call to or
-// . This template includes your custom sign-up instructions and placeholders
-// for user name and temporary password.
+// This message is based on a template that you configured in your call to create
+// or update a user pool. This template includes your custom sign-up instructions
+// and placeholders for user name and temporary password.
 //
 // Alternatively, you can call AdminCreateUser with “SUPPRESS” for the MessageAction
 // parameter, and Amazon Cognito will not send any email.
@@ -737,7 +737,7 @@ func (c *CognitoIdentityProvider) AdminDisableProviderForUserRequest(input *Admi
 // sign-in. If the user to disable is a linked external IdP user, any link between
 // that user and an existing user is removed. The next time the external user
 // (no longer attached to the previously linked DestinationUser) signs in, they
-// must create a new user account. See .
+// must create a new user account. See AdminLinkProviderForUser (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminLinkProviderForUser.html).
 //
 // This action is enabled only for admin access and requires developer credentials.
 //
@@ -756,10 +756,11 @@ func (c *CognitoIdentityProvider) AdminDisableProviderForUserRequest(input *Admi
 // For de-linking a SAML identity, there are two scenarios. If the linked identity
 // has not yet been used to sign-in, the ProviderAttributeName and ProviderAttributeValue
 // must be the same values that were used for the SourceUser when the identities
-// were originally linked in the call. (If the linking was done with ProviderAttributeName
-// set to Cognito_Subject, the same applies here). However, if the user has
-// already signed in, the ProviderAttributeName must be Cognito_Subject and
-// ProviderAttributeValue must be the subject of the SAML assertion.
+// were originally linked using AdminLinkProviderForUser call. (If the linking
+// was done with ProviderAttributeName set to Cognito_Subject, the same applies
+// here). However, if the user has already signed in, the ProviderAttributeName
+// must be Cognito_Subject and ProviderAttributeValue must be the subject of
+// the SAML assertion.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1510,12 +1511,12 @@ func (c *CognitoIdentityProvider) AdminLinkProviderForUserRequest(input *AdminLi
 // API links that user to a federated user identity, so that when the federated
 // user identity is used, the user signs in as the existing user account.
 //
+// The maximum number of federated identities linked to a user is 5.
+//
 // Because this API allows a user with an external federated identity to sign
 // in as an existing user in the user pool, it is critical that it only be used
 // with external identity providers and provider attributes that have been trusted
 // by the application owner.
-//
-// See also .
 //
 // This action is enabled only for admin access and requires developer credentials.
 //
@@ -2656,7 +2657,8 @@ func (c *CognitoIdentityProvider) AdminSetUserSettingsRequest(input *AdminSetUse
 //
 // This action is no longer supported. You can use it to configure only SMS
 // MFA. You can't use it to configure TOTP software token MFA. To configure
-// either type of MFA, use the AdminSetUserMFAPreference action instead.
+// either type of MFA, use AdminSetUserMFAPreference (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminSetUserMFAPreference.html)
+// instead.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3208,6 +3210,9 @@ func (c *CognitoIdentityProvider) AssociateSoftwareTokenRequest(input *Associate
 // API operation AssociateSoftwareToken for usage and error information.
 //
 // Returned Error Types:
+//   * ConcurrentModificationException
+//   This exception is thrown if two or more modifications are happening concurrently.
+//
 //   * InvalidParameterException
 //   This exception is thrown when the Amazon Cognito service encounters an invalid
 //   parameter.
@@ -6064,10 +6069,11 @@ func (c *CognitoIdentityProvider) ForgotPasswordRequest(input *ForgotPasswordInp
 // code that is required to change the user's password. For the Username parameter,
 // you can use the username or user alias. The method used to send the confirmation
 // code is sent according to the specified AccountRecoverySetting. For more
-// information, see Recovering User Accounts in the Amazon Cognito Developer
-// Guide. If neither a verified phone number nor a verified email exists, an
-// InvalidParameterException is thrown. To use the confirmation code for resetting
-// the password, call .
+// information, see Recovering User Accounts (https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-recover-a-user-account.html)
+// in the Amazon Cognito Developer Guide. If neither a verified phone number
+// nor a verified email exists, an InvalidParameterException is thrown. To use
+// the confirmation code for resetting the password, call ConfirmForgotPassword
+// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ConfirmForgotPassword.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7208,6 +7214,7 @@ func (c *CognitoIdentityProvider) InitiateAuthRequest(input *InitiateAuthInput) 
 
 	output = &InitiateAuthOutput{}
 	req = c.newRequest(op, input, output)
+	req.Config.Credentials = credentials.AnonymousCredentials
 	return
 }
 
@@ -8832,6 +8839,7 @@ func (c *CognitoIdentityProvider) RespondToAuthChallengeRequest(input *RespondTo
 
 	output = &RespondToAuthChallengeOutput{}
 	req = c.newRequest(op, input, output)
+	req.Config.Credentials = credentials.AnonymousCredentials
 	return
 }
 
@@ -8995,8 +9003,6 @@ func (c *CognitoIdentityProvider) SetRiskConfigurationRequest(input *SetRiskConf
 //
 // To enable Amazon Cognito advanced security features, update the user pool
 // to include the UserPoolAddOns keyAdvancedSecurityMode.
-//
-// See .
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -9211,7 +9217,11 @@ func (c *CognitoIdentityProvider) SetUserMFAPreferenceRequest(input *SetUserMFAP
 // be set as preferred. The preferred MFA factor will be used to authenticate
 // a user if multiple factors are enabled. If multiple options are enabled and
 // no preference is set, a challenge to choose an MFA option will be returned
-// during sign in.
+// during sign in. If an MFA type is enabled for a user, the user will be prompted
+// for MFA during all sign in attempts, unless device tracking is turned on
+// and the device has been trusted. If you would like MFA to be applied selectively
+// based on the assessed risk level of sign in attempts, disable MFA for users
+// and turn on Adaptive Authentication for the user pool.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -9418,7 +9428,8 @@ func (c *CognitoIdentityProvider) SetUserSettingsRequest(input *SetUserSettingsI
 //
 // This action is no longer supported. You can use it to configure only SMS
 // MFA. You can't use it to configure TOTP software token MFA. To configure
-// either type of MFA, use the SetUserMFAPreference action instead.
+// either type of MFA, use SetUserMFAPreference (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_SetUserMFAPreference.html)
+// instead.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -10703,7 +10714,7 @@ func (c *CognitoIdentityProvider) UpdateUserPoolRequest(input *UpdateUserPoolInp
 // UpdateUserPool API operation for Amazon Cognito Identity Provider.
 //
 // Updates the specified user pool with the specified attributes. You can get
-// a list of the current user pool settings with .
+// a list of the current user pool settings using DescribeUserPool (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_DescribeUserPool.html).
 //
 // If you don't provide a value for an attribute, it will be set to the default
 // value.
@@ -10825,7 +10836,8 @@ func (c *CognitoIdentityProvider) UpdateUserPoolClientRequest(input *UpdateUserP
 // UpdateUserPoolClient API operation for Amazon Cognito Identity Provider.
 //
 // Updates the specified user pool app client with the specified attributes.
-// You can get a list of the current user pool app client settings with .
+// You can get a list of the current user pool app client settings using DescribeUserPoolClient
+// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_DescribeUserPoolClient.html).
 //
 // If you don't provide a value for an attribute, it will be set to the default
 // value.
@@ -11910,9 +11922,9 @@ type AdminCreateUserInput struct {
 	// An array of name-value pairs that contain user attributes and attribute values
 	// to be set for the user to be created. You can create a user without specifying
 	// any attributes other than Username. However, any attributes that you specify
-	// as required (in or in the Attributes tab of the console) must be supplied
-	// either by you (in your call to AdminCreateUser) or by the user (when he or
-	// she signs up in response to your welcome message).
+	// as required (when creating a user pool or in the Attributes tab of the console)
+	// must be supplied either by you (in your call to AdminCreateUser) or by the
+	// user (when he or she signs up in response to your welcome message).
 	//
 	// For custom attributes, you must prepend the custom: prefix to the attribute
 	// name.
@@ -11924,7 +11936,7 @@ type AdminCreateUserInput struct {
 	//
 	// In your call to AdminCreateUser, you can set the email_verified attribute
 	// to True, and you can set the phone_number_verified attribute to True. (You
-	// can also do this by calling .)
+	// can also do this by calling AdminUpdateUserAttributes (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminUpdateUserAttributes.html).)
 	//
 	//    * email: The email address of the user to whom the message that contains
 	//    the code and username will be sent. Required if the email_verified attribute
@@ -12746,7 +12758,7 @@ type AdminGetUserOutput struct {
 	// This response parameter is no longer supported. It provides information only
 	// about SMS MFA configurations. It doesn't provide information about TOTP software
 	// token MFA configurations. To look up information about either type of MFA
-	// configuration, use the AdminGetUserResponse$UserMFASettingList response instead.
+	// configuration, use UserMFASettingList instead.
 	MFAOptions []*MFAOptionType `type:"list"`
 
 	// The user's preferred MFA setting.
@@ -12906,16 +12918,18 @@ type AdminInitiateAuthInput struct {
 	// that you are invoking. The required values depend on the value of AuthFlow:
 	//
 	//    * For USER_SRP_AUTH: USERNAME (required), SRP_A (required), SECRET_HASH
-	//    (required if the app client is configured with a client secret), DEVICE_KEY
+	//    (required if the app client is configured with a client secret), DEVICE_KEY.
 	//
 	//    * For REFRESH_TOKEN_AUTH/REFRESH_TOKEN: REFRESH_TOKEN (required), SECRET_HASH
-	//    (required if the app client is configured with a client secret), DEVICE_KEY
+	//    (required if the app client is configured with a client secret), DEVICE_KEY.
 	//
 	//    * For ADMIN_NO_SRP_AUTH: USERNAME (required), SECRET_HASH (if app client
-	//    is configured with client secret), PASSWORD (required), DEVICE_KEY
+	//    is configured with client secret), PASSWORD (required), DEVICE_KEY.
 	//
 	//    * For CUSTOM_AUTH: USERNAME (required), SECRET_HASH (if app client is
-	//    configured with client secret), DEVICE_KEY
+	//    configured with client secret), DEVICE_KEY. To start the authentication
+	//    flow with password verification, include ChallengeName: SRP_A and SRP_A:
+	//    (The SRP_A Value).
 	AuthParameters map[string]*string `type:"map" sensitive:"true"`
 
 	// The app client ID.
@@ -13838,7 +13852,7 @@ type AdminRespondToAuthChallengeInput struct {
 	// calls.
 	AnalyticsMetadata *AnalyticsMetadataType `type:"structure"`
 
-	// The challenge name. For more information, see .
+	// The challenge name. For more information, see AdminInitiateAuth (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminInitiateAuth.html).
 	//
 	// ChallengeName is a required field
 	ChallengeName *string `type:"string" required:"true" enum:"ChallengeNameType"`
@@ -14019,17 +14033,16 @@ type AdminRespondToAuthChallengeOutput struct {
 	// The result returned by the server in response to the authentication request.
 	AuthenticationResult *AuthenticationResultType `type:"structure"`
 
-	// The name of the challenge. For more information, see .
+	// The name of the challenge. For more information, see AdminInitiateAuth (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminInitiateAuth.html).
 	ChallengeName *string `type:"string" enum:"ChallengeNameType"`
 
-	// The challenge parameters. For more information, see .
+	// The challenge parameters. For more information, see AdminInitiateAuth (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminInitiateAuth.html).
 	ChallengeParameters map[string]*string `type:"map"`
 
 	// The session which should be passed both ways in challenge-response calls
-	// to the service. If the or API call determines that the caller needs to go
-	// through another challenge, they return a session with other challenge parameters.
-	// This session should be passed as it is to the next RespondToAuthChallenge
-	// API call.
+	// to the service. If the caller needs to go through another challenge, they
+	// return a session with other challenge parameters. This session should be
+	// passed as it is to the next RespondToAuthChallenge API call.
 	Session *string `min:"20" type:"string"`
 }
 
@@ -14835,27 +14848,28 @@ func (s *AliasExistsException) RequestID() string {
 // The Amazon Pinpoint analytics configuration for collecting metrics for a
 // user pool.
 //
-// Cognito User Pools only supports sending events to Amazon Pinpoint projects
-// in the US East (N. Virginia) us-east-1 Region, regardless of the region in
-// which the user pool resides.
+// In regions where Pinpoint is not available, Cognito User Pools only supports
+// sending events to Amazon Pinpoint projects in us-east-1. In regions where
+// Pinpoint is available, Cognito User Pools will support sending events to
+// Amazon Pinpoint projects within that same region.
 type AnalyticsConfigurationType struct {
 	_ struct{} `type:"structure"`
 
+	// The Amazon Resource Name (ARN) of an Amazon Pinpoint project. You can use
+	// the Amazon Pinpoint project for Pinpoint integration with the chosen User
+	// Pool Client. Amazon Cognito publishes events to the pinpoint project declared
+	// by the app ARN.
+	ApplicationArn *string `min:"20" type:"string"`
+
 	// The application ID for an Amazon Pinpoint application.
-	//
-	// ApplicationId is a required field
-	ApplicationId *string `type:"string" required:"true"`
+	ApplicationId *string `type:"string"`
 
 	// The external ID.
-	//
-	// ExternalId is a required field
-	ExternalId *string `type:"string" required:"true"`
+	ExternalId *string `type:"string"`
 
 	// The ARN of an IAM role that authorizes Amazon Cognito to publish events to
 	// Amazon Pinpoint analytics.
-	//
-	// RoleArn is a required field
-	RoleArn *string `min:"20" type:"string" required:"true"`
+	RoleArn *string `min:"20" type:"string"`
 
 	// If UserDataShared is true, Amazon Cognito will include user data in the events
 	// it publishes to Amazon Pinpoint analytics.
@@ -14875,14 +14889,8 @@ func (s AnalyticsConfigurationType) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *AnalyticsConfigurationType) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "AnalyticsConfigurationType"}
-	if s.ApplicationId == nil {
-		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
-	}
-	if s.ExternalId == nil {
-		invalidParams.Add(request.NewErrParamRequired("ExternalId"))
-	}
-	if s.RoleArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("RoleArn"))
+	if s.ApplicationArn != nil && len(*s.ApplicationArn) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("ApplicationArn", 20))
 	}
 	if s.RoleArn != nil && len(*s.RoleArn) < 20 {
 		invalidParams.Add(request.NewErrParamMinLen("RoleArn", 20))
@@ -14892,6 +14900,12 @@ func (s *AnalyticsConfigurationType) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetApplicationArn sets the ApplicationArn field's value.
+func (s *AnalyticsConfigurationType) SetApplicationArn(v string) *AnalyticsConfigurationType {
+	s.ApplicationArn = &v
+	return s
 }
 
 // SetApplicationId sets the ApplicationId field's value.
@@ -15815,7 +15829,7 @@ type ConfirmForgotPasswordInput struct {
 	ClientMetadata map[string]*string `type:"map"`
 
 	// The confirmation code sent by a user's request to retrieve a forgotten password.
-	// For more information, see
+	// For more information, see ForgotPassword (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ForgotPassword.html).
 	//
 	// ConfirmationCode is a required field
 	ConfirmationCode *string `min:"1" type:"string" required:"true"`
@@ -16357,8 +16371,9 @@ type CreateIdentityProviderInput struct {
 	// The identity provider details. The following list describes the provider
 	// detail keys for each identity provider type.
 	//
-	//    * For Google, Facebook and Login with Amazon: client_id client_secret
-	//    authorize_scopes
+	//    * For Google and Login with Amazon: client_id client_secret authorize_scopes
+	//
+	//    * For Facebook: client_id client_secret authorize_scopes api_version
 	//
 	//    * For Sign in with Apple: client_id team_id key_id private_key authorize_scopes
 	//
@@ -16367,7 +16382,7 @@ type CreateIdentityProviderInput struct {
 	//    URL specified by oidc_issuer key token_url if not available from discovery
 	//    URL specified by oidc_issuer key attributes_url if not available from
 	//    discovery URL specified by oidc_issuer key jwks_uri if not available from
-	//    discovery URL specified by oidc_issuer key authorize_scopes
+	//    discovery URL specified by oidc_issuer key
 	//
 	//    * For SAML providers: MetadataFile OR MetadataURL IDPSignout optional
 	//
@@ -16714,6 +16729,11 @@ func (s *CreateUserImportJobOutput) SetUserImportJob(v *UserImportJobType) *Crea
 type CreateUserPoolClientInput struct {
 	_ struct{} `type:"structure"`
 
+	// The time limit, between 5 minutes and 1 day, after which the access token
+	// is no longer valid and cannot be used. This value will be overridden if you
+	// have entered a value in TokenValidityUnits.
+	AccessTokenValidity *int64 `min:"1" type:"integer"`
+
 	// The allowed OAuth flows.
 	//
 	// Set to code to initiate a code grant flow, which provides an authorization
@@ -16740,9 +16760,10 @@ type CreateUserPoolClientInput struct {
 	// The Amazon Pinpoint analytics configuration for collecting metrics for this
 	// user pool.
 	//
-	// Cognito User Pools only supports sending events to Amazon Pinpoint projects
-	// in the US East (N. Virginia) us-east-1 Region, regardless of the region in
-	// which the user pool resides.
+	// In regions where Pinpoint is not available, Cognito User Pools only supports
+	// sending events to Amazon Pinpoint projects in us-east-1. In regions where
+	// Pinpoint is available, Cognito User Pools will support sending events to
+	// Amazon Pinpoint projects within that same region.
 	AnalyticsConfiguration *AnalyticsConfigurationType `type:"structure"`
 
 	// A list of allowed redirect (callback) URLs for the identity providers.
@@ -16814,6 +16835,11 @@ type CreateUserPoolClientInput struct {
 	// client being created.
 	GenerateSecret *bool `type:"boolean"`
 
+	// The time limit, between 5 minutes and 1 day, after which the ID token is
+	// no longer valid and cannot be used. This value will be overridden if you
+	// have entered a value in TokenValidityUnits.
+	IdTokenValidity *int64 `min:"1" type:"integer"`
+
 	// A list of allowed logout URLs for the identity providers.
 	LogoutURLs []*string `type:"list"`
 
@@ -16833,24 +16859,6 @@ type CreateUserPoolClientInput struct {
 	//    * LEGACY - This represents the old behavior of Cognito where user existence
 	//    related errors are not prevented.
 	//
-	// This setting affects the behavior of following APIs:
-	//
-	//    * AdminInitiateAuth
-	//
-	//    * AdminRespondToAuthChallenge
-	//
-	//    * InitiateAuth
-	//
-	//    * RespondToAuthChallenge
-	//
-	//    * ForgotPassword
-	//
-	//    * ConfirmForgotPassword
-	//
-	//    * ConfirmSignUp
-	//
-	//    * ResendConfirmationCode
-	//
 	// After February 15th 2020, the value of PreventUserExistenceErrors will default
 	// to ENABLED for newly created user pool clients if no value is provided.
 	PreventUserExistenceErrors *string `type:"string" enum:"PreventUserExistenceErrorTypes"`
@@ -16865,6 +16873,10 @@ type CreateUserPoolClientInput struct {
 	// A list of provider names for the identity providers that are supported on
 	// this client. The following are supported: COGNITO, Facebook, Google and LoginWithAmazon.
 	SupportedIdentityProviders []*string `type:"list"`
+
+	// The units in which the validity times are represented in. Default for RefreshToken
+	// is days, and default for ID and access tokens are hours.
+	TokenValidityUnits *TokenValidityUnitsType `type:"structure"`
 
 	// The user pool ID for the user pool where you want to create a user pool client.
 	//
@@ -16896,6 +16908,9 @@ func (s CreateUserPoolClientInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *CreateUserPoolClientInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "CreateUserPoolClientInput"}
+	if s.AccessTokenValidity != nil && *s.AccessTokenValidity < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("AccessTokenValidity", 1))
+	}
 	if s.ClientName == nil {
 		invalidParams.Add(request.NewErrParamRequired("ClientName"))
 	}
@@ -16904,6 +16919,9 @@ func (s *CreateUserPoolClientInput) Validate() error {
 	}
 	if s.DefaultRedirectURI != nil && len(*s.DefaultRedirectURI) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DefaultRedirectURI", 1))
+	}
+	if s.IdTokenValidity != nil && *s.IdTokenValidity < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("IdTokenValidity", 1))
 	}
 	if s.UserPoolId == nil {
 		invalidParams.Add(request.NewErrParamRequired("UserPoolId"))
@@ -16921,6 +16939,12 @@ func (s *CreateUserPoolClientInput) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAccessTokenValidity sets the AccessTokenValidity field's value.
+func (s *CreateUserPoolClientInput) SetAccessTokenValidity(v int64) *CreateUserPoolClientInput {
+	s.AccessTokenValidity = &v
+	return s
 }
 
 // SetAllowedOAuthFlows sets the AllowedOAuthFlows field's value.
@@ -16977,6 +17001,12 @@ func (s *CreateUserPoolClientInput) SetGenerateSecret(v bool) *CreateUserPoolCli
 	return s
 }
 
+// SetIdTokenValidity sets the IdTokenValidity field's value.
+func (s *CreateUserPoolClientInput) SetIdTokenValidity(v int64) *CreateUserPoolClientInput {
+	s.IdTokenValidity = &v
+	return s
+}
+
 // SetLogoutURLs sets the LogoutURLs field's value.
 func (s *CreateUserPoolClientInput) SetLogoutURLs(v []*string) *CreateUserPoolClientInput {
 	s.LogoutURLs = v
@@ -17004,6 +17034,12 @@ func (s *CreateUserPoolClientInput) SetRefreshTokenValidity(v int64) *CreateUser
 // SetSupportedIdentityProviders sets the SupportedIdentityProviders field's value.
 func (s *CreateUserPoolClientInput) SetSupportedIdentityProviders(v []*string) *CreateUserPoolClientInput {
 	s.SupportedIdentityProviders = v
+	return s
+}
+
+// SetTokenValidityUnits sets the TokenValidityUnits field's value.
+func (s *CreateUserPoolClientInput) SetTokenValidityUnits(v *TokenValidityUnitsType) *CreateUserPoolClientInput {
+	s.TokenValidityUnits = v
 	return s
 }
 
@@ -17158,10 +17194,6 @@ type CreateUserPoolInput struct {
 	// if the user also has SMS MFA enabled. In the absence of this setting, Cognito
 	// uses the legacy behavior to determine the recovery method where SMS is preferred
 	// over email.
-	//
-	// Starting February 1, 2020, the value of AccountRecoverySetting will default
-	// to verified_email first and verified_phone_number as the second option for
-	// newly created user pools if no value is provided.
 	AccountRecoverySetting *AccountRecoverySettingType `type:"structure"`
 
 	// The configuration for AdminCreateUser requests.
@@ -17180,10 +17212,14 @@ type CreateUserPoolInput struct {
 	// The email configuration.
 	EmailConfiguration *EmailConfigurationType `type:"structure"`
 
-	// A string representing the email verification message.
+	// A string representing the email verification message. EmailVerificationMessage
+	// is allowed only if EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER.
 	EmailVerificationMessage *string `min:"6" type:"string"`
 
-	// A string representing the email verification subject.
+	// A string representing the email verification subject. EmailVerificationSubject
+	// is allowed only if EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER.
 	EmailVerificationSubject *string `min:"1" type:"string"`
 
 	// The Lambda trigger configuration information for the new user pool.
@@ -17238,7 +17274,8 @@ type CreateUserPoolInput struct {
 	// You can choose to set case sensitivity on the username input for the selected
 	// sign-in option. For example, when this is set to False, users will be able
 	// to sign in using either "username" or "Username". This configuration is immutable
-	// once it has been set. For more information, see .
+	// once it has been set. For more information, see UsernameConfigurationType
+	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_UsernameConfigurationType.html).
 	UsernameConfiguration *UsernameConfigurationType `type:"structure"`
 
 	// The template for the verification message that the user sees when the app
@@ -17534,6 +17571,124 @@ func (s *CustomDomainConfigType) Validate() error {
 // SetCertificateArn sets the CertificateArn field's value.
 func (s *CustomDomainConfigType) SetCertificateArn(v string) *CustomDomainConfigType {
 	s.CertificateArn = &v
+	return s
+}
+
+// A custom email sender Lambda configuration type.
+type CustomEmailLambdaVersionConfigType struct {
+	_ struct{} `type:"structure"`
+
+	// The Lambda Amazon Resource Name of the Lambda function that Amazon Cognito
+	// triggers to send email notifications to users.
+	//
+	// LambdaArn is a required field
+	LambdaArn *string `min:"20" type:"string" required:"true"`
+
+	// The Lambda version represents the signature of the "request" attribute in
+	// the "event" information Amazon Cognito passes to your custom email Lambda
+	// function. The only supported value is V1_0.
+	//
+	// LambdaVersion is a required field
+	LambdaVersion *string `type:"string" required:"true" enum:"CustomEmailSenderLambdaVersionType"`
+}
+
+// String returns the string representation
+func (s CustomEmailLambdaVersionConfigType) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CustomEmailLambdaVersionConfigType) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CustomEmailLambdaVersionConfigType) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CustomEmailLambdaVersionConfigType"}
+	if s.LambdaArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("LambdaArn"))
+	}
+	if s.LambdaArn != nil && len(*s.LambdaArn) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("LambdaArn", 20))
+	}
+	if s.LambdaVersion == nil {
+		invalidParams.Add(request.NewErrParamRequired("LambdaVersion"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLambdaArn sets the LambdaArn field's value.
+func (s *CustomEmailLambdaVersionConfigType) SetLambdaArn(v string) *CustomEmailLambdaVersionConfigType {
+	s.LambdaArn = &v
+	return s
+}
+
+// SetLambdaVersion sets the LambdaVersion field's value.
+func (s *CustomEmailLambdaVersionConfigType) SetLambdaVersion(v string) *CustomEmailLambdaVersionConfigType {
+	s.LambdaVersion = &v
+	return s
+}
+
+// A custom SMS sender Lambda configuration type.
+type CustomSMSLambdaVersionConfigType struct {
+	_ struct{} `type:"structure"`
+
+	// The Lambda Amazon Resource Name of the Lambda function that Amazon Cognito
+	// triggers to send SMS notifications to users.
+	//
+	// LambdaArn is a required field
+	LambdaArn *string `min:"20" type:"string" required:"true"`
+
+	// The Lambda version represents the signature of the "request" attribute in
+	// the "event" information Amazon Cognito passes to your custom SMS Lambda function.
+	// The only supported value is V1_0.
+	//
+	// LambdaVersion is a required field
+	LambdaVersion *string `type:"string" required:"true" enum:"CustomSMSSenderLambdaVersionType"`
+}
+
+// String returns the string representation
+func (s CustomSMSLambdaVersionConfigType) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CustomSMSLambdaVersionConfigType) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CustomSMSLambdaVersionConfigType) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CustomSMSLambdaVersionConfigType"}
+	if s.LambdaArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("LambdaArn"))
+	}
+	if s.LambdaArn != nil && len(*s.LambdaArn) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("LambdaArn", 20))
+	}
+	if s.LambdaVersion == nil {
+		invalidParams.Add(request.NewErrParamRequired("LambdaVersion"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLambdaArn sets the LambdaArn field's value.
+func (s *CustomSMSLambdaVersionConfigType) SetLambdaArn(v string) *CustomSMSLambdaVersionConfigType {
+	s.LambdaArn = &v
+	return s
+}
+
+// SetLambdaVersion sets the LambdaVersion field's value.
+func (s *CustomSMSLambdaVersionConfigType) SetLambdaVersion(v string) *CustomSMSLambdaVersionConfigType {
+	s.LambdaVersion = &v
 	return s
 }
 
@@ -18893,6 +19048,10 @@ func (s *DuplicateProviderException) RequestID() string {
 }
 
 // The email configuration type.
+//
+// Amazon Cognito has specific regions for use with Amazon SES. For more information
+// on the supported regions, see Email Settings for Amazon Cognito User Pools
+// (https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-email.html).
 type EmailConfigurationType struct {
 	_ struct{} `type:"structure"`
 
@@ -18932,6 +19091,27 @@ type EmailConfigurationType struct {
 	// The default FROM address is no-reply@verificationemail.com. To customize
 	// the FROM address, provide the ARN of an Amazon SES verified email address
 	// for the SourceArn parameter.
+	//
+	// If EmailSendingAccount is COGNITO_DEFAULT, the following parameters aren't
+	// allowed:
+	//
+	//    * EmailVerificationMessage
+	//
+	//    * EmailVerificationSubject
+	//
+	//    * InviteMessageTemplate.EmailMessage
+	//
+	//    * InviteMessageTemplate.EmailSubject
+	//
+	//    * VerificationMessageTemplate.EmailMessage
+	//
+	//    * VerificationMessageTemplate.EmailMessageByLink
+	//
+	//    * VerificationMessageTemplate.EmailSubject,
+	//
+	//    * VerificationMessageTemplate.EmailSubjectByLink
+	//
+	// DEVELOPER EmailSendingAccount is required.
 	//
 	// DEVELOPER
 	//
@@ -20147,8 +20327,7 @@ type GetUserOutput struct {
 	// This response parameter is no longer supported. It provides information only
 	// about SMS MFA configurations. It doesn't provide information about TOTP software
 	// token MFA configurations. To look up information about either type of MFA
-	// configuration, use the use the GetUserResponse$UserMFASettingList response
-	// instead.
+	// configuration, use UserMFASettingList instead.
 	MFAOptions []*MFAOptionType `type:"list"`
 
 	// The user's preferred MFA setting.
@@ -20556,8 +20735,9 @@ type IdentityProviderType struct {
 	// The identity provider details. The following list describes the provider
 	// detail keys for each identity provider type.
 	//
-	//    * For Google, Facebook and Login with Amazon: client_id client_secret
-	//    authorize_scopes
+	//    * For Google and Login with Amazon: client_id client_secret authorize_scopes
+	//
+	//    * For Facebook: client_id client_secret authorize_scopes api_version
 	//
 	//    * For Sign in with Apple: client_id team_id key_id private_key authorize_scopes
 	//
@@ -20688,13 +20868,15 @@ type InitiateAuthInput struct {
 	// that you are invoking. The required values depend on the value of AuthFlow:
 	//
 	//    * For USER_SRP_AUTH: USERNAME (required), SRP_A (required), SECRET_HASH
-	//    (required if the app client is configured with a client secret), DEVICE_KEY
+	//    (required if the app client is configured with a client secret), DEVICE_KEY.
 	//
 	//    * For REFRESH_TOKEN_AUTH/REFRESH_TOKEN: REFRESH_TOKEN (required), SECRET_HASH
-	//    (required if the app client is configured with a client secret), DEVICE_KEY
+	//    (required if the app client is configured with a client secret), DEVICE_KEY.
 	//
 	//    * For CUSTOM_AUTH: USERNAME (required), SECRET_HASH (if app client is
-	//    configured with client secret), DEVICE_KEY
+	//    configured with client secret), DEVICE_KEY. To start the authentication
+	//    flow with password verification, include ChallengeName: SRP_A and SRP_A:
+	//    (The SRP_A Value).
 	AuthParameters map[string]*string `type:"map" sensitive:"true"`
 
 	// The app client ID.
@@ -20875,10 +21057,9 @@ type InitiateAuthOutput struct {
 	ChallengeParameters map[string]*string `type:"map"`
 
 	// The session which should be passed both ways in challenge-response calls
-	// to the service. If the or API call determines that the caller needs to go
-	// through another challenge, they return a session with other challenge parameters.
-	// This session should be passed as it is to the next RespondToAuthChallenge
-	// API call.
+	// to the service. If the caller needs to go through another challenge, they
+	// return a session with other challenge parameters. This session should be
+	// passed as it is to the next RespondToAuthChallenge API call.
 	Session *string `min:"20" type:"string"`
 }
 
@@ -21449,11 +21630,22 @@ type LambdaConfigType struct {
 	// Creates an authentication challenge.
 	CreateAuthChallenge *string `min:"20" type:"string"`
 
+	// A custom email sender AWS Lambda trigger.
+	CustomEmailSender *CustomEmailLambdaVersionConfigType `type:"structure"`
+
 	// A custom Message AWS Lambda trigger.
 	CustomMessage *string `min:"20" type:"string"`
 
+	// A custom SMS sender AWS Lambda trigger.
+	CustomSMSSender *CustomSMSLambdaVersionConfigType `type:"structure"`
+
 	// Defines the authentication challenge.
 	DefineAuthChallenge *string `min:"20" type:"string"`
+
+	// The Amazon Resource Name of Key Management Service Customer master keys (/kms/latest/developerguide/concepts.html#master_keys)
+	// . Amazon Cognito uses the key to encrypt codes and temporary passwords sent
+	// to CustomEmailSender and CustomSMSSender.
+	KMSKeyID *string `min:"20" type:"string"`
 
 	// A post-authentication AWS Lambda trigger.
 	PostAuthentication *string `min:"20" type:"string"`
@@ -21499,6 +21691,9 @@ func (s *LambdaConfigType) Validate() error {
 	if s.DefineAuthChallenge != nil && len(*s.DefineAuthChallenge) < 20 {
 		invalidParams.Add(request.NewErrParamMinLen("DefineAuthChallenge", 20))
 	}
+	if s.KMSKeyID != nil && len(*s.KMSKeyID) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("KMSKeyID", 20))
+	}
 	if s.PostAuthentication != nil && len(*s.PostAuthentication) < 20 {
 		invalidParams.Add(request.NewErrParamMinLen("PostAuthentication", 20))
 	}
@@ -21520,6 +21715,16 @@ func (s *LambdaConfigType) Validate() error {
 	if s.VerifyAuthChallengeResponse != nil && len(*s.VerifyAuthChallengeResponse) < 20 {
 		invalidParams.Add(request.NewErrParamMinLen("VerifyAuthChallengeResponse", 20))
 	}
+	if s.CustomEmailSender != nil {
+		if err := s.CustomEmailSender.Validate(); err != nil {
+			invalidParams.AddNested("CustomEmailSender", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.CustomSMSSender != nil {
+		if err := s.CustomSMSSender.Validate(); err != nil {
+			invalidParams.AddNested("CustomSMSSender", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -21533,15 +21738,33 @@ func (s *LambdaConfigType) SetCreateAuthChallenge(v string) *LambdaConfigType {
 	return s
 }
 
+// SetCustomEmailSender sets the CustomEmailSender field's value.
+func (s *LambdaConfigType) SetCustomEmailSender(v *CustomEmailLambdaVersionConfigType) *LambdaConfigType {
+	s.CustomEmailSender = v
+	return s
+}
+
 // SetCustomMessage sets the CustomMessage field's value.
 func (s *LambdaConfigType) SetCustomMessage(v string) *LambdaConfigType {
 	s.CustomMessage = &v
 	return s
 }
 
+// SetCustomSMSSender sets the CustomSMSSender field's value.
+func (s *LambdaConfigType) SetCustomSMSSender(v *CustomSMSLambdaVersionConfigType) *LambdaConfigType {
+	s.CustomSMSSender = v
+	return s
+}
+
 // SetDefineAuthChallenge sets the DefineAuthChallenge field's value.
 func (s *LambdaConfigType) SetDefineAuthChallenge(v string) *LambdaConfigType {
 	s.DefineAuthChallenge = &v
+	return s
+}
+
+// SetKMSKeyID sets the KMSKeyID field's value.
+func (s *LambdaConfigType) SetKMSKeyID(v string) *LambdaConfigType {
+	s.KMSKeyID = &v
 	return s
 }
 
@@ -22725,12 +22948,6 @@ func (s *MFAMethodNotFoundException) RequestID() string {
 
 // This data type is no longer supported. You can use it only for SMS MFA configurations.
 // You can't use it for TOTP software token MFA configurations.
-//
-// To set either type of MFA configuration, use the AdminSetUserMFAPreference
-// or SetUserMFAPreference actions.
-//
-// To look up information about either type of MFA configuration, use the AdminGetUserResponse$UserMFASettingList
-// or GetUserResponse$UserMFASettingList responses.
 type MFAOptionType struct {
 	_ struct{} `type:"structure"`
 
@@ -22781,10 +22998,14 @@ func (s *MFAOptionType) SetDeliveryMedium(v string) *MFAOptionType {
 type MessageTemplateType struct {
 	_ struct{} `type:"structure"`
 
-	// The message template for email messages.
+	// The message template for email messages. EmailMessage is allowed only if
+	// EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER.
 	EmailMessage *string `min:"6" type:"string"`
 
-	// The subject line for email messages.
+	// The subject line for email messages. EmailSubject is allowed only if EmailSendingAccount
+	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER.
 	EmailSubject *string `min:"1" type:"string"`
 
 	// The message template for SMS messages.
@@ -23839,7 +24060,7 @@ type RespondToAuthChallengeInput struct {
 	// calls.
 	AnalyticsMetadata *AnalyticsMetadataType `type:"structure"`
 
-	// The challenge name. For more information, see .
+	// The challenge name. For more information, see InitiateAuth (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_InitiateAuth.html).
 	//
 	// ADMIN_NO_SRP_AUTH is not a valid value.
 	//
@@ -24001,17 +24222,16 @@ type RespondToAuthChallengeOutput struct {
 	// the authentication challenge.
 	AuthenticationResult *AuthenticationResultType `type:"structure"`
 
-	// The challenge name. For more information, see .
+	// The challenge name. For more information, see InitiateAuth (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_InitiateAuth.html).
 	ChallengeName *string `type:"string" enum:"ChallengeNameType"`
 
-	// The challenge parameters. For more information, see .
+	// The challenge parameters. For more information, see InitiateAuth (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_InitiateAuth.html).
 	ChallengeParameters map[string]*string `type:"map"`
 
 	// The session which should be passed both ways in challenge-response calls
-	// to the service. If the or API call determines that the caller needs to go
-	// through another challenge, they return a session with other challenge parameters.
-	// This session should be passed as it is to the next RespondToAuthChallenge
-	// API call.
+	// to the service. If the caller needs to go through another challenge, they
+	// return a session with other challenge parameters. This session should be
+	// passed as it is to the next RespondToAuthChallenge API call.
 	Session *string `min:"20" type:"string"`
 }
 
@@ -24156,11 +24376,19 @@ func (s *RiskExceptionConfigurationType) SetSkippedIPRangeList(v []*string) *Ris
 	return s
 }
 
-// The type used for enabling SMS MFA at the user level.
+// The type used for enabling SMS MFA at the user level. Phone numbers don't
+// need to be verified to be used for SMS MFA. If an MFA type is enabled for
+// a user, the user will be prompted for MFA during all sign in attempts, unless
+// device tracking is turned on and the device has been trusted. If you would
+// like MFA to be applied selectively based on the assessed risk level of sign
+// in attempts, disable MFA for users and turn on Adaptive Authentication for
+// the user pool.
 type SMSMfaSettingsType struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies whether SMS text message MFA is enabled.
+	// Specifies whether SMS text message MFA is enabled. If an MFA type is enabled
+	// for a user, the user will be prompted for MFA during all sign in attempts,
+	// unless device tracking is turned on and the device has been trusted.
 	Enabled *bool `type:"boolean"`
 
 	// Specifies whether SMS is the preferred MFA method.
@@ -24204,7 +24432,7 @@ type SchemaAttributeType struct {
 	// Specifies whether the attribute type is developer only. This attribute can
 	// only be modified by an administrator. Users will not be able to modify this
 	// attribute using their access token. For example, DeveloperOnlyAttribute can
-	// be modified using the API but cannot be updated using the API.
+	// be modified using AdminUpdateUserAttributes but cannot be updated using UpdateUserAttributes.
 	DeveloperOnlyAttribute *bool `type:"boolean"`
 
 	// Specifies whether the value of the attribute can be changed.
@@ -25102,7 +25330,8 @@ type SmsConfigurationType struct {
 
 	// The Amazon Resource Name (ARN) of the Amazon Simple Notification Service
 	// (SNS) caller. This is the ARN of the IAM role in your AWS account which Cognito
-	// will use to send SMS messages.
+	// will use to send SMS messages. SMS messages are subject to a spending limit
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html).
 	//
 	// SnsCallerArn is a required field
 	SnsCallerArn *string `min:"20" type:"string" required:"true"`
@@ -25281,11 +25510,18 @@ func (s *SoftwareTokenMfaConfigType) SetEnabled(v bool) *SoftwareTokenMfaConfigT
 	return s
 }
 
-// The type used for enabling software token MFA at the user level.
+// The type used for enabling software token MFA at the user level. If an MFA
+// type is enabled for a user, the user will be prompted for MFA during all
+// sign in attempts, unless device tracking is turned on and the device has
+// been trusted. If you would like MFA to be applied selectively based on the
+// assessed risk level of sign in attempts, disable MFA for users and turn on
+// Adaptive Authentication for the user pool.
 type SoftwareTokenMfaSettingsType struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies whether software token MFA is enabled.
+	// Specifies whether software token MFA is enabled. If an MFA type is enabled
+	// for a user, the user will be prompted for MFA during all sign in attempts,
+	// unless device tracking is turned on and the device has been trusted.
 	Enabled *bool `type:"boolean"`
 
 	// Specifies whether software token MFA is the preferred MFA method.
@@ -25582,6 +25818,52 @@ func (s TagResourceOutput) String() string {
 // GoString returns the string representation
 func (s TagResourceOutput) GoString() string {
 	return s.String()
+}
+
+// The data type for TokenValidityUnits that specifics the time measurements
+// for token validity.
+type TokenValidityUnitsType struct {
+	_ struct{} `type:"structure"`
+
+	// A time unit in “seconds”, “minutes”, “hours” or “days” for
+	// the value in AccessTokenValidity, defaults to hours.
+	AccessToken *string `type:"string" enum:"TimeUnitsType"`
+
+	// A time unit in “seconds”, “minutes”, “hours” or “days” for
+	// the value in IdTokenValidity, defaults to hours.
+	IdToken *string `type:"string" enum:"TimeUnitsType"`
+
+	// A time unit in “seconds”, “minutes”, “hours” or “days” for
+	// the value in RefreshTokenValidity, defaults to days.
+	RefreshToken *string `type:"string" enum:"TimeUnitsType"`
+}
+
+// String returns the string representation
+func (s TokenValidityUnitsType) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TokenValidityUnitsType) GoString() string {
+	return s.String()
+}
+
+// SetAccessToken sets the AccessToken field's value.
+func (s *TokenValidityUnitsType) SetAccessToken(v string) *TokenValidityUnitsType {
+	s.AccessToken = &v
+	return s
+}
+
+// SetIdToken sets the IdToken field's value.
+func (s *TokenValidityUnitsType) SetIdToken(v string) *TokenValidityUnitsType {
+	s.IdToken = &v
+	return s
+}
+
+// SetRefreshToken sets the RefreshToken field's value.
+func (s *TokenValidityUnitsType) SetRefreshToken(v string) *TokenValidityUnitsType {
+	s.RefreshToken = &v
+	return s
 }
 
 // This exception is thrown when the user has made too many failed attempts
@@ -26232,7 +26514,7 @@ type UpdateGroupInput struct {
 	GroupName *string `min:"1" type:"string" required:"true"`
 
 	// The new precedence value for the group. For more information about this parameter,
-	// see .
+	// see CreateGroup (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_CreateGroup.html).
 	Precedence *int64 `type:"integer"`
 
 	// The new role ARN for the group. This is used for setting the cognito:roles
@@ -26694,6 +26976,10 @@ func (s *UpdateUserAttributesOutput) SetCodeDeliveryDetailsList(v []*CodeDeliver
 type UpdateUserPoolClientInput struct {
 	_ struct{} `type:"structure"`
 
+	// The time limit, after which the access token is no longer valid and cannot
+	// be used.
+	AccessTokenValidity *int64 `min:"1" type:"integer"`
+
 	// The allowed OAuth flows.
 	//
 	// Set to code to initiate a code grant flow, which provides an authorization
@@ -26720,9 +27006,10 @@ type UpdateUserPoolClientInput struct {
 	// The Amazon Pinpoint analytics configuration for collecting metrics for this
 	// user pool.
 	//
-	// Cognito User Pools only supports sending events to Amazon Pinpoint projects
-	// in the US East (N. Virginia) us-east-1 Region, regardless of the region in
-	// which the user pool resides.
+	// In regions where Pinpoint is not available, Cognito User Pools only supports
+	// sending events to Amazon Pinpoint projects in us-east-1. In regions where
+	// Pinpoint is available, Cognito User Pools will support sending events to
+	// Amazon Pinpoint projects within that same region.
 	AnalyticsConfiguration *AnalyticsConfigurationType `type:"structure"`
 
 	// A list of allowed redirect (callback) URLs for the identity providers.
@@ -26793,6 +27080,10 @@ type UpdateUserPoolClientInput struct {
 	//    * ALLOW_REFRESH_TOKEN_AUTH: Enable authflow to refresh tokens.
 	ExplicitAuthFlows []*string `type:"list"`
 
+	// The time limit, after which the ID token is no longer valid and cannot be
+	// used.
+	IdTokenValidity *int64 `min:"1" type:"integer"`
+
 	// A list of allowed logout URLs for the identity providers.
 	LogoutURLs []*string `type:"list"`
 
@@ -26812,24 +27103,6 @@ type UpdateUserPoolClientInput struct {
 	//    * LEGACY - This represents the old behavior of Cognito where user existence
 	//    related errors are not prevented.
 	//
-	// This setting affects the behavior of following APIs:
-	//
-	//    * AdminInitiateAuth
-	//
-	//    * AdminRespondToAuthChallenge
-	//
-	//    * InitiateAuth
-	//
-	//    * RespondToAuthChallenge
-	//
-	//    * ForgotPassword
-	//
-	//    * ConfirmForgotPassword
-	//
-	//    * ConfirmSignUp
-	//
-	//    * ResendConfirmationCode
-	//
 	// After February 15th 2020, the value of PreventUserExistenceErrors will default
 	// to ENABLED for newly created user pool clients if no value is provided.
 	PreventUserExistenceErrors *string `type:"string" enum:"PreventUserExistenceErrorTypes"`
@@ -26844,6 +27117,10 @@ type UpdateUserPoolClientInput struct {
 	// A list of provider names for the identity providers that are supported on
 	// this client.
 	SupportedIdentityProviders []*string `type:"list"`
+
+	// The units in which the validity times are represented in. Default for RefreshToken
+	// is days, and default for ID and access tokens are hours.
+	TokenValidityUnits *TokenValidityUnitsType `type:"structure"`
 
 	// The user pool ID for the user pool where you want to update the user pool
 	// client.
@@ -26868,6 +27145,9 @@ func (s UpdateUserPoolClientInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *UpdateUserPoolClientInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "UpdateUserPoolClientInput"}
+	if s.AccessTokenValidity != nil && *s.AccessTokenValidity < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("AccessTokenValidity", 1))
+	}
 	if s.ClientId == nil {
 		invalidParams.Add(request.NewErrParamRequired("ClientId"))
 	}
@@ -26879,6 +27159,9 @@ func (s *UpdateUserPoolClientInput) Validate() error {
 	}
 	if s.DefaultRedirectURI != nil && len(*s.DefaultRedirectURI) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DefaultRedirectURI", 1))
+	}
+	if s.IdTokenValidity != nil && *s.IdTokenValidity < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("IdTokenValidity", 1))
 	}
 	if s.UserPoolId == nil {
 		invalidParams.Add(request.NewErrParamRequired("UserPoolId"))
@@ -26896,6 +27179,12 @@ func (s *UpdateUserPoolClientInput) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAccessTokenValidity sets the AccessTokenValidity field's value.
+func (s *UpdateUserPoolClientInput) SetAccessTokenValidity(v int64) *UpdateUserPoolClientInput {
+	s.AccessTokenValidity = &v
+	return s
 }
 
 // SetAllowedOAuthFlows sets the AllowedOAuthFlows field's value.
@@ -26952,6 +27241,12 @@ func (s *UpdateUserPoolClientInput) SetExplicitAuthFlows(v []*string) *UpdateUse
 	return s
 }
 
+// SetIdTokenValidity sets the IdTokenValidity field's value.
+func (s *UpdateUserPoolClientInput) SetIdTokenValidity(v int64) *UpdateUserPoolClientInput {
+	s.IdTokenValidity = &v
+	return s
+}
+
 // SetLogoutURLs sets the LogoutURLs field's value.
 func (s *UpdateUserPoolClientInput) SetLogoutURLs(v []*string) *UpdateUserPoolClientInput {
 	s.LogoutURLs = v
@@ -26979,6 +27274,12 @@ func (s *UpdateUserPoolClientInput) SetRefreshTokenValidity(v int64) *UpdateUser
 // SetSupportedIdentityProviders sets the SupportedIdentityProviders field's value.
 func (s *UpdateUserPoolClientInput) SetSupportedIdentityProviders(v []*string) *UpdateUserPoolClientInput {
 	s.SupportedIdentityProviders = v
+	return s
+}
+
+// SetTokenValidityUnits sets the TokenValidityUnits field's value.
+func (s *UpdateUserPoolClientInput) SetTokenValidityUnits(v *TokenValidityUnitsType) *UpdateUserPoolClientInput {
+	s.TokenValidityUnits = v
 	return s
 }
 
@@ -27960,6 +28261,10 @@ func (s *UserPoolClientDescription) SetUserPoolId(v string) *UserPoolClientDescr
 type UserPoolClientType struct {
 	_ struct{} `type:"structure"`
 
+	// The time limit, specified by tokenValidityUnits, defaulting to hours, after
+	// which the access token is no longer valid and cannot be used.
+	AccessTokenValidity *int64 `min:"1" type:"integer"`
+
 	// The allowed OAuth flows.
 	//
 	// Set to code to initiate a code grant flow, which provides an authorization
@@ -28062,6 +28367,10 @@ type UserPoolClientType struct {
 	//    * ALLOW_REFRESH_TOKEN_AUTH: Enable authflow to refresh tokens.
 	ExplicitAuthFlows []*string `type:"list"`
 
+	// The time limit, specified by tokenValidityUnits, defaulting to hours, after
+	// which the refresh token is no longer valid and cannot be used.
+	IdTokenValidity *int64 `min:"1" type:"integer"`
+
 	// The date the user pool client was last modified.
 	LastModifiedDate *time.Time `type:"timestamp"`
 
@@ -28084,24 +28393,6 @@ type UserPoolClientType struct {
 	//    * LEGACY - This represents the old behavior of Cognito where user existence
 	//    related errors are not prevented.
 	//
-	// This setting affects the behavior of following APIs:
-	//
-	//    * AdminInitiateAuth
-	//
-	//    * AdminRespondToAuthChallenge
-	//
-	//    * InitiateAuth
-	//
-	//    * RespondToAuthChallenge
-	//
-	//    * ForgotPassword
-	//
-	//    * ConfirmForgotPassword
-	//
-	//    * ConfirmSignUp
-	//
-	//    * ResendConfirmationCode
-	//
 	// After February 15th 2020, the value of PreventUserExistenceErrors will default
 	// to ENABLED for newly created user pool clients if no value is provided.
 	PreventUserExistenceErrors *string `type:"string" enum:"PreventUserExistenceErrorTypes"`
@@ -28116,6 +28407,10 @@ type UserPoolClientType struct {
 	// A list of provider names for the identity providers that are supported on
 	// this client.
 	SupportedIdentityProviders []*string `type:"list"`
+
+	// The time units used to specify the token validity times of their respective
+	// token.
+	TokenValidityUnits *TokenValidityUnitsType `type:"structure"`
 
 	// The user pool ID for the user pool client.
 	UserPoolId *string `min:"1" type:"string"`
@@ -28132,6 +28427,12 @@ func (s UserPoolClientType) String() string {
 // GoString returns the string representation
 func (s UserPoolClientType) GoString() string {
 	return s.String()
+}
+
+// SetAccessTokenValidity sets the AccessTokenValidity field's value.
+func (s *UserPoolClientType) SetAccessTokenValidity(v int64) *UserPoolClientType {
+	s.AccessTokenValidity = &v
+	return s
 }
 
 // SetAllowedOAuthFlows sets the AllowedOAuthFlows field's value.
@@ -28200,6 +28501,12 @@ func (s *UserPoolClientType) SetExplicitAuthFlows(v []*string) *UserPoolClientTy
 	return s
 }
 
+// SetIdTokenValidity sets the IdTokenValidity field's value.
+func (s *UserPoolClientType) SetIdTokenValidity(v int64) *UserPoolClientType {
+	s.IdTokenValidity = &v
+	return s
+}
+
 // SetLastModifiedDate sets the LastModifiedDate field's value.
 func (s *UserPoolClientType) SetLastModifiedDate(v time.Time) *UserPoolClientType {
 	s.LastModifiedDate = &v
@@ -28233,6 +28540,12 @@ func (s *UserPoolClientType) SetRefreshTokenValidity(v int64) *UserPoolClientTyp
 // SetSupportedIdentityProviders sets the SupportedIdentityProviders field's value.
 func (s *UserPoolClientType) SetSupportedIdentityProviders(v []*string) *UserPoolClientType {
 	s.SupportedIdentityProviders = v
+	return s
+}
+
+// SetTokenValidityUnits sets the TokenValidityUnits field's value.
+func (s *UserPoolClientType) SetTokenValidityUnits(v *TokenValidityUnitsType) *UserPoolClientType {
+	s.TokenValidityUnits = v
 	return s
 }
 
@@ -28528,7 +28841,8 @@ type UserPoolType struct {
 	// You can choose to enable case sensitivity on the username input for the selected
 	// sign-in option. For example, when this is set to False, users will be able
 	// to sign in using either "username" or "Username". This configuration is immutable
-	// once it has been set. For more information, see .
+	// once it has been set. For more information, see UsernameConfigurationType
+	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_UsernameConfigurationType.html).
 	UsernameConfiguration *UsernameConfigurationType `type:"structure"`
 
 	// The template for verification messages.
@@ -28942,17 +29256,25 @@ type VerificationMessageTemplateType struct {
 	// The default email option.
 	DefaultEmailOption *string `type:"string" enum:"DefaultEmailOptionType"`
 
-	// The email message template.
+	// The email message template. EmailMessage is allowed only if EmailSendingAccount
+	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER.
 	EmailMessage *string `min:"6" type:"string"`
 
-	// The email message template for sending a confirmation link to the user.
+	// The email message template for sending a confirmation link to the user. EmailMessageByLink
+	// is allowed only if EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER.
 	EmailMessageByLink *string `min:"6" type:"string"`
 
-	// The subject line for the email message template.
+	// The subject line for the email message template. EmailSubject is allowed
+	// only if EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER.
 	EmailSubject *string `min:"1" type:"string"`
 
 	// The subject line for the email message template for sending a confirmation
-	// link to the user.
+	// link to the user. EmailSubjectByLink is allowed only EmailSendingAccount
+	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER.
 	EmailSubjectByLink *string `min:"1" type:"string"`
 
 	// The SMS message template.
@@ -29043,7 +29365,8 @@ type VerifySoftwareTokenInput struct {
 	// to the service.
 	Session *string `min:"20" type:"string"`
 
-	// The one time password computed using the secret code returned by
+	// The one time password computed using the secret code returned by AssociateSoftwareToken"
+	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AssociateSoftwareToken.html).
 	//
 	// UserCode is a required field
 	UserCode *string `min:"6" type:"string" required:"true"`
@@ -29238,6 +29561,16 @@ const (
 	AccountTakeoverEventActionTypeNoAction = "NO_ACTION"
 )
 
+// AccountTakeoverEventActionType_Values returns all elements of the AccountTakeoverEventActionType enum
+func AccountTakeoverEventActionType_Values() []string {
+	return []string{
+		AccountTakeoverEventActionTypeBlock,
+		AccountTakeoverEventActionTypeMfaIfConfigured,
+		AccountTakeoverEventActionTypeMfaRequired,
+		AccountTakeoverEventActionTypeNoAction,
+	}
+}
+
 const (
 	// AdvancedSecurityModeTypeOff is a AdvancedSecurityModeType enum value
 	AdvancedSecurityModeTypeOff = "OFF"
@@ -29249,6 +29582,15 @@ const (
 	AdvancedSecurityModeTypeEnforced = "ENFORCED"
 )
 
+// AdvancedSecurityModeType_Values returns all elements of the AdvancedSecurityModeType enum
+func AdvancedSecurityModeType_Values() []string {
+	return []string{
+		AdvancedSecurityModeTypeOff,
+		AdvancedSecurityModeTypeAudit,
+		AdvancedSecurityModeTypeEnforced,
+	}
+}
+
 const (
 	// AliasAttributeTypePhoneNumber is a AliasAttributeType enum value
 	AliasAttributeTypePhoneNumber = "phone_number"
@@ -29259,6 +29601,15 @@ const (
 	// AliasAttributeTypePreferredUsername is a AliasAttributeType enum value
 	AliasAttributeTypePreferredUsername = "preferred_username"
 )
+
+// AliasAttributeType_Values returns all elements of the AliasAttributeType enum
+func AliasAttributeType_Values() []string {
+	return []string{
+		AliasAttributeTypePhoneNumber,
+		AliasAttributeTypeEmail,
+		AliasAttributeTypePreferredUsername,
+	}
+}
 
 const (
 	// AttributeDataTypeString is a AttributeDataType enum value
@@ -29273,6 +29624,16 @@ const (
 	// AttributeDataTypeBoolean is a AttributeDataType enum value
 	AttributeDataTypeBoolean = "Boolean"
 )
+
+// AttributeDataType_Values returns all elements of the AttributeDataType enum
+func AttributeDataType_Values() []string {
+	return []string{
+		AttributeDataTypeString,
+		AttributeDataTypeNumber,
+		AttributeDataTypeDateTime,
+		AttributeDataTypeBoolean,
+	}
+}
 
 const (
 	// AuthFlowTypeUserSrpAuth is a AuthFlowType enum value
@@ -29297,6 +29658,19 @@ const (
 	AuthFlowTypeAdminUserPasswordAuth = "ADMIN_USER_PASSWORD_AUTH"
 )
 
+// AuthFlowType_Values returns all elements of the AuthFlowType enum
+func AuthFlowType_Values() []string {
+	return []string{
+		AuthFlowTypeUserSrpAuth,
+		AuthFlowTypeRefreshTokenAuth,
+		AuthFlowTypeRefreshToken,
+		AuthFlowTypeCustomAuth,
+		AuthFlowTypeAdminNoSrpAuth,
+		AuthFlowTypeUserPasswordAuth,
+		AuthFlowTypeAdminUserPasswordAuth,
+	}
+}
+
 const (
 	// ChallengeNamePassword is a ChallengeName enum value
 	ChallengeNamePassword = "Password"
@@ -29304,6 +29678,14 @@ const (
 	// ChallengeNameMfa is a ChallengeName enum value
 	ChallengeNameMfa = "Mfa"
 )
+
+// ChallengeName_Values returns all elements of the ChallengeName enum
+func ChallengeName_Values() []string {
+	return []string{
+		ChallengeNamePassword,
+		ChallengeNameMfa,
+	}
+}
 
 const (
 	// ChallengeNameTypeSmsMfa is a ChallengeNameType enum value
@@ -29337,6 +29719,22 @@ const (
 	ChallengeNameTypeNewPasswordRequired = "NEW_PASSWORD_REQUIRED"
 )
 
+// ChallengeNameType_Values returns all elements of the ChallengeNameType enum
+func ChallengeNameType_Values() []string {
+	return []string{
+		ChallengeNameTypeSmsMfa,
+		ChallengeNameTypeSoftwareTokenMfa,
+		ChallengeNameTypeSelectMfaType,
+		ChallengeNameTypeMfaSetup,
+		ChallengeNameTypePasswordVerifier,
+		ChallengeNameTypeCustomChallenge,
+		ChallengeNameTypeDeviceSrpAuth,
+		ChallengeNameTypeDevicePasswordVerifier,
+		ChallengeNameTypeAdminNoSrpAuth,
+		ChallengeNameTypeNewPasswordRequired,
+	}
+}
+
 const (
 	// ChallengeResponseSuccess is a ChallengeResponse enum value
 	ChallengeResponseSuccess = "Success"
@@ -29344,6 +29742,14 @@ const (
 	// ChallengeResponseFailure is a ChallengeResponse enum value
 	ChallengeResponseFailure = "Failure"
 )
+
+// ChallengeResponse_Values returns all elements of the ChallengeResponse enum
+func ChallengeResponse_Values() []string {
+	return []string{
+		ChallengeResponseSuccess,
+		ChallengeResponseFailure,
+	}
+}
 
 const (
 	// CompromisedCredentialsEventActionTypeBlock is a CompromisedCredentialsEventActionType enum value
@@ -29353,6 +29759,38 @@ const (
 	CompromisedCredentialsEventActionTypeNoAction = "NO_ACTION"
 )
 
+// CompromisedCredentialsEventActionType_Values returns all elements of the CompromisedCredentialsEventActionType enum
+func CompromisedCredentialsEventActionType_Values() []string {
+	return []string{
+		CompromisedCredentialsEventActionTypeBlock,
+		CompromisedCredentialsEventActionTypeNoAction,
+	}
+}
+
+const (
+	// CustomEmailSenderLambdaVersionTypeV10 is a CustomEmailSenderLambdaVersionType enum value
+	CustomEmailSenderLambdaVersionTypeV10 = "V1_0"
+)
+
+// CustomEmailSenderLambdaVersionType_Values returns all elements of the CustomEmailSenderLambdaVersionType enum
+func CustomEmailSenderLambdaVersionType_Values() []string {
+	return []string{
+		CustomEmailSenderLambdaVersionTypeV10,
+	}
+}
+
+const (
+	// CustomSMSSenderLambdaVersionTypeV10 is a CustomSMSSenderLambdaVersionType enum value
+	CustomSMSSenderLambdaVersionTypeV10 = "V1_0"
+)
+
+// CustomSMSSenderLambdaVersionType_Values returns all elements of the CustomSMSSenderLambdaVersionType enum
+func CustomSMSSenderLambdaVersionType_Values() []string {
+	return []string{
+		CustomSMSSenderLambdaVersionTypeV10,
+	}
+}
+
 const (
 	// DefaultEmailOptionTypeConfirmWithLink is a DefaultEmailOptionType enum value
 	DefaultEmailOptionTypeConfirmWithLink = "CONFIRM_WITH_LINK"
@@ -29360,6 +29798,14 @@ const (
 	// DefaultEmailOptionTypeConfirmWithCode is a DefaultEmailOptionType enum value
 	DefaultEmailOptionTypeConfirmWithCode = "CONFIRM_WITH_CODE"
 )
+
+// DefaultEmailOptionType_Values returns all elements of the DefaultEmailOptionType enum
+func DefaultEmailOptionType_Values() []string {
+	return []string{
+		DefaultEmailOptionTypeConfirmWithLink,
+		DefaultEmailOptionTypeConfirmWithCode,
+	}
+}
 
 const (
 	// DeliveryMediumTypeSms is a DeliveryMediumType enum value
@@ -29369,6 +29815,14 @@ const (
 	DeliveryMediumTypeEmail = "EMAIL"
 )
 
+// DeliveryMediumType_Values returns all elements of the DeliveryMediumType enum
+func DeliveryMediumType_Values() []string {
+	return []string{
+		DeliveryMediumTypeSms,
+		DeliveryMediumTypeEmail,
+	}
+}
+
 const (
 	// DeviceRememberedStatusTypeRemembered is a DeviceRememberedStatusType enum value
 	DeviceRememberedStatusTypeRemembered = "remembered"
@@ -29376,6 +29830,14 @@ const (
 	// DeviceRememberedStatusTypeNotRemembered is a DeviceRememberedStatusType enum value
 	DeviceRememberedStatusTypeNotRemembered = "not_remembered"
 )
+
+// DeviceRememberedStatusType_Values returns all elements of the DeviceRememberedStatusType enum
+func DeviceRememberedStatusType_Values() []string {
+	return []string{
+		DeviceRememberedStatusTypeRemembered,
+		DeviceRememberedStatusTypeNotRemembered,
+	}
+}
 
 const (
 	// DomainStatusTypeCreating is a DomainStatusType enum value
@@ -29394,6 +29856,17 @@ const (
 	DomainStatusTypeFailed = "FAILED"
 )
 
+// DomainStatusType_Values returns all elements of the DomainStatusType enum
+func DomainStatusType_Values() []string {
+	return []string{
+		DomainStatusTypeCreating,
+		DomainStatusTypeDeleting,
+		DomainStatusTypeUpdating,
+		DomainStatusTypeActive,
+		DomainStatusTypeFailed,
+	}
+}
+
 const (
 	// EmailSendingAccountTypeCognitoDefault is a EmailSendingAccountType enum value
 	EmailSendingAccountTypeCognitoDefault = "COGNITO_DEFAULT"
@@ -29401,6 +29874,14 @@ const (
 	// EmailSendingAccountTypeDeveloper is a EmailSendingAccountType enum value
 	EmailSendingAccountTypeDeveloper = "DEVELOPER"
 )
+
+// EmailSendingAccountType_Values returns all elements of the EmailSendingAccountType enum
+func EmailSendingAccountType_Values() []string {
+	return []string{
+		EmailSendingAccountTypeCognitoDefault,
+		EmailSendingAccountTypeDeveloper,
+	}
+}
 
 const (
 	// EventFilterTypeSignIn is a EventFilterType enum value
@@ -29413,6 +29894,15 @@ const (
 	EventFilterTypeSignUp = "SIGN_UP"
 )
 
+// EventFilterType_Values returns all elements of the EventFilterType enum
+func EventFilterType_Values() []string {
+	return []string{
+		EventFilterTypeSignIn,
+		EventFilterTypePasswordChange,
+		EventFilterTypeSignUp,
+	}
+}
+
 const (
 	// EventResponseTypeSuccess is a EventResponseType enum value
 	EventResponseTypeSuccess = "Success"
@@ -29420,6 +29910,14 @@ const (
 	// EventResponseTypeFailure is a EventResponseType enum value
 	EventResponseTypeFailure = "Failure"
 )
+
+// EventResponseType_Values returns all elements of the EventResponseType enum
+func EventResponseType_Values() []string {
+	return []string{
+		EventResponseTypeSuccess,
+		EventResponseTypeFailure,
+	}
+}
 
 const (
 	// EventTypeSignIn is a EventType enum value
@@ -29431,6 +29929,15 @@ const (
 	// EventTypeForgotPassword is a EventType enum value
 	EventTypeForgotPassword = "ForgotPassword"
 )
+
+// EventType_Values returns all elements of the EventType enum
+func EventType_Values() []string {
+	return []string{
+		EventTypeSignIn,
+		EventTypeSignUp,
+		EventTypeForgotPassword,
+	}
+}
 
 const (
 	// ExplicitAuthFlowsTypeAdminNoSrpAuth is a ExplicitAuthFlowsType enum value
@@ -29458,6 +29965,20 @@ const (
 	ExplicitAuthFlowsTypeAllowRefreshTokenAuth = "ALLOW_REFRESH_TOKEN_AUTH"
 )
 
+// ExplicitAuthFlowsType_Values returns all elements of the ExplicitAuthFlowsType enum
+func ExplicitAuthFlowsType_Values() []string {
+	return []string{
+		ExplicitAuthFlowsTypeAdminNoSrpAuth,
+		ExplicitAuthFlowsTypeCustomAuthFlowOnly,
+		ExplicitAuthFlowsTypeUserPasswordAuth,
+		ExplicitAuthFlowsTypeAllowAdminUserPasswordAuth,
+		ExplicitAuthFlowsTypeAllowCustomAuth,
+		ExplicitAuthFlowsTypeAllowUserPasswordAuth,
+		ExplicitAuthFlowsTypeAllowUserSrpAuth,
+		ExplicitAuthFlowsTypeAllowRefreshTokenAuth,
+	}
+}
+
 const (
 	// FeedbackValueTypeValid is a FeedbackValueType enum value
 	FeedbackValueTypeValid = "Valid"
@@ -29465,6 +29986,14 @@ const (
 	// FeedbackValueTypeInvalid is a FeedbackValueType enum value
 	FeedbackValueTypeInvalid = "Invalid"
 )
+
+// FeedbackValueType_Values returns all elements of the FeedbackValueType enum
+func FeedbackValueType_Values() []string {
+	return []string{
+		FeedbackValueTypeValid,
+		FeedbackValueTypeInvalid,
+	}
+}
 
 const (
 	// IdentityProviderTypeTypeSaml is a IdentityProviderTypeType enum value
@@ -29486,6 +30015,18 @@ const (
 	IdentityProviderTypeTypeOidc = "OIDC"
 )
 
+// IdentityProviderTypeType_Values returns all elements of the IdentityProviderTypeType enum
+func IdentityProviderTypeType_Values() []string {
+	return []string{
+		IdentityProviderTypeTypeSaml,
+		IdentityProviderTypeTypeFacebook,
+		IdentityProviderTypeTypeGoogle,
+		IdentityProviderTypeTypeLoginWithAmazon,
+		IdentityProviderTypeTypeSignInWithApple,
+		IdentityProviderTypeTypeOidc,
+	}
+}
+
 const (
 	// MessageActionTypeResend is a MessageActionType enum value
 	MessageActionTypeResend = "RESEND"
@@ -29493,6 +30034,14 @@ const (
 	// MessageActionTypeSuppress is a MessageActionType enum value
 	MessageActionTypeSuppress = "SUPPRESS"
 )
+
+// MessageActionType_Values returns all elements of the MessageActionType enum
+func MessageActionType_Values() []string {
+	return []string{
+		MessageActionTypeResend,
+		MessageActionTypeSuppress,
+	}
+}
 
 const (
 	// OAuthFlowTypeCode is a OAuthFlowType enum value
@@ -29505,6 +30054,15 @@ const (
 	OAuthFlowTypeClientCredentials = "client_credentials"
 )
 
+// OAuthFlowType_Values returns all elements of the OAuthFlowType enum
+func OAuthFlowType_Values() []string {
+	return []string{
+		OAuthFlowTypeCode,
+		OAuthFlowTypeImplicit,
+		OAuthFlowTypeClientCredentials,
+	}
+}
+
 const (
 	// PreventUserExistenceErrorTypesLegacy is a PreventUserExistenceErrorTypes enum value
 	PreventUserExistenceErrorTypesLegacy = "LEGACY"
@@ -29512,6 +30070,14 @@ const (
 	// PreventUserExistenceErrorTypesEnabled is a PreventUserExistenceErrorTypes enum value
 	PreventUserExistenceErrorTypesEnabled = "ENABLED"
 )
+
+// PreventUserExistenceErrorTypes_Values returns all elements of the PreventUserExistenceErrorTypes enum
+func PreventUserExistenceErrorTypes_Values() []string {
+	return []string{
+		PreventUserExistenceErrorTypesLegacy,
+		PreventUserExistenceErrorTypesEnabled,
+	}
+}
 
 const (
 	// RecoveryOptionNameTypeVerifiedEmail is a RecoveryOptionNameType enum value
@@ -29524,6 +30090,15 @@ const (
 	RecoveryOptionNameTypeAdminOnly = "admin_only"
 )
 
+// RecoveryOptionNameType_Values returns all elements of the RecoveryOptionNameType enum
+func RecoveryOptionNameType_Values() []string {
+	return []string{
+		RecoveryOptionNameTypeVerifiedEmail,
+		RecoveryOptionNameTypeVerifiedPhoneNumber,
+		RecoveryOptionNameTypeAdminOnly,
+	}
+}
+
 const (
 	// RiskDecisionTypeNoRisk is a RiskDecisionType enum value
 	RiskDecisionTypeNoRisk = "NoRisk"
@@ -29534,6 +30109,15 @@ const (
 	// RiskDecisionTypeBlock is a RiskDecisionType enum value
 	RiskDecisionTypeBlock = "Block"
 )
+
+// RiskDecisionType_Values returns all elements of the RiskDecisionType enum
+func RiskDecisionType_Values() []string {
+	return []string{
+		RiskDecisionTypeNoRisk,
+		RiskDecisionTypeAccountTakeover,
+		RiskDecisionTypeBlock,
+	}
+}
 
 const (
 	// RiskLevelTypeLow is a RiskLevelType enum value
@@ -29546,6 +30130,15 @@ const (
 	RiskLevelTypeHigh = "High"
 )
 
+// RiskLevelType_Values returns all elements of the RiskLevelType enum
+func RiskLevelType_Values() []string {
+	return []string{
+		RiskLevelTypeLow,
+		RiskLevelTypeMedium,
+		RiskLevelTypeHigh,
+	}
+}
+
 const (
 	// StatusTypeEnabled is a StatusType enum value
 	StatusTypeEnabled = "Enabled"
@@ -29553,6 +30146,38 @@ const (
 	// StatusTypeDisabled is a StatusType enum value
 	StatusTypeDisabled = "Disabled"
 )
+
+// StatusType_Values returns all elements of the StatusType enum
+func StatusType_Values() []string {
+	return []string{
+		StatusTypeEnabled,
+		StatusTypeDisabled,
+	}
+}
+
+const (
+	// TimeUnitsTypeSeconds is a TimeUnitsType enum value
+	TimeUnitsTypeSeconds = "seconds"
+
+	// TimeUnitsTypeMinutes is a TimeUnitsType enum value
+	TimeUnitsTypeMinutes = "minutes"
+
+	// TimeUnitsTypeHours is a TimeUnitsType enum value
+	TimeUnitsTypeHours = "hours"
+
+	// TimeUnitsTypeDays is a TimeUnitsType enum value
+	TimeUnitsTypeDays = "days"
+)
+
+// TimeUnitsType_Values returns all elements of the TimeUnitsType enum
+func TimeUnitsType_Values() []string {
+	return []string{
+		TimeUnitsTypeSeconds,
+		TimeUnitsTypeMinutes,
+		TimeUnitsTypeHours,
+		TimeUnitsTypeDays,
+	}
+}
 
 const (
 	// UserImportJobStatusTypeCreated is a UserImportJobStatusType enum value
@@ -29580,6 +30205,20 @@ const (
 	UserImportJobStatusTypeSucceeded = "Succeeded"
 )
 
+// UserImportJobStatusType_Values returns all elements of the UserImportJobStatusType enum
+func UserImportJobStatusType_Values() []string {
+	return []string{
+		UserImportJobStatusTypeCreated,
+		UserImportJobStatusTypePending,
+		UserImportJobStatusTypeInProgress,
+		UserImportJobStatusTypeStopping,
+		UserImportJobStatusTypeExpired,
+		UserImportJobStatusTypeStopped,
+		UserImportJobStatusTypeFailed,
+		UserImportJobStatusTypeSucceeded,
+	}
+}
+
 const (
 	// UserPoolMfaTypeOff is a UserPoolMfaType enum value
 	UserPoolMfaTypeOff = "OFF"
@@ -29590,6 +30229,15 @@ const (
 	// UserPoolMfaTypeOptional is a UserPoolMfaType enum value
 	UserPoolMfaTypeOptional = "OPTIONAL"
 )
+
+// UserPoolMfaType_Values returns all elements of the UserPoolMfaType enum
+func UserPoolMfaType_Values() []string {
+	return []string{
+		UserPoolMfaTypeOff,
+		UserPoolMfaTypeOn,
+		UserPoolMfaTypeOptional,
+	}
+}
 
 const (
 	// UserStatusTypeUnconfirmed is a UserStatusType enum value
@@ -29614,6 +30262,19 @@ const (
 	UserStatusTypeForceChangePassword = "FORCE_CHANGE_PASSWORD"
 )
 
+// UserStatusType_Values returns all elements of the UserStatusType enum
+func UserStatusType_Values() []string {
+	return []string{
+		UserStatusTypeUnconfirmed,
+		UserStatusTypeConfirmed,
+		UserStatusTypeArchived,
+		UserStatusTypeCompromised,
+		UserStatusTypeUnknown,
+		UserStatusTypeResetRequired,
+		UserStatusTypeForceChangePassword,
+	}
+}
+
 const (
 	// UsernameAttributeTypePhoneNumber is a UsernameAttributeType enum value
 	UsernameAttributeTypePhoneNumber = "phone_number"
@@ -29621,6 +30282,14 @@ const (
 	// UsernameAttributeTypeEmail is a UsernameAttributeType enum value
 	UsernameAttributeTypeEmail = "email"
 )
+
+// UsernameAttributeType_Values returns all elements of the UsernameAttributeType enum
+func UsernameAttributeType_Values() []string {
+	return []string{
+		UsernameAttributeTypePhoneNumber,
+		UsernameAttributeTypeEmail,
+	}
+}
 
 const (
 	// VerifiedAttributeTypePhoneNumber is a VerifiedAttributeType enum value
@@ -29630,6 +30299,14 @@ const (
 	VerifiedAttributeTypeEmail = "email"
 )
 
+// VerifiedAttributeType_Values returns all elements of the VerifiedAttributeType enum
+func VerifiedAttributeType_Values() []string {
+	return []string{
+		VerifiedAttributeTypePhoneNumber,
+		VerifiedAttributeTypeEmail,
+	}
+}
+
 const (
 	// VerifySoftwareTokenResponseTypeSuccess is a VerifySoftwareTokenResponseType enum value
 	VerifySoftwareTokenResponseTypeSuccess = "SUCCESS"
@@ -29637,3 +30314,11 @@ const (
 	// VerifySoftwareTokenResponseTypeError is a VerifySoftwareTokenResponseType enum value
 	VerifySoftwareTokenResponseTypeError = "ERROR"
 )
+
+// VerifySoftwareTokenResponseType_Values returns all elements of the VerifySoftwareTokenResponseType enum
+func VerifySoftwareTokenResponseType_Values() []string {
+	return []string{
+		VerifySoftwareTokenResponseTypeSuccess,
+		VerifySoftwareTokenResponseTypeError,
+	}
+}

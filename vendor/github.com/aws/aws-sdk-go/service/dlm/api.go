@@ -1582,6 +1582,11 @@ type LifecyclePolicySummary struct {
 	// The identifier of the lifecycle policy.
 	PolicyId *string `type:"string"`
 
+	// The type of policy. EBS_SNAPSHOT_MANAGEMENT indicates that the policy manages
+	// the lifecycle of Amazon EBS snapshots. IMAGE_MANAGEMENT indicates that the
+	// policy manages the lifecycle of EBS-backed AMIs.
+	PolicyType *string `type:"string" enum:"PolicyTypeValues"`
+
 	// The activation state of the lifecycle policy.
 	State *string `type:"string" enum:"GettablePolicyStateValues"`
 
@@ -1608,6 +1613,12 @@ func (s *LifecyclePolicySummary) SetDescription(v string) *LifecyclePolicySummar
 // SetPolicyId sets the PolicyId field's value.
 func (s *LifecyclePolicySummary) SetPolicyId(v string) *LifecyclePolicySummary {
 	s.PolicyId = &v
+	return s
+}
+
+// SetPolicyType sets the PolicyType field's value.
+func (s *LifecyclePolicySummary) SetPolicyType(v string) *LifecyclePolicySummary {
+	s.PolicyType = &v
 	return s
 }
 
@@ -1757,6 +1768,13 @@ type Parameters struct {
 	// exclude the root volume from snapshots created using CreateSnapshots (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateSnapshots.html).
 	// The default is false.
 	ExcludeBootVolume *bool `type:"boolean"`
+
+	// Applies to AMI lifecycle policies only. Indicates whether targeted instances
+	// are rebooted when the lifecycle policy runs. true indicates that targeted
+	// instances are not rebooted when the policy runs. false indicates that target
+	// instances are rebooted when the policy runs. The default is true (instance
+	// are not rebooted).
+	NoReboot *bool `type:"boolean"`
 }
 
 // String returns the string representation
@@ -1775,6 +1793,12 @@ func (s *Parameters) SetExcludeBootVolume(v bool) *Parameters {
 	return s
 }
 
+// SetNoReboot sets the NoReboot field's value.
+func (s *Parameters) SetNoReboot(v bool) *Parameters {
+	s.NoReboot = &v
+	return s
+}
+
 // Specifies the configuration of a lifecycle policy.
 type PolicyDetails struct {
 	_ struct{} `type:"structure"`
@@ -1782,15 +1806,18 @@ type PolicyDetails struct {
 	// A set of optional parameters for the policy.
 	Parameters *Parameters `type:"structure"`
 
-	// The valid target resource types and actions a policy can manage. The default
-	// is EBS_SNAPSHOT_MANAGEMENT.
+	// The valid target resource types and actions a policy can manage. Specify
+	// EBS_SNAPSHOT_MANAGEMENT to create a lifecycle policy that manages the lifecycle
+	// of Amazon EBS snapshots. Specify IMAGE_MANAGEMENT to create a lifecycle policy
+	// that manages the lifecycle of EBS-backed AMIs. The default is EBS_SNAPSHOT_MANAGEMENT.
 	PolicyType *string `type:"string" enum:"PolicyTypeValues"`
 
 	// The resource type. Use VOLUME to create snapshots of individual volumes or
 	// use INSTANCE to create multi-volume snapshots from the volumes for an instance.
 	ResourceTypes []*string `min:"1" type:"list"`
 
-	// The schedule of policy-defined actions.
+	// The schedules of policy-defined actions. A policy can have up to four schedules
+	// - one mandatory schedule and up to three optional schedules.
 	Schedules []*Schedule `min:"1" type:"list"`
 
 	// The single tag that identifies targeted resources for this policy.
@@ -2453,15 +2480,42 @@ const (
 	GettablePolicyStateValuesError = "ERROR"
 )
 
+// GettablePolicyStateValues_Values returns all elements of the GettablePolicyStateValues enum
+func GettablePolicyStateValues_Values() []string {
+	return []string{
+		GettablePolicyStateValuesEnabled,
+		GettablePolicyStateValuesDisabled,
+		GettablePolicyStateValuesError,
+	}
+}
+
 const (
 	// IntervalUnitValuesHours is a IntervalUnitValues enum value
 	IntervalUnitValuesHours = "HOURS"
 )
 
+// IntervalUnitValues_Values returns all elements of the IntervalUnitValues enum
+func IntervalUnitValues_Values() []string {
+	return []string{
+		IntervalUnitValuesHours,
+	}
+}
+
 const (
 	// PolicyTypeValuesEbsSnapshotManagement is a PolicyTypeValues enum value
 	PolicyTypeValuesEbsSnapshotManagement = "EBS_SNAPSHOT_MANAGEMENT"
+
+	// PolicyTypeValuesImageManagement is a PolicyTypeValues enum value
+	PolicyTypeValuesImageManagement = "IMAGE_MANAGEMENT"
 )
+
+// PolicyTypeValues_Values returns all elements of the PolicyTypeValues enum
+func PolicyTypeValues_Values() []string {
+	return []string{
+		PolicyTypeValuesEbsSnapshotManagement,
+		PolicyTypeValuesImageManagement,
+	}
+}
 
 const (
 	// ResourceTypeValuesVolume is a ResourceTypeValues enum value
@@ -2470,6 +2524,14 @@ const (
 	// ResourceTypeValuesInstance is a ResourceTypeValues enum value
 	ResourceTypeValuesInstance = "INSTANCE"
 )
+
+// ResourceTypeValues_Values returns all elements of the ResourceTypeValues enum
+func ResourceTypeValues_Values() []string {
+	return []string{
+		ResourceTypeValuesVolume,
+		ResourceTypeValuesInstance,
+	}
+}
 
 const (
 	// RetentionIntervalUnitValuesDays is a RetentionIntervalUnitValues enum value
@@ -2485,6 +2547,16 @@ const (
 	RetentionIntervalUnitValuesYears = "YEARS"
 )
 
+// RetentionIntervalUnitValues_Values returns all elements of the RetentionIntervalUnitValues enum
+func RetentionIntervalUnitValues_Values() []string {
+	return []string{
+		RetentionIntervalUnitValuesDays,
+		RetentionIntervalUnitValuesWeeks,
+		RetentionIntervalUnitValuesMonths,
+		RetentionIntervalUnitValuesYears,
+	}
+}
+
 const (
 	// SettablePolicyStateValuesEnabled is a SettablePolicyStateValues enum value
 	SettablePolicyStateValuesEnabled = "ENABLED"
@@ -2492,3 +2564,11 @@ const (
 	// SettablePolicyStateValuesDisabled is a SettablePolicyStateValues enum value
 	SettablePolicyStateValuesDisabled = "DISABLED"
 )
+
+// SettablePolicyStateValues_Values returns all elements of the SettablePolicyStateValues enum
+func SettablePolicyStateValues_Values() []string {
+	return []string{
+		SettablePolicyStateValuesEnabled,
+		SettablePolicyStateValuesDisabled,
+	}
+}

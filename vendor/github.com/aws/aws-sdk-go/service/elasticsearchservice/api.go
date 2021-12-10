@@ -2400,6 +2400,158 @@ func (c *ElasticsearchService) GetCompatibleElasticsearchVersionsWithContext(ctx
 	return out, req.Send()
 }
 
+const opGetPackageVersionHistory = "GetPackageVersionHistory"
+
+// GetPackageVersionHistoryRequest generates a "aws/request.Request" representing the
+// client's request for the GetPackageVersionHistory operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetPackageVersionHistory for more information on using the GetPackageVersionHistory
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetPackageVersionHistoryRequest method.
+//    req, resp := client.GetPackageVersionHistoryRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *ElasticsearchService) GetPackageVersionHistoryRequest(input *GetPackageVersionHistoryInput) (req *request.Request, output *GetPackageVersionHistoryOutput) {
+	op := &request.Operation{
+		Name:       opGetPackageVersionHistory,
+		HTTPMethod: "GET",
+		HTTPPath:   "/2015-01-01/packages/{PackageID}/history",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &GetPackageVersionHistoryInput{}
+	}
+
+	output = &GetPackageVersionHistoryOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetPackageVersionHistory API operation for Amazon Elasticsearch Service.
+//
+// Returns a list of versions of the package, along with their creation time
+// and commit message.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elasticsearch Service's
+// API operation GetPackageVersionHistory for usage and error information.
+//
+// Returned Error Types:
+//   * BaseException
+//   An error occurred while processing the request.
+//
+//   * InternalException
+//   The request processing has failed because of an unknown error, exception
+//   or failure (the failure is internal to the service) . Gives http status code
+//   of 500.
+//
+//   * ResourceNotFoundException
+//   An exception for accessing or deleting a resource that does not exist. Gives
+//   http status code of 400.
+//
+//   * AccessDeniedException
+//   An error occurred because user does not have permissions to access the resource.
+//   Returns HTTP status code 403.
+//
+//   * ValidationException
+//   An exception for missing / invalid input fields. Gives http status code of
+//   400.
+//
+func (c *ElasticsearchService) GetPackageVersionHistory(input *GetPackageVersionHistoryInput) (*GetPackageVersionHistoryOutput, error) {
+	req, out := c.GetPackageVersionHistoryRequest(input)
+	return out, req.Send()
+}
+
+// GetPackageVersionHistoryWithContext is the same as GetPackageVersionHistory with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetPackageVersionHistory for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ElasticsearchService) GetPackageVersionHistoryWithContext(ctx aws.Context, input *GetPackageVersionHistoryInput, opts ...request.Option) (*GetPackageVersionHistoryOutput, error) {
+	req, out := c.GetPackageVersionHistoryRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// GetPackageVersionHistoryPages iterates over the pages of a GetPackageVersionHistory operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See GetPackageVersionHistory method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a GetPackageVersionHistory operation.
+//    pageNum := 0
+//    err := client.GetPackageVersionHistoryPages(params,
+//        func(page *elasticsearchservice.GetPackageVersionHistoryOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ElasticsearchService) GetPackageVersionHistoryPages(input *GetPackageVersionHistoryInput, fn func(*GetPackageVersionHistoryOutput, bool) bool) error {
+	return c.GetPackageVersionHistoryPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// GetPackageVersionHistoryPagesWithContext same as GetPackageVersionHistoryPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ElasticsearchService) GetPackageVersionHistoryPagesWithContext(ctx aws.Context, input *GetPackageVersionHistoryInput, fn func(*GetPackageVersionHistoryOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *GetPackageVersionHistoryInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.GetPackageVersionHistoryRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*GetPackageVersionHistoryOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opGetUpgradeHistory = "GetUpgradeHistory"
 
 // GetUpgradeHistoryRequest generates a "aws/request.Request" representing the
@@ -3865,6 +4017,103 @@ func (c *ElasticsearchService) UpdateElasticsearchDomainConfigWithContext(ctx aw
 	return out, req.Send()
 }
 
+const opUpdatePackage = "UpdatePackage"
+
+// UpdatePackageRequest generates a "aws/request.Request" representing the
+// client's request for the UpdatePackage operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdatePackage for more information on using the UpdatePackage
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdatePackageRequest method.
+//    req, resp := client.UpdatePackageRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *ElasticsearchService) UpdatePackageRequest(input *UpdatePackageInput) (req *request.Request, output *UpdatePackageOutput) {
+	op := &request.Operation{
+		Name:       opUpdatePackage,
+		HTTPMethod: "POST",
+		HTTPPath:   "/2015-01-01/packages/update",
+	}
+
+	if input == nil {
+		input = &UpdatePackageInput{}
+	}
+
+	output = &UpdatePackageOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdatePackage API operation for Amazon Elasticsearch Service.
+//
+// Updates a package for use with Amazon ES domains.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elasticsearch Service's
+// API operation UpdatePackage for usage and error information.
+//
+// Returned Error Types:
+//   * BaseException
+//   An error occurred while processing the request.
+//
+//   * InternalException
+//   The request processing has failed because of an unknown error, exception
+//   or failure (the failure is internal to the service) . Gives http status code
+//   of 500.
+//
+//   * LimitExceededException
+//   An exception for trying to create more than allowed resources or sub-resources.
+//   Gives http status code of 409.
+//
+//   * ResourceNotFoundException
+//   An exception for accessing or deleting a resource that does not exist. Gives
+//   http status code of 400.
+//
+//   * AccessDeniedException
+//   An error occurred because user does not have permissions to access the resource.
+//   Returns HTTP status code 403.
+//
+//   * ValidationException
+//   An exception for missing / invalid input fields. Gives http status code of
+//   400.
+//
+func (c *ElasticsearchService) UpdatePackage(input *UpdatePackageInput) (*UpdatePackageOutput, error) {
+	req, out := c.UpdatePackageRequest(input)
+	return out, req.Send()
+}
+
+// UpdatePackageWithContext is the same as UpdatePackage with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdatePackage for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ElasticsearchService) UpdatePackageWithContext(ctx aws.Context, input *UpdatePackageInput, opts ...request.Option) (*UpdatePackageOutput, error) {
+	req, out := c.UpdatePackageRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpgradeElasticsearchDomain = "UpgradeElasticsearchDomain"
 
 // UpgradeElasticsearchDomainRequest generates a "aws/request.Request" representing the
@@ -4305,6 +4554,9 @@ type AdvancedSecurityOptions struct {
 
 	// True if the internal user database is enabled.
 	InternalUserDatabaseEnabled *bool `type:"boolean"`
+
+	// Describes the SAML application configured for a domain.
+	SAMLOptions *SAMLOptionsOutput `type:"structure"`
 }
 
 // String returns the string representation
@@ -4329,6 +4581,12 @@ func (s *AdvancedSecurityOptions) SetInternalUserDatabaseEnabled(v bool) *Advanc
 	return s
 }
 
+// SetSAMLOptions sets the SAMLOptions field's value.
+func (s *AdvancedSecurityOptions) SetSAMLOptions(v *SAMLOptionsOutput) *AdvancedSecurityOptions {
+	s.SAMLOptions = v
+	return s
+}
+
 // Specifies the advanced security configuration: whether advanced security
 // is enabled, whether the internal database option is enabled, master username
 // and password (if internal database is enabled), and master user ARN (if IAM
@@ -4344,6 +4602,9 @@ type AdvancedSecurityOptionsInput struct {
 
 	// Credentials for the master user: username and password, ARN, or both.
 	MasterUserOptions *MasterUserOptions `type:"structure"`
+
+	// Specifies the SAML application configuration for the domain.
+	SAMLOptions *SAMLOptionsInput `type:"structure"`
 }
 
 // String returns the string representation
@@ -4362,6 +4623,11 @@ func (s *AdvancedSecurityOptionsInput) Validate() error {
 	if s.MasterUserOptions != nil {
 		if err := s.MasterUserOptions.Validate(); err != nil {
 			invalidParams.AddNested("MasterUserOptions", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.SAMLOptions != nil {
+		if err := s.SAMLOptions.Validate(); err != nil {
+			invalidParams.AddNested("SAMLOptions", err.(request.ErrInvalidParams))
 		}
 	}
 
@@ -4386,6 +4652,12 @@ func (s *AdvancedSecurityOptionsInput) SetInternalUserDatabaseEnabled(v bool) *A
 // SetMasterUserOptions sets the MasterUserOptions field's value.
 func (s *AdvancedSecurityOptionsInput) SetMasterUserOptions(v *MasterUserOptions) *AdvancedSecurityOptionsInput {
 	s.MasterUserOptions = v
+	return s
+}
+
+// SetSAMLOptions sets the SAMLOptions field's value.
+func (s *AdvancedSecurityOptionsInput) SetSAMLOptions(v *SAMLOptionsInput) *AdvancedSecurityOptionsInput {
+	s.SAMLOptions = v
 	return s
 }
 
@@ -4929,6 +5201,11 @@ func (s *CreateElasticsearchDomainInput) Validate() error {
 	if s.CognitoOptions != nil {
 		if err := s.CognitoOptions.Validate(); err != nil {
 			invalidParams.AddNested("CognitoOptions", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DomainEndpointOptions != nil {
+		if err := s.DomainEndpointOptions.Validate(); err != nil {
+			invalidParams.AddNested("DomainEndpointOptions", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.EncryptionAtRestOptions != nil {
@@ -6546,6 +6823,15 @@ func (s *DissociatePackageOutput) SetDomainPackageDetails(v *DomainPackageDetail
 type DomainEndpointOptions struct {
 	_ struct{} `type:"structure"`
 
+	// Specify the fully qualified domain for your custom endpoint.
+	CustomEndpoint *string `min:"1" type:"string"`
+
+	// Specify ACM certificate ARN for your custom endpoint.
+	CustomEndpointCertificateArn *string `type:"string"`
+
+	// Specify if custom endpoint should be enabled for the Elasticsearch domain.
+	CustomEndpointEnabled *bool `type:"boolean"`
+
 	// Specify if only HTTPS endpoint should be enabled for the Elasticsearch domain.
 	EnforceHTTPS *bool `type:"boolean"`
 
@@ -6567,6 +6853,37 @@ func (s DomainEndpointOptions) String() string {
 // GoString returns the string representation
 func (s DomainEndpointOptions) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DomainEndpointOptions) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DomainEndpointOptions"}
+	if s.CustomEndpoint != nil && len(*s.CustomEndpoint) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("CustomEndpoint", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCustomEndpoint sets the CustomEndpoint field's value.
+func (s *DomainEndpointOptions) SetCustomEndpoint(v string) *DomainEndpointOptions {
+	s.CustomEndpoint = &v
+	return s
+}
+
+// SetCustomEndpointCertificateArn sets the CustomEndpointCertificateArn field's value.
+func (s *DomainEndpointOptions) SetCustomEndpointCertificateArn(v string) *DomainEndpointOptions {
+	s.CustomEndpointCertificateArn = &v
+	return s
+}
+
+// SetCustomEndpointEnabled sets the CustomEndpointEnabled field's value.
+func (s *DomainEndpointOptions) SetCustomEndpointEnabled(v bool) *DomainEndpointOptions {
+	s.CustomEndpointEnabled = &v
+	return s
 }
 
 // SetEnforceHTTPS sets the EnforceHTTPS field's value.
@@ -6730,6 +7047,8 @@ type DomainPackageDetails struct {
 	// Currently supports only TXT-DICTIONARY.
 	PackageType *string `type:"string" enum:"PackageType"`
 
+	PackageVersion *string `type:"string"`
+
 	// The relative path on Amazon ES nodes, which can be used as synonym_path when
 	// the package is synonym file.
 	ReferencePath *string `type:"string"`
@@ -6784,6 +7103,12 @@ func (s *DomainPackageDetails) SetPackageName(v string) *DomainPackageDetails {
 // SetPackageType sets the PackageType field's value.
 func (s *DomainPackageDetails) SetPackageType(v string) *DomainPackageDetails {
 	s.PackageType = &v
+	return s
+}
+
+// SetPackageVersion sets the PackageVersion field's value.
+func (s *DomainPackageDetails) SetPackageVersion(v string) *DomainPackageDetails {
+	s.PackageVersion = &v
 	return s
 }
 
@@ -7684,6 +8009,107 @@ func (s GetCompatibleElasticsearchVersionsOutput) GoString() string {
 // SetCompatibleElasticsearchVersions sets the CompatibleElasticsearchVersions field's value.
 func (s *GetCompatibleElasticsearchVersionsOutput) SetCompatibleElasticsearchVersions(v []*CompatibleVersionsMap) *GetCompatibleElasticsearchVersionsOutput {
 	s.CompatibleElasticsearchVersions = v
+	return s
+}
+
+// Container for request parameters to GetPackageVersionHistory operation.
+type GetPackageVersionHistoryInput struct {
+	_ struct{} `type:"structure"`
+
+	// Limits results to a maximum number of versions.
+	MaxResults *int64 `location:"querystring" locationName:"maxResults" type:"integer"`
+
+	// Used for pagination. Only necessary if a previous API call includes a non-null
+	// NextToken value. If provided, returns results for the next page.
+	NextToken *string `location:"querystring" locationName:"nextToken" type:"string"`
+
+	// Returns an audit history of versions of the package.
+	//
+	// PackageID is a required field
+	PackageID *string `location:"uri" locationName:"PackageID" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetPackageVersionHistoryInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetPackageVersionHistoryInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetPackageVersionHistoryInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetPackageVersionHistoryInput"}
+	if s.PackageID == nil {
+		invalidParams.Add(request.NewErrParamRequired("PackageID"))
+	}
+	if s.PackageID != nil && len(*s.PackageID) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("PackageID", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *GetPackageVersionHistoryInput) SetMaxResults(v int64) *GetPackageVersionHistoryInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetPackageVersionHistoryInput) SetNextToken(v string) *GetPackageVersionHistoryInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetPackageID sets the PackageID field's value.
+func (s *GetPackageVersionHistoryInput) SetPackageID(v string) *GetPackageVersionHistoryInput {
+	s.PackageID = &v
+	return s
+}
+
+// Container for response returned by GetPackageVersionHistory operation.
+type GetPackageVersionHistoryOutput struct {
+	_ struct{} `type:"structure"`
+
+	NextToken *string `type:"string"`
+
+	PackageID *string `type:"string"`
+
+	// List of PackageVersionHistory objects.
+	PackageVersionHistoryList []*PackageVersionHistory `type:"list"`
+}
+
+// String returns the string representation
+func (s GetPackageVersionHistoryOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetPackageVersionHistoryOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetPackageVersionHistoryOutput) SetNextToken(v string) *GetPackageVersionHistoryOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetPackageID sets the PackageID field's value.
+func (s *GetPackageVersionHistoryOutput) SetPackageID(v string) *GetPackageVersionHistoryOutput {
+	s.PackageID = &v
+	return s
+}
+
+// SetPackageVersionHistoryList sets the PackageVersionHistoryList field's value.
+func (s *GetPackageVersionHistoryOutput) SetPackageVersionHistoryList(v []*PackageVersionHistory) *GetPackageVersionHistoryOutput {
+	s.PackageVersionHistoryList = v
 	return s
 }
 
@@ -9186,11 +9612,15 @@ func (s *OutboundCrossClusterSearchConnectionStatus) SetStatusCode(v string) *Ou
 type PackageDetails struct {
 	_ struct{} `type:"structure"`
 
+	AvailablePackageVersion *string `type:"string"`
+
 	// Timestamp which tells creation date of the package.
 	CreatedAt *time.Time `type:"timestamp"`
 
 	// Additional information if the package is in an error state. Null otherwise.
 	ErrorDetails *ErrorDetails `type:"structure"`
+
+	LastUpdatedAt *time.Time `type:"timestamp"`
 
 	// User-specified description of the package.
 	PackageDescription *string `type:"string"`
@@ -9218,6 +9648,12 @@ func (s PackageDetails) GoString() string {
 	return s.String()
 }
 
+// SetAvailablePackageVersion sets the AvailablePackageVersion field's value.
+func (s *PackageDetails) SetAvailablePackageVersion(v string) *PackageDetails {
+	s.AvailablePackageVersion = &v
+	return s
+}
+
 // SetCreatedAt sets the CreatedAt field's value.
 func (s *PackageDetails) SetCreatedAt(v time.Time) *PackageDetails {
 	s.CreatedAt = &v
@@ -9227,6 +9663,12 @@ func (s *PackageDetails) SetCreatedAt(v time.Time) *PackageDetails {
 // SetErrorDetails sets the ErrorDetails field's value.
 func (s *PackageDetails) SetErrorDetails(v *ErrorDetails) *PackageDetails {
 	s.ErrorDetails = v
+	return s
+}
+
+// SetLastUpdatedAt sets the LastUpdatedAt field's value.
+func (s *PackageDetails) SetLastUpdatedAt(v time.Time) *PackageDetails {
+	s.LastUpdatedAt = &v
 	return s
 }
 
@@ -9303,6 +9745,48 @@ func (s *PackageSource) SetS3BucketName(v string) *PackageSource {
 // SetS3Key sets the S3Key field's value.
 func (s *PackageSource) SetS3Key(v string) *PackageSource {
 	s.S3Key = &v
+	return s
+}
+
+// Details of a package version.
+type PackageVersionHistory struct {
+	_ struct{} `type:"structure"`
+
+	// A message associated with the version.
+	CommitMessage *string `type:"string"`
+
+	// Timestamp which tells creation time of the package version.
+	CreatedAt *time.Time `type:"timestamp"`
+
+	// Version of the package.
+	PackageVersion *string `type:"string"`
+}
+
+// String returns the string representation
+func (s PackageVersionHistory) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PackageVersionHistory) GoString() string {
+	return s.String()
+}
+
+// SetCommitMessage sets the CommitMessage field's value.
+func (s *PackageVersionHistory) SetCommitMessage(v string) *PackageVersionHistory {
+	s.CommitMessage = &v
+	return s
+}
+
+// SetCreatedAt sets the CreatedAt field's value.
+func (s *PackageVersionHistory) SetCreatedAt(v time.Time) *PackageVersionHistory {
+	s.CreatedAt = &v
+	return s
+}
+
+// SetPackageVersion sets the PackageVersion field's value.
+func (s *PackageVersionHistory) SetPackageVersion(v string) *PackageVersionHistory {
+	s.PackageVersion = &v
 	return s
 }
 
@@ -9921,6 +10405,226 @@ func (s *ResourceNotFoundException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Specifies the SAML Identity Provider's information.
+type SAMLIdp struct {
+	_ struct{} `type:"structure"`
+
+	// The unique Entity ID of the application in SAML Identity Provider.
+	//
+	// EntityId is a required field
+	EntityId *string `min:"8" type:"string" required:"true"`
+
+	// The Metadata of the SAML application in xml format.
+	//
+	// MetadataContent is a required field
+	MetadataContent *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s SAMLIdp) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SAMLIdp) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SAMLIdp) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SAMLIdp"}
+	if s.EntityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("EntityId"))
+	}
+	if s.EntityId != nil && len(*s.EntityId) < 8 {
+		invalidParams.Add(request.NewErrParamMinLen("EntityId", 8))
+	}
+	if s.MetadataContent == nil {
+		invalidParams.Add(request.NewErrParamRequired("MetadataContent"))
+	}
+	if s.MetadataContent != nil && len(*s.MetadataContent) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("MetadataContent", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEntityId sets the EntityId field's value.
+func (s *SAMLIdp) SetEntityId(v string) *SAMLIdp {
+	s.EntityId = &v
+	return s
+}
+
+// SetMetadataContent sets the MetadataContent field's value.
+func (s *SAMLIdp) SetMetadataContent(v string) *SAMLIdp {
+	s.MetadataContent = &v
+	return s
+}
+
+// Specifies the SAML application configuration for the domain.
+type SAMLOptionsInput struct {
+	_ struct{} `type:"structure"`
+
+	// True if SAML is enabled.
+	Enabled *bool `type:"boolean"`
+
+	// Specifies the SAML Identity Provider's information.
+	Idp *SAMLIdp `type:"structure"`
+
+	// The backend role to which the SAML master user is mapped to.
+	MasterBackendRole *string `min:"1" type:"string"`
+
+	// The SAML master username, which is stored in the Amazon Elasticsearch Service
+	// domain's internal database.
+	MasterUserName *string `min:"1" type:"string" sensitive:"true"`
+
+	// The key to use for matching the SAML Roles attribute.
+	RolesKey *string `type:"string"`
+
+	// The duration, in minutes, after which a user session becomes inactive. Acceptable
+	// values are between 1 and 1440, and the default value is 60.
+	SessionTimeoutMinutes *int64 `type:"integer"`
+
+	// The key to use for matching the SAML Subject attribute.
+	SubjectKey *string `type:"string"`
+}
+
+// String returns the string representation
+func (s SAMLOptionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SAMLOptionsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SAMLOptionsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SAMLOptionsInput"}
+	if s.MasterBackendRole != nil && len(*s.MasterBackendRole) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("MasterBackendRole", 1))
+	}
+	if s.MasterUserName != nil && len(*s.MasterUserName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("MasterUserName", 1))
+	}
+	if s.Idp != nil {
+		if err := s.Idp.Validate(); err != nil {
+			invalidParams.AddNested("Idp", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *SAMLOptionsInput) SetEnabled(v bool) *SAMLOptionsInput {
+	s.Enabled = &v
+	return s
+}
+
+// SetIdp sets the Idp field's value.
+func (s *SAMLOptionsInput) SetIdp(v *SAMLIdp) *SAMLOptionsInput {
+	s.Idp = v
+	return s
+}
+
+// SetMasterBackendRole sets the MasterBackendRole field's value.
+func (s *SAMLOptionsInput) SetMasterBackendRole(v string) *SAMLOptionsInput {
+	s.MasterBackendRole = &v
+	return s
+}
+
+// SetMasterUserName sets the MasterUserName field's value.
+func (s *SAMLOptionsInput) SetMasterUserName(v string) *SAMLOptionsInput {
+	s.MasterUserName = &v
+	return s
+}
+
+// SetRolesKey sets the RolesKey field's value.
+func (s *SAMLOptionsInput) SetRolesKey(v string) *SAMLOptionsInput {
+	s.RolesKey = &v
+	return s
+}
+
+// SetSessionTimeoutMinutes sets the SessionTimeoutMinutes field's value.
+func (s *SAMLOptionsInput) SetSessionTimeoutMinutes(v int64) *SAMLOptionsInput {
+	s.SessionTimeoutMinutes = &v
+	return s
+}
+
+// SetSubjectKey sets the SubjectKey field's value.
+func (s *SAMLOptionsInput) SetSubjectKey(v string) *SAMLOptionsInput {
+	s.SubjectKey = &v
+	return s
+}
+
+// Describes the SAML application configured for the domain.
+type SAMLOptionsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// True if SAML is enabled.
+	Enabled *bool `type:"boolean"`
+
+	// Describes the SAML Identity Provider's information.
+	Idp *SAMLIdp `type:"structure"`
+
+	// The key used for matching the SAML Roles attribute.
+	RolesKey *string `type:"string"`
+
+	// The duration, in minutes, after which a user session becomes inactive.
+	SessionTimeoutMinutes *int64 `type:"integer"`
+
+	// The key used for matching the SAML Subject attribute.
+	SubjectKey *string `type:"string"`
+}
+
+// String returns the string representation
+func (s SAMLOptionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SAMLOptionsOutput) GoString() string {
+	return s.String()
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *SAMLOptionsOutput) SetEnabled(v bool) *SAMLOptionsOutput {
+	s.Enabled = &v
+	return s
+}
+
+// SetIdp sets the Idp field's value.
+func (s *SAMLOptionsOutput) SetIdp(v *SAMLIdp) *SAMLOptionsOutput {
+	s.Idp = v
+	return s
+}
+
+// SetRolesKey sets the RolesKey field's value.
+func (s *SAMLOptionsOutput) SetRolesKey(v string) *SAMLOptionsOutput {
+	s.RolesKey = &v
+	return s
+}
+
+// SetSessionTimeoutMinutes sets the SessionTimeoutMinutes field's value.
+func (s *SAMLOptionsOutput) SetSessionTimeoutMinutes(v int64) *SAMLOptionsOutput {
+	s.SessionTimeoutMinutes = &v
+	return s
+}
+
+// SetSubjectKey sets the SubjectKey field's value.
+func (s *SAMLOptionsOutput) SetSubjectKey(v string) *SAMLOptionsOutput {
+	s.SubjectKey = &v
+	return s
+}
+
 // The current options of an Elasticsearch domain service software options.
 type ServiceSoftwareOptions struct {
 	_ struct{} `type:"structure"`
@@ -10372,6 +11076,11 @@ func (s *UpdateElasticsearchDomainConfigInput) Validate() error {
 			invalidParams.AddNested("CognitoOptions", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.DomainEndpointOptions != nil {
+		if err := s.DomainEndpointOptions.Validate(); err != nil {
+			invalidParams.AddNested("DomainEndpointOptions", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -10469,6 +11178,106 @@ func (s UpdateElasticsearchDomainConfigOutput) GoString() string {
 // SetDomainConfig sets the DomainConfig field's value.
 func (s *UpdateElasticsearchDomainConfigOutput) SetDomainConfig(v *ElasticsearchDomainConfig) *UpdateElasticsearchDomainConfigOutput {
 	s.DomainConfig = v
+	return s
+}
+
+// Container for request parameters to UpdatePackage operation.
+type UpdatePackageInput struct {
+	_ struct{} `type:"structure"`
+
+	// An info message for the new version which will be shown as part of GetPackageVersionHistoryResponse.
+	CommitMessage *string `type:"string"`
+
+	// New description of the package.
+	PackageDescription *string `type:"string"`
+
+	// Unique identifier for the package.
+	//
+	// PackageID is a required field
+	PackageID *string `type:"string" required:"true"`
+
+	// The S3 location for importing the package specified as S3BucketName and S3Key
+	//
+	// PackageSource is a required field
+	PackageSource *PackageSource `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdatePackageInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdatePackageInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdatePackageInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdatePackageInput"}
+	if s.PackageID == nil {
+		invalidParams.Add(request.NewErrParamRequired("PackageID"))
+	}
+	if s.PackageSource == nil {
+		invalidParams.Add(request.NewErrParamRequired("PackageSource"))
+	}
+	if s.PackageSource != nil {
+		if err := s.PackageSource.Validate(); err != nil {
+			invalidParams.AddNested("PackageSource", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCommitMessage sets the CommitMessage field's value.
+func (s *UpdatePackageInput) SetCommitMessage(v string) *UpdatePackageInput {
+	s.CommitMessage = &v
+	return s
+}
+
+// SetPackageDescription sets the PackageDescription field's value.
+func (s *UpdatePackageInput) SetPackageDescription(v string) *UpdatePackageInput {
+	s.PackageDescription = &v
+	return s
+}
+
+// SetPackageID sets the PackageID field's value.
+func (s *UpdatePackageInput) SetPackageID(v string) *UpdatePackageInput {
+	s.PackageID = &v
+	return s
+}
+
+// SetPackageSource sets the PackageSource field's value.
+func (s *UpdatePackageInput) SetPackageSource(v *PackageSource) *UpdatePackageInput {
+	s.PackageSource = v
+	return s
+}
+
+// Container for response returned by UpdatePackage operation.
+type UpdatePackageOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the package PackageDetails.
+	PackageDetails *PackageDetails `type:"structure"`
+}
+
+// String returns the string representation
+func (s UpdatePackageOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdatePackageOutput) GoString() string {
+	return s.String()
+}
+
+// SetPackageDetails sets the PackageDetails field's value.
+func (s *UpdatePackageOutput) SetPackageDetails(v *PackageDetails) *UpdatePackageOutput {
+	s.PackageDetails = v
 	return s
 }
 
@@ -10943,6 +11752,17 @@ const (
 	DeploymentStatusEligible = "ELIGIBLE"
 )
 
+// DeploymentStatus_Values returns all elements of the DeploymentStatus enum
+func DeploymentStatus_Values() []string {
+	return []string{
+		DeploymentStatusPendingUpdate,
+		DeploymentStatusInProgress,
+		DeploymentStatusCompleted,
+		DeploymentStatusNotEligible,
+		DeploymentStatusEligible,
+	}
+}
+
 const (
 	// DescribePackagesFilterNamePackageId is a DescribePackagesFilterName enum value
 	DescribePackagesFilterNamePackageId = "PackageID"
@@ -10953,6 +11773,15 @@ const (
 	// DescribePackagesFilterNamePackageStatus is a DescribePackagesFilterName enum value
 	DescribePackagesFilterNamePackageStatus = "PackageStatus"
 )
+
+// DescribePackagesFilterName_Values returns all elements of the DescribePackagesFilterName enum
+func DescribePackagesFilterName_Values() []string {
+	return []string{
+		DescribePackagesFilterNamePackageId,
+		DescribePackagesFilterNamePackageName,
+		DescribePackagesFilterNamePackageStatus,
+	}
+}
 
 const (
 	// DomainPackageStatusAssociating is a DomainPackageStatus enum value
@@ -10970,6 +11799,17 @@ const (
 	// DomainPackageStatusDissociationFailed is a DomainPackageStatus enum value
 	DomainPackageStatusDissociationFailed = "DISSOCIATION_FAILED"
 )
+
+// DomainPackageStatus_Values returns all elements of the DomainPackageStatus enum
+func DomainPackageStatus_Values() []string {
+	return []string{
+		DomainPackageStatusAssociating,
+		DomainPackageStatusAssociationFailed,
+		DomainPackageStatusActive,
+		DomainPackageStatusDissociating,
+		DomainPackageStatusDissociationFailed,
+	}
+}
 
 const (
 	// ESPartitionInstanceTypeM3MediumElasticsearch is a ESPartitionInstanceType enum value
@@ -11147,6 +11987,70 @@ const (
 	ESPartitionInstanceTypeI316xlargeElasticsearch = "i3.16xlarge.elasticsearch"
 )
 
+// ESPartitionInstanceType_Values returns all elements of the ESPartitionInstanceType enum
+func ESPartitionInstanceType_Values() []string {
+	return []string{
+		ESPartitionInstanceTypeM3MediumElasticsearch,
+		ESPartitionInstanceTypeM3LargeElasticsearch,
+		ESPartitionInstanceTypeM3XlargeElasticsearch,
+		ESPartitionInstanceTypeM32xlargeElasticsearch,
+		ESPartitionInstanceTypeM4LargeElasticsearch,
+		ESPartitionInstanceTypeM4XlargeElasticsearch,
+		ESPartitionInstanceTypeM42xlargeElasticsearch,
+		ESPartitionInstanceTypeM44xlargeElasticsearch,
+		ESPartitionInstanceTypeM410xlargeElasticsearch,
+		ESPartitionInstanceTypeM5LargeElasticsearch,
+		ESPartitionInstanceTypeM5XlargeElasticsearch,
+		ESPartitionInstanceTypeM52xlargeElasticsearch,
+		ESPartitionInstanceTypeM54xlargeElasticsearch,
+		ESPartitionInstanceTypeM512xlargeElasticsearch,
+		ESPartitionInstanceTypeR5LargeElasticsearch,
+		ESPartitionInstanceTypeR5XlargeElasticsearch,
+		ESPartitionInstanceTypeR52xlargeElasticsearch,
+		ESPartitionInstanceTypeR54xlargeElasticsearch,
+		ESPartitionInstanceTypeR512xlargeElasticsearch,
+		ESPartitionInstanceTypeC5LargeElasticsearch,
+		ESPartitionInstanceTypeC5XlargeElasticsearch,
+		ESPartitionInstanceTypeC52xlargeElasticsearch,
+		ESPartitionInstanceTypeC54xlargeElasticsearch,
+		ESPartitionInstanceTypeC59xlargeElasticsearch,
+		ESPartitionInstanceTypeC518xlargeElasticsearch,
+		ESPartitionInstanceTypeUltrawarm1MediumElasticsearch,
+		ESPartitionInstanceTypeUltrawarm1LargeElasticsearch,
+		ESPartitionInstanceTypeT2MicroElasticsearch,
+		ESPartitionInstanceTypeT2SmallElasticsearch,
+		ESPartitionInstanceTypeT2MediumElasticsearch,
+		ESPartitionInstanceTypeR3LargeElasticsearch,
+		ESPartitionInstanceTypeR3XlargeElasticsearch,
+		ESPartitionInstanceTypeR32xlargeElasticsearch,
+		ESPartitionInstanceTypeR34xlargeElasticsearch,
+		ESPartitionInstanceTypeR38xlargeElasticsearch,
+		ESPartitionInstanceTypeI2XlargeElasticsearch,
+		ESPartitionInstanceTypeI22xlargeElasticsearch,
+		ESPartitionInstanceTypeD2XlargeElasticsearch,
+		ESPartitionInstanceTypeD22xlargeElasticsearch,
+		ESPartitionInstanceTypeD24xlargeElasticsearch,
+		ESPartitionInstanceTypeD28xlargeElasticsearch,
+		ESPartitionInstanceTypeC4LargeElasticsearch,
+		ESPartitionInstanceTypeC4XlargeElasticsearch,
+		ESPartitionInstanceTypeC42xlargeElasticsearch,
+		ESPartitionInstanceTypeC44xlargeElasticsearch,
+		ESPartitionInstanceTypeC48xlargeElasticsearch,
+		ESPartitionInstanceTypeR4LargeElasticsearch,
+		ESPartitionInstanceTypeR4XlargeElasticsearch,
+		ESPartitionInstanceTypeR42xlargeElasticsearch,
+		ESPartitionInstanceTypeR44xlargeElasticsearch,
+		ESPartitionInstanceTypeR48xlargeElasticsearch,
+		ESPartitionInstanceTypeR416xlargeElasticsearch,
+		ESPartitionInstanceTypeI3LargeElasticsearch,
+		ESPartitionInstanceTypeI3XlargeElasticsearch,
+		ESPartitionInstanceTypeI32xlargeElasticsearch,
+		ESPartitionInstanceTypeI34xlargeElasticsearch,
+		ESPartitionInstanceTypeI38xlargeElasticsearch,
+		ESPartitionInstanceTypeI316xlargeElasticsearch,
+	}
+}
+
 const (
 	// ESWarmPartitionInstanceTypeUltrawarm1MediumElasticsearch is a ESWarmPartitionInstanceType enum value
 	ESWarmPartitionInstanceTypeUltrawarm1MediumElasticsearch = "ultrawarm1.medium.elasticsearch"
@@ -11154,6 +12058,14 @@ const (
 	// ESWarmPartitionInstanceTypeUltrawarm1LargeElasticsearch is a ESWarmPartitionInstanceType enum value
 	ESWarmPartitionInstanceTypeUltrawarm1LargeElasticsearch = "ultrawarm1.large.elasticsearch"
 )
+
+// ESWarmPartitionInstanceType_Values returns all elements of the ESWarmPartitionInstanceType enum
+func ESWarmPartitionInstanceType_Values() []string {
+	return []string{
+		ESWarmPartitionInstanceTypeUltrawarm1MediumElasticsearch,
+		ESWarmPartitionInstanceTypeUltrawarm1LargeElasticsearch,
+	}
+}
 
 const (
 	// InboundCrossClusterSearchConnectionStatusCodePendingAcceptance is a InboundCrossClusterSearchConnectionStatusCode enum value
@@ -11175,6 +12087,18 @@ const (
 	InboundCrossClusterSearchConnectionStatusCodeDeleted = "DELETED"
 )
 
+// InboundCrossClusterSearchConnectionStatusCode_Values returns all elements of the InboundCrossClusterSearchConnectionStatusCode enum
+func InboundCrossClusterSearchConnectionStatusCode_Values() []string {
+	return []string{
+		InboundCrossClusterSearchConnectionStatusCodePendingAcceptance,
+		InboundCrossClusterSearchConnectionStatusCodeApproved,
+		InboundCrossClusterSearchConnectionStatusCodeRejecting,
+		InboundCrossClusterSearchConnectionStatusCodeRejected,
+		InboundCrossClusterSearchConnectionStatusCodeDeleting,
+		InboundCrossClusterSearchConnectionStatusCodeDeleted,
+	}
+}
+
 // Type of Log File, it can be one of the following:
 //    * INDEX_SLOW_LOGS: Index slow logs contain insert requests that took more
 //    time than configured index query log threshold to execute.
@@ -11185,6 +12109,9 @@ const (
 //    * ES_APPLICATION_LOGS: Elasticsearch application logs contain information
 //    about errors and warnings raised during the operation of the service and
 //    can be useful for troubleshooting.
+//
+//    * AUDIT_LOGS: Audit logs contain records of user requests for access from
+//    the domain.
 const (
 	// LogTypeIndexSlowLogs is a LogType enum value
 	LogTypeIndexSlowLogs = "INDEX_SLOW_LOGS"
@@ -11194,7 +12121,20 @@ const (
 
 	// LogTypeEsApplicationLogs is a LogType enum value
 	LogTypeEsApplicationLogs = "ES_APPLICATION_LOGS"
+
+	// LogTypeAuditLogs is a LogType enum value
+	LogTypeAuditLogs = "AUDIT_LOGS"
 )
+
+// LogType_Values returns all elements of the LogType enum
+func LogType_Values() []string {
+	return []string{
+		LogTypeIndexSlowLogs,
+		LogTypeSearchSlowLogs,
+		LogTypeEsApplicationLogs,
+		LogTypeAuditLogs,
+	}
+}
 
 // The state of a requested change. One of the following:
 //
@@ -11212,6 +12152,15 @@ const (
 	// OptionStateActive is a OptionState enum value
 	OptionStateActive = "Active"
 )
+
+// OptionState_Values returns all elements of the OptionState enum
+func OptionState_Values() []string {
+	return []string{
+		OptionStateRequiresIndexDocuments,
+		OptionStateProcessing,
+		OptionStateActive,
+	}
+}
 
 const (
 	// OutboundCrossClusterSearchConnectionStatusCodePendingAcceptance is a OutboundCrossClusterSearchConnectionStatusCode enum value
@@ -11239,6 +12188,20 @@ const (
 	OutboundCrossClusterSearchConnectionStatusCodeDeleted = "DELETED"
 )
 
+// OutboundCrossClusterSearchConnectionStatusCode_Values returns all elements of the OutboundCrossClusterSearchConnectionStatusCode enum
+func OutboundCrossClusterSearchConnectionStatusCode_Values() []string {
+	return []string{
+		OutboundCrossClusterSearchConnectionStatusCodePendingAcceptance,
+		OutboundCrossClusterSearchConnectionStatusCodeValidating,
+		OutboundCrossClusterSearchConnectionStatusCodeValidationFailed,
+		OutboundCrossClusterSearchConnectionStatusCodeProvisioning,
+		OutboundCrossClusterSearchConnectionStatusCodeActive,
+		OutboundCrossClusterSearchConnectionStatusCodeRejected,
+		OutboundCrossClusterSearchConnectionStatusCodeDeleting,
+		OutboundCrossClusterSearchConnectionStatusCodeDeleted,
+	}
+}
+
 const (
 	// PackageStatusCopying is a PackageStatus enum value
 	PackageStatusCopying = "COPYING"
@@ -11265,10 +12228,31 @@ const (
 	PackageStatusDeleteFailed = "DELETE_FAILED"
 )
 
+// PackageStatus_Values returns all elements of the PackageStatus enum
+func PackageStatus_Values() []string {
+	return []string{
+		PackageStatusCopying,
+		PackageStatusCopyFailed,
+		PackageStatusValidating,
+		PackageStatusValidationFailed,
+		PackageStatusAvailable,
+		PackageStatusDeleting,
+		PackageStatusDeleted,
+		PackageStatusDeleteFailed,
+	}
+}
+
 const (
 	// PackageTypeTxtDictionary is a PackageType enum value
 	PackageTypeTxtDictionary = "TXT-DICTIONARY"
 )
+
+// PackageType_Values returns all elements of the PackageType enum
+func PackageType_Values() []string {
+	return []string{
+		PackageTypeTxtDictionary,
+	}
+}
 
 const (
 	// ReservedElasticsearchInstancePaymentOptionAllUpfront is a ReservedElasticsearchInstancePaymentOption enum value
@@ -11281,6 +12265,15 @@ const (
 	ReservedElasticsearchInstancePaymentOptionNoUpfront = "NO_UPFRONT"
 )
 
+// ReservedElasticsearchInstancePaymentOption_Values returns all elements of the ReservedElasticsearchInstancePaymentOption enum
+func ReservedElasticsearchInstancePaymentOption_Values() []string {
+	return []string{
+		ReservedElasticsearchInstancePaymentOptionAllUpfront,
+		ReservedElasticsearchInstancePaymentOptionPartialUpfront,
+		ReservedElasticsearchInstancePaymentOptionNoUpfront,
+	}
+}
+
 const (
 	// TLSSecurityPolicyPolicyMinTls10201907 is a TLSSecurityPolicy enum value
 	TLSSecurityPolicyPolicyMinTls10201907 = "Policy-Min-TLS-1-0-2019-07"
@@ -11288,6 +12281,14 @@ const (
 	// TLSSecurityPolicyPolicyMinTls12201907 is a TLSSecurityPolicy enum value
 	TLSSecurityPolicyPolicyMinTls12201907 = "Policy-Min-TLS-1-2-2019-07"
 )
+
+// TLSSecurityPolicy_Values returns all elements of the TLSSecurityPolicy enum
+func TLSSecurityPolicy_Values() []string {
+	return []string{
+		TLSSecurityPolicyPolicyMinTls10201907,
+		TLSSecurityPolicyPolicyMinTls12201907,
+	}
+}
 
 const (
 	// UpgradeStatusInProgress is a UpgradeStatus enum value
@@ -11303,6 +12304,16 @@ const (
 	UpgradeStatusFailed = "FAILED"
 )
 
+// UpgradeStatus_Values returns all elements of the UpgradeStatus enum
+func UpgradeStatus_Values() []string {
+	return []string{
+		UpgradeStatusInProgress,
+		UpgradeStatusSucceeded,
+		UpgradeStatusSucceededWithIssues,
+		UpgradeStatusFailed,
+	}
+}
+
 const (
 	// UpgradeStepPreUpgradeCheck is a UpgradeStep enum value
 	UpgradeStepPreUpgradeCheck = "PRE_UPGRADE_CHECK"
@@ -11313,6 +12324,15 @@ const (
 	// UpgradeStepUpgrade is a UpgradeStep enum value
 	UpgradeStepUpgrade = "UPGRADE"
 )
+
+// UpgradeStep_Values returns all elements of the UpgradeStep enum
+func UpgradeStep_Values() []string {
+	return []string{
+		UpgradeStepPreUpgradeCheck,
+		UpgradeStepSnapshot,
+		UpgradeStepUpgrade,
+	}
+}
 
 // The type of EBS volume, standard, gp2, or io1. See Configuring EBS-based
 // Storage (http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createupdatedomains.html#es-createdomain-configure-ebs)for
@@ -11327,3 +12347,12 @@ const (
 	// VolumeTypeIo1 is a VolumeType enum value
 	VolumeTypeIo1 = "io1"
 )
+
+// VolumeType_Values returns all elements of the VolumeType enum
+func VolumeType_Values() []string {
+	return []string{
+		VolumeTypeStandard,
+		VolumeTypeGp2,
+		VolumeTypeIo1,
+	}
+}

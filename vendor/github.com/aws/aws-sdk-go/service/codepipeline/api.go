@@ -3186,6 +3186,10 @@ func (c *CodePipeline) RetryStageExecutionRequest(input *RetryStageExecutionInpu
 //   * ValidationException
 //   The validation was specified in an invalid format.
 //
+//   * ConflictException
+//   Your request cannot be handled because the pipeline is busy handling ongoing
+//   activities. Try again later.
+//
 //   * PipelineNotFoundException
 //   The pipeline was specified in an invalid format or cannot be found.
 //
@@ -3280,6 +3284,10 @@ func (c *CodePipeline) StartPipelineExecutionRequest(input *StartPipelineExecuti
 //   * ValidationException
 //   The validation was specified in an invalid format.
 //
+//   * ConflictException
+//   Your request cannot be handled because the pipeline is busy handling ongoing
+//   activities. Try again later.
+//
 //   * PipelineNotFoundException
 //   The pipeline was specified in an invalid format or cannot be found.
 //
@@ -3366,6 +3374,10 @@ func (c *CodePipeline) StopPipelineExecutionRequest(input *StopPipelineExecution
 // Returned Error Types:
 //   * ValidationException
 //   The validation was specified in an invalid format.
+//
+//   * ConflictException
+//   Your request cannot be handled because the pipeline is busy handling ongoing
+//   activities. Try again later.
 //
 //   * PipelineNotFoundException
 //   The pipeline was specified in an invalid format or cannot be found.
@@ -4285,6 +4297,13 @@ func (s *ActionDeclaration) SetRunOrder(v int64) *ActionDeclaration {
 type ActionExecution struct {
 	_ struct{} `type:"structure"`
 
+	// ID of the workflow action execution in the current stage. Use the GetPipelineState
+	// action to retrieve the current action execution details of the current stage.
+	//
+	// For older executions, this field might be empty. The action execution ID
+	// is available for executions run on or after March 2020.
+	ActionExecutionId *string `locationName:"actionExecutionId" type:"string"`
+
 	// The details of an error returned by a URL external to AWS.
 	ErrorDetails *ErrorDetails `locationName:"errorDetails" type:"structure"`
 
@@ -4326,6 +4345,12 @@ func (s ActionExecution) String() string {
 // GoString returns the string representation
 func (s ActionExecution) GoString() string {
 	return s.String()
+}
+
+// SetActionExecutionId sets the ActionExecutionId field's value.
+func (s *ActionExecution) SetActionExecutionId(v string) *ActionExecution {
+	s.ActionExecutionId = &v
+	return s
 }
 
 // SetErrorDetails sets the ErrorDetails field's value.
@@ -4950,10 +4975,25 @@ type ActionTypeId struct {
 	// the provider type for the action. Valid categories are limited to one of
 	// the following values.
 	//
+	//    * Source
+	//
+	//    * Build
+	//
+	//    * Test
+	//
+	//    * Deploy
+	//
+	//    * Invoke
+	//
+	//    * Approval
+	//
 	// Category is a required field
 	Category *string `locationName:"category" type:"string" required:"true" enum:"ActionCategory"`
 
-	// The creator of the action being called.
+	// The creator of the action being called. There are three valid values for
+	// the Owner field in the action category section within your pipeline structure:
+	// AWS, ThirdParty, and Custom. For more information, see Valid Action Types
+	// and Providers in CodePipeline (https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-pipeline-structure.html#actions-valid-providers).
 	//
 	// Owner is a required field
 	Owner *string `locationName:"owner" type:"string" required:"true" enum:"ActionOwner"`
@@ -5715,14 +5755,68 @@ func (s *ConcurrentModificationException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Your request cannot be handled because the pipeline is busy handling ongoing
+// activities. Try again later.
+type ConflictException struct {
+	_            struct{}                  `type:"structure"`
+	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
+
+	Message_ *string `locationName:"message" min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s ConflictException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ConflictException) GoString() string {
+	return s.String()
+}
+
+func newErrorConflictException(v protocol.ResponseMetadata) error {
+	return &ConflictException{
+		RespMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s *ConflictException) Code() string {
+	return "ConflictException"
+}
+
+// Message returns the exception's message.
+func (s *ConflictException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s *ConflictException) OrigErr() error {
+	return nil
+}
+
+func (s *ConflictException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s *ConflictException) StatusCode() int {
+	return s.RespMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s *ConflictException) RequestID() string {
+	return s.RespMetadata.RequestID
+}
+
 // Represents the input of a CreateCustomActionType operation.
 type CreateCustomActionTypeInput struct {
 	_ struct{} `type:"structure"`
 
 	// The category of the custom action, such as a build action or a test action.
-	//
-	// Although Source and Approval are listed as valid values, they are not currently
-	// functional. These values are reserved for future use.
 	//
 	// Category is a required field
 	Category *string `locationName:"category" type:"string" required:"true" enum:"ActionCategory"`
@@ -9332,7 +9426,7 @@ type PipelineDeclaration struct {
 	// you must use artifactStores.
 	ArtifactStores map[string]*ArtifactStore `locationName:"artifactStores" type:"map"`
 
-	// The name of the action to be performed.
+	// The name of the pipeline.
 	//
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
@@ -11545,6 +11639,9 @@ type StageState struct {
 	// The state of the stage.
 	ActionStates []*ActionState `locationName:"actionStates" type:"list"`
 
+	// Represents information about the run of a stage.
+	InboundExecution *StageExecution `locationName:"inboundExecution" type:"structure"`
+
 	// The state of the inbound transition, which is either enabled or disabled.
 	InboundTransitionState *TransitionState `locationName:"inboundTransitionState" type:"structure"`
 
@@ -11569,6 +11666,12 @@ func (s StageState) GoString() string {
 // SetActionStates sets the ActionStates field's value.
 func (s *StageState) SetActionStates(v []*ActionState) *StageState {
 	s.ActionStates = v
+	return s
+}
+
+// SetInboundExecution sets the InboundExecution field's value.
+func (s *StageState) SetInboundExecution(v *StageExecution) *StageState {
+	s.InboundExecution = v
 	return s
 }
 
@@ -12747,6 +12850,18 @@ const (
 	ActionCategoryApproval = "Approval"
 )
 
+// ActionCategory_Values returns all elements of the ActionCategory enum
+func ActionCategory_Values() []string {
+	return []string{
+		ActionCategorySource,
+		ActionCategoryBuild,
+		ActionCategoryDeploy,
+		ActionCategoryTest,
+		ActionCategoryInvoke,
+		ActionCategoryApproval,
+	}
+}
+
 const (
 	// ActionConfigurationPropertyTypeString is a ActionConfigurationPropertyType enum value
 	ActionConfigurationPropertyTypeString = "String"
@@ -12757,6 +12872,15 @@ const (
 	// ActionConfigurationPropertyTypeBoolean is a ActionConfigurationPropertyType enum value
 	ActionConfigurationPropertyTypeBoolean = "Boolean"
 )
+
+// ActionConfigurationPropertyType_Values returns all elements of the ActionConfigurationPropertyType enum
+func ActionConfigurationPropertyType_Values() []string {
+	return []string{
+		ActionConfigurationPropertyTypeString,
+		ActionConfigurationPropertyTypeNumber,
+		ActionConfigurationPropertyTypeBoolean,
+	}
+}
 
 const (
 	// ActionExecutionStatusInProgress is a ActionExecutionStatus enum value
@@ -12772,6 +12896,16 @@ const (
 	ActionExecutionStatusFailed = "Failed"
 )
 
+// ActionExecutionStatus_Values returns all elements of the ActionExecutionStatus enum
+func ActionExecutionStatus_Values() []string {
+	return []string{
+		ActionExecutionStatusInProgress,
+		ActionExecutionStatusAbandoned,
+		ActionExecutionStatusSucceeded,
+		ActionExecutionStatusFailed,
+	}
+}
+
 const (
 	// ActionOwnerAws is a ActionOwner enum value
 	ActionOwnerAws = "AWS"
@@ -12783,6 +12917,15 @@ const (
 	ActionOwnerCustom = "Custom"
 )
 
+// ActionOwner_Values returns all elements of the ActionOwner enum
+func ActionOwner_Values() []string {
+	return []string{
+		ActionOwnerAws,
+		ActionOwnerThirdParty,
+		ActionOwnerCustom,
+	}
+}
+
 const (
 	// ApprovalStatusApproved is a ApprovalStatus enum value
 	ApprovalStatusApproved = "Approved"
@@ -12791,25 +12934,61 @@ const (
 	ApprovalStatusRejected = "Rejected"
 )
 
+// ApprovalStatus_Values returns all elements of the ApprovalStatus enum
+func ApprovalStatus_Values() []string {
+	return []string{
+		ApprovalStatusApproved,
+		ApprovalStatusRejected,
+	}
+}
+
 const (
 	// ArtifactLocationTypeS3 is a ArtifactLocationType enum value
 	ArtifactLocationTypeS3 = "S3"
 )
+
+// ArtifactLocationType_Values returns all elements of the ArtifactLocationType enum
+func ArtifactLocationType_Values() []string {
+	return []string{
+		ArtifactLocationTypeS3,
+	}
+}
 
 const (
 	// ArtifactStoreTypeS3 is a ArtifactStoreType enum value
 	ArtifactStoreTypeS3 = "S3"
 )
 
+// ArtifactStoreType_Values returns all elements of the ArtifactStoreType enum
+func ArtifactStoreType_Values() []string {
+	return []string{
+		ArtifactStoreTypeS3,
+	}
+}
+
 const (
 	// BlockerTypeSchedule is a BlockerType enum value
 	BlockerTypeSchedule = "Schedule"
 )
 
+// BlockerType_Values returns all elements of the BlockerType enum
+func BlockerType_Values() []string {
+	return []string{
+		BlockerTypeSchedule,
+	}
+}
+
 const (
 	// EncryptionKeyTypeKms is a EncryptionKeyType enum value
 	EncryptionKeyTypeKms = "KMS"
 )
+
+// EncryptionKeyType_Values returns all elements of the EncryptionKeyType enum
+func EncryptionKeyType_Values() []string {
+	return []string{
+		EncryptionKeyTypeKms,
+	}
+}
 
 const (
 	// FailureTypeJobFailed is a FailureType enum value
@@ -12830,6 +13009,18 @@ const (
 	// FailureTypeSystemUnavailable is a FailureType enum value
 	FailureTypeSystemUnavailable = "SystemUnavailable"
 )
+
+// FailureType_Values returns all elements of the FailureType enum
+func FailureType_Values() []string {
+	return []string{
+		FailureTypeJobFailed,
+		FailureTypeConfigurationError,
+		FailureTypePermissionError,
+		FailureTypeRevisionOutOfSync,
+		FailureTypeRevisionUnavailable,
+		FailureTypeSystemUnavailable,
+	}
+}
 
 const (
 	// JobStatusCreated is a JobStatus enum value
@@ -12854,6 +13045,19 @@ const (
 	JobStatusFailed = "Failed"
 )
 
+// JobStatus_Values returns all elements of the JobStatus enum
+func JobStatus_Values() []string {
+	return []string{
+		JobStatusCreated,
+		JobStatusQueued,
+		JobStatusDispatched,
+		JobStatusInProgress,
+		JobStatusTimedOut,
+		JobStatusSucceeded,
+		JobStatusFailed,
+	}
+}
+
 const (
 	// PipelineExecutionStatusInProgress is a PipelineExecutionStatus enum value
 	PipelineExecutionStatusInProgress = "InProgress"
@@ -12874,6 +13078,18 @@ const (
 	PipelineExecutionStatusFailed = "Failed"
 )
 
+// PipelineExecutionStatus_Values returns all elements of the PipelineExecutionStatus enum
+func PipelineExecutionStatus_Values() []string {
+	return []string{
+		PipelineExecutionStatusInProgress,
+		PipelineExecutionStatusStopped,
+		PipelineExecutionStatusStopping,
+		PipelineExecutionStatusSucceeded,
+		PipelineExecutionStatusSuperseded,
+		PipelineExecutionStatusFailed,
+	}
+}
+
 const (
 	// StageExecutionStatusInProgress is a StageExecutionStatus enum value
 	StageExecutionStatusInProgress = "InProgress"
@@ -12891,10 +13107,28 @@ const (
 	StageExecutionStatusSucceeded = "Succeeded"
 )
 
+// StageExecutionStatus_Values returns all elements of the StageExecutionStatus enum
+func StageExecutionStatus_Values() []string {
+	return []string{
+		StageExecutionStatusInProgress,
+		StageExecutionStatusFailed,
+		StageExecutionStatusStopped,
+		StageExecutionStatusStopping,
+		StageExecutionStatusSucceeded,
+	}
+}
+
 const (
 	// StageRetryModeFailedActions is a StageRetryMode enum value
 	StageRetryModeFailedActions = "FAILED_ACTIONS"
 )
+
+// StageRetryMode_Values returns all elements of the StageRetryMode enum
+func StageRetryMode_Values() []string {
+	return []string{
+		StageRetryModeFailedActions,
+	}
+}
 
 const (
 	// StageTransitionTypeInbound is a StageTransitionType enum value
@@ -12903,6 +13137,14 @@ const (
 	// StageTransitionTypeOutbound is a StageTransitionType enum value
 	StageTransitionTypeOutbound = "Outbound"
 )
+
+// StageTransitionType_Values returns all elements of the StageTransitionType enum
+func StageTransitionType_Values() []string {
+	return []string{
+		StageTransitionTypeInbound,
+		StageTransitionTypeOutbound,
+	}
+}
 
 const (
 	// TriggerTypeCreatePipeline is a TriggerType enum value
@@ -12924,6 +13166,18 @@ const (
 	TriggerTypePutActionRevision = "PutActionRevision"
 )
 
+// TriggerType_Values returns all elements of the TriggerType enum
+func TriggerType_Values() []string {
+	return []string{
+		TriggerTypeCreatePipeline,
+		TriggerTypeStartPipelineExecution,
+		TriggerTypePollForSourceChanges,
+		TriggerTypeWebhook,
+		TriggerTypeCloudWatchEvent,
+		TriggerTypePutActionRevision,
+	}
+}
+
 const (
 	// WebhookAuthenticationTypeGithubHmac is a WebhookAuthenticationType enum value
 	WebhookAuthenticationTypeGithubHmac = "GITHUB_HMAC"
@@ -12934,3 +13188,12 @@ const (
 	// WebhookAuthenticationTypeUnauthenticated is a WebhookAuthenticationType enum value
 	WebhookAuthenticationTypeUnauthenticated = "UNAUTHENTICATED"
 )
+
+// WebhookAuthenticationType_Values returns all elements of the WebhookAuthenticationType enum
+func WebhookAuthenticationType_Values() []string {
+	return []string{
+		WebhookAuthenticationTypeGithubHmac,
+		WebhookAuthenticationTypeIp,
+		WebhookAuthenticationTypeUnauthenticated,
+	}
+}

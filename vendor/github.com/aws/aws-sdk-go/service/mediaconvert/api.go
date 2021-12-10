@@ -3008,6 +3008,39 @@ func (s AssociateCertificateOutput) GoString() string {
 	return s.String()
 }
 
+// When you mimic a multi-channel audio layout with multiple mono-channel tracks,
+// you can tag each channel layout manually. For example, you would tag the
+// tracks that contain your left, right, and center audio with Left (L), Right
+// (R), and Center (C), respectively. When you don't specify a value, MediaConvert
+// labels your track as Center (C) by default. To use audio layout tagging,
+// your output must be in a QuickTime (.mov) container; your audio codec must
+// be AAC, WAV, or AIFF; and you must set up your audio track to have only one
+// channel.
+type AudioChannelTaggingSettings struct {
+	_ struct{} `type:"structure"`
+
+	// You can add a tag for this mono-channel audio track to mimic its placement
+	// in a multi-channel layout. For example, if this track is the left surround
+	// channel, choose Left surround (LS).
+	ChannelTag *string `locationName:"channelTag" type:"string" enum:"AudioChannelTag"`
+}
+
+// String returns the string representation
+func (s AudioChannelTaggingSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AudioChannelTaggingSettings) GoString() string {
+	return s.String()
+}
+
+// SetChannelTag sets the ChannelTag field's value.
+func (s *AudioChannelTaggingSettings) SetChannelTag(v string) *AudioChannelTaggingSettings {
+	s.ChannelTag = &v
+	return s
+}
+
 // Audio codec settings (CodecSettings) under (AudioDescriptions) contains the
 // group of settings related to audio encoding. The settings in this group vary
 // depending on the value that you choose for Audio codec (Codec). For each
@@ -3208,6 +3241,16 @@ func (s *AudioCodecSettings) SetWavSettings(v *WavSettings) *AudioCodecSettings 
 type AudioDescription struct {
 	_ struct{} `type:"structure"`
 
+	// When you mimic a multi-channel audio layout with multiple mono-channel tracks,
+	// you can tag each channel layout manually. For example, you would tag the
+	// tracks that contain your left, right, and center audio with Left (L), Right
+	// (R), and Center (C), respectively. When you don't specify a value, MediaConvert
+	// labels your track as Center (C) by default. To use audio layout tagging,
+	// your output must be in a QuickTime (.mov) container; your audio codec must
+	// be AAC, WAV, or AIFF; and you must set up your audio track to have only one
+	// channel.
+	AudioChannelTaggingSettings *AudioChannelTaggingSettings `locationName:"audioChannelTaggingSettings" type:"structure"`
+
 	// Advanced audio normalization settings. Ignore these settings unless you need
 	// to comply with a loudness standard.
 	AudioNormalizationSettings *AudioNormalizationSettings `locationName:"audioNormalizationSettings" type:"structure"`
@@ -3315,6 +3358,12 @@ func (s *AudioDescription) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAudioChannelTaggingSettings sets the AudioChannelTaggingSettings field's value.
+func (s *AudioDescription) SetAudioChannelTaggingSettings(v *AudioChannelTaggingSettings) *AudioDescription {
+	s.AudioChannelTaggingSettings = v
+	return s
 }
 
 // SetAudioNormalizationSettings sets the AudioNormalizationSettings field's value.
@@ -3649,6 +3698,124 @@ func (s *AudioSelectorGroup) SetAudioSelectorNames(v []*string) *AudioSelectorGr
 	return s
 }
 
+// Use automated ABR to have MediaConvert set up the renditions in your ABR
+// package for you automatically, based on characteristics of your input video.
+// This feature optimizes video quality while minimizing the overall size of
+// your ABR package.
+type AutomatedAbrSettings struct {
+	_ struct{} `type:"structure"`
+
+	// Optional. The maximum target bit rate used in your automated ABR stack. Use
+	// this value to set an upper limit on the bandwidth consumed by the highest-quality
+	// rendition. This is the rendition that is delivered to viewers with the fastest
+	// internet connections. If you don't specify a value, MediaConvert uses 8,000,000
+	// (8 mb/s) by default.
+	MaxAbrBitrate *int64 `locationName:"maxAbrBitrate" min:"100000" type:"integer"`
+
+	// Optional. The maximum number of renditions that MediaConvert will create
+	// in your automated ABR stack. The number of renditions is determined automatically,
+	// based on analysis of each job, but will never exceed this limit. When you
+	// set this to Auto in the console, which is equivalent to excluding it from
+	// your JSON job specification, MediaConvert defaults to a limit of 15.
+	MaxRenditions *int64 `locationName:"maxRenditions" min:"3" type:"integer"`
+
+	// Optional. The minimum target bitrate used in your automated ABR stack. Use
+	// this value to set a lower limit on the bitrate of video delivered to viewers
+	// with slow internet connections. If you don't specify a value, MediaConvert
+	// uses 600,000 (600 kb/s) by default.
+	MinAbrBitrate *int64 `locationName:"minAbrBitrate" min:"100000" type:"integer"`
+}
+
+// String returns the string representation
+func (s AutomatedAbrSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AutomatedAbrSettings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AutomatedAbrSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AutomatedAbrSettings"}
+	if s.MaxAbrBitrate != nil && *s.MaxAbrBitrate < 100000 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxAbrBitrate", 100000))
+	}
+	if s.MaxRenditions != nil && *s.MaxRenditions < 3 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxRenditions", 3))
+	}
+	if s.MinAbrBitrate != nil && *s.MinAbrBitrate < 100000 {
+		invalidParams.Add(request.NewErrParamMinValue("MinAbrBitrate", 100000))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxAbrBitrate sets the MaxAbrBitrate field's value.
+func (s *AutomatedAbrSettings) SetMaxAbrBitrate(v int64) *AutomatedAbrSettings {
+	s.MaxAbrBitrate = &v
+	return s
+}
+
+// SetMaxRenditions sets the MaxRenditions field's value.
+func (s *AutomatedAbrSettings) SetMaxRenditions(v int64) *AutomatedAbrSettings {
+	s.MaxRenditions = &v
+	return s
+}
+
+// SetMinAbrBitrate sets the MinAbrBitrate field's value.
+func (s *AutomatedAbrSettings) SetMinAbrBitrate(v int64) *AutomatedAbrSettings {
+	s.MinAbrBitrate = &v
+	return s
+}
+
+// Use automated encoding to have MediaConvert choose your encoding settings
+// for you, based on characteristics of your input video.
+type AutomatedEncodingSettings struct {
+	_ struct{} `type:"structure"`
+
+	// Use automated ABR to have MediaConvert set up the renditions in your ABR
+	// package for you automatically, based on characteristics of your input video.
+	// This feature optimizes video quality while minimizing the overall size of
+	// your ABR package.
+	AbrSettings *AutomatedAbrSettings `locationName:"abrSettings" type:"structure"`
+}
+
+// String returns the string representation
+func (s AutomatedEncodingSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AutomatedEncodingSettings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AutomatedEncodingSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AutomatedEncodingSettings"}
+	if s.AbrSettings != nil {
+		if err := s.AbrSettings.Validate(); err != nil {
+			invalidParams.AddNested("AbrSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAbrSettings sets the AbrSettings field's value.
+func (s *AutomatedEncodingSettings) SetAbrSettings(v *AutomatedAbrSettings) *AutomatedEncodingSettings {
+	s.AbrSettings = v
+	return s
+}
+
 // Settings for quality-defined variable bitrate encoding with the AV1 codec.
 // Required when you set Rate control mode to QVBR. Not valid when you set Rate
 // control mode to a value other than QVBR, or when you don't define Rate control
@@ -3715,8 +3882,8 @@ func (s *Av1QvbrSettings) SetQvbrQualityLevelFineTune(v float64) *Av1QvbrSetting
 type Av1Settings struct {
 	_ struct{} `type:"structure"`
 
-	// Adaptive quantization. Allows intra-frame quantizers to vary to improve visual
-	// quality.
+	// Specify the strength of any adaptive quantization filters that you enable.
+	// The value that you choose here applies to Spatial adaptive quantization (spatialAdaptiveQuantization).
 	AdaptiveQuantization *string `locationName:"adaptiveQuantization" type:"string" enum:"Av1AdaptiveQuantization"`
 
 	// If you are using the console, use the Framerate setting to specify the frame
@@ -3732,7 +3899,16 @@ type Av1Settings struct {
 	// rate you specify in the settings FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Av1FramerateControl"`
 
-	// When set to INTERPOLATE, produces smoother motion during frame rate conversion.
+	// Choose the method that you want MediaConvert to use when increasing or decreasing
+	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// frame rate conversions, especially if your source video has already been
+	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+	// motion-compensated interpolation. FrameFormer chooses the best conversion
+	// method frame by frame. Note that using FrameFormer increases the transcoding
+	// time and incurs a significant add-on cost.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Av1FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -3781,8 +3957,21 @@ type Av1Settings struct {
 	// be less than or equal to half the number of macroblock rows.
 	Slices *int64 `locationName:"slices" min:"1" type:"integer"`
 
-	// Adjust quantization within each frame based on spatial variation of content
-	// complexity.
+	// Keep the default value, Enabled (ENABLED), to adjust quantization within
+	// each frame based on spatial variation of content complexity. When you enable
+	// this feature, the encoder uses fewer bits on areas that can sustain more
+	// distortion with no noticeable visual degradation and uses more bits on areas
+	// where any small distortion will be noticeable. For example, complex textured
+	// blocks are encoded with fewer bits and smooth textured blocks are encoded
+	// with more bits. Enabling this feature will almost always improve your video
+	// quality. Note, though, that this feature doesn't take into account where
+	// the viewer's attention is likely to be. If viewers are likely to be focusing
+	// their attention on a part of the screen with a lot of complex texture, you
+	// might choose to disable this feature. Related setting: When you enable spatial
+	// adaptive quantization, set the value for Adaptive quantization (adaptiveQuantization)
+	// depending on your content. For homogeneous content, such as cartoons and
+	// video games, set it to Low. For content with a wider variety of textures,
+	// set it to High or Higher.
 	SpatialAdaptiveQuantization *string `locationName:"spatialAdaptiveQuantization" type:"string" enum:"Av1SpatialAdaptiveQuantization"`
 }
 
@@ -3933,6 +4122,166 @@ func (s *AvailBlanking) Validate() error {
 // SetAvailBlankingImage sets the AvailBlankingImage field's value.
 func (s *AvailBlanking) SetAvailBlankingImage(v string) *AvailBlanking {
 	s.AvailBlankingImage = &v
+	return s
+}
+
+// Required when you set your output video codec to AVC-Intra. For more information
+// about the AVC-I settings, see the relevant specification. For detailed information
+// about SD and HD in AVC-I, see https://ieeexplore.ieee.org/document/7290936.
+type AvcIntraSettings struct {
+	_ struct{} `type:"structure"`
+
+	// Specify the AVC-Intra class of your output. The AVC-Intra class selection
+	// determines the output video bit rate depending on the frame rate of the output.
+	// Outputs with higher class values have higher bitrates and improved image
+	// quality.
+	AvcIntraClass *string `locationName:"avcIntraClass" type:"string" enum:"AvcIntraClass"`
+
+	// If you are using the console, use the Framerate setting to specify the frame
+	// rate for this output. If you want to keep the same frame rate as the input
+	// video, choose Follow source. If you want to do frame rate conversion, choose
+	// a frame rate from the dropdown list or choose Custom. The framerates shown
+	// in the dropdown list are decimal approximations of fractions. If you choose
+	// Custom, specify your frame rate as a fraction. If you are creating your transcoding
+	// job specification as a JSON file without the console, use FramerateControl
+	// to specify which value the service uses for the frame rate for this output.
+	// Choose INITIALIZE_FROM_SOURCE if you want the service to use the frame rate
+	// from the input. Choose SPECIFIED if you want the service to use the frame
+	// rate you specify in the settings FramerateNumerator and FramerateDenominator.
+	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"AvcIntraFramerateControl"`
+
+	// Choose the method that you want MediaConvert to use when increasing or decreasing
+	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// frame rate conversions, especially if your source video has already been
+	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+	// motion-compensated interpolation. FrameFormer chooses the best conversion
+	// method frame by frame. Note that using FrameFormer increases the transcoding
+	// time and incurs a significant add-on cost.
+	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"AvcIntraFramerateConversionAlgorithm"`
+
+	// When you use the API for transcode jobs that use frame rate conversion, specify
+	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
+	// FramerateDenominator to specify the denominator of this fraction. In this
+	// example, use 1001 for the value of FramerateDenominator. When you use the
+	// console for transcode jobs that use frame rate conversion, provide the value
+	// as a decimal number for Framerate. In this example, specify 23.976.
+	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
+
+	// When you use the API for transcode jobs that use frame rate conversion, specify
+	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
+	// FramerateNumerator to specify the numerator of this fraction. In this example,
+	// use 24000 for the value of FramerateNumerator. When you use the console for
+	// transcode jobs that use frame rate conversion, provide the value as a decimal
+	// number for Framerate. In this example, specify 23.976.
+	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"24" type:"integer"`
+
+	// Choose the scan line type for the output. Keep the default value, Progressive
+	// (PROGRESSIVE) to create a progressive output, regardless of the scan type
+	// of your input. Use Top field first (TOP_FIELD) or Bottom field first (BOTTOM_FIELD)
+	// to create an output that's interlaced with the same field polarity throughout.
+	// Use Follow, default top (FOLLOW_TOP_FIELD) or Follow, default bottom (FOLLOW_BOTTOM_FIELD)
+	// to produce outputs with the same field polarity as the source. For jobs that
+	// have multiple inputs, the output field polarity might change over the course
+	// of the output. Follow behavior depends on the input scan type. If the source
+	// is interlaced, the output will be interlaced with the same polarity as the
+	// source. If the source is progressive, the output will be interlaced with
+	// top field bottom field first, depending on which of the Follow options you
+	// choose.
+	InterlaceMode *string `locationName:"interlaceMode" type:"string" enum:"AvcIntraInterlaceMode"`
+
+	// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+	// second (fps). Enable slow PAL to create a 25 fps output. When you enable
+	// slow PAL, MediaConvert relabels the video frames to 25 fps and resamples
+	// your audio to keep it synchronized with the video. Note that enabling this
+	// setting will slightly reduce the duration of your video. Required settings:
+	// You must also set Framerate to 25. In your JSON job specification, set (framerateControl)
+	// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+	// 1.
+	SlowPal *string `locationName:"slowPal" type:"string" enum:"AvcIntraSlowPal"`
+
+	// When you do frame rate conversion from 23.976 frames per second (fps) to
+	// 29.97 fps, and your output scan type is interlaced, you can optionally enable
+	// hard telecine (HARD) to create a smoother picture. When you keep the default
+	// value, None (NONE), MediaConvert does a standard frame rate conversion to
+	// 29.97 without doing anything with the field polarity to create a smoother
+	// picture.
+	Telecine *string `locationName:"telecine" type:"string" enum:"AvcIntraTelecine"`
+}
+
+// String returns the string representation
+func (s AvcIntraSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AvcIntraSettings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AvcIntraSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AvcIntraSettings"}
+	if s.FramerateDenominator != nil && *s.FramerateDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateDenominator", 1))
+	}
+	if s.FramerateNumerator != nil && *s.FramerateNumerator < 24 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateNumerator", 24))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAvcIntraClass sets the AvcIntraClass field's value.
+func (s *AvcIntraSettings) SetAvcIntraClass(v string) *AvcIntraSettings {
+	s.AvcIntraClass = &v
+	return s
+}
+
+// SetFramerateControl sets the FramerateControl field's value.
+func (s *AvcIntraSettings) SetFramerateControl(v string) *AvcIntraSettings {
+	s.FramerateControl = &v
+	return s
+}
+
+// SetFramerateConversionAlgorithm sets the FramerateConversionAlgorithm field's value.
+func (s *AvcIntraSettings) SetFramerateConversionAlgorithm(v string) *AvcIntraSettings {
+	s.FramerateConversionAlgorithm = &v
+	return s
+}
+
+// SetFramerateDenominator sets the FramerateDenominator field's value.
+func (s *AvcIntraSettings) SetFramerateDenominator(v int64) *AvcIntraSettings {
+	s.FramerateDenominator = &v
+	return s
+}
+
+// SetFramerateNumerator sets the FramerateNumerator field's value.
+func (s *AvcIntraSettings) SetFramerateNumerator(v int64) *AvcIntraSettings {
+	s.FramerateNumerator = &v
+	return s
+}
+
+// SetInterlaceMode sets the InterlaceMode field's value.
+func (s *AvcIntraSettings) SetInterlaceMode(v string) *AvcIntraSettings {
+	s.InterlaceMode = &v
+	return s
+}
+
+// SetSlowPal sets the SlowPal field's value.
+func (s *AvcIntraSettings) SetSlowPal(v string) *AvcIntraSettings {
+	s.SlowPal = &v
+	return s
+}
+
+// SetTelecine sets the Telecine field's value.
+func (s *AvcIntraSettings) SetTelecine(v string) *AvcIntraSettings {
+	s.Telecine = &v
 	return s
 }
 
@@ -5038,8 +5387,10 @@ type CmafGroupSettings struct {
 	// than the manifest file.
 	BaseUrl *string `locationName:"baseUrl" type:"string"`
 
-	// When set to ENABLED, sets #EXT-X-ALLOW-CACHE:no tag, which prevents client
-	// from saving media segments for later replay.
+	// Disable this setting only when your workflow requires the #EXT-X-ALLOW-CACHE:no
+	// tag. Otherwise, keep the default value Enabled (ENABLED) and control caching
+	// in your video distribution set up. For example, use the Cache-Control http
+	// header.
 	ClientCache *string `locationName:"clientCache" type:"string" enum:"CmafClientCache"`
 
 	// Specification to use (RFC-6381 or the default RFC-4281) during m3u8 playlist
@@ -5293,6 +5644,21 @@ func (s *CmafGroupSettings) SetWriteSegmentTimelineInRepresentation(v string) *C
 type CmfcSettings struct {
 	_ struct{} `type:"structure"`
 
+	// Specify this setting only when your output will be consumed by a downstream
+	// repackaging workflow that is sensitive to very small duration differences
+	// between video and audio. For this situation, choose Match video duration
+	// (MATCH_VIDEO_DURATION). In all other cases, keep the default value, Default
+	// codec duration (DEFAULT_CODEC_DURATION). When you choose Match video duration,
+	// MediaConvert pads the output audio streams with silence or trims them to
+	// ensure that the total duration of each audio stream is at least as long as
+	// the total duration of the video stream. After padding or trimming, the audio
+	// stream duration is no more than one frame longer than the video stream. MediaConvert
+	// applies audio padding or trimming only to the end of the last segment of
+	// the output. For unsegmented outputs, MediaConvert adds padding only to the
+	// end of the file. When you keep the default value, any minor discrepancies
+	// between audio and video duration will depend on your output audio codec.
+	AudioDuration *string `locationName:"audioDuration" type:"string" enum:"CmfcAudioDuration"`
+
 	// Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 	// INSERT to put SCTE-35 markers in this output at the insertion points that
 	// you specify in an ESAM XML document. Provide the document in the setting
@@ -5314,6 +5680,12 @@ func (s CmfcSettings) String() string {
 // GoString returns the string representation
 func (s CmfcSettings) GoString() string {
 	return s.String()
+}
+
+// SetAudioDuration sets the AudioDuration field's value.
+func (s *CmfcSettings) SetAudioDuration(v string) *CmfcSettings {
+	s.AudioDuration = &v
+	return s
 }
 
 // SetScte35Esam sets the Scte35Esam field's value.
@@ -5658,11 +6030,11 @@ type CreateJobInput struct {
 
 	// Optional. When you create a job, you can specify a queue to send it to. If
 	// you don't specify, the job will go to the default queue. For more about queues,
-	// see the User Guide topic at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html.
+	// see the User Guide topic at https://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html.
 	Queue *string `locationName:"queue" type:"string"`
 
 	// Required. The IAM role you use for creating this job. For details about permissions,
-	// see the User Guide topic at the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/iam-role.html.
+	// see the User Guide topic at the User Guide at https://docs.aws.amazon.com/mediaconvert/latest/ug/iam-role.html.
 	//
 	// Role is a required field
 	Role *string `locationName:"role" type:"string" required:"true"`
@@ -5686,11 +6058,15 @@ type CreateJobInput struct {
 	StatusUpdateInterval *string `locationName:"statusUpdateInterval" type:"string" enum:"StatusUpdateInterval"`
 
 	// Optional. The tags that you want to add to the resource. You can tag resources
-	// with a key-value pair or with only a key.
+	// with a key-value pair or with only a key. Use standard AWS tags on your job
+	// for automatic integration with AWS services and for custom integrations and
+	// workflows.
 	Tags map[string]*string `locationName:"tags" type:"map"`
 
 	// Optional. User-defined metadata that you want to associate with an MediaConvert
-	// job. You specify metadata in key/value pairs.
+	// job. You specify metadata in key/value pairs. Use only for existing integrations
+	// or workflows that rely on job metadata tags. Otherwise, we recommend that
+	// you use standard AWS tags.
 	UserMetadata map[string]*string `locationName:"userMetadata" type:"map"`
 }
 
@@ -5826,7 +6202,7 @@ type CreateJobOutput struct {
 	_ struct{} `type:"structure"`
 
 	// Each job converts an input file into an output file or files. For more information,
-	// see the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html
+	// see the User Guide at https://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html
 	Job *Job `locationName:"job" type:"structure"`
 }
 
@@ -6416,6 +6792,19 @@ type DashIsoGroupSettings struct {
 	// playout.
 	MinBufferTime *int64 `locationName:"minBufferTime" type:"integer"`
 
+	// Keep this setting at the default value of 0, unless you are troubleshooting
+	// a problem with how devices play back the end of your video asset. If you
+	// know that player devices are hanging on the final segment of your video because
+	// the length of your final segment is too short, use this setting to specify
+	// a minimum final segment length, in seconds. Choose a value that is greater
+	// than or equal to 1 and less than your segment length. When you specify a
+	// value for this setting, the encoder will combine any final segment that is
+	// shorter than the length that you specify with the previous segment. For example,
+	// your segment length is 3 seconds and your final segment is .5 seconds without
+	// a minimum final segment length; when you set the minimum final segment length
+	// to 1, your final segment is 3.5 seconds.
+	MinFinalSegmentLength *float64 `locationName:"minFinalSegmentLength" type:"double"`
+
 	// Specify whether your DASH profile is on-demand or main. When you choose Main
 	// profile (MAIN_PROFILE), the service signals urn:mpeg:dash:profile:isoff-main:2011
 	// in your .mpd DASH manifest. When you choose On-demand (ON_DEMAND_PROFILE),
@@ -6527,6 +6916,12 @@ func (s *DashIsoGroupSettings) SetHbbtvCompliance(v string) *DashIsoGroupSetting
 // SetMinBufferTime sets the MinBufferTime field's value.
 func (s *DashIsoGroupSettings) SetMinBufferTime(v int64) *DashIsoGroupSettings {
 	s.MinBufferTime = &v
+	return s
+}
+
+// SetMinFinalSegmentLength sets the MinFinalSegmentLength field's value.
+func (s *DashIsoGroupSettings) SetMinFinalSegmentLength(v float64) *DashIsoGroupSettings {
+	s.MinFinalSegmentLength = &v
 	return s
 }
 
@@ -8565,7 +8960,7 @@ type GetJobOutput struct {
 	_ struct{} `type:"structure"`
 
 	// Each job converts an input file into an output file or files. For more information,
-	// see the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html
+	// see the User Guide at https://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html
 	Job *Job `locationName:"job" type:"structure"`
 }
 
@@ -8873,8 +9268,15 @@ func (s *H264QvbrSettings) SetQvbrQualityLevelFineTune(v float64) *H264QvbrSetti
 type H264Settings struct {
 	_ struct{} `type:"structure"`
 
-	// Adaptive quantization. Allows intra-frame quantizers to vary to improve visual
-	// quality.
+	// Keep the default value, Auto (AUTO), for this setting to have MediaConvert
+	// automatically apply the best types of quantization for your video content.
+	// When you want to apply your quantization settings manually, you must set
+	// H264AdaptiveQuantization to a value other than Auto (AUTO). Use this setting
+	// to specify the strength of any adaptive quantization filters that you enable.
+	// If you don't want MediaConvert to do any adaptive quantization in this transcode,
+	// set Adaptive quantization (H264AdaptiveQuantization) to Off (OFF). Related
+	// settings: The value that you choose here applies to the following settings:
+	// H264FlickerAdaptiveQuantization, H264SpatialAdaptiveQuantization, and H264TemporalAdaptiveQuantization.
 	AdaptiveQuantization *string `locationName:"adaptiveQuantization" type:"string" enum:"H264AdaptiveQuantization"`
 
 	// Specify the average bitrate in bits per second. Required for VBR and CBR.
@@ -8900,10 +9302,24 @@ type H264Settings struct {
 	// Entropy encoding mode. Use CABAC (must be in Main or High profile) or CAVLC.
 	EntropyEncoding *string `locationName:"entropyEncoding" type:"string" enum:"H264EntropyEncoding"`
 
-	// Choosing FORCE_FIELD disables PAFF encoding for interlaced outputs.
+	// Keep the default value, PAFF, to have MediaConvert use PAFF encoding for
+	// interlaced outputs. Choose Force field (FORCE_FIELD) to disable PAFF encoding
+	// and create separate interlaced fields.
 	FieldEncoding *string `locationName:"fieldEncoding" type:"string" enum:"H264FieldEncoding"`
 
-	// Adjust quantization within each frame to reduce flicker or 'pop' on I-frames.
+	// Only use this setting when you change the default value, AUTO, for the setting
+	// H264AdaptiveQuantization. When you keep all defaults, excluding H264AdaptiveQuantization
+	// and all other adaptive quantization from your JSON job specification, MediaConvert
+	// automatically applies the best types of quantization for your video content.
+	// When you set H264AdaptiveQuantization to a value other than AUTO, the default
+	// value for H264FlickerAdaptiveQuantization is Disabled (DISABLED). Change
+	// this value to Enabled (ENABLED) to reduce I-frame pop. I-frame pop appears
+	// as a visual flicker that can arise when the encoder saves bits by copying
+	// some macroblocks many times from frame to frame, and then refreshes them
+	// at the I-frame. When you enable this setting, the encoder updates these macroblocks
+	// slightly more often to smooth out the flicker. To manually enable or disable
+	// H264FlickerAdaptiveQuantization, you must set Adaptive quantization (H264AdaptiveQuantization)
+	// to a value other than AUTO.
 	FlickerAdaptiveQuantization *string `locationName:"flickerAdaptiveQuantization" type:"string" enum:"H264FlickerAdaptiveQuantization"`
 
 	// If you are using the console, use the Framerate setting to specify the frame
@@ -8919,8 +9335,16 @@ type H264Settings struct {
 	// rate you specify in the settings FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"H264FramerateControl"`
 
-	// Optional. Specify how the transcoder performs framerate conversion. The default
-	// behavior is to use duplicate drop conversion.
+	// Choose the method that you want MediaConvert to use when increasing or decreasing
+	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// frame rate conversions, especially if your source video has already been
+	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+	// motion-compensated interpolation. FrameFormer chooses the best conversion
+	// method frame by frame. Note that using FrameFormer increases the transcoding
+	// time and incurs a significant add-on cost.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"H264FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -8931,8 +9355,12 @@ type H264Settings struct {
 	// as a decimal number for Framerate. In this example, specify 23.976.
 	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
 
-	// Frame rate numerator - frame rate is a fraction, e.g. 24000 / 1001 = 23.976
-	// fps.
+	// When you use the API for transcode jobs that use frame rate conversion, specify
+	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
+	// FramerateNumerator to specify the numerator of this fraction. In this example,
+	// use 24000 for the value of FramerateNumerator. When you use the console for
+	// transcode jobs that use frame rate conversion, provide the value as a decimal
+	// number for Framerate. In this example, specify 23.976.
 	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"1" type:"integer"`
 
 	// If enable, use reference B frames for GOP structures that have B frames >
@@ -8959,17 +9387,18 @@ type H264Settings struct {
 	// as 5000000.
 	HrdBufferSize *int64 `locationName:"hrdBufferSize" type:"integer"`
 
-	// Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
-	// * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
-	// interlaced output with the entire output having the same field polarity (top
-	// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
-	// Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
-	// behavior depends on the input scan type, as follows. - If the source is interlaced,
-	// the output will be interlaced with the same polarity as the source (it will
-	// follow the source). The output could therefore be a mix of "top field first"
-	// and "bottom field first". - If the source is progressive, the output will
-	// be interlaced with "top field first" or "bottom field first" polarity, depending
-	// on which of the Follow options you chose.
+	// Choose the scan line type for the output. Keep the default value, Progressive
+	// (PROGRESSIVE) to create a progressive output, regardless of the scan type
+	// of your input. Use Top field first (TOP_FIELD) or Bottom field first (BOTTOM_FIELD)
+	// to create an output that's interlaced with the same field polarity throughout.
+	// Use Follow, default top (FOLLOW_TOP_FIELD) or Follow, default bottom (FOLLOW_BOTTOM_FIELD)
+	// to produce outputs with the same field polarity as the source. For jobs that
+	// have multiple inputs, the output field polarity might change over the course
+	// of the output. Follow behavior depends on the input scan type. If the source
+	// is interlaced, the output will be interlaced with the same polarity as the
+	// source. If the source is progressive, the output will be interlaced with
+	// top field bottom field first, depending on which of the Follow options you
+	// choose.
 	InterlaceMode *string `locationName:"interlaceMode" type:"string" enum:"H264InterlaceMode"`
 
 	// Maximum bitrate in bits/second. For example, enter five megabits per second
@@ -8994,16 +9423,27 @@ type H264Settings struct {
 
 	// Optional. Specify how the service determines the pixel aspect ratio (PAR)
 	// for this output. The default behavior, Follow source (INITIALIZE_FROM_SOURCE),
-	// uses the PAR from your input video for your output. To use a different PAR,
-	// choose (SPECIFIED). In the console, SPECIFIED corresponds to any value other
-	// than Follow source. When you choose SPECIFIED for this setting, you must
-	// also specify values for the parNumerator and parDenominator settings.
+	// uses the PAR from your input video for your output. To specify a different
+	// PAR in the console, choose any value other than Follow source. To specify
+	// a different PAR by editing the JSON job specification, choose SPECIFIED.
+	// When you choose SPECIFIED for this setting, you must also specify values
+	// for the parNumerator and parDenominator settings.
 	ParControl *string `locationName:"parControl" type:"string" enum:"H264ParControl"`
 
-	// Pixel Aspect Ratio denominator.
+	// Required when you set Pixel aspect ratio (parControl) to SPECIFIED. On the
+	// console, this corresponds to any value other than Follow source. When you
+	// specify an output pixel aspect ratio (PAR) that is different from your input
+	// video PAR, provide your output PAR as a ratio. For example, for D1/DV NTSC
+	// widescreen, you would specify the ratio 40:33. In this example, the value
+	// for parDenominator is 33.
 	ParDenominator *int64 `locationName:"parDenominator" min:"1" type:"integer"`
 
-	// Pixel Aspect Ratio numerator.
+	// Required when you set Pixel aspect ratio (parControl) to SPECIFIED. On the
+	// console, this corresponds to any value other than Follow source. When you
+	// specify an output pixel aspect ratio (PAR) that is different from your input
+	// video PAR, provide your output PAR as a ratio. For example, for D1/DV NTSC
+	// widescreen, you would specify the ratio 40:33. In this example, the value
+	// for parNumerator is 40.
 	ParNumerator *int64 `locationName:"parNumerator" min:"1" type:"integer"`
 
 	// Optional. Use Quality tuning level (qualityTuningLevel) to choose how you
@@ -9036,32 +9476,87 @@ type H264Settings struct {
 	// the number of macroblock rows for interlaced pictures.
 	Slices *int64 `locationName:"slices" min:"1" type:"integer"`
 
-	// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
-	// as 25fps, and audio is sped up correspondingly.
+	// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+	// second (fps). Enable slow PAL to create a 25 fps output. When you enable
+	// slow PAL, MediaConvert relabels the video frames to 25 fps and resamples
+	// your audio to keep it synchronized with the video. Note that enabling this
+	// setting will slightly reduce the duration of your video. Required settings:
+	// You must also set Framerate to 25. In your JSON job specification, set (framerateControl)
+	// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+	// 1.
 	SlowPal *string `locationName:"slowPal" type:"string" enum:"H264SlowPal"`
 
-	// Softness. Selects quantizer matrix, larger values reduce high-frequency content
-	// in the encoded image.
+	// Ignore this setting unless you need to comply with a specification that requires
+	// a specific value. If you don't have a specification requirement, we recommend
+	// that you adjust the softness of your output by using a lower value for the
+	// setting Sharpness (sharpness) or by enabling a noise reducer filter (noiseReducerFilter).
+	// The Softness (softness) setting specifies the quantization matrices that
+	// the encoder uses. Keep the default value, 0, for flat quantization. Choose
+	// the value 1 or 16 to use the default JVT softening quantization matricies
+	// from the H.264 specification. Choose a value from 17 to 128 to use planar
+	// interpolation. Increasing values from 17 to 128 result in increasing reduction
+	// of high-frequency data. The value 128 results in the softest video.
 	Softness *int64 `locationName:"softness" type:"integer"`
 
-	// Adjust quantization within each frame based on spatial variation of content
-	// complexity.
+	// Only use this setting when you change the default value, Auto (AUTO), for
+	// the setting H264AdaptiveQuantization. When you keep all defaults, excluding
+	// H264AdaptiveQuantization and all other adaptive quantization from your JSON
+	// job specification, MediaConvert automatically applies the best types of quantization
+	// for your video content. When you set H264AdaptiveQuantization to a value
+	// other than AUTO, the default value for H264SpatialAdaptiveQuantization is
+	// Enabled (ENABLED). Keep this default value to adjust quantization within
+	// each frame based on spatial variation of content complexity. When you enable
+	// this feature, the encoder uses fewer bits on areas that can sustain more
+	// distortion with no noticeable visual degradation and uses more bits on areas
+	// where any small distortion will be noticeable. For example, complex textured
+	// blocks are encoded with fewer bits and smooth textured blocks are encoded
+	// with more bits. Enabling this feature will almost always improve your video
+	// quality. Note, though, that this feature doesn't take into account where
+	// the viewer's attention is likely to be. If viewers are likely to be focusing
+	// their attention on a part of the screen with a lot of complex texture, you
+	// might choose to set H264SpatialAdaptiveQuantization to Disabled (DISABLED).
+	// Related setting: When you enable spatial adaptive quantization, set the value
+	// for Adaptive quantization (H264AdaptiveQuantization) depending on your content.
+	// For homogeneous content, such as cartoons and video games, set it to Low.
+	// For content with a wider variety of textures, set it to High or Higher. To
+	// manually enable or disable H264SpatialAdaptiveQuantization, you must set
+	// Adaptive quantization (H264AdaptiveQuantization) to a value other than AUTO.
 	SpatialAdaptiveQuantization *string `locationName:"spatialAdaptiveQuantization" type:"string" enum:"H264SpatialAdaptiveQuantization"`
 
 	// Produces a bitstream compliant with SMPTE RP-2027.
 	Syntax *string `locationName:"syntax" type:"string" enum:"H264Syntax"`
 
-	// This field applies only if the Streams > Advanced > Framerate (framerate)
-	// field is set to 29.970. This field works with the Streams > Advanced > Preprocessors
-	// > Deinterlacer field (deinterlace_mode) and the Streams > Advanced > Interlaced
-	// Mode field (interlace_mode) to identify the scan type for the output: Progressive,
-	// Interlaced, Hard Telecine or Soft Telecine. - Hard: produces 29.97i output
-	// from 23.976 input. - Soft: produces 23.976; the player converts this output
-	// to 29.97i.
+	// When you do frame rate conversion from 23.976 frames per second (fps) to
+	// 29.97 fps, and your output scan type is interlaced, you can optionally enable
+	// hard or soft telecine to create a smoother picture. Hard telecine (HARD)
+	// produces a 29.97i output. Soft telecine (SOFT) produces an output with a
+	// 23.976 output that signals to the video player device to do the conversion
+	// during play back. When you keep the default value, None (NONE), MediaConvert
+	// does a standard frame rate conversion to 29.97 without doing anything with
+	// the field polarity to create a smoother picture.
 	Telecine *string `locationName:"telecine" type:"string" enum:"H264Telecine"`
 
-	// Adjust quantization within each frame based on temporal variation of content
-	// complexity.
+	// Only use this setting when you change the default value, AUTO, for the setting
+	// H264AdaptiveQuantization. When you keep all defaults, excluding H264AdaptiveQuantization
+	// and all other adaptive quantization from your JSON job specification, MediaConvert
+	// automatically applies the best types of quantization for your video content.
+	// When you set H264AdaptiveQuantization to a value other than AUTO, the default
+	// value for H264TemporalAdaptiveQuantization is Enabled (ENABLED). Keep this
+	// default value to adjust quantization within each frame based on temporal
+	// variation of content complexity. When you enable this feature, the encoder
+	// uses fewer bits on areas of the frame that aren't moving and uses more bits
+	// on complex objects with sharp edges that move a lot. For example, this feature
+	// improves the readability of text tickers on newscasts and scoreboards on
+	// sports matches. Enabling this feature will almost always improve your video
+	// quality. Note, though, that this feature doesn't take into account where
+	// the viewer's attention is likely to be. If viewers are likely to be focusing
+	// their attention on a part of the screen that doesn't have moving objects
+	// with sharp edges, such as sports athletes' faces, you might choose to set
+	// H264TemporalAdaptiveQuantization to Disabled (DISABLED). Related setting:
+	// When you enable temporal quantization, adjust the strength of the filter
+	// with the setting Adaptive quantization (adaptiveQuantization). To manually
+	// enable or disable H264TemporalAdaptiveQuantization, you must set Adaptive
+	// quantization (H264AdaptiveQuantization) to a value other than AUTO.
 	TemporalAdaptiveQuantization *string `locationName:"temporalAdaptiveQuantization" type:"string" enum:"H264TemporalAdaptiveQuantization"`
 
 	// Inserts timecode for each frame as 4 bytes of an unregistered SEI message.
@@ -9433,8 +9928,10 @@ func (s *H265QvbrSettings) SetQvbrQualityLevelFineTune(v float64) *H265QvbrSetti
 type H265Settings struct {
 	_ struct{} `type:"structure"`
 
-	// Adaptive quantization. Allows intra-frame quantizers to vary to improve visual
-	// quality.
+	// Specify the strength of any adaptive quantization filters that you enable.
+	// The value that you choose here applies to the following settings: Flicker
+	// adaptive quantization (flickerAdaptiveQuantization), Spatial adaptive quantization
+	// (spatialAdaptiveQuantization), and Temporal adaptive quantization (temporalAdaptiveQuantization).
 	AdaptiveQuantization *string `locationName:"adaptiveQuantization" type:"string" enum:"H265AdaptiveQuantization"`
 
 	// Enables Alternate Transfer Function SEI message for outputs using Hybrid
@@ -9461,7 +9958,13 @@ type H265Settings struct {
 	// value you provide for the setting B frames between reference frames (numberBFramesBetweenReferenceFrames).
 	DynamicSubGop *string `locationName:"dynamicSubGop" type:"string" enum:"H265DynamicSubGop"`
 
-	// Adjust quantization within each frame to reduce flicker or 'pop' on I-frames.
+	// Enable this setting to have the encoder reduce I-frame pop. I-frame pop appears
+	// as a visual flicker that can arise when the encoder saves bits by copying
+	// some macroblocks many times from frame to frame, and then refreshes them
+	// at the I-frame. When you enable this setting, the encoder updates these macroblocks
+	// slightly more often to smooth out the flicker. This setting is disabled by
+	// default. Related setting: In addition to enabling this setting, you must
+	// also set adaptiveQuantization to a value other than Off (OFF).
 	FlickerAdaptiveQuantization *string `locationName:"flickerAdaptiveQuantization" type:"string" enum:"H265FlickerAdaptiveQuantization"`
 
 	// If you are using the console, use the Framerate setting to specify the frame
@@ -9477,14 +9980,32 @@ type H265Settings struct {
 	// rate you specify in the settings FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"H265FramerateControl"`
 
-	// When set to INTERPOLATE, produces smoother motion during frame rate conversion.
+	// Choose the method that you want MediaConvert to use when increasing or decreasing
+	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// frame rate conversions, especially if your source video has already been
+	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+	// motion-compensated interpolation. FrameFormer chooses the best conversion
+	// method frame by frame. Note that using FrameFormer increases the transcoding
+	// time and incurs a significant add-on cost.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"H265FramerateConversionAlgorithm"`
 
-	// Frame rate denominator.
+	// When you use the API for transcode jobs that use frame rate conversion, specify
+	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
+	// FramerateDenominator to specify the denominator of this fraction. In this
+	// example, use 1001 for the value of FramerateDenominator. When you use the
+	// console for transcode jobs that use frame rate conversion, provide the value
+	// as a decimal number for Framerate. In this example, specify 23.976.
 	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
 
-	// Frame rate numerator - frame rate is a fraction, e.g. 24000 / 1001 = 23.976
-	// fps.
+	// When you use the API for transcode jobs that use frame rate conversion, specify
+	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
+	// FramerateNumerator to specify the numerator of this fraction. In this example,
+	// use 24000 for the value of FramerateNumerator. When you use the console for
+	// transcode jobs that use frame rate conversion, provide the value as a decimal
+	// number for Framerate. In this example, specify 23.976.
 	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"1" type:"integer"`
 
 	// If enable, use reference B frames for GOP structures that have B frames >
@@ -9511,18 +10032,18 @@ type H265Settings struct {
 	// as 5000000.
 	HrdBufferSize *int64 `locationName:"hrdBufferSize" type:"integer"`
 
-	// Choose the scan line type for the output. Choose Progressive (PROGRESSIVE)
-	// to create a progressive output, regardless of the scan type of your input.
-	// Choose Top Field First (TOP_FIELD) or Bottom Field First (BOTTOM_FIELD) to
-	// create an output that's interlaced with the same field polarity throughout.
-	// Choose Follow, Default Top (FOLLOW_TOP_FIELD) or Follow, Default Bottom (FOLLOW_BOTTOM_FIELD)
-	// to create an interlaced output with the same field polarity as the source.
-	// If the source is interlaced, the output will be interlaced with the same
-	// polarity as the source (it will follow the source). The output could therefore
-	// be a mix of "top field first" and "bottom field first". If the source is
-	// progressive, your output will be interlaced with "top field first" or "bottom
-	// field first" polarity, depending on which of the Follow options you chose.
-	// If you don't choose a value, the service will default to Progressive (PROGRESSIVE).
+	// Choose the scan line type for the output. Keep the default value, Progressive
+	// (PROGRESSIVE) to create a progressive output, regardless of the scan type
+	// of your input. Use Top field first (TOP_FIELD) or Bottom field first (BOTTOM_FIELD)
+	// to create an output that's interlaced with the same field polarity throughout.
+	// Use Follow, default top (FOLLOW_TOP_FIELD) or Follow, default bottom (FOLLOW_BOTTOM_FIELD)
+	// to produce outputs with the same field polarity as the source. For jobs that
+	// have multiple inputs, the output field polarity might change over the course
+	// of the output. Follow behavior depends on the input scan type. If the source
+	// is interlaced, the output will be interlaced with the same polarity as the
+	// source. If the source is progressive, the output will be interlaced with
+	// top field bottom field first, depending on which of the Follow options you
+	// choose.
 	InterlaceMode *string `locationName:"interlaceMode" type:"string" enum:"H265InterlaceMode"`
 
 	// Maximum bitrate in bits/second. For example, enter five megabits per second
@@ -9547,16 +10068,27 @@ type H265Settings struct {
 
 	// Optional. Specify how the service determines the pixel aspect ratio (PAR)
 	// for this output. The default behavior, Follow source (INITIALIZE_FROM_SOURCE),
-	// uses the PAR from your input video for your output. To use a different PAR,
-	// choose (SPECIFIED). In the console, SPECIFIED corresponds to any value other
-	// than Follow source. When you choose SPECIFIED for this setting, you must
-	// also specify values for the parNumerator and parDenominator settings.
+	// uses the PAR from your input video for your output. To specify a different
+	// PAR in the console, choose any value other than Follow source. To specify
+	// a different PAR by editing the JSON job specification, choose SPECIFIED.
+	// When you choose SPECIFIED for this setting, you must also specify values
+	// for the parNumerator and parDenominator settings.
 	ParControl *string `locationName:"parControl" type:"string" enum:"H265ParControl"`
 
-	// Pixel Aspect Ratio denominator.
+	// Required when you set Pixel aspect ratio (parControl) to SPECIFIED. On the
+	// console, this corresponds to any value other than Follow source. When you
+	// specify an output pixel aspect ratio (PAR) that is different from your input
+	// video PAR, provide your output PAR as a ratio. For example, for D1/DV NTSC
+	// widescreen, you would specify the ratio 40:33. In this example, the value
+	// for parDenominator is 33.
 	ParDenominator *int64 `locationName:"parDenominator" min:"1" type:"integer"`
 
-	// Pixel Aspect Ratio numerator.
+	// Required when you set Pixel aspect ratio (parControl) to SPECIFIED. On the
+	// console, this corresponds to any value other than Follow source. When you
+	// specify an output pixel aspect ratio (PAR) that is different from your input
+	// video PAR, provide your output PAR as a ratio. For example, for D1/DV NTSC
+	// widescreen, you would specify the ratio 40:33. In this example, the value
+	// for parNumerator is 40.
 	ParNumerator *int64 `locationName:"parNumerator" min:"1" type:"integer"`
 
 	// Optional. Use Quality tuning level (qualityTuningLevel) to choose how you
@@ -9590,12 +10122,31 @@ type H265Settings struct {
 	// the number of macroblock rows for interlaced pictures.
 	Slices *int64 `locationName:"slices" min:"1" type:"integer"`
 
-	// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
-	// as 25fps, and audio is sped up correspondingly.
+	// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+	// second (fps). Enable slow PAL to create a 25 fps output. When you enable
+	// slow PAL, MediaConvert relabels the video frames to 25 fps and resamples
+	// your audio to keep it synchronized with the video. Note that enabling this
+	// setting will slightly reduce the duration of your video. Required settings:
+	// You must also set Framerate to 25. In your JSON job specification, set (framerateControl)
+	// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+	// 1.
 	SlowPal *string `locationName:"slowPal" type:"string" enum:"H265SlowPal"`
 
-	// Adjust quantization within each frame based on spatial variation of content
-	// complexity.
+	// Keep the default value, Enabled (ENABLED), to adjust quantization within
+	// each frame based on spatial variation of content complexity. When you enable
+	// this feature, the encoder uses fewer bits on areas that can sustain more
+	// distortion with no noticeable visual degradation and uses more bits on areas
+	// where any small distortion will be noticeable. For example, complex textured
+	// blocks are encoded with fewer bits and smooth textured blocks are encoded
+	// with more bits. Enabling this feature will almost always improve your video
+	// quality. Note, though, that this feature doesn't take into account where
+	// the viewer's attention is likely to be. If viewers are likely to be focusing
+	// their attention on a part of the screen with a lot of complex texture, you
+	// might choose to disable this feature. Related setting: When you enable spatial
+	// adaptive quantization, set the value for Adaptive quantization (adaptiveQuantization)
+	// depending on your content. For homogeneous content, such as cartoons and
+	// video games, set it to Low. For content with a wider variety of textures,
+	// set it to High or Higher.
 	SpatialAdaptiveQuantization *string `locationName:"spatialAdaptiveQuantization" type:"string" enum:"H265SpatialAdaptiveQuantization"`
 
 	// This field applies only if the Streams > Advanced > Framerate (framerate)
@@ -9607,8 +10158,19 @@ type H265Settings struct {
 	// to 29.97i.
 	Telecine *string `locationName:"telecine" type:"string" enum:"H265Telecine"`
 
-	// Adjust quantization within each frame based on temporal variation of content
-	// complexity.
+	// Keep the default value, Enabled (ENABLED), to adjust quantization within
+	// each frame based on temporal variation of content complexity. When you enable
+	// this feature, the encoder uses fewer bits on areas of the frame that aren't
+	// moving and uses more bits on complex objects with sharp edges that move a
+	// lot. For example, this feature improves the readability of text tickers on
+	// newscasts and scoreboards on sports matches. Enabling this feature will almost
+	// always improve your video quality. Note, though, that this feature doesn't
+	// take into account where the viewer's attention is likely to be. If viewers
+	// are likely to be focusing their attention on a part of the screen that doesn't
+	// have moving objects with sharp edges, such as sports athletes' faces, you
+	// might choose to disable this feature. Related setting: When you enable temporal
+	// quantization, adjust the strength of the filter with the setting Adaptive
+	// quantization (adaptiveQuantization).
 	TemporalAdaptiveQuantization *string `locationName:"temporalAdaptiveQuantization" type:"string" enum:"H265TemporalAdaptiveQuantization"`
 
 	// Enables temporal layer identifiers in the encoded bitstream. Up to 3 layers
@@ -10313,6 +10875,12 @@ type HlsGroupSettings struct {
 	// a subset of the outputs in the output group, specify a list of them here.
 	AdditionalManifests []*HlsAdditionalManifest `locationName:"additionalManifests" type:"list"`
 
+	// Ignore this setting unless you are using FairPlay DRM with Verimatrix and
+	// you encounter playback issues. Keep the default value, Include (INCLUDE),
+	// to output audio-only headers. Choose Exclude (EXCLUDE) to remove the audio-only
+	// headers from your audio segments.
+	AudioOnlyHeader *string `locationName:"audioOnlyHeader" type:"string" enum:"HlsAudioOnlyHeader"`
+
 	// A partial URI prefix that will be prepended to each output in the media .m3u8
 	// file. Can be used if base manifest is delivered from a different URL than
 	// the main .m3u8 file.
@@ -10332,8 +10900,10 @@ type HlsGroupSettings struct {
 	// line from the manifest.
 	CaptionLanguageSetting *string `locationName:"captionLanguageSetting" type:"string" enum:"HlsCaptionLanguageSetting"`
 
-	// When set to ENABLED, sets #EXT-X-ALLOW-CACHE:no tag, which prevents client
-	// from saving media segments for later replay.
+	// Disable this setting only when your workflow requires the #EXT-X-ALLOW-CACHE:no
+	// tag. Otherwise, keep the default value Enabled (ENABLED) and control caching
+	// in your video distribution set up. For example, use the Cache-Control http
+	// header.
 	ClientCache *string `locationName:"clientCache" type:"string" enum:"HlsClientCache"`
 
 	// Specification to use (RFC-6381 or the default RFC-4281) during m3u8 playlist
@@ -10488,6 +11058,12 @@ func (s *HlsGroupSettings) SetAdMarkers(v []*string) *HlsGroupSettings {
 // SetAdditionalManifests sets the AdditionalManifests field's value.
 func (s *HlsGroupSettings) SetAdditionalManifests(v []*HlsAdditionalManifest) *HlsGroupSettings {
 	s.AdditionalManifests = v
+	return s
+}
+
+// SetAudioOnlyHeader sets the AudioOnlyHeader field's value.
+func (s *HlsGroupSettings) SetAudioOnlyHeader(v string) *HlsGroupSettings {
+	s.AudioOnlyHeader = &v
 	return s
 }
 
@@ -10905,9 +11481,8 @@ type Input struct {
 	// selectors per input.
 	AudioSelectors map[string]*AudioSelector `locationName:"audioSelectors" type:"map"`
 
-	// Use Captions selectors (CaptionSelectors) to specify the captions data from
-	// the input that you will use in your outputs. You can use multiple captions
-	// selectors per input.
+	// Use captions selectors to specify the captions data from your input that
+	// you use in your outputs. You can use up to 20 captions selectors per input.
 	CaptionSelectors map[string]*CaptionSelector `locationName:"captionSelectors" type:"map"`
 
 	// Use Cropping selection (crop) to specify the video area that the service
@@ -10941,13 +11516,13 @@ type Input struct {
 	// that contain assets referenced by the CPL.
 	FileInput *string `locationName:"fileInput" type:"string"`
 
-	// Use Filter enable (InputFilterEnable) to specify how the transcoding service
-	// applies the denoise and deblock filters. You must also enable the filters
-	// separately, with Denoise (InputDenoiseFilter) and Deblock (InputDeblockFilter).
-	// * Auto - The transcoding service determines whether to apply filtering, depending
-	// on input type and quality. * Disable - The input is not filtered. This is
-	// true even if you use the API to enable them in (InputDeblockFilter) and (InputDeblockFilter).
-	// * Force - The in put is filtered regardless of input type.
+	// Specify how the transcoding service applies the denoise and deblock filters.
+	// You must also enable the filters separately, with Denoise (InputDenoiseFilter)
+	// and Deblock (InputDeblockFilter). * Auto - The transcoding service determines
+	// whether to apply filtering, depending on input type and quality. * Disable
+	// - The input is not filtered. This is true even if you use the API to enable
+	// them in (InputDeblockFilter) and (InputDeblockFilter). * Force - The input
+	// is filtered regardless of input type.
 	FilterEnable *string `locationName:"filterEnable" type:"string" enum:"InputFilterEnable"`
 
 	// Use Filter strength (FilterStrength) to adjust the magnitude the input filter
@@ -10966,6 +11541,15 @@ type Input struct {
 	// you specify more than one input clip, the transcoding service creates the
 	// job outputs by stringing the clips together in the order you specify them.
 	InputClippings []*InputClipping `locationName:"inputClippings" type:"list"`
+
+	// When you have a progressive segmented frame (PsF) input, use this setting
+	// to flag the input as PsF. MediaConvert doesn't automatically detect PsF.
+	// Therefore, flagging your input as PsF results in better preservation of video
+	// quality when you do deinterlacing and frame rate conversion. If you don't
+	// specify, the default value is Auto (AUTO). Auto is the correct setting for
+	// all inputs that are not PsF. Don't set this value to PsF when your input
+	// is interlaced. Doing so creates horizontal interlacing artifacts.
+	InputScanType *string `locationName:"inputScanType" type:"string" enum:"InputScanType"`
 
 	// Use Selection placement (position) to define the video area in your output
 	// frame. The area outside of the rectangle that you specify here is black.
@@ -11164,6 +11748,12 @@ func (s *Input) SetInputClippings(v []*InputClipping) *Input {
 	return s
 }
 
+// SetInputScanType sets the InputScanType field's value.
+func (s *Input) SetInputScanType(v string) *Input {
+	s.InputScanType = &v
+	return s
+}
+
 // SetPosition sets the Position field's value.
 func (s *Input) SetPosition(v *Rectangle) *Input {
 	s.Position = v
@@ -11353,9 +11943,8 @@ type InputTemplate struct {
 	// selectors per input.
 	AudioSelectors map[string]*AudioSelector `locationName:"audioSelectors" type:"map"`
 
-	// Use Captions selectors (CaptionSelectors) to specify the captions data from
-	// the input that you will use in your outputs. You can use multiple captions
-	// selectors per input.
+	// Use captions selectors to specify the captions data from your input that
+	// you use in your outputs. You can use up to 20 captions selectors per input.
 	CaptionSelectors map[string]*CaptionSelector `locationName:"captionSelectors" type:"map"`
 
 	// Use Cropping selection (crop) to specify the video area that the service
@@ -11374,13 +11963,13 @@ type InputTemplate struct {
 	// inputs.
 	DenoiseFilter *string `locationName:"denoiseFilter" type:"string" enum:"InputDenoiseFilter"`
 
-	// Use Filter enable (InputFilterEnable) to specify how the transcoding service
-	// applies the denoise and deblock filters. You must also enable the filters
-	// separately, with Denoise (InputDenoiseFilter) and Deblock (InputDeblockFilter).
-	// * Auto - The transcoding service determines whether to apply filtering, depending
-	// on input type and quality. * Disable - The input is not filtered. This is
-	// true even if you use the API to enable them in (InputDeblockFilter) and (InputDeblockFilter).
-	// * Force - The in put is filtered regardless of input type.
+	// Specify how the transcoding service applies the denoise and deblock filters.
+	// You must also enable the filters separately, with Denoise (InputDenoiseFilter)
+	// and Deblock (InputDeblockFilter). * Auto - The transcoding service determines
+	// whether to apply filtering, depending on input type and quality. * Disable
+	// - The input is not filtered. This is true even if you use the API to enable
+	// them in (InputDeblockFilter) and (InputDeblockFilter). * Force - The input
+	// is filtered regardless of input type.
 	FilterEnable *string `locationName:"filterEnable" type:"string" enum:"InputFilterEnable"`
 
 	// Use Filter strength (FilterStrength) to adjust the magnitude the input filter
@@ -11399,6 +11988,15 @@ type InputTemplate struct {
 	// you specify more than one input clip, the transcoding service creates the
 	// job outputs by stringing the clips together in the order you specify them.
 	InputClippings []*InputClipping `locationName:"inputClippings" type:"list"`
+
+	// When you have a progressive segmented frame (PsF) input, use this setting
+	// to flag the input as PsF. MediaConvert doesn't automatically detect PsF.
+	// Therefore, flagging your input as PsF results in better preservation of video
+	// quality when you do deinterlacing and frame rate conversion. If you don't
+	// specify, the default value is Auto (AUTO). Auto is the correct setting for
+	// all inputs that are not PsF. Don't set this value to PsF when your input
+	// is interlaced. Doing so creates horizontal interlacing artifacts.
+	InputScanType *string `locationName:"inputScanType" type:"string" enum:"InputScanType"`
 
 	// Use Selection placement (position) to define the video area in your output
 	// frame. The area outside of the rectangle that you specify here is black.
@@ -11569,6 +12167,12 @@ func (s *InputTemplate) SetImageInserter(v *ImageInserter) *InputTemplate {
 // SetInputClippings sets the InputClippings field's value.
 func (s *InputTemplate) SetInputClippings(v []*InputClipping) *InputTemplate {
 	s.InputClippings = v
+	return s
+}
+
+// SetInputScanType sets the InputScanType field's value.
+func (s *InputTemplate) SetInputScanType(v string) *InputTemplate {
+	s.InputScanType = &v
 	return s
 }
 
@@ -11813,7 +12417,7 @@ func (s *InternalServerErrorException) RequestID() string {
 }
 
 // Each job converts an input file into an output file or files. For more information,
-// see the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html
+// see the User Guide at https://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html
 type Job struct {
 	_ struct{} `type:"structure"`
 
@@ -11886,7 +12490,7 @@ type Job struct {
 
 	// When you create a job, you can specify a queue to send it to. If you don't
 	// specify, the job will go to the default queue. For more about queues, see
-	// the User Guide topic at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html
+	// the User Guide topic at https://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html
 	Queue *string `locationName:"queue" type:"string"`
 
 	// The job's queue hopping history.
@@ -11897,7 +12501,7 @@ type Job struct {
 	RetryCount *int64 `locationName:"retryCount" type:"integer"`
 
 	// The IAM role you use for creating this job. For details about permissions,
-	// see the User Guide topic at the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/iam-role.html
+	// see the User Guide topic at the User Guide at https://docs.aws.amazon.com/mediaconvert/latest/ug/iam-role.html
 	//
 	// Role is a required field
 	Role *string `locationName:"role" type:"string" required:"true"`
@@ -12160,6 +12764,15 @@ type JobSettings struct {
 	// the setting.
 	NielsenConfiguration *NielsenConfiguration `locationName:"nielsenConfiguration" type:"structure"`
 
+	// Ignore these settings unless you are using Nielsen non-linear watermarking.
+	// Specify the values that MediaConvert uses to generate and place Nielsen watermarks
+	// in your output audio. In addition to specifying these values, you also need
+	// to set up your cloud TIC server. These settings apply to every output in
+	// your job. The MediaConvert implementation is currently with the following
+	// Nielsen versions: Nielsen Watermark SDK Version 5.2.1 Nielsen NLM Watermark
+	// Engine Version 1.2.7 Nielsen Watermark Authenticator [SID_TIC] Version [5.0.0]
+	NielsenNonLinearWatermark *NielsenNonLinearWatermarkSettings `locationName:"nielsenNonLinearWatermark" type:"structure"`
+
 	// (OutputGroups) contains one group of settings for each set of outputs that
 	// share a common package type. All unpackaged files (MPEG-4, MPEG-2 TS, Quicktime,
 	// MXF, and no container) are grouped in a single output group as well. Required
@@ -12175,8 +12788,8 @@ type JobSettings struct {
 	TimecodeConfig *TimecodeConfig `locationName:"timecodeConfig" type:"structure"`
 
 	// Enable Timed metadata insertion (TimedMetadataInsertion) to include ID3 tags
-	// in your job. To include timed metadata, you must enable it here, enable it
-	// in each output container, and specify tags and timecodes in ID3 insertion
+	// in any HLS outputs. To include timed metadata, you must enable it here, enable
+	// it in each output container, and specify tags and timecodes in ID3 insertion
 	// (Id3Insertion) objects.
 	TimedMetadataInsertion *TimedMetadataInsertion `locationName:"timedMetadataInsertion" type:"structure"`
 }
@@ -12215,6 +12828,11 @@ func (s *JobSettings) Validate() error {
 	if s.MotionImageInserter != nil {
 		if err := s.MotionImageInserter.Validate(); err != nil {
 			invalidParams.AddNested("MotionImageInserter", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.NielsenNonLinearWatermark != nil {
+		if err := s.NielsenNonLinearWatermark.Validate(); err != nil {
+			invalidParams.AddNested("NielsenNonLinearWatermark", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.OutputGroups != nil {
@@ -12267,6 +12885,12 @@ func (s *JobSettings) SetMotionImageInserter(v *MotionImageInserter) *JobSetting
 // SetNielsenConfiguration sets the NielsenConfiguration field's value.
 func (s *JobSettings) SetNielsenConfiguration(v *NielsenConfiguration) *JobSettings {
 	s.NielsenConfiguration = v
+	return s
+}
+
+// SetNielsenNonLinearWatermark sets the NielsenNonLinearWatermark field's value.
+func (s *JobSettings) SetNielsenNonLinearWatermark(v *NielsenNonLinearWatermarkSettings) *JobSettings {
+	s.NielsenNonLinearWatermark = v
 	return s
 }
 
@@ -12467,6 +13091,15 @@ type JobTemplateSettings struct {
 	// the setting.
 	NielsenConfiguration *NielsenConfiguration `locationName:"nielsenConfiguration" type:"structure"`
 
+	// Ignore these settings unless you are using Nielsen non-linear watermarking.
+	// Specify the values that MediaConvert uses to generate and place Nielsen watermarks
+	// in your output audio. In addition to specifying these values, you also need
+	// to set up your cloud TIC server. These settings apply to every output in
+	// your job. The MediaConvert implementation is currently with the following
+	// Nielsen versions: Nielsen Watermark SDK Version 5.2.1 Nielsen NLM Watermark
+	// Engine Version 1.2.7 Nielsen Watermark Authenticator [SID_TIC] Version [5.0.0]
+	NielsenNonLinearWatermark *NielsenNonLinearWatermarkSettings `locationName:"nielsenNonLinearWatermark" type:"structure"`
+
 	// (OutputGroups) contains one group of settings for each set of outputs that
 	// share a common package type. All unpackaged files (MPEG-4, MPEG-2 TS, Quicktime,
 	// MXF, and no container) are grouped in a single output group as well. Required
@@ -12482,8 +13115,8 @@ type JobTemplateSettings struct {
 	TimecodeConfig *TimecodeConfig `locationName:"timecodeConfig" type:"structure"`
 
 	// Enable Timed metadata insertion (TimedMetadataInsertion) to include ID3 tags
-	// in your job. To include timed metadata, you must enable it here, enable it
-	// in each output container, and specify tags and timecodes in ID3 insertion
+	// in any HLS outputs. To include timed metadata, you must enable it here, enable
+	// it in each output container, and specify tags and timecodes in ID3 insertion
 	// (Id3Insertion) objects.
 	TimedMetadataInsertion *TimedMetadataInsertion `locationName:"timedMetadataInsertion" type:"structure"`
 }
@@ -12522,6 +13155,11 @@ func (s *JobTemplateSettings) Validate() error {
 	if s.MotionImageInserter != nil {
 		if err := s.MotionImageInserter.Validate(); err != nil {
 			invalidParams.AddNested("MotionImageInserter", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.NielsenNonLinearWatermark != nil {
+		if err := s.NielsenNonLinearWatermark.Validate(); err != nil {
+			invalidParams.AddNested("NielsenNonLinearWatermark", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.OutputGroups != nil {
@@ -12574,6 +13212,12 @@ func (s *JobTemplateSettings) SetMotionImageInserter(v *MotionImageInserter) *Jo
 // SetNielsenConfiguration sets the NielsenConfiguration field's value.
 func (s *JobTemplateSettings) SetNielsenConfiguration(v *NielsenConfiguration) *JobTemplateSettings {
 	s.NielsenConfiguration = v
+	return s
+}
+
+// SetNielsenNonLinearWatermark sets the NielsenNonLinearWatermark field's value.
+func (s *JobTemplateSettings) SetNielsenNonLinearWatermark(v *NielsenNonLinearWatermarkSettings) *JobTemplateSettings {
+	s.NielsenNonLinearWatermark = v
 	return s
 }
 
@@ -13171,6 +13815,21 @@ type M2tsSettings struct {
 	// Selects between the DVB and ATSC buffer models for Dolby Digital audio.
 	AudioBufferModel *string `locationName:"audioBufferModel" type:"string" enum:"M2tsAudioBufferModel"`
 
+	// Specify this setting only when your output will be consumed by a downstream
+	// repackaging workflow that is sensitive to very small duration differences
+	// between video and audio. For this situation, choose Match video duration
+	// (MATCH_VIDEO_DURATION). In all other cases, keep the default value, Default
+	// codec duration (DEFAULT_CODEC_DURATION). When you choose Match video duration,
+	// MediaConvert pads the output audio streams with silence or trims them to
+	// ensure that the total duration of each audio stream is at least as long as
+	// the total duration of the video stream. After padding or trimming, the audio
+	// stream duration is no more than one frame longer than the video stream. MediaConvert
+	// applies audio padding or trimming only to the end of the last segment of
+	// the output. For unsegmented outputs, MediaConvert adds padding only to the
+	// end of the file. When you keep the default value, any minor discrepancies
+	// between audio and video duration will depend on your output audio codec.
+	AudioDuration *string `locationName:"audioDuration" type:"string" enum:"M2tsAudioDuration"`
+
 	// The number of audio frames to insert for each PES packet.
 	AudioFramesPerPes *int64 `locationName:"audioFramesPerPes" type:"integer"`
 
@@ -13415,6 +14074,12 @@ func (s *M2tsSettings) SetAudioBufferModel(v string) *M2tsSettings {
 	return s
 }
 
+// SetAudioDuration sets the AudioDuration field's value.
+func (s *M2tsSettings) SetAudioDuration(v string) *M2tsSettings {
+	s.AudioDuration = &v
+	return s
+}
+
 // SetAudioFramesPerPes sets the AudioFramesPerPes field's value.
 func (s *M2tsSettings) SetAudioFramesPerPes(v int64) *M2tsSettings {
 	s.AudioFramesPerPes = &v
@@ -13629,6 +14294,21 @@ func (s *M2tsSettings) SetVideoPid(v int64) *M2tsSettings {
 type M3u8Settings struct {
 	_ struct{} `type:"structure"`
 
+	// Specify this setting only when your output will be consumed by a downstream
+	// repackaging workflow that is sensitive to very small duration differences
+	// between video and audio. For this situation, choose Match video duration
+	// (MATCH_VIDEO_DURATION). In all other cases, keep the default value, Default
+	// codec duration (DEFAULT_CODEC_DURATION). When you choose Match video duration,
+	// MediaConvert pads the output audio streams with silence or trims them to
+	// ensure that the total duration of each audio stream is at least as long as
+	// the total duration of the video stream. After padding or trimming, the audio
+	// stream duration is no more than one frame longer than the video stream. MediaConvert
+	// applies audio padding or trimming only to the end of the last segment of
+	// the output. For unsegmented outputs, MediaConvert adds padding only to the
+	// end of the file. When you keep the default value, any minor discrepancies
+	// between audio and video duration will depend on your output audio codec.
+	AudioDuration *string `locationName:"audioDuration" type:"string" enum:"M3u8AudioDuration"`
+
 	// The number of audio frames to insert for each PES packet.
 	AudioFramesPerPes *int64 `locationName:"audioFramesPerPes" type:"integer"`
 
@@ -13732,6 +14412,12 @@ func (s *M3u8Settings) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAudioDuration sets the AudioDuration field's value.
+func (s *M3u8Settings) SetAudioDuration(v string) *M3u8Settings {
+	s.AudioDuration = &v
+	return s
 }
 
 // SetAudioFramesPerPes sets the AudioFramesPerPes field's value.
@@ -14058,7 +14744,11 @@ type MovSettings struct {
 	// video codec is MPEG2.
 	Mpeg2FourCCControl *string `locationName:"mpeg2FourCCControl" type:"string" enum:"MovMpeg2FourCCControl"`
 
-	// If set to OMNEON, inserts Omneon-compatible padding
+	// To make this output compatible with Omenon, keep the default value, OMNEON.
+	// Unless you need Omneon compatibility, set this value to NONE. When you keep
+	// the default value, OMNEON, MediaConvert increases the length of the edit
+	// list atom. This might cause file rejections when a recipient of the output
+	// file doesn't expct this extra padding.
 	PaddingControl *string `locationName:"paddingControl" type:"string" enum:"MovPaddingControl"`
 
 	// Always keep the default value (SELF_CONTAINED) for this setting.
@@ -14259,6 +14949,21 @@ func (s *Mp3Settings) SetVbrQuality(v int64) *Mp3Settings {
 type Mp4Settings struct {
 	_ struct{} `type:"structure"`
 
+	// Specify this setting only when your output will be consumed by a downstream
+	// repackaging workflow that is sensitive to very small duration differences
+	// between video and audio. For this situation, choose Match video duration
+	// (MATCH_VIDEO_DURATION). In all other cases, keep the default value, Default
+	// codec duration (DEFAULT_CODEC_DURATION). When you choose Match video duration,
+	// MediaConvert pads the output audio streams with silence or trims them to
+	// ensure that the total duration of each audio stream is at least as long as
+	// the total duration of the video stream. After padding or trimming, the audio
+	// stream duration is no more than one frame longer than the video stream. MediaConvert
+	// applies audio padding or trimming only to the end of the last segment of
+	// the output. For unsegmented outputs, MediaConvert adds padding only to the
+	// end of the file. When you keep the default value, any minor discrepancies
+	// between audio and video duration will depend on your output audio codec.
+	AudioDuration *string `locationName:"audioDuration" type:"string" enum:"CmfcAudioDuration"`
+
 	// When enabled, file composition times will start at zero, composition times
 	// in the 'ctts' (composition time to sample) box for B-frames will be negative,
 	// and a 'cslg' (composition shift least greatest) box will be included per
@@ -14296,6 +15001,12 @@ func (s Mp4Settings) GoString() string {
 	return s.String()
 }
 
+// SetAudioDuration sets the AudioDuration field's value.
+func (s *Mp4Settings) SetAudioDuration(v string) *Mp4Settings {
+	s.AudioDuration = &v
+	return s
+}
+
 // SetCslgAtom sets the CslgAtom field's value.
 func (s *Mp4Settings) SetCslgAtom(v string) *Mp4Settings {
 	s.CslgAtom = &v
@@ -14330,6 +15041,29 @@ func (s *Mp4Settings) SetMp4MajorBrand(v string) *Mp4Settings {
 type MpdSettings struct {
 	_ struct{} `type:"structure"`
 
+	// Optional. Choose Include (INCLUDE) to have MediaConvert mark up your DASH
+	// manifest with elements for embedded 608 captions. This markup isn't generally
+	// required, but some video players require it to discover and play embedded
+	// 608 captions. Keep the default value, Exclude (EXCLUDE), to leave these elements
+	// out. When you enable this setting, this is the markup that MediaConvert includes
+	// in your manifest:
+	AccessibilityCaptionHints *string `locationName:"accessibilityCaptionHints" type:"string" enum:"MpdAccessibilityCaptionHints"`
+
+	// Specify this setting only when your output will be consumed by a downstream
+	// repackaging workflow that is sensitive to very small duration differences
+	// between video and audio. For this situation, choose Match video duration
+	// (MATCH_VIDEO_DURATION). In all other cases, keep the default value, Default
+	// codec duration (DEFAULT_CODEC_DURATION). When you choose Match video duration,
+	// MediaConvert pads the output audio streams with silence or trims them to
+	// ensure that the total duration of each audio stream is at least as long as
+	// the total duration of the video stream. After padding or trimming, the audio
+	// stream duration is no more than one frame longer than the video stream. MediaConvert
+	// applies audio padding or trimming only to the end of the last segment of
+	// the output. For unsegmented outputs, MediaConvert adds padding only to the
+	// end of the file. When you keep the default value, any minor discrepancies
+	// between audio and video duration will depend on your output audio codec.
+	AudioDuration *string `locationName:"audioDuration" type:"string" enum:"MpdAudioDuration"`
+
 	// Use this setting only in DASH output groups that include sidecar TTML or
 	// IMSC captions. You specify sidecar captions in a separate output from your
 	// audio and video. Choose Raw (RAW) for captions in a single XML file in a
@@ -14361,6 +15095,18 @@ func (s MpdSettings) GoString() string {
 	return s.String()
 }
 
+// SetAccessibilityCaptionHints sets the AccessibilityCaptionHints field's value.
+func (s *MpdSettings) SetAccessibilityCaptionHints(v string) *MpdSettings {
+	s.AccessibilityCaptionHints = &v
+	return s
+}
+
+// SetAudioDuration sets the AudioDuration field's value.
+func (s *MpdSettings) SetAudioDuration(v string) *MpdSettings {
+	s.AudioDuration = &v
+	return s
+}
+
 // SetCaptionContainerType sets the CaptionContainerType field's value.
 func (s *MpdSettings) SetCaptionContainerType(v string) *MpdSettings {
 	s.CaptionContainerType = &v
@@ -14384,8 +15130,10 @@ func (s *MpdSettings) SetScte35Source(v string) *MpdSettings {
 type Mpeg2Settings struct {
 	_ struct{} `type:"structure"`
 
-	// Adaptive quantization. Allows intra-frame quantizers to vary to improve visual
-	// quality.
+	// Specify the strength of any adaptive quantization filters that you enable.
+	// The value that you choose here applies to the following settings: Spatial
+	// adaptive quantization (spatialAdaptiveQuantization), and Temporal adaptive
+	// quantization (temporalAdaptiveQuantization).
 	AdaptiveQuantization *string `locationName:"adaptiveQuantization" type:"string" enum:"Mpeg2AdaptiveQuantization"`
 
 	// Specify the average bitrate in bits per second. Required for VBR and CBR.
@@ -14419,15 +15167,32 @@ type Mpeg2Settings struct {
 	// rate you specify in the settings FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Mpeg2FramerateControl"`
 
-	// Optional. Specify how the transcoder performs framerate conversion. The default
-	// behavior is to use duplicate drop conversion.
+	// Choose the method that you want MediaConvert to use when increasing or decreasing
+	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// frame rate conversions, especially if your source video has already been
+	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+	// motion-compensated interpolation. FrameFormer chooses the best conversion
+	// method frame by frame. Note that using FrameFormer increases the transcoding
+	// time and incurs a significant add-on cost.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Mpeg2FramerateConversionAlgorithm"`
 
-	// Frame rate denominator.
+	// When you use the API for transcode jobs that use frame rate conversion, specify
+	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
+	// FramerateDenominator to specify the denominator of this fraction. In this
+	// example, use 1001 for the value of FramerateDenominator. When you use the
+	// console for transcode jobs that use frame rate conversion, provide the value
+	// as a decimal number for Framerate. In this example, specify 23.976.
 	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
 
-	// Frame rate numerator - frame rate is a fraction, e.g. 24000 / 1001 = 23.976
-	// fps.
+	// When you use the API for transcode jobs that use frame rate conversion, specify
+	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
+	// FramerateNumerator to specify the numerator of this fraction. In this example,
+	// use 24000 for the value of FramerateNumerator. When you use the console for
+	// transcode jobs that use frame rate conversion, provide the value as a decimal
+	// number for Framerate. In this example, specify 23.976.
 	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"24" type:"integer"`
 
 	// Frequency of closed GOPs. In streaming applications, it is recommended that
@@ -14450,17 +15215,18 @@ type Mpeg2Settings struct {
 	// as 5000000.
 	HrdBufferSize *int64 `locationName:"hrdBufferSize" type:"integer"`
 
-	// Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
-	// * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
-	// interlaced output with the entire output having the same field polarity (top
-	// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
-	// Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
-	// behavior depends on the input scan type. - If the source is interlaced, the
-	// output will be interlaced with the same polarity as the source (it will follow
-	// the source). The output could therefore be a mix of "top field first" and
-	// "bottom field first". - If the source is progressive, the output will be
-	// interlaced with "top field first" or "bottom field first" polarity, depending
-	// on which of the Follow options you chose.
+	// Choose the scan line type for the output. Keep the default value, Progressive
+	// (PROGRESSIVE) to create a progressive output, regardless of the scan type
+	// of your input. Use Top field first (TOP_FIELD) or Bottom field first (BOTTOM_FIELD)
+	// to create an output that's interlaced with the same field polarity throughout.
+	// Use Follow, default top (FOLLOW_TOP_FIELD) or Follow, default bottom (FOLLOW_BOTTOM_FIELD)
+	// to produce outputs with the same field polarity as the source. For jobs that
+	// have multiple inputs, the output field polarity might change over the course
+	// of the output. Follow behavior depends on the input scan type. If the source
+	// is interlaced, the output will be interlaced with the same polarity as the
+	// source. If the source is progressive, the output will be interlaced with
+	// top field bottom field first, depending on which of the Follow options you
+	// choose.
 	InterlaceMode *string `locationName:"interlaceMode" type:"string" enum:"Mpeg2InterlaceMode"`
 
 	// Use Intra DC precision (Mpeg2IntraDcPrecision) to set quantization precision
@@ -14487,16 +15253,27 @@ type Mpeg2Settings struct {
 
 	// Optional. Specify how the service determines the pixel aspect ratio (PAR)
 	// for this output. The default behavior, Follow source (INITIALIZE_FROM_SOURCE),
-	// uses the PAR from your input video for your output. To use a different PAR,
-	// choose (SPECIFIED). In the console, SPECIFIED corresponds to any value other
-	// than Follow source. When you choose SPECIFIED for this setting, you must
-	// also specify values for the parNumerator and parDenominator settings.
+	// uses the PAR from your input video for your output. To specify a different
+	// PAR in the console, choose any value other than Follow source. To specify
+	// a different PAR by editing the JSON job specification, choose SPECIFIED.
+	// When you choose SPECIFIED for this setting, you must also specify values
+	// for the parNumerator and parDenominator settings.
 	ParControl *string `locationName:"parControl" type:"string" enum:"Mpeg2ParControl"`
 
-	// Pixel Aspect Ratio denominator.
+	// Required when you set Pixel aspect ratio (parControl) to SPECIFIED. On the
+	// console, this corresponds to any value other than Follow source. When you
+	// specify an output pixel aspect ratio (PAR) that is different from your input
+	// video PAR, provide your output PAR as a ratio. For example, for D1/DV NTSC
+	// widescreen, you would specify the ratio 40:33. In this example, the value
+	// for parDenominator is 33.
 	ParDenominator *int64 `locationName:"parDenominator" min:"1" type:"integer"`
 
-	// Pixel Aspect Ratio numerator.
+	// Required when you set Pixel aspect ratio (parControl) to SPECIFIED. On the
+	// console, this corresponds to any value other than Follow source. When you
+	// specify an output pixel aspect ratio (PAR) that is different from your input
+	// video PAR, provide your output PAR as a ratio. For example, for D1/DV NTSC
+	// widescreen, you would specify the ratio 40:33. In this example, the value
+	// for parNumerator is 40.
 	ParNumerator *int64 `locationName:"parNumerator" min:"1" type:"integer"`
 
 	// Optional. Use Quality tuning level (qualityTuningLevel) to choose how you
@@ -14512,29 +15289,72 @@ type Mpeg2Settings struct {
 	// automatically detects. This improves video quality and is enabled by default.
 	SceneChangeDetect *string `locationName:"sceneChangeDetect" type:"string" enum:"Mpeg2SceneChangeDetect"`
 
-	// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
-	// as 25fps, and audio is sped up correspondingly.
+	// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+	// second (fps). Enable slow PAL to create a 25 fps output. When you enable
+	// slow PAL, MediaConvert relabels the video frames to 25 fps and resamples
+	// your audio to keep it synchronized with the video. Note that enabling this
+	// setting will slightly reduce the duration of your video. Required settings:
+	// You must also set Framerate to 25. In your JSON job specification, set (framerateControl)
+	// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+	// 1.
 	SlowPal *string `locationName:"slowPal" type:"string" enum:"Mpeg2SlowPal"`
 
-	// Softness. Selects quantizer matrix, larger values reduce high-frequency content
-	// in the encoded image.
+	// Ignore this setting unless you need to comply with a specification that requires
+	// a specific value. If you don't have a specification requirement, we recommend
+	// that you adjust the softness of your output by using a lower value for the
+	// setting Sharpness (sharpness) or by enabling a noise reducer filter (noiseReducerFilter).
+	// The Softness (softness) setting specifies the quantization matrices that
+	// the encoder uses. Keep the default value, 0, to use the AWS Elemental default
+	// matrices. Choose a value from 17 to 128 to use planar interpolation. Increasing
+	// values from 17 to 128 result in increasing reduction of high-frequency data.
+	// The value 128 results in the softest video.
 	Softness *int64 `locationName:"softness" type:"integer"`
 
-	// Adjust quantization within each frame based on spatial variation of content
-	// complexity.
+	// Keep the default value, Enabled (ENABLED), to adjust quantization within
+	// each frame based on spatial variation of content complexity. When you enable
+	// this feature, the encoder uses fewer bits on areas that can sustain more
+	// distortion with no noticeable visual degradation and uses more bits on areas
+	// where any small distortion will be noticeable. For example, complex textured
+	// blocks are encoded with fewer bits and smooth textured blocks are encoded
+	// with more bits. Enabling this feature will almost always improve your video
+	// quality. Note, though, that this feature doesn't take into account where
+	// the viewer's attention is likely to be. If viewers are likely to be focusing
+	// their attention on a part of the screen with a lot of complex texture, you
+	// might choose to disable this feature. Related setting: When you enable spatial
+	// adaptive quantization, set the value for Adaptive quantization (adaptiveQuantization)
+	// depending on your content. For homogeneous content, such as cartoons and
+	// video games, set it to Low. For content with a wider variety of textures,
+	// set it to High or Higher.
 	SpatialAdaptiveQuantization *string `locationName:"spatialAdaptiveQuantization" type:"string" enum:"Mpeg2SpatialAdaptiveQuantization"`
 
-	// Produces a Type D-10 compatible bitstream (SMPTE 356M-2001).
+	// Specify whether this output's video uses the D10 syntax. Keep the default
+	// value to not use the syntax. Related settings: When you choose D10 (D_10)
+	// for your MXF profile (profile), you must also set this value to to D10 (D_10).
 	Syntax *string `locationName:"syntax" type:"string" enum:"Mpeg2Syntax"`
 
-	// Only use Telecine (Mpeg2Telecine) when you set Framerate (Framerate) to 29.970.
-	// Set Telecine (Mpeg2Telecine) to Hard (hard) to produce a 29.97i output from
-	// a 23.976 input. Set it to Soft (soft) to produce 23.976 output and leave
-	// converstion to the player.
+	// When you do frame rate conversion from 23.976 frames per second (fps) to
+	// 29.97 fps, and your output scan type is interlaced, you can optionally enable
+	// hard or soft telecine to create a smoother picture. Hard telecine (HARD)
+	// produces a 29.97i output. Soft telecine (SOFT) produces an output with a
+	// 23.976 output that signals to the video player device to do the conversion
+	// during play back. When you keep the default value, None (NONE), MediaConvert
+	// does a standard frame rate conversion to 29.97 without doing anything with
+	// the field polarity to create a smoother picture.
 	Telecine *string `locationName:"telecine" type:"string" enum:"Mpeg2Telecine"`
 
-	// Adjust quantization within each frame based on temporal variation of content
-	// complexity.
+	// Keep the default value, Enabled (ENABLED), to adjust quantization within
+	// each frame based on temporal variation of content complexity. When you enable
+	// this feature, the encoder uses fewer bits on areas of the frame that aren't
+	// moving and uses more bits on complex objects with sharp edges that move a
+	// lot. For example, this feature improves the readability of text tickers on
+	// newscasts and scoreboards on sports matches. Enabling this feature will almost
+	// always improve your video quality. Note, though, that this feature doesn't
+	// take into account where the viewer's attention is likely to be. If viewers
+	// are likely to be focusing their attention on a part of the screen that doesn't
+	// have moving objects with sharp edges, such as sports athletes' faces, you
+	// might choose to disable this feature. Related setting: When you enable temporal
+	// quantization, adjust the strength of the filter with the setting Adaptive
+	// quantization (adaptiveQuantization).
 	TemporalAdaptiveQuantization *string `locationName:"temporalAdaptiveQuantization" type:"string" enum:"Mpeg2TemporalAdaptiveQuantization"`
 }
 
@@ -14970,6 +15790,12 @@ type MxfSettings struct {
 	// under VideoDescription. On the console, find AFD signaling under the output's
 	// video encoding settings.
 	AfdSignaling *string `locationName:"afdSignaling" type:"string" enum:"MxfAfdSignaling"`
+
+	// Specify the MXF profile, also called shim, for this output. When you choose
+	// Auto, MediaConvert chooses a profile based on the video codec and resolution.
+	// For a list of codecs supported with each MXF profile, see https://docs.aws.amazon.com/mediaconvert/latest/ug/codecs-supported-with-each-mxf-profile.html.
+	// For more information about the automatic selection behavior, see https://docs.aws.amazon.com/mediaconvert/latest/ug/default-automatic-selection-of-mxf-profiles.html.
+	Profile *string `locationName:"profile" type:"string" enum:"MxfProfile"`
 }
 
 // String returns the string representation
@@ -14985,6 +15811,98 @@ func (s MxfSettings) GoString() string {
 // SetAfdSignaling sets the AfdSignaling field's value.
 func (s *MxfSettings) SetAfdSignaling(v string) *MxfSettings {
 	s.AfdSignaling = &v
+	return s
+}
+
+// SetProfile sets the Profile field's value.
+func (s *MxfSettings) SetProfile(v string) *MxfSettings {
+	s.Profile = &v
+	return s
+}
+
+// For forensic video watermarking, MediaConvert supports Nagra NexGuard File
+// Marker watermarking. MediaConvert supports both PreRelease Content (NGPR/G2)
+// and OTT Streaming workflows.
+type NexGuardFileMarkerSettings struct {
+	_ struct{} `type:"structure"`
+
+	// Use the base64 license string that Nagra provides you. Enter it directly
+	// in your JSON job specification or in the console. Required when you include
+	// Nagra NexGuard File Marker watermarking (NexGuardWatermarkingSettings) in
+	// your job.
+	License *string `locationName:"license" min:"1" type:"string"`
+
+	// Specify the payload ID that you want associated with this output. Valid values
+	// vary depending on your Nagra NexGuard forensic watermarking workflow. Required
+	// when you include Nagra NexGuard File Marker watermarking (NexGuardWatermarkingSettings)
+	// in your job. For PreRelease Content (NGPR/G2), specify an integer from 1
+	// through 4,194,303. You must generate a unique ID for each asset you watermark,
+	// and keep a record of which ID you have assigned to each asset. Neither Nagra
+	// nor MediaConvert keep track of the relationship between output files and
+	// your IDs. For OTT Streaming, create two adaptive bitrate (ABR) stacks for
+	// each asset. Do this by setting up two output groups. For one output group,
+	// set the value of Payload ID (payload) to 0 in every output. For the other
+	// output group, set Payload ID (payload) to 1 in every output.
+	Payload *int64 `locationName:"payload" type:"integer"`
+
+	// Enter one of the watermarking preset strings that Nagra provides you. Required
+	// when you include Nagra NexGuard File Marker watermarking (NexGuardWatermarkingSettings)
+	// in your job.
+	Preset *string `locationName:"preset" min:"1" type:"string"`
+
+	// Optional. Ignore this setting unless Nagra support directs you to specify
+	// a value. When you don't specify a value here, the Nagra NexGuard library
+	// uses its default value.
+	Strength *string `locationName:"strength" type:"string" enum:"WatermarkingStrength"`
+}
+
+// String returns the string representation
+func (s NexGuardFileMarkerSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NexGuardFileMarkerSettings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *NexGuardFileMarkerSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "NexGuardFileMarkerSettings"}
+	if s.License != nil && len(*s.License) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("License", 1))
+	}
+	if s.Preset != nil && len(*s.Preset) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Preset", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLicense sets the License field's value.
+func (s *NexGuardFileMarkerSettings) SetLicense(v string) *NexGuardFileMarkerSettings {
+	s.License = &v
+	return s
+}
+
+// SetPayload sets the Payload field's value.
+func (s *NexGuardFileMarkerSettings) SetPayload(v int64) *NexGuardFileMarkerSettings {
+	s.Payload = &v
+	return s
+}
+
+// SetPreset sets the Preset field's value.
+func (s *NexGuardFileMarkerSettings) SetPreset(v string) *NexGuardFileMarkerSettings {
+	s.Preset = &v
+	return s
+}
+
+// SetStrength sets the Strength field's value.
+func (s *NexGuardFileMarkerSettings) SetStrength(v string) *NexGuardFileMarkerSettings {
+	s.Strength = &v
 	return s
 }
 
@@ -15026,6 +15944,179 @@ func (s *NielsenConfiguration) SetBreakoutCode(v int64) *NielsenConfiguration {
 // SetDistributorId sets the DistributorId field's value.
 func (s *NielsenConfiguration) SetDistributorId(v string) *NielsenConfiguration {
 	s.DistributorId = &v
+	return s
+}
+
+// Ignore these settings unless you are using Nielsen non-linear watermarking.
+// Specify the values that MediaConvert uses to generate and place Nielsen watermarks
+// in your output audio. In addition to specifying these values, you also need
+// to set up your cloud TIC server. These settings apply to every output in
+// your job. The MediaConvert implementation is currently with the following
+// Nielsen versions: Nielsen Watermark SDK Version 5.2.1 Nielsen NLM Watermark
+// Engine Version 1.2.7 Nielsen Watermark Authenticator [SID_TIC] Version [5.0.0]
+type NielsenNonLinearWatermarkSettings struct {
+	_ struct{} `type:"structure"`
+
+	// Choose the type of Nielsen watermarks that you want in your outputs. When
+	// you choose NAES 2 and NW (NAES2_AND_NW), you must provide a value for the
+	// setting SID (sourceId). When you choose CBET (CBET), you must provide a value
+	// for the setting CSID (cbetSourceId). When you choose NAES 2, NW, and CBET
+	// (NAES2_AND_NW_AND_CBET), you must provide values for both of these settings.
+	ActiveWatermarkProcess *string `locationName:"activeWatermarkProcess" type:"string" enum:"NielsenActiveWatermarkProcessType"`
+
+	// Optional. Use this setting when you want the service to include an ADI file
+	// in the Nielsen metadata .zip file. To provide an ADI file, store it in Amazon
+	// S3 and provide a URL to it here. The URL should be in the following format:
+	// S3://bucket/path/ADI-file. For more information about the metadata .zip file,
+	// see the setting Metadata destination (metadataDestination).
+	AdiFilename *string `locationName:"adiFilename" type:"string"`
+
+	// Use the asset ID that you provide to Nielsen to uniquely identify this asset.
+	// Required for all Nielsen non-linear watermarking.
+	AssetId *string `locationName:"assetId" min:"1" type:"string"`
+
+	// Use the asset name that you provide to Nielsen for this asset. Required for
+	// all Nielsen non-linear watermarking.
+	AssetName *string `locationName:"assetName" min:"1" type:"string"`
+
+	// Use the CSID that Nielsen provides to you. This CBET source ID should be
+	// unique to your Nielsen account but common to all of your output assets that
+	// have CBET watermarking. Required when you choose a value for the setting
+	// Watermark types (ActiveWatermarkProcess) that includes CBET.
+	CbetSourceId *string `locationName:"cbetSourceId" type:"string"`
+
+	// Optional. If this asset uses an episode ID with Nielsen, provide it here.
+	EpisodeId *string `locationName:"episodeId" min:"1" type:"string"`
+
+	// Specify the Amazon S3 location where you want MediaConvert to save your Nielsen
+	// non-linear metadata .zip file. This Amazon S3 bucket must be in the same
+	// Region as the one where you do your MediaConvert transcoding. If you want
+	// to include an ADI file in this .zip file, use the setting ADI file (adiFilename)
+	// to specify it. MediaConvert delivers the Nielsen metadata .zip files only
+	// to your metadata destination Amazon S3 bucket. It doesn't deliver the .zip
+	// files to Nielsen. You are responsible for delivering the metadata .zip files
+	// to Nielsen.
+	MetadataDestination *string `locationName:"metadataDestination" type:"string"`
+
+	// Use the SID that Nielsen provides to you. This source ID should be unique
+	// to your Nielsen account but common to all of your output assets. Required
+	// for all Nielsen non-linear watermarking. This ID should be unique to your
+	// Nielsen account but common to all of your output assets. Required for all
+	// Nielsen non-linear watermarking.
+	SourceId *int64 `locationName:"sourceId" type:"integer"`
+
+	// Required. Specify whether your source content already contains Nielsen non-linear
+	// watermarks. When you set this value to Watermarked (WATERMARKED), the service
+	// fails the job. Nielsen requires that you add non-linear watermarking to only
+	// clean content that doesn't already have non-linear Nielsen watermarks.
+	SourceWatermarkStatus *string `locationName:"sourceWatermarkStatus" type:"string" enum:"NielsenSourceWatermarkStatusType"`
+
+	// Specify the endpoint for the TIC server that you have deployed and configured
+	// in the AWS Cloud. Required for all Nielsen non-linear watermarking. MediaConvert
+	// can't connect directly to a TIC server. Instead, you must use API Gateway
+	// to provide a RESTful interface between MediaConvert and a TIC server that
+	// you deploy in your AWS account. For more information on deploying a TIC server
+	// in your AWS account and the required API Gateway, contact Nielsen support.
+	TicServerUrl *string `locationName:"ticServerUrl" type:"string"`
+
+	// To create assets that have the same TIC values in each audio track, keep
+	// the default value Share TICs (SAME_TICS_PER_TRACK). To create assets that
+	// have unique TIC values for each audio track, choose Use unique TICs (RESERVE_UNIQUE_TICS_PER_TRACK).
+	UniqueTicPerAudioTrack *string `locationName:"uniqueTicPerAudioTrack" type:"string" enum:"NielsenUniqueTicPerAudioTrackType"`
+}
+
+// String returns the string representation
+func (s NielsenNonLinearWatermarkSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NielsenNonLinearWatermarkSettings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *NielsenNonLinearWatermarkSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "NielsenNonLinearWatermarkSettings"}
+	if s.AssetId != nil && len(*s.AssetId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AssetId", 1))
+	}
+	if s.AssetName != nil && len(*s.AssetName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AssetName", 1))
+	}
+	if s.EpisodeId != nil && len(*s.EpisodeId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EpisodeId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetActiveWatermarkProcess sets the ActiveWatermarkProcess field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetActiveWatermarkProcess(v string) *NielsenNonLinearWatermarkSettings {
+	s.ActiveWatermarkProcess = &v
+	return s
+}
+
+// SetAdiFilename sets the AdiFilename field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetAdiFilename(v string) *NielsenNonLinearWatermarkSettings {
+	s.AdiFilename = &v
+	return s
+}
+
+// SetAssetId sets the AssetId field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetAssetId(v string) *NielsenNonLinearWatermarkSettings {
+	s.AssetId = &v
+	return s
+}
+
+// SetAssetName sets the AssetName field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetAssetName(v string) *NielsenNonLinearWatermarkSettings {
+	s.AssetName = &v
+	return s
+}
+
+// SetCbetSourceId sets the CbetSourceId field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetCbetSourceId(v string) *NielsenNonLinearWatermarkSettings {
+	s.CbetSourceId = &v
+	return s
+}
+
+// SetEpisodeId sets the EpisodeId field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetEpisodeId(v string) *NielsenNonLinearWatermarkSettings {
+	s.EpisodeId = &v
+	return s
+}
+
+// SetMetadataDestination sets the MetadataDestination field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetMetadataDestination(v string) *NielsenNonLinearWatermarkSettings {
+	s.MetadataDestination = &v
+	return s
+}
+
+// SetSourceId sets the SourceId field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetSourceId(v int64) *NielsenNonLinearWatermarkSettings {
+	s.SourceId = &v
+	return s
+}
+
+// SetSourceWatermarkStatus sets the SourceWatermarkStatus field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetSourceWatermarkStatus(v string) *NielsenNonLinearWatermarkSettings {
+	s.SourceWatermarkStatus = &v
+	return s
+}
+
+// SetTicServerUrl sets the TicServerUrl field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetTicServerUrl(v string) *NielsenNonLinearWatermarkSettings {
+	s.TicServerUrl = &v
+	return s
+}
+
+// SetUniqueTicPerAudioTrack sets the UniqueTicPerAudioTrack field's value.
+func (s *NielsenNonLinearWatermarkSettings) SetUniqueTicPerAudioTrack(v string) *NielsenNonLinearWatermarkSettings {
+	s.UniqueTicPerAudioTrack = &v
 	return s
 }
 
@@ -15203,9 +16294,11 @@ type NoiseReducerTemporalFilterSettings struct {
 	AggressiveMode *int64 `locationName:"aggressiveMode" type:"integer"`
 
 	// Optional. When you set Noise reducer (noiseReducer) to Temporal (TEMPORAL),
-	// you can optionally use this setting to apply additional sharpening. The default
-	// behavior, Auto (AUTO) allows the transcoder to determine whether to apply
-	// filtering, depending on input type and quality.
+	// you can use this setting to apply sharpening. The default behavior, Auto
+	// (AUTO), allows the transcoder to determine whether to apply filtering, depending
+	// on input type and quality. When you set Noise reducer to Temporal, your output
+	// bandwidth is reduced. When Post temporal sharpening is also enabled, that
+	// bandwidth reduction is smaller.
 	PostTemporalSharpening *string `locationName:"postTemporalSharpening" type:"string" enum:"NoiseFilterPostTemporalSharpening"`
 
 	// The speed of the filter (higher number is faster). Low setting reduces bit
@@ -15602,6 +16695,10 @@ func (s *OutputDetail) SetVideoDetails(v *VideoDetail) *OutputDetail {
 type OutputGroup struct {
 	_ struct{} `type:"structure"`
 
+	// Use automated encoding to have MediaConvert choose your encoding settings
+	// for you, based on characteristics of your input video.
+	AutomatedEncodingSettings *AutomatedEncodingSettings `locationName:"automatedEncodingSettings" type:"structure"`
+
 	// Use Custom Group Name (CustomName) to specify a name for the output group.
 	// This value is displayed on the console and can make your job settings JSON
 	// more human-readable. It does not affect your outputs. Use up to twelve characters
@@ -15632,6 +16729,11 @@ func (s OutputGroup) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *OutputGroup) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "OutputGroup"}
+	if s.AutomatedEncodingSettings != nil {
+		if err := s.AutomatedEncodingSettings.Validate(); err != nil {
+			invalidParams.AddNested("AutomatedEncodingSettings", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.OutputGroupSettings != nil {
 		if err := s.OutputGroupSettings.Validate(); err != nil {
 			invalidParams.AddNested("OutputGroupSettings", err.(request.ErrInvalidParams))
@@ -15652,6 +16754,12 @@ func (s *OutputGroup) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAutomatedEncodingSettings sets the AutomatedEncodingSettings field's value.
+func (s *OutputGroup) SetAutomatedEncodingSettings(v *AutomatedEncodingSettings) *OutputGroup {
+	s.AutomatedEncodingSettings = v
+	return s
 }
 
 // SetCustomName sets the CustomName field's value.
@@ -15829,6 +16937,49 @@ func (s OutputSettings) GoString() string {
 // SetHlsSettings sets the HlsSettings field's value.
 func (s *OutputSettings) SetHlsSettings(v *HlsSettings) *OutputSettings {
 	s.HlsSettings = v
+	return s
+}
+
+// If you work with a third party video watermarking partner, use the group
+// of settings that correspond with your watermarking partner to include watermarks
+// in your output.
+type PartnerWatermarking struct {
+	_ struct{} `type:"structure"`
+
+	// For forensic video watermarking, MediaConvert supports Nagra NexGuard File
+	// Marker watermarking. MediaConvert supports both PreRelease Content (NGPR/G2)
+	// and OTT Streaming workflows.
+	NexguardFileMarkerSettings *NexGuardFileMarkerSettings `locationName:"nexguardFileMarkerSettings" type:"structure"`
+}
+
+// String returns the string representation
+func (s PartnerWatermarking) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PartnerWatermarking) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PartnerWatermarking) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PartnerWatermarking"}
+	if s.NexguardFileMarkerSettings != nil {
+		if err := s.NexguardFileMarkerSettings.Validate(); err != nil {
+			invalidParams.AddNested("NexguardFileMarkerSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetNexguardFileMarkerSettings sets the NexguardFileMarkerSettings field's value.
+func (s *PartnerWatermarking) SetNexguardFileMarkerSettings(v *NexGuardFileMarkerSettings) *PartnerWatermarking {
+	s.NexguardFileMarkerSettings = v
 	return s
 }
 
@@ -16044,54 +17195,89 @@ type ProresSettings struct {
 	// rate you specify in the settings FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"ProresFramerateControl"`
 
-	// Optional. Specify how the transcoder performs framerate conversion. The default
-	// behavior is to use duplicate drop conversion.
+	// Choose the method that you want MediaConvert to use when increasing or decreasing
+	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// frame rate conversions, especially if your source video has already been
+	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+	// motion-compensated interpolation. FrameFormer chooses the best conversion
+	// method frame by frame. Note that using FrameFormer increases the transcoding
+	// time and incurs a significant add-on cost.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"ProresFramerateConversionAlgorithm"`
 
-	// Frame rate denominator.
+	// When you use the API for transcode jobs that use frame rate conversion, specify
+	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
+	// FramerateDenominator to specify the denominator of this fraction. In this
+	// example, use 1001 for the value of FramerateDenominator. When you use the
+	// console for transcode jobs that use frame rate conversion, provide the value
+	// as a decimal number for Framerate. In this example, specify 23.976.
 	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
 	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
 	// FramerateNumerator to specify the numerator of this fraction. In this example,
-	// use 24000 for the value of FramerateNumerator.
+	// use 24000 for the value of FramerateNumerator. When you use the console for
+	// transcode jobs that use frame rate conversion, provide the value as a decimal
+	// number for Framerate. In this example, specify 23.976.
 	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"1" type:"integer"`
 
-	// Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
-	// * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
-	// interlaced output with the entire output having the same field polarity (top
-	// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
-	// Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
-	// behavior depends on the input scan type. - If the source is interlaced, the
-	// output will be interlaced with the same polarity as the source (it will follow
-	// the source). The output could therefore be a mix of "top field first" and
-	// "bottom field first". - If the source is progressive, the output will be
-	// interlaced with "top field first" or "bottom field first" polarity, depending
-	// on which of the Follow options you chose.
+	// Choose the scan line type for the output. Keep the default value, Progressive
+	// (PROGRESSIVE) to create a progressive output, regardless of the scan type
+	// of your input. Use Top field first (TOP_FIELD) or Bottom field first (BOTTOM_FIELD)
+	// to create an output that's interlaced with the same field polarity throughout.
+	// Use Follow, default top (FOLLOW_TOP_FIELD) or Follow, default bottom (FOLLOW_BOTTOM_FIELD)
+	// to produce outputs with the same field polarity as the source. For jobs that
+	// have multiple inputs, the output field polarity might change over the course
+	// of the output. Follow behavior depends on the input scan type. If the source
+	// is interlaced, the output will be interlaced with the same polarity as the
+	// source. If the source is progressive, the output will be interlaced with
+	// top field bottom field first, depending on which of the Follow options you
+	// choose.
 	InterlaceMode *string `locationName:"interlaceMode" type:"string" enum:"ProresInterlaceMode"`
 
 	// Optional. Specify how the service determines the pixel aspect ratio (PAR)
 	// for this output. The default behavior, Follow source (INITIALIZE_FROM_SOURCE),
-	// uses the PAR from your input video for your output. To use a different PAR,
-	// choose (SPECIFIED). In the console, SPECIFIED corresponds to any value other
-	// than Follow source. When you choose SPECIFIED for this setting, you must
-	// also specify values for the parNumerator and parDenominator settings.
+	// uses the PAR from your input video for your output. To specify a different
+	// PAR in the console, choose any value other than Follow source. To specify
+	// a different PAR by editing the JSON job specification, choose SPECIFIED.
+	// When you choose SPECIFIED for this setting, you must also specify values
+	// for the parNumerator and parDenominator settings.
 	ParControl *string `locationName:"parControl" type:"string" enum:"ProresParControl"`
 
-	// Pixel Aspect Ratio denominator.
+	// Required when you set Pixel aspect ratio (parControl) to SPECIFIED. On the
+	// console, this corresponds to any value other than Follow source. When you
+	// specify an output pixel aspect ratio (PAR) that is different from your input
+	// video PAR, provide your output PAR as a ratio. For example, for D1/DV NTSC
+	// widescreen, you would specify the ratio 40:33. In this example, the value
+	// for parDenominator is 33.
 	ParDenominator *int64 `locationName:"parDenominator" min:"1" type:"integer"`
 
-	// Pixel Aspect Ratio numerator.
+	// Required when you set Pixel aspect ratio (parControl) to SPECIFIED. On the
+	// console, this corresponds to any value other than Follow source. When you
+	// specify an output pixel aspect ratio (PAR) that is different from your input
+	// video PAR, provide your output PAR as a ratio. For example, for D1/DV NTSC
+	// widescreen, you would specify the ratio 40:33. In this example, the value
+	// for parNumerator is 40.
 	ParNumerator *int64 `locationName:"parNumerator" min:"1" type:"integer"`
 
-	// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
-	// as 25fps, and audio is sped up correspondingly.
+	// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+	// second (fps). Enable slow PAL to create a 25 fps output. When you enable
+	// slow PAL, MediaConvert relabels the video frames to 25 fps and resamples
+	// your audio to keep it synchronized with the video. Note that enabling this
+	// setting will slightly reduce the duration of your video. Required settings:
+	// You must also set Framerate to 25. In your JSON job specification, set (framerateControl)
+	// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+	// 1.
 	SlowPal *string `locationName:"slowPal" type:"string" enum:"ProresSlowPal"`
 
-	// Only use Telecine (ProresTelecine) when you set Framerate (Framerate) to
-	// 29.970. Set Telecine (ProresTelecine) to Hard (hard) to produce a 29.97i
-	// output from a 23.976 input. Set it to Soft (soft) to produce 23.976 output
-	// and leave converstion to the player.
+	// When you do frame rate conversion from 23.976 frames per second (fps) to
+	// 29.97 fps, and your output scan type is interlaced, you can optionally enable
+	// hard telecine (HARD) to create a smoother picture. When you keep the default
+	// value, None (NONE), MediaConvert does a standard frame rate conversion to
+	// 29.97 without doing anything with the field polarity to create a smoother
+	// picture.
 	Telecine *string `locationName:"telecine" type:"string" enum:"ProresTelecine"`
 }
 
@@ -17323,8 +18509,8 @@ func (s *TimecodeConfig) SetTimestampOffset(v string) *TimecodeConfig {
 }
 
 // Enable Timed metadata insertion (TimedMetadataInsertion) to include ID3 tags
-// in your job. To include timed metadata, you must enable it here, enable it
-// in each output container, and specify tags and timecodes in ID3 insertion
+// in any HLS outputs. To include timed metadata, you must enable it here, enable
+// it in each output container, and specify tags and timecodes in ID3 insertion
 // (Id3Insertion) objects.
 type TimedMetadataInsertion struct {
 	_ struct{} `type:"structure"`
@@ -17973,20 +19159,177 @@ func (s *UpdateQueueOutput) SetQueue(v *Queue) *UpdateQueueOutput {
 	return s
 }
 
+// Required when you set (Codec) under (VideoDescription)>(CodecSettings) to
+// the value VC3
+type Vc3Settings struct {
+	_ struct{} `type:"structure"`
+
+	// If you are using the console, use the Framerate setting to specify the frame
+	// rate for this output. If you want to keep the same frame rate as the input
+	// video, choose Follow source. If you want to do frame rate conversion, choose
+	// a frame rate from the dropdown list or choose Custom. The framerates shown
+	// in the dropdown list are decimal approximations of fractions. If you choose
+	// Custom, specify your frame rate as a fraction. If you are creating your transcoding
+	// job specification as a JSON file without the console, use FramerateControl
+	// to specify which value the service uses for the frame rate for this output.
+	// Choose INITIALIZE_FROM_SOURCE if you want the service to use the frame rate
+	// from the input. Choose SPECIFIED if you want the service to use the frame
+	// rate you specify in the settings FramerateNumerator and FramerateDenominator.
+	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Vc3FramerateControl"`
+
+	// Choose the method that you want MediaConvert to use when increasing or decreasing
+	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// frame rate conversions, especially if your source video has already been
+	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+	// motion-compensated interpolation. FrameFormer chooses the best conversion
+	// method frame by frame. Note that using FrameFormer increases the transcoding
+	// time and incurs a significant add-on cost.
+	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Vc3FramerateConversionAlgorithm"`
+
+	// When you use the API for transcode jobs that use frame rate conversion, specify
+	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
+	// FramerateDenominator to specify the denominator of this fraction. In this
+	// example, use 1001 for the value of FramerateDenominator. When you use the
+	// console for transcode jobs that use frame rate conversion, provide the value
+	// as a decimal number for Framerate. In this example, specify 23.976.
+	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
+
+	// When you use the API for transcode jobs that use frame rate conversion, specify
+	// the frame rate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
+	// FramerateNumerator to specify the numerator of this fraction. In this example,
+	// use 24000 for the value of FramerateNumerator. When you use the console for
+	// transcode jobs that use frame rate conversion, provide the value as a decimal
+	// number for Framerate. In this example, specify 23.976.
+	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"24" type:"integer"`
+
+	// Optional. Choose the scan line type for this output. If you don't specify
+	// a value, MediaConvert will create a progressive output.
+	InterlaceMode *string `locationName:"interlaceMode" type:"string" enum:"Vc3InterlaceMode"`
+
+	// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+	// second (fps). Enable slow PAL to create a 25 fps output by relabeling the
+	// video frames and resampling your audio. Note that enabling this setting will
+	// slightly reduce the duration of your video. Related settings: You must also
+	// set Framerate to 25. In your JSON job specification, set (framerateControl)
+	// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+	// 1.
+	SlowPal *string `locationName:"slowPal" type:"string" enum:"Vc3SlowPal"`
+
+	// When you do frame rate conversion from 23.976 frames per second (fps) to
+	// 29.97 fps, and your output scan type is interlaced, you can optionally enable
+	// hard telecine (HARD) to create a smoother picture. When you keep the default
+	// value, None (NONE), MediaConvert does a standard frame rate conversion to
+	// 29.97 without doing anything with the field polarity to create a smoother
+	// picture.
+	Telecine *string `locationName:"telecine" type:"string" enum:"Vc3Telecine"`
+
+	// Specify the VC3 class to choose the quality characteristics for this output.
+	// VC3 class, together with the settings Framerate (framerateNumerator and framerateDenominator)
+	// and Resolution (height and width), determine your output bitrate. For example,
+	// say that your video resolution is 1920x1080 and your framerate is 29.97.
+	// Then Class 145 (CLASS_145) gives you an output with a bitrate of approximately
+	// 145 Mbps and Class 220 (CLASS_220) gives you and output with a bitrate of
+	// approximately 220 Mbps. VC3 class also specifies the color bit depth of your
+	// output.
+	Vc3Class *string `locationName:"vc3Class" type:"string" enum:"Vc3Class"`
+}
+
+// String returns the string representation
+func (s Vc3Settings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Vc3Settings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Vc3Settings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Vc3Settings"}
+	if s.FramerateDenominator != nil && *s.FramerateDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateDenominator", 1))
+	}
+	if s.FramerateNumerator != nil && *s.FramerateNumerator < 24 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateNumerator", 24))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFramerateControl sets the FramerateControl field's value.
+func (s *Vc3Settings) SetFramerateControl(v string) *Vc3Settings {
+	s.FramerateControl = &v
+	return s
+}
+
+// SetFramerateConversionAlgorithm sets the FramerateConversionAlgorithm field's value.
+func (s *Vc3Settings) SetFramerateConversionAlgorithm(v string) *Vc3Settings {
+	s.FramerateConversionAlgorithm = &v
+	return s
+}
+
+// SetFramerateDenominator sets the FramerateDenominator field's value.
+func (s *Vc3Settings) SetFramerateDenominator(v int64) *Vc3Settings {
+	s.FramerateDenominator = &v
+	return s
+}
+
+// SetFramerateNumerator sets the FramerateNumerator field's value.
+func (s *Vc3Settings) SetFramerateNumerator(v int64) *Vc3Settings {
+	s.FramerateNumerator = &v
+	return s
+}
+
+// SetInterlaceMode sets the InterlaceMode field's value.
+func (s *Vc3Settings) SetInterlaceMode(v string) *Vc3Settings {
+	s.InterlaceMode = &v
+	return s
+}
+
+// SetSlowPal sets the SlowPal field's value.
+func (s *Vc3Settings) SetSlowPal(v string) *Vc3Settings {
+	s.SlowPal = &v
+	return s
+}
+
+// SetTelecine sets the Telecine field's value.
+func (s *Vc3Settings) SetTelecine(v string) *Vc3Settings {
+	s.Telecine = &v
+	return s
+}
+
+// SetVc3Class sets the Vc3Class field's value.
+func (s *Vc3Settings) SetVc3Class(v string) *Vc3Settings {
+	s.Vc3Class = &v
+	return s
+}
+
 // Video codec settings, (CodecSettings) under (VideoDescription), contains
 // the group of settings related to video encoding. The settings in this group
 // vary depending on the value that you choose for Video codec (Codec). For
 // each codec enum that you choose, define the corresponding settings object.
-// The following lists the codec enum, settings object pairs. * FRAME_CAPTURE,
-// FrameCaptureSettings * AV1, Av1Settings * H_264, H264Settings * H_265, H265Settings
-// * MPEG2, Mpeg2Settings * PRORES, ProresSettings * VP8, Vp8Settings * VP9,
-// Vp9Settings
+// The following lists the codec enum, settings object pairs. * AV1, Av1Settings
+// * AVC_INTRA, AvcIntraSettings * FRAME_CAPTURE, FrameCaptureSettings * H_264,
+// H264Settings * H_265, H265Settings * MPEG2, Mpeg2Settings * PRORES, ProresSettings
+// * VC3, Vc3Settings * VP8, Vp8Settings * VP9, Vp9Settings
 type VideoCodecSettings struct {
 	_ struct{} `type:"structure"`
 
 	// Required when you set Codec, under VideoDescription>CodecSettings to the
 	// value AV1.
 	Av1Settings *Av1Settings `locationName:"av1Settings" type:"structure"`
+
+	// Required when you set your output video codec to AVC-Intra. For more information
+	// about the AVC-I settings, see the relevant specification. For detailed information
+	// about SD and HD in AVC-I, see https://ieeexplore.ieee.org/document/7290936.
+	AvcIntraSettings *AvcIntraSettings `locationName:"avcIntraSettings" type:"structure"`
 
 	// Specifies the video codec. This must be equal to one of the enum values defined
 	// by the object VideoCodec.
@@ -18010,6 +19353,10 @@ type VideoCodecSettings struct {
 	// Required when you set (Codec) under (VideoDescription)>(CodecSettings) to
 	// the value PRORES.
 	ProresSettings *ProresSettings `locationName:"proresSettings" type:"structure"`
+
+	// Required when you set (Codec) under (VideoDescription)>(CodecSettings) to
+	// the value VC3
+	Vc3Settings *Vc3Settings `locationName:"vc3Settings" type:"structure"`
 
 	// Required when you set (Codec) under (VideoDescription)>(CodecSettings) to
 	// the value VP8.
@@ -18038,6 +19385,11 @@ func (s *VideoCodecSettings) Validate() error {
 			invalidParams.AddNested("Av1Settings", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.AvcIntraSettings != nil {
+		if err := s.AvcIntraSettings.Validate(); err != nil {
+			invalidParams.AddNested("AvcIntraSettings", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.FrameCaptureSettings != nil {
 		if err := s.FrameCaptureSettings.Validate(); err != nil {
 			invalidParams.AddNested("FrameCaptureSettings", err.(request.ErrInvalidParams))
@@ -18063,6 +19415,11 @@ func (s *VideoCodecSettings) Validate() error {
 			invalidParams.AddNested("ProresSettings", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.Vc3Settings != nil {
+		if err := s.Vc3Settings.Validate(); err != nil {
+			invalidParams.AddNested("Vc3Settings", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.Vp8Settings != nil {
 		if err := s.Vp8Settings.Validate(); err != nil {
 			invalidParams.AddNested("Vp8Settings", err.(request.ErrInvalidParams))
@@ -18083,6 +19440,12 @@ func (s *VideoCodecSettings) Validate() error {
 // SetAv1Settings sets the Av1Settings field's value.
 func (s *VideoCodecSettings) SetAv1Settings(v *Av1Settings) *VideoCodecSettings {
 	s.Av1Settings = v
+	return s
+}
+
+// SetAvcIntraSettings sets the AvcIntraSettings field's value.
+func (s *VideoCodecSettings) SetAvcIntraSettings(v *AvcIntraSettings) *VideoCodecSettings {
+	s.AvcIntraSettings = v
 	return s
 }
 
@@ -18122,6 +19485,12 @@ func (s *VideoCodecSettings) SetProresSettings(v *ProresSettings) *VideoCodecSet
 	return s
 }
 
+// SetVc3Settings sets the Vc3Settings field's value.
+func (s *VideoCodecSettings) SetVc3Settings(v *Vc3Settings) *VideoCodecSettings {
+	s.Vc3Settings = v
+	return s
+}
+
 // SetVp8Settings sets the Vp8Settings field's value.
 func (s *VideoCodecSettings) SetVp8Settings(v *Vp8Settings) *VideoCodecSettings {
 	s.Vp8Settings = v
@@ -18155,10 +19524,10 @@ type VideoDescription struct {
 	// the group of settings related to video encoding. The settings in this group
 	// vary depending on the value that you choose for Video codec (Codec). For
 	// each codec enum that you choose, define the corresponding settings object.
-	// The following lists the codec enum, settings object pairs. * FRAME_CAPTURE,
-	// FrameCaptureSettings * AV1, Av1Settings * H_264, H264Settings * H_265, H265Settings
-	// * MPEG2, Mpeg2Settings * PRORES, ProresSettings * VP8, Vp8Settings * VP9,
-	// Vp9Settings
+	// The following lists the codec enum, settings object pairs. * AV1, Av1Settings
+	// * AVC_INTRA, AvcIntraSettings * FRAME_CAPTURE, FrameCaptureSettings * H_264,
+	// H264Settings * H_265, H265Settings * MPEG2, Mpeg2Settings * PRORES, ProresSettings
+	// * VC3, Vc3Settings * VP8, Vp8Settings * VP9, Vp9Settings
 	CodecSettings *VideoCodecSettings `locationName:"codecSettings" type:"structure"`
 
 	// Choose Insert (INSERT) for this setting to include color metadata in this
@@ -18437,6 +19806,11 @@ type VideoPreprocessor struct {
 	// individually. This setting is disabled by default.
 	NoiseReducer *NoiseReducer `locationName:"noiseReducer" type:"structure"`
 
+	// If you work with a third party video watermarking partner, use the group
+	// of settings that correspond with your watermarking partner to include watermarks
+	// in your output.
+	PartnerWatermarking *PartnerWatermarking `locationName:"partnerWatermarking" type:"structure"`
+
 	// Timecode burn-in (TimecodeBurnIn)--Burns the output timecode and specified
 	// prefix into the output.
 	TimecodeBurnin *TimecodeBurnin `locationName:"timecodeBurnin" type:"structure"`
@@ -18468,6 +19842,11 @@ func (s *VideoPreprocessor) Validate() error {
 	if s.NoiseReducer != nil {
 		if err := s.NoiseReducer.Validate(); err != nil {
 			invalidParams.AddNested("NoiseReducer", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.PartnerWatermarking != nil {
+		if err := s.PartnerWatermarking.Validate(); err != nil {
+			invalidParams.AddNested("PartnerWatermarking", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.TimecodeBurnin != nil {
@@ -18509,6 +19888,12 @@ func (s *VideoPreprocessor) SetImageInserter(v *ImageInserter) *VideoPreprocesso
 // SetNoiseReducer sets the NoiseReducer field's value.
 func (s *VideoPreprocessor) SetNoiseReducer(v *NoiseReducer) *VideoPreprocessor {
 	s.NoiseReducer = v
+	return s
+}
+
+// SetPartnerWatermarking sets the PartnerWatermarking field's value.
+func (s *VideoPreprocessor) SetPartnerWatermarking(v *PartnerWatermarking) *VideoPreprocessor {
+	s.PartnerWatermarking = v
 	return s
 }
 
@@ -18745,9 +20130,16 @@ type Vp8Settings struct {
 	// rate you specify in the settings FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Vp8FramerateControl"`
 
-	// Optional. Specify how the transcoder performs framerate conversion. The default
-	// behavior is to use Drop duplicate (DUPLICATE_DROP) conversion. When you choose
-	// Interpolate (INTERPOLATE) instead, the conversion produces smoother motion.
+	// Choose the method that you want MediaConvert to use when increasing or decreasing
+	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// frame rate conversions, especially if your source video has already been
+	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+	// motion-compensated interpolation. FrameFormer chooses the best conversion
+	// method frame by frame. Note that using FrameFormer increases the transcoding
+	// time and incurs a significant add-on cost.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Vp8FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -18952,9 +20344,16 @@ type Vp9Settings struct {
 	// rate you specify in the settings FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Vp9FramerateControl"`
 
-	// Optional. Specify how the transcoder performs framerate conversion. The default
-	// behavior is to use Drop duplicate (DUPLICATE_DROP) conversion. When you choose
-	// Interpolate (INTERPOLATE) instead, the conversion produces smoother motion.
+	// Choose the method that you want MediaConvert to use when increasing or decreasing
+	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// frame rate conversions, especially if your source video has already been
+	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+	// motion-compensated interpolation. FrameFormer chooses the best conversion
+	// method frame by frame. Note that using FrameFormer increases the transcoding
+	// time and incurs a significant add-on cost.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Vp9FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -19225,6 +20624,14 @@ const (
 	AacAudioDescriptionBroadcasterMixNormal = "NORMAL"
 )
 
+// AacAudioDescriptionBroadcasterMix_Values returns all elements of the AacAudioDescriptionBroadcasterMix enum
+func AacAudioDescriptionBroadcasterMix_Values() []string {
+	return []string{
+		AacAudioDescriptionBroadcasterMixBroadcasterMixedAd,
+		AacAudioDescriptionBroadcasterMixNormal,
+	}
+}
+
 // AAC Profile.
 const (
 	// AacCodecProfileLc is a AacCodecProfile enum value
@@ -19236,6 +20643,15 @@ const (
 	// AacCodecProfileHev2 is a AacCodecProfile enum value
 	AacCodecProfileHev2 = "HEV2"
 )
+
+// AacCodecProfile_Values returns all elements of the AacCodecProfile enum
+func AacCodecProfile_Values() []string {
+	return []string{
+		AacCodecProfileLc,
+		AacCodecProfileHev1,
+		AacCodecProfileHev2,
+	}
+}
 
 // Mono (Audio Description), Mono, Stereo, or 5.1 channel layout. Valid values
 // depend on rate control mode and profile. "1.0 - Audio Description (Receiver
@@ -19259,6 +20675,17 @@ const (
 	AacCodingModeCodingMode51 = "CODING_MODE_5_1"
 )
 
+// AacCodingMode_Values returns all elements of the AacCodingMode enum
+func AacCodingMode_Values() []string {
+	return []string{
+		AacCodingModeAdReceiverMix,
+		AacCodingModeCodingMode10,
+		AacCodingModeCodingMode11,
+		AacCodingModeCodingMode20,
+		AacCodingModeCodingMode51,
+	}
+}
+
 // Rate Control Mode.
 const (
 	// AacRateControlModeCbr is a AacRateControlMode enum value
@@ -19267,6 +20694,14 @@ const (
 	// AacRateControlModeVbr is a AacRateControlMode enum value
 	AacRateControlModeVbr = "VBR"
 )
+
+// AacRateControlMode_Values returns all elements of the AacRateControlMode enum
+func AacRateControlMode_Values() []string {
+	return []string{
+		AacRateControlModeCbr,
+		AacRateControlModeVbr,
+	}
+}
 
 // Enables LATM/LOAS AAC output. Note that if you use LATM/LOAS AAC in an output,
 // you must choose "No container" for the output container.
@@ -19278,6 +20713,14 @@ const (
 	AacRawFormatNone = "NONE"
 )
 
+// AacRawFormat_Values returns all elements of the AacRawFormat enum
+func AacRawFormat_Values() []string {
+	return []string{
+		AacRawFormatLatmLoas,
+		AacRawFormatNone,
+	}
+}
+
 // Use MPEG-2 AAC instead of MPEG-4 AAC audio for raw or MPEG-2 Transport Stream
 // containers.
 const (
@@ -19287,6 +20730,14 @@ const (
 	// AacSpecificationMpeg4 is a AacSpecification enum value
 	AacSpecificationMpeg4 = "MPEG4"
 )
+
+// AacSpecification_Values returns all elements of the AacSpecification enum
+func AacSpecification_Values() []string {
+	return []string{
+		AacSpecificationMpeg2,
+		AacSpecificationMpeg4,
+	}
+}
 
 // VBR Quality Level - Only used if rate_control_mode is VBR.
 const (
@@ -19302,6 +20753,16 @@ const (
 	// AacVbrQualityHigh is a AacVbrQuality enum value
 	AacVbrQualityHigh = "HIGH"
 )
+
+// AacVbrQuality_Values returns all elements of the AacVbrQuality enum
+func AacVbrQuality_Values() []string {
+	return []string{
+		AacVbrQualityLow,
+		AacVbrQualityMediumLow,
+		AacVbrQualityMediumHigh,
+		AacVbrQualityHigh,
+	}
+}
 
 // Specify the bitstream mode for the AC-3 stream that the encoder emits. For
 // more information about the AC3 bitstream mode, see ATSC A/52-2012 (Annex
@@ -19332,6 +20793,20 @@ const (
 	Ac3BitstreamModeVoiceOver = "VOICE_OVER"
 )
 
+// Ac3BitstreamMode_Values returns all elements of the Ac3BitstreamMode enum
+func Ac3BitstreamMode_Values() []string {
+	return []string{
+		Ac3BitstreamModeCompleteMain,
+		Ac3BitstreamModeCommentary,
+		Ac3BitstreamModeDialogue,
+		Ac3BitstreamModeEmergency,
+		Ac3BitstreamModeHearingImpaired,
+		Ac3BitstreamModeMusicAndEffects,
+		Ac3BitstreamModeVisuallyImpaired,
+		Ac3BitstreamModeVoiceOver,
+	}
+}
+
 // Dolby Digital coding mode. Determines number of channels.
 const (
 	// Ac3CodingModeCodingMode10 is a Ac3CodingMode enum value
@@ -19347,6 +20822,16 @@ const (
 	Ac3CodingModeCodingMode32Lfe = "CODING_MODE_3_2_LFE"
 )
 
+// Ac3CodingMode_Values returns all elements of the Ac3CodingMode enum
+func Ac3CodingMode_Values() []string {
+	return []string{
+		Ac3CodingModeCodingMode10,
+		Ac3CodingModeCodingMode11,
+		Ac3CodingModeCodingMode20,
+		Ac3CodingModeCodingMode32Lfe,
+	}
+}
+
 // If set to FILM_STANDARD, adds dynamic range compression signaling to the
 // output bitstream as defined in the Dolby Digital specification.
 const (
@@ -19356,6 +20841,14 @@ const (
 	// Ac3DynamicRangeCompressionProfileNone is a Ac3DynamicRangeCompressionProfile enum value
 	Ac3DynamicRangeCompressionProfileNone = "NONE"
 )
+
+// Ac3DynamicRangeCompressionProfile_Values returns all elements of the Ac3DynamicRangeCompressionProfile enum
+func Ac3DynamicRangeCompressionProfile_Values() []string {
+	return []string{
+		Ac3DynamicRangeCompressionProfileFilmStandard,
+		Ac3DynamicRangeCompressionProfileNone,
+	}
+}
 
 // Applies a 120Hz lowpass filter to the LFE channel prior to encoding. Only
 // valid with 3_2_LFE coding mode.
@@ -19367,6 +20860,14 @@ const (
 	Ac3LfeFilterDisabled = "DISABLED"
 )
 
+// Ac3LfeFilter_Values returns all elements of the Ac3LfeFilter enum
+func Ac3LfeFilter_Values() []string {
+	return []string{
+		Ac3LfeFilterEnabled,
+		Ac3LfeFilterDisabled,
+	}
+}
+
 // When set to FOLLOW_INPUT, encoder metadata will be sourced from the DD, DD+,
 // or DolbyE decoder that supplied this audio data. If audio was not supplied
 // from one of these streams, then the static metadata settings will be used.
@@ -19377,6 +20878,14 @@ const (
 	// Ac3MetadataControlUseConfigured is a Ac3MetadataControl enum value
 	Ac3MetadataControlUseConfigured = "USE_CONFIGURED"
 )
+
+// Ac3MetadataControl_Values returns all elements of the Ac3MetadataControl enum
+func Ac3MetadataControl_Values() []string {
+	return []string{
+		Ac3MetadataControlFollowInput,
+		Ac3MetadataControlUseConfigured,
+	}
+}
 
 // Specify whether the service runs your job with accelerated transcoding. Choose
 // DISABLED if you don't want accelerated transcoding. Choose ENABLED if you
@@ -19395,6 +20904,15 @@ const (
 	// AccelerationModePreferred is a AccelerationMode enum value
 	AccelerationModePreferred = "PREFERRED"
 )
+
+// AccelerationMode_Values returns all elements of the AccelerationMode enum
+func AccelerationMode_Values() []string {
+	return []string{
+		AccelerationModeDisabled,
+		AccelerationModeEnabled,
+		AccelerationModePreferred,
+	}
+}
 
 // Describes whether the current job is running with accelerated transcoding.
 // For jobs that have Acceleration (AccelerationMode) set to DISABLED, AccelerationStatus
@@ -19421,6 +20939,16 @@ const (
 	AccelerationStatusNotAccelerated = "NOT_ACCELERATED"
 )
 
+// AccelerationStatus_Values returns all elements of the AccelerationStatus enum
+func AccelerationStatus_Values() []string {
+	return []string{
+		AccelerationStatusNotApplicable,
+		AccelerationStatusInProgress,
+		AccelerationStatusAccelerated,
+		AccelerationStatusNotAccelerated,
+	}
+}
+
 // This setting only applies to H.264, H.265, and MPEG2 outputs. Use Insert
 // AFD signaling (AfdSignaling) to specify whether the service includes AFD
 // values in the output video data and what those values are. * Choose None
@@ -19438,6 +20966,15 @@ const (
 	AfdSignalingFixed = "FIXED"
 )
 
+// AfdSignaling_Values returns all elements of the AfdSignaling enum
+func AfdSignaling_Values() []string {
+	return []string{
+		AfdSignalingNone,
+		AfdSignalingAuto,
+		AfdSignalingFixed,
+	}
+}
+
 // Ignore this setting unless this input is a QuickTime animation with an alpha
 // channel. Use this setting to create separate Key and Fill outputs. In each
 // output, specify which part of the input MediaConvert uses. Leave this setting
@@ -19452,6 +20989,14 @@ const (
 	AlphaBehaviorRemapToLuma = "REMAP_TO_LUMA"
 )
 
+// AlphaBehavior_Values returns all elements of the AlphaBehavior enum
+func AlphaBehavior_Values() []string {
+	return []string{
+		AlphaBehaviorDiscard,
+		AlphaBehaviorRemapToLuma,
+	}
+}
+
 // Specify whether this set of input captions appears in your outputs in both
 // 608 and 708 format. If you choose Upconvert (UPCONVERT), MediaConvert includes
 // the captions data in two ways: it passes the 608 data through using the 608
@@ -19465,6 +21010,14 @@ const (
 	AncillaryConvert608To708Disabled = "DISABLED"
 )
 
+// AncillaryConvert608To708_Values returns all elements of the AncillaryConvert608To708 enum
+func AncillaryConvert608To708_Values() []string {
+	return []string{
+		AncillaryConvert608To708Upconvert,
+		AncillaryConvert608To708Disabled,
+	}
+}
+
 // By default, the service terminates any unterminated captions at the end of
 // each input. If you want the caption to continue onto your next input, disable
 // this setting.
@@ -19476,6 +21029,14 @@ const (
 	AncillaryTerminateCaptionsDisabled = "DISABLED"
 )
 
+// AncillaryTerminateCaptions_Values returns all elements of the AncillaryTerminateCaptions enum
+func AncillaryTerminateCaptions_Values() []string {
+	return []string{
+		AncillaryTerminateCaptionsEndOfInput,
+		AncillaryTerminateCaptionsDisabled,
+	}
+}
+
 // The anti-alias filter is automatically applied to all outputs. The service
 // no longer accepts the value DISABLED for AntiAlias. If you specify that in
 // your job, the service will ignore the setting.
@@ -19486,6 +21047,85 @@ const (
 	// AntiAliasEnabled is a AntiAlias enum value
 	AntiAliasEnabled = "ENABLED"
 )
+
+// AntiAlias_Values returns all elements of the AntiAlias enum
+func AntiAlias_Values() []string {
+	return []string{
+		AntiAliasDisabled,
+		AntiAliasEnabled,
+	}
+}
+
+// You can add a tag for this mono-channel audio track to mimic its placement
+// in a multi-channel layout. For example, if this track is the left surround
+// channel, choose Left surround (LS).
+const (
+	// AudioChannelTagL is a AudioChannelTag enum value
+	AudioChannelTagL = "L"
+
+	// AudioChannelTagR is a AudioChannelTag enum value
+	AudioChannelTagR = "R"
+
+	// AudioChannelTagC is a AudioChannelTag enum value
+	AudioChannelTagC = "C"
+
+	// AudioChannelTagLfe is a AudioChannelTag enum value
+	AudioChannelTagLfe = "LFE"
+
+	// AudioChannelTagLs is a AudioChannelTag enum value
+	AudioChannelTagLs = "LS"
+
+	// AudioChannelTagRs is a AudioChannelTag enum value
+	AudioChannelTagRs = "RS"
+
+	// AudioChannelTagLc is a AudioChannelTag enum value
+	AudioChannelTagLc = "LC"
+
+	// AudioChannelTagRc is a AudioChannelTag enum value
+	AudioChannelTagRc = "RC"
+
+	// AudioChannelTagCs is a AudioChannelTag enum value
+	AudioChannelTagCs = "CS"
+
+	// AudioChannelTagLsd is a AudioChannelTag enum value
+	AudioChannelTagLsd = "LSD"
+
+	// AudioChannelTagRsd is a AudioChannelTag enum value
+	AudioChannelTagRsd = "RSD"
+
+	// AudioChannelTagTcs is a AudioChannelTag enum value
+	AudioChannelTagTcs = "TCS"
+
+	// AudioChannelTagVhl is a AudioChannelTag enum value
+	AudioChannelTagVhl = "VHL"
+
+	// AudioChannelTagVhc is a AudioChannelTag enum value
+	AudioChannelTagVhc = "VHC"
+
+	// AudioChannelTagVhr is a AudioChannelTag enum value
+	AudioChannelTagVhr = "VHR"
+)
+
+// AudioChannelTag_Values returns all elements of the AudioChannelTag enum
+func AudioChannelTag_Values() []string {
+	return []string{
+		AudioChannelTagL,
+		AudioChannelTagR,
+		AudioChannelTagC,
+		AudioChannelTagLfe,
+		AudioChannelTagLs,
+		AudioChannelTagRs,
+		AudioChannelTagLc,
+		AudioChannelTagRc,
+		AudioChannelTagCs,
+		AudioChannelTagLsd,
+		AudioChannelTagRsd,
+		AudioChannelTagTcs,
+		AudioChannelTagVhl,
+		AudioChannelTagVhc,
+		AudioChannelTagVhr,
+	}
+}
 
 // Type of Audio codec.
 const (
@@ -19523,6 +21163,23 @@ const (
 	AudioCodecPassthrough = "PASSTHROUGH"
 )
 
+// AudioCodec_Values returns all elements of the AudioCodec enum
+func AudioCodec_Values() []string {
+	return []string{
+		AudioCodecAac,
+		AudioCodecMp2,
+		AudioCodecMp3,
+		AudioCodecWav,
+		AudioCodecAiff,
+		AudioCodecAc3,
+		AudioCodecEac3,
+		AudioCodecEac3Atmos,
+		AudioCodecVorbis,
+		AudioCodecOpus,
+		AudioCodecPassthrough,
+	}
+}
+
 // Enable this setting on one audio selector to set it as the default for the
 // job. The service uses this default for outputs where it can't find the specified
 // input audio. If you don't set a default, those outputs have no audio.
@@ -19533,6 +21190,14 @@ const (
 	// AudioDefaultSelectionNotDefault is a AudioDefaultSelection enum value
 	AudioDefaultSelectionNotDefault = "NOT_DEFAULT"
 )
+
+// AudioDefaultSelection_Values returns all elements of the AudioDefaultSelection enum
+func AudioDefaultSelection_Values() []string {
+	return []string{
+		AudioDefaultSelectionDefault,
+		AudioDefaultSelectionNotDefault,
+	}
+}
 
 // Specify which source for language code takes precedence for this audio track.
 // When you choose Follow input (FOLLOW_INPUT), the service uses the language
@@ -19547,6 +21212,14 @@ const (
 	// AudioLanguageCodeControlUseConfigured is a AudioLanguageCodeControl enum value
 	AudioLanguageCodeControlUseConfigured = "USE_CONFIGURED"
 )
+
+// AudioLanguageCodeControl_Values returns all elements of the AudioLanguageCodeControl enum
+func AudioLanguageCodeControl_Values() []string {
+	return []string{
+		AudioLanguageCodeControlFollowInput,
+		AudioLanguageCodeControlUseConfigured,
+	}
+}
 
 // Choose one of the following audio normalization algorithms: ITU-R BS.1770-1:
 // Ungated loudness. A measurement of ungated average loudness for an entire
@@ -19572,6 +21245,16 @@ const (
 	AudioNormalizationAlgorithmItuBs17704 = "ITU_BS_1770_4"
 )
 
+// AudioNormalizationAlgorithm_Values returns all elements of the AudioNormalizationAlgorithm enum
+func AudioNormalizationAlgorithm_Values() []string {
+	return []string{
+		AudioNormalizationAlgorithmItuBs17701,
+		AudioNormalizationAlgorithmItuBs17702,
+		AudioNormalizationAlgorithmItuBs17703,
+		AudioNormalizationAlgorithmItuBs17704,
+	}
+}
+
 // When enabled the output audio is corrected using the chosen algorithm. If
 // disabled, the audio will be measured but not adjusted.
 const (
@@ -19582,6 +21265,14 @@ const (
 	AudioNormalizationAlgorithmControlMeasureOnly = "MEASURE_ONLY"
 )
 
+// AudioNormalizationAlgorithmControl_Values returns all elements of the AudioNormalizationAlgorithmControl enum
+func AudioNormalizationAlgorithmControl_Values() []string {
+	return []string{
+		AudioNormalizationAlgorithmControlCorrectAudio,
+		AudioNormalizationAlgorithmControlMeasureOnly,
+	}
+}
+
 // If set to LOG, log each output's audio track loudness to a CSV file.
 const (
 	// AudioNormalizationLoudnessLoggingLog is a AudioNormalizationLoudnessLogging enum value
@@ -19590,6 +21281,14 @@ const (
 	// AudioNormalizationLoudnessLoggingDontLog is a AudioNormalizationLoudnessLogging enum value
 	AudioNormalizationLoudnessLoggingDontLog = "DONT_LOG"
 )
+
+// AudioNormalizationLoudnessLogging_Values returns all elements of the AudioNormalizationLoudnessLogging enum
+func AudioNormalizationLoudnessLogging_Values() []string {
+	return []string{
+		AudioNormalizationLoudnessLoggingLog,
+		AudioNormalizationLoudnessLoggingDontLog,
+	}
+}
 
 // If set to TRUE_PEAK, calculate and log the TruePeak for each output's audio
 // track loudness.
@@ -19600,6 +21299,14 @@ const (
 	// AudioNormalizationPeakCalculationNone is a AudioNormalizationPeakCalculation enum value
 	AudioNormalizationPeakCalculationNone = "NONE"
 )
+
+// AudioNormalizationPeakCalculation_Values returns all elements of the AudioNormalizationPeakCalculation enum
+func AudioNormalizationPeakCalculation_Values() []string {
+	return []string{
+		AudioNormalizationPeakCalculationTruePeak,
+		AudioNormalizationPeakCalculationNone,
+	}
+}
 
 // Specifies the type of the audio selector.
 const (
@@ -19612,6 +21319,15 @@ const (
 	// AudioSelectorTypeLanguageCode is a AudioSelectorType enum value
 	AudioSelectorTypeLanguageCode = "LANGUAGE_CODE"
 )
+
+// AudioSelectorType_Values returns all elements of the AudioSelectorType enum
+func AudioSelectorType_Values() []string {
+	return []string{
+		AudioSelectorTypePid,
+		AudioSelectorTypeTrack,
+		AudioSelectorTypeLanguageCode,
+	}
+}
 
 // When set to FOLLOW_INPUT, if the input contains an ISO 639 audio_type, then
 // that value is passed through to the output. If the input contains no ISO
@@ -19626,8 +21342,16 @@ const (
 	AudioTypeControlUseConfigured = "USE_CONFIGURED"
 )
 
-// Adaptive quantization. Allows intra-frame quantizers to vary to improve visual
-// quality.
+// AudioTypeControl_Values returns all elements of the AudioTypeControl enum
+func AudioTypeControl_Values() []string {
+	return []string{
+		AudioTypeControlFollowInput,
+		AudioTypeControlUseConfigured,
+	}
+}
+
+// Specify the strength of any adaptive quantization filters that you enable.
+// The value that you choose here applies to Spatial adaptive quantization (spatialAdaptiveQuantization).
 const (
 	// Av1AdaptiveQuantizationOff is a Av1AdaptiveQuantization enum value
 	Av1AdaptiveQuantizationOff = "OFF"
@@ -19648,6 +21372,18 @@ const (
 	Av1AdaptiveQuantizationMax = "MAX"
 )
 
+// Av1AdaptiveQuantization_Values returns all elements of the Av1AdaptiveQuantization enum
+func Av1AdaptiveQuantization_Values() []string {
+	return []string{
+		Av1AdaptiveQuantizationOff,
+		Av1AdaptiveQuantizationLow,
+		Av1AdaptiveQuantizationMedium,
+		Av1AdaptiveQuantizationHigh,
+		Av1AdaptiveQuantizationHigher,
+		Av1AdaptiveQuantizationMax,
+	}
+}
+
 // If you are using the console, use the Framerate setting to specify the frame
 // rate for this output. If you want to keep the same frame rate as the input
 // video, choose Follow source. If you want to do frame rate conversion, choose
@@ -19667,14 +21403,43 @@ const (
 	Av1FramerateControlSpecified = "SPECIFIED"
 )
 
-// When set to INTERPOLATE, produces smoother motion during frame rate conversion.
+// Av1FramerateControl_Values returns all elements of the Av1FramerateControl enum
+func Av1FramerateControl_Values() []string {
+	return []string{
+		Av1FramerateControlInitializeFromSource,
+		Av1FramerateControlSpecified,
+	}
+}
+
+// Choose the method that you want MediaConvert to use when increasing or decreasing
+// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+// smooth picture, but might introduce undesirable video artifacts. For complex
+// frame rate conversions, especially if your source video has already been
+// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+// motion-compensated interpolation. FrameFormer chooses the best conversion
+// method frame by frame. Note that using FrameFormer increases the transcoding
+// time and incurs a significant add-on cost.
 const (
 	// Av1FramerateConversionAlgorithmDuplicateDrop is a Av1FramerateConversionAlgorithm enum value
 	Av1FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
 
 	// Av1FramerateConversionAlgorithmInterpolate is a Av1FramerateConversionAlgorithm enum value
 	Av1FramerateConversionAlgorithmInterpolate = "INTERPOLATE"
+
+	// Av1FramerateConversionAlgorithmFrameformer is a Av1FramerateConversionAlgorithm enum value
+	Av1FramerateConversionAlgorithmFrameformer = "FRAMEFORMER"
 )
+
+// Av1FramerateConversionAlgorithm_Values returns all elements of the Av1FramerateConversionAlgorithm enum
+func Av1FramerateConversionAlgorithm_Values() []string {
+	return []string{
+		Av1FramerateConversionAlgorithmDuplicateDrop,
+		Av1FramerateConversionAlgorithmInterpolate,
+		Av1FramerateConversionAlgorithmFrameformer,
+	}
+}
 
 // 'With AV1 outputs, for rate control mode, MediaConvert supports only quality-defined
 // variable bitrate (QVBR). You can''t use CBR or VBR.'
@@ -19683,8 +21448,28 @@ const (
 	Av1RateControlModeQvbr = "QVBR"
 )
 
-// Adjust quantization within each frame based on spatial variation of content
-// complexity.
+// Av1RateControlMode_Values returns all elements of the Av1RateControlMode enum
+func Av1RateControlMode_Values() []string {
+	return []string{
+		Av1RateControlModeQvbr,
+	}
+}
+
+// Keep the default value, Enabled (ENABLED), to adjust quantization within
+// each frame based on spatial variation of content complexity. When you enable
+// this feature, the encoder uses fewer bits on areas that can sustain more
+// distortion with no noticeable visual degradation and uses more bits on areas
+// where any small distortion will be noticeable. For example, complex textured
+// blocks are encoded with fewer bits and smooth textured blocks are encoded
+// with more bits. Enabling this feature will almost always improve your video
+// quality. Note, though, that this feature doesn't take into account where
+// the viewer's attention is likely to be. If viewers are likely to be focusing
+// their attention on a part of the screen with a lot of complex texture, you
+// might choose to disable this feature. Related setting: When you enable spatial
+// adaptive quantization, set the value for Adaptive quantization (adaptiveQuantization)
+// depending on your content. For homogeneous content, such as cartoons and
+// video games, set it to Low. For content with a wider variety of textures,
+// set it to High or Higher.
 const (
 	// Av1SpatialAdaptiveQuantizationDisabled is a Av1SpatialAdaptiveQuantization enum value
 	Av1SpatialAdaptiveQuantizationDisabled = "DISABLED"
@@ -19692,6 +21477,181 @@ const (
 	// Av1SpatialAdaptiveQuantizationEnabled is a Av1SpatialAdaptiveQuantization enum value
 	Av1SpatialAdaptiveQuantizationEnabled = "ENABLED"
 )
+
+// Av1SpatialAdaptiveQuantization_Values returns all elements of the Av1SpatialAdaptiveQuantization enum
+func Av1SpatialAdaptiveQuantization_Values() []string {
+	return []string{
+		Av1SpatialAdaptiveQuantizationDisabled,
+		Av1SpatialAdaptiveQuantizationEnabled,
+	}
+}
+
+// Specify the AVC-Intra class of your output. The AVC-Intra class selection
+// determines the output video bit rate depending on the frame rate of the output.
+// Outputs with higher class values have higher bitrates and improved image
+// quality.
+const (
+	// AvcIntraClassClass50 is a AvcIntraClass enum value
+	AvcIntraClassClass50 = "CLASS_50"
+
+	// AvcIntraClassClass100 is a AvcIntraClass enum value
+	AvcIntraClassClass100 = "CLASS_100"
+
+	// AvcIntraClassClass200 is a AvcIntraClass enum value
+	AvcIntraClassClass200 = "CLASS_200"
+)
+
+// AvcIntraClass_Values returns all elements of the AvcIntraClass enum
+func AvcIntraClass_Values() []string {
+	return []string{
+		AvcIntraClassClass50,
+		AvcIntraClassClass100,
+		AvcIntraClassClass200,
+	}
+}
+
+// If you are using the console, use the Framerate setting to specify the frame
+// rate for this output. If you want to keep the same frame rate as the input
+// video, choose Follow source. If you want to do frame rate conversion, choose
+// a frame rate from the dropdown list or choose Custom. The framerates shown
+// in the dropdown list are decimal approximations of fractions. If you choose
+// Custom, specify your frame rate as a fraction. If you are creating your transcoding
+// job specification as a JSON file without the console, use FramerateControl
+// to specify which value the service uses for the frame rate for this output.
+// Choose INITIALIZE_FROM_SOURCE if you want the service to use the frame rate
+// from the input. Choose SPECIFIED if you want the service to use the frame
+// rate you specify in the settings FramerateNumerator and FramerateDenominator.
+const (
+	// AvcIntraFramerateControlInitializeFromSource is a AvcIntraFramerateControl enum value
+	AvcIntraFramerateControlInitializeFromSource = "INITIALIZE_FROM_SOURCE"
+
+	// AvcIntraFramerateControlSpecified is a AvcIntraFramerateControl enum value
+	AvcIntraFramerateControlSpecified = "SPECIFIED"
+)
+
+// AvcIntraFramerateControl_Values returns all elements of the AvcIntraFramerateControl enum
+func AvcIntraFramerateControl_Values() []string {
+	return []string{
+		AvcIntraFramerateControlInitializeFromSource,
+		AvcIntraFramerateControlSpecified,
+	}
+}
+
+// Choose the method that you want MediaConvert to use when increasing or decreasing
+// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+// smooth picture, but might introduce undesirable video artifacts. For complex
+// frame rate conversions, especially if your source video has already been
+// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+// motion-compensated interpolation. FrameFormer chooses the best conversion
+// method frame by frame. Note that using FrameFormer increases the transcoding
+// time and incurs a significant add-on cost.
+const (
+	// AvcIntraFramerateConversionAlgorithmDuplicateDrop is a AvcIntraFramerateConversionAlgorithm enum value
+	AvcIntraFramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
+
+	// AvcIntraFramerateConversionAlgorithmInterpolate is a AvcIntraFramerateConversionAlgorithm enum value
+	AvcIntraFramerateConversionAlgorithmInterpolate = "INTERPOLATE"
+
+	// AvcIntraFramerateConversionAlgorithmFrameformer is a AvcIntraFramerateConversionAlgorithm enum value
+	AvcIntraFramerateConversionAlgorithmFrameformer = "FRAMEFORMER"
+)
+
+// AvcIntraFramerateConversionAlgorithm_Values returns all elements of the AvcIntraFramerateConversionAlgorithm enum
+func AvcIntraFramerateConversionAlgorithm_Values() []string {
+	return []string{
+		AvcIntraFramerateConversionAlgorithmDuplicateDrop,
+		AvcIntraFramerateConversionAlgorithmInterpolate,
+		AvcIntraFramerateConversionAlgorithmFrameformer,
+	}
+}
+
+// Choose the scan line type for the output. Keep the default value, Progressive
+// (PROGRESSIVE) to create a progressive output, regardless of the scan type
+// of your input. Use Top field first (TOP_FIELD) or Bottom field first (BOTTOM_FIELD)
+// to create an output that's interlaced with the same field polarity throughout.
+// Use Follow, default top (FOLLOW_TOP_FIELD) or Follow, default bottom (FOLLOW_BOTTOM_FIELD)
+// to produce outputs with the same field polarity as the source. For jobs that
+// have multiple inputs, the output field polarity might change over the course
+// of the output. Follow behavior depends on the input scan type. If the source
+// is interlaced, the output will be interlaced with the same polarity as the
+// source. If the source is progressive, the output will be interlaced with
+// top field bottom field first, depending on which of the Follow options you
+// choose.
+const (
+	// AvcIntraInterlaceModeProgressive is a AvcIntraInterlaceMode enum value
+	AvcIntraInterlaceModeProgressive = "PROGRESSIVE"
+
+	// AvcIntraInterlaceModeTopField is a AvcIntraInterlaceMode enum value
+	AvcIntraInterlaceModeTopField = "TOP_FIELD"
+
+	// AvcIntraInterlaceModeBottomField is a AvcIntraInterlaceMode enum value
+	AvcIntraInterlaceModeBottomField = "BOTTOM_FIELD"
+
+	// AvcIntraInterlaceModeFollowTopField is a AvcIntraInterlaceMode enum value
+	AvcIntraInterlaceModeFollowTopField = "FOLLOW_TOP_FIELD"
+
+	// AvcIntraInterlaceModeFollowBottomField is a AvcIntraInterlaceMode enum value
+	AvcIntraInterlaceModeFollowBottomField = "FOLLOW_BOTTOM_FIELD"
+)
+
+// AvcIntraInterlaceMode_Values returns all elements of the AvcIntraInterlaceMode enum
+func AvcIntraInterlaceMode_Values() []string {
+	return []string{
+		AvcIntraInterlaceModeProgressive,
+		AvcIntraInterlaceModeTopField,
+		AvcIntraInterlaceModeBottomField,
+		AvcIntraInterlaceModeFollowTopField,
+		AvcIntraInterlaceModeFollowBottomField,
+	}
+}
+
+// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+// second (fps). Enable slow PAL to create a 25 fps output. When you enable
+// slow PAL, MediaConvert relabels the video frames to 25 fps and resamples
+// your audio to keep it synchronized with the video. Note that enabling this
+// setting will slightly reduce the duration of your video. Required settings:
+// You must also set Framerate to 25. In your JSON job specification, set (framerateControl)
+// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+// 1.
+const (
+	// AvcIntraSlowPalDisabled is a AvcIntraSlowPal enum value
+	AvcIntraSlowPalDisabled = "DISABLED"
+
+	// AvcIntraSlowPalEnabled is a AvcIntraSlowPal enum value
+	AvcIntraSlowPalEnabled = "ENABLED"
+)
+
+// AvcIntraSlowPal_Values returns all elements of the AvcIntraSlowPal enum
+func AvcIntraSlowPal_Values() []string {
+	return []string{
+		AvcIntraSlowPalDisabled,
+		AvcIntraSlowPalEnabled,
+	}
+}
+
+// When you do frame rate conversion from 23.976 frames per second (fps) to
+// 29.97 fps, and your output scan type is interlaced, you can optionally enable
+// hard telecine (HARD) to create a smoother picture. When you keep the default
+// value, None (NONE), MediaConvert does a standard frame rate conversion to
+// 29.97 without doing anything with the field polarity to create a smoother
+// picture.
+const (
+	// AvcIntraTelecineNone is a AvcIntraTelecine enum value
+	AvcIntraTelecineNone = "NONE"
+
+	// AvcIntraTelecineHard is a AvcIntraTelecine enum value
+	AvcIntraTelecineHard = "HARD"
+)
+
+// AvcIntraTelecine_Values returns all elements of the AvcIntraTelecine enum
+func AvcIntraTelecine_Values() []string {
+	return []string{
+		AvcIntraTelecineNone,
+		AvcIntraTelecineHard,
+	}
+}
 
 // The tag type that AWS Billing and Cost Management will use to sort your AWS
 // Elemental MediaConvert costs on any billing report that you set up.
@@ -19709,6 +21669,16 @@ const (
 	BillingTagsSourceJob = "JOB"
 )
 
+// BillingTagsSource_Values returns all elements of the BillingTagsSource enum
+func BillingTagsSource_Values() []string {
+	return []string{
+		BillingTagsSourceQueue,
+		BillingTagsSourcePreset,
+		BillingTagsSourceJobTemplate,
+		BillingTagsSourceJob,
+	}
+}
+
 // If no explicit x_position or y_position is provided, setting alignment to
 // centered will place the captions at the bottom center of the output. Similarly,
 // setting a left alignment will align captions to the bottom left of the output.
@@ -19725,6 +21695,14 @@ const (
 	BurninSubtitleAlignmentLeft = "LEFT"
 )
 
+// BurninSubtitleAlignment_Values returns all elements of the BurninSubtitleAlignment enum
+func BurninSubtitleAlignment_Values() []string {
+	return []string{
+		BurninSubtitleAlignmentCentered,
+		BurninSubtitleAlignmentLeft,
+	}
+}
+
 // Specifies the color of the rectangle behind the captions.All burn-in and
 // DVB-Sub font settings must match.
 const (
@@ -19737,6 +21715,15 @@ const (
 	// BurninSubtitleBackgroundColorWhite is a BurninSubtitleBackgroundColor enum value
 	BurninSubtitleBackgroundColorWhite = "WHITE"
 )
+
+// BurninSubtitleBackgroundColor_Values returns all elements of the BurninSubtitleBackgroundColor enum
+func BurninSubtitleBackgroundColor_Values() []string {
+	return []string{
+		BurninSubtitleBackgroundColorNone,
+		BurninSubtitleBackgroundColorBlack,
+		BurninSubtitleBackgroundColorWhite,
+	}
+}
 
 // Specifies the color of the burned-in captions. This option is not valid for
 // source captions that are STL, 608/embedded or teletext. These source settings
@@ -19762,6 +21749,18 @@ const (
 	BurninSubtitleFontColorBlue = "BLUE"
 )
 
+// BurninSubtitleFontColor_Values returns all elements of the BurninSubtitleFontColor enum
+func BurninSubtitleFontColor_Values() []string {
+	return []string{
+		BurninSubtitleFontColorWhite,
+		BurninSubtitleFontColorBlack,
+		BurninSubtitleFontColorYellow,
+		BurninSubtitleFontColorRed,
+		BurninSubtitleFontColorGreen,
+		BurninSubtitleFontColorBlue,
+	}
+}
+
 // Specifies font outline color. This option is not valid for source captions
 // that are either 608/embedded or teletext. These source settings are already
 // pre-defined by the caption stream. All burn-in and DVB-Sub font settings
@@ -19786,6 +21785,18 @@ const (
 	BurninSubtitleOutlineColorBlue = "BLUE"
 )
 
+// BurninSubtitleOutlineColor_Values returns all elements of the BurninSubtitleOutlineColor enum
+func BurninSubtitleOutlineColor_Values() []string {
+	return []string{
+		BurninSubtitleOutlineColorBlack,
+		BurninSubtitleOutlineColorWhite,
+		BurninSubtitleOutlineColorYellow,
+		BurninSubtitleOutlineColorRed,
+		BurninSubtitleOutlineColorGreen,
+		BurninSubtitleOutlineColorBlue,
+	}
+}
+
 // Specifies the color of the shadow cast by the captions.All burn-in and DVB-Sub
 // font settings must match.
 const (
@@ -19799,6 +21810,15 @@ const (
 	BurninSubtitleShadowColorWhite = "WHITE"
 )
 
+// BurninSubtitleShadowColor_Values returns all elements of the BurninSubtitleShadowColor enum
+func BurninSubtitleShadowColor_Values() []string {
+	return []string{
+		BurninSubtitleShadowColorNone,
+		BurninSubtitleShadowColorBlack,
+		BurninSubtitleShadowColorWhite,
+	}
+}
+
 // Only applies to jobs with input captions in Teletext or STL formats. Specify
 // whether the spacing between letters in your captions is set by the captions
 // grid or varies depending on letter width. Choose fixed grid to conform to
@@ -19811,6 +21831,14 @@ const (
 	// BurninSubtitleTeletextSpacingProportional is a BurninSubtitleTeletextSpacing enum value
 	BurninSubtitleTeletextSpacingProportional = "PROPORTIONAL"
 )
+
+// BurninSubtitleTeletextSpacing_Values returns all elements of the BurninSubtitleTeletextSpacing enum
+func BurninSubtitleTeletextSpacing_Values() []string {
+	return []string{
+		BurninSubtitleTeletextSpacingFixedGrid,
+		BurninSubtitleTeletextSpacingProportional,
+	}
+}
 
 // Specify the format for this set of captions on this output. The default format
 // is embedded without SCTE-20. Other options are embedded with SCTE-20, burn-in,
@@ -19856,6 +21884,24 @@ const (
 	CaptionDestinationTypeWebvtt = "WEBVTT"
 )
 
+// CaptionDestinationType_Values returns all elements of the CaptionDestinationType enum
+func CaptionDestinationType_Values() []string {
+	return []string{
+		CaptionDestinationTypeBurnIn,
+		CaptionDestinationTypeDvbSub,
+		CaptionDestinationTypeEmbedded,
+		CaptionDestinationTypeEmbeddedPlusScte20,
+		CaptionDestinationTypeImsc,
+		CaptionDestinationTypeScte20PlusEmbedded,
+		CaptionDestinationTypeScc,
+		CaptionDestinationTypeSrt,
+		CaptionDestinationTypeSmi,
+		CaptionDestinationTypeTeletext,
+		CaptionDestinationTypeTtml,
+		CaptionDestinationTypeWebvtt,
+	}
+}
+
 // Use Source (SourceType) to identify the format of your input captions. The
 // service cannot auto-detect caption format.
 const (
@@ -19896,8 +21942,28 @@ const (
 	CaptionSourceTypeImsc = "IMSC"
 )
 
-// When set to ENABLED, sets #EXT-X-ALLOW-CACHE:no tag, which prevents client
-// from saving media segments for later replay.
+// CaptionSourceType_Values returns all elements of the CaptionSourceType enum
+func CaptionSourceType_Values() []string {
+	return []string{
+		CaptionSourceTypeAncillary,
+		CaptionSourceTypeDvbSub,
+		CaptionSourceTypeEmbedded,
+		CaptionSourceTypeScte20,
+		CaptionSourceTypeScc,
+		CaptionSourceTypeTtml,
+		CaptionSourceTypeStl,
+		CaptionSourceTypeSrt,
+		CaptionSourceTypeSmi,
+		CaptionSourceTypeTeletext,
+		CaptionSourceTypeNullSource,
+		CaptionSourceTypeImsc,
+	}
+}
+
+// Disable this setting only when your workflow requires the #EXT-X-ALLOW-CACHE:no
+// tag. Otherwise, keep the default value Enabled (ENABLED) and control caching
+// in your video distribution set up. For example, use the Cache-Control http
+// header.
 const (
 	// CmafClientCacheDisabled is a CmafClientCache enum value
 	CmafClientCacheDisabled = "DISABLED"
@@ -19905,6 +21971,14 @@ const (
 	// CmafClientCacheEnabled is a CmafClientCache enum value
 	CmafClientCacheEnabled = "ENABLED"
 )
+
+// CmafClientCache_Values returns all elements of the CmafClientCache enum
+func CmafClientCache_Values() []string {
+	return []string{
+		CmafClientCacheDisabled,
+		CmafClientCacheEnabled,
+	}
+}
 
 // Specification to use (RFC-6381 or the default RFC-4281) during m3u8 playlist
 // generation.
@@ -19916,6 +21990,14 @@ const (
 	CmafCodecSpecificationRfc4281 = "RFC_4281"
 )
 
+// CmafCodecSpecification_Values returns all elements of the CmafCodecSpecification enum
+func CmafCodecSpecification_Values() []string {
+	return []string{
+		CmafCodecSpecificationRfc6381,
+		CmafCodecSpecificationRfc4281,
+	}
+}
+
 // Specify the encryption scheme that you want the service to use when encrypting
 // your CMAF segments. Choose AES-CBC subsample (SAMPLE-AES) or AES_CTR (AES-CTR).
 const (
@@ -19925,6 +22007,14 @@ const (
 	// CmafEncryptionTypeAesCtr is a CmafEncryptionType enum value
 	CmafEncryptionTypeAesCtr = "AES_CTR"
 )
+
+// CmafEncryptionType_Values returns all elements of the CmafEncryptionType enum
+func CmafEncryptionType_Values() []string {
+	return []string{
+		CmafEncryptionTypeSampleAes,
+		CmafEncryptionTypeAesCtr,
+	}
+}
 
 // When you use DRM with CMAF outputs, choose whether the service writes the
 // 128-bit encryption initialization vector in the HLS and DASH manifests.
@@ -19936,6 +22026,14 @@ const (
 	CmafInitializationVectorInManifestExclude = "EXCLUDE"
 )
 
+// CmafInitializationVectorInManifest_Values returns all elements of the CmafInitializationVectorInManifest enum
+func CmafInitializationVectorInManifest_Values() []string {
+	return []string{
+		CmafInitializationVectorInManifestInclude,
+		CmafInitializationVectorInManifestExclude,
+	}
+}
+
 // Specify whether your DRM encryption key is static or from a key provider
 // that follows the SPEKE standard. For more information about SPEKE, see https://docs.aws.amazon.com/speke/latest/documentation/what-is-speke.html.
 const (
@@ -19946,6 +22044,14 @@ const (
 	CmafKeyProviderTypeStaticKey = "STATIC_KEY"
 )
 
+// CmafKeyProviderType_Values returns all elements of the CmafKeyProviderType enum
+func CmafKeyProviderType_Values() []string {
+	return []string{
+		CmafKeyProviderTypeSpeke,
+		CmafKeyProviderTypeStaticKey,
+	}
+}
+
 // When set to GZIP, compresses HLS playlist.
 const (
 	// CmafManifestCompressionGzip is a CmafManifestCompression enum value
@@ -19954,6 +22060,14 @@ const (
 	// CmafManifestCompressionNone is a CmafManifestCompression enum value
 	CmafManifestCompressionNone = "NONE"
 )
+
+// CmafManifestCompression_Values returns all elements of the CmafManifestCompression enum
+func CmafManifestCompression_Values() []string {
+	return []string{
+		CmafManifestCompressionGzip,
+		CmafManifestCompressionNone,
+	}
+}
 
 // Indicates whether the output manifest should use floating point values for
 // segment duration.
@@ -19964,6 +22078,14 @@ const (
 	// CmafManifestDurationFormatInteger is a CmafManifestDurationFormat enum value
 	CmafManifestDurationFormatInteger = "INTEGER"
 )
+
+// CmafManifestDurationFormat_Values returns all elements of the CmafManifestDurationFormat enum
+func CmafManifestDurationFormat_Values() []string {
+	return []string{
+		CmafManifestDurationFormatFloatingPoint,
+		CmafManifestDurationFormatInteger,
+	}
+}
 
 // Specify whether your DASH profile is on-demand or main. When you choose Main
 // profile (MAIN_PROFILE), the service signals urn:mpeg:dash:profile:isoff-main:2011
@@ -19979,6 +22101,14 @@ const (
 	CmafMpdProfileOnDemandProfile = "ON_DEMAND_PROFILE"
 )
 
+// CmafMpdProfile_Values returns all elements of the CmafMpdProfile enum
+func CmafMpdProfile_Values() []string {
+	return []string{
+		CmafMpdProfileMainProfile,
+		CmafMpdProfileOnDemandProfile,
+	}
+}
+
 // When set to SINGLE_FILE, a single output file is generated, which is internally
 // segmented using the Fragment Length and Segment Length. When set to SEGMENTED_FILES,
 // separate segment files will be created.
@@ -19990,6 +22120,14 @@ const (
 	CmafSegmentControlSegmentedFiles = "SEGMENTED_FILES"
 )
 
+// CmafSegmentControl_Values returns all elements of the CmafSegmentControl enum
+func CmafSegmentControl_Values() []string {
+	return []string{
+		CmafSegmentControlSingleFile,
+		CmafSegmentControlSegmentedFiles,
+	}
+}
+
 // Include or exclude RESOLUTION attribute for video in EXT-X-STREAM-INF tag
 // of variant manifest.
 const (
@@ -20000,6 +22138,14 @@ const (
 	CmafStreamInfResolutionExclude = "EXCLUDE"
 )
 
+// CmafStreamInfResolution_Values returns all elements of the CmafStreamInfResolution enum
+func CmafStreamInfResolution_Values() []string {
+	return []string{
+		CmafStreamInfResolutionInclude,
+		CmafStreamInfResolutionExclude,
+	}
+}
+
 // When set to ENABLED, a DASH MPD manifest will be generated for this output.
 const (
 	// CmafWriteDASHManifestDisabled is a CmafWriteDASHManifest enum value
@@ -20009,6 +22155,14 @@ const (
 	CmafWriteDASHManifestEnabled = "ENABLED"
 )
 
+// CmafWriteDASHManifest_Values returns all elements of the CmafWriteDASHManifest enum
+func CmafWriteDASHManifest_Values() []string {
+	return []string{
+		CmafWriteDASHManifestDisabled,
+		CmafWriteDASHManifestEnabled,
+	}
+}
+
 // When set to ENABLED, an Apple HLS manifest will be generated for this output.
 const (
 	// CmafWriteHLSManifestDisabled is a CmafWriteHLSManifest enum value
@@ -20017,6 +22171,14 @@ const (
 	// CmafWriteHLSManifestEnabled is a CmafWriteHLSManifest enum value
 	CmafWriteHLSManifestEnabled = "ENABLED"
 )
+
+// CmafWriteHLSManifest_Values returns all elements of the CmafWriteHLSManifest enum
+func CmafWriteHLSManifest_Values() []string {
+	return []string{
+		CmafWriteHLSManifestDisabled,
+		CmafWriteHLSManifestEnabled,
+	}
+}
 
 // When you enable Precise segment duration in DASH manifests (writeSegmentTimelineInRepresentation),
 // your DASH manifest shows precise segment durations. The segment duration
@@ -20032,6 +22194,43 @@ const (
 	CmafWriteSegmentTimelineInRepresentationDisabled = "DISABLED"
 )
 
+// CmafWriteSegmentTimelineInRepresentation_Values returns all elements of the CmafWriteSegmentTimelineInRepresentation enum
+func CmafWriteSegmentTimelineInRepresentation_Values() []string {
+	return []string{
+		CmafWriteSegmentTimelineInRepresentationEnabled,
+		CmafWriteSegmentTimelineInRepresentationDisabled,
+	}
+}
+
+// Specify this setting only when your output will be consumed by a downstream
+// repackaging workflow that is sensitive to very small duration differences
+// between video and audio. For this situation, choose Match video duration
+// (MATCH_VIDEO_DURATION). In all other cases, keep the default value, Default
+// codec duration (DEFAULT_CODEC_DURATION). When you choose Match video duration,
+// MediaConvert pads the output audio streams with silence or trims them to
+// ensure that the total duration of each audio stream is at least as long as
+// the total duration of the video stream. After padding or trimming, the audio
+// stream duration is no more than one frame longer than the video stream. MediaConvert
+// applies audio padding or trimming only to the end of the last segment of
+// the output. For unsegmented outputs, MediaConvert adds padding only to the
+// end of the file. When you keep the default value, any minor discrepancies
+// between audio and video duration will depend on your output audio codec.
+const (
+	// CmfcAudioDurationDefaultCodecDuration is a CmfcAudioDuration enum value
+	CmfcAudioDurationDefaultCodecDuration = "DEFAULT_CODEC_DURATION"
+
+	// CmfcAudioDurationMatchVideoDuration is a CmfcAudioDuration enum value
+	CmfcAudioDurationMatchVideoDuration = "MATCH_VIDEO_DURATION"
+)
+
+// CmfcAudioDuration_Values returns all elements of the CmfcAudioDuration enum
+func CmfcAudioDuration_Values() []string {
+	return []string{
+		CmfcAudioDurationDefaultCodecDuration,
+		CmfcAudioDurationMatchVideoDuration,
+	}
+}
+
 // Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 // INSERT to put SCTE-35 markers in this output at the insertion points that
 // you specify in an ESAM XML document. Provide the document in the setting
@@ -20043,6 +22242,14 @@ const (
 	// CmfcScte35EsamNone is a CmfcScte35Esam enum value
 	CmfcScte35EsamNone = "NONE"
 )
+
+// CmfcScte35Esam_Values returns all elements of the CmfcScte35Esam enum
+func CmfcScte35Esam_Values() []string {
+	return []string{
+		CmfcScte35EsamInsert,
+		CmfcScte35EsamNone,
+	}
+}
 
 // Ignore this setting unless you have SCTE-35 markers in your input video file.
 // Choose Passthrough (PASSTHROUGH) if you want SCTE-35 markers that appear
@@ -20056,6 +22263,14 @@ const (
 	CmfcScte35SourceNone = "NONE"
 )
 
+// CmfcScte35Source_Values returns all elements of the CmfcScte35Source enum
+func CmfcScte35Source_Values() []string {
+	return []string{
+		CmfcScte35SourcePassthrough,
+		CmfcScte35SourceNone,
+	}
+}
+
 // Choose Insert (INSERT) for this setting to include color metadata in this
 // output. Choose Ignore (IGNORE) to exclude color metadata from this output.
 // If you don't specify a value, the service sets this to Insert by default.
@@ -20066,6 +22281,14 @@ const (
 	// ColorMetadataInsert is a ColorMetadata enum value
 	ColorMetadataInsert = "INSERT"
 )
+
+// ColorMetadata_Values returns all elements of the ColorMetadata enum
+func ColorMetadata_Values() []string {
+	return []string{
+		ColorMetadataIgnore,
+		ColorMetadataInsert,
+	}
+}
 
 // If your input video has accurate color space metadata, or if you don't know
 // about color space, leave this set to the default value Follow (FOLLOW). The
@@ -20093,6 +22316,17 @@ const (
 	ColorSpaceHlg2020 = "HLG_2020"
 )
 
+// ColorSpace_Values returns all elements of the ColorSpace enum
+func ColorSpace_Values() []string {
+	return []string{
+		ColorSpaceFollow,
+		ColorSpaceRec601,
+		ColorSpaceRec709,
+		ColorSpaceHdr10,
+		ColorSpaceHlg2020,
+	}
+}
+
 // Specify the color space you want for this output. The service supports conversion
 // between HDR formats, between SDR formats, from SDR to HDR, and from HDR to
 // SDR. SDR to HDR conversion doesn't upgrade the dynamic range. The converted
@@ -20116,6 +22350,17 @@ const (
 	ColorSpaceConversionForceHlg2020 = "FORCE_HLG_2020"
 )
 
+// ColorSpaceConversion_Values returns all elements of the ColorSpaceConversion enum
+func ColorSpaceConversion_Values() []string {
+	return []string{
+		ColorSpaceConversionNone,
+		ColorSpaceConversionForce601,
+		ColorSpaceConversionForce709,
+		ColorSpaceConversionForceHdr10,
+		ColorSpaceConversionForceHlg2020,
+	}
+}
+
 // There are two sources for color metadata, the input file and the job input
 // settings Color space (ColorSpace) and HDR master display information settings(Hdr10Metadata).
 // The Color space usage setting determines which takes precedence. Choose Force
@@ -20132,11 +22377,26 @@ const (
 	ColorSpaceUsageFallback = "FALLBACK"
 )
 
+// ColorSpaceUsage_Values returns all elements of the ColorSpaceUsage enum
+func ColorSpaceUsage_Values() []string {
+	return []string{
+		ColorSpaceUsageForce,
+		ColorSpaceUsageFallback,
+	}
+}
+
 // The length of the term of your reserved queue pricing plan commitment.
 const (
 	// CommitmentOneYear is a Commitment enum value
 	CommitmentOneYear = "ONE_YEAR"
 )
+
+// Commitment_Values returns all elements of the Commitment enum
+func Commitment_Values() []string {
+	return []string{
+		CommitmentOneYear,
+	}
+}
 
 // Container for this output. Some containers require a container settings object.
 // If not specified, the default object will be created.
@@ -20175,6 +22435,23 @@ const (
 	ContainerTypeRaw = "RAW"
 )
 
+// ContainerType_Values returns all elements of the ContainerType enum
+func ContainerType_Values() []string {
+	return []string{
+		ContainerTypeF4v,
+		ContainerTypeIsmv,
+		ContainerTypeM2ts,
+		ContainerTypeM3u8,
+		ContainerTypeCmfc,
+		ContainerTypeMov,
+		ContainerTypeMp4,
+		ContainerTypeMpd,
+		ContainerTypeMxf,
+		ContainerTypeWebm,
+		ContainerTypeRaw,
+	}
+}
+
 // Supports HbbTV specification as indicated
 const (
 	// DashIsoHbbtvComplianceHbbtv15 is a DashIsoHbbtvCompliance enum value
@@ -20183,6 +22460,14 @@ const (
 	// DashIsoHbbtvComplianceNone is a DashIsoHbbtvCompliance enum value
 	DashIsoHbbtvComplianceNone = "NONE"
 )
+
+// DashIsoHbbtvCompliance_Values returns all elements of the DashIsoHbbtvCompliance enum
+func DashIsoHbbtvCompliance_Values() []string {
+	return []string{
+		DashIsoHbbtvComplianceHbbtv15,
+		DashIsoHbbtvComplianceNone,
+	}
+}
 
 // Specify whether your DASH profile is on-demand or main. When you choose Main
 // profile (MAIN_PROFILE), the service signals urn:mpeg:dash:profile:isoff-main:2011
@@ -20198,6 +22483,14 @@ const (
 	DashIsoMpdProfileOnDemandProfile = "ON_DEMAND_PROFILE"
 )
 
+// DashIsoMpdProfile_Values returns all elements of the DashIsoMpdProfile enum
+func DashIsoMpdProfile_Values() []string {
+	return []string{
+		DashIsoMpdProfileMainProfile,
+		DashIsoMpdProfileOnDemandProfile,
+	}
+}
+
 // This setting can improve the compatibility of your output with video players
 // on obsolete devices. It applies only to DASH H.264 outputs with DRM encryption.
 // Choose Unencrypted SEI (UNENCRYPTED_SEI) only to correct problems with playback
@@ -20212,6 +22505,14 @@ const (
 	DashIsoPlaybackDeviceCompatibilityUnencryptedSei = "UNENCRYPTED_SEI"
 )
 
+// DashIsoPlaybackDeviceCompatibility_Values returns all elements of the DashIsoPlaybackDeviceCompatibility enum
+func DashIsoPlaybackDeviceCompatibility_Values() []string {
+	return []string{
+		DashIsoPlaybackDeviceCompatibilityCencV1,
+		DashIsoPlaybackDeviceCompatibilityUnencryptedSei,
+	}
+}
+
 // When set to SINGLE_FILE, a single output file is generated, which is internally
 // segmented using the Fragment Length and Segment Length. When set to SEGMENTED_FILES,
 // separate segment files will be created.
@@ -20222,6 +22523,14 @@ const (
 	// DashIsoSegmentControlSegmentedFiles is a DashIsoSegmentControl enum value
 	DashIsoSegmentControlSegmentedFiles = "SEGMENTED_FILES"
 )
+
+// DashIsoSegmentControl_Values returns all elements of the DashIsoSegmentControl enum
+func DashIsoSegmentControl_Values() []string {
+	return []string{
+		DashIsoSegmentControlSingleFile,
+		DashIsoSegmentControlSegmentedFiles,
+	}
+}
 
 // When you enable Precise segment duration in manifests (writeSegmentTimelineInRepresentation),
 // your DASH manifest shows precise segment durations. The segment duration
@@ -20237,6 +22546,14 @@ const (
 	DashIsoWriteSegmentTimelineInRepresentationDisabled = "DISABLED"
 )
 
+// DashIsoWriteSegmentTimelineInRepresentation_Values returns all elements of the DashIsoWriteSegmentTimelineInRepresentation enum
+func DashIsoWriteSegmentTimelineInRepresentation_Values() []string {
+	return []string{
+		DashIsoWriteSegmentTimelineInRepresentationEnabled,
+		DashIsoWriteSegmentTimelineInRepresentationDisabled,
+	}
+}
+
 // Specify the encryption mode that you used to encrypt your input files.
 const (
 	// DecryptionModeAesCtr is a DecryptionMode enum value
@@ -20248,6 +22565,15 @@ const (
 	// DecryptionModeAesGcm is a DecryptionMode enum value
 	DecryptionModeAesGcm = "AES_GCM"
 )
+
+// DecryptionMode_Values returns all elements of the DecryptionMode enum
+func DecryptionMode_Values() []string {
+	return []string{
+		DecryptionModeAesCtr,
+		DecryptionModeAesCbc,
+		DecryptionModeAesGcm,
+	}
+}
 
 // Only applies when you set Deinterlacer (DeinterlaceMode) to Deinterlace (DEINTERLACE)
 // or Adaptive (ADAPTIVE). Motion adaptive interpolate (INTERPOLATE) produces
@@ -20268,6 +22594,16 @@ const (
 	DeinterlaceAlgorithmBlendTicker = "BLEND_TICKER"
 )
 
+// DeinterlaceAlgorithm_Values returns all elements of the DeinterlaceAlgorithm enum
+func DeinterlaceAlgorithm_Values() []string {
+	return []string{
+		DeinterlaceAlgorithmInterpolate,
+		DeinterlaceAlgorithmInterpolateTicker,
+		DeinterlaceAlgorithmBlend,
+		DeinterlaceAlgorithmBlendTicker,
+	}
+}
+
 // - When set to NORMAL (default), the deinterlacer does not convert frames
 // that are tagged in metadata as progressive. It will only convert those that
 // are tagged as some other type. - When set to FORCE_ALL_FRAMES, the deinterlacer
@@ -20284,6 +22620,14 @@ const (
 	DeinterlacerControlNormal = "NORMAL"
 )
 
+// DeinterlacerControl_Values returns all elements of the DeinterlacerControl enum
+func DeinterlacerControl_Values() []string {
+	return []string{
+		DeinterlacerControlForceAllFrames,
+		DeinterlacerControlNormal,
+	}
+}
+
 // Use Deinterlacer (DeinterlaceMode) to choose how the service will do deinterlacing.
 // Default is Deinterlace. - Deinterlace converts interlaced to progressive.
 // - Inverse telecine converts Hard Telecine 29.97i to progressive 23.976p.
@@ -20299,6 +22643,15 @@ const (
 	DeinterlacerModeAdaptive = "ADAPTIVE"
 )
 
+// DeinterlacerMode_Values returns all elements of the DeinterlacerMode enum
+func DeinterlacerMode_Values() []string {
+	return []string{
+		DeinterlacerModeDeinterlace,
+		DeinterlacerModeInverseTelecine,
+		DeinterlacerModeAdaptive,
+	}
+}
+
 // Optional field, defaults to DEFAULT. Specify DEFAULT for this operation to
 // return your endpoints if any exist, or to create an endpoint for you and
 // return it if one doesn't already exist. Specify GET_ONLY to return your endpoints
@@ -20310,6 +22663,14 @@ const (
 	// DescribeEndpointsModeGetOnly is a DescribeEndpointsMode enum value
 	DescribeEndpointsModeGetOnly = "GET_ONLY"
 )
+
+// DescribeEndpointsMode_Values returns all elements of the DescribeEndpointsMode enum
+func DescribeEndpointsMode_Values() []string {
+	return []string{
+		DescribeEndpointsModeDefault,
+		DescribeEndpointsModeGetOnly,
+	}
+}
 
 // Use Dolby Vision Mode to choose how the service will handle Dolby Vision
 // MaxCLL and MaxFALL properies.
@@ -20324,6 +22685,15 @@ const (
 	DolbyVisionLevel6ModeSpecify = "SPECIFY"
 )
 
+// DolbyVisionLevel6Mode_Values returns all elements of the DolbyVisionLevel6Mode enum
+func DolbyVisionLevel6Mode_Values() []string {
+	return []string{
+		DolbyVisionLevel6ModePassthrough,
+		DolbyVisionLevel6ModeRecalculate,
+		DolbyVisionLevel6ModeSpecify,
+	}
+}
+
 // In the current MediaConvert implementation, the Dolby Vision profile is always
 // 5 (PROFILE_5). Therefore, all of your inputs must contain Dolby Vision frame
 // interleaved data.
@@ -20331,6 +22701,13 @@ const (
 	// DolbyVisionProfileProfile5 is a DolbyVisionProfile enum value
 	DolbyVisionProfileProfile5 = "PROFILE_5"
 )
+
+// DolbyVisionProfile_Values returns all elements of the DolbyVisionProfile enum
+func DolbyVisionProfile_Values() []string {
+	return []string{
+		DolbyVisionProfileProfile5,
+	}
+}
 
 // Applies only to 29.97 fps outputs. When this feature is enabled, the service
 // will use drop-frame timecode on outputs. If it is not possible to use drop-frame
@@ -20343,6 +22720,14 @@ const (
 	// DropFrameTimecodeEnabled is a DropFrameTimecode enum value
 	DropFrameTimecodeEnabled = "ENABLED"
 )
+
+// DropFrameTimecode_Values returns all elements of the DropFrameTimecode enum
+func DropFrameTimecode_Values() []string {
+	return []string{
+		DropFrameTimecodeDisabled,
+		DropFrameTimecodeEnabled,
+	}
+}
 
 // If no explicit x_position or y_position is provided, setting alignment to
 // centered will place the captions at the bottom center of the output. Similarly,
@@ -20360,6 +22745,14 @@ const (
 	DvbSubtitleAlignmentLeft = "LEFT"
 )
 
+// DvbSubtitleAlignment_Values returns all elements of the DvbSubtitleAlignment enum
+func DvbSubtitleAlignment_Values() []string {
+	return []string{
+		DvbSubtitleAlignmentCentered,
+		DvbSubtitleAlignmentLeft,
+	}
+}
+
 // Specifies the color of the rectangle behind the captions.All burn-in and
 // DVB-Sub font settings must match.
 const (
@@ -20372,6 +22765,15 @@ const (
 	// DvbSubtitleBackgroundColorWhite is a DvbSubtitleBackgroundColor enum value
 	DvbSubtitleBackgroundColorWhite = "WHITE"
 )
+
+// DvbSubtitleBackgroundColor_Values returns all elements of the DvbSubtitleBackgroundColor enum
+func DvbSubtitleBackgroundColor_Values() []string {
+	return []string{
+		DvbSubtitleBackgroundColorNone,
+		DvbSubtitleBackgroundColorBlack,
+		DvbSubtitleBackgroundColorWhite,
+	}
+}
 
 // Specifies the color of the burned-in captions. This option is not valid for
 // source captions that are STL, 608/embedded or teletext. These source settings
@@ -20397,6 +22799,18 @@ const (
 	DvbSubtitleFontColorBlue = "BLUE"
 )
 
+// DvbSubtitleFontColor_Values returns all elements of the DvbSubtitleFontColor enum
+func DvbSubtitleFontColor_Values() []string {
+	return []string{
+		DvbSubtitleFontColorWhite,
+		DvbSubtitleFontColorBlack,
+		DvbSubtitleFontColorYellow,
+		DvbSubtitleFontColorRed,
+		DvbSubtitleFontColorGreen,
+		DvbSubtitleFontColorBlue,
+	}
+}
+
 // Specifies font outline color. This option is not valid for source captions
 // that are either 608/embedded or teletext. These source settings are already
 // pre-defined by the caption stream. All burn-in and DVB-Sub font settings
@@ -20421,6 +22835,18 @@ const (
 	DvbSubtitleOutlineColorBlue = "BLUE"
 )
 
+// DvbSubtitleOutlineColor_Values returns all elements of the DvbSubtitleOutlineColor enum
+func DvbSubtitleOutlineColor_Values() []string {
+	return []string{
+		DvbSubtitleOutlineColorBlack,
+		DvbSubtitleOutlineColorWhite,
+		DvbSubtitleOutlineColorYellow,
+		DvbSubtitleOutlineColorRed,
+		DvbSubtitleOutlineColorGreen,
+		DvbSubtitleOutlineColorBlue,
+	}
+}
+
 // Specifies the color of the shadow cast by the captions.All burn-in and DVB-Sub
 // font settings must match.
 const (
@@ -20433,6 +22859,15 @@ const (
 	// DvbSubtitleShadowColorWhite is a DvbSubtitleShadowColor enum value
 	DvbSubtitleShadowColorWhite = "WHITE"
 )
+
+// DvbSubtitleShadowColor_Values returns all elements of the DvbSubtitleShadowColor enum
+func DvbSubtitleShadowColor_Values() []string {
+	return []string{
+		DvbSubtitleShadowColorNone,
+		DvbSubtitleShadowColorBlack,
+		DvbSubtitleShadowColorWhite,
+	}
+}
 
 // Only applies to jobs with input captions in Teletext or STL formats. Specify
 // whether the spacing between letters in your captions is set by the captions
@@ -20447,6 +22882,14 @@ const (
 	DvbSubtitleTeletextSpacingProportional = "PROPORTIONAL"
 )
 
+// DvbSubtitleTeletextSpacing_Values returns all elements of the DvbSubtitleTeletextSpacing enum
+func DvbSubtitleTeletextSpacing_Values() []string {
+	return []string{
+		DvbSubtitleTeletextSpacingFixedGrid,
+		DvbSubtitleTeletextSpacingProportional,
+	}
+}
+
 // Specify whether your DVB subtitles are standard or for hearing impaired.
 // Choose hearing impaired if your subtitles include audio descriptions and
 // dialogue. Choose standard if your subtitles include only dialogue.
@@ -20458,6 +22901,14 @@ const (
 	DvbSubtitlingTypeStandard = "STANDARD"
 )
 
+// DvbSubtitlingType_Values returns all elements of the DvbSubtitlingType enum
+func DvbSubtitlingType_Values() []string {
+	return []string{
+		DvbSubtitlingTypeHearingImpaired,
+		DvbSubtitlingTypeStandard,
+	}
+}
+
 // Specify the bitstream mode for the E-AC-3 stream that the encoder emits.
 // For more information about the EAC3 bitstream mode, see ATSC A/52-2012 (Annex
 // E).
@@ -20466,11 +22917,25 @@ const (
 	Eac3AtmosBitstreamModeCompleteMain = "COMPLETE_MAIN"
 )
 
+// Eac3AtmosBitstreamMode_Values returns all elements of the Eac3AtmosBitstreamMode enum
+func Eac3AtmosBitstreamMode_Values() []string {
+	return []string{
+		Eac3AtmosBitstreamModeCompleteMain,
+	}
+}
+
 // The coding mode for Dolby Digital Plus JOC (Atmos) is always 9.1.6 (CODING_MODE_9_1_6).
 const (
 	// Eac3AtmosCodingModeCodingMode916 is a Eac3AtmosCodingMode enum value
 	Eac3AtmosCodingModeCodingMode916 = "CODING_MODE_9_1_6"
 )
+
+// Eac3AtmosCodingMode_Values returns all elements of the Eac3AtmosCodingMode enum
+func Eac3AtmosCodingMode_Values() []string {
+	return []string{
+		Eac3AtmosCodingModeCodingMode916,
+	}
+}
 
 // Enable Dolby Dialogue Intelligence to adjust loudness based on dialogue analysis.
 const (
@@ -20480,6 +22945,14 @@ const (
 	// Eac3AtmosDialogueIntelligenceDisabled is a Eac3AtmosDialogueIntelligence enum value
 	Eac3AtmosDialogueIntelligenceDisabled = "DISABLED"
 )
+
+// Eac3AtmosDialogueIntelligence_Values returns all elements of the Eac3AtmosDialogueIntelligence enum
+func Eac3AtmosDialogueIntelligence_Values() []string {
+	return []string{
+		Eac3AtmosDialogueIntelligenceEnabled,
+		Eac3AtmosDialogueIntelligenceDisabled,
+	}
+}
 
 // Specify the absolute peak level for a signal with dynamic range compression.
 const (
@@ -20501,6 +22974,18 @@ const (
 	// Eac3AtmosDynamicRangeCompressionLineSpeech is a Eac3AtmosDynamicRangeCompressionLine enum value
 	Eac3AtmosDynamicRangeCompressionLineSpeech = "SPEECH"
 )
+
+// Eac3AtmosDynamicRangeCompressionLine_Values returns all elements of the Eac3AtmosDynamicRangeCompressionLine enum
+func Eac3AtmosDynamicRangeCompressionLine_Values() []string {
+	return []string{
+		Eac3AtmosDynamicRangeCompressionLineNone,
+		Eac3AtmosDynamicRangeCompressionLineFilmStandard,
+		Eac3AtmosDynamicRangeCompressionLineFilmLight,
+		Eac3AtmosDynamicRangeCompressionLineMusicStandard,
+		Eac3AtmosDynamicRangeCompressionLineMusicLight,
+		Eac3AtmosDynamicRangeCompressionLineSpeech,
+	}
+}
 
 // Specify how the service limits the audio dynamic range when compressing the
 // audio.
@@ -20524,6 +23009,18 @@ const (
 	Eac3AtmosDynamicRangeCompressionRfSpeech = "SPEECH"
 )
 
+// Eac3AtmosDynamicRangeCompressionRf_Values returns all elements of the Eac3AtmosDynamicRangeCompressionRf enum
+func Eac3AtmosDynamicRangeCompressionRf_Values() []string {
+	return []string{
+		Eac3AtmosDynamicRangeCompressionRfNone,
+		Eac3AtmosDynamicRangeCompressionRfFilmStandard,
+		Eac3AtmosDynamicRangeCompressionRfFilmLight,
+		Eac3AtmosDynamicRangeCompressionRfMusicStandard,
+		Eac3AtmosDynamicRangeCompressionRfMusicLight,
+		Eac3AtmosDynamicRangeCompressionRfSpeech,
+	}
+}
+
 // Choose how the service meters the loudness of your audio.
 const (
 	// Eac3AtmosMeteringModeLeqA is a Eac3AtmosMeteringMode enum value
@@ -20542,6 +23039,17 @@ const (
 	Eac3AtmosMeteringModeItuBs17704 = "ITU_BS_1770_4"
 )
 
+// Eac3AtmosMeteringMode_Values returns all elements of the Eac3AtmosMeteringMode enum
+func Eac3AtmosMeteringMode_Values() []string {
+	return []string{
+		Eac3AtmosMeteringModeLeqA,
+		Eac3AtmosMeteringModeItuBs17701,
+		Eac3AtmosMeteringModeItuBs17702,
+		Eac3AtmosMeteringModeItuBs17703,
+		Eac3AtmosMeteringModeItuBs17704,
+	}
+}
+
 // Choose how the service does stereo downmixing.
 const (
 	// Eac3AtmosStereoDownmixNotIndicated is a Eac3AtmosStereoDownmix enum value
@@ -20557,6 +23065,16 @@ const (
 	Eac3AtmosStereoDownmixDpl2 = "DPL2"
 )
 
+// Eac3AtmosStereoDownmix_Values returns all elements of the Eac3AtmosStereoDownmix enum
+func Eac3AtmosStereoDownmix_Values() []string {
+	return []string{
+		Eac3AtmosStereoDownmixNotIndicated,
+		Eac3AtmosStereoDownmixStereo,
+		Eac3AtmosStereoDownmixSurround,
+		Eac3AtmosStereoDownmixDpl2,
+	}
+}
+
 // Specify whether your input audio has an additional center rear surround channel
 // matrix encoded into your left and right surround channels.
 const (
@@ -20570,6 +23088,15 @@ const (
 	Eac3AtmosSurroundExModeDisabled = "DISABLED"
 )
 
+// Eac3AtmosSurroundExMode_Values returns all elements of the Eac3AtmosSurroundExMode enum
+func Eac3AtmosSurroundExMode_Values() []string {
+	return []string{
+		Eac3AtmosSurroundExModeNotIndicated,
+		Eac3AtmosSurroundExModeEnabled,
+		Eac3AtmosSurroundExModeDisabled,
+	}
+}
+
 // If set to ATTENUATE_3_DB, applies a 3 dB attenuation to the surround channels.
 // Only used for 3/2 coding mode.
 const (
@@ -20579,6 +23106,14 @@ const (
 	// Eac3AttenuationControlNone is a Eac3AttenuationControl enum value
 	Eac3AttenuationControlNone = "NONE"
 )
+
+// Eac3AttenuationControl_Values returns all elements of the Eac3AttenuationControl enum
+func Eac3AttenuationControl_Values() []string {
+	return []string{
+		Eac3AttenuationControlAttenuate3Db,
+		Eac3AttenuationControlNone,
+	}
+}
 
 // Specify the bitstream mode for the E-AC-3 stream that the encoder emits.
 // For more information about the EAC3 bitstream mode, see ATSC A/52-2012 (Annex
@@ -20600,6 +23135,17 @@ const (
 	Eac3BitstreamModeVisuallyImpaired = "VISUALLY_IMPAIRED"
 )
 
+// Eac3BitstreamMode_Values returns all elements of the Eac3BitstreamMode enum
+func Eac3BitstreamMode_Values() []string {
+	return []string{
+		Eac3BitstreamModeCompleteMain,
+		Eac3BitstreamModeCommentary,
+		Eac3BitstreamModeEmergency,
+		Eac3BitstreamModeHearingImpaired,
+		Eac3BitstreamModeVisuallyImpaired,
+	}
+}
+
 // Dolby Digital Plus coding mode. Determines number of channels.
 const (
 	// Eac3CodingModeCodingMode10 is a Eac3CodingMode enum value
@@ -20612,6 +23158,15 @@ const (
 	Eac3CodingModeCodingMode32 = "CODING_MODE_3_2"
 )
 
+// Eac3CodingMode_Values returns all elements of the Eac3CodingMode enum
+func Eac3CodingMode_Values() []string {
+	return []string{
+		Eac3CodingModeCodingMode10,
+		Eac3CodingModeCodingMode20,
+		Eac3CodingModeCodingMode32,
+	}
+}
+
 // Activates a DC highpass filter for all input channels.
 const (
 	// Eac3DcFilterEnabled is a Eac3DcFilter enum value
@@ -20620,6 +23175,14 @@ const (
 	// Eac3DcFilterDisabled is a Eac3DcFilter enum value
 	Eac3DcFilterDisabled = "DISABLED"
 )
+
+// Eac3DcFilter_Values returns all elements of the Eac3DcFilter enum
+func Eac3DcFilter_Values() []string {
+	return []string{
+		Eac3DcFilterEnabled,
+		Eac3DcFilterDisabled,
+	}
+}
 
 // Specify the absolute peak level for a signal with dynamic range compression.
 const (
@@ -20641,6 +23204,18 @@ const (
 	// Eac3DynamicRangeCompressionLineSpeech is a Eac3DynamicRangeCompressionLine enum value
 	Eac3DynamicRangeCompressionLineSpeech = "SPEECH"
 )
+
+// Eac3DynamicRangeCompressionLine_Values returns all elements of the Eac3DynamicRangeCompressionLine enum
+func Eac3DynamicRangeCompressionLine_Values() []string {
+	return []string{
+		Eac3DynamicRangeCompressionLineNone,
+		Eac3DynamicRangeCompressionLineFilmStandard,
+		Eac3DynamicRangeCompressionLineFilmLight,
+		Eac3DynamicRangeCompressionLineMusicStandard,
+		Eac3DynamicRangeCompressionLineMusicLight,
+		Eac3DynamicRangeCompressionLineSpeech,
+	}
+}
 
 // Specify how the service limits the audio dynamic range when compressing the
 // audio.
@@ -20664,6 +23239,18 @@ const (
 	Eac3DynamicRangeCompressionRfSpeech = "SPEECH"
 )
 
+// Eac3DynamicRangeCompressionRf_Values returns all elements of the Eac3DynamicRangeCompressionRf enum
+func Eac3DynamicRangeCompressionRf_Values() []string {
+	return []string{
+		Eac3DynamicRangeCompressionRfNone,
+		Eac3DynamicRangeCompressionRfFilmStandard,
+		Eac3DynamicRangeCompressionRfFilmLight,
+		Eac3DynamicRangeCompressionRfMusicStandard,
+		Eac3DynamicRangeCompressionRfMusicLight,
+		Eac3DynamicRangeCompressionRfSpeech,
+	}
+}
+
 // When encoding 3/2 audio, controls whether the LFE channel is enabled
 const (
 	// Eac3LfeControlLfe is a Eac3LfeControl enum value
@@ -20672,6 +23259,14 @@ const (
 	// Eac3LfeControlNoLfe is a Eac3LfeControl enum value
 	Eac3LfeControlNoLfe = "NO_LFE"
 )
+
+// Eac3LfeControl_Values returns all elements of the Eac3LfeControl enum
+func Eac3LfeControl_Values() []string {
+	return []string{
+		Eac3LfeControlLfe,
+		Eac3LfeControlNoLfe,
+	}
+}
 
 // Applies a 120Hz lowpass filter to the LFE channel prior to encoding. Only
 // valid with 3_2_LFE coding mode.
@@ -20683,6 +23278,14 @@ const (
 	Eac3LfeFilterDisabled = "DISABLED"
 )
 
+// Eac3LfeFilter_Values returns all elements of the Eac3LfeFilter enum
+func Eac3LfeFilter_Values() []string {
+	return []string{
+		Eac3LfeFilterEnabled,
+		Eac3LfeFilterDisabled,
+	}
+}
+
 // When set to FOLLOW_INPUT, encoder metadata will be sourced from the DD, DD+,
 // or DolbyE decoder that supplied this audio data. If audio was not supplied
 // from one of these streams, then the static metadata settings will be used.
@@ -20693,6 +23296,14 @@ const (
 	// Eac3MetadataControlUseConfigured is a Eac3MetadataControl enum value
 	Eac3MetadataControlUseConfigured = "USE_CONFIGURED"
 )
+
+// Eac3MetadataControl_Values returns all elements of the Eac3MetadataControl enum
+func Eac3MetadataControl_Values() []string {
+	return []string{
+		Eac3MetadataControlFollowInput,
+		Eac3MetadataControlUseConfigured,
+	}
+}
 
 // When set to WHEN_POSSIBLE, input DD+ audio will be passed through if it is
 // present on the input. this detection is dynamic over the life of the transcode.
@@ -20706,6 +23317,14 @@ const (
 	Eac3PassthroughControlNoPassthrough = "NO_PASSTHROUGH"
 )
 
+// Eac3PassthroughControl_Values returns all elements of the Eac3PassthroughControl enum
+func Eac3PassthroughControl_Values() []string {
+	return []string{
+		Eac3PassthroughControlWhenPossible,
+		Eac3PassthroughControlNoPassthrough,
+	}
+}
+
 // Controls the amount of phase-shift applied to the surround channels. Only
 // used for 3/2 coding mode.
 const (
@@ -20715,6 +23334,14 @@ const (
 	// Eac3PhaseControlNoShift is a Eac3PhaseControl enum value
 	Eac3PhaseControlNoShift = "NO_SHIFT"
 )
+
+// Eac3PhaseControl_Values returns all elements of the Eac3PhaseControl enum
+func Eac3PhaseControl_Values() []string {
+	return []string{
+		Eac3PhaseControlShift90Degrees,
+		Eac3PhaseControlNoShift,
+	}
+}
 
 // Choose how the service does stereo downmixing. This setting only applies
 // if you keep the default value of 3/2 - L, R, C, Ls, Rs (CODING_MODE_3_2)
@@ -20734,6 +23361,16 @@ const (
 	Eac3StereoDownmixDpl2 = "DPL2"
 )
 
+// Eac3StereoDownmix_Values returns all elements of the Eac3StereoDownmix enum
+func Eac3StereoDownmix_Values() []string {
+	return []string{
+		Eac3StereoDownmixNotIndicated,
+		Eac3StereoDownmixLoRo,
+		Eac3StereoDownmixLtRt,
+		Eac3StereoDownmixDpl2,
+	}
+}
+
 // When encoding 3/2 audio, sets whether an extra center back surround channel
 // is matrix encoded into the left and right surround channels.
 const (
@@ -20746,6 +23383,15 @@ const (
 	// Eac3SurroundExModeDisabled is a Eac3SurroundExMode enum value
 	Eac3SurroundExModeDisabled = "DISABLED"
 )
+
+// Eac3SurroundExMode_Values returns all elements of the Eac3SurroundExMode enum
+func Eac3SurroundExMode_Values() []string {
+	return []string{
+		Eac3SurroundExModeNotIndicated,
+		Eac3SurroundExModeEnabled,
+		Eac3SurroundExModeDisabled,
+	}
+}
 
 // When encoding 2/0 audio, sets whether Dolby Surround is matrix encoded into
 // the two channels.
@@ -20760,6 +23406,15 @@ const (
 	Eac3SurroundModeDisabled = "DISABLED"
 )
 
+// Eac3SurroundMode_Values returns all elements of the Eac3SurroundMode enum
+func Eac3SurroundMode_Values() []string {
+	return []string{
+		Eac3SurroundModeNotIndicated,
+		Eac3SurroundModeEnabled,
+		Eac3SurroundModeDisabled,
+	}
+}
+
 // Specify whether this set of input captions appears in your outputs in both
 // 608 and 708 format. If you choose Upconvert (UPCONVERT), MediaConvert includes
 // the captions data in two ways: it passes the 608 data through using the 608
@@ -20773,6 +23428,14 @@ const (
 	EmbeddedConvert608To708Disabled = "DISABLED"
 )
 
+// EmbeddedConvert608To708_Values returns all elements of the EmbeddedConvert608To708 enum
+func EmbeddedConvert608To708_Values() []string {
+	return []string{
+		EmbeddedConvert608To708Upconvert,
+		EmbeddedConvert608To708Disabled,
+	}
+}
+
 // By default, the service terminates any unterminated captions at the end of
 // each input. If you want the caption to continue onto your next input, disable
 // this setting.
@@ -20784,6 +23447,14 @@ const (
 	EmbeddedTerminateCaptionsDisabled = "DISABLED"
 )
 
+// EmbeddedTerminateCaptions_Values returns all elements of the EmbeddedTerminateCaptions enum
+func EmbeddedTerminateCaptions_Values() []string {
+	return []string{
+		EmbeddedTerminateCaptionsEndOfInput,
+		EmbeddedTerminateCaptionsDisabled,
+	}
+}
+
 // If set to PROGRESSIVE_DOWNLOAD, the MOOV atom is relocated to the beginning
 // of the archive as required for progressive downloading. Otherwise it is placed
 // normally at the end.
@@ -20794,6 +23465,14 @@ const (
 	// F4vMoovPlacementNormal is a F4vMoovPlacement enum value
 	F4vMoovPlacementNormal = "NORMAL"
 )
+
+// F4vMoovPlacement_Values returns all elements of the F4vMoovPlacement enum
+func F4vMoovPlacement_Values() []string {
+	return []string{
+		F4vMoovPlacementProgressiveDownload,
+		F4vMoovPlacementNormal,
+	}
+}
 
 // Specify whether this set of input captions appears in your outputs in both
 // 608 and 708 format. If you choose Upconvert (UPCONVERT), MediaConvert includes
@@ -20807,6 +23486,14 @@ const (
 	// FileSourceConvert608To708Disabled is a FileSourceConvert608To708 enum value
 	FileSourceConvert608To708Disabled = "DISABLED"
 )
+
+// FileSourceConvert608To708_Values returns all elements of the FileSourceConvert608To708 enum
+func FileSourceConvert608To708_Values() []string {
+	return []string{
+		FileSourceConvert608To708Upconvert,
+		FileSourceConvert608To708Disabled,
+	}
+}
 
 // Provide the font script, using an ISO 15924 script code, if the LanguageCode
 // is not sufficient for determining the script type. Where LanguageCode or
@@ -20822,11 +23509,30 @@ const (
 	FontScriptHant = "HANT"
 )
 
-// Adaptive quantization. Allows intra-frame quantizers to vary to improve visual
-// quality.
+// FontScript_Values returns all elements of the FontScript enum
+func FontScript_Values() []string {
+	return []string{
+		FontScriptAutomatic,
+		FontScriptHans,
+		FontScriptHant,
+	}
+}
+
+// Keep the default value, Auto (AUTO), for this setting to have MediaConvert
+// automatically apply the best types of quantization for your video content.
+// When you want to apply your quantization settings manually, you must set
+// H264AdaptiveQuantization to a value other than Auto (AUTO). Use this setting
+// to specify the strength of any adaptive quantization filters that you enable.
+// If you don't want MediaConvert to do any adaptive quantization in this transcode,
+// set Adaptive quantization (H264AdaptiveQuantization) to Off (OFF). Related
+// settings: The value that you choose here applies to the following settings:
+// H264FlickerAdaptiveQuantization, H264SpatialAdaptiveQuantization, and H264TemporalAdaptiveQuantization.
 const (
 	// H264AdaptiveQuantizationOff is a H264AdaptiveQuantization enum value
 	H264AdaptiveQuantizationOff = "OFF"
+
+	// H264AdaptiveQuantizationAuto is a H264AdaptiveQuantization enum value
+	H264AdaptiveQuantizationAuto = "AUTO"
 
 	// H264AdaptiveQuantizationLow is a H264AdaptiveQuantization enum value
 	H264AdaptiveQuantizationLow = "LOW"
@@ -20843,6 +23549,19 @@ const (
 	// H264AdaptiveQuantizationMax is a H264AdaptiveQuantization enum value
 	H264AdaptiveQuantizationMax = "MAX"
 )
+
+// H264AdaptiveQuantization_Values returns all elements of the H264AdaptiveQuantization enum
+func H264AdaptiveQuantization_Values() []string {
+	return []string{
+		H264AdaptiveQuantizationOff,
+		H264AdaptiveQuantizationAuto,
+		H264AdaptiveQuantizationLow,
+		H264AdaptiveQuantizationMedium,
+		H264AdaptiveQuantizationHigh,
+		H264AdaptiveQuantizationHigher,
+		H264AdaptiveQuantizationMax,
+	}
+}
 
 // Specify an H.264 level that is consistent with your output video settings.
 // If you aren't sure what level to specify, choose Auto (AUTO).
@@ -20899,6 +23618,29 @@ const (
 	H264CodecLevelLevel52 = "LEVEL_5_2"
 )
 
+// H264CodecLevel_Values returns all elements of the H264CodecLevel enum
+func H264CodecLevel_Values() []string {
+	return []string{
+		H264CodecLevelAuto,
+		H264CodecLevelLevel1,
+		H264CodecLevelLevel11,
+		H264CodecLevelLevel12,
+		H264CodecLevelLevel13,
+		H264CodecLevelLevel2,
+		H264CodecLevelLevel21,
+		H264CodecLevelLevel22,
+		H264CodecLevelLevel3,
+		H264CodecLevelLevel31,
+		H264CodecLevelLevel32,
+		H264CodecLevelLevel4,
+		H264CodecLevelLevel41,
+		H264CodecLevelLevel42,
+		H264CodecLevelLevel5,
+		H264CodecLevelLevel51,
+		H264CodecLevelLevel52,
+	}
+}
+
 // H.264 Profile. High 4:2:2 and 10-bit profiles are only available with the
 // AVC-I License.
 const (
@@ -20921,6 +23663,18 @@ const (
 	H264CodecProfileMain = "MAIN"
 )
 
+// H264CodecProfile_Values returns all elements of the H264CodecProfile enum
+func H264CodecProfile_Values() []string {
+	return []string{
+		H264CodecProfileBaseline,
+		H264CodecProfileHigh,
+		H264CodecProfileHigh10bit,
+		H264CodecProfileHigh422,
+		H264CodecProfileHigh42210bit,
+		H264CodecProfileMain,
+	}
+}
+
 // Choose Adaptive to improve subjective video quality for high-motion content.
 // This will cause the service to use fewer B-frames (which infer information
 // based on other frames) for high-motion portions of the video and more B-frames
@@ -20934,6 +23688,14 @@ const (
 	H264DynamicSubGopStatic = "STATIC"
 )
 
+// H264DynamicSubGop_Values returns all elements of the H264DynamicSubGop enum
+func H264DynamicSubGop_Values() []string {
+	return []string{
+		H264DynamicSubGopAdaptive,
+		H264DynamicSubGopStatic,
+	}
+}
+
 // Entropy encoding mode. Use CABAC (must be in Main or High profile) or CAVLC.
 const (
 	// H264EntropyEncodingCabac is a H264EntropyEncoding enum value
@@ -20943,7 +23705,17 @@ const (
 	H264EntropyEncodingCavlc = "CAVLC"
 )
 
-// Choosing FORCE_FIELD disables PAFF encoding for interlaced outputs.
+// H264EntropyEncoding_Values returns all elements of the H264EntropyEncoding enum
+func H264EntropyEncoding_Values() []string {
+	return []string{
+		H264EntropyEncodingCabac,
+		H264EntropyEncodingCavlc,
+	}
+}
+
+// Keep the default value, PAFF, to have MediaConvert use PAFF encoding for
+// interlaced outputs. Choose Force field (FORCE_FIELD) to disable PAFF encoding
+// and create separate interlaced fields.
 const (
 	// H264FieldEncodingPaff is a H264FieldEncoding enum value
 	H264FieldEncodingPaff = "PAFF"
@@ -20952,7 +23724,27 @@ const (
 	H264FieldEncodingForceField = "FORCE_FIELD"
 )
 
-// Adjust quantization within each frame to reduce flicker or 'pop' on I-frames.
+// H264FieldEncoding_Values returns all elements of the H264FieldEncoding enum
+func H264FieldEncoding_Values() []string {
+	return []string{
+		H264FieldEncodingPaff,
+		H264FieldEncodingForceField,
+	}
+}
+
+// Only use this setting when you change the default value, AUTO, for the setting
+// H264AdaptiveQuantization. When you keep all defaults, excluding H264AdaptiveQuantization
+// and all other adaptive quantization from your JSON job specification, MediaConvert
+// automatically applies the best types of quantization for your video content.
+// When you set H264AdaptiveQuantization to a value other than AUTO, the default
+// value for H264FlickerAdaptiveQuantization is Disabled (DISABLED). Change
+// this value to Enabled (ENABLED) to reduce I-frame pop. I-frame pop appears
+// as a visual flicker that can arise when the encoder saves bits by copying
+// some macroblocks many times from frame to frame, and then refreshes them
+// at the I-frame. When you enable this setting, the encoder updates these macroblocks
+// slightly more often to smooth out the flicker. To manually enable or disable
+// H264FlickerAdaptiveQuantization, you must set Adaptive quantization (H264AdaptiveQuantization)
+// to a value other than AUTO.
 const (
 	// H264FlickerAdaptiveQuantizationDisabled is a H264FlickerAdaptiveQuantization enum value
 	H264FlickerAdaptiveQuantizationDisabled = "DISABLED"
@@ -20960,6 +23752,14 @@ const (
 	// H264FlickerAdaptiveQuantizationEnabled is a H264FlickerAdaptiveQuantization enum value
 	H264FlickerAdaptiveQuantizationEnabled = "ENABLED"
 )
+
+// H264FlickerAdaptiveQuantization_Values returns all elements of the H264FlickerAdaptiveQuantization enum
+func H264FlickerAdaptiveQuantization_Values() []string {
+	return []string{
+		H264FlickerAdaptiveQuantizationDisabled,
+		H264FlickerAdaptiveQuantizationEnabled,
+	}
+}
 
 // If you are using the console, use the Framerate setting to specify the frame
 // rate for this output. If you want to keep the same frame rate as the input
@@ -20980,15 +23780,43 @@ const (
 	H264FramerateControlSpecified = "SPECIFIED"
 )
 
-// Optional. Specify how the transcoder performs framerate conversion. The default
-// behavior is to use duplicate drop conversion.
+// H264FramerateControl_Values returns all elements of the H264FramerateControl enum
+func H264FramerateControl_Values() []string {
+	return []string{
+		H264FramerateControlInitializeFromSource,
+		H264FramerateControlSpecified,
+	}
+}
+
+// Choose the method that you want MediaConvert to use when increasing or decreasing
+// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+// smooth picture, but might introduce undesirable video artifacts. For complex
+// frame rate conversions, especially if your source video has already been
+// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+// motion-compensated interpolation. FrameFormer chooses the best conversion
+// method frame by frame. Note that using FrameFormer increases the transcoding
+// time and incurs a significant add-on cost.
 const (
 	// H264FramerateConversionAlgorithmDuplicateDrop is a H264FramerateConversionAlgorithm enum value
 	H264FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
 
 	// H264FramerateConversionAlgorithmInterpolate is a H264FramerateConversionAlgorithm enum value
 	H264FramerateConversionAlgorithmInterpolate = "INTERPOLATE"
+
+	// H264FramerateConversionAlgorithmFrameformer is a H264FramerateConversionAlgorithm enum value
+	H264FramerateConversionAlgorithmFrameformer = "FRAMEFORMER"
 )
+
+// H264FramerateConversionAlgorithm_Values returns all elements of the H264FramerateConversionAlgorithm enum
+func H264FramerateConversionAlgorithm_Values() []string {
+	return []string{
+		H264FramerateConversionAlgorithmDuplicateDrop,
+		H264FramerateConversionAlgorithmInterpolate,
+		H264FramerateConversionAlgorithmFrameformer,
+	}
+}
 
 // If enable, use reference B frames for GOP structures that have B frames >
 // 1.
@@ -21000,6 +23828,14 @@ const (
 	H264GopBReferenceEnabled = "ENABLED"
 )
 
+// H264GopBReference_Values returns all elements of the H264GopBReference enum
+func H264GopBReference_Values() []string {
+	return []string{
+		H264GopBReferenceDisabled,
+		H264GopBReferenceEnabled,
+	}
+}
+
 // Indicates if the GOP Size in H264 is specified in frames or seconds. If seconds
 // the system will convert the GOP Size into a frame count at run time.
 const (
@@ -21010,17 +23846,26 @@ const (
 	H264GopSizeUnitsSeconds = "SECONDS"
 )
 
-// Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
-// * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
-// interlaced output with the entire output having the same field polarity (top
-// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
-// Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
-// behavior depends on the input scan type, as follows. - If the source is interlaced,
-// the output will be interlaced with the same polarity as the source (it will
-// follow the source). The output could therefore be a mix of "top field first"
-// and "bottom field first". - If the source is progressive, the output will
-// be interlaced with "top field first" or "bottom field first" polarity, depending
-// on which of the Follow options you chose.
+// H264GopSizeUnits_Values returns all elements of the H264GopSizeUnits enum
+func H264GopSizeUnits_Values() []string {
+	return []string{
+		H264GopSizeUnitsFrames,
+		H264GopSizeUnitsSeconds,
+	}
+}
+
+// Choose the scan line type for the output. Keep the default value, Progressive
+// (PROGRESSIVE) to create a progressive output, regardless of the scan type
+// of your input. Use Top field first (TOP_FIELD) or Bottom field first (BOTTOM_FIELD)
+// to create an output that's interlaced with the same field polarity throughout.
+// Use Follow, default top (FOLLOW_TOP_FIELD) or Follow, default bottom (FOLLOW_BOTTOM_FIELD)
+// to produce outputs with the same field polarity as the source. For jobs that
+// have multiple inputs, the output field polarity might change over the course
+// of the output. Follow behavior depends on the input scan type. If the source
+// is interlaced, the output will be interlaced with the same polarity as the
+// source. If the source is progressive, the output will be interlaced with
+// top field bottom field first, depending on which of the Follow options you
+// choose.
 const (
 	// H264InterlaceModeProgressive is a H264InterlaceMode enum value
 	H264InterlaceModeProgressive = "PROGRESSIVE"
@@ -21038,12 +23883,24 @@ const (
 	H264InterlaceModeFollowBottomField = "FOLLOW_BOTTOM_FIELD"
 )
 
+// H264InterlaceMode_Values returns all elements of the H264InterlaceMode enum
+func H264InterlaceMode_Values() []string {
+	return []string{
+		H264InterlaceModeProgressive,
+		H264InterlaceModeTopField,
+		H264InterlaceModeBottomField,
+		H264InterlaceModeFollowTopField,
+		H264InterlaceModeFollowBottomField,
+	}
+}
+
 // Optional. Specify how the service determines the pixel aspect ratio (PAR)
 // for this output. The default behavior, Follow source (INITIALIZE_FROM_SOURCE),
-// uses the PAR from your input video for your output. To use a different PAR,
-// choose (SPECIFIED). In the console, SPECIFIED corresponds to any value other
-// than Follow source. When you choose SPECIFIED for this setting, you must
-// also specify values for the parNumerator and parDenominator settings.
+// uses the PAR from your input video for your output. To specify a different
+// PAR in the console, choose any value other than Follow source. To specify
+// a different PAR by editing the JSON job specification, choose SPECIFIED.
+// When you choose SPECIFIED for this setting, you must also specify values
+// for the parNumerator and parDenominator settings.
 const (
 	// H264ParControlInitializeFromSource is a H264ParControl enum value
 	H264ParControlInitializeFromSource = "INITIALIZE_FROM_SOURCE"
@@ -21051,6 +23908,14 @@ const (
 	// H264ParControlSpecified is a H264ParControl enum value
 	H264ParControlSpecified = "SPECIFIED"
 )
+
+// H264ParControl_Values returns all elements of the H264ParControl enum
+func H264ParControl_Values() []string {
+	return []string{
+		H264ParControlInitializeFromSource,
+		H264ParControlSpecified,
+	}
+}
 
 // Optional. Use Quality tuning level (qualityTuningLevel) to choose how you
 // want to trade off encoding speed for output video quality. The default behavior
@@ -21066,6 +23931,15 @@ const (
 	H264QualityTuningLevelMultiPassHq = "MULTI_PASS_HQ"
 )
 
+// H264QualityTuningLevel_Values returns all elements of the H264QualityTuningLevel enum
+func H264QualityTuningLevel_Values() []string {
+	return []string{
+		H264QualityTuningLevelSinglePass,
+		H264QualityTuningLevelSinglePassHq,
+		H264QualityTuningLevelMultiPassHq,
+	}
+}
+
 // Use this setting to specify whether this output has a variable bitrate (VBR),
 // constant bitrate (CBR) or quality-defined variable bitrate (QVBR).
 const (
@@ -21079,6 +23953,15 @@ const (
 	H264RateControlModeQvbr = "QVBR"
 )
 
+// H264RateControlMode_Values returns all elements of the H264RateControlMode enum
+func H264RateControlMode_Values() []string {
+	return []string{
+		H264RateControlModeVbr,
+		H264RateControlModeCbr,
+		H264RateControlModeQvbr,
+	}
+}
+
 // Places a PPS header on each encoded picture, even if repeated.
 const (
 	// H264RepeatPpsDisabled is a H264RepeatPps enum value
@@ -21087,6 +23970,14 @@ const (
 	// H264RepeatPpsEnabled is a H264RepeatPps enum value
 	H264RepeatPpsEnabled = "ENABLED"
 )
+
+// H264RepeatPps_Values returns all elements of the H264RepeatPps enum
+func H264RepeatPps_Values() []string {
+	return []string{
+		H264RepeatPpsDisabled,
+		H264RepeatPpsEnabled,
+	}
+}
 
 // Enable this setting to insert I-frames at scene changes that the service
 // automatically detects. This improves video quality and is enabled by default.
@@ -21104,8 +23995,23 @@ const (
 	H264SceneChangeDetectTransitionDetection = "TRANSITION_DETECTION"
 )
 
-// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
-// as 25fps, and audio is sped up correspondingly.
+// H264SceneChangeDetect_Values returns all elements of the H264SceneChangeDetect enum
+func H264SceneChangeDetect_Values() []string {
+	return []string{
+		H264SceneChangeDetectDisabled,
+		H264SceneChangeDetectEnabled,
+		H264SceneChangeDetectTransitionDetection,
+	}
+}
+
+// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+// second (fps). Enable slow PAL to create a 25 fps output. When you enable
+// slow PAL, MediaConvert relabels the video frames to 25 fps and resamples
+// your audio to keep it synchronized with the video. Note that enabling this
+// setting will slightly reduce the duration of your video. Required settings:
+// You must also set Framerate to 25. In your JSON job specification, set (framerateControl)
+// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+// 1.
 const (
 	// H264SlowPalDisabled is a H264SlowPal enum value
 	H264SlowPalDisabled = "DISABLED"
@@ -21114,8 +24020,37 @@ const (
 	H264SlowPalEnabled = "ENABLED"
 )
 
-// Adjust quantization within each frame based on spatial variation of content
-// complexity.
+// H264SlowPal_Values returns all elements of the H264SlowPal enum
+func H264SlowPal_Values() []string {
+	return []string{
+		H264SlowPalDisabled,
+		H264SlowPalEnabled,
+	}
+}
+
+// Only use this setting when you change the default value, Auto (AUTO), for
+// the setting H264AdaptiveQuantization. When you keep all defaults, excluding
+// H264AdaptiveQuantization and all other adaptive quantization from your JSON
+// job specification, MediaConvert automatically applies the best types of quantization
+// for your video content. When you set H264AdaptiveQuantization to a value
+// other than AUTO, the default value for H264SpatialAdaptiveQuantization is
+// Enabled (ENABLED). Keep this default value to adjust quantization within
+// each frame based on spatial variation of content complexity. When you enable
+// this feature, the encoder uses fewer bits on areas that can sustain more
+// distortion with no noticeable visual degradation and uses more bits on areas
+// where any small distortion will be noticeable. For example, complex textured
+// blocks are encoded with fewer bits and smooth textured blocks are encoded
+// with more bits. Enabling this feature will almost always improve your video
+// quality. Note, though, that this feature doesn't take into account where
+// the viewer's attention is likely to be. If viewers are likely to be focusing
+// their attention on a part of the screen with a lot of complex texture, you
+// might choose to set H264SpatialAdaptiveQuantization to Disabled (DISABLED).
+// Related setting: When you enable spatial adaptive quantization, set the value
+// for Adaptive quantization (H264AdaptiveQuantization) depending on your content.
+// For homogeneous content, such as cartoons and video games, set it to Low.
+// For content with a wider variety of textures, set it to High or Higher. To
+// manually enable or disable H264SpatialAdaptiveQuantization, you must set
+// Adaptive quantization (H264AdaptiveQuantization) to a value other than AUTO.
 const (
 	// H264SpatialAdaptiveQuantizationDisabled is a H264SpatialAdaptiveQuantization enum value
 	H264SpatialAdaptiveQuantizationDisabled = "DISABLED"
@@ -21123,6 +24058,14 @@ const (
 	// H264SpatialAdaptiveQuantizationEnabled is a H264SpatialAdaptiveQuantization enum value
 	H264SpatialAdaptiveQuantizationEnabled = "ENABLED"
 )
+
+// H264SpatialAdaptiveQuantization_Values returns all elements of the H264SpatialAdaptiveQuantization enum
+func H264SpatialAdaptiveQuantization_Values() []string {
+	return []string{
+		H264SpatialAdaptiveQuantizationDisabled,
+		H264SpatialAdaptiveQuantizationEnabled,
+	}
+}
 
 // Produces a bitstream compliant with SMPTE RP-2027.
 const (
@@ -21133,13 +24076,22 @@ const (
 	H264SyntaxRp2027 = "RP2027"
 )
 
-// This field applies only if the Streams > Advanced > Framerate (framerate)
-// field is set to 29.970. This field works with the Streams > Advanced > Preprocessors
-// > Deinterlacer field (deinterlace_mode) and the Streams > Advanced > Interlaced
-// Mode field (interlace_mode) to identify the scan type for the output: Progressive,
-// Interlaced, Hard Telecine or Soft Telecine. - Hard: produces 29.97i output
-// from 23.976 input. - Soft: produces 23.976; the player converts this output
-// to 29.97i.
+// H264Syntax_Values returns all elements of the H264Syntax enum
+func H264Syntax_Values() []string {
+	return []string{
+		H264SyntaxDefault,
+		H264SyntaxRp2027,
+	}
+}
+
+// When you do frame rate conversion from 23.976 frames per second (fps) to
+// 29.97 fps, and your output scan type is interlaced, you can optionally enable
+// hard or soft telecine to create a smoother picture. Hard telecine (HARD)
+// produces a 29.97i output. Soft telecine (SOFT) produces an output with a
+// 23.976 output that signals to the video player device to do the conversion
+// during play back. When you keep the default value, None (NONE), MediaConvert
+// does a standard frame rate conversion to 29.97 without doing anything with
+// the field polarity to create a smoother picture.
 const (
 	// H264TelecineNone is a H264Telecine enum value
 	H264TelecineNone = "NONE"
@@ -21151,8 +24103,36 @@ const (
 	H264TelecineHard = "HARD"
 )
 
-// Adjust quantization within each frame based on temporal variation of content
-// complexity.
+// H264Telecine_Values returns all elements of the H264Telecine enum
+func H264Telecine_Values() []string {
+	return []string{
+		H264TelecineNone,
+		H264TelecineSoft,
+		H264TelecineHard,
+	}
+}
+
+// Only use this setting when you change the default value, AUTO, for the setting
+// H264AdaptiveQuantization. When you keep all defaults, excluding H264AdaptiveQuantization
+// and all other adaptive quantization from your JSON job specification, MediaConvert
+// automatically applies the best types of quantization for your video content.
+// When you set H264AdaptiveQuantization to a value other than AUTO, the default
+// value for H264TemporalAdaptiveQuantization is Enabled (ENABLED). Keep this
+// default value to adjust quantization within each frame based on temporal
+// variation of content complexity. When you enable this feature, the encoder
+// uses fewer bits on areas of the frame that aren't moving and uses more bits
+// on complex objects with sharp edges that move a lot. For example, this feature
+// improves the readability of text tickers on newscasts and scoreboards on
+// sports matches. Enabling this feature will almost always improve your video
+// quality. Note, though, that this feature doesn't take into account where
+// the viewer's attention is likely to be. If viewers are likely to be focusing
+// their attention on a part of the screen that doesn't have moving objects
+// with sharp edges, such as sports athletes' faces, you might choose to set
+// H264TemporalAdaptiveQuantization to Disabled (DISABLED). Related setting:
+// When you enable temporal quantization, adjust the strength of the filter
+// with the setting Adaptive quantization (adaptiveQuantization). To manually
+// enable or disable H264TemporalAdaptiveQuantization, you must set Adaptive
+// quantization (H264AdaptiveQuantization) to a value other than AUTO.
 const (
 	// H264TemporalAdaptiveQuantizationDisabled is a H264TemporalAdaptiveQuantization enum value
 	H264TemporalAdaptiveQuantizationDisabled = "DISABLED"
@@ -21160,6 +24140,14 @@ const (
 	// H264TemporalAdaptiveQuantizationEnabled is a H264TemporalAdaptiveQuantization enum value
 	H264TemporalAdaptiveQuantizationEnabled = "ENABLED"
 )
+
+// H264TemporalAdaptiveQuantization_Values returns all elements of the H264TemporalAdaptiveQuantization enum
+func H264TemporalAdaptiveQuantization_Values() []string {
+	return []string{
+		H264TemporalAdaptiveQuantizationDisabled,
+		H264TemporalAdaptiveQuantizationEnabled,
+	}
+}
 
 // Inserts timecode for each frame as 4 bytes of an unregistered SEI message.
 const (
@@ -21170,8 +24158,18 @@ const (
 	H264UnregisteredSeiTimecodeEnabled = "ENABLED"
 )
 
-// Adaptive quantization. Allows intra-frame quantizers to vary to improve visual
-// quality.
+// H264UnregisteredSeiTimecode_Values returns all elements of the H264UnregisteredSeiTimecode enum
+func H264UnregisteredSeiTimecode_Values() []string {
+	return []string{
+		H264UnregisteredSeiTimecodeDisabled,
+		H264UnregisteredSeiTimecodeEnabled,
+	}
+}
+
+// Specify the strength of any adaptive quantization filters that you enable.
+// The value that you choose here applies to the following settings: Flicker
+// adaptive quantization (flickerAdaptiveQuantization), Spatial adaptive quantization
+// (spatialAdaptiveQuantization), and Temporal adaptive quantization (temporalAdaptiveQuantization).
 const (
 	// H265AdaptiveQuantizationOff is a H265AdaptiveQuantization enum value
 	H265AdaptiveQuantizationOff = "OFF"
@@ -21192,6 +24190,18 @@ const (
 	H265AdaptiveQuantizationMax = "MAX"
 )
 
+// H265AdaptiveQuantization_Values returns all elements of the H265AdaptiveQuantization enum
+func H265AdaptiveQuantization_Values() []string {
+	return []string{
+		H265AdaptiveQuantizationOff,
+		H265AdaptiveQuantizationLow,
+		H265AdaptiveQuantizationMedium,
+		H265AdaptiveQuantizationHigh,
+		H265AdaptiveQuantizationHigher,
+		H265AdaptiveQuantizationMax,
+	}
+}
+
 // Enables Alternate Transfer Function SEI message for outputs using Hybrid
 // Log Gamma (HLG) Electro-Optical Transfer Function (EOTF).
 const (
@@ -21201,6 +24211,14 @@ const (
 	// H265AlternateTransferFunctionSeiEnabled is a H265AlternateTransferFunctionSei enum value
 	H265AlternateTransferFunctionSeiEnabled = "ENABLED"
 )
+
+// H265AlternateTransferFunctionSei_Values returns all elements of the H265AlternateTransferFunctionSei enum
+func H265AlternateTransferFunctionSei_Values() []string {
+	return []string{
+		H265AlternateTransferFunctionSeiDisabled,
+		H265AlternateTransferFunctionSeiEnabled,
+	}
+}
 
 // H.265 Level.
 const (
@@ -21247,6 +24265,26 @@ const (
 	H265CodecLevelLevel62 = "LEVEL_6_2"
 )
 
+// H265CodecLevel_Values returns all elements of the H265CodecLevel enum
+func H265CodecLevel_Values() []string {
+	return []string{
+		H265CodecLevelAuto,
+		H265CodecLevelLevel1,
+		H265CodecLevelLevel2,
+		H265CodecLevelLevel21,
+		H265CodecLevelLevel3,
+		H265CodecLevelLevel31,
+		H265CodecLevelLevel4,
+		H265CodecLevelLevel41,
+		H265CodecLevelLevel5,
+		H265CodecLevelLevel51,
+		H265CodecLevelLevel52,
+		H265CodecLevelLevel6,
+		H265CodecLevelLevel61,
+		H265CodecLevelLevel62,
+	}
+}
+
 // Represents the Profile and Tier, per the HEVC (H.265) specification. Selections
 // are grouped as [Profile] / [Tier], so "Main/High" represents Main Profile
 // with High Tier. 4:2:2 profiles are only available with the HEVC 4:2:2 License.
@@ -21276,6 +24314,20 @@ const (
 	H265CodecProfileMain42210bitHigh = "MAIN_422_10BIT_HIGH"
 )
 
+// H265CodecProfile_Values returns all elements of the H265CodecProfile enum
+func H265CodecProfile_Values() []string {
+	return []string{
+		H265CodecProfileMainMain,
+		H265CodecProfileMainHigh,
+		H265CodecProfileMain10Main,
+		H265CodecProfileMain10High,
+		H265CodecProfileMain4228bitMain,
+		H265CodecProfileMain4228bitHigh,
+		H265CodecProfileMain42210bitMain,
+		H265CodecProfileMain42210bitHigh,
+	}
+}
+
 // Choose Adaptive to improve subjective video quality for high-motion content.
 // This will cause the service to use fewer B-frames (which infer information
 // based on other frames) for high-motion portions of the video and more B-frames
@@ -21289,7 +24341,21 @@ const (
 	H265DynamicSubGopStatic = "STATIC"
 )
 
-// Adjust quantization within each frame to reduce flicker or 'pop' on I-frames.
+// H265DynamicSubGop_Values returns all elements of the H265DynamicSubGop enum
+func H265DynamicSubGop_Values() []string {
+	return []string{
+		H265DynamicSubGopAdaptive,
+		H265DynamicSubGopStatic,
+	}
+}
+
+// Enable this setting to have the encoder reduce I-frame pop. I-frame pop appears
+// as a visual flicker that can arise when the encoder saves bits by copying
+// some macroblocks many times from frame to frame, and then refreshes them
+// at the I-frame. When you enable this setting, the encoder updates these macroblocks
+// slightly more often to smooth out the flicker. This setting is disabled by
+// default. Related setting: In addition to enabling this setting, you must
+// also set adaptiveQuantization to a value other than Off (OFF).
 const (
 	// H265FlickerAdaptiveQuantizationDisabled is a H265FlickerAdaptiveQuantization enum value
 	H265FlickerAdaptiveQuantizationDisabled = "DISABLED"
@@ -21297,6 +24363,14 @@ const (
 	// H265FlickerAdaptiveQuantizationEnabled is a H265FlickerAdaptiveQuantization enum value
 	H265FlickerAdaptiveQuantizationEnabled = "ENABLED"
 )
+
+// H265FlickerAdaptiveQuantization_Values returns all elements of the H265FlickerAdaptiveQuantization enum
+func H265FlickerAdaptiveQuantization_Values() []string {
+	return []string{
+		H265FlickerAdaptiveQuantizationDisabled,
+		H265FlickerAdaptiveQuantizationEnabled,
+	}
+}
 
 // If you are using the console, use the Framerate setting to specify the frame
 // rate for this output. If you want to keep the same frame rate as the input
@@ -21317,14 +24391,43 @@ const (
 	H265FramerateControlSpecified = "SPECIFIED"
 )
 
-// When set to INTERPOLATE, produces smoother motion during frame rate conversion.
+// H265FramerateControl_Values returns all elements of the H265FramerateControl enum
+func H265FramerateControl_Values() []string {
+	return []string{
+		H265FramerateControlInitializeFromSource,
+		H265FramerateControlSpecified,
+	}
+}
+
+// Choose the method that you want MediaConvert to use when increasing or decreasing
+// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+// smooth picture, but might introduce undesirable video artifacts. For complex
+// frame rate conversions, especially if your source video has already been
+// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+// motion-compensated interpolation. FrameFormer chooses the best conversion
+// method frame by frame. Note that using FrameFormer increases the transcoding
+// time and incurs a significant add-on cost.
 const (
 	// H265FramerateConversionAlgorithmDuplicateDrop is a H265FramerateConversionAlgorithm enum value
 	H265FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
 
 	// H265FramerateConversionAlgorithmInterpolate is a H265FramerateConversionAlgorithm enum value
 	H265FramerateConversionAlgorithmInterpolate = "INTERPOLATE"
+
+	// H265FramerateConversionAlgorithmFrameformer is a H265FramerateConversionAlgorithm enum value
+	H265FramerateConversionAlgorithmFrameformer = "FRAMEFORMER"
 )
+
+// H265FramerateConversionAlgorithm_Values returns all elements of the H265FramerateConversionAlgorithm enum
+func H265FramerateConversionAlgorithm_Values() []string {
+	return []string{
+		H265FramerateConversionAlgorithmDuplicateDrop,
+		H265FramerateConversionAlgorithmInterpolate,
+		H265FramerateConversionAlgorithmFrameformer,
+	}
+}
 
 // If enable, use reference B frames for GOP structures that have B frames >
 // 1.
@@ -21336,6 +24439,14 @@ const (
 	H265GopBReferenceEnabled = "ENABLED"
 )
 
+// H265GopBReference_Values returns all elements of the H265GopBReference enum
+func H265GopBReference_Values() []string {
+	return []string{
+		H265GopBReferenceDisabled,
+		H265GopBReferenceEnabled,
+	}
+}
+
 // Indicates if the GOP Size in H265 is specified in frames or seconds. If seconds
 // the system will convert the GOP Size into a frame count at run time.
 const (
@@ -21346,18 +24457,26 @@ const (
 	H265GopSizeUnitsSeconds = "SECONDS"
 )
 
-// Choose the scan line type for the output. Choose Progressive (PROGRESSIVE)
-// to create a progressive output, regardless of the scan type of your input.
-// Choose Top Field First (TOP_FIELD) or Bottom Field First (BOTTOM_FIELD) to
-// create an output that's interlaced with the same field polarity throughout.
-// Choose Follow, Default Top (FOLLOW_TOP_FIELD) or Follow, Default Bottom (FOLLOW_BOTTOM_FIELD)
-// to create an interlaced output with the same field polarity as the source.
-// If the source is interlaced, the output will be interlaced with the same
-// polarity as the source (it will follow the source). The output could therefore
-// be a mix of "top field first" and "bottom field first". If the source is
-// progressive, your output will be interlaced with "top field first" or "bottom
-// field first" polarity, depending on which of the Follow options you chose.
-// If you don't choose a value, the service will default to Progressive (PROGRESSIVE).
+// H265GopSizeUnits_Values returns all elements of the H265GopSizeUnits enum
+func H265GopSizeUnits_Values() []string {
+	return []string{
+		H265GopSizeUnitsFrames,
+		H265GopSizeUnitsSeconds,
+	}
+}
+
+// Choose the scan line type for the output. Keep the default value, Progressive
+// (PROGRESSIVE) to create a progressive output, regardless of the scan type
+// of your input. Use Top field first (TOP_FIELD) or Bottom field first (BOTTOM_FIELD)
+// to create an output that's interlaced with the same field polarity throughout.
+// Use Follow, default top (FOLLOW_TOP_FIELD) or Follow, default bottom (FOLLOW_BOTTOM_FIELD)
+// to produce outputs with the same field polarity as the source. For jobs that
+// have multiple inputs, the output field polarity might change over the course
+// of the output. Follow behavior depends on the input scan type. If the source
+// is interlaced, the output will be interlaced with the same polarity as the
+// source. If the source is progressive, the output will be interlaced with
+// top field bottom field first, depending on which of the Follow options you
+// choose.
 const (
 	// H265InterlaceModeProgressive is a H265InterlaceMode enum value
 	H265InterlaceModeProgressive = "PROGRESSIVE"
@@ -21375,12 +24494,24 @@ const (
 	H265InterlaceModeFollowBottomField = "FOLLOW_BOTTOM_FIELD"
 )
 
+// H265InterlaceMode_Values returns all elements of the H265InterlaceMode enum
+func H265InterlaceMode_Values() []string {
+	return []string{
+		H265InterlaceModeProgressive,
+		H265InterlaceModeTopField,
+		H265InterlaceModeBottomField,
+		H265InterlaceModeFollowTopField,
+		H265InterlaceModeFollowBottomField,
+	}
+}
+
 // Optional. Specify how the service determines the pixel aspect ratio (PAR)
 // for this output. The default behavior, Follow source (INITIALIZE_FROM_SOURCE),
-// uses the PAR from your input video for your output. To use a different PAR,
-// choose (SPECIFIED). In the console, SPECIFIED corresponds to any value other
-// than Follow source. When you choose SPECIFIED for this setting, you must
-// also specify values for the parNumerator and parDenominator settings.
+// uses the PAR from your input video for your output. To specify a different
+// PAR in the console, choose any value other than Follow source. To specify
+// a different PAR by editing the JSON job specification, choose SPECIFIED.
+// When you choose SPECIFIED for this setting, you must also specify values
+// for the parNumerator and parDenominator settings.
 const (
 	// H265ParControlInitializeFromSource is a H265ParControl enum value
 	H265ParControlInitializeFromSource = "INITIALIZE_FROM_SOURCE"
@@ -21388,6 +24519,14 @@ const (
 	// H265ParControlSpecified is a H265ParControl enum value
 	H265ParControlSpecified = "SPECIFIED"
 )
+
+// H265ParControl_Values returns all elements of the H265ParControl enum
+func H265ParControl_Values() []string {
+	return []string{
+		H265ParControlInitializeFromSource,
+		H265ParControlSpecified,
+	}
+}
 
 // Optional. Use Quality tuning level (qualityTuningLevel) to choose how you
 // want to trade off encoding speed for output video quality. The default behavior
@@ -21403,6 +24542,15 @@ const (
 	H265QualityTuningLevelMultiPassHq = "MULTI_PASS_HQ"
 )
 
+// H265QualityTuningLevel_Values returns all elements of the H265QualityTuningLevel enum
+func H265QualityTuningLevel_Values() []string {
+	return []string{
+		H265QualityTuningLevelSinglePass,
+		H265QualityTuningLevelSinglePassHq,
+		H265QualityTuningLevelMultiPassHq,
+	}
+}
+
 // Use this setting to specify whether this output has a variable bitrate (VBR),
 // constant bitrate (CBR) or quality-defined variable bitrate (QVBR).
 const (
@@ -21416,6 +24564,15 @@ const (
 	H265RateControlModeQvbr = "QVBR"
 )
 
+// H265RateControlMode_Values returns all elements of the H265RateControlMode enum
+func H265RateControlMode_Values() []string {
+	return []string{
+		H265RateControlModeVbr,
+		H265RateControlModeCbr,
+		H265RateControlModeQvbr,
+	}
+}
+
 // Specify Sample Adaptive Offset (SAO) filter strength. Adaptive mode dynamically
 // selects best strength based on content
 const (
@@ -21428,6 +24585,15 @@ const (
 	// H265SampleAdaptiveOffsetFilterModeOff is a H265SampleAdaptiveOffsetFilterMode enum value
 	H265SampleAdaptiveOffsetFilterModeOff = "OFF"
 )
+
+// H265SampleAdaptiveOffsetFilterMode_Values returns all elements of the H265SampleAdaptiveOffsetFilterMode enum
+func H265SampleAdaptiveOffsetFilterMode_Values() []string {
+	return []string{
+		H265SampleAdaptiveOffsetFilterModeDefault,
+		H265SampleAdaptiveOffsetFilterModeAdaptive,
+		H265SampleAdaptiveOffsetFilterModeOff,
+	}
+}
 
 // Enable this setting to insert I-frames at scene changes that the service
 // automatically detects. This improves video quality and is enabled by default.
@@ -21445,8 +24611,23 @@ const (
 	H265SceneChangeDetectTransitionDetection = "TRANSITION_DETECTION"
 )
 
-// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
-// as 25fps, and audio is sped up correspondingly.
+// H265SceneChangeDetect_Values returns all elements of the H265SceneChangeDetect enum
+func H265SceneChangeDetect_Values() []string {
+	return []string{
+		H265SceneChangeDetectDisabled,
+		H265SceneChangeDetectEnabled,
+		H265SceneChangeDetectTransitionDetection,
+	}
+}
+
+// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+// second (fps). Enable slow PAL to create a 25 fps output. When you enable
+// slow PAL, MediaConvert relabels the video frames to 25 fps and resamples
+// your audio to keep it synchronized with the video. Note that enabling this
+// setting will slightly reduce the duration of your video. Required settings:
+// You must also set Framerate to 25. In your JSON job specification, set (framerateControl)
+// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+// 1.
 const (
 	// H265SlowPalDisabled is a H265SlowPal enum value
 	H265SlowPalDisabled = "DISABLED"
@@ -21455,8 +24636,29 @@ const (
 	H265SlowPalEnabled = "ENABLED"
 )
 
-// Adjust quantization within each frame based on spatial variation of content
-// complexity.
+// H265SlowPal_Values returns all elements of the H265SlowPal enum
+func H265SlowPal_Values() []string {
+	return []string{
+		H265SlowPalDisabled,
+		H265SlowPalEnabled,
+	}
+}
+
+// Keep the default value, Enabled (ENABLED), to adjust quantization within
+// each frame based on spatial variation of content complexity. When you enable
+// this feature, the encoder uses fewer bits on areas that can sustain more
+// distortion with no noticeable visual degradation and uses more bits on areas
+// where any small distortion will be noticeable. For example, complex textured
+// blocks are encoded with fewer bits and smooth textured blocks are encoded
+// with more bits. Enabling this feature will almost always improve your video
+// quality. Note, though, that this feature doesn't take into account where
+// the viewer's attention is likely to be. If viewers are likely to be focusing
+// their attention on a part of the screen with a lot of complex texture, you
+// might choose to disable this feature. Related setting: When you enable spatial
+// adaptive quantization, set the value for Adaptive quantization (adaptiveQuantization)
+// depending on your content. For homogeneous content, such as cartoons and
+// video games, set it to Low. For content with a wider variety of textures,
+// set it to High or Higher.
 const (
 	// H265SpatialAdaptiveQuantizationDisabled is a H265SpatialAdaptiveQuantization enum value
 	H265SpatialAdaptiveQuantizationDisabled = "DISABLED"
@@ -21464,6 +24666,14 @@ const (
 	// H265SpatialAdaptiveQuantizationEnabled is a H265SpatialAdaptiveQuantization enum value
 	H265SpatialAdaptiveQuantizationEnabled = "ENABLED"
 )
+
+// H265SpatialAdaptiveQuantization_Values returns all elements of the H265SpatialAdaptiveQuantization enum
+func H265SpatialAdaptiveQuantization_Values() []string {
+	return []string{
+		H265SpatialAdaptiveQuantizationDisabled,
+		H265SpatialAdaptiveQuantizationEnabled,
+	}
+}
 
 // This field applies only if the Streams > Advanced > Framerate (framerate)
 // field is set to 29.970. This field works with the Streams > Advanced > Preprocessors
@@ -21483,8 +24693,28 @@ const (
 	H265TelecineHard = "HARD"
 )
 
-// Adjust quantization within each frame based on temporal variation of content
-// complexity.
+// H265Telecine_Values returns all elements of the H265Telecine enum
+func H265Telecine_Values() []string {
+	return []string{
+		H265TelecineNone,
+		H265TelecineSoft,
+		H265TelecineHard,
+	}
+}
+
+// Keep the default value, Enabled (ENABLED), to adjust quantization within
+// each frame based on temporal variation of content complexity. When you enable
+// this feature, the encoder uses fewer bits on areas of the frame that aren't
+// moving and uses more bits on complex objects with sharp edges that move a
+// lot. For example, this feature improves the readability of text tickers on
+// newscasts and scoreboards on sports matches. Enabling this feature will almost
+// always improve your video quality. Note, though, that this feature doesn't
+// take into account where the viewer's attention is likely to be. If viewers
+// are likely to be focusing their attention on a part of the screen that doesn't
+// have moving objects with sharp edges, such as sports athletes' faces, you
+// might choose to disable this feature. Related setting: When you enable temporal
+// quantization, adjust the strength of the filter with the setting Adaptive
+// quantization (adaptiveQuantization).
 const (
 	// H265TemporalAdaptiveQuantizationDisabled is a H265TemporalAdaptiveQuantization enum value
 	H265TemporalAdaptiveQuantizationDisabled = "DISABLED"
@@ -21492,6 +24722,14 @@ const (
 	// H265TemporalAdaptiveQuantizationEnabled is a H265TemporalAdaptiveQuantization enum value
 	H265TemporalAdaptiveQuantizationEnabled = "ENABLED"
 )
+
+// H265TemporalAdaptiveQuantization_Values returns all elements of the H265TemporalAdaptiveQuantization enum
+func H265TemporalAdaptiveQuantization_Values() []string {
+	return []string{
+		H265TemporalAdaptiveQuantizationDisabled,
+		H265TemporalAdaptiveQuantizationEnabled,
+	}
+}
 
 // Enables temporal layer identifiers in the encoded bitstream. Up to 3 layers
 // are supported depending on GOP structure: I- and P-frames form one layer,
@@ -21509,6 +24747,14 @@ const (
 	H265TemporalIdsEnabled = "ENABLED"
 )
 
+// H265TemporalIds_Values returns all elements of the H265TemporalIds enum
+func H265TemporalIds_Values() []string {
+	return []string{
+		H265TemporalIdsDisabled,
+		H265TemporalIdsEnabled,
+	}
+}
+
 // Enable use of tiles, allowing horizontal as well as vertical subdivision
 // of the encoded pictures.
 const (
@@ -21519,6 +24765,14 @@ const (
 	H265TilesEnabled = "ENABLED"
 )
 
+// H265Tiles_Values returns all elements of the H265Tiles enum
+func H265Tiles_Values() []string {
+	return []string{
+		H265TilesDisabled,
+		H265TilesEnabled,
+	}
+}
+
 // Inserts timecode for each frame as 4 bytes of an unregistered SEI message.
 const (
 	// H265UnregisteredSeiTimecodeDisabled is a H265UnregisteredSeiTimecode enum value
@@ -21527,6 +24781,14 @@ const (
 	// H265UnregisteredSeiTimecodeEnabled is a H265UnregisteredSeiTimecode enum value
 	H265UnregisteredSeiTimecodeEnabled = "ENABLED"
 )
+
+// H265UnregisteredSeiTimecode_Values returns all elements of the H265UnregisteredSeiTimecode enum
+func H265UnregisteredSeiTimecode_Values() []string {
+	return []string{
+		H265UnregisteredSeiTimecodeDisabled,
+		H265UnregisteredSeiTimecodeEnabled,
+	}
+}
 
 // If the location of parameter set NAL units doesn't matter in your workflow,
 // ignore this setting. Use this setting only with CMAF or DASH outputs, or
@@ -21547,6 +24809,14 @@ const (
 	H265WriteMp4PackagingTypeHev1 = "HEV1"
 )
 
+// H265WriteMp4PackagingType_Values returns all elements of the H265WriteMp4PackagingType enum
+func H265WriteMp4PackagingType_Values() []string {
+	return []string{
+		H265WriteMp4PackagingTypeHvc1,
+		H265WriteMp4PackagingTypeHev1,
+	}
+}
+
 const (
 	// HlsAdMarkersElemental is a HlsAdMarkers enum value
 	HlsAdMarkersElemental = "ELEMENTAL"
@@ -21554,6 +24824,14 @@ const (
 	// HlsAdMarkersElementalScte35 is a HlsAdMarkers enum value
 	HlsAdMarkersElementalScte35 = "ELEMENTAL_SCTE35"
 )
+
+// HlsAdMarkers_Values returns all elements of the HlsAdMarkers enum
+func HlsAdMarkers_Values() []string {
+	return []string{
+		HlsAdMarkersElemental,
+		HlsAdMarkersElementalScte35,
+	}
+}
 
 // Use this setting only in audio-only outputs. Choose MPEG-2 Transport Stream
 // (M2TS) to create a file in an MPEG2-TS container. Keep the default value
@@ -21567,6 +24845,34 @@ const (
 	// HlsAudioOnlyContainerM2ts is a HlsAudioOnlyContainer enum value
 	HlsAudioOnlyContainerM2ts = "M2TS"
 )
+
+// HlsAudioOnlyContainer_Values returns all elements of the HlsAudioOnlyContainer enum
+func HlsAudioOnlyContainer_Values() []string {
+	return []string{
+		HlsAudioOnlyContainerAutomatic,
+		HlsAudioOnlyContainerM2ts,
+	}
+}
+
+// Ignore this setting unless you are using FairPlay DRM with Verimatrix and
+// you encounter playback issues. Keep the default value, Include (INCLUDE),
+// to output audio-only headers. Choose Exclude (EXCLUDE) to remove the audio-only
+// headers from your audio segments.
+const (
+	// HlsAudioOnlyHeaderInclude is a HlsAudioOnlyHeader enum value
+	HlsAudioOnlyHeaderInclude = "INCLUDE"
+
+	// HlsAudioOnlyHeaderExclude is a HlsAudioOnlyHeader enum value
+	HlsAudioOnlyHeaderExclude = "EXCLUDE"
+)
+
+// HlsAudioOnlyHeader_Values returns all elements of the HlsAudioOnlyHeader enum
+func HlsAudioOnlyHeader_Values() []string {
+	return []string{
+		HlsAudioOnlyHeaderInclude,
+		HlsAudioOnlyHeaderExclude,
+	}
+}
 
 // Four types of audio-only tracks are supported: Audio-Only Variant Stream
 // The client can play back this audio-only stream instead of video in low-bandwidth
@@ -21593,6 +24899,16 @@ const (
 	HlsAudioTrackTypeAudioOnlyVariantStream = "AUDIO_ONLY_VARIANT_STREAM"
 )
 
+// HlsAudioTrackType_Values returns all elements of the HlsAudioTrackType enum
+func HlsAudioTrackType_Values() []string {
+	return []string{
+		HlsAudioTrackTypeAlternateAudioAutoSelectDefault,
+		HlsAudioTrackTypeAlternateAudioAutoSelect,
+		HlsAudioTrackTypeAlternateAudioNotAutoSelect,
+		HlsAudioTrackTypeAudioOnlyVariantStream,
+	}
+}
+
 // Applies only to 608 Embedded output captions. Insert: Include CLOSED-CAPTIONS
 // lines in the manifest. Specify at least one language in the CC1 Language
 // Code field. One CLOSED-CAPTION line is added for each Language Code you specify.
@@ -21613,8 +24929,19 @@ const (
 	HlsCaptionLanguageSettingNone = "NONE"
 )
 
-// When set to ENABLED, sets #EXT-X-ALLOW-CACHE:no tag, which prevents client
-// from saving media segments for later replay.
+// HlsCaptionLanguageSetting_Values returns all elements of the HlsCaptionLanguageSetting enum
+func HlsCaptionLanguageSetting_Values() []string {
+	return []string{
+		HlsCaptionLanguageSettingInsert,
+		HlsCaptionLanguageSettingOmit,
+		HlsCaptionLanguageSettingNone,
+	}
+}
+
+// Disable this setting only when your workflow requires the #EXT-X-ALLOW-CACHE:no
+// tag. Otherwise, keep the default value Enabled (ENABLED) and control caching
+// in your video distribution set up. For example, use the Cache-Control http
+// header.
 const (
 	// HlsClientCacheDisabled is a HlsClientCache enum value
 	HlsClientCacheDisabled = "DISABLED"
@@ -21622,6 +24949,14 @@ const (
 	// HlsClientCacheEnabled is a HlsClientCache enum value
 	HlsClientCacheEnabled = "ENABLED"
 )
+
+// HlsClientCache_Values returns all elements of the HlsClientCache enum
+func HlsClientCache_Values() []string {
+	return []string{
+		HlsClientCacheDisabled,
+		HlsClientCacheEnabled,
+	}
+}
 
 // Specification to use (RFC-6381 or the default RFC-4281) during m3u8 playlist
 // generation.
@@ -21633,6 +24968,14 @@ const (
 	HlsCodecSpecificationRfc4281 = "RFC_4281"
 )
 
+// HlsCodecSpecification_Values returns all elements of the HlsCodecSpecification enum
+func HlsCodecSpecification_Values() []string {
+	return []string{
+		HlsCodecSpecificationRfc6381,
+		HlsCodecSpecificationRfc4281,
+	}
+}
+
 // Indicates whether segments should be placed in subdirectories.
 const (
 	// HlsDirectoryStructureSingleDirectory is a HlsDirectoryStructure enum value
@@ -21641,6 +24984,14 @@ const (
 	// HlsDirectoryStructureSubdirectoryPerStream is a HlsDirectoryStructure enum value
 	HlsDirectoryStructureSubdirectoryPerStream = "SUBDIRECTORY_PER_STREAM"
 )
+
+// HlsDirectoryStructure_Values returns all elements of the HlsDirectoryStructure enum
+func HlsDirectoryStructure_Values() []string {
+	return []string{
+		HlsDirectoryStructureSingleDirectory,
+		HlsDirectoryStructureSubdirectoryPerStream,
+	}
+}
 
 // Encrypts the segments with the given encryption scheme. Leave blank to disable.
 // Selecting 'Disabled' in the web interface also disables encryption.
@@ -21652,6 +25003,14 @@ const (
 	HlsEncryptionTypeSampleAes = "SAMPLE_AES"
 )
 
+// HlsEncryptionType_Values returns all elements of the HlsEncryptionType enum
+func HlsEncryptionType_Values() []string {
+	return []string{
+		HlsEncryptionTypeAes128,
+		HlsEncryptionTypeSampleAes,
+	}
+}
+
 // When set to INCLUDE, writes I-Frame Only Manifest in addition to the HLS
 // manifest
 const (
@@ -21661,6 +25020,14 @@ const (
 	// HlsIFrameOnlyManifestExclude is a HlsIFrameOnlyManifest enum value
 	HlsIFrameOnlyManifestExclude = "EXCLUDE"
 )
+
+// HlsIFrameOnlyManifest_Values returns all elements of the HlsIFrameOnlyManifest enum
+func HlsIFrameOnlyManifest_Values() []string {
+	return []string{
+		HlsIFrameOnlyManifestInclude,
+		HlsIFrameOnlyManifestExclude,
+	}
+}
 
 // The Initialization Vector is a 128-bit number used in conjunction with the
 // key for encrypting blocks. If set to INCLUDE, Initialization Vector is listed
@@ -21673,6 +25040,14 @@ const (
 	HlsInitializationVectorInManifestExclude = "EXCLUDE"
 )
 
+// HlsInitializationVectorInManifest_Values returns all elements of the HlsInitializationVectorInManifest enum
+func HlsInitializationVectorInManifest_Values() []string {
+	return []string{
+		HlsInitializationVectorInManifestInclude,
+		HlsInitializationVectorInManifestExclude,
+	}
+}
+
 // Specify whether your DRM encryption key is static or from a key provider
 // that follows the SPEKE standard. For more information about SPEKE, see https://docs.aws.amazon.com/speke/latest/documentation/what-is-speke.html.
 const (
@@ -21683,6 +25058,14 @@ const (
 	HlsKeyProviderTypeStaticKey = "STATIC_KEY"
 )
 
+// HlsKeyProviderType_Values returns all elements of the HlsKeyProviderType enum
+func HlsKeyProviderType_Values() []string {
+	return []string{
+		HlsKeyProviderTypeSpeke,
+		HlsKeyProviderTypeStaticKey,
+	}
+}
+
 // When set to GZIP, compresses HLS playlist.
 const (
 	// HlsManifestCompressionGzip is a HlsManifestCompression enum value
@@ -21691,6 +25074,14 @@ const (
 	// HlsManifestCompressionNone is a HlsManifestCompression enum value
 	HlsManifestCompressionNone = "NONE"
 )
+
+// HlsManifestCompression_Values returns all elements of the HlsManifestCompression enum
+func HlsManifestCompression_Values() []string {
+	return []string{
+		HlsManifestCompressionGzip,
+		HlsManifestCompressionNone,
+	}
+}
 
 // Indicates whether the output manifest should use floating point values for
 // segment duration.
@@ -21702,6 +25093,14 @@ const (
 	HlsManifestDurationFormatInteger = "INTEGER"
 )
 
+// HlsManifestDurationFormat_Values returns all elements of the HlsManifestDurationFormat enum
+func HlsManifestDurationFormat_Values() []string {
+	return []string{
+		HlsManifestDurationFormatFloatingPoint,
+		HlsManifestDurationFormatInteger,
+	}
+}
+
 // Enable this setting to insert the EXT-X-SESSION-KEY element into the master
 // playlist. This allows for offline Apple HLS FairPlay content protection.
 const (
@@ -21712,6 +25111,14 @@ const (
 	HlsOfflineEncryptedDisabled = "DISABLED"
 )
 
+// HlsOfflineEncrypted_Values returns all elements of the HlsOfflineEncrypted enum
+func HlsOfflineEncrypted_Values() []string {
+	return []string{
+		HlsOfflineEncryptedEnabled,
+		HlsOfflineEncryptedDisabled,
+	}
+}
+
 // Indicates whether the .m3u8 manifest file should be generated for this HLS
 // output group.
 const (
@@ -21721,6 +25128,14 @@ const (
 	// HlsOutputSelectionSegmentsOnly is a HlsOutputSelection enum value
 	HlsOutputSelectionSegmentsOnly = "SEGMENTS_ONLY"
 )
+
+// HlsOutputSelection_Values returns all elements of the HlsOutputSelection enum
+func HlsOutputSelection_Values() []string {
+	return []string{
+		HlsOutputSelectionManifestsAndSegments,
+		HlsOutputSelectionSegmentsOnly,
+	}
+}
 
 // Includes or excludes EXT-X-PROGRAM-DATE-TIME tag in .m3u8 manifest files.
 // The value is calculated as follows: either the program date and time are
@@ -21734,6 +25149,14 @@ const (
 	HlsProgramDateTimeExclude = "EXCLUDE"
 )
 
+// HlsProgramDateTime_Values returns all elements of the HlsProgramDateTime enum
+func HlsProgramDateTime_Values() []string {
+	return []string{
+		HlsProgramDateTimeInclude,
+		HlsProgramDateTimeExclude,
+	}
+}
+
 // When set to SINGLE_FILE, emits program as a single media resource (.ts) file,
 // uses #EXT-X-BYTERANGE tags to index segment for playback.
 const (
@@ -21744,6 +25167,14 @@ const (
 	HlsSegmentControlSegmentedFiles = "SEGMENTED_FILES"
 )
 
+// HlsSegmentControl_Values returns all elements of the HlsSegmentControl enum
+func HlsSegmentControl_Values() []string {
+	return []string{
+		HlsSegmentControlSingleFile,
+		HlsSegmentControlSegmentedFiles,
+	}
+}
+
 // Include or exclude RESOLUTION attribute for video in EXT-X-STREAM-INF tag
 // of variant manifest.
 const (
@@ -21753,6 +25184,14 @@ const (
 	// HlsStreamInfResolutionExclude is a HlsStreamInfResolution enum value
 	HlsStreamInfResolutionExclude = "EXCLUDE"
 )
+
+// HlsStreamInfResolution_Values returns all elements of the HlsStreamInfResolution enum
+func HlsStreamInfResolution_Values() []string {
+	return []string{
+		HlsStreamInfResolutionInclude,
+		HlsStreamInfResolutionExclude,
+	}
+}
 
 // Indicates ID3 frame that has the timecode.
 const (
@@ -21766,6 +25205,15 @@ const (
 	HlsTimedMetadataId3FrameTdrl = "TDRL"
 )
 
+// HlsTimedMetadataId3Frame_Values returns all elements of the HlsTimedMetadataId3Frame enum
+func HlsTimedMetadataId3Frame_Values() []string {
+	return []string{
+		HlsTimedMetadataId3FrameNone,
+		HlsTimedMetadataId3FramePriv,
+		HlsTimedMetadataId3FrameTdrl,
+	}
+}
+
 // Keep this setting enabled to have MediaConvert use the font style and position
 // information from the captions source in the output. This option is available
 // only when your input captions are IMSC, SMPTE-TT, or TTML. Disable this setting
@@ -21778,6 +25226,14 @@ const (
 	ImscStylePassthroughDisabled = "DISABLED"
 )
 
+// ImscStylePassthrough_Values returns all elements of the ImscStylePassthrough enum
+func ImscStylePassthrough_Values() []string {
+	return []string{
+		ImscStylePassthroughEnabled,
+		ImscStylePassthroughDisabled,
+	}
+}
+
 // Enable Deblock (InputDeblockFilter) to produce smoother motion in the output.
 // Default is disabled. Only manually controllable for MPEG2 and uncompressed
 // video inputs.
@@ -21788,6 +25244,14 @@ const (
 	// InputDeblockFilterDisabled is a InputDeblockFilter enum value
 	InputDeblockFilterDisabled = "DISABLED"
 )
+
+// InputDeblockFilter_Values returns all elements of the InputDeblockFilter enum
+func InputDeblockFilter_Values() []string {
+	return []string{
+		InputDeblockFilterEnabled,
+		InputDeblockFilterDisabled,
+	}
+}
 
 // Enable Denoise (InputDenoiseFilter) to filter noise from the input. Default
 // is disabled. Only applicable to MPEG2, H.264, H.265, and uncompressed video
@@ -21800,13 +25264,21 @@ const (
 	InputDenoiseFilterDisabled = "DISABLED"
 )
 
-// Use Filter enable (InputFilterEnable) to specify how the transcoding service
-// applies the denoise and deblock filters. You must also enable the filters
-// separately, with Denoise (InputDenoiseFilter) and Deblock (InputDeblockFilter).
-// * Auto - The transcoding service determines whether to apply filtering, depending
-// on input type and quality. * Disable - The input is not filtered. This is
-// true even if you use the API to enable them in (InputDeblockFilter) and (InputDeblockFilter).
-// * Force - The in put is filtered regardless of input type.
+// InputDenoiseFilter_Values returns all elements of the InputDenoiseFilter enum
+func InputDenoiseFilter_Values() []string {
+	return []string{
+		InputDenoiseFilterEnabled,
+		InputDenoiseFilterDisabled,
+	}
+}
+
+// Specify how the transcoding service applies the denoise and deblock filters.
+// You must also enable the filters separately, with Denoise (InputDenoiseFilter)
+// and Deblock (InputDeblockFilter). * Auto - The transcoding service determines
+// whether to apply filtering, depending on input type and quality. * Disable
+// - The input is not filtered. This is true even if you use the API to enable
+// them in (InputDeblockFilter) and (InputDeblockFilter). * Force - The input
+// is filtered regardless of input type.
 const (
 	// InputFilterEnableAuto is a InputFilterEnable enum value
 	InputFilterEnableAuto = "AUTO"
@@ -21818,6 +25290,15 @@ const (
 	InputFilterEnableForce = "FORCE"
 )
 
+// InputFilterEnable_Values returns all elements of the InputFilterEnable enum
+func InputFilterEnable_Values() []string {
+	return []string{
+		InputFilterEnableAuto,
+		InputFilterEnableDisable,
+		InputFilterEnableForce,
+	}
+}
+
 // Set PSI control (InputPsiControl) for transport stream inputs to specify
 // which data the demux process to scans. * Ignore PSI - Scan all PIDs for audio
 // and video. * Use PSI - Scan only PSI data.
@@ -21828,6 +25309,14 @@ const (
 	// InputPsiControlUsePsi is a InputPsiControl enum value
 	InputPsiControlUsePsi = "USE_PSI"
 )
+
+// InputPsiControl_Values returns all elements of the InputPsiControl enum
+func InputPsiControl_Values() []string {
+	return []string{
+		InputPsiControlIgnorePsi,
+		InputPsiControlUsePsi,
+	}
+}
 
 // Use Rotate (InputRotate) to specify how the service rotates your video. You
 // can choose automatic rotation or specify a rotation. You can specify a clockwise
@@ -21856,6 +25345,40 @@ const (
 	InputRotateAuto = "AUTO"
 )
 
+// InputRotate_Values returns all elements of the InputRotate enum
+func InputRotate_Values() []string {
+	return []string{
+		InputRotateDegree0,
+		InputRotateDegrees90,
+		InputRotateDegrees180,
+		InputRotateDegrees270,
+		InputRotateAuto,
+	}
+}
+
+// When you have a progressive segmented frame (PsF) input, use this setting
+// to flag the input as PsF. MediaConvert doesn't automatically detect PsF.
+// Therefore, flagging your input as PsF results in better preservation of video
+// quality when you do deinterlacing and frame rate conversion. If you don't
+// specify, the default value is Auto (AUTO). Auto is the correct setting for
+// all inputs that are not PsF. Don't set this value to PsF when your input
+// is interlaced. Doing so creates horizontal interlacing artifacts.
+const (
+	// InputScanTypeAuto is a InputScanType enum value
+	InputScanTypeAuto = "AUTO"
+
+	// InputScanTypePsf is a InputScanType enum value
+	InputScanTypePsf = "PSF"
+)
+
+// InputScanType_Values returns all elements of the InputScanType enum
+func InputScanType_Values() []string {
+	return []string{
+		InputScanTypeAuto,
+		InputScanTypePsf,
+	}
+}
+
 // Use this Timecode source setting, located under the input settings (InputTimecodeSource),
 // to specify how the service counts input video frames. This input frame count
 // affects only the behavior of features that apply to a single input at a time,
@@ -21877,6 +25400,15 @@ const (
 	InputTimecodeSourceSpecifiedstart = "SPECIFIEDSTART"
 )
 
+// InputTimecodeSource_Values returns all elements of the InputTimecodeSource enum
+func InputTimecodeSource_Values() []string {
+	return []string{
+		InputTimecodeSourceEmbedded,
+		InputTimecodeSourceZerobased,
+		InputTimecodeSourceSpecifiedstart,
+	}
+}
+
 // A job's phase can be PROBING, TRANSCODING OR UPLOADING
 const (
 	// JobPhaseProbing is a JobPhase enum value
@@ -21888,6 +25420,15 @@ const (
 	// JobPhaseUploading is a JobPhase enum value
 	JobPhaseUploading = "UPLOADING"
 )
+
+// JobPhase_Values returns all elements of the JobPhase enum
+func JobPhase_Values() []string {
+	return []string{
+		JobPhaseProbing,
+		JobPhaseTranscoding,
+		JobPhaseUploading,
+	}
+}
 
 // A job's status can be SUBMITTED, PROGRESSING, COMPLETE, CANCELED, or ERROR.
 const (
@@ -21907,6 +25448,17 @@ const (
 	JobStatusError = "ERROR"
 )
 
+// JobStatus_Values returns all elements of the JobStatus enum
+func JobStatus_Values() []string {
+	return []string{
+		JobStatusSubmitted,
+		JobStatusProgressing,
+		JobStatusComplete,
+		JobStatusCanceled,
+		JobStatusError,
+	}
+}
+
 // Optional. When you request a list of job templates, you can choose to list
 // them alphabetically by NAME or chronologically by CREATION_DATE. If you don't
 // specify, the service will list them by name.
@@ -21920,6 +25472,15 @@ const (
 	// JobTemplateListBySystem is a JobTemplateListBy enum value
 	JobTemplateListBySystem = "SYSTEM"
 )
+
+// JobTemplateListBy_Values returns all elements of the JobTemplateListBy enum
+func JobTemplateListBy_Values() []string {
+	return []string{
+		JobTemplateListByName,
+		JobTemplateListByCreationDate,
+		JobTemplateListBySystem,
+	}
+}
 
 // Specify the language, using the ISO 639-2 three-letter code listed at https://www.loc.gov/standards/iso639-2/php/code_list.php.
 const (
@@ -22497,6 +26058,203 @@ const (
 	LanguageCodeTng = "TNG"
 )
 
+// LanguageCode_Values returns all elements of the LanguageCode enum
+func LanguageCode_Values() []string {
+	return []string{
+		LanguageCodeEng,
+		LanguageCodeSpa,
+		LanguageCodeFra,
+		LanguageCodeDeu,
+		LanguageCodeGer,
+		LanguageCodeZho,
+		LanguageCodeAra,
+		LanguageCodeHin,
+		LanguageCodeJpn,
+		LanguageCodeRus,
+		LanguageCodePor,
+		LanguageCodeIta,
+		LanguageCodeUrd,
+		LanguageCodeVie,
+		LanguageCodeKor,
+		LanguageCodePan,
+		LanguageCodeAbk,
+		LanguageCodeAar,
+		LanguageCodeAfr,
+		LanguageCodeAka,
+		LanguageCodeSqi,
+		LanguageCodeAmh,
+		LanguageCodeArg,
+		LanguageCodeHye,
+		LanguageCodeAsm,
+		LanguageCodeAva,
+		LanguageCodeAve,
+		LanguageCodeAym,
+		LanguageCodeAze,
+		LanguageCodeBam,
+		LanguageCodeBak,
+		LanguageCodeEus,
+		LanguageCodeBel,
+		LanguageCodeBen,
+		LanguageCodeBih,
+		LanguageCodeBis,
+		LanguageCodeBos,
+		LanguageCodeBre,
+		LanguageCodeBul,
+		LanguageCodeMya,
+		LanguageCodeCat,
+		LanguageCodeKhm,
+		LanguageCodeCha,
+		LanguageCodeChe,
+		LanguageCodeNya,
+		LanguageCodeChu,
+		LanguageCodeChv,
+		LanguageCodeCor,
+		LanguageCodeCos,
+		LanguageCodeCre,
+		LanguageCodeHrv,
+		LanguageCodeCes,
+		LanguageCodeDan,
+		LanguageCodeDiv,
+		LanguageCodeNld,
+		LanguageCodeDzo,
+		LanguageCodeEnm,
+		LanguageCodeEpo,
+		LanguageCodeEst,
+		LanguageCodeEwe,
+		LanguageCodeFao,
+		LanguageCodeFij,
+		LanguageCodeFin,
+		LanguageCodeFrm,
+		LanguageCodeFul,
+		LanguageCodeGla,
+		LanguageCodeGlg,
+		LanguageCodeLug,
+		LanguageCodeKat,
+		LanguageCodeEll,
+		LanguageCodeGrn,
+		LanguageCodeGuj,
+		LanguageCodeHat,
+		LanguageCodeHau,
+		LanguageCodeHeb,
+		LanguageCodeHer,
+		LanguageCodeHmo,
+		LanguageCodeHun,
+		LanguageCodeIsl,
+		LanguageCodeIdo,
+		LanguageCodeIbo,
+		LanguageCodeInd,
+		LanguageCodeIna,
+		LanguageCodeIle,
+		LanguageCodeIku,
+		LanguageCodeIpk,
+		LanguageCodeGle,
+		LanguageCodeJav,
+		LanguageCodeKal,
+		LanguageCodeKan,
+		LanguageCodeKau,
+		LanguageCodeKas,
+		LanguageCodeKaz,
+		LanguageCodeKik,
+		LanguageCodeKin,
+		LanguageCodeKir,
+		LanguageCodeKom,
+		LanguageCodeKon,
+		LanguageCodeKua,
+		LanguageCodeKur,
+		LanguageCodeLao,
+		LanguageCodeLat,
+		LanguageCodeLav,
+		LanguageCodeLim,
+		LanguageCodeLin,
+		LanguageCodeLit,
+		LanguageCodeLub,
+		LanguageCodeLtz,
+		LanguageCodeMkd,
+		LanguageCodeMlg,
+		LanguageCodeMsa,
+		LanguageCodeMal,
+		LanguageCodeMlt,
+		LanguageCodeGlv,
+		LanguageCodeMri,
+		LanguageCodeMar,
+		LanguageCodeMah,
+		LanguageCodeMon,
+		LanguageCodeNau,
+		LanguageCodeNav,
+		LanguageCodeNde,
+		LanguageCodeNbl,
+		LanguageCodeNdo,
+		LanguageCodeNep,
+		LanguageCodeSme,
+		LanguageCodeNor,
+		LanguageCodeNob,
+		LanguageCodeNno,
+		LanguageCodeOci,
+		LanguageCodeOji,
+		LanguageCodeOri,
+		LanguageCodeOrm,
+		LanguageCodeOss,
+		LanguageCodePli,
+		LanguageCodeFas,
+		LanguageCodePol,
+		LanguageCodePus,
+		LanguageCodeQue,
+		LanguageCodeQaa,
+		LanguageCodeRon,
+		LanguageCodeRoh,
+		LanguageCodeRun,
+		LanguageCodeSmo,
+		LanguageCodeSag,
+		LanguageCodeSan,
+		LanguageCodeSrd,
+		LanguageCodeSrb,
+		LanguageCodeSna,
+		LanguageCodeIii,
+		LanguageCodeSnd,
+		LanguageCodeSin,
+		LanguageCodeSlk,
+		LanguageCodeSlv,
+		LanguageCodeSom,
+		LanguageCodeSot,
+		LanguageCodeSun,
+		LanguageCodeSwa,
+		LanguageCodeSsw,
+		LanguageCodeSwe,
+		LanguageCodeTgl,
+		LanguageCodeTah,
+		LanguageCodeTgk,
+		LanguageCodeTam,
+		LanguageCodeTat,
+		LanguageCodeTel,
+		LanguageCodeTha,
+		LanguageCodeBod,
+		LanguageCodeTir,
+		LanguageCodeTon,
+		LanguageCodeTso,
+		LanguageCodeTsn,
+		LanguageCodeTur,
+		LanguageCodeTuk,
+		LanguageCodeTwi,
+		LanguageCodeUig,
+		LanguageCodeUkr,
+		LanguageCodeUzb,
+		LanguageCodeVen,
+		LanguageCodeVol,
+		LanguageCodeWln,
+		LanguageCodeCym,
+		LanguageCodeFry,
+		LanguageCodeWol,
+		LanguageCodeXho,
+		LanguageCodeYid,
+		LanguageCodeYor,
+		LanguageCodeZha,
+		LanguageCodeZul,
+		LanguageCodeOrj,
+		LanguageCodeQpc,
+		LanguageCodeTng,
+	}
+}
+
 // Selects between the DVB and ATSC buffer models for Dolby Digital audio.
 const (
 	// M2tsAudioBufferModelDvb is a M2tsAudioBufferModel enum value
@@ -22505,6 +26263,43 @@ const (
 	// M2tsAudioBufferModelAtsc is a M2tsAudioBufferModel enum value
 	M2tsAudioBufferModelAtsc = "ATSC"
 )
+
+// M2tsAudioBufferModel_Values returns all elements of the M2tsAudioBufferModel enum
+func M2tsAudioBufferModel_Values() []string {
+	return []string{
+		M2tsAudioBufferModelDvb,
+		M2tsAudioBufferModelAtsc,
+	}
+}
+
+// Specify this setting only when your output will be consumed by a downstream
+// repackaging workflow that is sensitive to very small duration differences
+// between video and audio. For this situation, choose Match video duration
+// (MATCH_VIDEO_DURATION). In all other cases, keep the default value, Default
+// codec duration (DEFAULT_CODEC_DURATION). When you choose Match video duration,
+// MediaConvert pads the output audio streams with silence or trims them to
+// ensure that the total duration of each audio stream is at least as long as
+// the total duration of the video stream. After padding or trimming, the audio
+// stream duration is no more than one frame longer than the video stream. MediaConvert
+// applies audio padding or trimming only to the end of the last segment of
+// the output. For unsegmented outputs, MediaConvert adds padding only to the
+// end of the file. When you keep the default value, any minor discrepancies
+// between audio and video duration will depend on your output audio codec.
+const (
+	// M2tsAudioDurationDefaultCodecDuration is a M2tsAudioDuration enum value
+	M2tsAudioDurationDefaultCodecDuration = "DEFAULT_CODEC_DURATION"
+
+	// M2tsAudioDurationMatchVideoDuration is a M2tsAudioDuration enum value
+	M2tsAudioDurationMatchVideoDuration = "MATCH_VIDEO_DURATION"
+)
+
+// M2tsAudioDuration_Values returns all elements of the M2tsAudioDuration enum
+func M2tsAudioDuration_Values() []string {
+	return []string{
+		M2tsAudioDurationDefaultCodecDuration,
+		M2tsAudioDurationMatchVideoDuration,
+	}
+}
 
 // Controls what buffer model to use for accurate interleaving. If set to MULTIPLEX,
 // use multiplex buffer model. If set to NONE, this can lead to lower latency,
@@ -22516,6 +26311,14 @@ const (
 	// M2tsBufferModelNone is a M2tsBufferModel enum value
 	M2tsBufferModelNone = "NONE"
 )
+
+// M2tsBufferModel_Values returns all elements of the M2tsBufferModel enum
+func M2tsBufferModel_Values() []string {
+	return []string{
+		M2tsBufferModelMultiplex,
+		M2tsBufferModelNone,
+	}
+}
 
 // When set to VIDEO_AND_FIXED_INTERVALS, audio EBP markers will be added to
 // partitions 3 and 4. The interval between these additional markers will be
@@ -22531,6 +26334,14 @@ const (
 	M2tsEbpAudioIntervalVideoInterval = "VIDEO_INTERVAL"
 )
 
+// M2tsEbpAudioInterval_Values returns all elements of the M2tsEbpAudioInterval enum
+func M2tsEbpAudioInterval_Values() []string {
+	return []string{
+		M2tsEbpAudioIntervalVideoAndFixedIntervals,
+		M2tsEbpAudioIntervalVideoInterval,
+	}
+}
+
 // Selects which PIDs to place EBP markers on. They can either be placed only
 // on the video PID, or on both the video PID and all audio PIDs. Only applicable
 // when EBP segmentation markers are is selected (segmentationMarkers is EBP
@@ -22543,6 +26354,14 @@ const (
 	M2tsEbpPlacementVideoPid = "VIDEO_PID"
 )
 
+// M2tsEbpPlacement_Values returns all elements of the M2tsEbpPlacement enum
+func M2tsEbpPlacement_Values() []string {
+	return []string{
+		M2tsEbpPlacementVideoAndAudioPids,
+		M2tsEbpPlacementVideoPid,
+	}
+}
+
 // Controls whether to include the ES Rate field in the PES header.
 const (
 	// M2tsEsRateInPesInclude is a M2tsEsRateInPes enum value
@@ -22551,6 +26370,14 @@ const (
 	// M2tsEsRateInPesExclude is a M2tsEsRateInPes enum value
 	M2tsEsRateInPesExclude = "EXCLUDE"
 )
+
+// M2tsEsRateInPes_Values returns all elements of the M2tsEsRateInPes enum
+func M2tsEsRateInPes_Values() []string {
+	return []string{
+		M2tsEsRateInPesInclude,
+		M2tsEsRateInPesExclude,
+	}
+}
 
 // Keep the default value (DEFAULT) unless you know that your audio EBP markers
 // are incorrectly appearing before your video EBP markers. To correct this
@@ -22563,6 +26390,14 @@ const (
 	M2tsForceTsVideoEbpOrderDefault = "DEFAULT"
 )
 
+// M2tsForceTsVideoEbpOrder_Values returns all elements of the M2tsForceTsVideoEbpOrder enum
+func M2tsForceTsVideoEbpOrder_Values() []string {
+	return []string{
+		M2tsForceTsVideoEbpOrderForce,
+		M2tsForceTsVideoEbpOrderDefault,
+	}
+}
+
 // If INSERT, Nielsen inaudible tones for media tracking will be detected in
 // the input audio and an equivalent ID3 tag will be inserted in the output.
 const (
@@ -22572,6 +26407,14 @@ const (
 	// M2tsNielsenId3None is a M2tsNielsenId3 enum value
 	M2tsNielsenId3None = "NONE"
 )
+
+// M2tsNielsenId3_Values returns all elements of the M2tsNielsenId3 enum
+func M2tsNielsenId3_Values() []string {
+	return []string{
+		M2tsNielsenId3Insert,
+		M2tsNielsenId3None,
+	}
+}
 
 // When set to PCR_EVERY_PES_PACKET, a Program Clock Reference value is inserted
 // for every Packetized Elementary Stream (PES) header. This is effective only
@@ -22584,6 +26427,14 @@ const (
 	M2tsPcrControlConfiguredPcrPeriod = "CONFIGURED_PCR_PERIOD"
 )
 
+// M2tsPcrControl_Values returns all elements of the M2tsPcrControl enum
+func M2tsPcrControl_Values() []string {
+	return []string{
+		M2tsPcrControlPcrEveryPesPacket,
+		M2tsPcrControlConfiguredPcrPeriod,
+	}
+}
+
 // When set to CBR, inserts null packets into transport stream to fill specified
 // bitrate. When set to VBR, the bitrate setting acts as the maximum bitrate,
 // but the output will not be padded up to that bitrate.
@@ -22594,6 +26445,14 @@ const (
 	// M2tsRateModeCbr is a M2tsRateMode enum value
 	M2tsRateModeCbr = "CBR"
 )
+
+// M2tsRateMode_Values returns all elements of the M2tsRateMode enum
+func M2tsRateMode_Values() []string {
+	return []string{
+		M2tsRateModeVbr,
+		M2tsRateModeCbr,
+	}
+}
 
 // For SCTE-35 markers from your input-- Choose Passthrough (PASSTHROUGH) if
 // you want SCTE-35 markers that appear in your input to also appear in this
@@ -22608,6 +26467,14 @@ const (
 	// M2tsScte35SourceNone is a M2tsScte35Source enum value
 	M2tsScte35SourceNone = "NONE"
 )
+
+// M2tsScte35Source_Values returns all elements of the M2tsScte35Source enum
+func M2tsScte35Source_Values() []string {
+	return []string{
+		M2tsScte35SourcePassthrough,
+		M2tsScte35SourceNone,
+	}
+}
 
 // Inserts segmentation markers at each segmentation_time period. rai_segstart
 // sets the Random Access Indicator bit in the adaptation field. rai_adapt sets
@@ -22636,6 +26503,18 @@ const (
 	M2tsSegmentationMarkersEbpLegacy = "EBP_LEGACY"
 )
 
+// M2tsSegmentationMarkers_Values returns all elements of the M2tsSegmentationMarkers enum
+func M2tsSegmentationMarkers_Values() []string {
+	return []string{
+		M2tsSegmentationMarkersNone,
+		M2tsSegmentationMarkersRaiSegstart,
+		M2tsSegmentationMarkersRaiAdapt,
+		M2tsSegmentationMarkersPsiSegstart,
+		M2tsSegmentationMarkersEbp,
+		M2tsSegmentationMarkersEbpLegacy,
+	}
+}
+
 // The segmentation style parameter controls how segmentation markers are inserted
 // into the transport stream. With avails, it is possible that segments may
 // be truncated, which can influence where future segmentation markers are inserted.
@@ -22655,6 +26534,43 @@ const (
 	M2tsSegmentationStyleResetCadence = "RESET_CADENCE"
 )
 
+// M2tsSegmentationStyle_Values returns all elements of the M2tsSegmentationStyle enum
+func M2tsSegmentationStyle_Values() []string {
+	return []string{
+		M2tsSegmentationStyleMaintainCadence,
+		M2tsSegmentationStyleResetCadence,
+	}
+}
+
+// Specify this setting only when your output will be consumed by a downstream
+// repackaging workflow that is sensitive to very small duration differences
+// between video and audio. For this situation, choose Match video duration
+// (MATCH_VIDEO_DURATION). In all other cases, keep the default value, Default
+// codec duration (DEFAULT_CODEC_DURATION). When you choose Match video duration,
+// MediaConvert pads the output audio streams with silence or trims them to
+// ensure that the total duration of each audio stream is at least as long as
+// the total duration of the video stream. After padding or trimming, the audio
+// stream duration is no more than one frame longer than the video stream. MediaConvert
+// applies audio padding or trimming only to the end of the last segment of
+// the output. For unsegmented outputs, MediaConvert adds padding only to the
+// end of the file. When you keep the default value, any minor discrepancies
+// between audio and video duration will depend on your output audio codec.
+const (
+	// M3u8AudioDurationDefaultCodecDuration is a M3u8AudioDuration enum value
+	M3u8AudioDurationDefaultCodecDuration = "DEFAULT_CODEC_DURATION"
+
+	// M3u8AudioDurationMatchVideoDuration is a M3u8AudioDuration enum value
+	M3u8AudioDurationMatchVideoDuration = "MATCH_VIDEO_DURATION"
+)
+
+// M3u8AudioDuration_Values returns all elements of the M3u8AudioDuration enum
+func M3u8AudioDuration_Values() []string {
+	return []string{
+		M3u8AudioDurationDefaultCodecDuration,
+		M3u8AudioDurationMatchVideoDuration,
+	}
+}
+
 // If INSERT, Nielsen inaudible tones for media tracking will be detected in
 // the input audio and an equivalent ID3 tag will be inserted in the output.
 const (
@@ -22664,6 +26580,14 @@ const (
 	// M3u8NielsenId3None is a M3u8NielsenId3 enum value
 	M3u8NielsenId3None = "NONE"
 )
+
+// M3u8NielsenId3_Values returns all elements of the M3u8NielsenId3 enum
+func M3u8NielsenId3_Values() []string {
+	return []string{
+		M3u8NielsenId3Insert,
+		M3u8NielsenId3None,
+	}
+}
 
 // When set to PCR_EVERY_PES_PACKET a Program Clock Reference value is inserted
 // for every Packetized Elementary Stream (PES) header. This parameter is effective
@@ -22675,6 +26599,14 @@ const (
 	// M3u8PcrControlConfiguredPcrPeriod is a M3u8PcrControl enum value
 	M3u8PcrControlConfiguredPcrPeriod = "CONFIGURED_PCR_PERIOD"
 )
+
+// M3u8PcrControl_Values returns all elements of the M3u8PcrControl enum
+func M3u8PcrControl_Values() []string {
+	return []string{
+		M3u8PcrControlPcrEveryPesPacket,
+		M3u8PcrControlConfiguredPcrPeriod,
+	}
+}
 
 // For SCTE-35 markers from your input-- Choose Passthrough (PASSTHROUGH) if
 // you want SCTE-35 markers that appear in your input to also appear in this
@@ -22692,6 +26624,14 @@ const (
 	M3u8Scte35SourceNone = "NONE"
 )
 
+// M3u8Scte35Source_Values returns all elements of the M3u8Scte35Source enum
+func M3u8Scte35Source_Values() []string {
+	return []string{
+		M3u8Scte35SourcePassthrough,
+		M3u8Scte35SourceNone,
+	}
+}
+
 // Choose the type of motion graphic asset that you are providing for your overlay.
 // You can choose either a .mov file or a series of .png files.
 const (
@@ -22701,6 +26641,14 @@ const (
 	// MotionImageInsertionModePng is a MotionImageInsertionMode enum value
 	MotionImageInsertionModePng = "PNG"
 )
+
+// MotionImageInsertionMode_Values returns all elements of the MotionImageInsertionMode enum
+func MotionImageInsertionMode_Values() []string {
+	return []string{
+		MotionImageInsertionModeMov,
+		MotionImageInsertionModePng,
+	}
+}
 
 // Specify whether your motion graphic overlay repeats on a loop or plays only
 // once.
@@ -22712,6 +26660,14 @@ const (
 	MotionImagePlaybackRepeat = "REPEAT"
 )
 
+// MotionImagePlayback_Values returns all elements of the MotionImagePlayback enum
+func MotionImagePlayback_Values() []string {
+	return []string{
+		MotionImagePlaybackOnce,
+		MotionImagePlaybackRepeat,
+	}
+}
+
 // When enabled, include 'clap' atom if appropriate for the video output settings.
 const (
 	// MovClapAtomInclude is a MovClapAtom enum value
@@ -22720,6 +26676,14 @@ const (
 	// MovClapAtomExclude is a MovClapAtom enum value
 	MovClapAtomExclude = "EXCLUDE"
 )
+
+// MovClapAtom_Values returns all elements of the MovClapAtom enum
+func MovClapAtom_Values() []string {
+	return []string{
+		MovClapAtomInclude,
+		MovClapAtomExclude,
+	}
+}
 
 // When enabled, file composition times will start at zero, composition times
 // in the 'ctts' (composition time to sample) box for B-frames will be negative,
@@ -22733,6 +26697,14 @@ const (
 	MovCslgAtomExclude = "EXCLUDE"
 )
 
+// MovCslgAtom_Values returns all elements of the MovCslgAtom enum
+func MovCslgAtom_Values() []string {
+	return []string{
+		MovCslgAtomInclude,
+		MovCslgAtomExclude,
+	}
+}
+
 // When set to XDCAM, writes MPEG2 video streams into the QuickTime file using
 // XDCAM fourcc codes. This increases compatibility with Apple editors and players,
 // but may decrease compatibility with other players. Only applicable when the
@@ -22745,7 +26717,19 @@ const (
 	MovMpeg2FourCCControlMpeg = "MPEG"
 )
 
-// If set to OMNEON, inserts Omneon-compatible padding
+// MovMpeg2FourCCControl_Values returns all elements of the MovMpeg2FourCCControl enum
+func MovMpeg2FourCCControl_Values() []string {
+	return []string{
+		MovMpeg2FourCCControlXdcam,
+		MovMpeg2FourCCControlMpeg,
+	}
+}
+
+// To make this output compatible with Omenon, keep the default value, OMNEON.
+// Unless you need Omneon compatibility, set this value to NONE. When you keep
+// the default value, OMNEON, MediaConvert increases the length of the edit
+// list atom. This might cause file rejections when a recipient of the output
+// file doesn't expct this extra padding.
 const (
 	// MovPaddingControlOmneon is a MovPaddingControl enum value
 	MovPaddingControlOmneon = "OMNEON"
@@ -22753,6 +26737,14 @@ const (
 	// MovPaddingControlNone is a MovPaddingControl enum value
 	MovPaddingControlNone = "NONE"
 )
+
+// MovPaddingControl_Values returns all elements of the MovPaddingControl enum
+func MovPaddingControl_Values() []string {
+	return []string{
+		MovPaddingControlOmneon,
+		MovPaddingControlNone,
+	}
+}
 
 // Always keep the default value (SELF_CONTAINED) for this setting.
 const (
@@ -22763,6 +26755,14 @@ const (
 	MovReferenceExternal = "EXTERNAL"
 )
 
+// MovReference_Values returns all elements of the MovReference enum
+func MovReference_Values() []string {
+	return []string{
+		MovReferenceSelfContained,
+		MovReferenceExternal,
+	}
+}
+
 // Specify whether the service encodes this MP3 audio output with a constant
 // bitrate (CBR) or a variable bitrate (VBR).
 const (
@@ -22772,6 +26772,14 @@ const (
 	// Mp3RateControlModeVbr is a Mp3RateControlMode enum value
 	Mp3RateControlModeVbr = "VBR"
 )
+
+// Mp3RateControlMode_Values returns all elements of the Mp3RateControlMode enum
+func Mp3RateControlMode_Values() []string {
+	return []string{
+		Mp3RateControlModeCbr,
+		Mp3RateControlModeVbr,
+	}
+}
 
 // When enabled, file composition times will start at zero, composition times
 // in the 'ctts' (composition time to sample) box for B-frames will be negative,
@@ -22785,6 +26793,14 @@ const (
 	Mp4CslgAtomExclude = "EXCLUDE"
 )
 
+// Mp4CslgAtom_Values returns all elements of the Mp4CslgAtom enum
+func Mp4CslgAtom_Values() []string {
+	return []string{
+		Mp4CslgAtomInclude,
+		Mp4CslgAtomExclude,
+	}
+}
+
 // Inserts a free-space box immediately after the moov box.
 const (
 	// Mp4FreeSpaceBoxInclude is a Mp4FreeSpaceBox enum value
@@ -22793,6 +26809,14 @@ const (
 	// Mp4FreeSpaceBoxExclude is a Mp4FreeSpaceBox enum value
 	Mp4FreeSpaceBoxExclude = "EXCLUDE"
 )
+
+// Mp4FreeSpaceBox_Values returns all elements of the Mp4FreeSpaceBox enum
+func Mp4FreeSpaceBox_Values() []string {
+	return []string{
+		Mp4FreeSpaceBoxInclude,
+		Mp4FreeSpaceBoxExclude,
+	}
+}
 
 // If set to PROGRESSIVE_DOWNLOAD, the MOOV atom is relocated to the beginning
 // of the archive as required for progressive downloading. Otherwise it is placed
@@ -22804,6 +26828,65 @@ const (
 	// Mp4MoovPlacementNormal is a Mp4MoovPlacement enum value
 	Mp4MoovPlacementNormal = "NORMAL"
 )
+
+// Mp4MoovPlacement_Values returns all elements of the Mp4MoovPlacement enum
+func Mp4MoovPlacement_Values() []string {
+	return []string{
+		Mp4MoovPlacementProgressiveDownload,
+		Mp4MoovPlacementNormal,
+	}
+}
+
+// Optional. Choose Include (INCLUDE) to have MediaConvert mark up your DASH
+// manifest with elements for embedded 608 captions. This markup isn't generally
+// required, but some video players require it to discover and play embedded
+// 608 captions. Keep the default value, Exclude (EXCLUDE), to leave these elements
+// out. When you enable this setting, this is the markup that MediaConvert includes
+// in your manifest:
+const (
+	// MpdAccessibilityCaptionHintsInclude is a MpdAccessibilityCaptionHints enum value
+	MpdAccessibilityCaptionHintsInclude = "INCLUDE"
+
+	// MpdAccessibilityCaptionHintsExclude is a MpdAccessibilityCaptionHints enum value
+	MpdAccessibilityCaptionHintsExclude = "EXCLUDE"
+)
+
+// MpdAccessibilityCaptionHints_Values returns all elements of the MpdAccessibilityCaptionHints enum
+func MpdAccessibilityCaptionHints_Values() []string {
+	return []string{
+		MpdAccessibilityCaptionHintsInclude,
+		MpdAccessibilityCaptionHintsExclude,
+	}
+}
+
+// Specify this setting only when your output will be consumed by a downstream
+// repackaging workflow that is sensitive to very small duration differences
+// between video and audio. For this situation, choose Match video duration
+// (MATCH_VIDEO_DURATION). In all other cases, keep the default value, Default
+// codec duration (DEFAULT_CODEC_DURATION). When you choose Match video duration,
+// MediaConvert pads the output audio streams with silence or trims them to
+// ensure that the total duration of each audio stream is at least as long as
+// the total duration of the video stream. After padding or trimming, the audio
+// stream duration is no more than one frame longer than the video stream. MediaConvert
+// applies audio padding or trimming only to the end of the last segment of
+// the output. For unsegmented outputs, MediaConvert adds padding only to the
+// end of the file. When you keep the default value, any minor discrepancies
+// between audio and video duration will depend on your output audio codec.
+const (
+	// MpdAudioDurationDefaultCodecDuration is a MpdAudioDuration enum value
+	MpdAudioDurationDefaultCodecDuration = "DEFAULT_CODEC_DURATION"
+
+	// MpdAudioDurationMatchVideoDuration is a MpdAudioDuration enum value
+	MpdAudioDurationMatchVideoDuration = "MATCH_VIDEO_DURATION"
+)
+
+// MpdAudioDuration_Values returns all elements of the MpdAudioDuration enum
+func MpdAudioDuration_Values() []string {
+	return []string{
+		MpdAudioDurationDefaultCodecDuration,
+		MpdAudioDurationMatchVideoDuration,
+	}
+}
 
 // Use this setting only in DASH output groups that include sidecar TTML or
 // IMSC captions. You specify sidecar captions in a separate output from your
@@ -22819,6 +26902,14 @@ const (
 	MpdCaptionContainerTypeFragmentedMp4 = "FRAGMENTED_MP4"
 )
 
+// MpdCaptionContainerType_Values returns all elements of the MpdCaptionContainerType enum
+func MpdCaptionContainerType_Values() []string {
+	return []string{
+		MpdCaptionContainerTypeRaw,
+		MpdCaptionContainerTypeFragmentedMp4,
+	}
+}
+
 // Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 // INSERT to put SCTE-35 markers in this output at the insertion points that
 // you specify in an ESAM XML document. Provide the document in the setting
@@ -22830,6 +26921,14 @@ const (
 	// MpdScte35EsamNone is a MpdScte35Esam enum value
 	MpdScte35EsamNone = "NONE"
 )
+
+// MpdScte35Esam_Values returns all elements of the MpdScte35Esam enum
+func MpdScte35Esam_Values() []string {
+	return []string{
+		MpdScte35EsamInsert,
+		MpdScte35EsamNone,
+	}
+}
 
 // Ignore this setting unless you have SCTE-35 markers in your input video file.
 // Choose Passthrough (PASSTHROUGH) if you want SCTE-35 markers that appear
@@ -22843,8 +26942,18 @@ const (
 	MpdScte35SourceNone = "NONE"
 )
 
-// Adaptive quantization. Allows intra-frame quantizers to vary to improve visual
-// quality.
+// MpdScte35Source_Values returns all elements of the MpdScte35Source enum
+func MpdScte35Source_Values() []string {
+	return []string{
+		MpdScte35SourcePassthrough,
+		MpdScte35SourceNone,
+	}
+}
+
+// Specify the strength of any adaptive quantization filters that you enable.
+// The value that you choose here applies to the following settings: Spatial
+// adaptive quantization (spatialAdaptiveQuantization), and Temporal adaptive
+// quantization (temporalAdaptiveQuantization).
 const (
 	// Mpeg2AdaptiveQuantizationOff is a Mpeg2AdaptiveQuantization enum value
 	Mpeg2AdaptiveQuantizationOff = "OFF"
@@ -22858,6 +26967,16 @@ const (
 	// Mpeg2AdaptiveQuantizationHigh is a Mpeg2AdaptiveQuantization enum value
 	Mpeg2AdaptiveQuantizationHigh = "HIGH"
 )
+
+// Mpeg2AdaptiveQuantization_Values returns all elements of the Mpeg2AdaptiveQuantization enum
+func Mpeg2AdaptiveQuantization_Values() []string {
+	return []string{
+		Mpeg2AdaptiveQuantizationOff,
+		Mpeg2AdaptiveQuantizationLow,
+		Mpeg2AdaptiveQuantizationMedium,
+		Mpeg2AdaptiveQuantizationHigh,
+	}
+}
 
 // Use Level (Mpeg2CodecLevel) to set the MPEG-2 level for the video output.
 const (
@@ -22877,6 +26996,17 @@ const (
 	Mpeg2CodecLevelHigh = "HIGH"
 )
 
+// Mpeg2CodecLevel_Values returns all elements of the Mpeg2CodecLevel enum
+func Mpeg2CodecLevel_Values() []string {
+	return []string{
+		Mpeg2CodecLevelAuto,
+		Mpeg2CodecLevelLow,
+		Mpeg2CodecLevelMain,
+		Mpeg2CodecLevelHigh1440,
+		Mpeg2CodecLevelHigh,
+	}
+}
+
 // Use Profile (Mpeg2CodecProfile) to set the MPEG-2 profile for the video output.
 const (
 	// Mpeg2CodecProfileMain is a Mpeg2CodecProfile enum value
@@ -22885,6 +27015,14 @@ const (
 	// Mpeg2CodecProfileProfile422 is a Mpeg2CodecProfile enum value
 	Mpeg2CodecProfileProfile422 = "PROFILE_422"
 )
+
+// Mpeg2CodecProfile_Values returns all elements of the Mpeg2CodecProfile enum
+func Mpeg2CodecProfile_Values() []string {
+	return []string{
+		Mpeg2CodecProfileMain,
+		Mpeg2CodecProfileProfile422,
+	}
+}
 
 // Choose Adaptive to improve subjective video quality for high-motion content.
 // This will cause the service to use fewer B-frames (which infer information
@@ -22898,6 +27036,14 @@ const (
 	// Mpeg2DynamicSubGopStatic is a Mpeg2DynamicSubGop enum value
 	Mpeg2DynamicSubGopStatic = "STATIC"
 )
+
+// Mpeg2DynamicSubGop_Values returns all elements of the Mpeg2DynamicSubGop enum
+func Mpeg2DynamicSubGop_Values() []string {
+	return []string{
+		Mpeg2DynamicSubGopAdaptive,
+		Mpeg2DynamicSubGopStatic,
+	}
+}
 
 // If you are using the console, use the Framerate setting to specify the frame
 // rate for this output. If you want to keep the same frame rate as the input
@@ -22918,15 +27064,43 @@ const (
 	Mpeg2FramerateControlSpecified = "SPECIFIED"
 )
 
-// Optional. Specify how the transcoder performs framerate conversion. The default
-// behavior is to use duplicate drop conversion.
+// Mpeg2FramerateControl_Values returns all elements of the Mpeg2FramerateControl enum
+func Mpeg2FramerateControl_Values() []string {
+	return []string{
+		Mpeg2FramerateControlInitializeFromSource,
+		Mpeg2FramerateControlSpecified,
+	}
+}
+
+// Choose the method that you want MediaConvert to use when increasing or decreasing
+// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+// smooth picture, but might introduce undesirable video artifacts. For complex
+// frame rate conversions, especially if your source video has already been
+// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+// motion-compensated interpolation. FrameFormer chooses the best conversion
+// method frame by frame. Note that using FrameFormer increases the transcoding
+// time and incurs a significant add-on cost.
 const (
 	// Mpeg2FramerateConversionAlgorithmDuplicateDrop is a Mpeg2FramerateConversionAlgorithm enum value
 	Mpeg2FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
 
 	// Mpeg2FramerateConversionAlgorithmInterpolate is a Mpeg2FramerateConversionAlgorithm enum value
 	Mpeg2FramerateConversionAlgorithmInterpolate = "INTERPOLATE"
+
+	// Mpeg2FramerateConversionAlgorithmFrameformer is a Mpeg2FramerateConversionAlgorithm enum value
+	Mpeg2FramerateConversionAlgorithmFrameformer = "FRAMEFORMER"
 )
+
+// Mpeg2FramerateConversionAlgorithm_Values returns all elements of the Mpeg2FramerateConversionAlgorithm enum
+func Mpeg2FramerateConversionAlgorithm_Values() []string {
+	return []string{
+		Mpeg2FramerateConversionAlgorithmDuplicateDrop,
+		Mpeg2FramerateConversionAlgorithmInterpolate,
+		Mpeg2FramerateConversionAlgorithmFrameformer,
+	}
+}
 
 // Indicates if the GOP Size in MPEG2 is specified in frames or seconds. If
 // seconds the system will convert the GOP Size into a frame count at run time.
@@ -22938,17 +27112,26 @@ const (
 	Mpeg2GopSizeUnitsSeconds = "SECONDS"
 )
 
-// Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
-// * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
-// interlaced output with the entire output having the same field polarity (top
-// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
-// Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
-// behavior depends on the input scan type. - If the source is interlaced, the
-// output will be interlaced with the same polarity as the source (it will follow
-// the source). The output could therefore be a mix of "top field first" and
-// "bottom field first". - If the source is progressive, the output will be
-// interlaced with "top field first" or "bottom field first" polarity, depending
-// on which of the Follow options you chose.
+// Mpeg2GopSizeUnits_Values returns all elements of the Mpeg2GopSizeUnits enum
+func Mpeg2GopSizeUnits_Values() []string {
+	return []string{
+		Mpeg2GopSizeUnitsFrames,
+		Mpeg2GopSizeUnitsSeconds,
+	}
+}
+
+// Choose the scan line type for the output. Keep the default value, Progressive
+// (PROGRESSIVE) to create a progressive output, regardless of the scan type
+// of your input. Use Top field first (TOP_FIELD) or Bottom field first (BOTTOM_FIELD)
+// to create an output that's interlaced with the same field polarity throughout.
+// Use Follow, default top (FOLLOW_TOP_FIELD) or Follow, default bottom (FOLLOW_BOTTOM_FIELD)
+// to produce outputs with the same field polarity as the source. For jobs that
+// have multiple inputs, the output field polarity might change over the course
+// of the output. Follow behavior depends on the input scan type. If the source
+// is interlaced, the output will be interlaced with the same polarity as the
+// source. If the source is progressive, the output will be interlaced with
+// top field bottom field first, depending on which of the Follow options you
+// choose.
 const (
 	// Mpeg2InterlaceModeProgressive is a Mpeg2InterlaceMode enum value
 	Mpeg2InterlaceModeProgressive = "PROGRESSIVE"
@@ -22965,6 +27148,17 @@ const (
 	// Mpeg2InterlaceModeFollowBottomField is a Mpeg2InterlaceMode enum value
 	Mpeg2InterlaceModeFollowBottomField = "FOLLOW_BOTTOM_FIELD"
 )
+
+// Mpeg2InterlaceMode_Values returns all elements of the Mpeg2InterlaceMode enum
+func Mpeg2InterlaceMode_Values() []string {
+	return []string{
+		Mpeg2InterlaceModeProgressive,
+		Mpeg2InterlaceModeTopField,
+		Mpeg2InterlaceModeBottomField,
+		Mpeg2InterlaceModeFollowTopField,
+		Mpeg2InterlaceModeFollowBottomField,
+	}
+}
 
 // Use Intra DC precision (Mpeg2IntraDcPrecision) to set quantization precision
 // for intra-block DC coefficients. If you choose the value auto, the service
@@ -22987,12 +27181,24 @@ const (
 	Mpeg2IntraDcPrecisionIntraDcPrecision11 = "INTRA_DC_PRECISION_11"
 )
 
+// Mpeg2IntraDcPrecision_Values returns all elements of the Mpeg2IntraDcPrecision enum
+func Mpeg2IntraDcPrecision_Values() []string {
+	return []string{
+		Mpeg2IntraDcPrecisionAuto,
+		Mpeg2IntraDcPrecisionIntraDcPrecision8,
+		Mpeg2IntraDcPrecisionIntraDcPrecision9,
+		Mpeg2IntraDcPrecisionIntraDcPrecision10,
+		Mpeg2IntraDcPrecisionIntraDcPrecision11,
+	}
+}
+
 // Optional. Specify how the service determines the pixel aspect ratio (PAR)
 // for this output. The default behavior, Follow source (INITIALIZE_FROM_SOURCE),
-// uses the PAR from your input video for your output. To use a different PAR,
-// choose (SPECIFIED). In the console, SPECIFIED corresponds to any value other
-// than Follow source. When you choose SPECIFIED for this setting, you must
-// also specify values for the parNumerator and parDenominator settings.
+// uses the PAR from your input video for your output. To specify a different
+// PAR in the console, choose any value other than Follow source. To specify
+// a different PAR by editing the JSON job specification, choose SPECIFIED.
+// When you choose SPECIFIED for this setting, you must also specify values
+// for the parNumerator and parDenominator settings.
 const (
 	// Mpeg2ParControlInitializeFromSource is a Mpeg2ParControl enum value
 	Mpeg2ParControlInitializeFromSource = "INITIALIZE_FROM_SOURCE"
@@ -23000,6 +27206,14 @@ const (
 	// Mpeg2ParControlSpecified is a Mpeg2ParControl enum value
 	Mpeg2ParControlSpecified = "SPECIFIED"
 )
+
+// Mpeg2ParControl_Values returns all elements of the Mpeg2ParControl enum
+func Mpeg2ParControl_Values() []string {
+	return []string{
+		Mpeg2ParControlInitializeFromSource,
+		Mpeg2ParControlSpecified,
+	}
+}
 
 // Optional. Use Quality tuning level (qualityTuningLevel) to choose how you
 // want to trade off encoding speed for output video quality. The default behavior
@@ -23012,6 +27226,14 @@ const (
 	Mpeg2QualityTuningLevelMultiPass = "MULTI_PASS"
 )
 
+// Mpeg2QualityTuningLevel_Values returns all elements of the Mpeg2QualityTuningLevel enum
+func Mpeg2QualityTuningLevel_Values() []string {
+	return []string{
+		Mpeg2QualityTuningLevelSinglePass,
+		Mpeg2QualityTuningLevelMultiPass,
+	}
+}
+
 // Use Rate control mode (Mpeg2RateControlMode) to specifiy whether the bitrate
 // is variable (vbr) or constant (cbr).
 const (
@@ -23021,6 +27243,14 @@ const (
 	// Mpeg2RateControlModeCbr is a Mpeg2RateControlMode enum value
 	Mpeg2RateControlModeCbr = "CBR"
 )
+
+// Mpeg2RateControlMode_Values returns all elements of the Mpeg2RateControlMode enum
+func Mpeg2RateControlMode_Values() []string {
+	return []string{
+		Mpeg2RateControlModeVbr,
+		Mpeg2RateControlModeCbr,
+	}
+}
 
 // Enable this setting to insert I-frames at scene changes that the service
 // automatically detects. This improves video quality and is enabled by default.
@@ -23032,8 +27262,22 @@ const (
 	Mpeg2SceneChangeDetectEnabled = "ENABLED"
 )
 
-// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
-// as 25fps, and audio is sped up correspondingly.
+// Mpeg2SceneChangeDetect_Values returns all elements of the Mpeg2SceneChangeDetect enum
+func Mpeg2SceneChangeDetect_Values() []string {
+	return []string{
+		Mpeg2SceneChangeDetectDisabled,
+		Mpeg2SceneChangeDetectEnabled,
+	}
+}
+
+// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+// second (fps). Enable slow PAL to create a 25 fps output. When you enable
+// slow PAL, MediaConvert relabels the video frames to 25 fps and resamples
+// your audio to keep it synchronized with the video. Note that enabling this
+// setting will slightly reduce the duration of your video. Required settings:
+// You must also set Framerate to 25. In your JSON job specification, set (framerateControl)
+// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+// 1.
 const (
 	// Mpeg2SlowPalDisabled is a Mpeg2SlowPal enum value
 	Mpeg2SlowPalDisabled = "DISABLED"
@@ -23042,8 +27286,29 @@ const (
 	Mpeg2SlowPalEnabled = "ENABLED"
 )
 
-// Adjust quantization within each frame based on spatial variation of content
-// complexity.
+// Mpeg2SlowPal_Values returns all elements of the Mpeg2SlowPal enum
+func Mpeg2SlowPal_Values() []string {
+	return []string{
+		Mpeg2SlowPalDisabled,
+		Mpeg2SlowPalEnabled,
+	}
+}
+
+// Keep the default value, Enabled (ENABLED), to adjust quantization within
+// each frame based on spatial variation of content complexity. When you enable
+// this feature, the encoder uses fewer bits on areas that can sustain more
+// distortion with no noticeable visual degradation and uses more bits on areas
+// where any small distortion will be noticeable. For example, complex textured
+// blocks are encoded with fewer bits and smooth textured blocks are encoded
+// with more bits. Enabling this feature will almost always improve your video
+// quality. Note, though, that this feature doesn't take into account where
+// the viewer's attention is likely to be. If viewers are likely to be focusing
+// their attention on a part of the screen with a lot of complex texture, you
+// might choose to disable this feature. Related setting: When you enable spatial
+// adaptive quantization, set the value for Adaptive quantization (adaptiveQuantization)
+// depending on your content. For homogeneous content, such as cartoons and
+// video games, set it to Low. For content with a wider variety of textures,
+// set it to High or Higher.
 const (
 	// Mpeg2SpatialAdaptiveQuantizationDisabled is a Mpeg2SpatialAdaptiveQuantization enum value
 	Mpeg2SpatialAdaptiveQuantizationDisabled = "DISABLED"
@@ -23052,7 +27317,17 @@ const (
 	Mpeg2SpatialAdaptiveQuantizationEnabled = "ENABLED"
 )
 
-// Produces a Type D-10 compatible bitstream (SMPTE 356M-2001).
+// Mpeg2SpatialAdaptiveQuantization_Values returns all elements of the Mpeg2SpatialAdaptiveQuantization enum
+func Mpeg2SpatialAdaptiveQuantization_Values() []string {
+	return []string{
+		Mpeg2SpatialAdaptiveQuantizationDisabled,
+		Mpeg2SpatialAdaptiveQuantizationEnabled,
+	}
+}
+
+// Specify whether this output's video uses the D10 syntax. Keep the default
+// value to not use the syntax. Related settings: When you choose D10 (D_10)
+// for your MXF profile (profile), you must also set this value to to D10 (D_10).
 const (
 	// Mpeg2SyntaxDefault is a Mpeg2Syntax enum value
 	Mpeg2SyntaxDefault = "DEFAULT"
@@ -23061,10 +27336,22 @@ const (
 	Mpeg2SyntaxD10 = "D_10"
 )
 
-// Only use Telecine (Mpeg2Telecine) when you set Framerate (Framerate) to 29.970.
-// Set Telecine (Mpeg2Telecine) to Hard (hard) to produce a 29.97i output from
-// a 23.976 input. Set it to Soft (soft) to produce 23.976 output and leave
-// converstion to the player.
+// Mpeg2Syntax_Values returns all elements of the Mpeg2Syntax enum
+func Mpeg2Syntax_Values() []string {
+	return []string{
+		Mpeg2SyntaxDefault,
+		Mpeg2SyntaxD10,
+	}
+}
+
+// When you do frame rate conversion from 23.976 frames per second (fps) to
+// 29.97 fps, and your output scan type is interlaced, you can optionally enable
+// hard or soft telecine to create a smoother picture. Hard telecine (HARD)
+// produces a 29.97i output. Soft telecine (SOFT) produces an output with a
+// 23.976 output that signals to the video player device to do the conversion
+// during play back. When you keep the default value, None (NONE), MediaConvert
+// does a standard frame rate conversion to 29.97 without doing anything with
+// the field polarity to create a smoother picture.
 const (
 	// Mpeg2TelecineNone is a Mpeg2Telecine enum value
 	Mpeg2TelecineNone = "NONE"
@@ -23076,8 +27363,28 @@ const (
 	Mpeg2TelecineHard = "HARD"
 )
 
-// Adjust quantization within each frame based on temporal variation of content
-// complexity.
+// Mpeg2Telecine_Values returns all elements of the Mpeg2Telecine enum
+func Mpeg2Telecine_Values() []string {
+	return []string{
+		Mpeg2TelecineNone,
+		Mpeg2TelecineSoft,
+		Mpeg2TelecineHard,
+	}
+}
+
+// Keep the default value, Enabled (ENABLED), to adjust quantization within
+// each frame based on temporal variation of content complexity. When you enable
+// this feature, the encoder uses fewer bits on areas of the frame that aren't
+// moving and uses more bits on complex objects with sharp edges that move a
+// lot. For example, this feature improves the readability of text tickers on
+// newscasts and scoreboards on sports matches. Enabling this feature will almost
+// always improve your video quality. Note, though, that this feature doesn't
+// take into account where the viewer's attention is likely to be. If viewers
+// are likely to be focusing their attention on a part of the screen that doesn't
+// have moving objects with sharp edges, such as sports athletes' faces, you
+// might choose to disable this feature. Related setting: When you enable temporal
+// quantization, adjust the strength of the filter with the setting Adaptive
+// quantization (adaptiveQuantization).
 const (
 	// Mpeg2TemporalAdaptiveQuantizationDisabled is a Mpeg2TemporalAdaptiveQuantization enum value
 	Mpeg2TemporalAdaptiveQuantizationDisabled = "DISABLED"
@@ -23085,6 +27392,14 @@ const (
 	// Mpeg2TemporalAdaptiveQuantizationEnabled is a Mpeg2TemporalAdaptiveQuantization enum value
 	Mpeg2TemporalAdaptiveQuantizationEnabled = "ENABLED"
 )
+
+// Mpeg2TemporalAdaptiveQuantization_Values returns all elements of the Mpeg2TemporalAdaptiveQuantization enum
+func Mpeg2TemporalAdaptiveQuantization_Values() []string {
+	return []string{
+		Mpeg2TemporalAdaptiveQuantizationDisabled,
+		Mpeg2TemporalAdaptiveQuantizationEnabled,
+	}
+}
 
 // COMBINE_DUPLICATE_STREAMS combines identical audio encoding settings across
 // a Microsoft Smooth output group into a single audio stream.
@@ -23096,6 +27411,14 @@ const (
 	MsSmoothAudioDeduplicationNone = "NONE"
 )
 
+// MsSmoothAudioDeduplication_Values returns all elements of the MsSmoothAudioDeduplication enum
+func MsSmoothAudioDeduplication_Values() []string {
+	return []string{
+		MsSmoothAudioDeduplicationCombineDuplicateStreams,
+		MsSmoothAudioDeduplicationNone,
+	}
+}
+
 // Use Manifest encoding (MsSmoothManifestEncoding) to specify the encoding
 // format for the server and client manifest. Valid options are utf8 and utf16.
 const (
@@ -23105,6 +27428,14 @@ const (
 	// MsSmoothManifestEncodingUtf16 is a MsSmoothManifestEncoding enum value
 	MsSmoothManifestEncodingUtf16 = "UTF16"
 )
+
+// MsSmoothManifestEncoding_Values returns all elements of the MsSmoothManifestEncoding enum
+func MsSmoothManifestEncoding_Values() []string {
+	return []string{
+		MsSmoothManifestEncodingUtf8,
+		MsSmoothManifestEncodingUtf16,
+	}
+}
 
 // Optional. When you have AFD signaling set up in your output video stream,
 // use this setting to choose whether to also include it in the MXF wrapper.
@@ -23123,10 +27454,108 @@ const (
 	MxfAfdSignalingCopyFromVideo = "COPY_FROM_VIDEO"
 )
 
+// MxfAfdSignaling_Values returns all elements of the MxfAfdSignaling enum
+func MxfAfdSignaling_Values() []string {
+	return []string{
+		MxfAfdSignalingNoCopy,
+		MxfAfdSignalingCopyFromVideo,
+	}
+}
+
+// Specify the MXF profile, also called shim, for this output. When you choose
+// Auto, MediaConvert chooses a profile based on the video codec and resolution.
+// For a list of codecs supported with each MXF profile, see https://docs.aws.amazon.com/mediaconvert/latest/ug/codecs-supported-with-each-mxf-profile.html.
+// For more information about the automatic selection behavior, see https://docs.aws.amazon.com/mediaconvert/latest/ug/default-automatic-selection-of-mxf-profiles.html.
+const (
+	// MxfProfileD10 is a MxfProfile enum value
+	MxfProfileD10 = "D_10"
+
+	// MxfProfileXdcam is a MxfProfile enum value
+	MxfProfileXdcam = "XDCAM"
+
+	// MxfProfileOp1a is a MxfProfile enum value
+	MxfProfileOp1a = "OP1A"
+)
+
+// MxfProfile_Values returns all elements of the MxfProfile enum
+func MxfProfile_Values() []string {
+	return []string{
+		MxfProfileD10,
+		MxfProfileXdcam,
+		MxfProfileOp1a,
+	}
+}
+
+// Choose the type of Nielsen watermarks that you want in your outputs. When
+// you choose NAES 2 and NW (NAES2_AND_NW), you must provide a value for the
+// setting SID (sourceId). When you choose CBET (CBET), you must provide a value
+// for the setting CSID (cbetSourceId). When you choose NAES 2, NW, and CBET
+// (NAES2_AND_NW_AND_CBET), you must provide values for both of these settings.
+const (
+	// NielsenActiveWatermarkProcessTypeNaes2AndNw is a NielsenActiveWatermarkProcessType enum value
+	NielsenActiveWatermarkProcessTypeNaes2AndNw = "NAES2_AND_NW"
+
+	// NielsenActiveWatermarkProcessTypeCbet is a NielsenActiveWatermarkProcessType enum value
+	NielsenActiveWatermarkProcessTypeCbet = "CBET"
+
+	// NielsenActiveWatermarkProcessTypeNaes2AndNwAndCbet is a NielsenActiveWatermarkProcessType enum value
+	NielsenActiveWatermarkProcessTypeNaes2AndNwAndCbet = "NAES2_AND_NW_AND_CBET"
+)
+
+// NielsenActiveWatermarkProcessType_Values returns all elements of the NielsenActiveWatermarkProcessType enum
+func NielsenActiveWatermarkProcessType_Values() []string {
+	return []string{
+		NielsenActiveWatermarkProcessTypeNaes2AndNw,
+		NielsenActiveWatermarkProcessTypeCbet,
+		NielsenActiveWatermarkProcessTypeNaes2AndNwAndCbet,
+	}
+}
+
+// Required. Specify whether your source content already contains Nielsen non-linear
+// watermarks. When you set this value to Watermarked (WATERMARKED), the service
+// fails the job. Nielsen requires that you add non-linear watermarking to only
+// clean content that doesn't already have non-linear Nielsen watermarks.
+const (
+	// NielsenSourceWatermarkStatusTypeClean is a NielsenSourceWatermarkStatusType enum value
+	NielsenSourceWatermarkStatusTypeClean = "CLEAN"
+
+	// NielsenSourceWatermarkStatusTypeWatermarked is a NielsenSourceWatermarkStatusType enum value
+	NielsenSourceWatermarkStatusTypeWatermarked = "WATERMARKED"
+)
+
+// NielsenSourceWatermarkStatusType_Values returns all elements of the NielsenSourceWatermarkStatusType enum
+func NielsenSourceWatermarkStatusType_Values() []string {
+	return []string{
+		NielsenSourceWatermarkStatusTypeClean,
+		NielsenSourceWatermarkStatusTypeWatermarked,
+	}
+}
+
+// To create assets that have the same TIC values in each audio track, keep
+// the default value Share TICs (SAME_TICS_PER_TRACK). To create assets that
+// have unique TIC values for each audio track, choose Use unique TICs (RESERVE_UNIQUE_TICS_PER_TRACK).
+const (
+	// NielsenUniqueTicPerAudioTrackTypeReserveUniqueTicsPerTrack is a NielsenUniqueTicPerAudioTrackType enum value
+	NielsenUniqueTicPerAudioTrackTypeReserveUniqueTicsPerTrack = "RESERVE_UNIQUE_TICS_PER_TRACK"
+
+	// NielsenUniqueTicPerAudioTrackTypeSameTicsPerTrack is a NielsenUniqueTicPerAudioTrackType enum value
+	NielsenUniqueTicPerAudioTrackTypeSameTicsPerTrack = "SAME_TICS_PER_TRACK"
+)
+
+// NielsenUniqueTicPerAudioTrackType_Values returns all elements of the NielsenUniqueTicPerAudioTrackType enum
+func NielsenUniqueTicPerAudioTrackType_Values() []string {
+	return []string{
+		NielsenUniqueTicPerAudioTrackTypeReserveUniqueTicsPerTrack,
+		NielsenUniqueTicPerAudioTrackTypeSameTicsPerTrack,
+	}
+}
+
 // Optional. When you set Noise reducer (noiseReducer) to Temporal (TEMPORAL),
-// you can optionally use this setting to apply additional sharpening. The default
-// behavior, Auto (AUTO) allows the transcoder to determine whether to apply
-// filtering, depending on input type and quality.
+// you can use this setting to apply sharpening. The default behavior, Auto
+// (AUTO), allows the transcoder to determine whether to apply filtering, depending
+// on input type and quality. When you set Noise reducer to Temporal, your output
+// bandwidth is reduced. When Post temporal sharpening is also enabled, that
+// bandwidth reduction is smaller.
 const (
 	// NoiseFilterPostTemporalSharpeningDisabled is a NoiseFilterPostTemporalSharpening enum value
 	NoiseFilterPostTemporalSharpeningDisabled = "DISABLED"
@@ -23137,6 +27566,15 @@ const (
 	// NoiseFilterPostTemporalSharpeningAuto is a NoiseFilterPostTemporalSharpening enum value
 	NoiseFilterPostTemporalSharpeningAuto = "AUTO"
 )
+
+// NoiseFilterPostTemporalSharpening_Values returns all elements of the NoiseFilterPostTemporalSharpening enum
+func NoiseFilterPostTemporalSharpening_Values() []string {
+	return []string{
+		NoiseFilterPostTemporalSharpeningDisabled,
+		NoiseFilterPostTemporalSharpeningEnabled,
+		NoiseFilterPostTemporalSharpeningAuto,
+	}
+}
 
 // Use Noise reducer filter (NoiseReducerFilter) to select one of the following
 // spatial image filtering functions. To use this setting, you must also enable
@@ -23171,6 +27609,20 @@ const (
 	NoiseReducerFilterTemporal = "TEMPORAL"
 )
 
+// NoiseReducerFilter_Values returns all elements of the NoiseReducerFilter enum
+func NoiseReducerFilter_Values() []string {
+	return []string{
+		NoiseReducerFilterBilateral,
+		NoiseReducerFilterMean,
+		NoiseReducerFilterGaussian,
+		NoiseReducerFilterLanczos,
+		NoiseReducerFilterSharpen,
+		NoiseReducerFilterConserve,
+		NoiseReducerFilterSpatial,
+		NoiseReducerFilterTemporal,
+	}
+}
+
 // Optional. When you request lists of resources, you can specify whether they
 // are sorted in ASCENDING or DESCENDING order. Default varies by resource.
 const (
@@ -23180,6 +27632,14 @@ const (
 	// OrderDescending is a Order enum value
 	OrderDescending = "DESCENDING"
 )
+
+// Order_Values returns all elements of the Order enum
+func Order_Values() []string {
+	return []string{
+		OrderAscending,
+		OrderDescending,
+	}
+}
 
 // Type of output group (File group, Apple HLS, DASH ISO, Microsoft Smooth Streaming,
 // CMAF)
@@ -23199,6 +27659,17 @@ const (
 	// OutputGroupTypeCmafGroupSettings is a OutputGroupType enum value
 	OutputGroupTypeCmafGroupSettings = "CMAF_GROUP_SETTINGS"
 )
+
+// OutputGroupType_Values returns all elements of the OutputGroupType enum
+func OutputGroupType_Values() []string {
+	return []string{
+		OutputGroupTypeHlsGroupSettings,
+		OutputGroupTypeDashIsoGroupSettings,
+		OutputGroupTypeFileGroupSettings,
+		OutputGroupTypeMsSmoothGroupSettings,
+		OutputGroupTypeCmafGroupSettings,
+	}
+}
 
 // Selects method of inserting SDT information into output stream. "Follow input
 // SDT" copies SDT information from input stream to output stream. "Follow input
@@ -23220,6 +27691,16 @@ const (
 	OutputSdtSdtNone = "SDT_NONE"
 )
 
+// OutputSdt_Values returns all elements of the OutputSdt enum
+func OutputSdt_Values() []string {
+	return []string{
+		OutputSdtSdtFollow,
+		OutputSdtSdtFollowIfPresent,
+		OutputSdtSdtManual,
+		OutputSdtSdtNone,
+	}
+}
+
 // Optional. When you request a list of presets, you can choose to list them
 // alphabetically by NAME or chronologically by CREATION_DATE. If you don't
 // specify, the service will list them by name.
@@ -23234,6 +27715,15 @@ const (
 	PresetListBySystem = "SYSTEM"
 )
 
+// PresetListBy_Values returns all elements of the PresetListBy enum
+func PresetListBy_Values() []string {
+	return []string{
+		PresetListByName,
+		PresetListByCreationDate,
+		PresetListBySystem,
+	}
+}
+
 // Specifies whether the pricing plan for the queue is on-demand or reserved.
 // For on-demand, you pay per minute, billed in increments of .01 minute. For
 // reserved, you pay for the transcoding capacity of the entire queue, regardless
@@ -23246,6 +27736,14 @@ const (
 	// PricingPlanReserved is a PricingPlan enum value
 	PricingPlanReserved = "RESERVED"
 )
+
+// PricingPlan_Values returns all elements of the PricingPlan enum
+func PricingPlan_Values() []string {
+	return []string{
+		PricingPlanOnDemand,
+		PricingPlanReserved,
+	}
+}
 
 // Use Profile (ProResCodecProfile) to specifiy the type of Apple ProRes codec
 // to use for this output.
@@ -23262,6 +27760,16 @@ const (
 	// ProresCodecProfileAppleProres422Proxy is a ProresCodecProfile enum value
 	ProresCodecProfileAppleProres422Proxy = "APPLE_PRORES_422_PROXY"
 )
+
+// ProresCodecProfile_Values returns all elements of the ProresCodecProfile enum
+func ProresCodecProfile_Values() []string {
+	return []string{
+		ProresCodecProfileAppleProres422,
+		ProresCodecProfileAppleProres422Hq,
+		ProresCodecProfileAppleProres422Lt,
+		ProresCodecProfileAppleProres422Proxy,
+	}
+}
 
 // If you are using the console, use the Framerate setting to specify the frame
 // rate for this output. If you want to keep the same frame rate as the input
@@ -23282,27 +27790,56 @@ const (
 	ProresFramerateControlSpecified = "SPECIFIED"
 )
 
-// Optional. Specify how the transcoder performs framerate conversion. The default
-// behavior is to use duplicate drop conversion.
+// ProresFramerateControl_Values returns all elements of the ProresFramerateControl enum
+func ProresFramerateControl_Values() []string {
+	return []string{
+		ProresFramerateControlInitializeFromSource,
+		ProresFramerateControlSpecified,
+	}
+}
+
+// Choose the method that you want MediaConvert to use when increasing or decreasing
+// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+// smooth picture, but might introduce undesirable video artifacts. For complex
+// frame rate conversions, especially if your source video has already been
+// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+// motion-compensated interpolation. FrameFormer chooses the best conversion
+// method frame by frame. Note that using FrameFormer increases the transcoding
+// time and incurs a significant add-on cost.
 const (
 	// ProresFramerateConversionAlgorithmDuplicateDrop is a ProresFramerateConversionAlgorithm enum value
 	ProresFramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
 
 	// ProresFramerateConversionAlgorithmInterpolate is a ProresFramerateConversionAlgorithm enum value
 	ProresFramerateConversionAlgorithmInterpolate = "INTERPOLATE"
+
+	// ProresFramerateConversionAlgorithmFrameformer is a ProresFramerateConversionAlgorithm enum value
+	ProresFramerateConversionAlgorithmFrameformer = "FRAMEFORMER"
 )
 
-// Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
-// * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
-// interlaced output with the entire output having the same field polarity (top
-// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
-// Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
-// behavior depends on the input scan type. - If the source is interlaced, the
-// output will be interlaced with the same polarity as the source (it will follow
-// the source). The output could therefore be a mix of "top field first" and
-// "bottom field first". - If the source is progressive, the output will be
-// interlaced with "top field first" or "bottom field first" polarity, depending
-// on which of the Follow options you chose.
+// ProresFramerateConversionAlgorithm_Values returns all elements of the ProresFramerateConversionAlgorithm enum
+func ProresFramerateConversionAlgorithm_Values() []string {
+	return []string{
+		ProresFramerateConversionAlgorithmDuplicateDrop,
+		ProresFramerateConversionAlgorithmInterpolate,
+		ProresFramerateConversionAlgorithmFrameformer,
+	}
+}
+
+// Choose the scan line type for the output. Keep the default value, Progressive
+// (PROGRESSIVE) to create a progressive output, regardless of the scan type
+// of your input. Use Top field first (TOP_FIELD) or Bottom field first (BOTTOM_FIELD)
+// to create an output that's interlaced with the same field polarity throughout.
+// Use Follow, default top (FOLLOW_TOP_FIELD) or Follow, default bottom (FOLLOW_BOTTOM_FIELD)
+// to produce outputs with the same field polarity as the source. For jobs that
+// have multiple inputs, the output field polarity might change over the course
+// of the output. Follow behavior depends on the input scan type. If the source
+// is interlaced, the output will be interlaced with the same polarity as the
+// source. If the source is progressive, the output will be interlaced with
+// top field bottom field first, depending on which of the Follow options you
+// choose.
 const (
 	// ProresInterlaceModeProgressive is a ProresInterlaceMode enum value
 	ProresInterlaceModeProgressive = "PROGRESSIVE"
@@ -23320,12 +27857,24 @@ const (
 	ProresInterlaceModeFollowBottomField = "FOLLOW_BOTTOM_FIELD"
 )
 
+// ProresInterlaceMode_Values returns all elements of the ProresInterlaceMode enum
+func ProresInterlaceMode_Values() []string {
+	return []string{
+		ProresInterlaceModeProgressive,
+		ProresInterlaceModeTopField,
+		ProresInterlaceModeBottomField,
+		ProresInterlaceModeFollowTopField,
+		ProresInterlaceModeFollowBottomField,
+	}
+}
+
 // Optional. Specify how the service determines the pixel aspect ratio (PAR)
 // for this output. The default behavior, Follow source (INITIALIZE_FROM_SOURCE),
-// uses the PAR from your input video for your output. To use a different PAR,
-// choose (SPECIFIED). In the console, SPECIFIED corresponds to any value other
-// than Follow source. When you choose SPECIFIED for this setting, you must
-// also specify values for the parNumerator and parDenominator settings.
+// uses the PAR from your input video for your output. To specify a different
+// PAR in the console, choose any value other than Follow source. To specify
+// a different PAR by editing the JSON job specification, choose SPECIFIED.
+// When you choose SPECIFIED for this setting, you must also specify values
+// for the parNumerator and parDenominator settings.
 const (
 	// ProresParControlInitializeFromSource is a ProresParControl enum value
 	ProresParControlInitializeFromSource = "INITIALIZE_FROM_SOURCE"
@@ -23334,8 +27883,22 @@ const (
 	ProresParControlSpecified = "SPECIFIED"
 )
 
-// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
-// as 25fps, and audio is sped up correspondingly.
+// ProresParControl_Values returns all elements of the ProresParControl enum
+func ProresParControl_Values() []string {
+	return []string{
+		ProresParControlInitializeFromSource,
+		ProresParControlSpecified,
+	}
+}
+
+// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+// second (fps). Enable slow PAL to create a 25 fps output. When you enable
+// slow PAL, MediaConvert relabels the video frames to 25 fps and resamples
+// your audio to keep it synchronized with the video. Note that enabling this
+// setting will slightly reduce the duration of your video. Required settings:
+// You must also set Framerate to 25. In your JSON job specification, set (framerateControl)
+// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+// 1.
 const (
 	// ProresSlowPalDisabled is a ProresSlowPal enum value
 	ProresSlowPalDisabled = "DISABLED"
@@ -23344,10 +27907,20 @@ const (
 	ProresSlowPalEnabled = "ENABLED"
 )
 
-// Only use Telecine (ProresTelecine) when you set Framerate (Framerate) to
-// 29.970. Set Telecine (ProresTelecine) to Hard (hard) to produce a 29.97i
-// output from a 23.976 input. Set it to Soft (soft) to produce 23.976 output
-// and leave converstion to the player.
+// ProresSlowPal_Values returns all elements of the ProresSlowPal enum
+func ProresSlowPal_Values() []string {
+	return []string{
+		ProresSlowPalDisabled,
+		ProresSlowPalEnabled,
+	}
+}
+
+// When you do frame rate conversion from 23.976 frames per second (fps) to
+// 29.97 fps, and your output scan type is interlaced, you can optionally enable
+// hard telecine (HARD) to create a smoother picture. When you keep the default
+// value, None (NONE), MediaConvert does a standard frame rate conversion to
+// 29.97 without doing anything with the field polarity to create a smoother
+// picture.
 const (
 	// ProresTelecineNone is a ProresTelecine enum value
 	ProresTelecineNone = "NONE"
@@ -23355,6 +27928,14 @@ const (
 	// ProresTelecineHard is a ProresTelecine enum value
 	ProresTelecineHard = "HARD"
 )
+
+// ProresTelecine_Values returns all elements of the ProresTelecine enum
+func ProresTelecine_Values() []string {
+	return []string{
+		ProresTelecineNone,
+		ProresTelecineHard,
+	}
+}
 
 // Optional. When you request a list of queues, you can choose to list them
 // alphabetically by NAME or chronologically by CREATION_DATE. If you don't
@@ -23367,6 +27948,14 @@ const (
 	QueueListByCreationDate = "CREATION_DATE"
 )
 
+// QueueListBy_Values returns all elements of the QueueListBy enum
+func QueueListBy_Values() []string {
+	return []string{
+		QueueListByName,
+		QueueListByCreationDate,
+	}
+}
+
 // Queues can be ACTIVE or PAUSED. If you pause a queue, jobs in that queue
 // won't begin. Jobs that are running when you pause a queue continue to run
 // until they finish or result in an error.
@@ -23378,6 +27967,14 @@ const (
 	QueueStatusPaused = "PAUSED"
 )
 
+// QueueStatus_Values returns all elements of the QueueStatus enum
+func QueueStatus_Values() []string {
+	return []string{
+		QueueStatusActive,
+		QueueStatusPaused,
+	}
+}
+
 // Specifies whether the term of your reserved queue pricing plan is automatically
 // extended (AUTO_RENEW) or expires (EXPIRE) at the end of the term.
 const (
@@ -23388,6 +27985,14 @@ const (
 	RenewalTypeExpire = "EXPIRE"
 )
 
+// RenewalType_Values returns all elements of the RenewalType enum
+func RenewalType_Values() []string {
+	return []string{
+		RenewalTypeAutoRenew,
+		RenewalTypeExpire,
+	}
+}
+
 // Specifies whether the pricing plan for your reserved queue is ACTIVE or EXPIRED.
 const (
 	// ReservationPlanStatusActive is a ReservationPlanStatus enum value
@@ -23396,6 +28001,14 @@ const (
 	// ReservationPlanStatusExpired is a ReservationPlanStatus enum value
 	ReservationPlanStatusExpired = "EXPIRED"
 )
+
+// ReservationPlanStatus_Values returns all elements of the ReservationPlanStatus enum
+func ReservationPlanStatus_Values() []string {
+	return []string{
+		ReservationPlanStatusActive,
+		ReservationPlanStatusExpired,
+	}
+}
 
 // Use Respond to AFD (RespondToAfd) to specify how the service changes the
 // video itself in response to AFD values in the input. * Choose Respond to
@@ -23416,6 +28029,15 @@ const (
 	RespondToAfdPassthrough = "PASSTHROUGH"
 )
 
+// RespondToAfd_Values returns all elements of the RespondToAfd enum
+func RespondToAfd_Values() []string {
+	return []string{
+		RespondToAfdNone,
+		RespondToAfdRespond,
+		RespondToAfdPassthrough,
+	}
+}
+
 // Choose an Amazon S3 canned ACL for MediaConvert to apply to this output.
 const (
 	// S3ObjectCannedAclPublicRead is a S3ObjectCannedAcl enum value
@@ -23430,6 +28052,16 @@ const (
 	// S3ObjectCannedAclBucketOwnerFullControl is a S3ObjectCannedAcl enum value
 	S3ObjectCannedAclBucketOwnerFullControl = "BUCKET_OWNER_FULL_CONTROL"
 )
+
+// S3ObjectCannedAcl_Values returns all elements of the S3ObjectCannedAcl enum
+func S3ObjectCannedAcl_Values() []string {
+	return []string{
+		S3ObjectCannedAclPublicRead,
+		S3ObjectCannedAclAuthenticatedRead,
+		S3ObjectCannedAclBucketOwnerRead,
+		S3ObjectCannedAclBucketOwnerFullControl,
+	}
+}
 
 // Specify how you want your data keys managed. AWS uses data keys to encrypt
 // your content. AWS also encrypts the data keys themselves, using a customer
@@ -23450,6 +28082,14 @@ const (
 	S3ServerSideEncryptionTypeServerSideEncryptionKms = "SERVER_SIDE_ENCRYPTION_KMS"
 )
 
+// S3ServerSideEncryptionType_Values returns all elements of the S3ServerSideEncryptionType enum
+func S3ServerSideEncryptionType_Values() []string {
+	return []string{
+		S3ServerSideEncryptionTypeServerSideEncryptionS3,
+		S3ServerSideEncryptionTypeServerSideEncryptionKms,
+	}
+}
+
 // Specify how the service handles outputs that have a different aspect ratio
 // from the input aspect ratio. Choose Stretch to output (STRETCH_TO_OUTPUT)
 // to have the service stretch your video image to fit. Keep the setting Default
@@ -23463,6 +28103,14 @@ const (
 	// ScalingBehaviorStretchToOutput is a ScalingBehavior enum value
 	ScalingBehaviorStretchToOutput = "STRETCH_TO_OUTPUT"
 )
+
+// ScalingBehavior_Values returns all elements of the ScalingBehavior enum
+func ScalingBehavior_Values() []string {
+	return []string{
+		ScalingBehaviorDefault,
+		ScalingBehaviorStretchToOutput,
+	}
+}
 
 // Set Framerate (SccDestinationFramerate) to make sure that the captions and
 // the video are synchronized in the output. Specify a frame rate that matches
@@ -23487,6 +28135,17 @@ const (
 	SccDestinationFramerateFramerate2997NonDropframe = "FRAMERATE_29_97_NON_DROPFRAME"
 )
 
+// SccDestinationFramerate_Values returns all elements of the SccDestinationFramerate enum
+func SccDestinationFramerate_Values() []string {
+	return []string{
+		SccDestinationFramerateFramerate2397,
+		SccDestinationFramerateFramerate24,
+		SccDestinationFramerateFramerate25,
+		SccDestinationFramerateFramerate2997Dropframe,
+		SccDestinationFramerateFramerate2997NonDropframe,
+	}
+}
+
 // Enable this setting when you run a test job to estimate how many reserved
 // transcoding slots (RTS) you need. When this is enabled, MediaConvert runs
 // your job from an on-demand queue with similar performance to what you will
@@ -23498,6 +28157,14 @@ const (
 	// SimulateReservedQueueEnabled is a SimulateReservedQueue enum value
 	SimulateReservedQueueEnabled = "ENABLED"
 )
+
+// SimulateReservedQueue_Values returns all elements of the SimulateReservedQueue enum
+func SimulateReservedQueue_Values() []string {
+	return []string{
+		SimulateReservedQueueDisabled,
+		SimulateReservedQueueEnabled,
+	}
+}
 
 // Specify how often MediaConvert sends STATUS_UPDATE events to Amazon CloudWatch
 // Events. Set the interval, in seconds, between status updates. MediaConvert
@@ -23550,6 +28217,27 @@ const (
 	StatusUpdateIntervalSeconds600 = "SECONDS_600"
 )
 
+// StatusUpdateInterval_Values returns all elements of the StatusUpdateInterval enum
+func StatusUpdateInterval_Values() []string {
+	return []string{
+		StatusUpdateIntervalSeconds10,
+		StatusUpdateIntervalSeconds12,
+		StatusUpdateIntervalSeconds15,
+		StatusUpdateIntervalSeconds20,
+		StatusUpdateIntervalSeconds30,
+		StatusUpdateIntervalSeconds60,
+		StatusUpdateIntervalSeconds120,
+		StatusUpdateIntervalSeconds180,
+		StatusUpdateIntervalSeconds240,
+		StatusUpdateIntervalSeconds300,
+		StatusUpdateIntervalSeconds360,
+		StatusUpdateIntervalSeconds420,
+		StatusUpdateIntervalSeconds480,
+		StatusUpdateIntervalSeconds540,
+		StatusUpdateIntervalSeconds600,
+	}
+}
+
 // A page type as defined in the standard ETSI EN 300 468, Table 94
 const (
 	// TeletextPageTypePageTypeInitial is a TeletextPageType enum value
@@ -23567,6 +28255,17 @@ const (
 	// TeletextPageTypePageTypeHearingImpairedSubtitle is a TeletextPageType enum value
 	TeletextPageTypePageTypeHearingImpairedSubtitle = "PAGE_TYPE_HEARING_IMPAIRED_SUBTITLE"
 )
+
+// TeletextPageType_Values returns all elements of the TeletextPageType enum
+func TeletextPageType_Values() []string {
+	return []string{
+		TeletextPageTypePageTypeInitial,
+		TeletextPageTypePageTypeSubtitle,
+		TeletextPageTypePageTypeAddlInfo,
+		TeletextPageTypePageTypeProgramSchedule,
+		TeletextPageTypePageTypeHearingImpairedSubtitle,
+	}
+}
 
 // Use Position (Position) under under Timecode burn-in (TimecodeBurnIn) to
 // specify the location the burned-in timecode on output video.
@@ -23599,6 +28298,21 @@ const (
 	TimecodeBurninPositionBottomRight = "BOTTOM_RIGHT"
 )
 
+// TimecodeBurninPosition_Values returns all elements of the TimecodeBurninPosition enum
+func TimecodeBurninPosition_Values() []string {
+	return []string{
+		TimecodeBurninPositionTopCenter,
+		TimecodeBurninPositionTopLeft,
+		TimecodeBurninPositionTopRight,
+		TimecodeBurninPositionMiddleLeft,
+		TimecodeBurninPositionMiddleCenter,
+		TimecodeBurninPositionMiddleRight,
+		TimecodeBurninPositionBottomLeft,
+		TimecodeBurninPositionBottomCenter,
+		TimecodeBurninPositionBottomRight,
+	}
+}
+
 // Use Source (TimecodeSource) to set how timecodes are handled within this
 // job. To make sure that your video, audio, captions, and markers are synchronized
 // and that time-based features, such as image inserter, work correctly, choose
@@ -23621,6 +28335,15 @@ const (
 	TimecodeSourceSpecifiedstart = "SPECIFIEDSTART"
 )
 
+// TimecodeSource_Values returns all elements of the TimecodeSource enum
+func TimecodeSource_Values() []string {
+	return []string{
+		TimecodeSourceEmbedded,
+		TimecodeSourceZerobased,
+		TimecodeSourceSpecifiedstart,
+	}
+}
+
 // Applies only to HLS outputs. Use this setting to specify whether the service
 // inserts the ID3 timed metadata from the input in this output.
 const (
@@ -23630,6 +28353,14 @@ const (
 	// TimedMetadataNone is a TimedMetadata enum value
 	TimedMetadataNone = "NONE"
 )
+
+// TimedMetadata_Values returns all elements of the TimedMetadata enum
+func TimedMetadata_Values() []string {
+	return []string{
+		TimedMetadataPassthrough,
+		TimedMetadataNone,
+	}
+}
 
 // Pass through style and position information from a TTML-like input source
 // (TTML, SMPTE-TT) to the TTML output.
@@ -23641,6 +28372,14 @@ const (
 	TtmlStylePassthroughDisabled = "DISABLED"
 )
 
+// TtmlStylePassthrough_Values returns all elements of the TtmlStylePassthrough enum
+func TtmlStylePassthrough_Values() []string {
+	return []string{
+		TtmlStylePassthroughEnabled,
+		TtmlStylePassthroughDisabled,
+	}
+}
+
 const (
 	// TypeSystem is a Type enum value
 	TypeSystem = "SYSTEM"
@@ -23649,13 +28388,172 @@ const (
 	TypeCustom = "CUSTOM"
 )
 
+// Type_Values returns all elements of the Type enum
+func Type_Values() []string {
+	return []string{
+		TypeSystem,
+		TypeCustom,
+	}
+}
+
+// Specify the VC3 class to choose the quality characteristics for this output.
+// VC3 class, together with the settings Framerate (framerateNumerator and framerateDenominator)
+// and Resolution (height and width), determine your output bitrate. For example,
+// say that your video resolution is 1920x1080 and your framerate is 29.97.
+// Then Class 145 (CLASS_145) gives you an output with a bitrate of approximately
+// 145 Mbps and Class 220 (CLASS_220) gives you and output with a bitrate of
+// approximately 220 Mbps. VC3 class also specifies the color bit depth of your
+// output.
+const (
+	// Vc3ClassClass1458bit is a Vc3Class enum value
+	Vc3ClassClass1458bit = "CLASS_145_8BIT"
+
+	// Vc3ClassClass2208bit is a Vc3Class enum value
+	Vc3ClassClass2208bit = "CLASS_220_8BIT"
+
+	// Vc3ClassClass22010bit is a Vc3Class enum value
+	Vc3ClassClass22010bit = "CLASS_220_10BIT"
+)
+
+// Vc3Class_Values returns all elements of the Vc3Class enum
+func Vc3Class_Values() []string {
+	return []string{
+		Vc3ClassClass1458bit,
+		Vc3ClassClass2208bit,
+		Vc3ClassClass22010bit,
+	}
+}
+
+// If you are using the console, use the Framerate setting to specify the frame
+// rate for this output. If you want to keep the same frame rate as the input
+// video, choose Follow source. If you want to do frame rate conversion, choose
+// a frame rate from the dropdown list or choose Custom. The framerates shown
+// in the dropdown list are decimal approximations of fractions. If you choose
+// Custom, specify your frame rate as a fraction. If you are creating your transcoding
+// job specification as a JSON file without the console, use FramerateControl
+// to specify which value the service uses for the frame rate for this output.
+// Choose INITIALIZE_FROM_SOURCE if you want the service to use the frame rate
+// from the input. Choose SPECIFIED if you want the service to use the frame
+// rate you specify in the settings FramerateNumerator and FramerateDenominator.
+const (
+	// Vc3FramerateControlInitializeFromSource is a Vc3FramerateControl enum value
+	Vc3FramerateControlInitializeFromSource = "INITIALIZE_FROM_SOURCE"
+
+	// Vc3FramerateControlSpecified is a Vc3FramerateControl enum value
+	Vc3FramerateControlSpecified = "SPECIFIED"
+)
+
+// Vc3FramerateControl_Values returns all elements of the Vc3FramerateControl enum
+func Vc3FramerateControl_Values() []string {
+	return []string{
+		Vc3FramerateControlInitializeFromSource,
+		Vc3FramerateControlSpecified,
+	}
+}
+
+// Choose the method that you want MediaConvert to use when increasing or decreasing
+// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+// smooth picture, but might introduce undesirable video artifacts. For complex
+// frame rate conversions, especially if your source video has already been
+// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+// motion-compensated interpolation. FrameFormer chooses the best conversion
+// method frame by frame. Note that using FrameFormer increases the transcoding
+// time and incurs a significant add-on cost.
+const (
+	// Vc3FramerateConversionAlgorithmDuplicateDrop is a Vc3FramerateConversionAlgorithm enum value
+	Vc3FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
+
+	// Vc3FramerateConversionAlgorithmInterpolate is a Vc3FramerateConversionAlgorithm enum value
+	Vc3FramerateConversionAlgorithmInterpolate = "INTERPOLATE"
+
+	// Vc3FramerateConversionAlgorithmFrameformer is a Vc3FramerateConversionAlgorithm enum value
+	Vc3FramerateConversionAlgorithmFrameformer = "FRAMEFORMER"
+)
+
+// Vc3FramerateConversionAlgorithm_Values returns all elements of the Vc3FramerateConversionAlgorithm enum
+func Vc3FramerateConversionAlgorithm_Values() []string {
+	return []string{
+		Vc3FramerateConversionAlgorithmDuplicateDrop,
+		Vc3FramerateConversionAlgorithmInterpolate,
+		Vc3FramerateConversionAlgorithmFrameformer,
+	}
+}
+
+// Optional. Choose the scan line type for this output. If you don't specify
+// a value, MediaConvert will create a progressive output.
+const (
+	// Vc3InterlaceModeInterlaced is a Vc3InterlaceMode enum value
+	Vc3InterlaceModeInterlaced = "INTERLACED"
+
+	// Vc3InterlaceModeProgressive is a Vc3InterlaceMode enum value
+	Vc3InterlaceModeProgressive = "PROGRESSIVE"
+)
+
+// Vc3InterlaceMode_Values returns all elements of the Vc3InterlaceMode enum
+func Vc3InterlaceMode_Values() []string {
+	return []string{
+		Vc3InterlaceModeInterlaced,
+		Vc3InterlaceModeProgressive,
+	}
+}
+
+// Ignore this setting unless your input frame rate is 23.976 or 24 frames per
+// second (fps). Enable slow PAL to create a 25 fps output by relabeling the
+// video frames and resampling your audio. Note that enabling this setting will
+// slightly reduce the duration of your video. Related settings: You must also
+// set Framerate to 25. In your JSON job specification, set (framerateControl)
+// to (SPECIFIED), (framerateNumerator) to 25 and (framerateDenominator) to
+// 1.
+const (
+	// Vc3SlowPalDisabled is a Vc3SlowPal enum value
+	Vc3SlowPalDisabled = "DISABLED"
+
+	// Vc3SlowPalEnabled is a Vc3SlowPal enum value
+	Vc3SlowPalEnabled = "ENABLED"
+)
+
+// Vc3SlowPal_Values returns all elements of the Vc3SlowPal enum
+func Vc3SlowPal_Values() []string {
+	return []string{
+		Vc3SlowPalDisabled,
+		Vc3SlowPalEnabled,
+	}
+}
+
+// When you do frame rate conversion from 23.976 frames per second (fps) to
+// 29.97 fps, and your output scan type is interlaced, you can optionally enable
+// hard telecine (HARD) to create a smoother picture. When you keep the default
+// value, None (NONE), MediaConvert does a standard frame rate conversion to
+// 29.97 without doing anything with the field polarity to create a smoother
+// picture.
+const (
+	// Vc3TelecineNone is a Vc3Telecine enum value
+	Vc3TelecineNone = "NONE"
+
+	// Vc3TelecineHard is a Vc3Telecine enum value
+	Vc3TelecineHard = "HARD"
+)
+
+// Vc3Telecine_Values returns all elements of the Vc3Telecine enum
+func Vc3Telecine_Values() []string {
+	return []string{
+		Vc3TelecineNone,
+		Vc3TelecineHard,
+	}
+}
+
 // Type of video codec
 const (
-	// VideoCodecFrameCapture is a VideoCodec enum value
-	VideoCodecFrameCapture = "FRAME_CAPTURE"
-
 	// VideoCodecAv1 is a VideoCodec enum value
 	VideoCodecAv1 = "AV1"
+
+	// VideoCodecAvcIntra is a VideoCodec enum value
+	VideoCodecAvcIntra = "AVC_INTRA"
+
+	// VideoCodecFrameCapture is a VideoCodec enum value
+	VideoCodecFrameCapture = "FRAME_CAPTURE"
 
 	// VideoCodecH264 is a VideoCodec enum value
 	VideoCodecH264 = "H_264"
@@ -23669,12 +28567,31 @@ const (
 	// VideoCodecProres is a VideoCodec enum value
 	VideoCodecProres = "PRORES"
 
+	// VideoCodecVc3 is a VideoCodec enum value
+	VideoCodecVc3 = "VC3"
+
 	// VideoCodecVp8 is a VideoCodec enum value
 	VideoCodecVp8 = "VP8"
 
 	// VideoCodecVp9 is a VideoCodec enum value
 	VideoCodecVp9 = "VP9"
 )
+
+// VideoCodec_Values returns all elements of the VideoCodec enum
+func VideoCodec_Values() []string {
+	return []string{
+		VideoCodecAv1,
+		VideoCodecAvcIntra,
+		VideoCodecFrameCapture,
+		VideoCodecH264,
+		VideoCodecH265,
+		VideoCodecMpeg2,
+		VideoCodecProres,
+		VideoCodecVc3,
+		VideoCodecVp8,
+		VideoCodecVp9,
+	}
+}
 
 // Applies only to H.264, H.265, MPEG2, and ProRes outputs. Only enable Timecode
 // insertion when the input frame rate is identical to the output frame rate.
@@ -23696,6 +28613,14 @@ const (
 	VideoTimecodeInsertionPicTimingSei = "PIC_TIMING_SEI"
 )
 
+// VideoTimecodeInsertion_Values returns all elements of the VideoTimecodeInsertion enum
+func VideoTimecodeInsertion_Values() []string {
+	return []string{
+		VideoTimecodeInsertionDisabled,
+		VideoTimecodeInsertionPicTimingSei,
+	}
+}
+
 // If you are using the console, use the Framerate setting to specify the frame
 // rate for this output. If you want to keep the same frame rate as the input
 // video, choose Follow source. If you want to do frame rate conversion, choose
@@ -23715,16 +28640,43 @@ const (
 	Vp8FramerateControlSpecified = "SPECIFIED"
 )
 
-// Optional. Specify how the transcoder performs framerate conversion. The default
-// behavior is to use Drop duplicate (DUPLICATE_DROP) conversion. When you choose
-// Interpolate (INTERPOLATE) instead, the conversion produces smoother motion.
+// Vp8FramerateControl_Values returns all elements of the Vp8FramerateControl enum
+func Vp8FramerateControl_Values() []string {
+	return []string{
+		Vp8FramerateControlInitializeFromSource,
+		Vp8FramerateControlSpecified,
+	}
+}
+
+// Choose the method that you want MediaConvert to use when increasing or decreasing
+// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+// smooth picture, but might introduce undesirable video artifacts. For complex
+// frame rate conversions, especially if your source video has already been
+// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+// motion-compensated interpolation. FrameFormer chooses the best conversion
+// method frame by frame. Note that using FrameFormer increases the transcoding
+// time and incurs a significant add-on cost.
 const (
 	// Vp8FramerateConversionAlgorithmDuplicateDrop is a Vp8FramerateConversionAlgorithm enum value
 	Vp8FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
 
 	// Vp8FramerateConversionAlgorithmInterpolate is a Vp8FramerateConversionAlgorithm enum value
 	Vp8FramerateConversionAlgorithmInterpolate = "INTERPOLATE"
+
+	// Vp8FramerateConversionAlgorithmFrameformer is a Vp8FramerateConversionAlgorithm enum value
+	Vp8FramerateConversionAlgorithmFrameformer = "FRAMEFORMER"
 )
+
+// Vp8FramerateConversionAlgorithm_Values returns all elements of the Vp8FramerateConversionAlgorithm enum
+func Vp8FramerateConversionAlgorithm_Values() []string {
+	return []string{
+		Vp8FramerateConversionAlgorithmDuplicateDrop,
+		Vp8FramerateConversionAlgorithmInterpolate,
+		Vp8FramerateConversionAlgorithmFrameformer,
+	}
+}
 
 // Optional. Specify how the service determines the pixel aspect ratio (PAR)
 // for this output. The default behavior, Follow source (INITIALIZE_FROM_SOURCE),
@@ -23741,6 +28693,14 @@ const (
 	Vp8ParControlSpecified = "SPECIFIED"
 )
 
+// Vp8ParControl_Values returns all elements of the Vp8ParControl enum
+func Vp8ParControl_Values() []string {
+	return []string{
+		Vp8ParControlInitializeFromSource,
+		Vp8ParControlSpecified,
+	}
+}
+
 // Optional. Use Quality tuning level (qualityTuningLevel) to choose how you
 // want to trade off encoding speed for output video quality. The default behavior
 // is faster, lower quality, multi-pass encoding.
@@ -23752,12 +28712,27 @@ const (
 	Vp8QualityTuningLevelMultiPassHq = "MULTI_PASS_HQ"
 )
 
+// Vp8QualityTuningLevel_Values returns all elements of the Vp8QualityTuningLevel enum
+func Vp8QualityTuningLevel_Values() []string {
+	return []string{
+		Vp8QualityTuningLevelMultiPass,
+		Vp8QualityTuningLevelMultiPassHq,
+	}
+}
+
 // With the VP8 codec, you can use only the variable bitrate (VBR) rate control
 // mode.
 const (
 	// Vp8RateControlModeVbr is a Vp8RateControlMode enum value
 	Vp8RateControlModeVbr = "VBR"
 )
+
+// Vp8RateControlMode_Values returns all elements of the Vp8RateControlMode enum
+func Vp8RateControlMode_Values() []string {
+	return []string{
+		Vp8RateControlModeVbr,
+	}
+}
 
 // If you are using the console, use the Framerate setting to specify the frame
 // rate for this output. If you want to keep the same frame rate as the input
@@ -23778,16 +28753,43 @@ const (
 	Vp9FramerateControlSpecified = "SPECIFIED"
 )
 
-// Optional. Specify how the transcoder performs framerate conversion. The default
-// behavior is to use Drop duplicate (DUPLICATE_DROP) conversion. When you choose
-// Interpolate (INTERPOLATE) instead, the conversion produces smoother motion.
+// Vp9FramerateControl_Values returns all elements of the Vp9FramerateControl enum
+func Vp9FramerateControl_Values() []string {
+	return []string{
+		Vp9FramerateControlInitializeFromSource,
+		Vp9FramerateControlSpecified,
+	}
+}
+
+// Choose the method that you want MediaConvert to use when increasing or decreasing
+// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
+// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
+// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
+// smooth picture, but might introduce undesirable video artifacts. For complex
+// frame rate conversions, especially if your source video has already been
+// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
+// motion-compensated interpolation. FrameFormer chooses the best conversion
+// method frame by frame. Note that using FrameFormer increases the transcoding
+// time and incurs a significant add-on cost.
 const (
 	// Vp9FramerateConversionAlgorithmDuplicateDrop is a Vp9FramerateConversionAlgorithm enum value
 	Vp9FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
 
 	// Vp9FramerateConversionAlgorithmInterpolate is a Vp9FramerateConversionAlgorithm enum value
 	Vp9FramerateConversionAlgorithmInterpolate = "INTERPOLATE"
+
+	// Vp9FramerateConversionAlgorithmFrameformer is a Vp9FramerateConversionAlgorithm enum value
+	Vp9FramerateConversionAlgorithmFrameformer = "FRAMEFORMER"
 )
+
+// Vp9FramerateConversionAlgorithm_Values returns all elements of the Vp9FramerateConversionAlgorithm enum
+func Vp9FramerateConversionAlgorithm_Values() []string {
+	return []string{
+		Vp9FramerateConversionAlgorithmDuplicateDrop,
+		Vp9FramerateConversionAlgorithmInterpolate,
+		Vp9FramerateConversionAlgorithmFrameformer,
+	}
+}
 
 // Optional. Specify how the service determines the pixel aspect ratio (PAR)
 // for this output. The default behavior, Follow source (INITIALIZE_FROM_SOURCE),
@@ -23804,6 +28806,14 @@ const (
 	Vp9ParControlSpecified = "SPECIFIED"
 )
 
+// Vp9ParControl_Values returns all elements of the Vp9ParControl enum
+func Vp9ParControl_Values() []string {
+	return []string{
+		Vp9ParControlInitializeFromSource,
+		Vp9ParControlSpecified,
+	}
+}
+
 // Optional. Use Quality tuning level (qualityTuningLevel) to choose how you
 // want to trade off encoding speed for output video quality. The default behavior
 // is faster, lower quality, multi-pass encoding.
@@ -23815,12 +28825,58 @@ const (
 	Vp9QualityTuningLevelMultiPassHq = "MULTI_PASS_HQ"
 )
 
+// Vp9QualityTuningLevel_Values returns all elements of the Vp9QualityTuningLevel enum
+func Vp9QualityTuningLevel_Values() []string {
+	return []string{
+		Vp9QualityTuningLevelMultiPass,
+		Vp9QualityTuningLevelMultiPassHq,
+	}
+}
+
 // With the VP9 codec, you can use only the variable bitrate (VBR) rate control
 // mode.
 const (
 	// Vp9RateControlModeVbr is a Vp9RateControlMode enum value
 	Vp9RateControlModeVbr = "VBR"
 )
+
+// Vp9RateControlMode_Values returns all elements of the Vp9RateControlMode enum
+func Vp9RateControlMode_Values() []string {
+	return []string{
+		Vp9RateControlModeVbr,
+	}
+}
+
+// Optional. Ignore this setting unless Nagra support directs you to specify
+// a value. When you don't specify a value here, the Nagra NexGuard library
+// uses its default value.
+const (
+	// WatermarkingStrengthLightest is a WatermarkingStrength enum value
+	WatermarkingStrengthLightest = "LIGHTEST"
+
+	// WatermarkingStrengthLighter is a WatermarkingStrength enum value
+	WatermarkingStrengthLighter = "LIGHTER"
+
+	// WatermarkingStrengthDefault is a WatermarkingStrength enum value
+	WatermarkingStrengthDefault = "DEFAULT"
+
+	// WatermarkingStrengthStronger is a WatermarkingStrength enum value
+	WatermarkingStrengthStronger = "STRONGER"
+
+	// WatermarkingStrengthStrongest is a WatermarkingStrength enum value
+	WatermarkingStrengthStrongest = "STRONGEST"
+)
+
+// WatermarkingStrength_Values returns all elements of the WatermarkingStrength enum
+func WatermarkingStrength_Values() []string {
+	return []string{
+		WatermarkingStrengthLightest,
+		WatermarkingStrengthLighter,
+		WatermarkingStrengthDefault,
+		WatermarkingStrengthStronger,
+		WatermarkingStrengthStrongest,
+	}
+}
 
 // The service defaults to using RIFF for WAV outputs. If your output audio
 // is likely to exceed 4 GB in file size, or if you otherwise need the extended
@@ -23832,3 +28888,11 @@ const (
 	// WavFormatRf64 is a WavFormat enum value
 	WavFormatRf64 = "RF64"
 )
+
+// WavFormat_Values returns all elements of the WavFormat enum
+func WavFormat_Values() []string {
+	return []string{
+		WavFormatRiff,
+		WavFormatRf64,
+	}
+}

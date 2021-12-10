@@ -1245,8 +1245,9 @@ func (c *ApplicationAutoScaling) RegisterScalableTargetRequest(input *RegisterSc
 // of resource ID, scalable dimension, and namespace.
 //
 // When you register a new scalable target, you must specify values for minimum
-// and maximum capacity. Application Auto Scaling scaling policies will not
-// scale capacity to values that are outside of this range.
+// and maximum capacity. Current capacity will be adjusted within the specified
+// range when scaling starts. Application Auto Scaling scaling policies will
+// not scale capacity to values that are outside of this range.
 //
 // After you register a scalable target, you do not need to register it again
 // to use other Application Auto Scaling operations. To see which resources
@@ -1561,6 +1562,9 @@ type DeleteScalingPolicyInput struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -1568,6 +1572,9 @@ type DeleteScalingPolicyInput struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	//
 	// ResourceId is a required field
 	ResourceId *string `min:"1" type:"string" required:"true"`
@@ -1612,6 +1619,9 @@ type DeleteScalingPolicyInput struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -1620,6 +1630,9 @@ type DeleteScalingPolicyInput struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	//
 	// ScalableDimension is a required field
 	ScalableDimension *string `type:"string" required:"true" enum:"ScalableDimension"`
@@ -1745,6 +1758,9 @@ type DeleteScheduledActionInput struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -1752,6 +1768,9 @@ type DeleteScheduledActionInput struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	//
 	// ResourceId is a required field
 	ResourceId *string `min:"1" type:"string" required:"true"`
@@ -1796,6 +1815,9 @@ type DeleteScheduledActionInput struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -1804,6 +1826,9 @@ type DeleteScheduledActionInput struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	//
 	// ScalableDimension is a required field
 	ScalableDimension *string `type:"string" required:"true" enum:"ScalableDimension"`
@@ -1934,6 +1959,9 @@ type DeregisterScalableTargetInput struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -1941,6 +1969,9 @@ type DeregisterScalableTargetInput struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	//
 	// ResourceId is a required field
 	ResourceId *string `min:"1" type:"string" required:"true"`
@@ -1985,6 +2016,9 @@ type DeregisterScalableTargetInput struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -1993,6 +2027,9 @@ type DeregisterScalableTargetInput struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	//
 	// ScalableDimension is a required field
 	ScalableDimension *string `type:"string" required:"true" enum:"ScalableDimension"`
@@ -2119,6 +2156,9 @@ type DescribeScalableTargetsInput struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -2126,6 +2166,9 @@ type DescribeScalableTargetsInput struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	ResourceIds []*string `type:"list"`
 
 	// The scalable dimension associated with the scalable target. This string consists
@@ -2169,6 +2212,9 @@ type DescribeScalableTargetsInput struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -2177,6 +2223,9 @@ type DescribeScalableTargetsInput struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	ScalableDimension *string `type:"string" enum:"ScalableDimension"`
 
 	// The namespace of the AWS service that provides the resource. For a resource
@@ -2323,6 +2372,9 @@ type DescribeScalingActivitiesInput struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -2330,6 +2382,9 @@ type DescribeScalingActivitiesInput struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	ResourceId *string `min:"1" type:"string"`
 
 	// The scalable dimension. This string consists of the service namespace, resource
@@ -2373,6 +2428,9 @@ type DescribeScalingActivitiesInput struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -2381,6 +2439,9 @@ type DescribeScalingActivitiesInput struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	ScalableDimension *string `type:"string" enum:"ScalableDimension"`
 
 	// The namespace of the AWS service that provides the resource. For a resource
@@ -2533,6 +2594,9 @@ type DescribeScalingPoliciesInput struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -2540,6 +2604,9 @@ type DescribeScalingPoliciesInput struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	ResourceId *string `min:"1" type:"string"`
 
 	// The scalable dimension. This string consists of the service namespace, resource
@@ -2583,6 +2650,9 @@ type DescribeScalingPoliciesInput struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -2591,6 +2661,9 @@ type DescribeScalingPoliciesInput struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	ScalableDimension *string `type:"string" enum:"ScalableDimension"`
 
 	// The namespace of the AWS service that provides the resource. For a resource
@@ -2746,6 +2819,9 @@ type DescribeScheduledActionsInput struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -2753,6 +2829,9 @@ type DescribeScheduledActionsInput struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	ResourceId *string `min:"1" type:"string"`
 
 	// The scalable dimension. This string consists of the service namespace, resource
@@ -2796,6 +2875,9 @@ type DescribeScheduledActionsInput struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -2804,6 +2886,9 @@ type DescribeScheduledActionsInput struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	ScalableDimension *string `type:"string" enum:"ScalableDimension"`
 
 	// The names of the scheduled actions to describe.
@@ -3275,7 +3360,9 @@ type PredefinedMetricSpecification struct {
 	// a resource label unless the metric type is ALBRequestCountPerTarget and there
 	// is a target group attached to the Spot Fleet request or ECS service.
 	//
-	// The format is app/<load-balancer-name>/<load-balancer-id>/targetgroup/<target-group-name>/<target-group-id>,
+	// You create the resource label by appending the final portion of the load
+	// balancer ARN and the final portion of the target group ARN into a single
+	// value, separated by a forward slash (/). The format is app/<load-balancer-name>/<load-balancer-id>/targetgroup/<target-group-name>/<target-group-id>,
 	// where:
 	//
 	//    * app/<load-balancer-name>/<load-balancer-id> is the final portion of
@@ -3283,6 +3370,14 @@ type PredefinedMetricSpecification struct {
 	//
 	//    * targetgroup/<target-group-name>/<target-group-id> is the final portion
 	//    of the target group ARN.
+	//
+	// This is an example: app/EC2Co-EcsEl-1TKLTMITMM0EO/f37c06a68c1748aa/targetgroup/EC2Co-Defau-LDNM7Q3ZH1ZN/6d4ea56ca2d6a18d.
+	//
+	// To find the ARN for an Application Load Balancer, use the DescribeLoadBalancers
+	// (https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_DescribeLoadBalancers.html)
+	// API operation. To find the ARN for the target group, use the DescribeTargetGroups
+	// (https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_DescribeTargetGroups.html)
+	// API operation.
 	ResourceLabel *string `min:"1" type:"string"`
 }
 
@@ -3339,8 +3434,8 @@ type PutScalingPolicyInput struct {
 	//
 	// TargetTrackingScaling—Not supported for Amazon EMR
 	//
-	// StepScaling—Not supported for DynamoDB, Amazon Comprehend, Lambda, or Amazon
-	// Keyspaces (for Apache Cassandra).
+	// StepScaling—Not supported for DynamoDB, Amazon Comprehend, Lambda, Amazon
+	// Keyspaces (for Apache Cassandra), or Amazon MSK.
 	//
 	// For more information, see Target Tracking Scaling Policies (https://docs.aws.amazon.com/autoscaling/application/userguide/application-auto-scaling-target-tracking.html)
 	// and Step Scaling Policies (https://docs.aws.amazon.com/autoscaling/application/userguide/application-auto-scaling-step-scaling-policies.html)
@@ -3382,6 +3477,9 @@ type PutScalingPolicyInput struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -3389,6 +3487,9 @@ type PutScalingPolicyInput struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	//
 	// ResourceId is a required field
 	ResourceId *string `min:"1" type:"string" required:"true"`
@@ -3433,6 +3534,9 @@ type PutScalingPolicyInput struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -3441,6 +3545,9 @@ type PutScalingPolicyInput struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	//
 	// ScalableDimension is a required field
 	ScalableDimension *string `type:"string" required:"true" enum:"ScalableDimension"`
@@ -3630,6 +3737,9 @@ type PutScheduledActionInput struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -3637,6 +3747,9 @@ type PutScheduledActionInput struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	//
 	// ResourceId is a required field
 	ResourceId *string `min:"1" type:"string" required:"true"`
@@ -3681,6 +3794,9 @@ type PutScheduledActionInput struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -3689,6 +3805,9 @@ type PutScheduledActionInput struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	//
 	// ScalableDimension is a required field
 	ScalableDimension *string `type:"string" required:"true" enum:"ScalableDimension"`
@@ -3847,6 +3966,14 @@ type RegisterScalableTargetInput struct {
 	// maximum capacity limit in response to changing demand.
 	//
 	// This parameter is required if you are registering a scalable target.
+	//
+	// Although you can specify a large maximum capacity, note that service quotas
+	// may impose lower limits. Each service has its own default quotas for the
+	// maximum capacity of the resource. If you want to specify a higher limit,
+	// you can request an increase. For more information, consult the documentation
+	// for that service. For information about the default quotas for each service,
+	// see Service Endpoints and Quotas (https://docs.aws.amazon.com/general/latest/gr/aws-service-information.html)
+	// in the Amazon Web Services General Reference.
 	MaxCapacity *int64 `type:"integer"`
 
 	// The minimum value that you plan to scale in to. When a scaling policy is
@@ -3854,8 +3981,10 @@ type RegisterScalableTargetInput struct {
 	// the minimum capacity limit in response to changing demand.
 	//
 	// This parameter is required if you are registering a scalable target. For
-	// Lambda provisioned concurrency, the minimum value allowed is 0. For all other
-	// resources, the minimum value allowed is 1.
+	// certain resources, the minimum value allowed is 0. This includes Lambda provisioned
+	// concurrency, Spot Fleet, ECS services, Aurora DB clusters, EMR clusters,
+	// and custom resources. For all other resources, the minimum value allowed
+	// is 1.
 	MinCapacity *int64 `type:"integer"`
 
 	// The identifier of the resource that is associated with the scalable target.
@@ -3893,6 +4022,9 @@ type RegisterScalableTargetInput struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -3900,6 +4032,9 @@ type RegisterScalableTargetInput struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	//
 	// ResourceId is a required field
 	ResourceId *string `min:"1" type:"string" required:"true"`
@@ -3953,6 +4088,9 @@ type RegisterScalableTargetInput struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -3961,6 +4099,9 @@ type RegisterScalableTargetInput struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	//
 	// ScalableDimension is a required field
 	ScalableDimension *string `type:"string" required:"true" enum:"ScalableDimension"`
@@ -4137,6 +4278,9 @@ type ScalableTarget struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -4144,6 +4288,9 @@ type ScalableTarget struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	//
 	// ResourceId is a required field
 	ResourceId *string `min:"1" type:"string" required:"true"`
@@ -4194,6 +4341,9 @@ type ScalableTarget struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -4202,6 +4352,9 @@ type ScalableTarget struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	//
 	// ScalableDimension is a required field
 	ScalableDimension *string `type:"string" required:"true" enum:"ScalableDimension"`
@@ -4279,12 +4432,22 @@ type ScalableTargetAction struct {
 	_ struct{} `type:"structure"`
 
 	// The maximum capacity.
+	//
+	// Although you can specify a large maximum capacity, note that service quotas
+	// may impose lower limits. Each service has its own default quotas for the
+	// maximum capacity of the resource. If you want to specify a higher limit,
+	// you can request an increase. For more information, consult the documentation
+	// for that service. For information about the default quotas for each service,
+	// see Service Endpoints and Quotas (https://docs.aws.amazon.com/general/latest/gr/aws-service-information.html)
+	// in the Amazon Web Services General Reference.
 	MaxCapacity *int64 `type:"integer"`
 
 	// The minimum capacity.
 	//
-	// For Lambda provisioned concurrency, the minimum value allowed is 0. For all
-	// other resources, the minimum value allowed is 1.
+	// For certain resources, the minimum value allowed is 0. This includes Lambda
+	// provisioned concurrency, Spot Fleet, ECS services, Aurora DB clusters, EMR
+	// clusters, and custom resources. For all other resources, the minimum value
+	// allowed is 1.
 	MinCapacity *int64 `type:"integer"`
 }
 
@@ -4370,6 +4533,9 @@ type ScalingActivity struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -4377,6 +4543,9 @@ type ScalingActivity struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	//
 	// ResourceId is a required field
 	ResourceId *string `min:"1" type:"string" required:"true"`
@@ -4421,6 +4590,9 @@ type ScalingActivity struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -4429,6 +4601,9 @@ type ScalingActivity struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	//
 	// ScalableDimension is a required field
 	ScalableDimension *string `type:"string" required:"true" enum:"ScalableDimension"`
@@ -4529,6 +4704,10 @@ func (s *ScalingActivity) SetStatusMessage(v string) *ScalingActivity {
 }
 
 // Represents a scaling policy to use with Application Auto Scaling.
+//
+// For more information about configuring scaling policies for a specific service,
+// see Getting started with Application Auto Scaling (https://docs.aws.amazon.com/autoscaling/application/userguide/getting-started.html)
+// in the Application Auto Scaling User Guide.
 type ScalingPolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -4590,6 +4769,9 @@ type ScalingPolicy struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -4597,6 +4779,9 @@ type ScalingPolicy struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	//
 	// ResourceId is a required field
 	ResourceId *string `min:"1" type:"string" required:"true"`
@@ -4641,6 +4826,9 @@ type ScalingPolicy struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -4649,6 +4837,9 @@ type ScalingPolicy struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	//
 	// ScalableDimension is a required field
 	ScalableDimension *string `type:"string" required:"true" enum:"ScalableDimension"`
@@ -4782,6 +4973,9 @@ type ScheduledAction struct {
 	//    * Amazon Comprehend document classification endpoint - The resource type
 	//    and unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:document-classifier-endpoint/EXAMPLE.
 	//
+	//    * Amazon Comprehend entity recognizer endpoint - The resource type and
+	//    unique identifier are specified using the endpoint ARN. Example: arn:aws:comprehend:us-west-2:123456789012:entity-recognizer-endpoint/EXAMPLE.
+	//
 	//    * Lambda provisioned concurrency - The resource type is function and the
 	//    unique identifier is the function name with a function version or alias
 	//    name suffix that is not $LATEST. Example: function:my-function:prod or
@@ -4789,6 +4983,9 @@ type ScheduledAction struct {
 	//
 	//    * Amazon Keyspaces table - The resource type is table and the unique identifier
 	//    is the table name. Example: keyspace/mykeyspace/table/mytable.
+	//
+	//    * Amazon MSK cluster - The resource type and unique identifier are specified
+	//    using the cluster ARN. Example: arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5.
 	//
 	// ResourceId is a required field
 	ResourceId *string `min:"1" type:"string" required:"true"`
@@ -4833,6 +5030,9 @@ type ScheduledAction struct {
 	//    number of inference units for an Amazon Comprehend document classification
 	//    endpoint.
 	//
+	//    * comprehend:entity-recognizer-endpoint:DesiredInferenceUnits - The number
+	//    of inference units for an Amazon Comprehend entity recognizer endpoint.
+	//
 	//    * lambda:function:ProvisionedConcurrency - The provisioned concurrency
 	//    for a Lambda function.
 	//
@@ -4841,6 +5041,9 @@ type ScheduledAction struct {
 	//
 	//    * cassandra:table:WriteCapacityUnits - The provisioned write capacity
 	//    for an Amazon Keyspaces table.
+	//
+	//    * kafka:broker-storage:VolumeSize - The provisioned volume size (in GiB)
+	//    for brokers in an Amazon MSK cluster.
 	ScalableDimension *string `type:"string" enum:"ScalableDimension"`
 
 	// The new minimum and maximum capacity. You can set both values or just one.
@@ -5012,7 +5215,7 @@ type StepAdjustment struct {
 
 	// The amount by which to scale, based on the specified adjustment type. A positive
 	// value adds to the current capacity while a negative number removes from the
-	// current capacity.
+	// current capacity. For exact capacity, you must specify a positive value.
 	//
 	// ScalingAdjustment is a required field
 	ScalingAdjustment *int64 `type:"integer" required:"true"`
@@ -5064,8 +5267,9 @@ func (s *StepAdjustment) SetScalingAdjustment(v int64) *StepAdjustment {
 type StepScalingPolicyConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies whether the ScalingAdjustment value in a StepAdjustment (https://docs.aws.amazon.com/autoscaling/application/APIReference/API_StepAdjustment.html)
-	// is an absolute number or a percentage of the current capacity.
+	// Specifies how the ScalingAdjustment value in a StepAdjustment (https://docs.aws.amazon.com/autoscaling/application/APIReference/API_StepAdjustment.html)
+	// is interpreted (for example, an absolute number or a percentage). The valid
+	// values are ChangeInCapacity, ExactCapacity, and PercentChangeInCapacity.
 	//
 	// AdjustmentType is required if you are adding a new step scaling policy configuration.
 	AdjustmentType *string `type:"string" enum:"AdjustmentType"`
@@ -5075,15 +5279,16 @@ type StepScalingPolicyConfiguration struct {
 	//
 	// With scale-out policies, the intention is to continuously (but not excessively)
 	// scale out. After Application Auto Scaling successfully scales out using a
-	// step scaling policy, it starts to calculate the cooldown time. While the
-	// cooldown period is in effect, capacity added by the initiating scale-out
-	// activity is calculated as part of the desired capacity for the next scale-out
-	// activity. For example, when an alarm triggers a step scaling policy to increase
-	// the capacity by 2, the scaling activity completes successfully, and a cooldown
-	// period starts. If the alarm triggers again during the cooldown period but
-	// at a more aggressive step adjustment of 3, the previous increase of 2 is
-	// considered part of the current capacity. Therefore, only 1 is added to the
-	// capacity.
+	// step scaling policy, it starts to calculate the cooldown time. The scaling
+	// policy won't increase the desired capacity again unless either a larger scale
+	// out is triggered or the cooldown period ends. While the cooldown period is
+	// in effect, capacity added by the initiating scale-out activity is calculated
+	// as part of the desired capacity for the next scale-out activity. For example,
+	// when an alarm triggers a step scaling policy to increase the capacity by
+	// 2, the scaling activity completes successfully, and a cooldown period starts.
+	// If the alarm triggers again during the cooldown period but at a more aggressive
+	// step adjustment of 3, the previous increase of 2 is considered part of the
+	// current capacity. Therefore, only 1 is added to the capacity.
 	//
 	// With scale-in policies, the intention is to scale in conservatively to protect
 	// your application’s availability, so scale-in activities are blocked until
@@ -5115,11 +5320,13 @@ type StepScalingPolicyConfiguration struct {
 	//
 	//    * DynamoDB global secondary indexes
 	//
-	//    * Amazon Comprehend document classification endpoints
+	//    * Amazon Comprehend document classification and entity recognizer endpoints
 	//
 	//    * Lambda provisioned concurrency
 	//
 	//    * Amazon Keyspaces tables
+	//
+	//    * Amazon MSK cluster storage
 	Cooldown *int64 `type:"integer"`
 
 	// The aggregation type for the CloudWatch metrics. Valid values are Minimum,
@@ -5127,14 +5334,12 @@ type StepScalingPolicyConfiguration struct {
 	// as Average.
 	MetricAggregationType *string `type:"string" enum:"MetricAggregationType"`
 
-	// The minimum value to scale by when scaling by percentages. For example, suppose
-	// that you create a step scaling policy to scale out an Amazon ECS service
-	// by 25 percent and you specify a MinAdjustmentMagnitude of 2. If the service
-	// has 4 tasks and the scaling policy is performed, 25 percent of 4 is 1. However,
-	// because you specified a MinAdjustmentMagnitude of 2, Application Auto Scaling
-	// scales out the service by 2 tasks.
-	//
-	// Valid only if the adjustment type is PercentChangeInCapacity.
+	// The minimum value to scale by when the adjustment type is PercentChangeInCapacity.
+	// For example, suppose that you create a step scaling policy to scale out an
+	// Amazon ECS service by 25 percent and you specify a MinAdjustmentMagnitude
+	// of 2. If the service has 4 tasks and the scaling policy is performed, 25
+	// percent of 4 is 1. However, because you specified a MinAdjustmentMagnitude
+	// of 2, Application Auto Scaling scales out the service by 2 tasks.
 	MinAdjustmentMagnitude *int64 `type:"integer"`
 
 	// A set of adjustments that enable you to scale based on the size of the alarm
@@ -5307,11 +5512,13 @@ type TargetTrackingScalingPolicyConfiguration struct {
 	//
 	//    * DynamoDB global secondary indexes
 	//
-	//    * Amazon Comprehend document classification endpoints
+	//    * Amazon Comprehend document classification and entity recognizer endpoints
 	//
 	//    * Lambda provisioned concurrency
 	//
 	//    * Amazon Keyspaces tables
+	//
+	//    * Amazon MSK cluster storage
 	ScaleInCooldown *int64 `type:"integer"`
 
 	// The amount of time, in seconds, to wait for a previous scale-out activity
@@ -5320,9 +5527,11 @@ type TargetTrackingScalingPolicyConfiguration struct {
 	// With the scale-out cooldown period, the intention is to continuously (but
 	// not excessively) scale out. After Application Auto Scaling successfully scales
 	// out using a target tracking scaling policy, it starts to calculate the cooldown
-	// time. While the scale-out cooldown period is in effect, the capacity added
-	// by the initiating scale-out activity is calculated as part of the desired
-	// capacity for the next scale-out activity.
+	// time. The scaling policy won't increase the desired capacity again unless
+	// either a larger scale out is triggered or the cooldown period ends. While
+	// the cooldown period is in effect, the capacity added by the initiating scale-out
+	// activity is calculated as part of the desired capacity for the next scale-out
+	// activity.
 	//
 	// Application Auto Scaling provides a default value of 300 for the following
 	// scalable targets:
@@ -5347,11 +5556,13 @@ type TargetTrackingScalingPolicyConfiguration struct {
 	//
 	//    * DynamoDB global secondary indexes
 	//
-	//    * Amazon Comprehend document classification endpoints
+	//    * Amazon Comprehend document classification and entity recognizer endpoints
 	//
 	//    * Lambda provisioned concurrency
 	//
 	//    * Amazon Keyspaces tables
+	//
+	//    * Amazon MSK cluster storage
 	ScaleOutCooldown *int64 `type:"integer"`
 
 	// The target value for the metric. The range is 8.515920e-109 to 1.174271e+108
@@ -5498,6 +5709,15 @@ const (
 	AdjustmentTypeExactCapacity = "ExactCapacity"
 )
 
+// AdjustmentType_Values returns all elements of the AdjustmentType enum
+func AdjustmentType_Values() []string {
+	return []string{
+		AdjustmentTypeChangeInCapacity,
+		AdjustmentTypePercentChangeInCapacity,
+		AdjustmentTypeExactCapacity,
+	}
+}
+
 const (
 	// MetricAggregationTypeAverage is a MetricAggregationType enum value
 	MetricAggregationTypeAverage = "Average"
@@ -5508,6 +5728,15 @@ const (
 	// MetricAggregationTypeMaximum is a MetricAggregationType enum value
 	MetricAggregationTypeMaximum = "Maximum"
 )
+
+// MetricAggregationType_Values returns all elements of the MetricAggregationType enum
+func MetricAggregationType_Values() []string {
+	return []string{
+		MetricAggregationTypeAverage,
+		MetricAggregationTypeMinimum,
+		MetricAggregationTypeMaximum,
+	}
+}
 
 const (
 	// MetricStatisticAverage is a MetricStatistic enum value
@@ -5525,6 +5754,17 @@ const (
 	// MetricStatisticSum is a MetricStatistic enum value
 	MetricStatisticSum = "Sum"
 )
+
+// MetricStatistic_Values returns all elements of the MetricStatistic enum
+func MetricStatistic_Values() []string {
+	return []string{
+		MetricStatisticAverage,
+		MetricStatisticMinimum,
+		MetricStatisticMaximum,
+		MetricStatisticSampleCount,
+		MetricStatisticSum,
+	}
+}
 
 const (
 	// MetricTypeDynamoDbreadCapacityUtilization is a MetricType enum value
@@ -5574,7 +5814,33 @@ const (
 
 	// MetricTypeCassandraWriteCapacityUtilization is a MetricType enum value
 	MetricTypeCassandraWriteCapacityUtilization = "CassandraWriteCapacityUtilization"
+
+	// MetricTypeKafkaBrokerStorageUtilization is a MetricType enum value
+	MetricTypeKafkaBrokerStorageUtilization = "KafkaBrokerStorageUtilization"
 )
+
+// MetricType_Values returns all elements of the MetricType enum
+func MetricType_Values() []string {
+	return []string{
+		MetricTypeDynamoDbreadCapacityUtilization,
+		MetricTypeDynamoDbwriteCapacityUtilization,
+		MetricTypeAlbrequestCountPerTarget,
+		MetricTypeRdsreaderAverageCpuutilization,
+		MetricTypeRdsreaderAverageDatabaseConnections,
+		MetricTypeEc2spotFleetRequestAverageCpuutilization,
+		MetricTypeEc2spotFleetRequestAverageNetworkIn,
+		MetricTypeEc2spotFleetRequestAverageNetworkOut,
+		MetricTypeSageMakerVariantInvocationsPerInstance,
+		MetricTypeEcsserviceAverageCpuutilization,
+		MetricTypeEcsserviceAverageMemoryUtilization,
+		MetricTypeAppStreamAverageCapacityUtilization,
+		MetricTypeComprehendInferenceUtilization,
+		MetricTypeLambdaProvisionedConcurrencyUtilization,
+		MetricTypeCassandraReadCapacityUtilization,
+		MetricTypeCassandraWriteCapacityUtilization,
+		MetricTypeKafkaBrokerStorageUtilization,
+	}
+}
 
 const (
 	// PolicyTypeStepScaling is a PolicyType enum value
@@ -5583,6 +5849,14 @@ const (
 	// PolicyTypeTargetTrackingScaling is a PolicyType enum value
 	PolicyTypeTargetTrackingScaling = "TargetTrackingScaling"
 )
+
+// PolicyType_Values returns all elements of the PolicyType enum
+func PolicyType_Values() []string {
+	return []string{
+		PolicyTypeStepScaling,
+		PolicyTypeTargetTrackingScaling,
+	}
+}
 
 const (
 	// ScalableDimensionEcsServiceDesiredCount is a ScalableDimension enum value
@@ -5621,6 +5895,9 @@ const (
 	// ScalableDimensionComprehendDocumentClassifierEndpointDesiredInferenceUnits is a ScalableDimension enum value
 	ScalableDimensionComprehendDocumentClassifierEndpointDesiredInferenceUnits = "comprehend:document-classifier-endpoint:DesiredInferenceUnits"
 
+	// ScalableDimensionComprehendEntityRecognizerEndpointDesiredInferenceUnits is a ScalableDimension enum value
+	ScalableDimensionComprehendEntityRecognizerEndpointDesiredInferenceUnits = "comprehend:entity-recognizer-endpoint:DesiredInferenceUnits"
+
 	// ScalableDimensionLambdaFunctionProvisionedConcurrency is a ScalableDimension enum value
 	ScalableDimensionLambdaFunctionProvisionedConcurrency = "lambda:function:ProvisionedConcurrency"
 
@@ -5629,7 +5906,33 @@ const (
 
 	// ScalableDimensionCassandraTableWriteCapacityUnits is a ScalableDimension enum value
 	ScalableDimensionCassandraTableWriteCapacityUnits = "cassandra:table:WriteCapacityUnits"
+
+	// ScalableDimensionKafkaBrokerStorageVolumeSize is a ScalableDimension enum value
+	ScalableDimensionKafkaBrokerStorageVolumeSize = "kafka:broker-storage:VolumeSize"
 )
+
+// ScalableDimension_Values returns all elements of the ScalableDimension enum
+func ScalableDimension_Values() []string {
+	return []string{
+		ScalableDimensionEcsServiceDesiredCount,
+		ScalableDimensionEc2SpotFleetRequestTargetCapacity,
+		ScalableDimensionElasticmapreduceInstancegroupInstanceCount,
+		ScalableDimensionAppstreamFleetDesiredCapacity,
+		ScalableDimensionDynamodbTableReadCapacityUnits,
+		ScalableDimensionDynamodbTableWriteCapacityUnits,
+		ScalableDimensionDynamodbIndexReadCapacityUnits,
+		ScalableDimensionDynamodbIndexWriteCapacityUnits,
+		ScalableDimensionRdsClusterReadReplicaCount,
+		ScalableDimensionSagemakerVariantDesiredInstanceCount,
+		ScalableDimensionCustomResourceResourceTypeProperty,
+		ScalableDimensionComprehendDocumentClassifierEndpointDesiredInferenceUnits,
+		ScalableDimensionComprehendEntityRecognizerEndpointDesiredInferenceUnits,
+		ScalableDimensionLambdaFunctionProvisionedConcurrency,
+		ScalableDimensionCassandraTableReadCapacityUnits,
+		ScalableDimensionCassandraTableWriteCapacityUnits,
+		ScalableDimensionKafkaBrokerStorageVolumeSize,
+	}
+}
 
 const (
 	// ScalingActivityStatusCodePending is a ScalingActivityStatusCode enum value
@@ -5650,6 +5953,18 @@ const (
 	// ScalingActivityStatusCodeFailed is a ScalingActivityStatusCode enum value
 	ScalingActivityStatusCodeFailed = "Failed"
 )
+
+// ScalingActivityStatusCode_Values returns all elements of the ScalingActivityStatusCode enum
+func ScalingActivityStatusCode_Values() []string {
+	return []string{
+		ScalingActivityStatusCodePending,
+		ScalingActivityStatusCodeInProgress,
+		ScalingActivityStatusCodeSuccessful,
+		ScalingActivityStatusCodeOverridden,
+		ScalingActivityStatusCodeUnfulfilled,
+		ScalingActivityStatusCodeFailed,
+	}
+}
 
 const (
 	// ServiceNamespaceEcs is a ServiceNamespace enum value
@@ -5684,4 +5999,25 @@ const (
 
 	// ServiceNamespaceCassandra is a ServiceNamespace enum value
 	ServiceNamespaceCassandra = "cassandra"
+
+	// ServiceNamespaceKafka is a ServiceNamespace enum value
+	ServiceNamespaceKafka = "kafka"
 )
+
+// ServiceNamespace_Values returns all elements of the ServiceNamespace enum
+func ServiceNamespace_Values() []string {
+	return []string{
+		ServiceNamespaceEcs,
+		ServiceNamespaceElasticmapreduce,
+		ServiceNamespaceEc2,
+		ServiceNamespaceAppstream,
+		ServiceNamespaceDynamodb,
+		ServiceNamespaceRds,
+		ServiceNamespaceSagemaker,
+		ServiceNamespaceCustomResource,
+		ServiceNamespaceComprehend,
+		ServiceNamespaceLambda,
+		ServiceNamespaceCassandra,
+		ServiceNamespaceKafka,
+	}
+}

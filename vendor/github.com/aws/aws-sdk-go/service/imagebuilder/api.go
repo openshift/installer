@@ -4793,7 +4793,10 @@ func (c *Imagebuilder) UpdateInfrastructureConfigurationWithContext(ctx aws.Cont
 type Ami struct {
 	_ struct{} `type:"structure"`
 
-	// The description of the EC2 AMI.
+	// The account ID of the owner of the AMI.
+	AccountId *string `locationName:"accountId" min:"1" type:"string"`
+
+	// The description of the EC2 AMI. Minimum and maximum length are in characters.
 	Description *string `locationName:"description" min:"1" type:"string"`
 
 	// The AMI ID of the EC2 AMI.
@@ -4817,6 +4820,12 @@ func (s Ami) String() string {
 // GoString returns the string representation
 func (s Ami) GoString() string {
 	return s.String()
+}
+
+// SetAccountId sets the AccountId field's value.
+func (s *Ami) SetAccountId(v string) *Ami {
+	s.AccountId = &v
+	return s
 }
 
 // SetDescription sets the Description field's value.
@@ -4856,8 +4865,12 @@ type AmiDistributionConfiguration struct {
 	// The tags to apply to AMIs distributed to this Region.
 	AmiTags map[string]*string `locationName:"amiTags" min:"1" type:"map"`
 
-	// The description of the distribution configuration.
+	// The description of the distribution configuration. Minimum and maximum length
+	// are in characters.
 	Description *string `locationName:"description" min:"1" type:"string"`
+
+	// The KMS key identifier used to encrypt the distributed image.
+	KmsKeyId *string `locationName:"kmsKeyId" min:"1" type:"string"`
 
 	// Launch permissions can be used to configure which AWS accounts can use the
 	// AMI to launch instances.
@@ -4865,6 +4878,9 @@ type AmiDistributionConfiguration struct {
 
 	// The name of the distribution configuration.
 	Name *string `locationName:"name" min:"1" type:"string"`
+
+	// The ID of an account to which you want to distribute an image.
+	TargetAccountIds []*string `locationName:"targetAccountIds" min:"1" type:"list"`
 }
 
 // String returns the string representation
@@ -4886,8 +4902,19 @@ func (s *AmiDistributionConfiguration) Validate() error {
 	if s.Description != nil && len(*s.Description) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Description", 1))
 	}
+	if s.KmsKeyId != nil && len(*s.KmsKeyId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KmsKeyId", 1))
+	}
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.TargetAccountIds != nil && len(s.TargetAccountIds) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TargetAccountIds", 1))
+	}
+	if s.LaunchPermission != nil {
+		if err := s.LaunchPermission.Validate(); err != nil {
+			invalidParams.AddNested("LaunchPermission", err.(request.ErrInvalidParams))
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -4908,6 +4935,12 @@ func (s *AmiDistributionConfiguration) SetDescription(v string) *AmiDistribution
 	return s
 }
 
+// SetKmsKeyId sets the KmsKeyId field's value.
+func (s *AmiDistributionConfiguration) SetKmsKeyId(v string) *AmiDistributionConfiguration {
+	s.KmsKeyId = &v
+	return s
+}
+
 // SetLaunchPermission sets the LaunchPermission field's value.
 func (s *AmiDistributionConfiguration) SetLaunchPermission(v *LaunchPermissionConfiguration) *AmiDistributionConfiguration {
 	s.LaunchPermission = v
@@ -4917,6 +4950,12 @@ func (s *AmiDistributionConfiguration) SetLaunchPermission(v *LaunchPermissionCo
 // SetName sets the Name field's value.
 func (s *AmiDistributionConfiguration) SetName(v string) *AmiDistributionConfiguration {
 	s.Name = &v
+	return s
+}
+
+// SetTargetAccountIds sets the TargetAccountIds field's value.
+func (s *AmiDistributionConfiguration) SetTargetAccountIds(v []*string) *AmiDistributionConfiguration {
+	s.TargetAccountIds = v
 	return s
 }
 
@@ -6259,13 +6298,11 @@ type CreateImageRecipeInput struct {
 
 	// The parent image of the image recipe. The value of the string can be the
 	// ARN of the parent image or an AMI ID. The format for the ARN follows this
-	// example: arn:aws:imagebuilder:us-west-2:aws:image/windows-server-2016-english-full-base-x86/2019.x.x.
-	// The ARN ends with /20xx.x.x, which communicates to EC2 Image Builder that
-	// you want to use the latest AMI created in 20xx (year). You can provide the
-	// specific version that you want to use, or you can use a wildcard in all of
-	// the fields. If you enter an AMI ID for the string value, you must have access
-	// to the AMI, and the AMI must be in the same Region in which you are using
-	// Image Builder.
+	// example: arn:aws:imagebuilder:us-west-2:aws:image/windows-server-2016-english-full-base-x86/xxxx.x.x.
+	// You can provide the specific version that you want to use, or you can use
+	// a wildcard in all of the fields. If you enter an AMI ID for the string value,
+	// you must have access to the AMI, and the AMI must be in the same Region in
+	// which you are using Image Builder.
 	//
 	// ParentImage is a required field
 	ParentImage *string `locationName:"parentImage" min:"1" type:"string" required:"true"`
@@ -7105,7 +7142,7 @@ type Distribution struct {
 
 	// The License Manager Configuration to associate with the AMI in the specified
 	// Region.
-	LicenseConfigurationArns []*string `locationName:"licenseConfigurationArns" type:"list"`
+	LicenseConfigurationArns []*string `locationName:"licenseConfigurationArns" min:"1" type:"list"`
 
 	// The target Region.
 	//
@@ -7126,6 +7163,9 @@ func (s Distribution) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *Distribution) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "Distribution"}
+	if s.LicenseConfigurationArns != nil && len(s.LicenseConfigurationArns) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LicenseConfigurationArns", 1))
+	}
 	if s.Region == nil {
 		invalidParams.Add(request.NewErrParamRequired("Region"))
 	}
@@ -9877,7 +9917,9 @@ func (s *InvalidVersionNumberException) RequestID() string {
 // Describes the configuration for a launch permission. The launch permission
 // modification request is sent to the EC2 ModifyImageAttribute (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyImageAttribute.html)
 // API on behalf of the user for each Region they have selected to distribute
-// the AMI.
+// the AMI. To make an AMI public, set the launch permission authorized accounts
+// to all. See the examples for making an AMI public at EC2 ModifyImageAttribute
+// (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyImageAttribute.html).
 type LaunchPermissionConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -9885,7 +9927,7 @@ type LaunchPermissionConfiguration struct {
 	UserGroups []*string `locationName:"userGroups" type:"list"`
 
 	// The AWS account ID.
-	UserIds []*string `locationName:"userIds" type:"list"`
+	UserIds []*string `locationName:"userIds" min:"1" type:"list"`
 }
 
 // String returns the string representation
@@ -9896,6 +9938,19 @@ func (s LaunchPermissionConfiguration) String() string {
 // GoString returns the string representation
 func (s LaunchPermissionConfiguration) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *LaunchPermissionConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "LaunchPermissionConfiguration"}
+	if s.UserIds != nil && len(s.UserIds) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("UserIds", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetUserGroups sets the UserGroups field's value.
@@ -10147,6 +10202,8 @@ type ListDistributionConfigurationsInput struct {
 	_ struct{} `type:"structure"`
 
 	// The filters.
+	//
+	//    * name - The name of this distribution configuration.
 	Filters []*Filter `locationName:"filters" min:"1" type:"list"`
 
 	// The maximum items to return in a request.
@@ -11671,12 +11728,20 @@ type Schedule struct {
 
 	// The condition configures when the pipeline should trigger a new image build.
 	// When the pipelineExecutionStartCondition is set to EXPRESSION_MATCH_AND_DEPENDENCY_UPDATES_AVAILABLE,
-	// EC2 Image Builder will build a new image only when there are known changes
-	// pending. When it is set to EXPRESSION_MATCH_ONLY, it will build a new image
-	// every time the CRON expression matches the current time.
+	// and you use semantic version filters on the source image or components in
+	// your image recipe, EC2 Image Builder will build a new image only when there
+	// are new versions of the image or components in your recipe that match the
+	// semantic version filter. When it is set to EXPRESSION_MATCH_ONLY, it will
+	// build a new image every time the CRON expression matches the current time.
+	// For semantic version syntax, see CreateComponent (https://docs.aws.amazon.com/imagebuilder/latest/APIReference/API_CreateComponent.html)
+	// in the EC2 Image Builder API Reference.
 	PipelineExecutionStartCondition *string `locationName:"pipelineExecutionStartCondition" type:"string" enum:"PipelineExecutionStartCondition"`
 
-	// The expression determines how often EC2 Image Builder evaluates your pipelineExecutionStartCondition.
+	// The cron expression determines how often EC2 Image Builder evaluates your
+	// pipelineExecutionStartCondition.
+	//
+	// For information on how to format a cron expression in Image Builder, see
+	// Use cron expressions in EC2 Image Builder (https://docs.aws.amazon.com/imagebuilder/latest/userguide/image-builder-cron.html).
 	ScheduleExpression *string `locationName:"scheduleExpression" min:"1" type:"string"`
 }
 
@@ -12662,6 +12727,13 @@ const (
 	ComponentFormatShell = "SHELL"
 )
 
+// ComponentFormat_Values returns all elements of the ComponentFormat enum
+func ComponentFormat_Values() []string {
+	return []string{
+		ComponentFormatShell,
+	}
+}
+
 const (
 	// ComponentTypeBuild is a ComponentType enum value
 	ComponentTypeBuild = "BUILD"
@@ -12670,12 +12742,23 @@ const (
 	ComponentTypeTest = "TEST"
 )
 
+// ComponentType_Values returns all elements of the ComponentType enum
+func ComponentType_Values() []string {
+	return []string{
+		ComponentTypeBuild,
+		ComponentTypeTest,
+	}
+}
+
 const (
 	// EbsVolumeTypeStandard is a EbsVolumeType enum value
 	EbsVolumeTypeStandard = "standard"
 
 	// EbsVolumeTypeIo1 is a EbsVolumeType enum value
 	EbsVolumeTypeIo1 = "io1"
+
+	// EbsVolumeTypeIo2 is a EbsVolumeType enum value
+	EbsVolumeTypeIo2 = "io2"
 
 	// EbsVolumeTypeGp2 is a EbsVolumeType enum value
 	EbsVolumeTypeGp2 = "gp2"
@@ -12686,6 +12769,18 @@ const (
 	// EbsVolumeTypeSt1 is a EbsVolumeType enum value
 	EbsVolumeTypeSt1 = "st1"
 )
+
+// EbsVolumeType_Values returns all elements of the EbsVolumeType enum
+func EbsVolumeType_Values() []string {
+	return []string{
+		EbsVolumeTypeStandard,
+		EbsVolumeTypeIo1,
+		EbsVolumeTypeIo2,
+		EbsVolumeTypeGp2,
+		EbsVolumeTypeSc1,
+		EbsVolumeTypeSt1,
+	}
+}
 
 const (
 	// ImageStatusPending is a ImageStatus enum value
@@ -12722,6 +12817,23 @@ const (
 	ImageStatusDeleted = "DELETED"
 )
 
+// ImageStatus_Values returns all elements of the ImageStatus enum
+func ImageStatus_Values() []string {
+	return []string{
+		ImageStatusPending,
+		ImageStatusCreating,
+		ImageStatusBuilding,
+		ImageStatusTesting,
+		ImageStatusDistributing,
+		ImageStatusIntegrating,
+		ImageStatusAvailable,
+		ImageStatusCancelled,
+		ImageStatusFailed,
+		ImageStatusDeprecated,
+		ImageStatusDeleted,
+	}
+}
+
 const (
 	// OwnershipSelf is a Ownership enum value
 	OwnershipSelf = "Self"
@@ -12733,6 +12845,15 @@ const (
 	OwnershipAmazon = "Amazon"
 )
 
+// Ownership_Values returns all elements of the Ownership enum
+func Ownership_Values() []string {
+	return []string{
+		OwnershipSelf,
+		OwnershipShared,
+		OwnershipAmazon,
+	}
+}
+
 const (
 	// PipelineExecutionStartConditionExpressionMatchOnly is a PipelineExecutionStartCondition enum value
 	PipelineExecutionStartConditionExpressionMatchOnly = "EXPRESSION_MATCH_ONLY"
@@ -12740,6 +12861,14 @@ const (
 	// PipelineExecutionStartConditionExpressionMatchAndDependencyUpdatesAvailable is a PipelineExecutionStartCondition enum value
 	PipelineExecutionStartConditionExpressionMatchAndDependencyUpdatesAvailable = "EXPRESSION_MATCH_AND_DEPENDENCY_UPDATES_AVAILABLE"
 )
+
+// PipelineExecutionStartCondition_Values returns all elements of the PipelineExecutionStartCondition enum
+func PipelineExecutionStartCondition_Values() []string {
+	return []string{
+		PipelineExecutionStartConditionExpressionMatchOnly,
+		PipelineExecutionStartConditionExpressionMatchAndDependencyUpdatesAvailable,
+	}
+}
 
 const (
 	// PipelineStatusDisabled is a PipelineStatus enum value
@@ -12749,6 +12878,14 @@ const (
 	PipelineStatusEnabled = "ENABLED"
 )
 
+// PipelineStatus_Values returns all elements of the PipelineStatus enum
+func PipelineStatus_Values() []string {
+	return []string{
+		PipelineStatusDisabled,
+		PipelineStatusEnabled,
+	}
+}
+
 const (
 	// PlatformWindows is a Platform enum value
 	PlatformWindows = "Windows"
@@ -12756,3 +12893,11 @@ const (
 	// PlatformLinux is a Platform enum value
 	PlatformLinux = "Linux"
 )
+
+// Platform_Values returns all elements of the Platform enum
+func Platform_Values() []string {
+	return []string{
+		PlatformWindows,
+		PlatformLinux,
+	}
+}

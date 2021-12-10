@@ -22,11 +22,13 @@
 //
 //    * Custom resources provided by your own applications or services
 //
-//    * Amazon Comprehend document classification endpoints
+//    * Amazon Comprehend document classification and entity recognizer endpoints
 //
 //    * AWS Lambda function provisioned concurrency
 //
 //    * Amazon Keyspaces (for Apache Cassandra) tables
+//
+//    * Amazon Managed Streaming for Apache Kafka cluster storage
 //
 // API Summary
 //
