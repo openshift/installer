@@ -3149,10 +3149,6 @@ k8s.io/utils/trace
 ## explicit; go 1.15
 sigs.k8s.io/cluster-api-provider-aws/pkg/apis
 sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1
-# sigs.k8s.io/cluster-api-provider-azure v0.0.0 => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f
-## explicit; go 1.15
-sigs.k8s.io/cluster-api-provider-azure/pkg/apis
-sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1
 # sigs.k8s.io/cluster-api-provider-openstack v0.0.0 => github.com/openshift/cluster-api-provider-openstack v0.0.0-20211111204942-611d320170af
 ## explicit; go 1.16
 sigs.k8s.io/cluster-api-provider-openstack/pkg/apis

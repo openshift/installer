@@ -12,7 +12,6 @@ import (
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
-	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 )
 
 const (
@@ -79,7 +78,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int) (*azureprovider.AzureMachineProviderSpec, error) {
+func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int) (*machineapi.AzureMachineProviderSpec, error) {
 	var az *string
 	if len(mpool.Zones) > 0 && azIdx != nil {
 		az = &mpool.Zones[*azIdx]
@@ -106,22 +105,22 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		managedIdentity = ""
 	}
 
-	return &azureprovider.AzureMachineProviderSpec{
+	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "azureproviderconfig.openshift.io/v1beta1",
+			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "AzureMachineProviderSpec",
 		},
 		UserDataSecret:    &corev1.SecretReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		Location:          platform.Region,
 		VMSize:            mpool.InstanceType,
-		Image: azureprovider.Image{
+		Image: machineapi.Image{
 			ResourceID: fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID),
 		},
-		OSDisk: azureprovider.OSDisk{
+		OSDisk: machineapi.OSDisk{
 			OSType:     "Linux",
 			DiskSizeGB: mpool.OSDisk.DiskSizeGB,
-			ManagedDisk: azureprovider.ManagedDiskParameters{
+			ManagedDisk: machineapi.ManagedDiskParameters{
 				StorageAccountType: mpool.OSDisk.DiskType,
 			},
 		},
@@ -132,7 +131,13 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		ResourceGroup:        rg,
 		NetworkResourceGroup: networkResourceGroup,
 		PublicLoadBalancer:   publicLB,
-	}, nil
+	}
+
+	if platform.CloudName == azure.StackCloud {
+		spec.AvailabilitySet = fmt.Sprintf("%s-cluster", clusterID)
+	}
+
+	return spec, nil
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
