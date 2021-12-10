@@ -6,8 +6,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 
-	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
-
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
@@ -51,8 +50,8 @@ type TFVarsSources struct {
 	ARMEndpoint                 string
 	ResourceGroupName           string
 	BaseDomainResourceGroupName string
-	MasterConfigs               []*azureprovider.AzureMachineProviderSpec
-	WorkerConfigs               []*azureprovider.AzureMachineProviderSpec
+	MasterConfigs               []*machineapi.AzureMachineProviderSpec
+	WorkerConfigs               []*machineapi.AzureMachineProviderSpec
 	ImageURL                    string
 	PreexistingNetwork          bool
 	Publish                     types.PublishingStrategy

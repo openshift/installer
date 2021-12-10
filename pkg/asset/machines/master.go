@@ -28,8 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
-	azureapi "sigs.k8s.io/cluster-api-provider-azure/pkg/apis"
-	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
@@ -535,22 +533,20 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 	scheme := runtime.NewScheme()
 	alibabacloudapi.AddToScheme(scheme)
 	awsapi.AddToScheme(scheme)
-	azureapi.AddToScheme(scheme)
 	baremetalapi.AddToScheme(scheme)
 	gcpapi.AddToScheme(scheme)
 	ibmcloudapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
-	// Add vsphere types to scheme
 	scheme.AddKnownTypes(machineapi.SchemeGroupVersion,
 		&machineapi.VSphereMachineProviderSpec{},
+		&machineapi.AzureMachineProviderSpec{},
 	)
 	machineapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		alibabacloudprovider.SchemeGroupVersion,
 		awsprovider.SchemeGroupVersion,
-		azureprovider.SchemeGroupVersion,
 		baremetalprovider.SchemeGroupVersion,
 		gcpprovider.SchemeGroupVersion,
 		ibmcloudprovider.SchemeGroupVersion,

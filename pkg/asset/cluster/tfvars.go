@@ -18,7 +18,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
-	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1beta1"
@@ -311,17 +310,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		masterConfigs := make([]*azureprovider.AzureMachineProviderSpec, len(masters))
+		masterConfigs := make([]*machinev1.AzureMachineProviderSpec, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*azureprovider.AzureMachineProviderSpec)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.AzureMachineProviderSpec)
 		}
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
 			return err
 		}
-		workerConfigs := make([]*azureprovider.AzureMachineProviderSpec, len(workers))
+		workerConfigs := make([]*machinev1.AzureMachineProviderSpec, len(workers))
 		for i, w := range workers {
-			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*azureprovider.AzureMachineProviderSpec)
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1.AzureMachineProviderSpec)
 		}
 
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
