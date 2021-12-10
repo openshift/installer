@@ -276,7 +276,7 @@ storage blob.
 First, download and decompress the VHD, note that the decompressed file is 16GB:
 
 ```sh
-$ export COMPRESSED_VHD_URL=$(curl -s https://raw.githubusercontent.com/openshift/installer/release-4.9/data/data/rhcos-amd64.json | jq -r '(.baseURI + .images.azurestack.path)')
+$ export COMPRESSED_VHD_URL=$(openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.azurestack.formats."vhd.gz".disk.location')
 $ $ curl -O -L $COMPRESSED_VHD_URL 
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
