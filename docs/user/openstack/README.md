@@ -18,6 +18,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Nova Metadata Service](#nova-metadata-service)
     - [Glance Service](#glance-service)
   - [OpenStack Credentials](#openstack-credentials)
+    - [OpenStack credentials update](#openstack-credentials-update)
     - [Self Signed OpenStack CA certificates](#self-signed-openstack-ca-certificates)
   - [Standalone Single-Node Development Environment](#standalone-single-node-development-environment)
   - [Running The Installer](#running-the-installer)
@@ -244,6 +245,18 @@ clouds:
 
 The file can contain information about several clouds. For instance, the example above describes two clouds: `shiftstack` and `dev-evn`.
 In order to determine which cloud to use, the user can either specify it in the `install-config.yaml` file under `platform.openstack.cloud` or with `OS_CLOUD` environment variable. If both are omitted, then the cloud name defaults to `openstack`.
+
+### OpenStack credentials update
+
+To update the OpenStack credentials on a running OpenShift cluster, upload the new `clouds.yaml` to the `openstack-credentials` secret in the `kube-system` namespace.
+
+For example:
+
+```
+oc set data -n kube-system secret/openstack-credentials clouds.yaml="$(<path/to/clouds.yaml)"
+```
+
+Please note that the credentials MUST be in the `openstack` stanza of `clouds`.
 
 ### Self Signed OpenStack CA certificates
 
