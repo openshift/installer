@@ -159,15 +159,15 @@ func getSecurityGroupNames(clusterID string, role string) ([]string, error) {
 	switch role {
 	case "master":
 		return []string{
-			fmt.Sprintf("%s-security-group-cluster-wide", clusterID),
-			fmt.Sprintf("%s-security-group-openshift-network", clusterID),
-			fmt.Sprintf("%s-security-group-control-plane", clusterID),
-			fmt.Sprintf("%s-security-group-control-plane-internal", clusterID),
+			fmt.Sprintf("%s-sg-cluster-wide", clusterID),
+			fmt.Sprintf("%s-sg-openshift-net", clusterID),
+			fmt.Sprintf("%s-sg-control-plane", clusterID),
+			fmt.Sprintf("%s-sg-cp-internal", clusterID),
 		}, nil
 	case "worker":
 		return []string{
-			fmt.Sprintf("%s-security-group-cluster-wide", clusterID),
-			fmt.Sprintf("%s-security-group-openshift-network", clusterID),
+			fmt.Sprintf("%s-sg-cluster-wide", clusterID),
+			fmt.Sprintf("%s-sg-openshift-net", clusterID),
 		}, nil
 	default:
 		return nil, fmt.Errorf("invalid machine role %v", role)
