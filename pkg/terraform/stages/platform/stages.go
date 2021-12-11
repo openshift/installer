@@ -28,7 +28,7 @@ func StagesForPlatform(platform string) []terraform.Stage {
 		return aws.PlatformStages
 	case azuretypes.Name:
 		return azure.PlatformStages
-	case azuretypes.StackCloud.Name():
+	case azuretypes.StackTerraformName:
 		return azure.StackPlatformStages
 	case gcptypes.Name:
 		return gcp.PlatformStages
