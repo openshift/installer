@@ -49,6 +49,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Reconfiguring cloud provider](#reconfiguring-cloud-provider)
       - [Modifying cloud provider options](#modifying-cloud-provider-options)
       - [Refreshing a CA Certificate](#refreshing-a-ca-certificate)
+    - [Control Plane node migration](#control-plane-node-migration)
   - [Reporting Issues](#reporting-issues)
 
 ## Reference Documents
@@ -690,6 +691,69 @@ If you need to modify the direct cloud provider options, then edit the `config` 
 #### Refreshing a CA Certificate
 
 If you ran the installer with a [custom CA certificate](#self-signed-openstack-ca-certificates), then this certificate can be changed while the cluster is running. To change your certificate, edit the value of the `ca-cert.pem` key in the `cloud-provider-config` configmap with a valid PEM certificate.
+
+## Control Plane node migration
+
+This script moves one node from its host to a different host.
+
+Requirements:
+* environment variable `OS_CLOUD` pointing to a `clouds` entry with admin credentials in `clouds.yaml`
+* environment variable `KUBECONFIG` pointing to admin OpenShift credentials
+
+```
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+if [ $# -lt 1 ]; then
+	echo "Usage: '$0 node_name'"
+	exit 64
+fi
+
+# Check for admin OpenStack credentials
+openstack server list --all-projects >/dev/null || { >&2 echo "The script needs OpenStack admin credentials. Exiting"; exit 77; }
+
+# Check for admin OpenShift credentials
+oc adm top node >/dev/null || { >&2 echo "The script needs OpenShift admin credentials. Exiting"; exit 77; }
+
+set -x
+
+declare -r node_name="$1"
+declare server_id
+server_id="$(openstack server list --all-projects -f value -c ID -c Name | grep "$node_name" | cut -d' ' -f1)"
+readonly server_id
+
+# Drain the node
+oc adm cordon "$node_name"
+oc adm drain "$node_name" --delete-emptydir-data --ignore-daemonsets
+
+# Power off the server
+oc debug "node/${node_name}" -- chroot /host shutdown -h 1
+
+# Verify the server is shutoff
+until openstack server show "$server_id" -f value -c status | grep -q 'SHUTOFF'; do sleep 5; done
+
+# Migrate the node
+openstack server migrate --wait "$server_id"
+
+# Resize VM
+openstack server resize confirm "$server_id"
+
+# Wait for the resize confirm to finish
+until openstack server show "$server_id" -f value -c status | grep -q 'SHUTOFF'; do sleep 5; done
+
+# Restart VM
+openstack server start "$server_id"
+
+# Wait for the node to show up as Ready:
+until oc get node "$node_name" | grep -q "^${node_name}[[:space:]]\+Ready"; do sleep 5; done
+
+# Uncordon the node
+oc adm uncordon "$node_name"
+
+# Wait for cluster operators to stabilize
+until oc get co -o go-template='statuses: {{ range .items }}{{ range .status.conditions }}{{ if eq .type "Degraded" }}{{ if ne .status "False" }}DEGRADED{{ end }}{{ else if eq .type "Progressing"}}{{ if ne .status "False" }}PROGRESSING{{ end }}{{ else if eq .type "Available"}}{{ if ne .status "True" }}NOTAVAILABLE{{ end }}{{ end }}{{ end }}{{ end }}' | grep -qv '\(DEGRADED\|PROGRESSING\|NOTAVAILABLE\)'; do sleep 5; done
+```
 
 ## Reporting Issues
 
