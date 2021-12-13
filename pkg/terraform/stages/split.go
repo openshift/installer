@@ -41,11 +41,6 @@ func WithCustomDestroy(destroy DestroyFunc) StageOption {
 	}
 }
 
-// WithNormalExtractHostAddresses returns an option for specifying that a split stage should use the normal extract host addresses process.
-func WithNormalExtractHostAddresses() StageOption {
-	return WithCustomExtractHostAddresses(normalExtractHostAddresses)
-}
-
 // WithCustomExtractHostAddresses returns an option for specifying that a split stage should use a custom extract host addresses process.
 func WithCustomExtractHostAddresses(extractHostAddresses ExtractFunc) StageOption {
 	return func(s *SplitStage) {
