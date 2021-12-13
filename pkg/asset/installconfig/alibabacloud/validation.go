@@ -3,7 +3,7 @@ package alibabacloud
 import (
 	"fmt"
 
-	"github.com/wxnacy/wgo/arrays"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -16,73 +16,100 @@ func Validate(client *Client, ic *types.InstallConfig) error {
 	platformPath := field.NewPath("platform").Child("alibabacloud")
 	allErrs = append(allErrs, validatePlatform(client, ic, platformPath)...)
 
-	if ic.ControlPlane != nil && ic.ControlPlane.Platform.AlibabaCloud != nil {
-		allErrs = append(allErrs, validateMachinePool(client, ic, field.NewPath("controlPlane", "platform", "alibabacloud"), ic.ControlPlane.Platform.AlibabaCloud, ic.ControlPlane.Replicas)...)
-	}
-
-	for idx, compute := range ic.Compute {
-		fldPath := field.NewPath("compute").Index(idx)
-		if compute.Platform.AlibabaCloud != nil {
-			allErrs = append(allErrs, validateMachinePool(client, ic, fldPath.Child("platform", "alibabacloud"), compute.Platform.AlibabaCloud, compute.Replicas)...)
-		}
-	}
+	allErrs = append(allErrs, validateControlPlaneMachinePool(client, ic)...)
+	allErrs = append(allErrs, validateComputeMachinePool(client, ic)...)
 
 	return allErrs.ToAggregate()
 }
 
-func validatePlatform(client *Client, ic *types.InstallConfig, path *field.Path) field.ErrorList {
+func validateControlPlaneMachinePool(client *Client, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	mpool := mergedMachinePool{}
+	defaultPool := alibabacloudtypes.DefaultMasterMachinePoolPlatform()
+	mpool.setWithFieldPath(&defaultPool, field.NewPath("controlPlane", "platform", "alibabacloud"))
+	if ic.Platform.AlibabaCloud != nil {
+		mpool.setWithFieldPath(ic.Platform.AlibabaCloud.DefaultMachinePlatform, field.NewPath("platform", "alibabacloud", "defaultMachinePlatform"))
+	}
+	mpool.setWithFieldPath(ic.ControlPlane.Platform.AlibabaCloud, field.NewPath("controlPlane", "platform", "alibabacloud"))
+
+	allErrs = append(allErrs, validateMachinePool(client, ic, &mpool)...)
+	return allErrs
+}
+
+func validateComputeMachinePool(client *Client, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if ic.AlibabaCloud.ResourceGroupID != "" {
-		allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
-	}
+	for idx, compute := range ic.Compute {
+		mpool := mergedMachinePool{}
+		computePoolFieldPath := field.NewPath("compute").Index(idx).Child("platform", "alibabacloud")
+		defaultPool := alibabacloudtypes.DefaultWorkerMachinePoolPlatform()
+		mpool.setWithFieldPath(&defaultPool, computePoolFieldPath)
+		if ic.Platform.AlibabaCloud != nil {
+			mpool.setWithFieldPath(ic.Platform.AlibabaCloud.DefaultMachinePlatform, field.NewPath("platform", "alibabacloud", "defaultMachinePlatform"))
+		}
 
-	if ic.Platform.AlibabaCloud.DefaultMachinePlatform != nil {
-		allErrs = append(allErrs, validateMachinePool(client, ic, path.Child("defaultMachinePlatform"), ic.Platform.AlibabaCloud.DefaultMachinePlatform, nil)...)
+		if compute.Platform.AlibabaCloud != nil {
+			mpool.setWithFieldPath(compute.Platform.AlibabaCloud, computePoolFieldPath)
+		}
+		allErrs = append(allErrs, validateMachinePool(client, ic, &mpool)...)
+	}
+	return allErrs
+}
+
+func validateMachinePool(client *Client, ic *types.InstallConfig, pool *mergedMachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if len(pool.Zones) > 0 {
+		availableZones := map[string]bool{}
+
+		response, err := client.DescribeAvailableResource("Zone")
+		if err != nil {
+			return append(allErrs, field.InternalError(pool.zonesFieldPath, err))
+		}
+		for _, availableZone := range response.AvailableZones.AvailableZone {
+			if availableZone.Status == "Available" {
+				availableZones[availableZone.ZoneId] = true
+			}
+		}
+
+		for idx, zone := range pool.Zones {
+			if !availableZones[zone] {
+				allErrs = append(allErrs, field.Invalid(pool.zonesFieldPath.Index(idx), zone, fmt.Sprintf("zone ID is unavailable in region %q", ic.Platform.AlibabaCloud.Region)))
+			}
+		}
+	}
+	// InstanceType and zones are related.
+	// If the availability zone is not available, the instanceType will not be validated.
+	if len(allErrs) == 0 {
+		allErrs = append(allErrs, validateInstanceType(client, pool.Zones, pool.InstanceType, pool.instanceTypeFieldPath)...)
 	}
 
 	return allErrs
 }
 
-func validateMachinePool(client *Client, ic *types.InstallConfig, fldPath *field.Path, pool *alibabacloudtypes.MachinePool, replicas *int64) field.ErrorList {
+func validateInstanceType(client *Client, zones []string, instanceType string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	var zones []string
-	response, err := client.DescribeAvailableResource("Zone")
+	availableZones, err := client.GetAvailableZonesByInstanceType(instanceType)
+	zonesWithStock := sets.NewString(availableZones...)
+
 	if err != nil {
 		return append(allErrs, field.InternalError(fldPath, err))
 	}
-	for _, zone := range response.AvailableZones.AvailableZone {
-		if zone.Status == "Available" {
-			zones = append(zones, zone.ZoneId)
-		}
+	if len(zones) == 0 && len(availableZones) == 0 {
+		return append(allErrs, field.Invalid(fldPath, instanceType, "no available availability zones found"))
 	}
 
-	if len(pool.Zones) > 0 {
-		for _, zone := range pool.Zones {
-			if index := arrays.ContainsString(zones, zone); index == -1 {
-				allErrs = append(allErrs, field.Invalid(fldPath, zone, fmt.Sprintf("zone ID is unavailable in region %q", ic.Platform.AlibabaCloud.Region)))
-			}
-
+	for _, zoneID := range zones {
+		if zonesWithStock.Has(zoneID) {
+			allErrs = append(allErrs, field.Invalid(fldPath, instanceType, fmt.Sprintf("instance type is out of stock or unavailable in zone %q", zoneID)))
 		}
 	}
+	return allErrs
+}
 
-	if pool.InstanceType != "" {
-		if len(pool.Zones) > 0 {
-			zones = pool.Zones
-		} else {
-			zones = zones[:3]
-		}
-
-		for _, zoneID := range zones {
-			response, err := client.DescribeAvailableInstanceType(zoneID, pool.InstanceType)
-			if err != nil {
-				allErrs = append(allErrs, field.InternalError(fldPath.Child("instanceType"), err))
-			}
-			if err == nil && response.AvailableZones.AvailableZone == nil {
-				allErrs = append(allErrs, field.Invalid(fldPath, pool.InstanceType, fmt.Sprintf("instance type is unavailable in zone %q", zoneID)))
-			}
-		}
-	}
+func validatePlatform(client *Client, ic *types.InstallConfig, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
 	return allErrs
 }
 
@@ -120,4 +147,25 @@ func validateClusterName(client *Client, ic *types.InstallConfig) field.ErrorLis
 		allErrs = append(allErrs, field.Invalid(namePath, ic.ObjectMeta.Name, fmt.Sprintf("cluster name is unavailable, private zone name %s already exists", zoneName)))
 	}
 	return allErrs
+}
+
+type mergedMachinePool struct {
+	alibabacloudtypes.MachinePool
+	zonesFieldPath        *field.Path
+	instanceTypeFieldPath *field.Path
+}
+
+func (a *mergedMachinePool) setWithFieldPath(required *alibabacloudtypes.MachinePool, fldPath *field.Path) {
+	if required == nil || a == nil {
+		return
+	}
+
+	if len(required.Zones) > 0 {
+		a.Zones = required.Zones
+		a.zonesFieldPath = fldPath.Child("zones")
+	}
+	if required.InstanceType != "" {
+		a.InstanceType = required.InstanceType
+		a.instanceTypeFieldPath = fldPath.Child("instanceType")
+	}
 }

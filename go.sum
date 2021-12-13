@@ -1935,8 +1935,6 @@ github.com/vmware/govmomi v0.24.0 h1:G7YFF6unMTG3OY25Dh278fsomVTKs46m2ENlEFSbmbs
 github.com/vmware/govmomi v0.24.0/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
 github.com/vmware/vmw-ovflib v0.0.0-20170608004843-1f217b9dc714/go.mod h1:jiPk45kn7klhByRvUq5i2vo1RtHKBHj+iWGFpxbXuuI=
-github.com/wxnacy/wgo v1.0.4 h1:UEkzjlW3pMAXcTUCgMekrCvFYLKKwc0p5GAQrMIphs8=
-github.com/wxnacy/wgo v1.0.4/go.mod h1:8hqUwCgvMGgAIr4MLIeFur2YXS/Ns3vbyx5abx0e8iM=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=

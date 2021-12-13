@@ -75,3 +75,30 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 // DefaultDiskCategory holds the default Alibaba Cloud disk type used by the ECS.
 const DefaultDiskCategory DiskCategory = CloudESSDDiskCategory
+
+// DefaultSystemDiskSize holds the default Alibaba Cloud system disk size used by the ECS.
+const DefaultSystemDiskSize int = 120
+
+// DefaultMasterInstanceType holds the default Alibaba Cloud instacne type used by the master.
+const DefaultMasterInstanceType string = "ecs.g6.xlarge"
+
+// DefaultWorkerInstanceType holds the default Alibaba Cloud instacne type used by the worker.
+const DefaultWorkerInstanceType string = "ecs.g6.large"
+
+// DefaultMasterMachinePoolPlatform returns the default machine pool configuration used by the master
+func DefaultMasterMachinePoolPlatform() MachinePool {
+	return MachinePool{
+		InstanceType:       DefaultMasterInstanceType,
+		SystemDiskCategory: DefaultDiskCategory,
+		SystemDiskSize:     DefaultSystemDiskSize,
+	}
+}
+
+// DefaultWorkerMachinePoolPlatform returns the default machine pool configuration used by the worker
+func DefaultWorkerMachinePoolPlatform() MachinePool {
+	return MachinePool{
+		InstanceType:       DefaultWorkerInstanceType,
+		SystemDiskCategory: DefaultDiskCategory,
+		SystemDiskSize:     DefaultSystemDiskSize,
+	}
+}

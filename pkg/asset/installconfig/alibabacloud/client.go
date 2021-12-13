@@ -198,6 +198,19 @@ func (client *Client) DescribeAvailableInstanceType(zoneID string, instanceType 
 	return
 }
 
+// DescribeAvailableZoneByInstanceType queries available zone by instance type of ECS.
+func (client *Client) DescribeAvailableZoneByInstanceType(instanceType string) (response *ecs.DescribeAvailableResourceResponse, err error) {
+	request := ecs.CreateDescribeAvailableResourceRequest()
+	request.RegionId = client.RegionID
+	request.DestinationResource = "InstanceType"
+	request.InstanceType = instanceType
+	response = &ecs.DescribeAvailableResourceResponse{
+		BaseResponse: &responses.BaseResponse{},
+	}
+	err = client.doActionWithSetDomain(request, response)
+	return
+}
+
 // ListResourceGroups gets the list of resource groups.
 func (client *Client) ListResourceGroups() (response *resourcemanager.ListResourceGroupsResponse, err error) {
 	request := resourcemanager.CreateListResourceGroupsRequest()
@@ -262,6 +275,24 @@ func (client *Client) GetOSSObjectSignURL(bucketName string, objectName string) 
 
 	signedURL, err = bucket.SignURL(objectName, oss.HTTPGet, 7200)
 	return
+}
+
+// GetAvailableZonesByInstanceType returns a list of available zones with the specified instance type is
+// available and stock
+func (client *Client) GetAvailableZonesByInstanceType(instanceType string) ([]string, error) {
+	response, err := client.DescribeAvailableZoneByInstanceType(instanceType)
+	if err != nil {
+		return nil, err
+	}
+
+	var zones []string
+
+	for _, zone := range response.AvailableZones.AvailableZone {
+		if zone.Status == "Available" && zone.StatusCategory == "WithStock" {
+			zones = append(zones, zone.ZoneId)
+		}
+	}
+	return zones, nil
 }
 
 func defaultEndpoint() map[string]string {
