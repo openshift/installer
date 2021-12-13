@@ -101,27 +101,37 @@ func (s SplitStage) ExtractHostAddresses(directory string, ic *types.InstallConf
 	return normalExtractHostAddresses(s, directory, ic)
 }
 
-func normalExtractHostAddresses(s SplitStage, directory string, _ *types.InstallConfig) (string, int, []string, error) {
+// GetTerraformOutputs reads the terraform outputs file for the stage and parses it into a map of outputs.
+func GetTerraformOutputs(s SplitStage, directory string) (map[string]interface{}, error) {
 	outputsFilePath := filepath.Join(directory, s.OutputsFilename())
 	if _, err := os.Stat(outputsFilePath); err != nil {
-		return "", 0, nil, errors.Wrapf(err, "could not find outputs file %q", outputsFilePath)
+		return nil, errors.Wrapf(err, "could not find outputs file %q", outputsFilePath)
 	}
 
 	outputsFile, err := ioutil.ReadFile(outputsFilePath)
 	if err != nil {
-		return "", 0, nil, errors.Wrapf(err, "failed to read outputs file %q", outputsFilePath)
+		return nil, errors.Wrapf(err, "failed to read outputs file %q", outputsFilePath)
 	}
 
 	outputs := map[string]interface{}{}
 	if err := json.Unmarshal(outputsFile, &outputs); err != nil {
-		return "", 0, nil, errors.Wrapf(err, "could not unmarshal outputs file %q", outputsFilePath)
+		return nil, errors.Wrapf(err, "could not unmarshal outputs file %q", outputsFilePath)
+	}
+
+	return outputs, nil
+}
+
+func normalExtractHostAddresses(s SplitStage, directory string, _ *types.InstallConfig) (string, int, []string, error) {
+	outputs, err := GetTerraformOutputs(s, directory)
+	if err != nil {
+		return "", 0, nil, err
 	}
 
 	var bootstrap string
 	if bootstrapRaw, ok := outputs["bootstrap_ip"]; ok {
 		bootstrap, ok = bootstrapRaw.(string)
 		if !ok {
-			return "", 0, nil, errors.Errorf("could not read bootstrap IP from outputs file %q", outputsFilePath)
+			return "", 0, nil, errors.New("could not read bootstrap IP from terraform outputs")
 		}
 	}
 
@@ -129,13 +139,13 @@ func normalExtractHostAddresses(s SplitStage, directory string, _ *types.Install
 	if mastersRaw, ok := outputs["control_plane_ips"]; ok {
 		mastersSlice, ok := mastersRaw.([]interface{})
 		if !ok {
-			return "", 0, nil, errors.Errorf("could not read control plane IPs from outputs file %q", outputsFilePath)
+			return "", 0, nil, errors.New("could not read control plane IPs from terraform outputs")
 		}
 		masters = make([]string, len(mastersSlice))
 		for i, ipRaw := range mastersSlice {
 			ip, ok := ipRaw.(string)
 			if !ok {
-				return "", 0, nil, errors.Errorf("could not read control plane IPs from outputs file %q", outputsFilePath)
+				return "", 0, nil, errors.New("could not read control plane IPs from terraform outputs")
 			}
 			masters[i] = ip
 		}
