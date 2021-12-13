@@ -8,5 +8,5 @@ import (
 // PlatformStages are the stages to run to provision the infrastructure in AWS.
 var PlatformStages = []terraform.Stage{
 	stages.NewStage("aws", "cluster"),
-	stages.NewStage("aws", "bootstrap", stages.WithNormalDestroy()),
+	stages.NewStage("aws", "bootstrap", stages.WithNormalBootstrapDestroy()),
 }
