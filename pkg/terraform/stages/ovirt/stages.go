@@ -23,9 +23,9 @@ var bootstrapSSHPortAsString = strconv.Itoa(22)
 
 // PlatformStages are the stages to run to provision the infrastructure in oVirt.
 var PlatformStages = []terraform.Stage{
-	stages.NewStage(ovirttypes.Name, "image", stages.WithNormalDestroy()),
+	stages.NewStage(ovirttypes.Name, "image", stages.WithNormalBootstrapDestroy()),
 	stages.NewStage(ovirttypes.Name, "cluster", stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
-	stages.NewStage(ovirttypes.Name, "bootstrap", stages.WithNormalDestroy(), stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
+	stages.NewStage(ovirttypes.Name, "bootstrap", stages.WithNormalBootstrapDestroy(), stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
 }
 
 func extractOutputHostAddresses(s stages.SplitStage, directory string, ic *types.InstallConfig) (bootstrapIP string, sshPort int, controlPlaneIPs []string, returnErr error) {

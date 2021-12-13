@@ -11,8 +11,8 @@ import (
 // PlatformStages are the stages to run to provision the infrastructure in GCP.
 var PlatformStages = []terraform.Stage{
 	stages.NewStage("gcp", "cluster"),
-	stages.NewStage("gcp", "bootstrap", stages.WithNormalDestroy()),
-	stages.NewStage("gcp", "post-bootstrap", stages.WithCustomDestroy(removeFromLoadBalancers)),
+	stages.NewStage("gcp", "bootstrap", stages.WithNormalBootstrapDestroy()),
+	stages.NewStage("gcp", "post-bootstrap", stages.WithCustomBootstrapDestroy(removeFromLoadBalancers)),
 }
 
 func removeFromLoadBalancers(s stages.SplitStage, directory string, extraArgs []string) error {

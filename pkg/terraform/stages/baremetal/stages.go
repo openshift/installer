@@ -17,7 +17,7 @@ import (
 // PlatformStages are the stages to run to provision the infrastructure in
 // Bare Metal.
 var PlatformStages = []terraform.Stage{
-	stages.NewStage("baremetal", "bootstrap", stages.WithNormalDestroy()),
+	stages.NewStage("baremetal", "bootstrap", stages.WithNormalBootstrapDestroy()),
 	stages.NewStage("baremetal", "masters", stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
 }
 

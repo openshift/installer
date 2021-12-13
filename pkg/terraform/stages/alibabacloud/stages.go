@@ -8,5 +8,5 @@ import (
 // PlatformStages are the stages to run to provision the infrastructure in Alibaba Cloud.
 var PlatformStages = []terraform.Stage{
 	stages.NewStage("alibabacloud", "cluster"),
-	stages.NewStage("alibabacloud", "bootstrap", stages.WithNormalDestroy()),
+	stages.NewStage("alibabacloud", "bootstrap", stages.WithNormalBootstrapDestroy()),
 }

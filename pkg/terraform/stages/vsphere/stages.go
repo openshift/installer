@@ -18,7 +18,7 @@ import (
 // PlatformStages are the stages to run to provision the infrastructure in vsphere.
 var PlatformStages = []terraform.Stage{
 	stages.NewStage("vsphere", "pre-bootstrap"),
-	stages.NewStage("vsphere", "bootstrap", stages.WithNormalDestroy(), stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
+	stages.NewStage("vsphere", "bootstrap", stages.WithNormalBootstrapDestroy(), stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
 	stages.NewStage("vsphere", "master", stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
 }
 

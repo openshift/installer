@@ -9,5 +9,5 @@ import (
 // OpenStack.
 var PlatformStages = []terraform.Stage{
 	stages.NewStage("openstack", "masters"),
-	stages.NewStage("openstack", "bootstrap", stages.WithNormalDestroy()),
+	stages.NewStage("openstack", "bootstrap", stages.WithNormalBootstrapDestroy()),
 }
