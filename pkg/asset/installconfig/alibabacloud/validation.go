@@ -90,15 +90,15 @@ func validateMachinePool(client *Client, ic *types.InstallConfig, pool *mergedMa
 func validateInstanceType(client *Client, zones []string, instanceType string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	availableZones, err := client.GetAvailableZonesByInstanceType(instanceType)
-	zonesWithStock := sets.NewString(availableZones...)
 
 	if err != nil {
 		return append(allErrs, field.InternalError(fldPath, err))
 	}
-	if len(zones) == 0 && len(availableZones) == 0 {
+	if len(availableZones) == 0 {
 		return append(allErrs, field.Invalid(fldPath, instanceType, "no available availability zones found"))
 	}
 
+	zonesWithStock := sets.NewString(availableZones...)
 	for _, zoneID := range zones {
 		if zonesWithStock.Has(zoneID) {
 			allErrs = append(allErrs, field.Invalid(fldPath, instanceType, fmt.Sprintf("instance type is out of stock or unavailable in zone %q", zoneID)))
