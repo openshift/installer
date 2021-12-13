@@ -35,16 +35,12 @@ func Destroy(dir string) (err error) {
 		}
 	}
 
-	tfPlatformVarsFileName := fmt.Sprintf(cluster.TfPlatformVarsFileName, platform)
-
 	// Azure Stack uses the Azure platform but has its own Terraform configuration.
-	// Set platform to azurestack after setting tfPlatformVarsFileName, because the
-	// tfvars file is still terraform.azure.auto.tfvars.json in the case of Azure Stack.
 	if platform == typesazure.Name && metadata.Azure.CloudName == typesazure.StackCloud {
 		platform = typesazure.StackTerraformName
 	}
 
-	varFiles := []string{cluster.TfVarsFileName, tfPlatformVarsFileName}
+	varFiles := []string{cluster.TfVarsFileName, cluster.TfPlatformVarsFileName}
 	tfStages := platformstages.StagesForPlatform(platform)
 	for _, stage := range tfStages {
 		varFiles = append(varFiles, stage.OutputsFilename())
@@ -69,7 +65,7 @@ func Destroy(dir string) (err error) {
 
 		extraArgs := make([]string, len(varFiles))
 		for i, filename := range varFiles {
-			allowMissing := filename == tfPlatformVarsFileName // platform may not need platform-specific Terraform variables
+			allowMissing := filename == cluster.TfPlatformVarsFileName // platform may not need platform-specific Terraform variables
 			if err := copyToTemp(filename, dir, tempDir, allowMissing); err != nil {
 				return err
 			}
