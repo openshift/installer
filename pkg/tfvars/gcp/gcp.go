@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
+	machineapi "github.com/openshift/api/machine/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -45,8 +45,8 @@ type TFVarsSources struct {
 	Auth               Auth
 	ImageURI           string
 	ImageLicenses      []string
-	MasterConfigs      []*gcpprovider.GCPMachineProviderSpec
-	WorkerConfigs      []*gcpprovider.GCPMachineProviderSpec
+	MasterConfigs      []*machineapi.GCPMachineProviderSpec
+	WorkerConfigs      []*machineapi.GCPMachineProviderSpec
 	PublicZoneName     string
 	PublishStrategy    types.PublishingStrategy
 	PreexistingNetwork bool
@@ -68,7 +68,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterInstanceType:      masterConfig.MachineType,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		VolumeType:              masterConfig.Disks[0].Type,
-		VolumeSize:              masterConfig.Disks[0].SizeGb,
+		VolumeSize:              masterConfig.Disks[0].SizeGB,
 		ImageURI:                sources.ImageURI,
 		Image:                   masterConfig.Disks[0].Image,
 		ImageLicenses:           sources.ImageLicenses,
@@ -91,7 +91,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	return json.MarshalIndent(cfg, "", "  ")
 }
 
-func generateDiskEncryptionKeyLink(keyRef *gcpprovider.GCPEncryptionKeyReference, projectID string) string {
+func generateDiskEncryptionKeyLink(keyRef *machineapi.GCPEncryptionKeyReference, projectID string) string {
 	if keyRef.KMSKey.ProjectID != "" {
 		projectID = keyRef.KMSKey.ProjectID
 	}

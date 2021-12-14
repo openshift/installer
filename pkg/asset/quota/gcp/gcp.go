@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
-	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
-
 	"github.com/openshift/installer/pkg/quota"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -17,15 +15,15 @@ import (
 // These constraints can be used to check if there is enough quota for creating a cluster
 // for the isntall config.
 func Constraints(client *Client, config *types.InstallConfig, controlPlanes []machineapi.Machine, computes []machineapi.MachineSet) []quota.Constraint {
-	ctrplConfigs := make([]*gcpprovider.GCPMachineProviderSpec, len(controlPlanes))
+	ctrplConfigs := make([]*machineapi.GCPMachineProviderSpec, len(controlPlanes))
 	for i, m := range controlPlanes {
-		ctrplConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
+		ctrplConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machineapi.GCPMachineProviderSpec)
 	}
 	computeReplicas := make([]int64, len(computes))
-	computeConfigs := make([]*gcpprovider.GCPMachineProviderSpec, len(computes))
+	computeConfigs := make([]*machineapi.GCPMachineProviderSpec, len(computes))
 	for i, w := range computes {
 		computeReplicas[i] = int64(*w.Spec.Replicas)
-		computeConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
+		computeConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machineapi.GCPMachineProviderSpec)
 	}
 
 	var ret []quota.Constraint
@@ -140,7 +138,7 @@ func apiInternal(config *types.InstallConfig) func() []quota.Constraint {
 	}
 }
 
-func controlPlane(client MachineTypeGetter, config *types.InstallConfig, machines []*gcpprovider.GCPMachineProviderSpec) func() []quota.Constraint {
+func controlPlane(client MachineTypeGetter, config *types.InstallConfig, machines []*machineapi.GCPMachineProviderSpec) func() []quota.Constraint {
 	return func() []quota.Constraint {
 		var ret []quota.Constraint
 		for _, m := range machines {
@@ -158,7 +156,7 @@ func controlPlane(client MachineTypeGetter, config *types.InstallConfig, machine
 	}
 }
 
-func compute(client MachineTypeGetter, config *types.InstallConfig, replicas []int64, machines []*gcpprovider.GCPMachineProviderSpec) func() []quota.Constraint {
+func compute(client MachineTypeGetter, config *types.InstallConfig, replicas []int64, machines []*machineapi.GCPMachineProviderSpec) func() []quota.Constraint {
 	return func() []quota.Constraint {
 		var ret []quota.Constraint
 		for idx, m := range machines {
