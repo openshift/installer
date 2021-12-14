@@ -39,7 +39,6 @@ type ClusterUninstaller struct {
 
 	InfraID                     string
 	ResourceGroupName           string
-	ClusterName                 string
 	BaseDomainResourceGroupName string
 
 	Logger logrus.FieldLogger
@@ -102,7 +101,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		ResourceGroupName:           group,
 		Logger:                      logger,
 		BaseDomainResourceGroupName: metadata.Azure.BaseDomainResourceGroupName,
-		ClusterName:                 metadata.ClusterName,
 		CloudName:                   cloudName,
 	}, nil
 }
@@ -222,7 +220,6 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 
 	recordsClient := azurestackdns.NewRecordSetsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
 	recordsClient.Authorizer = o.Authorizer
-	clusterName := o.ClusterName
 
 	var errs []error
 
@@ -250,7 +247,7 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 		}
 	}
 
-	clusterTag := fmt.Sprintf("kubernetes.io_cluster.%s", clusterName)
+	clusterTag := fmt.Sprintf("kubernetes.io_cluster.%s", o.InfraID)
 	for _, zone := range allZones.List() {
 		for recordPages, err := recordsClient.ListByDNSZone(ctx, rgName, zone, to.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
 			if err != nil {

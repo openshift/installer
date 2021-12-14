@@ -6,6 +6,5 @@ type Metadata struct {
 	CloudName                   CloudEnvironment `json:"cloudName"`
 	Region                      string           `json:"region"`
 	ResourceGroupName           string           `json:"resourceGroupName"`
-	ClusterName                 string           `json:"clusterName"`
 	BaseDomainResourceGroupName string           `json:"baseDomainResourceGroupName"`
 }
