@@ -101,7 +101,7 @@ func TestVCenter(t *testing.T) {
 		{"single lowercase", "a", true},
 		{"single uppercase", "A", false},
 		{"contains whitespace", "abc D", false},
-		{"single number", "1", false},
+		{"single number", "1", true},
 		{"single dot", ".", false},
 		{"ends with dot", "a.", false},
 		{"starts with dot", ".a", false},
@@ -115,7 +115,6 @@ func TestVCenter(t *testing.T) {
 		{"contains non-ascii", "a日本語a", false},
 		{"URLs", "https://hello.openshift.org", false},
 		{"IP", "192.168.1.1", true},
-		{"invalid IP", "192.168.1", false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
