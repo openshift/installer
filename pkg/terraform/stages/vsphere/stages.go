@@ -1,11 +1,6 @@
 package vsphere
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/terraform"
@@ -23,26 +18,17 @@ var PlatformStages = []terraform.Stage{
 
 func extractOutputHostAddresses(s stages.SplitStage, directory string, config *types.InstallConfig) (bootstrap string, port int, masters []string, err error) {
 	port = 22
-	outputsFilePath := filepath.Join(directory, s.OutputsFilename())
-	if _, err := os.Stat(outputsFilePath); err != nil {
-		return "", 0, nil, errors.Wrapf(err, "could not find outputs file %q", outputsFilePath)
-	}
 
-	outputsFile, err := ioutil.ReadFile(outputsFilePath)
+	outputs, err := stages.GetTerraformOutputs(s, directory)
 	if err != nil {
-		return "", 0, nil, errors.Wrapf(err, "failed to read outputs file %q", outputsFilePath)
-	}
-
-	outputs := map[string]interface{}{}
-	if err := json.Unmarshal(outputsFile, &outputs); err != nil {
-		return "", 0, nil, errors.Wrapf(err, "could not unmarshal outputs file %q", outputsFilePath)
+		return "", 0, nil, err
 	}
 
 	var bootstrapMoid string
 	if bootstrapRaw, ok := outputs["bootstrap_moid"]; ok {
 		bootstrapMoid, ok = bootstrapRaw.(string)
 		if !ok {
-			return "", 0, nil, errors.Errorf("could not read bootstrap MOID from outputs file %q", outputsFilePath)
+			return "", 0, nil, errors.New("could not read bootstrap MOID from terraform outputs")
 		}
 	}
 
@@ -50,13 +36,13 @@ func extractOutputHostAddresses(s stages.SplitStage, directory string, config *t
 	if mastersRaw, ok := outputs["control_plane_moids"]; ok {
 		mastersSlice, ok := mastersRaw.([]interface{})
 		if !ok {
-			return "", 0, nil, errors.Errorf("could not read control plane MOIDs from outputs file %q", outputsFilePath)
+			return "", 0, nil, errors.New("could not read control plane MOIDs from terraform outputs")
 		}
 		mastersMoids = make([]string, len(mastersSlice))
 		for i, moidRaw := range mastersSlice {
 			moid, ok := moidRaw.(string)
 			if !ok {
-				return "", 0, nil, errors.Errorf("could not read control plane MOIDs from outputs file %q", outputsFilePath)
+				return "", 0, nil, errors.New("could not read control plane MOIDs from terraform outputs")
 			}
 			mastersMoids[i] = moid
 		}
