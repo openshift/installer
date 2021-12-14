@@ -8,10 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/terraform"
-	gatherbaremetal "github.com/openshift/installer/pkg/terraform/gather/baremetal"
 	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
 	"github.com/openshift/installer/pkg/types"
-	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -67,12 +65,6 @@ func (s stage) ExtractHostAddresses(directory string, config *types.InstallConfi
 func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State) (bootstrap string, port int, masters []string, err error) {
 	port = 22
 	switch config.Platform.Name() {
-	case baremetaltypes.Name:
-		bootstrap = config.Platform.BareMetal.BootstrapProvisioningIP
-		masters, err = gatherbaremetal.ControlPlaneIPs(config, tfstate)
-		if err != nil {
-			return
-		}
 	case openstacktypes.Name:
 		bootstrap, err = gatheropenstack.BootstrapIP(tfstate)
 		if err != nil {
