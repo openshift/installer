@@ -181,6 +181,7 @@ func (o *ClusterUninstaller) cleanSharedRoute53(ctx context.Context, session *se
 	if err != nil {
 		return err
 	}
+	logger = logger.WithField("id", id)
 
 	switch resourceType {
 	case "hostedzone":
@@ -202,7 +203,6 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, client *
 	if err != nil {
 		return err
 	}
-	logger = logger.WithField("id", publicZoneID)
 
 	var lastError error
 	err = client.ListResourceRecordSetsPagesWithContext(
