@@ -10,7 +10,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
   protocol          = "tcp"
   port_range_min    = 22623
   port_range_max    = 22623
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -35,7 +35,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ssh" {
   protocol          = "tcp"
   port_range_min    = 22
   port_range_max    = 22
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -46,7 +46,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp" {
   protocol          = "tcp"
   port_range_min    = 53
   port_range_max    = 53
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -57,7 +57,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
   protocol          = "udp"
   port_range_min    = 53
   port_range_max    = 53
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -80,7 +80,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_vxlan" {
   protocol          = "udp"
   port_range_min    = 4789
   port_range_max    = 4789
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -91,7 +91,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_geneve" {
   protocol          = "udp"
   port_range_min    = 6081
   port_range_max    = 6081
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -102,7 +102,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ike" {
   protocol          = "udp"
   port_range_min    = 500
   port_range_max    = 500
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -113,7 +113,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ike_nat_t" {
   protocol          = "udp"
   port_range_min    = 4500
   port_range_max    = 4500
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -122,7 +122,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_esp" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "esp"
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -133,7 +133,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ovndb" {
   protocol          = "tcp"
   port_range_min    = 6641
   port_range_max    = 6642
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -144,7 +144,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal" {
   protocol          = "tcp"
   port_range_min    = 9000
   port_range_max    = 9999
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -155,7 +155,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_udp" {
   protocol          = "udp"
   port_range_min    = 9000
   port_range_max    = 9999
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -166,7 +166,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler"
   protocol          = "tcp"
   port_range_min    = 10259
   port_range_max    = 10259
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -177,7 +177,18 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller
   protocol          = "tcp"
   port_range_min    = 10257
   port_range_max    = 10257
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_cluster_policy_controller" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 10357
+  port_range_max    = 10357
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -188,7 +199,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure"
   protocol          = "tcp"
   port_range_min    = 10250
   port_range_max    = 10250
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -199,7 +210,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_etcd" {
   protocol          = "tcp"
   port_range_min    = 2379
   port_range_max    = 2380
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -234,7 +245,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
   # Explicitly set the vrrp protocol number to prevent cases when the Neutron Plugin
   # is disabled and it cannot identify a number by name.
   protocol          = "112"
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -270,7 +281,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_router" {
   protocol          = "tcp"
   port_range_min    = 1936
   port_range_max    = 1936
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = var.machine_v4_cidrs[0]
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }

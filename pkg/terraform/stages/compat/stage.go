@@ -5,12 +5,9 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/terraform"
-	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
 	"github.com/openshift/installer/pkg/types"
-	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 )
 
 // PlatformStages are the stages to run to provision the infrastructure used the legacy compat procedures.
@@ -62,21 +59,7 @@ func (s stage) ExtractHostAddresses(directory string, config *types.InstallConfi
 	return bootstrap, port, masters, errors.Wrapf(err, "failed to get bootstrap and control plane host addresses from %q", tfStateFilePath)
 }
 
-func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State) (bootstrap string, port int, masters []string, err error) {
+func extractHostAddresses(_ *types.InstallConfig, _ *terraform.State) (bootstrap string, port int, masters []string, err error) {
 	port = 22
-	switch config.Platform.Name() {
-	case openstacktypes.Name:
-		bootstrap, err = gatheropenstack.BootstrapIP(tfstate)
-		if err != nil {
-			return
-		}
-		masters, err = gatheropenstack.ControlPlaneIPs(tfstate)
-		if err != nil {
-			logrus.Error(err)
-		}
-		if err != nil {
-			logrus.Error(err)
-		}
-	}
 	return bootstrap, port, masters, nil
 }
