@@ -11,9 +11,14 @@ variable "vpc_id" {
   description = "The VPC ID of the master ECS."
 }
 
-variable "vswitch_ids" {
+variable "zone_ids" {
   type        = list(string)
-  description = "The VSwitch IDs of the master ECS. Example: [vsw-xxx1, vsw-xxx2, vsw-xxx3]"
+  description = "The availability zones in which to create the masters. The length of this list must match instance_count."
+}
+
+variable "az_to_vswitch_id" {
+  type        = map(string)
+  description = "Map from availability zone ID to the ID of the VSwitch in that availability zone"
 }
 
 variable "sg_id" {
@@ -23,6 +28,10 @@ variable "sg_id" {
 
 variable "slb_ids" {
   type = list(string)
+}
+
+variable "instance_count" {
+  type = string
 }
 
 variable "instance_type" {

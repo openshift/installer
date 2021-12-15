@@ -2,7 +2,7 @@ resource "alicloud_security_group" "sg_master" {
   name              = "${local.prefix}-sg-master"
   description       = local.description
   resource_group_id = var.resource_group_id
-  vpc_id            = alicloud_vpc.vpc.id
+  vpc_id            = local.vpc_id
   tags = merge(
     {
       "Name" = "${local.prefix}-sg-master"

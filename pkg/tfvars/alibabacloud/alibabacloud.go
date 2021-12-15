@@ -19,7 +19,10 @@ type Auth struct {
 type config struct {
 	Auth                  `json:",inline"`
 	Region                string            `json:"ali_region_id"`
+	VpcID                 string            `json:"ali_vpc_id"`
+	VSwitchIDs            []string          `json:"ali_vswitch_ids"`
 	ZoneIDs               []string          `json:"ali_zone_ids"`
+	PrivateZoneID         string            `json:"ali_private_zone_id"`
 	NatGatewayZoneID      string            `json:"ali_nat_gateway_zone_id"`
 	ResourceGroupID       string            `json:"ali_resource_group_id"`
 	BootstrapInstanceType string            `json:"ali_bootstrap_instance_type"`
@@ -35,6 +38,9 @@ type config struct {
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
 	Auth                  Auth
+	VpcID                 string
+	VSwitchIDs            []string
+	PrivateZoneID         string
 	ResourceGroupID       string
 	BaseDomain            string
 	NatGatewayZoneID      string
@@ -65,6 +71,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Auth:                  sources.Auth,
 		Region:                masterConfig.RegionID,
 		ZoneIDs:               zoneIDs,
+		VpcID:                 sources.VpcID,
+		VSwitchIDs:            sources.VSwitchIDs,
+		PrivateZoneID:         sources.PrivateZoneID,
 		NatGatewayZoneID:      sources.NatGatewayZoneID,
 		ResourceGroupID:       sources.ResourceGroupID,
 		BootstrapInstanceType: masterConfig.InstanceType,

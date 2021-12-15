@@ -1,6 +1,6 @@
 
 resource "alicloud_nat_gateway" "nat_gateway" {
-  vpc_id           = alicloud_vpc.vpc.id
+  vpc_id           = local.vpc_id
   specification    = "Small"
   nat_gateway_name = "${local.prefix}-ngw"
   vswitch_id       = alicloud_vswitch.vswitch_nat_gateway.id
@@ -15,10 +15,10 @@ resource "alicloud_nat_gateway" "nat_gateway" {
 }
 
 resource "alicloud_snat_entry" "snat_entrys" {
-  count = length(var.zone_ids)
+  count = length(local.vswitch_ids)
 
   depends_on        = [alicloud_eip_association.eip_association]
   snat_table_id     = alicloud_nat_gateway.nat_gateway.snat_table_ids
-  source_vswitch_id = alicloud_vswitch.vswitchs[count.index].id
+  source_vswitch_id = local.vswitch_ids[count.index]
   snat_ip           = alicloud_eip_address.eip.ip_address
 }

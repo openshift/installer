@@ -109,7 +109,18 @@ func validateInstanceType(client *Client, zones []string, instanceType string, f
 
 func validatePlatform(client *Client, ic *types.InstallConfig, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
+	if ic.AlibabaCloud.ResourceGroupID != "" {
+		allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
+	}
+	if ic.AlibabaCloud.VpcID != "" {
+		allErrs = append(allErrs, validateVpc(client, ic, path)...)
+	}
+	if len(ic.AlibabaCloud.VSwitchIDs) != 0 {
+		allErrs = append(allErrs, validateVSwitches(client, ic, path)...)
+	}
+	if ic.AlibabaCloud.PrivateZoneID != "" {
+		allErrs = append(allErrs, validatePrivateZoneID(client, ic, path)...)
+	}
 	return allErrs
 }
 
@@ -127,6 +138,73 @@ func validateResourceGroup(client *Client, ic *types.InstallConfig, path *field.
 	return append(allErrs, field.NotFound(path.Child("resourceGroupID"), ic.AlibabaCloud.ResourceGroupID))
 }
 
+func validateVpc(client *Client, ic *types.InstallConfig, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	vpcs, err := client.ListVpcs(ic.AlibabaCloud.VpcID)
+	if err != nil {
+		return append(allErrs, field.InternalError(path.Child("vpcID"), err))
+	}
+	if vpcs.TotalCount == 0 {
+		allErrs = append(allErrs, field.NotFound(path.Child("vpcID"), ic.AlibabaCloud.VpcID))
+	}
+	return allErrs
+}
+
+func validateVSwitches(client *Client, ic *types.InstallConfig, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	zoneIDs := map[string]bool{}
+	for idx, id := range ic.AlibabaCloud.VSwitchIDs {
+		vswitches, err := client.ListVSwitches(id)
+		if err != nil {
+			return append(allErrs, field.InternalError(path.Child("vswitchIDs"), err))
+		}
+		if vswitches.TotalCount != 1 {
+			allErrs = append(allErrs, field.NotFound(path.Child("vswitchIDs").Index(idx), id))
+			continue
+		}
+
+		vswitch := vswitches.VSwitches.VSwitch[0]
+		if vswitch.VpcId != ic.AlibabaCloud.VpcID {
+			allErrs = append(allErrs, field.Invalid(path.Child("vswitchIDs").Index(idx), id, fmt.Sprintf("the VSwitch does not belong to vpc %s", ic.AlibabaCloud.VpcID)))
+		}
+
+		if zoneIDs[vswitch.ZoneId] {
+			allErrs = append(allErrs, field.Invalid(path.Child("vswitchIDs").Index(idx), id, "the availability zone of the VSwitch overlapped with other VSwitches"))
+		} else {
+			zoneIDs[vswitch.ZoneId] = true
+		}
+	}
+
+	return allErrs
+}
+
+func validatePrivateZoneID(client *Client, ic *types.InstallConfig, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	fldpath := path.Child("privateZoneID")
+	zoneName := ic.ClusterDomain()
+	isExist := false
+
+	zones, err := client.ListPrivateZonesByVPC(ic.AlibabaCloud.VpcID)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldpath, err))
+	}
+
+	for _, zone := range zones.Zones.Zone {
+		if zone.ZoneId == ic.AlibabaCloud.PrivateZoneID {
+			isExist = true
+			if zone.ZoneName != zoneName {
+				allErrs = append(allErrs, field.Invalid(fldpath, ic.AlibabaCloud.PrivateZoneID, fmt.Sprintf("the name %s of the existing private zone does not match the expected zone name %s", zone.ZoneName, zoneName)))
+			}
+			break
+		}
+	}
+	if !isExist {
+		return append(allErrs, field.Invalid(fldpath, ic.AlibabaCloud.PrivateZoneID, fmt.Sprintf("the private zone is not found, or not associated with the VPC %s", ic.AlibabaCloud.VpcID)))
+	}
+	return allErrs
+}
+
 // ValidateForProvisioning validates if the install config is valid for provisioning the cluster.
 func ValidateForProvisioning(client *Client, ic *types.InstallConfig, metadata *Metadata) error {
 	allErrs := field.ErrorList{}
@@ -136,15 +214,21 @@ func ValidateForProvisioning(client *Client, ic *types.InstallConfig, metadata *
 
 func validateClusterName(client *Client, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	namePath := field.NewPath("metadata").Child("name")
+	if ic.AlibabaCloud.PrivateZoneID != "" {
+		return allErrs
+	}
 
+	namePath := field.NewPath("metadata").Child("name")
 	zoneName := ic.ClusterDomain()
-	response, err := client.ListPrivateZones(zoneName)
+	response, err := client.ListPrivateZonesByName(zoneName)
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(namePath, err))
 	}
-	if response.TotalItems > 0 {
-		allErrs = append(allErrs, field.Invalid(namePath, ic.ObjectMeta.Name, fmt.Sprintf("cluster name is unavailable, private zone name %s already exists", zoneName)))
+	for _, zone := range response.Zones.Zone {
+		if zone.ZoneName == zoneName {
+			allErrs = append(allErrs, field.Invalid(namePath, ic.ObjectMeta.Name, fmt.Sprintf("cluster name is unavailable, private zone name %s already exists", zoneName)))
+			break
+		}
 	}
 	return allErrs
 }
