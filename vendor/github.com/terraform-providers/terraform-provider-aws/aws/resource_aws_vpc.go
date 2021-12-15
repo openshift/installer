@@ -9,14 +9,19 @@ import (
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/hashicorp/aws-sdk-go-base/tfawserr"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+
 	"github.com/terraform-providers/terraform-provider-aws/aws/internal/keyvaluetags"
+	"github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ec2/finder"
+	"github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ec2/waiter"
+	"github.com/terraform-providers/terraform-provider-aws/aws/internal/tfresource"
 )
 
 func resourceAwsVpc() *schema.Resource {
-	//lintignore:R011
+	// lintignore:R011
 	return &schema.Resource{
 		Create: resourceAwsVpcCreate,
 		Read:   resourceAwsVpcRead,
@@ -181,7 +186,11 @@ func resourceAwsVpcCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if _, err := conn.ModifyVpcAttribute(input); err != nil {
-			return fmt.Errorf("error enabling VPC (%s) DNS hostnames: %s", d.Id(), err)
+			return fmt.Errorf("error enabling EC2 VPC (%s) DNS Hostnames: %w", d.Id(), err)
+		}
+
+		if _, err := waiter.VpcAttributeUpdated(conn, d.Id(), ec2.VpcAttributeNameEnableDnsHostnames, d.Get("enable_dns_hostnames").(bool)); err != nil {
+			return fmt.Errorf("error waiting for EC2 VPC (%s) DNS Hostnames to enable: %w", d.Id(), err)
 		}
 	}
 
@@ -197,7 +206,11 @@ func resourceAwsVpcCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if _, err := conn.ModifyVpcAttribute(input); err != nil {
-			return fmt.Errorf("error disabling VPC (%s) DNS support: %s", d.Id(), err)
+			return fmt.Errorf("error disabling EC2 VPC (%s) DNS Support: %w", d.Id(), err)
+		}
+
+		if _, err := waiter.VpcAttributeUpdated(conn, d.Id(), ec2.VpcAttributeNameEnableDnsSupport, d.Get("enable_dns_support").(bool)); err != nil {
+			return fmt.Errorf("error waiting for EC2 VPC (%s) DNS Support to disable: %w", d.Id(), err)
 		}
 	}
 
@@ -234,18 +247,54 @@ func resourceAwsVpcRead(d *schema.ResourceData, meta interface{}) error {
 	conn := meta.(*AWSClient).ec2conn
 	ignoreTagsConfig := meta.(*AWSClient).IgnoreTagsConfig
 
-	// Refresh the VPC state
-	vpcRaw, _, err := VPCStateRefreshFunc(conn, d.Id())()
-	if err != nil {
-		return err
+	var vpc *ec2.Vpc
+
+	err := resource.Retry(waiter.VpcPropagationTimeout, func() *resource.RetryError {
+		var err error
+
+		vpc, err = finder.VpcByID(conn, d.Id())
+
+		if d.IsNewResource() && tfawserr.ErrCodeEquals(err, "InvalidVpcID.NotFound") {
+			return resource.RetryableError(err)
+		}
+
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		if d.IsNewResource() && vpc == nil {
+			return resource.RetryableError(&resource.NotFoundError{
+				LastError: fmt.Errorf("EC2 VPC (%s) not found", d.Id()),
+			})
+		}
+
+		return nil
+	})
+
+	if tfresource.TimedOut(err) {
+		vpc, err = finder.VpcByID(conn, d.Id())
 	}
-	if vpcRaw == nil {
+
+	if !d.IsNewResource() && tfawserr.ErrCodeEquals(err, "InvalidVpcID.NotFound") {
+		log.Printf("[WARN] EC2 VPC (%s) not found, removing from state", d.Id())
 		d.SetId("")
 		return nil
 	}
 
-	// VPC stuff
-	vpc := vpcRaw.(*ec2.Vpc)
+	if err != nil {
+		return fmt.Errorf("error reading EC2 VPC (%s): %w", d.Id(), err)
+	}
+
+	if vpc == nil {
+		if d.IsNewResource() {
+			return fmt.Errorf("error reading EC2 VPC (%s): not found after creation", d.Id())
+		}
+
+		log.Printf("[WARN] EC2 VPC (%s) not found, removing from state", d.Id())
+		d.SetId("")
+		return nil
+	}
+
 	vpcid := d.Id()
 	d.Set("cidr_block", vpc.CidrBlock)
 	d.Set("dhcp_options_id", vpc.DhcpOptionsId)
@@ -273,24 +322,28 @@ func resourceAwsVpcRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("ipv6_cidr_block", "")
 
 	for _, a := range vpc.Ipv6CidrBlockAssociationSet {
-		if aws.StringValue(a.Ipv6CidrBlockState.State) == ec2.VpcCidrBlockStateCodeAssociated { //we can only ever have 1 IPv6 block associated at once
+		if aws.StringValue(a.Ipv6CidrBlockState.State) == ec2.VpcCidrBlockStateCodeAssociated { // we can only ever have 1 IPv6 block associated at once
 			d.Set("assign_generated_ipv6_cidr_block", true)
 			d.Set("ipv6_association_id", a.AssociationId)
 			d.Set("ipv6_cidr_block", a.Ipv6CidrBlock)
 		}
 	}
 
-	resp, err := awsVpcDescribeVpcAttribute("enableDnsSupport", vpcid, conn)
-	if err != nil {
-		return err
-	}
-	d.Set("enable_dns_support", resp.EnableDnsSupport.Value)
+	enableDnsHostnames, err := finder.VpcAttribute(conn, aws.StringValue(vpc.VpcId), ec2.VpcAttributeNameEnableDnsHostnames)
 
-	resp, err = awsVpcDescribeVpcAttribute("enableDnsHostnames", vpcid, conn)
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading EC2 VPC (%s) Attribute (%s): %w", aws.StringValue(vpc.VpcId), ec2.VpcAttributeNameEnableDnsHostnames, err)
 	}
-	d.Set("enable_dns_hostnames", resp.EnableDnsHostnames.Value)
+
+	d.Set("enable_dns_hostnames", enableDnsHostnames)
+
+	enableDnsSupport, err := finder.VpcAttribute(conn, aws.StringValue(vpc.VpcId), ec2.VpcAttributeNameEnableDnsSupport)
+
+	if err != nil {
+		return fmt.Errorf("error reading EC2 VPC (%s) Attribute (%s): %w", aws.StringValue(vpc.VpcId), ec2.VpcAttributeNameEnableDnsSupport, err)
+	}
+
+	d.Set("enable_dns_support", enableDnsSupport)
 
 	describeClassiclinkOpts := &ec2.DescribeVpcClassicLinkInput{
 		VpcIds: []*string{&vpcid},
@@ -366,38 +419,38 @@ func resourceAwsVpcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	vpcid := d.Id()
 	if d.HasChange("enable_dns_hostnames") {
-		val := d.Get("enable_dns_hostnames").(bool)
-		modifyOpts := &ec2.ModifyVpcAttributeInput{
-			VpcId: &vpcid,
+		input := &ec2.ModifyVpcAttributeInput{
+			VpcId: aws.String(d.Id()),
 			EnableDnsHostnames: &ec2.AttributeBooleanValue{
-				Value: &val,
+				Value: aws.Bool(d.Get("enable_dns_hostnames").(bool)),
 			},
 		}
 
-		log.Printf(
-			"[INFO] Modifying enable_dns_hostnames vpc attribute for %s: %s",
-			d.Id(), modifyOpts)
-		if _, err := conn.ModifyVpcAttribute(modifyOpts); err != nil {
-			return err
+		if _, err := conn.ModifyVpcAttribute(input); err != nil {
+			return fmt.Errorf("error updating EC2 VPC (%s) DNS Hostnames: %w", d.Id(), err)
+		}
+
+		if _, err := waiter.VpcAttributeUpdated(conn, d.Id(), ec2.VpcAttributeNameEnableDnsHostnames, d.Get("enable_dns_hostnames").(bool)); err != nil {
+			return fmt.Errorf("error waiting for EC2 VPC (%s) DNS Hostnames update: %w", d.Id(), err)
 		}
 	}
 
 	_, hasEnableDnsSupportOption := d.GetOk("enable_dns_support")
 
 	if !hasEnableDnsSupportOption || d.HasChange("enable_dns_support") {
-		val := d.Get("enable_dns_support").(bool)
-		modifyOpts := &ec2.ModifyVpcAttributeInput{
-			VpcId: &vpcid,
+		input := &ec2.ModifyVpcAttributeInput{
+			VpcId: aws.String(d.Id()),
 			EnableDnsSupport: &ec2.AttributeBooleanValue{
-				Value: &val,
+				Value: aws.Bool(d.Get("enable_dns_support").(bool)),
 			},
 		}
 
-		log.Printf(
-			"[INFO] Modifying enable_dns_support vpc attribute for %s: %s",
-			d.Id(), modifyOpts)
-		if _, err := conn.ModifyVpcAttribute(modifyOpts); err != nil {
-			return err
+		if _, err := conn.ModifyVpcAttribute(input); err != nil {
+			return fmt.Errorf("error updating EC2 VPC (%s) DNS Support: %w", d.Id(), err)
+		}
+
+		if _, err := waiter.VpcAttributeUpdated(conn, d.Id(), ec2.VpcAttributeNameEnableDnsSupport, d.Get("enable_dns_support").(bool)); err != nil {
+			return fmt.Errorf("error waiting for EC2 VPC (%s) DNS Support update: %w", d.Id(), err)
 		}
 	}
 
@@ -735,19 +788,6 @@ func resourceAwsVpcInstanceImport(
 	d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	d.Set("assign_generated_ipv6_cidr_block", false)
 	return []*schema.ResourceData{d}, nil
-}
-
-func awsVpcDescribeVpcAttribute(attribute string, vpcId string, conn *ec2.EC2) (*ec2.DescribeVpcAttributeOutput, error) {
-	describeAttrOpts := &ec2.DescribeVpcAttributeInput{
-		Attribute: aws.String(attribute),
-		VpcId:     aws.String(vpcId),
-	}
-	resp, err := conn.DescribeVpcAttribute(describeAttrOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
 }
 
 // vpcDescribe returns EC2 API information about the specified VPC.

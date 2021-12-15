@@ -2,9 +2,11 @@ package waiter
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/hashicorp/aws-sdk-go-base/tfawserr"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	tfec2 "github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ec2"
 	"github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ec2/finder"
@@ -151,5 +153,26 @@ func ClientVpnRouteStatus(conn *ec2.EC2, routeID string) resource.StateRefreshFu
 		}
 
 		return rule, aws.StringValue(rule.Status.Code), nil
+	}
+}
+
+// VpcAttribute fetches the Vpc and its attribute value
+func VpcAttribute(conn *ec2.EC2, id string, attribute string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		attributeValue, err := finder.VpcAttribute(conn, id, attribute)
+
+		if tfawserr.ErrCodeEquals(err, tfec2.ErrCodeInvalidVpcIDNotFound) {
+			return nil, "", nil
+		}
+
+		if err != nil {
+			return nil, "", err
+		}
+
+		if attributeValue == nil {
+			return nil, "", nil
+		}
+
+		return attributeValue, strconv.FormatBool(aws.BoolValue(attributeValue)), nil
 	}
 }
