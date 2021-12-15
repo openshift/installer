@@ -63,43 +63,55 @@ variable "azure_image_url" {
 
 variable "azure_arm_endpoint" {
   type        = string
-  default     = ""
   description = "The endpoint for the Azure API. Only used when installing to Azure Stack"
 }
 
-variable "azure_subscription_id" {
+variable "azure_bootstrap_ignition_stub" {
   type        = string
+  description = "The bootstrap ignition stub. Only used when installing to Azure Stack"
+}
+
+variable "azure_bootstrap_ignition_url_placeholder" {
+  type        = string
+  description = <<EOF
+The placeholder value in the bootstrap ignition to be replaced with the ignition URL.
+Only used when installing to Azure Stack
+EOF
+}
+
+variable "azure_subscription_id" {
+  type = string
   description = "The subscription that should be used to interact with Azure API"
 }
 
 variable "azure_client_id" {
-  type        = string
+  type = string
   description = "The app ID that should be used to interact with Azure API"
 }
 
 variable "azure_client_secret" {
-  type        = string
+  type = string
   description = "The password that should be used to interact with Azure API"
 }
 
 variable "azure_tenant_id" {
-  type        = string
+  type = string
   description = "The tenant ID that should be used to interact with Azure API"
 }
 
 variable "azure_master_availability_zones" {
-  type        = list(string)
+  type = list(string)
   description = "The availability zones in which to create the masters. The length of this list must match master_count."
 }
 
 variable "azure_preexisting_network" {
-  type        = bool
-  default     = false
+  type = bool
+  default = false
   description = "Specifies whether an existing network should be used or a new one created for installation."
 }
 
 variable "azure_resource_group_name" {
-  type        = string
+  type = string
   description = <<EOF
 The name of the resource group for the cluster. If this is set, the cluster is installed to that existing resource group
 otherwise a new resource group will be created using cluster id.
@@ -107,32 +119,32 @@ EOF
 }
 
 variable "azure_network_resource_group_name" {
-  type = string
+  type        = string
   description = "The name of the network resource group, either existing or to be created."
 }
 
 variable "azure_virtual_network" {
-  type = string
+  type        = string
   description = "The name of the virtual network, either existing or to be created."
 }
 
 variable "azure_control_plane_subnet" {
-  type = string
+  type        = string
   description = "The name of the subnet for the control plane, either existing or to be created."
 }
 
 variable "azure_compute_subnet" {
-  type = string
+  type        = string
   description = "The name of the subnet for worker nodes, either existing or to be created"
 }
 
 variable "azure_private" {
-  type = bool
+  type        = bool
   description = "This determines if this is a private cluster or not."
 }
 
 variable "azure_outbound_user_defined_routing" {
-  type = bool
+  type    = bool
   default = false
 
   description = <<EOF

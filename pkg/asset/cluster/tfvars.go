@@ -324,19 +324,34 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
+
+		var bootstrapIgnStub, bootstrapIgnURLPlaceholder string
+		if installConfig.Azure.CloudName == azure.StackCloud {
+			// Due to the SAS created in Terraform to limit access to bootstrap ignition, we cannot know the URL in advance.
+			// Instead, we will pass a placeholder string in the ignition to be replaced in TF once the value is known.
+			bootstrapIgnURLPlaceholder = "BOOTSTRAP_IGNITION_URL_PLACEHOLDER"
+			shim, err := bootstrap.GenerateIgnitionShimWithCertBundle(bootstrapIgnURLPlaceholder, installConfig.Config.AdditionalTrustBundle)
+			if err != nil {
+				return errors.Wrap(err, "failed to create stub Ignition config for bootstrap")
+			}
+			bootstrapIgnStub = string(shim)
+		}
+
 		data, err := azuretfvars.TFVars(
 			azuretfvars.TFVarsSources{
-				Auth:                        auth,
-				CloudName:                   installConfig.Config.Azure.CloudName,
-				ARMEndpoint:                 installConfig.Config.Azure.ARMEndpoint,
-				ResourceGroupName:           installConfig.Config.Azure.ResourceGroupName,
-				BaseDomainResourceGroupName: installConfig.Config.Azure.BaseDomainResourceGroupName,
-				MasterConfigs:               masterConfigs,
-				WorkerConfigs:               workerConfigs,
-				ImageURL:                    string(*rhcosImage),
-				PreexistingNetwork:          preexistingnetwork,
-				Publish:                     installConfig.Config.Publish,
-				OutboundType:                installConfig.Config.Azure.OutboundType,
+				Auth:                            auth,
+				CloudName:                       installConfig.Config.Azure.CloudName,
+				ARMEndpoint:                     installConfig.Config.Azure.ARMEndpoint,
+				ResourceGroupName:               installConfig.Config.Azure.ResourceGroupName,
+				BaseDomainResourceGroupName:     installConfig.Config.Azure.BaseDomainResourceGroupName,
+				MasterConfigs:                   masterConfigs,
+				WorkerConfigs:                   workerConfigs,
+				ImageURL:                        string(*rhcosImage),
+				PreexistingNetwork:              preexistingnetwork,
+				Publish:                         installConfig.Config.Publish,
+				OutboundType:                    installConfig.Config.Azure.OutboundType,
+				BootstrapIgnStub:                bootstrapIgnStub,
+				BootstrapIgnitionURLPlaceholder: bootstrapIgnURLPlaceholder,
 			},
 		)
 		if err != nil {
