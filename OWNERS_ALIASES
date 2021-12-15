@@ -49,17 +49,16 @@ aliases:
     - patrickdillon
     - jstuever
   baremetal-approvers:
-    - dhellmann
+    - andfasano
+    - ardaguclu
     - hardys
-    - kirankt
-    - stbenjam
+    - sadasu
   baremetal-reviewers:
+    - andfasano
     - ardaguclu
     - celebdor
-    - dhellmann
     - hardys
-    - kirankt
-    - stbenjam
+    - sadasu
   aws-approvers:
     - jstuever
     - patrickdillon
