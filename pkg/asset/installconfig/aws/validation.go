@@ -319,50 +319,116 @@ var requiredServices = []string{
 
 // ValidateForProvisioning validates if the install config is valid for provisioning the cluster.
 func ValidateForProvisioning(session *session.Session, ic *types.InstallConfig, metadata *Metadata) error {
-	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, validateExistingHostedZone(session, ic, metadata)...)
-	return allErrs.ToAggregate()
-}
-
-func validateExistingHostedZone(session *session.Session, ic *types.InstallConfig, metadata *Metadata) field.ErrorList {
-	if ic.AWS.HostedZone == "" {
+	if ic.Publish == types.InternalPublishingStrategy {
 		return nil
 	}
 
-	// validate that the hosted zone exists
-	hostedZonePath := field.NewPath("aws", "hostedZone")
+	var zoneName string
+	var zonePath *field.Path
+	var zone *route53.HostedZone
+
+	errors := field.ErrorList{}
+	allErrs := field.ErrorList{}
 	client := route53.New(session)
-	zone, err := client.GetHostedZone(&route53.GetHostedZoneInput{Id: aws.String(ic.AWS.HostedZone)})
-	if err != nil {
-		return field.ErrorList{
-			field.Invalid(hostedZonePath, ic.AWS.HostedZone, "cannot find hosted zone"),
+
+	if ic.AWS.HostedZone != "" {
+		zoneName := ic.AWS.HostedZone
+		zonePath := field.NewPath("aws", "hostedZone")
+		zoneOutput, errors := getHostedZone(client, zonePath, zoneName)
+		if len(errors) > 0 {
+			allErrs = append(allErrs, errors...)
+		}
+
+		if errors = validateHostedZone(zoneOutput, zonePath, zoneName, metadata); len(errors) > 0 {
+			allErrs = append(allErrs, errors...)
+		}
+
+		zone = zoneOutput.HostedZone
+	} else {
+		zoneName := ic.BaseDomain
+		zonePath := field.NewPath("baseDomain")
+		zone, errors = getBaseDomain(session, zonePath, zoneName)
+		if len(errors) > 0 {
+			allErrs = append(allErrs, errors...)
 		}
 	}
 
+	if errors = validateZoneRecords(client, zone, zoneName, zonePath, ic); len(errors) > 0 {
+		allErrs = append(allErrs, errors...)
+	}
+
+	return allErrs.ToAggregate()
+}
+
+func validateZoneRecords(client *route53.Route53, zone *route53.HostedZone, zoneName string, zonePath *field.Path, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	problematicRecords, err := getSubDomainDNSRecords(client, zone, ic)
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(zonePath,
+			errors.Wrapf(err, "could not list record sets for domain %q", zoneName)))
+	}
+
+	if len(problematicRecords) > 0 {
+		detail := fmt.Sprintf(
+			"the zone already has record sets for the domain of the cluster: [%s]",
+			strings.Join(problematicRecords, ", "),
+		)
+		allErrs = append(allErrs, field.Invalid(zonePath, zoneName, detail))
+	}
+
+	return allErrs
+}
+
+func getBaseDomain(session *session.Session, baseDomainPath *field.Path, baseDomainName string) (*route53.HostedZone, field.ErrorList) {
+	baseDomainZone, err := GetPublicZone(session, baseDomainName)
+	if err != nil {
+		return nil, field.ErrorList{
+			field.Invalid(baseDomainPath, baseDomainName, "cannot find base domain"),
+		}
+	}
+	return baseDomainZone, nil
+}
+
+func getHostedZone(client *route53.Route53, hostedZonePath *field.Path, hostedZoneName string) (*route53.GetHostedZoneOutput, field.ErrorList) {
+	// validate that the hosted zone exists
+	hostedZoneOutput, err := client.GetHostedZone(&route53.GetHostedZoneInput{Id: aws.String(hostedZoneName)})
+	if err != nil {
+		return nil, field.ErrorList{
+			field.Invalid(hostedZonePath, hostedZoneName, "cannot find hosted zone"),
+		}
+	}
+	return hostedZoneOutput, nil
+}
+
+func validateHostedZone(hostedZoneOutput *route53.GetHostedZoneOutput, hostedZonePath *field.Path, hostedZoneName string, metadata *Metadata) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	// validate that the hosted zone is associated with the VPC containing the existing subnets for the cluster
 	vpcID, err := metadata.VPC(context.TODO())
 	if err == nil {
-		if !isHostedZoneAssociatedWithVPC(zone, vpcID) {
-			allErrs = append(allErrs, field.Invalid(hostedZonePath, ic.AWS.HostedZone, "hosted zone is not associated with the VPC"))
+		if !isHostedZoneAssociatedWithVPC(hostedZoneOutput, vpcID) {
+			allErrs = append(allErrs, field.Invalid(hostedZonePath, hostedZoneName, "hosted zone is not associated with the VPC"))
 		}
 	} else {
-		allErrs = append(allErrs, field.Invalid(hostedZonePath, ic.AWS.HostedZone, "no VPC found"))
+		allErrs = append(allErrs, field.Invalid(hostedZonePath, hostedZoneName, "no VPC found"))
 	}
 
+	return allErrs
+}
+
+func getSubDomainDNSRecords(client *route53.Route53, hostedZone *route53.HostedZone, ic *types.InstallConfig) ([]string, error) {
 	dottedClusterDomain := ic.ClusterDomain() + "."
 
 	// validate that the domain of the hosted zone is the cluster domain or a parent of the cluster domain
-	if !isHostedZoneDomainParentOfClusterDomain(zone.HostedZone, dottedClusterDomain) {
-		allErrs = append(allErrs, field.Invalid(hostedZonePath, ic.AWS.HostedZone,
-			fmt.Sprintf("hosted zone domain %q is not a parent of the cluster domain %q", *zone.HostedZone.Name, dottedClusterDomain)))
+	if !isHostedZoneDomainParentOfClusterDomain(hostedZone, dottedClusterDomain) {
+		return nil, errors.Errorf("hosted zone domain %q is not a parent of the cluster domain %q", *hostedZone.Name, dottedClusterDomain)
 	}
 
-	// validate that the hosted zone does not already have any record sets for the cluster domain
 	var problematicRecords []string
+	// validate that the hosted zone does not already have any record sets for the cluster domain
 	if err := client.ListResourceRecordSetsPages(
-		&route53.ListResourceRecordSetsInput{HostedZoneId: zone.HostedZone.Id},
+		&route53.ListResourceRecordSetsInput{HostedZoneId: hostedZone.Id},
 		func(out *route53.ListResourceRecordSetsOutput, lastPage bool) bool {
 			for _, recordSet := range out.ResourceRecordSets {
 				name := aws.StringValue(recordSet.Name)
@@ -382,18 +448,10 @@ func validateExistingHostedZone(session *session.Session, ic *types.InstallConfi
 			return !lastPage
 		},
 	); err != nil {
-		allErrs = append(allErrs, field.InternalError(hostedZonePath,
-			errors.Wrapf(err, "could not list record sets for hosted zone %q", ic.AWS.HostedZone)))
-	}
-	if len(problematicRecords) > 0 {
-		detail := fmt.Sprintf(
-			"hosted zone already has record sets for the domain of the cluster: [%s]",
-			strings.Join(problematicRecords, ", "),
-		)
-		allErrs = append(allErrs, field.Invalid(hostedZonePath, ic.AWS.HostedZone, detail))
+		return nil, err
 	}
 
-	return allErrs
+	return problematicRecords, nil
 }
 
 func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcID string) bool {
