@@ -65,7 +65,7 @@ func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int
 			},
 		},
 
-		OverrideDataDir: filepath.Join(dir, ".tf"),
+		OverrideDataDir: filepath.Join(dir, ".terraform"),
 
 		ShutdownCh: sdCh,
 	}

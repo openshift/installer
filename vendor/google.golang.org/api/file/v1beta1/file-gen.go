@@ -75,6 +75,7 @@ const apiId = "file:v1beta1"
 const apiName = "file"
 const apiVersion = "v1beta1"
 const basePath = "https://file.googleapis.com/"
+const mtlsBasePath = "https://file.mtls.googleapis.com/"
 
 // OAuth2 scopes used by this API.
 const (
@@ -90,6 +91,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
 	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
+	opts = append(opts, internaloption.WithDefaultMTLSEndpoint(mtlsBasePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -147,6 +149,7 @@ type ProjectsService struct {
 
 func NewProjectsLocationsService(s *Service) *ProjectsLocationsService {
 	rs := &ProjectsLocationsService{s: s}
+	rs.Backups = NewProjectsLocationsBackupsService(s)
 	rs.Instances = NewProjectsLocationsInstancesService(s)
 	rs.Operations = NewProjectsLocationsOperationsService(s)
 	return rs
@@ -155,9 +158,20 @@ func NewProjectsLocationsService(s *Service) *ProjectsLocationsService {
 type ProjectsLocationsService struct {
 	s *Service
 
+	Backups *ProjectsLocationsBackupsService
+
 	Instances *ProjectsLocationsInstancesService
 
 	Operations *ProjectsLocationsOperationsService
+}
+
+func NewProjectsLocationsBackupsService(s *Service) *ProjectsLocationsBackupsService {
+	rs := &ProjectsLocationsBackupsService{s: s}
+	return rs
+}
+
+type ProjectsLocationsBackupsService struct {
+	s *Service
 }
 
 func NewProjectsLocationsInstancesService(s *Service) *ProjectsLocationsInstancesService {
@@ -178,19 +192,81 @@ type ProjectsLocationsOperationsService struct {
 	s *Service
 }
 
-// AttributeValue: The allowed types for [VALUE] in a `[KEY]:[VALUE]`
-// attribute.
-type AttributeValue struct {
-	// BoolValue: A Boolean value represented by `true` or `false`.
-	BoolValue bool `json:"boolValue,omitempty"`
+// Backup: A Cloud Filestore backup.
+type Backup struct {
+	// CapacityGb: Output only. Capacity of the backup. This would be the
+	// size of the file share when the backup is restored.
+	CapacityGb int64 `json:"capacityGb,omitempty,string"`
 
-	// IntValue: A 64-bit signed integer.
-	IntValue int64 `json:"intValue,omitempty,string"`
+	// CreateTime: Output only. The time when the backup was created.
+	CreateTime string `json:"createTime,omitempty"`
 
-	// StringValue: A string up to 256 bytes long.
-	StringValue *TruncatableString `json:"stringValue,omitempty"`
+	// Description: A description of the backup with 2048 characters or
+	// less. Requests with longer descriptions will be rejected.
+	Description string `json:"description,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "BoolValue") to
+	// DownloadBytes: Output only. Amount of bytes that will be downloaded
+	// if the backup is restored
+	DownloadBytes int64 `json:"downloadBytes,omitempty,string"`
+
+	// Labels: Resource labels to represent user provided metadata.
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Name: Output only. The resource name of the backup, in the format
+	// projects/{project_id}/locations/{location_id}/backups/{backup_id}.
+	Name string `json:"name,omitempty"`
+
+	// SourceFileShare: Name of the file share in the source Cloud Filestore
+	// instance that the backup is created from.
+	SourceFileShare string `json:"sourceFileShare,omitempty"`
+
+	// SourceInstance: The resource name of the source Cloud Filestore
+	// instance, in the format
+	// projects/{project_id}/locations/{location_id}/instances/{instance_id},
+	//  used to create this backup.
+	SourceInstance string `json:"sourceInstance,omitempty"`
+
+	// SourceInstanceTier: Output only. The service tier of the source Cloud
+	// Filestore instance that this backup is created from.
+	//
+	// Possible values:
+	//   "TIER_UNSPECIFIED" - Not set.
+	//   "STANDARD" - STANDARD tier. BASIC_HDD is the preferred term for
+	// this tier.
+	//   "PREMIUM" - PREMIUM tier. BASIC_SSD is the preferred term for this
+	// tier.
+	//   "BASIC_HDD" - BASIC instances offer a maximum capacity of 63.9 TB.
+	// BASIC_HDD is an alias for STANDARD Tier, offering economical
+	// performance backed by HDD.
+	//   "BASIC_SSD" - BASIC instances offer a maximum capacity of 63.9 TB.
+	// BASIC_SSD is an alias for PREMIUM Tier, and offers improved
+	// performance backed by SSD.
+	//   "HIGH_SCALE_SSD" - HIGH_SCALE instances offer expanded capacity and
+	// performance scaling capabilities.
+	SourceInstanceTier string `json:"sourceInstanceTier,omitempty"`
+
+	// State: Output only. The backup state.
+	//
+	// Possible values:
+	//   "STATE_UNSPECIFIED" - State not set.
+	//   "CREATING" - Backup is being created.
+	//   "FINALIZING" - Backup has been taken and the operation is being
+	// finalized. At this point, changes to the file share will not be
+	// reflected in the backup.
+	//   "READY" - Backup is available for use.
+	//   "DELETING" - Backup is being deleted.
+	State string `json:"state,omitempty"`
+
+	// StorageBytes: Output only. The size of the storage used by the
+	// backup. As backups share storage, this number is expected to change
+	// with backup creation/deletion.
+	StorageBytes int64 `json:"storageBytes,omitempty,string"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "CapacityGb") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -198,7 +274,7 @@ type AttributeValue struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "BoolValue") to include in
+	// NullFields is a list of field names (e.g. "CapacityGb") to include in
 	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
@@ -207,91 +283,8 @@ type AttributeValue struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *AttributeValue) MarshalJSON() ([]byte, error) {
-	type NoMethod AttributeValue
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// Attributes: A set of attributes, each in the format `[KEY]:[VALUE]`.
-type Attributes struct {
-	// AttributeMap: The set of attributes. Each attribute's key can be up
-	// to 128 bytes
-	// long. The value can be a string up to 256 bytes, a signed 64-bit
-	// integer,
-	// or the Boolean values `true` and `false`. For example:
-	//
-	//     "/instance_id": "my-instance"
-	//     "/http/user_agent": ""
-	//     "/http/request_bytes": 300
-	//     "abc.com/myattribute": true
-	AttributeMap map[string]AttributeValue `json:"attributeMap,omitempty"`
-
-	// DroppedAttributesCount: The number of attributes that were discarded.
-	// Attributes can be discarded
-	// because their keys are too long or because there are too many
-	// attributes.
-	// If this value is 0 then all attributes are valid.
-	DroppedAttributesCount int64 `json:"droppedAttributesCount,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "AttributeMap") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "AttributeMap") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *Attributes) MarshalJSON() ([]byte, error) {
-	type NoMethod Attributes
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// BillingView: Message for reporting billing requests through
-// Eventstream.
-type BillingView struct {
-	// ReportRequests: Billing requests to be reported for an
-	// [Eventstream
-	// resource](http://google3/cloud/eventstream/v2/resource_ev
-	// ent.proto).
-	//
-	// Each request contains billing operations to be reported under a
-	// service
-	// name. See go/billing-view-construction for documentation on
-	// constructing
-	// billing view report requests.
-	ReportRequests []*ReportRequest `json:"reportRequests,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "ReportRequests") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "ReportRequests") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *BillingView) MarshalJSON() ([]byte, error) {
-	type NoMethod BillingView
+func (s *Backup) MarshalJSON() ([]byte, error) {
+	type NoMethod Backup
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -301,318 +294,35 @@ func (s *BillingView) MarshalJSON() ([]byte, error) {
 type CancelOperationRequest struct {
 }
 
-// Distribution: Distribution represents a frequency distribution of
-// double-valued sample
-// points. It contains the size of the population of sample points
-// plus
-// additional optional information:
-//
-//   - the arithmetic mean of the samples
-//   - the minimum and maximum of the samples
-//   - the sum-squared-deviation of the samples, used to compute
-// variance
-//   - a histogram of the values of the sample points
-type Distribution struct {
-	// BucketCounts: The number of samples in each histogram bucket.
-	// `bucket_counts` are
-	// optional. If present, they must sum to the `count` value.
-	//
-	// The buckets are defined below in `bucket_option`. There are N
-	// buckets.
-	// `bucket_counts[0]` is the number of samples in the underflow
-	// bucket.
-	// `bucket_counts[1]` to `bucket_counts[N-1]` are the numbers of
-	// samples
-	// in each of the finite buckets. And `bucket_counts[N] is the number
-	// of samples in the overflow bucket. See the comments of
-	// `bucket_option`
-	// below for more details.
-	//
-	// Any suffix of trailing zeros may be omitted.
-	BucketCounts googleapi.Int64s `json:"bucketCounts,omitempty"`
-
-	// Count: The total number of samples in the distribution. Must be >= 0.
-	Count int64 `json:"count,omitempty,string"`
-
-	// Exemplars: Example points. Must be in increasing order of `value`
-	// field.
-	Exemplars []*Exemplar `json:"exemplars,omitempty"`
-
-	// ExplicitBuckets: Buckets with arbitrary user-provided width.
-	ExplicitBuckets *ExplicitBuckets `json:"explicitBuckets,omitempty"`
-
-	// ExponentialBuckets: Buckets with exponentially growing width.
-	ExponentialBuckets *ExponentialBuckets `json:"exponentialBuckets,omitempty"`
-
-	// LinearBuckets: Buckets with constant width.
-	LinearBuckets *LinearBuckets `json:"linearBuckets,omitempty"`
-
-	// Maximum: The maximum of the population of values. Ignored if `count`
-	// is zero.
-	Maximum float64 `json:"maximum,omitempty"`
-
-	// Mean: The arithmetic mean of the samples in the distribution. If
-	// `count` is
-	// zero then this field must be zero.
-	Mean float64 `json:"mean,omitempty"`
-
-	// Minimum: The minimum of the population of values. Ignored if `count`
-	// is zero.
-	Minimum float64 `json:"minimum,omitempty"`
-
-	// SumOfSquaredDeviation: The sum of squared deviations from the mean:
-	//   Sum[i=1..count]((x_i - mean)^2)
-	// where each x_i is a sample values. If `count` is zero then this
-	// field
-	// must be zero, otherwise validation of the request fails.
-	SumOfSquaredDeviation float64 `json:"sumOfSquaredDeviation,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "BucketCounts") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "BucketCounts") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *Distribution) MarshalJSON() ([]byte, error) {
-	type NoMethod Distribution
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-func (s *Distribution) UnmarshalJSON(data []byte) error {
-	type NoMethod Distribution
-	var s1 struct {
-		Maximum               gensupport.JSONFloat64 `json:"maximum"`
-		Mean                  gensupport.JSONFloat64 `json:"mean"`
-		Minimum               gensupport.JSONFloat64 `json:"minimum"`
-		SumOfSquaredDeviation gensupport.JSONFloat64 `json:"sumOfSquaredDeviation"`
-		*NoMethod
-	}
-	s1.NoMethod = (*NoMethod)(s)
-	if err := json.Unmarshal(data, &s1); err != nil {
-		return err
-	}
-	s.Maximum = float64(s1.Maximum)
-	s.Mean = float64(s1.Mean)
-	s.Minimum = float64(s1.Minimum)
-	s.SumOfSquaredDeviation = float64(s1.SumOfSquaredDeviation)
-	return nil
-}
-
 // Empty: A generic empty message that you can re-use to avoid defining
-// duplicated
-// empty messages in your APIs. A typical example is to use it as the
-// request
-// or the response type of an API method. For instance:
-//
-//     service Foo {
-//       rpc Bar(google.protobuf.Empty) returns
-// (google.protobuf.Empty);
-//     }
-//
-// The JSON representation for `Empty` is empty JSON object `{}`.
+// duplicated empty messages in your APIs. A typical example is to use
+// it as the request or the response type of an API method. For
+// instance: service Foo { rpc Bar(google.protobuf.Empty) returns
+// (google.protobuf.Empty); } The JSON representation for `Empty` is
+// empty JSON object `{}`.
 type Empty struct {
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
 	googleapi.ServerResponse `json:"-"`
 }
 
-// Exemplar: Exemplars are example points that may be used to annotate
-// aggregated
-// distribution values. They are metadata that gives information about
-// a
-// particular value added to a Distribution bucket, such as a trace ID
-// that
-// was active when a value was added. They may contain further
-// information,
-// such as a example values and timestamps, origin, etc.
-type Exemplar struct {
-	// Attachments: Contextual information about the example value. Examples
-	// are:
-	//
-	//   Trace: type.googleapis.com/google.monitoring.v3.SpanContext
-	//
-	//   Literal string: type.googleapis.com/google.protobuf.StringValue
-	//
-	//   Labels dropped during aggregation:
-	//     type.googleapis.com/google.monitoring.v3.DroppedLabels
-	//
-	// There may be only a single attachment of any given message type in
-	// a
-	// single exemplar, and this is enforced by the system.
-	Attachments []googleapi.RawMessage `json:"attachments,omitempty"`
-
-	// Timestamp: The observation (sampling) time of the above value.
-	Timestamp string `json:"timestamp,omitempty"`
-
-	// Value: Value of the exemplar point. This value determines to which
-	// bucket the
-	// exemplar belongs.
-	Value float64 `json:"value,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Attachments") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Attachments") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *Exemplar) MarshalJSON() ([]byte, error) {
-	type NoMethod Exemplar
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-func (s *Exemplar) UnmarshalJSON(data []byte) error {
-	type NoMethod Exemplar
-	var s1 struct {
-		Value gensupport.JSONFloat64 `json:"value"`
-		*NoMethod
-	}
-	s1.NoMethod = (*NoMethod)(s)
-	if err := json.Unmarshal(data, &s1); err != nil {
-		return err
-	}
-	s.Value = float64(s1.Value)
-	return nil
-}
-
-// ExplicitBuckets: Describing buckets with arbitrary user-provided
-// width.
-type ExplicitBuckets struct {
-	// Bounds: 'bound' is a list of strictly increasing boundaries
-	// between
-	// buckets. Note that a list of length N-1 defines N buckets because
-	// of fenceposting. See comments on `bucket_options` for details.
-	//
-	// The i'th finite bucket covers the interval
-	//   [bound[i-1], bound[i])
-	// where i ranges from 1 to bound_size() - 1. Note that there are
-	// no
-	// finite buckets at all if 'bound' only contains a single element;
-	// in
-	// that special case the single bound defines the boundary between
-	// the
-	// underflow and overflow buckets.
-	//
-	// bucket number                   lower bound    upper bound
-	//  i == 0 (underflow)              -inf           bound[i]
-	//  0 < i < bound_size()            bound[i-1]     bound[i]
-	//  i == bound_size() (overflow)    bound[i-1]     +inf
-	Bounds []float64 `json:"bounds,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Bounds") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Bounds") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ExplicitBuckets) MarshalJSON() ([]byte, error) {
-	type NoMethod ExplicitBuckets
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// ExponentialBuckets: Describing buckets with exponentially growing
-// width.
-type ExponentialBuckets struct {
-	// GrowthFactor: The i'th exponential bucket covers the interval
-	//   [scale * growth_factor^(i-1), scale * growth_factor^i)
-	// where i ranges from 1 to num_finite_buckets inclusive.
-	// Must be larger than 1.0.
-	GrowthFactor float64 `json:"growthFactor,omitempty"`
-
-	// NumFiniteBuckets: The number of finite buckets. With the underflow
-	// and overflow buckets,
-	// the total number of buckets is `num_finite_buckets` + 2.
-	// See comments on `bucket_options` for details.
-	NumFiniteBuckets int64 `json:"numFiniteBuckets,omitempty"`
-
-	// Scale: The i'th exponential bucket covers the interval
-	//   [scale * growth_factor^(i-1), scale * growth_factor^i)
-	// where i ranges from 1 to num_finite_buckets inclusive.
-	// Must be > 0.
-	Scale float64 `json:"scale,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "GrowthFactor") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "GrowthFactor") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ExponentialBuckets) MarshalJSON() ([]byte, error) {
-	type NoMethod ExponentialBuckets
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-func (s *ExponentialBuckets) UnmarshalJSON(data []byte) error {
-	type NoMethod ExponentialBuckets
-	var s1 struct {
-		GrowthFactor gensupport.JSONFloat64 `json:"growthFactor"`
-		Scale        gensupport.JSONFloat64 `json:"scale"`
-		*NoMethod
-	}
-	s1.NoMethod = (*NoMethod)(s)
-	if err := json.Unmarshal(data, &s1); err != nil {
-		return err
-	}
-	s.GrowthFactor = float64(s1.GrowthFactor)
-	s.Scale = float64(s1.Scale)
-	return nil
-}
-
 // FileShareConfig: File share configuration for the instance.
 type FileShareConfig struct {
-	// CapacityGb: File share capacity in gigabytes (GB).
-	// Cloud Filestore defines 1 GB as 1024^3 bytes.
+	// CapacityGb: File share capacity in gigabytes (GB). Cloud Filestore
+	// defines 1 GB as 1024^3 bytes.
 	CapacityGb int64 `json:"capacityGb,omitempty,string"`
 
 	// Name: The name of the file share (must be 16 characters or less).
 	Name string `json:"name,omitempty"`
+
+	// NfsExportOptions: Nfs Export Options. There is a limit of 10 export
+	// options per file share.
+	NfsExportOptions []*NfsExportOptions `json:"nfsExportOptions,omitempty"`
+
+	// SourceBackup: The resource name of the backup, in the format
+	// projects/{project_id}/locations/{location_id}/backups/{backup_id},
+	// that this file share has been restored from.
+	SourceBackup string `json:"sourceBackup,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CapacityGb") to
 	// unconditionally include in API requests. By default, fields with
@@ -637,240 +347,71 @@ func (s *FileShareConfig) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// GoogleApiServicecontrolV1Operation: Represents information regarding
-// an operation.
-type GoogleApiServicecontrolV1Operation struct {
-	// ConsumerId: Identity of the consumer who is using the service.
-	// This field should be filled in for the operations initiated by
-	// a
-	// consumer, but not for service-initiated operations that are
-	// not related to a specific consumer.
-	//
-	// - This can be in one of the following formats:
-	//     - project:PROJECT_ID,
-	//     - project`_`number:PROJECT_NUMBER,
-	//     - projects/PROJECT_ID or PROJECT_NUMBER,
-	//     - folders/FOLDER_NUMBER,
-	//     - organizations/ORGANIZATION_NUMBER,
-	//     - api`_`key:API_KEY.
-	ConsumerId string `json:"consumerId,omitempty"`
-
-	// EndTime: End time of the operation.
-	// Required when the operation is used in ServiceController.Report,
-	// but optional when the operation is used in ServiceController.Check.
-	EndTime string `json:"endTime,omitempty"`
-
-	// Importance: DO NOT USE. This is an experimental field.
-	//
-	// Possible values:
-	//   "LOW" - The API implementation may cache and aggregate the
-	// data.
-	// The data may be lost when rare and unexpected system failures occur.
-	//   "HIGH" - The API implementation doesn't cache and aggregate the
-	// data.
-	// If the method returns successfully, it's guaranteed that the data
-	// has
-	// been persisted in durable storage.
-	//   "DEBUG" - In addition to the behavior described in HIGH, DEBUG
-	// enables
-	// additional validation logic that is only useful during the
-	// onboarding
-	// process. This is only available to Google internal services and
-	// the service must be whitelisted by chemist-dev@google.com in order
-	// to use this level.
-	Importance string `json:"importance,omitempty"`
-
-	// Labels: Labels describing the operation. Only the following labels
-	// are allowed:
-	//
-	// - Labels describing monitored resources as defined in
-	//   the service configuration.
-	// - Default labels of metric values. When specified, labels defined in
-	// the
-	//   metric value override these default.
-	// - The following labels defined by Google Cloud Platform:
-	//     - `cloud.googleapis.com/location` describing the location where
-	// the
-	//        operation happened,
-	//     - `servicecontrol.googleapis.com/user_agent` describing the user
-	// agent
-	//        of the API request,
-	//     - `servicecontrol.googleapis.com/service_agent` describing the
-	// service
-	//        used to handle the API request (e.g. ESP),
-	//     - `servicecontrol.googleapis.com/platform` describing the
-	// platform
-	//        where the API is served, such as App Engine, Compute Engine,
-	// or
-	//        Kubernetes Engine.
-	Labels map[string]string `json:"labels,omitempty"`
-
-	// LogEntries: Represents information to be logged.
-	LogEntries []*LogEntry `json:"logEntries,omitempty"`
-
-	// MetricValueSets: Represents information about this operation. Each
-	// MetricValueSet
-	// corresponds to a metric defined in the service configuration.
-	// The data type used in the MetricValueSet must agree with
-	// the data type specified in the metric definition.
-	//
-	// Within a single operation, it is not allowed to have more than
-	// one
-	// MetricValue instances that have the same metric names and
-	// identical
-	// label value combinations. If a request has such duplicated
-	// MetricValue
-	// instances, the entire request is rejected with
-	// an invalid argument error.
-	MetricValueSets []*MetricValueSet `json:"metricValueSets,omitempty"`
-
-	// OperationId: Identity of the operation. This must be unique within
-	// the scope of the
-	// service that generated the operation. If the service calls
-	// Check() and Report() on the same operation, the two calls should
-	// carry
-	// the same id.
-	//
-	// UUID version 4 is recommended, though not required.
-	// In scenarios where an operation is computed from existing
-	// information
-	// and an idempotent id is desirable for deduplication purpose, UUID
-	// version 5
-	// is recommended. See RFC 4122 for details.
-	OperationId string `json:"operationId,omitempty"`
-
-	// OperationName: Fully qualified name of the operation. Reserved for
-	// future use.
-	OperationName string `json:"operationName,omitempty"`
-
-	// QuotaProperties: Represents the properties needed for quota check.
-	// Applicable only if this
-	// operation is for a quota check request. If this is not specified, no
-	// quota
-	// check will be performed.
-	QuotaProperties *QuotaProperties `json:"quotaProperties,omitempty"`
-
-	// Resources: The resources that are involved in the operation.
-	// The maximum supported number of entries in this field is 100.
-	Resources []*ResourceInfo `json:"resources,omitempty"`
-
-	// StartTime: Required. Start time of the operation.
-	StartTime string `json:"startTime,omitempty"`
-
-	// TraceSpans: Unimplemented. A list of Cloud Trace spans. The span
-	// names shall contain
-	// the id of the destination project which can be either the produce or
-	// the
-	// consumer project.
-	TraceSpans []*TraceSpan `json:"traceSpans,omitempty"`
-
-	// UserLabels: User defined labels for the resource that this operation
-	// is associated
-	// with. Only a combination of 1000 user labels per consumer project
-	// are
-	// allowed.
-	UserLabels map[string]string `json:"userLabels,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "ConsumerId") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "ConsumerId") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleApiServicecontrolV1Operation) MarshalJSON() ([]byte, error) {
-	type NoMethod GoogleApiServicecontrolV1Operation
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 type GoogleCloudSaasacceleratorManagementProvidersV1Instance struct {
 	// ConsumerDefinedName: consumer_defined_name is the name that is set by
-	// the consumer. On the other
-	// hand Name field represents system-assigned id of an instance so
-	// consumers
-	// are not necessarily aware of it.
+	// the consumer. On the other hand Name field represents system-assigned
+	// id of an instance so consumers are not necessarily aware of it.
 	// consumer_defined_name is used for notification/UI purposes for
-	// consumer to
-	// recognize their instances.
+	// consumer to recognize their instances.
 	ConsumerDefinedName string `json:"consumerDefinedName,omitempty"`
 
 	// CreateTime: Output only. Timestamp when the resource was created.
 	CreateTime string `json:"createTime,omitempty"`
 
 	// Labels: Optional. Resource labels to represent user provided
-	// metadata. Each label
-	// is a key-value pair, where both the key and the value are arbitrary
-	// strings
-	// provided by the user.
+	// metadata. Each label is a key-value pair, where both the key and the
+	// value are arbitrary strings provided by the user.
 	Labels map[string]string `json:"labels,omitempty"`
 
 	// MaintenancePolicyNames: The MaintenancePolicies that have been
-	// attached to the instance.
-	// The key must be of the type name of the oneof policy name defined
-	// in
-	// MaintenancePolicy, and the referenced policy must define the same
-	// policy
-	// type. For complete details of MaintenancePolicy, please refer
-	// to
-	// go/cloud-saas-mw-ug.
+	// attached to the instance. The key must be of the type name of the
+	// oneof policy name defined in MaintenancePolicy, and the referenced
+	// policy must define the same policy type. For complete details of
+	// MaintenancePolicy, please refer to go/cloud-saas-mw-ug.
 	MaintenancePolicyNames map[string]string `json:"maintenancePolicyNames,omitempty"`
 
 	// MaintenanceSchedules: The MaintenanceSchedule contains the scheduling
-	// information of published
-	// maintenance schedule.
+	// information of published maintenance schedule with same key as
+	// software_versions.
 	MaintenanceSchedules map[string]GoogleCloudSaasacceleratorManagementProvidersV1MaintenanceSchedule `json:"maintenanceSchedules,omitempty"`
 
+	// MaintenanceSettings: Optional. The MaintenanceSettings associated
+	// with instance.
+	MaintenanceSettings *GoogleCloudSaasacceleratorManagementProvidersV1MaintenanceSettings `json:"maintenanceSettings,omitempty"`
+
 	// Name: Unique name of the resource. It uses the form:
-	//
 	// `projects/{project_id}/locations/{location_id}/instances/{instance_id}
 	// `
 	Name string `json:"name,omitempty"`
 
 	// ProducerMetadata: Output only. Custom string attributes used
-	// primarily to expose
-	// producer-specific information in monitoring dashboards.
-	// See go/get-instance-metadata.
+	// primarily to expose producer-specific information in monitoring
+	// dashboards. See go/get-instance-metadata.
 	ProducerMetadata map[string]string `json:"producerMetadata,omitempty"`
 
 	// ProvisionedResources: Output only. The list of data plane resources
-	// provisioned for this
-	// instance, e.g. compute VMs. See go/get-instance-metadata.
+	// provisioned for this instance, e.g. compute VMs. See
+	// go/get-instance-metadata.
 	ProvisionedResources []*GoogleCloudSaasacceleratorManagementProvidersV1ProvisionedResource `json:"provisionedResources,omitempty"`
 
 	// SlmInstanceTemplate: Link to the SLM instance template. Only
-	// populated when updating SLM
-	// instances via SSA's Actuation service adaptor.
-	// Service producers with custom control plane (e.g. Cloud SQL)
-	// doesn't
-	// need to populate this field. Instead they should use
+	// populated when updating SLM instances via SSA's Actuation service
+	// adaptor. Service producers with custom control plane (e.g. Cloud SQL)
+	// doesn't need to populate this field. Instead they should use
 	// software_versions.
 	SlmInstanceTemplate string `json:"slmInstanceTemplate,omitempty"`
 
 	// SloMetadata: Output only. SLO metadata for instance classification in
-	// the
-	// Standardized dataplane SLO platform.
-	// See go/cloud-ssa-standard-slo for feature description.
+	// the Standardized dataplane SLO platform. See
+	// go/cloud-ssa-standard-slo for feature description.
 	SloMetadata *GoogleCloudSaasacceleratorManagementProvidersV1SloMetadata `json:"sloMetadata,omitempty"`
 
 	// SoftwareVersions: Software versions that are used to deploy this
-	// instance. This can be
-	// mutated by rollout services.
+	// instance. This can be mutated by rollout services.
 	SoftwareVersions map[string]string `json:"softwareVersions,omitempty"`
 
 	// State: Output only. Current lifecycle state of the resource (e.g. if
-	// it's being
-	// created or ready to use).
+	// it's being created or ready to use).
 	//
 	// Possible values:
 	//   "STATE_UNSPECIFIED" - Unspecified state.
@@ -884,8 +425,7 @@ type GoogleCloudSaasacceleratorManagementProvidersV1Instance struct {
 	State string `json:"state,omitempty"`
 
 	// TenantProjectId: Output only. ID of the associated GCP tenant
-	// project.
-	// See go/get-instance-metadata.
+	// project. See go/get-instance-metadata.
 	TenantProjectId string `json:"tenantProjectId,omitempty"`
 
 	// UpdateTime: Output only. Timestamp when the resource was last
@@ -918,23 +458,19 @@ func (s *GoogleCloudSaasacceleratorManagementProvidersV1Instance) MarshalJSON() 
 
 // GoogleCloudSaasacceleratorManagementProvidersV1MaintenanceSchedule:
 // Maintenance schedule which is exposed to customer and potentially end
-// user,
-// indicating published upcoming future maintenance schedule
+// user, indicating published upcoming future maintenance schedule
 type GoogleCloudSaasacceleratorManagementProvidersV1MaintenanceSchedule struct {
-	// CanReschedule: Can this scheduled update be rescheduled?
-	// By default, it's true and API needs to do explicitly check whether
-	// it's
-	// set, if it's set as false explicitly, it's false
+	// CanReschedule: Can this scheduled update be rescheduled? By default,
+	// it's true and API needs to do explicitly check whether it's set, if
+	// it's set as false explicitly, it's false
 	CanReschedule bool `json:"canReschedule,omitempty"`
 
 	// EndTime: The scheduled end time for the maintenance.
 	EndTime string `json:"endTime,omitempty"`
 
 	// RolloutManagementPolicy: The rollout management policy this
-	// maintenance schedule is associated
-	// with. When doing reschedule update request, the reschedule should
-	// be
-	// against this given policy.
+	// maintenance schedule is associated with. When doing reschedule update
+	// request, the reschedule should be against this given policy.
 	RolloutManagementPolicy string `json:"rolloutManagementPolicy,omitempty"`
 
 	// StartTime: The scheduled start time for the maintenance.
@@ -963,29 +499,59 @@ func (s *GoogleCloudSaasacceleratorManagementProvidersV1MaintenanceSchedule) Mar
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GoogleCloudSaasacceleratorManagementProvidersV1MaintenanceSettings:
+// Maintenance settings associated with instance. Allows service
+// producers and end users to assign settings that controls maintenance
+// on this instance.
+type GoogleCloudSaasacceleratorManagementProvidersV1MaintenanceSettings struct {
+	// Exclude: Optional. Exclude instance from maintenance. When true,
+	// rollout service will not attempt maintenance on the instance. Rollout
+	// service will include the instance in reported rollout progress as not
+	// attempted.
+	Exclude bool `json:"exclude,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Exclude") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Exclude") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudSaasacceleratorManagementProvidersV1MaintenanceSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudSaasacceleratorManagementProvidersV1MaintenanceSettings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GoogleCloudSaasacceleratorManagementProvidersV1NodeSloMetadata: Node
-// information for custom per-node SLO implementations.
-// SSA does not support per-node SLO, but producers can populate
-// per-node
-// information in SloMetadata for custom precomputations.
-// SSA Eligibility Exporter will emit per-node metric based on this
-// information.
+// information for custom per-node SLO implementations. SSA does not
+// support per-node SLO, but producers can populate per-node information
+// in SloMetadata for custom precomputations. SSA Eligibility Exporter
+// will emit per-node metric based on this information.
 type GoogleCloudSaasacceleratorManagementProvidersV1NodeSloMetadata struct {
-	// Exclusions: By default node is eligible if instance is eligible.
-	// But individual node might be excluded from SLO by adding entry
-	// here.
-	// For semantic see SloMetadata.exclusions.
-	// If both instance and node level exclusions are present for time
-	// period,
-	// the node level's reason will be reported by Eligibility Exporter.
+	// Exclusions: By default node is eligible if instance is eligible. But
+	// individual node might be excluded from SLO by adding entry here. For
+	// semantic see SloMetadata.exclusions. If both instance and node level
+	// exclusions are present for time period, the node level's reason will
+	// be reported by Eligibility Exporter.
 	Exclusions []*GoogleCloudSaasacceleratorManagementProvidersV1SloExclusion `json:"exclusions,omitempty"`
 
 	// Location: The location of the node, if different from instance
 	// location.
 	Location string `json:"location,omitempty"`
 
-	// NodeId: The id of the node.
-	// This should be equal to SaasInstanceNode.node_id.
+	// NodeId: The id of the node. This should be equal to
+	// SaasInstanceNode.node_id.
 	NodeId string `json:"nodeId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Exclusions") to
@@ -1015,20 +581,15 @@ func (s *GoogleCloudSaasacceleratorManagementProvidersV1NodeSloMetadata) Marshal
 // Describes provisioned dataplane resources.
 type GoogleCloudSaasacceleratorManagementProvidersV1ProvisionedResource struct {
 	// ResourceType: Type of the resource. This can be either a GCP resource
-	// or a custom one
-	// (e.g. another cloud provider's VM). For GCP compute resources use
-	// singular
-	// form of the names listed in GCP compute API
+	// or a custom one (e.g. another cloud provider's VM). For GCP compute
+	// resources use singular form of the names listed in GCP compute API
 	// documentation
-	// (https://cloud.google.com/compute/docs/reference/rest/v1
-	// /), prefixed with
-	// 'compute-', for example: 'compute-instance',
-	// 'compute-disk',
+	// (https://cloud.google.com/compute/docs/reference/rest/v1/), prefixed
+	// with 'compute-', for example: 'compute-instance', 'compute-disk',
 	// 'compute-autoscaler'.
 	ResourceType string `json:"resourceType,omitempty"`
 
-	// ResourceUrl: URL identifying the resource,
-	// e.g.
+	// ResourceUrl: URL identifying the resource, e.g.
 	// "https://www.googleapis.com/compute/v1/projects/...)".
 	ResourceUrl string `json:"resourceUrl,omitempty"`
 
@@ -1057,19 +618,16 @@ func (s *GoogleCloudSaasacceleratorManagementProvidersV1ProvisionedResource) Mar
 
 // GoogleCloudSaasacceleratorManagementProvidersV1SloEligibility:
 // SloEligibility is a tuple containing eligibility value: true if an
-// instance
-// is eligible for SLO calculation or false if it should be excluded
-// from all
-// SLO-related calculations along with a user-defined reason.
+// instance is eligible for SLO calculation or false if it should be
+// excluded from all SLO-related calculations along with a user-defined
+// reason.
 type GoogleCloudSaasacceleratorManagementProvidersV1SloEligibility struct {
 	// Eligible: Whether an instance is eligible or ineligible.
 	Eligible bool `json:"eligible,omitempty"`
 
 	// Reason: User-defined reason for the current value of instance
-	// eligibility. Usually,
-	// this can be directly mapped to the internal state. An empty reason
-	// is
-	// allowed.
+	// eligibility. Usually, this can be directly mapped to the internal
+	// state. An empty reason is allowed.
 	Reason string `json:"reason,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Eligible") to
@@ -1099,35 +657,25 @@ func (s *GoogleCloudSaasacceleratorManagementProvidersV1SloEligibility) MarshalJ
 // SloExclusion represents an exclusion in SLI calculation applies to
 // all SLOs.
 type GoogleCloudSaasacceleratorManagementProvidersV1SloExclusion struct {
-	// Duration: Exclusion duration. No restrictions on the possible
-	// values.
-	//
-	// When an ongoing operation is taking longer than initially
-	// expected,
+	// Duration: Exclusion duration. No restrictions on the possible values.
+	// When an ongoing operation is taking longer than initially expected,
 	// an existing entry in the exclusion list can be updated by extending
-	// the
-	// duration. This is supported by the subsystem exporting eligibility
-	// data
-	// as long as such extension is committed at least 10 minutes before
-	// the
-	// original exclusion expiration - otherwise it is possible that there
-	// will
-	// be "gaps" in the exclusion application in the exported timeseries.
+	// the duration. This is supported by the subsystem exporting
+	// eligibility data as long as such extension is committed at least 10
+	// minutes before the original exclusion expiration - otherwise it is
+	// possible that there will be "gaps" in the exclusion application in
+	// the exported timeseries.
 	Duration string `json:"duration,omitempty"`
 
-	// Reason: Human-readable reason for the exclusion.
-	// This should be a static string (e.g. "Disruptive update in
-	// progress")
-	// and should not contain dynamically generated data (e.g. instance
-	// name).
-	// Can be left empty.
+	// Reason: Human-readable reason for the exclusion. This should be a
+	// static string (e.g. "Disruptive update in progress") and should not
+	// contain dynamically generated data (e.g. instance name). Can be left
+	// empty.
 	Reason string `json:"reason,omitempty"`
 
 	// SliName: Name of an SLI that this exclusion applies to. Can be left
-	// empty,
-	// signaling that the instance should be excluded from all SLIs
-	// defined
-	// in the service SLO configuration.
+	// empty, signaling that the instance should be excluded from all SLIs
+	// defined in the service SLO configuration.
 	SliName string `json:"sliName,omitempty"`
 
 	// StartTime: Start time of the exclusion. No alignment (e.g. to a full
@@ -1159,50 +707,34 @@ func (s *GoogleCloudSaasacceleratorManagementProvidersV1SloExclusion) MarshalJSO
 
 // GoogleCloudSaasacceleratorManagementProvidersV1SloMetadata:
 // SloMetadata contains resources required for proper SLO classification
-// of the
-// instance.
+// of the instance.
 type GoogleCloudSaasacceleratorManagementProvidersV1SloMetadata struct {
 	// Eligibility: Optional. User-defined instance eligibility.
 	Eligibility *GoogleCloudSaasacceleratorManagementProvidersV1SloEligibility `json:"eligibility,omitempty"`
 
 	// Exclusions: List of SLO exclusion windows. When multiple entries in
-	// the list match
-	// (matching the exclusion time-window against current time point)
-	// the exclusion reason used in the first matching entry will be
-	// published.
-	//
-	// It is not needed to include expired exclusion in this list, as only
-	// the
-	// currently applicable exclusions are taken into account by the
-	// eligibility
-	// exporting subsystem (the historical state of exclusions will be
-	// reflected
-	// in the historically produced timeseries regardless of the current
-	// state).
-	//
-	// This field can be used to mark the instance as temporary
-	// ineligible
-	// for the purpose of SLO calculation. For permanent instance SLO
-	// exclusion,
-	// use of custom instance eligibility is recommended. See 'eligibility'
-	// field
-	// below.
+	// the list match (matching the exclusion time-window against current
+	// time point) the exclusion reason used in the first matching entry
+	// will be published. It is not needed to include expired exclusion in
+	// this list, as only the currently applicable exclusions are taken into
+	// account by the eligibility exporting subsystem (the historical state
+	// of exclusions will be reflected in the historically produced
+	// timeseries regardless of the current state). This field can be used
+	// to mark the instance as temporary ineligible for the purpose of SLO
+	// calculation. For permanent instance SLO exclusion, use of custom
+	// instance eligibility is recommended. See 'eligibility' field below.
 	Exclusions []*GoogleCloudSaasacceleratorManagementProvidersV1SloExclusion `json:"exclusions,omitempty"`
 
-	// Nodes: Optional. List of nodes.
-	// Some producers need to use per-node metadata to calculate SLO.
-	// This field allows such producers to publish per-node SLO meta
-	// data,
-	// which will be consumed by SSA Eligibility Exporter and published in
-	// the
-	// form of per node metric to Monarch.
+	// Nodes: Optional. List of nodes. Some producers need to use per-node
+	// metadata to calculate SLO. This field allows such producers to
+	// publish per-node SLO meta data, which will be consumed by SSA
+	// Eligibility Exporter and published in the form of per node metric to
+	// Monarch.
 	Nodes []*GoogleCloudSaasacceleratorManagementProvidersV1NodeSloMetadata `json:"nodes,omitempty"`
 
 	// Tier: Name of the SLO tier the Instance belongs to. This name will be
-	// expected to
-	// match the tiers specified in the service SLO configuration.
-	//
-	// Field is mandatory and must not be empty.
+	// expected to match the tiers specified in the service SLO
+	// configuration. Field is mandatory and must not be empty.
 	Tier string `json:"tier,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Eligibility") to
@@ -1228,111 +760,6 @@ func (s *GoogleCloudSaasacceleratorManagementProvidersV1SloMetadata) MarshalJSON
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// HttpRequest: A common proto for logging HTTP requests. Only contains
-// semantics
-// defined by the HTTP specification. Product-specific
-// logging
-// information MUST be defined in a separate message.
-type HttpRequest struct {
-	// CacheFillBytes: The number of HTTP response bytes inserted into
-	// cache. Set only when a
-	// cache fill was attempted.
-	CacheFillBytes int64 `json:"cacheFillBytes,omitempty,string"`
-
-	// CacheHit: Whether or not an entity was served from cache
-	// (with or without validation).
-	CacheHit bool `json:"cacheHit,omitempty"`
-
-	// CacheLookup: Whether or not a cache lookup was attempted.
-	CacheLookup bool `json:"cacheLookup,omitempty"`
-
-	// CacheValidatedWithOriginServer: Whether or not the response was
-	// validated with the origin server before
-	// being served from cache. This field is only meaningful if `cache_hit`
-	// is
-	// True.
-	CacheValidatedWithOriginServer bool `json:"cacheValidatedWithOriginServer,omitempty"`
-
-	// Latency: The request processing latency on the server, from the time
-	// the request was
-	// received until the response was sent.
-	Latency string `json:"latency,omitempty"`
-
-	// Protocol: Protocol used for the request. Examples: "HTTP/1.1",
-	// "HTTP/2", "websocket"
-	Protocol string `json:"protocol,omitempty"`
-
-	// Referer: The referer URL of the request, as defined in
-	// [HTTP/1.1 Header
-	// Field
-	// Definitions](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.h
-	// tml).
-	Referer string `json:"referer,omitempty"`
-
-	// RemoteIp: The IP address (IPv4 or IPv6) of the client that issued the
-	// HTTP
-	// request. Examples: "192.168.1.1", "FE80::0202:B3FF:FE1E:8329".
-	RemoteIp string `json:"remoteIp,omitempty"`
-
-	// RequestMethod: The request method. Examples: "GET", "HEAD",
-	// "PUT", "POST".
-	RequestMethod string `json:"requestMethod,omitempty"`
-
-	// RequestSize: The size of the HTTP request message in bytes, including
-	// the request
-	// headers and the request body.
-	RequestSize int64 `json:"requestSize,omitempty,string"`
-
-	// RequestUrl: The scheme (http, https), the host name, the path, and
-	// the query
-	// portion of the URL that was requested.
-	// Example: "http://example.com/some/info?color=red".
-	RequestUrl string `json:"requestUrl,omitempty"`
-
-	// ResponseSize: The size of the HTTP response message sent back to the
-	// client, in bytes,
-	// including the response headers and the response body.
-	ResponseSize int64 `json:"responseSize,omitempty,string"`
-
-	// ServerIp: The IP address (IPv4 or IPv6) of the origin server that the
-	// request was
-	// sent to.
-	ServerIp string `json:"serverIp,omitempty"`
-
-	// Status: The response code indicating the status of the
-	// response.
-	// Examples: 200, 404.
-	Status int64 `json:"status,omitempty"`
-
-	// UserAgent: The user agent sent by the client. Example:
-	// "Mozilla/4.0 (compatible; MSIE 6.0; Windows 98; Q312461; .NET
-	// CLR 1.0.3705)".
-	UserAgent string `json:"userAgent,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "CacheFillBytes") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "CacheFillBytes") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *HttpRequest) MarshalJSON() ([]byte, error) {
-	type NoMethod HttpRequest
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // Instance: A Cloud Filestore instance.
 type Instance struct {
 	// CreateTime: Output only. The time when the instance was created.
@@ -1343,25 +770,22 @@ type Instance struct {
 	Description string `json:"description,omitempty"`
 
 	// Etag: Server-specified ETag for the instance resource to prevent
-	// simultaneous
-	// updates from overwriting each other.
+	// simultaneous updates from overwriting each other.
 	Etag string `json:"etag,omitempty"`
 
-	// FileShares: File system shares on the instance.
-	// For this version, only a single file share is supported.
+	// FileShares: File system shares on the instance. For this version,
+	// only a single file share is supported.
 	FileShares []*FileShareConfig `json:"fileShares,omitempty"`
 
 	// Labels: Resource labels to represent user provided metadata.
 	Labels map[string]string `json:"labels,omitempty"`
 
-	// Name: Output only. The resource name of the instance, in the
-	// format
-	// projects/{project_id}/locations/{location_id}/instances/{instan
-	// ce_id}.
+	// Name: Output only. The resource name of the instance, in the format
+	// projects/{project_id}/locations/{location_id}/instances/{instance_id}.
 	Name string `json:"name,omitempty"`
 
-	// Networks: VPC networks to which the instance is connected.
-	// For this version, only a single network is supported.
+	// Networks: VPC networks to which the instance is connected. For this
+	// version, only a single network is supported.
 	Networks []*NetworkConfig `json:"networks,omitempty"`
 
 	// State: Output only. The instance state.
@@ -1371,17 +795,14 @@ type Instance struct {
 	//   "CREATING" - The instance is being created.
 	//   "READY" - The instance is available for use.
 	//   "REPAIRING" - Work is being done on the instance. You can get
-	// further details from the
-	// `statusMessage` field of the `Instance` resource.
+	// further details from the `statusMessage` field of the `Instance`
+	// resource.
 	//   "DELETING" - The instance is shutting down.
 	//   "ERROR" - The instance is experiencing an issue and might be
-	// unusable. You can get
-	// further details from the `statusMessage` field of the
-	// `Instance`
-	// resource.
+	// unusable. You can get further details from the `statusMessage` field
+	// of the `Instance` resource.
 	//   "RESTORING" - The instance is restoring a snapshot or backup to an
-	// existing file share
-	// and may be unusable during this time.
+	// existing file share and may be unusable during this time.
 	State string `json:"state,omitempty"`
 
 	// StatusMessage: Output only. Additional information about the instance
@@ -1396,19 +817,14 @@ type Instance struct {
 	// this tier.
 	//   "PREMIUM" - PREMIUM tier. BASIC_SSD is the preferred term for this
 	// tier.
-	//   "BASIC_HDD" - BASIC instances offer a maximum capacity of 63.9
-	// TB.
-	// BASIC_HDD is an alias for STANDARD Tier, offering
-	// economical
+	//   "BASIC_HDD" - BASIC instances offer a maximum capacity of 63.9 TB.
+	// BASIC_HDD is an alias for STANDARD Tier, offering economical
 	// performance backed by HDD.
-	//   "BASIC_SSD" - BASIC instances offer a maximum capacity of 63.9
-	// TB.
-	// BASIC_SSD is an alias for PREMIUM Tier, and offers
-	// improved
+	//   "BASIC_SSD" - BASIC instances offer a maximum capacity of 63.9 TB.
+	// BASIC_SSD is an alias for PREMIUM Tier, and offers improved
 	// performance backed by SSD.
 	//   "HIGH_SCALE_SSD" - HIGH_SCALE instances offer expanded capacity and
-	// performance scaling
-	// capabilities.
+	// performance scaling capabilities.
 	Tier string `json:"tier,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1438,26 +854,29 @@ func (s *Instance) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// LinearBuckets: Describing buckets with constant width.
-type LinearBuckets struct {
-	// NumFiniteBuckets: The number of finite buckets. With the underflow
-	// and overflow buckets,
-	// the total number of buckets is `num_finite_buckets` + 2.
-	// See comments on `bucket_options` for details.
-	NumFiniteBuckets int64 `json:"numFiniteBuckets,omitempty"`
+// ListBackupsResponse: ListBackupsResponse is the result of
+// ListBackupsRequest.
+type ListBackupsResponse struct {
+	// Backups: A list of backups in the project for the specified location.
+	// If the {location} value in the request is "-", the response contains
+	// a list of backups from all locations. If any location is unreachable,
+	// the response will only return backups in reachable locations and the
+	// "unreachable" field will be populated with a list of unreachable
+	// locations.
+	Backups []*Backup `json:"backups,omitempty"`
 
-	// Offset: The i'th linear bucket covers the interval
-	//   [offset + (i-1) * width, offset + i * width)
-	// where i ranges from 1 to num_finite_buckets, inclusive.
-	Offset float64 `json:"offset,omitempty"`
+	// NextPageToken: The token you can use to retrieve the next page of
+	// results. Not returned if there are no more results in the list.
+	NextPageToken string `json:"nextPageToken,omitempty"`
 
-	// Width: The i'th linear bucket covers the interval
-	//   [offset + (i-1) * width, offset + i * width)
-	// where i ranges from 1 to num_finite_buckets, inclusive.
-	// Must be strictly positive.
-	Width float64 `json:"width,omitempty"`
+	// Unreachable: Locations that could not be reached.
+	Unreachable []string `json:"unreachable,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "NumFiniteBuckets") to
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Backups") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -1465,57 +884,34 @@ type LinearBuckets struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "NumFiniteBuckets") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g. "Backups") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
-func (s *LinearBuckets) MarshalJSON() ([]byte, error) {
-	type NoMethod LinearBuckets
+func (s *ListBackupsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod ListBackupsResponse
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-func (s *LinearBuckets) UnmarshalJSON(data []byte) error {
-	type NoMethod LinearBuckets
-	var s1 struct {
-		Offset gensupport.JSONFloat64 `json:"offset"`
-		Width  gensupport.JSONFloat64 `json:"width"`
-		*NoMethod
-	}
-	s1.NoMethod = (*NoMethod)(s)
-	if err := json.Unmarshal(data, &s1); err != nil {
-		return err
-	}
-	s.Offset = float64(s1.Offset)
-	s.Width = float64(s1.Width)
-	return nil
 }
 
 // ListInstancesResponse: ListInstancesResponse is the result of
 // ListInstancesRequest.
 type ListInstancesResponse struct {
 	// Instances: A list of instances in the project for the specified
-	// location.
-	//
-	// If the {location} value in the request is "-", the response contains
-	// a list
-	// of instances from all locations. If any location is unreachable,
-	// the
-	// response will only return instances in reachable locations and
-	// the
-	// "unreachable" field will be populated with a list of unreachable
-	// locations.
+	// location. If the {location} value in the request is "-", the response
+	// contains a list of instances from all locations. If any location is
+	// unreachable, the response will only return instances in reachable
+	// locations and the "unreachable" field will be populated with a list
+	// of unreachable locations.
 	Instances []*Instance `json:"instances,omitempty"`
 
 	// NextPageToken: The token you can use to retrieve the next page of
-	// results. Not returned
-	// if there are no more results in the list.
+	// results. Not returned if there are no more results in the list.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// Unreachable: Locations that could not be reached.
@@ -1625,13 +1021,11 @@ func (s *ListOperationsResponse) MarshalJSON() ([]byte, error) {
 // Location: A resource that represents Google Cloud Platform location.
 type Location struct {
 	// DisplayName: The friendly name for this location, typically a nearby
-	// city name.
-	// For example, "Tokyo".
+	// city name. For example, "Tokyo".
 	DisplayName string `json:"displayName,omitempty"`
 
 	// Labels: Cross-service attributes for the location. For example
-	//
-	//     {"cloud.googleapis.com/region": "us-east1"}
+	// {"cloud.googleapis.com/region": "us-east1"}
 	Labels map[string]string `json:"labels,omitempty"`
 
 	// LocationId: The canonical id for this location. For example:
@@ -1639,13 +1033,12 @@ type Location struct {
 	LocationId string `json:"locationId,omitempty"`
 
 	// Metadata: Service-specific metadata. For example the available
-	// capacity at the given
-	// location.
+	// capacity at the given location.
 	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
 
 	// Name: Resource name for the location, which may vary between
-	// implementations.
-	// For example: "projects/example-project/locations/us-east1"
+	// implementations. For example:
+	// "projects/example-project/locations/us-east1"
 	Name string `json:"name,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1675,402 +1068,34 @@ func (s *Location) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// LogEntry: An individual log entry.
-type LogEntry struct {
-	// HttpRequest: Optional. Information about the HTTP request associated
-	// with this
-	// log entry, if applicable.
-	HttpRequest *HttpRequest `json:"httpRequest,omitempty"`
-
-	// InsertId: A unique ID for the log entry used for deduplication. If
-	// omitted,
-	// the implementation will generate one based on operation_id.
-	InsertId string `json:"insertId,omitempty"`
-
-	// Labels: A set of user-defined (key, value) data that provides
-	// additional
-	// information about the log entry.
-	Labels map[string]string `json:"labels,omitempty"`
-
-	// Name: Required. The log to which this log entry belongs. Examples:
-	// "syslog",
-	// "book_log".
-	Name string `json:"name,omitempty"`
-
-	// Operation: Optional. Information about an operation associated with
-	// the log entry, if
-	// applicable.
-	Operation *LogEntryOperation `json:"operation,omitempty"`
-
-	// ProtoPayload: The log entry payload, represented as a protocol buffer
-	// that is
-	// expressed as a JSON object. The only accepted type currently
-	// is
-	// AuditLog.
-	ProtoPayload googleapi.RawMessage `json:"protoPayload,omitempty"`
-
-	// Severity: The severity of the log entry. The default value
-	// is
-	// `LogSeverity.DEFAULT`.
-	//
-	// Possible values:
-	//   "DEFAULT" - (0) The log entry has no assigned severity level.
-	//   "DEBUG" - (100) Debug or trace information.
-	//   "INFO" - (200) Routine information, such as ongoing status or
-	// performance.
-	//   "NOTICE" - (300) Normal but significant events, such as start up,
-	// shut down, or
-	// a configuration change.
-	//   "WARNING" - (400) Warning events might cause problems.
-	//   "ERROR" - (500) Error events are likely to cause problems.
-	//   "CRITICAL" - (600) Critical events cause more severe problems or
-	// outages.
-	//   "ALERT" - (700) A person must take an action immediately.
-	//   "EMERGENCY" - (800) One or more systems are unusable.
-	Severity string `json:"severity,omitempty"`
-
-	// SourceLocation: Optional. Source code location information associated
-	// with the log entry,
-	// if any.
-	SourceLocation *LogEntrySourceLocation `json:"sourceLocation,omitempty"`
-
-	// StructPayload: The log entry payload, represented as a structure
-	// that
-	// is expressed as a JSON object.
-	StructPayload googleapi.RawMessage `json:"structPayload,omitempty"`
-
-	// TextPayload: The log entry payload, represented as a Unicode string
-	// (UTF-8).
-	TextPayload string `json:"textPayload,omitempty"`
-
-	// Timestamp: The time the event described by the log entry occurred.
-	// If
-	// omitted, defaults to operation start time.
-	Timestamp string `json:"timestamp,omitempty"`
-
-	// Trace: Optional. Resource name of the trace associated with the log
-	// entry, if any.
-	// If this field contains a relative resource name, you can assume the
-	// name is
-	// relative to `//tracing.googleapis.com`.
-	// Example:
-	// `projects/my-projectid/traces/06796866738c859f2f19b7cfb321482
-	// 4`
-	Trace string `json:"trace,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "HttpRequest") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "HttpRequest") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *LogEntry) MarshalJSON() ([]byte, error) {
-	type NoMethod LogEntry
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// LogEntryOperation: Additional information about a potentially
-// long-running operation with which
-// a log entry is associated.
-type LogEntryOperation struct {
-	// First: Optional. Set this to True if this is the first log entry in
-	// the operation.
-	First bool `json:"first,omitempty"`
-
-	// Id: Optional. An arbitrary operation identifier. Log entries with
-	// the
-	// same identifier are assumed to be part of the same operation.
-	Id string `json:"id,omitempty"`
-
-	// Last: Optional. Set this to True if this is the last log entry in the
-	// operation.
-	Last bool `json:"last,omitempty"`
-
-	// Producer: Optional. An arbitrary producer identifier. The combination
-	// of
-	// `id` and `producer` must be globally unique.  Examples for
-	// `producer`:
-	// "MyDivision.MyBigCompany.com",
-	// "github.com/MyProject/MyApplication".
-	Producer string `json:"producer,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "First") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "First") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *LogEntryOperation) MarshalJSON() ([]byte, error) {
-	type NoMethod LogEntryOperation
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// LogEntrySourceLocation: Additional information about the source code
-// location that produced the log
-// entry.
-type LogEntrySourceLocation struct {
-	// File: Optional. Source file name. Depending on the runtime
-	// environment, this
-	// might be a simple name or a fully-qualified name.
-	File string `json:"file,omitempty"`
-
-	// Function: Optional. Human-readable name of the function or method
-	// being invoked, with
-	// optional context such as the class or package name. This information
-	// may be
-	// used in contexts such as the logs viewer, where a file and line
-	// number are
-	// less meaningful. The format can vary by language. For
-	// example:
-	// `qual.if.ied.Class.method` (Java), `dir/package.func` (Go),
-	// `function`
-	// (Python).
-	Function string `json:"function,omitempty"`
-
-	// Line: Optional. Line within the source file. 1-based; 0 indicates no
-	// line number
-	// available.
-	Line int64 `json:"line,omitempty,string"`
-
-	// ForceSendFields is a list of field names (e.g. "File") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "File") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *LogEntrySourceLocation) MarshalJSON() ([]byte, error) {
-	type NoMethod LogEntrySourceLocation
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// MetricValue: Represents a single metric value.
-type MetricValue struct {
-	// BoolValue: A boolean value.
-	BoolValue bool `json:"boolValue,omitempty"`
-
-	// DistributionValue: A distribution value.
-	DistributionValue *Distribution `json:"distributionValue,omitempty"`
-
-	// DoubleValue: A double precision floating point value.
-	DoubleValue float64 `json:"doubleValue,omitempty"`
-
-	// EndTime: The end of the time period over which this metric value's
-	// measurement
-	// applies.
-	EndTime string `json:"endTime,omitempty"`
-
-	// Int64Value: A signed 64-bit integer value.
-	Int64Value int64 `json:"int64Value,omitempty,string"`
-
-	// Labels: The labels describing the metric value.
-	// See comments on google.api.servicecontrol.v1.Operation.labels for
-	// the overriding relationship.
-	// Note that this map must not contain monitored resource labels.
-	Labels map[string]string `json:"labels,omitempty"`
-
-	// MoneyValue: A money value.
-	MoneyValue *Money `json:"moneyValue,omitempty"`
-
-	// StartTime: The start of the time period over which this metric
-	// value's measurement
-	// applies. The time period has different semantics for different
-	// metric
-	// types (cumulative, delta, and gauge). See the metric
-	// definition
-	// documentation in the service configuration for details.
-	StartTime string `json:"startTime,omitempty"`
-
-	// StringValue: A text string value.
-	StringValue string `json:"stringValue,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "BoolValue") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "BoolValue") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *MetricValue) MarshalJSON() ([]byte, error) {
-	type NoMethod MetricValue
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-func (s *MetricValue) UnmarshalJSON(data []byte) error {
-	type NoMethod MetricValue
-	var s1 struct {
-		DoubleValue gensupport.JSONFloat64 `json:"doubleValue"`
-		*NoMethod
-	}
-	s1.NoMethod = (*NoMethod)(s)
-	if err := json.Unmarshal(data, &s1); err != nil {
-		return err
-	}
-	s.DoubleValue = float64(s1.DoubleValue)
-	return nil
-}
-
-// MetricValueSet: Represents a set of metric values in the same
-// metric.
-// Each metric value in the set should have a unique combination of
-// start time,
-// end time, and label values.
-type MetricValueSet struct {
-	// MetricName: The metric name defined in the service configuration.
-	MetricName string `json:"metricName,omitempty"`
-
-	// MetricValues: The values in this metric.
-	MetricValues []*MetricValue `json:"metricValues,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "MetricName") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "MetricName") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *MetricValueSet) MarshalJSON() ([]byte, error) {
-	type NoMethod MetricValueSet
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// Money: Represents an amount of money with its currency type.
-type Money struct {
-	// CurrencyCode: The 3-letter currency code defined in ISO 4217.
-	CurrencyCode string `json:"currencyCode,omitempty"`
-
-	// Nanos: Number of nano (10^-9) units of the amount.
-	// The value must be between -999,999,999 and +999,999,999 inclusive.
-	// If `units` is positive, `nanos` must be positive or zero.
-	// If `units` is zero, `nanos` can be positive, zero, or negative.
-	// If `units` is negative, `nanos` must be negative or zero.
-	// For example $-1.75 is represented as `units`=-1 and
-	// `nanos`=-750,000,000.
-	Nanos int64 `json:"nanos,omitempty"`
-
-	// Units: The whole units of the amount.
-	// For example if `currencyCode` is "USD", then 1 unit is one US
-	// dollar.
-	Units int64 `json:"units,omitempty,string"`
-
-	// ForceSendFields is a list of field names (e.g. "CurrencyCode") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "CurrencyCode") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *Money) MarshalJSON() ([]byte, error) {
-	type NoMethod Money
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // NetworkConfig: Network configuration for the instance.
 type NetworkConfig struct {
-	// IpAddresses: Output only. IPv4 addresses in the format
-	// {octet 1}.{octet 2}.{octet 3}.{octet 4} or IPv6 addresses in the
-	// format
-	// {block 1}:{block 2}:{block 3}:{block 4}:{block 5}:{block
-	// 6}:{block
+	// IpAddresses: Output only. IPv4 addresses in the format {octet
+	// 1}.{octet 2}.{octet 3}.{octet 4} or IPv6 addresses in the format
+	// {block 1}:{block 2}:{block 3}:{block 4}:{block 5}:{block 6}:{block
 	// 7}:{block 8}.
 	IpAddresses []string `json:"ipAddresses,omitempty"`
 
 	// Modes: Internet protocol versions for which the instance has IP
-	// addresses
-	// assigned. For this version, only MODE_IPV4 is supported.
+	// addresses assigned. For this version, only MODE_IPV4 is supported.
 	//
 	// Possible values:
 	//   "ADDRESS_MODE_UNSPECIFIED" - Internet protocol not set.
 	//   "MODE_IPV4" - Use the IPv4 internet protocol.
 	Modes []string `json:"modes,omitempty"`
 
-	// Network: The name of the Google Compute Engine
-	// [VPC network](/compute/docs/networks-and-firewalls#networks) to which
-	// the
+	// Network: The name of the Google Compute Engine [VPC
+	// network](/compute/docs/networks-and-firewalls#networks) to which the
 	// instance is connected.
 	Network string `json:"network,omitempty"`
 
 	// ReservedIpRange: A /29 CIDR block for Basic or a /23 CIDR block for
-	// High Scale in one of the
-	// [internal IP
-	// address
-	// ranges](https://www.arin.net/knowledge/address_filters.html)
-	// that
-	// identifies the range of IP addresses reserved for this instance.
-	// For
+	// High Scale in one of the [internal IP address
+	// ranges](https://www.arin.net/knowledge/address_filters.html) that
+	// identifies the range of IP addresses reserved for this instance. For
 	// example, 10.0.0.0/29 or 192.168.0.0/23. The range you specify can't
-	// overlap
-	// with either existing subnets or assigned IP address ranges for other
-	// Cloud
-	// Filestore instances in the selected VPC network.
+	// overlap with either existing subnets or assigned IP address ranges
+	// for other Cloud Filestore instances in the selected VPC network.
 	ReservedIpRange string `json:"reservedIpRange,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "IpAddresses") to
@@ -2096,53 +1121,107 @@ func (s *NetworkConfig) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// NfsExportOptions: NFS export options specifications.
+type NfsExportOptions struct {
+	// AccessMode: Either READ_ONLY, for allowing only read requests on the
+	// exported directory, or READ_WRITE, for allowing both read and write
+	// requests. The default is READ_WRITE.
+	//
+	// Possible values:
+	//   "ACCESS_MODE_UNSPECIFIED" - AccessMode not set.
+	//   "READ_ONLY" - The client can only read the file share.
+	//   "READ_WRITE" - The client can read and write the file share
+	// (default).
+	AccessMode string `json:"accessMode,omitempty"`
+
+	// AnonGid: An integer representing the anonymous group id with a
+	// default value of 65534. Anon_gid may only be set with squash_mode of
+	// ROOT_SQUASH. An error will be returned if this field is specified for
+	// other squash_mode settings.
+	AnonGid int64 `json:"anonGid,omitempty,string"`
+
+	// AnonUid: An integer representing the anonymous user id with a default
+	// value of 65534. Anon_uid may only be set with squash_mode of
+	// ROOT_SQUASH. An error will be returned if this field is specified for
+	// other squash_mode settings.
+	AnonUid int64 `json:"anonUid,omitempty,string"`
+
+	// IpRanges: List of either an IPv4 addresses in the format {octet
+	// 1}.{octet 2}.{octet 3}.{octet 4} or CIDR ranges in the format {octet
+	// 1}.{octet 2}.{octet 3}.{octet 4}/{mask size} which may mount the file
+	// share. Overlapping IP ranges are not allowed, both within and across
+	// NfsExportOptions. An error will be returned. The limit is 64 IP
+	// ranges/addresses for each FileShareConfig among all NfsExportOptions.
+	IpRanges []string `json:"ipRanges,omitempty"`
+
+	// SquashMode: Either NO_ROOT_SQUASH, for allowing root access on the
+	// exported directory, or ROOT_SQUASH, for not allowing root access. The
+	// default is NO_ROOT_SQUASH.
+	//
+	// Possible values:
+	//   "SQUASH_MODE_UNSPECIFIED" - SquashMode not set.
+	//   "NO_ROOT_SQUASH" - The Root user has root access to the file share
+	// (default).
+	//   "ROOT_SQUASH" - The Root user has squashed access to the anonymous
+	// uid/gid.
+	SquashMode string `json:"squashMode,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AccessMode") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AccessMode") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *NfsExportOptions) MarshalJSON() ([]byte, error) {
+	type NoMethod NfsExportOptions
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Operation: This resource represents a long-running operation that is
-// the result of a
-// network API call.
+// the result of a network API call.
 type Operation struct {
 	// Done: If the value is `false`, it means the operation is still in
-	// progress.
-	// If `true`, the operation is completed, and either `error` or
-	// `response` is
-	// available.
+	// progress. If `true`, the operation is completed, and either `error`
+	// or `response` is available.
 	Done bool `json:"done,omitempty"`
 
 	// Error: The error result of the operation in case of failure or
 	// cancellation.
 	Error *Status `json:"error,omitempty"`
 
-	// Metadata: Service-specific metadata associated with the operation.
-	// It typically
-	// contains progress information and common metadata such as create
-	// time.
-	// Some services might not provide such metadata.  Any method that
-	// returns a
-	// long-running operation should document the metadata type, if any.
+	// Metadata: Service-specific metadata associated with the operation. It
+	// typically contains progress information and common metadata such as
+	// create time. Some services might not provide such metadata. Any
+	// method that returns a long-running operation should document the
+	// metadata type, if any.
 	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
 
 	// Name: The server-assigned name, which is only unique within the same
-	// service that
-	// originally returns it. If you use the default HTTP mapping,
-	// the
-	// `name` should be a resource name ending with
+	// service that originally returns it. If you use the default HTTP
+	// mapping, the `name` should be a resource name ending with
 	// `operations/{unique_id}`.
 	Name string `json:"name,omitempty"`
 
-	// Response: The normal response of the operation in case of success.
-	// If the original
-	// method returns no data on success, such as `Delete`, the response
-	// is
-	// `google.protobuf.Empty`.  If the original method is
-	// standard
-	// `Get`/`Create`/`Update`, the response should be the resource.  For
-	// other
-	// methods, the response should have the type `XxxResponse`, where
-	// `Xxx`
-	// is the original method name.  For example, if the original method
-	// name
-	// is `TakeSnapshot()`, the inferred response type
-	// is
-	// `TakeSnapshotResponse`.
+	// Response: The normal response of the operation in case of success. If
+	// the original method returns no data on success, such as `Delete`, the
+	// response is `google.protobuf.Empty`. If the original method is
+	// standard `Get`/`Create`/`Update`, the response should be the
+	// resource. For other methods, the response should have the type
+	// `XxxResponse`, where `Xxx` is the original method name. For example,
+	// if the original method name is `TakeSnapshot()`, the inferred
+	// response type is `TakeSnapshotResponse`.
 	Response googleapi.RawMessage `json:"response,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2179,12 +1258,9 @@ type OperationMetadata struct {
 	ApiVersion string `json:"apiVersion,omitempty"`
 
 	// CancelRequested: [Output only] Identifies whether the user has
-	// requested cancellation
-	// of the operation. Operations that have successfully been
-	// cancelled
-	// have Operation.error value with a google.rpc.Status.code of
-	// 1,
-	// corresponding to `Code.CANCELLED`.
+	// requested cancellation of the operation. Operations that have
+	// successfully been cancelled have Operation.error value with a
+	// google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
 	CancelRequested bool `json:"cancelRequested,omitempty"`
 
 	// CreateTime: [Output only] The time the operation was created.
@@ -2227,32 +1303,22 @@ func (s *OperationMetadata) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// QuotaProperties: Represents the properties needed for quota
-// operations.
-type QuotaProperties struct {
-	// QuotaMode: Quota mode for this operation.
-	//
-	// Possible values:
-	//   "ACQUIRE" - Decreases available quota by the cost specified for the
-	// operation.
-	// If cost is higher than available quota, operation fails and
-	// returns
-	// error.
-	//   "ACQUIRE_BEST_EFFORT" - Decreases available quota by the cost
-	// specified for the operation.
-	// If cost is higher than available quota, operation does not fail
-	// and
-	// available quota goes down to zero but it returns error.
-	//   "CHECK" - Does not change any available quota. Only checks if there
-	// is enough
-	// quota.
-	// No lock is placed on the checked tokens neither.
-	//   "RELEASE" - Increases available quota by the operation cost
-	// specified for the
-	// operation.
-	QuotaMode string `json:"quotaMode,omitempty"`
+// RestoreInstanceRequest: RestoreInstanceRequest restores an existing
+// instances's file share from a snapshot or backup.
+type RestoreInstanceRequest struct {
+	// FileShare: Required. Name of the file share in the Cloud Filestore
+	// instance that the snapshot is being restored to.
+	FileShare string `json:"fileShare,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "QuotaMode") to
+	// SourceBackup: The resource name of the backup, in the format
+	// projects/{project_id}/locations/{location_id}/backups/{backup_id}.
+	SourceBackup string `json:"sourceBackup,omitempty"`
+
+	// SourceSnapshot: The resource name of the snapshot, in the format
+	// projects/{project_id}/locations/{location_id}/snapshots/{snapshot_id}.
+	SourceSnapshot string `json:"sourceSnapshot,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "FileShare") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -2260,7 +1326,7 @@ type QuotaProperties struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "QuotaMode") to include in
+	// NullFields is a list of field names (e.g. "FileShare") to include in
 	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
@@ -2269,147 +1335,31 @@ type QuotaProperties struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *QuotaProperties) MarshalJSON() ([]byte, error) {
-	type NoMethod QuotaProperties
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// ReportRequest: Request message for the Report method.
-type ReportRequest struct {
-	// Operations: Operations to be reported.
-	//
-	// Typically the service should report one operation per
-	// request.
-	// Putting multiple operations into a single request is allowed, but
-	// should
-	// be used only when multiple operations are natually available at the
-	// time
-	// of the report.
-	//
-	// There is no limit on the number of operations in the same
-	// ReportRequest,
-	// however the ReportRequest size should be no larger than 1MB.
-	// See
-	// ReportResponse.report_errors for partial failure behavior.
-	Operations []*GoogleApiServicecontrolV1Operation `json:"operations,omitempty"`
-
-	// ServiceConfigId: Specifies which version of service config should be
-	// used to process the
-	// request.
-	//
-	// If unspecified or no matching version can be found, the
-	// latest one will be used.
-	ServiceConfigId string `json:"serviceConfigId,omitempty"`
-
-	// ServiceName: The service name as specified in its service
-	// configuration. For
-	// example,
-	// "pubsub.googleapis.com".
-	//
-	// See
-	// [google.api.Service](https://
-	// cloud.google.com/service-management/reference/rpc/google.api#google.ap
-	// i.Service)
-	// for the definition of a service name.
-	ServiceName string `json:"serviceName,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Operations") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Operations") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ReportRequest) MarshalJSON() ([]byte, error) {
-	type NoMethod ReportRequest
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// ResourceInfo: Describes a resource associated with this operation.
-type ResourceInfo struct {
-	// ResourceContainer: The identifier of the parent of this resource
-	// instance.
-	// Must be in one of the following formats:
-	//     - “projects/<project-id or project-number>”
-	//     - “folders/<folder-id>”
-	//     - “organizations/<organization-id>”
-	ResourceContainer string `json:"resourceContainer,omitempty"`
-
-	// ResourceLocation: The location of the resource. If not empty, the
-	// resource will be checked
-	// against location policy. The value must be a valid zone, region
-	// or
-	// multiregion. For example: "europe-west4" or
-	// "northamerica-northeast1-a"
-	ResourceLocation string `json:"resourceLocation,omitempty"`
-
-	// ResourceName: Name of the resource. This is used for auditing
-	// purposes.
-	ResourceName string `json:"resourceName,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "ResourceContainer")
-	// to unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "ResourceContainer") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ResourceInfo) MarshalJSON() ([]byte, error) {
-	type NoMethod ResourceInfo
+func (s *RestoreInstanceRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod RestoreInstanceRequest
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // Status: The `Status` type defines a logical error model that is
-// suitable for
-// different programming environments, including REST APIs and RPC APIs.
-// It is
-// used by [gRPC](https://github.com/grpc). Each `Status` message
-// contains
-// three pieces of data: error code, error message, and error
-// details.
-//
-// You can find out more about this error model and how to work with it
-// in the
-// [API Design Guide](https://cloud.google.com/apis/design/errors).
+// suitable for different programming environments, including REST APIs
+// and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each
+// `Status` message contains three pieces of data: error code, error
+// message, and error details. You can find out more about this error
+// model and how to work with it in the [API Design
+// Guide](https://cloud.google.com/apis/design/errors).
 type Status struct {
 	// Code: The status code, which should be an enum value of
 	// google.rpc.Code.
 	Code int64 `json:"code,omitempty"`
 
-	// Details: A list of messages that carry the error details.  There is a
-	// common set of
-	// message types for APIs to use.
+	// Details: A list of messages that carry the error details. There is a
+	// common set of message types for APIs to use.
 	Details []googleapi.RawMessage `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which should be in
-	// English. Any
-	// user-facing error message should be localized and sent in
-	// the
-	// google.rpc.Status.details field, or localized by the client.
+	// English. Any user-facing error message should be localized and sent
+	// in the google.rpc.Status.details field, or localized by the client.
 	Message string `json:"message,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Code") to
@@ -2431,186 +1381,6 @@ type Status struct {
 
 func (s *Status) MarshalJSON() ([]byte, error) {
 	type NoMethod Status
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// TraceSpan: A span represents a single operation within a trace. Spans
-// can be
-// nested to form a trace tree. Often, a trace contains a root span
-// that describes the end-to-end latency, and one or more subspans
-// for
-// its sub-operations. A trace can also contain multiple root spans,
-// or none at all. Spans do not need to be contiguous&mdash;there may
-// be
-// gaps or overlaps between spans in a trace.
-type TraceSpan struct {
-	// Attributes: A set of attributes on the span. You can have up to 32
-	// attributes per
-	// span.
-	Attributes *Attributes `json:"attributes,omitempty"`
-
-	// ChildSpanCount: An optional number of child spans that were generated
-	// while this span
-	// was active. If set, allows implementation to detect missing child
-	// spans.
-	ChildSpanCount int64 `json:"childSpanCount,omitempty"`
-
-	// DisplayName: A description of the span's operation (up to 128
-	// bytes).
-	// Stackdriver Trace displays the description in the
-	// Google Cloud Platform Console.
-	// For example, the display name can be a qualified method name or a
-	// file name
-	// and a line number where the operation is called. A best practice is
-	// to use
-	// the same display name within an application and at the same call
-	// point.
-	// This makes it easier to correlate spans in different traces.
-	DisplayName *TruncatableString `json:"displayName,omitempty"`
-
-	// EndTime: The end time of the span. On the client side, this is the
-	// time kept by
-	// the local machine where the span execution ends. On the server side,
-	// this
-	// is the time when the server application handler stops running.
-	EndTime string `json:"endTime,omitempty"`
-
-	// Name: The resource name of the span in the following format:
-	//
-	//     projects/[PROJECT_ID]/traces/[TRACE_ID]/spans/SPAN_ID is a unique
-	// identifier for a trace within a project;
-	// it is a 32-character hexadecimal encoding of a 16-byte
-	// array.
-	//
-	// [SPAN_ID] is a unique identifier for a span within a trace; it
-	// is a 16-character hexadecimal encoding of an 8-byte array.
-	Name string `json:"name,omitempty"`
-
-	// ParentSpanId: The [SPAN_ID] of this span's parent span. If this is a
-	// root span,
-	// then this field must be empty.
-	ParentSpanId string `json:"parentSpanId,omitempty"`
-
-	// SameProcessAsParentSpan: (Optional) Set this parameter to indicate
-	// whether this span is in
-	// the same process as its parent. If you do not set this
-	// parameter,
-	// Stackdriver Trace is unable to take advantage of this
-	// helpful
-	// information.
-	SameProcessAsParentSpan bool `json:"sameProcessAsParentSpan,omitempty"`
-
-	// SpanId: The [SPAN_ID] portion of the span's resource name.
-	SpanId string `json:"spanId,omitempty"`
-
-	// SpanKind: Distinguishes between spans generated in a particular
-	// context. For example,
-	// two spans with the same name may be distinguished using `CLIENT`
-	// (caller)
-	// and `SERVER` (callee) to identify an RPC call.
-	//
-	// Possible values:
-	//   "SPAN_KIND_UNSPECIFIED" - Unspecified. Do NOT use as
-	// default.
-	// Implementations MAY assume SpanKind.INTERNAL to be default.
-	//   "INTERNAL" - Indicates that the span is used internally. Default
-	// value.
-	//   "SERVER" - Indicates that the span covers server-side handling of
-	// an RPC or other
-	// remote network request.
-	//   "CLIENT" - Indicates that the span covers the client-side wrapper
-	// around an RPC or
-	// other remote request.
-	//   "PRODUCER" - Indicates that the span describes producer sending a
-	// message to a broker.
-	// Unlike client and  server, there is no direct critical path
-	// latency
-	// relationship between producer and consumer spans (e.g. publishing
-	// a
-	// message to a pubsub service).
-	//   "CONSUMER" - Indicates that the span describes consumer receiving a
-	// message from a
-	// broker. Unlike client and  server, there is no direct critical
-	// path
-	// latency relationship between producer and consumer spans (e.g.
-	// receiving
-	// a message from a pubsub service subscription).
-	SpanKind string `json:"spanKind,omitempty"`
-
-	// StartTime: The start time of the span. On the client side, this is
-	// the time kept by
-	// the local machine where the span execution starts. On the server
-	// side, this
-	// is the time when the server's application handler starts running.
-	StartTime string `json:"startTime,omitempty"`
-
-	// Status: An optional final status for this span.
-	Status *Status `json:"status,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Attributes") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Attributes") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *TraceSpan) MarshalJSON() ([]byte, error) {
-	type NoMethod TraceSpan
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// TruncatableString: Represents a string that might be shortened to a
-// specified length.
-type TruncatableString struct {
-	// TruncatedByteCount: The number of bytes removed from the original
-	// string. If this
-	// value is 0, then the string was not shortened.
-	TruncatedByteCount int64 `json:"truncatedByteCount,omitempty"`
-
-	// Value: The shortened string. For example, if the original string is
-	// 500
-	// bytes long and the limit of the string is 128 bytes, then
-	// `value` contains the first 128 bytes of the 500-byte
-	// string.
-	//
-	// Truncation always happens on a UTF8 character boundary. If there
-	// are multi-byte characters in the string, then the length of
-	// the
-	// shortened string might be less than the size limit.
-	Value string `json:"value,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "TruncatedByteCount")
-	// to unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "TruncatedByteCount") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *TruncatableString) MarshalJSON() ([]byte, error) {
-	type NoMethod TruncatableString
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2670,7 +1440,7 @@ func (c *ProjectsLocationsGetCall) Header() http.Header {
 
 func (c *ProjectsLocationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2787,8 +1557,7 @@ func (c *ProjectsLocationsListCall) Filter(filter string) *ProjectsLocationsList
 
 // IncludeUnrevealedLocations sets the optional parameter
 // "includeUnrevealedLocations": If true, the returned list will include
-// locations which are not yet
-// revealed.
+// locations which are not yet revealed.
 func (c *ProjectsLocationsListCall) IncludeUnrevealedLocations(includeUnrevealedLocations bool) *ProjectsLocationsListCall {
 	c.urlParams_.Set("includeUnrevealedLocations", fmt.Sprint(includeUnrevealedLocations))
 	return c
@@ -2845,7 +1614,7 @@ func (c *ProjectsLocationsListCall) Header() http.Header {
 
 func (c *ProjectsLocationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2921,7 +1690,7 @@ func (c *ProjectsLocationsListCall) Do(opts ...googleapi.CallOption) (*ListLocat
 	//       "type": "string"
 	//     },
 	//     "includeUnrevealedLocations": {
-	//       "description": "If true, the returned list will include locations which are not yet\nrevealed.",
+	//       "description": "If true, the returned list will include locations which are not yet revealed.",
 	//       "location": "query",
 	//       "type": "boolean"
 	//     },
@@ -2976,6 +1745,804 @@ func (c *ProjectsLocationsListCall) Pages(ctx context.Context, f func(*ListLocat
 	}
 }
 
+// method id "file.projects.locations.backups.create":
+
+type ProjectsLocationsBackupsCreateCall struct {
+	s          *Service
+	parent     string
+	backup     *Backup
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Create: Creates a backup.
+func (r *ProjectsLocationsBackupsService) Create(parent string, backup *Backup) *ProjectsLocationsBackupsCreateCall {
+	c := &ProjectsLocationsBackupsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	c.backup = backup
+	return c
+}
+
+// BackupId sets the optional parameter "backupId": Required. The ID to
+// use for the backup. The ID must be unique within the specified
+// project and location. This value must start with a lowercase letter
+// followed by up to 62 lowercase letters, numbers, or hyphens, and
+// cannot end with a hyphen.
+func (c *ProjectsLocationsBackupsCreateCall) BackupId(backupId string) *ProjectsLocationsBackupsCreateCall {
+	c.urlParams_.Set("backupId", backupId)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsLocationsBackupsCreateCall) Fields(s ...googleapi.Field) *ProjectsLocationsBackupsCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsLocationsBackupsCreateCall) Context(ctx context.Context) *ProjectsLocationsBackupsCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsLocationsBackupsCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsBackupsCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.backup)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/backups")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "file.projects.locations.backups.create" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ProjectsLocationsBackupsCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates a backup.",
+	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/backups",
+	//   "httpMethod": "POST",
+	//   "id": "file.projects.locations.backups.create",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "backupId": {
+	//       "description": "Required. The ID to use for the backup. The ID must be unique within the specified project and location. This value must start with a lowercase letter followed by up to 62 lowercase letters, numbers, or hyphens, and cannot end with a hyphen.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parent": {
+	//       "description": "Required. The backup's project and location, in the format projects/{project_id}/locations/{location}. In Cloud Filestore, backup locations map to GCP regions, for example **us-west1**.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/locations/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1beta1/{+parent}/backups",
+	//   "request": {
+	//     "$ref": "Backup"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "file.projects.locations.backups.delete":
+
+type ProjectsLocationsBackupsDeleteCall struct {
+	s          *Service
+	name       string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes a backup.
+func (r *ProjectsLocationsBackupsService) Delete(name string) *ProjectsLocationsBackupsDeleteCall {
+	c := &ProjectsLocationsBackupsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsLocationsBackupsDeleteCall) Fields(s ...googleapi.Field) *ProjectsLocationsBackupsDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsLocationsBackupsDeleteCall) Context(ctx context.Context) *ProjectsLocationsBackupsDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsLocationsBackupsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsBackupsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("DELETE", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "file.projects.locations.backups.delete" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ProjectsLocationsBackupsDeleteCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes a backup.",
+	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/backups/{backupsId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "file.projects.locations.backups.delete",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The backup resource name, in the format projects/{project_id}/locations/{location}/backups/{backup_id}",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/locations/[^/]+/backups/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1beta1/{+name}",
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "file.projects.locations.backups.get":
+
+type ProjectsLocationsBackupsGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Gets the details of a specific backup.
+func (r *ProjectsLocationsBackupsService) Get(name string) *ProjectsLocationsBackupsGetCall {
+	c := &ProjectsLocationsBackupsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsLocationsBackupsGetCall) Fields(s ...googleapi.Field) *ProjectsLocationsBackupsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsLocationsBackupsGetCall) IfNoneMatch(entityTag string) *ProjectsLocationsBackupsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsLocationsBackupsGetCall) Context(ctx context.Context) *ProjectsLocationsBackupsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsLocationsBackupsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsBackupsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "file.projects.locations.backups.get" call.
+// Exactly one of *Backup or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Backup.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *ProjectsLocationsBackupsGetCall) Do(opts ...googleapi.CallOption) (*Backup, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Backup{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets the details of a specific backup.",
+	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/backups/{backupsId}",
+	//   "httpMethod": "GET",
+	//   "id": "file.projects.locations.backups.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The backup resource name, in the format projects/{project_id}/locations/{location}/backups/{backup_id}.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/locations/[^/]+/backups/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1beta1/{+name}",
+	//   "response": {
+	//     "$ref": "Backup"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "file.projects.locations.backups.list":
+
+type ProjectsLocationsBackupsListCall struct {
+	s            *Service
+	parent       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists all backups in a project for either a specified location
+// or for all locations.
+func (r *ProjectsLocationsBackupsService) List(parent string) *ProjectsLocationsBackupsListCall {
+	c := &ProjectsLocationsBackupsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	return c
+}
+
+// Filter sets the optional parameter "filter": List filter.
+func (c *ProjectsLocationsBackupsListCall) Filter(filter string) *ProjectsLocationsBackupsListCall {
+	c.urlParams_.Set("filter", filter)
+	return c
+}
+
+// OrderBy sets the optional parameter "orderBy": Sort results.
+// Supported values are "name", "name desc" or "" (unsorted).
+func (c *ProjectsLocationsBackupsListCall) OrderBy(orderBy string) *ProjectsLocationsBackupsListCall {
+	c.urlParams_.Set("orderBy", orderBy)
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": The maximum number
+// of items to return.
+func (c *ProjectsLocationsBackupsListCall) PageSize(pageSize int64) *ProjectsLocationsBackupsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": The
+// next_page_token value to use if there are additional results to
+// retrieve for this list request.
+func (c *ProjectsLocationsBackupsListCall) PageToken(pageToken string) *ProjectsLocationsBackupsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsLocationsBackupsListCall) Fields(s ...googleapi.Field) *ProjectsLocationsBackupsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsLocationsBackupsListCall) IfNoneMatch(entityTag string) *ProjectsLocationsBackupsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsLocationsBackupsListCall) Context(ctx context.Context) *ProjectsLocationsBackupsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsLocationsBackupsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsBackupsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/backups")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "file.projects.locations.backups.list" call.
+// Exactly one of *ListBackupsResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *ListBackupsResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsLocationsBackupsListCall) Do(opts ...googleapi.CallOption) (*ListBackupsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListBackupsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists all backups in a project for either a specified location or for all locations.",
+	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/backups",
+	//   "httpMethod": "GET",
+	//   "id": "file.projects.locations.backups.list",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "filter": {
+	//       "description": "List filter.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "orderBy": {
+	//       "description": "Sort results. Supported values are \"name\", \"name desc\" or \"\" (unsorted).",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "The maximum number of items to return.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "The next_page_token value to use if there are additional results to retrieve for this list request.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parent": {
+	//       "description": "Required. The project and location for which to retrieve backup information, in the format projects/{project_id}/locations/{location}. In Cloud Filestore, backup locations map to GCP regions, for example **us-west1**. To retrieve backup information for all locations, use \"-\" for the {location} value.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/locations/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1beta1/{+parent}/backups",
+	//   "response": {
+	//     "$ref": "ListBackupsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *ProjectsLocationsBackupsListCall) Pages(ctx context.Context, f func(*ListBackupsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "file.projects.locations.backups.patch":
+
+type ProjectsLocationsBackupsPatchCall struct {
+	s          *Service
+	name       string
+	backup     *Backup
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Patch: Updates the settings of a specific backup.
+func (r *ProjectsLocationsBackupsService) Patch(name string, backup *Backup) *ProjectsLocationsBackupsPatchCall {
+	c := &ProjectsLocationsBackupsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.backup = backup
+	return c
+}
+
+// UpdateMask sets the optional parameter "updateMask": Required. Mask
+// of fields to update. At least one path must be supplied in this
+// field.
+func (c *ProjectsLocationsBackupsPatchCall) UpdateMask(updateMask string) *ProjectsLocationsBackupsPatchCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsLocationsBackupsPatchCall) Fields(s ...googleapi.Field) *ProjectsLocationsBackupsPatchCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsLocationsBackupsPatchCall) Context(ctx context.Context) *ProjectsLocationsBackupsPatchCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsLocationsBackupsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsBackupsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.backup)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("PATCH", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "file.projects.locations.backups.patch" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ProjectsLocationsBackupsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Updates the settings of a specific backup.",
+	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/backups/{backupsId}",
+	//   "httpMethod": "PATCH",
+	//   "id": "file.projects.locations.backups.patch",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Output only. The resource name of the backup, in the format projects/{project_id}/locations/{location_id}/backups/{backup_id}.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/locations/[^/]+/backups/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "Required. Mask of fields to update. At least one path must be supplied in this field.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1beta1/{+name}",
+	//   "request": {
+	//     "$ref": "Backup"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
 // method id "file.projects.locations.instances.create":
 
 type ProjectsLocationsInstancesCreateCall struct {
@@ -2996,13 +2563,10 @@ func (r *ProjectsLocationsInstancesService) Create(parent string, instance *Inst
 }
 
 // InstanceId sets the optional parameter "instanceId": Required. The ID
-// of the instance to create.
-// The ID must be unique within the specified project and
-// location.
-//
-// This value must start with a lowercase letter followed by up to
-// 62
-// lowercase letters, numbers, or hyphens, and cannot end with a hyphen.
+// of the instance to create. The ID must be unique within the specified
+// project and location. This value must start with a lowercase letter
+// followed by up to 62 lowercase letters, numbers, or hyphens, and
+// cannot end with a hyphen.
 func (c *ProjectsLocationsInstancesCreateCall) InstanceId(instanceId string) *ProjectsLocationsInstancesCreateCall {
 	c.urlParams_.Set("instanceId", instanceId)
 	return c
@@ -3035,7 +2599,7 @@ func (c *ProjectsLocationsInstancesCreateCall) Header() http.Header {
 
 func (c *ProjectsLocationsInstancesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3108,12 +2672,12 @@ func (c *ProjectsLocationsInstancesCreateCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "instanceId": {
-	//       "description": "Required. The ID of the instance to create.\nThe ID must be unique within the specified project and location.\n\nThis value must start with a lowercase letter followed by up to 62\nlowercase letters, numbers, or hyphens, and cannot end with a hyphen.",
+	//       "description": "Required. The ID of the instance to create. The ID must be unique within the specified project and location. This value must start with a lowercase letter followed by up to 62 lowercase letters, numbers, or hyphens, and cannot end with a hyphen.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "Required. The instance's project and location, in the format\nprojects/{project_id}/locations/{location}. In Cloud Filestore,\nlocations map to GCP zones, for example **us-west1-b**.",
+	//       "description": "Required. The instance's project and location, in the format projects/{project_id}/locations/{location}. In Cloud Filestore, locations map to GCP zones, for example **us-west1-b**.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+$",
 	//       "required": true,
@@ -3178,7 +2742,7 @@ func (c *ProjectsLocationsInstancesDeleteCall) Header() http.Header {
 
 func (c *ProjectsLocationsInstancesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3246,7 +2810,7 @@ func (c *ProjectsLocationsInstancesDeleteCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Required. The instance resource name, in the format\nprojects/{project_id}/locations/{location}/instances/{instance_id}",
+	//       "description": "Required. The instance resource name, in the format projects/{project_id}/locations/{location}/instances/{instance_id}",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/instances/[^/]+$",
 	//       "required": true,
@@ -3319,7 +2883,7 @@ func (c *ProjectsLocationsInstancesGetCall) Header() http.Header {
 
 func (c *ProjectsLocationsInstancesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3390,7 +2954,7 @@ func (c *ProjectsLocationsInstancesGetCall) Do(opts ...googleapi.CallOption) (*I
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Required. The instance resource name, in the format\nprojects/{project_id}/locations/{location}/instances/{instance_id}.",
+	//       "description": "Required. The instance resource name, in the format projects/{project_id}/locations/{location}/instances/{instance_id}.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/instances/[^/]+$",
 	//       "required": true,
@@ -3420,8 +2984,7 @@ type ProjectsLocationsInstancesListCall struct {
 }
 
 // List: Lists all instances in a project for either a specified
-// location
-// or for all locations.
+// location or for all locations.
 func (r *ProjectsLocationsInstancesService) List(parent string) *ProjectsLocationsInstancesListCall {
 	c := &ProjectsLocationsInstancesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -3449,8 +3012,8 @@ func (c *ProjectsLocationsInstancesListCall) PageSize(pageSize int64) *ProjectsL
 }
 
 // PageToken sets the optional parameter "pageToken": The
-// next_page_token value to use if there are additional
-// results to retrieve for this list request.
+// next_page_token value to use if there are additional results to
+// retrieve for this list request.
 func (c *ProjectsLocationsInstancesListCall) PageToken(pageToken string) *ProjectsLocationsInstancesListCall {
 	c.urlParams_.Set("pageToken", pageToken)
 	return c
@@ -3493,7 +3056,7 @@ func (c *ProjectsLocationsInstancesListCall) Header() http.Header {
 
 func (c *ProjectsLocationsInstancesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3555,7 +3118,7 @@ func (c *ProjectsLocationsInstancesListCall) Do(opts ...googleapi.CallOption) (*
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists all instances in a project for either a specified location\nor for all locations.",
+	//   "description": "Lists all instances in a project for either a specified location or for all locations.",
 	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/instances",
 	//   "httpMethod": "GET",
 	//   "id": "file.projects.locations.instances.list",
@@ -3580,12 +3143,12 @@ func (c *ProjectsLocationsInstancesListCall) Do(opts ...googleapi.CallOption) (*
 	//       "type": "integer"
 	//     },
 	//     "pageToken": {
-	//       "description": "The next_page_token value to use if there are additional\nresults to retrieve for this list request.",
+	//       "description": "The next_page_token value to use if there are additional results to retrieve for this list request.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "Required. The project and location for which to retrieve instance information,\nin the format projects/{project_id}/locations/{location}. In Cloud\nFilestore, locations map to GCP zones, for example **us-west1-b**. To\nretrieve instance information for all locations, use \"-\" for the {location}\nvalue.",
+	//       "description": "Required. The project and location for which to retrieve instance information, in the format projects/{project_id}/locations/{location}. In Cloud Filestore, locations map to GCP zones, for example **us-west1-b**. To retrieve instance information for all locations, use \"-\" for the {location} value.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+$",
 	//       "required": true,
@@ -3644,15 +3207,9 @@ func (r *ProjectsLocationsInstancesService) Patch(name string, instance *Instanc
 }
 
 // UpdateMask sets the optional parameter "updateMask": Required. Mask
-// of fields to update.  At least one path must be supplied in
-// this
-// field.  The elements of the repeated paths field may only include
-// these
-// fields:
-//
-// * "description"
-// * "file_shares"
-// * "labels"
+// of fields to update. At least one path must be supplied in this
+// field. The elements of the repeated paths field may only include
+// these fields: * "description" * "file_shares" * "labels"
 func (c *ProjectsLocationsInstancesPatchCall) UpdateMask(updateMask string) *ProjectsLocationsInstancesPatchCall {
 	c.urlParams_.Set("updateMask", updateMask)
 	return c
@@ -3685,7 +3242,7 @@ func (c *ProjectsLocationsInstancesPatchCall) Header() http.Header {
 
 func (c *ProjectsLocationsInstancesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3758,14 +3315,14 @@ func (c *ProjectsLocationsInstancesPatchCall) Do(opts ...googleapi.CallOption) (
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Output only. The resource name of the instance, in the format\nprojects/{project_id}/locations/{location_id}/instances/{instance_id}.",
+	//       "description": "Output only. The resource name of the instance, in the format projects/{project_id}/locations/{location_id}/instances/{instance_id}.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/instances/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     },
 	//     "updateMask": {
-	//       "description": "Required. Mask of fields to update.  At least one path must be supplied in this\nfield.  The elements of the repeated paths field may only include these\nfields:\n\n* \"description\"\n* \"file_shares\"\n* \"labels\"",
+	//       "description": "Required. Mask of fields to update. At least one path must be supplied in this field. The elements of the repeated paths field may only include these fields: * \"description\" * \"file_shares\" * \"labels\"",
 	//       "format": "google-fieldmask",
 	//       "location": "query",
 	//       "type": "string"
@@ -3774,6 +3331,147 @@ func (c *ProjectsLocationsInstancesPatchCall) Do(opts ...googleapi.CallOption) (
 	//   "path": "v1beta1/{+name}",
 	//   "request": {
 	//     "$ref": "Instance"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "file.projects.locations.instances.restore":
+
+type ProjectsLocationsInstancesRestoreCall struct {
+	s                      *Service
+	name                   string
+	restoreinstancerequest *RestoreInstanceRequest
+	urlParams_             gensupport.URLParams
+	ctx_                   context.Context
+	header_                http.Header
+}
+
+// Restore: Restores an existing instance's file share from a snapshot
+// or backup.
+func (r *ProjectsLocationsInstancesService) Restore(name string, restoreinstancerequest *RestoreInstanceRequest) *ProjectsLocationsInstancesRestoreCall {
+	c := &ProjectsLocationsInstancesRestoreCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.restoreinstancerequest = restoreinstancerequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsLocationsInstancesRestoreCall) Fields(s ...googleapi.Field) *ProjectsLocationsInstancesRestoreCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsLocationsInstancesRestoreCall) Context(ctx context.Context) *ProjectsLocationsInstancesRestoreCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsLocationsInstancesRestoreCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsInstancesRestoreCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.restoreinstancerequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:restore")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "file.projects.locations.instances.restore" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ProjectsLocationsInstancesRestoreCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Restores an existing instance's file share from a snapshot or backup.",
+	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/instances/{instancesId}:restore",
+	//   "httpMethod": "POST",
+	//   "id": "file.projects.locations.instances.restore",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The resource name of the instance, in the format projects/{project_id}/locations/{location_id}/instances/{instance_id}.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/locations/[^/]+/instances/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1beta1/{+name}:restore",
+	//   "request": {
+	//     "$ref": "RestoreInstanceRequest"
 	//   },
 	//   "response": {
 	//     "$ref": "Operation"
@@ -3797,23 +3495,15 @@ type ProjectsLocationsOperationsCancelCall struct {
 }
 
 // Cancel: Starts asynchronous cancellation on a long-running operation.
-//  The server
-// makes a best effort to cancel the operation, but success is
-// not
-// guaranteed.  If the server doesn't support this method, it
-// returns
-// `google.rpc.Code.UNIMPLEMENTED`.  Clients can
-// use
-// Operations.GetOperation or
-// other methods to check whether the cancellation succeeded or whether
-// the
-// operation completed despite cancellation. On successful
-// cancellation,
-// the operation is not deleted; instead, it becomes an operation
-// with
-// an Operation.error value with a google.rpc.Status.code of
-// 1,
-// corresponding to `Code.CANCELLED`.
+// The server makes a best effort to cancel the operation, but success
+// is not guaranteed. If the server doesn't support this method, it
+// returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use
+// Operations.GetOperation or other methods to check whether the
+// cancellation succeeded or whether the operation completed despite
+// cancellation. On successful cancellation, the operation is not
+// deleted; instead, it becomes an operation with an Operation.error
+// value with a google.rpc.Status.code of 1, corresponding to
+// `Code.CANCELLED`.
 func (r *ProjectsLocationsOperationsService) Cancel(name string, canceloperationrequest *CancelOperationRequest) *ProjectsLocationsOperationsCancelCall {
 	c := &ProjectsLocationsOperationsCancelCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -3848,7 +3538,7 @@ func (c *ProjectsLocationsOperationsCancelCall) Header() http.Header {
 
 func (c *ProjectsLocationsOperationsCancelCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3912,7 +3602,7 @@ func (c *ProjectsLocationsOperationsCancelCall) Do(opts ...googleapi.CallOption)
 	}
 	return ret, nil
 	// {
-	//   "description": "Starts asynchronous cancellation on a long-running operation.  The server\nmakes a best effort to cancel the operation, but success is not\nguaranteed.  If the server doesn't support this method, it returns\n`google.rpc.Code.UNIMPLEMENTED`.  Clients can use\nOperations.GetOperation or\nother methods to check whether the cancellation succeeded or whether the\noperation completed despite cancellation. On successful cancellation,\nthe operation is not deleted; instead, it becomes an operation with\nan Operation.error value with a google.rpc.Status.code of 1,\ncorresponding to `Code.CANCELLED`.",
+	//   "description": "Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.",
 	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/operations/{operationsId}:cancel",
 	//   "httpMethod": "POST",
 	//   "id": "file.projects.locations.operations.cancel",
@@ -3953,12 +3643,9 @@ type ProjectsLocationsOperationsDeleteCall struct {
 }
 
 // Delete: Deletes a long-running operation. This method indicates that
-// the client is
-// no longer interested in the operation result. It does not cancel
-// the
-// operation. If the server doesn't support this method, it
-// returns
-// `google.rpc.Code.UNIMPLEMENTED`.
+// the client is no longer interested in the operation result. It does
+// not cancel the operation. If the server doesn't support this method,
+// it returns `google.rpc.Code.UNIMPLEMENTED`.
 func (r *ProjectsLocationsOperationsService) Delete(name string) *ProjectsLocationsOperationsDeleteCall {
 	c := &ProjectsLocationsOperationsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -3992,7 +3679,7 @@ func (c *ProjectsLocationsOperationsDeleteCall) Header() http.Header {
 
 func (c *ProjectsLocationsOperationsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4051,7 +3738,7 @@ func (c *ProjectsLocationsOperationsDeleteCall) Do(opts ...googleapi.CallOption)
 	}
 	return ret, nil
 	// {
-	//   "description": "Deletes a long-running operation. This method indicates that the client is\nno longer interested in the operation result. It does not cancel the\noperation. If the server doesn't support this method, it returns\n`google.rpc.Code.UNIMPLEMENTED`.",
+	//   "description": "Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`.",
 	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/operations/{operationsId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "file.projects.locations.operations.delete",
@@ -4089,11 +3776,9 @@ type ProjectsLocationsOperationsGetCall struct {
 	header_      http.Header
 }
 
-// Get: Gets the latest state of a long-running operation.  Clients can
-// use this
-// method to poll the operation result at intervals as recommended by
-// the API
-// service.
+// Get: Gets the latest state of a long-running operation. Clients can
+// use this method to poll the operation result at intervals as
+// recommended by the API service.
 func (r *ProjectsLocationsOperationsService) Get(name string) *ProjectsLocationsOperationsGetCall {
 	c := &ProjectsLocationsOperationsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4137,7 +3822,7 @@ func (c *ProjectsLocationsOperationsGetCall) Header() http.Header {
 
 func (c *ProjectsLocationsOperationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4199,7 +3884,7 @@ func (c *ProjectsLocationsOperationsGetCall) Do(opts ...googleapi.CallOption) (*
 	}
 	return ret, nil
 	// {
-	//   "description": "Gets the latest state of a long-running operation.  Clients can use this\nmethod to poll the operation result at intervals as recommended by the API\nservice.",
+	//   "description": "Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.",
 	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/operations/{operationsId}",
 	//   "httpMethod": "GET",
 	//   "id": "file.projects.locations.operations.get",
@@ -4238,22 +3923,15 @@ type ProjectsLocationsOperationsListCall struct {
 }
 
 // List: Lists operations that match the specified filter in the
-// request. If the
-// server doesn't support this method, it returns
-// `UNIMPLEMENTED`.
-//
-// NOTE: the `name` binding allows API services to override the
-// binding
-// to use different resource name schemes, such as `users/*/operations`.
-// To
-// override the binding, API services can add a binding such
-// as
-// "/v1/{name=users/*}/operations" to their service configuration.
-// For backwards compatibility, the default name includes the
-// operations
-// collection id, however overriding users must ensure the name
-// binding
-// is the parent resource, without the operations collection id.
+// request. If the server doesn't support this method, it returns
+// `UNIMPLEMENTED`. NOTE: the `name` binding allows API services to
+// override the binding to use different resource name schemes, such as
+// `users/*/operations`. To override the binding, API services can add a
+// binding such as "/v1/{name=users/*}/operations" to their service
+// configuration. For backwards compatibility, the default name includes
+// the operations collection id, however overriding users must ensure
+// the name binding is the parent resource, without the operations
+// collection id.
 func (r *ProjectsLocationsOperationsService) List(name string) *ProjectsLocationsOperationsListCall {
 	c := &ProjectsLocationsOperationsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4318,7 +3996,7 @@ func (c *ProjectsLocationsOperationsListCall) Header() http.Header {
 
 func (c *ProjectsLocationsOperationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201009")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4380,7 +4058,7 @@ func (c *ProjectsLocationsOperationsListCall) Do(opts ...googleapi.CallOption) (
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists operations that match the specified filter in the request. If the\nserver doesn't support this method, it returns `UNIMPLEMENTED`.\n\nNOTE: the `name` binding allows API services to override the binding\nto use different resource name schemes, such as `users/*/operations`. To\noverride the binding, API services can add a binding such as\n`\"/v1/{name=users/*}/operations\"` to their service configuration.\nFor backwards compatibility, the default name includes the operations\ncollection id, however overriding users must ensure the name binding\nis the parent resource, without the operations collection id.",
+	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`. NOTE: the `name` binding allows API services to override the binding to use different resource name schemes, such as `users/*/operations`. To override the binding, API services can add a binding such as `\"/v1/{name=users/*}/operations\"` to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.",
 	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/operations",
 	//   "httpMethod": "GET",
 	//   "id": "file.projects.locations.operations.list",

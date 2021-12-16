@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/command/clistate"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/mitchellh/cli"
 )
 
@@ -17,13 +17,9 @@ type StateRmCommand struct {
 }
 
 func (c *StateRmCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, true)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	var dryRun bool
-	cmdFlags := c.Meta.defaultFlagSet("state rm")
+	cmdFlags := c.Meta.ignoreRemoteVersionFlagSet("state rm")
 	cmdFlags.BoolVar(&dryRun, "dry-run", false, "dry run")
 	cmdFlags.StringVar(&c.backupPath, "backup", "-", "backup")
 	cmdFlags.BoolVar(&c.Meta.stateLock, "lock", true, "lock state")
@@ -113,15 +109,21 @@ func (c *StateRmCommand) Run(args []string) int {
 		return 1
 	}
 
-	if len(diags) > 0 {
+	if len(diags) > 0 && isCount != 0 {
 		c.showDiagnostics(diags)
 	}
 
 	if isCount == 0 {
-		c.Ui.Output("No matching resource instances found.")
-	} else {
-		c.Ui.Output(fmt.Sprintf("Successfully removed %d resource instance(s).", isCount))
+		diags = diags.Append(tfdiags.Sourceless(
+			tfdiags.Error,
+			"Invalid target address",
+			"No matching objects found. To view the available instances, use \"terraform state list\". Please modify the address to reference a specific instance.",
+		))
+		c.showDiagnostics(diags)
+		return 1
 	}
+
+	c.Ui.Output(fmt.Sprintf("Successfully removed %d resource instance(s).", isCount))
 	return 0
 }
 
@@ -144,18 +146,22 @@ Usage: terraform state rm [options] ADDRESS...
 
 Options:
 
-  -dry-run            If set, prints out what would've been removed but
-                      doesn't actually remove anything.
+  -dry-run                If set, prints out what would've been removed but
+                          doesn't actually remove anything.
 
-  -backup=PATH        Path where Terraform should write the backup
-                      state.
+  -backup=PATH            Path where Terraform should write the backup
+                          state.
 
-  -lock=true          Lock the state file when locking is supported.
+  -lock=true              Lock the state file when locking is supported.
 
-  -lock-timeout=0s    Duration to retry a state lock.
+  -lock-timeout=0s        Duration to retry a state lock.
 
-  -state=PATH         Path to the state file to update. Defaults to the current
-                      workspace state.
+  -state=PATH             Path to the state file to update. Defaults to the
+                          current workspace state.
+
+  -ignore-remote-version  Continue even if remote and local Terraform versions
+                          differ. This may result in an unusable workspace, and
+                          should be used with extreme caution.
 
 `
 	return strings.TrimSpace(helpText)
@@ -164,12 +170,6 @@ Options:
 func (c *StateRmCommand) Synopsis() string {
 	return "Remove instances from the state"
 }
-
-const errStateRm = `Error removing items from the state: %s
-
-The state was not saved. No items were removed from the persisted
-state. No backup was created since no modification occurred. Please
-resolve the issue above and try again.`
 
 const errStateRmPersist = `Error saving the state: %s
 

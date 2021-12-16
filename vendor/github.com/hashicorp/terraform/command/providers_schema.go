@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/backend"
 	"github.com/hashicorp/terraform/command/jsonprovider"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // ProvidersCommand is a Command implementation that prints out information
@@ -20,15 +20,11 @@ func (c *ProvidersSchemaCommand) Help() string {
 }
 
 func (c *ProvidersSchemaCommand) Synopsis() string {
-	return "Prints the schemas of the providers used in the configuration"
+	return "Show schemas for the providers used in the configuration"
 }
 
 func (c *ProvidersSchemaCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, false)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	cmdFlags := c.Meta.defaultFlagSet("providers schema")
 	var jsonOutput bool
 	cmdFlags.BoolVar(&jsonOutput, "json", false, "produce JSON output")
@@ -47,6 +43,7 @@ func (c *ProvidersSchemaCommand) Run(args []string) int {
 	}
 
 	// Check for user-supplied plugin path
+	var err error
 	if c.pluginPath, err = c.loadPluginPath(); err != nil {
 		c.Ui.Error(fmt.Sprintf("Error loading plugin path: %s", err))
 		return 1
@@ -69,6 +66,9 @@ func (c *ProvidersSchemaCommand) Run(args []string) int {
 		c.Ui.Error(ErrUnsupportedLocalOp)
 		return 1
 	}
+
+	// This is a read-only command
+	c.ignoreRemoteBackendVersionConflict(b)
 
 	// we expect that the config dir is the cwd
 	cwd, err := os.Getwd()

@@ -17,7 +17,6 @@ package autorest
 import (
 	"bytes"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -261,9 +260,6 @@ func (c Client) Do(r *http.Request) (*http.Response, error) {
 		},
 	})
 	resp, err := SendWithSender(c.sender(tls.RenegotiateNever), r)
-	if resp == nil && err == nil {
-		err = errors.New("autorest: received nil response and error")
-	}
 	logger.Instance.WriteResponse(resp, logger.Filter{})
 	Respond(resp, c.ByInspecting())
 	return resp, err

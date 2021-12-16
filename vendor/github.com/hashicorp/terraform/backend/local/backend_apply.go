@@ -8,12 +8,12 @@ import (
 	"log"
 
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/backend"
 	"github.com/hashicorp/terraform/states"
 	"github.com/hashicorp/terraform/states/statefile"
 	"github.com/hashicorp/terraform/states/statemgr"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 func (b *Local) opApply(
@@ -56,24 +56,20 @@ func (b *Local) opApply(
 		b.ReportResult(runningOp, diags)
 		return
 	}
+	// the state was locked during succesfull context creation; unlock the state
+	// when the operation completes
+	defer func() {
+		err := op.StateLocker.Unlock(nil)
+		if err != nil {
+			b.ShowDiagnostics(err)
+			runningOp.Result = backend.OperationFailure
+		}
+	}()
 
-	// Setup the state
 	runningOp.State = tfCtx.State()
 
 	// If we weren't given a plan, then we refresh/plan
 	if op.PlanFile == nil {
-		// If we're refreshing before apply, perform that
-		if op.PlanRefresh {
-			log.Printf("[INFO] backend/local: apply calling Refresh")
-			_, refreshDiags := tfCtx.Refresh()
-			diags = diags.Append(refreshDiags)
-			if diags.HasErrors() {
-				runningOp.Result = backend.OperationFailure
-				b.ShowDiagnostics(diags)
-				return
-			}
-		}
-
 		// Perform the plan
 		log.Printf("[INFO] backend/local: apply calling Plan")
 		plan, planDiags := tfCtx.Plan()
