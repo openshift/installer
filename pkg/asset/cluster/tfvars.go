@@ -64,11 +64,11 @@ const (
 	// TfVarsFileName is the filename for Terraform variables.
 	TfVarsFileName = "terraform.tfvars.json"
 
-	// TfPlatformVarsFileName is a template for platform-specific
+	// TfPlatformVarsFileName is the name for platform-specific
 	// Terraform variable files.
 	//
 	// https://www.terraform.io/docs/configuration/variables.html#variable-files
-	TfPlatformVarsFileName = "terraform.%s.auto.tfvars.json"
+	TfPlatformVarsFileName = "terraform.platform.auto.tfvars.json"
 
 	tfvarsAssetName = "Terraform Variables"
 )
@@ -291,7 +291,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
 	case azure.Name:
@@ -358,7 +358,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
 	case gcp.Name:
@@ -431,7 +431,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
 	case ibmcloud.Name:
@@ -534,7 +534,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
 	case libvirt.Name:
@@ -566,7 +566,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
 	case openstack.Name:
@@ -582,7 +582,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
 	case baremetal.Name:
@@ -613,7 +613,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
 	case ovirt.Name:
@@ -670,7 +670,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
 	case vsphere.Name:
@@ -701,7 +701,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
 	case alibabacloud.Name:
@@ -770,7 +770,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
 	default:
@@ -796,11 +796,12 @@ func (t *TerraformVariables) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 	t.FileList = []*asset.File{file}
 
-	fileList, err := f.FetchByPattern(fmt.Sprintf(TfPlatformVarsFileName, "*"))
-	if err != nil {
+	switch file, err := f.FetchByName(TfPlatformVarsFileName); {
+	case err == nil:
+		t.FileList = append(t.FileList, file)
+	case !os.IsNotExist(err):
 		return false, err
 	}
-	t.FileList = append(t.FileList, fileList...)
 
 	return true, nil
 }
