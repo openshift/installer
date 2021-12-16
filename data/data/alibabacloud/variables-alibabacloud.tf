@@ -23,9 +23,14 @@ variable "ali_private_zone_id" {
   type = string
 }
 
-variable "ali_zone_ids" {
+variable "ali_master_availability_zone_ids" {
   type        = list(string)
   description = "The availability zones in which to create the masters. The length of this list must match master_count."
+}
+
+variable "ali_worker_availability_zone_ids" {
+  type        = list(string)
+  description = "The availability zones to provision for workers. Worker instances are created by the machine-API operator, but this variable controls their supporting VSwitches."
 }
 
 variable "ali_nat_gateway_zone_id" {

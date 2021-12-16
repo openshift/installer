@@ -16,7 +16,7 @@ variable "vswitch_ids" {
 
 variable "zone_ids" {
   type        = list(string)
-  description = "The availability zones in which to create the masters."
+  description = "The availability zones in which to create the masters, workers and bootstrap node."
 }
 
 variable "nat_gateway_zone_id" {
