@@ -72,18 +72,10 @@ spec:
   config:
     ignition:
       version: 3.2.0
-    storage:
-      files:
-      - contents:
-          source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
-        mode: 384
-        overwrite: true
-        path: /etc/pivot/kernel-args
-        user:
-          name: root
   extensions: null
   fips: false
-  kernelArguments: null
+  kernelArguments:
+  - nosmt
   kernelType: ""
   osImageURL: ""
 `},
@@ -103,18 +95,10 @@ spec:
   config:
     ignition:
       version: 3.2.0
-    storage:
-      files:
-      - contents:
-          source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
-        mode: 384
-        overwrite: true
-        path: /etc/pivot/kernel-args
-        user:
-          name: root
   extensions: null
   fips: false
-  kernelArguments: null
+  kernelArguments:
+  - nosmt
   kernelType: ""
   osImageURL: ""
 `, `apiVersion: machineconfiguration.openshift.io/v1

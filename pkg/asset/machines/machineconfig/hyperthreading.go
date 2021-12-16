@@ -11,16 +11,11 @@ import (
 )
 
 // ForHyperthreadingDisabled creates the MachineConfig to disable hyperthreading.
-// RHCOS ships with pivot.service that uses the `/etc/pivot/kernel-args` to override the kernel arguments for hosts.
+// RHCOS ships with pivot.service to override the kernel arguments for hosts.
 func ForHyperthreadingDisabled(role string) (*mcfgv1.MachineConfig, error) {
 	ignConfig := igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
-		},
-		Storage: igntypes.Storage{
-			Files: []igntypes.File{
-				ignition.FileFromString("/etc/pivot/kernel-args", "root", 0600, "ADD nosmt"),
-			},
 		},
 	}
 
@@ -41,7 +36,8 @@ func ForHyperthreadingDisabled(role string) (*mcfgv1.MachineConfig, error) {
 			},
 		},
 		Spec: mcfgv1.MachineConfigSpec{
-			Config: rawExt,
+			Config:          rawExt,
+			KernelArguments: []string{"nosmt"},
 		},
 	}, nil
 }
