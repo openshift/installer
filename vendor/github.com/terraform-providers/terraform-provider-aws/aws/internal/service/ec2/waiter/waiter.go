@@ -1,6 +1,7 @@
 package waiter
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -13,6 +14,11 @@ const (
 
 	// Maximum amount of time to wait for a LocalGatewayRouteTableVpcAssociation to return Disassociated
 	LocalGatewayRouteTableVpcAssociationDisassociatedTimeout = 5 * time.Minute
+
+	// General timeout for EC2 resource creations to propagate
+	PropagationTimeout = 2 * time.Minute
+
+	VpcPropagationTimeout = 2 * time.Minute
 )
 
 // LocalGatewayRouteTableVpcAssociationAssociated waits for a LocalGatewayRouteTableVpcAssociation to return Associated
@@ -127,6 +133,28 @@ func ClientVpnRouteDeleted(conn *ec2.EC2, routeID string) (*ec2.ClientVpnRoute, 
 	outputRaw, err := stateConf.WaitForState()
 
 	if output, ok := outputRaw.(*ec2.ClientVpnRoute); ok {
+		return output, err
+	}
+
+	return nil, err
+}
+
+const (
+	VpcAttributePropagationTimeout = 5 * time.Minute
+)
+
+func VpcAttributeUpdated(conn *ec2.EC2, vpcID string, attribute string, expectedValue bool) (*ec2.Vpc, error) {
+	stateConf := &resource.StateChangeConf{
+		Target:     []string{strconv.FormatBool(expectedValue)},
+		Refresh:    VpcAttribute(conn, vpcID, attribute),
+		Timeout:    VpcAttributePropagationTimeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+
+	outputRaw, err := stateConf.WaitForState()
+
+	if output, ok := outputRaw.(*ec2.Vpc); ok {
 		return output, err
 	}
 

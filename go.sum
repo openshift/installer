@@ -959,8 +959,9 @@ github.com/h2non/filetype v1.0.12/go.mod h1:319b3zT68BvV+WRj7cwy856M2ehB3HqNOt6s
 github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 h1:2VTzZjLZBgl62/EtslCrtky5vbi9dd7HrQPQIx6wqiw=
 github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542/go.mod h1:Ow0tF8D4Kplbc8s8sSb3V2oUCygFHVp8gC3Dn6U4MNI=
 github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed/go.mod h1:tMWxXQ9wFIaZeTI9F+hmhFiGpFmhOHzyShyFUhRm0H4=
-github.com/hashicorp/aws-sdk-go-base v0.5.0 h1:fk7ID0v3PWL/KNL8FvkBPu8Sm93EPUCCmtZCiTXLySE=
-github.com/hashicorp/aws-sdk-go-base v0.5.0/go.mod h1:2fRjWDv3jJBeN6mVWFHV6hFTNeFBx2gpDLQaZNxUVAY=
+github.com/hashicorp/aws-sdk-go-base v0.6.0/go.mod h1:2fRjWDv3jJBeN6mVWFHV6hFTNeFBx2gpDLQaZNxUVAY=
+github.com/hashicorp/aws-sdk-go-base v0.7.0 h1:Umcq11kcoARameDgxPiYBbyltTZqO7GgBVSdq4pzX/w=
+github.com/hashicorp/aws-sdk-go-base v0.7.0/go.mod h1:2fRjWDv3jJBeN6mVWFHV6hFTNeFBx2gpDLQaZNxUVAY=
 github.com/hashicorp/consul-template v0.22.0/go.mod h1:lHrykBIcPobCuEcIMLJryKxDyk2lUMnQWmffOEONH0k=
 github.com/hashicorp/consul/api v1.1.0/go.mod h1:VmuI/Lkw1nC05EYQWNKwWGbkg+FbDBtguAZLlVdkD9Q=
 github.com/hashicorp/consul/api v1.3.0/go.mod h1:MmDNSzIMUjNpY/mQ398R4bk2FnqQLoPndWW5VkKPlCE=
@@ -1601,8 +1602,8 @@ github.com/openshift/machine-api-operator v0.2.1-0.20211111133920-c8bba3e64310/g
 github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 h1:C4gCipkWTDp0B9jb0wZdLgB+HWC7EzVVwQOeNaKnTRA=
 github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8/go.mod h1:fjKreLaKEeUKsyIkT4wlzIQwUVJ2ZKDUh3CI73ckYIY=
 github.com/openshift/runtime-utils v0.0.0-20200415173359-c45d4ff3f912/go.mod h1:0OXNy7VoqFexkxKqyQbHJLPwn1MFp1/CxRJAgKHM+/o=
-github.com/openshift/terraform-provider-aws v1.60.1-0.20211207215258-c9b9d0b9dc46 h1:kr9MjwNCy4mq1c1hbaXWyR18a940J0Xb3YirhUf/Gdk=
-github.com/openshift/terraform-provider-aws v1.60.1-0.20211207215258-c9b9d0b9dc46/go.mod h1:6maj14kbPlYXJM9jjerOLaPXOUxLDML5i0YGqXj5X4A=
+github.com/openshift/terraform-provider-aws v1.60.1-0.20211215220004-24df6d73af46 h1:ykLhhSfpLbdRfRyhQkSb/ydCedc+57SXEOYqLxeCJrY=
+github.com/openshift/terraform-provider-aws v1.60.1-0.20211215220004-24df6d73af46/go.mod h1:T4V1hyevFAuS/Bt3dh90ncYdyh2LVXYNK0kN33NTSfc=
 github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4 h1:pwWMhAha70saUe66//ErWm39hek9FUijl67WfxaqXxY=
 github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4/go.mod h1:MohWawSEwkGnsTTEW/U/sPVxsgQVHBNg2LsqQPbMa/U=
 github.com/openshift/terraform-provider-azurestack v0.10.0-openshift h1:OB8vX01eavwH+6pdJjAh5nE2HYfnotzHpXtNbugTOQo=

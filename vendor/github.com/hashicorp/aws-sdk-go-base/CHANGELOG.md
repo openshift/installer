@@ -1,3 +1,20 @@
+# v0.7.0 (Unreleased)
+
+ENHANCEMENTS
+
+* Optionally log the STS API calls when assuming a role #51
+
+# v0.6.0 (August 18, 2020)
+
+BREAKING CHANGES
+
+* AWS error checking function have been moved to `tfawserr` package. `IsAWSErr` has been renamed to `ErrMessageContains` and `IsAWSErrExtended` has been renamed to `ErrMessageAndOrigErrContain`. #37
+
+ENHANCEMENTS
+
+* Additional AWS error checking function have been added to the `tfawserr` package - `ErrCodeEquals`, `ErrCodeContains` and `ErrStatusCodeEquals`.
+* Support for appending data to User-Agent request header with the `TF_APPEND_USER_AGENT` environment variable. #47
+
 # v0.5.0 (June 4, 2020)
 
 BREAKING CHANGES

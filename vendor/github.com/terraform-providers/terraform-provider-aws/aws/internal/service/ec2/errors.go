@@ -24,3 +24,7 @@ const ErrCodeClientVpnAuthorizationRuleNotFound = "InvalidClientVpnEndpointAutho
 const ErrCodeClientVpnAssociationIdNotFound = "InvalidClientVpnAssociationId.NotFound"
 
 const ErrCodeClientVpnRouteNotFound = "InvalidClientVpnRouteNotFound"
+
+const (
+	ErrCodeInvalidVpcIDNotFound = "InvalidVpcID.NotFound"
+)
