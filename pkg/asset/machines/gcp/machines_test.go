@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
-	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,14 +37,14 @@ func TestConfigMasters(t *testing.T) {
 			{
 				Spec: machineapi.MachineSpec{
 					ProviderSpec: machineapi.ProviderSpec{
-						Value: &runtime.RawExtension{Object: &gcpprovider.GCPMachineProviderSpec{}},
+						Value: &runtime.RawExtension{Object: &machineapi.GCPMachineProviderSpec{}},
 					},
 				},
 			},
 			{
 				Spec: machineapi.MachineSpec{
 					ProviderSpec: machineapi.ProviderSpec{
-						Value: &runtime.RawExtension{Object: &gcpprovider.GCPMachineProviderSpec{}},
+						Value: &runtime.RawExtension{Object: &machineapi.GCPMachineProviderSpec{}},
 					},
 				},
 			},
@@ -53,7 +52,7 @@ func TestConfigMasters(t *testing.T) {
 		t.Run(tc.testCase, func(t *testing.T) {
 			ConfigMasters(machines, clusterID, tc.publishingStrategy)
 			for _, machine := range machines {
-				providerSpec := machine.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
+				providerSpec := machine.Spec.ProviderSpec.Value.Object.(*machineapi.GCPMachineProviderSpec)
 				assert.Equal(t, providerSpec.TargetPools, tc.expectedTargetPools)
 			}
 		})

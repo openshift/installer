@@ -1756,10 +1756,6 @@ github.com/openshift/cluster-api/pkg/apis/machine/v1beta1
 ## explicit; go 1.16
 github.com/openshift/cluster-api-provider-alibaba/pkg/apis
 github.com/openshift/cluster-api-provider-alibaba/pkg/apis/alibabacloudprovider/v1beta1
-# github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5
-## explicit; go 1.15
-github.com/openshift/cluster-api-provider-gcp/pkg/apis
-github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1
 # github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20211008100740-4d7907adbd6b
 ## explicit; go 1.16
 github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
-	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,7 +66,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*gcpprovider.GCPMachineProviderSpec, error) {
+func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*machineapi.GCPMachineProviderSpec, error) {
 	az := mpool.Zones[azIdx]
 	if len(platform.Licenses) > 0 {
 		osImage = fmt.Sprintf("%s-rhcos-image", clusterID)
@@ -77,11 +76,11 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		return nil, err
 	}
 
-	var encryptionKey *gcpprovider.GCPEncryptionKeyReference
+	var encryptionKey *machineapi.GCPEncryptionKeyReference
 
 	if mpool.OSDisk.EncryptionKey != nil {
-		encryptionKey = &gcpprovider.GCPEncryptionKeyReference{
-			KMSKey: &gcpprovider.GCPKMSKeyReference{
+		encryptionKey = &machineapi.GCPEncryptionKeyReference{
+			KMSKey: &machineapi.GCPKMSKeyReference{
 				Name:      mpool.OSDisk.EncryptionKey.KMSKey.Name,
 				KeyRing:   mpool.OSDisk.EncryptionKey.KMSKey.KeyRing,
 				ProjectID: mpool.OSDisk.EncryptionKey.KMSKey.ProjectID,
@@ -91,26 +90,26 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		}
 	}
 
-	return &gcpprovider.GCPMachineProviderSpec{
+	return &machineapi.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "gcpprovider.openshift.io/v1beta1",
+			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "GCPMachineProviderSpec",
 		},
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "gcp-cloud-credentials"},
-		Disks: []*gcpprovider.GCPDisk{{
+		Disks: []*machineapi.GCPDisk{{
 			AutoDelete:    true,
 			Boot:          true,
-			SizeGb:        mpool.OSDisk.DiskSizeGB,
+			SizeGB:        mpool.OSDisk.DiskSizeGB,
 			Type:          mpool.OSDisk.DiskType,
 			Image:         osImage,
 			EncryptionKey: encryptionKey,
 		}},
-		NetworkInterfaces: []*gcpprovider.GCPNetworkInterface{{
+		NetworkInterfaces: []*machineapi.GCPNetworkInterface{{
 			Network:    network,
 			Subnetwork: subnetwork,
 		}},
-		ServiceAccounts: []gcpprovider.GCPServiceAccount{{
+		ServiceAccounts: []machineapi.GCPServiceAccount{{
 			Email:  fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID),
 			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
 		}},
@@ -130,7 +129,7 @@ func ConfigMasters(machines []machineapi.Machine, clusterID string, publish type
 	}
 
 	for _, machine := range machines {
-		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
+		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*machineapi.GCPMachineProviderSpec)
 		providerSpec.TargetPools = targetPools
 	}
 }
