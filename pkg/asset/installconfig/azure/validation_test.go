@@ -376,3 +376,52 @@ func Test_validateResourceGroup(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckAzureStackClusterOSImageSet(t *testing.T) {
+	cases := []struct {
+		ClusterOSImage string
+		err            string
+	}{{
+		ClusterOSImage: "https://storage.test-endpoint.com/rhcos-image",
+		err:            "",
+	}, {
+		ClusterOSImage: "",
+		err:            "^platform.azure.clusterOSImage: Required value: clusterOSImage must be set when installing on Azure Stack$",
+	}}
+	for _, test := range cases {
+		t.Run("", func(t *testing.T) {
+			err := checkAzureStackClusterOSImageSet(test.ClusterOSImage, field.NewPath("platform").Child("azure"))
+			if test.err != "" {
+				assert.Regexp(t, test.err, err.ToAggregate())
+			} else {
+				assert.NoError(t, err.ToAggregate())
+			}
+		})
+	}
+}
+
+func TestValidateAzureStackClusterOSImage(t *testing.T) {
+	cases := []struct {
+		StorageEndpointSuffix string
+		ClusterOSImage        string
+		err                   string
+	}{{
+		StorageEndpointSuffix: "storage.test-endpoint.com",
+		ClusterOSImage:        "https://storage.test-endpoint.com/rhcos-image",
+		err:                   "",
+	}, {
+		StorageEndpointSuffix: "storage.test-endpoint.com",
+		ClusterOSImage:        "https://storage.not-in-the-cluster.com/rhcos-image",
+		err:                   `^platform.azure.clusterOSImage: Invalid value: "https://storage.not-in-the-cluster.com/rhcos-image": clusterOSImage must be in the Azure Stack environment$`,
+	}}
+	for _, test := range cases {
+		t.Run("", func(t *testing.T) {
+			err := validateAzureStackClusterOSImage(test.StorageEndpointSuffix, test.ClusterOSImage, field.NewPath("platform").Child("azure"))
+			if test.err != "" {
+				assert.Regexp(t, test.err, err.ToAggregate())
+			} else {
+				assert.NoError(t, err.ToAggregate())
+			}
+		})
+	}
+}
