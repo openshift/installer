@@ -203,6 +203,28 @@ type OSDisk struct {
 	ManagedDisk ManagedDiskParameters `json:"managedDisk"`
 	// DiskSizeGB is the size in GB to assign to the data disk.
 	DiskSizeGB int32 `json:"diskSizeGB"`
+	// DiskSettings describe ephemeral disk settings for the os disk.
+	// +optional
+	DiskSettings DiskSettings `json:"diskSettings,omitempty"`
+	// CachingType specifies the caching requirements.
+	// Possible values include: 'None', 'ReadOnly', 'ReadWrite'.
+	// Empty value means no opinion and the platform chooses a default, which is subject to change over
+	// time. Currently the default is `None`.
+	// +optional
+	// +kubebuilder:validation:Enum=None;ReadOnly;ReadWrite
+	CachingType string `json:"cachingType,omitempty"`
+}
+
+// DiskSettings describe ephemeral disk settings for the os disk.
+type DiskSettings struct {
+	// EphemeralStorageLocation enables ephemeral OS when set to 'Local'.
+	// Possible values include: 'Local'.
+	// See https://docs.microsoft.com/en-us/azure/virtual-machines/ephemeral-os-disks for full details.
+	// Empty value means no opinion and the platform chooses a default, which is subject to change over
+	// time. Currently the default is that disks are saved to remote Azure storage.
+	// +optional
+	// +kubebuilder:validation:Enum=Local
+	EphemeralStorageLocation string `json:"ephemeralStorageLocation,omitempty"`
 }
 
 // ManagedDiskParameters is the parameters of a managed disk.
