@@ -7,6 +7,9 @@ terraform {
     ignition = {
       source = "openshift/local/ignition"
     }
+    local = {
+      source = "openshift/local/local"
+    }
   }
 }
 
