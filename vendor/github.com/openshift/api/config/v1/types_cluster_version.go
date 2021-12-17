@@ -408,7 +408,7 @@ type ClusterCondition struct {
 type PromQLClusterCondition struct {
 	// PromQL is a PromQL query classifying clusters. This query
 	// query should return a 1 in the match case and a 0 in the
-	// does-not-match case case. Queries which return no time
+	// does-not-match case. Queries which return no time
 	// series, or which return values besides 0 or 1, are
 	// evaluation failures.
 	// +kubebuilder:validation:Required
