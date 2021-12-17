@@ -19,7 +19,7 @@ limitations under the License.
 // Package v1alpha1 contains API Schema definitions for the baremetal v1alpha1 API group
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
-// +k8s:conversion-gen=github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal
+// +k8s:conversion-gen=github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=baremetal.cluster.k8s.io
 package v1alpha1
