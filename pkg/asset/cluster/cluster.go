@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
+	//"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -19,7 +19,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/quota"
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
-	"github.com/openshift/installer/pkg/terraform/exec"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
@@ -105,7 +104,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "failed to create temp dir for terraform execution")
 		}
-		defer os.RemoveAll(tmpDir)
+		//defer os.RemoveAll(tmpDir)
 
 		var extraOpts []tfexec.ApplyOption
 		for _, file := range tfvarsFiles {
@@ -177,7 +176,7 @@ func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform
 		return nil, err
 	}
 
-	outputs, err := exec.Outputs(stateFile)
+	outputs, err := terraform.Outputs(stateFile)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not get outputs from state file %q", stateFile)
 	}

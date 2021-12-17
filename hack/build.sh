@@ -19,7 +19,7 @@ fi
 if [ ! -f "${PWD}/terraform/bin.tbz2" ]; then
 	env TFBINDIR="${PWD}/terraform/bin" make -j $(nproc) -C terraform all
 	tar -C "${PWD}/terraform" -cjvf terraform/bin.tbz2 bin
-	cp "${PWD}/terraform/bin.tbz2" "${PWD}/pkg/terraform/exec/plugins/bin.tbz2"
+	cp "${PWD}/terraform/bin.tbz2" "${PWD}/pkg/terraform/bin.tbz2"
 fi
 
 MODE="${MODE:-release}"
