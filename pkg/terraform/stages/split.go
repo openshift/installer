@@ -17,6 +17,11 @@ import (
 type StageOption func(*SplitStage)
 
 // NewStage creates a new split stage.
+// The default behavior is the following. The behavior can be changed by providing StageOptions.
+// - The resources of the stage will not be deleted as part of destroying the bootstrap.
+// - The IP addresses for the bootstrap and control plane VMs will be output from the stage as bootstrap_ip and
+//   control_plane_ips, respectively. Only one stage for the platform should output a particular variable. This will
+//   likely be the same stage that creates the VM.
 func NewStage(platform, name string, opts ...StageOption) SplitStage {
 	s := SplitStage{
 		platform: platform,
@@ -28,22 +33,19 @@ func NewStage(platform, name string, opts ...StageOption) SplitStage {
 	return s
 }
 
-// WithNormalDestroy returns an option for specifying that a split stage should use the normal destroy process.
-func WithNormalDestroy() StageOption {
-	return WithCustomDestroy(normalDestroy)
+// WithNormalBootstrapDestroy returns an option for specifying that a split stage should use the normal bootstrap
+// destroy process. The normal process is to fully delete all of the resources created in the stage.
+func WithNormalBootstrapDestroy() StageOption {
+	return WithCustomBootstrapDestroy(normalDestroy)
 }
 
-// WithCustomDestroy returns an option for specifying that a split stage should use a custom destroy process.
-func WithCustomDestroy(destroy DestroyFunc) StageOption {
+// WithCustomBootstrapDestroy returns an option for specifying that a split stage should use a custom bootstrap
+// destroy process.
+func WithCustomBootstrapDestroy(destroy DestroyFunc) StageOption {
 	return func(s *SplitStage) {
 		s.destroyWithBootstrap = true
 		s.destroy = destroy
 	}
-}
-
-// WithNormalExtractHostAddresses returns an option for specifying that a split stage should use the normal extract host addresses process.
-func WithNormalExtractHostAddresses() StageOption {
-	return WithCustomExtractHostAddresses(normalExtractHostAddresses)
 }
 
 // WithCustomExtractHostAddresses returns an option for specifying that a split stage should use a custom extract host addresses process.

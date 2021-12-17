@@ -1,18 +1,24 @@
 package vsphere
 
 import (
+	"context"
+	"time"
+
 	"github.com/pkg/errors"
+	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vim25"
+	vmwaretypes "github.com/vmware/govmomi/vim25/types"
 
 	"github.com/openshift/installer/pkg/terraform"
-	gathervsphere "github.com/openshift/installer/pkg/terraform/gather/vsphere"
 	"github.com/openshift/installer/pkg/terraform/stages"
 	"github.com/openshift/installer/pkg/types"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // PlatformStages are the stages to run to provision the infrastructure in vsphere.
 var PlatformStages = []terraform.Stage{
 	stages.NewStage("vsphere", "pre-bootstrap"),
-	stages.NewStage("vsphere", "bootstrap", stages.WithNormalDestroy(), stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
+	stages.NewStage("vsphere", "bootstrap", stages.WithNormalBootstrapDestroy(), stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
 	stages.NewStage("vsphere", "master", stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
 }
 
@@ -48,18 +54,54 @@ func extractOutputHostAddresses(s stages.SplitStage, directory string, config *t
 		}
 	}
 
-	bootstrap, err = gathervsphere.HostIP(config, bootstrapMoid)
+	bootstrap, err = hostIP(config, bootstrapMoid)
 	if err != nil {
 		return "", 0, nil, errors.Errorf("could not extract IP with bootstrap MOID: %s", bootstrapMoid)
 	}
 
 	masters = make([]string, len(mastersMoids))
 	for i, moid := range mastersMoids {
-		masters[i], err = gathervsphere.HostIP(config, moid)
+		masters[i], err = hostIP(config, moid)
 		if err != nil {
 			return "", 0, nil, errors.Errorf("could not extract IP with control node MOID: %s", moid)
 		}
 	}
 
 	return bootstrap, port, masters, nil
+}
+
+// hostIP returns the ip address for a host
+func hostIP(config *types.InstallConfig, moid string) (string, error) {
+	client, _, err := vspheretypes.CreateVSphereClients(context.TODO(), config.VSphere.VCenter, config.VSphere.Username, config.VSphere.Password)
+	if err != nil {
+		return "", err
+	}
+
+	var errs []error
+	ip, err := waitForVirtualMachineIP(client, moid)
+	if err != nil {
+		errs = append(errs, errors.Wrapf(err, "failed to lookup ipv4 address from given moid %s", moid))
+	}
+
+	return ip, nil
+}
+
+func waitForVirtualMachineIP(client *vim25.Client, moRefValue string) (string, error) {
+	moRef := vmwaretypes.ManagedObjectReference{
+		Type:  "VirtualMachine",
+		Value: moRefValue,
+	}
+
+	vm := object.NewVirtualMachine(client, moRef)
+	if vm == nil {
+		return "", errors.Errorf("VirtualMachine was not found")
+	}
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	ip, err := vm.WaitForIP(ctx, true)
+	if err != nil {
+		return "", err
+	}
+	return ip, nil
 }

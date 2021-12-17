@@ -1,12 +1,13 @@
 package platform
 
 import (
+	"fmt"
+
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/stages/alibabacloud"
 	"github.com/openshift/installer/pkg/terraform/stages/aws"
 	"github.com/openshift/installer/pkg/terraform/stages/azure"
 	"github.com/openshift/installer/pkg/terraform/stages/baremetal"
-	"github.com/openshift/installer/pkg/terraform/stages/compat"
 	"github.com/openshift/installer/pkg/terraform/stages/gcp"
 	"github.com/openshift/installer/pkg/terraform/stages/ibmcloud"
 	"github.com/openshift/installer/pkg/terraform/stages/libvirt"
@@ -51,6 +52,6 @@ func StagesForPlatform(platform string) []terraform.Stage {
 	case vspheretypes.Name:
 		return vsphere.PlatformStages
 	default:
-		return compat.PlatformStages(platform)
+		panic(fmt.Sprintf("unsupported platform %q", platform))
 	}
 }

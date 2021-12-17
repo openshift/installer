@@ -8,5 +8,5 @@ import (
 // PlatformStages are the stages to run to provision the infrastructure in libvirt.
 var PlatformStages = []terraform.Stage{
 	stages.NewStage("libvirt", "cluster"),
-	stages.NewStage("libvirt", "bootstrap", stages.WithNormalDestroy()),
+	stages.NewStage("libvirt", "bootstrap", stages.WithNormalBootstrapDestroy()),
 }

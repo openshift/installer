@@ -8,6 +8,6 @@ import (
 // PlatformStages are the stages to run to provision the infrastructure in IBM Cloud.
 var PlatformStages = []terraform.Stage{
 	stages.NewStage("ibmcloud", "network"),
-	stages.NewStage("ibmcloud", "bootstrap", stages.WithNormalDestroy()),
+	stages.NewStage("ibmcloud", "bootstrap", stages.WithNormalBootstrapDestroy()),
 	stages.NewStage("ibmcloud", "master"),
 }
