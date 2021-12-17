@@ -616,7 +616,7 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 	}
 	allErrs := field.ErrorList{}
 
-	allowedAzureModes := []types.CredentialsMode{types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode}
+	allowedAzureModes := []types.CredentialsMode{types.PassthroughCredentialsMode, types.ManualCredentialsMode}
 	if platform.Azure != nil && platform.Azure.CloudName == azure.StackCloud {
 		allowedAzureModes = []types.CredentialsMode{types.ManualCredentialsMode}
 	}
