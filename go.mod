@@ -15,7 +15,7 @@ require (
 	github.com/IBM/go-sdk-core/v5 v5.4.3
 	github.com/IBM/networking-go-sdk v0.14.0
 	github.com/IBM/platform-services-go-sdk v0.18.16
-	github.com/IBM/vpc-go-sdk v1.0.1
+	github.com/IBM/vpc-go-sdk v0.7.0
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1154
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
 	github.com/aliyun/terraform-provider-alicloud v1.132.0
@@ -60,7 +60,7 @@ require (
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20211111151530-06177b773958
 	github.com/openshift/library-go v0.0.0-20210811133500-5e31383de2a7
-	github.com/openshift/machine-config-operator v0.0.0
+	github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 	github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
 	github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20211019085223-db1ac552ec57
 	github.com/pborman/uuid v1.2.0
@@ -201,13 +201,13 @@ require (
 	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/go-logr/logr v1.2.0 // indirect
-	github.com/go-openapi/analysis v0.19.5 // indirect
-	github.com/go-openapi/errors v0.19.8 // indirect
+	github.com/go-openapi/analysis v0.19.16 // indirect
+	github.com/go-openapi/errors v0.19.9 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
-	github.com/go-openapi/loads v0.19.4 // indirect
-	github.com/go-openapi/runtime v0.19.11 // indirect
-	github.com/go-openapi/spec v0.19.9 // indirect
+	github.com/go-openapi/loads v0.20.0 // indirect
+	github.com/go-openapi/runtime v0.19.24 // indirect
+	github.com/go-openapi/spec v0.20.0 // indirect
 	github.com/go-openapi/strfmt v0.20.1 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/go-openapi/validate v0.20.1 // indirect
@@ -223,7 +223,6 @@ require (
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/renameio v1.0.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
@@ -243,7 +242,7 @@ require (
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20200806211835-c481b8bfa41e // indirect
 	github.com/hashicorp/terraform-exec v0.13.1 // indirect
 	github.com/hashicorp/terraform-json v0.9.0 // indirect
-	github.com/hashicorp/terraform-plugin-test/v2 v2.1.2 // indirect
+	github.com/hashicorp/terraform-plugin-test/v2 v2.2.0 // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce // indirect
@@ -327,7 +326,7 @@ require (
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
 	github.com/zclconf/go-cty-yaml v1.0.2 // indirect
 	go.mongodb.org/mongo-driver v1.5.1 // indirect
-	go.opencensus.io v0.22.5 // indirect
+	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20210825183410-e898025ed96a // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
@@ -347,7 +346,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/resty.v1 v1.12.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	honnef.co/go/tools v0.0.1-2020.1.6 // indirect
+	honnef.co/go/tools v0.0.1-2020.1.4 // indirect
 	k8s.io/component-base v0.23.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
 	sigs.k8s.io/controller-runtime v0.11.0 // indirect
@@ -356,10 +355,9 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
+// These replaces are for forks.
 replace (
-	cloud.google.com/go => cloud.google.com/go v0.57.0
 	github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
-	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
 	github.com/gophercloud/gophercloud => github.com/gophercloud/gophercloud v0.17.0
 	github.com/hashicorp/terraform => github.com/openshift/hashicorp-terraform v0.14.6-openshift-1 // Pin to fork with deduplicated rpc types v0.14.6-openshift-1
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.16.0-openshift // Pin to fork with public rpc types
@@ -368,41 +366,32 @@ replace (
 	github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20211201170610-92ffa60c683d // Use OpenShift fork
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20211201170610-92ffa60c683d // Use OpenShift fork
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3 // Pin client-go
-	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 // Pin MCO so it doesn't get downgraded
-	github.com/spf13/afero => github.com/spf13/afero v1.2.2
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20211215220004-24df6d73af46 // Pin to openshift fork with tag v3.1.0-openshift-2
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4 // Pin to 2.48.0-openshift
 	github.com/terraform-providers/terraform-provider-azurestack => github.com/openshift/terraform-provider-azurestack v0.10.0-openshift // Use OpenShift fork
-	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160 => github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20211201190933-7b79c6d1afc8 // Pin to 3.27.0-openshift
+	github.com/terraform-providers/terraform-provider-google => github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20211201190933-7b79c6d1afc8 // Pin to 3.27.0-openshift
 	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
-	k8s.io/client-go => k8s.io/client-go v0.23.0
-	k8s.io/kubectl => k8s.io/kubectl v0.23.0
 	sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80
 	sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f // Indirect dependency through MAO from cluster API providers
 	sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20211111204942-611d320170af
-	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 )
 
-// Prevent the following modules from upgrading version as result of terraform-provider-kubernetes module
-// The following modules need to be locked to compile correctly with
-// terraform-provider-azure, terraform-provider-google, and
-// terraform-provider-ibm. This also locks in Terraform to v0.14.6.
+// Versions needed for terraform-provider-google
 replace (
-	github.com/Azure/go-autorest/autorest => github.com/Azure/go-autorest/autorest v0.11.17
-	github.com/Azure/go-autorest/autorest/adal => github.com/Azure/go-autorest/autorest/adal v0.9.10 // indirect
-	github.com/Azure/go-autorest/autorest/date => github.com/Azure/go-autorest/autorest/date v0.3.0
-	github.com/Azure/go-autorest/autorest/validation => github.com/Azure/go-autorest/autorest/validation v0.3.1
-	github.com/IBM/vpc-go-sdk => github.com/IBM/vpc-go-sdk v0.7.0
-	github.com/apparentlymart/go-cidr => github.com/apparentlymart/go-cidr v1.1.0
-	github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.35.37
-	github.com/go-openapi/errors => github.com/go-openapi/errors v0.19.2
-	github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.4
-	github.com/go-openapi/validate => github.com/go-openapi/validate v0.19.8
-	github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.5.2
-	github.com/hashicorp/go-plugin => github.com/hashicorp/go-plugin v1.3.0
-	github.com/hashicorp/terraform-plugin-test/v2 => github.com/hashicorp/terraform-plugin-test/v2 v2.2.0
-	github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.7
+	cloud.google.com/go => cloud.google.com/go v0.57.0
 	google.golang.org/api => google.golang.org/api v0.33.0
-	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
-	google.golang.org/grpc => google.golang.org/grpc v1.35.0
 )
+
+// Versions needed for terraform-provider-aws
+replace github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.35.37
+
+// Versions needed for terraform-provider-openstack
+replace github.com/spf13/afero => github.com/spf13/afero v1.2.2
+
+// Required to overcome the use of version v12.0.0+incompatible. The version used should be kept up to date with the
+// k8s version used.
+replace k8s.io/client-go => k8s.io/client-go v0.23.0
+
+// This replace is required because the CRD for the InstallConfig cannot be created with more recent versions of
+// controller-gen. This is due to issues with using IPNet as a field type.
+replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
