@@ -1,0 +1,49 @@
+;; This file is for testing dns record import and export functionality.
+;;
+;; Domain:     sdk.cistest-load.com.
+;; Exported:   2020-07-23 06:46:45
+;;
+;; This file is intended for use for informational and archival
+;; purposes ONLY and MUST be edited before use on a production
+;; DNS server.  In particular, you must:
+;;   -- update the SOA record with the correct authoritative name server
+;;   -- update the SOA record with the contact e-mail address information
+;;   -- update the NS record(s) with the authoritative name servers for this domain.
+;;
+;; For further information, please consult the BIND documentation
+;; located on the following website:
+;;
+;; http://www.isc.org/
+;;
+;; And RFC 1035:
+;;
+;; http://www.ietf.org/rfc/rfc1035.txt
+;;
+;; Please note that we do NOT offer technical support for any use
+;; of this zone data, the BIND name server, or any other third-party
+;; DNS software.
+;;
+;; Use at your own risk.
+;; A Records
+host-9.test-example.com.sdk.cistest-load.com.	1	IN	A	12.12.12.1
+
+;; AAAA Records
+host-1.test-example.com.sdk.cistest-load.com.	1	IN	AAAA	2001:db8:85a3::8a2e:370:7334
+
+;; CAA Records
+host.test-example.com.sdk.cistest-load.com.	1	IN	CAA	0 http "domain1.com"
+
+;; CNAME Records
+host-2.test-example.com.sdk.cistest-load.com.	1	IN	CNAME	domain2.com.
+
+;; MX Records
+host-3.test-example.com.sdk.cistest-load.com.	1	IN	MX	5 example-domain.com.
+
+;; NS Records
+host-4.test-example.com.sdk.cistest-load.com.	1	IN	NS	domain6.com.
+
+;; SPF Records
+host-5.test-example.com.sdk.cistest-load.com.	1	IN	SPF	"domain7.com"
+
+;; TXT Records
+host-10.test-example.com.sdk.cistest-load.com.	1	IN	TXT	"Test Text"
