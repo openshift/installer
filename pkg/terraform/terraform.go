@@ -156,7 +156,7 @@ func setupEmbeddedPlugins(dir string) error {
 
 		// XXX: HACK: pretend all plugin versions are v1.0.0
 		pluginVersion := "1.0.0"
-		dstDir := filepath.Join(pdir, pluginName, pluginVersion, fmt.Sprintf("linux_%s", runtime.GOARCH))
+		dstDir := filepath.Join(pdir, pluginName, pluginVersion, fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH))
 		if err := os.MkdirAll(dstDir, 0777); err != nil {
 			return err
 		}
