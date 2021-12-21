@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -22,10 +23,11 @@ type StageOption func(*SplitStage)
 // - The IP addresses for the bootstrap and control plane VMs will be output from the stage as bootstrap_ip and
 //   control_plane_ips, respectively. Only one stage for the platform should output a particular variable. This will
 //   likely be the same stage that creates the VM.
-func NewStage(platform, name string, opts ...StageOption) SplitStage {
+func NewStage(platform, name string, providers []providers.Provider, opts ...StageOption) SplitStage {
 	s := SplitStage{
-		platform: platform,
-		name:     name,
+		platform:  platform,
+		name:      name,
+		providers: providers,
 	}
 	for _, opt := range opts {
 		opt(&s)
@@ -59,6 +61,7 @@ func WithCustomExtractHostAddresses(extractHostAddresses ExtractFunc) StageOptio
 type SplitStage struct {
 	platform             string
 	name                 string
+	providers            []providers.Provider
 	destroyWithBootstrap bool
 	destroy              DestroyFunc
 	extractHostAddresses ExtractFunc
@@ -73,6 +76,11 @@ type ExtractFunc func(s SplitStage, directory string, ic *types.InstallConfig) (
 // Name implements pkg/terraform/Stage.Name
 func (s SplitStage) Name() string {
 	return s.name
+}
+
+// Providers is the list of providers that are used for the stage.
+func (s SplitStage) Providers() []providers.Provider {
+	return s.providers
 }
 
 // StateFilename implements pkg/terraform/Stage.StateFilename
