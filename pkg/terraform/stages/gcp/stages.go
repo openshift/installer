@@ -35,6 +35,8 @@ var PlatformStages = []terraform.Stage{
 // tfexec.ApplyOption. Maybe we should provide custom Init/Apply/Destroy
 // function options?
 func removeFromLoadBalancers(s stages.SplitStage, directory string, extraOpts []tfexec.DestroyOption) error {
-	_, err := terraform.Apply(directory, gcptypes.Name, s, tfexec.Var("gcp_bootstrap_lb=false"))
-	return errors.Wrap(err, "failed disabling bootstrap load balancing")
+	return errors.Wrap(
+		terraform.Apply(directory, gcptypes.Name, s, tfexec.Var("gcp_bootstrap_lb=false")),
+		"failed disabling bootstrap load balancing",
+	)
 }

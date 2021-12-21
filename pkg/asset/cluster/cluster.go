@@ -149,36 +149,26 @@ func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform
 	timer.StartTimer(stage.Name())
 	defer timer.StopTimer(stage.Name())
 
-	stateFile, err := terraform.Apply(tmpDir, platform, stage, opts...)
-	if err != nil {
-		err = errors.Wrap(err, "failed to create cluster")
-		if stateFile == "" {
-			return nil, err
-		}
-		// Store the error from the apply, but continue with the
-		// generation so that the Terraform state file is recovered from
-		// the temporary directory.
-	}
+	applyErr := terraform.Apply(tmpDir, platform, stage, opts...)
 
-	data, err2 := ioutil.ReadFile(stateFile)
-	if err2 == nil {
+	// Write the state file to the install directory even if the apply failed.
+	if data, err := ioutil.ReadFile(filepath.Join(tmpDir, terraform.StateFilename)); err == nil {
 		c.FileList = append(c.FileList, &asset.File{
 			Filename: stage.StateFilename(),
 			Data:     data,
 		})
-	} else {
-		logrus.Errorf("Failed to read tfstate: %v", err2)
-		if err == nil {
-			err2 = err
-		}
-	}
-	if err != nil {
-		return nil, err
+	} else if !os.IsNotExist(err) {
+		logrus.Errorf("Failed to read tfstate: %v", err)
+		return nil, errors.Wrap(err, "failed to read tfstate")
 	}
 
-	outputs, err := terraform.Outputs(tmpDir, stateFile)
+	if applyErr != nil {
+		return nil, errors.Wrap(applyErr, "failed to create cluster")
+	}
+
+	outputs, err := terraform.Outputs(tmpDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not get outputs from state file %q", stateFile)
+		return nil, errors.Wrapf(err, "could not get outputs from stage %q", stage.Name())
 	}
 
 	outputsFile := &asset.File{

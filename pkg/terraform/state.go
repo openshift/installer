@@ -4,20 +4,22 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 )
 
+// StateFilename is the default name of the terraform state file.
+const StateFilename = "terraform.tfstate"
+
 // Outputs reads the terraform state file and returns the outputs of the stage as json.
-func Outputs(dir string, file string) ([]byte, error) {
+func Outputs(dir string) ([]byte, error) {
 	tf, err := newTFExec(dir)
 	if err != nil {
 		return nil, err
 	}
 
-	tfoutput, err := tf.Output(context.Background(), tfexec.State(file))
+	tfoutput, err := tf.Output(context.Background())
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read terraform state file %q", file)
+		return nil, errors.Wrap(err, "failed to read terraform state file")
 	}
 
 	outputs := make(map[string]interface{}, len(tfoutput))

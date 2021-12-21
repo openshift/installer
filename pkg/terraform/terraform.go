@@ -36,52 +36,34 @@ func newTFExec(datadir string) (*tfexec.Terraform, error) {
 
 // Apply unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
-// apply'.  It returns the absolute path of the tfstate file, rooted
-// in the specified directory, along with any errors from Terraform.
-func Apply(dir string, platform string, stage Stage, extraOpts ...tfexec.ApplyOption) (path string, err error) {
-	err = unpackAndInit(dir, platform, stage.Name(), stage.Providers())
-	if err != nil {
-		return "", err
+// apply'.
+func Apply(dir string, platform string, stage Stage, extraOpts ...tfexec.ApplyOption) error {
+	if err := unpackAndInit(dir, platform, stage.Name(), stage.Providers()); err != nil {
+		return err
 	}
-
-	sf := filepath.Join(dir, stage.StateFilename())
-	opts := append(
-		extraOpts,
-		tfexec.State(sf),
-		tfexec.StateOut(sf),
-	)
 
 	tf, err := newTFExec(dir)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to create a new tfexec")
+		return errors.Wrap(err, "failed to create a new tfexec")
 	}
-	err = tf.Apply(context.Background(), opts...)
-	err = diagnoseApplyError(err)
-	return sf, errors.Wrap(err, "failed to apply Terraform")
+	err = tf.Apply(context.Background(), extraOpts...)
+	return errors.Wrap(diagnoseApplyError(err), "failed to apply Terraform")
 }
 
 // Destroy unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
 // destroy'.
-func Destroy(dir string, platform string, stage Stage, extraOpts ...tfexec.DestroyOption) (err error) {
-	err = unpackAndInit(dir, platform, stage.Name(), stage.Providers())
-	if err != nil {
+func Destroy(dir string, platform string, stage Stage, extraOpts ...tfexec.DestroyOption) error {
+	if err := unpackAndInit(dir, platform, stage.Name(), stage.Providers()); err != nil {
 		return err
 	}
-
-	sf := filepath.Join(dir, stage.StateFilename())
-	opts := append(
-		extraOpts,
-		tfexec.State(sf),
-		tfexec.StateOut(sf),
-	)
 
 	tf, err := newTFExec(dir)
 	if err != nil {
 		return errors.Wrap(err, "failed to create a new tfexec")
 	}
 	return errors.Wrap(
-		tf.Destroy(context.Background(), opts...),
+		tf.Destroy(context.Background(), extraOpts...),
 		"failed doing terraform destroy",
 	)
 }
