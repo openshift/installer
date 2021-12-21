@@ -24,16 +24,12 @@ aliases:
     - cfergeau
   openstack-approvers:
     - EmilienM
-    - adduarte
-    - iamemilio
     - mandre
     - mdbooth
     - pierreprinetti
     - stephenfin
   openstack-reviewers:
     - EmilienM
-    - adduarte
-    - iamemilio
     - mandre
     - mdbooth
     - pierreprinetti
