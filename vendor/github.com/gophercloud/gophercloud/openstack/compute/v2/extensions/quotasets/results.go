@@ -11,10 +11,10 @@ type QuotaSet struct {
 	// ID is tenant associated with this QuotaSet.
 	ID string `json:"id"`
 
-	// FixedIPs is number of fixed ips alloted this QuotaSet.
+	// FixedIPs is number of fixed ips allotted this QuotaSet.
 	FixedIPs int `json:"fixed_ips"`
 
-	// FloatingIPs is number of floating ips alloted this QuotaSet.
+	// FloatingIPs is number of floating ips allotted this QuotaSet.
 	FloatingIPs int `json:"floating_ips"`
 
 	// InjectedFileContentBytes is the allowed bytes for each injected file.
@@ -61,10 +61,10 @@ type QuotaDetailSet struct {
 	// ID is the tenant ID associated with this QuotaDetailSet.
 	ID string `json:"id"`
 
-	// FixedIPs is number of fixed ips alloted this QuotaDetailSet.
+	// FixedIPs is number of fixed ips allotted this QuotaDetailSet.
 	FixedIPs QuotaDetail `json:"fixed_ips"`
 
-	// FloatingIPs is number of floating ips alloted this QuotaDetailSet.
+	// FloatingIPs is number of floating ips allotted this QuotaDetailSet.
 	FloatingIPs QuotaDetail `json:"floating_ips"`
 
 	// InjectedFileContentBytes is the allowed bytes for each injected file.

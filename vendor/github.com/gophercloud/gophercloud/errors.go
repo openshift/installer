@@ -179,7 +179,11 @@ func (e ErrDefault403) Error() string {
 	return e.choseErrString()
 }
 func (e ErrDefault404) Error() string {
-	return "Resource not found"
+	e.DefaultErrString = fmt.Sprintf(
+		"Resource not found: [%s %s], error message: %s",
+		e.Method, e.URL, e.Body,
+	)
+	return e.choseErrString()
 }
 func (e ErrDefault405) Error() string {
 	return "Method not allowed"

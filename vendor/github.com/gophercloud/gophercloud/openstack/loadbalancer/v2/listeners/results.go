@@ -27,7 +27,7 @@ type Listener struct {
 	// Human-readable description for the Listener.
 	Description string `json:"description"`
 
-	// The protocol to loadbalance. A valid value is TCP, HTTP, or HTTPS.
+	// The protocol to loadbalance. A valid value is TCP, SCTP, HTTP, HTTPS or TERMINATED_HTTPS.
 	Protocol string `json:"protocol"`
 
 	// The port on which to listen to client traffic that is associated with the
@@ -83,6 +83,13 @@ type Listener struct {
 
 	// A list of IPv4, IPv6 or mix of both CIDRs
 	AllowedCIDRs []string `json:"allowed_cidrs"`
+
+	// A list of TLS protocol versions. Available from microversion 2.17
+	TLSVersions []string `json:"tls_versions"`
+
+	// Tags is a list of resource tags. Tags are arbitrarily defined strings
+	// attached to the resource. New in version 2.5
+	Tags []string `json:"tags"`
 }
 
 type Stats struct {
