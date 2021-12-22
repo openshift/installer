@@ -37,13 +37,13 @@ var (
 	validResourceSkuRegions        = "southeastasia"
 
 	instanceTypeSku = []*azsku.ResourceSku{
-		{Name: to.StringPtr("Standard_D4s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUs"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_A1_v2"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUs"), Value: to.StringPtr("1")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("2")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_D2_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUs"), Value: to.StringPtr("2")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("8")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_D4_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUs"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_D2s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUs"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_D8s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUs"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_D_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUs"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("False")}}},
+		{Name: to.StringPtr("Standard_D4s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
+		{Name: to.StringPtr("Standard_A1_v2"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("1")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("2")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
+		{Name: to.StringPtr("Standard_D2_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("2")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("8")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
+		{Name: to.StringPtr("Standard_D4_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
+		{Name: to.StringPtr("Standard_D2s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
+		{Name: to.StringPtr("Standard_D8s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}}},
+		{Name: to.StringPtr("Standard_D_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("False")}}},
 	}
 
 	validInstanceTypes = func(ic *types.InstallConfig) {
@@ -206,7 +206,7 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		{
 			name:     "Invalid default machine type",
 			edits:    editFunctions{invalidateDefaultInstanceTypes},
-			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 4 vCPUs, controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 16 GB Memory, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 2 vCPUs, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 8 GB Memory\]`,
+			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 4 vCPUsAvailable, controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 16 GB Memory, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 2 vCPUsAvailable, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 8 GB Memory\]`,
 		},
 		{
 			name:     "Invalid control plane instance types",
@@ -221,7 +221,7 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		{
 			name:     "Invalid compute instance types",
 			edits:    editFunctions{invalidateComputeInstanceTypes},
-			errorMsg: `\[compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 2 vCPUs, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 8 GB Memory\]`,
+			errorMsg: `\[compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 2 vCPUsAvailable, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 8 GB Memory\]`,
 		},
 		{
 			name:     "Invalid region",
