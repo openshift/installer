@@ -1,9 +1,12 @@
 package terraform
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
+	"text/template"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
@@ -48,6 +51,10 @@ func unpackAndInit(dir string, platform string, target string, providers []prov.
 		return errors.Wrap(err, "failed to unpack Terraform modules")
 	}
 
+	if err := addVersionsFiles(dir, providers); err != nil {
+		return errors.Wrap(err, "failed to write versions.tf files")
+	}
+
 	if err := setupEmbeddedPlugins(dir, providers); err != nil {
 		return errors.Wrap(err, "failed to setup embedded Terraform plugins")
 	}
@@ -66,6 +73,45 @@ func unpackAndInit(dir string, platform string, target string, providers []prov.
 		tf.Init(context.Background(), tfexec.PluginDir(filepath.Join(dir, "plugins"))),
 		"failed doing terraform init",
 	)
+}
+
+const versionFileTemplate = `terraform {
+  required_version = ">= 1.0.0"
+  required_providers {
+{{- range .}}
+    {{.Name}} = {
+      source = "{{.Source}}"
+    }
+{{- end}}
+  }
+}
+`
+
+func addVersionsFiles(dir string, providers []prov.Provider) error {
+	tmpl := template.Must(template.New("versions").Parse(versionFileTemplate))
+	buf := &bytes.Buffer{}
+	if err := tmpl.Execute(buf, providers); err != nil {
+		return errors.Wrap(err, "could not create versions.tf from template")
+	}
+	return addFileToAllDirectories("versions.tf", buf.Bytes(), dir)
+}
+
+func addFileToAllDirectories(name string, data []byte, dir string) error {
+	if err := os.WriteFile(filepath.Join(dir, name), data, 0666); err != nil {
+		return err
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			if err := addFileToAllDirectories(name, data, filepath.Join(dir, entry.Name())); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func setupEmbeddedPlugins(dir string, providers []prov.Provider) error {
