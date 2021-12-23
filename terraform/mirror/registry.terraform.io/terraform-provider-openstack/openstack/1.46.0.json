@@ -1,0 +1,22 @@
+{
+  "archives": {
+    "darwin_amd64": {
+      "hashes": [
+        "h1:4jDRT3EJ49IPjfIXfSF+0QqE5SahAZAqjqALCr6aB/A="
+      ],
+      "url": "terraform-provider-openstack_1.46.0_darwin_amd64.zip"
+    },
+    "darwin_arm64": {
+      "hashes": [
+        "h1:TXb+fbfKQ8sS6yGMZ6wlYIx+mo7L2igfacrbA5P3Q5A="
+      ],
+      "url": "terraform-provider-openstack_1.46.0_darwin_arm64.zip"
+    },
+    "linux_amd64": {
+      "hashes": [
+        "h1:wufxfGcIYWkD3WUwF1y+qLJeOXrquAY2AHOWdN8qlnI="
+      ],
+      "url": "terraform-provider-openstack_1.46.0_linux_amd64.zip"
+    }
+  }
+}

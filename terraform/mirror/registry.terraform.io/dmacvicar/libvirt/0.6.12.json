@@ -1,0 +1,22 @@
+{
+  "archives": {
+    "darwin_amd64": {
+      "hashes": [
+        "h1:Xl0dWsv+xxMUOPegx9a16JCsugxnTEkxiVGz5p6Ww+I="
+      ],
+      "url": "terraform-provider-libvirt_0.6.12_darwin_amd64.zip"
+    },
+    "darwin_arm64": {
+      "hashes": [
+        "h1:ucfVa60mv201f+VVF7Hqhtt2tkJ0fkBBbH6a6ZgSGbo="
+      ],
+      "url": "terraform-provider-libvirt_0.6.12_darwin_arm64.zip"
+    },
+    "linux_amd64": {
+      "hashes": [
+        "h1:1A3u3hCgQouwXWpfa9Su4c696LivN5GYGNz04Y+b9O8="
+      ],
+      "url": "terraform-provider-libvirt_0.6.12_linux_amd64.zip"
+    }
+  }
+}
