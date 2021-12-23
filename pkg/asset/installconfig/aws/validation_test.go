@@ -458,6 +458,7 @@ func TestValidate(t *testing.T) {
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
 			c.Platform.AWS.Region = "us-newregion-1"
+			c.Platform.AWS.ServiceEndpoints = validServiceEndpoints()
 			return c
 		}(),
 		availZones:     validAvailZones(),

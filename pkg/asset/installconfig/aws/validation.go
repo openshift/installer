@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -266,29 +267,25 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnets map[string]Subnet
 
 func validateServiceEndpoints(fldPath *field.Path, region string, services []awstypes.ServiceEndpoint) field.ErrorList {
 	allErrs := field.ErrorList{}
-	// For each provided service endpoint, verify we can resolve and connect with net.Dial.
+	ec2Endpoint := ""
 	for id, service := range services {
-		// Ignore e2e.local from unit tests.
-		if service.URL == "e2e.local" {
-			continue
-		}
-		URL, err := url.Parse(service.URL)
+		err := validateEndpointAccessibility(service.URL)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(id).Child("url"), service.URL, err.Error()))
 			continue
 		}
-		port := URL.Port()
-		if port == "" {
-			port = "https"
+		if service.Name == ec2.ServiceName {
+			ec2Endpoint = service.URL
 		}
-		conn, err := net.Dial("tcp", net.JoinHostPort(URL.Hostname(), port))
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(id).Child("url"), service.URL, err.Error()))
-			continue
-		}
-		conn.Close()
 	}
-	if _, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region); partitionFound {
+
+	if partition, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region); partitionFound {
+		if _, ok := partition.Regions()[region]; !ok && ec2Endpoint == "" {
+			err := validateRegion(region)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("region"), region, err.Error()))
+			}
+		}
 		return allErrs
 	}
 
@@ -303,8 +300,40 @@ func validateServiceEndpoints(fldPath *field.Path, region string, services []aws
 	if err := utilerrors.NewAggregate(errs); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath, services, err.Error()))
 	}
-
 	return allErrs
+}
+
+func validateRegion(region string) error {
+	ses, err := GetSessionWithOptions(func(sess *session.Options) {
+		sess.Config.Region = aws.String(region)
+	})
+	if err != nil {
+		return err
+	}
+	ec2Session := ec2.New(ses)
+	return validateEndpointAccessibility(ec2Session.Endpoint)
+}
+
+func validateEndpointAccessibility(endpointURL string) error {
+	// For each provided service endpoint, verify we can resolve and connect with net.Dial.
+	// Ignore e2e.local from unit tests.
+	if endpointURL == "e2e.local" {
+		return nil
+	}
+	URL, err := url.Parse(endpointURL)
+	if err != nil {
+		return err
+	}
+	port := URL.Port()
+	if port == "" {
+		port = "https"
+	}
+	conn, err := net.Dial("tcp", net.JoinHostPort(URL.Hostname(), port))
+	if err != nil {
+		return err
+	}
+	conn.Close()
+	return nil
 }
 
 var requiredServices = []string{
