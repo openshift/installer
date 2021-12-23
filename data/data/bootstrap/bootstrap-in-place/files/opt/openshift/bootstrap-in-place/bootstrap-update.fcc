@@ -1,0 +1,25 @@
+variant: fcos
+version: 1.1.0
+ignition:
+  config:
+    merge:
+      - local: original-bootstrap.ign
+storage:
+  files:
+    - path: /etc/systemd/system/agent.service
+      contents:
+        local: agent.service
+    - path: /usr/local/bin/agent-fix-bz1964591
+      contents:
+        local: agent-fix-bz1964591
+      mode: 0755
+    - path: /etc/systemd/system/bootkube.service.d/okd.conf
+      contents:
+        inline: |
+          [Unit]
+          ConditionPathExists=/opt/openshift/.pivot-done
+      mode: 0755
+systemd:
+  units:
+    - name: agent.service
+      enabled: true

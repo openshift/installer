@@ -5,12 +5,36 @@ set -euo pipefail
 
 # shellcheck disable=SC1091
 . /usr/local/bin/bootstrap-service-record.sh
+. /usr/local/bin/release-image.sh
+
+bootkube_podman_run() {
+    # we run all commands in the host-network to prevent IP conflicts with
+    # end-user infrastructure.
+    podman run --quiet --net=host "${@}"
+}
 
 if [[ -f /var/opt/install-dir/bootstrap.ign ]]; then
   record_service_stage_start "pivot-agent-to-fcos"
+  # Include agent service in bootstrap
+  echo "Adding bootstrap control plane and bootstrap installer-gather bundle to master ignition"
+  cd /opt/openshift
+  CLUSTER_BOOTSTRAP_IMAGE=$(image_for cluster-bootstrap)
+  cp -rvf /etc/systemd/system/agent.service /opt/openshift/bootstrap-in-place
+  cp -rvf /usr/local/bin/agent-fix-bz1964591 /opt/openshift/bootstrap-in-place
+  cp -rvf /var/opt/install-dir/bootstrap.ign ./bootstrap-in-place/original-bootstrap.ign
+  bootkube_podman_run \
+    --rm \
+    --privileged \
+    --volume "$PWD/bootstrap-in-place:/assets:z" \
+    "${CLUSTER_BOOTSTRAP_IMAGE}" \
+    bootstrap-in-place \
+    --asset-dir /assets \
+    --input /assets/bootstrap-update.fcc \
+    --output /assets/bootstrap.ign
+
   # Write image + ignition to disk in assisted-installer flow
-  echo "Executing coreos-installer with the following options: install -i /var/opt/install-dir/bootstrap.ign {{.BootstrapInPlace.InstallationDisk}}"
-  coreos-installer install --copy-network -i /var/opt/install-dir/bootstrap.ign {{.BootstrapInPlace.InstallationDisk}}
+  echo "Executing coreos-installer with the following options: install -i /opt/openshift/bootstrap-in-place/bootstrap.ign {{.BootstrapInPlace.InstallationDisk}}"
+  coreos-installer install --copy-network -i /opt/openshift/bootstrap-in-place/bootstrap.ign {{.BootstrapInPlace.InstallationDisk}}
   record_service_stage_success
   record_service_stage_start "reboot"
   echo "Going to reboot"
