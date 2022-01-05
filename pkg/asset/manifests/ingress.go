@@ -95,8 +95,32 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 }
 
 func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig) ([]byte, error) {
-	switch config.Publish {
-	case types.InternalPublishingStrategy:
+	switch {
+	case config.BootstrapInPlace != nil:
+		replicas := int32(1)
+		obj := &operatorv1.IngressController{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: operatorv1.GroupVersion.String(),
+				Kind:       "IngressController",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "openshift-ingress-operator",
+				Name: "default",
+			},
+			Spec: operatorv1.IngressControllerSpec{
+				Replicas: &replicas,
+				NodePlacement: &operatorv1.NodePlacement{
+					NodeSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"node-role.kubernetes.io/master": "",
+							"kubernetes.io/os": "linux",
+						},
+					},
+				},
+			},
+		}
+		return yaml.Marshal(obj)
+	case config.Publish == types.InternalPublishingStrategy:
 		obj := &operatorv1.IngressController{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: operatorv1.GroupVersion.String(),
