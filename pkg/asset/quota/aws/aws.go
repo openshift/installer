@@ -1,9 +1,13 @@
 package aws
 
 import (
+	"fmt"
+	"regexp"
 	"sort"
+	"strings"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 
@@ -130,14 +134,26 @@ func others() []quota.Constraint {
 
 func machineTypeToQuota(t string, instanceTypes map[string]InstanceTypeInfo) quota.Constraint {
 	info, ok := instanceTypes[t]
+	warnMessage := fmt.Sprintf("The instance class is unknown for the instance type %q. The vCPU quota check will be skipped.", t)
 	if !ok {
+		logrus.Warnf(warnMessage)
 		return quota.Constraint{Name: "ec2/L-7295265B", Count: 0}
 	}
-	class := string(t[0])
-	switch class {
-	case "a", "c", "d", "h", "i", "m", "r", "t", "z":
+	r := regexp.MustCompile(`^([A-Za-z]+)[0-9]`)
+	match := r.FindStringSubmatch(strings.ToLower(t))
+	if match == nil {
+		logrus.Warnf(warnMessage)
+		return quota.Constraint{Name: "ec2/L-7295265B", Count: 0}
+	}
+	switch match[1] {
+	case "a", "c", "d", "h", "i", "is", "im", "m", "r", "t", "z":
 		return quota.Constraint{Name: "ec2/L-1216C47A", Count: info.vCPU}
-	default:
+	case "g", "vt":
+		return quota.Constraint{Name: "ec2/L-DB2E81BA", Count: info.vCPU}
+	case "x":
 		return quota.Constraint{Name: "ec2/L-7295265B", Count: info.vCPU}
+	default:
+		logrus.Warnf(warnMessage)
+		return quota.Constraint{Name: "ec2/L-7295265B", Count: 0}
 	}
 }
