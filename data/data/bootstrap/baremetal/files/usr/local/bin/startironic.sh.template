@@ -173,7 +173,7 @@ else
 fi
 
 # Embed agent ignition into the rhcos live iso
-sudo podman run -d --net host --privileged --name image-customization \
+podman run -d --net host --privileged --name image-customization \
     --env DEPLOY_ISO="/shared/html/images/ironic-python-agent.iso" \
     --env DEPLOY_INITRD="/shared/html/images/ironic-python-agent.initramfs" \
     --env IRONIC_BASE_URL="http://${IRONIC_HOST}" \
@@ -188,7 +188,7 @@ sudo podman run -d --net host --privileged --name image-customization \
     -v /etc/containers:/tmp/containers:z \
     ${CUSTOMIZATION_IMAGE}
 
-sudo podman run -d --net host --privileged --name ironic-conductor \
+podman run -d --net host --privileged --name ironic-conductor \
      --restart on-failure \
      --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
      --env MARIADB_PASSWORD=$mariadb_password \
@@ -212,7 +212,7 @@ podman run -d --net host --privileged --name ironic-inspector \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_IMAGE}"
 
-sudo podman run -d --net host --privileged --name ironic-api \
+podman run -d --net host --privileged --name ironic-api \
      --restart on-failure \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
@@ -221,7 +221,7 @@ sudo podman run -d --net host --privileged --name ironic-api \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 
-sudo podman run -d --name ironic-ramdisk-logs \
+podman run -d --name ironic-ramdisk-logs \
      --restart on-failure \
      --entrypoint /bin/runlogwatch.sh \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
