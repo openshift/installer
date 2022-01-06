@@ -18,11 +18,6 @@ variable "azure_region" {
   description = "The target Azure region for the cluster."
 }
 
-variable "azure_bootstrap_vm_type" {
-  type = string
-  description = "Instance type for the bootstrap node. Example: `Standard_DS4_v3`."
-}
-
 variable "azure_master_vm_type" {
   type = string
   description = "Instance type for the master node(s). Example: `Standard_D8s_v3`."

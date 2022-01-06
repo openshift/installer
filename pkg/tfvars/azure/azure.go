@@ -9,7 +9,6 @@ import (
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
-	"github.com/openshift/installer/pkg/types/azure/defaults"
 )
 
 // Auth is the collection of credentials that will be used by terrform.
@@ -25,7 +24,6 @@ type config struct {
 	Environment                     string            `json:"azure_environment"`
 	ARMEndpoint                     string            `json:"azure_arm_endpoint"`
 	ExtraTags                       map[string]string `json:"azure_extra_tags,omitempty"`
-	BootstrapInstanceType           string            `json:"azure_bootstrap_vm_type,omitempty"`
 	MasterInstanceType              string            `json:"azure_master_vm_type,omitempty"`
 	MasterAvailabilityZones         []string          `json:"azure_master_availability_zones"`
 	VolumeType                      string            `json:"azure_master_root_volume_type"`
@@ -84,7 +82,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Environment:                     environment,
 		ARMEndpoint:                     sources.ARMEndpoint,
 		Region:                          region,
-		BootstrapInstanceType:           defaults.BootstrapInstanceType(sources.CloudName, region),
 		MasterInstanceType:              masterConfig.VMSize,
 		MasterAvailabilityZones:         masterAvailabilityZones,
 		VolumeType:                      masterConfig.OSDisk.ManagedDisk.StorageAccountType,
