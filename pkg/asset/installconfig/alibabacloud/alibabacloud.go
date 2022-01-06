@@ -41,12 +41,21 @@ func selectRegion(client *Client) (string, error) {
 	}
 	regions := regionsResponse.Regions.Region
 
+	var defaultLongRegion string
 	longRegions := make([]string, 0, len(regions))
 	shortRegions := make([]string, 0, len(regions))
 	for _, location := range regions {
-		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", location.RegionId, location.LocalName))
+		longRegion := fmt.Sprintf("%s (%s)", location.RegionId, location.LocalName)
+		longRegions = append(longRegions, longRegion)
 		shortRegions = append(shortRegions, location.RegionId)
+		if location.RegionId == defaultRegion {
+			defaultLongRegion = longRegion
+		}
 	}
+	if defaultLongRegion == "" {
+		return "", errors.Errorf("installer bug: invalid default alibabacloud region %q", defaultRegion)
+	}
+
 	var regionTransform survey.Transformer = func(ans interface{}) interface{} {
 		switch v := ans.(type) {
 		case core.OptionAnswer:
@@ -66,7 +75,7 @@ func selectRegion(client *Client) (string, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The Alibaba Cloud region to be used for installation.",
-				Default: defaultRegion,
+				Default: defaultLongRegion,
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
