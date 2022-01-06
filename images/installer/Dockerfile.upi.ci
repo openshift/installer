@@ -56,9 +56,7 @@ ENV IGNITION_PROVIDER_VERSION=v2.1.0
 RUN curl -L -O https://github.com/community-terraform-providers/terraform-provider-ignition/releases/download/${IGNITION_PROVIDER_VERSION}/terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64.tar.gz && \
     tar xzf terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64.tar.gz && \
     mv terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64/terraform-provider-ignition /bin/terraform-provider-ignition
-RUN curl -L -O https://github.com/vmware/govmomi/releases/download/v0.20.0/govc_linux_amd64.gz && \
-    gzip -d govc_linux_amd64.gz && \
-    chmod +x govc_linux_amd64 && mv govc_linux_amd64 /bin/govc
+RUN curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | tar -C /bin -xvzf - govc
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
     ./aws/install -b /bin && \
