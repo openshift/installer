@@ -489,14 +489,21 @@ func isNotFoundError(err error) bool {
 	}
 
 	var dErr autorest.DetailedError
-	if errors.As(err, &dErr) {
-		switch statusCode := dErr.StatusCode.(type) {
-		case int:
-			if statusCode == http.StatusNotFound {
+	errors.As(err, &dErr)
+
+	if dErr.StatusCode == http.StatusNotFound {
+		return true
+	}
+
+	if dErr.StatusCode == 0 {
+		serviceErr, ok := dErr.Original.(*azureenv.ServiceError)
+		if ok {
+			if strings.HasSuffix(serviceErr.Code, "NotFound") {
 				return true
 			}
 		}
 	}
+
 	return false
 }
 
