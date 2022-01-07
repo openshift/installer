@@ -1,11 +1,11 @@
 package baremetal
 
 import (
-	"encoding/base64"
+	"testing"
+
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestTemplatingIPv4(t *testing.T) {
@@ -34,7 +34,7 @@ func TestTemplatingIPv4(t *testing.T) {
 		},
 	}
 
-	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd", "pullsecret")
+	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd")
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "172.22.0.10,172.22.0.100,24")
 	assert.Equal(t, result.ProvisioningCIDR, 24)
@@ -43,7 +43,6 @@ func TestTemplatingIPv4(t *testing.T) {
 	assert.Equal(t, result.ProvisioningDHCPAllowList, "c0:ff:ee:ca:fe:00 c0:ff:ee:ca:fe:01 c0:ff:ee:ca:fe:02")
 	assert.Equal(t, result.IronicUsername, "bootstrap-ironic-user")
 	assert.Equal(t, result.IronicPassword, "passw0rd")
-	assert.Equal(t, result.PullSecretBase64, base64.StdEncoding.EncodeToString([]byte("pullsecret")))
 }
 
 func TestTemplatingManagedIPv6(t *testing.T) {
@@ -54,7 +53,7 @@ func TestTemplatingManagedIPv6(t *testing.T) {
 		ProvisioningNetwork:     baremetal.ManagedProvisioningNetwork,
 	}
 
-	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd", "pullsecret")
+	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd")
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "fd2e:6f44:5dd8:b856::1,fd2e:6f44:5dd8::ff,80")
 	assert.Equal(t, result.ProvisioningCIDR, 80)
@@ -71,7 +70,7 @@ func TestTemplatingUnmanagedIPv6(t *testing.T) {
 		ProvisioningNetwork:     baremetal.UnmanagedProvisioningNetwork,
 	}
 
-	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd", "pullsecret")
+	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd")
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "")
 	assert.Equal(t, result.ProvisioningCIDR, 64)
