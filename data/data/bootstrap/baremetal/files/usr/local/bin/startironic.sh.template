@@ -111,8 +111,8 @@ podman run -d --name coreos-downloader \
 
 # Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
 for port in 80 5050 6385 ; do
-    if ! sudo $IPTABLES -C INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
-        sudo $IPTABLES -I INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT
+    if ! $IPTABLES -C INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
+        $IPTABLES -I INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT
     fi
 done
 
