@@ -22,11 +22,12 @@
   },
   "resources" : [
     {
-      "apiVersion" : "2018-06-01",
+      "apiVersion" : "2021-07-01",
       "type": "Microsoft.Compute/images",
       "name": "[variables('imageName')]",
       "location" : "[variables('location')]",
       "properties": {
+        "hyperVGeneration": "V2",
         "storageProfile": {
           "osDisk": {
             "osType": "Linux",
