@@ -188,6 +188,7 @@ sudo podman run -d --net host --privileged --name image-customization \
     --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
     --env IRONIC_AGENT_IMAGE="$IRONIC_AGENT_IMAGE" \
     --env IRONIC_AGENT_PULL_SECRET="{{.PlatformData.BareMetal.PullSecretBase64}}" \
+    --env IP_OPTIONS=$EXTERNAL_IP_OPTIONS \
     --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
     --env REGISTRIES_CONF_PATH=/tmp/containers/registries.conf \
     --entrypoint '["/image-customization-server", "--nmstate-dir=/tmp/nmstate/", "--images-publish-addr=http://0.0.0.0:8084"]' \
