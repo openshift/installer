@@ -429,3 +429,7 @@ replace (
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 	google.golang.org/grpc => google.golang.org/grpc v1.35.0
 )
+
+replace (
+        github.com/openshift/api => github.com/josefkarasek/api-1 v0.0.0-20211122143617-216bd2eae3e2
+)
