@@ -35,6 +35,7 @@ var (
 		"europe-west4":            "Eemshaven, Netherlands",
 		"europe-west6":            "Zürich, Switzerland",
 		"northamerica-northeast1": "Montréal, Québec, Canada",
+		"northamerica-northeast2": "Toronto, Ontario, Canada",
 		"southamerica-east1":      "São Paulo, Brazil",
 		"us-central1":             "Council Bluffs, Iowa, USA",
 		"us-east1":                "Moncks Corner, South Carolina, USA",
