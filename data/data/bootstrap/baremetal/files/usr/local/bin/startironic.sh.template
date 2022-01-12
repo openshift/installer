@@ -98,14 +98,22 @@ IPTABLES=iptables
 {{ end }}
 
 {{ if .UseIPv6ForNodeIP }}
-IP_OPTIONS="ip=dhcp6"
+EXTERNAL_IP_OPTIONS="ip=dhcp6"
 {{ else }}
-IP_OPTIONS="ip=dhcp"
+EXTERNAL_IP_OPTIONS="ip=dhcp"
 {{ end }}
+
+
+{{ if .PlatformData.BareMetal.ProvisioningIPv6 }}
+PROVISIONING_IP_OPTIONS="ip=dhcp6"
+{{ else }}
+PROVISIONING_IP_OPTIONS="ip=dhcp"
+{{ end }}
+
 
 podman run -d --name coreos-downloader \
      --restart on-failure \
-     --env IP_OPTIONS=${IP_OPTIONS} \
+     --env IP_OPTIONS=${PROVISIONING_IP_OPTIONS} \
      -v $IRONIC_SHARED_VOLUME:/shared:z \
      ${MACHINE_OS_IMAGES_IMAGE} /bin/copy-metal --all /shared/html/images/
 
@@ -180,7 +188,7 @@ sudo podman run -d --net host --privileged --name image-customization \
     --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
     --env IRONIC_AGENT_IMAGE="$IRONIC_AGENT_IMAGE" \
     --env IRONIC_AGENT_PULL_SECRET="{{.PlatformData.BareMetal.PullSecretBase64}}" \
-    --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+    --env IP_OPTIONS=$EXTERNAL_IP_OPTIONS \
     --env REGISTRIES_CONF_PATH=/tmp/containers/registries.conf \
     --entrypoint '["/image-customization-server", "--nmstate-dir=/tmp/nmstate/", "--images-publish-addr=http://0.0.0.0:8084"]' \
     -v /tmp/nmstate/:/tmp/nmstate/ \
@@ -195,7 +203,7 @@ sudo podman run -d --net host --privileged --name ironic-conductor \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
      --env HTTP_BASIC_HTPASSWD=${IRONIC_HTPASSWD} \
-     --env IRONIC_KERNEL_PARAMS=${IP_OPTIONS} \
+     --env IRONIC_KERNEL_PARAMS=${PROVISIONING_IP_OPTIONS} \
      --entrypoint /bin/runironic-conductor \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
@@ -207,7 +215,7 @@ podman run -d --net host --privileged --name ironic-inspector \
      --restart on-failure \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env HTTP_BASIC_HTPASSWD=${IRONIC_HTPASSWD} \
-     --env IRONIC_KERNEL_PARAMS=${IP_OPTIONS} \
+     --env IRONIC_KERNEL_PARAMS=${PROVISIONING_IP_OPTIONS} \
      --entrypoint /bin/runironic-inspector \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_IMAGE}"
