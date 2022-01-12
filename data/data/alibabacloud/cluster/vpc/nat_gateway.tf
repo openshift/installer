@@ -1,11 +1,11 @@
 
 resource "alicloud_nat_gateway" "nat_gateway" {
-  vpc_id           = local.vpc_id
-  specification    = "Small"
-  nat_gateway_name = "${local.prefix}-ngw"
-  vswitch_id       = alicloud_vswitch.vswitch_nat_gateway.id
-  nat_type         = "Enhanced"
-  description      = local.description
+  vpc_id               = local.vpc_id
+  nat_gateway_name     = "${local.prefix}-ngw"
+  vswitch_id           = alicloud_vswitch.vswitch_nat_gateway.id
+  internet_charge_type = "PayByLcu"
+  nat_type             = "Enhanced"
+  description          = local.description
   tags = merge(
     {
       "Name" = "${local.prefix}-ngw"
