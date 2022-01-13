@@ -30,6 +30,10 @@ variable "slb_ids" {
   type = list(string)
 }
 
+variable "slb_group_length" {
+  description = "The length of the 'slb_ids' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
+}
+
 variable "instance_count" {
   type = string
 }
@@ -66,4 +70,9 @@ variable "user_data_ign" {
 variable "tags" {
   type        = map(string)
   description = "Tags to be applied to created resources."
+}
+
+variable "publish_strategy" {
+  type        = string
+  description = "The cluster publishing strategy, either Internal or External"
 }

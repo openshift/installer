@@ -34,6 +34,7 @@ type config struct {
 	ExtraTags                 map[string]string `json:"ali_extra_tags"`
 	IgnitionBucket            string            `json:"ali_ignition_bucket"`
 	BootstrapIgnitionStub     string            `json:"ali_bootstrap_stub_ignition"`
+	PublishStrategy           string            `json:"ali_publish_strategy"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -96,6 +97,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		SystemDiskCategory:        masterConfig.SystemDisk.Category,
 		ExtraTags:                 tags,
 		IgnitionBucket:            sources.IgnitionBucket,
+		PublishStrategy:           string(sources.Publish),
 	}
 
 	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundle(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle)

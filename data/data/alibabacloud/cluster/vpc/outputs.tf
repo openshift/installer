@@ -23,11 +23,15 @@ output "eip_ip" {
 }
 
 output "slb_ids" {
-  value = [alicloud_slb_load_balancer.slb_external.id, alicloud_slb_load_balancer.slb_internal.id]
+  value = concat(alicloud_slb_load_balancer.slb_external[*].id, [alicloud_slb_load_balancer.slb_internal.id])
+}
+
+output "slb_group_length" {
+  value = length(concat(alicloud_slb_load_balancer.slb_external[*].id, [alicloud_slb_load_balancer.slb_internal.id]))
 }
 
 output "slb_external_ip" {
-  value = alicloud_slb_load_balancer.slb_external.address
+  value = local.is_external ? alicloud_slb_load_balancer.slb_external[0].address : null
 }
 
 output "slb_internal_ip" {

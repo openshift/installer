@@ -4,6 +4,7 @@ locals {
   prefix      = var.cluster_id
   vpc_id      = var.vpc_id == "" ? alicloud_vpc.vpc.0.id : var.vpc_id
   vswitch_ids = length(var.vswitch_ids) == 0 ? alicloud_vswitch.vswitches.*.id : var.vswitch_ids
+  is_external = var.publish_strategy == "External" ? true : false
 }
 
 data "alicloud_vswitches" "vswitches" {
