@@ -1,7 +1,6 @@
 package baremetal
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net"
 	"strings"
@@ -56,13 +55,10 @@ type TemplateData struct {
 
 	// Hosts is the information needed to create the objects in Ironic.
 	Hosts []*baremetal.Host
-
-	// Pull secret for Ironic agent.
-	PullSecretBase64 string
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
-func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry, ironicUsername, ironicPassword string, pullSecret string) *TemplateData {
+func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry, ironicUsername, ironicPassword string) *TemplateData {
 	var templateData TemplateData
 
 	templateData.Hosts = config.Hosts
@@ -114,7 +110,6 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.IronicPassword = ironicPassword
 	templateData.ClusterOSImage = config.ClusterOSImage
 	templateData.APIVIP = config.APIVIP
-	templateData.PullSecretBase64 = base64.StdEncoding.EncodeToString([]byte(pullSecret))
 
 	return &templateData
 }

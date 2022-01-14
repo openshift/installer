@@ -180,6 +180,10 @@ else
     IRONIC_HOST="${IRONIC_IP}"
 fi
 
+# Create a podman secret for the image-customization-server 
+podman secret rm pull-secret || true
+base64 -w 0 /root/.docker/config.json | podman secret create pull-secret -
+
 # Embed agent ignition into the rhcos live iso
 podman run -d --net host --privileged --name image-customization \
     --env DEPLOY_ISO="/shared/html/images/ironic-python-agent.iso" \
@@ -187,13 +191,13 @@ podman run -d --net host --privileged --name image-customization \
     --env IRONIC_BASE_URL="http://${IRONIC_HOST}" \
     --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
     --env IRONIC_AGENT_IMAGE="$IRONIC_AGENT_IMAGE" \
-    --env IRONIC_AGENT_PULL_SECRET="{{.PlatformData.BareMetal.PullSecretBase64}}" \
     --env IP_OPTIONS=$EXTERNAL_IP_OPTIONS \
     --env REGISTRIES_CONF_PATH=/tmp/containers/registries.conf \
     --entrypoint '["/image-customization-server", "--nmstate-dir=/tmp/nmstate/", "--images-publish-addr=http://0.0.0.0:8084"]' \
     -v /tmp/nmstate/:/tmp/nmstate/ \
     -v $IRONIC_SHARED_VOLUME:/shared:z \
     -v /etc/containers:/tmp/containers:z \
+    --secret pull-secret,mode=400 \
     ${CUSTOMIZATION_IMAGE}
 
 podman run -d --net host --privileged --name ironic-conductor \
