@@ -31,6 +31,7 @@ import (
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -211,6 +212,15 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodeCABundle: base64.StdEncoding.EncodeToString([]byte(conf.CABundle)),
 			},
 		}
+	case nutanixtypes.Name:
+		cloudCreds = cloudCredsSecretData{
+			Nutanix: &NutanixCredsSecretData{
+				Base64encodeEndpoint: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.Nutanix.PrismCentral)),
+				Base64encodePort:     base64.StdEncoding.EncodeToString([]byte(installConfig.Config.Nutanix.Port)),
+				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.Nutanix.Username)),
+				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.Nutanix.Password)),
+			},
+		}
 	}
 
 	templateData := &openshiftTemplateData{
@@ -236,7 +246,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	}
 
 	switch platform {
-	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name, ibmcloudtypes.Name, ovirttypes.Name:
+	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name, ibmcloudtypes.Name, ovirttypes.Name, nutanixtypes.Name:
 		if installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
 			assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		}

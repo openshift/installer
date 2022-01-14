@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/powervs"
@@ -223,6 +224,14 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			Region:         installConfig.Config.Platform.PowerVS.Region,
 			Zone:           installConfig.Config.Platform.PowerVS.Zone,
 			CISInstanceCRN: cisInstanceCRN,
+		}
+	case nutanix.Name:
+		config.Spec.PlatformSpec.Type = configv1.NutanixPlatformType
+		if installConfig.Config.Nutanix.APIVIP != "" {
+			config.Status.PlatformStatus.Nutanix = &configv1.NutanixPlatformStatus{
+				APIServerInternalIP: installConfig.Config.Nutanix.APIVIP,
+				IngressIP:           installConfig.Config.Nutanix.IngressVIP,
+			}
 		}
 	default:
 		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
