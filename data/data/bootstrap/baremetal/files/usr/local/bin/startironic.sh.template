@@ -93,6 +93,11 @@ IPTABLES=ip6tables
 IPTABLES=iptables
 {{ end }}
 
+{{ if .UseIPv6ForNodeIP }}
+IP_OPTIONS="ip=dhcp6"
+{{ else }}
+IP_OPTIONS="ip=dhcp"
+{{ end }}
 
 # Set CACHEURL to the the same IP as is used in RHCOS_BOOT_IMAGE_URL, assuming any cache would
 # be the same host, if none is found then the downloader containers just skip and download
@@ -101,6 +106,7 @@ IP=$(echo $RHCOS_BOOT_IMAGE_URL | sed -e 's/.*:\/\/\([^/]*\)\/.*/\1/g' )
 CACHEURL="http://$IP/images"
 podman run -d --net host --name coreos-downloader \
      --env CACHEURL=${CACHEURL} \
+     --env IP_OPTIONS=${IP_OPTIONS} \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_BOOT_IMAGE_URL
 
 podman run -d --net host --name ipa-downloader \
