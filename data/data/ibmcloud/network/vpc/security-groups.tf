@@ -6,7 +6,7 @@ locals {
 }
 
 # NOTE: Security group rules enforces network access based on OCP requirements
-# https://docs.openshift.com/container-platform/4.8/installing/installing_platform_agnostic/installing-platform-agnostic.html#installation-network-connectivity-user-infra_installing-platform-agnostic
+# https://docs.openshift.com/container-platform/4.9/installing/installing_platform_agnostic/installing-platform-agnostic.html#installation-network-connectivity-user-infra_installing-platform-agnostic
 
 # NOTE: Security group limitations
 # 5 per network interface (NIC) on a virtual server instance
@@ -112,6 +112,33 @@ resource "ibm_is_security_group_rule" "openshift_network_kube_default_ports_inbo
   tcp {
     port_min = 10250
     port_max = 10250
+  }
+}
+
+# Due to limtation of only 5 SGs per interface and only 5 remotes per SG
+# we stick the IPsec rules here in openshift_network since this SG is added
+# to all nodes.
+# There is a max of 50 rules per SG, so if we have more subnets this will break.
+
+# IPsec IKE - port 500
+resource "ibm_is_security_group_rule" "openshift_network_ipsec_ike_500_inbound" {
+  group     = ibm_is_security_group.openshift_network.id
+  direction = "inbound"
+  remote    = ibm_is_security_group.openshift_network.id
+  udp {
+    port_min = 500
+    port_max = 500
+  }
+}
+
+# IPsec IKE NAT-T - port 4500
+resource "ibm_is_security_group_rule" "openshift_network_ipsec_ike_nat_t_4500_inbound" {
+  group     = ibm_is_security_group.openshift_network.id
+  direction = "inbound"
+  remote    = ibm_is_security_group.openshift_network.id
+  udp {
+    port_min = 4500
+    port_max = 4500
   }
 }
 
