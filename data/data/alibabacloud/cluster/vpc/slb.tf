@@ -18,9 +18,8 @@ resource "alicloud_slb_listener" "listener_external_6443" {
   backend_port              = 6443
   frontend_port             = 6443
   protocol                  = "tcp"
-  bandwidth                 = 10
-  sticky_session            = "on"
-  sticky_session_type       = "insert"
+  bandwidth                 = -1
+  sticky_session            = "off"
   cookie_timeout            = 86400
   health_check              = "on"
   health_check_type         = "http"
@@ -57,9 +56,8 @@ resource "alicloud_slb_listener" "listener_internal_6443" {
   backend_port              = 6443
   frontend_port             = 6443
   protocol                  = "tcp"
-  bandwidth                 = 10
-  sticky_session            = "on"
-  sticky_session_type       = "insert"
+  bandwidth                 = -1
+  sticky_session            = "off"
   cookie_timeout            = 86400
   health_check              = "on"
   health_check_type         = "http"
@@ -82,9 +80,8 @@ resource "alicloud_slb_listener" "listener_internal_22623" {
   backend_port              = 22623
   frontend_port             = 22623
   protocol                  = "tcp"
-  bandwidth                 = 10
-  sticky_session            = "on"
-  sticky_session_type       = "insert"
+  bandwidth                 = -1
+  sticky_session            = "off"
   cookie_timeout            = 86400
   health_check              = "on"
   health_check_type         = "http"
