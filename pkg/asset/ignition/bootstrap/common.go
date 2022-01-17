@@ -281,15 +281,11 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		clusterProfile = cp
 	}
 
-	// Set Tear-down delay for platform specific
-	var tearDownDelay string
-	switch installConfig.Config.Platform.Name() {
-	case alibabacloud.Name:
+	tearDownDelay := "0"
+	if installConfig.Config.Platform.Name() == alibabacloud.Name {
 		// tear-down set to let kube-apiserver rolls out and avoid loopback CLB limitation
 		// BZ https://bugzilla.redhat.com/show_bug.cgi?id=2035757
 		tearDownDelay = "10m"
-	default:
-		tearDownDelay = "0"
 	}
 
 	var bootstrapInPlaceConfig *types.BootstrapInPlace
