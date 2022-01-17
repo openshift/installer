@@ -85,12 +85,6 @@ podman run -d --net host --privileged --name mariadb \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runmariadb \
      --env MARIADB_PASSWORD=$mariadb_password ${IRONIC_IMAGE}
 
-podman run -d --net host --privileged --name httpd \
-     --restart on-failure \
-     --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
-     --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
-     -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
-
 {{ if .PlatformData.BareMetal.ProvisioningIPv6 }}
 IPTABLES=ip6tables
 {{ else }}
@@ -116,6 +110,15 @@ podman run -d --name coreos-downloader \
      --env IP_OPTIONS=${PROVISIONING_IP_OPTIONS} \
      -v $IRONIC_SHARED_VOLUME:/shared:z \
      ${MACHINE_OS_IMAGES_IMAGE} /bin/copy-metal --all /shared/html/images/
+
+# Wait for images to be downloaded/ready
+podman wait -i 1000ms coreos-downloader
+
+podman run -d --net host --privileged --name httpd \
+     --restart on-failure \
+     --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
+     --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
 # Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
 for port in 80 5050 6385 ; do
@@ -146,9 +149,6 @@ done
 
 $IPTABLES -t raw -A DHCP_IRONIC -j DROP
 {{end}}
-
-# Wait for images to be downloaded/ready
-podman wait -i 1000ms coreos-downloader
 
 export KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback
 
