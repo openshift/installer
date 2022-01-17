@@ -16,6 +16,7 @@ import (
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
+	icnutanix "github.com/openshift/installer/pkg/asset/installconfig/nutanix"
 	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	icpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
@@ -100,6 +101,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.BareMetal = platform.BareMetal
 	a.Config.Ovirt = platform.Ovirt
 	a.Config.PowerVS = platform.PowerVS
+	a.Config.Nutanix = platform.Nutanix
 
 	return a.finish("")
 }
@@ -230,6 +232,9 @@ func (a *InstallConfig) platformValidation() error {
 	}
 	if a.Config.Platform.OpenStack != nil {
 		return icopenstack.Validate(a.Config)
+	}
+	if a.Config.Platform.Nutanix != nil {
+		return icnutanix.Validate(a.Config)
 	}
 	return field.ErrorList{}.ToAggregate()
 }
