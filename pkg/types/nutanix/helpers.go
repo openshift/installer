@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -27,24 +28,37 @@ type metadataCloudInit struct {
 	UUID string `json:"uuid"`
 }
 
-func bootISOImageName(infraID string) string {
+// BootISOImageName is the image name for Bootstrap node for a given infraID
+func BootISOImageName(infraID string) string {
 	return fmt.Sprintf("%s-%s", infraID, isoFile)
 }
 
-func createBootstrapISO(infraID, userData string) (string, error) {
+// BootISOImagePath is the image path for Bootstrap node for a given infraID and path
+func BootISOImagePath(path, infraID string) string {
+	imgName := BootISOImageName(infraID)
+	application := "openshift-installer"
+	subdir := "image_cache"
+	fullISOFile := filepath.Join(path, application, subdir, imgName)
+	return fullISOFile
+}
+
+// CreateBootstrapISO creates a ISO for the bootstrap node
+func CreateBootstrapISO(infraID, userData string) (string, error) {
 	id := uuid.New()
 	metaObj := &metadataCloudInit{
 		UUID: id.String(),
 	}
-	fullISOFile := bootISOImageName(infraID)
+
 	metadata, err := json.Marshal(metaObj)
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("failed to marshal metadata struct to json"))
 	}
+
 	writer, err := iso9660.NewWriter()
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("failed to create writer: %s", err))
 	}
+
 	defer writer.Cleanup()
 
 	userDataReader := strings.NewReader(userData)
@@ -59,6 +73,12 @@ func createBootstrapISO(infraID, userData string) (string, error) {
 		return "", errors.Wrap(err, fmt.Sprintf("failed to add file: %s", err))
 	}
 
+	cacheDir, err := os.UserCacheDir()
+	if err != nil {
+		return "", errors.Wrap(err, "unable to fetch user cache dir")
+	}
+
+	fullISOFile := BootISOImagePath(cacheDir, infraID)
 	outputFile, err := os.OpenFile(fullISOFile, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("failed to create file: %s", err))
@@ -73,6 +93,7 @@ func createBootstrapISO(infraID, userData string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("failed to close output file: %s", err))
 	}
+
 	return fullISOFile, nil
 }
 
