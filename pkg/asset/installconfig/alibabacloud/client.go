@@ -235,10 +235,8 @@ func (client *Client) ListPrivateZoneRegions() (response *pvtz.DescribeRegionsRe
 }
 
 // ListDNSDomain get the list of domains.
-func (client *Client) ListDNSDomain(baseDomain string) (response *alidns.DescribeDomainsResponse, err error) {
+func (client *Client) ListDNSDomain() (response *alidns.DescribeDomainsResponse, err error) {
 	request := alidns.CreateDescribeDomainsRequest()
-	request.KeyWord = baseDomain
-	request.SearchMode = "EXACT"
 	response = &alidns.DescribeDomainsResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
