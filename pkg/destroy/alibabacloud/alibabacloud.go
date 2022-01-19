@@ -331,7 +331,7 @@ func (o *ClusterUninstaller) deleteResourceGroup(logger logrus.FieldLogger) (err
 	logger = logger.WithField("name", resourceGroupName)
 	logger.Debug("Searching resource groups")
 
-	response, err := o.listResourceGroups()
+	response, err := o.listResourceGroups(resourceGroupName)
 	if err != nil {
 		return err
 	}
@@ -355,7 +355,7 @@ func (o *ClusterUninstaller) deleteResourceGroup(logger logrus.FieldLogger) (err
 		2*time.Second,
 		1*time.Minute,
 		func() (bool, error) {
-			response, err := o.listResourceGroups()
+			response, err := o.listResourceGroups(resourceGroupName)
 			if err != nil {
 				return false, err
 			}
@@ -381,9 +381,10 @@ func (o *ClusterUninstaller) deleteResourceGroupByID(resourceGroupID string, log
 	return
 }
 
-func (o *ClusterUninstaller) listResourceGroups() (response *resourcemanager.ListResourceGroupsResponse, err error) {
+func (o *ClusterUninstaller) listResourceGroups(resourceGroupName string) (response *resourcemanager.ListResourceGroupsResponse, err error) {
 	request := resourcemanager.CreateListResourceGroupsRequest()
 	request.Scheme = "https"
+	request.QueryParams["Name"] = resourceGroupName
 	response, err = o.rmanagerClient.ListResourceGroups(request)
 	return
 }
