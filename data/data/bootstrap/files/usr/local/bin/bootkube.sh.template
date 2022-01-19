@@ -402,7 +402,11 @@ run_cluster_bootstrap() {
         --volume "$PWD:/assets:z" \
         --volume /etc/kubernetes:/etc/kubernetes:z \
         "${CLUSTER_BOOTSTRAP_IMAGE}" \
-        start --tear-down-early=false --asset-dir=/assets --required-pods="${REQUIRED_PODS}"
+        start \
+          --tear-down-early=false \
+          --tear-down-delay="{{.TearDownDelay}}" \
+          --asset-dir=/assets \
+          --required-pods="${REQUIRED_PODS}"
 }
     
 if [ ! -f cb-bootstrap.done ]

@@ -38,6 +38,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -78,6 +79,7 @@ type bootstrapTemplateData struct {
 	BootstrapInPlace      *types.BootstrapInPlace
 	UseIPv6ForNodeIP      bool
 	IsOKD                 bool
+	TearDownDelay         string
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -278,6 +280,14 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		logrus.Warnf("Found override for Cluster Profile: %q", cp)
 		clusterProfile = cp
 	}
+
+	tearDownDelay := "0"
+	if installConfig.Config.Platform.Name() == alibabacloud.Name {
+		// tear-down set to let kube-apiserver rolls out and avoid loopback CLB limitation
+		// BZ https://bugzilla.redhat.com/show_bug.cgi?id=2035757
+		tearDownDelay = "10m"
+	}
+
 	var bootstrapInPlaceConfig *types.BootstrapInPlace
 	if bootstrapInPlace {
 		bootstrapInPlaceConfig = installConfig.Config.BootstrapInPlace
@@ -297,6 +307,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		BootstrapInPlace:      bootstrapInPlaceConfig,
 		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
 		IsOKD:                 installConfig.Config.IsOKD(),
+		TearDownDelay:         tearDownDelay,
 	}
 }
 
