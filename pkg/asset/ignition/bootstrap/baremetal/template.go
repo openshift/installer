@@ -55,6 +55,9 @@ type TemplateData struct {
 
 	// Hosts is the information needed to create the objects in Ironic.
 	Hosts []*baremetal.Host
+
+	// ProvisioningNetwork displays the type of provisioning network being used
+	ProvisioningNetwork string
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
@@ -64,6 +67,7 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.Hosts = config.Hosts
 
 	templateData.ProvisioningIP = config.BootstrapProvisioningIP
+	templateData.ProvisioningNetwork = string(config.ProvisioningNetwork)
 	templateData.BaremetalEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "6385"))
 	templateData.BaremetalIntrospectionEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "5050"))
 

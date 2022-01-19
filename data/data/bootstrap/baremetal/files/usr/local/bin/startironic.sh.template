@@ -104,10 +104,14 @@ EXTERNAL_IP_OPTIONS="ip=dhcp"
 {{ end }}
 
 
-{{ if .PlatformData.BareMetal.ProvisioningIPv6 }}
-PROVISIONING_IP_OPTIONS="ip=dhcp6"
+{{ if eq .PlatformData.BareMetal.ProvisioningNetwork "Disabled" }}
+PROVISIONING_IP_OPTIONS=$EXTERNAL_IP_OPTIONS
 {{ else }}
+  {{ if .PlatformData.BareMetal.ProvisioningIPv6 }}
+PROVISIONING_IP_OPTIONS="ip=dhcp6"
+  {{ else }}
 PROVISIONING_IP_OPTIONS="ip=dhcp"
+  {{ end }}
 {{ end }}
 
 
