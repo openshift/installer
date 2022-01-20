@@ -143,6 +143,11 @@ type Platform struct {
 	// +optional
 	ProvisioningNetworkInterface string `json:"provisioningNetworkInterface"`
 
+	// BootstrapProvisioningInterface override. If set, it sets the interface that the
+	// bootstrap node will use to host its ProvisioningIP.
+	// +optional
+	BootstrapProvisioningInterfaceOverride string `json:"bootstrapProvisioningInterfaceOverride"`
+
 	// ProvisioningNetworkCIDR defines the network to use for provisioning.
 	// +optional
 	ProvisioningNetworkCIDR *ipnet.IPNet `json:"provisioningNetworkCIDR,omitempty"`

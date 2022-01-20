@@ -1435,6 +1435,11 @@ spec:
                     description: APIVIP is the VIP to use for internal API communication
                     format: ip
                     type: string
+                  boostrapProvisioningInterfaceOverride:
+                    description: BootstrapProvisioningInterface override. If set,
+                      it sets the interface that the bootstrap node will use to host
+                      its ProvisioningIP.
+                    type: string
                   bootstrapOSImage:
                     description: BootstrapOSImage is a URL to override the default
                       OS image for the bootstrap node. The URL must contain a sha256

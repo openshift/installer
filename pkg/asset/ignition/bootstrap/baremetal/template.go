@@ -75,7 +75,11 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
 		templateData.ProvisioningCIDR = cidr
 		templateData.ProvisioningIPv6 = config.ProvisioningNetworkCIDR.IP.To4() == nil
-		templateData.ProvisioningInterface = "ens4"
+		if config.BootstrapProvisioningInterfaceOverride == "" {
+			templateData.ProvisioningInterface = "ens4"
+		} else {
+			templateData.ProvisioningInterface = config.BootstrapProvisioningInterfaceOverride
+		}
 		templateData.ProvisioningDNSMasq = true
 	}
 
@@ -95,7 +99,11 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 		}
 		templateData.ProvisioningDHCPAllowList = strings.Join(dhcpAllowList, " ")
 	case baremetal.DisabledProvisioningNetwork:
-		templateData.ProvisioningInterface = "ens3"
+		if config.BootstrapProvisioningInterfaceOverride == "" {
+			templateData.ProvisioningInterface = "ens3"
+		} else {
+			templateData.ProvisioningInterface = config.BootstrapProvisioningInterfaceOverride
+		}
 		templateData.ProvisioningDNSMasq = false
 
 		if templateData.ProvisioningIP != "" {
