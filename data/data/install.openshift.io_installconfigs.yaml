@@ -1514,7 +1514,7 @@ spec:
                         name:
                           type: string
                         networkConfig:
-                          type: string
+                          x-kubernetes-preserve-unknown-fields: true
                         role:
                           type: string
                         rootDeviceHints:
