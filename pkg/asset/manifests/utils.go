@@ -5,6 +5,8 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	configv1 "github.com/openshift/api/config/v1"
 )
 
 type configurationObject struct {
@@ -39,4 +41,28 @@ func getAPIServerURL(ic *types.InstallConfig) string {
 
 func getInternalAPIServerURL(ic *types.InstallConfig) string {
 	return fmt.Sprintf("https://api-int.%s:6443", ic.ClusterDomain())
+}
+
+func getControlPlaneTopology(ic *types.InstallConfig) configv1.TopologyMode {
+	if ic.ControlPlane.Replicas != nil && *ic.ControlPlane.Replicas < 3 {
+		return configv1.SingleReplicaTopologyMode
+	}
+	return configv1.HighlyAvailableTopologyMode
+}
+
+func getInfrastructureTopology(ic *types.InstallConfig) configv1.TopologyMode {
+	numOfWorkers := int64(0)
+	for _, mp := range ic.Compute {
+		if mp.Replicas != nil {
+			numOfWorkers += *mp.Replicas
+		}
+	}
+	switch numOfWorkers {
+	case 0:
+		return getControlPlaneTopology(ic)
+	case 1:
+		return configv1.SingleReplicaTopologyMode
+	default:
+		return configv1.HighlyAvailableTopologyMode
+	}
 }

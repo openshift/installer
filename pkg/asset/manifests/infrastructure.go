@@ -75,32 +75,13 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			PlatformSpec: configv1.PlatformSpec{},
 		},
 		Status: configv1.InfrastructureStatus{
-			InfrastructureName:   clusterID.InfraID,
-			APIServerURL:         getAPIServerURL(installConfig.Config),
-			APIServerInternalURL: getInternalAPIServerURL(installConfig.Config),
-			PlatformStatus:       &configv1.PlatformStatus{},
+			InfrastructureName:     clusterID.InfraID,
+			APIServerURL:           getAPIServerURL(installConfig.Config),
+			APIServerInternalURL:   getInternalAPIServerURL(installConfig.Config),
+			PlatformStatus:         &configv1.PlatformStatus{},
+			ControlPlaneTopology:   getControlPlaneTopology(installConfig.Config),
+			InfrastructureTopology: getInfrastructureTopology(installConfig.Config),
 		},
-	}
-
-	if installConfig.Config.ControlPlane.Replicas != nil && *installConfig.Config.ControlPlane.Replicas < 3 {
-		config.Status.ControlPlaneTopology = configv1.SingleReplicaTopologyMode
-	} else {
-		config.Status.ControlPlaneTopology = configv1.HighlyAvailableTopologyMode
-	}
-
-	numOfWorkers := int64(0)
-	for _, mp := range installConfig.Config.Compute {
-		if mp.Replicas != nil {
-			numOfWorkers += *mp.Replicas
-		}
-	}
-	switch numOfWorkers {
-	case 0:
-		config.Status.InfrastructureTopology = config.Status.ControlPlaneTopology
-	case 1:
-		config.Status.InfrastructureTopology = configv1.SingleReplicaTopologyMode
-	default:
-		config.Status.InfrastructureTopology = configv1.HighlyAvailableTopologyMode
 	}
 
 	switch installConfig.Config.Platform.Name() {

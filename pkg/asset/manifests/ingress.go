@@ -97,6 +97,11 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig) ([]byte, error) {
 	switch config.Publish {
 	case types.InternalPublishingStrategy:
+		var replicas *int32
+		if getInfrastructureTopology(config) == configv1.SingleReplicaTopologyMode {
+			one := int32(1)
+			replicas = &one
+		}
 		obj := &operatorv1.IngressController{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: operatorv1.GroupVersion.String(),
@@ -113,6 +118,7 @@ func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig
 						Scope: operatorv1.InternalLoadBalancer,
 					},
 				},
+				Replicas: replicas,
 			},
 		}
 		return yaml.Marshal(obj)
