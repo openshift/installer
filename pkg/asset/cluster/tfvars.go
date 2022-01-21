@@ -10,7 +10,6 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	"github.com/ghodss/yaml"
-	alibabacloudprovider "github.com/openshift/cluster-api-provider-alibaba/pkg/apis/alibabacloudprovider/v1beta1"
 	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
@@ -19,7 +18,8 @@ import (
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 
 	configv1 "github.com/openshift/api/config/v1"
-	machinev1 "github.com/openshift/api/machine/v1beta1"
+	machinev1 "github.com/openshift/api/machine/v1"
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -309,17 +309,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		masterConfigs := make([]*machinev1.AzureMachineProviderSpec, len(masters))
+		masterConfigs := make([]*machinev1beta1.AzureMachineProviderSpec, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.AzureMachineProviderSpec)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec)
 		}
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
 			return err
 		}
-		workerConfigs := make([]*machinev1.AzureMachineProviderSpec, len(workers))
+		workerConfigs := make([]*machinev1beta1.AzureMachineProviderSpec, len(workers))
 		for i, w := range workers {
-			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1.AzureMachineProviderSpec)
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec)
 		}
 
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
@@ -375,17 +375,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		masterConfigs := make([]*machinev1.GCPMachineProviderSpec, len(masters))
+		masterConfigs := make([]*machinev1beta1.GCPMachineProviderSpec, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.GCPMachineProviderSpec)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec)
 		}
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
 			return err
 		}
-		workerConfigs := make([]*machinev1.GCPMachineProviderSpec, len(workers))
+		workerConfigs := make([]*machinev1beta1.GCPMachineProviderSpec, len(workers))
 		for i, w := range workers {
-			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1.GCPMachineProviderSpec)
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec)
 		}
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 			publicZone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
@@ -677,9 +677,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		controlPlaneConfigs := make([]*machinev1.VSphereMachineProviderSpec, len(controlPlanes))
+		controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlanes))
 		for i, c := range controlPlanes {
-			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1.VSphereMachineProviderSpec)
+			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
 		}
 
 		// Set this flag to use an existing folder specified in the install-config. Otherwise, create one.
@@ -724,17 +724,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to get master machine info")
 		}
-		masterConfigs := make([]*alibabacloudprovider.AlibabaCloudMachineProviderConfig, len(masters))
+		masterConfigs := make([]*machinev1.AlibabaCloudMachineProviderConfig, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.AlibabaCloudMachineProviderConfig)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.AlibabaCloudMachineProviderConfig)
 		}
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
 			return errors.Wrapf(err, "failed to get worker machine info")
 		}
-		workerConfigs := make([]*alibabacloudprovider.AlibabaCloudMachineProviderConfig, len(workers))
+		workerConfigs := make([]*machinev1.AlibabaCloudMachineProviderConfig, len(workers))
 		for i, w := range workers {
-			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*alibabacloudprovider.AlibabaCloudMachineProviderConfig)
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1.AlibabaCloudMachineProviderConfig)
 		}
 
 		natGatewayZones, err := client.ListEnhanhcedNatGatewayAvailableZones()

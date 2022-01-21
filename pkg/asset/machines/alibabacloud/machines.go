@@ -4,8 +4,9 @@ package alibabacloud
 import (
 	"fmt"
 
-	machineapi "github.com/openshift/api/machine/v1beta1"
-	alibabacloudprovider "github.com/openshift/cluster-api-provider-alibaba/pkg/apis/alibabacloudprovider/v1beta1"
+	machinev1 "github.com/openshift/api/machine/v1"
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
+
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +18,7 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string, resourceTags map[string]string, vswitchMaps map[string]string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string, resourceTags map[string]string, vswitchMaps map[string]string) ([]machinev1beta1.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != alibabacloud.Name {
 		return nil, fmt.Errorf("non-AlibabaCloud configuration: %q", configPlatform)
 	}
@@ -33,7 +34,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		total = *pool.Replicas
 	}
 
-	var machines []machineapi.Machine
+	var machines []machinev1beta1.Machine
 	for idx := int64(0); idx < total; idx++ {
 		zoneID := azs[int(idx)%len(azs)]
 		vswitchID := vswitchMaps[zoneID]
@@ -41,7 +42,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
-		machine := machineapi.Machine{
+		machine := machinev1beta1.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
 				Kind:       "Machine",
@@ -55,8 +56,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 					"machine.openshift.io/cluster-api-machine-type": role,
 				},
 			},
-			Spec: machineapi.MachineSpec{
-				ProviderSpec: machineapi.ProviderSpec{
+			Spec: machinev1beta1.MachineSpec{
+				ProviderSpec: machinev1beta1.ProviderSpec{
 					Value: &runtime.RawExtension{Object: provider},
 				},
 			},
@@ -75,32 +76,33 @@ func provider(clusterID string,
 	userDataSecret string,
 	resourceTags map[string]string,
 	vswitchID string,
-) (*alibabacloudprovider.AlibabaCloudMachineProviderConfig, error) {
+) (*machinev1.AlibabaCloudMachineProviderConfig, error) {
 	tags, err := tagsFromResourceTags(clusterID, resourceTags)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create alibabacloudprovider.Tag from Tags")
 	}
-	sgResourceRef := []alibabacloudprovider.AlibabaResourceReference{
+	sgTags := append(tags, machinev1.Tag{
+		Key:   "Name",
+		Value: fmt.Sprintf("%s-sg-%s", clusterID, role),
+	})
+	sgResourceRef := []machinev1.AlibabaResourceReference{
 		{
-			Tags: append(tags, alibabacloudprovider.Tag{
-				Key:   "Name",
-				Value: fmt.Sprintf("%s-sg-%s", clusterID, role),
-			}),
+			Type: machinev1.AlibabaResourceReferenceTypeTags,
+			Tags: &sgTags,
 		},
 	}
-	config := &alibabacloudprovider.AlibabaCloudMachineProviderConfig{
+	config := &machinev1.AlibabaCloudMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "alibabacloudmachineproviderconfig.openshift.io/v1beta1",
+			APIVersion: "machine.openshift.io/v1",
 			Kind:       "AlibabaCloudMachineProviderConfig",
 		},
 		ImageID:      mpool.ImageID,
 		InstanceType: mpool.InstanceType,
-		SystemDisk: alibabacloudprovider.SystemDiskProperties{
+		SystemDisk: machinev1.SystemDiskProperties{
 			Category: string(mpool.SystemDiskCategory),
-			Size:     mpool.SystemDiskSize,
+			Size:     int64(mpool.SystemDiskSize),
 		},
 		RegionID:          platform.Region,
-		ResourceGroupID:   platform.ResourceGroupID,
 		ZoneID:            zoneID,
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "alibabacloud-credentials"},
@@ -108,18 +110,40 @@ func provider(clusterID string,
 		RAMRoleName:       fmt.Sprintf("%s-role-%s", clusterID, role),
 		SecurityGroups:    sgResourceRef,
 	}
-	config.VSwitch = alibabacloudprovider.AlibabaResourceReference{
-		ID: vswitchID,
-		Tags: append(tags, alibabacloudprovider.Tag{
+
+	if platform.ResourceGroupID != "" {
+		config.ResourceGroup = machinev1.AlibabaResourceReference{
+			Type: machinev1.AlibabaResourceReferenceTypeID,
+			ID:   &platform.ResourceGroupID,
+		}
+	} else {
+		rgname := platform.ClusterResourceGroupName(clusterID)
+		config.ResourceGroup = machinev1.AlibabaResourceReference{
+			Type: machinev1.AlibabaResourceReferenceTypeName,
+			Name: &rgname,
+		}
+	}
+
+	if vswitchID != "" {
+		config.VSwitch = machinev1.AlibabaResourceReference{
+			Type: machinev1.AlibabaResourceReferenceTypeID,
+			ID:   &vswitchID,
+		}
+	} else {
+		vstags := append(tags, machinev1.Tag{
 			Key:   "Name",
 			Value: fmt.Sprintf("%s-vswitch-%s", clusterID, zoneID),
-		}),
+		})
+		config.VSwitch = machinev1.AlibabaResourceReference{
+			Type: machinev1.AlibabaResourceReferenceTypeTags,
+			Tags: &vstags,
+		}
 	}
 	return config, nil
 }
 
-func tagsFromResourceTags(clusterID string, resourceTags map[string]string) ([]alibabacloudprovider.Tag, error) {
-	tags := []alibabacloudprovider.Tag{
+func tagsFromResourceTags(clusterID string, resourceTags map[string]string) ([]machinev1.Tag, error) {
+	tags := []machinev1.Tag{
 		{Key: fmt.Sprintf("kubernetes.io/cluster/%s", clusterID), Value: "owned"},
 		{Key: "GISV", Value: "ocp"},
 		{Key: "sigs.k8s.io/cloud-provider-alibaba/origin", Value: "ocp"},
@@ -132,7 +156,7 @@ func tagsFromResourceTags(clusterID string, resourceTags map[string]string) ([]a
 		if forbiddenTags.Has(k) {
 			return nil, fmt.Errorf("user tags may not clobber %s", k)
 		}
-		tags = append(tags, alibabacloudprovider.Tag{Key: k, Value: v})
+		tags = append(tags, machinev1.Tag{Key: k, Value: v})
 	}
 	return tags, nil
 }

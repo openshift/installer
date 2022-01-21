@@ -9,9 +9,8 @@ import (
 
 	"github.com/ghodss/yaml"
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
-	machineapi "github.com/openshift/api/machine/v1beta1"
-	alibabacloudapi "github.com/openshift/cluster-api-provider-alibaba/pkg/apis"
-	alibabacloudprovider "github.com/openshift/cluster-api-provider-alibaba/pkg/apis/alibabacloudprovider/v1beta1"
+	machinev1 "github.com/openshift/api/machine/v1"
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	baremetalapi "github.com/openshift/cluster-api-provider-baremetal/pkg/apis"
 	baremetalprovider "github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
 	ibmcloudapi "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis"
@@ -161,7 +160,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 	pool := *ic.ControlPlane
 	var err error
-	machines := []machineapi.Machine{}
+	machines := []machinev1beta1.Machine{}
 	switch ic.Platform.Name() {
 	case alibabacloudtypes.Name:
 		client, err := installConfig.AlibabaCloud.Client()
@@ -543,35 +542,37 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 }
 
 // Machines returns master Machine manifest structures.
-func (m *Master) Machines() ([]machineapi.Machine, error) {
+func (m *Master) Machines() ([]machinev1beta1.Machine, error) {
 	scheme := runtime.NewScheme()
-	alibabacloudapi.AddToScheme(scheme)
 	awsapi.AddToScheme(scheme)
 	baremetalapi.AddToScheme(scheme)
 	ibmcloudapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
-	scheme.AddKnownTypes(machineapi.SchemeGroupVersion,
-		&machineapi.VSphereMachineProviderSpec{},
-		&machineapi.AzureMachineProviderSpec{},
-		&machineapi.GCPMachineProviderSpec{},
+	scheme.AddKnownTypes(machinev1beta1.SchemeGroupVersion,
+		&machinev1beta1.VSphereMachineProviderSpec{},
+		&machinev1beta1.AzureMachineProviderSpec{},
+		&machinev1beta1.GCPMachineProviderSpec{},
 	)
-	machineapi.AddToScheme(scheme)
+	scheme.AddKnownTypes(machinev1.GroupVersion,
+		&machinev1.AlibabaCloudMachineProviderConfig{},
+	)
+	machinev1beta1.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
-		alibabacloudprovider.SchemeGroupVersion,
+		machinev1.GroupVersion,
 		awsprovider.SchemeGroupVersion,
 		baremetalprovider.SchemeGroupVersion,
 		ibmcloudprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
 		openstackprovider.SchemeGroupVersion,
-		machineapi.SchemeGroupVersion,
+		machinev1beta1.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
 	)
 
-	machines := []machineapi.Machine{}
+	machines := []machinev1beta1.Machine{}
 	for i, file := range m.MachineFiles {
-		machine := &machineapi.Machine{}
+		machine := &machinev1beta1.Machine{}
 		err := yaml.Unmarshal(file.Data, &machine)
 		if err != nil {
 			return machines, errors.Wrapf(err, "unmarshal master %d", i)
