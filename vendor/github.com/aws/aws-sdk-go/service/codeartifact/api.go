@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/private/protocol"
+	"github.com/aws/aws-sdk-go/private/protocol/restjson"
 )
 
 const opAssociateExternalConnection = "AssociateExternalConnection"
@@ -495,10 +496,6 @@ func (c *CodeArtifact) DeleteDomainRequest(input *DeleteDomainInput) (req *reque
 //   * InternalServerException
 //   The operation did not succeed because of an error that occurred inside AWS
 //   CodeArtifact.
-//
-//   * ResourceNotFoundException
-//   The operation did not succeed because the resource requested is not found
-//   in the service.
 //
 //   * ThrottlingException
 //   The operation did not succeed because too many requests are sent to the service.
@@ -1365,15 +1362,13 @@ func (c *CodeArtifact) DisposePackageVersionsRequest(input *DisposePackageVersio
 // to Disposed. A disposed package version cannot be restored in your repository
 // because its assets are deleted.
 //
-// To view all disposed package versions in a repository, use ListackageVersions
+// To view all disposed package versions in a repository, use ListPackageVersions
 // (https://docs.aws.amazon.com/codeartifact/latest/APIReference/API_ListPackageVersions.html)
 // and set the status (https://docs.aws.amazon.com/codeartifact/latest/APIReference/API_ListPackageVersions.html#API_ListPackageVersions_RequestSyntax)
 // parameter to Disposed.
 //
-// To view information about a disposed package version, use ListPackageVersions
-// (https://docs.aws.amazon.com/codeartifact/latest/APIReference/API_ListPackageVersions.html)
-// and set the status (https://docs.aws.amazon.com/API_ListPackageVersions.html#codeartifact-ListPackageVersions-response-status)
-// parameter to Disposed.
+// To view information about a disposed package version, use DescribePackageVersion
+// (https://docs.aws.amazon.com/codeartifact/latest/APIReference/API_DescribePackageVersion.html)..
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1470,9 +1465,10 @@ func (c *CodeArtifact) GetAuthorizationTokenRequest(input *GetAuthorizationToken
 
 // GetAuthorizationToken API operation for CodeArtifact.
 //
-// Generates a temporary authentication token for accessing repositories in
-// the domain. This API requires the codeartifact:GetAuthorizationToken and
-// sts:GetServiceBearerToken permissions.
+// Generates a temporary authorization token for accessing repositories in the
+// domain. This API requires the codeartifact:GetAuthorizationToken and sts:GetServiceBearerToken
+// permissions. For more information about authorization tokens, see AWS CodeArtifact
+// authentication and tokens (https://docs.aws.amazon.com/codeartifact/latest/ug/tokens-authentication.html).
 //
 // CodeArtifact authorization tokens are valid for a period of 12 hours when
 // created with the login command. You can call login periodically to refresh
@@ -1712,6 +1708,9 @@ func (c *CodeArtifact) GetPackageVersionAssetRequest(input *GetPackageVersionAss
 //   The operation did not succeed because a parameter in the request was sent
 //   with an invalid value.
 //
+//   * ConflictException
+//   The operation did not succeed because prerequisites are not met.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/codeartifact-2018-09-22/GetPackageVersionAsset
 func (c *CodeArtifact) GetPackageVersionAsset(input *GetPackageVersionAssetInput) (*GetPackageVersionAssetOutput, error) {
 	req, out := c.GetPackageVersionAssetRequest(input)
@@ -1886,6 +1885,8 @@ func (c *CodeArtifact) GetRepositoryEndpointRequest(input *GetRepositoryEndpoint
 //    * pypi
 //
 //    * maven
+//
+//    * nuget
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3041,6 +3042,97 @@ func (c *CodeArtifact) ListRepositoriesInDomainPagesWithContext(ctx aws.Context,
 	return p.Err()
 }
 
+const opListTagsForResource = "ListTagsForResource"
+
+// ListTagsForResourceRequest generates a "aws/request.Request" representing the
+// client's request for the ListTagsForResource operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListTagsForResource for more information on using the ListTagsForResource
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListTagsForResourceRequest method.
+//    req, resp := client.ListTagsForResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codeartifact-2018-09-22/ListTagsForResource
+func (c *CodeArtifact) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
+	op := &request.Operation{
+		Name:       opListTagsForResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/v1/tags",
+	}
+
+	if input == nil {
+		input = &ListTagsForResourceInput{}
+	}
+
+	output = &ListTagsForResourceOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListTagsForResource API operation for CodeArtifact.
+//
+// Gets information about AWS tags for a specified Amazon Resource Name (ARN)
+// in AWS CodeArtifact.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for CodeArtifact's
+// API operation ListTagsForResource for usage and error information.
+//
+// Returned Error Types:
+//   * AccessDeniedException
+//   The operation did not succeed because of an unauthorized access attempt.
+//
+//   * ResourceNotFoundException
+//   The operation did not succeed because the resource requested is not found
+//   in the service.
+//
+//   * ThrottlingException
+//   The operation did not succeed because too many requests are sent to the service.
+//
+//   * ValidationException
+//   The operation did not succeed because a parameter in the request was sent
+//   with an invalid value.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codeartifact-2018-09-22/ListTagsForResource
+func (c *CodeArtifact) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
+	req, out := c.ListTagsForResourceRequest(input)
+	return out, req.Send()
+}
+
+// ListTagsForResourceWithContext is the same as ListTagsForResource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTagsForResource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CodeArtifact) ListTagsForResourceWithContext(ctx aws.Context, input *ListTagsForResourceInput, opts ...request.Option) (*ListTagsForResourceOutput, error) {
+	req, out := c.ListTagsForResourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opPutDomainPermissionsPolicy = "PutDomainPermissionsPolicy"
 
 // PutDomainPermissionsPolicyRequest generates a "aws/request.Request" representing the
@@ -3086,6 +3178,11 @@ func (c *CodeArtifact) PutDomainPermissionsPolicyRequest(input *PutDomainPermiss
 // PutDomainPermissionsPolicy API operation for CodeArtifact.
 //
 // Sets a resource policy on a domain that specifies permissions to access it.
+//
+// When you call PutDomainPermissionsPolicy, the resource policy on the domain
+// is ignored when evaluting permissions. This ensures that the owner of a domain
+// cannot lock themselves out of the domain, which would prevent them from being
+// able to update the resource policy.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3189,6 +3286,11 @@ func (c *CodeArtifact) PutRepositoryPermissionsPolicyRequest(input *PutRepositor
 // Sets the resource policy on a repository that specifies permissions to access
 // it.
 //
+// When you call PutRepositoryPermissionsPolicy, the resource policy on the
+// repository is ignored when evaluting permissions. This ensures that the owner
+// of a repository cannot lock themselves out of the repository, which would
+// prevent them from being able to update the resource policy.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -3239,6 +3341,192 @@ func (c *CodeArtifact) PutRepositoryPermissionsPolicy(input *PutRepositoryPermis
 // for more information on using Contexts.
 func (c *CodeArtifact) PutRepositoryPermissionsPolicyWithContext(ctx aws.Context, input *PutRepositoryPermissionsPolicyInput, opts ...request.Option) (*PutRepositoryPermissionsPolicyOutput, error) {
 	req, out := c.PutRepositoryPermissionsPolicyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opTagResource = "TagResource"
+
+// TagResourceRequest generates a "aws/request.Request" representing the
+// client's request for the TagResource operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See TagResource for more information on using the TagResource
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the TagResourceRequest method.
+//    req, resp := client.TagResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codeartifact-2018-09-22/TagResource
+func (c *CodeArtifact) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
+	op := &request.Operation{
+		Name:       opTagResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/v1/tag",
+	}
+
+	if input == nil {
+		input = &TagResourceInput{}
+	}
+
+	output = &TagResourceOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// TagResource API operation for CodeArtifact.
+//
+// Adds or updates tags for a resource in AWS CodeArtifact.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for CodeArtifact's
+// API operation TagResource for usage and error information.
+//
+// Returned Error Types:
+//   * AccessDeniedException
+//   The operation did not succeed because of an unauthorized access attempt.
+//
+//   * ResourceNotFoundException
+//   The operation did not succeed because the resource requested is not found
+//   in the service.
+//
+//   * ServiceQuotaExceededException
+//   The operation did not succeed because it would have exceeded a service limit
+//   for your account.
+//
+//   * ThrottlingException
+//   The operation did not succeed because too many requests are sent to the service.
+//
+//   * ValidationException
+//   The operation did not succeed because a parameter in the request was sent
+//   with an invalid value.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codeartifact-2018-09-22/TagResource
+func (c *CodeArtifact) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
+	req, out := c.TagResourceRequest(input)
+	return out, req.Send()
+}
+
+// TagResourceWithContext is the same as TagResource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See TagResource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CodeArtifact) TagResourceWithContext(ctx aws.Context, input *TagResourceInput, opts ...request.Option) (*TagResourceOutput, error) {
+	req, out := c.TagResourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUntagResource = "UntagResource"
+
+// UntagResourceRequest generates a "aws/request.Request" representing the
+// client's request for the UntagResource operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UntagResource for more information on using the UntagResource
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UntagResourceRequest method.
+//    req, resp := client.UntagResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codeartifact-2018-09-22/UntagResource
+func (c *CodeArtifact) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
+	op := &request.Operation{
+		Name:       opUntagResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/v1/untag",
+	}
+
+	if input == nil {
+		input = &UntagResourceInput{}
+	}
+
+	output = &UntagResourceOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UntagResource API operation for CodeArtifact.
+//
+// Removes tags from a resource in AWS CodeArtifact.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for CodeArtifact's
+// API operation UntagResource for usage and error information.
+//
+// Returned Error Types:
+//   * AccessDeniedException
+//   The operation did not succeed because of an unauthorized access attempt.
+//
+//   * ResourceNotFoundException
+//   The operation did not succeed because the resource requested is not found
+//   in the service.
+//
+//   * ThrottlingException
+//   The operation did not succeed because too many requests are sent to the service.
+//
+//   * ValidationException
+//   The operation did not succeed because a parameter in the request was sent
+//   with an invalid value.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codeartifact-2018-09-22/UntagResource
+func (c *CodeArtifact) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
+	req, out := c.UntagResourceRequest(input)
+	return out, req.Send()
+}
+
+// UntagResourceWithContext is the same as UntagResource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UntagResource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CodeArtifact) UntagResourceWithContext(ctx aws.Context, input *UntagResourceInput, opts ...request.Option) (*UntagResourceOutput, error) {
+	req, out := c.UntagResourceRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -3569,6 +3857,8 @@ type AssociateExternalConnectionInput struct {
 	//
 	//    * public:maven-commonsware - for the CommonsWare Android repository.
 	//
+	//    * public:nuget-org - for the NuGet Gallery.
+	//
 	// ExternalConnection is a required field
 	ExternalConnection *string `location:"querystring" locationName:"external-connection" type:"string" required:"true"`
 
@@ -3757,6 +4047,8 @@ type CopyPackageVersionsInput struct {
 	//    * maven: A Maven package that contains compiled code in a distributable
 	//    format, such as a JAR file.
 	//
+	//    * nuget: A NuGet package.
+	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
 
@@ -3773,6 +4065,9 @@ type CopyPackageVersionsInput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
@@ -3989,6 +4284,9 @@ type CreateDomainInput struct {
 	// keys (https://docs.aws.amazon.com/kms/latest/developerguide/symmetric-asymmetric.html)
 	// in the AWS Key Management Service Developer Guide.
 	EncryptionKey *string `locationName:"encryptionKey" min:"1" type:"string"`
+
+	// One or more tag key-value pairs for the domain.
+	Tags []*Tag `locationName:"tags" type:"list"`
 }
 
 // String returns the string representation
@@ -4013,6 +4311,16 @@ func (s *CreateDomainInput) Validate() error {
 	if s.EncryptionKey != nil && len(*s.EncryptionKey) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("EncryptionKey", 1))
 	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4029,6 +4337,12 @@ func (s *CreateDomainInput) SetDomain(v string) *CreateDomainInput {
 // SetEncryptionKey sets the EncryptionKey field's value.
 func (s *CreateDomainInput) SetEncryptionKey(v string) *CreateDomainInput {
 	s.EncryptionKey = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateDomainInput) SetTags(v []*Tag) *CreateDomainInput {
+	s.Tags = v
 	return s
 }
 
@@ -4075,6 +4389,9 @@ type CreateRepositoryInput struct {
 	// Repository is a required field
 	Repository *string `location:"querystring" locationName:"repository" min:"2" type:"string" required:"true"`
 
+	// One or more tag key-value pairs for the repository.
+	Tags []*Tag `locationName:"tags" type:"list"`
+
 	// A list of upstream repositories to associate with the repository. The order
 	// of the upstream repositories in the list determines their priority order
 	// when AWS CodeArtifact looks for a requested package version. For more information,
@@ -4109,6 +4426,16 @@ func (s *CreateRepositoryInput) Validate() error {
 	}
 	if s.Repository != nil && len(*s.Repository) < 2 {
 		invalidParams.Add(request.NewErrParamMinLen("Repository", 2))
+	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
 	}
 	if s.Upstreams != nil {
 		for i, v := range s.Upstreams {
@@ -4148,6 +4475,12 @@ func (s *CreateRepositoryInput) SetDomainOwner(v string) *CreateRepositoryInput 
 // SetRepository sets the Repository field's value.
 func (s *CreateRepositoryInput) SetRepository(v string) *CreateRepositoryInput {
 	s.Repository = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateRepositoryInput) SetTags(v []*Tag) *CreateRepositoryInput {
+	s.Tags = v
 	return s
 }
 
@@ -4381,6 +4714,8 @@ type DeletePackageVersionsInput struct {
 	//
 	//    * maven
 	//
+	//    * nuget
+	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
 
@@ -4392,6 +4727,9 @@ type DeletePackageVersionsInput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
@@ -4858,6 +5196,8 @@ type DescribePackageVersionInput struct {
 	//
 	//    * maven
 	//
+	//    * nuget
+	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
 
@@ -4869,6 +5209,9 @@ type DescribePackageVersionInput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
@@ -5246,6 +5589,8 @@ type DisposePackageVersionsInput struct {
 	//
 	//    * maven
 	//
+	//    * nuget
+	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
 
@@ -5257,6 +5602,9 @@ type DisposePackageVersionsInput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
@@ -5456,6 +5804,10 @@ type DomainDescription struct {
 	// The number of repositories in the domain.
 	RepositoryCount *int64 `locationName:"repositoryCount" type:"integer"`
 
+	// The Amazon Resource Name (ARN) of the Amazon S3 bucket that is used to store
+	// package assets in the domain.
+	S3BucketArn *string `locationName:"s3BucketArn" min:"1" type:"string"`
+
 	// The current status of a domain. The valid values are
 	//
 	//    * Active
@@ -5513,6 +5865,12 @@ func (s *DomainDescription) SetOwner(v string) *DomainDescription {
 // SetRepositoryCount sets the RepositoryCount field's value.
 func (s *DomainDescription) SetRepositoryCount(v int64) *DomainDescription {
 	s.RepositoryCount = &v
+	return s
+}
+
+// SetS3BucketArn sets the S3BucketArn field's value.
+func (s *DomainDescription) SetS3BucketArn(v string) *DomainDescription {
+	s.S3BucketArn = &v
 	return s
 }
 
@@ -5610,7 +5968,10 @@ type GetAuthorizationTokenInput struct {
 	// not include dashes or spaces.
 	DomainOwner *string `location:"querystring" locationName:"domain-owner" min:"12" type:"string"`
 
-	// The time, in seconds, that the generated authorization token is valid.
+	// The time, in seconds, that the generated authorization token is valid. Valid
+	// values are 0 and any number between 900 (15 minutes) and 43200 (12 hours).
+	// A value of 0 will set the expiration of the authorization token to the same
+	// expiration of the user's role's temporary credentials.
 	DurationSeconds *int64 `location:"querystring" locationName:"duration" type:"long"`
 }
 
@@ -5797,6 +6158,8 @@ type GetPackageVersionAssetInput struct {
 	//
 	//    * maven
 	//
+	//    * nuget
+	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
 
@@ -5808,6 +6171,9 @@ type GetPackageVersionAssetInput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
@@ -6018,6 +6384,8 @@ type GetPackageVersionReadmeInput struct {
 	//
 	//    * maven
 	//
+	//    * nuget
+	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
 
@@ -6029,6 +6397,9 @@ type GetPackageVersionReadmeInput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
@@ -6154,6 +6525,8 @@ type GetPackageVersionReadmeOutput struct {
 	//    * pypi
 	//
 	//    * maven
+	//
+	//    * nuget
 	Format *string `locationName:"format" type:"string" enum:"PackageFormat"`
 
 	// The namespace of the package. The package component that specifies its namespace
@@ -6164,6 +6537,9 @@ type GetPackageVersionReadmeOutput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `locationName:"namespace" min:"1" type:"string"`
 
@@ -6246,6 +6622,8 @@ type GetRepositoryEndpointInput struct {
 	//    * pypi
 	//
 	//    * maven
+	//
+	//    * nuget
 	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
@@ -6632,6 +7010,8 @@ type ListPackageVersionAssetsInput struct {
 	//    * maven: A Maven package that contains compiled code in a distributable
 	//    format, such as a JAR file.
 	//
+	//    * nuget: A NuGet package.
+	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
 
@@ -6646,6 +7026,9 @@ type ListPackageVersionAssetsInput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
@@ -6802,6 +7185,9 @@ type ListPackageVersionAssetsOutput struct {
 	//
 	//    * A Python package does not contain a corresponding component, so Python
 	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
+	//    packages do not have a namespace.
 	Namespace *string `locationName:"namespace" min:"1" type:"string"`
 
 	// If there are additional results, this is the token for the next set of results.
@@ -6892,6 +7278,8 @@ type ListPackageVersionDependenciesInput struct {
 	//    * maven: A Maven package that contains compiled code in a distributable
 	//    format, such as a JAR file.
 	//
+	//    * nuget: A NuGet package.
+	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
 
@@ -6903,6 +7291,9 @@ type ListPackageVersionDependenciesInput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
@@ -7045,6 +7436,8 @@ type ListPackageVersionDependenciesOutput struct {
 	//    * pypi
 	//
 	//    * maven
+	//
+	//    * nuget
 	Format *string `locationName:"format" type:"string" enum:"PackageFormat"`
 
 	// The namespace of the package. The package component that specifies its namespace
@@ -7055,6 +7448,9 @@ type ListPackageVersionDependenciesOutput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `locationName:"namespace" min:"1" type:"string"`
 
@@ -7146,6 +7542,8 @@ type ListPackageVersionsInput struct {
 	//    * maven: A Maven package that contains compiled code in a distributable
 	//    format, such as a JAR file.
 	//
+	//    * nuget: A NuGet package.
+	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
 
@@ -7160,6 +7558,9 @@ type ListPackageVersionsInput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
@@ -7327,6 +7728,8 @@ type ListPackageVersionsOutput struct {
 	//    * pypi
 	//
 	//    * maven
+	//
+	//    * nuget
 	Format *string `locationName:"format" type:"string" enum:"PackageFormat"`
 
 	// The namespace of the package. The package component that specifies its namespace
@@ -7337,6 +7740,9 @@ type ListPackageVersionsOutput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `locationName:"namespace" min:"1" type:"string"`
 
@@ -7418,6 +7824,8 @@ type ListPackagesInput struct {
 	//
 	//    * maven: A Maven package that contains compiled code in a distributable
 	//    format, such as a JAR file.
+	//
+	//    * nuget: A NuGet package.
 	Format *string `location:"querystring" locationName:"format" type:"string" enum:"PackageFormat"`
 
 	// The maximum number of results to return per page.
@@ -7432,14 +7840,17 @@ type ListPackagesInput struct {
 	//
 	//    * A Python package does not contain a corresponding component, so Python
 	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
+	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
 	// The token for the next set of results. Use the value returned in the previous
 	// response in the next request to retrieve the next set of results.
 	NextToken *string `location:"querystring" locationName:"next-token" min:"1" type:"string"`
 
-	// A prefix used to filter returned repositories. Only repositories with names
-	// that start with repositoryPrefix are returned.
+	// A prefix used to filter returned packages. Only packages with names that
+	// start with packagePrefix are returned.
 	PackagePrefix *string `location:"querystring" locationName:"package-prefix" min:"1" type:"string"`
 
 	// The name of the repository from which packages are to be listed.
@@ -7808,6 +8219,70 @@ func (s *ListRepositoriesOutput) SetRepositories(v []*RepositorySummary) *ListRe
 	return s
 }
 
+type ListTagsForResourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the resource to get tags for.
+	//
+	// ResourceArn is a required field
+	ResourceArn *string `location:"querystring" locationName:"resourceArn" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s ListTagsForResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTagsForResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListTagsForResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListTagsForResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+	if s.ResourceArn != nil && len(*s.ResourceArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceArn", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *ListTagsForResourceInput) SetResourceArn(v string) *ListTagsForResourceInput {
+	s.ResourceArn = &v
+	return s
+}
+
+type ListTagsForResourceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of tag key and value pairs associated with the specified resource.
+	Tags []*Tag `locationName:"tags" type:"list"`
+}
+
+// String returns the string representation
+func (s ListTagsForResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTagsForResourceOutput) GoString() string {
+	return s.String()
+}
+
+// SetTags sets the Tags field's value.
+func (s *ListTagsForResourceOutput) SetTags(v []*Tag) *ListTagsForResourceOutput {
+	s.Tags = v
+	return s
+}
+
 // Details about a package dependency.
 type PackageDependency struct {
 	_ struct{} `type:"structure"`
@@ -7825,6 +8300,9 @@ type PackageDependency struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `locationName:"namespace" min:"1" type:"string"`
 
@@ -7884,6 +8362,8 @@ type PackageSummary struct {
 	//    * pypi
 	//
 	//    * maven
+	//
+	//    * nuget
 	Format *string `locationName:"format" type:"string" enum:"PackageFormat"`
 
 	// The namespace of the package. The package component that specifies its namespace
@@ -7894,6 +8374,9 @@ type PackageSummary struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `locationName:"namespace" min:"1" type:"string"`
 
@@ -7947,6 +8430,8 @@ type PackageVersionDescription struct {
 	//
 	//    * maven: A Maven package that contains compiled code in a distributable
 	//    format, such as a JAR file.
+	//
+	//    * nuget: A NuGet package.
 	Format *string `locationName:"format" type:"string" enum:"PackageFormat"`
 
 	// The homepage associated with the package.
@@ -7963,6 +8448,9 @@ type PackageVersionDescription struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `locationName:"namespace" min:"1" type:"string"`
 
@@ -8536,6 +9024,8 @@ type RepositoryExternalConnectionInfo struct {
 	//
 	//    * maven: A Maven package that contains compiled code in a distributable
 	//    format, such as a JAR file.
+	//
+	//    * nuget: A NuGet package.
 	PackageFormat *string `locationName:"packageFormat" type:"string" enum:"PackageFormat"`
 
 	// The status of the external connection of a repository. There is one valid
@@ -8855,6 +9345,143 @@ func (s *SuccessfulPackageVersionInfo) SetStatus(v string) *SuccessfulPackageVer
 	return s
 }
 
+// A tag is a key-value pair that can be used to manage, search for, or filter
+// resources in AWS CodeArtifact.
+type Tag struct {
+	_ struct{} `type:"structure"`
+
+	// The tag key.
+	//
+	// Key is a required field
+	Key *string `locationName:"key" min:"1" type:"string" required:"true"`
+
+	// The tag value.
+	//
+	// Value is a required field
+	Value *string `locationName:"value" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s Tag) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Tag) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Tag) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Tag"}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
+	if s.Key != nil && len(*s.Key) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Key", 1))
+	}
+	if s.Value == nil {
+		invalidParams.Add(request.NewErrParamRequired("Value"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetKey sets the Key field's value.
+func (s *Tag) SetKey(v string) *Tag {
+	s.Key = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *Tag) SetValue(v string) *Tag {
+	s.Value = &v
+	return s
+}
+
+type TagResourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the resource that you want to add or update
+	// tags for.
+	//
+	// ResourceArn is a required field
+	ResourceArn *string `location:"querystring" locationName:"resourceArn" min:"1" type:"string" required:"true"`
+
+	// The tags you want to modify or add to the resource.
+	//
+	// Tags is a required field
+	Tags []*Tag `locationName:"tags" type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s TagResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TagResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TagResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TagResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+	if s.ResourceArn != nil && len(*s.ResourceArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceArn", 1))
+	}
+	if s.Tags == nil {
+		invalidParams.Add(request.NewErrParamRequired("Tags"))
+	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *TagResourceInput) SetResourceArn(v string) *TagResourceInput {
+	s.ResourceArn = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *TagResourceInput) SetTags(v []*Tag) *TagResourceInput {
+	s.Tags = v
+	return s
+}
+
+type TagResourceOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s TagResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TagResourceOutput) GoString() string {
+	return s.String()
+}
+
 // The operation did not succeed because too many requests are sent to the service.
 type ThrottlingException struct {
 	_            struct{}                  `type:"structure"`
@@ -8914,6 +9541,76 @@ func (s *ThrottlingException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+type UntagResourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the resource that you want to remove tags
+	// from.
+	//
+	// ResourceArn is a required field
+	ResourceArn *string `location:"querystring" locationName:"resourceArn" min:"1" type:"string" required:"true"`
+
+	// The tag key for each tag that you want to remove from the resource.
+	//
+	// TagKeys is a required field
+	TagKeys []*string `locationName:"tagKeys" type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s UntagResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UntagResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UntagResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UntagResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+	if s.ResourceArn != nil && len(*s.ResourceArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceArn", 1))
+	}
+	if s.TagKeys == nil {
+		invalidParams.Add(request.NewErrParamRequired("TagKeys"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *UntagResourceInput) SetResourceArn(v string) *UntagResourceInput {
+	s.ResourceArn = &v
+	return s
+}
+
+// SetTagKeys sets the TagKeys field's value.
+func (s *UntagResourceInput) SetTagKeys(v []*string) *UntagResourceInput {
+	s.TagKeys = v
+	return s
+}
+
+type UntagResourceOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s UntagResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UntagResourceOutput) GoString() string {
+	return s.String()
+}
+
 type UpdatePackageVersionsStatusInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8941,6 +9638,8 @@ type UpdatePackageVersionsStatusInput struct {
 	//
 	//    * maven
 	//
+	//    * nuget
+	//
 	// Format is a required field
 	Format *string `location:"querystring" locationName:"format" type:"string" required:"true" enum:"PackageFormat"`
 
@@ -8952,6 +9651,9 @@ type UpdatePackageVersionsStatusInput struct {
 	//    * The namespace of an npm package is its scope.
 	//
 	//    * A Python package does not contain a corresponding component, so Python
+	//    packages do not have a namespace.
+	//
+	//    * A NuGet package does not contain a corresponding component, so NuGet
 	//    packages do not have a namespace.
 	Namespace *string `location:"querystring" locationName:"namespace" min:"1" type:"string"`
 
@@ -9390,10 +10092,25 @@ const (
 	DomainStatusDeleted = "Deleted"
 )
 
+// DomainStatus_Values returns all elements of the DomainStatus enum
+func DomainStatus_Values() []string {
+	return []string{
+		DomainStatusActive,
+		DomainStatusDeleted,
+	}
+}
+
 const (
 	// ExternalConnectionStatusAvailable is a ExternalConnectionStatus enum value
 	ExternalConnectionStatusAvailable = "Available"
 )
+
+// ExternalConnectionStatus_Values returns all elements of the ExternalConnectionStatus enum
+func ExternalConnectionStatus_Values() []string {
+	return []string{
+		ExternalConnectionStatusAvailable,
+	}
+}
 
 const (
 	// HashAlgorithmMd5 is a HashAlgorithm enum value
@@ -9409,6 +10126,16 @@ const (
 	HashAlgorithmSha512 = "SHA-512"
 )
 
+// HashAlgorithm_Values returns all elements of the HashAlgorithm enum
+func HashAlgorithm_Values() []string {
+	return []string{
+		HashAlgorithmMd5,
+		HashAlgorithmSha1,
+		HashAlgorithmSha256,
+		HashAlgorithmSha512,
+	}
+}
+
 const (
 	// PackageFormatNpm is a PackageFormat enum value
 	PackageFormatNpm = "npm"
@@ -9418,7 +10145,20 @@ const (
 
 	// PackageFormatMaven is a PackageFormat enum value
 	PackageFormatMaven = "maven"
+
+	// PackageFormatNuget is a PackageFormat enum value
+	PackageFormatNuget = "nuget"
 )
+
+// PackageFormat_Values returns all elements of the PackageFormat enum
+func PackageFormat_Values() []string {
+	return []string{
+		PackageFormatNpm,
+		PackageFormatPypi,
+		PackageFormatMaven,
+		PackageFormatNuget,
+	}
+}
 
 const (
 	// PackageVersionErrorCodeAlreadyExists is a PackageVersionErrorCode enum value
@@ -9440,10 +10180,29 @@ const (
 	PackageVersionErrorCodeSkipped = "SKIPPED"
 )
 
+// PackageVersionErrorCode_Values returns all elements of the PackageVersionErrorCode enum
+func PackageVersionErrorCode_Values() []string {
+	return []string{
+		PackageVersionErrorCodeAlreadyExists,
+		PackageVersionErrorCodeMismatchedRevision,
+		PackageVersionErrorCodeMismatchedStatus,
+		PackageVersionErrorCodeNotAllowed,
+		PackageVersionErrorCodeNotFound,
+		PackageVersionErrorCodeSkipped,
+	}
+}
+
 const (
 	// PackageVersionSortTypePublishedTime is a PackageVersionSortType enum value
 	PackageVersionSortTypePublishedTime = "PUBLISHED_TIME"
 )
+
+// PackageVersionSortType_Values returns all elements of the PackageVersionSortType enum
+func PackageVersionSortType_Values() []string {
+	return []string{
+		PackageVersionSortTypePublishedTime,
+	}
+}
 
 const (
 	// PackageVersionStatusPublished is a PackageVersionStatus enum value
@@ -9465,6 +10224,18 @@ const (
 	PackageVersionStatusDeleted = "Deleted"
 )
 
+// PackageVersionStatus_Values returns all elements of the PackageVersionStatus enum
+func PackageVersionStatus_Values() []string {
+	return []string{
+		PackageVersionStatusPublished,
+		PackageVersionStatusUnfinished,
+		PackageVersionStatusUnlisted,
+		PackageVersionStatusArchived,
+		PackageVersionStatusDisposed,
+		PackageVersionStatusDeleted,
+	}
+}
+
 const (
 	// ResourceTypeDomain is a ResourceType enum value
 	ResourceTypeDomain = "domain"
@@ -9482,6 +10253,17 @@ const (
 	ResourceTypeAsset = "asset"
 )
 
+// ResourceType_Values returns all elements of the ResourceType enum
+func ResourceType_Values() []string {
+	return []string{
+		ResourceTypeDomain,
+		ResourceTypeRepository,
+		ResourceTypePackage,
+		ResourceTypePackageVersion,
+		ResourceTypeAsset,
+	}
+}
+
 const (
 	// ValidationExceptionReasonCannotParse is a ValidationExceptionReason enum value
 	ValidationExceptionReasonCannotParse = "CANNOT_PARSE"
@@ -9498,3 +10280,14 @@ const (
 	// ValidationExceptionReasonOther is a ValidationExceptionReason enum value
 	ValidationExceptionReasonOther = "OTHER"
 )
+
+// ValidationExceptionReason_Values returns all elements of the ValidationExceptionReason enum
+func ValidationExceptionReason_Values() []string {
+	return []string{
+		ValidationExceptionReasonCannotParse,
+		ValidationExceptionReasonEncryptionKeyError,
+		ValidationExceptionReasonFieldValidationFailed,
+		ValidationExceptionReasonUnknownOperation,
+		ValidationExceptionReasonOther,
+	}
+}

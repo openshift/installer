@@ -21,8 +21,8 @@ const (
 	// ErrCodeConcurrentUpdatingException for service response error code
 	// "ConcurrentUpdatingException".
 	//
-	// A resource is already in a state that indicates an action is happening that
-	// must complete before a new update can be applied.
+	// A resource is already in a state that indicates an operation is happening
+	// that must complete before a new update can be applied.
 	ErrCodeConcurrentUpdatingException = "ConcurrentUpdatingException"
 
 	// ErrCodeConflictException for service response error code
@@ -106,6 +106,20 @@ const (
 	// Access is throttled.
 	ErrCodeThrottlingException = "ThrottlingException"
 
+	// ErrCodeUnsupportedPricingPlanException for service response error code
+	// "UnsupportedPricingPlanException".
+	//
+	// This error indicates that you are calling an embedding operation in Amazon
+	// QuickSight without the required pricing plan on your AWS account. Before
+	// you can use anonymous embedding, a QuickSight administrator needs to add
+	// capacity pricing to QuickSight. You can do this on the Manage QuickSight
+	// page.
+	//
+	// After capacity pricing is added, you can enable anonymous embedding by using
+	// the GetDashboardEmbedUrl API operation with the --identity-type ANONYMOUS
+	// option.
+	ErrCodeUnsupportedPricingPlanException = "UnsupportedPricingPlanException"
+
 	// ErrCodeUnsupportedUserEditionException for service response error code
 	// "UnsupportedUserEditionException".
 	//
@@ -140,6 +154,7 @@ var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
 	"ResourceUnavailableException":             newErrorResourceUnavailableException,
 	"SessionLifetimeInMinutesInvalidException": newErrorSessionLifetimeInMinutesInvalidException,
 	"ThrottlingException":                      newErrorThrottlingException,
+	"UnsupportedPricingPlanException":          newErrorUnsupportedPricingPlanException,
 	"UnsupportedUserEditionException":          newErrorUnsupportedUserEditionException,
 	"QuickSightUserNotFoundException":          newErrorUserNotFoundException,
 }

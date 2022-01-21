@@ -412,8 +412,8 @@ func (c *EMR) CancelStepsRequest(input *CancelStepsInput) (req *request.Request,
 // Cancels a pending step or steps in a running cluster. Available only in Amazon
 // EMR versions 4.8.0 and later, excluding version 5.0.0. A maximum of 256 steps
 // are allowed in each CancelSteps request. CancelSteps is idempotent but asynchronous;
-// it does not guarantee a step will be canceled, even if the request is successfully
-// submitted. You can only cancel steps that are in a PENDING state.
+// it does not guarantee that a step will be canceled, even if the request is
+// successfully submitted. You can only cancel steps that are in a PENDING state.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -535,6 +535,181 @@ func (c *EMR) CreateSecurityConfigurationWithContext(ctx aws.Context, input *Cre
 	return out, req.Send()
 }
 
+const opCreateStudio = "CreateStudio"
+
+// CreateStudioRequest generates a "aws/request.Request" representing the
+// client's request for the CreateStudio operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateStudio for more information on using the CreateStudio
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateStudioRequest method.
+//    req, resp := client.CreateStudioRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/CreateStudio
+func (c *EMR) CreateStudioRequest(input *CreateStudioInput) (req *request.Request, output *CreateStudioOutput) {
+	op := &request.Operation{
+		Name:       opCreateStudio,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateStudioInput{}
+	}
+
+	output = &CreateStudioOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateStudio API operation for Amazon Elastic MapReduce.
+//
+//
+// The Amazon EMR Studio APIs are in preview release for Amazon EMR and are
+// subject to change.
+//
+// Creates a new Amazon EMR Studio.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation CreateStudio for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerException
+//   This exception occurs when there is an internal failure in the EMR service.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/CreateStudio
+func (c *EMR) CreateStudio(input *CreateStudioInput) (*CreateStudioOutput, error) {
+	req, out := c.CreateStudioRequest(input)
+	return out, req.Send()
+}
+
+// CreateStudioWithContext is the same as CreateStudio with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateStudio for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) CreateStudioWithContext(ctx aws.Context, input *CreateStudioInput, opts ...request.Option) (*CreateStudioOutput, error) {
+	req, out := c.CreateStudioRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCreateStudioSessionMapping = "CreateStudioSessionMapping"
+
+// CreateStudioSessionMappingRequest generates a "aws/request.Request" representing the
+// client's request for the CreateStudioSessionMapping operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateStudioSessionMapping for more information on using the CreateStudioSessionMapping
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateStudioSessionMappingRequest method.
+//    req, resp := client.CreateStudioSessionMappingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/CreateStudioSessionMapping
+func (c *EMR) CreateStudioSessionMappingRequest(input *CreateStudioSessionMappingInput) (req *request.Request, output *CreateStudioSessionMappingOutput) {
+	op := &request.Operation{
+		Name:       opCreateStudioSessionMapping,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateStudioSessionMappingInput{}
+	}
+
+	output = &CreateStudioSessionMappingOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// CreateStudioSessionMapping API operation for Amazon Elastic MapReduce.
+//
+//
+// The Amazon EMR Studio APIs are in preview release for Amazon EMR and are
+// subject to change.
+//
+// Maps a user or group to the Amazon EMR Studio specified by StudioId, and
+// applies a session policy to refine Studio permissions for that user or group.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation CreateStudioSessionMapping for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerError
+//   Indicates that an error occurred while processing the request and that the
+//   request was not completed.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/CreateStudioSessionMapping
+func (c *EMR) CreateStudioSessionMapping(input *CreateStudioSessionMappingInput) (*CreateStudioSessionMappingOutput, error) {
+	req, out := c.CreateStudioSessionMappingRequest(input)
+	return out, req.Send()
+}
+
+// CreateStudioSessionMappingWithContext is the same as CreateStudioSessionMapping with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateStudioSessionMapping for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) CreateStudioSessionMappingWithContext(ctx aws.Context, input *CreateStudioSessionMappingInput, opts ...request.Option) (*CreateStudioSessionMappingOutput, error) {
+	req, out := c.CreateStudioSessionMappingRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteSecurityConfiguration = "DeleteSecurityConfiguration"
 
 // DeleteSecurityConfigurationRequest generates a "aws/request.Request" representing the
@@ -613,6 +788,181 @@ func (c *EMR) DeleteSecurityConfiguration(input *DeleteSecurityConfigurationInpu
 // for more information on using Contexts.
 func (c *EMR) DeleteSecurityConfigurationWithContext(ctx aws.Context, input *DeleteSecurityConfigurationInput, opts ...request.Option) (*DeleteSecurityConfigurationOutput, error) {
 	req, out := c.DeleteSecurityConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteStudio = "DeleteStudio"
+
+// DeleteStudioRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteStudio operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteStudio for more information on using the DeleteStudio
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteStudioRequest method.
+//    req, resp := client.DeleteStudioRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/DeleteStudio
+func (c *EMR) DeleteStudioRequest(input *DeleteStudioInput) (req *request.Request, output *DeleteStudioOutput) {
+	op := &request.Operation{
+		Name:       opDeleteStudio,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteStudioInput{}
+	}
+
+	output = &DeleteStudioOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteStudio API operation for Amazon Elastic MapReduce.
+//
+//
+// The Amazon EMR Studio APIs are in preview release for Amazon EMR and are
+// subject to change.
+//
+// Removes an Amazon EMR Studio from the Studio metadata store.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation DeleteStudio for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerException
+//   This exception occurs when there is an internal failure in the EMR service.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/DeleteStudio
+func (c *EMR) DeleteStudio(input *DeleteStudioInput) (*DeleteStudioOutput, error) {
+	req, out := c.DeleteStudioRequest(input)
+	return out, req.Send()
+}
+
+// DeleteStudioWithContext is the same as DeleteStudio with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteStudio for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) DeleteStudioWithContext(ctx aws.Context, input *DeleteStudioInput, opts ...request.Option) (*DeleteStudioOutput, error) {
+	req, out := c.DeleteStudioRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteStudioSessionMapping = "DeleteStudioSessionMapping"
+
+// DeleteStudioSessionMappingRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteStudioSessionMapping operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteStudioSessionMapping for more information on using the DeleteStudioSessionMapping
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteStudioSessionMappingRequest method.
+//    req, resp := client.DeleteStudioSessionMappingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/DeleteStudioSessionMapping
+func (c *EMR) DeleteStudioSessionMappingRequest(input *DeleteStudioSessionMappingInput) (req *request.Request, output *DeleteStudioSessionMappingOutput) {
+	op := &request.Operation{
+		Name:       opDeleteStudioSessionMapping,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteStudioSessionMappingInput{}
+	}
+
+	output = &DeleteStudioSessionMappingOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteStudioSessionMapping API operation for Amazon Elastic MapReduce.
+//
+//
+// The Amazon EMR Studio APIs are in preview release for Amazon EMR and are
+// subject to change.
+//
+// Removes a user or group from an Amazon EMR Studio.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation DeleteStudioSessionMapping for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerError
+//   Indicates that an error occurred while processing the request and that the
+//   request was not completed.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/DeleteStudioSessionMapping
+func (c *EMR) DeleteStudioSessionMapping(input *DeleteStudioSessionMappingInput) (*DeleteStudioSessionMappingOutput, error) {
+	req, out := c.DeleteStudioSessionMappingRequest(input)
+	return out, req.Send()
+}
+
+// DeleteStudioSessionMappingWithContext is the same as DeleteStudioSessionMapping with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteStudioSessionMapping for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) DeleteStudioSessionMappingWithContext(ctx aws.Context, input *DeleteStudioSessionMappingInput, opts ...request.Option) (*DeleteStudioSessionMappingOutput, error) {
+	req, out := c.DeleteStudioSessionMappingRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -750,9 +1100,9 @@ func (c *EMR) DescribeJobFlowsRequest(input *DescribeJobFlowsInput) (req *reques
 
 // DescribeJobFlows API operation for Amazon Elastic MapReduce.
 //
-// This API is deprecated and will eventually be removed. We recommend you use
-// ListClusters, DescribeCluster, ListSteps, ListInstanceGroups and ListBootstrapActions
-// instead.
+// This API is no longer supported and will eventually be removed. We recommend
+// you use ListClusters, DescribeCluster, ListSteps, ListInstanceGroups and
+// ListBootstrapActions instead.
 //
 // DescribeJobFlows returns a list of job flows that match all of the supplied
 // parameters. The parameters can include a list of job flow IDs, job flow states,
@@ -804,6 +1154,89 @@ func (c *EMR) DescribeJobFlows(input *DescribeJobFlowsInput) (*DescribeJobFlowsO
 // Deprecated: DescribeJobFlowsWithContext has been deprecated
 func (c *EMR) DescribeJobFlowsWithContext(ctx aws.Context, input *DescribeJobFlowsInput, opts ...request.Option) (*DescribeJobFlowsOutput, error) {
 	req, out := c.DescribeJobFlowsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeNotebookExecution = "DescribeNotebookExecution"
+
+// DescribeNotebookExecutionRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeNotebookExecution operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeNotebookExecution for more information on using the DescribeNotebookExecution
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeNotebookExecutionRequest method.
+//    req, resp := client.DescribeNotebookExecutionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/DescribeNotebookExecution
+func (c *EMR) DescribeNotebookExecutionRequest(input *DescribeNotebookExecutionInput) (req *request.Request, output *DescribeNotebookExecutionOutput) {
+	op := &request.Operation{
+		Name:       opDescribeNotebookExecution,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeNotebookExecutionInput{}
+	}
+
+	output = &DescribeNotebookExecutionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeNotebookExecution API operation for Amazon Elastic MapReduce.
+//
+// Provides details of a notebook execution.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation DescribeNotebookExecution for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerError
+//   Indicates that an error occurred while processing the request and that the
+//   request was not completed.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/DescribeNotebookExecution
+func (c *EMR) DescribeNotebookExecution(input *DescribeNotebookExecutionInput) (*DescribeNotebookExecutionOutput, error) {
+	req, out := c.DescribeNotebookExecutionRequest(input)
+	return out, req.Send()
+}
+
+// DescribeNotebookExecutionWithContext is the same as DescribeNotebookExecution with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeNotebookExecution for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) DescribeNotebookExecutionWithContext(ctx aws.Context, input *DescribeNotebookExecutionInput, opts ...request.Option) (*DescribeNotebookExecutionOutput, error) {
+	req, out := c.DescribeNotebookExecutionRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -974,6 +1407,93 @@ func (c *EMR) DescribeStepWithContext(ctx aws.Context, input *DescribeStepInput,
 	return out, req.Send()
 }
 
+const opDescribeStudio = "DescribeStudio"
+
+// DescribeStudioRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeStudio operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeStudio for more information on using the DescribeStudio
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeStudioRequest method.
+//    req, resp := client.DescribeStudioRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/DescribeStudio
+func (c *EMR) DescribeStudioRequest(input *DescribeStudioInput) (req *request.Request, output *DescribeStudioOutput) {
+	op := &request.Operation{
+		Name:       opDescribeStudio,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeStudioInput{}
+	}
+
+	output = &DescribeStudioOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeStudio API operation for Amazon Elastic MapReduce.
+//
+//
+// The Amazon EMR Studio APIs are in preview release for Amazon EMR and are
+// subject to change.
+//
+// Returns details for the specified Amazon EMR Studio including ID, Name, VPC,
+// Studio access URL, and so on.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation DescribeStudio for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerException
+//   This exception occurs when there is an internal failure in the EMR service.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/DescribeStudio
+func (c *EMR) DescribeStudio(input *DescribeStudioInput) (*DescribeStudioOutput, error) {
+	req, out := c.DescribeStudioRequest(input)
+	return out, req.Send()
+}
+
+// DescribeStudioWithContext is the same as DescribeStudio with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeStudio for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) DescribeStudioWithContext(ctx aws.Context, input *DescribeStudioInput, opts ...request.Option) (*DescribeStudioOutput, error) {
+	req, out := c.DescribeStudioRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetBlockPublicAccessConfiguration = "GetBlockPublicAccessConfiguration"
 
 // GetBlockPublicAccessConfigurationRequest generates a "aws/request.Request" representing the
@@ -1128,6 +1648,94 @@ func (c *EMR) GetManagedScalingPolicy(input *GetManagedScalingPolicyInput) (*Get
 // for more information on using Contexts.
 func (c *EMR) GetManagedScalingPolicyWithContext(ctx aws.Context, input *GetManagedScalingPolicyInput, opts ...request.Option) (*GetManagedScalingPolicyOutput, error) {
 	req, out := c.GetManagedScalingPolicyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetStudioSessionMapping = "GetStudioSessionMapping"
+
+// GetStudioSessionMappingRequest generates a "aws/request.Request" representing the
+// client's request for the GetStudioSessionMapping operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetStudioSessionMapping for more information on using the GetStudioSessionMapping
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetStudioSessionMappingRequest method.
+//    req, resp := client.GetStudioSessionMappingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/GetStudioSessionMapping
+func (c *EMR) GetStudioSessionMappingRequest(input *GetStudioSessionMappingInput) (req *request.Request, output *GetStudioSessionMappingOutput) {
+	op := &request.Operation{
+		Name:       opGetStudioSessionMapping,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetStudioSessionMappingInput{}
+	}
+
+	output = &GetStudioSessionMappingOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetStudioSessionMapping API operation for Amazon Elastic MapReduce.
+//
+//
+// The Amazon EMR Studio APIs are in preview release for Amazon EMR and are
+// subject to change.
+//
+// Fetches mapping details for the specified Amazon EMR Studio and identity
+// (user or group).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation GetStudioSessionMapping for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerError
+//   Indicates that an error occurred while processing the request and that the
+//   request was not completed.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/GetStudioSessionMapping
+func (c *EMR) GetStudioSessionMapping(input *GetStudioSessionMappingInput) (*GetStudioSessionMappingOutput, error) {
+	req, out := c.GetStudioSessionMappingRequest(input)
+	return out, req.Send()
+}
+
+// GetStudioSessionMappingWithContext is the same as GetStudioSessionMapping with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetStudioSessionMapping for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) GetStudioSessionMappingWithContext(ctx aws.Context, input *GetStudioSessionMappingInput, opts ...request.Option) (*GetStudioSessionMappingOutput, error) {
+	req, out := c.GetStudioSessionMappingRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -1843,6 +2451,150 @@ func (c *EMR) ListInstancesPagesWithContext(ctx aws.Context, input *ListInstance
 	return p.Err()
 }
 
+const opListNotebookExecutions = "ListNotebookExecutions"
+
+// ListNotebookExecutionsRequest generates a "aws/request.Request" representing the
+// client's request for the ListNotebookExecutions operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListNotebookExecutions for more information on using the ListNotebookExecutions
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListNotebookExecutionsRequest method.
+//    req, resp := client.ListNotebookExecutionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/ListNotebookExecutions
+func (c *EMR) ListNotebookExecutionsRequest(input *ListNotebookExecutionsInput) (req *request.Request, output *ListNotebookExecutionsOutput) {
+	op := &request.Operation{
+		Name:       opListNotebookExecutions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListNotebookExecutionsInput{}
+	}
+
+	output = &ListNotebookExecutionsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListNotebookExecutions API operation for Amazon Elastic MapReduce.
+//
+// Provides summaries of all notebook executions. You can filter the list based
+// on multiple criteria such as status, time range, and editor id. Returns a
+// maximum of 50 notebook executions and a marker to track the paging of a longer
+// notebook execution list across multiple ListNotebookExecution calls.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation ListNotebookExecutions for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerError
+//   Indicates that an error occurred while processing the request and that the
+//   request was not completed.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/ListNotebookExecutions
+func (c *EMR) ListNotebookExecutions(input *ListNotebookExecutionsInput) (*ListNotebookExecutionsOutput, error) {
+	req, out := c.ListNotebookExecutionsRequest(input)
+	return out, req.Send()
+}
+
+// ListNotebookExecutionsWithContext is the same as ListNotebookExecutions with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListNotebookExecutions for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) ListNotebookExecutionsWithContext(ctx aws.Context, input *ListNotebookExecutionsInput, opts ...request.Option) (*ListNotebookExecutionsOutput, error) {
+	req, out := c.ListNotebookExecutionsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListNotebookExecutionsPages iterates over the pages of a ListNotebookExecutions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListNotebookExecutions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListNotebookExecutions operation.
+//    pageNum := 0
+//    err := client.ListNotebookExecutionsPages(params,
+//        func(page *emr.ListNotebookExecutionsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *EMR) ListNotebookExecutionsPages(input *ListNotebookExecutionsInput, fn func(*ListNotebookExecutionsOutput, bool) bool) error {
+	return c.ListNotebookExecutionsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListNotebookExecutionsPagesWithContext same as ListNotebookExecutionsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) ListNotebookExecutionsPagesWithContext(ctx aws.Context, input *ListNotebookExecutionsInput, fn func(*ListNotebookExecutionsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListNotebookExecutionsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListNotebookExecutionsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListNotebookExecutionsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListSecurityConfigurations = "ListSecurityConfigurations"
 
 // ListSecurityConfigurationsRequest generates a "aws/request.Request" representing the
@@ -2121,6 +2873,298 @@ func (c *EMR) ListStepsPagesWithContext(ctx aws.Context, input *ListStepsInput, 
 
 	for p.Next() {
 		if !fn(p.Page().(*ListStepsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
+const opListStudioSessionMappings = "ListStudioSessionMappings"
+
+// ListStudioSessionMappingsRequest generates a "aws/request.Request" representing the
+// client's request for the ListStudioSessionMappings operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListStudioSessionMappings for more information on using the ListStudioSessionMappings
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListStudioSessionMappingsRequest method.
+//    req, resp := client.ListStudioSessionMappingsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/ListStudioSessionMappings
+func (c *EMR) ListStudioSessionMappingsRequest(input *ListStudioSessionMappingsInput) (req *request.Request, output *ListStudioSessionMappingsOutput) {
+	op := &request.Operation{
+		Name:       opListStudioSessionMappings,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListStudioSessionMappingsInput{}
+	}
+
+	output = &ListStudioSessionMappingsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListStudioSessionMappings API operation for Amazon Elastic MapReduce.
+//
+//
+// The Amazon EMR Studio APIs are in preview release for Amazon EMR and are
+// subject to change.
+//
+// Returns a list of all user or group session mappings for the EMR Studio specified
+// by StudioId.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation ListStudioSessionMappings for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerError
+//   Indicates that an error occurred while processing the request and that the
+//   request was not completed.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/ListStudioSessionMappings
+func (c *EMR) ListStudioSessionMappings(input *ListStudioSessionMappingsInput) (*ListStudioSessionMappingsOutput, error) {
+	req, out := c.ListStudioSessionMappingsRequest(input)
+	return out, req.Send()
+}
+
+// ListStudioSessionMappingsWithContext is the same as ListStudioSessionMappings with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListStudioSessionMappings for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) ListStudioSessionMappingsWithContext(ctx aws.Context, input *ListStudioSessionMappingsInput, opts ...request.Option) (*ListStudioSessionMappingsOutput, error) {
+	req, out := c.ListStudioSessionMappingsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListStudioSessionMappingsPages iterates over the pages of a ListStudioSessionMappings operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListStudioSessionMappings method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListStudioSessionMappings operation.
+//    pageNum := 0
+//    err := client.ListStudioSessionMappingsPages(params,
+//        func(page *emr.ListStudioSessionMappingsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *EMR) ListStudioSessionMappingsPages(input *ListStudioSessionMappingsInput, fn func(*ListStudioSessionMappingsOutput, bool) bool) error {
+	return c.ListStudioSessionMappingsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListStudioSessionMappingsPagesWithContext same as ListStudioSessionMappingsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) ListStudioSessionMappingsPagesWithContext(ctx aws.Context, input *ListStudioSessionMappingsInput, fn func(*ListStudioSessionMappingsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListStudioSessionMappingsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListStudioSessionMappingsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListStudioSessionMappingsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
+const opListStudios = "ListStudios"
+
+// ListStudiosRequest generates a "aws/request.Request" representing the
+// client's request for the ListStudios operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListStudios for more information on using the ListStudios
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListStudiosRequest method.
+//    req, resp := client.ListStudiosRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/ListStudios
+func (c *EMR) ListStudiosRequest(input *ListStudiosInput) (req *request.Request, output *ListStudiosOutput) {
+	op := &request.Operation{
+		Name:       opListStudios,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListStudiosInput{}
+	}
+
+	output = &ListStudiosOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListStudios API operation for Amazon Elastic MapReduce.
+//
+//
+// The Amazon EMR Studio APIs are in preview release for Amazon EMR and are
+// subject to change.
+//
+// Returns a list of all Amazon EMR Studios associated with the AWS account.
+// The list includes details such as ID, Studio Access URL, and creation time
+// for each Studio.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation ListStudios for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerException
+//   This exception occurs when there is an internal failure in the EMR service.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/ListStudios
+func (c *EMR) ListStudios(input *ListStudiosInput) (*ListStudiosOutput, error) {
+	req, out := c.ListStudiosRequest(input)
+	return out, req.Send()
+}
+
+// ListStudiosWithContext is the same as ListStudios with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListStudios for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) ListStudiosWithContext(ctx aws.Context, input *ListStudiosInput, opts ...request.Option) (*ListStudiosOutput, error) {
+	req, out := c.ListStudiosRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListStudiosPages iterates over the pages of a ListStudios operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListStudios method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListStudios operation.
+//    pageNum := 0
+//    err := client.ListStudiosPages(params,
+//        func(page *emr.ListStudiosOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *EMR) ListStudiosPages(input *ListStudiosInput, fn func(*ListStudiosOutput, bool) bool) error {
+	return c.ListStudiosPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListStudiosPagesWithContext same as ListStudiosPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) ListStudiosPagesWithContext(ctx aws.Context, input *ListStudiosInput, fn func(*ListStudiosOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListStudiosInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListStudiosRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListStudiosOutput), !p.HasNextPage()) {
 			break
 		}
 	}
@@ -3155,6 +4199,172 @@ func (c *EMR) SetVisibleToAllUsersWithContext(ctx aws.Context, input *SetVisible
 	return out, req.Send()
 }
 
+const opStartNotebookExecution = "StartNotebookExecution"
+
+// StartNotebookExecutionRequest generates a "aws/request.Request" representing the
+// client's request for the StartNotebookExecution operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See StartNotebookExecution for more information on using the StartNotebookExecution
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the StartNotebookExecutionRequest method.
+//    req, resp := client.StartNotebookExecutionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/StartNotebookExecution
+func (c *EMR) StartNotebookExecutionRequest(input *StartNotebookExecutionInput) (req *request.Request, output *StartNotebookExecutionOutput) {
+	op := &request.Operation{
+		Name:       opStartNotebookExecution,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StartNotebookExecutionInput{}
+	}
+
+	output = &StartNotebookExecutionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// StartNotebookExecution API operation for Amazon Elastic MapReduce.
+//
+// Starts a notebook execution.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation StartNotebookExecution for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerException
+//   This exception occurs when there is an internal failure in the EMR service.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/StartNotebookExecution
+func (c *EMR) StartNotebookExecution(input *StartNotebookExecutionInput) (*StartNotebookExecutionOutput, error) {
+	req, out := c.StartNotebookExecutionRequest(input)
+	return out, req.Send()
+}
+
+// StartNotebookExecutionWithContext is the same as StartNotebookExecution with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StartNotebookExecution for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) StartNotebookExecutionWithContext(ctx aws.Context, input *StartNotebookExecutionInput, opts ...request.Option) (*StartNotebookExecutionOutput, error) {
+	req, out := c.StartNotebookExecutionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opStopNotebookExecution = "StopNotebookExecution"
+
+// StopNotebookExecutionRequest generates a "aws/request.Request" representing the
+// client's request for the StopNotebookExecution operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See StopNotebookExecution for more information on using the StopNotebookExecution
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the StopNotebookExecutionRequest method.
+//    req, resp := client.StopNotebookExecutionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/StopNotebookExecution
+func (c *EMR) StopNotebookExecutionRequest(input *StopNotebookExecutionInput) (req *request.Request, output *StopNotebookExecutionOutput) {
+	op := &request.Operation{
+		Name:       opStopNotebookExecution,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StopNotebookExecutionInput{}
+	}
+
+	output = &StopNotebookExecutionOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// StopNotebookExecution API operation for Amazon Elastic MapReduce.
+//
+// Stops a notebook execution.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation StopNotebookExecution for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerError
+//   Indicates that an error occurred while processing the request and that the
+//   request was not completed.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/StopNotebookExecution
+func (c *EMR) StopNotebookExecution(input *StopNotebookExecutionInput) (*StopNotebookExecutionOutput, error) {
+	req, out := c.StopNotebookExecutionRequest(input)
+	return out, req.Send()
+}
+
+// StopNotebookExecutionWithContext is the same as StopNotebookExecution with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StopNotebookExecution for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) StopNotebookExecutionWithContext(ctx aws.Context, input *StopNotebookExecutionInput, opts ...request.Option) (*StopNotebookExecutionOutput, error) {
+	req, out := c.StopNotebookExecutionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opTerminateJobFlows = "TerminateJobFlows"
 
 // TerminateJobFlowsRequest generates a "aws/request.Request" representing the
@@ -3240,6 +4450,95 @@ func (c *EMR) TerminateJobFlows(input *TerminateJobFlowsInput) (*TerminateJobFlo
 // for more information on using Contexts.
 func (c *EMR) TerminateJobFlowsWithContext(ctx aws.Context, input *TerminateJobFlowsInput, opts ...request.Option) (*TerminateJobFlowsOutput, error) {
 	req, out := c.TerminateJobFlowsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateStudioSessionMapping = "UpdateStudioSessionMapping"
+
+// UpdateStudioSessionMappingRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateStudioSessionMapping operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateStudioSessionMapping for more information on using the UpdateStudioSessionMapping
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateStudioSessionMappingRequest method.
+//    req, resp := client.UpdateStudioSessionMappingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/UpdateStudioSessionMapping
+func (c *EMR) UpdateStudioSessionMappingRequest(input *UpdateStudioSessionMappingInput) (req *request.Request, output *UpdateStudioSessionMappingOutput) {
+	op := &request.Operation{
+		Name:       opUpdateStudioSessionMapping,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateStudioSessionMappingInput{}
+	}
+
+	output = &UpdateStudioSessionMappingOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UpdateStudioSessionMapping API operation for Amazon Elastic MapReduce.
+//
+//
+// The Amazon EMR Studio APIs are in preview release for Amazon EMR and are
+// subject to change.
+//
+// Updates the session policy attached to the user or group for the specified
+// Amazon EMR Studio.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic MapReduce's
+// API operation UpdateStudioSessionMapping for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerError
+//   Indicates that an error occurred while processing the request and that the
+//   request was not completed.
+//
+//   * InvalidRequestException
+//   This exception occurs when there is something wrong with user input.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/UpdateStudioSessionMapping
+func (c *EMR) UpdateStudioSessionMapping(input *UpdateStudioSessionMappingInput) (*UpdateStudioSessionMappingOutput, error) {
+	req, out := c.UpdateStudioSessionMappingRequest(input)
+	return out, req.Send()
+}
+
+// UpdateStudioSessionMappingWithContext is the same as UpdateStudioSessionMapping with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateStudioSessionMapping for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EMR) UpdateStudioSessionMappingWithContext(ctx aws.Context, input *UpdateStudioSessionMappingInput, opts ...request.Option) (*UpdateStudioSessionMappingOutput, error) {
+	req, out := c.UpdateStudioSessionMappingRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -3547,7 +4846,7 @@ type AddTagsInput struct {
 	ResourceId *string `type:"string" required:"true"`
 
 	// A list of tags to associate with a cluster and propagate to EC2 instances.
-	// Tags are user-defined key/value pairs that consist of a required key string
+	// Tags are user-defined key-value pairs that consist of a required key string
 	// with a maximum of 128 characters, and an optional value string with a maximum
 	// of 256 characters.
 	//
@@ -3866,9 +5165,10 @@ func (s *AutoScalingPolicyStatus) SetStateChangeReason(v *AutoScalingPolicyState
 type BlockPublicAccessConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// Indicates whether EMR block public access is enabled (true) or disabled (false).
-	// By default, the value is false for accounts that have created EMR clusters
-	// before July 2019. For accounts created after this, the default is true.
+	// Indicates whether Amazon EMR block public access is enabled (true) or disabled
+	// (false). By default, the value is false for accounts that have created EMR
+	// clusters before July 2019. For accounts created after this, the default is
+	// true.
 	//
 	// BlockPublicSecurityGroupRules is a required field
 	BlockPublicSecurityGroupRules *bool `type:"boolean" required:"true"`
@@ -4099,14 +5399,13 @@ func (s *CancelStepsInfo) SetStepId(v string) *CancelStepsInfo {
 type CancelStepsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The ClusterID for which specified steps will be canceled. Use RunJobFlow
+	// The ClusterID for the specified steps that will be canceled. Use RunJobFlow
 	// and ListClusters to get ClusterIDs.
 	//
 	// ClusterId is a required field
 	ClusterId *string `type:"string" required:"true"`
 
-	// The option to choose for cancelling RUNNING steps. By default, the value
-	// is SEND_INTERRUPT.
+	// The option to choose to cancel RUNNING steps. By default, the value is SEND_INTERRUPT.
 	StepCancellationOption *string `type:"string" enum:"StepCancellationOption"`
 
 	// The list of StepIDs to cancel. Use ListSteps to get steps and their states
@@ -4347,8 +5646,8 @@ type Cluster struct {
 	// Amazon EBS-backed Linux AMI if the cluster uses a custom AMI.
 	CustomAmiId *string `type:"string"`
 
-	// The size, in GiB, of the EBS root device volume of the Linux AMI that is
-	// used for each EC2 instance. Available in Amazon EMR version 4.x and later.
+	// The size, in GiB, of the Amazon EBS root device volume of the Linux AMI that
+	// is used for each EC2 instance. Available in Amazon EMR version 4.x and later.
 	EbsRootVolumeSize *int64 `type:"integer"`
 
 	// Provides information about the EC2 instances in a cluster grouped by category.
@@ -4370,7 +5669,7 @@ type Cluster struct {
 	// Attributes for Kerberos configuration when Kerberos authentication is enabled
 	// using a security configuration. For more information see Use Kerberos Authentication
 	// (https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-kerberos.html)
-	// in the EMR Management Guide.
+	// in the Amazon EMR Management Guide.
 	KerberosAttributes *KerberosAttributes `type:"structure"`
 
 	// The AWS KMS customer master key (CMK) used for encrypting log files. This
@@ -4399,6 +5698,9 @@ type Cluster struct {
 	// The Amazon Resource Name (ARN) of the Outpost where the cluster is launched.
 	OutpostArn *string `type:"string"`
 
+	// Placement group configured for an Amazon EMR cluster.
+	PlacementGroups []*PlacementGroupConfig `type:"list"`
+
 	// The Amazon EMR release label, which determines the version of open-source
 	// application packages installed on the cluster. Release labels are in the
 	// form emr-x.x.x, where x.x.x is an Amazon EMR release version such as emr-5.14.0.
@@ -4426,10 +5728,10 @@ type Cluster struct {
 	// regardless of when the request to terminate the instance was submitted. This
 	// option is only available with Amazon EMR 5.1.0 and later and is the default
 	// for clusters created using that version. TERMINATE_AT_TASK_COMPLETION indicates
-	// that Amazon EMR blacklists and drains tasks from nodes before terminating
-	// the Amazon EC2 instances, regardless of the instance-hour boundary. With
-	// either behavior, Amazon EMR removes the least active nodes first and blocks
-	// instance termination if it could lead to HDFS corruption. TERMINATE_AT_TASK_COMPLETION
+	// that Amazon EMR adds nodes to a deny list and drains tasks from nodes before
+	// terminating the Amazon EC2 instances, regardless of the instance-hour boundary.
+	// With either behavior, Amazon EMR removes the least active nodes first and
+	// blocks instance termination if it could lead to HDFS corruption. TERMINATE_AT_TASK_COMPLETION
 	// is available only in Amazon EMR version 4.1.0 and later, and is the default
 	// for versions of Amazon EMR earlier than 5.1.0.
 	ScaleDownBehavior *string `type:"string" enum:"ScaleDownBehavior"`
@@ -4575,6 +5877,12 @@ func (s *Cluster) SetNormalizedInstanceHours(v int64) *Cluster {
 // SetOutpostArn sets the OutpostArn field's value.
 func (s *Cluster) SetOutpostArn(v string) *Cluster {
 	s.OutpostArn = &v
+	return s
+}
+
+// SetPlacementGroups sets the PlacementGroups field's value.
+func (s *Cluster) SetPlacementGroups(v []*PlacementGroupConfig) *Cluster {
+	s.PlacementGroups = v
 	return s
 }
 
@@ -4810,7 +6118,7 @@ type ClusterTimeline struct {
 	// The date and time when the cluster was terminated.
 	EndDateTime *time.Time `type:"timestamp"`
 
-	// The date and time when the cluster was ready to execute steps.
+	// The date and time when the cluster was ready to run steps.
 	ReadyDateTime *time.Time `type:"timestamp"`
 }
 
@@ -4891,7 +6199,7 @@ func (s *Command) SetScriptPath(v string) *Command {
 type ComputeLimits struct {
 	_ struct{} `type:"structure"`
 
-	// The upper boundary of EC2 units. It is measured through VCPU cores or instances
+	// The upper boundary of EC2 units. It is measured through vCPU cores or instances
 	// for instance groups and measured through units for instance fleets. Managed
 	// scaling activities are not allowed beyond this boundary. The limit only applies
 	// to the core and task nodes. The master node cannot be scaled after initial
@@ -4900,14 +6208,21 @@ type ComputeLimits struct {
 	// MaximumCapacityUnits is a required field
 	MaximumCapacityUnits *int64 `type:"integer" required:"true"`
 
-	// The upper boundary of on-demand EC2 units. It is measured through VCPU cores
+	// The upper boundary of EC2 units for core node type in a cluster. It is measured
+	// through vCPU cores or instances for instance groups and measured through
+	// units for instance fleets. The core units are not allowed to scale beyond
+	// this boundary. The parameter is used to split capacity allocation between
+	// core and task nodes.
+	MaximumCoreCapacityUnits *int64 `type:"integer"`
+
+	// The upper boundary of On-Demand EC2 units. It is measured through vCPU cores
 	// or instances for instance groups and measured through units for instance
-	// fleets. The on-demand units are not allowed to scale beyond this boundary.
-	// The limit only applies to the core and task nodes. The master node cannot
-	// be scaled after initial configuration.
+	// fleets. The On-Demand units are not allowed to scale beyond this boundary.
+	// The parameter is used to split capacity allocation between On-Demand and
+	// Spot Instances.
 	MaximumOnDemandCapacityUnits *int64 `type:"integer"`
 
-	// The lower boundary of EC2 units. It is measured through VCPU cores or instances
+	// The lower boundary of EC2 units. It is measured through vCPU cores or instances
 	// for instance groups and measured through units for instance fleets. Managed
 	// scaling activities are not allowed beyond this boundary. The limit only applies
 	// to the core and task nodes. The master node cannot be scaled after initial
@@ -4954,6 +6269,12 @@ func (s *ComputeLimits) Validate() error {
 // SetMaximumCapacityUnits sets the MaximumCapacityUnits field's value.
 func (s *ComputeLimits) SetMaximumCapacityUnits(v int64) *ComputeLimits {
 	s.MaximumCapacityUnits = &v
+	return s
+}
+
+// SetMaximumCoreCapacityUnits sets the MaximumCoreCapacityUnits field's value.
+func (s *ComputeLimits) SetMaximumCoreCapacityUnits(v int64) *ComputeLimits {
+	s.MaximumCoreCapacityUnits = &v
 	return s
 }
 
@@ -5115,6 +6436,323 @@ func (s *CreateSecurityConfigurationOutput) SetName(v string) *CreateSecurityCon
 	return s
 }
 
+type CreateStudioInput struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies whether the Studio authenticates users using single sign-on (SSO)
+	// or IAM. Amazon EMR Studio currently only supports SSO authentication.
+	//
+	// AuthMode is a required field
+	AuthMode *string `type:"string" required:"true" enum:"AuthMode"`
+
+	// The default Amazon S3 location to back up EMR Studio Workspaces and notebook
+	// files. A Studio user can select an alternative Amazon S3 location when creating
+	// a Workspace.
+	DefaultS3Location *string `type:"string"`
+
+	// A detailed description of the Studio.
+	Description *string `type:"string"`
+
+	// The ID of the Amazon EMR Studio Engine security group. The Engine security
+	// group allows inbound network traffic from the Workspace security group, and
+	// it must be in the same VPC specified by VpcId.
+	//
+	// EngineSecurityGroupId is a required field
+	EngineSecurityGroupId *string `type:"string" required:"true"`
+
+	// A descriptive name for the Amazon EMR Studio.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// The IAM role that will be assumed by the Amazon EMR Studio. The service role
+	// provides a way for Amazon EMR Studio to interoperate with other AWS services.
+	//
+	// ServiceRole is a required field
+	ServiceRole *string `type:"string" required:"true"`
+
+	// A list of subnet IDs to associate with the Studio. The subnets must belong
+	// to the VPC specified by VpcId. Studio users can create a Workspace in any
+	// of the specified subnets.
+	//
+	// SubnetIds is a required field
+	SubnetIds []*string `type:"list" required:"true"`
+
+	// A list of tags to associate with the Studio. Tags are user-defined key-value
+	// pairs that consist of a required key string with a maximum of 128 characters,
+	// and an optional value string with a maximum of 256 characters.
+	Tags []*Tag `type:"list"`
+
+	// The IAM user role that will be assumed by users and groups logged in to a
+	// Studio. The permissions attached to this IAM role can be scoped down for
+	// each user or group using session policies.
+	//
+	// UserRole is a required field
+	UserRole *string `type:"string" required:"true"`
+
+	// The ID of the Amazon Virtual Private Cloud (Amazon VPC) to associate with
+	// the Studio.
+	//
+	// VpcId is a required field
+	VpcId *string `type:"string" required:"true"`
+
+	// The ID of the Amazon EMR Studio Workspace security group. The Workspace security
+	// group allows outbound network traffic to resources in the Engine security
+	// group, and it must be in the same VPC specified by VpcId.
+	//
+	// WorkspaceSecurityGroupId is a required field
+	WorkspaceSecurityGroupId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateStudioInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateStudioInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateStudioInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateStudioInput"}
+	if s.AuthMode == nil {
+		invalidParams.Add(request.NewErrParamRequired("AuthMode"))
+	}
+	if s.EngineSecurityGroupId == nil {
+		invalidParams.Add(request.NewErrParamRequired("EngineSecurityGroupId"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.ServiceRole == nil {
+		invalidParams.Add(request.NewErrParamRequired("ServiceRole"))
+	}
+	if s.SubnetIds == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubnetIds"))
+	}
+	if s.UserRole == nil {
+		invalidParams.Add(request.NewErrParamRequired("UserRole"))
+	}
+	if s.VpcId == nil {
+		invalidParams.Add(request.NewErrParamRequired("VpcId"))
+	}
+	if s.WorkspaceSecurityGroupId == nil {
+		invalidParams.Add(request.NewErrParamRequired("WorkspaceSecurityGroupId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAuthMode sets the AuthMode field's value.
+func (s *CreateStudioInput) SetAuthMode(v string) *CreateStudioInput {
+	s.AuthMode = &v
+	return s
+}
+
+// SetDefaultS3Location sets the DefaultS3Location field's value.
+func (s *CreateStudioInput) SetDefaultS3Location(v string) *CreateStudioInput {
+	s.DefaultS3Location = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *CreateStudioInput) SetDescription(v string) *CreateStudioInput {
+	s.Description = &v
+	return s
+}
+
+// SetEngineSecurityGroupId sets the EngineSecurityGroupId field's value.
+func (s *CreateStudioInput) SetEngineSecurityGroupId(v string) *CreateStudioInput {
+	s.EngineSecurityGroupId = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateStudioInput) SetName(v string) *CreateStudioInput {
+	s.Name = &v
+	return s
+}
+
+// SetServiceRole sets the ServiceRole field's value.
+func (s *CreateStudioInput) SetServiceRole(v string) *CreateStudioInput {
+	s.ServiceRole = &v
+	return s
+}
+
+// SetSubnetIds sets the SubnetIds field's value.
+func (s *CreateStudioInput) SetSubnetIds(v []*string) *CreateStudioInput {
+	s.SubnetIds = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateStudioInput) SetTags(v []*Tag) *CreateStudioInput {
+	s.Tags = v
+	return s
+}
+
+// SetUserRole sets the UserRole field's value.
+func (s *CreateStudioInput) SetUserRole(v string) *CreateStudioInput {
+	s.UserRole = &v
+	return s
+}
+
+// SetVpcId sets the VpcId field's value.
+func (s *CreateStudioInput) SetVpcId(v string) *CreateStudioInput {
+	s.VpcId = &v
+	return s
+}
+
+// SetWorkspaceSecurityGroupId sets the WorkspaceSecurityGroupId field's value.
+func (s *CreateStudioInput) SetWorkspaceSecurityGroupId(v string) *CreateStudioInput {
+	s.WorkspaceSecurityGroupId = &v
+	return s
+}
+
+type CreateStudioOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the Amazon EMR Studio.
+	StudioId *string `type:"string"`
+
+	// The unique Studio access URL.
+	Url *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CreateStudioOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateStudioOutput) GoString() string {
+	return s.String()
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *CreateStudioOutput) SetStudioId(v string) *CreateStudioOutput {
+	s.StudioId = &v
+	return s
+}
+
+// SetUrl sets the Url field's value.
+func (s *CreateStudioOutput) SetUrl(v string) *CreateStudioOutput {
+	s.Url = &v
+	return s
+}
+
+type CreateStudioSessionMappingInput struct {
+	_ struct{} `type:"structure"`
+
+	// The globally unique identifier (GUID) of the user or group from the AWS SSO
+	// Identity Store. For more information, see UserId (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_User.html#singlesignon-Type-User-UserId)
+	// and GroupId (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_Group.html#singlesignon-Type-Group-GroupId)
+	// in the AWS SSO Identity Store API Reference. Either IdentityName or IdentityId
+	// must be specified.
+	IdentityId *string `type:"string"`
+
+	// The name of the user or group. For more information, see UserName (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_User.html#singlesignon-Type-User-UserId)
+	// and DisplayName (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_Group.html#singlesignon-Type-Group-DisplayName)
+	// in the AWS SSO Identity Store API Reference. Either IdentityName or IdentityId
+	// must be specified.
+	IdentityName *string `type:"string"`
+
+	// Specifies whether the identity to map to the Studio is a user or a group.
+	//
+	// IdentityType is a required field
+	IdentityType *string `type:"string" required:"true" enum:"IdentityType"`
+
+	// The Amazon Resource Name (ARN) for the session policy that will be applied
+	// to the user or group. Session policies refine Studio user permissions without
+	// the need to use multiple IAM user roles.
+	//
+	// SessionPolicyArn is a required field
+	SessionPolicyArn *string `type:"string" required:"true"`
+
+	// The ID of the Amazon EMR Studio to which the user or group will be mapped.
+	//
+	// StudioId is a required field
+	StudioId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateStudioSessionMappingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateStudioSessionMappingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateStudioSessionMappingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateStudioSessionMappingInput"}
+	if s.IdentityType == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityType"))
+	}
+	if s.SessionPolicyArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("SessionPolicyArn"))
+	}
+	if s.StudioId == nil {
+		invalidParams.Add(request.NewErrParamRequired("StudioId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIdentityId sets the IdentityId field's value.
+func (s *CreateStudioSessionMappingInput) SetIdentityId(v string) *CreateStudioSessionMappingInput {
+	s.IdentityId = &v
+	return s
+}
+
+// SetIdentityName sets the IdentityName field's value.
+func (s *CreateStudioSessionMappingInput) SetIdentityName(v string) *CreateStudioSessionMappingInput {
+	s.IdentityName = &v
+	return s
+}
+
+// SetIdentityType sets the IdentityType field's value.
+func (s *CreateStudioSessionMappingInput) SetIdentityType(v string) *CreateStudioSessionMappingInput {
+	s.IdentityType = &v
+	return s
+}
+
+// SetSessionPolicyArn sets the SessionPolicyArn field's value.
+func (s *CreateStudioSessionMappingInput) SetSessionPolicyArn(v string) *CreateStudioSessionMappingInput {
+	s.SessionPolicyArn = &v
+	return s
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *CreateStudioSessionMappingInput) SetStudioId(v string) *CreateStudioSessionMappingInput {
+	s.StudioId = &v
+	return s
+}
+
+type CreateStudioSessionMappingOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s CreateStudioSessionMappingOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateStudioSessionMappingOutput) GoString() string {
+	return s.String()
+}
+
 type DeleteSecurityConfigurationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5164,6 +6802,150 @@ func (s DeleteSecurityConfigurationOutput) String() string {
 
 // GoString returns the string representation
 func (s DeleteSecurityConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteStudioInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the Amazon EMR Studio.
+	//
+	// StudioId is a required field
+	StudioId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteStudioInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteStudioInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteStudioInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteStudioInput"}
+	if s.StudioId == nil {
+		invalidParams.Add(request.NewErrParamRequired("StudioId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *DeleteStudioInput) SetStudioId(v string) *DeleteStudioInput {
+	s.StudioId = &v
+	return s
+}
+
+type DeleteStudioOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteStudioOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteStudioOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteStudioSessionMappingInput struct {
+	_ struct{} `type:"structure"`
+
+	// The globally unique identifier (GUID) of the user or group to remove from
+	// the Amazon EMR Studio. For more information, see UserId (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_User.html#singlesignon-Type-User-UserId)
+	// and GroupId (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_Group.html#singlesignon-Type-Group-GroupId)
+	// in the AWS SSO Identity Store API Reference. Either IdentityName or IdentityId
+	// must be specified.
+	IdentityId *string `type:"string"`
+
+	// The name of the user name or group to remove from the Studio. For more information,
+	// see UserName (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_User.html#singlesignon-Type-User-UserId)
+	// and DisplayName (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_Group.html#singlesignon-Type-Group-DisplayName)
+	// in the AWS SSO Identity Store API Reference. Either IdentityName or IdentityId
+	// must be specified.
+	IdentityName *string `type:"string"`
+
+	// Specifies whether the identity to delete from the Studio is a user or a group.
+	//
+	// IdentityType is a required field
+	IdentityType *string `type:"string" required:"true" enum:"IdentityType"`
+
+	// The ID of the Amazon EMR Studio.
+	//
+	// StudioId is a required field
+	StudioId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteStudioSessionMappingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteStudioSessionMappingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteStudioSessionMappingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteStudioSessionMappingInput"}
+	if s.IdentityType == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityType"))
+	}
+	if s.StudioId == nil {
+		invalidParams.Add(request.NewErrParamRequired("StudioId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIdentityId sets the IdentityId field's value.
+func (s *DeleteStudioSessionMappingInput) SetIdentityId(v string) *DeleteStudioSessionMappingInput {
+	s.IdentityId = &v
+	return s
+}
+
+// SetIdentityName sets the IdentityName field's value.
+func (s *DeleteStudioSessionMappingInput) SetIdentityName(v string) *DeleteStudioSessionMappingInput {
+	s.IdentityName = &v
+	return s
+}
+
+// SetIdentityType sets the IdentityType field's value.
+func (s *DeleteStudioSessionMappingInput) SetIdentityType(v string) *DeleteStudioSessionMappingInput {
+	s.IdentityType = &v
+	return s
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *DeleteStudioSessionMappingInput) SetStudioId(v string) *DeleteStudioSessionMappingInput {
+	s.StudioId = &v
+	return s
+}
+
+type DeleteStudioSessionMappingOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteStudioSessionMappingOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteStudioSessionMappingOutput) GoString() string {
 	return s.String()
 }
 
@@ -5302,6 +7084,67 @@ func (s DescribeJobFlowsOutput) GoString() string {
 // SetJobFlows sets the JobFlows field's value.
 func (s *DescribeJobFlowsOutput) SetJobFlows(v []*JobFlowDetail) *DescribeJobFlowsOutput {
 	s.JobFlows = v
+	return s
+}
+
+type DescribeNotebookExecutionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique identifier of the notebook execution.
+	//
+	// NotebookExecutionId is a required field
+	NotebookExecutionId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeNotebookExecutionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeNotebookExecutionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeNotebookExecutionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeNotebookExecutionInput"}
+	if s.NotebookExecutionId == nil {
+		invalidParams.Add(request.NewErrParamRequired("NotebookExecutionId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetNotebookExecutionId sets the NotebookExecutionId field's value.
+func (s *DescribeNotebookExecutionInput) SetNotebookExecutionId(v string) *DescribeNotebookExecutionInput {
+	s.NotebookExecutionId = &v
+	return s
+}
+
+type DescribeNotebookExecutionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Properties of the notebook execution.
+	NotebookExecution *NotebookExecution `type:"structure"`
+}
+
+// String returns the string representation
+func (s DescribeNotebookExecutionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeNotebookExecutionOutput) GoString() string {
+	return s.String()
+}
+
+// SetNotebookExecution sets the NotebookExecution field's value.
+func (s *DescribeNotebookExecutionOutput) SetNotebookExecution(v *NotebookExecution) *DescribeNotebookExecutionOutput {
+	s.NotebookExecution = v
 	return s
 }
 
@@ -5458,6 +7301,67 @@ func (s DescribeStepOutput) GoString() string {
 // SetStep sets the Step field's value.
 func (s *DescribeStepOutput) SetStep(v *Step) *DescribeStepOutput {
 	s.Step = v
+	return s
+}
+
+type DescribeStudioInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon EMR Studio ID.
+	//
+	// StudioId is a required field
+	StudioId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeStudioInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeStudioInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeStudioInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeStudioInput"}
+	if s.StudioId == nil {
+		invalidParams.Add(request.NewErrParamRequired("StudioId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *DescribeStudioInput) SetStudioId(v string) *DescribeStudioInput {
+	s.StudioId = &v
+	return s
+}
+
+type DescribeStudioOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon EMR Studio details.
+	Studio *Studio `type:"structure"`
+}
+
+// String returns the string representation
+func (s DescribeStudioOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeStudioOutput) GoString() string {
+	return s.String()
+}
+
+// SetStudio sets the Studio field's value.
+func (s *DescribeStudioOutput) SetStudio(v *Studio) *DescribeStudioOutput {
+	s.Studio = v
 	return s
 }
 
@@ -5775,6 +7679,68 @@ func (s *Ec2InstanceAttributes) SetServiceAccessSecurityGroup(v string) *Ec2Inst
 	return s
 }
 
+// Specifies the execution engine (cluster) to run the notebook and perform
+// the notebook execution, for example, an EMR cluster.
+type ExecutionEngineConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The unique identifier of the execution engine. For an EMR cluster, this is
+	// the cluster ID.
+	//
+	// Id is a required field
+	Id *string `type:"string" required:"true"`
+
+	// An optional unique ID of an EC2 security group to associate with the master
+	// instance of the EMR cluster for this notebook execution. For more information
+	// see Specifying EC2 Security Groups for EMR Notebooks (https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-managed-notebooks-security-groups.html)
+	// in the EMR Management Guide.
+	MasterInstanceSecurityGroupId *string `type:"string"`
+
+	// The type of execution engine. A value of EMR specifies an EMR cluster.
+	Type *string `type:"string" enum:"ExecutionEngineType"`
+}
+
+// String returns the string representation
+func (s ExecutionEngineConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ExecutionEngineConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ExecutionEngineConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ExecutionEngineConfig"}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetId sets the Id field's value.
+func (s *ExecutionEngineConfig) SetId(v string) *ExecutionEngineConfig {
+	s.Id = &v
+	return s
+}
+
+// SetMasterInstanceSecurityGroupId sets the MasterInstanceSecurityGroupId field's value.
+func (s *ExecutionEngineConfig) SetMasterInstanceSecurityGroupId(v string) *ExecutionEngineConfig {
+	s.MasterInstanceSecurityGroupId = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *ExecutionEngineConfig) SetType(v string) *ExecutionEngineConfig {
+	s.Type = &v
+	return s
+}
+
 // The details of the step failure. The service attempts to detect the root
 // cause for many common failures.
 type FailureDetails struct {
@@ -5784,7 +7750,7 @@ type FailureDetails struct {
 	// recorded.
 	LogFile *string `type:"string"`
 
-	// The descriptive message including the error the EMR service has identified
+	// The descriptive message including the error the Amazon EMR service has identified
 	// as the cause of step failure. This is text from an error log that describes
 	// the root cause of the failure.
 	Message *string `type:"string"`
@@ -5952,6 +7918,108 @@ func (s *GetManagedScalingPolicyOutput) SetManagedScalingPolicy(v *ManagedScalin
 	return s
 }
 
+type GetStudioSessionMappingInput struct {
+	_ struct{} `type:"structure"`
+
+	// The globally unique identifier (GUID) of the user or group. For more information,
+	// see UserId (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_User.html#singlesignon-Type-User-UserId)
+	// and GroupId (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_Group.html#singlesignon-Type-Group-GroupId)
+	// in the AWS SSO Identity Store API Reference. Either IdentityName or IdentityId
+	// must be specified.
+	IdentityId *string `type:"string"`
+
+	// The name of the user or group to fetch. For more information, see UserName
+	// (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_User.html#singlesignon-Type-User-UserId)
+	// and DisplayName (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_Group.html#singlesignon-Type-Group-DisplayName)
+	// in the AWS SSO Identity Store API Reference. Either IdentityName or IdentityId
+	// must be specified.
+	IdentityName *string `type:"string"`
+
+	// Specifies whether the identity to fetch is a user or a group.
+	//
+	// IdentityType is a required field
+	IdentityType *string `type:"string" required:"true" enum:"IdentityType"`
+
+	// The ID of the Amazon EMR Studio.
+	//
+	// StudioId is a required field
+	StudioId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetStudioSessionMappingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetStudioSessionMappingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetStudioSessionMappingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetStudioSessionMappingInput"}
+	if s.IdentityType == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityType"))
+	}
+	if s.StudioId == nil {
+		invalidParams.Add(request.NewErrParamRequired("StudioId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIdentityId sets the IdentityId field's value.
+func (s *GetStudioSessionMappingInput) SetIdentityId(v string) *GetStudioSessionMappingInput {
+	s.IdentityId = &v
+	return s
+}
+
+// SetIdentityName sets the IdentityName field's value.
+func (s *GetStudioSessionMappingInput) SetIdentityName(v string) *GetStudioSessionMappingInput {
+	s.IdentityName = &v
+	return s
+}
+
+// SetIdentityType sets the IdentityType field's value.
+func (s *GetStudioSessionMappingInput) SetIdentityType(v string) *GetStudioSessionMappingInput {
+	s.IdentityType = &v
+	return s
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *GetStudioSessionMappingInput) SetStudioId(v string) *GetStudioSessionMappingInput {
+	s.StudioId = &v
+	return s
+}
+
+type GetStudioSessionMappingOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The session mapping details for the specified Amazon EMR Studio and identity,
+	// including session policy ARN and creation time.
+	SessionMapping *SessionMappingDetail `type:"structure"`
+}
+
+// String returns the string representation
+func (s GetStudioSessionMappingOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetStudioSessionMappingOutput) GoString() string {
+	return s.String()
+}
+
+// SetSessionMapping sets the SessionMapping field's value.
+func (s *GetStudioSessionMappingOutput) SetSessionMapping(v *SessionMappingDetail) *GetStudioSessionMappingOutput {
+	s.SessionMapping = v
+	return s
+}
+
 // A job flow step consisting of a JAR file whose main function will be executed.
 // The main function submits a job for Hadoop to execute and waits for the job
 // to finish or fail.
@@ -6041,7 +8109,7 @@ type HadoopStepConfig struct {
 	MainClass *string `type:"string"`
 
 	// The list of Java properties that are set when the step runs. You can use
-	// these properties to pass key value pairs to your main function.
+	// these properties to pass key-value pairs to your main function.
 	Properties map[string]*string `type:"map"`
 }
 
@@ -6205,7 +8273,7 @@ func (s *Instance) SetStatus(v *InstanceStatus) *Instance {
 // Describes an instance fleet, which is a group of EC2 instances that host
 // a particular node type (master, core, or task) in an Amazon EMR cluster.
 // Instance fleets can consist of a mix of instance types and On-Demand and
-// Spot instances, which are provisioned to meet a defined target capacity.
+// Spot Instances, which are provisioned to meet a defined target capacity.
 //
 // The instance fleet configuration is available only in Amazon EMR versions
 // 4.8.0 and later, excluding 5.0.x versions.
@@ -6244,10 +8312,10 @@ type InstanceFleet struct {
 	Status *InstanceFleetStatus `type:"structure"`
 
 	// The target capacity of On-Demand units for the instance fleet, which determines
-	// how many On-Demand instances to provision. When the instance fleet launches,
-	// Amazon EMR tries to provision On-Demand instances as specified by InstanceTypeConfig.
+	// how many On-Demand Instances to provision. When the instance fleet launches,
+	// Amazon EMR tries to provision On-Demand Instances as specified by InstanceTypeConfig.
 	// Each instance configuration has a specified WeightedCapacity. When an On-Demand
-	// instance is provisioned, the WeightedCapacity units count toward the target
+	// Instance is provisioned, the WeightedCapacity units count toward the target
 	// capacity. Amazon EMR provisions instances until the target capacity is totally
 	// fulfilled, even if this results in an overage. For example, if there are
 	// 2 units remaining to fulfill capacity, and Amazon EMR can only provision
@@ -6256,7 +8324,7 @@ type InstanceFleet struct {
 	// to determine the Spot capacity units that have been provisioned for the instance
 	// fleet.
 	//
-	// If not specified or set to 0, only Spot instances are provisioned for the
+	// If not specified or set to 0, only Spot Instances are provisioned for the
 	// instance fleet using TargetSpotCapacity. At least one of TargetSpotCapacity
 	// and TargetOnDemandCapacity should be greater than 0. For a master instance
 	// fleet, only one of TargetSpotCapacity and TargetOnDemandCapacity can be specified,
@@ -6377,17 +8445,17 @@ type InstanceFleetConfig struct {
 	Name *string `type:"string"`
 
 	// The target capacity of On-Demand units for the instance fleet, which determines
-	// how many On-Demand instances to provision. When the instance fleet launches,
-	// Amazon EMR tries to provision On-Demand instances as specified by InstanceTypeConfig.
+	// how many On-Demand Instances to provision. When the instance fleet launches,
+	// Amazon EMR tries to provision On-Demand Instances as specified by InstanceTypeConfig.
 	// Each instance configuration has a specified WeightedCapacity. When an On-Demand
-	// instance is provisioned, the WeightedCapacity units count toward the target
+	// Instance is provisioned, the WeightedCapacity units count toward the target
 	// capacity. Amazon EMR provisions instances until the target capacity is totally
 	// fulfilled, even if this results in an overage. For example, if there are
 	// 2 units remaining to fulfill capacity, and Amazon EMR can only provision
 	// an instance with a WeightedCapacity of 5 units, the instance is provisioned,
 	// and the target capacity is exceeded by 3 units.
 	//
-	// If not specified or set to 0, only Spot instances are provisioned for the
+	// If not specified or set to 0, only Spot Instances are provisioned for the
 	// instance fleet using TargetSpotCapacity. At least one of TargetSpotCapacity
 	// and TargetOnDemandCapacity should be greater than 0. For a master instance
 	// fleet, only one of TargetSpotCapacity and TargetOnDemandCapacity can be specified,
@@ -6395,17 +8463,17 @@ type InstanceFleetConfig struct {
 	TargetOnDemandCapacity *int64 `type:"integer"`
 
 	// The target capacity of Spot units for the instance fleet, which determines
-	// how many Spot instances to provision. When the instance fleet launches, Amazon
-	// EMR tries to provision Spot instances as specified by InstanceTypeConfig.
+	// how many Spot Instances to provision. When the instance fleet launches, Amazon
+	// EMR tries to provision Spot Instances as specified by InstanceTypeConfig.
 	// Each instance configuration has a specified WeightedCapacity. When a Spot
-	// instance is provisioned, the WeightedCapacity units count toward the target
+	// Instance is provisioned, the WeightedCapacity units count toward the target
 	// capacity. Amazon EMR provisions instances until the target capacity is totally
 	// fulfilled, even if this results in an overage. For example, if there are
 	// 2 units remaining to fulfill capacity, and Amazon EMR can only provision
 	// an instance with a WeightedCapacity of 5 units, the instance is provisioned,
 	// and the target capacity is exceeded by 3 units.
 	//
-	// If not specified or set to 0, only On-Demand instances are provisioned for
+	// If not specified or set to 0, only On-Demand Instances are provisioned for
 	// the instance fleet. At least one of TargetSpotCapacity and TargetOnDemandCapacity
 	// should be greater than 0. For a master instance fleet, only one of TargetSpotCapacity
 	// and TargetOnDemandCapacity can be specified, and its value must be 1.
@@ -6548,19 +8616,26 @@ func (s *InstanceFleetModifyConfig) SetTargetSpotCapacity(v int64) *InstanceFlee
 	return s
 }
 
-// The launch specification for Spot instances in the fleet, which determines
-// the defined duration and provisioning timeout behavior.
+// The launch specification for Spot Instances in the fleet, which determines
+// the defined duration, provisioning timeout behavior, and allocation strategy.
 //
 // The instance fleet configuration is available only in Amazon EMR versions
-// 4.8.0 and later, excluding 5.0.x versions.
+// 4.8.0 and later, excluding 5.0.x versions. On-Demand and Spot Instance allocation
+// strategies are available in Amazon EMR version 5.12.1 and later.
 type InstanceFleetProvisioningSpecifications struct {
 	_ struct{} `type:"structure"`
 
-	// The launch specification for Spot instances in the fleet, which determines
-	// the defined duration and provisioning timeout behavior.
+	// The launch specification for On-Demand Instances in the instance fleet, which
+	// determines the allocation strategy.
 	//
-	// SpotSpecification is a required field
-	SpotSpecification *SpotProvisioningSpecification `type:"structure" required:"true"`
+	// The instance fleet configuration is available only in Amazon EMR versions
+	// 4.8.0 and later, excluding 5.0.x versions. On-Demand Instances allocation
+	// strategy is available in Amazon EMR version 5.12.1 and later.
+	OnDemandSpecification *OnDemandProvisioningSpecification `type:"structure"`
+
+	// The launch specification for Spot Instances in the fleet, which determines
+	// the defined duration, provisioning timeout behavior, and allocation strategy.
+	SpotSpecification *SpotProvisioningSpecification `type:"structure"`
 }
 
 // String returns the string representation
@@ -6576,8 +8651,10 @@ func (s InstanceFleetProvisioningSpecifications) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *InstanceFleetProvisioningSpecifications) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "InstanceFleetProvisioningSpecifications"}
-	if s.SpotSpecification == nil {
-		invalidParams.Add(request.NewErrParamRequired("SpotSpecification"))
+	if s.OnDemandSpecification != nil {
+		if err := s.OnDemandSpecification.Validate(); err != nil {
+			invalidParams.AddNested("OnDemandSpecification", err.(request.ErrInvalidParams))
+		}
 	}
 	if s.SpotSpecification != nil {
 		if err := s.SpotSpecification.Validate(); err != nil {
@@ -6589,6 +8666,12 @@ func (s *InstanceFleetProvisioningSpecifications) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetOnDemandSpecification sets the OnDemandSpecification field's value.
+func (s *InstanceFleetProvisioningSpecifications) SetOnDemandSpecification(v *OnDemandProvisioningSpecification) *InstanceFleetProvisioningSpecifications {
+	s.OnDemandSpecification = v
+	return s
 }
 
 // SetSpotSpecification sets the SpotSpecification field's value.
@@ -6756,7 +8839,7 @@ type InstanceGroup struct {
 	// of a CloudWatch metric. See PutAutoScalingPolicy.
 	AutoScalingPolicy *AutoScalingPolicyDescription `type:"structure"`
 
-	// The bid price for each EC2 Spot instance type as defined by InstanceType.
+	// The bid price for each EC2 Spot Instance type as defined by InstanceType.
 	// Expressed in USD. If neither BidPrice nor BidPriceAsPercentageOfOnDemandPrice
 	// is provided, BidPriceAsPercentageOfOnDemandPrice defaults to 100%.
 	BidPrice *string `type:"string"`
@@ -6940,7 +9023,7 @@ type InstanceGroupConfig struct {
 	// of a CloudWatch metric. See PutAutoScalingPolicy.
 	AutoScalingPolicy *AutoScalingPolicy `type:"structure"`
 
-	// The bid price for each EC2 Spot instance type as defined by InstanceType.
+	// The bid price for each EC2 Spot Instance type as defined by InstanceType.
 	// Expressed in USD. If neither BidPrice nor BidPriceAsPercentageOfOnDemandPrice
 	// is provided, BidPriceAsPercentageOfOnDemandPrice defaults to 100%.
 	BidPrice *string `type:"string"`
@@ -7079,7 +9162,7 @@ func (s *InstanceGroupConfig) SetName(v string) *InstanceGroupConfig {
 type InstanceGroupDetail struct {
 	_ struct{} `type:"structure"`
 
-	// The bid price for each EC2 Spot instance type as defined by InstanceType.
+	// The bid price for each EC2 Spot Instance type as defined by InstanceType.
 	// Expressed in USD. If neither BidPrice nor BidPriceAsPercentageOfOnDemandPrice
 	// is provided, BidPriceAsPercentageOfOnDemandPrice defaults to 100%.
 	BidPrice *string `type:"string"`
@@ -7247,7 +9330,7 @@ type InstanceGroupModifyConfig struct {
 	// Target size for the instance group.
 	InstanceCount *int64 `type:"integer"`
 
-	// Unique ID of the instance group to expand or shrink.
+	// Unique ID of the instance group to modify.
 	//
 	// InstanceGroupId is a required field
 	InstanceGroupId *string `type:"string" required:"true"`
@@ -7589,7 +9672,7 @@ func (s *InstanceTimeline) SetReadyDateTime(v time.Time) *InstanceTimeline {
 
 // An instance type configuration for each instance type in an instance fleet,
 // which determines the EC2 instances Amazon EMR attempts to provision to fulfill
-// On-Demand and Spot target capacities. There can be a maximum of 5 instance
+// On-Demand and Spot target capacities. There can be a maximum of five instance
 // type configurations in a fleet.
 //
 // The instance fleet configuration is available only in Amazon EMR versions
@@ -7597,12 +9680,12 @@ func (s *InstanceTimeline) SetReadyDateTime(v time.Time) *InstanceTimeline {
 type InstanceTypeConfig struct {
 	_ struct{} `type:"structure"`
 
-	// The bid price for each EC2 Spot instance type as defined by InstanceType.
+	// The bid price for each EC2 Spot Instance type as defined by InstanceType.
 	// Expressed in USD. If neither BidPrice nor BidPriceAsPercentageOfOnDemandPrice
 	// is provided, BidPriceAsPercentageOfOnDemandPrice defaults to 100%.
 	BidPrice *string `type:"string"`
 
-	// The bid price, as a percentage of On-Demand price, for each EC2 Spot instance
+	// The bid price, as a percentage of On-Demand price, for each EC2 Spot Instance
 	// as defined by InstanceType. Expressed as a number (for example, 20 specifies
 	// 20%). If neither BidPrice nor BidPriceAsPercentageOfOnDemandPrice is provided,
 	// BidPriceAsPercentageOfOnDemandPrice defaults to 100%.
@@ -7613,8 +9696,8 @@ type InstanceTypeConfig struct {
 	// the cluster.
 	Configurations []*Configuration `type:"list"`
 
-	// The configuration of Amazon Elastic Block Storage (EBS) attached to each
-	// instance as defined by InstanceType.
+	// The configuration of Amazon Elastic Block Storage (Amazon EBS) attached to
+	// each instance as defined by InstanceType.
 	EbsConfiguration *EbsConfiguration `type:"structure"`
 
 	// An EC2 instance type, such as m3.xlarge.
@@ -7703,11 +9786,11 @@ func (s *InstanceTypeConfig) SetWeightedCapacity(v int64) *InstanceTypeConfig {
 type InstanceTypeSpecification struct {
 	_ struct{} `type:"structure"`
 
-	// The bid price for each EC2 Spot instance type as defined by InstanceType.
+	// The bid price for each EC2 Spot Instance type as defined by InstanceType.
 	// Expressed in USD.
 	BidPrice *string `type:"string"`
 
-	// The bid price, as a percentage of On-Demand price, for each EC2 Spot instance
+	// The bid price, as a percentage of On-Demand price, for each EC2 Spot Instance
 	// as defined by InstanceType. Expressed as a number (for example, 20 specifies
 	// 20%).
 	BidPriceAsPercentageOfOnDemandPrice *float64 `type:"double"`
@@ -7717,8 +9800,8 @@ type InstanceTypeSpecification struct {
 	// Amazon EMR.
 	Configurations []*Configuration `type:"list"`
 
-	// The configuration of Amazon Elastic Block Storage (EBS) attached to each
-	// instance as defined by InstanceType.
+	// The configuration of Amazon Elastic Block Storage (Amazon EBS) attached to
+	// each instance as defined by InstanceType.
 	EbsBlockDevices []*EbsBlockDevice `type:"list"`
 
 	// Evaluates to TRUE when the specified InstanceType is EBS-optimized.
@@ -8015,23 +10098,23 @@ type JobFlowDetail struct {
 	// regardless of when the request to terminate the instance was submitted. This
 	// option is only available with Amazon EMR 5.1.0 and later and is the default
 	// for clusters created using that version. TERMINATE_AT_TASK_COMPLETION indicates
-	// that Amazon EMR blacklists and drains tasks from nodes before terminating
-	// the Amazon EC2 instances, regardless of the instance-hour boundary. With
-	// either behavior, Amazon EMR removes the least active nodes first and blocks
-	// instance termination if it could lead to HDFS corruption. TERMINATE_AT_TASK_COMPLETION
+	// that Amazon EMR adds nodes to a deny list and drains tasks from nodes before
+	// terminating the Amazon EC2 instances, regardless of the instance-hour boundary.
+	// With either behavior, Amazon EMR removes the least active nodes first and
+	// blocks instance termination if it could lead to HDFS corruption. TERMINATE_AT_TASK_COMPLETION
 	// available only in Amazon EMR version 4.1.0 and later, and is the default
 	// for versions of Amazon EMR earlier than 5.1.0.
 	ScaleDownBehavior *string `type:"string" enum:"ScaleDownBehavior"`
 
-	// The IAM role that will be assumed by the Amazon EMR service to access AWS
-	// resources on your behalf.
+	// The IAM role that is assumed by the Amazon EMR service to access AWS resources
+	// on your behalf.
 	ServiceRole *string `type:"string"`
 
 	// A list of steps run by the job flow.
 	Steps []*StepDetail `type:"list"`
 
-	// A list of strings set by third party software when the job flow is launched.
-	// If you are not using third party software to manage the job flow this value
+	// A list of strings set by third-party software when the job flow is launched.
+	// If you are not using third-party software to manage the job flow, this value
 	// is empty.
 	SupportedProducts []*string `type:"list"`
 
@@ -8222,9 +10305,9 @@ func (s *JobFlowExecutionStatusDetail) SetState(v string) *JobFlowExecutionStatu
 
 // A description of the Amazon EC2 instance on which the cluster (job flow)
 // runs. A valid JobFlowInstancesConfig must contain either InstanceGroups or
-// InstanceFleets, which is the recommended configuration. They cannot be used
-// together. You may also have MasterInstanceType, SlaveInstanceType, and InstanceCount
-// (all three must be present), but we don't recommend this configuration.
+// InstanceFleets. They cannot be used together. You may also have MasterInstanceType,
+// SlaveInstanceType, and InstanceCount (all three must be present), but we
+// don't recommend this configuration.
 type JobFlowInstancesConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -8235,8 +10318,8 @@ type JobFlowInstancesConfig struct {
 	// nodes.
 	AdditionalSlaveSecurityGroups []*string `type:"list"`
 
-	// The name of the EC2 key pair that can be used to ssh to the master node as
-	// the user called "hadoop."
+	// The name of the EC2 key pair that can be used to connect to the master node
+	// using SSH as the user called "hadoop."
 	Ec2KeyName *string `type:"string"`
 
 	// Applies to clusters that use the uniform instance group configuration. To
@@ -8261,11 +10344,11 @@ type JobFlowInstancesConfig struct {
 	EmrManagedSlaveSecurityGroup *string `type:"string"`
 
 	// Applies only to Amazon EMR release versions earlier than 4.0. The Hadoop
-	// version for the cluster. Valid inputs are "0.18" (deprecated), "0.20" (deprecated),
-	// "0.20.205" (deprecated), "1.0.3", "2.2.0", or "2.4.0". If you do not set
-	// this value, the default of 0.18 is used, unless the AmiVersion parameter
-	// is set in the RunJobFlow call, in which case the default version of Hadoop
-	// for that AMI version is used.
+	// version for the cluster. Valid inputs are "0.18" (no longer maintained),
+	// "0.20" (no longer maintained), "0.20.205" (no longer maintained), "1.0.3",
+	// "2.2.0", or "2.4.0". If you do not set this value, the default of 0.18 is
+	// used, unless the AmiVersion parameter is set in the RunJobFlow call, in which
+	// case the default version of Hadoop for that AMI version is used.
 	HadoopVersion *string `type:"string"`
 
 	// The number of EC2 instances in the cluster.
@@ -8458,8 +10541,8 @@ func (s *JobFlowInstancesConfig) SetTerminationProtected(v bool) *JobFlowInstanc
 type JobFlowInstancesDetail struct {
 	_ struct{} `type:"structure"`
 
-	// The name of an Amazon EC2 key pair that can be used to ssh to the master
-	// node.
+	// The name of an Amazon EC2 key pair that can be used to connect to the master
+	// node using SSH.
 	Ec2KeyName *string `type:"string"`
 
 	// For clusters launched within Amazon Virtual Private Cloud, this is the identifier
@@ -8497,11 +10580,11 @@ type JobFlowInstancesDetail struct {
 	MasterPublicDnsName *string `type:"string"`
 
 	// An approximation of the cost of the cluster, represented in m1.small/hours.
-	// This value is incremented one time for every hour that an m1.small runs.
-	// Larger instances are weighted more, so an Amazon EC2 instance that is roughly
-	// four times more expensive would result in the normalized instance hours being
-	// incremented by four. This result is only an approximation and does not reflect
-	// the actual billing rate.
+	// This value is increased one time for every hour that an m1.small instance
+	// runs. Larger instances are weighted more heavily, so an Amazon EC2 instance
+	// that is roughly four times more expensive would result in the normalized
+	// instance hours being increased incrementally four times. This result is only
+	// an approximation and does not reflect the actual billing rate.
 	NormalizedInstanceHours *int64 `type:"integer"`
 
 	// The Amazon EC2 Availability Zone for the cluster.
@@ -8609,7 +10692,7 @@ func (s *JobFlowInstancesDetail) SetTerminationProtected(v bool) *JobFlowInstanc
 // Attributes for Kerberos configuration when Kerberos authentication is enabled
 // using a security configuration. For more information see Use Kerberos Authentication
 // (https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-kerberos.html)
-// in the EMR Management Guide.
+// in the Amazon EMR Management Guide.
 type KerberosAttributes struct {
 	_ struct{} `type:"structure"`
 
@@ -8695,11 +10778,11 @@ func (s *KerberosAttributes) SetRealm(v string) *KerberosAttributes {
 	return s
 }
 
-// A key value pair.
+// A key-value pair.
 type KeyValue struct {
 	_ struct{} `type:"structure"`
 
-	// The unique identifier of a key value pair.
+	// The unique identifier of a key-value pair.
 	Key *string `type:"string"`
 
 	// The value part of the identified key.
@@ -9182,6 +11265,126 @@ func (s *ListInstancesOutput) SetMarker(v string) *ListInstancesOutput {
 	return s
 }
 
+type ListNotebookExecutionsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique ID of the editor associated with the notebook execution.
+	EditorId *string `type:"string"`
+
+	// The beginning of time range filter for listing notebook executions. The default
+	// is the timestamp of 30 days ago.
+	From *time.Time `type:"timestamp"`
+
+	// The pagination token, returned by a previous ListNotebookExecutions call,
+	// that indicates the start of the list for this ListNotebookExecutions call.
+	Marker *string `type:"string"`
+
+	// The status filter for listing notebook executions.
+	//
+	//    * START_PENDING indicates that the cluster has received the execution
+	//    request but execution has not begun.
+	//
+	//    * STARTING indicates that the execution is starting on the cluster.
+	//
+	//    * RUNNING indicates that the execution is being processed by the cluster.
+	//
+	//    * FINISHING indicates that execution processing is in the final stages.
+	//
+	//    * FINISHED indicates that the execution has completed without error.
+	//
+	//    * FAILING indicates that the execution is failing and will not finish
+	//    successfully.
+	//
+	//    * FAILED indicates that the execution failed.
+	//
+	//    * STOP_PENDING indicates that the cluster has received a StopNotebookExecution
+	//    request and the stop is pending.
+	//
+	//    * STOPPING indicates that the cluster is in the process of stopping the
+	//    execution as a result of a StopNotebookExecution request.
+	//
+	//    * STOPPED indicates that the execution stopped because of a StopNotebookExecution
+	//    request.
+	Status *string `type:"string" enum:"NotebookExecutionStatus"`
+
+	// The end of time range filter for listing notebook executions. The default
+	// is the current timestamp.
+	To *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation
+func (s ListNotebookExecutionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListNotebookExecutionsInput) GoString() string {
+	return s.String()
+}
+
+// SetEditorId sets the EditorId field's value.
+func (s *ListNotebookExecutionsInput) SetEditorId(v string) *ListNotebookExecutionsInput {
+	s.EditorId = &v
+	return s
+}
+
+// SetFrom sets the From field's value.
+func (s *ListNotebookExecutionsInput) SetFrom(v time.Time) *ListNotebookExecutionsInput {
+	s.From = &v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *ListNotebookExecutionsInput) SetMarker(v string) *ListNotebookExecutionsInput {
+	s.Marker = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *ListNotebookExecutionsInput) SetStatus(v string) *ListNotebookExecutionsInput {
+	s.Status = &v
+	return s
+}
+
+// SetTo sets the To field's value.
+func (s *ListNotebookExecutionsInput) SetTo(v time.Time) *ListNotebookExecutionsInput {
+	s.To = &v
+	return s
+}
+
+type ListNotebookExecutionsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A pagination token that a subsequent ListNotebookExecutions can use to determine
+	// the next set of results to retrieve.
+	Marker *string `type:"string"`
+
+	// A list of notebook executions.
+	NotebookExecutions []*NotebookExecutionSummary `type:"list"`
+}
+
+// String returns the string representation
+func (s ListNotebookExecutionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListNotebookExecutionsOutput) GoString() string {
+	return s.String()
+}
+
+// SetMarker sets the Marker field's value.
+func (s *ListNotebookExecutionsOutput) SetMarker(v string) *ListNotebookExecutionsOutput {
+	s.Marker = &v
+	return s
+}
+
+// SetNotebookExecutions sets the NotebookExecutions field's value.
+func (s *ListNotebookExecutionsOutput) SetNotebookExecutions(v []*NotebookExecutionSummary) *ListNotebookExecutionsOutput {
+	s.NotebookExecutions = v
+	return s
+}
+
 type ListSecurityConfigurationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9338,6 +11541,138 @@ func (s *ListStepsOutput) SetMarker(v string) *ListStepsOutput {
 // SetSteps sets the Steps field's value.
 func (s *ListStepsOutput) SetSteps(v []*StepSummary) *ListStepsOutput {
 	s.Steps = v
+	return s
+}
+
+type ListStudioSessionMappingsInput struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies whether to return session mappings for users or groups. If not
+	// specified, the results include session mapping details for both users and
+	// groups.
+	IdentityType *string `type:"string" enum:"IdentityType"`
+
+	// The pagination token that indicates the set of results to retrieve.
+	Marker *string `type:"string"`
+
+	// The ID of the Amazon EMR Studio.
+	StudioId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListStudioSessionMappingsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListStudioSessionMappingsInput) GoString() string {
+	return s.String()
+}
+
+// SetIdentityType sets the IdentityType field's value.
+func (s *ListStudioSessionMappingsInput) SetIdentityType(v string) *ListStudioSessionMappingsInput {
+	s.IdentityType = &v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *ListStudioSessionMappingsInput) SetMarker(v string) *ListStudioSessionMappingsInput {
+	s.Marker = &v
+	return s
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *ListStudioSessionMappingsInput) SetStudioId(v string) *ListStudioSessionMappingsInput {
+	s.StudioId = &v
+	return s
+}
+
+type ListStudioSessionMappingsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The pagination token that indicates the next set of results to retrieve.
+	Marker *string `type:"string"`
+
+	// A list of session mapping summary objects. Each object includes session mapping
+	// details such as creation time, identity type (user or group), and Studio
+	// ID.
+	SessionMappings []*SessionMappingSummary `type:"list"`
+}
+
+// String returns the string representation
+func (s ListStudioSessionMappingsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListStudioSessionMappingsOutput) GoString() string {
+	return s.String()
+}
+
+// SetMarker sets the Marker field's value.
+func (s *ListStudioSessionMappingsOutput) SetMarker(v string) *ListStudioSessionMappingsOutput {
+	s.Marker = &v
+	return s
+}
+
+// SetSessionMappings sets the SessionMappings field's value.
+func (s *ListStudioSessionMappingsOutput) SetSessionMappings(v []*SessionMappingSummary) *ListStudioSessionMappingsOutput {
+	s.SessionMappings = v
+	return s
+}
+
+type ListStudiosInput struct {
+	_ struct{} `type:"structure"`
+
+	// The pagination token that indicates the set of results to retrieve.
+	Marker *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListStudiosInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListStudiosInput) GoString() string {
+	return s.String()
+}
+
+// SetMarker sets the Marker field's value.
+func (s *ListStudiosInput) SetMarker(v string) *ListStudiosInput {
+	s.Marker = &v
+	return s
+}
+
+type ListStudiosOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The pagination token that indicates the next set of results to retrieve.
+	Marker *string `type:"string"`
+
+	// The list of Studio summary objects.
+	Studios []*StudioSummary `type:"list"`
+}
+
+// String returns the string representation
+func (s ListStudiosOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListStudiosOutput) GoString() string {
+	return s.String()
+}
+
+// SetMarker sets the Marker field's value.
+func (s *ListStudiosOutput) SetMarker(v string) *ListStudiosOutput {
+	s.Marker = &v
+	return s
+}
+
+// SetStudios sets the Studios field's value.
+func (s *ListStudiosOutput) SetStudios(v []*StudioSummary) *ListStudiosOutput {
+	s.Studios = v
 	return s
 }
 
@@ -9632,6 +11967,369 @@ func (s ModifyInstanceGroupsOutput) GoString() string {
 	return s.String()
 }
 
+// A notebook execution. An execution is a specific instance that an EMR Notebook
+// is run using the StartNotebookExecution action.
+type NotebookExecution struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the notebook execution.
+	Arn *string `type:"string"`
+
+	// The unique identifier of the EMR Notebook that is used for the notebook execution.
+	EditorId *string `type:"string"`
+
+	// The timestamp when notebook execution ended.
+	EndTime *time.Time `type:"timestamp"`
+
+	// The execution engine, such as an EMR cluster, used to run the EMR notebook
+	// and perform the notebook execution.
+	ExecutionEngine *ExecutionEngineConfig `type:"structure"`
+
+	// The reason for the latest status change of the notebook execution.
+	LastStateChangeReason *string `type:"string"`
+
+	// The unique identifier of a notebook execution.
+	NotebookExecutionId *string `type:"string"`
+
+	// A name for the notebook execution.
+	NotebookExecutionName *string `type:"string"`
+
+	// The unique identifier of the EC2 security group associated with the EMR Notebook
+	// instance. For more information see Specifying EC2 Security Groups for EMR
+	// Notebooks (https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-managed-notebooks-security-groups.html)
+	// in the EMR Management Guide.
+	NotebookInstanceSecurityGroupId *string `type:"string"`
+
+	// Input parameters in JSON format passed to the EMR Notebook at runtime for
+	// execution.
+	NotebookParams *string `type:"string"`
+
+	// The location of the notebook execution's output file in Amazon S3.
+	OutputNotebookURI *string `type:"string"`
+
+	// The timestamp when notebook execution started.
+	StartTime *time.Time `type:"timestamp"`
+
+	// The status of the notebook execution.
+	//
+	//    * START_PENDING indicates that the cluster has received the execution
+	//    request but execution has not begun.
+	//
+	//    * STARTING indicates that the execution is starting on the cluster.
+	//
+	//    * RUNNING indicates that the execution is being processed by the cluster.
+	//
+	//    * FINISHING indicates that execution processing is in the final stages.
+	//
+	//    * FINISHED indicates that the execution has completed without error.
+	//
+	//    * FAILING indicates that the execution is failing and will not finish
+	//    successfully.
+	//
+	//    * FAILED indicates that the execution failed.
+	//
+	//    * STOP_PENDING indicates that the cluster has received a StopNotebookExecution
+	//    request and the stop is pending.
+	//
+	//    * STOPPING indicates that the cluster is in the process of stopping the
+	//    execution as a result of a StopNotebookExecution request.
+	//
+	//    * STOPPED indicates that the execution stopped because of a StopNotebookExecution
+	//    request.
+	Status *string `type:"string" enum:"NotebookExecutionStatus"`
+
+	// A list of tags associated with a notebook execution. Tags are user-defined
+	// key-value pairs that consist of a required key string with a maximum of 128
+	// characters and an optional value string with a maximum of 256 characters.
+	Tags []*Tag `type:"list"`
+}
+
+// String returns the string representation
+func (s NotebookExecution) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NotebookExecution) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *NotebookExecution) SetArn(v string) *NotebookExecution {
+	s.Arn = &v
+	return s
+}
+
+// SetEditorId sets the EditorId field's value.
+func (s *NotebookExecution) SetEditorId(v string) *NotebookExecution {
+	s.EditorId = &v
+	return s
+}
+
+// SetEndTime sets the EndTime field's value.
+func (s *NotebookExecution) SetEndTime(v time.Time) *NotebookExecution {
+	s.EndTime = &v
+	return s
+}
+
+// SetExecutionEngine sets the ExecutionEngine field's value.
+func (s *NotebookExecution) SetExecutionEngine(v *ExecutionEngineConfig) *NotebookExecution {
+	s.ExecutionEngine = v
+	return s
+}
+
+// SetLastStateChangeReason sets the LastStateChangeReason field's value.
+func (s *NotebookExecution) SetLastStateChangeReason(v string) *NotebookExecution {
+	s.LastStateChangeReason = &v
+	return s
+}
+
+// SetNotebookExecutionId sets the NotebookExecutionId field's value.
+func (s *NotebookExecution) SetNotebookExecutionId(v string) *NotebookExecution {
+	s.NotebookExecutionId = &v
+	return s
+}
+
+// SetNotebookExecutionName sets the NotebookExecutionName field's value.
+func (s *NotebookExecution) SetNotebookExecutionName(v string) *NotebookExecution {
+	s.NotebookExecutionName = &v
+	return s
+}
+
+// SetNotebookInstanceSecurityGroupId sets the NotebookInstanceSecurityGroupId field's value.
+func (s *NotebookExecution) SetNotebookInstanceSecurityGroupId(v string) *NotebookExecution {
+	s.NotebookInstanceSecurityGroupId = &v
+	return s
+}
+
+// SetNotebookParams sets the NotebookParams field's value.
+func (s *NotebookExecution) SetNotebookParams(v string) *NotebookExecution {
+	s.NotebookParams = &v
+	return s
+}
+
+// SetOutputNotebookURI sets the OutputNotebookURI field's value.
+func (s *NotebookExecution) SetOutputNotebookURI(v string) *NotebookExecution {
+	s.OutputNotebookURI = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *NotebookExecution) SetStartTime(v time.Time) *NotebookExecution {
+	s.StartTime = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *NotebookExecution) SetStatus(v string) *NotebookExecution {
+	s.Status = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *NotebookExecution) SetTags(v []*Tag) *NotebookExecution {
+	s.Tags = v
+	return s
+}
+
+type NotebookExecutionSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The unique identifier of the editor associated with the notebook execution.
+	EditorId *string `type:"string"`
+
+	// The timestamp when notebook execution started.
+	EndTime *time.Time `type:"timestamp"`
+
+	// The unique identifier of the notebook execution.
+	NotebookExecutionId *string `type:"string"`
+
+	// The name of the notebook execution.
+	NotebookExecutionName *string `type:"string"`
+
+	// The timestamp when notebook execution started.
+	StartTime *time.Time `type:"timestamp"`
+
+	// The status of the notebook execution.
+	//
+	//    * START_PENDING indicates that the cluster has received the execution
+	//    request but execution has not begun.
+	//
+	//    * STARTING indicates that the execution is starting on the cluster.
+	//
+	//    * RUNNING indicates that the execution is being processed by the cluster.
+	//
+	//    * FINISHING indicates that execution processing is in the final stages.
+	//
+	//    * FINISHED indicates that the execution has completed without error.
+	//
+	//    * FAILING indicates that the execution is failing and will not finish
+	//    successfully.
+	//
+	//    * FAILED indicates that the execution failed.
+	//
+	//    * STOP_PENDING indicates that the cluster has received a StopNotebookExecution
+	//    request and the stop is pending.
+	//
+	//    * STOPPING indicates that the cluster is in the process of stopping the
+	//    execution as a result of a StopNotebookExecution request.
+	//
+	//    * STOPPED indicates that the execution stopped because of a StopNotebookExecution
+	//    request.
+	Status *string `type:"string" enum:"NotebookExecutionStatus"`
+}
+
+// String returns the string representation
+func (s NotebookExecutionSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NotebookExecutionSummary) GoString() string {
+	return s.String()
+}
+
+// SetEditorId sets the EditorId field's value.
+func (s *NotebookExecutionSummary) SetEditorId(v string) *NotebookExecutionSummary {
+	s.EditorId = &v
+	return s
+}
+
+// SetEndTime sets the EndTime field's value.
+func (s *NotebookExecutionSummary) SetEndTime(v time.Time) *NotebookExecutionSummary {
+	s.EndTime = &v
+	return s
+}
+
+// SetNotebookExecutionId sets the NotebookExecutionId field's value.
+func (s *NotebookExecutionSummary) SetNotebookExecutionId(v string) *NotebookExecutionSummary {
+	s.NotebookExecutionId = &v
+	return s
+}
+
+// SetNotebookExecutionName sets the NotebookExecutionName field's value.
+func (s *NotebookExecutionSummary) SetNotebookExecutionName(v string) *NotebookExecutionSummary {
+	s.NotebookExecutionName = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *NotebookExecutionSummary) SetStartTime(v time.Time) *NotebookExecutionSummary {
+	s.StartTime = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *NotebookExecutionSummary) SetStatus(v string) *NotebookExecutionSummary {
+	s.Status = &v
+	return s
+}
+
+// The launch specification for On-Demand Instances in the instance fleet, which
+// determines the allocation strategy.
+//
+// The instance fleet configuration is available only in Amazon EMR versions
+// 4.8.0 and later, excluding 5.0.x versions. On-Demand Instances allocation
+// strategy is available in Amazon EMR version 5.12.1 and later.
+type OnDemandProvisioningSpecification struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the strategy to use in launching On-Demand Instance fleets. Currently,
+	// the only option is lowest-price (the default), which launches the lowest
+	// price first.
+	//
+	// AllocationStrategy is a required field
+	AllocationStrategy *string `type:"string" required:"true" enum:"OnDemandProvisioningAllocationStrategy"`
+}
+
+// String returns the string representation
+func (s OnDemandProvisioningSpecification) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s OnDemandProvisioningSpecification) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *OnDemandProvisioningSpecification) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "OnDemandProvisioningSpecification"}
+	if s.AllocationStrategy == nil {
+		invalidParams.Add(request.NewErrParamRequired("AllocationStrategy"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAllocationStrategy sets the AllocationStrategy field's value.
+func (s *OnDemandProvisioningSpecification) SetAllocationStrategy(v string) *OnDemandProvisioningSpecification {
+	s.AllocationStrategy = &v
+	return s
+}
+
+// Placement group configuration for an Amazon EMR cluster. The configuration
+// specifies the placement strategy that can be applied to instance roles during
+// cluster creation.
+//
+// To use this configuration, consider attaching managed policy AmazonElasticMapReducePlacementGroupPolicy
+// to the EMR role.
+type PlacementGroupConfig struct {
+	_ struct{} `type:"structure"`
+
+	// Role of the instance in the cluster.
+	//
+	// Starting with Amazon EMR version 5.23.0, the only supported instance role
+	// is MASTER.
+	//
+	// InstanceRole is a required field
+	InstanceRole *string `type:"string" required:"true" enum:"InstanceRoleType"`
+
+	// EC2 Placement Group strategy associated with instance role.
+	//
+	// Starting with Amazon EMR version 5.23.0, the only supported placement strategy
+	// is SPREAD for the MASTER instance role.
+	PlacementStrategy *string `type:"string" enum:"PlacementGroupStrategy"`
+}
+
+// String returns the string representation
+func (s PlacementGroupConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PlacementGroupConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PlacementGroupConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PlacementGroupConfig"}
+	if s.InstanceRole == nil {
+		invalidParams.Add(request.NewErrParamRequired("InstanceRole"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetInstanceRole sets the InstanceRole field's value.
+func (s *PlacementGroupConfig) SetInstanceRole(v string) *PlacementGroupConfig {
+	s.InstanceRole = &v
+	return s
+}
+
+// SetPlacementStrategy sets the PlacementStrategy field's value.
+func (s *PlacementGroupConfig) SetPlacementStrategy(v string) *PlacementGroupConfig {
+	s.PlacementStrategy = &v
+	return s
+}
+
 // The Amazon EC2 Availability Zone configuration of the cluster (job flow).
 type PlacementType struct {
 	_ struct{} `type:"structure"`
@@ -9701,8 +12399,14 @@ func (s PortRange) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *PortRange) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "PortRange"}
+	if s.MaxRange != nil && *s.MaxRange < -1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxRange", -1))
+	}
 	if s.MinRange == nil {
 		invalidParams.Add(request.NewErrParamRequired("MinRange"))
+	}
+	if s.MinRange != nil && *s.MinRange < -1 {
+		invalidParams.Add(request.NewErrParamMinValue("MinRange", -1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -10221,8 +12925,8 @@ type RunJobFlowInput struct {
 	// about finding an AMI ID, see Finding a Linux AMI (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html).
 	CustomAmiId *string `type:"string"`
 
-	// The size, in GiB, of the EBS root device volume of the Linux AMI that is
-	// used for each EC2 instance. Available in Amazon EMR version 4.x and later.
+	// The size, in GiB, of the Amazon EBS root device volume of the Linux AMI that
+	// is used for each EC2 instance. Available in Amazon EMR version 4.x and later.
 	EbsRootVolumeSize *int64 `type:"integer"`
 
 	// A specification of the number and type of Amazon EC2 instances.
@@ -10239,12 +12943,13 @@ type RunJobFlowInput struct {
 	// Attributes for Kerberos configuration when Kerberos authentication is enabled
 	// using a security configuration. For more information see Use Kerberos Authentication
 	// (https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-kerberos.html)
-	// in the EMR Management Guide.
+	// in the Amazon EMR Management Guide.
 	KerberosAttributes *KerberosAttributes `type:"structure"`
 
 	// The AWS KMS customer master key (CMK) used for encrypting log files. If a
-	// value is not provided, the logs will remain encrypted by AES-256. This attribute
-	// is only available with EMR version 5.30.0 and later, excluding EMR 6.0.0.
+	// value is not provided, the logs remain encrypted by AES-256. This attribute
+	// is only available with Amazon EMR version 5.30.0 and later, excluding Amazon
+	// EMR 6.0.0.
 	LogEncryptionKmsKeyId *string `type:"string"`
 
 	// The location in Amazon S3 to write the log files of the job flow. If a value
@@ -10288,6 +12993,9 @@ type RunJobFlowInput struct {
 	//    * "ganglia" - launch the cluster with the Ganglia Monitoring System installed.
 	NewSupportedProducts []*SupportedProductConfig `type:"list"`
 
+	// The specified placement group configuration for an Amazon EMR cluster.
+	PlacementGroupConfigs []*PlacementGroupConfig `type:"list"`
+
 	// The Amazon EMR release label, which determines the version of open-source
 	// application packages installed on the cluster. Release labels are in the
 	// form emr-x.x.x, where x.x.x is an Amazon EMR release version such as emr-5.14.0.
@@ -10311,10 +13019,10 @@ type RunJobFlowInput struct {
 	// regardless of when the request to terminate the instance was submitted. This
 	// option is only available with Amazon EMR 5.1.0 and later and is the default
 	// for clusters created using that version. TERMINATE_AT_TASK_COMPLETION indicates
-	// that Amazon EMR blacklists and drains tasks from nodes before terminating
-	// the Amazon EC2 instances, regardless of the instance-hour boundary. With
-	// either behavior, Amazon EMR removes the least active nodes first and blocks
-	// instance termination if it could lead to HDFS corruption. TERMINATE_AT_TASK_COMPLETION
+	// that Amazon EMR adds nodes to a deny list and drains tasks from nodes before
+	// terminating the Amazon EC2 instances, regardless of the instance-hour boundary.
+	// With either behavior, Amazon EMR removes the least active nodes first and
+	// blocks instance termination if it could lead to HDFS corruption. TERMINATE_AT_TASK_COMPLETION
 	// available only in Amazon EMR version 4.1.0 and later, and is the default
 	// for versions of Amazon EMR earlier than 5.1.0.
 	ScaleDownBehavior *string `type:"string" enum:"ScaleDownBehavior"`
@@ -10398,6 +13106,16 @@ func (s *RunJobFlowInput) Validate() error {
 	if s.ManagedScalingPolicy != nil {
 		if err := s.ManagedScalingPolicy.Validate(); err != nil {
 			invalidParams.AddNested("ManagedScalingPolicy", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.PlacementGroupConfigs != nil {
+		for i, v := range s.PlacementGroupConfigs {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "PlacementGroupConfigs", i), err.(request.ErrInvalidParams))
+			}
 		}
 	}
 	if s.Steps != nil {
@@ -10510,6 +13228,12 @@ func (s *RunJobFlowInput) SetName(v string) *RunJobFlowInput {
 // SetNewSupportedProducts sets the NewSupportedProducts field's value.
 func (s *RunJobFlowInput) SetNewSupportedProducts(v []*SupportedProductConfig) *RunJobFlowInput {
 	s.NewSupportedProducts = v
+	return s
+}
+
+// SetPlacementGroupConfigs sets the PlacementGroupConfigs field's value.
+func (s *RunJobFlowInput) SetPlacementGroupConfigs(v []*PlacementGroupConfig) *RunJobFlowInput {
+	s.PlacementGroupConfigs = v
 	return s
 }
 
@@ -10939,6 +13663,162 @@ func (s *SecurityConfigurationSummary) SetName(v string) *SecurityConfigurationS
 	return s
 }
 
+// Details for an Amazon EMR Studio session mapping including creation time,
+// user or group ID, Studio ID, and so on.
+type SessionMappingDetail struct {
+	_ struct{} `type:"structure"`
+
+	// The time the session mapping was created.
+	CreationTime *time.Time `type:"timestamp"`
+
+	// The globally unique identifier (GUID) of the user or group.
+	IdentityId *string `type:"string"`
+
+	// The name of the user or group. For more information, see UserName (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_User.html#singlesignon-Type-User-UserId)
+	// and DisplayName (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_Group.html#singlesignon-Type-Group-DisplayName)
+	// in the AWS SSO Identity Store API Reference.
+	IdentityName *string `type:"string"`
+
+	// Specifies whether the identity mapped to the Studio is a user or a group.
+	IdentityType *string `type:"string" enum:"IdentityType"`
+
+	// The time the session mapping was last modified.
+	LastModifiedTime *time.Time `type:"timestamp"`
+
+	// The Amazon Resource Name (ARN) of the session policy associated with the
+	// user or group.
+	SessionPolicyArn *string `type:"string"`
+
+	// The ID of the Amazon EMR Studio.
+	StudioId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s SessionMappingDetail) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SessionMappingDetail) GoString() string {
+	return s.String()
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *SessionMappingDetail) SetCreationTime(v time.Time) *SessionMappingDetail {
+	s.CreationTime = &v
+	return s
+}
+
+// SetIdentityId sets the IdentityId field's value.
+func (s *SessionMappingDetail) SetIdentityId(v string) *SessionMappingDetail {
+	s.IdentityId = &v
+	return s
+}
+
+// SetIdentityName sets the IdentityName field's value.
+func (s *SessionMappingDetail) SetIdentityName(v string) *SessionMappingDetail {
+	s.IdentityName = &v
+	return s
+}
+
+// SetIdentityType sets the IdentityType field's value.
+func (s *SessionMappingDetail) SetIdentityType(v string) *SessionMappingDetail {
+	s.IdentityType = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *SessionMappingDetail) SetLastModifiedTime(v time.Time) *SessionMappingDetail {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetSessionPolicyArn sets the SessionPolicyArn field's value.
+func (s *SessionMappingDetail) SetSessionPolicyArn(v string) *SessionMappingDetail {
+	s.SessionPolicyArn = &v
+	return s
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *SessionMappingDetail) SetStudioId(v string) *SessionMappingDetail {
+	s.StudioId = &v
+	return s
+}
+
+// Details for an Amazon EMR Studio session mapping. The details do not include
+// the time the session mapping was last modified.
+type SessionMappingSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The time the session mapping was created.
+	CreationTime *time.Time `type:"timestamp"`
+
+	// The globally unique identifier (GUID) of the user or group from the AWS SSO
+	// Identity Store.
+	IdentityId *string `type:"string"`
+
+	// The name of the user or group. For more information, see UserName (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_User.html#singlesignon-Type-User-UserId)
+	// and DisplayName (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_Group.html#singlesignon-Type-Group-DisplayName)
+	// in the AWS SSO Identity Store API Reference.
+	IdentityName *string `type:"string"`
+
+	// Specifies whether the identity mapped to the Studio is a user or a group.
+	IdentityType *string `type:"string" enum:"IdentityType"`
+
+	// The Amazon Resource Name (ARN) of the session policy associated with the
+	// user or group.
+	SessionPolicyArn *string `type:"string"`
+
+	// The ID of the Amazon EMR Studio.
+	StudioId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s SessionMappingSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SessionMappingSummary) GoString() string {
+	return s.String()
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *SessionMappingSummary) SetCreationTime(v time.Time) *SessionMappingSummary {
+	s.CreationTime = &v
+	return s
+}
+
+// SetIdentityId sets the IdentityId field's value.
+func (s *SessionMappingSummary) SetIdentityId(v string) *SessionMappingSummary {
+	s.IdentityId = &v
+	return s
+}
+
+// SetIdentityName sets the IdentityName field's value.
+func (s *SessionMappingSummary) SetIdentityName(v string) *SessionMappingSummary {
+	s.IdentityName = &v
+	return s
+}
+
+// SetIdentityType sets the IdentityType field's value.
+func (s *SessionMappingSummary) SetIdentityType(v string) *SessionMappingSummary {
+	s.IdentityType = &v
+	return s
+}
+
+// SetSessionPolicyArn sets the SessionPolicyArn field's value.
+func (s *SessionMappingSummary) SetSessionPolicyArn(v string) *SessionMappingSummary {
+	s.SessionPolicyArn = &v
+	return s
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *SessionMappingSummary) SetStudioId(v string) *SessionMappingSummary {
+	s.StudioId = &v
+	return s
+}
+
 // The input argument to the TerminationProtection operation.
 type SetTerminationProtectionInput struct {
 	_ struct{} `type:"structure"`
@@ -11192,35 +14072,43 @@ func (s *SimpleScalingPolicyConfiguration) SetScalingAdjustment(v int64) *Simple
 	return s
 }
 
-// The launch specification for Spot instances in the instance fleet, which
-// determines the defined duration and provisioning timeout behavior.
+// The launch specification for Spot Instances in the instance fleet, which
+// determines the defined duration, provisioning timeout behavior, and allocation
+// strategy.
 //
 // The instance fleet configuration is available only in Amazon EMR versions
-// 4.8.0 and later, excluding 5.0.x versions.
+// 4.8.0 and later, excluding 5.0.x versions. Spot Instance allocation strategy
+// is available in Amazon EMR version 5.12.1 and later.
 type SpotProvisioningSpecification struct {
 	_ struct{} `type:"structure"`
 
-	// The defined duration for Spot instances (also known as Spot blocks) in minutes.
-	// When specified, the Spot instance does not terminate before the defined duration
+	// Specifies the strategy to use in launching Spot Instance fleets. Currently,
+	// the only option is capacity-optimized (the default), which launches instances
+	// from Spot Instance pools with optimal capacity for the number of instances
+	// that are launching.
+	AllocationStrategy *string `type:"string" enum:"SpotProvisioningAllocationStrategy"`
+
+	// The defined duration for Spot Instances (also known as Spot blocks) in minutes.
+	// When specified, the Spot Instance does not terminate before the defined duration
 	// expires, and defined duration pricing for Spot instances applies. Valid values
 	// are 60, 120, 180, 240, 300, or 360. The duration period starts as soon as
-	// a Spot instance receives its instance ID. At the end of the duration, Amazon
-	// EC2 marks the Spot instance for termination and provides a Spot instance
+	// a Spot Instance receives its instance ID. At the end of the duration, Amazon
+	// EC2 marks the Spot Instance for termination and provides a Spot Instance
 	// termination notice, which gives the instance a two-minute warning before
 	// it terminates.
 	BlockDurationMinutes *int64 `type:"integer"`
 
 	// The action to take when TargetSpotCapacity has not been fulfilled when the
-	// TimeoutDurationMinutes has expired; that is, when all Spot instances could
+	// TimeoutDurationMinutes has expired; that is, when all Spot Instances could
 	// not be provisioned within the Spot provisioning timeout. Valid values are
 	// TERMINATE_CLUSTER and SWITCH_TO_ON_DEMAND. SWITCH_TO_ON_DEMAND specifies
-	// that if no Spot instances are available, On-Demand Instances should be provisioned
+	// that if no Spot Instances are available, On-Demand Instances should be provisioned
 	// to fulfill any remaining Spot capacity.
 	//
 	// TimeoutAction is a required field
 	TimeoutAction *string `type:"string" required:"true" enum:"SpotProvisioningTimeoutAction"`
 
-	// The spot provisioning timeout period in minutes. If Spot instances are not
+	// The spot provisioning timeout period in minutes. If Spot Instances are not
 	// provisioned within this time period, the TimeOutAction is taken. Minimum
 	// value is 5 and maximum value is 1440. The timeout applies only during initial
 	// provisioning, when the cluster is first created.
@@ -11255,6 +14143,12 @@ func (s *SpotProvisioningSpecification) Validate() error {
 	return nil
 }
 
+// SetAllocationStrategy sets the AllocationStrategy field's value.
+func (s *SpotProvisioningSpecification) SetAllocationStrategy(v string) *SpotProvisioningSpecification {
+	s.AllocationStrategy = &v
+	return s
+}
+
 // SetBlockDurationMinutes sets the BlockDurationMinutes field's value.
 func (s *SpotProvisioningSpecification) SetBlockDurationMinutes(v int64) *SpotProvisioningSpecification {
 	s.BlockDurationMinutes = &v
@@ -11270,6 +14164,160 @@ func (s *SpotProvisioningSpecification) SetTimeoutAction(v string) *SpotProvisio
 // SetTimeoutDurationMinutes sets the TimeoutDurationMinutes field's value.
 func (s *SpotProvisioningSpecification) SetTimeoutDurationMinutes(v int64) *SpotProvisioningSpecification {
 	s.TimeoutDurationMinutes = &v
+	return s
+}
+
+type StartNotebookExecutionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique identifier of the EMR Notebook to use for notebook execution.
+	//
+	// EditorId is a required field
+	EditorId *string `type:"string" required:"true"`
+
+	// Specifies the execution engine (cluster) that runs the notebook execution.
+	//
+	// ExecutionEngine is a required field
+	ExecutionEngine *ExecutionEngineConfig `type:"structure" required:"true"`
+
+	// An optional name for the notebook execution.
+	NotebookExecutionName *string `type:"string"`
+
+	// The unique identifier of the Amazon EC2 security group to associate with
+	// the EMR Notebook for this notebook execution.
+	NotebookInstanceSecurityGroupId *string `type:"string"`
+
+	// Input parameters in JSON format passed to the EMR Notebook at runtime for
+	// execution.
+	NotebookParams *string `type:"string"`
+
+	// The path and file name of the notebook file for this execution, relative
+	// to the path specified for the EMR Notebook. For example, if you specify a
+	// path of s3://MyBucket/MyNotebooks when you create an EMR Notebook for a notebook
+	// with an ID of e-ABCDEFGHIJK1234567890ABCD (the EditorID of this request),
+	// and you specify a RelativePath of my_notebook_executions/notebook_execution.ipynb,
+	// the location of the file for the notebook execution is s3://MyBucket/MyNotebooks/e-ABCDEFGHIJK1234567890ABCD/my_notebook_executions/notebook_execution.ipynb.
+	//
+	// RelativePath is a required field
+	RelativePath *string `type:"string" required:"true"`
+
+	// The name or ARN of the IAM role that is used as the service role for Amazon
+	// EMR (the EMR role) for the notebook execution.
+	//
+	// ServiceRole is a required field
+	ServiceRole *string `type:"string" required:"true"`
+
+	// A list of tags associated with a notebook execution. Tags are user-defined
+	// key-value pairs that consist of a required key string with a maximum of 128
+	// characters and an optional value string with a maximum of 256 characters.
+	Tags []*Tag `type:"list"`
+}
+
+// String returns the string representation
+func (s StartNotebookExecutionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StartNotebookExecutionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StartNotebookExecutionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StartNotebookExecutionInput"}
+	if s.EditorId == nil {
+		invalidParams.Add(request.NewErrParamRequired("EditorId"))
+	}
+	if s.ExecutionEngine == nil {
+		invalidParams.Add(request.NewErrParamRequired("ExecutionEngine"))
+	}
+	if s.RelativePath == nil {
+		invalidParams.Add(request.NewErrParamRequired("RelativePath"))
+	}
+	if s.ServiceRole == nil {
+		invalidParams.Add(request.NewErrParamRequired("ServiceRole"))
+	}
+	if s.ExecutionEngine != nil {
+		if err := s.ExecutionEngine.Validate(); err != nil {
+			invalidParams.AddNested("ExecutionEngine", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEditorId sets the EditorId field's value.
+func (s *StartNotebookExecutionInput) SetEditorId(v string) *StartNotebookExecutionInput {
+	s.EditorId = &v
+	return s
+}
+
+// SetExecutionEngine sets the ExecutionEngine field's value.
+func (s *StartNotebookExecutionInput) SetExecutionEngine(v *ExecutionEngineConfig) *StartNotebookExecutionInput {
+	s.ExecutionEngine = v
+	return s
+}
+
+// SetNotebookExecutionName sets the NotebookExecutionName field's value.
+func (s *StartNotebookExecutionInput) SetNotebookExecutionName(v string) *StartNotebookExecutionInput {
+	s.NotebookExecutionName = &v
+	return s
+}
+
+// SetNotebookInstanceSecurityGroupId sets the NotebookInstanceSecurityGroupId field's value.
+func (s *StartNotebookExecutionInput) SetNotebookInstanceSecurityGroupId(v string) *StartNotebookExecutionInput {
+	s.NotebookInstanceSecurityGroupId = &v
+	return s
+}
+
+// SetNotebookParams sets the NotebookParams field's value.
+func (s *StartNotebookExecutionInput) SetNotebookParams(v string) *StartNotebookExecutionInput {
+	s.NotebookParams = &v
+	return s
+}
+
+// SetRelativePath sets the RelativePath field's value.
+func (s *StartNotebookExecutionInput) SetRelativePath(v string) *StartNotebookExecutionInput {
+	s.RelativePath = &v
+	return s
+}
+
+// SetServiceRole sets the ServiceRole field's value.
+func (s *StartNotebookExecutionInput) SetServiceRole(v string) *StartNotebookExecutionInput {
+	s.ServiceRole = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *StartNotebookExecutionInput) SetTags(v []*Tag) *StartNotebookExecutionInput {
+	s.Tags = v
+	return s
+}
+
+type StartNotebookExecutionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique identifier of the notebook execution.
+	NotebookExecutionId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s StartNotebookExecutionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StartNotebookExecutionOutput) GoString() string {
+	return s.String()
+}
+
+// SetNotebookExecutionId sets the NotebookExecutionId field's value.
+func (s *StartNotebookExecutionOutput) SetNotebookExecutionId(v string) *StartNotebookExecutionOutput {
+	s.NotebookExecutionId = &v
 	return s
 }
 
@@ -11695,6 +14743,287 @@ func (s *StepTimeline) SetStartDateTime(v time.Time) *StepTimeline {
 	return s
 }
 
+type StopNotebookExecutionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique identifier of the notebook execution.
+	//
+	// NotebookExecutionId is a required field
+	NotebookExecutionId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s StopNotebookExecutionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StopNotebookExecutionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StopNotebookExecutionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StopNotebookExecutionInput"}
+	if s.NotebookExecutionId == nil {
+		invalidParams.Add(request.NewErrParamRequired("NotebookExecutionId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetNotebookExecutionId sets the NotebookExecutionId field's value.
+func (s *StopNotebookExecutionInput) SetNotebookExecutionId(v string) *StopNotebookExecutionInput {
+	s.NotebookExecutionId = &v
+	return s
+}
+
+type StopNotebookExecutionOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s StopNotebookExecutionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StopNotebookExecutionOutput) GoString() string {
+	return s.String()
+}
+
+// Details for an Amazon EMR Studio including ID, creation time, name, and so
+// on.
+type Studio struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies whether the Studio authenticates users using single sign-on (SSO)
+	// or IAM.
+	AuthMode *string `type:"string" enum:"AuthMode"`
+
+	// The time the Amazon EMR Studio was created.
+	CreationTime *time.Time `type:"timestamp"`
+
+	// The default Amazon S3 location to back up Amazon EMR Studio Workspaces and
+	// notebook files.
+	DefaultS3Location *string `type:"string"`
+
+	// The detailed description of the EMR Studio.
+	Description *string `type:"string"`
+
+	// The ID of the Engine security group associated with the Amazon EMR Studio.
+	// The Engine security group allows inbound network traffic from resources in
+	// the Workspace security group.
+	EngineSecurityGroupId *string `type:"string"`
+
+	// The name of the EMR Studio.
+	Name *string `type:"string"`
+
+	// The name of the IAM role assumed by the Amazon EMR Studio.
+	ServiceRole *string `type:"string"`
+
+	// The Amazon Resource Name (ARN) of the EMR Studio.
+	StudioArn *string `type:"string"`
+
+	// The ID of the EMR Studio.
+	StudioId *string `type:"string"`
+
+	// The list of IDs of the subnets associated with the Amazon EMR Studio.
+	SubnetIds []*string `type:"list"`
+
+	// A list of tags associated with the Amazon EMR Studio.
+	Tags []*Tag `type:"list"`
+
+	// The unique access URL of the Amazon EMR Studio.
+	Url *string `type:"string"`
+
+	// The name of the IAM role assumed by users logged in to the Amazon EMR Studio.
+	UserRole *string `type:"string"`
+
+	// The ID of the VPC associated with the EMR Studio.
+	VpcId *string `type:"string"`
+
+	// The ID of the Workspace security group associated with the Amazon EMR Studio.
+	// The Workspace security group allows outbound network traffic to resources
+	// in the Engine security group and to the internet.
+	WorkspaceSecurityGroupId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s Studio) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Studio) GoString() string {
+	return s.String()
+}
+
+// SetAuthMode sets the AuthMode field's value.
+func (s *Studio) SetAuthMode(v string) *Studio {
+	s.AuthMode = &v
+	return s
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *Studio) SetCreationTime(v time.Time) *Studio {
+	s.CreationTime = &v
+	return s
+}
+
+// SetDefaultS3Location sets the DefaultS3Location field's value.
+func (s *Studio) SetDefaultS3Location(v string) *Studio {
+	s.DefaultS3Location = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *Studio) SetDescription(v string) *Studio {
+	s.Description = &v
+	return s
+}
+
+// SetEngineSecurityGroupId sets the EngineSecurityGroupId field's value.
+func (s *Studio) SetEngineSecurityGroupId(v string) *Studio {
+	s.EngineSecurityGroupId = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *Studio) SetName(v string) *Studio {
+	s.Name = &v
+	return s
+}
+
+// SetServiceRole sets the ServiceRole field's value.
+func (s *Studio) SetServiceRole(v string) *Studio {
+	s.ServiceRole = &v
+	return s
+}
+
+// SetStudioArn sets the StudioArn field's value.
+func (s *Studio) SetStudioArn(v string) *Studio {
+	s.StudioArn = &v
+	return s
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *Studio) SetStudioId(v string) *Studio {
+	s.StudioId = &v
+	return s
+}
+
+// SetSubnetIds sets the SubnetIds field's value.
+func (s *Studio) SetSubnetIds(v []*string) *Studio {
+	s.SubnetIds = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *Studio) SetTags(v []*Tag) *Studio {
+	s.Tags = v
+	return s
+}
+
+// SetUrl sets the Url field's value.
+func (s *Studio) SetUrl(v string) *Studio {
+	s.Url = &v
+	return s
+}
+
+// SetUserRole sets the UserRole field's value.
+func (s *Studio) SetUserRole(v string) *Studio {
+	s.UserRole = &v
+	return s
+}
+
+// SetVpcId sets the VpcId field's value.
+func (s *Studio) SetVpcId(v string) *Studio {
+	s.VpcId = &v
+	return s
+}
+
+// SetWorkspaceSecurityGroupId sets the WorkspaceSecurityGroupId field's value.
+func (s *Studio) SetWorkspaceSecurityGroupId(v string) *Studio {
+	s.WorkspaceSecurityGroupId = &v
+	return s
+}
+
+// Details for an Amazon EMR Studio, including ID, Name, VPC, and Description.
+// The details do not include subnets, IAM roles, security groups, or tags associated
+// with the Studio.
+type StudioSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The time when the Amazon EMR Studio was created.
+	CreationTime *time.Time `type:"timestamp"`
+
+	// The detailed description of the EMR Studio.
+	Description *string `type:"string"`
+
+	// The name of the Amazon EMR Studio.
+	Name *string `type:"string"`
+
+	// The ID of the Amazon EMR Studio.
+	StudioId *string `type:"string"`
+
+	// The unique access URL of the Amazon EMR Studio.
+	Url *string `type:"string"`
+
+	// The ID of the Virtual Private Cloud (Amazon VPC) associated with the Amazon
+	// EMR Studio.
+	VpcId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s StudioSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StudioSummary) GoString() string {
+	return s.String()
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *StudioSummary) SetCreationTime(v time.Time) *StudioSummary {
+	s.CreationTime = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *StudioSummary) SetDescription(v string) *StudioSummary {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *StudioSummary) SetName(v string) *StudioSummary {
+	s.Name = &v
+	return s
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *StudioSummary) SetStudioId(v string) *StudioSummary {
+	s.StudioId = &v
+	return s
+}
+
+// SetUrl sets the Url field's value.
+func (s *StudioSummary) SetUrl(v string) *StudioSummary {
+	s.Url = &v
+	return s
+}
+
+// SetVpcId sets the VpcId field's value.
+func (s *StudioSummary) SetVpcId(v string) *StudioSummary {
+	s.VpcId = &v
+	return s
+}
+
 // The list of supported product configurations which allow user-supplied arguments.
 // EMR accepts these arguments and forwards them to the corresponding installation
 // script as bootstrap action arguments.
@@ -11730,7 +15059,7 @@ func (s *SupportedProductConfig) SetName(v string) *SupportedProductConfig {
 	return s
 }
 
-// A key/value pair containing user-defined metadata that you can associate
+// A key-value pair containing user-defined metadata that you can associate
 // with an Amazon EMR resource. Tags make it easier to associate clusters in
 // various ways, such as grouping clusters to track your Amazon EMR resource
 // allocation costs. For more information, see Tag Clusters (https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-tags.html).
@@ -11772,7 +15101,7 @@ func (s *Tag) SetValue(v string) *Tag {
 type TerminateJobFlowsInput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of job flows to be shutdown.
+	// A list of job flows to be shut down.
 	//
 	// JobFlowIds is a required field
 	JobFlowIds []*string `type:"list" required:"true"`
@@ -11818,6 +15147,113 @@ func (s TerminateJobFlowsOutput) String() string {
 
 // GoString returns the string representation
 func (s TerminateJobFlowsOutput) GoString() string {
+	return s.String()
+}
+
+type UpdateStudioSessionMappingInput struct {
+	_ struct{} `type:"structure"`
+
+	// The globally unique identifier (GUID) of the user or group. For more information,
+	// see UserId (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_User.html#singlesignon-Type-User-UserId)
+	// and GroupId (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_Group.html#singlesignon-Type-Group-GroupId)
+	// in the AWS SSO Identity Store API Reference. Either IdentityName or IdentityId
+	// must be specified.
+	IdentityId *string `type:"string"`
+
+	// The name of the user or group to update. For more information, see UserName
+	// (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_User.html#singlesignon-Type-User-UserId)
+	// and DisplayName (https://docs.aws.amazon.com/singlesignon/latest/IdentityStoreAPIReference/API_Group.html#singlesignon-Type-Group-DisplayName)
+	// in the AWS SSO Identity Store API Reference. Either IdentityName or IdentityId
+	// must be specified.
+	IdentityName *string `type:"string"`
+
+	// Specifies whether the identity to update is a user or a group.
+	//
+	// IdentityType is a required field
+	IdentityType *string `type:"string" required:"true" enum:"IdentityType"`
+
+	// The Amazon Resource Name (ARN) of the session policy to associate with the
+	// specified user or group.
+	//
+	// SessionPolicyArn is a required field
+	SessionPolicyArn *string `type:"string" required:"true"`
+
+	// The ID of the EMR Studio.
+	//
+	// StudioId is a required field
+	StudioId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateStudioSessionMappingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateStudioSessionMappingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateStudioSessionMappingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateStudioSessionMappingInput"}
+	if s.IdentityType == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityType"))
+	}
+	if s.SessionPolicyArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("SessionPolicyArn"))
+	}
+	if s.StudioId == nil {
+		invalidParams.Add(request.NewErrParamRequired("StudioId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIdentityId sets the IdentityId field's value.
+func (s *UpdateStudioSessionMappingInput) SetIdentityId(v string) *UpdateStudioSessionMappingInput {
+	s.IdentityId = &v
+	return s
+}
+
+// SetIdentityName sets the IdentityName field's value.
+func (s *UpdateStudioSessionMappingInput) SetIdentityName(v string) *UpdateStudioSessionMappingInput {
+	s.IdentityName = &v
+	return s
+}
+
+// SetIdentityType sets the IdentityType field's value.
+func (s *UpdateStudioSessionMappingInput) SetIdentityType(v string) *UpdateStudioSessionMappingInput {
+	s.IdentityType = &v
+	return s
+}
+
+// SetSessionPolicyArn sets the SessionPolicyArn field's value.
+func (s *UpdateStudioSessionMappingInput) SetSessionPolicyArn(v string) *UpdateStudioSessionMappingInput {
+	s.SessionPolicyArn = &v
+	return s
+}
+
+// SetStudioId sets the StudioId field's value.
+func (s *UpdateStudioSessionMappingInput) SetStudioId(v string) *UpdateStudioSessionMappingInput {
+	s.StudioId = &v
+	return s
+}
+
+type UpdateStudioSessionMappingOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s UpdateStudioSessionMappingOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateStudioSessionMappingOutput) GoString() string {
 	return s.String()
 }
 
@@ -11899,6 +15335,16 @@ const (
 	ActionOnFailureContinue = "CONTINUE"
 )
 
+// ActionOnFailure_Values returns all elements of the ActionOnFailure enum
+func ActionOnFailure_Values() []string {
+	return []string{
+		ActionOnFailureTerminateJobFlow,
+		ActionOnFailureTerminateCluster,
+		ActionOnFailureCancelAndWait,
+		ActionOnFailureContinue,
+	}
+}
+
 const (
 	// AdjustmentTypeChangeInCapacity is a AdjustmentType enum value
 	AdjustmentTypeChangeInCapacity = "CHANGE_IN_CAPACITY"
@@ -11909,6 +15355,31 @@ const (
 	// AdjustmentTypeExactCapacity is a AdjustmentType enum value
 	AdjustmentTypeExactCapacity = "EXACT_CAPACITY"
 )
+
+// AdjustmentType_Values returns all elements of the AdjustmentType enum
+func AdjustmentType_Values() []string {
+	return []string{
+		AdjustmentTypeChangeInCapacity,
+		AdjustmentTypePercentChangeInCapacity,
+		AdjustmentTypeExactCapacity,
+	}
+}
+
+const (
+	// AuthModeSso is a AuthMode enum value
+	AuthModeSso = "SSO"
+
+	// AuthModeIam is a AuthMode enum value
+	AuthModeIam = "IAM"
+)
+
+// AuthMode_Values returns all elements of the AuthMode enum
+func AuthMode_Values() []string {
+	return []string{
+		AuthModeSso,
+		AuthModeIam,
+	}
+}
 
 const (
 	// AutoScalingPolicyStatePending is a AutoScalingPolicyState enum value
@@ -11930,6 +15401,18 @@ const (
 	AutoScalingPolicyStateFailed = "FAILED"
 )
 
+// AutoScalingPolicyState_Values returns all elements of the AutoScalingPolicyState enum
+func AutoScalingPolicyState_Values() []string {
+	return []string{
+		AutoScalingPolicyStatePending,
+		AutoScalingPolicyStateAttaching,
+		AutoScalingPolicyStateAttached,
+		AutoScalingPolicyStateDetaching,
+		AutoScalingPolicyStateDetached,
+		AutoScalingPolicyStateFailed,
+	}
+}
+
 const (
 	// AutoScalingPolicyStateChangeReasonCodeUserRequest is a AutoScalingPolicyStateChangeReasonCode enum value
 	AutoScalingPolicyStateChangeReasonCodeUserRequest = "USER_REQUEST"
@@ -11941,6 +15424,15 @@ const (
 	AutoScalingPolicyStateChangeReasonCodeCleanupFailure = "CLEANUP_FAILURE"
 )
 
+// AutoScalingPolicyStateChangeReasonCode_Values returns all elements of the AutoScalingPolicyStateChangeReasonCode enum
+func AutoScalingPolicyStateChangeReasonCode_Values() []string {
+	return []string{
+		AutoScalingPolicyStateChangeReasonCodeUserRequest,
+		AutoScalingPolicyStateChangeReasonCodeProvisionFailure,
+		AutoScalingPolicyStateChangeReasonCodeCleanupFailure,
+	}
+}
+
 const (
 	// CancelStepsRequestStatusSubmitted is a CancelStepsRequestStatus enum value
 	CancelStepsRequestStatusSubmitted = "SUBMITTED"
@@ -11948,6 +15440,14 @@ const (
 	// CancelStepsRequestStatusFailed is a CancelStepsRequestStatus enum value
 	CancelStepsRequestStatusFailed = "FAILED"
 )
+
+// CancelStepsRequestStatus_Values returns all elements of the CancelStepsRequestStatus enum
+func CancelStepsRequestStatus_Values() []string {
+	return []string{
+		CancelStepsRequestStatusSubmitted,
+		CancelStepsRequestStatusFailed,
+	}
+}
 
 const (
 	// ClusterStateStarting is a ClusterState enum value
@@ -11971,6 +15471,19 @@ const (
 	// ClusterStateTerminatedWithErrors is a ClusterState enum value
 	ClusterStateTerminatedWithErrors = "TERMINATED_WITH_ERRORS"
 )
+
+// ClusterState_Values returns all elements of the ClusterState enum
+func ClusterState_Values() []string {
+	return []string{
+		ClusterStateStarting,
+		ClusterStateBootstrapping,
+		ClusterStateRunning,
+		ClusterStateWaiting,
+		ClusterStateTerminating,
+		ClusterStateTerminated,
+		ClusterStateTerminatedWithErrors,
+	}
+}
 
 const (
 	// ClusterStateChangeReasonCodeInternalError is a ClusterStateChangeReasonCode enum value
@@ -11998,6 +15511,20 @@ const (
 	ClusterStateChangeReasonCodeAllStepsCompleted = "ALL_STEPS_COMPLETED"
 )
 
+// ClusterStateChangeReasonCode_Values returns all elements of the ClusterStateChangeReasonCode enum
+func ClusterStateChangeReasonCode_Values() []string {
+	return []string{
+		ClusterStateChangeReasonCodeInternalError,
+		ClusterStateChangeReasonCodeValidationError,
+		ClusterStateChangeReasonCodeInstanceFailure,
+		ClusterStateChangeReasonCodeInstanceFleetTimeout,
+		ClusterStateChangeReasonCodeBootstrapFailure,
+		ClusterStateChangeReasonCodeUserRequest,
+		ClusterStateChangeReasonCodeStepFailure,
+		ClusterStateChangeReasonCodeAllStepsCompleted,
+	}
+}
+
 const (
 	// ComparisonOperatorGreaterThanOrEqual is a ComparisonOperator enum value
 	ComparisonOperatorGreaterThanOrEqual = "GREATER_THAN_OR_EQUAL"
@@ -12012,6 +15539,16 @@ const (
 	ComparisonOperatorLessThanOrEqual = "LESS_THAN_OR_EQUAL"
 )
 
+// ComparisonOperator_Values returns all elements of the ComparisonOperator enum
+func ComparisonOperator_Values() []string {
+	return []string{
+		ComparisonOperatorGreaterThanOrEqual,
+		ComparisonOperatorGreaterThan,
+		ComparisonOperatorLessThan,
+		ComparisonOperatorLessThanOrEqual,
+	}
+}
+
 const (
 	// ComputeLimitsUnitTypeInstanceFleetUnits is a ComputeLimitsUnitType enum value
 	ComputeLimitsUnitTypeInstanceFleetUnits = "InstanceFleetUnits"
@@ -12023,6 +15560,43 @@ const (
 	ComputeLimitsUnitTypeVcpu = "VCPU"
 )
 
+// ComputeLimitsUnitType_Values returns all elements of the ComputeLimitsUnitType enum
+func ComputeLimitsUnitType_Values() []string {
+	return []string{
+		ComputeLimitsUnitTypeInstanceFleetUnits,
+		ComputeLimitsUnitTypeInstances,
+		ComputeLimitsUnitTypeVcpu,
+	}
+}
+
+const (
+	// ExecutionEngineTypeEmr is a ExecutionEngineType enum value
+	ExecutionEngineTypeEmr = "EMR"
+)
+
+// ExecutionEngineType_Values returns all elements of the ExecutionEngineType enum
+func ExecutionEngineType_Values() []string {
+	return []string{
+		ExecutionEngineTypeEmr,
+	}
+}
+
+const (
+	// IdentityTypeUser is a IdentityType enum value
+	IdentityTypeUser = "USER"
+
+	// IdentityTypeGroup is a IdentityType enum value
+	IdentityTypeGroup = "GROUP"
+)
+
+// IdentityType_Values returns all elements of the IdentityType enum
+func IdentityType_Values() []string {
+	return []string{
+		IdentityTypeUser,
+		IdentityTypeGroup,
+	}
+}
+
 const (
 	// InstanceCollectionTypeInstanceFleet is a InstanceCollectionType enum value
 	InstanceCollectionTypeInstanceFleet = "INSTANCE_FLEET"
@@ -12030,6 +15604,14 @@ const (
 	// InstanceCollectionTypeInstanceGroup is a InstanceCollectionType enum value
 	InstanceCollectionTypeInstanceGroup = "INSTANCE_GROUP"
 )
+
+// InstanceCollectionType_Values returns all elements of the InstanceCollectionType enum
+func InstanceCollectionType_Values() []string {
+	return []string{
+		InstanceCollectionTypeInstanceFleet,
+		InstanceCollectionTypeInstanceGroup,
+	}
+}
 
 const (
 	// InstanceFleetStateProvisioning is a InstanceFleetState enum value
@@ -12054,6 +15636,19 @@ const (
 	InstanceFleetStateTerminated = "TERMINATED"
 )
 
+// InstanceFleetState_Values returns all elements of the InstanceFleetState enum
+func InstanceFleetState_Values() []string {
+	return []string{
+		InstanceFleetStateProvisioning,
+		InstanceFleetStateBootstrapping,
+		InstanceFleetStateRunning,
+		InstanceFleetStateResizing,
+		InstanceFleetStateSuspended,
+		InstanceFleetStateTerminating,
+		InstanceFleetStateTerminated,
+	}
+}
+
 const (
 	// InstanceFleetStateChangeReasonCodeInternalError is a InstanceFleetStateChangeReasonCode enum value
 	InstanceFleetStateChangeReasonCodeInternalError = "INTERNAL_ERROR"
@@ -12068,6 +15663,16 @@ const (
 	InstanceFleetStateChangeReasonCodeClusterTerminated = "CLUSTER_TERMINATED"
 )
 
+// InstanceFleetStateChangeReasonCode_Values returns all elements of the InstanceFleetStateChangeReasonCode enum
+func InstanceFleetStateChangeReasonCode_Values() []string {
+	return []string{
+		InstanceFleetStateChangeReasonCodeInternalError,
+		InstanceFleetStateChangeReasonCodeValidationError,
+		InstanceFleetStateChangeReasonCodeInstanceFailure,
+		InstanceFleetStateChangeReasonCodeClusterTerminated,
+	}
+}
+
 const (
 	// InstanceFleetTypeMaster is a InstanceFleetType enum value
 	InstanceFleetTypeMaster = "MASTER"
@@ -12078,6 +15683,15 @@ const (
 	// InstanceFleetTypeTask is a InstanceFleetType enum value
 	InstanceFleetTypeTask = "TASK"
 )
+
+// InstanceFleetType_Values returns all elements of the InstanceFleetType enum
+func InstanceFleetType_Values() []string {
+	return []string{
+		InstanceFleetTypeMaster,
+		InstanceFleetTypeCore,
+		InstanceFleetTypeTask,
+	}
+}
 
 const (
 	// InstanceGroupStateProvisioning is a InstanceGroupState enum value
@@ -12114,6 +15728,23 @@ const (
 	InstanceGroupStateEnded = "ENDED"
 )
 
+// InstanceGroupState_Values returns all elements of the InstanceGroupState enum
+func InstanceGroupState_Values() []string {
+	return []string{
+		InstanceGroupStateProvisioning,
+		InstanceGroupStateBootstrapping,
+		InstanceGroupStateRunning,
+		InstanceGroupStateReconfiguring,
+		InstanceGroupStateResizing,
+		InstanceGroupStateSuspended,
+		InstanceGroupStateTerminating,
+		InstanceGroupStateTerminated,
+		InstanceGroupStateArrested,
+		InstanceGroupStateShuttingDown,
+		InstanceGroupStateEnded,
+	}
+}
+
 const (
 	// InstanceGroupStateChangeReasonCodeInternalError is a InstanceGroupStateChangeReasonCode enum value
 	InstanceGroupStateChangeReasonCodeInternalError = "INTERNAL_ERROR"
@@ -12128,6 +15759,16 @@ const (
 	InstanceGroupStateChangeReasonCodeClusterTerminated = "CLUSTER_TERMINATED"
 )
 
+// InstanceGroupStateChangeReasonCode_Values returns all elements of the InstanceGroupStateChangeReasonCode enum
+func InstanceGroupStateChangeReasonCode_Values() []string {
+	return []string{
+		InstanceGroupStateChangeReasonCodeInternalError,
+		InstanceGroupStateChangeReasonCodeValidationError,
+		InstanceGroupStateChangeReasonCodeInstanceFailure,
+		InstanceGroupStateChangeReasonCodeClusterTerminated,
+	}
+}
+
 const (
 	// InstanceGroupTypeMaster is a InstanceGroupType enum value
 	InstanceGroupTypeMaster = "MASTER"
@@ -12139,6 +15780,15 @@ const (
 	InstanceGroupTypeTask = "TASK"
 )
 
+// InstanceGroupType_Values returns all elements of the InstanceGroupType enum
+func InstanceGroupType_Values() []string {
+	return []string{
+		InstanceGroupTypeMaster,
+		InstanceGroupTypeCore,
+		InstanceGroupTypeTask,
+	}
+}
+
 const (
 	// InstanceRoleTypeMaster is a InstanceRoleType enum value
 	InstanceRoleTypeMaster = "MASTER"
@@ -12149,6 +15799,15 @@ const (
 	// InstanceRoleTypeTask is a InstanceRoleType enum value
 	InstanceRoleTypeTask = "TASK"
 )
+
+// InstanceRoleType_Values returns all elements of the InstanceRoleType enum
+func InstanceRoleType_Values() []string {
+	return []string{
+		InstanceRoleTypeMaster,
+		InstanceRoleTypeCore,
+		InstanceRoleTypeTask,
+	}
+}
 
 const (
 	// InstanceStateAwaitingFulfillment is a InstanceState enum value
@@ -12167,6 +15826,17 @@ const (
 	InstanceStateTerminated = "TERMINATED"
 )
 
+// InstanceState_Values returns all elements of the InstanceState enum
+func InstanceState_Values() []string {
+	return []string{
+		InstanceStateAwaitingFulfillment,
+		InstanceStateProvisioning,
+		InstanceStateBootstrapping,
+		InstanceStateRunning,
+		InstanceStateTerminated,
+	}
+}
+
 const (
 	// InstanceStateChangeReasonCodeInternalError is a InstanceStateChangeReasonCode enum value
 	InstanceStateChangeReasonCodeInternalError = "INTERNAL_ERROR"
@@ -12183,6 +15853,17 @@ const (
 	// InstanceStateChangeReasonCodeClusterTerminated is a InstanceStateChangeReasonCode enum value
 	InstanceStateChangeReasonCodeClusterTerminated = "CLUSTER_TERMINATED"
 )
+
+// InstanceStateChangeReasonCode_Values returns all elements of the InstanceStateChangeReasonCode enum
+func InstanceStateChangeReasonCode_Values() []string {
+	return []string{
+		InstanceStateChangeReasonCodeInternalError,
+		InstanceStateChangeReasonCodeValidationError,
+		InstanceStateChangeReasonCodeInstanceFailure,
+		InstanceStateChangeReasonCodeBootstrapFailure,
+		InstanceStateChangeReasonCodeClusterTerminated,
+	}
+}
 
 // The type of instance.
 const (
@@ -12211,6 +15892,20 @@ const (
 	JobFlowExecutionStateFailed = "FAILED"
 )
 
+// JobFlowExecutionState_Values returns all elements of the JobFlowExecutionState enum
+func JobFlowExecutionState_Values() []string {
+	return []string{
+		JobFlowExecutionStateStarting,
+		JobFlowExecutionStateBootstrapping,
+		JobFlowExecutionStateRunning,
+		JobFlowExecutionStateWaiting,
+		JobFlowExecutionStateShuttingDown,
+		JobFlowExecutionStateTerminated,
+		JobFlowExecutionStateCompleted,
+		JobFlowExecutionStateFailed,
+	}
+}
+
 const (
 	// MarketTypeOnDemand is a MarketType enum value
 	MarketTypeOnDemand = "ON_DEMAND"
@@ -12218,6 +15913,98 @@ const (
 	// MarketTypeSpot is a MarketType enum value
 	MarketTypeSpot = "SPOT"
 )
+
+// MarketType_Values returns all elements of the MarketType enum
+func MarketType_Values() []string {
+	return []string{
+		MarketTypeOnDemand,
+		MarketTypeSpot,
+	}
+}
+
+const (
+	// NotebookExecutionStatusStartPending is a NotebookExecutionStatus enum value
+	NotebookExecutionStatusStartPending = "START_PENDING"
+
+	// NotebookExecutionStatusStarting is a NotebookExecutionStatus enum value
+	NotebookExecutionStatusStarting = "STARTING"
+
+	// NotebookExecutionStatusRunning is a NotebookExecutionStatus enum value
+	NotebookExecutionStatusRunning = "RUNNING"
+
+	// NotebookExecutionStatusFinishing is a NotebookExecutionStatus enum value
+	NotebookExecutionStatusFinishing = "FINISHING"
+
+	// NotebookExecutionStatusFinished is a NotebookExecutionStatus enum value
+	NotebookExecutionStatusFinished = "FINISHED"
+
+	// NotebookExecutionStatusFailing is a NotebookExecutionStatus enum value
+	NotebookExecutionStatusFailing = "FAILING"
+
+	// NotebookExecutionStatusFailed is a NotebookExecutionStatus enum value
+	NotebookExecutionStatusFailed = "FAILED"
+
+	// NotebookExecutionStatusStopPending is a NotebookExecutionStatus enum value
+	NotebookExecutionStatusStopPending = "STOP_PENDING"
+
+	// NotebookExecutionStatusStopping is a NotebookExecutionStatus enum value
+	NotebookExecutionStatusStopping = "STOPPING"
+
+	// NotebookExecutionStatusStopped is a NotebookExecutionStatus enum value
+	NotebookExecutionStatusStopped = "STOPPED"
+)
+
+// NotebookExecutionStatus_Values returns all elements of the NotebookExecutionStatus enum
+func NotebookExecutionStatus_Values() []string {
+	return []string{
+		NotebookExecutionStatusStartPending,
+		NotebookExecutionStatusStarting,
+		NotebookExecutionStatusRunning,
+		NotebookExecutionStatusFinishing,
+		NotebookExecutionStatusFinished,
+		NotebookExecutionStatusFailing,
+		NotebookExecutionStatusFailed,
+		NotebookExecutionStatusStopPending,
+		NotebookExecutionStatusStopping,
+		NotebookExecutionStatusStopped,
+	}
+}
+
+const (
+	// OnDemandProvisioningAllocationStrategyLowestPrice is a OnDemandProvisioningAllocationStrategy enum value
+	OnDemandProvisioningAllocationStrategyLowestPrice = "lowest-price"
+)
+
+// OnDemandProvisioningAllocationStrategy_Values returns all elements of the OnDemandProvisioningAllocationStrategy enum
+func OnDemandProvisioningAllocationStrategy_Values() []string {
+	return []string{
+		OnDemandProvisioningAllocationStrategyLowestPrice,
+	}
+}
+
+const (
+	// PlacementGroupStrategySpread is a PlacementGroupStrategy enum value
+	PlacementGroupStrategySpread = "SPREAD"
+
+	// PlacementGroupStrategyPartition is a PlacementGroupStrategy enum value
+	PlacementGroupStrategyPartition = "PARTITION"
+
+	// PlacementGroupStrategyCluster is a PlacementGroupStrategy enum value
+	PlacementGroupStrategyCluster = "CLUSTER"
+
+	// PlacementGroupStrategyNone is a PlacementGroupStrategy enum value
+	PlacementGroupStrategyNone = "NONE"
+)
+
+// PlacementGroupStrategy_Values returns all elements of the PlacementGroupStrategy enum
+func PlacementGroupStrategy_Values() []string {
+	return []string{
+		PlacementGroupStrategySpread,
+		PlacementGroupStrategyPartition,
+		PlacementGroupStrategyCluster,
+		PlacementGroupStrategyNone,
+	}
+}
 
 const (
 	// RepoUpgradeOnBootSecurity is a RepoUpgradeOnBoot enum value
@@ -12227,6 +16014,14 @@ const (
 	RepoUpgradeOnBootNone = "NONE"
 )
 
+// RepoUpgradeOnBoot_Values returns all elements of the RepoUpgradeOnBoot enum
+func RepoUpgradeOnBoot_Values() []string {
+	return []string{
+		RepoUpgradeOnBootSecurity,
+		RepoUpgradeOnBootNone,
+	}
+}
+
 const (
 	// ScaleDownBehaviorTerminateAtInstanceHour is a ScaleDownBehavior enum value
 	ScaleDownBehaviorTerminateAtInstanceHour = "TERMINATE_AT_INSTANCE_HOUR"
@@ -12235,6 +16030,26 @@ const (
 	ScaleDownBehaviorTerminateAtTaskCompletion = "TERMINATE_AT_TASK_COMPLETION"
 )
 
+// ScaleDownBehavior_Values returns all elements of the ScaleDownBehavior enum
+func ScaleDownBehavior_Values() []string {
+	return []string{
+		ScaleDownBehaviorTerminateAtInstanceHour,
+		ScaleDownBehaviorTerminateAtTaskCompletion,
+	}
+}
+
+const (
+	// SpotProvisioningAllocationStrategyCapacityOptimized is a SpotProvisioningAllocationStrategy enum value
+	SpotProvisioningAllocationStrategyCapacityOptimized = "capacity-optimized"
+)
+
+// SpotProvisioningAllocationStrategy_Values returns all elements of the SpotProvisioningAllocationStrategy enum
+func SpotProvisioningAllocationStrategy_Values() []string {
+	return []string{
+		SpotProvisioningAllocationStrategyCapacityOptimized,
+	}
+}
+
 const (
 	// SpotProvisioningTimeoutActionSwitchToOnDemand is a SpotProvisioningTimeoutAction enum value
 	SpotProvisioningTimeoutActionSwitchToOnDemand = "SWITCH_TO_ON_DEMAND"
@@ -12242,6 +16057,14 @@ const (
 	// SpotProvisioningTimeoutActionTerminateCluster is a SpotProvisioningTimeoutAction enum value
 	SpotProvisioningTimeoutActionTerminateCluster = "TERMINATE_CLUSTER"
 )
+
+// SpotProvisioningTimeoutAction_Values returns all elements of the SpotProvisioningTimeoutAction enum
+func SpotProvisioningTimeoutAction_Values() []string {
+	return []string{
+		SpotProvisioningTimeoutActionSwitchToOnDemand,
+		SpotProvisioningTimeoutActionTerminateCluster,
+	}
+}
 
 const (
 	// StatisticSampleCount is a Statistic enum value
@@ -12260,6 +16083,17 @@ const (
 	StatisticMaximum = "MAXIMUM"
 )
 
+// Statistic_Values returns all elements of the Statistic enum
+func Statistic_Values() []string {
+	return []string{
+		StatisticSampleCount,
+		StatisticAverage,
+		StatisticSum,
+		StatisticMinimum,
+		StatisticMaximum,
+	}
+}
+
 const (
 	// StepCancellationOptionSendInterrupt is a StepCancellationOption enum value
 	StepCancellationOptionSendInterrupt = "SEND_INTERRUPT"
@@ -12267,6 +16101,14 @@ const (
 	// StepCancellationOptionTerminateProcess is a StepCancellationOption enum value
 	StepCancellationOptionTerminateProcess = "TERMINATE_PROCESS"
 )
+
+// StepCancellationOption_Values returns all elements of the StepCancellationOption enum
+func StepCancellationOption_Values() []string {
+	return []string{
+		StepCancellationOptionSendInterrupt,
+		StepCancellationOptionTerminateProcess,
+	}
+}
 
 const (
 	// StepExecutionStatePending is a StepExecutionState enum value
@@ -12291,6 +16133,19 @@ const (
 	StepExecutionStateInterrupted = "INTERRUPTED"
 )
 
+// StepExecutionState_Values returns all elements of the StepExecutionState enum
+func StepExecutionState_Values() []string {
+	return []string{
+		StepExecutionStatePending,
+		StepExecutionStateRunning,
+		StepExecutionStateContinue,
+		StepExecutionStateCompleted,
+		StepExecutionStateCancelled,
+		StepExecutionStateFailed,
+		StepExecutionStateInterrupted,
+	}
+}
+
 const (
 	// StepStatePending is a StepState enum value
 	StepStatePending = "PENDING"
@@ -12314,10 +16169,30 @@ const (
 	StepStateInterrupted = "INTERRUPTED"
 )
 
+// StepState_Values returns all elements of the StepState enum
+func StepState_Values() []string {
+	return []string{
+		StepStatePending,
+		StepStateCancelPending,
+		StepStateRunning,
+		StepStateCompleted,
+		StepStateCancelled,
+		StepStateFailed,
+		StepStateInterrupted,
+	}
+}
+
 const (
 	// StepStateChangeReasonCodeNone is a StepStateChangeReasonCode enum value
 	StepStateChangeReasonCodeNone = "NONE"
 )
+
+// StepStateChangeReasonCode_Values returns all elements of the StepStateChangeReasonCode enum
+func StepStateChangeReasonCode_Values() []string {
+	return []string{
+		StepStateChangeReasonCodeNone,
+	}
+}
 
 const (
 	// UnitNone is a Unit enum value
@@ -12401,3 +16276,36 @@ const (
 	// UnitCountPerSecond is a Unit enum value
 	UnitCountPerSecond = "COUNT_PER_SECOND"
 )
+
+// Unit_Values returns all elements of the Unit enum
+func Unit_Values() []string {
+	return []string{
+		UnitNone,
+		UnitSeconds,
+		UnitMicroSeconds,
+		UnitMilliSeconds,
+		UnitBytes,
+		UnitKiloBytes,
+		UnitMegaBytes,
+		UnitGigaBytes,
+		UnitTeraBytes,
+		UnitBits,
+		UnitKiloBits,
+		UnitMegaBits,
+		UnitGigaBits,
+		UnitTeraBits,
+		UnitPercent,
+		UnitCount,
+		UnitBytesPerSecond,
+		UnitKiloBytesPerSecond,
+		UnitMegaBytesPerSecond,
+		UnitGigaBytesPerSecond,
+		UnitTeraBytesPerSecond,
+		UnitBitsPerSecond,
+		UnitKiloBitsPerSecond,
+		UnitMegaBitsPerSecond,
+		UnitGigaBitsPerSecond,
+		UnitTeraBitsPerSecond,
+		UnitCountPerSecond,
+	}
+}

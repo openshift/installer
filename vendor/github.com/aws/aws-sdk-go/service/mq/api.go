@@ -1193,6 +1193,12 @@ func (c *MQ) ListBrokersRequest(input *ListBrokersInput) (req *request.Request, 
 		Name:       opListBrokers,
 		HTTPMethod: "GET",
 		HTTPPath:   "/v1/brokers",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1245,6 +1251,58 @@ func (c *MQ) ListBrokersWithContext(ctx aws.Context, input *ListBrokersInput, op
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// ListBrokersPages iterates over the pages of a ListBrokers operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListBrokers method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListBrokers operation.
+//    pageNum := 0
+//    err := client.ListBrokersPages(params,
+//        func(page *mq.ListBrokersResponse, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *MQ) ListBrokersPages(input *ListBrokersInput, fn func(*ListBrokersResponse, bool) bool) error {
+	return c.ListBrokersPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListBrokersPagesWithContext same as ListBrokersPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *MQ) ListBrokersPagesWithContext(ctx aws.Context, input *ListBrokersInput, fn func(*ListBrokersResponse, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListBrokersInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListBrokersRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListBrokersResponse), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
 }
 
 const opListConfigurationRevisions = "ListConfigurationRevisions"
@@ -2078,13 +2136,14 @@ func (s *BrokerEngineType) SetEngineVersions(v []*EngineVersion) *BrokerEngineTy
 type BrokerInstance struct {
 	_ struct{} `type:"structure"`
 
-	// The URL of the broker's ActiveMQ Web Console.
+	// The URL of the broker's Web Console.
 	ConsoleURL *string `locationName:"consoleURL" type:"string"`
 
 	// The broker's wire-level protocol endpoints.
 	Endpoints []*string `locationName:"endpoints" type:"list"`
 
 	// The IP address of the Elastic Network Interface (ENI) attached to the broker.
+	// Does not apply to RabbitMQ brokers
 	IpAddress *string `locationName:"ipAddress" type:"string"`
 }
 
@@ -2210,6 +2269,9 @@ type BrokerSummary struct {
 	// Required. The deployment mode of the broker.
 	DeploymentMode *string `locationName:"deploymentMode" type:"string" enum:"DeploymentMode"`
 
+	// Required. The type of broker engine.
+	EngineType *string `locationName:"engineType" type:"string" enum:"EngineType"`
+
 	// The broker's instance type.
 	HostInstanceType *string `locationName:"hostInstanceType" type:"string"`
 }
@@ -2260,6 +2322,12 @@ func (s *BrokerSummary) SetDeploymentMode(v string) *BrokerSummary {
 	return s
 }
 
+// SetEngineType sets the EngineType field's value.
+func (s *BrokerSummary) SetEngineType(v string) *BrokerSummary {
+	s.EngineType = &v
+	return s
+}
+
 // SetHostInstanceType sets the HostInstanceType field's value.
 func (s *BrokerSummary) SetHostInstanceType(v string) *BrokerSummary {
 	s.HostInstanceType = &v
@@ -2273,6 +2341,9 @@ type Configuration struct {
 	// Required. The ARN of the configuration.
 	Arn *string `locationName:"arn" type:"string"`
 
+	// The authentication strategy associated with the configuration.
+	AuthenticationStrategy *string `locationName:"authenticationStrategy" type:"string" enum:"AuthenticationStrategy"`
+
 	// Required. The date and time of the configuration revision.
 	Created *time.Time `locationName:"created" type:"timestamp" timestampFormat:"iso8601"`
 
@@ -2280,7 +2351,7 @@ type Configuration struct {
 	Description *string `locationName:"description" type:"string"`
 
 	// Required. The type of broker engine. Note: Currently, Amazon MQ supports
-	// only ACTIVEMQ.
+	// ACTIVEMQ and RABBITMQ.
 	EngineType *string `locationName:"engineType" type:"string" enum:"EngineType"`
 
 	// Required. The version of the broker engine. For a list of supported engine
@@ -2315,6 +2386,12 @@ func (s Configuration) GoString() string {
 // SetArn sets the Arn field's value.
 func (s *Configuration) SetArn(v string) *Configuration {
 	s.Arn = &v
+	return s
+}
+
+// SetAuthenticationStrategy sets the AuthenticationStrategy field's value.
+func (s *Configuration) SetAuthenticationStrategy(v string) *Configuration {
+	s.AuthenticationStrategy = &v
 	return s
 }
 
@@ -2366,7 +2443,8 @@ func (s *Configuration) SetTags(v map[string]*string) *Configuration {
 	return s
 }
 
-// A list of information about the configuration.
+// A list of information about the configuration. Does not apply to RabbitMQ
+// brokers.
 type ConfigurationId struct {
 	_ struct{} `type:"structure"`
 
@@ -2544,11 +2622,15 @@ func (s *ConflictException) RequestID() string {
 type CreateBrokerRequest struct {
 	_ struct{} `type:"structure"`
 
+	// The authentication strategy used to secure the broker.
+	AuthenticationStrategy *string `locationName:"authenticationStrategy" type:"string" enum:"AuthenticationStrategy"`
+
 	AutoMinorVersionUpgrade *bool `locationName:"autoMinorVersionUpgrade" type:"boolean"`
 
 	BrokerName *string `locationName:"brokerName" type:"string"`
 
-	// A list of information about the configuration.
+	// A list of information about the configuration. Does not apply to RabbitMQ
+	// brokers.
 	Configuration *ConfigurationId `locationName:"configuration" type:"structure"`
 
 	CreatorRequestId *string `locationName:"creatorRequestId" type:"string" idempotencyToken:"true"`
@@ -2559,12 +2641,17 @@ type CreateBrokerRequest struct {
 	// Encryption options for the broker.
 	EncryptionOptions *EncryptionOptions `locationName:"encryptionOptions" type:"structure"`
 
-	// The type of broker engine. Note: Currently, Amazon MQ supports only ActiveMQ.
+	// The type of broker engine. Note: Currently, Amazon MQ supports ActiveMQ and
+	// RabbitMQ.
 	EngineType *string `locationName:"engineType" type:"string" enum:"EngineType"`
 
 	EngineVersion *string `locationName:"engineVersion" type:"string"`
 
 	HostInstanceType *string `locationName:"hostInstanceType" type:"string"`
+
+	// The metadata of the LDAP server used to authenticate and authorize connections
+	// to the broker. Currently not supported for RabbitMQ engine type.
+	LdapServerMetadata *LdapServerMetadataInput `locationName:"ldapServerMetadata" type:"structure"`
 
 	// The list of information about logs to be enabled for the specified broker.
 	Logs *Logs `locationName:"logs" type:"structure"`
@@ -2577,7 +2664,8 @@ type CreateBrokerRequest struct {
 
 	SecurityGroups []*string `locationName:"securityGroups" type:"list"`
 
-	// The storage type of the broker.
+	// The storage type of the broker. EFS is currently not Supported for RabbitMQ
+	// engine type.
 	StorageType *string `locationName:"storageType" type:"string" enum:"BrokerStorageType"`
 
 	SubnetIds []*string `locationName:"subnetIds" type:"list"`
@@ -2610,6 +2698,12 @@ func (s *CreateBrokerRequest) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAuthenticationStrategy sets the AuthenticationStrategy field's value.
+func (s *CreateBrokerRequest) SetAuthenticationStrategy(v string) *CreateBrokerRequest {
+	s.AuthenticationStrategy = &v
+	return s
 }
 
 // SetAutoMinorVersionUpgrade sets the AutoMinorVersionUpgrade field's value.
@@ -2663,6 +2757,12 @@ func (s *CreateBrokerRequest) SetEngineVersion(v string) *CreateBrokerRequest {
 // SetHostInstanceType sets the HostInstanceType field's value.
 func (s *CreateBrokerRequest) SetHostInstanceType(v string) *CreateBrokerRequest {
 	s.HostInstanceType = &v
+	return s
+}
+
+// SetLdapServerMetadata sets the LdapServerMetadata field's value.
+func (s *CreateBrokerRequest) SetLdapServerMetadata(v *LdapServerMetadataInput) *CreateBrokerRequest {
+	s.LdapServerMetadata = v
 	return s
 }
 
@@ -2747,7 +2847,11 @@ func (s *CreateBrokerResponse) SetBrokerId(v string) *CreateBrokerResponse {
 type CreateConfigurationRequest struct {
 	_ struct{} `type:"structure"`
 
-	// The type of broker engine. Note: Currently, Amazon MQ supports only ActiveMQ.
+	// The authentication strategy used to secure the broker.
+	AuthenticationStrategy *string `locationName:"authenticationStrategy" type:"string" enum:"AuthenticationStrategy"`
+
+	// The type of broker engine. Note: Currently, Amazon MQ supports ActiveMQ and
+	// RabbitMQ.
 	EngineType *string `locationName:"engineType" type:"string" enum:"EngineType"`
 
 	EngineVersion *string `locationName:"engineVersion" type:"string"`
@@ -2765,6 +2869,12 @@ func (s CreateConfigurationRequest) String() string {
 // GoString returns the string representation
 func (s CreateConfigurationRequest) GoString() string {
 	return s.String()
+}
+
+// SetAuthenticationStrategy sets the AuthenticationStrategy field's value.
+func (s *CreateConfigurationRequest) SetAuthenticationStrategy(v string) *CreateConfigurationRequest {
+	s.AuthenticationStrategy = &v
+	return s
 }
 
 // SetEngineType sets the EngineType field's value.
@@ -2796,6 +2906,9 @@ type CreateConfigurationResponse struct {
 
 	Arn *string `locationName:"arn" type:"string"`
 
+	// The authentication strategy used to secure the broker.
+	AuthenticationStrategy *string `locationName:"authenticationStrategy" type:"string" enum:"AuthenticationStrategy"`
+
 	Created *time.Time `locationName:"created" type:"timestamp" timestampFormat:"iso8601"`
 
 	Id *string `locationName:"id" type:"string"`
@@ -2819,6 +2932,12 @@ func (s CreateConfigurationResponse) GoString() string {
 // SetArn sets the Arn field's value.
 func (s *CreateConfigurationResponse) SetArn(v string) *CreateConfigurationResponse {
 	s.Arn = &v
+	return s
+}
+
+// SetAuthenticationStrategy sets the AuthenticationStrategy field's value.
+func (s *CreateConfigurationResponse) SetAuthenticationStrategy(v string) *CreateConfigurationResponse {
+	s.AuthenticationStrategy = &v
 	return s
 }
 
@@ -3429,6 +3548,9 @@ func (s *DescribeBrokerInstanceOptionsOutput) SetNextToken(v string) *DescribeBr
 type DescribeBrokerResponse struct {
 	_ struct{} `type:"structure"`
 
+	// The authentication strategy used to secure the broker.
+	AuthenticationStrategy *string `locationName:"authenticationStrategy" type:"string" enum:"AuthenticationStrategy"`
+
 	AutoMinorVersionUpgrade *bool `locationName:"autoMinorVersionUpgrade" type:"boolean"`
 
 	BrokerArn *string `locationName:"brokerArn" type:"string"`
@@ -3453,12 +3575,17 @@ type DescribeBrokerResponse struct {
 	// Encryption options for the broker.
 	EncryptionOptions *EncryptionOptions `locationName:"encryptionOptions" type:"structure"`
 
-	// The type of broker engine. Note: Currently, Amazon MQ supports only ActiveMQ.
+	// The type of broker engine. Note: Currently, Amazon MQ supports ActiveMQ and
+	// RabbitMQ.
 	EngineType *string `locationName:"engineType" type:"string" enum:"EngineType"`
 
 	EngineVersion *string `locationName:"engineVersion" type:"string"`
 
 	HostInstanceType *string `locationName:"hostInstanceType" type:"string"`
+
+	// The metadata of the LDAP server used to authenticate and authorize connections
+	// to the broker.
+	LdapServerMetadata *LdapServerMetadataOutput `locationName:"ldapServerMetadata" type:"structure"`
 
 	// The list of information about logs currently enabled and pending to be deployed
 	// for the specified broker.
@@ -3468,9 +3595,16 @@ type DescribeBrokerResponse struct {
 	// apply pending updates or patches to the broker.
 	MaintenanceWindowStartTime *WeeklyStartTime `locationName:"maintenanceWindowStartTime" type:"structure"`
 
+	// The authentication strategy used to secure the broker.
+	PendingAuthenticationStrategy *string `locationName:"pendingAuthenticationStrategy" type:"string" enum:"AuthenticationStrategy"`
+
 	PendingEngineVersion *string `locationName:"pendingEngineVersion" type:"string"`
 
 	PendingHostInstanceType *string `locationName:"pendingHostInstanceType" type:"string"`
+
+	// The metadata of the LDAP server used to authenticate and authorize connections
+	// to the broker.
+	PendingLdapServerMetadata *LdapServerMetadataOutput `locationName:"pendingLdapServerMetadata" type:"structure"`
 
 	PendingSecurityGroups []*string `locationName:"pendingSecurityGroups" type:"list"`
 
@@ -3478,7 +3612,8 @@ type DescribeBrokerResponse struct {
 
 	SecurityGroups []*string `locationName:"securityGroups" type:"list"`
 
-	// The storage type of the broker.
+	// The storage type of the broker. EFS is currently not Supported for RabbitMQ
+	// engine type.
 	StorageType *string `locationName:"storageType" type:"string" enum:"BrokerStorageType"`
 
 	SubnetIds []*string `locationName:"subnetIds" type:"list"`
@@ -3496,6 +3631,12 @@ func (s DescribeBrokerResponse) String() string {
 // GoString returns the string representation
 func (s DescribeBrokerResponse) GoString() string {
 	return s.String()
+}
+
+// SetAuthenticationStrategy sets the AuthenticationStrategy field's value.
+func (s *DescribeBrokerResponse) SetAuthenticationStrategy(v string) *DescribeBrokerResponse {
+	s.AuthenticationStrategy = &v
+	return s
 }
 
 // SetAutoMinorVersionUpgrade sets the AutoMinorVersionUpgrade field's value.
@@ -3576,6 +3717,12 @@ func (s *DescribeBrokerResponse) SetHostInstanceType(v string) *DescribeBrokerRe
 	return s
 }
 
+// SetLdapServerMetadata sets the LdapServerMetadata field's value.
+func (s *DescribeBrokerResponse) SetLdapServerMetadata(v *LdapServerMetadataOutput) *DescribeBrokerResponse {
+	s.LdapServerMetadata = v
+	return s
+}
+
 // SetLogs sets the Logs field's value.
 func (s *DescribeBrokerResponse) SetLogs(v *LogsSummary) *DescribeBrokerResponse {
 	s.Logs = v
@@ -3588,6 +3735,12 @@ func (s *DescribeBrokerResponse) SetMaintenanceWindowStartTime(v *WeeklyStartTim
 	return s
 }
 
+// SetPendingAuthenticationStrategy sets the PendingAuthenticationStrategy field's value.
+func (s *DescribeBrokerResponse) SetPendingAuthenticationStrategy(v string) *DescribeBrokerResponse {
+	s.PendingAuthenticationStrategy = &v
+	return s
+}
+
 // SetPendingEngineVersion sets the PendingEngineVersion field's value.
 func (s *DescribeBrokerResponse) SetPendingEngineVersion(v string) *DescribeBrokerResponse {
 	s.PendingEngineVersion = &v
@@ -3597,6 +3750,12 @@ func (s *DescribeBrokerResponse) SetPendingEngineVersion(v string) *DescribeBrok
 // SetPendingHostInstanceType sets the PendingHostInstanceType field's value.
 func (s *DescribeBrokerResponse) SetPendingHostInstanceType(v string) *DescribeBrokerResponse {
 	s.PendingHostInstanceType = &v
+	return s
+}
+
+// SetPendingLdapServerMetadata sets the PendingLdapServerMetadata field's value.
+func (s *DescribeBrokerResponse) SetPendingLdapServerMetadata(v *LdapServerMetadataOutput) *DescribeBrokerResponse {
+	s.PendingLdapServerMetadata = v
 	return s
 }
 
@@ -3686,11 +3845,15 @@ type DescribeConfigurationOutput struct {
 
 	Arn *string `locationName:"arn" type:"string"`
 
+	// The authentication strategy used to secure the broker.
+	AuthenticationStrategy *string `locationName:"authenticationStrategy" type:"string" enum:"AuthenticationStrategy"`
+
 	Created *time.Time `locationName:"created" type:"timestamp" timestampFormat:"iso8601"`
 
 	Description *string `locationName:"description" type:"string"`
 
-	// The type of broker engine. Note: Currently, Amazon MQ supports only ActiveMQ.
+	// The type of broker engine. Note: Currently, Amazon MQ supports ActiveMQ and
+	// RabbitMQ.
 	EngineType *string `locationName:"engineType" type:"string" enum:"EngineType"`
 
 	EngineVersion *string `locationName:"engineVersion" type:"string"`
@@ -3718,6 +3881,12 @@ func (s DescribeConfigurationOutput) GoString() string {
 // SetArn sets the Arn field's value.
 func (s *DescribeConfigurationOutput) SetArn(v string) *DescribeConfigurationOutput {
 	s.Arn = &v
+	return s
+}
+
+// SetAuthenticationStrategy sets the AuthenticationStrategy field's value.
+func (s *DescribeConfigurationOutput) SetAuthenticationStrategy(v string) *DescribeConfigurationOutput {
+	s.AuthenticationStrategy = &v
 	return s
 }
 
@@ -3983,9 +4152,9 @@ func (s *DescribeUserResponse) SetUsername(v string) *DescribeUserResponse {
 type EncryptionOptions struct {
 	_ struct{} `type:"structure"`
 
-	// The customer master key (CMK) to use for the AWS Key Management Service (KMS).
-	// This key is used to encrypt your data at rest. If not provided, Amazon MQ
-	// will use a default CMK to encrypt your data.
+	// The symmetric customer master key (CMK) to use for the AWS Key Management
+	// Service (KMS). This key is used to encrypt your data at rest. If not provided,
+	// Amazon MQ will use a default CMK to encrypt your data.
 	KmsKeyId *string `locationName:"kmsKeyId" type:"string"`
 
 	// Enables the use of an AWS owned CMK using AWS Key Management Service (KMS).
@@ -4167,6 +4336,233 @@ func (s *InternalServerErrorException) StatusCode() int {
 // RequestID returns the service's response RequestID for request.
 func (s *InternalServerErrorException) RequestID() string {
 	return s.RespMetadata.RequestID
+}
+
+// The metadata of the LDAP server used to authenticate and authorize connections
+// to the broker. Currently not supported for RabbitMQ engine type.
+type LdapServerMetadataInput struct {
+	_ struct{} `type:"structure"`
+
+	// Fully qualified domain name of the LDAP server. Optional failover server.
+	Hosts []*string `locationName:"hosts" type:"list"`
+
+	// Fully qualified name of the directory to search for a user’s groups.
+	RoleBase *string `locationName:"roleBase" type:"string"`
+
+	// Specifies the LDAP attribute that identifies the group name attribute in
+	// the object returned from the group membership query.
+	RoleName *string `locationName:"roleName" type:"string"`
+
+	// The search criteria for groups.
+	RoleSearchMatching *string `locationName:"roleSearchMatching" type:"string"`
+
+	// The directory search scope for the role. If set to true, scope is to search
+	// the entire sub-tree.
+	RoleSearchSubtree *bool `locationName:"roleSearchSubtree" type:"boolean"`
+
+	// Service account password.
+	ServiceAccountPassword *string `locationName:"serviceAccountPassword" type:"string"`
+
+	// Service account username.
+	ServiceAccountUsername *string `locationName:"serviceAccountUsername" type:"string"`
+
+	// Fully qualified name of the directory where you want to search for users.
+	UserBase *string `locationName:"userBase" type:"string"`
+
+	// Specifies the name of the LDAP attribute for the user group membership.
+	UserRoleName *string `locationName:"userRoleName" type:"string"`
+
+	// The search criteria for users.
+	UserSearchMatching *string `locationName:"userSearchMatching" type:"string"`
+
+	// The directory search scope for the user. If set to true, scope is to search
+	// the entire sub-tree.
+	UserSearchSubtree *bool `locationName:"userSearchSubtree" type:"boolean"`
+}
+
+// String returns the string representation
+func (s LdapServerMetadataInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LdapServerMetadataInput) GoString() string {
+	return s.String()
+}
+
+// SetHosts sets the Hosts field's value.
+func (s *LdapServerMetadataInput) SetHosts(v []*string) *LdapServerMetadataInput {
+	s.Hosts = v
+	return s
+}
+
+// SetRoleBase sets the RoleBase field's value.
+func (s *LdapServerMetadataInput) SetRoleBase(v string) *LdapServerMetadataInput {
+	s.RoleBase = &v
+	return s
+}
+
+// SetRoleName sets the RoleName field's value.
+func (s *LdapServerMetadataInput) SetRoleName(v string) *LdapServerMetadataInput {
+	s.RoleName = &v
+	return s
+}
+
+// SetRoleSearchMatching sets the RoleSearchMatching field's value.
+func (s *LdapServerMetadataInput) SetRoleSearchMatching(v string) *LdapServerMetadataInput {
+	s.RoleSearchMatching = &v
+	return s
+}
+
+// SetRoleSearchSubtree sets the RoleSearchSubtree field's value.
+func (s *LdapServerMetadataInput) SetRoleSearchSubtree(v bool) *LdapServerMetadataInput {
+	s.RoleSearchSubtree = &v
+	return s
+}
+
+// SetServiceAccountPassword sets the ServiceAccountPassword field's value.
+func (s *LdapServerMetadataInput) SetServiceAccountPassword(v string) *LdapServerMetadataInput {
+	s.ServiceAccountPassword = &v
+	return s
+}
+
+// SetServiceAccountUsername sets the ServiceAccountUsername field's value.
+func (s *LdapServerMetadataInput) SetServiceAccountUsername(v string) *LdapServerMetadataInput {
+	s.ServiceAccountUsername = &v
+	return s
+}
+
+// SetUserBase sets the UserBase field's value.
+func (s *LdapServerMetadataInput) SetUserBase(v string) *LdapServerMetadataInput {
+	s.UserBase = &v
+	return s
+}
+
+// SetUserRoleName sets the UserRoleName field's value.
+func (s *LdapServerMetadataInput) SetUserRoleName(v string) *LdapServerMetadataInput {
+	s.UserRoleName = &v
+	return s
+}
+
+// SetUserSearchMatching sets the UserSearchMatching field's value.
+func (s *LdapServerMetadataInput) SetUserSearchMatching(v string) *LdapServerMetadataInput {
+	s.UserSearchMatching = &v
+	return s
+}
+
+// SetUserSearchSubtree sets the UserSearchSubtree field's value.
+func (s *LdapServerMetadataInput) SetUserSearchSubtree(v bool) *LdapServerMetadataInput {
+	s.UserSearchSubtree = &v
+	return s
+}
+
+// The metadata of the LDAP server used to authenticate and authorize connections
+// to the broker.
+type LdapServerMetadataOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Fully qualified domain name of the LDAP server. Optional failover server.
+	Hosts []*string `locationName:"hosts" type:"list"`
+
+	// Fully qualified name of the directory to search for a user’s groups.
+	RoleBase *string `locationName:"roleBase" type:"string"`
+
+	// Specifies the LDAP attribute that identifies the group name attribute in
+	// the object returned from the group membership query.
+	RoleName *string `locationName:"roleName" type:"string"`
+
+	// The search criteria for groups.
+	RoleSearchMatching *string `locationName:"roleSearchMatching" type:"string"`
+
+	// The directory search scope for the role. If set to true, scope is to search
+	// the entire sub-tree.
+	RoleSearchSubtree *bool `locationName:"roleSearchSubtree" type:"boolean"`
+
+	// Service account username.
+	ServiceAccountUsername *string `locationName:"serviceAccountUsername" type:"string"`
+
+	// Fully qualified name of the directory where you want to search for users.
+	UserBase *string `locationName:"userBase" type:"string"`
+
+	// Specifies the name of the LDAP attribute for the user group membership.
+	UserRoleName *string `locationName:"userRoleName" type:"string"`
+
+	// The search criteria for users.
+	UserSearchMatching *string `locationName:"userSearchMatching" type:"string"`
+
+	// The directory search scope for the user. If set to true, scope is to search
+	// the entire sub-tree.
+	UserSearchSubtree *bool `locationName:"userSearchSubtree" type:"boolean"`
+}
+
+// String returns the string representation
+func (s LdapServerMetadataOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LdapServerMetadataOutput) GoString() string {
+	return s.String()
+}
+
+// SetHosts sets the Hosts field's value.
+func (s *LdapServerMetadataOutput) SetHosts(v []*string) *LdapServerMetadataOutput {
+	s.Hosts = v
+	return s
+}
+
+// SetRoleBase sets the RoleBase field's value.
+func (s *LdapServerMetadataOutput) SetRoleBase(v string) *LdapServerMetadataOutput {
+	s.RoleBase = &v
+	return s
+}
+
+// SetRoleName sets the RoleName field's value.
+func (s *LdapServerMetadataOutput) SetRoleName(v string) *LdapServerMetadataOutput {
+	s.RoleName = &v
+	return s
+}
+
+// SetRoleSearchMatching sets the RoleSearchMatching field's value.
+func (s *LdapServerMetadataOutput) SetRoleSearchMatching(v string) *LdapServerMetadataOutput {
+	s.RoleSearchMatching = &v
+	return s
+}
+
+// SetRoleSearchSubtree sets the RoleSearchSubtree field's value.
+func (s *LdapServerMetadataOutput) SetRoleSearchSubtree(v bool) *LdapServerMetadataOutput {
+	s.RoleSearchSubtree = &v
+	return s
+}
+
+// SetServiceAccountUsername sets the ServiceAccountUsername field's value.
+func (s *LdapServerMetadataOutput) SetServiceAccountUsername(v string) *LdapServerMetadataOutput {
+	s.ServiceAccountUsername = &v
+	return s
+}
+
+// SetUserBase sets the UserBase field's value.
+func (s *LdapServerMetadataOutput) SetUserBase(v string) *LdapServerMetadataOutput {
+	s.UserBase = &v
+	return s
+}
+
+// SetUserRoleName sets the UserRoleName field's value.
+func (s *LdapServerMetadataOutput) SetUserRoleName(v string) *LdapServerMetadataOutput {
+	s.UserRoleName = &v
+	return s
+}
+
+// SetUserSearchMatching sets the UserSearchMatching field's value.
+func (s *LdapServerMetadataOutput) SetUserSearchMatching(v string) *LdapServerMetadataOutput {
+	s.UserSearchMatching = &v
+	return s
+}
+
+// SetUserSearchSubtree sets the UserSearchSubtree field's value.
+func (s *LdapServerMetadataOutput) SetUserSearchSubtree(v bool) *LdapServerMetadataOutput {
+	s.UserSearchSubtree = &v
+	return s
 }
 
 type ListBrokersInput struct {
@@ -4597,7 +4993,7 @@ type Logs struct {
 	_ struct{} `type:"structure"`
 
 	// Enables audit logging. Every user management action made using JMX or the
-	// ActiveMQ Web Console is logged.
+	// ActiveMQ Web Console is logged. Does not apply to RabbitMQ brokers.
 	Audit *bool `locationName:"audit" type:"boolean"`
 
 	// Enables general logging.
@@ -4938,17 +5334,25 @@ func (s *UnauthorizedException) RequestID() string {
 type UpdateBrokerRequest struct {
 	_ struct{} `type:"structure"`
 
+	// The authentication strategy used to secure the broker.
+	AuthenticationStrategy *string `locationName:"authenticationStrategy" type:"string" enum:"AuthenticationStrategy"`
+
 	AutoMinorVersionUpgrade *bool `locationName:"autoMinorVersionUpgrade" type:"boolean"`
 
 	// BrokerId is a required field
 	BrokerId *string `location:"uri" locationName:"broker-id" type:"string" required:"true"`
 
-	// A list of information about the configuration.
+	// A list of information about the configuration. Does not apply to RabbitMQ
+	// brokers.
 	Configuration *ConfigurationId `locationName:"configuration" type:"structure"`
 
 	EngineVersion *string `locationName:"engineVersion" type:"string"`
 
 	HostInstanceType *string `locationName:"hostInstanceType" type:"string"`
+
+	// The metadata of the LDAP server used to authenticate and authorize connections
+	// to the broker. Currently not supported for RabbitMQ engine type.
+	LdapServerMetadata *LdapServerMetadataInput `locationName:"ldapServerMetadata" type:"structure"`
 
 	// The list of information about logs to be enabled for the specified broker.
 	Logs *Logs `locationName:"logs" type:"structure"`
@@ -4982,6 +5386,12 @@ func (s *UpdateBrokerRequest) Validate() error {
 	return nil
 }
 
+// SetAuthenticationStrategy sets the AuthenticationStrategy field's value.
+func (s *UpdateBrokerRequest) SetAuthenticationStrategy(v string) *UpdateBrokerRequest {
+	s.AuthenticationStrategy = &v
+	return s
+}
+
 // SetAutoMinorVersionUpgrade sets the AutoMinorVersionUpgrade field's value.
 func (s *UpdateBrokerRequest) SetAutoMinorVersionUpgrade(v bool) *UpdateBrokerRequest {
 	s.AutoMinorVersionUpgrade = &v
@@ -5012,6 +5422,12 @@ func (s *UpdateBrokerRequest) SetHostInstanceType(v string) *UpdateBrokerRequest
 	return s
 }
 
+// SetLdapServerMetadata sets the LdapServerMetadata field's value.
+func (s *UpdateBrokerRequest) SetLdapServerMetadata(v *LdapServerMetadataInput) *UpdateBrokerRequest {
+	s.LdapServerMetadata = v
+	return s
+}
+
 // SetLogs sets the Logs field's value.
 func (s *UpdateBrokerRequest) SetLogs(v *Logs) *UpdateBrokerRequest {
 	s.Logs = v
@@ -5027,16 +5443,24 @@ func (s *UpdateBrokerRequest) SetSecurityGroups(v []*string) *UpdateBrokerReques
 type UpdateBrokerResponse struct {
 	_ struct{} `type:"structure"`
 
+	// The authentication strategy used to secure the broker.
+	AuthenticationStrategy *string `locationName:"authenticationStrategy" type:"string" enum:"AuthenticationStrategy"`
+
 	AutoMinorVersionUpgrade *bool `locationName:"autoMinorVersionUpgrade" type:"boolean"`
 
 	BrokerId *string `locationName:"brokerId" type:"string"`
 
-	// A list of information about the configuration.
+	// A list of information about the configuration. Does not apply to RabbitMQ
+	// brokers.
 	Configuration *ConfigurationId `locationName:"configuration" type:"structure"`
 
 	EngineVersion *string `locationName:"engineVersion" type:"string"`
 
 	HostInstanceType *string `locationName:"hostInstanceType" type:"string"`
+
+	// The metadata of the LDAP server used to authenticate and authorize connections
+	// to the broker.
+	LdapServerMetadata *LdapServerMetadataOutput `locationName:"ldapServerMetadata" type:"structure"`
 
 	// The list of information about logs to be enabled for the specified broker.
 	Logs *Logs `locationName:"logs" type:"structure"`
@@ -5052,6 +5476,12 @@ func (s UpdateBrokerResponse) String() string {
 // GoString returns the string representation
 func (s UpdateBrokerResponse) GoString() string {
 	return s.String()
+}
+
+// SetAuthenticationStrategy sets the AuthenticationStrategy field's value.
+func (s *UpdateBrokerResponse) SetAuthenticationStrategy(v string) *UpdateBrokerResponse {
+	s.AuthenticationStrategy = &v
+	return s
 }
 
 // SetAutoMinorVersionUpgrade sets the AutoMinorVersionUpgrade field's value.
@@ -5081,6 +5511,12 @@ func (s *UpdateBrokerResponse) SetEngineVersion(v string) *UpdateBrokerResponse 
 // SetHostInstanceType sets the HostInstanceType field's value.
 func (s *UpdateBrokerResponse) SetHostInstanceType(v string) *UpdateBrokerResponse {
 	s.HostInstanceType = &v
+	return s
+}
+
+// SetLdapServerMetadata sets the LdapServerMetadata field's value.
+func (s *UpdateBrokerResponse) SetLdapServerMetadata(v *LdapServerMetadataOutput) *UpdateBrokerResponse {
+	s.LdapServerMetadata = v
 	return s
 }
 
@@ -5306,11 +5742,12 @@ func (s *UpdateUserRequest) SetUsername(v string) *UpdateUserRequest {
 	return s
 }
 
-// An ActiveMQ user associated with the broker.
+// A user associated with the broker.
 type User struct {
 	_ struct{} `type:"structure"`
 
-	// Enables access to the the ActiveMQ Web Console for the ActiveMQ user.
+	// Enables access to the ActiveMQ Web Console for the ActiveMQ user (Does not
+	// apply to RabbitMQ brokers).
 	ConsoleAccess *bool `locationName:"consoleAccess" type:"boolean"`
 
 	// The list of groups (20 maximum) to which the ActiveMQ user belongs. This
@@ -5318,14 +5755,14 @@ type User struct {
 	// and tildes (- . _ ~). This value must be 2-100 characters long.
 	Groups []*string `locationName:"groups" type:"list"`
 
-	// Required. The password of the ActiveMQ user. This value must be at least
-	// 12 characters long, must contain at least 4 unique characters, and must not
+	// Required. The password of the broker user. This value must be at least 12
+	// characters long, must contain at least 4 unique characters, and must not
 	// contain commas.
 	Password *string `locationName:"password" type:"string"`
 
-	// Required. The username of the ActiveMQ user. This value can contain only
-	// alphanumeric characters, dashes, periods, underscores, and tildes (- . _
-	// ~). This value must be 2-100 characters long.
+	// Required. The username of the broker user. This value can contain only alphanumeric
+	// characters, dashes, periods, underscores, and tildes (- . _ ~). This value
+	// must be 2-100 characters long.
 	Username *string `locationName:"username" type:"string"`
 }
 
@@ -5408,16 +5845,16 @@ func (s *UserPendingChanges) SetPendingChange(v string) *UserPendingChanges {
 	return s
 }
 
-// Returns a list of all ActiveMQ users.
+// Returns a list of all broker users.
 type UserSummary struct {
 	_ struct{} `type:"structure"`
 
-	// The type of change pending for the ActiveMQ user.
+	// The type of change pending for the broker user.
 	PendingChange *string `locationName:"pendingChange" type:"string" enum:"ChangeType"`
 
-	// Required. The username of the ActiveMQ user. This value can contain only
-	// alphanumeric characters, dashes, periods, underscores, and tildes (- . _
-	// ~). This value must be 2-100 characters long.
+	// Required. The username of the broker user. This value can contain only alphanumeric
+	// characters, dashes, periods, underscores, and tildes (- . _ ~). This value
+	// must be 2-100 characters long.
 	Username *string `locationName:"username" type:"string"`
 }
 
@@ -5487,6 +5924,23 @@ func (s *WeeklyStartTime) SetTimeZone(v string) *WeeklyStartTime {
 	return s
 }
 
+// The authentication strategy used to secure the broker.
+const (
+	// AuthenticationStrategySimple is a AuthenticationStrategy enum value
+	AuthenticationStrategySimple = "SIMPLE"
+
+	// AuthenticationStrategyLdap is a AuthenticationStrategy enum value
+	AuthenticationStrategyLdap = "LDAP"
+)
+
+// AuthenticationStrategy_Values returns all elements of the AuthenticationStrategy enum
+func AuthenticationStrategy_Values() []string {
+	return []string{
+		AuthenticationStrategySimple,
+		AuthenticationStrategyLdap,
+	}
+}
+
 // The status of the broker.
 const (
 	// BrokerStateCreationInProgress is a BrokerState enum value
@@ -5505,7 +5959,19 @@ const (
 	BrokerStateRebootInProgress = "REBOOT_IN_PROGRESS"
 )
 
-// The storage type of the broker.
+// BrokerState_Values returns all elements of the BrokerState enum
+func BrokerState_Values() []string {
+	return []string{
+		BrokerStateCreationInProgress,
+		BrokerStateCreationFailed,
+		BrokerStateDeletionInProgress,
+		BrokerStateRunning,
+		BrokerStateRebootInProgress,
+	}
+}
+
+// The storage type of the broker. EFS is currently not Supported for RabbitMQ
+// engine type.
 const (
 	// BrokerStorageTypeEbs is a BrokerStorageType enum value
 	BrokerStorageTypeEbs = "EBS"
@@ -5513,6 +5979,14 @@ const (
 	// BrokerStorageTypeEfs is a BrokerStorageType enum value
 	BrokerStorageTypeEfs = "EFS"
 )
+
+// BrokerStorageType_Values returns all elements of the BrokerStorageType enum
+func BrokerStorageType_Values() []string {
+	return []string{
+		BrokerStorageTypeEbs,
+		BrokerStorageTypeEfs,
+	}
+}
 
 // The type of change pending for the ActiveMQ user.
 const (
@@ -5525,6 +5999,15 @@ const (
 	// ChangeTypeDelete is a ChangeType enum value
 	ChangeTypeDelete = "DELETE"
 )
+
+// ChangeType_Values returns all elements of the ChangeType enum
+func ChangeType_Values() []string {
+	return []string{
+		ChangeTypeCreate,
+		ChangeTypeUpdate,
+		ChangeTypeDelete,
+	}
+}
 
 const (
 	// DayOfWeekMonday is a DayOfWeek enum value
@@ -5549,6 +6032,19 @@ const (
 	DayOfWeekSunday = "SUNDAY"
 )
 
+// DayOfWeek_Values returns all elements of the DayOfWeek enum
+func DayOfWeek_Values() []string {
+	return []string{
+		DayOfWeekMonday,
+		DayOfWeekTuesday,
+		DayOfWeekWednesday,
+		DayOfWeekThursday,
+		DayOfWeekFriday,
+		DayOfWeekSaturday,
+		DayOfWeekSunday,
+	}
+}
+
 // The deployment mode of the broker.
 const (
 	// DeploymentModeSingleInstance is a DeploymentMode enum value
@@ -5556,13 +6052,37 @@ const (
 
 	// DeploymentModeActiveStandbyMultiAz is a DeploymentMode enum value
 	DeploymentModeActiveStandbyMultiAz = "ACTIVE_STANDBY_MULTI_AZ"
+
+	// DeploymentModeClusterMultiAz is a DeploymentMode enum value
+	DeploymentModeClusterMultiAz = "CLUSTER_MULTI_AZ"
 )
 
-// The type of broker engine. Note: Currently, Amazon MQ supports only ActiveMQ.
+// DeploymentMode_Values returns all elements of the DeploymentMode enum
+func DeploymentMode_Values() []string {
+	return []string{
+		DeploymentModeSingleInstance,
+		DeploymentModeActiveStandbyMultiAz,
+		DeploymentModeClusterMultiAz,
+	}
+}
+
+// The type of broker engine. Note: Currently, Amazon MQ supports ActiveMQ and
+// RabbitMQ.
 const (
 	// EngineTypeActivemq is a EngineType enum value
 	EngineTypeActivemq = "ACTIVEMQ"
+
+	// EngineTypeRabbitmq is a EngineType enum value
+	EngineTypeRabbitmq = "RABBITMQ"
 )
+
+// EngineType_Values returns all elements of the EngineType enum
+func EngineType_Values() []string {
+	return []string{
+		EngineTypeActivemq,
+		EngineTypeRabbitmq,
+	}
+}
 
 // The reason for which the XML elements or attributes were sanitized.
 const (
@@ -5575,3 +6095,12 @@ const (
 	// SanitizationWarningReasonInvalidAttributeValueRemoved is a SanitizationWarningReason enum value
 	SanitizationWarningReasonInvalidAttributeValueRemoved = "INVALID_ATTRIBUTE_VALUE_REMOVED"
 )
+
+// SanitizationWarningReason_Values returns all elements of the SanitizationWarningReason enum
+func SanitizationWarningReason_Values() []string {
+	return []string{
+		SanitizationWarningReasonDisallowedElementRemoved,
+		SanitizationWarningReasonDisallowedAttributeRemoved,
+		SanitizationWarningReasonInvalidAttributeValueRemoved,
+	}
+}
