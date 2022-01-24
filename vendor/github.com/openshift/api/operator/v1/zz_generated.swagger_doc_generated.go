@@ -422,12 +422,13 @@ func (DNSNodePlacement) SwaggerDoc() map[string]string {
 }
 
 var map_DNSSpec = map[string]string{
-	"":                 "DNSSpec is the specification of the desired behavior of the DNS.",
-	"servers":          "servers is a list of DNS resolvers that provide name query delegation for one or more subdomains outside the scope of the cluster domain. If servers consists of more than one Server, longest suffix match will be used to determine the Server.\n\nFor example, if there are two Servers, one for \"foo.com\" and another for \"a.foo.com\", and the name query is for \"www.a.foo.com\", it will be routed to the Server with Zone \"a.foo.com\".\n\nIf this field is nil, no servers are created.",
-	"nodePlacement":    "nodePlacement provides explicit control over the scheduling of DNS pods.\n\nGenerally, it is useful to run a DNS pod on every node so that DNS queries are always handled by a local DNS pod instead of going over the network to a DNS pod on another node.  However, security policies may require restricting the placement of DNS pods to specific nodes. For example, if a security policy prohibits pods on arbitrary nodes from communicating with the API, a node selector can be specified to restrict DNS pods to nodes that are permitted to communicate with the API.  Conversely, if running DNS pods on nodes with a particular taint is desired, a toleration can be specified for that taint.\n\nIf unset, defaults are used. See nodePlacement for more details.",
-	"managementState":  "managementState indicates whether the DNS operator should manage cluster DNS",
-	"operatorLogLevel": "operatorLogLevel controls the logging level of the DNS Operator. Valid values are: \"Normal\", \"Debug\", \"Trace\". Defaults to \"Normal\". setting operatorLogLevel: Trace will produce extremely verbose logs.",
-	"logLevel":         "logLevel describes the desired logging verbosity for CoreDNS. Any one of the following values may be specified: * Normal logs errors from upstream resolvers. * Debug logs errors, NXDOMAIN responses, and NODATA responses. * Trace logs errors and all responses.\n Setting logLevel: Trace will produce extremely verbose logs.\nValid values are: \"Normal\", \"Debug\", \"Trace\". Defaults to \"Normal\".",
+	"":                  "DNSSpec is the specification of the desired behavior of the DNS.",
+	"servers":           "servers is a list of DNS resolvers that provide name query delegation for one or more subdomains outside the scope of the cluster domain. If servers consists of more than one Server, longest suffix match will be used to determine the Server.\n\nFor example, if there are two Servers, one for \"foo.com\" and another for \"a.foo.com\", and the name query is for \"www.a.foo.com\", it will be routed to the Server with Zone \"a.foo.com\".\n\nIf this field is nil, no servers are created.",
+	"upstreamResolvers": "upstreamResolvers defines a schema for configuring CoreDNS to proxy DNS messages to upstream resolvers for the case of the default (\".\") server\n\nIf this field is not specified, the upstream used will default to /etc/resolv.conf, with policy \"sequential\"",
+	"nodePlacement":     "nodePlacement provides explicit control over the scheduling of DNS pods.\n\nGenerally, it is useful to run a DNS pod on every node so that DNS queries are always handled by a local DNS pod instead of going over the network to a DNS pod on another node.  However, security policies may require restricting the placement of DNS pods to specific nodes. For example, if a security policy prohibits pods on arbitrary nodes from communicating with the API, a node selector can be specified to restrict DNS pods to nodes that are permitted to communicate with the API.  Conversely, if running DNS pods on nodes with a particular taint is desired, a toleration can be specified for that taint.\n\nIf unset, defaults are used. See nodePlacement for more details.",
+	"managementState":   "managementState indicates whether the DNS operator should manage cluster DNS",
+	"operatorLogLevel":  "operatorLogLevel controls the logging level of the DNS Operator. Valid values are: \"Normal\", \"Debug\", \"Trace\". Defaults to \"Normal\". setting operatorLogLevel: Trace will produce extremely verbose logs.",
+	"logLevel":          "logLevel describes the desired logging verbosity for CoreDNS. Any one of the following values may be specified: * Normal logs errors from upstream resolvers. * Debug logs errors, NXDOMAIN responses, and NODATA responses. * Trace logs errors and all responses.\n Setting logLevel: Trace will produce extremely verbose logs.\nValid values are: \"Normal\", \"Debug\", \"Trace\". Defaults to \"Normal\".",
 }
 
 func (DNSSpec) SwaggerDoc() map[string]string {
@@ -464,6 +465,27 @@ var map_Server = map[string]string{
 
 func (Server) SwaggerDoc() map[string]string {
 	return map_Server
+}
+
+var map_Upstream = map[string]string{
+	"":        "Upstream can either be of type SystemResolvConf, or of type Network.\n\n* For an Upstream of type SystemResolvConf, no further fields are necessary:\n  The upstream will be configured to use /etc/resolv.conf.\n* For an Upstream of type Network, a NetworkResolver field needs to be defined\n  with an IP address or IP:port if the upstream listens on a port other than 53.",
+	"type":    "Type defines whether this upstream contains an IP/IP:port resolver or the local /etc/resolv.conf. Type accepts 2 possible values: SystemResolvConf or Network.\n\n* When SystemResolvConf is used, the Upstream structure does not require any further fields to be defined:\n  /etc/resolv.conf will be used\n* When Network is used, the Upstream structure must contain at least an Address",
+	"address": "Address must be defined when Type is set to Network. It will be ignored otherwise. It must be a valid ipv4 or ipv6 address.",
+	"port":    "Port may be defined when Type is set to Network. It will be ignored otherwise. Port must be between 65535",
+}
+
+func (Upstream) SwaggerDoc() map[string]string {
+	return map_Upstream
+}
+
+var map_UpstreamResolvers = map[string]string{
+	"":          "UpstreamResolvers defines a schema for configuring the CoreDNS forward plugin in the specific case of the default (\".\") server. It defers from ForwardPlugin in the default values it accepts: * At least one upstream should be specified. * the default policy is Sequential",
+	"upstreams": "Upstreams is a list of resolvers to forward name queries for the \".\" domain. Each instance of CoreDNS performs health checking of Upstreams. When a healthy upstream returns an error during the exchange, another resolver is tried from Upstreams. The Upstreams are selected in the order specified in Policy.\n\nA maximum of 15 upstreams is allowed per ForwardPlugin. If no Upstreams are specified, /etc/resolv.conf is used by default",
+	"policy":    "Policy is used to determine the order in which upstream servers are selected for querying. Any one of the following values may be specified:\n\n* \"Random\" picks a random upstream server for each query. * \"RoundRobin\" picks upstream servers in a round-robin order, moving to the next server for each new query. * \"Sequential\" tries querying upstream servers in a sequential order until one responds, starting with the first server for each new query.\n\nThe default value is \"Sequential\"",
+}
+
+func (UpstreamResolvers) SwaggerDoc() map[string]string {
+	return map_UpstreamResolvers
 }
 
 var map_Etcd = map[string]string{
@@ -896,7 +918,7 @@ var map_DefaultNetworkDefinition = map[string]string{
 	"":                    "DefaultNetworkDefinition represents a single network plugin's configuration. type must be specified, along with exactly one \"Config\" that matches the type.",
 	"type":                "type is the type of network All NetworkTypes are supported except for NetworkTypeRaw",
 	"openshiftSDNConfig":  "openShiftSDNConfig configures the openshift-sdn plugin",
-	"ovnKubernetesConfig": "oVNKubernetesConfig configures the ovn-kubernetes plugin. This is currently not implemented.",
+	"ovnKubernetesConfig": "ovnKubernetesConfig configures the ovn-kubernetes plugin.",
 	"kuryrConfig":         "KuryrConfig configures the kuryr plugin",
 }
 
@@ -912,6 +934,15 @@ var map_ExportNetworkFlows = map[string]string{
 
 func (ExportNetworkFlows) SwaggerDoc() map[string]string {
 	return map_ExportNetworkFlows
+}
+
+var map_GatewayConfig = map[string]string{
+	"":               "GatewayConfig holds node gateway-related parsed config file parameters and command-line overrides",
+	"routingViaHost": "RoutingViaHost allows pod egress traffic to exit via the ovn-k8s-mp0 management port into the host before sending it out. If this is not set, traffic will always egress directly from OVN to outside without touching the host stack. Setting this to true means hardware offload will not be supported. Default is false if GatewayConfig is specified.",
+}
+
+func (GatewayConfig) SwaggerDoc() map[string]string {
+	return map_GatewayConfig
 }
 
 var map_HybridOverlayConfig = map[string]string{
@@ -957,6 +988,26 @@ func (KuryrConfig) SwaggerDoc() map[string]string {
 	return map_KuryrConfig
 }
 
+var map_MTUMigration = map[string]string{
+	"":        "MTUMigration MTU contains infomation about MTU migration.",
+	"network": "network contains information about MTU migration for the default network. Migrations are only allowed to MTU values lower than the machine's uplink MTU by the minimum appropriate offset.",
+	"machine": "machine contains MTU migration configuration for the machine's uplink. Needs to be migrated along with the default network MTU unless the current uplink MTU already accommodates the default network MTU.",
+}
+
+func (MTUMigration) SwaggerDoc() map[string]string {
+	return map_MTUMigration
+}
+
+var map_MTUMigrationValues = map[string]string{
+	"":     "MTUMigrationValues contains the values for a MTU migration.",
+	"to":   "to is the MTU to migrate to.",
+	"from": "from is the MTU to migrate from.",
+}
+
+func (MTUMigrationValues) SwaggerDoc() map[string]string {
+	return map_MTUMigrationValues
+}
+
 var map_NetFlowConfig = map[string]string{
 	"collectors": "netFlow defines the NetFlow collectors that will consume the flow data exported from OVS. It is a list of strings formatted as ip:port with a maximum of ten items",
 }
@@ -983,7 +1034,8 @@ func (NetworkList) SwaggerDoc() map[string]string {
 
 var map_NetworkMigration = map[string]string{
 	"":            "NetworkMigration represents the cluster network configuration.",
-	"networkType": "networkType is the target type of network migration The supported values are OpenShiftSDN, OVNKubernetes",
+	"networkType": "networkType is the target type of network migration. Set this to the target network type to allow changing the default network. If unset, the operation of changing cluster default network plugin will be rejected. The supported values are OpenShiftSDN, OVNKubernetes",
+	"mtu":         "mtu contains the MTU migration configuration. Set this to allow changing the MTU values for the default network. If unset, the operation of changing the MTU for the default network will be rejected.",
 }
 
 func (NetworkMigration) SwaggerDoc() map[string]string {
@@ -1002,7 +1054,7 @@ var map_NetworkSpec = map[string]string{
 	"disableNetworkDiagnostics": "disableNetworkDiagnostics specifies whether or not PodNetworkConnectivityCheck CRs from a test pod to every node, apiserver and LB should be disabled or not. If unset, this property defaults to 'false' and network diagnostics is enabled. Setting this to 'true' would reduce the additional load of the pods performing the checks.",
 	"kubeProxyConfig":           "kubeProxyConfig lets us configure desired proxy configuration. If not specified, sensible defaults will be chosen by OpenShift directly. Not consumed by all network providers - currently only openshift-sdn.",
 	"exportNetworkFlows":        "exportNetworkFlows enables and configures the export of network flow metadata from the pod network by using protocols NetFlow, SFlow or IPFIX. Currently only supported on OVN-Kubernetes plugin. If unset, flows will not be exported to any collector.",
-	"migration":                 "migration enables and configures the cluster network migration. Setting this to the target network type to allow changing the default network. If unset, the operation of changing cluster default network plugin will be rejected.",
+	"migration":                 "migration enables and configures the cluster network migration. The migration procedure allows to change the network type and the MTU.",
 }
 
 func (NetworkSpec) SwaggerDoc() map[string]string {
@@ -1024,6 +1076,7 @@ var map_OVNKubernetesConfig = map[string]string{
 	"hybridOverlayConfig": "HybridOverlayConfig configures an additional overlay network for peers that are not using OVN.",
 	"ipsecConfig":         "ipsecConfig enables and configures IPsec for pods on the pod network within the cluster.",
 	"policyAuditConfig":   "policyAuditConfig is the configuration for network policy audit events. If unset, reported defaults are used.",
+	"gatewayConfig":       "gatewayConfig holds the configuration for node gateway options.",
 }
 
 func (OVNKubernetesConfig) SwaggerDoc() map[string]string {

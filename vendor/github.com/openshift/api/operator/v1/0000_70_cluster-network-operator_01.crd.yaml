@@ -290,9 +290,24 @@ spec:
                         type: integer
                     type: object
                   ovnKubernetesConfig:
-                    description: oVNKubernetesConfig configures the ovn-kubernetes
-                      plugin. This is currently not implemented.
+                    description: ovnKubernetesConfig configures the ovn-kubernetes
+                      plugin.
                     properties:
+                      gatewayConfig:
+                        description: gatewayConfig holds the configuration for node
+                          gateway options.
+                        properties:
+                          routingViaHost:
+                            default: false
+                            description: RoutingViaHost allows pod egress traffic
+                              to exit via the ovn-k8s-mp0 management port into the
+                              host before sending it out. If this is not set, traffic
+                              will always egress directly from OVN to outside without
+                              touching the host stack. Setting this to true means
+                              hardware offload will not be supported. Default is false
+                              if GatewayConfig is specified.
+                            type: boolean
+                        type: object
                       genevePort:
                         description: geneve port is the UDP port to be used by geneve
                           encapulation. Default is 6081
@@ -501,13 +516,56 @@ spec:
                 type: string
               migration:
                 description: migration enables and configures the cluster network
-                  migration. Setting this to the target network type to allow changing
-                  the default network. If unset, the operation of changing cluster
-                  default network plugin will be rejected.
+                  migration. The migration procedure allows to change the network
+                  type and the MTU.
                 properties:
+                  mtu:
+                    description: mtu contains the MTU migration configuration. Set
+                      this to allow changing the MTU values for the default network.
+                      If unset, the operation of changing the MTU for the default
+                      network will be rejected.
+                    properties:
+                      machine:
+                        description: machine contains MTU migration configuration
+                          for the machine's uplink. Needs to be migrated along with
+                          the default network MTU unless the current uplink MTU already
+                          accommodates the default network MTU.
+                        properties:
+                          from:
+                            description: from is the MTU to migrate from.
+                            format: int32
+                            minimum: 0
+                            type: integer
+                          to:
+                            description: to is the MTU to migrate to.
+                            format: int32
+                            minimum: 0
+                            type: integer
+                        type: object
+                      network:
+                        description: network contains information about MTU migration
+                          for the default network. Migrations are only allowed to
+                          MTU values lower than the machine's uplink MTU by the minimum
+                          appropriate offset.
+                        properties:
+                          from:
+                            description: from is the MTU to migrate from.
+                            format: int32
+                            minimum: 0
+                            type: integer
+                          to:
+                            description: to is the MTU to migrate to.
+                            format: int32
+                            minimum: 0
+                            type: integer
+                        type: object
+                    type: object
                   networkType:
-                    description: networkType is the target type of network migration
-                      The supported values are OpenShiftSDN, OVNKubernetes
+                    description: networkType is the target type of network migration.
+                      Set this to the target network type to allow changing the default
+                      network. If unset, the operation of changing cluster default
+                      network plugin will be rejected. The supported values are OpenShiftSDN,
+                      OVNKubernetes
                     type: string
                 type: object
               observedConfig:
