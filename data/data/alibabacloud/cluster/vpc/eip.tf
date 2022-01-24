@@ -1,4 +1,6 @@
 resource "alicloud_eip_address" "eip" {
+  count = length(var.vswitch_ids) == 0 ? 1 : 0
+
   description          = local.description
   address_name         = "${local.prefix}-eip"
   payment_type         = "PayAsYouGo"
@@ -13,7 +15,9 @@ resource "alicloud_eip_address" "eip" {
 }
 
 resource "alicloud_eip_association" "eip_association" {
-  allocation_id = alicloud_eip_address.eip.id
-  instance_id   = alicloud_nat_gateway.nat_gateway.id
+  count = length(var.vswitch_ids) == 0 ? 1 : 0
+
+  allocation_id = alicloud_eip_address.eip[0].id
+  instance_id   = alicloud_nat_gateway.nat_gateway[0].id
   instance_type = "Nat"
 }
