@@ -1678,9 +1678,10 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/openshift-metal3/terraform-provider-ironic v0.2.7
 ## explicit; go 1.13
 github.com/openshift-metal3/terraform-provider-ironic/ironic
-# github.com/openshift/api v0.0.0-20211210181228-6e0b1eb97188
+# github.com/openshift/api v0.0.0-20220124143425-d74727069f6f
 ## explicit; go 1.16
 github.com/openshift/api/config/v1
+github.com/openshift/api/machine/v1
 github.com/openshift/api/machine/v1beta1
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
@@ -1702,10 +1703,6 @@ github.com/openshift/cloud-credential-operator/version
 ## explicit
 github.com/openshift/cluster-api/pkg/apis/machine/common
 github.com/openshift/cluster-api/pkg/apis/machine/v1beta1
-# github.com/openshift/cluster-api-provider-alibaba v0.0.0-20211123142315-d16daa4e6349
-## explicit; go 1.16
-github.com/openshift/cluster-api-provider-alibaba/pkg/apis
-github.com/openshift/cluster-api-provider-alibaba/pkg/apis/alibabacloudprovider/v1beta1
 # github.com/openshift/cluster-api-provider-baremetal v0.0.0-20210924143856-c2d3ece4da38
 ## explicit; go 1.16
 github.com/openshift/cluster-api-provider-baremetal/pkg/apis

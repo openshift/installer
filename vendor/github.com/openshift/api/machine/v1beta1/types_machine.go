@@ -204,11 +204,15 @@ type MachineSpec struct {
 type LifecycleHooks struct {
 	// PreDrain hooks prevent the machine from being drained.
 	// This also blocks further lifecycle events, such as termination.
+	// +listType=map
+	// +listMapKey=name
 	// +optional
 	PreDrain []LifecycleHook `json:"preDrain,omitempty"`
 
 	// PreTerminate hooks prevent the machine from being terminated.
 	// PreTerminate hooks be actioned after the Machine has been drained.
+	// +listType=map
+	// +listMapKey=name
 	// +optional
 	PreTerminate []LifecycleHook `json:"preTerminate,omitempty"`
 }
@@ -222,7 +226,7 @@ type LifecycleHook struct {
 	// +kubebuilder:validation:Pattern=`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$`
 	// +kubebuilder:validation:MinLength:=3
 	// +kubebuilder:validation:MaxLength:=256
-	// +required
+	// +kubebuilder:validation:Required
 	Name string `json:"name"`
 
 	// Owner defines the owner of the lifecycle hook.
@@ -232,7 +236,7 @@ type LifecycleHook struct {
 	// or an administrator managing the hook.
 	// +kubebuilder:validation:MinLength:=3
 	// +kubebuilder:validation:MaxLength:=512
-	// +required
+	// +kubebuilder:validation:Required
 	Owner string `json:"owner"`
 }
 
