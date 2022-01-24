@@ -18,25 +18,11 @@ type Platform struct {
 	// +optional
 	ResourceGroupName string `json:"resourceGroupName,omitempty"`
 
-	// VPCResourceGroupName specifies the resource group containing an existing
-	// VPC. This must be defined if `VPC` is defined.
-	// +optional
-	VPCResourceGroupName string `json:"vpcResourceGroupName,omitempty"`
-
 	// DefaultMachinePlatform is the default configuration used when installing
 	// on IBM Cloud for machine pools which do not define their own platform
 	// configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
-
-	// VPC is the ID of an existing VPC network. Leave unset and the installer
-	// will create a new VPC network on your behalf.
-	VPC string `json:"vpc,omitempty"`
-
-	// Subnets is a list of existing subnet IDs. Leave unset and the installer
-	// will create new subnets in the VPC network on your behalf.
-	// +optional
-	Subnets []string `json:"subnets,omitempty"`
 }
 
 // ClusterResourceGroupName returns the name of the resource group for the cluster.
