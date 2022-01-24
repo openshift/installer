@@ -30,6 +30,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/vmware/govmomi/cns"
+	"github.com/vmware/govmomi/pbm"
 	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/session/cache"
 	"github.com/vmware/govmomi/session/keepalive"
@@ -275,7 +277,7 @@ func (flag *ClientFlag) ConfigureTLS(sc *soap.Client) error {
 	sc.Namespace = "urn:" + flag.vimNamespace
 	sc.Version = flag.vimVersion
 
-	sc.UserAgent = fmt.Sprintf("govc/%s", Version)
+	sc.UserAgent = fmt.Sprintf("govc/%s", strings.TrimPrefix(BuildVersion, "v"))
 
 	if err := flag.SetRootCAs(sc); err != nil {
 		return err
@@ -345,6 +347,21 @@ func apiVersionValid(c *vim25.Client, minVersionString string) error {
 	return nil
 }
 
+func (flag *ClientFlag) RoundTripper(c *soap.Client) soap.RoundTripper {
+	// Retry twice when a temporary I/O error occurs.
+	// This means a maximum of 3 attempts.
+	rt := vim25.Retry(c, vim25.RetryTemporaryNetworkError, 3)
+
+	switch {
+	case flag.dump:
+		rt = &dump{roundTripper: rt}
+	case flag.verbose:
+		rt = &verbose{roundTripper: rt}
+	}
+
+	return rt
+}
+
 func (flag *ClientFlag) Client() (*vim25.Client, error) {
 	if flag.client != nil {
 		return flag.client, nil
@@ -369,9 +386,7 @@ func (flag *ClientFlag) Client() (*vim25.Client, error) {
 		}
 	}
 
-	// Retry twice when a temporary I/O error occurs.
-	// This means a maximum of 3 attempts.
-	c.RoundTripper = vim25.Retry(c.Client, vim25.TemporaryNetworkError(3))
+	c.RoundTripper = flag.RoundTripper(c.Client)
 	flag.client = c
 
 	return flag.client, nil
@@ -391,6 +406,38 @@ func (flag *ClientFlag) RestClient() (*rest.Client, error) {
 
 	flag.restClient = c
 	return flag.restClient, nil
+}
+
+func (flag *ClientFlag) PbmClient() (*pbm.Client, error) {
+	vc, err := flag.Client()
+	if err != nil {
+		return nil, err
+	}
+	c, err := pbm.NewClient(context.Background(), vc)
+	if err != nil {
+		return nil, err
+	}
+
+	c.RoundTripper = flag.RoundTripper(c.Client)
+
+	return c, nil
+}
+
+func (flag *ClientFlag) CnsClient() (*cns.Client, error) {
+	vc, err := flag.Client()
+	if err != nil {
+		return nil, err
+	}
+	_ = vc.UseServiceVersion("vsan")
+
+	c, err := cns.NewClient(context.Background(), vc)
+	if err != nil {
+		return nil, err
+	}
+
+	c.RoundTripper = flag.RoundTripper(c.Client)
+
+	return c, nil
 }
 
 func (flag *ClientFlag) KeepAlive(client cache.Client) {

@@ -186,6 +186,7 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMx
 github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/VividCortex/ewma v1.1.1/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmxzcbUokwA=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
+github.com/a8m/tree v0.0.0-20210115125333-10a5fd5b637d/go.mod h1:FSdwKX97koS5efgm8WevNf7XS3PqtyFkKDDXrz778cg=
 github.com/abdullin/seq v0.0.0-20160510034733-d5467c17e7af/go.mod h1:5Jv4cbFiHJMsVxt52+i0Ha45fjshj6wxYr1r19tB9bw=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
@@ -1609,8 +1610,8 @@ github.com/openshift/terraform-provider-azurestack v0.10.0-openshift h1:OB8vX01e
 github.com/openshift/terraform-provider-azurestack v0.10.0-openshift/go.mod h1:wUvqPoPkdMZxYSgdyePsJm8mYbjAeIwR5hEyY9/UFI4=
 github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2 h1:HxvKVrzgLpfuzxU3KfYeruRuop1pG34rh2yXTKn42+I=
 github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2/go.mod h1:LnGKkV2HJUeJrIMMPK+/Ka6F+5JIy45mbEj9VpoHHqc=
-github.com/openshift/terraform-provider-vsphere v1.24.3-openshift h1:tG83XgfFwH4OLONUeEsxh8JPG9QRrqKLoPzkPmLye/Y=
-github.com/openshift/terraform-provider-vsphere v1.24.3-openshift/go.mod h1:FgcsrcPpnjLUO4XWpudYiBho9ETIXYRxVXWV7R3Iz6k=
+github.com/openshift/terraform-provider-vsphere v1.24.4-openshift h1:tG83XgfFwH4OLONUeEsxh8JPG9QRrqKLoPzkPmLye/Y=
+github.com/openshift/terraform-provider-vsphere v1.24.4-openshift/go.mod h1:FgcsrcPpnjLUO4XWpudYiBho9ETIXYRxVXWV7R3Iz6k=
 github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492/go.mod h1:Ngi6UdF0k5OKD5t5wlmGhe/EDKPoUM3BXZSSfIuJbis=
 github.com/opentracing/basictracer-go v1.0.0/go.mod h1:QfBfYuafItcjQuMwinw9GhYKwFXS9KnPs5lxoYwgW74=
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
@@ -1957,8 +1958,8 @@ github.com/vmihailenco/tagparser v0.1.1 h1:quXMXlA39OCbd2wAdTsGDlK9RkOk6Wuw+x37w
 github.com/vmihailenco/tagparser v0.1.1/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
 github.com/vmware/govmomi v0.22.2-0.20200523220130-61b30e20be49/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
 github.com/vmware/govmomi v0.22.2/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
-github.com/vmware/govmomi v0.24.0 h1:G7YFF6unMTG3OY25Dh278fsomVTKs46m2ENlEFSbmbs=
-github.com/vmware/govmomi v0.24.0/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
+github.com/vmware/govmomi v0.27.2 h1:Ecooqg069gUbl5EuWYwcrvzRqMkah9J8BXaf9HCEGVM=
+github.com/vmware/govmomi v0.27.2/go.mod h1:daTuJEcQosNMXYJOeku0qdBJP9SOLLWB3Mqz8THtv6o=
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
 github.com/vmware/vmw-ovflib v0.0.0-20170608004843-1f217b9dc714/go.mod h1:jiPk45kn7klhByRvUq5i2vo1RtHKBHj+iWGFpxbXuuI=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=

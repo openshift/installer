@@ -36,7 +36,7 @@ func NewContainerView(c *vim25.Client, ref types.ManagedObjectReference) *Contai
 }
 
 // Retrieve populates dst as property.Collector.Retrieve does, for all entities in the view of types specified by kind.
-func (v ContainerView) Retrieve(ctx context.Context, kind []string, ps []string, dst interface{}) error {
+func (v ContainerView) Retrieve(ctx context.Context, kind []string, ps []string, dst interface{}, pspec ...types.PropertySpec) error {
 	pc := property.DefaultCollector(v.Client())
 
 	ospec := types.ObjectSpec{
@@ -49,8 +49,6 @@ func (v ContainerView) Retrieve(ctx context.Context, kind []string, ps []string,
 			},
 		},
 	}
-
-	var pspec []types.PropertySpec
 
 	if len(kind) == 0 {
 		kind = []string{"ManagedEntity"}
@@ -127,4 +125,21 @@ func (v ContainerView) Find(ctx context.Context, kind []string, filter property.
 	}
 
 	return filter.MatchObjectContent(content), nil
+}
+
+// FindAny returns object references for entities of type kind, matching any property the given filter.
+func (v ContainerView) FindAny(ctx context.Context, kind []string, filter property.Filter) ([]types.ManagedObjectReference, error) {
+	if len(filter) == 0 {
+		// Ensure we have at least 1 filter to avoid retrieving all properties.
+		filter = property.Filter{"name": "*"}
+	}
+
+	var content []types.ObjectContent
+
+	err := v.Retrieve(ctx, kind, filter.Keys(), &content)
+	if err != nil {
+		return nil, err
+	}
+
+	return filter.MatchAnyObjectContent(content), nil
 }

@@ -1478,7 +1478,7 @@ github.com/hashicorp/terraform-provider-google/version
 # github.com/hashicorp/terraform-provider-kubernetes v1.13.3
 ## explicit; go 1.15
 github.com/hashicorp/terraform-provider-kubernetes/kubernetes
-# github.com/hashicorp/terraform-provider-vsphere v1.24.3 => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
+# github.com/hashicorp/terraform-provider-vsphere v1.24.3 => github.com/openshift/terraform-provider-vsphere v1.24.4-openshift
 ## explicit; go 1.13
 github.com/hashicorp/terraform-provider-vsphere/vsphere
 github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/administrationroles
@@ -2354,7 +2354,7 @@ github.com/vmihailenco/msgpack/v4/codes
 github.com/vmihailenco/tagparser
 github.com/vmihailenco/tagparser/internal
 github.com/vmihailenco/tagparser/internal/parser
-# github.com/vmware/govmomi v0.24.0
+# github.com/vmware/govmomi v0.27.2
 ## explicit; go 1.13
 github.com/vmware/govmomi
 github.com/vmware/govmomi/event
@@ -3339,7 +3339,7 @@ sigs.k8s.io/yaml
 # github.com/gophercloud/gophercloud => github.com/gophercloud/gophercloud v0.17.0
 # github.com/hashicorp/terraform => github.com/openshift/hashicorp-terraform v0.14.6-openshift-1
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.16.0-openshift
-# github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
+# github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.4-openshift
 # github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20211201170610-92ffa60c683d
 # github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20211201170610-92ffa60c683d
 # github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20211201170610-92ffa60c683d
