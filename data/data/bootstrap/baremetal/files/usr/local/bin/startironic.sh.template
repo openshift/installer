@@ -184,6 +184,18 @@ else
     IRONIC_HOST="${IRONIC_IP}"
 fi
 
+{{if .Proxy -}}
+{{if .Proxy.HTTPProxy -}}
+HTTP_PROXY="{{.Proxy.HTTPProxy}}"
+{{end -}}
+{{if .Proxy.HTTPSProxy -}}
+HTTPS_PROXY="{{.Proxy.HTTPSProxy}}"
+{{end -}}
+{{if .Proxy.NoProxy -}}
+NO_PROXY="{{.Proxy.NoProxy}}"
+{{end -}}
+{{end -}}
+
 # Create a podman secret for the image-customization-server 
 podman secret rm pull-secret || true
 base64 -w 0 /root/.docker/config.json | podman secret create pull-secret -
@@ -197,6 +209,9 @@ podman run -d --net host --privileged --name image-customization \
     --env IRONIC_AGENT_IMAGE="$IRONIC_AGENT_IMAGE" \
     --env IP_OPTIONS=$EXTERNAL_IP_OPTIONS \
     --env REGISTRIES_CONF_PATH=/tmp/containers/registries.conf \
+    --env HTTP_PROXY="$HTTP_PROXY" \
+    --env HTTPS_PROXY="$HTTPS_PROXY" \
+    --env NO_PROXY="$NO_PROXY" \
     --entrypoint '["/image-customization-server", "--nmstate-dir=/tmp/nmstate/", "--images-publish-addr=http://0.0.0.0:8084"]' \
     -v /tmp/nmstate/:/tmp/nmstate/ \
     -v $IRONIC_SHARED_VOLUME:/shared:z \
