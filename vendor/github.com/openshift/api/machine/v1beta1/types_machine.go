@@ -167,6 +167,11 @@ type MachineSpec struct {
 	// +optional
 	ObjectMeta `json:"metadata,omitempty"`
 
+	// LifecycleHooks allow users to pause operations on the machine at
+	// certain predefined points within the machine lifecycle.
+	// +optional
+	LifecycleHooks LifecycleHooks `json:"lifecycleHooks,omitempty"`
+
 	// The list of the taints to be applied to the corresponding Node in additive
 	// manner. This list will not overwrite any other taints added to the Node on
 	// an ongoing basis by other entities. These taints should be actively reconciled
@@ -192,6 +197,43 @@ type MachineSpec struct {
 	// be interfacing with cluster-api as generic provider.
 	// +optional
 	ProviderID *string `json:"providerID,omitempty"`
+}
+
+// LifecycleHooks allow users to pause operations on the machine at
+// certain prefedined points within the machine lifecycle.
+type LifecycleHooks struct {
+	// PreDrain hooks prevent the machine from being drained.
+	// This also blocks further lifecycle events, such as termination.
+	// +optional
+	PreDrain []LifecycleHook `json:"preDrain,omitempty"`
+
+	// PreTerminate hooks prevent the machine from being terminated.
+	// PreTerminate hooks be actioned after the Machine has been drained.
+	// +optional
+	PreTerminate []LifecycleHook `json:"preTerminate,omitempty"`
+}
+
+// LifecycleHook represents a single instance of a lifecycle hook
+type LifecycleHook struct {
+	// Name defines a unique name for the lifcycle hook.
+	// The name should be unique and descriptive, ideally 1-3 words, in CamelCase or
+	// it may be namespaced, eg. foo.example.com/CamelCase.
+	// Names must be unique and should only be managed by a single entity.
+	// +kubebuilder:validation:Pattern=`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$`
+	// +kubebuilder:validation:MinLength:=3
+	// +kubebuilder:validation:MaxLength:=256
+	// +required
+	Name string `json:"name"`
+
+	// Owner defines the owner of the lifecycle hook.
+	// This should be descriptive enough so that users can identify
+	// who/what is responsible for blocking the lifecycle.
+	// This could be the name of a controller (e.g. clusteroperator/etcd)
+	// or an administrator managing the hook.
+	// +kubebuilder:validation:MinLength:=3
+	// +kubebuilder:validation:MaxLength:=512
+	// +required
+	Owner string `json:"owner"`
 }
 
 // MachineStatus defines the observed state of Machine

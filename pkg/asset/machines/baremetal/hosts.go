@@ -3,7 +3,9 @@ package baremetal
 import (
 	"fmt"
 
+	"github.com/ghodss/yaml"
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
+	"github.com/pkg/errors"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,8 +31,14 @@ type HostSettings struct {
 	NetworkConfigSecrets []corev1.Secret
 }
 
-func createNetworkConfigSecret(host *baremetal.Host) corev1.Secret {
-	return corev1.Secret{
+func createNetworkConfigSecret(host *baremetal.Host) (*corev1.Secret, error) {
+
+	yamlNetworkConfig, err := yaml.Marshal(host.NetworkConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error while creating network config secret")
+	}
+
+	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Secret",
@@ -39,8 +47,8 @@ func createNetworkConfigSecret(host *baremetal.Host) corev1.Secret {
 			Name:      fmt.Sprintf("%s-network-config-secret", host.Name),
 			Namespace: "openshift-machine-api",
 		},
-		Data: map[string][]byte{"nmstate": []byte(host.NetworkConfig)},
-	}
+		Data: map[string][]byte{"nmstate": yamlNetworkConfig},
+	}, nil
 }
 
 func createSecret(host *baremetal.Host) (*corev1.Secret, baremetalhost.BMCDetails) {
@@ -120,9 +128,12 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 		}
 		newHost := createBaremetalHost(host, bmc)
 
-		if host.NetworkConfig != "" {
-			networkConfigSecret := createNetworkConfigSecret(host)
-			settings.NetworkConfigSecrets = append(settings.NetworkConfigSecrets, networkConfigSecret)
+		if host.NetworkConfig != nil {
+			networkConfigSecret, err := createNetworkConfigSecret(host)
+			if err != nil {
+				return nil, err
+			}
+			settings.NetworkConfigSecrets = append(settings.NetworkConfigSecrets, *networkConfigSecret)
 			newHost.Spec.PreprovisioningNetworkDataName = networkConfigSecret.Name
 		}
 

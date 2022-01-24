@@ -218,6 +218,15 @@ func (DiskEncryptionSetParameters) SwaggerDoc() map[string]string {
 	return map_DiskEncryptionSetParameters
 }
 
+var map_DiskSettings = map[string]string{
+	"":                         "DiskSettings describe ephemeral disk settings for the os disk.",
+	"ephemeralStorageLocation": "EphemeralStorageLocation enables ephemeral OS when set to 'Local'. Possible values include: 'Local'. See https://docs.microsoft.com/en-us/azure/virtual-machines/ephemeral-os-disks for full details. Empty value means no opinion and the platform chooses a default, which is subject to change over time. Currently the default is that disks are saved to remote Azure storage.",
+}
+
+func (DiskSettings) SwaggerDoc() map[string]string {
+	return map_DiskSettings
+}
+
 var map_Image = map[string]string{
 	"":           "Image is a mirror of azure sdk compute.ImageReference",
 	"publisher":  "Publisher is the name of the organization that created the image",
@@ -243,9 +252,11 @@ func (ManagedDiskParameters) SwaggerDoc() map[string]string {
 }
 
 var map_OSDisk = map[string]string{
-	"osType":      "OSType is the operating system type of the OS disk. Possible values include \"Linux\" and \"Windows\".",
-	"managedDisk": "ManagedDisk specifies the Managed Disk parameters for the OS disk.",
-	"diskSizeGB":  "DiskSizeGB is the size in GB to assign to the data disk.",
+	"osType":       "OSType is the operating system type of the OS disk. Possible values include \"Linux\" and \"Windows\".",
+	"managedDisk":  "ManagedDisk specifies the Managed Disk parameters for the OS disk.",
+	"diskSizeGB":   "DiskSizeGB is the size in GB to assign to the data disk.",
+	"diskSettings": "DiskSettings describe ephemeral disk settings for the os disk.",
+	"cachingType":  "CachingType specifies the caching requirements. Possible values include: 'None', 'ReadOnly', 'ReadWrite'. Empty value means no opinion and the platform chooses a default, which is subject to change over time. Currently the default is `None`.",
 }
 
 func (OSDisk) SwaggerDoc() map[string]string {
@@ -413,6 +424,26 @@ func (LastOperation) SwaggerDoc() map[string]string {
 	return map_LastOperation
 }
 
+var map_LifecycleHook = map[string]string{
+	"":      "LifecycleHook represents a single instance of a lifecycle hook",
+	"name":  "Name defines a unique name for the lifcycle hook. The name should be unique and descriptive, ideally 1-3 words, in CamelCase or it may be namespaced, eg. foo.example.com/CamelCase. Names must be unique and should only be managed by a single entity.",
+	"owner": "Owner defines the owner of the lifecycle hook. This should be descriptive enough so that users can identify who/what is responsible for blocking the lifecycle. This could be the name of a controller (e.g. clusteroperator/etcd) or an administrator managing the hook.",
+}
+
+func (LifecycleHook) SwaggerDoc() map[string]string {
+	return map_LifecycleHook
+}
+
+var map_LifecycleHooks = map[string]string{
+	"":             "LifecycleHooks allow users to pause operations on the machine at certain prefedined points within the machine lifecycle.",
+	"preDrain":     "PreDrain hooks prevent the machine from being drained. This also blocks further lifecycle events, such as termination.",
+	"preTerminate": "PreTerminate hooks prevent the machine from being terminated. PreTerminate hooks be actioned after the Machine has been drained.",
+}
+
+func (LifecycleHooks) SwaggerDoc() map[string]string {
+	return map_LifecycleHooks
+}
+
 var map_Machine = map[string]string{
 	"": "Machine is the Schema for the machines API Compatibility level 2: Stable within a major release for a minimum of 9 months or 3 minor releases (whichever is longer).",
 }
@@ -430,11 +461,12 @@ func (MachineList) SwaggerDoc() map[string]string {
 }
 
 var map_MachineSpec = map[string]string{
-	"":             "MachineSpec defines the desired state of Machine",
-	"metadata":     "ObjectMeta will autopopulate the Node created. Use this to indicate what labels, annotations, name prefix, etc., should be used when creating the Node.",
-	"taints":       "The list of the taints to be applied to the corresponding Node in additive manner. This list will not overwrite any other taints added to the Node on an ongoing basis by other entities. These taints should be actively reconciled e.g. if you ask the machine controller to apply a taint and then manually remove the taint the machine controller will put it back) but not have the machine controller remove any taints",
-	"providerSpec": "ProviderSpec details Provider-specific configuration to use during node creation.",
-	"providerID":   "ProviderID is the identification ID of the machine provided by the provider. This field must match the provider ID as seen on the node object corresponding to this machine. This field is required by higher level consumers of cluster-api. Example use case is cluster autoscaler with cluster-api as provider. Clean-up logic in the autoscaler compares machines to nodes to find out machines at provider which could not get registered as Kubernetes nodes. With cluster-api as a generic out-of-tree provider for autoscaler, this field is required by autoscaler to be able to have a provider view of the list of machines. Another list of nodes is queried from the k8s apiserver and then a comparison is done to find out unregistered machines and are marked for delete. This field will be set by the actuators and consumed by higher level entities like autoscaler that will be interfacing with cluster-api as generic provider.",
+	"":               "MachineSpec defines the desired state of Machine",
+	"metadata":       "ObjectMeta will autopopulate the Node created. Use this to indicate what labels, annotations, name prefix, etc., should be used when creating the Node.",
+	"lifecycleHooks": "LifecycleHooks allow users to pause operations on the machine at certain predefined points within the machine lifecycle.",
+	"taints":         "The list of the taints to be applied to the corresponding Node in additive manner. This list will not overwrite any other taints added to the Node on an ongoing basis by other entities. These taints should be actively reconciled e.g. if you ask the machine controller to apply a taint and then manually remove the taint the machine controller will put it back) but not have the machine controller remove any taints",
+	"providerSpec":   "ProviderSpec details Provider-specific configuration to use during node creation.",
+	"providerID":     "ProviderID is the identification ID of the machine provided by the provider. This field must match the provider ID as seen on the node object corresponding to this machine. This field is required by higher level consumers of cluster-api. Example use case is cluster autoscaler with cluster-api as provider. Clean-up logic in the autoscaler compares machines to nodes to find out machines at provider which could not get registered as Kubernetes nodes. With cluster-api as a generic out-of-tree provider for autoscaler, this field is required by autoscaler to be able to have a provider view of the list of machines. Another list of nodes is queried from the k8s apiserver and then a comparison is done to find out unregistered machines and are marked for delete. This field will be set by the actuators and consumed by higher level entities like autoscaler that will be interfacing with cluster-api as generic provider.",
 }
 
 func (MachineSpec) SwaggerDoc() map[string]string {

@@ -8,6 +8,7 @@ import (
 	"github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
@@ -251,7 +252,7 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 								Username: "usr-0",
 								Password: "pwd-0",
 							},
-							NetworkConfig: "interface:",
+							NetworkConfig: networkConfig("interfaces:"),
 						},
 						{
 							Name: "worker-0",
@@ -305,7 +306,7 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 	verifySecret(t, master.SecretFiles[1], "openshift/99_openshift-cluster-api_host-bmc-secrets-1.yaml", "worker-0-bmc-secret", "map[password:[112 119 100 45 49] username:[117 115 114 45 49]]")
 
 	assert.Len(t, master.NetworkConfigSecretFiles, 1)
-	verifySecret(t, master.NetworkConfigSecretFiles[0], "openshift/99_openshift-cluster-api_host-network-config-secrets-0.yaml", "master-0-network-config-secret", "map[nmstate:[105 110 116 101 114 102 97 99 101 58]]")
+	verifySecret(t, master.NetworkConfigSecretFiles[0], "openshift/99_openshift-cluster-api_host-network-config-secrets-0.yaml", "master-0-network-config-secret", "map[nmstate:[105 110 116 101 114 102 97 99 101 115 58 32 110 117 108 108 10]]")
 }
 
 func verifyHost(t *testing.T, a *asset.File, eFilename, eName string) {
@@ -321,4 +322,10 @@ func verifySecret(t *testing.T, a *asset.File, eFilename, eName, eData string) {
 	assert.NoError(t, yaml.Unmarshal(a.Data, &secret))
 	assert.Equal(t, eName, secret.Name)
 	assert.Equal(t, eData, fmt.Sprintf("%v", secret.Data))
+}
+
+func networkConfig(config string) *v1.JSON {
+	var nc v1.JSON
+	yaml.Unmarshal([]byte(config), &nc)
+	return &nc
 }

@@ -622,7 +622,7 @@ func (ConditionalUpdateRisk) SwaggerDoc() map[string]string {
 
 var map_PromQLClusterCondition = map[string]string{
 	"":       "PromQLClusterCondition represents a cluster condition based on PromQL.",
-	"promql": "PromQL is a PromQL query classifying clusters. This query query should return a 1 in the match case and a 0 in the does-not-match case case. Queries which return no time series, or which return values besides 0 or 1, are evaluation failures.",
+	"promql": "PromQL is a PromQL query classifying clusters. This query query should return a 1 in the match case and a 0 in the does-not-match case. Queries which return no time series, or which return values besides 0 or 1, are evaluation failures.",
 }
 
 func (PromQLClusterCondition) SwaggerDoc() map[string]string {
@@ -1190,7 +1190,8 @@ func (PlatformStatus) SwaggerDoc() map[string]string {
 }
 
 var map_PowerVSPlatformSpec = map[string]string{
-	"": "PowerVSPlatformSpec holds the desired state of the IBM Power Systems Virtual Servers infrastructure provider. This only includes fields that can be modified in the cluster.",
+	"":                 "PowerVSPlatformSpec holds the desired state of the IBM Power Systems Virtual Servers infrastructure provider. This only includes fields that can be modified in the cluster.",
+	"serviceEndpoints": "serviceEndpoints is a list of custom endpoints which will override the default service endpoints of a Power VS service.",
 }
 
 func (PowerVSPlatformSpec) SwaggerDoc() map[string]string {
@@ -1211,7 +1212,7 @@ func (PowerVSPlatformStatus) SwaggerDoc() map[string]string {
 
 var map_PowerVSServiceEndpoint = map[string]string{
 	"":     "PowervsServiceEndpoint stores the configuration of a custom url to override existing defaults of PowerVS Services.",
-	"name": "name is the name of the Power VS service.",
+	"name": "name is the name of the Power VS service. Few of the services are IAM - https://cloud.ibm.com/apidocs/iam-identity-token-api ResourceController - https://cloud.ibm.com/apidocs/resource-controller/resource-controller Power Cloud - https://cloud.ibm.com/apidocs/power-cloud",
 	"url":  "url is fully qualified URI with scheme https, that overrides the default generated endpoint for a client. This must be provided and cannot be empty.",
 }
 
@@ -1332,6 +1333,26 @@ func (ExternalIPPolicy) SwaggerDoc() map[string]string {
 	return map_ExternalIPPolicy
 }
 
+var map_MTUMigration = map[string]string{
+	"":        "MTUMigration contains infomation about MTU migration.",
+	"network": "Network contains MTU migration configuration for the default network.",
+	"machine": "Machine contains MTU migration configuration for the machine's uplink.",
+}
+
+func (MTUMigration) SwaggerDoc() map[string]string {
+	return map_MTUMigration
+}
+
+var map_MTUMigrationValues = map[string]string{
+	"":     "MTUMigrationValues contains the values for a MTU migration.",
+	"to":   "To is the MTU to migrate to.",
+	"from": "From is the MTU to migrate from.",
+}
+
+func (MTUMigrationValues) SwaggerDoc() map[string]string {
+	return map_MTUMigrationValues
+}
+
 var map_Network = map[string]string{
 	"":       "Network holds cluster-wide information about Network. The canonical name is `cluster`. It is used to configure the desired network configuration, such as: IP address pools for services/pod IPs, network plugin, etc. Please view network.spec for an explanation on what applies when configuring this resource.\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
 	"spec":   "spec holds user settable values for configuration. As a general rule, this SHOULD NOT be read directly. Instead, you should consume the NetworkStatus, as it indicates the currently deployed configuration. Currently, most spec fields are immutable after installation. Please view the individual ones for further details on each.",
@@ -1353,6 +1374,7 @@ func (NetworkList) SwaggerDoc() map[string]string {
 var map_NetworkMigration = map[string]string{
 	"":            "NetworkMigration represents the cluster network configuration.",
 	"networkType": "NetworkType is the target plugin that is to be deployed. Currently supported values are: OpenShiftSDN, OVNKubernetes",
+	"mtu":         "MTU contains the MTU migration configuration.",
 }
 
 func (NetworkMigration) SwaggerDoc() map[string]string {
@@ -1512,15 +1534,6 @@ func (OAuth) SwaggerDoc() map[string]string {
 	return map_OAuth
 }
 
-var map_OAuthAudit = map[string]string{
-	"":        "OAuthAudit specifies the Audit profile in use.",
-	"profile": "profile is a simple drop in profile type that can be turned off by setting it to \"None\" or it can be turned on by setting it to \"WriteLoginEvents\". By default the profile is set to \"WriteLoginEvents\".",
-}
-
-func (OAuthAudit) SwaggerDoc() map[string]string {
-	return map_OAuthAudit
-}
-
 var map_OAuthList = map[string]string{
 	"": "Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
 }
@@ -1546,7 +1559,6 @@ var map_OAuthSpec = map[string]string{
 	"identityProviders": "identityProviders is an ordered list of ways for a user to identify themselves. When this list is empty, no identities are provisioned for users.",
 	"tokenConfig":       "tokenConfig contains options for authorization and access tokens",
 	"templates":         "templates allow you to customize pages like the login page.",
-	"audit":             "audit specifies what should be audited in the context of OAuthServer. By default the Audit is turned on.",
 }
 
 func (OAuthSpec) SwaggerDoc() map[string]string {

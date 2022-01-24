@@ -4,18 +4,32 @@ import (
 	"fmt"
 	"testing"
 
-	machineapi "github.com/openshift/api/machine/v1beta1"
+	"github.com/ghodss/yaml"
+	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	"github.com/stretchr/testify/assert"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
-
-	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 )
 
 func TestHosts(t *testing.T) {
+
+	nmstate := `interfaces:
+- name: eth0
+  type: ethernet
+routes:
+  config:
+  - destination: 198.51.100.0/24
+    metric: 150
+    next-hop-address: 192.0.2.1
+    next-hop-interface: eth1
+    table-id: 254
+`
+
 	testCases := []struct {
 		Scenario        string
 		Machines        []machineapi.Machine
@@ -65,11 +79,11 @@ func TestHosts(t *testing.T) {
 			Config: configHosts(
 				hostType("master-0").
 					bmc("usr0", "pwd0").
-					networkConfig("interface:")),
+					networkConfig(nmstate)),
 
 			ExpectedSetting: settings().
 				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
-				networkConfigSecrets(secret("master-0-network-config-secret").nmstate("interface:")).
+				networkConfigSecrets(secret("master-0-network-config-secret").nmstate(nmstate)).
 				hosts(
 					host("master-0").
 						consumerRef("machine-0").
@@ -341,7 +355,7 @@ func (htb *hostTypeBuilder) bmc(user, password string) *hostTypeBuilder {
 }
 
 func (htb *hostTypeBuilder) networkConfig(config string) *hostTypeBuilder {
-	htb.NetworkConfig = config
+	yaml.Unmarshal([]byte(config), &htb.NetworkConfig)
 	return htb
 }
 
