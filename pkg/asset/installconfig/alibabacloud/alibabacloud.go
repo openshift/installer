@@ -8,6 +8,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 )
@@ -15,6 +16,13 @@ import (
 const (
 	defaultRegion         = "cn-hangzhou"
 	defaultAcceptLanguage = "en-US"
+)
+
+var unsupportedRegions = sets.NewString(
+	// Nanjing is a local cloud
+	"cn-nanjing",
+	// Dubai does not support private zone service
+	"me-east-1",
 )
 
 // Platform collects AlibabaCloud-specific configuration.
@@ -42,9 +50,12 @@ func selectRegion(client *Client) (string, error) {
 	regions := regionsResponse.Regions.Region
 
 	var defaultLongRegion string
-	longRegions := make([]string, 0, len(regions))
-	shortRegions := make([]string, 0, len(regions))
+	longRegions := []string{}
+	shortRegions := []string{}
 	for _, location := range regions {
+		if unsupportedRegions.Has(location.RegionId) {
+			continue
+		}
 		longRegion := fmt.Sprintf("%s (%s)", location.RegionId, location.LocalName)
 		longRegions = append(longRegions, longRegion)
 		shortRegions = append(shortRegions, location.RegionId)
