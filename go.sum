@@ -236,7 +236,6 @@ github.com/alibabacloud-go/tea-utils v1.3.9/go.mod h1:EI/o33aBfj3hETm4RLiAxF/ThQ
 github.com/aliyun/alibaba-cloud-sdk-go v0.0.0-20190329064014-6e358769c32a/go.mod h1:T9M45xf79ahXVelWoOBmH0y4aC1t5kXO5BxwyakgIGA=
 github.com/aliyun/alibaba-cloud-sdk-go v0.0.0-20190412020505-60e2075261b6/go.mod h1:T9M45xf79ahXVelWoOBmH0y4aC1t5kXO5BxwyakgIGA=
 github.com/aliyun/alibaba-cloud-sdk-go v0.0.0-20190620160927-9418d7b0cd0f/go.mod h1:myCDvQSzCW+wB1WAlocEru4wMGJxy+vlxHdhegi1CDQ=
-github.com/aliyun/alibaba-cloud-sdk-go v1.61.1153/go.mod h1:pUKYbK5JQ+1Dfxk80P0qxGqe5dkxDoabbZS7zOcouyA=
 github.com/aliyun/alibaba-cloud-sdk-go v1.61.1154 h1:+6PluSvddiDm8YF4E5LRs8kiXtC1BKCujLi4WrA4Srw=
 github.com/aliyun/alibaba-cloud-sdk-go v1.61.1154/go.mod h1:pUKYbK5JQ+1Dfxk80P0qxGqe5dkxDoabbZS7zOcouyA=
 github.com/aliyun/aliyun-datahub-sdk-go v0.1.5 h1:c2TFcJ5PjkqkHr2use7Av2wHB8jVgoKxX1gmLDsysR4=
@@ -1519,8 +1518,8 @@ github.com/openshift/api v0.0.0-20210816181336-8ff39b776da3/go.mod h1:x81TFA31x1
 github.com/openshift/api v0.0.0-20211025104849-a11323ccb6ea/go.mod h1:RsQCVJu4qhUawxxDP7pGlwU3IA4F01wYm3qKEu29Su8=
 github.com/openshift/api v0.0.0-20211108165917-be1be0e89115/go.mod h1:RsQCVJu4qhUawxxDP7pGlwU3IA4F01wYm3qKEu29Su8=
 github.com/openshift/api v0.0.0-20211209135129-c58d9f695577/go.mod h1:DoslCwtqUpr3d/gsbq4ZlkaMEdYqKxuypsDjorcHhME=
-github.com/openshift/api v0.0.0-20211210181228-6e0b1eb97188 h1:Z9UVScJKlWgNTvFzjkbZlEX3UzptTki2RwzaLaLjnFA=
-github.com/openshift/api v0.0.0-20211210181228-6e0b1eb97188/go.mod h1:DoslCwtqUpr3d/gsbq4ZlkaMEdYqKxuypsDjorcHhME=
+github.com/openshift/api v0.0.0-20220124143425-d74727069f6f h1:iOTv1WudhVm2UsoST+L+ZrA5A9w57h9vmQsdlBuqG6g=
+github.com/openshift/api v0.0.0-20220124143425-d74727069f6f/go.mod h1:F/eU6jgr6Q2VhMu1mSpMmygxAELd7+BUxs3NHZ25jV4=
 github.com/openshift/baremetal-operator v0.0.0-20211201170610-92ffa60c683d h1:4KkYItiWENIs2bV6lKOcIMdWUnZJA+GWT9Us7z0P1UA=
 github.com/openshift/baremetal-operator v0.0.0-20211201170610-92ffa60c683d/go.mod h1:p32F1DBUxfgd0JjM4rCuhJomFJokEoWR1Z/LZNL2LM8=
 github.com/openshift/baremetal-operator/apis v0.0.0-20211201170610-92ffa60c683d h1:DHGXCvXWsPExutf3tgQYD4TVDSAOviLXO7Vnc42oXhw=
@@ -1533,6 +1532,7 @@ github.com/openshift/build-machinery-go v0.0.0-20200819073603-48aa266c95f7/go.mo
 github.com/openshift/build-machinery-go v0.0.0-20200917070002-f171684f77ab/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
 github.com/openshift/build-machinery-go v0.0.0-20210209125900-0da259a2c359/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
 github.com/openshift/build-machinery-go v0.0.0-20210712174854-1bb7fd1518d3/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
+github.com/openshift/build-machinery-go v0.0.0-20211213093930-7e33a7eb4ce3/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
 github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3 h1:SG1aqwleU6bGD0X4mhkTNupjVnByMYYuW4XbnCPavQU=
 github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3/go.mod h1:cwhyki5lqBmrT0m8Im+9I7PGFaraOzcYPtEz93RcsGY=
 github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e h1:2gyl9UVyjHSWzdS56KUXxQwIhENbq2x2olqoMQSA/C8=
@@ -1540,8 +1540,6 @@ github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9
 github.com/openshift/cluster-api v0.0.0-20190805113604-f8de78af80fc h1:6Nf3TaiooyEZNk+3ZHonNOujT+HacuSj9cxyeGTc/zg=
 github.com/openshift/cluster-api v0.0.0-20190805113604-f8de78af80fc/go.mod h1:mNsD1dsD4T57kV4/C6zTHke/Ro166xgnyyRZqkamiEU=
 github.com/openshift/cluster-api-actuator-pkg v0.0.0-20190614215203-42228d06a2ca/go.mod h1:KNPaA64x3Ok7z538kvS2acwC5fEwvPfF0RdTx2geQEE=
-github.com/openshift/cluster-api-provider-alibaba v0.0.0-20211123142315-d16daa4e6349 h1:xBbz4HEyLoofwK9r5KUyOuoOsadqjcydibtb+aPzY0A=
-github.com/openshift/cluster-api-provider-alibaba v0.0.0-20211123142315-d16daa4e6349/go.mod h1:vJHKJg2+CEt1wmawpkFrg1IRlgyeaaGtzz76IM/z2os=
 github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80 h1:fFHoy/1QCLUcfo/NceEM8jGY2Tafl1BmyLa7tReN328=
 github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80/go.mod h1:JV7aXj/LZ8B4MwIQdhGxpTO2PCG8+7UKFd6FaOZCSzA=
 github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f/go.mod h1:GR+ocB8I+Z7JTSBdO+DMu/diBfH66lRlRpnc1KWysUM=
@@ -1583,7 +1581,6 @@ github.com/openshift/machine-api-operator v0.2.1-0.20201002104344-6abfb5440597/g
 github.com/openshift/machine-api-operator v0.2.1-0.20210104142355-8e6ae0acdfcf/go.mod h1:U5eAHChde1XvtQy3s1Zcr7ll4X7heb0SzYpaiAwxmQc=
 github.com/openshift/machine-api-operator v0.2.1-0.20210504014029-a132ec00f7dd/go.mod h1:DFZBMPtC2TYZH5NE9+2JQIpbZAnruqc9F26QmbOm9pw=
 github.com/openshift/machine-api-operator v0.2.1-0.20210820103535-d50698c302f5/go.mod h1:ko7xmso6c25h9UL6Ai0I5l+6OgyVf+ebinAYXnwlGNg=
-github.com/openshift/machine-api-operator v0.2.1-0.20211102083422-ee77ca7b9fd1/go.mod h1:8kWuB/zhnlBsNOyD1yz0epINZX5IodG3Z4iDwQrYKx0=
 github.com/openshift/machine-api-operator v0.2.1-0.20211111133920-c8bba3e64310/go.mod h1:8kWuB/zhnlBsNOyD1yz0epINZX5IodG3Z4iDwQrYKx0=
 github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 h1:C4gCipkWTDp0B9jb0wZdLgB+HWC7EzVVwQOeNaKnTRA=
 github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8/go.mod h1:fjKreLaKEeUKsyIkT4wlzIQwUVJ2ZKDUh3CI73ckYIY=

@@ -1,5 +1,7 @@
 package alibabacloud
 
+import "fmt"
+
 // Platform stores all the global configuration that all machinesets use.
 type Platform struct {
 	// Region specifies the Alibaba Cloud region where the cluster will be created.
@@ -41,4 +43,9 @@ type Platform struct {
 	// configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
+}
+
+// ClusterResourceGroupName returns the name of the resource group for the cluster.
+func (p *Platform) ClusterResourceGroupName(clusterID string) string {
+	return fmt.Sprintf("%s-rg", clusterID)
 }

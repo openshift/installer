@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	alibabacloudprovider "github.com/openshift/cluster-api-provider-alibaba/pkg/apis/alibabacloudprovider/v1beta1"
+	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
@@ -45,8 +45,8 @@ type TFVarsSources struct {
 	ResourceGroupID       string
 	BaseDomain            string
 	NatGatewayZoneID      string
-	MasterConfigs         []*alibabacloudprovider.AlibabaCloudMachineProviderConfig
-	WorkerConfigs         []*alibabacloudprovider.AlibabaCloudMachineProviderConfig
+	MasterConfigs         []*machinev1.AlibabaCloudMachineProviderConfig
+	WorkerConfigs         []*machinev1.AlibabaCloudMachineProviderConfig
 	IgnitionBucket        string
 	IgnitionPresignedURL  string
 	Publish               types.PublishingStrategy
@@ -92,7 +92,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		BootstrapInstanceType:     masterConfig.InstanceType,
 		MasterInstanceType:        masterConfig.InstanceType,
 		ImageID:                   masterConfig.ImageID,
-		SystemDiskSize:            masterConfig.SystemDisk.Size,
+		SystemDiskSize:            int(masterConfig.SystemDisk.Size),
 		SystemDiskCategory:        masterConfig.SystemDisk.Category,
 		ExtraTags:                 tags,
 		IgnitionBucket:            sources.IgnitionBucket,

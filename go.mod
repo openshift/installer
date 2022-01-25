@@ -51,10 +51,9 @@ require (
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0
 	github.com/mitchellh/cli v1.1.2
 	github.com/openshift-metal3/terraform-provider-ironic v0.2.7
-	github.com/openshift/api v0.0.0-20211210181228-6e0b1eb97188
+	github.com/openshift/api v0.0.0-20220124143425-d74727069f6f
 	github.com/openshift/client-go v0.0.0-20211025111749-96ca2abfc56c
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
-	github.com/openshift/cluster-api-provider-alibaba v0.0.0-20211123142315-d16daa4e6349
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20210924143856-c2d3ece4da38
 	github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20211008100740-4d7907adbd6b
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
