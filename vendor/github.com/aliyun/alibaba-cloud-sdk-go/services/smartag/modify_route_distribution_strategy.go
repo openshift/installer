@@ -71,16 +71,16 @@ func (client *Client) ModifyRouteDistributionStrategyWithCallback(request *Modif
 // ModifyRouteDistributionStrategyRequest is the request struct for api ModifyRouteDistributionStrategy
 type ModifyRouteDistributionStrategyRequest struct {
 	*requests.RpcRequest
-	RouteSource          string           `position:"Query"`
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	HcInstanceId         string           `position:"Query"`
-	SourceType           string           `position:"Query"`
-	DestCidrBlock        string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	RouteDistribution    string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	RouteSource          string           `position:"Query" name:"RouteSource"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	HcInstanceId         string           `position:"Query" name:"HcInstanceId"`
+	SourceType           string           `position:"Query" name:"SourceType"`
+	DestCidrBlock        string           `position:"Query" name:"DestCidrBlock"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	RouteDistribution    string           `position:"Query" name:"RouteDistribution"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // ModifyRouteDistributionStrategyResponse is the response struct for api ModifyRouteDistributionStrategy

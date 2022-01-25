@@ -83,8 +83,8 @@ type DescribePortRequest struct {
 // DescribePortResponse is the response struct for api DescribePort
 type DescribePortResponse struct {
 	*responses.BaseResponse
-	RequestId    string        `json:"RequestId" xml:"RequestId"`
 	TotalCount   int64         `json:"TotalCount" xml:"TotalCount"`
+	RequestId    string        `json:"RequestId" xml:"RequestId"`
 	NetworkRules []NetworkRule `json:"NetworkRules" xml:"NetworkRules"`
 }
 

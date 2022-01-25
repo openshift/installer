@@ -71,21 +71,21 @@ func (client *Client) ModifyQosCarWithCallback(request *ModifyQosCarRequest, cal
 // ModifyQosCarRequest is the request struct for api ModifyQosCar
 type ModifyQosCarRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	MinBandwidthAbs      requests.Integer `position:"Query"`
-	Description          string           `position:"Query"`
-	PercentSourceType    string           `position:"Query"`
-	QosId                string           `position:"Query"`
-	MaxBandwidthAbs      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	MaxBandwidthPercent  requests.Integer `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	QosCarId             string           `position:"Query"`
-	Priority             requests.Integer `position:"Query"`
-	MinBandwidthPercent  requests.Integer `position:"Query"`
-	LimitType            string           `position:"Query"`
-	Name                 string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	MinBandwidthAbs      requests.Integer `position:"Query" name:"MinBandwidthAbs"`
+	Description          string           `position:"Query" name:"Description"`
+	PercentSourceType    string           `position:"Query" name:"PercentSourceType"`
+	QosId                string           `position:"Query" name:"QosId"`
+	MaxBandwidthAbs      requests.Integer `position:"Query" name:"MaxBandwidthAbs"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	MaxBandwidthPercent  requests.Integer `position:"Query" name:"MaxBandwidthPercent"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	QosCarId             string           `position:"Query" name:"QosCarId"`
+	Priority             requests.Integer `position:"Query" name:"Priority"`
+	MinBandwidthPercent  requests.Integer `position:"Query" name:"MinBandwidthPercent"`
+	LimitType            string           `position:"Query" name:"LimitType"`
+	Name                 string           `position:"Query" name:"Name"`
 }
 
 // ModifyQosCarResponse is the response struct for api ModifyQosCar

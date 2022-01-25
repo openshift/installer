@@ -17,23 +17,28 @@ package cms
 
 // OptionJson is a nested struct in cms response
 type OptionJson struct {
-	DnsType         string  `json:"dns_type" xml:"dns_type"`
-	DnsServer       string  `json:"dns_server" xml:"dns_server"`
-	ExpectValue     string  `json:"expect_value" xml:"expect_value"`
-	HttpMethod      string  `json:"http_method" xml:"http_method"`
-	ResponseContent string  `json:"response_content" xml:"response_content"`
-	MatchRule       int     `json:"match_rule" xml:"match_rule"`
-	RequestContent  string  `json:"request_content" xml:"request_content"`
-	Cookie          string  `json:"cookie" xml:"cookie"`
-	Header          string  `json:"header" xml:"header"`
-	Username        string  `json:"username" xml:"username"`
-	Password        string  `json:"password" xml:"password"`
-	TimeOut         int64   `json:"time_out" xml:"time_out"`
-	PingNum         int     `json:"ping_num" xml:"ping_num"`
-	FailureRate     float64 `json:"failure_rate" xml:"failure_rate"`
-	RequestFormat   string  `json:"request_format" xml:"request_format"`
-	ResponseFormat  string  `json:"response_format" xml:"response_format"`
-	Port            int     `json:"port" xml:"port"`
-	Authentication  int     `json:"authentication" xml:"authentication"`
-	Traceroute      int64   `json:"traceroute" xml:"traceroute"`
+	DnsType                string  `json:"dns_type" xml:"dns_type"`
+	DnsServer              string  `json:"dns_server" xml:"dns_server"`
+	ExpectValue            string  `json:"expect_value" xml:"expect_value"`
+	HttpMethod             string  `json:"http_method" xml:"http_method"`
+	ResponseContent        string  `json:"response_content" xml:"response_content"`
+	MatchRule              int     `json:"match_rule" xml:"match_rule"`
+	RequestContent         string  `json:"request_content" xml:"request_content"`
+	Cookie                 string  `json:"cookie" xml:"cookie"`
+	Header                 string  `json:"header" xml:"header"`
+	Username               string  `json:"username" xml:"username"`
+	Password               string  `json:"password" xml:"password"`
+	TimeOut                int64   `json:"time_out" xml:"time_out"`
+	PingNum                int     `json:"ping_num" xml:"ping_num"`
+	FailureRate            float64 `json:"failure_rate" xml:"failure_rate"`
+	RequestFormat          string  `json:"request_format" xml:"request_format"`
+	ResponseFormat         string  `json:"response_format" xml:"response_format"`
+	Port                   int     `json:"port" xml:"port"`
+	Authentication         int     `json:"authentication" xml:"authentication"`
+	Traceroute             int64   `json:"traceroute" xml:"traceroute"`
+	CertVerify             bool    `json:"cert_verify" xml:"cert_verify"`
+	UnfollowRedirect       bool    `json:"unfollow_redirect" xml:"unfollow_redirect"`
+	ProxyProtocol          bool    `json:"proxy_protocol" xml:"proxy_protocol"`
+	AcceptableResponseCode string  `json:"acceptable_response_code" xml:"acceptable_response_code"`
+	Ipv6Task               string  `json:"ipv6_task" xml:"ipv6_task"`
 }

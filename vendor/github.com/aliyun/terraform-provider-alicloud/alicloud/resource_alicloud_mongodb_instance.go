@@ -163,11 +163,56 @@ func resourceAlicloudMongoDBInstance() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"order_type": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice([]string{"UPGRADE", "DOWNGRADE"}, false),
+			},
 			"ssl_status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"tags": tagsSchema(),
+			"replica_sets": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"vswitch_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"connection_port": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"replica_set_role": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"connection_domain": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"vpc_cloud_instance_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"network_type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"vpc_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"auto_renew": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -238,6 +283,9 @@ func buildMongoDBCreateRequest(d *schema.ResourceData, meta interface{}) (*dds.C
 		request.SecurityIPList = strings.Join(expandStringList(d.Get("security_ip_list").(*schema.Set).List())[:], COMMA_SEPARATED)
 	}
 
+	if v, ok := d.GetOk("auto_renew"); ok {
+		request.AutoRenew = strconv.FormatBool(v.(bool))
+	}
 	request.ClientToken = buildClientToken(request.GetActionName())
 	return request, nil
 }
@@ -261,9 +309,7 @@ func resourceAlicloudMongoDBInstanceCreate(d *schema.ResourceData, meta interfac
 
 	addDebug(request.GetActionName(), raw, request.RpcRequest, request)
 	response, _ := raw.(*dds.CreateDBInstanceResponse)
-
 	d.SetId(response.DBInstanceId)
-
 	stateConf := BuildStateConf([]string{"Creating"}, []string{"Running"}, d.Timeout(schema.TimeoutCreate), 1*time.Minute, ddsService.RdsMongodbDBInstanceStateRefreshFunc(d.Id(), []string{"Deleting"}))
 	if _, err := stateConf.WaitForState(); err != nil {
 		return WrapError(err)
@@ -285,6 +331,21 @@ func resourceAlicloudMongoDBInstanceRead(d *schema.ResourceData, meta interface{
 		return WrapError(err)
 	}
 
+	if len(instance.ReplicaSets.ReplicaSet) > 0 {
+		replicaSets := make([]map[string]interface{}, 0)
+		for _, v := range instance.ReplicaSets.ReplicaSet {
+			replicaSets = append(replicaSets, map[string]interface{}{
+				"vswitch_id":            v.VSwitchId,
+				"connection_port":       v.ConnectionPort,
+				"replica_set_role":      v.ReplicaSetRole,
+				"connection_domain":     v.ConnectionDomain,
+				"vpc_cloud_instance_id": v.VPCCloudInstanceId,
+				"network_type":          v.NetworkType,
+				"vpc_id":                v.VPCId,
+			})
+		}
+		d.Set("replica_sets", replicaSets)
+	}
 	backupPolicy, err := ddsService.DescribeMongoDBBackupPolicy(d.Id())
 	if err != nil {
 		return WrapError(err)
@@ -359,6 +420,9 @@ func resourceAlicloudMongoDBInstanceUpdate(d *schema.ResourceData, meta interfac
 		prePaidRequest.InstanceId = d.Id()
 		prePaidRequest.AutoPay = requests.NewBoolean(true)
 		prePaidRequest.Period = requests.NewInteger(d.Get("period").(int))
+		if v, ok := d.GetOk("auto_renew"); ok {
+			prePaidRequest.AutoRenew = strconv.FormatBool(v.(bool))
+		}
 		raw, err := client.WithDdsClient(func(client *dds.Client) (interface{}, error) {
 			return client.TransformToPrePaid(prePaidRequest)
 		})
@@ -520,6 +584,11 @@ func resourceAlicloudMongoDBInstanceUpdate(d *schema.ResourceData, meta interfac
 		}
 		addDebug(request.GetActionName(), raw, request.RpcRequest, request)
 		d.SetPartial("ssl_action")
+		// wait instance status is running after modifying
+		stateConf := BuildStateConf([]string{"SSLModifying"}, []string{"Running"}, d.Timeout(schema.TimeoutUpdate), 0, ddsService.RdsMongodbDBInstanceStateRefreshFunc(d.Id(), []string{"Deleting"}))
+		if _, err := stateConf.WaitForState(); err != nil {
+			return WrapError(err)
+		}
 	}
 
 	if d.HasChange("db_instance_storage") ||
@@ -529,6 +598,11 @@ func resourceAlicloudMongoDBInstanceUpdate(d *schema.ResourceData, meta interfac
 		request := dds.CreateModifyDBInstanceSpecRequest()
 		request.DBInstanceId = d.Id()
 
+		if d.Get("instance_charge_type").(string) == "PrePaid" {
+			if v, ok := d.GetOk("order_type"); ok {
+				request.OrderType = v.(string)
+			}
+		}
 		request.DBInstanceClass = d.Get("db_instance_class").(string)
 		request.DBInstanceStorage = strconv.Itoa(d.Get("db_instance_storage").(int))
 		request.ReplicationFactor = strconv.Itoa(d.Get("replication_factor").(int))
@@ -566,6 +640,11 @@ func resourceAlicloudMongoDBInstanceUpdate(d *schema.ResourceData, meta interfac
 }
 
 func resourceAlicloudMongoDBInstanceDelete(d *schema.ResourceData, meta interface{}) error {
+	// Pre paid instance can not be release.
+	if d.Get("instance_charge_type").(string) == string(PrePaid) {
+		log.Printf("[WARN] Cannot destroy resourceAlicloudMongoDBInstance. Terraform will remove this resource from the state file, however resources may remain.")
+		return nil
+	}
 	client := meta.(*connectivity.AliyunClient)
 	ddsService := MongoDBService{client}
 

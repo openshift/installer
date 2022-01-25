@@ -161,7 +161,7 @@ func resourceAlicloudGaIpSetUpdate(d *schema.ResourceData, meta interface{}) err
 			request["ClientToken"] = buildClientToken("UpdateIpSet")
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-11-20"), StringPointer("AK"), nil, request, &runtime)
 			if err != nil {
-				if IsExpectedErrors(err, []string{"StateError.Accelerator", "StateError.IpSet"}) {
+				if IsExpectedErrors(err, []string{"StateError.Accelerator", "StateError.IpSet", "GreaterThanGa.IpSetBandwidth"}) {
 					wait()
 					return resource.RetryableError(err)
 				}

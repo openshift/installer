@@ -71,16 +71,16 @@ func (client *Client) CreateSmartAccessGatewayClientUserWithCallback(request *Cr
 // CreateSmartAccessGatewayClientUserRequest is the request struct for api CreateSmartAccessGatewayClientUser
 type CreateSmartAccessGatewayClientUserRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	Password             string           `position:"Query"`
-	ClientIp             string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	Bandwidth            requests.Integer `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	UserMail             string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	UserName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	Password             string           `position:"Query" name:"Password"`
+	ClientIp             string           `position:"Query" name:"ClientIp"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	Bandwidth            requests.Integer `position:"Query" name:"Bandwidth"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	UserMail             string           `position:"Query" name:"UserMail"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	UserName             string           `position:"Query" name:"UserName"`
 }
 
 // CreateSmartAccessGatewayClientUserResponse is the response struct for api CreateSmartAccessGatewayClientUser

@@ -71,13 +71,13 @@ func (client *Client) DescribeDeviceAutoUpgradePolicyWithCallback(request *Descr
 // DescribeDeviceAutoUpgradePolicyRequest is the request struct for api DescribeDeviceAutoUpgradePolicy
 type DescribeDeviceAutoUpgradePolicyRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SerialNumber         string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	VersionType          string           `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SerialNumber         string           `position:"Query" name:"SerialNumber"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	VersionType          string           `position:"Query" name:"VersionType"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // DescribeDeviceAutoUpgradePolicyResponse is the response struct for api DescribeDeviceAutoUpgradePolicy
@@ -85,8 +85,8 @@ type DescribeDeviceAutoUpgradePolicyResponse struct {
 	*responses.BaseResponse
 	UpgradeType    string `json:"UpgradeType" xml:"UpgradeType"`
 	TimeZone       string `json:"TimeZone" xml:"TimeZone"`
-	RequestId      string `json:"RequestId" xml:"RequestId"`
 	SerialNumber   string `json:"SerialNumber" xml:"SerialNumber"`
+	RequestId      string `json:"RequestId" xml:"RequestId"`
 	Jitter         string `json:"Jitter" xml:"Jitter"`
 	Duration       string `json:"Duration" xml:"Duration"`
 	CronExpression string `json:"CronExpression" xml:"CronExpression"`

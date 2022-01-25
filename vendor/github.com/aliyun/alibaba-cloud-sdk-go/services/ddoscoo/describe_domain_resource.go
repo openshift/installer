@@ -82,8 +82,8 @@ type DescribeDomainResourceRequest struct {
 // DescribeDomainResourceResponse is the response struct for api DescribeDomainResource
 type DescribeDomainResourceResponse struct {
 	*responses.BaseResponse
-	RequestId  string    `json:"RequestId" xml:"RequestId"`
 	TotalCount int64     `json:"TotalCount" xml:"TotalCount"`
+	RequestId  string    `json:"RequestId" xml:"RequestId"`
 	WebRules   []WebRule `json:"WebRules" xml:"WebRules"`
 }
 

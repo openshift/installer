@@ -71,11 +71,11 @@ func (client *Client) DeleteHealthCheckWithCallback(request *DeleteHealthCheckRe
 // DeleteHealthCheckRequest is the request struct for api DeleteHealthCheck
 type DeleteHealthCheckRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	HcInstanceId         string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	HcInstanceId         string           `position:"Query" name:"HcInstanceId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
 }
 
 // DeleteHealthCheckResponse is the response struct for api DeleteHealthCheck

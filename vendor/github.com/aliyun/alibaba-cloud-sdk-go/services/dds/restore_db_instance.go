@@ -91,7 +91,7 @@ func CreateRestoreDBInstanceRequest() (request *RestoreDBInstanceRequest) {
 	request = &RestoreDBInstanceRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "RestoreDBInstance", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "RestoreDBInstance", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

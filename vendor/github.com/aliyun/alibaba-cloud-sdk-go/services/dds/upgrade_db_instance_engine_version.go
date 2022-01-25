@@ -91,7 +91,7 @@ func CreateUpgradeDBInstanceEngineVersionRequest() (request *UpgradeDBInstanceEn
 	request = &UpgradeDBInstanceEngineVersionRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "UpgradeDBInstanceEngineVersion", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "UpgradeDBInstanceEngineVersion", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

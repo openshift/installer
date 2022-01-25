@@ -77,11 +77,11 @@ type QueryCustomerAddressListRequest struct {
 // QueryCustomerAddressListResponse is the response struct for api QueryCustomerAddressList
 type QueryCustomerAddressListResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                         `json:"RequestId" xml:"RequestId"`
+	Success   bool                           `json:"Success" xml:"Success"`
+	Code      string                         `json:"Code" xml:"Code"`
+	Message   string                         `json:"Message" xml:"Message"`
+	Data      DataInQueryCustomerAddressList `json:"Data" xml:"Data"`
 }
 
 // CreateQueryCustomerAddressListRequest creates a request to invoke QueryCustomerAddressList API

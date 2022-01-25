@@ -71,12 +71,12 @@ func (client *Client) DescribeUserOnlineClientsWithCallback(request *DescribeUse
 // DescribeUserOnlineClientsRequest is the request struct for api DescribeUserOnlineClients
 type DescribeUserOnlineClientsRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	UserName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	UserName             string           `position:"Query" name:"UserName"`
 }
 
 // DescribeUserOnlineClientsResponse is the response struct for api DescribeUserOnlineClients

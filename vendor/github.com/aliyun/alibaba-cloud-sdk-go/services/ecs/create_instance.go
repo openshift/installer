@@ -82,6 +82,7 @@ type CreateInstanceRequest struct {
 	PrivatePoolOptionsMatchCriteria string                    `position:"Query" name:"PrivatePoolOptions.MatchCriteria"`
 	HostName                        string                    `position:"Query" name:"HostName"`
 	Password                        string                    `position:"Query" name:"Password"`
+	SystemDisk                      string                    `position:"Query" name:"SystemDisk"`
 	DeploymentSetGroupNo            requests.Integer          `position:"Query" name:"DeploymentSetGroupNo"`
 	StorageSetPartitionNumber       requests.Integer          `position:"Query" name:"StorageSetPartitionNumber"`
 	Tag                             *[]CreateInstanceTag      `position:"Query" name:"Tag"  type:"Repeated"`
@@ -162,6 +163,7 @@ type CreateInstanceDataDisk struct {
 	PerformanceLevel   string `name:"PerformanceLevel"`
 	EncryptAlgorithm   string `name:"EncryptAlgorithm"`
 	Description        string `name:"Description"`
+	StorageClusterId   string `name:"StorageClusterId"`
 	Category           string `name:"Category"`
 	KMSKeyId           string `name:"KMSKeyId"`
 	Device             string `name:"Device"`

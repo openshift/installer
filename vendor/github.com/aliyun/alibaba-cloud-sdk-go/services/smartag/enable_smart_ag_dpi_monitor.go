@@ -71,15 +71,15 @@ func (client *Client) EnableSmartAGDpiMonitorWithCallback(request *EnableSmartAG
 // EnableSmartAGDpiMonitorRequest is the request struct for api EnableSmartAGDpiMonitor
 type EnableSmartAGDpiMonitorRequest struct {
 	*requests.RpcRequest
-	SlsLogStore          string           `position:"Query"`
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ClientToken          string           `position:"Query"`
-	SlsProjectName       string           `position:"Query"`
-	DryRun               requests.Boolean `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	SlsLogStore          string           `position:"Query" name:"SlsLogStore"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ClientToken          string           `position:"Query" name:"ClientToken"`
+	SlsProjectName       string           `position:"Query" name:"SlsProjectName"`
+	DryRun               requests.Boolean `position:"Query" name:"DryRun"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // EnableSmartAGDpiMonitorResponse is the response struct for api EnableSmartAGDpiMonitor

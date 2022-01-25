@@ -80,11 +80,11 @@ type DescribePricingModuleRequest struct {
 // DescribePricingModuleResponse is the response struct for api DescribePricingModule
 type DescribePricingModuleResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                      `json:"RequestId" xml:"RequestId"`
+	Success   bool                        `json:"Success" xml:"Success"`
+	Code      string                      `json:"Code" xml:"Code"`
+	Message   string                      `json:"Message" xml:"Message"`
+	Data      DataInDescribePricingModule `json:"Data" xml:"Data"`
 }
 
 // CreateDescribePricingModuleRequest creates a request to invoke DescribePricingModule API

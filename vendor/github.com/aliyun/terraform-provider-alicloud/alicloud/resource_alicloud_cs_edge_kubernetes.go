@@ -269,6 +269,7 @@ func resourceAlicloudCSEdgeKubernetes() *schema.Resource {
 			"resource_group_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			// computed parameters start
 			"certificate_authority": {
@@ -391,6 +392,13 @@ func resourceAlicloudCSEdgeKubernetes() *schema.Resource {
 			"tags": {
 				Type:     schema.TypeMap,
 				Optional: true,
+			},
+			"retain_resources": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}

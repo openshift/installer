@@ -17,21 +17,21 @@ package smartag
 
 // HealthCheck is a nested struct in smartag response
 type HealthCheck struct {
-	Status             string `json:"Status" xml:"Status"`
-	Description        string `json:"Description" xml:"Description"`
-	SrcPort            int    `json:"SrcPort" xml:"SrcPort"`
-	SrcIpAddr          string `json:"SrcIpAddr" xml:"SrcIpAddr"`
-	FailCountThreshold int    `json:"FailCountThreshold" xml:"FailCountThreshold"`
-	DstPort            int    `json:"DstPort" xml:"DstPort"`
-	Name               string `json:"Name" xml:"Name"`
-	ProbeCount         int    `json:"ProbeCount" xml:"ProbeCount"`
 	Type               string `json:"Type" xml:"Type"`
 	ProbeTimeout       int    `json:"ProbeTimeout" xml:"ProbeTimeout"`
-	HcInstanceId       string `json:"HcInstanceId" xml:"HcInstanceId"`
-	RttThreshold       int    `json:"RttThreshold" xml:"RttThreshold"`
-	ProbeInterval      int    `json:"ProbeInterval" xml:"ProbeInterval"`
-	RelationCount      int    `json:"RelationCount" xml:"RelationCount"`
-	SmartAGId          string `json:"SmartAGId" xml:"SmartAGId"`
-	RttFailThreshold   int    `json:"RttFailThreshold" xml:"RttFailThreshold"`
+	Status             string `json:"Status" xml:"Status"`
 	DstIpAddr          string `json:"DstIpAddr" xml:"DstIpAddr"`
+	RelationCount      int    `json:"RelationCount" xml:"RelationCount"`
+	RttFailThreshold   int    `json:"RttFailThreshold" xml:"RttFailThreshold"`
+	SmartAGId          string `json:"SmartAGId" xml:"SmartAGId"`
+	DstPort            int    `json:"DstPort" xml:"DstPort"`
+	FailCountThreshold int    `json:"FailCountThreshold" xml:"FailCountThreshold"`
+	RttThreshold       int    `json:"RttThreshold" xml:"RttThreshold"`
+	SrcPort            int    `json:"SrcPort" xml:"SrcPort"`
+	ProbeCount         int    `json:"ProbeCount" xml:"ProbeCount"`
+	Description        string `json:"Description" xml:"Description"`
+	SrcIpAddr          string `json:"SrcIpAddr" xml:"SrcIpAddr"`
+	ProbeInterval      int    `json:"ProbeInterval" xml:"ProbeInterval"`
+	Name               string `json:"Name" xml:"Name"`
+	HcInstanceId       string `json:"HcInstanceId" xml:"HcInstanceId"`
 }

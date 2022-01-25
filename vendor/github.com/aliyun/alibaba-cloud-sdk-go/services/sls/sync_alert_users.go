@@ -78,11 +78,11 @@ type SyncAlertUsersRequest struct {
 // SyncAlertUsersResponse is the response struct for api SyncAlertUsers
 type SyncAlertUsersResponse struct {
 	*responses.BaseResponse
-	Code      bool   `json:"Code" xml:"Code"`
-	Data      string `json:"Data" xml:"Data"`
-	Message   string `json:"Message" xml:"Message"`
 	RequestId string `json:"RequestId" xml:"RequestId"`
 	Success   bool   `json:"Success" xml:"Success"`
+	Code      string `json:"Code" xml:"Code"`
+	Message   string `json:"Message" xml:"Message"`
+	Data      string `json:"Data" xml:"Data"`
 }
 
 // CreateSyncAlertUsersRequest creates a request to invoke SyncAlertUsers API
@@ -90,7 +90,7 @@ func CreateSyncAlertUsersRequest() (request *SyncAlertUsersRequest) {
 	request = &SyncAlertUsersRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Sls", "2018-06-13", "SyncAlertUsers", "", "")
+	request.InitWithApiInfo("Sls", "2019-10-23", "SyncAlertUsers", "", "")
 	request.Method = requests.POST
 	return
 }

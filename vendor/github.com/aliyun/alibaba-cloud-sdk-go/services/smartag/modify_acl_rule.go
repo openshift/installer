@@ -72,24 +72,24 @@ func (client *Client) ModifyACLRuleWithCallback(request *ModifyACLRuleRequest, c
 type ModifyACLRuleRequest struct {
 	*requests.RpcRequest
 	DpiGroupIds          *[]string        `position:"Query" name:"DpiGroupIds"  type:"Repeated"`
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SourcePortRange      string           `position:"Query"`
-	SourceCidr           string           `position:"Query"`
-	Description          string           `position:"Query"`
-	Type                 string           `position:"Query"`
-	DestCidr             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SourcePortRange      string           `position:"Query" name:"SourcePortRange"`
+	SourceCidr           string           `position:"Query" name:"SourceCidr"`
+	Description          string           `position:"Query" name:"Description"`
+	Type                 string           `position:"Query" name:"Type"`
+	DestCidr             string           `position:"Query" name:"DestCidr"`
 	DpiSignatureIds      *[]string        `position:"Query" name:"DpiSignatureIds"  type:"Repeated"`
-	Direction            string           `position:"Query"`
-	Policy               string           `position:"Query"`
-	AclId                string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	IpProtocol           string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	Priority             requests.Integer `position:"Query"`
-	AcrId                string           `position:"Query"`
-	DestPortRange        string           `position:"Query"`
-	Name                 string           `position:"Query"`
+	Direction            string           `position:"Query" name:"Direction"`
+	Policy               string           `position:"Query" name:"Policy"`
+	AclId                string           `position:"Query" name:"AclId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	IpProtocol           string           `position:"Query" name:"IpProtocol"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	Priority             requests.Integer `position:"Query" name:"Priority"`
+	AcrId                string           `position:"Query" name:"AcrId"`
+	DestPortRange        string           `position:"Query" name:"DestPortRange"`
+	Name                 string           `position:"Query" name:"Name"`
 }
 
 // ModifyACLRuleResponse is the response struct for api ModifyACLRule
@@ -97,8 +97,8 @@ type ModifyACLRuleResponse struct {
 	*responses.BaseResponse
 	Policy          string                         `json:"Policy" xml:"Policy"`
 	Description     string                         `json:"Description" xml:"Description"`
-	SourcePortRange string                         `json:"SourcePortRange" xml:"SourcePortRange"`
 	RequestId       string                         `json:"RequestId" xml:"RequestId"`
+	SourcePortRange string                         `json:"SourcePortRange" xml:"SourcePortRange"`
 	SourceCidr      string                         `json:"SourceCidr" xml:"SourceCidr"`
 	Priority        int                            `json:"Priority" xml:"Priority"`
 	AclId           string                         `json:"AclId" xml:"AclId"`
@@ -109,8 +109,8 @@ type ModifyACLRuleResponse struct {
 	GmtCreate       int64                          `json:"GmtCreate" xml:"GmtCreate"`
 	DestCidr        string                         `json:"DestCidr" xml:"DestCidr"`
 	IpProtocol      string                         `json:"IpProtocol" xml:"IpProtocol"`
-	DpiSignatureIds DpiSignatureIdsInModifyACLRule `json:"DpiSignatureIds" xml:"DpiSignatureIds"`
 	DpiGroupIds     DpiGroupIdsInModifyACLRule     `json:"DpiGroupIds" xml:"DpiGroupIds"`
+	DpiSignatureIds DpiSignatureIdsInModifyACLRule `json:"DpiSignatureIds" xml:"DpiSignatureIds"`
 }
 
 // CreateModifyACLRuleRequest creates a request to invoke ModifyACLRule API

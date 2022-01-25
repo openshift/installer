@@ -71,24 +71,24 @@ func (client *Client) DescribeQosPoliciesWithCallback(request *DescribeQosPolici
 // DescribeQosPoliciesRequest is the request struct for api DescribeQosPolicies
 type DescribeQosPoliciesRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	QosPolicyId          string           `position:"Query"`
-	Description          string           `position:"Query"`
-	PageNumber           requests.Integer `position:"Query"`
-	PageSize             requests.Integer `position:"Query"`
-	QosId                string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	Priority             requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	QosPolicyId          string           `position:"Query" name:"QosPolicyId"`
+	Description          string           `position:"Query" name:"Description"`
+	PageNumber           requests.Integer `position:"Query" name:"PageNumber"`
+	PageSize             requests.Integer `position:"Query" name:"PageSize"`
+	QosId                string           `position:"Query" name:"QosId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	Priority             requests.Integer `position:"Query" name:"Priority"`
 }
 
 // DescribeQosPoliciesResponse is the response struct for api DescribeQosPolicies
 type DescribeQosPoliciesResponse struct {
 	*responses.BaseResponse
 	TotalCount  int                              `json:"TotalCount" xml:"TotalCount"`
-	RequestId   string                           `json:"RequestId" xml:"RequestId"`
 	PageSize    int                              `json:"PageSize" xml:"PageSize"`
+	RequestId   string                           `json:"RequestId" xml:"RequestId"`
 	PageNumber  int                              `json:"PageNumber" xml:"PageNumber"`
 	QosPolicies QosPoliciesInDescribeQosPolicies `json:"QosPolicies" xml:"QosPolicies"`
 }

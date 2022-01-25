@@ -114,21 +114,15 @@ func resourceAlicloudCmsMonitorGroupInstancesRead(d *schema.ResourceData, meta i
 	}
 
 	d.Set("group_id", d.Id())
-
 	resourceMap := make([]map[string]interface{}, 0)
-	if resourceMapList, ok := object["Resources"].(map[string]interface{})["Resource"].([]interface{}); ok {
-		for _, v := range resourceMapList {
-			if m1, ok := v.(map[string]interface{}); ok {
-				temp1 := map[string]interface{}{
-					"category":      strings.ToLower(m1["Category"].(string)),
-					"instance_id":   m1["InstanceId"],
-					"instance_name": m1["InstanceName"],
-					"region_id":     m1["RegionId"],
-				}
-				resourceMap = append(resourceMap, temp1)
-
-			}
+	for _, v := range object {
+		temp1 := map[string]interface{}{
+			"category":      strings.ToLower(v["Category"].(string)),
+			"instance_id":   v["InstanceId"],
+			"instance_name": v["InstanceName"],
+			"region_id":     v["RegionId"],
 		}
+		resourceMap = append(resourceMap, temp1)
 	}
 	if err := d.Set("instances", resourceMap); err != nil {
 		return WrapError(err)

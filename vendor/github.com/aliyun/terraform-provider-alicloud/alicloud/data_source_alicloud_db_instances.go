@@ -2,11 +2,14 @@ package alicloud
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
+	"time"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/rds"
+	"github.com/PaesslerAG/jsonpath"
+	util "github.com/alibabacloud-go/tea-utils/service"
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
@@ -61,6 +64,11 @@ func dataSourceAlicloudDBInstances() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"enable_details": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 			"connection_mode": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -86,6 +94,38 @@ func dataSourceAlicloudDBInstances() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"parameters": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"force_modify": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"checking_code": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"parameter_value": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"force_restart": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"parameter_name": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"parameter_description": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
 						"id": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -305,28 +345,47 @@ func dataSourceAlicloudDBInstances() *schema.Resource {
 
 func dataSourceAlicloudDBInstancesRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
-
-	request := rds.CreateDescribeDBInstancesRequest()
-
-	request.RegionId = client.RegionId
-	request.Engine = d.Get("engine").(string)
-	request.DBInstanceStatus = d.Get("status").(string)
-	request.DBInstanceType = d.Get("db_type").(string)
-	request.VpcId = d.Get("vpc_id").(string)
-	request.VSwitchId = d.Get("vswitch_id").(string)
-	request.ConnectionMode = d.Get("connection_mode").(string)
+	action := "DescribeDBInstances"
+	request := map[string]interface{}{
+		"RegionId":   client.RegionId,
+		"SourceIp":   client.SourceIp,
+		"PageSize":   PageSizeLarge,
+		"PageNumber": 1,
+	}
+	if v, ok := d.GetOk("engine"); ok && v.(string) != "" {
+		request["Engine"] = v.(string)
+	}
+	if v, ok := d.GetOk("status"); ok && v.(string) != "" {
+		request["DBInstanceStatus"] = v.(string)
+	}
+	if v, ok := d.GetOk("db_type"); ok && v.(string) != "" {
+		request["DBInstanceType"] = v.(string)
+	}
+	if v, ok := d.GetOk("vpc_id"); ok && v.(string) != "" {
+		request["VpcId"] = v.(string)
+	}
+	if v, ok := d.GetOk("vswitch_id"); ok && v.(string) != "" {
+		request["VSwitchId"] = v.(string)
+	}
+	if v, ok := d.GetOk("connection_mode"); ok && v.(string) != "" {
+		request["ConnectionMode"] = v.(string)
+	}
 	if v, ok := d.GetOk("tags"); ok {
 		tagsMap := v.(map[string]interface{})
 		bs, err := json.Marshal(tagsMap)
 		if err != nil {
 			return WrapError(err)
 		}
-		request.Tags = string(bs)
+		request["Tags"] = string(bs)
 	}
-	request.PageSize = requests.NewInteger(PageSizeLarge)
-	request.PageNumber = requests.NewInteger(1)
 
-	var dbi []rds.DBInstance
+	var response map[string]interface{}
+	conn, err := client.NewRdsClient()
+	if err != nil {
+		return WrapError(err)
+	}
+
+	var objects []map[string]interface{}
 
 	var nameRegex *regexp.Regexp
 	if v, ok := d.GetOk("name_regex"); ok {
@@ -349,48 +408,52 @@ func dataSourceAlicloudDBInstancesRead(d *schema.ResourceData, meta interface{})
 	}
 
 	for {
-		raw, err := client.WithRdsClient(func(rdsClient *rds.Client) (interface{}, error) {
-			return rdsClient.DescribeDBInstances(request)
+		runtime := util.RuntimeOptions{}
+		runtime.SetAutoretry(true)
+		wait := incrementalWait(3*time.Second, 3*time.Second)
+		err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-08-15"), StringPointer("AK"), nil, request, &runtime)
+			if err != nil {
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			return nil
 		})
+		addDebug(action, response, request)
 		if err != nil {
-			return WrapErrorf(err, DataDefaultErrorMsg, "alicloud_db_instances", request.GetActionName(), AlibabaCloudSdkGoERROR)
+			return WrapErrorf(err, DataDefaultErrorMsg, "alicloud_db_instances", action, AlibabaCloudSdkGoERROR)
 		}
-		addDebug(request.GetActionName(), raw, request.RpcRequest, request)
-		response, _ := raw.(*rds.DescribeDBInstancesResponse)
-		if len(response.Items.DBInstance) < 1 {
-			break
+		resp, err := jsonpath.Get("$.Items.DBInstance", response)
+		if err != nil {
+			return WrapErrorf(err, FailedGetAttributeMsg, action, "$.Items.DBInstance", response)
 		}
-
-		for _, item := range response.Items.DBInstance {
+		result, _ := resp.([]interface{})
+		for _, v := range result {
+			item := v.(map[string]interface{})
 			if nameRegex != nil {
-				if !nameRegex.MatchString(item.DBInstanceDescription) {
+				if !nameRegex.MatchString(fmt.Sprint(item["DBInstanceDescription"])) {
 					continue
 				}
 			}
-
 			if len(idsMap) > 0 {
-				if _, ok := idsMap[item.DBInstanceId]; !ok {
+				if _, ok := idsMap[fmt.Sprint(item["DBInstanceId"])]; !ok {
 					continue
 				}
 			}
-
-			dbi = append(dbi, item)
+			objects = append(objects, item)
 		}
-
-		if len(response.Items.DBInstance) < PageSizeLarge {
+		if len(result) < PageSizeLarge {
 			break
 		}
-
-		page, err := getNextpageNumber(request.PageNumber)
-		if err != nil {
-			return WrapError(err)
-		}
-		request.PageNumber = page
+		request["PageNumber"] = request["PageNumber"].(int) + 1
 	}
-	return rdsInstancesDescription(d, meta, dbi)
+	return rdsInstancesDescription(d, meta, objects)
 }
 
-func rdsInstancesDescription(d *schema.ResourceData, meta interface{}, dbi []rds.DBInstance) error {
+func rdsInstancesDescription(d *schema.ResourceData, meta interface{}, objects []map[string]interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	rdsService := RdsService{client}
 
@@ -398,44 +461,44 @@ func rdsInstancesDescription(d *schema.ResourceData, meta interface{}, dbi []rds
 	var names []string
 	var s []map[string]interface{}
 
-	for _, item := range dbi {
+	for _, item := range objects {
 		readOnlyInstanceIDs := []string{}
-		for _, id := range item.ReadOnlyDBInstanceIds.ReadOnlyDBInstanceId {
-			readOnlyInstanceIDs = append(readOnlyInstanceIDs, id.DBInstanceId)
+		for _, id := range item["ReadOnlyDBInstanceIds"].(map[string]interface{})["ReadOnlyDBInstanceId"].([]interface{}) {
+			readOnlyInstanceIDs = append(readOnlyInstanceIDs, fmt.Sprint(id.(map[string]interface{})["DBInstanceId"]))
 		}
-		instance, err := rdsService.DescribeDBInstance(item.DBInstanceId)
+		instance, err := rdsService.DescribeDBInstance(fmt.Sprint(item["DBInstanceId"]))
 		if err != nil {
 			return WrapError(err)
 		}
 
 		mapping := map[string]interface{}{
-			"id":                       item.DBInstanceId,
-			"name":                     item.DBInstanceDescription,
-			"charge_type":              item.PayType,
-			"db_type":                  item.DBInstanceType,
-			"region_id":                item.RegionId,
-			"create_time":              item.CreateTime,
-			"expire_time":              item.ExpireTime,
-			"status":                   item.DBInstanceStatus,
-			"engine":                   item.Engine,
-			"engine_version":           item.EngineVersion,
-			"net_type":                 item.DBInstanceNetType,
-			"connection_mode":          item.ConnectionMode,
-			"instance_type":            item.DBInstanceClass,
-			"availability_zone":        item.ZoneId,
-			"master_instance_id":       item.MasterInstanceId,
-			"guard_instance_id":        item.GuardDBInstanceId,
-			"temp_instance_id":         item.TempDBInstanceId,
+			"id":                       fmt.Sprint(item["DBInstanceId"]),
+			"name":                     fmt.Sprint(item["DBInstanceDescription"]),
+			"charge_type":              fmt.Sprint(item["PayType"]),
+			"db_type":                  fmt.Sprint(item["DBInstanceType"]),
+			"region_id":                fmt.Sprint(item["RegionId"]),
+			"create_time":              fmt.Sprint(item["CreateTime"]),
+			"expire_time":              fmt.Sprint(item["ExpireTime"]),
+			"status":                   fmt.Sprint(item["DBInstanceStatus"]),
+			"engine":                   fmt.Sprint(item["Engine"]),
+			"engine_version":           fmt.Sprint(item["EngineVersion"]),
+			"net_type":                 fmt.Sprint(item["DBInstanceNetType"]),
+			"connection_mode":          fmt.Sprint(item["ConnectionMode"]),
+			"instance_type":            fmt.Sprint(item["DBInstanceClass"]),
+			"availability_zone":        fmt.Sprint(item["ZoneId"]),
+			"master_instance_id":       fmt.Sprint(item["MasterInstanceId"]),
+			"guard_instance_id":        fmt.Sprint(item["GuardDBInstanceId"]),
+			"temp_instance_id":         fmt.Sprint(item["TempDBInstanceId"]),
 			"readonly_instance_ids":    readOnlyInstanceIDs,
-			"vpc_id":                   item.VpcId,
-			"vswitch_id":               item.VSwitchId,
+			"vpc_id":                   fmt.Sprint(item["VpcId"]),
+			"vswitch_id":               fmt.Sprint(item["VSwitchId"]),
 			"connection_string":        instance["ConnectionString"],
 			"port":                     instance["Port"],
 			"db_instance_storage_type": instance["DBInstanceStorageType"],
 			"instance_storage":         instance["DBInstanceStorage"],
 			"master_zone":              instance["MasterZone"],
 		}
-		sslResponse, sslErr := rdsService.DescribeDBInstanceSSL(item.DBInstanceId)
+		sslResponse, sslErr := rdsService.DescribeDBInstanceSSL(fmt.Sprint(item["DBInstanceId"]))
 		if sslErr == nil {
 			if v, ok := sslResponse["SSLExpireTime"]; ok && v != "" {
 				mapping["ssl_expire_time"] = sslResponse["SSLExpireTime"]
@@ -491,7 +554,7 @@ func rdsInstancesDescription(d *schema.ResourceData, meta interface{}, dbi []rds
 
 		}
 
-		encResponse, encError := rdsService.DescribeDBInstanceEncryptionKey(item.DBInstanceId)
+		encResponse, encError := rdsService.DescribeDBInstanceEncryptionKey(fmt.Sprint(item["DBInstanceId"]))
 		if encError == nil {
 			if v, ok := encResponse["Creator"]; ok && v != "" {
 				mapping["creator"] = encResponse["Creator"]
@@ -527,8 +590,26 @@ func rdsInstancesDescription(d *schema.ResourceData, meta interface{}, dbi []rds
 			mapping["zone_id_slave_a"] = slaveZones[0].(map[string]interface{})["ZoneId"]
 		}
 
-		ids = append(ids, item.DBInstanceId)
-		names = append(names, item.DBInstanceDescription)
+		if d.Get("enable_details").(bool) {
+			paramResponse, paramError := rdsService.DescribeParameterTemplates(item["DBInstanceId"].(string), item["Engine"].(string), item["EngineVersion"].(string))
+			if paramError == nil {
+				parameterDetail := make([]map[string]interface{}, 0)
+				for _, val := range paramResponse {
+					item := val.(map[string]interface{})
+					parameterDetail = append(parameterDetail, map[string]interface{}{
+						"force_modify":          item["ForceModify"],
+						"checking_code":         item["CheckingCode"],
+						"parameter_value":       item["ParameterValue"],
+						"force_restart":         item["ForceRestart"],
+						"parameter_name":        item["ParameterName"],
+						"parameter_description": item["ParameterDescription"],
+					})
+				}
+				mapping["parameters"] = parameterDetail
+			}
+		}
+		ids = append(ids, fmt.Sprint(item["DBInstanceId"]))
+		names = append(names, fmt.Sprint(item["DBInstanceDescription"]))
 		s = append(s, mapping)
 	}
 

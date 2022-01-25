@@ -17,18 +17,18 @@ package ddoscoo
 
 // StatusCode is a nested struct in ddoscoo response
 type StatusCode struct {
-	Index     int   `json:"Index" xml:"Index"`
 	Time      int64 `json:"Time" xml:"Time"`
-	Status2XX int64 `json:"Status2XX" xml:"Status2XX"`
-	Status501 int64 `json:"Status501" xml:"Status501"`
 	Status502 int64 `json:"Status502" xml:"Status502"`
-	Status503 int64 `json:"Status503" xml:"Status503"`
-	Status504 int64 `json:"Status504" xml:"Status504"`
-	Status200 int64 `json:"Status200" xml:"Status200"`
-	Status405 int64 `json:"Status405" xml:"Status405"`
-	Status5XX int64 `json:"Status5XX" xml:"Status5XX"`
-	Status4XX int64 `json:"Status4XX" xml:"Status4XX"`
+	Status501 int64 `json:"Status501" xml:"Status501"`
 	Status403 int64 `json:"Status403" xml:"Status403"`
-	Status404 int64 `json:"Status404" xml:"Status404"`
+	Status5XX int64 `json:"Status5XX" xml:"Status5XX"`
+	Index     int   `json:"Index" xml:"Index"`
 	Status3XX int64 `json:"Status3XX" xml:"Status3XX"`
+	Status405 int64 `json:"Status405" xml:"Status405"`
+	Status4XX int64 `json:"Status4XX" xml:"Status4XX"`
+	Status504 int64 `json:"Status504" xml:"Status504"`
+	Status404 int64 `json:"Status404" xml:"Status404"`
+	Status2XX int64 `json:"Status2XX" xml:"Status2XX"`
+	Status503 int64 `json:"Status503" xml:"Status503"`
+	Status200 int64 `json:"Status200" xml:"Status200"`
 }

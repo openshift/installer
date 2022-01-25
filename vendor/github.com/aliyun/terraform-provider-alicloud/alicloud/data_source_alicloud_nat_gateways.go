@@ -179,6 +179,10 @@ func dataSourceAlicloudNatGateways() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"network_type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -307,6 +311,7 @@ func dataSourceAlicloudNatGatewaysRead(d *schema.ResourceData, meta interface{})
 			"nat_gateway_name":     object["Name"],
 			"name":                 object["Name"],
 			"nat_type":             object["NatType"],
+			"network_type":         object["NetworkType"],
 			"payment_type":         convertNatGatewayPaymentTypeResponse(object["InstanceChargeType"].(string)),
 			"resource_group_id":    object["ResourceGroupId"],
 			"snat_table_ids":       object["SnatTableIds"].(map[string]interface{})["SnatTableId"],

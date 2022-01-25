@@ -71,11 +71,11 @@ func (client *Client) ActiveFlowLogWithCallback(request *ActiveFlowLogRequest, c
 // ActiveFlowLogRequest is the request struct for api ActiveFlowLog
 type ActiveFlowLogRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	FlowLogId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	FlowLogId            string           `position:"Query" name:"FlowLogId"`
 }
 
 // ActiveFlowLogResponse is the response struct for api ActiveFlowLog

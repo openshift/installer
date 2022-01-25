@@ -2,22 +2,17 @@ package alicloud
 
 import (
 	"fmt"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/yundun_bastionhost"
+	"strconv"
 	"time"
 
-	util "github.com/alibabacloud-go/tea-utils/service"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/bssopenapi"
-	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
+	util "github.com/alibabacloud-go/tea-utils/service"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+
+	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-)
-
-const (
-	BATIONHOST_RELEASE_HANG_MINS  = 5
-	BASTIONHOST_WAITING_FOR_START = 600
 )
 
 func resourceAlicloudBastionhostInstance() *schema.Resource {
@@ -28,8 +23,9 @@ func resourceAlicloudBastionhostInstance() *schema.Resource {
 		Delete: resourceAlicloudBastionhostInstanceDelete,
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(20 * time.Minute),
+			Create: schema.DefaultTimeout(30 * time.Minute),
 			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(1 * time.Minute),
 		},
 
 		Importer: &schema.ResourceImporter{
@@ -66,6 +62,11 @@ func resourceAlicloudBastionhostInstance() *schema.Resource {
 			"resource_group_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"enable_public_access": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
 			},
 		},
 	}
@@ -153,7 +154,7 @@ func resourceAlicloudBastionhostInstanceCreate(d *schema.ResourceData, meta inte
 		return WrapError(err)
 	}
 	// wait for pending
-	stateConf = BuildStateConf([]string{"PENDING", "CREATING"}, []string{"RUNNING"}, d.Timeout(schema.TimeoutCreate), BASTIONHOST_WAITING_FOR_START*time.Second, bastionhostService.BastionhostInstanceRefreshFunc(d.Id(), []string{"UPGRADING", "UPGRADE_FAILED", "CREATE_FAILED"}))
+	stateConf = BuildStateConf([]string{"PENDING", "CREATING"}, []string{"RUNNING"}, d.Timeout(schema.TimeoutCreate), 600*time.Second, bastionhostService.BastionhostInstanceRefreshFunc(d.Id(), []string{"UPGRADING", "UPGRADE_FAILED", "CREATE_FAILED"}))
 	if _, err := stateConf.WaitForState(); err != nil {
 		return WrapErrorf(err, IdMsg, d.Id())
 	}
@@ -163,7 +164,7 @@ func resourceAlicloudBastionhostInstanceCreate(d *schema.ResourceData, meta inte
 func resourceAlicloudBastionhostInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	BastionhostService := YundunBastionhostService{client}
-	instance, err := BastionhostService.DescribeBastionhostInstanceAttribute(d.Id())
+	instance, err := BastionhostService.DescribeBastionhostInstance(d.Id())
 	if err != nil {
 		if NotFoundError(err) {
 			d.SetId("")
@@ -175,7 +176,7 @@ func resourceAlicloudBastionhostInstanceRead(d *schema.ResourceData, meta interf
 	d.Set("license_code", instance["LicenseCode"])
 	d.Set("vswitch_id", instance["VswitchId"])
 	d.Set("security_group_ids", instance["AuthorizedSecurityGroups"])
-
+	d.Set("enable_public_access", instance["PublicNetworkAccess"])
 	tags, err := BastionhostService.DescribeTags(d.Id(), nil, TagResourceInstance)
 	if err != nil {
 		return WrapError(err)
@@ -210,12 +211,7 @@ func resourceAlicloudBastionhostInstanceUpdate(d *schema.ResourceData, meta inte
 		d.SetPartial("resource_group_id")
 	}
 
-	if d.IsNewResource() {
-		d.Partial(false)
-		return resourceAlicloudBastionhostInstanceRead(d, meta)
-	}
-
-	if d.HasChange("license_code") {
+	if !d.IsNewResource() && d.HasChange("license_code") {
 		params := map[string]string{
 			"LicenseCode": "license_code",
 		}
@@ -229,7 +225,7 @@ func resourceAlicloudBastionhostInstanceUpdate(d *schema.ResourceData, meta inte
 		d.SetPartial("license_code")
 	}
 
-	if d.HasChange("security_group_ids") {
+	if !d.IsNewResource() && d.HasChange("security_group_ids") {
 		securityGroupIds := d.Get("security_group_ids").([]interface{})
 		sgs := make([]string, 0, len(securityGroupIds))
 		for _, rawSecurityGroupId := range securityGroupIds {
@@ -245,57 +241,36 @@ func resourceAlicloudBastionhostInstanceUpdate(d *schema.ResourceData, meta inte
 		d.SetPartial("security_group_ids")
 	}
 
+	if d.HasChange("enable_public_access") {
+		client := meta.(*connectivity.AliyunClient)
+		BastionhostService := YundunBastionhostService{client}
+		instance, err := BastionhostService.DescribeBastionhostInstance(d.Id())
+		if err != nil {
+			return WrapError(err)
+		}
+		target := strconv.FormatBool(d.Get("enable_public_access").(bool))
+		if strconv.FormatBool(instance["PublicNetworkAccess"].(bool)) != target {
+			if target == "false" {
+				err := BastionhostService.DisableInstancePublicAccess(d.Id())
+				if err != nil {
+					return WrapError(err)
+				}
+			} else {
+				err := BastionhostService.EnableInstancePublicAccess(d.Id())
+				if err != nil {
+					return WrapError(err)
+				}
+			}
+		}
+		d.SetPartial("enable_public_access")
+	}
+
 	d.Partial(false)
 	// wait for order complete
 	return resourceAlicloudBastionhostInstanceRead(d, meta)
 }
 
 func resourceAlicloudBastionhostInstanceDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*connectivity.AliyunClient)
-	bastionhostService := YundunBastionhostService{client}
-	request := yundun_bastionhost.CreateRefundInstanceRequest()
-	request.InstanceId = d.Id()
-
-	raw, err := bastionhostService.client.WithBastionhostClient(func(BastionhostClient *yundun_bastionhost.Client) (interface{}, error) {
-		return BastionhostClient.RefundInstance(request)
-	})
-
-	if err != nil {
-		return WrapErrorf(err, DefaultErrorMsg, d.Id(), request.GetActionName(), AlibabaCloudSdkGoERROR)
-	}
-	addDebug(request.GetActionName(), raw, request.RpcRequest, request)
-	// Wait for the release procedure of cloud resource dependencies. Instance can not be fetched through api as soon as release has
-	// been invoked, however the resources have not been fully destroyed yet. Therefore, a certain amount time of waiting
-	// is quite necessary (conservative estimation cloud be less then 3 minutes)
-	time.Sleep(BATIONHOST_RELEASE_HANG_MINS * time.Minute)
-	return WrapError(bastionhostService.WaitForYundunBastionhostInstance(d.Id(), Deleted, 0))
-}
-
-func buildBastionhostCreateRequest(d *schema.ResourceData, meta interface{}) *bssopenapi.CreateInstanceRequest {
-	request := bssopenapi.CreateCreateInstanceRequest()
-	request.ProductCode = "bastionhost"
-	request.SubscriptionType = "Subscription"
-	request.Period = requests.NewInteger(d.Get("period").(int))
-	client := meta.(*connectivity.AliyunClient)
-
-	request.Parameter = &[]bssopenapi.CreateInstanceParameter{
-		// force to buy vpc version
-		{
-			Code:  "NetworkType",
-			Value: "vpc",
-		},
-		{
-			Code:  "LicenseCode",
-			Value: d.Get("license_code").(string),
-		},
-		{
-			Code:  "PlanCode",
-			Value: "cloudbastion",
-		},
-		{
-			Code:  "RegionId",
-			Value: client.RegionId,
-		},
-	}
-	return request
+	log.Printf("[WARN] Cannot destroy resourceBastionhostInstance. Terraform will remove this resource from the state file, however resources may remain.")
+	return nil
 }

@@ -71,6 +71,7 @@ func (client *Client) UpdateWhiteIpsWithCallback(request *UpdateWhiteIpsRequest,
 // UpdateWhiteIpsRequest is the request struct for api UpdateWhiteIps
 type UpdateWhiteIpsRequest struct {
 	*requests.RoaRequest
+	ModifyMode  string `position:"Query" name:"modifyMode"`
 	InstanceId  string `position:"Path" name:"InstanceId"`
 	ClientToken string `position:"Query" name:"clientToken"`
 }

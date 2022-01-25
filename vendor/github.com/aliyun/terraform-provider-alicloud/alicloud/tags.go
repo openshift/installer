@@ -18,7 +18,6 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/elasticsearch"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ess"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ots"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/rds"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/vpc"
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -349,19 +348,6 @@ func diffTags(oldTags, newTags []Tag) ([]Tag, []Tag) {
 	return tagsFromMap(create), remove
 }
 
-func diffRdsTags(oldTags, newTags map[string]interface{}) (remove []string, add []rds.TagResourcesTag) {
-	for k, _ := range oldTags {
-		remove = append(remove, k)
-	}
-	for k, v := range newTags {
-		add = append(add, rds.TagResourcesTag{
-			Key:   k,
-			Value: v.(string),
-		})
-	}
-	return
-}
-
 func diffGpdbTags(oldTags, newTags []gpdb.TagResourcesTag) ([]gpdb.TagResourcesTag, []gpdb.TagResourcesTag) {
 	// First, we're creating everything we have
 	create := make(map[string]interface{})
@@ -583,13 +569,12 @@ func elasticsearchTagIgnored(tagKey, tagValue string) bool {
 	return false
 }
 
-func ignoredTags(tagKey, tagValue string) bool {
+func ignoredTags(tagKey string, tagValue interface{}) bool {
 	filter := []string{"^aliyun", "^acs:", "^http://", "^https://"}
 	for _, v := range filter {
-		log.Printf("[DEBUG] Matching prefix %v with %v\n", v, tagKey)
 		ok, _ := regexp.MatchString(v, tagKey)
 		if ok {
-			log.Printf("[DEBUG] Found Alibaba Cloud specific tag %s (val: %s), ignoring.\n", tagKey, tagValue)
+			log.Printf("[DEBUG] Found Alibaba Cloud specific tag with key: %s and value: %s, ignoring.\n", tagKey, tagValue)
 			return true
 		}
 	}

@@ -71,10 +71,10 @@ func (client *Client) ConfigWebIpSetWithCallback(request *ConfigWebIpSetRequest,
 // ConfigWebIpSetRequest is the request struct for api ConfigWebIpSet
 type ConfigWebIpSetRequest struct {
 	*requests.RpcRequest
-	BlackList       *[]string `position:"Query" name:"BlackList"  type:"Repeated"`
-	WhiteList       *[]string `position:"Query" name:"WhiteList"  type:"Repeated"`
 	ResourceGroupId string    `position:"Query" name:"ResourceGroupId"`
 	SourceIp        string    `position:"Query" name:"SourceIp"`
+	BlackList       *[]string `position:"Query" name:"BlackList"  type:"Repeated"`
+	WhiteList       *[]string `position:"Query" name:"WhiteList"  type:"Repeated"`
 	Domain          string    `position:"Query" name:"Domain"`
 }
 

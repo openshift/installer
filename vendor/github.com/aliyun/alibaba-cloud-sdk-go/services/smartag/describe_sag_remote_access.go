@@ -71,19 +71,19 @@ func (client *Client) DescribeSagRemoteAccessWithCallback(request *DescribeSagRe
 // DescribeSagRemoteAccessRequest is the request struct for api DescribeSagRemoteAccess
 type DescribeSagRemoteAccessRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SerialNumber         string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SerialNumber         string           `position:"Query" name:"SerialNumber"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // DescribeSagRemoteAccessResponse is the response struct for api DescribeSagRemoteAccess
 type DescribeSagRemoteAccessResponse struct {
 	*responses.BaseResponse
-	RequestId      string         `json:"RequestId" xml:"RequestId"`
 	Message        string         `json:"Message" xml:"Message"`
+	RequestId      string         `json:"RequestId" xml:"RequestId"`
 	SmartAGId      string         `json:"SmartAGId" xml:"SmartAGId"`
 	Code           string         `json:"Code" xml:"Code"`
 	Success        bool           `json:"Success" xml:"Success"`

@@ -71,27 +71,29 @@ func (client *Client) CreateCloudConnectNetworkWithCallback(request *CreateCloud
 // CreateCloudConnectNetworkRequest is the request struct for api CreateCloudConnectNetwork
 type CreateCloudConnectNetworkRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	Description          string           `position:"Query"`
-	SnatCidrBlock        string           `position:"Query"`
-	IsDefault            requests.Boolean `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	Name                 string           `position:"Query"`
-	CidrBlock            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	Description          string           `position:"Query" name:"Description"`
+	SnatCidrBlock        string           `position:"Query" name:"SnatCidrBlock"`
+	ResourceGroupId      string           `position:"Query" name:"ResourceGroupId"`
+	IsDefault            requests.Boolean `position:"Query" name:"IsDefault"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	Name                 string           `position:"Query" name:"Name"`
+	CidrBlock            string           `position:"Query" name:"CidrBlock"`
 }
 
 // CreateCloudConnectNetworkResponse is the response struct for api CreateCloudConnectNetwork
 type CreateCloudConnectNetworkResponse struct {
 	*responses.BaseResponse
-	Status        string `json:"Status" xml:"Status"`
-	Description   string `json:"Description" xml:"Description"`
-	RequestId     string `json:"RequestId" xml:"RequestId"`
-	CcnId         string `json:"CcnId" xml:"CcnId"`
-	CidrBlock     string `json:"CidrBlock" xml:"CidrBlock"`
-	SnatCidrBlock string `json:"SnatCidrBlock" xml:"SnatCidrBlock"`
-	Name          string `json:"Name" xml:"Name"`
+	Status          string `json:"Status" xml:"Status"`
+	Description     string `json:"Description" xml:"Description"`
+	RequestId       string `json:"RequestId" xml:"RequestId"`
+	CcnId           string `json:"CcnId" xml:"CcnId"`
+	CidrBlock       string `json:"CidrBlock" xml:"CidrBlock"`
+	SnatCidrBlock   string `json:"SnatCidrBlock" xml:"SnatCidrBlock"`
+	Name            string `json:"Name" xml:"Name"`
+	ResourceGroupId string `json:"ResourceGroupId" xml:"ResourceGroupId"`
 }
 
 // CreateCreateCloudConnectNetworkRequest creates a request to invoke CreateCloudConnectNetwork API

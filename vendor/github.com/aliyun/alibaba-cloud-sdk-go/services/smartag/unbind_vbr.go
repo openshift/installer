@@ -71,14 +71,14 @@ func (client *Client) UnbindVbrWithCallback(request *UnbindVbrRequest, callback 
 // UnbindVbrRequest is the request struct for api UnbindVbr
 type UnbindVbrRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	VbrId                string           `position:"Query"`
-	VbrRegionId          string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGUid           requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	VbrId                string           `position:"Query" name:"VbrId"`
+	VbrRegionId          string           `position:"Query" name:"VbrRegionId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGUid           requests.Integer `position:"Query" name:"SmartAGUid"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // UnbindVbrResponse is the response struct for api UnbindVbr

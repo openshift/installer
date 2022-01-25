@@ -71,13 +71,13 @@ func (client *Client) BindSmartAccessGatewayWithCallback(request *BindSmartAcces
 // BindSmartAccessGatewayRequest is the request struct for api BindSmartAccessGateway
 type BindSmartAccessGatewayRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	CcnId                string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGUid           requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	CcnId                string           `position:"Query" name:"CcnId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGUid           requests.Integer `position:"Query" name:"SmartAGUid"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // BindSmartAccessGatewayResponse is the response struct for api BindSmartAccessGateway

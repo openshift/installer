@@ -76,13 +76,15 @@ type DetachLoadBalancersRequest struct {
 	LoadBalancer         *[]string        `position:"Query" name:"LoadBalancer"  type:"Repeated"`
 	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
 	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	Async                requests.Boolean `position:"Query" name:"Async"`
 	ForceDetach          requests.Boolean `position:"Query" name:"ForceDetach"`
 }
 
 // DetachLoadBalancersResponse is the response struct for api DetachLoadBalancers
 type DetachLoadBalancersResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
+	RequestId         string `json:"RequestId" xml:"RequestId"`
+	ScalingActivityId string `json:"ScalingActivityId" xml:"ScalingActivityId"`
 }
 
 // CreateDetachLoadBalancersRequest creates a request to invoke DetachLoadBalancers API

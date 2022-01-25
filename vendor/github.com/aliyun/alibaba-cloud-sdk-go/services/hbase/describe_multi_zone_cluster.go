@@ -123,7 +123,7 @@ type DescribeMultiZoneClusterResponse struct {
 	ArbiterVSwitchIds       string                         `json:"ArbiterVSwitchIds" xml:"ArbiterVSwitchIds"`
 	VpcId                   string                         `json:"VpcId" xml:"VpcId"`
 	ResourceGroupId         string                         `json:"ResourceGroupId" xml:"ResourceGroupId"`
-	EncryptionType          bool                           `json:"EncryptionType" xml:"EncryptionType"`
+	EncryptionType          string                         `json:"EncryptionType" xml:"EncryptionType"`
 	EncryptionKey           string                         `json:"EncryptionKey" xml:"EncryptionKey"`
 	MultiZoneInstanceModels MultiZoneInstanceModels        `json:"MultiZoneInstanceModels" xml:"MultiZoneInstanceModels"`
 	Tags                    TagsInDescribeMultiZoneCluster `json:"Tags" xml:"Tags"`

@@ -71,15 +71,16 @@ func (client *Client) DescribeCloudConnectNetworksWithCallback(request *Describe
 // DescribeCloudConnectNetworksRequest is the request struct for api DescribeCloudConnectNetworks
 type DescribeCloudConnectNetworksRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer                   `position:"Query"`
-	CcnId                string                             `position:"Query"`
-	PageNumber           requests.Integer                   `position:"Query"`
-	PageSize             requests.Integer                   `position:"Query"`
+	ResourceOwnerId      requests.Integer                   `position:"Query" name:"ResourceOwnerId"`
+	CcnId                string                             `position:"Query" name:"CcnId"`
+	PageNumber           requests.Integer                   `position:"Query" name:"PageNumber"`
+	ResourceGroupId      string                             `position:"Query" name:"ResourceGroupId"`
+	PageSize             requests.Integer                   `position:"Query" name:"PageSize"`
 	Tag                  *[]DescribeCloudConnectNetworksTag `position:"Query" name:"Tag"  type:"Repeated"`
-	ResourceOwnerAccount string                             `position:"Query"`
-	OwnerAccount         string                             `position:"Query"`
-	OwnerId              requests.Integer                   `position:"Query"`
-	Name                 string                             `position:"Query"`
+	ResourceOwnerAccount string                             `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string                             `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer                   `position:"Query" name:"OwnerId"`
+	Name                 string                             `position:"Query" name:"Name"`
 }
 
 // DescribeCloudConnectNetworksTag is a repeated param struct in DescribeCloudConnectNetworksRequest
@@ -92,8 +93,8 @@ type DescribeCloudConnectNetworksTag struct {
 type DescribeCloudConnectNetworksResponse struct {
 	*responses.BaseResponse
 	TotalCount           int                  `json:"TotalCount" xml:"TotalCount"`
-	RequestId            string               `json:"RequestId" xml:"RequestId"`
 	PageSize             int                  `json:"PageSize" xml:"PageSize"`
+	RequestId            string               `json:"RequestId" xml:"RequestId"`
 	PageNumber           int                  `json:"PageNumber" xml:"PageNumber"`
 	CloudConnectNetworks CloudConnectNetworks `json:"CloudConnectNetworks" xml:"CloudConnectNetworks"`
 }

@@ -108,6 +108,7 @@ func dataSourceAlicloudMscSubContactsRead(d *schema.ResourceData, meta interface
 
 	action := "ListContacts"
 	request := make(map[string]interface{})
+	request["Locale"] = "en"
 	request["MaxResults"] = PageSizeLarge
 	var objects []map[string]interface{}
 	var contactNameRegex *regexp.Regexp
@@ -195,7 +196,7 @@ func dataSourceAlicloudMscSubContactsRead(d *schema.ResourceData, meta interface
 			"last_email_verification_time_stamp":  fmt.Sprint(object["LastEmailVerificationTimeStamp"]),
 			"last_mobile_verification_time_stamp": fmt.Sprint(object["LastMobileVerificationTimeStamp"]),
 			"mobile":                              object["Mobile"],
-			"position":                            object["Position"],
+			"position":                            convertMscSubContactPositionResponse(fmt.Sprint(object["Position"])),
 		}
 		ids = append(ids, fmt.Sprint(mapping["id"]))
 		names = append(names, object["ContactName"])

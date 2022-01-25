@@ -77,11 +77,11 @@ type QueryMonthlyBillRequest struct {
 // QueryMonthlyBillResponse is the response struct for api QueryMonthlyBill
 type QueryMonthlyBillResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                 `json:"RequestId" xml:"RequestId"`
+	Success   bool                   `json:"Success" xml:"Success"`
+	Code      string                 `json:"Code" xml:"Code"`
+	Message   string                 `json:"Message" xml:"Message"`
+	Data      DataInQueryMonthlyBill `json:"Data" xml:"Data"`
 }
 
 // CreateQueryMonthlyBillRequest creates a request to invoke QueryMonthlyBill API

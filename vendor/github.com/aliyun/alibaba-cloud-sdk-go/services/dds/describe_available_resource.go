@@ -92,7 +92,7 @@ func CreateDescribeAvailableResourceRequest() (request *DescribeAvailableResourc
 	request = &DescribeAvailableResourceRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeAvailableResource", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeAvailableResource", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

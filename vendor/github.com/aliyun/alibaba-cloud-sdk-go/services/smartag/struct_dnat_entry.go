@@ -17,12 +17,12 @@ package smartag
 
 // DnatEntry is a nested struct in smartag response
 type DnatEntry struct {
-	ExternalPort string `json:"ExternalPort" xml:"ExternalPort"`
 	Type         string `json:"Type" xml:"Type"`
-	ExternalIp   string `json:"ExternalIp" xml:"ExternalIp"`
-	IpProtocol   string `json:"IpProtocol" xml:"IpProtocol"`
-	InternalPort string `json:"InternalPort" xml:"InternalPort"`
 	SagId        string `json:"SagId" xml:"SagId"`
 	InternalIp   string `json:"InternalIp" xml:"InternalIp"`
+	InternalPort string `json:"InternalPort" xml:"InternalPort"`
+	IpProtocol   string `json:"IpProtocol" xml:"IpProtocol"`
+	ExternalPort string `json:"ExternalPort" xml:"ExternalPort"`
 	DnatEntryId  string `json:"DnatEntryId" xml:"DnatEntryId"`
+	ExternalIp   string `json:"ExternalIp" xml:"ExternalIp"`
 }

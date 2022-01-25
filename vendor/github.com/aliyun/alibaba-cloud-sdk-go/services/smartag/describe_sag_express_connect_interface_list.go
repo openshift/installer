@@ -71,13 +71,13 @@ func (client *Client) DescribeSagExpressConnectInterfaceListWithCallback(request
 // DescribeSagExpressConnectInterfaceListRequest is the request struct for api DescribeSagExpressConnectInterfaceList
 type DescribeSagExpressConnectInterfaceListRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
-	PortName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
+	PortName             string           `position:"Query" name:"PortName"`
 }
 
 // DescribeSagExpressConnectInterfaceListResponse is the response struct for api DescribeSagExpressConnectInterfaceList

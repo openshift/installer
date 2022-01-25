@@ -71,9 +71,9 @@ func (client *Client) CreateEnterpriseCodeWithCallback(request *CreateEnterprise
 // CreateEnterpriseCodeRequest is the request struct for api CreateEnterpriseCode
 type CreateEnterpriseCodeRequest struct {
 	*requests.RpcRequest
-	ClientToken    string           `position:"Query"`
-	EnterpriseCode string           `position:"Query"`
-	DryRun         requests.Boolean `position:"Query"`
+	ClientToken    string           `position:"Query" name:"ClientToken"`
+	EnterpriseCode string           `position:"Query" name:"EnterpriseCode"`
+	DryRun         requests.Boolean `position:"Query" name:"DryRun"`
 }
 
 // CreateEnterpriseCodeResponse is the response struct for api CreateEnterpriseCode

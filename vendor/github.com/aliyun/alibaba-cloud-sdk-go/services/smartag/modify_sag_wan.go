@@ -71,27 +71,27 @@ func (client *Client) ModifySagWanWithCallback(request *ModifySagWanRequest, cal
 // ModifySagWanRequest is the request struct for api ModifySagWan
 type ModifySagWanRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ISP                  string           `position:"Query"`
-	Password             string           `position:"Query"`
-	Vlan                 string           `position:"Query"`
-	Mask                 string           `position:"Query"`
-	StartIp              string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	Bandwidth            requests.Integer `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	IP                   string           `position:"Query"`
-	Weight               requests.Integer `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	IPType               string           `position:"Query"`
-	Priority             requests.Integer `position:"Query"`
-	SourceIps            string           `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
-	PortName             string           `position:"Query"`
-	StopIp               string           `position:"Query"`
-	Gateway              string           `position:"Query"`
-	Username             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ISP                  string           `position:"Query" name:"ISP"`
+	Password             string           `position:"Query" name:"Password"`
+	Vlan                 string           `position:"Query" name:"Vlan"`
+	Mask                 string           `position:"Query" name:"Mask"`
+	StartIp              string           `position:"Query" name:"StartIp"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	Bandwidth            requests.Integer `position:"Query" name:"Bandwidth"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	IP                   string           `position:"Query" name:"IP"`
+	Weight               requests.Integer `position:"Query" name:"Weight"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	IPType               string           `position:"Query" name:"IPType"`
+	Priority             requests.Integer `position:"Query" name:"Priority"`
+	SourceIps            string           `position:"Query" name:"SourceIps"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
+	PortName             string           `position:"Query" name:"PortName"`
+	StopIp               string           `position:"Query" name:"StopIp"`
+	Gateway              string           `position:"Query" name:"Gateway"`
+	Username             string           `position:"Query" name:"Username"`
 }
 
 // ModifySagWanResponse is the response struct for api ModifySagWan

@@ -71,13 +71,13 @@ func (client *Client) ModifyQosWithCallback(request *ModifyQosRequest, callback 
 // ModifyQosRequest is the request struct for api ModifyQos
 type ModifyQosRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	QosId                string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	QosName              string           `position:"Query"`
-	QosDescription       string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	QosId                string           `position:"Query" name:"QosId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	QosName              string           `position:"Query" name:"QosName"`
+	QosDescription       string           `position:"Query" name:"QosDescription"`
 }
 
 // ModifyQosResponse is the response struct for api ModifyQos

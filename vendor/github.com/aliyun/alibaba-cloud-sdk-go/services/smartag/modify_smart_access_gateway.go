@@ -71,17 +71,17 @@ func (client *Client) ModifySmartAccessGatewayWithCallback(request *ModifySmartA
 // ModifySmartAccessGatewayRequest is the request struct for api ModifySmartAccessGateway
 type ModifySmartAccessGatewayRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId       requests.Integer `position:"Query"`
-	City                  string           `position:"Query"`
-	Description           string           `position:"Query"`
-	SecurityLockThreshold requests.Integer `position:"Query"`
-	RoutingStrategy       string           `position:"Query"`
-	ResourceOwnerAccount  string           `position:"Query"`
-	OwnerAccount          string           `position:"Query"`
-	OwnerId               requests.Integer `position:"Query"`
-	Name                  string           `position:"Query"`
-	CidrBlock             string           `position:"Query"`
-	SmartAGId             string           `position:"Query"`
+	ResourceOwnerId       requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	City                  string           `position:"Query" name:"City"`
+	Description           string           `position:"Query" name:"Description"`
+	SecurityLockThreshold requests.Integer `position:"Query" name:"SecurityLockThreshold"`
+	RoutingStrategy       string           `position:"Query" name:"RoutingStrategy"`
+	ResourceOwnerAccount  string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount          string           `position:"Query" name:"OwnerAccount"`
+	OwnerId               requests.Integer `position:"Query" name:"OwnerId"`
+	Name                  string           `position:"Query" name:"Name"`
+	CidrBlock             string           `position:"Query" name:"CidrBlock"`
+	SmartAGId             string           `position:"Query" name:"SmartAGId"`
 }
 
 // ModifySmartAccessGatewayResponse is the response struct for api ModifySmartAccessGateway

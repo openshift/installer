@@ -165,7 +165,9 @@ func resourceAlicloudLogtailConfiglUpdate(d *schema.ResourceData, meta interface
 		update = true
 	}
 	if update {
-		logconfig := &sls.LogConfig{}
+		logconfig := &sls.LogConfig{
+			InputType: d.Get("input_type").(string),
+		}
 		inputConfigInputDetail := make(map[string]interface{})
 		data := d.Get("input_detail").(string)
 		conver_err := json.Unmarshal([]byte(data), &inputConfigInputDetail)

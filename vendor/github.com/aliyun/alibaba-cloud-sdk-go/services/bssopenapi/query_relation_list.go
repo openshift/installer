@@ -80,11 +80,11 @@ type QueryRelationListRequest struct {
 // QueryRelationListResponse is the response struct for api QueryRelationList
 type QueryRelationListResponse struct {
 	*responses.BaseResponse
-	Code      string                  `json:"Code" xml:"Code"`
-	RequestId string                  `json:"RequestId" xml:"RequestId"`
-	Success   bool                    `json:"Success" xml:"Success"`
-	Message   string                  `json:"Message" xml:"Message"`
-	Data      DataInQueryRelationList `json:"Data" xml:"Data"`
+	Code      string `json:"Code" xml:"Code"`
+	RequestId string `json:"RequestId" xml:"RequestId"`
+	Success   bool   `json:"Success" xml:"Success"`
+	Message   string `json:"Message" xml:"Message"`
+	Data      Data   `json:"Data" xml:"Data"`
 }
 
 // CreateQueryRelationListRequest creates a request to invoke QueryRelationList API

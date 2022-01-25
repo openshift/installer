@@ -71,19 +71,21 @@ func (client *Client) CreateQosWithCallback(request *CreateQosRequest, callback 
 // CreateQosRequest is the request struct for api CreateQos
 type CreateQosRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	QosName              string           `position:"Query"`
-	QosDescription       string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceGroupId      string           `position:"Query" name:"ResourceGroupId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	QosName              string           `position:"Query" name:"QosName"`
+	QosDescription       string           `position:"Query" name:"QosDescription"`
 }
 
 // CreateQosResponse is the response struct for api CreateQos
 type CreateQosResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	QosId     string `json:"QosId" xml:"QosId"`
+	RequestId       string `json:"RequestId" xml:"RequestId"`
+	QosId           string `json:"QosId" xml:"QosId"`
+	ResourceGroupId string `json:"ResourceGroupId" xml:"ResourceGroupId"`
 }
 
 // CreateCreateQosRequest creates a request to invoke CreateQos API

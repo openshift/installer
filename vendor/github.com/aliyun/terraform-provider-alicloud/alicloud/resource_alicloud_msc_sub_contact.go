@@ -26,7 +26,7 @@ func resourceAlicloudMscSubContact() *schema.Resource {
 			"contact_name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[a-zA-Z]{2,12}$`), "The name must be 2 to 12 characters in length, and can contain uppercase and lowercase letters."),
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^[\u4E00-\u9FA5a-zA-Z]{2,12}$"), "The name must be 2 to 12 characters in length."),
 			},
 			"email": {
 				Type:         schema.TypeString,
@@ -41,6 +41,7 @@ func resourceAlicloudMscSubContact() *schema.Resource {
 			"position": {
 				Type:         schema.TypeString,
 				Required:     true,
+				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice([]string{"CEO", "Finance Director", "Maintenance Director", "Other", "Project Director", "Technical Director"}, false),
 			},
 		},
@@ -61,6 +62,7 @@ func resourceAlicloudMscSubContactCreate(d *schema.ResourceData, meta interface{
 	request["Mobile"] = d.Get("mobile")
 	request["Position"] = d.Get("position")
 	request["ClientToken"] = buildClientToken("CreateContact")
+	request["Locale"] = "en"
 	runtime := util.RuntimeOptions{}
 	runtime.SetAutoretry(true)
 	wait := incrementalWait(3*time.Second, 3*time.Second)
@@ -102,7 +104,7 @@ func resourceAlicloudMscSubContactRead(d *schema.ResourceData, meta interface{})
 	d.Set("contact_name", object["ContactName"])
 	d.Set("email", object["Email"])
 	d.Set("mobile", object["Mobile"])
-	d.Set("position", object["Position"])
+	d.Set("position", convertMscSubContactPositionResponse(fmt.Sprint(object["Position"])))
 	return nil
 }
 func resourceAlicloudMscSubContactUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -190,4 +192,12 @@ func resourceAlicloudMscSubContactDelete(d *schema.ResourceData, meta interface{
 		return WrapError(fmt.Errorf("%s failed, response: %v", action, response))
 	}
 	return nil
+}
+
+func convertMscSubContactPositionResponse(source string) string {
+	switch source {
+	case "Others":
+		return "Other"
+	}
+	return source
 }

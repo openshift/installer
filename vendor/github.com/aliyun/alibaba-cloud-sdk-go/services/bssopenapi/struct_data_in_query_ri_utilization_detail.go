@@ -17,8 +17,8 @@ package bssopenapi
 
 // DataInQueryRIUtilizationDetail is a nested struct in bssopenapi response
 type DataInQueryRIUtilizationDetail struct {
-	PageNum    int64      `json:"PageNum" xml:"PageNum"`
-	PageSize   int64      `json:"PageSize" xml:"PageSize"`
-	TotalCount int64      `json:"TotalCount" xml:"TotalCount"`
-	DetailList DetailList `json:"DetailList" xml:"DetailList"`
+	PageNum    int64                                `json:"PageNum" xml:"PageNum"`
+	PageSize   int64                                `json:"PageSize" xml:"PageSize"`
+	TotalCount int64                                `json:"TotalCount" xml:"TotalCount"`
+	DetailList DetailListInQueryRIUtilizationDetail `json:"DetailList" xml:"DetailList"`
 }

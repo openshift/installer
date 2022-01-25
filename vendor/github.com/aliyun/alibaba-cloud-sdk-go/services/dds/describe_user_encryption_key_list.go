@@ -92,7 +92,7 @@ func CreateDescribeUserEncryptionKeyListRequest() (request *DescribeUserEncrypti
 	request = &DescribeUserEncryptionKeyListRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeUserEncryptionKeyList", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeUserEncryptionKeyList", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

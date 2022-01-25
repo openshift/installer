@@ -83,7 +83,15 @@ func resourceAlicloudFCTrigger() *schema.Resource {
 
 						return resolvedOld == resolvedNew
 					}
-					return removeSpaceAndEnter(old) == removeSpaceAndEnter(new)
+					resolvedNew, err := resolveFcTriggerConfig(removeSpaceAndEnter(new))
+					if err != nil {
+						panic(err)
+					}
+					resolvedOld, err := resolveFcTriggerConfig(removeSpaceAndEnter(old))
+					if err != nil {
+						panic(err)
+					}
+					return resolvedNew == resolvedOld
 				},
 				ValidateFunc: validation.ValidateJsonString,
 			},

@@ -71,6 +71,7 @@ func (client *Client) CreateBackupPlanWithCallback(request *CreateBackupPlanRequ
 // CreateBackupPlanRequest is the request struct for api CreateBackupPlan
 type CreateBackupPlanRequest struct {
 	*requests.RpcRequest
+	ClientToken     string           `position:"Query" name:"ClientToken"`
 	RetentionPeriod requests.Integer `position:"Query" name:"RetentionPeriod"`
 	DataCenterId    string           `position:"Query" name:"DataCenterId"`
 	Active          requests.Boolean `position:"Query" name:"Active"`

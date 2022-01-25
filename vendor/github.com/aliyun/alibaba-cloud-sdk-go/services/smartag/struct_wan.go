@@ -17,19 +17,19 @@ package smartag
 
 // Wan is a nested struct in smartag response
 type Wan struct {
-	IPType       string `json:"IPType" xml:"IPType"`
-	TrafficState string `json:"TrafficState" xml:"TrafficState"`
-	Priority     int    `json:"Priority" xml:"Priority"`
-	SourceIps    string `json:"SourceIps" xml:"SourceIps"`
-	ISP          string `json:"ISP" xml:"ISP"`
-	IP           string `json:"IP" xml:"IP"`
-	Mask         string `json:"Mask" xml:"Mask"`
-	StartIp      string `json:"StartIp" xml:"StartIp"`
-	Vlan         string `json:"Vlan" xml:"Vlan"`
-	PortName     string `json:"PortName" xml:"PortName"`
 	Weight       int    `json:"Weight" xml:"Weight"`
-	StopIp       string `json:"StopIp" xml:"StopIp"`
-	BandWidth    int    `json:"BandWidth" xml:"BandWidth"`
-	Username     string `json:"Username" xml:"Username"`
+	Mask         string `json:"Mask" xml:"Mask"`
 	Gateway      string `json:"Gateway" xml:"Gateway"`
+	PortName     string `json:"PortName" xml:"PortName"`
+	IPType       string `json:"IPType" xml:"IPType"`
+	Priority     int    `json:"Priority" xml:"Priority"`
+	BandWidth    int    `json:"BandWidth" xml:"BandWidth"`
+	TrafficState string `json:"TrafficState" xml:"TrafficState"`
+	IP           string `json:"IP" xml:"IP"`
+	ISP          string `json:"ISP" xml:"ISP"`
+	Username     string `json:"Username" xml:"Username"`
+	Vlan         string `json:"Vlan" xml:"Vlan"`
+	SourceIps    string `json:"SourceIps" xml:"SourceIps"`
+	StartIp      string `json:"StartIp" xml:"StartIp"`
+	StopIp       string `json:"StopIp" xml:"StopIp"`
 }

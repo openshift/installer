@@ -71,15 +71,15 @@ func (client *Client) ModifySagPortRoleWithCallback(request *ModifySagPortRoleRe
 // ModifySagPortRoleRequest is the request struct for api ModifySagPortRole
 type ModifySagPortRoleRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	Role                 string           `position:"Query"`
-	Vlan                 string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
-	PortName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	Role                 string           `position:"Query" name:"Role"`
+	Vlan                 string           `position:"Query" name:"Vlan"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
+	PortName             string           `position:"Query" name:"PortName"`
 }
 
 // ModifySagPortRoleResponse is the response struct for api ModifySagPortRole

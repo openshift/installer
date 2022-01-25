@@ -80,6 +80,7 @@ type ApplyInvoiceRequest struct {
 	InvoiceByAmount requests.Boolean `position:"Query" name:"InvoiceByAmount"`
 	CustomerId      requests.Integer `position:"Query" name:"CustomerId"`
 	SelectedIds     *[]string        `position:"Query" name:"SelectedIds"  type:"Repeated"`
+	UserRemark      string           `position:"Query" name:"UserRemark"`
 }
 
 // ApplyInvoiceResponse is the response struct for api ApplyInvoice

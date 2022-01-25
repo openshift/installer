@@ -17,14 +17,14 @@ package smartag
 
 // QosPolicyInGetQosAttribute is a nested struct in smartag response
 type QosPolicyInGetQosAttribute struct {
-	DestCidr              string `json:"DestCidr" xml:"DestCidr"`
-	SourcePortRange       string `json:"SourcePortRange" xml:"SourcePortRange"`
 	EndTime               int64  `json:"EndTime" xml:"EndTime"`
-	SourceCidr            string `json:"SourceCidr" xml:"SourceCidr"`
-	Priority              int    `json:"Priority" xml:"Priority"`
-	QosPolicieName        string `json:"QosPolicieName" xml:"QosPolicieName"`
-	QosPolicieDescription string `json:"QosPolicieDescription" xml:"QosPolicieDescription"`
 	StartTime             int64  `json:"StartTime" xml:"StartTime"`
-	IpProtocol            string `json:"IpProtocol" xml:"IpProtocol"`
+	DestCidr              string `json:"DestCidr" xml:"DestCidr"`
 	DestPortRange         string `json:"DestPortRange" xml:"DestPortRange"`
+	IpProtocol            string `json:"IpProtocol" xml:"IpProtocol"`
+	Priority              int    `json:"Priority" xml:"Priority"`
+	QosPolicieDescription string `json:"QosPolicieDescription" xml:"QosPolicieDescription"`
+	SourceCidr            string `json:"SourceCidr" xml:"SourceCidr"`
+	QosPolicieName        string `json:"QosPolicieName" xml:"QosPolicieName"`
+	SourcePortRange       string `json:"SourcePortRange" xml:"SourcePortRange"`
 }

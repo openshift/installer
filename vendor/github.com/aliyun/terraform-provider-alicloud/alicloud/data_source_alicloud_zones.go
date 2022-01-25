@@ -11,18 +11,13 @@ import (
 
 	"github.com/denverdino/aliyungo/common"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/gpdb"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-
-	"time"
-
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/adb"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/dds"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/elasticsearch"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/gpdb"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/polardb"
 	r_kvstore "github.com/aliyun/alibaba-cloud-sdk-go/services/r-kvstore"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/rds"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/slb"
 	"github.com/aliyun/fc-go-sdk"
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
@@ -199,44 +194,6 @@ func dataSourceAlicloudZonesRead(d *schema.ResourceData, meta interface{}) error
 	adbZones := make(map[string]string)
 	instanceChargeType := d.Get("instance_charge_type").(string)
 
-	if strings.ToLower(Trim(resType)) == strings.ToLower(string(ResourceTypeRds)) {
-		request := rds.CreateDescribeAvailableResourceRequest()
-		request.RegionId = client.RegionId
-		if instanceChargeType == string(PostPaid) {
-			request.InstanceChargeType = string(Postpaid)
-		} else {
-			request.InstanceChargeType = string(Prepaid)
-		}
-		var response = &rds.DescribeAvailableResourceResponse{}
-		err := resource.Retry(5*time.Minute, func() *resource.RetryError {
-			raw, err := client.WithRdsClient(func(rdsClient *rds.Client) (interface{}, error) {
-				return rdsClient.DescribeAvailableResource(request)
-			})
-			if err != nil {
-				if IsExpectedErrors(err, []string{Throttling}) {
-					time.Sleep(time.Duration(5) * time.Second)
-					return resource.RetryableError(err)
-				}
-				return resource.NonRetryableError(err)
-			}
-			addDebug(request.GetActionName(), raw, request.RpcRequest, request)
-			response = raw.(*rds.DescribeAvailableResourceResponse)
-			return nil
-		})
-		if err != nil {
-			return WrapErrorf(err, DataDefaultErrorMsg, "alicloud_zones", request.GetActionName(), AlibabaCloudSdkGoERROR)
-		}
-		if len(response.AvailableZones.AvailableZone) <= 0 {
-			return WrapError(fmt.Errorf("[ERROR] There is no available zone for RDS."))
-		}
-		for _, r := range response.AvailableZones.AvailableZone {
-			if multi && strings.Contains(r.ZoneId, MULTI_IZ_SYMBOL) && r.RegionId == string(client.Region) {
-				zoneIds = append(zoneIds, r.ZoneId)
-				continue
-			}
-			rdsZones[r.ZoneId] = r.RegionId
-		}
-	}
 	if strings.ToLower(Trim(resType)) == strings.ToLower(string(ResourceTypePolarDB)) {
 		request := polardb.CreateDescribeRegionsRequest()
 		request.RegionId = client.RegionId
@@ -622,16 +579,4 @@ func zoneIdsDescriptionAttributes(d *schema.ResourceData, zones []string) error 
 	}
 
 	return nil
-}
-
-func splitMultiZoneId(id string) (ids []string) {
-	if !(strings.Contains(id, MULTI_IZ_SYMBOL) || strings.Contains(id, "(")) {
-		return
-	}
-	firstIndex := strings.Index(id, MULTI_IZ_SYMBOL)
-	secondIndex := strings.Index(id, "(")
-	for _, p := range strings.Split(id[secondIndex+1:len(id)-1], COMMA_SEPARATED) {
-		ids = append(ids, id[:firstIndex]+string(p))
-	}
-	return
 }

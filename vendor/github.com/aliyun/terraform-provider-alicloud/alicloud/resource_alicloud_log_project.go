@@ -103,7 +103,7 @@ func buildTags(projectName string, tags map[string]interface{}) *sls.ResourceTag
 	slsTags := []sls.ResourceTag{}
 
 	for key, value := range tags {
-		tag := sls.ResourceTag{key, value.(string)}
+		tag := sls.ResourceTag{Key: key, Value: value.(string)}
 		slsTags = append(slsTags, tag)
 	}
 	projectTags := sls.NewProjectTags(projectName, slsTags)

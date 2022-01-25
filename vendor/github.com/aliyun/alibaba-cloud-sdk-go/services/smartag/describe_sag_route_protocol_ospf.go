@@ -71,12 +71,12 @@ func (client *Client) DescribeSagRouteProtocolOspfWithCallback(request *Describe
 // DescribeSagRouteProtocolOspfRequest is the request struct for api DescribeSagRouteProtocolOspf
 type DescribeSagRouteProtocolOspfRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
 }
 
 // DescribeSagRouteProtocolOspfResponse is the response struct for api DescribeSagRouteProtocolOspf
@@ -86,8 +86,8 @@ type DescribeSagRouteProtocolOspfResponse struct {
 	DeadTime           int         `json:"DeadTime" xml:"DeadTime"`
 	Md5KeyId           int         `json:"Md5KeyId" xml:"Md5KeyId"`
 	AreaId             string      `json:"AreaId" xml:"AreaId"`
-	HelloTime          int         `json:"HelloTime" xml:"HelloTime"`
 	RouterId           string      `json:"RouterId" xml:"RouterId"`
+	HelloTime          int         `json:"HelloTime" xml:"HelloTime"`
 	AreaType           string      `json:"AreaType" xml:"AreaType"`
 	Md5Key             string      `json:"Md5Key" xml:"Md5Key"`
 	AuthenticationType string      `json:"AuthenticationType" xml:"AuthenticationType"`

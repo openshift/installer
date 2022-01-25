@@ -71,9 +71,11 @@ func (client *Client) DescribeDynamicTagRuleListWithCallback(request *DescribeDy
 // DescribeDynamicTagRuleListRequest is the request struct for api DescribeDynamicTagRuleList
 type DescribeDynamicTagRuleListRequest struct {
 	*requests.RpcRequest
-	PageNumber string `position:"Query" name:"PageNumber"`
-	PageSize   string `position:"Query" name:"PageSize"`
-	TagKey     string `position:"Query" name:"TagKey"`
+	TagValue    string `position:"Query" name:"TagValue"`
+	PageNumber  string `position:"Query" name:"PageNumber"`
+	PageSize    string `position:"Query" name:"PageSize"`
+	TagKey      string `position:"Query" name:"TagKey"`
+	TagRegionId string `position:"Query" name:"TagRegionId"`
 }
 
 // DescribeDynamicTagRuleListResponse is the response struct for api DescribeDynamicTagRuleList

@@ -92,7 +92,7 @@ func CreateDescribeReplicaSetRoleRequest() (request *DescribeReplicaSetRoleReque
 	request = &DescribeReplicaSetRoleRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeReplicaSetRole", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeReplicaSetRole", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

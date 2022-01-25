@@ -91,7 +91,7 @@ func CreateDescribeDBInstanceTDEInfoRequest() (request *DescribeDBInstanceTDEInf
 	request = &DescribeDBInstanceTDEInfoRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeDBInstanceTDEInfo", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeDBInstanceTDEInfo", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

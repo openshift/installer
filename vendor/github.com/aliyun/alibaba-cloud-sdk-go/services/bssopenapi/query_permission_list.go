@@ -77,11 +77,11 @@ type QueryPermissionListRequest struct {
 // QueryPermissionListResponse is the response struct for api QueryPermissionList
 type QueryPermissionListResponse struct {
 	*responses.BaseResponse
-	Code      string                    `json:"Code" xml:"Code"`
-	RequestId string                    `json:"RequestId" xml:"RequestId"`
-	Success   bool                      `json:"Success" xml:"Success"`
-	Message   string                    `json:"Message" xml:"Message"`
-	Data      DataInQueryPermissionList `json:"Data" xml:"Data"`
+	Code      string `json:"Code" xml:"Code"`
+	RequestId string `json:"RequestId" xml:"RequestId"`
+	Success   bool   `json:"Success" xml:"Success"`
+	Message   string `json:"Message" xml:"Message"`
+	Data      Data   `json:"Data" xml:"Data"`
 }
 
 // CreateQueryPermissionListRequest creates a request to invoke QueryPermissionList API

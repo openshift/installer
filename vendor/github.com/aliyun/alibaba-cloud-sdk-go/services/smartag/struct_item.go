@@ -22,6 +22,6 @@ type Item struct {
 	StartTime int64  `json:"StartTime" xml:"StartTime"`
 	ItemName  string `json:"ItemName" xml:"ItemName"`
 	Level     string `json:"Level" xml:"Level"`
-	EN        EN     `json:"EN" xml:"EN"`
 	CN        CN     `json:"CN" xml:"CN"`
+	EN        EN     `json:"EN" xml:"EN"`
 }

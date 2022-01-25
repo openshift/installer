@@ -17,7 +17,8 @@ package smartag
 
 // Acl is a nested struct in smartag response
 type Acl struct {
-	SagCount string `json:"SagCount" xml:"SagCount"`
-	AclId    string `json:"AclId" xml:"AclId"`
-	Name     string `json:"Name" xml:"Name"`
+	SagCount        string `json:"SagCount" xml:"SagCount"`
+	AclId           string `json:"AclId" xml:"AclId"`
+	Name            string `json:"Name" xml:"Name"`
+	ResourceGroupId string `json:"ResourceGroupId" xml:"ResourceGroupId"`
 }

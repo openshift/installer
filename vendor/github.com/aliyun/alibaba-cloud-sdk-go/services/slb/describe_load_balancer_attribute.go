@@ -128,6 +128,8 @@ type DescribeLoadBalancerAttributeResponse struct {
 	BusinessStatus                 string                                        `json:"BusinessStatus" xml:"BusinessStatus"`
 	ModificationProtectionStatus   string                                        `json:"ModificationProtectionStatus" xml:"ModificationProtectionStatus"`
 	ModificationProtectionReason   string                                        `json:"ModificationProtectionReason" xml:"ModificationProtectionReason"`
+	SpecBpsFlag                    bool                                          `json:"SpecBpsFlag" xml:"SpecBpsFlag"`
+	SpecType                       string                                        `json:"SpecType" xml:"SpecType"`
 	ListenerPorts                  ListenerPorts                                 `json:"ListenerPorts" xml:"ListenerPorts"`
 	Labels                         Labels                                        `json:"Labels" xml:"Labels"`
 	ListenerPortsAndProtocal       ListenerPortsAndProtocal                      `json:"ListenerPortsAndProtocal" xml:"ListenerPortsAndProtocal"`

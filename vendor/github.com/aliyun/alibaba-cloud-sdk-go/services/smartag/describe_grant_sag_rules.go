@@ -71,21 +71,21 @@ func (client *Client) DescribeGrantSagRulesWithCallback(request *DescribeGrantSa
 // DescribeGrantSagRulesRequest is the request struct for api DescribeGrantSagRules
 type DescribeGrantSagRulesRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	PageNumber           requests.Integer `position:"Query"`
-	PageSize             requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	PageNumber           requests.Integer `position:"Query" name:"PageNumber"`
+	PageSize             requests.Integer `position:"Query" name:"PageSize"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // DescribeGrantSagRulesResponse is the response struct for api DescribeGrantSagRules
 type DescribeGrantSagRulesResponse struct {
 	*responses.BaseResponse
 	TotalCount int                               `json:"TotalCount" xml:"TotalCount"`
-	RequestId  string                            `json:"RequestId" xml:"RequestId"`
 	PageSize   int                               `json:"PageSize" xml:"PageSize"`
+	RequestId  string                            `json:"RequestId" xml:"RequestId"`
 	PageNumber int                               `json:"PageNumber" xml:"PageNumber"`
 	GrantRules GrantRulesInDescribeGrantSagRules `json:"GrantRules" xml:"GrantRules"`
 }

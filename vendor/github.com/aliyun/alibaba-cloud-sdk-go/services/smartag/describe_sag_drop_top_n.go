@@ -71,11 +71,11 @@ func (client *Client) DescribeSagDropTopNWithCallback(request *DescribeSagDropTo
 // DescribeSagDropTopNRequest is the request struct for api DescribeSagDropTopN
 type DescribeSagDropTopNRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	Size                 requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	Size                 requests.Integer `position:"Query" name:"Size"`
 }
 
 // DescribeSagDropTopNResponse is the response struct for api DescribeSagDropTopN

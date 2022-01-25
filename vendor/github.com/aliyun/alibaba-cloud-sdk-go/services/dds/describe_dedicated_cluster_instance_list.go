@@ -104,7 +104,7 @@ func CreateDescribeDedicatedClusterInstanceListRequest() (request *DescribeDedic
 	request = &DescribeDedicatedClusterInstanceListRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeDedicatedClusterInstanceList", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeDedicatedClusterInstanceList", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

@@ -71,13 +71,13 @@ func (client *Client) ResetSmartAccessGatewayClientUserPasswordWithCallback(requ
 // ResetSmartAccessGatewayClientUserPasswordRequest is the request struct for api ResetSmartAccessGatewayClientUserPassword
 type ResetSmartAccessGatewayClientUserPasswordRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	Password             string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	UserName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	Password             string           `position:"Query" name:"Password"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	UserName             string           `position:"Query" name:"UserName"`
 }
 
 // ResetSmartAccessGatewayClientUserPasswordResponse is the response struct for api ResetSmartAccessGatewayClientUserPassword

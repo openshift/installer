@@ -100,7 +100,7 @@ func CreateModifyNodeSpecRequest() (request *ModifyNodeSpecRequest) {
 	request = &ModifyNodeSpecRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyNodeSpec", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyNodeSpec", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

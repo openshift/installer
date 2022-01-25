@@ -3,6 +3,8 @@ package alicloud
 import (
 	"time"
 
+	util "github.com/alibabacloud-go/tea-utils/service"
+
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -71,7 +73,6 @@ func resourceAlicloudRamRole() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 			},
 			"version": {
 				Type:          schema.TypeString,
@@ -122,40 +123,54 @@ func resourceAlicloudRamRoleCreate(d *schema.ResourceData, meta interface{}) err
 func resourceAlicloudRamRoleUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	ramService := RamService{client}
-
-	request := ram.CreateUpdateRoleRequest()
-	request.RegionId = client.RegionId
-	request.RoleName = d.Id()
-
-	attributeUpdate := false
-
+	var response map[string]interface{}
+	update := false
+	request := map[string]interface{}{
+		"RoleName": d.Id(),
+	}
 	if d.HasChange("document") {
-		attributeUpdate = true
-		request.NewAssumeRolePolicyDocument = d.Get("document").(string)
-
+		update = true
+		request["NewAssumeRolePolicyDocument"] = d.Get("document").(string)
 	} else if d.HasChange("ram_users") || d.HasChange("services") || d.HasChange("version") {
-		attributeUpdate = true
-
+		update = true
 		document, err := ramService.AssembleRolePolicyDocument(d.Get("ram_users").(*schema.Set).List(), d.Get("services").(*schema.Set).List(), d.Get("version").(string))
 		if err != nil {
 			return WrapError(err)
 		}
-		request.NewAssumeRolePolicyDocument = document
+		request["NewAssumeRolePolicyDocument"] = document
 	}
 	if d.HasChange("max_session_duration") {
-		attributeUpdate = true
-		request.NewMaxSessionDuration = requests.NewInteger(d.Get("max_session_duration").(int))
+		update = true
+		request["NewMaxSessionDuration"] = d.Get("max_session_duration")
 	}
-
-	if attributeUpdate {
-		raw, err := client.WithRamClient(func(ramClient *ram.Client) (interface{}, error) {
-			return ramClient.UpdateRole(request)
+	if d.HasChange("description") {
+		update = true
+		request["NewDescription"] = d.Get("description")
+	}
+	if update {
+		action := "UpdateRole"
+		conn, err := client.NewRamClient()
+		if err != nil {
+			return WrapError(err)
+		}
+		wait := incrementalWait(3*time.Second, 3*time.Second)
+		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2015-05-01"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+			if err != nil {
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			addDebug(action, response, request)
+			return nil
 		})
 		if err != nil {
-			return WrapErrorf(err, DefaultErrorMsg, d.Id(), request.GetActionName(), AlibabaCloudSdkGoERROR)
+			return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
 		}
-		addDebug(request.GetActionName(), raw, request.RpcRequest, request)
 	}
+
 	return resourceAlicloudRamRoleRead(d, meta)
 }
 

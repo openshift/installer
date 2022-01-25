@@ -71,25 +71,25 @@ func (client *Client) ModifyHealthCheckWithCallback(request *ModifyHealthCheckRe
 // ModifyHealthCheckRequest is the request struct for api ModifyHealthCheck
 type ModifyHealthCheckRequest struct {
 	*requests.RpcRequest
-	ProbeInterval        requests.Integer `position:"Query"`
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	DstPort              requests.Integer `position:"Query"`
-	Description          string           `position:"Query"`
-	HcInstanceId         string           `position:"Query"`
-	Type                 string           `position:"Query"`
-	FailCountThreshold   requests.Integer `position:"Query"`
-	ProbeTimeout         requests.Integer `position:"Query"`
-	RttFailThreshold     requests.Integer `position:"Query"`
-	RttThreshold         requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	DstIpAddr            string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SrcIpAddr            string           `position:"Query"`
-	Name                 string           `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SrcPort              requests.Integer `position:"Query"`
-	ProbeCount           requests.Integer `position:"Query"`
+	ProbeInterval        requests.Integer `position:"Query" name:"ProbeInterval"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	DstPort              requests.Integer `position:"Query" name:"DstPort"`
+	Description          string           `position:"Query" name:"Description"`
+	HcInstanceId         string           `position:"Query" name:"HcInstanceId"`
+	Type                 string           `position:"Query" name:"Type"`
+	FailCountThreshold   requests.Integer `position:"Query" name:"FailCountThreshold"`
+	ProbeTimeout         requests.Integer `position:"Query" name:"ProbeTimeout"`
+	RttFailThreshold     requests.Integer `position:"Query" name:"RttFailThreshold"`
+	RttThreshold         requests.Integer `position:"Query" name:"RttThreshold"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	DstIpAddr            string           `position:"Query" name:"DstIpAddr"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SrcIpAddr            string           `position:"Query" name:"SrcIpAddr"`
+	Name                 string           `position:"Query" name:"Name"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SrcPort              requests.Integer `position:"Query" name:"SrcPort"`
+	ProbeCount           requests.Integer `position:"Query" name:"ProbeCount"`
 }
 
 // ModifyHealthCheckResponse is the response struct for api ModifyHealthCheck

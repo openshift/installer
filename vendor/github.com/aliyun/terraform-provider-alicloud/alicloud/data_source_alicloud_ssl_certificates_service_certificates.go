@@ -70,7 +70,7 @@ func dataSourceAlicloudSslCertificatesServiceCertificates() *schema.Resource {
 						},
 						"name": {
 							Type:       schema.TypeString,
-							Deprecated: "Field 'name' has been deprecated from provider version 1.129.0 and it will be remove in the future version. Please use the new attribute 'certificate_name' instead.",
+							Deprecated: "Field 'name' has been deprecated from provider version 1.129.0 and it will be removed in the future version. Please use the new attribute 'certificate_name' instead.",
 							Computed:   true,
 						},
 						"city": {

@@ -190,6 +190,7 @@ func resourceAlicloudCenTransitRouterVbrAttachmentRead(d *schema.ResourceData, m
 	d.Set("transit_router_attachment_id", object["TransitRouterAttachmentId"])
 	d.Set("transit_router_attachment_description", object["TransitRouterAttachmentDescription"])
 	d.Set("transit_router_attachment_name", object["TransitRouterAttachmentName"])
+	d.Set("transit_router_id", object["TransitRouterId"])
 	d.Set("vbr_id", object["VbrId"])
 	d.Set("vbr_owner_id", object["VbrOwnerId"])
 	return nil

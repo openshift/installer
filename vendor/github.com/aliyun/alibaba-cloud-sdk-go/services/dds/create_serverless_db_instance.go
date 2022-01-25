@@ -108,7 +108,7 @@ func CreateCreateServerlessDBInstanceRequest() (request *CreateServerlessDBInsta
 	request = &CreateServerlessDBInstanceRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "CreateServerlessDBInstance", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "CreateServerlessDBInstance", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

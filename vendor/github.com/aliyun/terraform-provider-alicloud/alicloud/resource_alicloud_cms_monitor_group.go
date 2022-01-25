@@ -30,26 +30,62 @@ func resourceAlicloudCmsMonitorGroup() *schema.Resource {
 			},
 			"monitor_group_name": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Computed: true,
 			},
 			"tags": tagsSchema(),
+			"resource_group_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"resource_group_name": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
 
 func resourceAlicloudCmsMonitorGroupCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
-	var response map[string]interface{}
-	action := "CreateMonitorGroup"
-	request := make(map[string]interface{})
 	conn, err := client.NewCmsClient()
+	var response map[string]interface{}
+	request := make(map[string]interface{})
+	if v, exist := d.GetOk("resource_group_id"); exist {
+		action := "CreateMonitorGroupByResourceGroupId"
+		request["RegionId"] = client.RegionId
+		request["ResourceGroupId"] = v.(string)
+		request["ResourceGroupName"] = d.Get("resource_group_name")
+		for k, v := range d.Get("contact_groups").([]interface{}) {
+			request[fmt.Sprintf("ContactGroupList.%d", k+1)] = v.(string)
+		}
+		wait := incrementalWait(3*time.Second, 3*time.Second)
+		err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-01-01"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+			if err != nil {
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			addDebug(action, response, request)
+			return nil
+		})
+		if err != nil {
+			return WrapErrorf(err, DefaultErrorMsg, "alicloud_cms_monitor_group", action, AlibabaCloudSdkGoERROR)
+		}
+		d.SetId(fmt.Sprint(response["Id"]))
+		return resourceAlicloudCmsMonitorGroupUpdate(d, meta)
+	}
+
+	action := "CreateMonitorGroup"
 	if err != nil {
 		return WrapError(err)
 	}
 	if v, ok := d.GetOk("contact_groups"); ok && v != nil {
 		request["ContactGroups"] = convertListToCommaSeparate(v.([]interface{}))
 	}
-
 	request["GroupName"] = d.Get("monitor_group_name")
 	wait := incrementalWait(3*time.Second, 3*time.Second)
 	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
@@ -93,6 +129,7 @@ func resourceAlicloudCmsMonitorGroupRead(d *schema.ResourceData, meta interface{
 			contactGroups = append(contactGroups, contactGroup.(map[string]interface{})["Name"])
 		}
 	}
+	d.Set("contact_groups", contactGroups)
 	d.Set("monitor_group_name", object["GroupName"])
 	d.Set("tags", tagsToMap(object["Tags"].(map[string]interface{})["Tag"]))
 	return nil
@@ -111,7 +148,7 @@ func resourceAlicloudCmsMonitorGroupUpdate(d *schema.ResourceData, meta interfac
 		update = true
 		request["ContactGroups"] = convertListToCommaSeparate(d.Get("contact_groups").([]interface{}))
 	}
-	if !d.IsNewResource() && d.HasChange("monitor_group_name") {
+	if d.HasChange("monitor_group_name") {
 		update = true
 		request["GroupName"] = d.Get("monitor_group_name")
 	}

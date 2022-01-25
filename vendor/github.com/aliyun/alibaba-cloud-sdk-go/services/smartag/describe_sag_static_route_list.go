@@ -71,20 +71,20 @@ func (client *Client) DescribeSagStaticRouteListWithCallback(request *DescribeSa
 // DescribeSagStaticRouteListRequest is the request struct for api DescribeSagStaticRouteList
 type DescribeSagStaticRouteListRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
 }
 
 // DescribeSagStaticRouteListResponse is the response struct for api DescribeSagStaticRouteList
 type DescribeSagStaticRouteListResponse struct {
 	*responses.BaseResponse
 	RequestId    string        `json:"RequestId" xml:"RequestId"`
-	TaskStates   []TaskState   `json:"TaskStates" xml:"TaskStates"`
 	StaticRoutes []StaticRoute `json:"StaticRoutes" xml:"StaticRoutes"`
+	TaskStates   []TaskState   `json:"TaskStates" xml:"TaskStates"`
 }
 
 // CreateDescribeSagStaticRouteListRequest creates a request to invoke DescribeSagStaticRouteList API

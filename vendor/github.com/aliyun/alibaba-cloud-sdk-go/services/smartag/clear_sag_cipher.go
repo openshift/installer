@@ -71,12 +71,12 @@ func (client *Client) ClearSagCipherWithCallback(request *ClearSagCipherRequest,
 // ClearSagCipherRequest is the request struct for api ClearSagCipher
 type ClearSagCipherRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SnNumber             string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SagId                string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SnNumber             string           `position:"Query" name:"SnNumber"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SagId                string           `position:"Query" name:"SagId"`
 }
 
 // ClearSagCipherResponse is the response struct for api ClearSagCipher

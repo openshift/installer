@@ -71,17 +71,18 @@ func (client *Client) DescribeCenRouteMapsWithCallback(request *DescribeCenRoute
 // DescribeCenRouteMapsRequest is the request struct for api DescribeCenRouteMaps
 type DescribeCenRouteMapsRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer              `position:"Query" name:"ResourceOwnerId"`
-	CenId                string                        `position:"Query" name:"CenId"`
-	PageNumber           requests.Integer              `position:"Query" name:"PageNumber"`
-	PageSize             requests.Integer              `position:"Query" name:"PageSize"`
-	TransmitDirection    string                        `position:"Query" name:"TransmitDirection"`
-	ResourceOwnerAccount string                        `position:"Query" name:"ResourceOwnerAccount"`
-	OwnerAccount         string                        `position:"Query" name:"OwnerAccount"`
-	RouteMapId           string                        `position:"Query" name:"RouteMapId"`
-	OwnerId              requests.Integer              `position:"Query" name:"OwnerId"`
-	Filter               *[]DescribeCenRouteMapsFilter `position:"Query" name:"Filter"  type:"Repeated"`
-	CenRegionId          string                        `position:"Query" name:"CenRegionId"`
+	ResourceOwnerId           requests.Integer              `position:"Query" name:"ResourceOwnerId"`
+	CenId                     string                        `position:"Query" name:"CenId"`
+	PageNumber                requests.Integer              `position:"Query" name:"PageNumber"`
+	TransitRouterRouteTableId string                        `position:"Query" name:"TransitRouterRouteTableId"`
+	PageSize                  requests.Integer              `position:"Query" name:"PageSize"`
+	TransmitDirection         string                        `position:"Query" name:"TransmitDirection"`
+	ResourceOwnerAccount      string                        `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount              string                        `position:"Query" name:"OwnerAccount"`
+	RouteMapId                string                        `position:"Query" name:"RouteMapId"`
+	OwnerId                   requests.Integer              `position:"Query" name:"OwnerId"`
+	Filter                    *[]DescribeCenRouteMapsFilter `position:"Query" name:"Filter"  type:"Repeated"`
+	CenRegionId               string                        `position:"Query" name:"CenRegionId"`
 }
 
 // DescribeCenRouteMapsFilter is a repeated param struct in DescribeCenRouteMapsRequest

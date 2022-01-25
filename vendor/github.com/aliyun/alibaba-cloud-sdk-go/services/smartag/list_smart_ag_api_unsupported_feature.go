@@ -71,13 +71,13 @@ func (client *Client) ListSmartAGApiUnsupportedFeatureWithCallback(request *List
 // ListSmartAGApiUnsupportedFeatureRequest is the request struct for api ListSmartAGApiUnsupportedFeature
 type ListSmartAGApiUnsupportedFeatureRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SerialNumber         string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	OpenApiName          string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SerialNumber         string           `position:"Query" name:"SerialNumber"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	OpenApiName          string           `position:"Query" name:"OpenApiName"`
 }
 
 // ListSmartAGApiUnsupportedFeatureResponse is the response struct for api ListSmartAGApiUnsupportedFeature

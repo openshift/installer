@@ -71,10 +71,10 @@ func (client *Client) UpdateEnterpriseCodeWithCallback(request *UpdateEnterprise
 // UpdateEnterpriseCodeRequest is the request struct for api UpdateEnterpriseCode
 type UpdateEnterpriseCodeRequest struct {
 	*requests.RpcRequest
-	ClientToken    string           `position:"Query"`
-	EnterpriseCode string           `position:"Query"`
-	IsDefault      requests.Boolean `position:"Query"`
-	DryRun         requests.Boolean `position:"Query"`
+	ClientToken    string           `position:"Query" name:"ClientToken"`
+	EnterpriseCode string           `position:"Query" name:"EnterpriseCode"`
+	IsDefault      requests.Boolean `position:"Query" name:"IsDefault"`
+	DryRun         requests.Boolean `position:"Query" name:"DryRun"`
 }
 
 // UpdateEnterpriseCodeResponse is the response struct for api UpdateEnterpriseCode

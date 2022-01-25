@@ -71,12 +71,12 @@ func (client *Client) RevokeSagInstanceFromCcnWithCallback(request *RevokeSagIns
 // RevokeSagInstanceFromCcnRequest is the request struct for api RevokeSagInstanceFromCcn
 type RevokeSagInstanceFromCcnRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	CcnInstanceId        string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	CcnInstanceId        string           `position:"Query" name:"CcnInstanceId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // RevokeSagInstanceFromCcnResponse is the response struct for api RevokeSagInstanceFromCcn

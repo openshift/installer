@@ -94,7 +94,7 @@ func CreateModifySecurityIpsRequest() (request *ModifySecurityIpsRequest) {
 	request = &ModifySecurityIpsRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "ModifySecurityIps", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "ModifySecurityIps", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

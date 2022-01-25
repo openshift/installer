@@ -29,8 +29,8 @@ type WebRule struct {
 	HttpsExt         string        `json:"HttpsExt" xml:"HttpsExt"`
 	ProxyEnabled     bool          `json:"ProxyEnabled" xml:"ProxyEnabled"`
 	RsType           int           `json:"RsType" xml:"RsType"`
-	CcRuleEnabled    bool          `json:"CcRuleEnabled" xml:"CcRuleEnabled"`
 	CcTemplate       string        `json:"CcTemplate" xml:"CcTemplate"`
+	CcRuleEnabled    bool          `json:"CcRuleEnabled" xml:"CcRuleEnabled"`
 	PolicyMode       string        `json:"PolicyMode" xml:"PolicyMode"`
 	CcEnabled        bool          `json:"CcEnabled" xml:"CcEnabled"`
 	Https2HttpEnable bool          `json:"Https2HttpEnable" xml:"Https2HttpEnable"`

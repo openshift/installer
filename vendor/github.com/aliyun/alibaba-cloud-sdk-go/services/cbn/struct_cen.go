@@ -24,6 +24,7 @@ type Cen struct {
 	Status                 string                 `json:"Status" xml:"Status"`
 	CreationTime           string                 `json:"CreationTime" xml:"CreationTime"`
 	Ipv6Level              string                 `json:"Ipv6Level" xml:"Ipv6Level"`
+	ResourceGroupId        string                 `json:"ResourceGroupId" xml:"ResourceGroupId"`
 	CenBandwidthPackageIds CenBandwidthPackageIds `json:"CenBandwidthPackageIds" xml:"CenBandwidthPackageIds"`
 	Tags                   TagsInDescribeCens     `json:"Tags" xml:"Tags"`
 }

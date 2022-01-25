@@ -71,7 +71,7 @@ func (client *Client) GetAclAttributeWithCallback(request *GetAclAttributeReques
 // GetAclAttributeRequest is the request struct for api GetAclAttribute
 type GetAclAttributeRequest struct {
 	*requests.RpcRequest
-	AclId string `position:"Query"`
+	AclId string `position:"Query" name:"AclId"`
 }
 
 // GetAclAttributeResponse is the response struct for api GetAclAttribute

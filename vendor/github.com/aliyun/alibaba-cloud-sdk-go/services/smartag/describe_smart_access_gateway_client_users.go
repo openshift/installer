@@ -71,23 +71,25 @@ func (client *Client) DescribeSmartAccessGatewayClientUsersWithCallback(request 
 // DescribeSmartAccessGatewayClientUsersRequest is the request struct for api DescribeSmartAccessGatewayClientUsers
 type DescribeSmartAccessGatewayClientUsersRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	PageNumber           requests.Integer `position:"Query"`
-	PageSize             requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	UserMail             string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	UserName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	PageNumber           requests.Integer `position:"Query" name:"PageNumber"`
+	PageSize             requests.Integer `position:"Query" name:"PageSize"`
+	EndLoginTime         requests.Integer `position:"Query" name:"EndLoginTime"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	UserMail             string           `position:"Query" name:"UserMail"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	BeginLoginTime       requests.Integer `position:"Query" name:"BeginLoginTime"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	UserName             string           `position:"Query" name:"UserName"`
 }
 
 // DescribeSmartAccessGatewayClientUsersResponse is the response struct for api DescribeSmartAccessGatewayClientUsers
 type DescribeSmartAccessGatewayClientUsersResponse struct {
 	*responses.BaseResponse
 	TotalCount int                                          `json:"TotalCount" xml:"TotalCount"`
-	RequestId  string                                       `json:"RequestId" xml:"RequestId"`
 	PageSize   int                                          `json:"PageSize" xml:"PageSize"`
+	RequestId  string                                       `json:"RequestId" xml:"RequestId"`
 	PageNumber int                                          `json:"PageNumber" xml:"PageNumber"`
 	Users      UsersInDescribeSmartAccessGatewayClientUsers `json:"Users" xml:"Users"`
 }

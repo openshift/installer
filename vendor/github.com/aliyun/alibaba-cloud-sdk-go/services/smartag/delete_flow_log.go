@@ -71,11 +71,11 @@ func (client *Client) DeleteFlowLogWithCallback(request *DeleteFlowLogRequest, c
 // DeleteFlowLogRequest is the request struct for api DeleteFlowLog
 type DeleteFlowLogRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	FlowLogId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	FlowLogId            string           `position:"Query" name:"FlowLogId"`
 }
 
 // DeleteFlowLogResponse is the response struct for api DeleteFlowLog

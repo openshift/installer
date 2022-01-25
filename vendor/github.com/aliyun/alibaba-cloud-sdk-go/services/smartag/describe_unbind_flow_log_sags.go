@@ -71,10 +71,11 @@ func (client *Client) DescribeUnbindFlowLogSagsWithCallback(request *DescribeUnb
 // DescribeUnbindFlowLogSagsRequest is the request struct for api DescribeUnbindFlowLogSags
 type DescribeUnbindFlowLogSagsRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceGroupId      string           `position:"Query" name:"ResourceGroupId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
 }
 
 // DescribeUnbindFlowLogSagsResponse is the response struct for api DescribeUnbindFlowLogSags

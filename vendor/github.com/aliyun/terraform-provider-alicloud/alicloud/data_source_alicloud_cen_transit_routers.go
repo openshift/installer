@@ -30,7 +30,8 @@ func dataSourceAlicloudCenTransitRouters() *schema.Resource {
 			},
 			"transit_router_id": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				ForceNew: true,
 			},
 			"transit_router_ids": {
 				Type:     schema.TypeList,
@@ -52,7 +53,8 @@ func dataSourceAlicloudCenTransitRouters() *schema.Resource {
 			"ids": {
 				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				Computed: true,
+				Optional: true,
+				ForceNew: true,
 			},
 			"output_file": {
 				Type:     schema.TypeString,
@@ -115,7 +117,9 @@ func dataSourceAlicloudCenTransitRoutersRead(d *schema.ResourceData, meta interf
 	request["RegionId"] = client.RegionId
 	request["PageSize"] = PageSizeLarge
 	request["PageNumber"] = 1
-	request["TransitRouterId"] = d.Get("transit_router_id")
+	if v, ok := d.GetOk("transit_router_id"); ok {
+		request["TransitRouterId"] = v
+	}
 	var objects []map[string]interface{}
 	var transitRouterNameRegex *regexp.Regexp
 	if v, ok := d.GetOk("name_regex"); ok {
@@ -127,7 +131,7 @@ func dataSourceAlicloudCenTransitRoutersRead(d *schema.ResourceData, meta interf
 	}
 
 	idsMap := make(map[string]string)
-	if v, ok := d.GetOk("transit_router_ids"); ok {
+	if v, ok := d.GetOk("ids"); ok {
 		for _, vv := range v.([]interface{}) {
 			if vv == nil {
 				continue
@@ -135,7 +139,17 @@ func dataSourceAlicloudCenTransitRoutersRead(d *schema.ResourceData, meta interf
 			idsMap[vv.(string)] = vv.(string)
 		}
 	}
-	request["TransitRouterIds"] = idsMap
+
+	transitRouterIdsMap := make(map[string]string)
+	if v, ok := d.GetOk("transit_router_ids"); ok {
+		for _, vv := range v.([]interface{}) {
+			if vv == nil {
+				continue
+			}
+			transitRouterIdsMap[vv.(string)] = vv.(string)
+		}
+	}
+
 	status, statusOk := d.GetOk("status")
 	var response map[string]interface{}
 	conn, err := client.NewCbnClient()
@@ -174,7 +188,12 @@ func dataSourceAlicloudCenTransitRoutersRead(d *schema.ResourceData, meta interf
 				}
 			}
 			if len(idsMap) > 0 {
-				if _, ok := idsMap[fmt.Sprint(item["TransitRouterId"])]; !ok {
+				if _, ok := idsMap[fmt.Sprint(item["CenId"], ":", item["TransitRouterId"])]; !ok {
+					continue
+				}
+			}
+			if len(transitRouterIdsMap) > 0 {
+				if _, ok := transitRouterIdsMap[fmt.Sprint(item["TransitRouterId"])]; !ok {
 					continue
 				}
 			}
@@ -197,7 +216,7 @@ func dataSourceAlicloudCenTransitRoutersRead(d *schema.ResourceData, meta interf
 			"cen_id":                     object["CenId"],
 			"status":                     object["Status"],
 			"transit_router_description": object["TransitRouterDescription"],
-			"id":                         fmt.Sprint(object["TransitRouterId"]),
+			"id":                         fmt.Sprint(object["CenId"], ":", object["TransitRouterId"]),
 			"transit_router_id":          fmt.Sprint(object["TransitRouterId"]),
 			"transit_router_name":        object["TransitRouterName"],
 			"type":                       object["Type"],

@@ -156,7 +156,7 @@ func dataSourceAlicloudEcsDisks() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"Attaching", "Available", "Creating", "Detaching", "In_use", "Migrating", "ReIniting", "Transfering"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"Attaching", "Available", "Creating", "Detaching", "In_use", "Migrating", "ReIniting", "Transferring"}, false),
 			},
 			"tags": tagsSchema(),
 			"zone_id": {
@@ -172,6 +172,14 @@ func dataSourceAlicloudEcsDisks() *schema.Resource {
 			},
 			"output_file": {
 				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"page_number": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"page_size": {
+				Type:     schema.TypeInt,
 				Optional: true,
 			},
 			"disks": {
@@ -366,6 +374,10 @@ func dataSourceAlicloudEcsDisks() *schema.Resource {
 					},
 				},
 			},
+			"total_count": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -465,9 +477,18 @@ func dataSourceAlicloudEcsDisksRead(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOk("availability_zone"); ok {
 		request["ZoneId"] = v
 	}
-	request["PageSize"] = PageSizeLarge
-	request["PageNumber"] = 1
-	var objects []map[string]interface{}
+
+	if v, ok := d.GetOk("page_number"); ok && v.(int) > 0 {
+		request["PageNumber"] = v.(int)
+	} else {
+		request["PageNumber"] = 1
+	}
+	if v, ok := d.GetOk("page_size"); ok && v.(int) > 0 {
+		request["PageSize"] = v.(int)
+	} else {
+		request["PageSize"] = PageSizeLarge
+	}
+	var objects []interface{}
 	var diskNameRegex *regexp.Regexp
 	if v, ok := d.GetOk("name_regex"); ok {
 		r, err := regexp.Compile(v.(string))
@@ -515,6 +536,10 @@ func dataSourceAlicloudEcsDisksRead(d *schema.ResourceData, meta interface{}) er
 			return WrapErrorf(err, FailedGetAttributeMsg, action, "$.Disks.Disk", response)
 		}
 		result, _ := resp.([]interface{})
+		if isPagingRequest(d) {
+			objects = result
+			break
+		}
 		for _, v := range result {
 			item := v.(map[string]interface{})
 			if diskNameRegex != nil {
@@ -529,7 +554,7 @@ func dataSourceAlicloudEcsDisksRead(d *schema.ResourceData, meta interface{}) er
 			}
 			objects = append(objects, item)
 		}
-		if len(result) < PageSizeLarge {
+		if len(result) < request["PageSize"].(int) {
 			break
 		}
 		request["PageNumber"] = request["PageNumber"].(int) + 1
@@ -537,7 +562,8 @@ func dataSourceAlicloudEcsDisksRead(d *schema.ResourceData, meta interface{}) er
 	ids := make([]string, 0)
 	names := make([]interface{}, 0)
 	s := make([]map[string]interface{}, 0)
-	for _, object := range objects {
+	for _, v := range objects {
+		object := v.(map[string]interface{})
 		mapping := map[string]interface{}{
 			"attached_time":                    object["AttachedTime"],
 			"auto_snapshot_policy_id":          object["AutoSnapshotPolicyId"],
@@ -638,6 +664,10 @@ func dataSourceAlicloudEcsDisksRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if err := d.Set("disks", s); err != nil {
+		return WrapError(err)
+	}
+
+	if err := d.Set("total_count", formatInt(response["TotalCount"])); err != nil {
 		return WrapError(err)
 	}
 	if output, ok := d.GetOk("output_file"); ok && output.(string) != "" {

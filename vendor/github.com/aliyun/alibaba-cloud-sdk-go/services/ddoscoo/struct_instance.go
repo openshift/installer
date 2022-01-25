@@ -23,7 +23,9 @@ type Instance struct {
 	InstanceId     string `json:"InstanceId" xml:"InstanceId"`
 	DebtStatus     int    `json:"DebtStatus" xml:"DebtStatus"`
 	Enabled        int    `json:"Enabled" xml:"Enabled"`
+	IpMode         string `json:"IpMode" xml:"IpMode"`
 	ExpireTime     int64  `json:"ExpireTime" xml:"ExpireTime"`
 	CreateTime     int64  `json:"CreateTime" xml:"CreateTime"`
+	IpVersion      string `json:"IpVersion" xml:"IpVersion"`
 	Edition        int    `json:"Edition" xml:"Edition"`
 }

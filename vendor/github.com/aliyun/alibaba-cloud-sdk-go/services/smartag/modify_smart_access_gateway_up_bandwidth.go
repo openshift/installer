@@ -71,13 +71,13 @@ func (client *Client) ModifySmartAccessGatewayUpBandwidthWithCallback(request *M
 // ModifySmartAccessGatewayUpBandwidthRequest is the request struct for api ModifySmartAccessGatewayUpBandwidth
 type ModifySmartAccessGatewayUpBandwidthRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	UpBandwidthWan       requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	UpBandwidth4G        requests.Integer `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	UpBandwidthWan       requests.Integer `position:"Query" name:"UpBandwidthWan"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	UpBandwidth4G        requests.Integer `position:"Query" name:"UpBandwidth4G"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // ModifySmartAccessGatewayUpBandwidthResponse is the response struct for api ModifySmartAccessGatewayUpBandwidth

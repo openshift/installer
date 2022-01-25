@@ -71,10 +71,10 @@ func (client *Client) UpdateSmartAGEnterpriseCodeWithCallback(request *UpdateSma
 // UpdateSmartAGEnterpriseCodeRequest is the request struct for api UpdateSmartAGEnterpriseCode
 type UpdateSmartAGEnterpriseCodeRequest struct {
 	*requests.RpcRequest
-	ClientToken    string           `position:"Query"`
-	EnterpriseCode string           `position:"Query"`
-	DryRun         requests.Boolean `position:"Query"`
-	SmartAGId      string           `position:"Query"`
+	ClientToken    string           `position:"Query" name:"ClientToken"`
+	EnterpriseCode string           `position:"Query" name:"EnterpriseCode"`
+	DryRun         requests.Boolean `position:"Query" name:"DryRun"`
+	SmartAGId      string           `position:"Query" name:"SmartAGId"`
 }
 
 // UpdateSmartAGEnterpriseCodeResponse is the response struct for api UpdateSmartAGEnterpriseCode

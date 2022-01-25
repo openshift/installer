@@ -58,6 +58,10 @@ type Config struct {
 	// Deprecated
 	// credential type
 	Type *string `json:"type,omitempty" xml:"type,omitempty"`
+	// source ip
+	SourceIp *string `json:"sourceIp,omitempty" xml:"sourceIp,omitempty"`
+	// secure transport
+	SecureTransport *string `json:"secureTransport,omitempty" xml:"secureTransport,omitempty"`
 }
 
 func (s Config) String() string {
@@ -173,6 +177,16 @@ func (s *Config) SetType(v string) *Config {
 	return s
 }
 
+func (s *Config) SetSourceIp(v string) *Config {
+	s.SourceIp = &v
+	return s
+}
+
+func (s *Config) SetSecureTransport(v string) *Config {
+	s.SecureTransport = &v
+	return s
+}
+
 type Client struct {
 	Endpoint             *string
 	RegionId             *string
@@ -193,6 +207,8 @@ type Client struct {
 	MaxIdleConns         *int
 	EndpointType         *string
 	OpenPlatformEndpoint *string
+	SourceIp             *string
+	SecureTransport      *string
 	Credential           credential.Credential
 }
 
@@ -247,6 +263,8 @@ func (client *Client) Init(config *Config) (_err error) {
 		return _err
 	}
 
+	client.SourceIp = config.SourceIp
+	client.SecureTransport = config.SecureTransport
 	client.Network = config.Network
 	client.Suffix = config.Suffix
 	client.Endpoint = config.Endpoint
@@ -324,6 +342,14 @@ func (client *Client) DoRequest(action *string, protocol *string, method *string
 				"Version":        tea.StringValue(version),
 				"SignatureNonce": tea.StringValue(util.GetNonce()),
 			}, query))
+			if !tea.BoolValue(util.IsUnset(client.SourceIp)) {
+				request_.Query["SourceIp"] = client.SourceIp
+			}
+
+			if !tea.BoolValue(util.IsUnset(client.SecureTransport)) {
+				request_.Query["SecureTransport"] = client.SecureTransport
+			}
+
 			// endpoint is setted in product client
 			request_.Headers = map[string]*string{
 				"x-acs-version": version,
@@ -377,9 +403,10 @@ func (client *Client) DoRequest(action *string, protocol *string, method *string
 			res := util.AssertAsMap(obj)
 			if tea.BoolValue(util.Is4xx(response_.StatusCode)) || tea.BoolValue(util.Is5xx(response_.StatusCode)) {
 				_err = tea.NewSDKError(map[string]interface{}{
-					"code":    tea.ToString(DefaultAny(res["Code"], res["code"])),
-					"message": "code: " + tea.ToString(tea.IntValue(response_.StatusCode)) + ", " + tea.ToString(DefaultAny(res["Message"], res["message"])) + " request id: " + tea.ToString(DefaultAny(res["RequestId"], res["requestId"])),
-					"data":    res,
+					"code":       tea.ToString(DefaultAny(res["Code"], res["code"])),
+					"statusCode": tea.IntValue(response_.StatusCode),
+					"message":    "code: " + tea.ToString(tea.IntValue(response_.StatusCode)) + ", " + tea.ToString(DefaultAny(res["Message"], res["message"])) + " request id: " + tea.ToString(DefaultAny(res["RequestId"], res["requestId"])),
+					"data":       res,
 				})
 				return _result, _err
 			}

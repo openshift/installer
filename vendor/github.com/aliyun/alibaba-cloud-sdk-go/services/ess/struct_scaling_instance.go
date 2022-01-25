@@ -32,4 +32,6 @@ type ScalingInstance struct {
 	WeightedCapacity       int    `json:"WeightedCapacity" xml:"WeightedCapacity"`
 	CreatedTime            string `json:"CreatedTime" xml:"CreatedTime"`
 	SpotStrategy           string `json:"SpotStrategy" xml:"SpotStrategy"`
+	ZoneId                 string `json:"ZoneId" xml:"ZoneId"`
+	ScalingActivityId      string `json:"ScalingActivityId" xml:"ScalingActivityId"`
 }

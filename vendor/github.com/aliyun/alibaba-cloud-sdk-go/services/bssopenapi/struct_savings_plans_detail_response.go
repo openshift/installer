@@ -17,18 +17,19 @@ package bssopenapi
 
 // SavingsPlansDetailResponse is a nested struct in bssopenapi response
 type SavingsPlansDetailResponse struct {
-	InstanceId     string `json:"InstanceId" xml:"InstanceId"`
-	SavingsType    string `json:"SavingsType" xml:"SavingsType"`
-	InstanceFamily string `json:"InstanceFamily" xml:"InstanceFamily"`
-	Region         string `json:"Region" xml:"Region"`
-	PoolValue      string `json:"PoolValue" xml:"PoolValue"`
-	Currency       string `json:"Currency" xml:"Currency"`
-	Status         string `json:"Status" xml:"Status"`
-	StartTime      string `json:"StartTime" xml:"StartTime"`
-	EndTime        string `json:"EndTime" xml:"EndTime"`
-	PayMode        string `json:"PayMode" xml:"PayMode"`
-	PrepayFee      string `json:"PrepayFee" xml:"PrepayFee"`
-	TotalSave      string `json:"TotalSave" xml:"TotalSave"`
-	Utilization    string `json:"Utilization" xml:"Utilization"`
-	Share          bool   `json:"Share" xml:"Share"`
+	InstanceId       string `json:"InstanceId" xml:"InstanceId"`
+	SavingsType      string `json:"SavingsType" xml:"SavingsType"`
+	InstanceFamily   string `json:"InstanceFamily" xml:"InstanceFamily"`
+	Region           string `json:"Region" xml:"Region"`
+	PoolValue        string `json:"PoolValue" xml:"PoolValue"`
+	Currency         string `json:"Currency" xml:"Currency"`
+	Status           string `json:"Status" xml:"Status"`
+	StartTime        string `json:"StartTime" xml:"StartTime"`
+	EndTime          string `json:"EndTime" xml:"EndTime"`
+	PayMode          string `json:"PayMode" xml:"PayMode"`
+	PrepayFee        string `json:"PrepayFee" xml:"PrepayFee"`
+	TotalSave        string `json:"TotalSave" xml:"TotalSave"`
+	Utilization      string `json:"Utilization" xml:"Utilization"`
+	AllocationStatus string `json:"AllocationStatus" xml:"AllocationStatus"`
+	Tags             []Tag  `json:"Tags" xml:"Tags"`
 }

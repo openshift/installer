@@ -71,10 +71,11 @@ func (client *Client) DescribeClustersWithCallback(request *DescribeClustersRequ
 // DescribeClustersRequest is the request struct for api DescribeClusters
 type DescribeClustersRequest struct {
 	*requests.RpcRequest
-	ClusterName string                 `position:"Query" name:"ClusterName"`
-	PageNumber  requests.Integer       `position:"Query" name:"PageNumber"`
-	PageSize    requests.Integer       `position:"Query" name:"PageSize"`
-	Tag         *[]DescribeClustersTag `position:"Query" name:"Tag"  type:"Repeated"`
+	ClusterName     string                 `position:"Query" name:"ClusterName"`
+	PageNumber      requests.Integer       `position:"Query" name:"PageNumber"`
+	ResourceGroupId string                 `position:"Query" name:"ResourceGroupId"`
+	PageSize        requests.Integer       `position:"Query" name:"PageSize"`
+	Tag             *[]DescribeClustersTag `position:"Query" name:"Tag"  type:"Repeated"`
 }
 
 // DescribeClustersTag is a repeated param struct in DescribeClustersRequest

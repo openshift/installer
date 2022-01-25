@@ -86,13 +86,13 @@ type DescribeDBNodePerformanceRequest struct {
 // DescribeDBNodePerformanceResponse is the response struct for api DescribeDBNodePerformance
 type DescribeDBNodePerformanceResponse struct {
 	*responses.BaseResponse
+	DBVersion       string                                     `json:"DBVersion" xml:"DBVersion"`
+	EndTime         string                                     `json:"EndTime" xml:"EndTime"`
 	RequestId       string                                     `json:"RequestId" xml:"RequestId"`
+	StartTime       string                                     `json:"StartTime" xml:"StartTime"`
+	DBType          string                                     `json:"DBType" xml:"DBType"`
 	DBNodeId        string                                     `json:"DBNodeId" xml:"DBNodeId"`
 	Engine          string                                     `json:"Engine" xml:"Engine"`
-	DBType          string                                     `json:"DBType" xml:"DBType"`
-	DBVersion       string                                     `json:"DBVersion" xml:"DBVersion"`
-	StartTime       string                                     `json:"StartTime" xml:"StartTime"`
-	EndTime         string                                     `json:"EndTime" xml:"EndTime"`
 	PerformanceKeys PerformanceKeysInDescribeDBNodePerformance `json:"PerformanceKeys" xml:"PerformanceKeys"`
 }
 

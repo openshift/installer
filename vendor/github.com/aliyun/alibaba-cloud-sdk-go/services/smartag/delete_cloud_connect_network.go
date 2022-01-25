@@ -71,11 +71,11 @@ func (client *Client) DeleteCloudConnectNetworkWithCallback(request *DeleteCloud
 // DeleteCloudConnectNetworkRequest is the request struct for api DeleteCloudConnectNetwork
 type DeleteCloudConnectNetworkRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	CcnId                string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	CcnId                string           `position:"Query" name:"CcnId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
 }
 
 // DeleteCloudConnectNetworkResponse is the response struct for api DeleteCloudConnectNetwork

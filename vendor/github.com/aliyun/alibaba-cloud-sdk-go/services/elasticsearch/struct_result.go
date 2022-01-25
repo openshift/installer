@@ -22,6 +22,7 @@ type Result struct {
 	Endpoints                 string                     `json:"endpoints" xml:"endpoints"`
 	IlmPolicy                 string                     `json:"ilmPolicy" xml:"ilmPolicy"`
 	Priority                  int                        `json:"priority" xml:"priority"`
+	EndpointName              string                     `json:"endpointName" xml:"endpointName"`
 	Tags                      map[string]interface{}     `json:"tags" xml:"tags"`
 	Domain                    string                     `json:"domain" xml:"domain"`
 	GmtUpdateTime             string                     `json:"gmtUpdateTime" xml:"gmtUpdateTime"`
@@ -29,6 +30,7 @@ type Result struct {
 	ResVersion                string                     `json:"resVersion" xml:"resVersion"`
 	PipelineId                string                     `json:"pipelineId" xml:"pipelineId"`
 	RegionId                  string                     `json:"regionId" xml:"regionId"`
+	EndpointDomain            string                     `json:"endpointDomain" xml:"endpointDomain"`
 	Env                       string                     `json:"env" xml:"env"`
 	VpcId                     string                     `json:"vpcId" xml:"vpcId"`
 	Connectable               bool                       `json:"connectable" xml:"connectable"`
@@ -49,6 +51,7 @@ type Result struct {
 	NodeAmount                int                        `json:"nodeAmount" xml:"nodeAmount"`
 	DataStream                bool                       `json:"dataStream" xml:"dataStream"`
 	InstanceId                string                     `json:"instanceId" xml:"instanceId"`
+	ServiceId                 string                     `json:"serviceId" xml:"serviceId"`
 	Description               string                     `json:"description" xml:"description"`
 	Trigger                   string                     `json:"trigger" xml:"trigger"`
 	EsInstanceId              string                     `json:"esInstanceId" xml:"esInstanceId"`
@@ -67,6 +70,7 @@ type Result struct {
 	Name                      string                     `json:"name" xml:"name"`
 	MessageWatermark          int64                      `json:"messageWatermark" xml:"messageWatermark"`
 	QuartzRegex               string                     `json:"QuartzRegex" xml:"QuartzRegex"`
+	EndpointId                string                     `json:"endpointId" xml:"endpointId"`
 	ResType                   string                     `json:"resType" xml:"resType"`
 	Integrity                 float64                    `json:"integrity" xml:"integrity"`
 	EnablePublic              bool                       `json:"enablePublic" xml:"enablePublic"`
@@ -91,12 +95,13 @@ type Result struct {
 	EsVersions                []string                   `json:"esVersions" xml:"esVersions"`
 	EsIPWhitelist             []string                   `json:"esIPWhitelist" xml:"esIPWhitelist"`
 	PublicIpWhitelist         []string                   `json:"publicIpWhitelist" xml:"publicIpWhitelist"`
+	KibanaPrivateIPWhitelist  []string                   `json:"kibanaPrivateIPWhitelist" xml:"kibanaPrivateIPWhitelist"`
 	Zones                     []string                   `json:"zones" xml:"zones"`
+	KibanaIPWhitelist         []string                   `json:"kibanaIPWhitelist" xml:"kibanaIPWhitelist"`
 	EsIPBlacklist             []string                   `json:"esIPBlacklist" xml:"esIPBlacklist"`
 	IndexPatterns             []string                   `json:"indexPatterns" xml:"indexPatterns"`
 	ClientNodeSpec            []string                   `json:"clientNodeSpec" xml:"clientNodeSpec"`
 	InstanceSupportNodes      []string                   `json:"instanceSupportNodes" xml:"instanceSupportNodes"`
-	KibanaIPWhitelist         []string                   `json:"kibanaIPWhitelist" xml:"kibanaIPWhitelist"`
 	PipelineIds               []string                   `json:"pipelineIds" xml:"pipelineIds"`
 	Node                      Node                       `json:"node" xml:"node"`
 	ElasticExpansionTask      ElasticExpansionTask       `json:"elasticExpansionTask" xml:"elasticExpansionTask"`

@@ -61,4 +61,5 @@ type ScalingGroup struct {
 	SuspendedProcesses                  SuspendedProcesses      `json:"SuspendedProcesses" xml:"SuspendedProcesses"`
 	VServerGroups                       VServerGroups           `json:"VServerGroups" xml:"VServerGroups"`
 	LaunchTemplateOverrides             LaunchTemplateOverrides `json:"LaunchTemplateOverrides" xml:"LaunchTemplateOverrides"`
+	AlbServerGroups                     AlbServerGroups         `json:"AlbServerGroups" xml:"AlbServerGroups"`
 }

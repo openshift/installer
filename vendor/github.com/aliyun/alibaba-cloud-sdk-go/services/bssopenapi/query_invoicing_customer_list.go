@@ -77,11 +77,11 @@ type QueryInvoicingCustomerListRequest struct {
 // QueryInvoicingCustomerListResponse is the response struct for api QueryInvoicingCustomerList
 type QueryInvoicingCustomerListResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                           `json:"RequestId" xml:"RequestId"`
+	Success   bool                             `json:"Success" xml:"Success"`
+	Code      string                           `json:"Code" xml:"Code"`
+	Message   string                           `json:"Message" xml:"Message"`
+	Data      DataInQueryInvoicingCustomerList `json:"Data" xml:"Data"`
 }
 
 // CreateQueryInvoicingCustomerListRequest creates a request to invoke QueryInvoicingCustomerList API

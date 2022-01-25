@@ -95,7 +95,7 @@ func CreateDescribeParameterModificationHistoryRequest() (request *DescribeParam
 	request = &DescribeParameterModificationHistoryRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeParameterModificationHistory", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeParameterModificationHistory", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

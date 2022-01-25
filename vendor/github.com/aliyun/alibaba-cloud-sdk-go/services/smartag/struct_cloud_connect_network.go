@@ -18,16 +18,17 @@ package smartag
 // CloudConnectNetwork is a nested struct in smartag response
 type CloudConnectNetwork struct {
 	IsDefault               bool   `json:"IsDefault" xml:"IsDefault"`
-	Description             string `json:"Description" xml:"Description"`
-	InterworkingStatus      string `json:"InterworkingStatus" xml:"InterworkingStatus"`
-	AvailableCloudBoxCount  string `json:"AvailableCloudBoxCount" xml:"AvailableCloudBoxCount"`
-	CcnId                   string `json:"CcnId" xml:"CcnId"`
 	CreateTime              int64  `json:"CreateTime" xml:"CreateTime"`
-	CidrBlock               string `json:"CidrBlock" xml:"CidrBlock"`
 	AssociatedCenOwnerId    string `json:"AssociatedCenOwnerId" xml:"AssociatedCenOwnerId"`
-	AssociatedCenId         string `json:"AssociatedCenId" xml:"AssociatedCenId"`
-	SnatCidrBlock           string `json:"SnatCidrBlock" xml:"SnatCidrBlock"`
 	AssociatedCloudBoxCount string `json:"AssociatedCloudBoxCount" xml:"AssociatedCloudBoxCount"`
+	InterworkingStatus      string `json:"InterworkingStatus" xml:"InterworkingStatus"`
+	CcnId                   string `json:"CcnId" xml:"CcnId"`
+	AvailableCloudBoxCount  string `json:"AvailableCloudBoxCount" xml:"AvailableCloudBoxCount"`
+	CidrBlock               string `json:"CidrBlock" xml:"CidrBlock"`
+	Description             string `json:"Description" xml:"Description"`
+	SnatCidrBlock           string `json:"SnatCidrBlock" xml:"SnatCidrBlock"`
+	AssociatedCenId         string `json:"AssociatedCenId" xml:"AssociatedCenId"`
 	Name                    string `json:"Name" xml:"Name"`
+	ResourceGroupId         string `json:"ResourceGroupId" xml:"ResourceGroupId"`
 	Tags                    Tags   `json:"Tags" xml:"Tags"`
 }

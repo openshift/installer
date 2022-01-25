@@ -18,15 +18,15 @@ package smartag
 // Strategy is a nested struct in smartag response
 type Strategy struct {
 	Status                string `json:"Status" xml:"Status"`
+	StrategyPublishStatus string `json:"StrategyPublishStatus" xml:"StrategyPublishStatus"`
+	RouteDistribution     string `json:"RouteDistribution" xml:"RouteDistribution"`
+	CreateTime            int64  `json:"CreateTime" xml:"CreateTime"`
+	SmartAGId             string `json:"SmartAGId" xml:"SmartAGId"`
+	SourceType            string `json:"SourceType" xml:"SourceType"`
+	IsConflict            bool   `json:"IsConflict" xml:"IsConflict"`
 	InstanceId            string `json:"InstanceId" xml:"InstanceId"`
+	DestCidrBlock         string `json:"DestCidrBlock" xml:"DestCidrBlock"`
+	ConflictInfo          string `json:"ConflictInfo" xml:"ConflictInfo"`
 	HcInstanceId          string `json:"HcInstanceId" xml:"HcInstanceId"`
 	RouteSource           string `json:"RouteSource" xml:"RouteSource"`
-	SourceType            string `json:"SourceType" xml:"SourceType"`
-	CreateTime            int64  `json:"CreateTime" xml:"CreateTime"`
-	RouteDistribution     string `json:"RouteDistribution" xml:"RouteDistribution"`
-	IsConflict            bool   `json:"IsConflict" xml:"IsConflict"`
-	SmartAGId             string `json:"SmartAGId" xml:"SmartAGId"`
-	StrategyPublishStatus string `json:"StrategyPublishStatus" xml:"StrategyPublishStatus"`
-	ConflictInfo          string `json:"ConflictInfo" xml:"ConflictInfo"`
-	DestCidrBlock         string `json:"DestCidrBlock" xml:"DestCidrBlock"`
 }

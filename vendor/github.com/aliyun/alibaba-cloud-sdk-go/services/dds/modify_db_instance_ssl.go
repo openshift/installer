@@ -91,7 +91,7 @@ func CreateModifyDBInstanceSSLRequest() (request *ModifyDBInstanceSSLRequest) {
 	request = &ModifyDBInstanceSSLRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyDBInstanceSSL", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyDBInstanceSSL", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

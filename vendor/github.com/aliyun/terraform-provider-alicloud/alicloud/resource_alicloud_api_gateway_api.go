@@ -3,8 +3,11 @@ package alicloud
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -290,6 +293,11 @@ func resourceAliyunApigatewayApi() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"force_nonce_check": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -358,6 +366,7 @@ func resourceAliyunApigatewayApiRead(d *schema.ResourceData, meta interface{}) e
 	d.Set("name", object.ApiName)
 	d.Set("description", object.Description)
 	d.Set("auth_type", object.AuthType)
+	d.Set("force_nonce_check", object.ForceNonceCheck)
 
 	requestConfig := map[string]interface{}{}
 	requestConfig["protocol"] = object.RequestConfig.RequestProtocol
@@ -492,6 +501,13 @@ func resourceAliyunApigatewayApiUpdate(d *schema.ResourceData, meta interface{})
 	request.Description = d.Get("description").(string)
 	request.AuthType = d.Get("auth_type").(string)
 
+	if d.HasChange("force_nonce_check") {
+		update = true
+	}
+	if v, exist := d.GetOk("force_nonce_check"); exist {
+		request.ForceNonceCheck = requests.Boolean(strconv.FormatBool(v.(bool)))
+	}
+
 	var paramErr error
 	var paramConfig string
 	if d.HasChange("request_config") {
@@ -622,7 +638,9 @@ func buildAliyunApiArgs(d *schema.ResourceData, meta interface{}) (*cloudapi.Cre
 	request.Description = d.Get("description").(string)
 	request.ApiName = d.Get("name").(string)
 	request.AuthType = d.Get("auth_type").(string)
-
+	if v, exist := d.GetOk("force_nonce_check"); exist {
+		request.ForceNonceCheck = requests.Boolean(strconv.FormatBool(v.(bool)))
+	}
 	requestConfig, err := requestConfigToJsonStr(d.Get("request_config").([]interface{}))
 	if err != nil {
 		return request, WrapError(err)

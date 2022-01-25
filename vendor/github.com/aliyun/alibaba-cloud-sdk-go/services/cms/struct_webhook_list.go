@@ -17,5 +17,5 @@ package cms
 
 // WebhookList is a nested struct in cms response
 type WebhookList struct {
-	WebhookList []string `json:"WebhookList" xml:"WebhookList"`
+	WebhookListItem []WebhookListItem `json:"WebhookList" xml:"WebhookList"`
 }

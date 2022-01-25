@@ -75,6 +75,7 @@ type DescribeCenBandwidthPackagesRequest struct {
 	IncludeReservationData requests.Boolean                      `position:"Query" name:"IncludeReservationData"`
 	PageNumber             requests.Integer                      `position:"Query" name:"PageNumber"`
 	IsOrKey                requests.Boolean                      `position:"Query" name:"IsOrKey"`
+	ResourceGroupId        string                                `position:"Query" name:"ResourceGroupId"`
 	PageSize               requests.Integer                      `position:"Query" name:"PageSize"`
 	Tag                    *[]DescribeCenBandwidthPackagesTag    `position:"Query" name:"Tag"  type:"Repeated"`
 	ResourceOwnerAccount   string                                `position:"Query" name:"ResourceOwnerAccount"`

@@ -42,7 +42,7 @@ func resourceAlicloudHbrVault() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"ARCHIVE", "IA", "STANDARD"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"STANDARD"}, false),
 			},
 			"vault_type": {
 				Type:         schema.TypeString,
@@ -184,7 +184,7 @@ func resourceAlicloudHbrVaultDelete(d *schema.ResourceData, meta interface{}) er
 	err = resource.Retry(d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
 		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2017-09-08"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
 		if err != nil {
-			if NeedRetry(err) {
+			if IsExpectedErrors(err, []string{"CannotDeleteReplicationSourceVault"}) || NeedRetry(err) {
 				wait()
 				return resource.RetryableError(err)
 			}

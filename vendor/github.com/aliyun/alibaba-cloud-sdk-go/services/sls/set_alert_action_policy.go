@@ -71,9 +71,10 @@ func (client *Client) SetAlertActionPolicyWithCallback(request *SetAlertActionPo
 // SetAlertActionPolicyRequest is the request struct for api SetAlertActionPolicy
 type SetAlertActionPolicyRequest struct {
 	*requests.RpcRequest
-	App      string `position:"Body" name:"App"`
-	PolicyId string `position:"Body" name:"PolicyId"`
-	Policy   string `position:"Body" name:"Policy"`
+	App        string `position:"Body" name:"App"`
+	PolicyId   string `position:"Body" name:"PolicyId"`
+	PolicyName string `position:"Body" name:"PolicyName"`
+	Policy     string `position:"Body" name:"Policy"`
 }
 
 // SetAlertActionPolicyResponse is the response struct for api SetAlertActionPolicy

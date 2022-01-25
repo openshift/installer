@@ -197,6 +197,18 @@ func (c *Client) GetLogLines(project, logstore string, topic string, from int64,
 	return ls.GetLogLines(topic, from, to, queryExp, maxLineNum, offset, reverse)
 }
 
+// GetLogsV2 ...
+func (c *Client) GetLogsV2(project, logstore string, req *GetLogRequest) (*GetLogsResponse, error) {
+	ls := convertLogstore(c, project, logstore)
+	return ls.GetLogsV2(req)
+}
+
+// GetLogLinesV2 ...
+func (c *Client) GetLogLinesV2(project, logstore string, req *GetLogRequest) (*GetLogLinesResponse, error) {
+	ls := convertLogstore(c, project, logstore)
+	return ls.GetLogLinesV2(req)
+}
+
 // CreateIndex ...
 func (c *Client) CreateIndex(project, logstore string, index Index) error {
 	ls := convertLogstore(c, project, logstore)

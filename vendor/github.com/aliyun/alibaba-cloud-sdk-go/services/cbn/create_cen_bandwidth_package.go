@@ -76,6 +76,7 @@ type CreateCenBandwidthPackageRequest struct {
 	Description                string           `position:"Query" name:"Description"`
 	AutoRenewDuration          requests.Integer `position:"Query" name:"AutoRenewDuration"`
 	BandwidthPackageChargeType string           `position:"Query" name:"BandwidthPackageChargeType"`
+	ResourceGroupId            string           `position:"Query" name:"ResourceGroupId"`
 	GeographicRegionBId        string           `position:"Query" name:"GeographicRegionBId"`
 	Period                     requests.Integer `position:"Query" name:"Period"`
 	GeographicRegionAId        string           `position:"Query" name:"GeographicRegionAId"`

@@ -92,7 +92,7 @@ func CreateDescribeActiveOperationTaskTypeRequest() (request *DescribeActiveOper
 	request = &DescribeActiveOperationTaskTypeRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeActiveOperationTaskType", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeActiveOperationTaskType", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

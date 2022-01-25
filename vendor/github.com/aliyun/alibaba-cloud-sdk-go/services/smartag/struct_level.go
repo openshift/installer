@@ -17,7 +17,7 @@ package smartag
 
 // Level is a nested struct in smartag response
 type Level struct {
-	Biz           string `json:"Biz" xml:"Biz"`
 	Configuration string `json:"Configuration" xml:"Configuration"`
 	Total         string `json:"Total" xml:"Total"`
+	Biz           string `json:"Biz" xml:"Biz"`
 }

@@ -121,7 +121,7 @@ type DescribeInstanceResponse struct {
 	Duration             int                    `json:"Duration" xml:"Duration"`
 	ColdStorageSize      int                    `json:"ColdStorageSize" xml:"ColdStorageSize"`
 	ResourceGroupId      string                 `json:"ResourceGroupId" xml:"ResourceGroupId"`
-	EncryptionType       bool                   `json:"EncryptionType" xml:"EncryptionType"`
+	EncryptionType       string                 `json:"EncryptionType" xml:"EncryptionType"`
 	EncryptionKey        string                 `json:"EncryptionKey" xml:"EncryptionKey"`
 	Tags                 TagsInDescribeInstance `json:"Tags" xml:"Tags"`
 }

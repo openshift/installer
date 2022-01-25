@@ -71,13 +71,13 @@ func (client *Client) AddSnatEntryWithCallback(request *AddSnatEntryRequest, cal
 // AddSnatEntryRequest is the request struct for api AddSnatEntry
 type AddSnatEntryRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SnatIp               string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	CidrBlock            string           `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SnatIp               string           `position:"Query" name:"SnatIp"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	CidrBlock            string           `position:"Query" name:"CidrBlock"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // AddSnatEntryResponse is the response struct for api AddSnatEntry

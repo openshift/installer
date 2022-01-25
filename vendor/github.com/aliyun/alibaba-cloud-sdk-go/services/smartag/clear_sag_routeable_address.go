@@ -71,12 +71,12 @@ func (client *Client) ClearSagRouteableAddressWithCallback(request *ClearSagRout
 // ClearSagRouteableAddressRequest is the request struct for api ClearSagRouteableAddress
 type ClearSagRouteableAddressRequest struct {
 	*requests.RpcRequest
-	AccessKeyId          string           `position:"Query"`
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SagId                string           `position:"Query"`
+	AccessKeyId          string           `position:"Query" name:"access_key_id"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SagId                string           `position:"Query" name:"SagId"`
 }
 
 // ClearSagRouteableAddressResponse is the response struct for api ClearSagRouteableAddress

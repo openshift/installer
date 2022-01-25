@@ -137,9 +137,10 @@ func ConvertToApsaraLogConfigInputDetail(detail InputDetailInterface) (*ApsaraLo
 // RegexConfigInputDetail regex log config
 type RegexConfigInputDetail struct {
 	LocalFileConfigInputDetail
-	Key           []string `json:"key"`
-	LogBeginRegex string   `json:"logBeginRegex"`
-	Regex         string   `json:"regex"`
+	Key              []string `json:"key"`
+	LogBeginRegex    string   `json:"logBeginRegex"`
+	Regex            string   `json:"regex"`
+	CustomizedFields string   `json:"customizedFields,omitempty"`
 }
 
 // InitRegexConfigInputDetail ...
@@ -221,11 +222,12 @@ func ConvertToJSONConfigInputDetail(detail InputDetailInterface) (*JSONConfigInp
 // DelimiterConfigInputDetail delimiter log config
 type DelimiterConfigInputDetail struct {
 	LocalFileConfigInputDetail
-	Separator  string   `json:"separator"`
-	Quote      string   `json:"quote"`
-	Key        []string `json:"key"`
-	TimeKey    string   `json:"timeKey"`
-	AutoExtend bool     `json:"autoExtend"`
+	Separator          string   `json:"separator"`
+	Quote              string   `json:"quote"`
+	Key                []string `json:"key"`
+	TimeKey            string   `json:"timeKey"`
+	AutoExtend         bool     `json:"autoExtend"`
+	AcceptNoEnoughKeys bool     `json:"acceptNoEnoughKeys"`
 }
 
 // InitDelimiterConfigInputDetail ...
@@ -271,24 +273,26 @@ func ConvertToDelimiterConfigInputDetail(detail InputDetailInterface) (*Delimite
 // LocalFileConfigInputDetail all file input detail's basic config
 type LocalFileConfigInputDetail struct {
 	CommonConfigInputDetail
-	LogType            string            `json:"logType"`
-	LogPath            string            `json:"logPath"`
-	FilePattern        string            `json:"filePattern"`
-	TimeFormat         string            `json:"timeFormat"`
-	TopicFormat        string            `json:"topicFormat,omitempty"`
-	Preserve           bool              `json:"preserve"`
-	PreserveDepth      int               `json:"preserveDepth"`
-	FileEncoding       string            `json:"fileEncoding,omitempty"`
-	DiscardUnmatch     bool              `json:"discardUnmatch"`
-	MaxDepth           int               `json:"maxDepth"`
-	TailExisted        bool              `json:"tailExisted"`
-	DiscardNonUtf8     bool              `json:"discardNonUtf8"`
-	DelaySkipBytes     int               `json:"delaySkipBytes"`
-	IsDockerFile       bool              `json:"dockerFile"`
-	DockerIncludeLabel map[string]string `json:"dockerIncludeLabel,omitempty"`
-	DockerExcludeLabel map[string]string `json:"dockerExcludeLabel,omitempty"`
-	DockerIncludeEnv   map[string]string `json:"dockerIncludeEnv,omitempty"`
-	DockerExcludeEnv   map[string]string `json:"dockerExcludeEnv,omitempty"`
+	LogType            string                 `json:"logType"`
+	LogPath            string                 `json:"logPath"`
+	FilePattern        string                 `json:"filePattern"`
+	TimeFormat         string                 `json:"timeFormat"`
+	TopicFormat        string                 `json:"topicFormat,omitempty"`
+	Preserve           bool                   `json:"preserve"`
+	PreserveDepth      int                    `json:"preserveDepth"`
+	FileEncoding       string                 `json:"fileEncoding,omitempty"`
+	DiscardUnmatch     bool                   `json:"discardUnmatch"`
+	MaxDepth           int                    `json:"maxDepth"`
+	TailExisted        bool                   `json:"tailExisted"`
+	DiscardNonUtf8     bool                   `json:"discardNonUtf8"`
+	DelaySkipBytes     int                    `json:"delaySkipBytes"`
+	IsDockerFile       bool                   `json:"dockerFile"`
+	DockerIncludeLabel map[string]string      `json:"dockerIncludeLabel,omitempty"`
+	DockerExcludeLabel map[string]string      `json:"dockerExcludeLabel,omitempty"`
+	DockerIncludeEnv   map[string]string      `json:"dockerIncludeEnv,omitempty"`
+	DockerExcludeEnv   map[string]string      `json:"dockerExcludeEnv,omitempty"`
+	PluginDetail       map[string]interface{} `json:"plugin,omitempty"`
+	Advanced           map[string]interface{} `json:"advanced,omitempty"`
 }
 
 func GetFileConfigInputDetailType(detail InputDetailInterface) (string, bool) {

@@ -440,11 +440,12 @@ func resourceAlicloudEcsDiskUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 	update = false
 	modifyDiskChargeTypeReq := map[string]interface{}{
-		"DiskIds": d.Id(),
+		"DiskIds": convertListToJsonString([]interface{}{d.Id()}),
 	}
 	if !d.IsNewResource() && d.HasChange("instance_id") {
 		update = true
 	}
+	modifyDiskChargeTypeReq["ClientToken"] = buildClientToken("ModifyDiskChargeType")
 	modifyDiskChargeTypeReq["InstanceId"] = d.Get("instance_id")
 	modifyDiskChargeTypeReq["RegionId"] = client.RegionId
 	modifyDiskChargeTypeReq["AutoPay"] = true

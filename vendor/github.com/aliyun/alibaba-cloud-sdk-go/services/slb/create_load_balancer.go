@@ -75,6 +75,7 @@ type CreateLoadBalancerRequest struct {
 	AddressIPVersion             string           `position:"Query" name:"AddressIPVersion"`
 	MasterZoneId                 string           `position:"Query" name:"MasterZoneId"`
 	ResourceGroupId              string           `position:"Query" name:"ResourceGroupId"`
+	SpecType                     string           `position:"Query" name:"SpecType"`
 	LoadBalancerName             string           `position:"Query" name:"LoadBalancerName"`
 	SlaveZoneId                  string           `position:"Query" name:"SlaveZoneId"`
 	LoadBalancerSpec             string           `position:"Query" name:"LoadBalancerSpec"`

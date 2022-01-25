@@ -71,12 +71,12 @@ func (client *Client) RevokeInstanceFromVbrWithCallback(request *RevokeInstanceF
 // RevokeInstanceFromVbrRequest is the request struct for api RevokeInstanceFromVbr
 type RevokeInstanceFromVbrRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	VbrInstanceId        string           `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	VbrInstanceId        string           `position:"Query" name:"VbrInstanceId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // RevokeInstanceFromVbrResponse is the response struct for api RevokeInstanceFromVbr

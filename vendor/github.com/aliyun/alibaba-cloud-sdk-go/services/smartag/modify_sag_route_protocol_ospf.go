@@ -71,20 +71,20 @@ func (client *Client) ModifySagRouteProtocolOspfWithCallback(request *ModifySagR
 // ModifySagRouteProtocolOspfRequest is the request struct for api ModifySagRouteProtocolOspf
 type ModifySagRouteProtocolOspfRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	AuthenticationType   string           `position:"Query"`
-	Password             string           `position:"Query"`
-	AreaId               requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	Md5KeyId             requests.Integer `position:"Query"`
-	RouterId             string           `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
-	DeadTime             requests.Integer `position:"Query"`
-	Md5Key               string           `position:"Query"`
-	HelloTime            requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	AuthenticationType   string           `position:"Query" name:"AuthenticationType"`
+	Password             string           `position:"Query" name:"Password"`
+	AreaId               requests.Integer `position:"Query" name:"AreaId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	Md5KeyId             requests.Integer `position:"Query" name:"Md5KeyId"`
+	RouterId             string           `position:"Query" name:"RouterId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
+	DeadTime             requests.Integer `position:"Query" name:"DeadTime"`
+	Md5Key               string           `position:"Query" name:"Md5Key"`
+	HelloTime            requests.Integer `position:"Query" name:"HelloTime"`
 }
 
 // ModifySagRouteProtocolOspfResponse is the response struct for api ModifySagRouteProtocolOspf

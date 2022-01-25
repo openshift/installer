@@ -71,10 +71,10 @@ func (client *Client) ListInstanceIndicesWithCallback(request *ListInstanceIndic
 // ListInstanceIndicesRequest is the request struct for api ListInstanceIndices
 type ListInstanceIndicesRequest struct {
 	*requests.RoaRequest
+	All        requests.Boolean `position:"Query" name:"all"`
 	InstanceId string           `position:"Path" name:"InstanceId"`
 	IsManaged  requests.Boolean `position:"Query" name:"isManaged"`
 	Name       string           `position:"Query" name:"name"`
-	Lang       string           `position:"Query" name:"lang"`
 }
 
 // ListInstanceIndicesResponse is the response struct for api ListInstanceIndices

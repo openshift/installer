@@ -17,8 +17,9 @@ package elasticsearch
 
 // NetworkConfig is a nested struct in elasticsearch response
 type NetworkConfig struct {
-	Type      string `json:"type" xml:"type"`
-	VsArea    string `json:"vsArea" xml:"vsArea"`
-	VswitchId string `json:"vswitchId" xml:"vswitchId"`
-	VpcId     string `json:"vpcId" xml:"vpcId"`
+	Type             string                 `json:"type" xml:"type"`
+	VsArea           string                 `json:"vsArea" xml:"vsArea"`
+	VswitchId        string                 `json:"vswitchId" xml:"vswitchId"`
+	VpcId            string                 `json:"vpcId" xml:"vpcId"`
+	WhiteIpGroupList []WhiteIpGroupListItem `json:"whiteIpGroupList" xml:"whiteIpGroupList"`
 }

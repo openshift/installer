@@ -87,6 +87,7 @@ type DescribeIntranetAttributeResponse struct {
 	IntranetBandwidth   int    `json:"IntranetBandwidth" xml:"IntranetBandwidth"`
 	ExpireTime          string `json:"ExpireTime" xml:"ExpireTime"`
 	BandwidthExpireTime string `json:"BandwidthExpireTime" xml:"BandwidthExpireTime"`
+	AutoRenewal         bool   `json:"AutoRenewal" xml:"AutoRenewal"`
 }
 
 // CreateDescribeIntranetAttributeRequest creates a request to invoke DescribeIntranetAttribute API

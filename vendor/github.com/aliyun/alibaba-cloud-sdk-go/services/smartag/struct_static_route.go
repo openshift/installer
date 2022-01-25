@@ -18,7 +18,7 @@ package smartag
 // StaticRoute is a nested struct in smartag response
 type StaticRoute struct {
 	NextHop         string `json:"NextHop" xml:"NextHop"`
-	Vlan            string `json:"Vlan" xml:"Vlan"`
-	PortName        string `json:"PortName" xml:"PortName"`
 	DestinationCidr string `json:"DestinationCidr" xml:"DestinationCidr"`
+	PortName        string `json:"PortName" xml:"PortName"`
+	Vlan            string `json:"Vlan" xml:"Vlan"`
 }
