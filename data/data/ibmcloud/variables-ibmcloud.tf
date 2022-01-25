@@ -11,7 +11,7 @@ variable "ibmcloud_api_key" {
 
 variable "ibmcloud_bootstrap_instance_type" {
   type        = string
-  description = "Instance type for the bootstrap node. Example: `bx2d-4x16`"
+  description = "Instance type for the bootstrap node. Example: `bx2-4x16`"
 }
 
 variable "ibmcloud_cis_crn" {
@@ -26,7 +26,7 @@ variable "ibmcloud_region" {
 
 variable "ibmcloud_master_instance_type" {
   type        = string
-  description = "Instance type for the master node(s). Example: `bx2d-4x16`"
+  description = "Instance type for the master node(s). Example: `bx2-4x16`"
 }
 
 variable "ibmcloud_master_availability_zones" {
