@@ -16,9 +16,9 @@ require (
 	github.com/IBM/networking-go-sdk v0.14.0
 	github.com/IBM/platform-services-go-sdk v0.18.16
 	github.com/IBM/vpc-go-sdk v1.0.1
-	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1154
+	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1264
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
-	github.com/aliyun/terraform-provider-alicloud v1.132.0
+	github.com/aliyun/terraform-provider-alicloud v1.153.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 	github.com/aws/aws-sdk-go v1.37.4
@@ -89,7 +89,7 @@ require (
 	google.golang.org/api v0.44.0
 	google.golang.org/genproto v0.0.0-20210831024726-fe130286e0e2
 	google.golang.org/grpc v1.40.0
-	gopkg.in/ini.v1 v1.62.0
+	gopkg.in/ini.v1 v1.66.2
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.23.0
 	k8s.io/apiextensions-apiserver v0.23.0
@@ -144,14 +144,14 @@ require (
 	github.com/alibabacloud-go/debug v0.0.0-20190504072949-9472017b5c68 // indirect
 	github.com/alibabacloud-go/endpoint-util v1.1.0 // indirect
 	github.com/alibabacloud-go/openapi-util v0.0.7 // indirect
-	github.com/alibabacloud-go/tea v1.1.15 // indirect
-	github.com/alibabacloud-go/tea-roa v1.2.8 // indirect
+	github.com/alibabacloud-go/tea v1.1.17 // indirect
+	github.com/alibabacloud-go/tea-roa v1.3.0 // indirect
 	github.com/alibabacloud-go/tea-roa-utils v1.1.5 // indirect
-	github.com/alibabacloud-go/tea-rpc v1.1.8 // indirect
+	github.com/alibabacloud-go/tea-rpc v1.2.0 // indirect
 	github.com/alibabacloud-go/tea-rpc-utils v1.1.2 // indirect
 	github.com/alibabacloud-go/tea-utils v1.3.9 // indirect
 	github.com/aliyun/aliyun-datahub-sdk-go v0.1.5 // indirect
-	github.com/aliyun/aliyun-log-go-sdk v0.1.21 // indirect
+	github.com/aliyun/aliyun-log-go-sdk v0.1.27 // indirect
 	github.com/aliyun/aliyun-mns-go-sdk v0.0.0-20210305050620-d1b5875bda58 // indirect
 	github.com/aliyun/aliyun-tablestore-go-sdk v4.1.3+incompatible // indirect
 	github.com/aliyun/credentials-go v1.1.2 // indirect
@@ -182,8 +182,8 @@ require (
 	github.com/coreos/vcontext v0.0.0-20201120045928-b0e13dab675c // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dchest/bcrypt_pbkdf v0.0.0-20150205184540-83f37f9c154a // indirect
-	github.com/deckarep/golang-set v1.7.1 // indirect
-	github.com/denverdino/aliyungo v0.0.0-20210518071019-eb3bbb144d8a // indirect
+	github.com/deckarep/golang-set v1.8.0 // indirect
+	github.com/denverdino/aliyungo v0.0.0-20211216040745-6cc94847413f // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0 // indirect
