@@ -9,8 +9,6 @@ locals {
     },
     var.ali_extra_tags,
   )
-  system_disk_size     = 120
-  system_disk_category = "cloud_essd"
 }
 
 provider "alicloud" {
@@ -144,8 +142,8 @@ resource "alicloud_instance" "bootstrap" {
 
   system_disk_name        = "${local.prefix}_sys_disk-bootstrap"
   system_disk_description = local.description
-  system_disk_category    = local.system_disk_category
-  system_disk_size        = local.system_disk_size
+  system_disk_category    = var.ali_system_disk_category
+  system_disk_size        = var.ali_system_disk_size
 
   user_data = var.ali_bootstrap_stub_ignition
   tags = merge(
