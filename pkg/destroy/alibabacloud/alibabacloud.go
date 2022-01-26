@@ -863,9 +863,6 @@ func (o *ClusterUninstaller) deleteSecurityGroups(logger logrus.FieldLogger) (er
 				if err == nil {
 					return true, nil
 				}
-				if strings.Contains(err.Error(), "DependencyViolation") {
-					return false, nil
-				}
 				return false, err
 			},
 		)
@@ -877,7 +874,7 @@ func (o *ClusterUninstaller) deleteSecurityGroups(logger logrus.FieldLogger) (er
 
 	err = wait.Poll(
 		1*time.Second,
-		1*time.Minute,
+		3*time.Minute,
 		func() (bool, error) {
 			response, err := o.listSecurityGroup(securityGroupIDs)
 			if err != nil {
@@ -906,6 +903,9 @@ func (o *ClusterUninstaller) deleteSecurityGroupRules(securityGroupID string, lo
 	logger.WithField("securityGroupID", securityGroupID).Debug("Revoking")
 	response, err := o.getSecurityGroup(securityGroupID)
 	if err != nil {
+		if strings.Contains(err.Error(), "InvalidSecurityGroupId.NotFound") {
+			return nil
+		}
 		return err
 	}
 	for _, permission := range response.Permissions.Permission {
