@@ -10,13 +10,7 @@ data "alicloud_pvtz_service" "open" {
   enable = "On"
 }
 
-data "alicloud_alidns_domains" "dns_public" {
-  domain_name_regex = "^${var.base_domain}$"
-}
-
 resource "alicloud_alidns_record" "dns_public_record" {
-  count = length(data.alicloud_alidns_domains.dns_public.domains) == 0 ? 0 : 1
-
   domain_name = var.base_domain
   rr          = "api.${local.cluster_name}"
   type        = "A"
