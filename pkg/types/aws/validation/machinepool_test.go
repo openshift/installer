@@ -89,9 +89,6 @@ func Test_validateAMIID(t *testing.T) {
 	}{{
 		platform: &aws.Platform{Region: "us-east-1"},
 	}, {
-		platform: &aws.Platform{Region: "us-gov-east-1"},
-		err:      `^test-path: Required value: AMI ID must be provided for regions .*$`,
-	}, {
 		platform: &aws.Platform{Region: "cn-north-1"},
 		err:      `^test-path: Required value: AMI ID must be provided for regions .*$`,
 	}, {
