@@ -10,5 +10,6 @@ func Metadata(config *types.InstallConfig) *alibabacloud.Metadata {
 	return &alibabacloud.Metadata{
 		Region:        config.Platform.AlibabaCloud.Region,
 		ClusterDomain: config.ClusterDomain(),
+		PrivateZoneID: config.AlibabaCloud.PrivateZoneID,
 	}
 }

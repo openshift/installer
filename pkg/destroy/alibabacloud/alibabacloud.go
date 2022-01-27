@@ -38,6 +38,7 @@ type ClusterUninstaller struct {
 	Region        string
 	InfraID       string
 	ClusterDomain string
+	PrivateZoneID string
 	Tags          []map[string]string
 	TagResources  struct {
 		ecsInstances   []ResourceArn
@@ -145,6 +146,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Region:          region,
 		InfraID:         metadata.InfraID,
 		ClusterDomain:   metadata.AlibabaCloud.ClusterDomain,
+		PrivateZoneID:   metadata.AlibabaCloud.PrivateZoneID,
 		Tags: []map[string]string{
 			{
 				fmt.Sprintf("kubernetes.io/cluster/%s", metadata.InfraID): "owned",
@@ -1205,6 +1207,10 @@ func (o *ClusterUninstaller) detachPolicy(policyName string, policyType string, 
 }
 
 func (o *ClusterUninstaller) deletePrivateZones(logger logrus.FieldLogger) (err error) {
+	if o.PrivateZoneID != "" {
+		return nil
+	}
+
 	clusterDomain := o.ClusterDomain
 	logger.WithField("clusterDomain", clusterDomain).Debug("Searching private zone")
 	zoneID, err := o.getPrivateZoneID()
