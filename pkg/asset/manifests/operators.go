@@ -136,6 +136,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	)
 
 	templateData := &bootkubeTemplateData{
+		CVOCapabilities:  installConfig.Config.Capabilities,
 		CVOClusterID:     clusterID.UUID,
 		McsTLSCert:       base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:        base64.StdEncoding.EncodeToString(mcsCertKey.Key()),

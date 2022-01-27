@@ -11,3 +11,12 @@ spec:
   channel: stable-4.11
 {{- end }}
   clusterID: {{.CVOClusterID}}
+{{- if .CVOCapabilities }}
+  capabilities:
+    baselineCapabilitySet: {{.CVOCapabilities.BaselineCapabilitySet}}
+    {{- if .CVOCapabilities.AdditionalEnabledCapabilities}}
+    additionalEnabledCapabilities: {{range .CVOCapabilities.AdditionalEnabledCapabilities}}
+    - {{.}}
+    {{- end}}
+    {{- end}}
+{{- end }}
