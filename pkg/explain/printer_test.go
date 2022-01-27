@@ -31,6 +31,9 @@ func Test_PrintFields(t *testing.T) {
     bootstrapInPlace <object>
       BootstrapInPlace is the configuration for installing a single node with bootstrap in place installation.
 
+    capabilities <object>
+      Capabilities configures the installation of optional core cluster components.
+
     compute <[]object>
       Compute is the configuration for the machines that comprise the compute nodes.
       MachinePool is a pool of machines to be installed.
