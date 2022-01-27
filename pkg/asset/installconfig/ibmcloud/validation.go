@@ -42,10 +42,6 @@ func validatePlatform(client API, ic *types.InstallConfig, path *field.Path) fie
 		allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
 	}
 
-	if ic.Platform.IBMCloud.VPC != "" {
-		allErrs = append(allErrs, validateNetworking(client, ic, path)...)
-	}
-
 	if ic.Platform.IBMCloud.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(client, ic.IBMCloud, ic.Platform.IBMCloud.DefaultMachinePlatform, path)...)
 	}
@@ -219,40 +215,6 @@ func validateResourceGroup(client API, ic *types.InstallConfig, path *field.Path
 		return append(allErrs, field.NotFound(path.Child("resourceGroupName"), ic.IBMCloud.ResourceGroupName))
 	}
 
-	return allErrs
-}
-
-func validateNetworking(client API, ic *types.InstallConfig, path *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-	platform := ic.Platform.IBMCloud
-
-	_, err := client.GetVPC(context.TODO(), platform.VPC)
-	if err != nil {
-		if errors.Is(err, &VPCResourceNotFoundError{}) {
-			allErrs = append(allErrs, field.NotFound(path.Child("vpc"), platform.VPC))
-		} else {
-			allErrs = append(allErrs, field.InternalError(path.Child("vpc"), err))
-		}
-	}
-
-	allErrs = append(allErrs, validateSubnets(client, ic, platform.Subnets, path)...)
-
-	return allErrs
-}
-
-func validateSubnets(client API, ic *types.InstallConfig, subnets []string, path *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-	zones, err := client.GetVPCZonesForRegion(context.TODO(), ic.Platform.IBMCloud.Region)
-	if err != nil {
-		allErrs = append(allErrs, field.InternalError(path.Child("subnets"), err))
-	}
-	validZones := sets.NewString(zones...)
-	for idx, subnet := range subnets {
-		subnetPath := path.Child("subnets").Index(idx)
-		allErrs = append(allErrs, validateSubnetZone(client, subnet, validZones, subnetPath)...)
-	}
-
-	// TODO: IBM[#80]: additional subnet validation
 	return allErrs
 }
 

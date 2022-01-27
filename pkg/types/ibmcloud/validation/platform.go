@@ -42,26 +42,8 @@ func ValidatePlatform(p *ibmcloud.Platform, fldPath *field.Path) field.ErrorList
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, regionShortNames))
 	}
 
-	allErrs = append(allErrs, validateVPCConfig(p, fldPath)...)
-
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
-	}
-	return allErrs
-}
-
-func validateVPCConfig(p *ibmcloud.Platform, path *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-	if p.VPC != "" || len(p.Subnets) > 0 || p.VPCResourceGroupName != "" {
-		if p.VPC == "" {
-			allErrs = append(allErrs, field.Required(path.Child("vpc"), "vpc is required when specifying subnets or vpcResourceGroupName"))
-		}
-		if len(p.Subnets) == 0 {
-			allErrs = append(allErrs, field.Required(path.Child("subnets"), "subnets is required when specifying vpc or vpcResourceGroupName"))
-		}
-		if p.VPCResourceGroupName == "" {
-			allErrs = append(allErrs, field.Required(path.Child("vpcResourceGroupName"), "vpcResourceGroupName is required when specifying vpc or subnets"))
-		}
 	}
 	return allErrs
 }

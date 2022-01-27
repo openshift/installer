@@ -27,7 +27,6 @@ var (
 	validClusterName             = "valid-cluster-name"
 	validDNSZoneID               = "valid-zone-id"
 	validBaseDomain              = "valid.base.domain"
-	validVPC                     = "valid-vpc"
 	validPublicSubnetUSSouth1ID  = "public-subnet-us-south-1-id"
 	validPublicSubnetUSSouth2ID  = "public-subnet-us-south-2-id"
 	validPrivateSubnetUSSouth1ID = "private-subnet-us-south-1-id"
@@ -42,13 +41,6 @@ var (
 
 	validInstanceProfies = []vpcv1.InstanceProfile{{Name: &[]string{"type-a"}[0]}, {Name: &[]string{"type-b"}[0]}}
 
-	validVPCConfig = func(ic *types.InstallConfig) {
-		ic.IBMCloud.VPC = validVPC
-		ic.IBMCloud.Subnets = validSubnets
-	}
-	notFoundVPC            = func(ic *types.InstallConfig) { ic.IBMCloud.VPC = "not-found" }
-	internalErrorVPC       = func(ic *types.InstallConfig) { ic.IBMCloud.VPC = "internal-error-vpc" }
-	subnetInvalidZone      = func(ic *types.InstallConfig) { ic.IBMCloud.Subnets = []string{"subnet-invalid-zone"} }
 	machinePoolInvalidType = func(ic *types.InstallConfig) {
 		ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
 			InstanceType: "invalid-type",
@@ -115,46 +107,12 @@ func TestValidate(t *testing.T) {
 			edits:    editFunctions{},
 			errorMsg: "",
 		},
-		{
-			name:     "valid vpc config",
-			edits:    editFunctions{validVPCConfig},
-			errorMsg: "",
-		},
-		{
-			name:     "not found vpc",
-			edits:    editFunctions{validVPCConfig, notFoundVPC},
-			errorMsg: `^platform\.ibmcloud\.vpc: Not found: \"not-found\"$`,
-		},
-		{
-			name:     "internal error vpc",
-			edits:    editFunctions{validVPCConfig, internalErrorVPC},
-			errorMsg: `^platform\.ibmcloud\.vpc: Internal error$`,
-		},
-		{
-			name:     "subnet invalid zone",
-			edits:    editFunctions{validVPCConfig, subnetInvalidZone},
-			errorMsg: `^\Qplatform.ibmcloud.subnets[0]: Invalid value: "subnet-invalid-zone": subnet is not in expected zones: [us-south-1 us-south-2 us-south-3]\E$`,
-		},
-		{
-			name:     "machine pool invalid type",
-			edits:    editFunctions{validVPCConfig, machinePoolInvalidType},
-			errorMsg: `^\QcontrolPlane.platform.ibmcloud.type: Not found: "invalid-type"\E$`,
-		},
-		{
-			name:     "machine pool invalid type",
-			edits:    editFunctions{validVPCConfig, machinePoolInvalidType},
-			errorMsg: `^\QcontrolPlane.platform.ibmcloud.type: Not found: "invalid-type"\E$`,
-		},
 	}
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	ibmcloudClient := mock.NewMockAPI(mockCtrl)
-
-	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), validVPC).Return(&vpcv1.VPC{}, nil).AnyTimes()
-	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), "not-found").Return(nil, &ibmcloud.VPCResourceNotFoundError{})
-	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), "internal-error-vpc").Return(nil, fmt.Errorf(""))
 
 	ibmcloudClient.EXPECT().GetSubnet(gomock.Any(), validPublicSubnetUSSouth1ID).Return(&vpcv1.Subnet{Zone: &vpcv1.ZoneReference{Name: &validZoneUSSouth1}}, nil).AnyTimes()
 	ibmcloudClient.EXPECT().GetSubnet(gomock.Any(), validPublicSubnetUSSouth2ID).Return(&vpcv1.Subnet{Zone: &vpcv1.ZoneReference{Name: &validZoneUSSouth1}}, nil).AnyTimes()
