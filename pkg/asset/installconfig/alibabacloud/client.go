@@ -212,10 +212,11 @@ func (client *Client) DescribeAvailableZoneByInstanceType(instanceType string) (
 }
 
 // ListResourceGroups gets the list of resource groups.
-func (client *Client) ListResourceGroups() (response *resourcemanager.ListResourceGroupsResponse, err error) {
+func (client *Client) ListResourceGroups(resourceGroupID string) (response *resourcemanager.ListResourceGroupsResponse, err error) {
 	request := resourcemanager.CreateListResourceGroupsRequest()
 	request.Status = "OK"
 	request.Scheme = "https"
+	request.QueryParams["ResourceGroupId"] = resourceGroupID
 	response = &resourcemanager.ListResourceGroupsResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
