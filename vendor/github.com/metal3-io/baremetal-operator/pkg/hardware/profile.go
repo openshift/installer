@@ -83,6 +83,16 @@ func init() {
 		LocalGB: 50,
 		CPUArch: "x86_64",
 	}
+
+	profiles["openstack"] = Profile{
+		Name: "openstack",
+		RootDeviceHints: metal3v1alpha1.RootDeviceHints{
+			DeviceName: "/dev/vdb",
+		},
+		RootGB:  10,
+		LocalGB: 50,
+		CPUArch: "x86_64",
+	}
 }
 
 // GetProfile returns the named profile
