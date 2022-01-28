@@ -71,19 +71,19 @@ func (client *Client) DescribeHealthCheckAttributeWithCallback(request *Describe
 // DescribeHealthCheckAttributeRequest is the request struct for api DescribeHealthCheckAttribute
 type DescribeHealthCheckAttributeRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	HcInstanceId         string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	HcInstanceId         string           `position:"Query" name:"HcInstanceId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // DescribeHealthCheckAttributeResponse is the response struct for api DescribeHealthCheckAttribute
 type DescribeHealthCheckAttributeResponse struct {
 	*responses.BaseResponse
-	Description        string `json:"Description" xml:"Description"`
 	SrcPort            int    `json:"SrcPort" xml:"SrcPort"`
+	Description        string `json:"Description" xml:"Description"`
 	RequestId          string `json:"RequestId" xml:"RequestId"`
 	SrcIpAddr          string `json:"SrcIpAddr" xml:"SrcIpAddr"`
 	CreateTime         int64  `json:"CreateTime" xml:"CreateTime"`

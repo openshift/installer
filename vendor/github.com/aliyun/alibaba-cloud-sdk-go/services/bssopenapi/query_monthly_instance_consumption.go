@@ -83,11 +83,11 @@ type QueryMonthlyInstanceConsumptionRequest struct {
 // QueryMonthlyInstanceConsumptionResponse is the response struct for api QueryMonthlyInstanceConsumption
 type QueryMonthlyInstanceConsumptionResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                                `json:"RequestId" xml:"RequestId"`
+	Success   bool                                  `json:"Success" xml:"Success"`
+	Code      string                                `json:"Code" xml:"Code"`
+	Message   string                                `json:"Message" xml:"Message"`
+	Data      DataInQueryMonthlyInstanceConsumption `json:"Data" xml:"Data"`
 }
 
 // CreateQueryMonthlyInstanceConsumptionRequest creates a request to invoke QueryMonthlyInstanceConsumption API

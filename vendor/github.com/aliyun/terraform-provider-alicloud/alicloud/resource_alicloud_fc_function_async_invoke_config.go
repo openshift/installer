@@ -331,7 +331,7 @@ func parseFCDestinationConfigId(id string) (serviceName string, functionName str
 		return
 	}
 
-	return "", "", "", fmt.Errorf("unexpected format of ID (%s), expected service_name:function_name or sevice_name:function_name:qualifier", id)
+	return "", "", "", fmt.Errorf("unexpected format of ID (%s), expected service_name:function_name or service_name:function_name:qualifier", id)
 }
 
 func flattenFCFunctionEventInvokeConfigDestinationConfig(destinationConfig *fc.DestinationConfig) []interface{} {

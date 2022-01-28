@@ -79,11 +79,11 @@ type QueryProductListRequest struct {
 // QueryProductListResponse is the response struct for api QueryProductList
 type QueryProductListResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                 `json:"RequestId" xml:"RequestId"`
+	Success   bool                   `json:"Success" xml:"Success"`
+	Code      string                 `json:"Code" xml:"Code"`
+	Message   string                 `json:"Message" xml:"Message"`
+	Data      DataInQueryProductList `json:"Data" xml:"Data"`
 }
 
 // CreateQueryProductListRequest creates a request to invoke QueryProductList API

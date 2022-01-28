@@ -71,17 +71,17 @@ func (client *Client) ModifySagPortRouteProtocolWithCallback(request *ModifySagP
 // ModifySagPortRouteProtocolRequest is the request struct for api ModifySagPortRouteProtocol
 type ModifySagPortRouteProtocolRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	RemoteIp             string           `position:"Query"`
-	Vlan                 string           `position:"Query"`
-	RemoteAs             string           `position:"Query"`
-	RouteProtocol        string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
-	PortName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	RemoteIp             string           `position:"Query" name:"RemoteIp"`
+	Vlan                 string           `position:"Query" name:"Vlan"`
+	RemoteAs             string           `position:"Query" name:"RemoteAs"`
+	RouteProtocol        string           `position:"Query" name:"RouteProtocol"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
+	PortName             string           `position:"Query" name:"PortName"`
 }
 
 // ModifySagPortRouteProtocolResponse is the response struct for api ModifySagPortRouteProtocol

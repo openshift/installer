@@ -71,10 +71,10 @@ func (client *Client) GetCloudConnectNetworkUseLimitWithCallback(request *GetClo
 // GetCloudConnectNetworkUseLimitRequest is the request struct for api GetCloudConnectNetworkUseLimit
 type GetCloudConnectNetworkUseLimitRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
 }
 
 // GetCloudConnectNetworkUseLimitResponse is the response struct for api GetCloudConnectNetworkUseLimit

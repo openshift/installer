@@ -17,10 +17,11 @@ package smartag
 
 // User is a nested struct in smartag response
 type User struct {
-	Bandwidth  int    `json:"Bandwidth" xml:"Bandwidth"`
-	UserMail   string `json:"UserMail" xml:"UserMail"`
-	UserName   string `json:"UserName" xml:"UserName"`
-	OnlineTime string `json:"OnlineTime" xml:"OnlineTime"`
-	State      int    `json:"State" xml:"State"`
-	ClientIp   string `json:"ClientIp" xml:"ClientIp"`
+	Bandwidth           int    `json:"Bandwidth" xml:"Bandwidth"`
+	UserMail            string `json:"UserMail" xml:"UserMail"`
+	UserName            string `json:"UserName" xml:"UserName"`
+	OnlineTime          string `json:"OnlineTime" xml:"OnlineTime"`
+	State               int    `json:"State" xml:"State"`
+	AccelerateBandwidth int64  `json:"AccelerateBandwidth" xml:"AccelerateBandwidth"`
+	ClientIp            string `json:"ClientIp" xml:"ClientIp"`
 }

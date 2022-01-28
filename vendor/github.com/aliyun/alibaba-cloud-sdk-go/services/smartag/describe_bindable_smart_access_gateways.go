@@ -71,24 +71,25 @@ func (client *Client) DescribeBindableSmartAccessGatewaysWithCallback(request *D
 // DescribeBindableSmartAccessGatewaysRequest is the request struct for api DescribeBindableSmartAccessGateways
 type DescribeBindableSmartAccessGatewaysRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	CcnId                string           `position:"Query"`
-	PageNumber           requests.Integer `position:"Query"`
-	PageSize             requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	CrossAccount         requests.Boolean `position:"Query"`
-	Name                 string           `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	CcnId                string           `position:"Query" name:"CcnId"`
+	PageNumber           requests.Integer `position:"Query" name:"PageNumber"`
+	ResourceGroupId      string           `position:"Query" name:"ResourceGroupId"`
+	PageSize             requests.Integer `position:"Query" name:"PageSize"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	CrossAccount         requests.Boolean `position:"Query" name:"CrossAccount"`
+	Name                 string           `position:"Query" name:"Name"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // DescribeBindableSmartAccessGatewaysResponse is the response struct for api DescribeBindableSmartAccessGateways
 type DescribeBindableSmartAccessGatewaysResponse struct {
 	*responses.BaseResponse
 	TotalCount          int                                                      `json:"TotalCount" xml:"TotalCount"`
-	RequestId           string                                                   `json:"RequestId" xml:"RequestId"`
 	PageSize            int                                                      `json:"PageSize" xml:"PageSize"`
+	RequestId           string                                                   `json:"RequestId" xml:"RequestId"`
 	PageNumber          int                                                      `json:"PageNumber" xml:"PageNumber"`
 	SmartAccessGateways SmartAccessGatewaysInDescribeBindableSmartAccessGateways `json:"SmartAccessGateways" xml:"SmartAccessGateways"`
 }

@@ -18,6 +18,6 @@ package smartag
 // SagVbrRelation is a nested struct in smartag response
 type SagVbrRelation struct {
 	VbrInstanceId string `json:"VbrInstanceId" xml:"VbrInstanceId"`
-	SagInstanceId string `json:"SagInstanceId" xml:"SagInstanceId"`
 	SagUid        string `json:"SagUid" xml:"SagUid"`
+	SagInstanceId string `json:"SagInstanceId" xml:"SagInstanceId"`
 }

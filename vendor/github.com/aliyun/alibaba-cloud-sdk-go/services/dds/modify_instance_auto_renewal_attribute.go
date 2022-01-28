@@ -92,7 +92,7 @@ func CreateModifyInstanceAutoRenewalAttributeRequest() (request *ModifyInstanceA
 	request = &ModifyInstanceAutoRenewalAttributeRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyInstanceAutoRenewalAttribute", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyInstanceAutoRenewalAttribute", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

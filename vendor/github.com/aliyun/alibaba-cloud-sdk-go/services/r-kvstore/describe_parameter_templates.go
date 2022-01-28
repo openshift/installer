@@ -79,6 +79,7 @@ type DescribeParameterTemplatesRequest struct {
 	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
 	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
 	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	InstanceId           string           `position:"Query" name:"InstanceId"`
 	CharacterType        string           `position:"Query" name:"CharacterType"`
 }
 

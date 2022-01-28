@@ -54,7 +54,7 @@ func dataSourceAlicloudSaeServiceRead(d *schema.ResourceData, meta interface{}) 
 		return nil
 	})
 	if err != nil {
-		if IsExpectedErrors(err, []string{"SYSTEM.SALE_VALIDATE_NO_SPECIFIC_CODE_FAILED"}) {
+		if IsExpectedErrors(err, []string{"ORDER.OPEND", "SYSTEM.SALE_VALIDATE_NO_SPECIFIC_CODE_FAILED"}) {
 			d.SetId("SaeServiceHasBeenOpened")
 			d.Set("status", "Opened")
 			return nil

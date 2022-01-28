@@ -17,8 +17,8 @@ package smartag
 
 // TrafficTopNItem is a nested struct in smartag response
 type TrafficTopNItem struct {
-	InstanceId  string `json:"InstanceId" xml:"InstanceId"`
 	TrafficRate string `json:"TrafficRate" xml:"TrafficRate"`
-	RegionId    string `json:"RegionId" xml:"RegionId"`
+	InstanceId  string `json:"InstanceId" xml:"InstanceId"`
 	Name        string `json:"Name" xml:"Name"`
+	RegionId    string `json:"RegionId" xml:"RegionId"`
 }

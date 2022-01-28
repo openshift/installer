@@ -77,12 +77,12 @@ type DescribeResourcePackageProductRequest struct {
 // DescribeResourcePackageProductResponse is the response struct for api DescribeResourcePackageProduct
 type DescribeResourcePackageProductResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	OrderId   int64  `json:"OrderId" xml:"OrderId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                               `json:"RequestId" xml:"RequestId"`
+	OrderId   int64                                `json:"OrderId" xml:"OrderId"`
+	Success   bool                                 `json:"Success" xml:"Success"`
+	Code      string                               `json:"Code" xml:"Code"`
+	Message   string                               `json:"Message" xml:"Message"`
+	Data      DataInDescribeResourcePackageProduct `json:"Data" xml:"Data"`
 }
 
 // CreateDescribeResourcePackageProductRequest creates a request to invoke DescribeResourcePackageProduct API

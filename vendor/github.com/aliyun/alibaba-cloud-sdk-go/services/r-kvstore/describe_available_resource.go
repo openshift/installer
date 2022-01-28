@@ -77,6 +77,7 @@ type DescribeAvailableResourceRequest struct {
 	SecurityToken        string           `position:"Query" name:"SecurityToken"`
 	Engine               string           `position:"Query" name:"Engine"`
 	InstanceChargeType   string           `position:"Query" name:"InstanceChargeType"`
+	NodeId               string           `position:"Query" name:"NodeId"`
 	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
 	Level                string           `position:"Query" name:"Level"`
 	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`

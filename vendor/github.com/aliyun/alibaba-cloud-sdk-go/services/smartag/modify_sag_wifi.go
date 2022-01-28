@@ -71,21 +71,21 @@ func (client *Client) ModifySagWifiWithCallback(request *ModifySagWifiRequest, c
 // ModifySagWifiRequest is the request struct for api ModifySagWifi
 type ModifySagWifiRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	EncryptAlgorithm     string           `position:"Query"`
-	Channel              string           `position:"Query"`
-	AuthenticationType   string           `position:"Query"`
-	SSID                 string           `position:"Query"`
-	Password             string           `position:"Query"`
-	IsBroadcast          string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	Bandwidth            string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	IsEnable             string           `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
-	IsAuth               string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	EncryptAlgorithm     string           `position:"Query" name:"EncryptAlgorithm"`
+	Channel              string           `position:"Query" name:"Channel"`
+	AuthenticationType   string           `position:"Query" name:"AuthenticationType"`
+	SSID                 string           `position:"Query" name:"SSID"`
+	Password             string           `position:"Query" name:"Password"`
+	IsBroadcast          string           `position:"Query" name:"IsBroadcast"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	Bandwidth            string           `position:"Query" name:"Bandwidth"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	IsEnable             string           `position:"Query" name:"IsEnable"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
+	IsAuth               string           `position:"Query" name:"IsAuth"`
 }
 
 // ModifySagWifiResponse is the response struct for api ModifySagWifi

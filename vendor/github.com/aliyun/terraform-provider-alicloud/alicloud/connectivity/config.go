@@ -23,7 +23,6 @@ var securityCredURL = "http://100.100.100.200/latest/meta-data/ram/security-cred
 
 // Config of aliyun
 type Config struct {
-	SourceIp             string
 	AccessKey            string
 	SecretKey            string
 	EcsRoleName          string
@@ -35,6 +34,8 @@ type Config struct {
 	Protocol             string
 	ClientReadTimeout    int
 	ClientConnectTimeout int
+	SourceIp             string
+	SecureTransport      string
 
 	RamRoleArn               string
 	RamRoleSessionName       string
@@ -132,6 +133,34 @@ type Config struct {
 	MscopensubscriptionEndpoint string
 	SddpEndpoint                string
 	BastionhostEndpoint         string
+	SasEndpoint                 string
+	AlidfsEndpoint              string
+	EhpcEndpoint                string
+	EnsEndpoint                 string
+	IotEndpoint                 string
+	ImmEndpoint                 string
+	ClickhouseEndpoint          string
+	DtsEndpoint                 string
+	DgEndpoint                  string
+	CloudssoEndpoint            string
+	WafEndpoint                 string
+	SwasEndpoint                string
+	VsEndpoint                  string
+	QuickbiEndpoint             string
+	VodEndpoint                 string
+	OpensearchEndpoint          string
+	GdsEndpoint                 string
+	DbfsEndpoint                string
+	DevopsrdcEndpoint           string
+	EaisEndpoint                string
+	CloudauthEndpoint           string
+	ImpEndpoint                 string
+	MhubEndpoint                string
+	ServicemeshEndpoint         string
+	AcrEndpoint                 string
+	EdsuserEndpoint             string
+	GpdbEndpoint                string
+	GaplusEndpoint              string
 }
 
 func (c *Config) loadAndValidate() error {
@@ -268,6 +297,13 @@ func (c *Config) getTeaDslSdkConfig(stsSupported bool) (config rpc.Config, err e
 		SetReadTimeout(c.ClientReadTimeout).
 		SetConnectTimeout(c.ClientConnectTimeout).
 		SetMaxIdleConns(500)
+	if c.SourceIp != "" {
+		config.SetSourceIp(c.SourceIp)
+	}
+	if c.SecureTransport != "" {
+		config.SetSecureTransport(c.SecureTransport)
+	}
+
 	return
 }
 func (c *Config) getTeaRoaDslSdkConfig(stsSupported bool) (config roa.Config, err error) {
@@ -280,6 +316,12 @@ func (c *Config) getTeaRoaDslSdkConfig(stsSupported bool) (config roa.Config, er
 		SetReadTimeout(c.ClientReadTimeout).
 		SetConnectTimeout(c.ClientConnectTimeout).
 		SetMaxIdleConns(500)
+	if c.SourceIp != "" {
+		config.SetSourceIp(c.SourceIp)
+	}
+	if c.SecureTransport != "" {
+		config.SetSecureTransport(c.SecureTransport)
+	}
 	return
 }
 func (c *Config) getCredentialConfig(stsSupported bool) *credential.Config {

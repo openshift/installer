@@ -17,11 +17,11 @@ package smartag
 
 // Lan is a nested struct in smartag response
 type Lan struct {
-	IPType   string `json:"IPType" xml:"IPType"`
 	Lease    string `json:"Lease" xml:"Lease"`
-	IP       string `json:"IP" xml:"IP"`
 	Mask     string `json:"Mask" xml:"Mask"`
-	StartIp  string `json:"StartIp" xml:"StartIp"`
-	PortName string `json:"PortName" xml:"PortName"`
 	EndIp    string `json:"EndIp" xml:"EndIp"`
+	PortName string `json:"PortName" xml:"PortName"`
+	StartIp  string `json:"StartIp" xml:"StartIp"`
+	IPType   string `json:"IPType" xml:"IPType"`
+	IP       string `json:"IP" xml:"IP"`
 }

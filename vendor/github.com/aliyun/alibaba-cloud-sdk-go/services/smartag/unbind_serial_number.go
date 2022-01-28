@@ -71,12 +71,12 @@ func (client *Client) UnbindSerialNumberWithCallback(request *UnbindSerialNumber
 // UnbindSerialNumberRequest is the request struct for api UnbindSerialNumber
 type UnbindSerialNumberRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SerialNumber         string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SerialNumber         string           `position:"Query" name:"SerialNumber"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // UnbindSerialNumberResponse is the response struct for api UnbindSerialNumber

@@ -71,21 +71,21 @@ func (client *Client) ModifySagRemoteAccessWithCallback(request *ModifySagRemote
 // ModifySagRemoteAccessRequest is the request struct for api ModifySagRemoteAccess
 type ModifySagRemoteAccessRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	RemoteAccessIp       string           `position:"Query"`
-	SerialNumber         string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	RemoteAccessIp       string           `position:"Query" name:"RemoteAccessIp"`
+	SerialNumber         string           `position:"Query" name:"SerialNumber"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // ModifySagRemoteAccessResponse is the response struct for api ModifySagRemoteAccess
 type ModifySagRemoteAccessResponse struct {
 	*responses.BaseResponse
-	Message        string `json:"Message" xml:"Message"`
-	RequestId      string `json:"RequestId" xml:"RequestId"`
 	SerialNumber   string `json:"SerialNumber" xml:"SerialNumber"`
+	RequestId      string `json:"RequestId" xml:"RequestId"`
+	Message        string `json:"Message" xml:"Message"`
 	RemoteAccessIp string `json:"RemoteAccessIp" xml:"RemoteAccessIp"`
 	Code           string `json:"Code" xml:"Code"`
 	Success        bool   `json:"Success" xml:"Success"`

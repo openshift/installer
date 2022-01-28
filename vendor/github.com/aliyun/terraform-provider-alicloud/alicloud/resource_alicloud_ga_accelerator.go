@@ -7,6 +7,7 @@ import (
 
 	util "github.com/alibabacloud-go/tea-utils/service"
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
@@ -29,10 +30,13 @@ func resourceAlicloudGaAccelerator() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"auto_renew_duration": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"auto_use_coupon": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false,
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -41,8 +45,22 @@ func resourceAlicloudGaAccelerator() *schema.Resource {
 			"duration": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.IntBetween(1, 9),
+			},
+			"pricing_cycle": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"Month", "Year"}, false),
+			},
+			"renewal_status": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					string(RenewAutoRenewal),
+					string(RenewNormal),
+					string(RenewNotRenewal)}, false),
 			},
 			"spec": {
 				Type:         schema.TypeString,
@@ -67,13 +85,20 @@ func resourceAlicloudGaAcceleratorCreate(d *schema.ResourceData, meta interface{
 	if err != nil {
 		return WrapError(err)
 	}
+	// there is an api bug that the name can not effect
+	//if v, ok := d.GetOk("accelerator_name"); ok {
+	//	request["Name"] = v
+	//}
 	request["AutoPay"] = true
 	if v, ok := d.GetOkExists("auto_use_coupon"); ok {
 		request["AutoUseCoupon"] = v
 	}
-
 	request["Duration"] = d.Get("duration")
-	request["PricingCycle"] = "Month"
+	if v, ok := d.GetOk("pricing_cycle"); ok {
+		request["PricingCycle"] = v
+	} else {
+		request["PricingCycle"] = "Month"
+	}
 	request["RegionId"] = client.RegionId
 	request["Spec"] = d.Get("spec")
 	runtime := util.RuntimeOptions{}
@@ -109,46 +134,97 @@ func resourceAlicloudGaAcceleratorRead(d *schema.ResourceData, meta interface{})
 	d.Set("description", object["Description"])
 	d.Set("spec", object["Spec"])
 	d.Set("status", object["State"])
-	if val, ok := d.GetOk("auto_use_coupon"); ok {
-		d.Set("auto_use_coupon", val)
+	describeAcceleratorAutoRenewAttributeObject, err := gaService.DescribeAcceleratorAutoRenewAttribute(d.Id())
+	if err != nil {
+		return WrapError(err)
 	}
+	if v, ok := describeAcceleratorAutoRenewAttributeObject["AutoRenewDuration"]; ok && fmt.Sprint(v) != "0" {
+		d.Set("auto_renew_duration", formatInt(v))
+	}
+	d.Set("renewal_status", describeAcceleratorAutoRenewAttributeObject["RenewalStatus"])
 	return nil
 }
 func resourceAlicloudGaAcceleratorUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	gaService := GaService{client}
 	var response map[string]interface{}
+	d.Partial(true)
+	conn, err := client.NewGaplusClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	update := false
 	request := map[string]interface{}{
 		"AcceleratorId": d.Id(),
 	}
-	if d.HasChange("accelerator_name") {
+	if d.HasChange("auto_renew_duration") {
 		update = true
-		request["Name"] = d.Get("accelerator_name")
 	}
-	request["AutoPay"] = true
-	if d.HasChange("description") {
-		update = true
-		request["Description"] = d.Get("description")
+	if v, ok := d.GetOk("auto_renew_duration"); ok {
+		request["AutoRenewDuration"] = v
 	}
 	request["RegionId"] = client.RegionId
-	if !d.IsNewResource() && d.HasChange("spec") {
+	if d.HasChange("renewal_status") {
 		update = true
-		request["Spec"] = d.Get("spec")
+	}
+	if v, ok := d.GetOk("renewal_status"); ok {
+		request["RenewalStatus"] = v
 	}
 	if update {
-		if _, ok := d.GetOkExists("auto_use_coupon"); ok {
-			request["AutoUseCoupon"] = d.Get("auto_use_coupon")
+		action := "UpdateAcceleratorAutoRenewAttribute"
+		request["ClientToken"] = buildClientToken("UpdateAcceleratorAutoRenewAttribute")
+		runtime := util.RuntimeOptions{}
+		runtime.SetAutoretry(true)
+		wait := incrementalWait(3*time.Second, 3*time.Second)
+		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-11-20"), StringPointer("AK"), nil, request, &runtime)
+			if err != nil {
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			return nil
+		})
+		addDebug(action, response, request)
+		if err != nil {
+			return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+		}
+		d.SetPartial("auto_renew_duration")
+		d.SetPartial("renewal_status")
+	}
+	update = false
+	updateAcceleratorReq := map[string]interface{}{
+		"AcceleratorId": d.Id(),
+	}
+	if d.HasChange("accelerator_name") {
+		update = true
+		if v, ok := d.GetOk("accelerator_name"); ok {
+			updateAcceleratorReq["Name"] = v
+		}
+	}
+	updateAcceleratorReq["AutoPay"] = true
+	if d.HasChange("description") {
+		update = true
+		if v, ok := d.GetOk("description"); ok {
+			updateAcceleratorReq["Description"] = v
+		}
+	}
+	updateAcceleratorReq["RegionId"] = client.RegionId
+	if !d.IsNewResource() && d.HasChange("spec") {
+		update = true
+		updateAcceleratorReq["Spec"] = d.Get("spec")
+	}
+	if update {
+		if v, ok := d.GetOkExists("auto_use_coupon"); ok {
+			updateAcceleratorReq["AutoUseCoupon"] = v
 		}
 		action := "UpdateAccelerator"
-		conn, err := client.NewGaplusClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)
 		request["ClientToken"] = buildClientToken("UpdateAccelerator")
-		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-11-20"), StringPointer("AK"), nil, request, &runtime)
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-11-20"), StringPointer("AK"), nil, updateAcceleratorReq, &runtime)
 		addDebug(action, response, request)
 		if err != nil {
 			return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
@@ -157,7 +233,11 @@ func resourceAlicloudGaAcceleratorUpdate(d *schema.ResourceData, meta interface{
 		if _, err := stateConf.WaitForState(); err != nil {
 			return WrapErrorf(err, IdMsg, d.Id())
 		}
+		d.SetPartial("accelerator_name")
+		d.SetPartial("description")
+		d.SetPartial("spec")
 	}
+	d.Partial(false)
 	return resourceAlicloudGaAcceleratorRead(d, meta)
 }
 func resourceAlicloudGaAcceleratorDelete(d *schema.ResourceData, meta interface{}) error {

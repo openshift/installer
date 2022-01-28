@@ -36,6 +36,10 @@ func resourceAlicloudConfigAggregateConfigRule() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"config_rule_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"config_rule_trigger_types": {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -95,8 +99,10 @@ func resourceAlicloudConfigAggregateConfigRule() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"ALIYUN", "CUSTOM_FC"}, false),
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice([]string{"ACTIVE", "INACTIVE"}, false),
+				Computed:     true,
 			},
 			"tag_key_scope": {
 				Type:     schema.TypeString,
@@ -112,7 +118,6 @@ func resourceAlicloudConfigAggregateConfigRule() *schema.Resource {
 
 func resourceAlicloudConfigAggregateConfigRuleCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
-	configService := ConfigService{client}
 	var response map[string]interface{}
 	action := "CreateAggregateConfigRule"
 	request := make(map[string]interface{})
@@ -176,12 +181,8 @@ func resourceAlicloudConfigAggregateConfigRuleCreate(d *schema.ResourceData, met
 	}
 
 	d.SetId(fmt.Sprint(request["AggregatorId"], ":", response["ConfigRuleId"]))
-	stateConf := BuildStateConf([]string{}, []string{"ACTIVE"}, d.Timeout(schema.TimeoutCreate), 10*time.Second, configService.ConfigAggregateConfigRuleStateRefreshFunc(d.Id(), []string{}))
-	if _, err := stateConf.WaitForState(); err != nil {
-		return WrapErrorf(err, IdMsg, d.Id())
-	}
 
-	return resourceAlicloudConfigAggregateConfigRuleRead(d, meta)
+	return resourceAlicloudConfigAggregateConfigRuleUpdate(d, meta)
 }
 func resourceAlicloudConfigAggregateConfigRuleRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
@@ -200,6 +201,7 @@ func resourceAlicloudConfigAggregateConfigRuleRead(d *schema.ResourceData, meta 
 		return WrapError(err)
 	}
 	d.Set("aggregator_id", parts[0])
+	d.Set("config_rule_id", parts[1])
 	d.Set("aggregate_config_rule_name", object["ConfigRuleName"])
 	d.Set("config_rule_trigger_types", object["ConfigRuleTriggerTypes"])
 	d.Set("description", object["Description"])
@@ -220,6 +222,7 @@ func resourceAlicloudConfigAggregateConfigRuleRead(d *schema.ResourceData, meta 
 func resourceAlicloudConfigAggregateConfigRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	configService := ConfigService{client}
+	d.Partial(true)
 	var response map[string]interface{}
 	parts, err := ParseResourceId(d.Id(), 2)
 	if err != nil {
@@ -230,27 +233,27 @@ func resourceAlicloudConfigAggregateConfigRuleUpdate(d *schema.ResourceData, met
 		"AggregatorId": parts[0],
 		"ConfigRuleId": parts[1],
 	}
-	if d.HasChange("config_rule_trigger_types") {
+	if !d.IsNewResource() && d.HasChange("config_rule_trigger_types") {
 		update = true
 	}
 	request["ConfigRuleTriggerTypes"] = d.Get("config_rule_trigger_types")
-	if d.HasChange("resource_types_scope") {
+	if !d.IsNewResource() && d.HasChange("resource_types_scope") {
 		update = true
 	}
 	request["ResourceTypesScope"] = convertListToCommaSeparate(d.Get("resource_types_scope").([]interface{}))
-	if d.HasChange("risk_level") {
+	if !d.IsNewResource() && d.HasChange("risk_level") {
 		update = true
 	}
 	request["RiskLevel"] = d.Get("risk_level")
-	if d.HasChange("description") {
+	if !d.IsNewResource() && d.HasChange("description") {
 		update = true
 		request["Description"] = d.Get("description")
 	}
-	if d.HasChange("exclude_resource_ids_scope") {
+	if !d.IsNewResource() && d.HasChange("exclude_resource_ids_scope") {
 		update = true
 		request["ExcludeResourceIdsScope"] = d.Get("exclude_resource_ids_scope")
 	}
-	if d.HasChange("input_parameters") {
+	if !d.IsNewResource() && d.HasChange("input_parameters") {
 		update = true
 		if v, err := convertMaptoJsonString(d.Get("input_parameters").(map[string]interface{})); err == nil {
 			request["InputParameters"] = v
@@ -258,23 +261,23 @@ func resourceAlicloudConfigAggregateConfigRuleUpdate(d *schema.ResourceData, met
 			return WrapError(err)
 		}
 	}
-	if d.HasChange("maximum_execution_frequency") {
+	if !d.IsNewResource() && d.HasChange("maximum_execution_frequency") {
 		update = true
 		request["MaximumExecutionFrequency"] = d.Get("maximum_execution_frequency")
 	}
-	if d.HasChange("region_ids_scope") {
+	if !d.IsNewResource() && d.HasChange("region_ids_scope") {
 		update = true
 		request["RegionIdsScope"] = d.Get("region_ids_scope")
 	}
-	if d.HasChange("resource_group_ids_scope") {
+	if !d.IsNewResource() && d.HasChange("resource_group_ids_scope") {
 		update = true
 		request["ResourceGroupIdsScope"] = d.Get("resource_group_ids_scope")
 	}
-	if d.HasChange("tag_key_scope") {
+	if !d.IsNewResource() && d.HasChange("tag_key_scope") {
 		update = true
 		request["TagKeyScope"] = d.Get("tag_key_scope")
 	}
-	if d.HasChange("tag_value_scope") {
+	if !d.IsNewResource() && d.HasChange("tag_value_scope") {
 		update = true
 		request["TagValueScope"] = d.Get("tag_value_scope")
 	}
@@ -303,11 +306,40 @@ func resourceAlicloudConfigAggregateConfigRuleUpdate(d *schema.ResourceData, met
 		if err != nil {
 			return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
 		}
-		stateConf := BuildStateConf([]string{}, []string{"ACTIVE"}, d.Timeout(schema.TimeoutUpdate), 10*time.Second, configService.ConfigAggregateConfigRuleStateRefreshFunc(d.Id(), []string{}))
-		if _, err := stateConf.WaitForState(); err != nil {
-			return WrapErrorf(err, IdMsg, d.Id())
-		}
 	}
+	update = false
+	if d.HasChange("status") {
+		update = true
+	}
+	if update {
+		configService := ConfigService{client}
+		object, err := configService.DescribeConfigAggregateConfigRule(d.Id())
+		if err != nil {
+			return WrapError(err)
+		}
+		target := d.Get("status").(string)
+		if value, exist := object["ConfigRuleState"]; exist && value.(string) != target {
+			if target == "ACTIVE" {
+				err := configService.ActiveAggregateConfigRules(parts[1], parts[0])
+				if err != nil {
+					return WrapError(err)
+				}
+			}
+			if target == "INACTIVE" {
+				err := configService.DeactiveAggregateConfigRules(parts[1], parts[0])
+				if err != nil {
+					return WrapError(err)
+				}
+			}
+		}
+		d.SetPartial("status")
+	}
+	d.Partial(false)
+	stateConf := BuildStateConf([]string{}, []string{"ACTIVE", "INACTIVE"}, d.Timeout(schema.TimeoutCreate), 10*time.Second, configService.ConfigAggregateConfigRuleStateRefreshFunc(d.Id(), []string{}))
+	if _, err := stateConf.WaitForState(); err != nil {
+		return WrapErrorf(err, IdMsg, d.Id())
+	}
+
 	return resourceAlicloudConfigAggregateConfigRuleRead(d, meta)
 }
 func resourceAlicloudConfigAggregateConfigRuleDelete(d *schema.ResourceData, meta interface{}) error {

@@ -92,7 +92,7 @@ func CreateModifyInstanceVpcAuthModeRequest() (request *ModifyInstanceVpcAuthMod
 	request = &ModifyInstanceVpcAuthModeRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyInstanceVpcAuthMode", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyInstanceVpcAuthMode", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

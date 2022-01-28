@@ -27,8 +27,8 @@ type LogStore struct {
 	AutoSplit     bool   `json:"autoSplit"`
 	MaxSplitShard int    `json:"maxSplitShard"`
 	AppendMeta    bool   `json:"appendMeta"`
-	ArchiveSecons int    `json:"archiveSeconds"`
 	TelemetryType string `json:"telemetryType"`
+	HotTTL        uint32 `json:"hot_ttl,omitempty"`
 
 	CreateTime     uint32 `json:"createTime,omitempty"`
 	LastModifyTime uint32 `json:"lastModifyTime,omitempty"`
@@ -534,23 +534,14 @@ func (s *LogStore) GetHistograms(topic string, from int64, to int64, queryExp st
 }
 
 // getLogs query logs with [from, to) time range
-func (s *LogStore) getLogs(topic string, from int64, to int64, queryExp string,
-	maxLineNum int64, offset int64, reverse bool) (*http.Response, []byte, *GetLogsResponse, error) {
+func (s *LogStore) getLogs(req *GetLogRequest) (*http.Response, []byte, *GetLogsResponse, error) {
 
 	h := map[string]string{
 		"x-log-bodyrawsize": "0",
 		"Accept":            "application/json",
 	}
 
-	urlVal := url.Values{}
-	urlVal.Add("type", "log")
-	urlVal.Add("from", strconv.Itoa(int(from)))
-	urlVal.Add("to", strconv.Itoa(int(to)))
-	urlVal.Add("topic", topic)
-	urlVal.Add("line", strconv.Itoa(int(maxLineNum)))
-	urlVal.Add("offset", strconv.Itoa(int(offset)))
-	urlVal.Add("reverse", strconv.FormatBool(reverse))
-	urlVal.Add("query", queryExp)
+	urlVal := req.ToURLParams()
 
 	uri := fmt.Sprintf("/logstores/%s?%s", s.Name, urlVal.Encode())
 	r, err := request(s.project, "GET", uri, h, nil)
@@ -591,11 +582,24 @@ func (s *LogStore) getLogs(topic string, from int64, to int64, queryExp string,
 	}, nil
 }
 
-// GetJsonLogs query logs with [from, to) time range
+// GetLogLines query logs with [from, to) time range
 func (s *LogStore) GetLogLines(topic string, from int64, to int64, queryExp string,
 	maxLineNum int64, offset int64, reverse bool) (*GetLogLinesResponse, error) {
 
-	rsp, b, logRsp, err := s.getLogs(topic, from, to, queryExp, maxLineNum, offset, reverse)
+	var req GetLogRequest
+	req.Topic = topic
+	req.From = from
+	req.To = to
+	req.Query = queryExp
+	req.Lines = maxLineNum
+	req.Offset = offset
+	req.Reverse = reverse
+	return s.GetLogLinesV2(&req)
+}
+
+// GetLogLinesV2 query logs with [from, to) time range
+func (s *LogStore) GetLogLinesV2(req *GetLogRequest) (*GetLogLinesResponse, error) {
+	rsp, b, logRsp, err := s.getLogs(req)
 	if err != nil {
 		return nil, err
 	}
@@ -616,8 +620,20 @@ func (s *LogStore) GetLogLines(topic string, from int64, to int64, queryExp stri
 // GetLogs query logs with [from, to) time range
 func (s *LogStore) GetLogs(topic string, from int64, to int64, queryExp string,
 	maxLineNum int64, offset int64, reverse bool) (*GetLogsResponse, error) {
+	var req GetLogRequest
+	req.Topic = topic
+	req.From = from
+	req.To = to
+	req.Query = queryExp
+	req.Lines = maxLineNum
+	req.Offset = offset
+	req.Reverse = reverse
+	return s.GetLogsV2(&req)
+}
 
-	rsp, b, logRsp, err := s.getLogs(topic, from, to, queryExp, maxLineNum, offset, reverse)
+// GetLogsV2 query logs with [from, to) time range
+func (s *LogStore) GetLogsV2(req *GetLogRequest) (*GetLogsResponse, error) {
+	rsp, b, logRsp, err := s.getLogs(req)
 	if err == nil && len(b) != 0 {
 		logs := []map[string]string{}
 		err = json.Unmarshal(b, &logs)
@@ -626,7 +642,6 @@ func (s *LogStore) GetLogs(topic string, from int64, to int64, queryExp string,
 		}
 		logRsp.Logs = logs
 	}
-
 	return logRsp, err
 }
 
@@ -754,27 +769,15 @@ func (s *LogStore) UpdateIndexString(indexStr string) error {
 
 // DeleteIndex ...
 func (s *LogStore) DeleteIndex() error {
-	type Body struct {
-		project string `json:"projectName"`
-		store   string `json:"logstoreName"`
-	}
-
-	body, err := json.Marshal(Body{
-		project: s.project.Name,
-		store:   s.Name,
-	})
-	if err != nil {
-		return err
-	}
 
 	h := map[string]string{
-		"x-log-bodyrawsize": fmt.Sprintf("%v", len(body)),
+		"x-log-bodyrawsize": "0",
 		"Content-Type":      "application/json",
 		"Accept-Encoding":   "deflate", // TODO: support lz4
 	}
 
 	uri := fmt.Sprintf("/logstores/%s/index", s.Name)
-	r, err := request(s.project, "DELETE", uri, h, body)
+	r, err := request(s.project, "DELETE", uri, h, nil)
 	if r != nil {
 		r.Body.Close()
 	}
@@ -783,27 +786,14 @@ func (s *LogStore) DeleteIndex() error {
 
 // GetIndex ...
 func (s *LogStore) GetIndex() (*Index, error) {
-	type Body struct {
-		project string `json:"projectName"`
-		store   string `json:"logstoreName"`
-	}
-
-	body, err := json.Marshal(Body{
-		project: s.project.Name,
-		store:   s.Name,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	h := map[string]string{
-		"x-log-bodyrawsize": fmt.Sprintf("%v", len(body)),
 		"Content-Type":      "application/json",
-		"Accept-Encoding":   "deflate", // TODO: support lz4
+		"x-log-bodyrawsize": "0",
+		"Accept-Encoding":   "deflate",
 	}
 
 	uri := fmt.Sprintf("/logstores/%s/index", s.Name)
-	r, err := request(s.project, "GET", uri, h, body)
+	r, err := request(s.project, "GET", uri, h, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -820,27 +810,14 @@ func (s *LogStore) GetIndex() (*Index, error) {
 
 // GetIndexString ...
 func (s *LogStore) GetIndexString() (string, error) {
-	type Body struct {
-		project string `json:"projectName"`
-		store   string `json:"logstoreName"`
-	}
-
-	body, err := json.Marshal(Body{
-		project: s.project.Name,
-		store:   s.Name,
-	})
-	if err != nil {
-		return "", err
-	}
-
 	h := map[string]string{
-		"x-log-bodyrawsize": fmt.Sprintf("%v", len(body)),
 		"Content-Type":      "application/json",
-		"Accept-Encoding":   "deflate", // TODO: support lz4
+		"x-log-bodyrawsize": "0",
+		"Accept-Encoding":   "deflate",
 	}
 
 	uri := fmt.Sprintf("/logstores/%s/index", s.Name)
-	r, err := request(s.project, "GET", uri, h, body)
+	r, err := request(s.project, "GET", uri, h, nil)
 	if err != nil {
 		return "", err
 	}

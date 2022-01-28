@@ -75,6 +75,7 @@ type CreateCenRequest struct {
 	ClientToken          string           `position:"Query" name:"ClientToken"`
 	Ipv6Level            string           `position:"Query" name:"Ipv6Level"`
 	Description          string           `position:"Query" name:"Description"`
+	ResourceGroupId      string           `position:"Query" name:"ResourceGroupId"`
 	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
 	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
 	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`

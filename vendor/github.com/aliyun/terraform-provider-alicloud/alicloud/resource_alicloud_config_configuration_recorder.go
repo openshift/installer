@@ -27,7 +27,7 @@ func resourceAlicloudConfigConfigurationRecorder() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
-				Default:  false,
+				Computed: true,
 			},
 			"organization_enable_status": {
 				Type:     schema.TypeString,

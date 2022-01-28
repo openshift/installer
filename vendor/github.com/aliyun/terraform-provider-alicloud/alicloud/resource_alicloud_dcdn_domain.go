@@ -455,6 +455,10 @@ func resourceAlicloudDcdnDomainUpdate(d *schema.ResourceData, meta interface{}) 
 		}
 	}
 	d.Partial(false)
+	stateConf := BuildStateConf([]string{}, []string{"online"}, d.Timeout(schema.TimeoutCreate), 5*time.Second, dcdnService.DcdnDomainStateRefreshFunc(d.Id(), []string{"check_failed", "configure_failed"}))
+	if _, err := stateConf.WaitForState(); err != nil {
+		return WrapErrorf(err, IdMsg, d.Id())
+	}
 	return resourceAlicloudDcdnDomainRead(d, meta)
 }
 func resourceAlicloudDcdnDomainDelete(d *schema.ResourceData, meta interface{}) error {

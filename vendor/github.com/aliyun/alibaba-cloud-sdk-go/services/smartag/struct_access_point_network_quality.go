@@ -17,7 +17,7 @@ package smartag
 
 // AccessPointNetworkQuality is a nested struct in smartag response
 type AccessPointNetworkQuality struct {
-	Rtt  string `json:"Rtt" xml:"Rtt"`
 	Loss string `json:"Loss" xml:"Loss"`
+	Rtt  string `json:"Rtt" xml:"Rtt"`
 	Id   int    `json:"Id" xml:"Id"`
 }

@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/PaesslerAG/jsonpath"
+	util "github.com/alibabacloud-go/tea-utils/service"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
@@ -735,6 +738,29 @@ func (s *AlikafkaService) ignoreTag(t alikafka.TagResource) bool {
 	return false
 }
 
+func (s *AlikafkaService) tagVOTagsToMap(tags []alikafka.TagVO) map[string]string {
+	result := make(map[string]string)
+	for _, t := range tags {
+		if !s.tagVOIgnoreTag(t) {
+			result[t.Key] = t.Value
+		}
+	}
+	return result
+}
+
+func (s *AlikafkaService) tagVOIgnoreTag(t alikafka.TagVO) bool {
+	filter := []string{"^aliyun", "^acs:", "^http://", "^https://"}
+	for _, v := range filter {
+		log.Printf("[DEBUG] Matching prefix %v with %v\n", v, t.Key)
+		ok, _ := regexp.MatchString(v, t.Key)
+		if ok {
+			log.Printf("[DEBUG] Found Alibaba Cloud specific t %s (val: %s), ignoring.\n", t.Key, t.Value)
+			return true
+		}
+	}
+	return false
+}
+
 func (s *AlikafkaService) diffTags(oldTags, newTags []alikafka.TagResourcesTag) ([]alikafka.TagResourcesTag, []alikafka.TagResourcesTag) {
 	// First, we're creating everything we have
 	create := make(map[string]interface{})
@@ -765,4 +791,38 @@ func (s *AlikafkaService) tagsFromMap(m map[string]interface{}) []alikafka.TagRe
 	}
 
 	return result
+}
+
+func (s *AlikafkaService) GetAllowedIpList(id string) (object map[string]interface{}, err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewAlikafkaClient()
+	if err != nil {
+		return nil, WrapError(err)
+	}
+	action := "GetAllowedIpList"
+	request := map[string]interface{}{
+		"RegionId":   s.client.RegionId,
+		"InstanceId": id,
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-09-16"), StringPointer("AK"), nil, request, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	v, err := jsonpath.Get("$", response)
+	if err != nil {
+		return object, WrapErrorf(err, FailedGetAttributeMsg, id, "$", response)
+	}
+	object = v.(map[string]interface{})
+	return object, nil
 }

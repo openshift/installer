@@ -57,7 +57,7 @@ func resourceAlicloudDRDSInstance() *schema.Resource {
 			"instance_series": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"drds.sn1.4c8g", "drds.sn1.8c16g", "drds.sn1.16c32g", "drds.sn1.32c64g"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"drds.sn1.4c8g", "drds.sn1.8c16g", "drds.sn1.16c32g", "drds.sn1.32c64g", "drds.sn2.4c16g", "drds.sn2.8c32g", "drds.sn2.16c64g"}, false),
 				ForceNew:     true,
 			},
 		},

@@ -72,6 +72,7 @@ func (client *Client) RestoreInstanceWithCallback(request *RestoreInstanceReques
 type RestoreInstanceRequest struct {
 	*requests.RpcRequest
 	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	FilterKey            string           `position:"Query" name:"FilterKey"`
 	SecurityToken        string           `position:"Query" name:"SecurityToken"`
 	RestoreTime          string           `position:"Query" name:"RestoreTime"`
 	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`

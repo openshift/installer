@@ -168,6 +168,10 @@ func resourceAlicloudVswitchUpdate(d *schema.ResourceData, meta interface{}) err
 	vpcService := VpcService{client}
 	var response map[string]interface{}
 	d.Partial(true)
+	conn, err := client.NewVpcClient()
+	if err != nil {
+		return WrapError(err)
+	}
 
 	if d.HasChange("tags") {
 		if err := vpcService.SetResourceTags(d, "VSWITCH"); err != nil {
@@ -194,10 +198,6 @@ func resourceAlicloudVswitchUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 	if update {
 		action := "ModifyVSwitchAttribute"
-		conn, err := client.NewVpcClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-04-28"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

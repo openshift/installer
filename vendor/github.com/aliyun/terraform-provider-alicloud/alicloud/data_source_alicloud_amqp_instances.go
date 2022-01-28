@@ -218,7 +218,7 @@ func dataSourceAlicloudAmqpInstancesRead(d *schema.ResourceData, meta interface{
 		}
 		id := fmt.Sprint(object["InstanceId"])
 		bssOpenApiService := BssOpenApiService{client}
-		getResp, err := bssOpenApiService.QueryAvailableInstances(id, "ons", "ons_onsproxy_pre")
+		getResp, err := bssOpenApiService.QueryAvailableInstances(id, "ons", "ons_onsproxy_pre", "ons_onsproxy_public_intl")
 		if err != nil {
 			return WrapError(err)
 		}

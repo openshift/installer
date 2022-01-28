@@ -71,6 +71,7 @@ func (client *Client) AllocatePublicContactPointsWithCallback(request *AllocateP
 // AllocatePublicContactPointsRequest is the request struct for api AllocatePublicContactPoints
 type AllocatePublicContactPointsRequest struct {
 	*requests.RpcRequest
+	ClientToken  string `position:"Query" name:"ClientToken"`
 	DataCenterId string `position:"Query" name:"DataCenterId"`
 	ClusterId    string `position:"Query" name:"ClusterId"`
 }

@@ -71,15 +71,15 @@ func (client *Client) DowngradeSmartAccessGatewayWithCallback(request *Downgrade
 // DowngradeSmartAccessGatewayRequest is the request struct for api DowngradeSmartAccessGateway
 type DowngradeSmartAccessGatewayRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	BandWidthSpec        requests.Integer `position:"Query"`
-	UserCount            requests.Integer `position:"Query"`
-	AutoPay              requests.Boolean `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	DataPlan             requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	BandWidthSpec        requests.Integer `position:"Query" name:"BandWidthSpec"`
+	UserCount            requests.Integer `position:"Query" name:"UserCount"`
+	AutoPay              requests.Boolean `position:"Query" name:"AutoPay"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	DataPlan             requests.Integer `position:"Query" name:"DataPlan"`
 }
 
 // DowngradeSmartAccessGatewayResponse is the response struct for api DowngradeSmartAccessGateway

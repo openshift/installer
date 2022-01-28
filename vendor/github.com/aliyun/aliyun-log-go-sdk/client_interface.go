@@ -189,6 +189,9 @@ type ClientInterface interface {
 	GetLogLines(project, logstore string, topic string, from int64, to int64, queryExp string,
 		maxLineNum int64, offset int64, reverse bool) (*GetLogLinesResponse, error)
 
+	GetLogsV2(project, logstore string, req *GetLogRequest) (*GetLogsResponse, error)
+	GetLogLinesV2(project, logstore string, req *GetLogRequest) (*GetLogLinesResponse, error)
+
 	// #################### Index Operations #####################
 	// CreateIndex ...
 	CreateIndex(project, logstore string, index Index) error
@@ -258,4 +261,32 @@ type ClientInterface interface {
 		resourceIDs []string,
 		tags []ResourceFilterTag,
 		nextToken string) (respTags []*ResourceTagResponse, respNextToken string, err error)
+	CreateScheduledSQL(project string, scheduledsql *ScheduledSQL) error
+	DeleteScheduledSQL(project string, name string) error
+	UpdateScheduledSQL(project string, scheduledsql *ScheduledSQL) error
+	GetScheduledSQL(project string, name string) (*ScheduledSQL, error)
+	ListScheduledSQL(project, name, displayName string, offset, size int) ([]*ScheduledSQL, int, int, error)
+	GetScheduledSQLJobInstance(projectName, jobName, instanceId string, result bool) (instance *ScheduledSQLJobInstance, err error)
+	ModifyScheduledSQLJobInstanceState(projectName, jobName, instanceId string, state ScheduledSQLState) error
+	ListScheduledSQLJobInstances(projectName, jobName string, status *InstanceStatus) (instances []*ScheduledSQLJobInstance, total, count int64, err error)
+
+	// #################### Resource Operations #####################
+	ListResource(resourceType string, resourceName string, offset, size int) (resourceList []*Resource, count, total int, err error)
+	GetResource(name string) (resource *Resource, err error)
+	GetResourceString(name string) (resource string, err error)
+	DeleteResource(name string) error
+	UpdateResource(resource *Resource) error
+	UpdateResourceString(resourceName, resourceStr string) error
+	CreateResource(resource *Resource) error
+	CreateResourceString(resourceStr string) error
+
+	// #################### Resource Record Operations #####################
+	ListResourceRecord(resourceName string, offset, size int) (recordList []*ResourceRecord, count, total int, err error)
+	GetResourceRecord(resourceName, recordId string) (record *ResourceRecord, err error)
+	GetResourceRecordString(resourceName, name string) (record string, err error)
+	DeleteResourceRecord(resourceName, recordId string) error
+	UpdateResourceRecord(resourceName string, record *ResourceRecord) error
+	UpdateResourceRecordString(resourceName, recordStr string) error
+	CreateResourceRecord(resourceName string, record *ResourceRecord) error
+	CreateResourceRecordString(resourceName, recordStr string) error
 }

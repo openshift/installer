@@ -286,6 +286,9 @@ func resourceAlicloudLogOssShipperDelete(d *schema.ResourceData, meta interface{
 		return nil
 	})
 	if err != nil {
+		if IsExpectedErrors(err, []string{"ShipperNotExist"}) {
+			return nil
+		}
 		return WrapErrorf(err, DefaultErrorMsg, "alicloud_log_oss_shipper", "DeleteLogOssShipper", AliyunLogGoSdkERROR)
 	}
 	return WrapError(logService.WaitForLogOssShipper(d.Id(), Deleted, DefaultTimeout))

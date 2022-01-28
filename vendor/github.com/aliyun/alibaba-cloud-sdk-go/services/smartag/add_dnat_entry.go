@@ -71,17 +71,17 @@ func (client *Client) AddDnatEntryWithCallback(request *AddDnatEntryRequest, cal
 // AddDnatEntryRequest is the request struct for api AddDnatEntry
 type AddDnatEntryRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	Type                 string           `position:"Query"`
-	InternalIp           string           `position:"Query"`
-	ExternalIp           string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	IpProtocol           string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SagId                string           `position:"Query"`
-	InternalPort         string           `position:"Query"`
-	ExternalPort         string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	Type                 string           `position:"Query" name:"Type"`
+	InternalIp           string           `position:"Query" name:"InternalIp"`
+	ExternalIp           string           `position:"Query" name:"ExternalIp"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	IpProtocol           string           `position:"Query" name:"IpProtocol"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SagId                string           `position:"Query" name:"SagId"`
+	InternalPort         string           `position:"Query" name:"InternalPort"`
+	ExternalPort         string           `position:"Query" name:"ExternalPort"`
 }
 
 // AddDnatEntryResponse is the response struct for api AddDnatEntry

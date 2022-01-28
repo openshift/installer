@@ -71,10 +71,10 @@ func (client *Client) DescribeDomainStatusCodeCountWithCallback(request *Describ
 // DescribeDomainStatusCodeCountRequest is the request struct for api DescribeDomainStatusCodeCount
 type DescribeDomainStatusCodeCountRequest struct {
 	*requests.RpcRequest
-	EndTime         requests.Integer `position:"Query" name:"EndTime"`
 	StartTime       requests.Integer `position:"Query" name:"StartTime"`
 	ResourceGroupId string           `position:"Query" name:"ResourceGroupId"`
 	SourceIp        string           `position:"Query" name:"SourceIp"`
+	EndTime         requests.Integer `position:"Query" name:"EndTime"`
 	Domain          string           `position:"Query" name:"Domain"`
 }
 

@@ -69,6 +69,42 @@ func dataSourceAlicloudDdoscooInstances() *schema.Resource {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
+						"remark": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"ip_mode": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"debt_status": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"edition": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"ip_version": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"status": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"enabled": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"expire_time": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"create_time": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -144,7 +180,7 @@ func dataSourceAlicloudDdoscooInstancesRead(d *schema.ResourceData, meta interfa
 	}
 
 	if len(instanceIds) < 1 {
-		return WrapError(extractDdoscooInstance(d, nameMap, []ddoscoo.InstanceSpec{}))
+		return WrapError(extractDdoscooInstance(d, nameMap, []ddoscoo.InstanceSpec{}, instances))
 	}
 
 	specReq := ddoscoo.CreateDescribeInstanceSpecsRequest()
@@ -161,15 +197,15 @@ func dataSourceAlicloudDdoscooInstancesRead(d *schema.ResourceData, meta interfa
 	addDebug(specReq.GetActionName(), raw, specReq.RpcRequest, specReq)
 	response, _ := raw.(*ddoscoo.DescribeInstanceSpecsResponse)
 
-	return WrapError(extractDdoscooInstance(d, nameMap, response.InstanceSpecs))
+	return WrapError(extractDdoscooInstance(d, nameMap, response.InstanceSpecs, instances))
 }
 
-func extractDdoscooInstance(d *schema.ResourceData, nameMap map[string]string, instanceSpecs []ddoscoo.InstanceSpec) error {
+func extractDdoscooInstance(d *schema.ResourceData, nameMap map[string]string, instanceSpecs []ddoscoo.InstanceSpec, instance []ddoscoo.Instance) error {
 	var instanceIds []string
 	var names []string
 	var s []map[string]interface{}
 
-	for _, item := range instanceSpecs {
+	for i, item := range instanceSpecs {
 		mapping := map[string]interface{}{
 			"id":                item.InstanceId,
 			"name":              nameMap[item.InstanceId],
@@ -178,6 +214,15 @@ func extractDdoscooInstance(d *schema.ResourceData, nameMap map[string]string, i
 			"service_bandwidth": item.BandwidthMbps,
 			"port_count":        item.PortLimit,
 			"domain_count":      item.DomainLimit,
+			"remark":            instance[i].Remark,
+			"ip_mode":           instance[i].IpMode,
+			"debt_status":       instance[i].DebtStatus,
+			"edition":           instance[i].Edition,
+			"ip_version":        instance[i].IpVersion,
+			"status":            instance[i].Status,
+			"enabled":           instance[i].Enabled,
+			"expire_time":       instance[i].ExpireTime,
+			"create_time":       instance[i].CreateTime,
 		}
 		instanceIds = append(instanceIds, item.InstanceId)
 		names = append(names, nameMap[item.InstanceId])

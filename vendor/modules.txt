@@ -456,17 +456,17 @@ github.com/alibabacloud-go/endpoint-util/service
 # github.com/alibabacloud-go/openapi-util v0.0.7
 ## explicit; go 1.14
 github.com/alibabacloud-go/openapi-util/service
-# github.com/alibabacloud-go/tea v1.1.15
+# github.com/alibabacloud-go/tea v1.1.17
 ## explicit; go 1.14
 github.com/alibabacloud-go/tea/tea
 github.com/alibabacloud-go/tea/utils
-# github.com/alibabacloud-go/tea-roa v1.2.8
+# github.com/alibabacloud-go/tea-roa v1.3.0
 ## explicit; go 1.14
 github.com/alibabacloud-go/tea-roa/client
 # github.com/alibabacloud-go/tea-roa-utils v1.1.5
 ## explicit; go 1.14
 github.com/alibabacloud-go/tea-roa-utils/service
-# github.com/alibabacloud-go/tea-rpc v1.1.8
+# github.com/alibabacloud-go/tea-rpc v1.2.0
 ## explicit; go 1.14
 github.com/alibabacloud-go/tea-rpc/client
 # github.com/alibabacloud-go/tea-rpc-utils v1.1.2
@@ -475,7 +475,7 @@ github.com/alibabacloud-go/tea-rpc-utils/service
 # github.com/alibabacloud-go/tea-utils v1.3.9
 ## explicit; go 1.14
 github.com/alibabacloud-go/tea-utils/service
-# github.com/aliyun/alibaba-cloud-sdk-go v1.61.1154
+# github.com/aliyun/alibaba-cloud-sdk-go v1.61.1264
 ## explicit; go 1.13
 github.com/aliyun/alibaba-cloud-sdk-go/sdk
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth
@@ -520,7 +520,6 @@ github.com/aliyun/alibaba-cloud-sdk-go/services/polardb
 github.com/aliyun/alibaba-cloud-sdk-go/services/pvtz
 github.com/aliyun/alibaba-cloud-sdk-go/services/r-kvstore
 github.com/aliyun/alibaba-cloud-sdk-go/services/ram
-github.com/aliyun/alibaba-cloud-sdk-go/services/rds
 github.com/aliyun/alibaba-cloud-sdk-go/services/resourcemanager
 github.com/aliyun/alibaba-cloud-sdk-go/services/slb
 github.com/aliyun/alibaba-cloud-sdk-go/services/sls
@@ -535,7 +534,7 @@ github.com/aliyun/alibaba-cloud-sdk-go/services/yundun_dbaudit
 github.com/aliyun/aliyun-datahub-sdk-go/datahub
 github.com/aliyun/aliyun-datahub-sdk-go/datahub/pbmodel
 github.com/aliyun/aliyun-datahub-sdk-go/datahub/util
-# github.com/aliyun/aliyun-log-go-sdk v0.1.21
+# github.com/aliyun/aliyun-log-go-sdk v0.1.27
 ## explicit; go 1.13
 github.com/aliyun/aliyun-log-go-sdk
 # github.com/aliyun/aliyun-mns-go-sdk v0.0.0-20210305050620-d1b5875bda58
@@ -558,7 +557,7 @@ github.com/aliyun/credentials-go/credentials/utils
 # github.com/aliyun/fc-go-sdk v0.0.0-20200925033337-c013428cbe21
 ## explicit
 github.com/aliyun/fc-go-sdk
-# github.com/aliyun/terraform-provider-alicloud v1.132.0
+# github.com/aliyun/terraform-provider-alicloud v1.153.0
 ## explicit; go 1.13
 github.com/aliyun/terraform-provider-alicloud/alicloud
 github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity
@@ -871,11 +870,11 @@ github.com/davecgh/go-spew/spew
 # github.com/dchest/bcrypt_pbkdf v0.0.0-20150205184540-83f37f9c154a
 ## explicit
 github.com/dchest/bcrypt_pbkdf
-# github.com/deckarep/golang-set v1.7.1
-## explicit
+# github.com/deckarep/golang-set v1.8.0
+## explicit; go 1.17
 github.com/deckarep/golang-set
-# github.com/denverdino/aliyungo v0.0.0-20210518071019-eb3bbb144d8a
-## explicit
+# github.com/denverdino/aliyungo v0.0.0-20211216040745-6cc94847413f
+## explicit; go 1.15
 github.com/denverdino/aliyungo/cdn
 github.com/denverdino/aliyungo/common
 github.com/denverdino/aliyungo/cs
@@ -2719,7 +2718,7 @@ gopkg.in/go-playground/validator.v9
 # gopkg.in/inf.v0 v0.9.1
 ## explicit
 gopkg.in/inf.v0
-# gopkg.in/ini.v1 v1.62.0
+# gopkg.in/ini.v1 v1.66.2
 ## explicit
 gopkg.in/ini.v1
 # gopkg.in/jcmturner/aescts.v1 v1.0.1

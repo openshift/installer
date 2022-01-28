@@ -71,12 +71,12 @@ func (client *Client) ProbeAccessPointNetworkQualityWithCallback(request *ProbeA
 // ProbeAccessPointNetworkQualityRequest is the request struct for api ProbeAccessPointNetworkQuality
 type ProbeAccessPointNetworkQualityRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
 	AccessPointIds       *[]string        `position:"Query" name:"AccessPointIds"  type:"Repeated"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // ProbeAccessPointNetworkQualityResponse is the response struct for api ProbeAccessPointNetworkQuality

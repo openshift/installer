@@ -72,23 +72,23 @@ func (client *Client) ModifyQosPolicyWithCallback(request *ModifyQosPolicyReques
 type ModifyQosPolicyRequest struct {
 	*requests.RpcRequest
 	DpiGroupIds          *[]string        `position:"Query" name:"DpiGroupIds"  type:"Repeated"`
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SourcePortRange      string           `position:"Query"`
-	QosPolicyId          string           `position:"Query"`
-	SourceCidr           string           `position:"Query"`
-	Description          string           `position:"Query"`
-	StartTime            string           `position:"Query"`
-	DestCidr             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SourcePortRange      string           `position:"Query" name:"SourcePortRange"`
+	QosPolicyId          string           `position:"Query" name:"QosPolicyId"`
+	SourceCidr           string           `position:"Query" name:"SourceCidr"`
+	Description          string           `position:"Query" name:"Description"`
+	StartTime            string           `position:"Query" name:"StartTime"`
+	DestCidr             string           `position:"Query" name:"DestCidr"`
 	DpiSignatureIds      *[]string        `position:"Query" name:"DpiSignatureIds"  type:"Repeated"`
-	QosId                string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	IpProtocol           string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	EndTime              string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	Priority             requests.Integer `position:"Query"`
-	DestPortRange        string           `position:"Query"`
-	Name                 string           `position:"Query"`
+	QosId                string           `position:"Query" name:"QosId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	IpProtocol           string           `position:"Query" name:"IpProtocol"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	EndTime              string           `position:"Query" name:"EndTime"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	Priority             requests.Integer `position:"Query" name:"Priority"`
+	DestPortRange        string           `position:"Query" name:"DestPortRange"`
+	Name                 string           `position:"Query" name:"Name"`
 }
 
 // ModifyQosPolicyResponse is the response struct for api ModifyQosPolicy

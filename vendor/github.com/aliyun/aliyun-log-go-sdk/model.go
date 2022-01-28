@@ -2,8 +2,36 @@ package sls
 
 import (
 	"encoding/json"
+	"net/url"
+	"strconv"
 	"strings"
 )
+
+// GetLogRequest for GetLogsV2
+type GetLogRequest struct {
+	From     int64  // unix time, eg time.Now().Unix() - 900
+	To       int64  // unix time, eg time.Now().Unix()
+	Topic    string // @note topic is not used anymore, use __topic__ : xxx in query instead
+	Lines    int64  // max 100; offset, lines and reverse is ignored when use SQL in query
+	Offset   int64
+	Reverse  bool
+	Query    string
+	PowerSQL bool
+}
+
+func (glr *GetLogRequest) ToURLParams() url.Values {
+	urlVal := url.Values{}
+	urlVal.Add("type", "log")
+	urlVal.Add("from", strconv.Itoa(int(glr.From)))
+	urlVal.Add("to", strconv.Itoa(int(glr.To)))
+	urlVal.Add("topic", glr.Topic)
+	urlVal.Add("line", strconv.Itoa(int(glr.Lines)))
+	urlVal.Add("offset", strconv.Itoa(int(glr.Offset)))
+	urlVal.Add("reverse", strconv.FormatBool(glr.Reverse))
+	urlVal.Add("powerSql", strconv.FormatBool(glr.PowerSQL))
+	urlVal.Add("query", glr.Query)
+	return urlVal
+}
 
 // GetHistogramsResponse defines response from GetHistograms call
 type SingleHistogram struct {
@@ -36,7 +64,7 @@ type GetLogsResponse struct {
 // note: GetLogLinesResponse.Logs is nil when use GetLogLinesResponse
 type GetLogLinesResponse struct {
 	GetLogsResponse
-	Lines     []json.RawMessage
+	Lines []json.RawMessage
 }
 
 func (resp *GetLogsResponse) IsComplete() bool {

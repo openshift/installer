@@ -71,21 +71,21 @@ func (client *Client) DescribeFlowLogSagsWithCallback(request *DescribeFlowLogSa
 // DescribeFlowLogSagsRequest is the request struct for api DescribeFlowLogSags
 type DescribeFlowLogSagsRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	PageNumber           requests.Integer `position:"Query"`
-	PageSize             requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	FlowLogId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	PageNumber           requests.Integer `position:"Query" name:"PageNumber"`
+	PageSize             requests.Integer `position:"Query" name:"PageSize"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	FlowLogId            string           `position:"Query" name:"FlowLogId"`
 }
 
 // DescribeFlowLogSagsResponse is the response struct for api DescribeFlowLogSags
 type DescribeFlowLogSagsResponse struct {
 	*responses.BaseResponse
 	TotalCount int                       `json:"TotalCount" xml:"TotalCount"`
-	RequestId  string                    `json:"RequestId" xml:"RequestId"`
 	PageSize   int                       `json:"PageSize" xml:"PageSize"`
+	RequestId  string                    `json:"RequestId" xml:"RequestId"`
 	PageNumber int                       `json:"PageNumber" xml:"PageNumber"`
 	Sags       SagsInDescribeFlowLogSags `json:"Sags" xml:"Sags"`
 }

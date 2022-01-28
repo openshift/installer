@@ -71,12 +71,12 @@ func (client *Client) DescribeUserOnlineClientStatisticsWithCallback(request *De
 // DescribeUserOnlineClientStatisticsRequest is the request struct for api DescribeUserOnlineClientStatistics
 type DescribeUserOnlineClientStatisticsRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
 	UserNames            *[]string        `position:"Query" name:"UserNames"  type:"Repeated"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // DescribeUserOnlineClientStatisticsResponse is the response struct for api DescribeUserOnlineClientStatistics

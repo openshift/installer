@@ -17,7 +17,7 @@ package smartag
 
 // Interface is a nested struct in smartag response
 type Interface struct {
-	IP   string `json:"IP" xml:"IP"`
 	Mask string `json:"Mask" xml:"Mask"`
 	Vlan string `json:"Vlan" xml:"Vlan"`
+	IP   string `json:"IP" xml:"IP"`
 }

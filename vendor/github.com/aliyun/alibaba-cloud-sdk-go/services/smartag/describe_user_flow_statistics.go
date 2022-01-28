@@ -71,13 +71,13 @@ func (client *Client) DescribeUserFlowStatisticsWithCallback(request *DescribeUs
 // DescribeUserFlowStatisticsRequest is the request struct for api DescribeUserFlowStatistics
 type DescribeUserFlowStatisticsRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
 	UserNames            *[]string        `position:"Query" name:"UserNames"  type:"Repeated"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	StatisticsDate       string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	StatisticsDate       string           `position:"Query" name:"StatisticsDate"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // DescribeUserFlowStatisticsResponse is the response struct for api DescribeUserFlowStatistics

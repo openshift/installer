@@ -92,7 +92,7 @@ func CreateDescribeAccountsRequest() (request *DescribeAccountsRequest) {
 	request = &DescribeAccountsRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeAccounts", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeAccounts", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

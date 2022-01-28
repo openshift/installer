@@ -71,14 +71,14 @@ func (client *Client) UpdateSmartAGDpiAttributeWithCallback(request *UpdateSmart
 // UpdateSmartAGDpiAttributeRequest is the request struct for api UpdateSmartAGDpiAttribute
 type UpdateSmartAGDpiAttributeRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ClientToken          string           `position:"Query"`
-	DpiEnabled           requests.Boolean `position:"Query"`
-	DryRun               requests.Boolean `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ClientToken          string           `position:"Query" name:"ClientToken"`
+	DpiEnabled           requests.Boolean `position:"Query" name:"DpiEnabled"`
+	DryRun               requests.Boolean `position:"Query" name:"DryRun"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // UpdateSmartAGDpiAttributeResponse is the response struct for api UpdateSmartAGDpiAttribute

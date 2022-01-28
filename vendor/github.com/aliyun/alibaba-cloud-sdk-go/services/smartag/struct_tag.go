@@ -17,6 +17,6 @@ package smartag
 
 // Tag is a nested struct in smartag response
 type Tag struct {
-	Value string `json:"Value" xml:"Value"`
 	Key   string `json:"Key" xml:"Key"`
+	Value string `json:"Value" xml:"Value"`
 }

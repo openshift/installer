@@ -189,6 +189,10 @@ func dataSourceAlicloudAlbServerGroups() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"tags": {
+							Type:     schema.TypeMap,
+							Computed: true,
+						},
 						"sticky_session_config": {
 							Type:     schema.TypeList,
 							Computed: true,
@@ -338,6 +342,26 @@ func dataSourceAlicloudAlbServerGroupsRead(d *schema.ResourceData, meta interfac
 			"sticky_session_config": object["StickySessionConfig"],
 			"vpc_id":                object["VpcId"],
 		}
+
+		healthCheckConfigSli := make([]map[string]interface{}, 0)
+		if len(object["HealthCheckConfig"].(map[string]interface{})) > 0 {
+			healthCheckConfig := object["HealthCheckConfig"]
+			healthCheckConfigMap := make(map[string]interface{})
+			healthCheckConfigMap["health_check_codes"] = healthCheckConfig.(map[string]interface{})["HealthCheckCodes"]
+			healthCheckConfigMap["health_check_connect_port"] = formatInt(healthCheckConfig.(map[string]interface{})["HealthCheckConnectPort"])
+			healthCheckConfigMap["health_check_enabled"] = healthCheckConfig.(map[string]interface{})["HealthCheckEnabled"]
+			healthCheckConfigMap["health_check_host"] = healthCheckConfig.(map[string]interface{})["HealthCheckHost"]
+			healthCheckConfigMap["health_check_http_version"] = healthCheckConfig.(map[string]interface{})["HealthCheckHttpVersion"]
+			healthCheckConfigMap["health_check_interval"] = formatInt(healthCheckConfig.(map[string]interface{})["HealthCheckInterval"])
+			healthCheckConfigMap["health_check_method"] = healthCheckConfig.(map[string]interface{})["HealthCheckMethod"]
+			healthCheckConfigMap["health_check_path"] = healthCheckConfig.(map[string]interface{})["HealthCheckPath"]
+			healthCheckConfigMap["health_check_protocol"] = healthCheckConfig.(map[string]interface{})["HealthCheckProtocol"]
+			healthCheckConfigMap["health_check_timeout"] = formatInt(healthCheckConfig.(map[string]interface{})["HealthCheckTimeout"])
+			healthCheckConfigMap["healthy_threshold"] = formatInt(healthCheckConfig.(map[string]interface{})["HealthyThreshold"])
+			healthCheckConfigMap["unhealthy_threshold"] = formatInt(healthCheckConfig.(map[string]interface{})["UnhealthyThreshold"])
+			healthCheckConfigSli = append(healthCheckConfigSli, healthCheckConfigMap)
+		}
+		mapping["health_check_config"] = healthCheckConfigSli
 
 		stickySessionConfigSli := make([]map[string]interface{}, 0)
 		if len(object["StickySessionConfig"].(map[string]interface{})) > 0 {

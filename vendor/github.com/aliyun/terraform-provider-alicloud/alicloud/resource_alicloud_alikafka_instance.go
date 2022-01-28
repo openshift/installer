@@ -69,10 +69,12 @@ func resourceAlicloudAlikafkaInstance() *schema.Resource {
 			"eip_max": {
 				Type:     schema.TypeInt,
 				Optional: true,
+				Computed: true,
 			},
 			"security_group": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"vswitch_id": {

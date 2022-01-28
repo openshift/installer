@@ -18,6 +18,6 @@ package smartag
 // EnterpriseCode is a nested struct in smartag response
 type EnterpriseCode struct {
 	IsDefault      bool   `json:"IsDefault" xml:"IsDefault"`
-	EnterpriseCode string `json:"EnterpriseCode" xml:"EnterpriseCode"`
 	SmartAGCount   int    `json:"SmartAGCount" xml:"SmartAGCount"`
+	EnterpriseCode string `json:"EnterpriseCode" xml:"EnterpriseCode"`
 }

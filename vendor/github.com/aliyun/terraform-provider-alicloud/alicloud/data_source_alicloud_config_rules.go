@@ -41,6 +41,7 @@ func dataSourceAlicloudConfigRules() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
+				Removed:  "Field 'member_id' has been removed from provider version 1.146.0. Please Use the Resource alicloud_config_aggregate_config_rule",
 			},
 			"message_type": {
 				Type:         schema.TypeString,
@@ -54,6 +55,7 @@ func dataSourceAlicloudConfigRules() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 				Default:  false,
+				Removed:  "Field 'multi_account' has been removed from provider version 1.146.0. Please Use the Resource alicloud_config_aggregate_config_rule",
 			},
 			"risk_level": {
 				Type:         schema.TypeInt,
@@ -225,12 +227,6 @@ func dataSourceAlicloudConfigRulesRead(d *schema.ResourceData, meta interface{})
 
 	action := "ListConfigRules"
 	request := make(map[string]interface{})
-	if v, ok := d.GetOk("member_id"); ok {
-		request["MemberId"] = v
-	}
-	if v, ok := d.GetOkExists("multi_account"); ok {
-		request["MultiAccount"] = v
-	}
 	if v, ok := d.GetOk("risk_level"); ok {
 		request["RiskLevel"] = v
 	}

@@ -71,7 +71,8 @@ func (client *Client) DescribeAppWithCallback(request *DescribeAppRequest, callb
 // DescribeAppRequest is the request struct for api DescribeApp
 type DescribeAppRequest struct {
 	*requests.RpcRequest
-	AppName string `position:"Query" name:"AppName"`
+	AppName  string `position:"Query" name:"AppName"`
+	ClientIp string `position:"Query" name:"ClientIp"`
 }
 
 // DescribeAppResponse is the response struct for api DescribeApp

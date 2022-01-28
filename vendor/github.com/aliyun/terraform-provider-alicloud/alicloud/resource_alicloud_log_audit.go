@@ -11,6 +11,7 @@ import (
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func resourceAlicloudLogAudit() *schema.Resource {
@@ -43,6 +44,11 @@ func resourceAlicloudLogAudit() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
 			},
+			"resource_directory_type": {
+				Type:         schema.TypeString,
+				ValidateFunc: validation.StringInSlice([]string{"custom", "all"}, true),
+				Optional:     true,
+			},
 		},
 	}
 }
@@ -61,7 +67,18 @@ func resourceAlicloudLogAuditUpdate(d *schema.ResourceData, meta interface{}) er
 
 	var variableMap = map[string]interface{}{}
 	mutiAccount := expandStringList(d.Get("multi_account").(*schema.Set).List())
-	if len(mutiAccount) > 0 {
+
+	if resourceDirectoryType, ok := d.GetOk("resource_directory_type"); ok {
+		resourceDirectoryMap := map[string]interface{}{}
+		resourceDirectoryMap["type"] = resourceDirectoryType
+		resourceDirectoryMap["multi_account"] = mutiAccount
+		data, err := json.Marshal(resourceDirectoryMap)
+		if err != nil {
+			return WrapError(err)
+		}
+		resultResourceDirectory := string(data)
+		variableMap["resource_directory"] = resultResourceDirectory
+	} else if len(mutiAccount) > 0 {
 		mutiAccountList := []map[string]string{}
 		for _, v := range mutiAccount {
 			mutiAccountMap := map[string]string{}
@@ -138,6 +155,21 @@ func resourceAlicloudLogAuditRead(d *schema.ResourceData, meta interface{}) erro
 		}
 		d.Set("multi_account", account)
 	}
+	if resourceDirectory, ok := initMap["resource_directory"]; ok {
+		resourceDirectoryMap := map[string]interface{}{}
+		err = json.Unmarshal([]byte(resourceDirectory.(string)), &resourceDirectoryMap)
+		if err != nil {
+			return WrapError(err)
+		}
+		if len(resourceDirectoryMap) > 0 {
+			if rd_type, ok := resourceDirectoryMap["type"]; ok {
+				d.Set("resource_directory_type", rd_type.(string))
+			}
+			if multiAccount, ok := resourceDirectoryMap["multi_account"]; ok {
+				d.Set("multi_account", multiAccount)
+			}
+		}
+	}
 	for k := range initMap {
 		if strings.HasSuffix(k, "_policy_setting") {
 			delete(initMap, k)
@@ -148,6 +180,7 @@ func resourceAlicloudLogAuditRead(d *schema.ResourceData, meta interface{}) erro
 	delete(initMap, "project")
 	delete(initMap, "logstore")
 	delete(initMap, "multi_account")
+	delete(initMap, "resource_directory")
 	d.Set("variable_map", initMap)
 	return nil
 }

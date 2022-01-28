@@ -71,11 +71,11 @@ func (client *Client) DeleteQosWithCallback(request *DeleteQosRequest, callback 
 // DeleteQosRequest is the request struct for api DeleteQos
 type DeleteQosRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	QosId                string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	QosId                string           `position:"Query" name:"QosId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
 }
 
 // DeleteQosResponse is the response struct for api DeleteQos

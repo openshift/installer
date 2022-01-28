@@ -71,14 +71,14 @@ func (client *Client) GrantSagInstanceToVbrWithCallback(request *GrantSagInstanc
 // GrantSagInstanceToVbrRequest is the request struct for api GrantSagInstanceToVbr
 type GrantSagInstanceToVbrRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	VbrRegionId          string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	VbrInstanceId        string           `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	VbrUid               requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	VbrRegionId          string           `position:"Query" name:"VbrRegionId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	VbrInstanceId        string           `position:"Query" name:"VbrInstanceId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	VbrUid               requests.Integer `position:"Query" name:"VbrUid"`
 }
 
 // GrantSagInstanceToVbrResponse is the response struct for api GrantSagInstanceToVbr

@@ -71,15 +71,15 @@ func (client *Client) ModifySagHaWithCallback(request *ModifySagHaRequest, callb
 // ModifySagHaRequest is the request struct for api ModifySagHa
 type ModifySagHaRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	VirtualIp            string           `position:"Query"`
-	Mode                 string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
-	PortName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	VirtualIp            string           `position:"Query" name:"VirtualIp"`
+	Mode                 string           `position:"Query" name:"Mode"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
+	PortName             string           `position:"Query" name:"PortName"`
 }
 
 // ModifySagHaResponse is the response struct for api ModifySagHa

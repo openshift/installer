@@ -65,7 +65,7 @@ func dataSourceAlicloudHbrVaults() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"create_time": {
+						"created_time": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -254,7 +254,7 @@ func dataSourceAlicloudHbrVaultsRead(d *schema.ResourceData, meta interface{}) e
 		mapping := map[string]interface{}{
 			"bucket_name":                  object["BucketName"],
 			"bytes_done":                   fmt.Sprint(object["BytesDone"]),
-			"create_time":                  fmt.Sprint(object["CreatedTime"]),
+			"created_time":                 fmt.Sprint(object["CreatedTime"]),
 			"dedup":                        object["Dedup"],
 			"description":                  object["Description"],
 			"index_available":              object["IndexAvailable"],

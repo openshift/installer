@@ -130,6 +130,10 @@ func resourceAlicloudCenInstanceRead(d *schema.ResourceData, meta interface{}) e
 func resourceAlicloudCenInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	cbnService := CbnService{client}
+	conn, err := client.NewCbnClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	d.Partial(true)
 
@@ -146,11 +150,9 @@ func resourceAlicloudCenInstanceUpdate(d *schema.ResourceData, meta interface{})
 	if !d.IsNewResource() && (d.HasChange("cen_instance_name") || d.HasChange("name")) {
 		update = true
 		if v, ok := d.GetOk("cen_instance_name"); ok {
-			if _, ok := d.GetOk("cen_instance_name"); ok {
-				request["Name"] = v
-			} else {
-				request["Name"] = v
-			}
+			request["Name"] = v
+		} else if v, ok := d.GetOk("name"); ok {
+			request["Name"] = v
 		}
 	}
 	if !d.IsNewResource() && d.HasChange("description") {
@@ -167,10 +169,6 @@ func resourceAlicloudCenInstanceUpdate(d *schema.ResourceData, meta interface{})
 	}
 	if update {
 		action := "ModifyCenAttribute"
-		conn, err := client.NewCbnClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2017-09-12"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

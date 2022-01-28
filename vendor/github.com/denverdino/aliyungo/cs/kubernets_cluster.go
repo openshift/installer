@@ -190,6 +190,15 @@ type ClusterArgs struct {
 	RdsInstances          []string          `json:"rds_instances"`
 	EncryptionProviderKey string            `json:"encryption_provider_key"`
 	MaintenanceWindow     MaintenanceWindow `json:"maintenance_window"`
+
+	//controlplane log parms
+	ControlplaneLogProject string   `json:"controlplane_log_project"`
+	ControlplaneLogTTL     string   `json:"controlplane_log_ttl"`
+	ControlplaneComponents []string `json:"controlplane_log_components"`
+
+	// Operating system hardening
+	SocEnabled *bool `json:"soc_enabled"`
+	CisEnabled *bool `json:"cis_enabled"`
 }
 
 //addon

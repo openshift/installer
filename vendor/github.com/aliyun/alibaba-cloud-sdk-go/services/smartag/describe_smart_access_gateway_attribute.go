@@ -71,52 +71,57 @@ func (client *Client) DescribeSmartAccessGatewayAttributeWithCallback(request *D
 // DescribeSmartAccessGatewayAttributeRequest is the request struct for api DescribeSmartAccessGatewayAttribute
 type DescribeSmartAccessGatewayAttributeRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // DescribeSmartAccessGatewayAttributeResponse is the response struct for api DescribeSmartAccessGatewayAttribute
 type DescribeSmartAccessGatewayAttributeResponse struct {
 	*responses.BaseResponse
-	Description           string                                     `json:"Description" xml:"Description"`
-	UpBandwidth4G         int                                        `json:"UpBandwidth4G" xml:"UpBandwidth4G"`
-	ResourceGroupId       string                                     `json:"ResourceGroupId" xml:"ResourceGroupId"`
-	EndTime               int64                                      `json:"EndTime" xml:"EndTime"`
-	UserCount             int                                        `json:"UserCount" xml:"UserCount"`
-	VpnStatus             string                                     `json:"VpnStatus" xml:"VpnStatus"`
-	MaxBandwidth          string                                     `json:"MaxBandwidth" xml:"MaxBandwidth"`
-	AssociatedCcnName     string                                     `json:"AssociatedCcnName" xml:"AssociatedCcnName"`
-	BoxControllerIp       string                                     `json:"BoxControllerIp" xml:"BoxControllerIp"`
-	CidrBlock             string                                     `json:"CidrBlock" xml:"CidrBlock"`
-	UpBandwidthWan        int                                        `json:"UpBandwidthWan" xml:"UpBandwidthWan"`
-	Name                  string                                     `json:"Name" xml:"Name"`
-	OptimizationType      bool                                       `json:"OptimizationType" xml:"OptimizationType"`
-	IpsecStatus           string                                     `json:"IpsecStatus" xml:"IpsecStatus"`
-	RoutingStrategy       string                                     `json:"RoutingStrategy" xml:"RoutingStrategy"`
-	AssociatedCcnId       string                                     `json:"AssociatedCcnId" xml:"AssociatedCcnId"`
-	InstanceType          string                                     `json:"InstanceType" xml:"InstanceType"`
-	SmartAGId             string                                     `json:"SmartAGId" xml:"SmartAGId"`
-	SecurityLockThreshold int                                        `json:"SecurityLockThreshold" xml:"SecurityLockThreshold"`
-	ResellerUid           string                                     `json:"ResellerUid" xml:"ResellerUid"`
-	Status                string                                     `json:"Status" xml:"Status"`
-	RequestId             string                                     `json:"RequestId" xml:"RequestId"`
-	CreateTime            int64                                      `json:"CreateTime" xml:"CreateTime"`
-	DataPlan              int64                                      `json:"DataPlan" xml:"DataPlan"`
-	EnableOptimization    bool                                       `json:"EnableOptimization" xml:"EnableOptimization"`
-	City                  string                                     `json:"City" xml:"City"`
-	ResellerInstanceId    string                                     `json:"ResellerInstanceId" xml:"ResellerInstanceId"`
-	BackupBoxControllerIp string                                     `json:"BackupBoxControllerIp" xml:"BackupBoxControllerIp"`
-	SerialNumber          string                                     `json:"SerialNumber" xml:"SerialNumber"`
-	TrafficMasterSn       string                                     `json:"TrafficMasterSn" xml:"TrafficMasterSn"`
-	AccessPointId         string                                     `json:"AccessPointId" xml:"AccessPointId"`
-	QosIds                QosIds                                     `json:"QosIds" xml:"QosIds"`
-	FlowLogIds            FlowLogIds                                 `json:"FlowLogIds" xml:"FlowLogIds"`
-	AclIds                AclIds                                     `json:"AclIds" xml:"AclIds"`
-	Links                 LinksInDescribeSmartAccessGatewayAttribute `json:"Links" xml:"Links"`
-	Devices               Devices                                    `json:"Devices" xml:"Devices"`
+	UpBandwidth4G                              int                                        `json:"UpBandwidth4G" xml:"UpBandwidth4G"`
+	Description                                string                                     `json:"Description" xml:"Description"`
+	EndTime                                    int64                                      `json:"EndTime" xml:"EndTime"`
+	ResourceGroupId                            string                                     `json:"ResourceGroupId" xml:"ResourceGroupId"`
+	UserCount                                  int                                        `json:"UserCount" xml:"UserCount"`
+	AssociatedCcnName                          string                                     `json:"AssociatedCcnName" xml:"AssociatedCcnName"`
+	MaxBandwidth                               string                                     `json:"MaxBandwidth" xml:"MaxBandwidth"`
+	VpnStatus                                  string                                     `json:"VpnStatus" xml:"VpnStatus"`
+	BoxControllerIp                            string                                     `json:"BoxControllerIp" xml:"BoxControllerIp"`
+	UpBandwidthWan                             int                                        `json:"UpBandwidthWan" xml:"UpBandwidthWan"`
+	CidrBlock                                  string                                     `json:"CidrBlock" xml:"CidrBlock"`
+	Name                                       string                                     `json:"Name" xml:"Name"`
+	OptimizationType                           bool                                       `json:"OptimizationType" xml:"OptimizationType"`
+	IpsecStatus                                string                                     `json:"IpsecStatus" xml:"IpsecStatus"`
+	RoutingStrategy                            string                                     `json:"RoutingStrategy" xml:"RoutingStrategy"`
+	AssociatedCcnId                            string                                     `json:"AssociatedCcnId" xml:"AssociatedCcnId"`
+	SmartAGId                                  string                                     `json:"SmartAGId" xml:"SmartAGId"`
+	InstanceType                               string                                     `json:"InstanceType" xml:"InstanceType"`
+	ResellerUid                                string                                     `json:"ResellerUid" xml:"ResellerUid"`
+	SecurityLockThreshold                      int                                        `json:"SecurityLockThreshold" xml:"SecurityLockThreshold"`
+	Status                                     string                                     `json:"Status" xml:"Status"`
+	RequestId                                  string                                     `json:"RequestId" xml:"RequestId"`
+	CreateTime                                 int64                                      `json:"CreateTime" xml:"CreateTime"`
+	DataPlan                                   int64                                      `json:"DataPlan" xml:"DataPlan"`
+	EnableOptimization                         bool                                       `json:"EnableOptimization" xml:"EnableOptimization"`
+	City                                       string                                     `json:"City" xml:"City"`
+	ResellerInstanceId                         string                                     `json:"ResellerInstanceId" xml:"ResellerInstanceId"`
+	SerialNumber                               string                                     `json:"SerialNumber" xml:"SerialNumber"`
+	BackupBoxControllerIp                      string                                     `json:"BackupBoxControllerIp" xml:"BackupBoxControllerIp"`
+	TrafficMasterSn                            string                                     `json:"TrafficMasterSn" xml:"TrafficMasterSn"`
+	AccessPointId                              string                                     `json:"AccessPointId" xml:"AccessPointId"`
+	ApplicationBandwidthPackageId              string                                     `json:"ApplicationBandwidthPackageId" xml:"ApplicationBandwidthPackageId"`
+	ApplicationBandwidthPackageName            string                                     `json:"ApplicationBandwidthPackageName" xml:"ApplicationBandwidthPackageName"`
+	AccelerateBandwidth                        int64                                      `json:"AccelerateBandwidth" xml:"AccelerateBandwidth"`
+	ApplicationBandwidthPackageBussinessStatus string                                     `json:"ApplicationBandwidthPackageBussinessStatus" xml:"ApplicationBandwidthPackageBussinessStatus"`
+	QosIds                                     QosIds                                     `json:"QosIds" xml:"QosIds"`
+	FlowLogIds                                 FlowLogIds                                 `json:"FlowLogIds" xml:"FlowLogIds"`
+	AclIds                                     AclIds                                     `json:"AclIds" xml:"AclIds"`
+	ApplicationBandwidthPackageOperationLocks  ApplicationBandwidthPackageOperationLocks  `json:"ApplicationBandwidthPackageOperationLocks" xml:"ApplicationBandwidthPackageOperationLocks"`
+	Devices                                    Devices                                    `json:"Devices" xml:"Devices"`
+	Links                                      LinksInDescribeSmartAccessGatewayAttribute `json:"Links" xml:"Links"`
 }
 
 // CreateDescribeSmartAccessGatewayAttributeRequest creates a request to invoke DescribeSmartAccessGatewayAttribute API

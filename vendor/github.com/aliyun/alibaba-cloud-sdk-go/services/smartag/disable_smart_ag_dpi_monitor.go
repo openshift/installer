@@ -71,13 +71,13 @@ func (client *Client) DisableSmartAGDpiMonitorWithCallback(request *DisableSmart
 // DisableSmartAGDpiMonitorRequest is the request struct for api DisableSmartAGDpiMonitor
 type DisableSmartAGDpiMonitorRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ClientToken          string           `position:"Query"`
-	DryRun               requests.Boolean `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ClientToken          string           `position:"Query" name:"ClientToken"`
+	DryRun               requests.Boolean `position:"Query" name:"DryRun"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // DisableSmartAGDpiMonitorResponse is the response struct for api DisableSmartAGDpiMonitor

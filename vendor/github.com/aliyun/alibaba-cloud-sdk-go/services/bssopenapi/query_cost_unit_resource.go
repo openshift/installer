@@ -80,11 +80,11 @@ type QueryCostUnitResourceRequest struct {
 // QueryCostUnitResourceResponse is the response struct for api QueryCostUnitResource
 type QueryCostUnitResourceResponse struct {
 	*responses.BaseResponse
-	RequestId string                      `json:"RequestId" xml:"RequestId"`
-	Message   string                      `json:"Message" xml:"Message"`
-	Code      string                      `json:"Code" xml:"Code"`
-	Success   bool                        `json:"Success" xml:"Success"`
-	Data      DataInQueryCostUnitResource `json:"Data" xml:"Data"`
+	RequestId string `json:"RequestId" xml:"RequestId"`
+	Message   string `json:"Message" xml:"Message"`
+	Code      string `json:"Code" xml:"Code"`
+	Success   bool   `json:"Success" xml:"Success"`
+	Data      Data   `json:"Data" xml:"Data"`
 }
 
 // CreateQueryCostUnitResourceRequest creates a request to invoke QueryCostUnitResource API

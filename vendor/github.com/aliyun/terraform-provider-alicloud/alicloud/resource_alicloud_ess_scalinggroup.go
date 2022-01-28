@@ -118,6 +118,10 @@ func resourceAlicloudEssScalingGroup() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+			"launch_template_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -211,6 +215,7 @@ func resourceAliyunEssScalingGroupRead(d *schema.ResourceData, meta interface{})
 		}
 	}
 	d.Set("vswitch_ids", vswitchIds)
+	d.Set("launch_template_id", object.LaunchTemplateId)
 
 	return nil
 }
@@ -396,6 +401,10 @@ func buildAlicloudEssScalingGroupArgs(d *schema.ResourceData, meta interface{}) 
 
 	if v, ok := d.GetOk("group_deletion_protection"); ok {
 		request.GroupDeletionProtection = requests.NewBoolean(v.(bool))
+	}
+
+	if v, ok := d.GetOk("launch_template_id"); ok {
+		request.LaunchTemplateId = v.(string)
 	}
 
 	return request, nil

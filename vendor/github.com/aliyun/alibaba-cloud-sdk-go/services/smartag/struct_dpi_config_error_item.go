@@ -17,8 +17,8 @@ package smartag
 
 // DpiConfigErrorItem is a nested struct in smartag response
 type DpiConfigErrorItem struct {
-	ErrorType           string                    `json:"ErrorType" xml:"ErrorType"`
 	SN                  string                    `json:"SN" xml:"SN"`
 	SmartAGId           string                    `json:"SmartAGId" xml:"SmartAGId"`
+	ErrorType           string                    `json:"ErrorType" xml:"ErrorType"`
 	RuleConfigErrorList []RuleConfigErrorListItem `json:"RuleConfigErrorList" xml:"RuleConfigErrorList"`
 }

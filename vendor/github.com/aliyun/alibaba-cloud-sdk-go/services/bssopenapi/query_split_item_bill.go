@@ -84,11 +84,11 @@ type QuerySplitItemBillRequest struct {
 // QuerySplitItemBillResponse is the response struct for api QuerySplitItemBill
 type QuerySplitItemBillResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                   `json:"RequestId" xml:"RequestId"`
+	Success   bool                     `json:"Success" xml:"Success"`
+	Code      string                   `json:"Code" xml:"Code"`
+	Message   string                   `json:"Message" xml:"Message"`
+	Data      DataInQuerySplitItemBill `json:"Data" xml:"Data"`
 }
 
 // CreateQuerySplitItemBillRequest creates a request to invoke QuerySplitItemBill API

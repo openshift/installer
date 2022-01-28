@@ -81,11 +81,11 @@ type QueryBillOverviewRequest struct {
 // QueryBillOverviewResponse is the response struct for api QueryBillOverview
 type QueryBillOverviewResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                  `json:"RequestId" xml:"RequestId"`
+	Success   bool                    `json:"Success" xml:"Success"`
+	Code      string                  `json:"Code" xml:"Code"`
+	Message   string                  `json:"Message" xml:"Message"`
+	Data      DataInQueryBillOverview `json:"Data" xml:"Data"`
 }
 
 // CreateQueryBillOverviewRequest creates a request to invoke QueryBillOverview API

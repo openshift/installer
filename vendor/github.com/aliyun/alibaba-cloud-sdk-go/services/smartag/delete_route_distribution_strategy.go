@@ -71,14 +71,14 @@ func (client *Client) DeleteRouteDistributionStrategyWithCallback(request *Delet
 // DeleteRouteDistributionStrategyRequest is the request struct for api DeleteRouteDistributionStrategy
 type DeleteRouteDistributionStrategyRequest struct {
 	*requests.RpcRequest
-	RouteSource          string           `position:"Query"`
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SourceType           string           `position:"Query"`
-	DestCidrBlock        string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	RouteSource          string           `position:"Query" name:"RouteSource"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SourceType           string           `position:"Query" name:"SourceType"`
+	DestCidrBlock        string           `position:"Query" name:"DestCidrBlock"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // DeleteRouteDistributionStrategyResponse is the response struct for api DeleteRouteDistributionStrategy

@@ -31,6 +31,38 @@ const (
 )
 
 const (
+	CountConditionKey = "__count__"
+)
+
+type Severity int
+
+const (
+	Report   Severity = 2
+	Low      Severity = 4
+	Medium   Severity = 6
+	High     Severity = 8
+	Critical Severity = 10
+)
+
+const (
+	JoinTypeCross        = "cross_join"
+	JoinTypeInner        = "inner_join"
+	JoinTypeLeft         = "left_join"
+	JoinTypeRight        = "right_join"
+	JoinTypeFull         = "full_join"
+	JoinTypeLeftExclude  = "left_exclude"
+	JoinTypeRightExclude = "right_exclude"
+	JoinTypeConcat       = "concat"
+	JoinTypeNo           = "no_join"
+)
+
+const (
+	GroupTypeNoGroup    = "no_group"
+	GroupTypeLabelsAuto = "labels_auto"
+	GroupTypeCustom     = "custom"
+)
+
+const (
 	ScheduleTypeFixedRate = "FixedRate"
 	ScheduleTypeHourly    = "Hourly"
 	ScheduleTypeDaily     = "Daily"
@@ -39,6 +71,63 @@ const (
 	ScheduleTypeDayRun    = "DryRun"
 	ScheduleTypeResident  = "Resident"
 )
+
+const (
+	StoreTypeLog    = "log"
+	StoreTypeMetric = "metric"
+	StoreTypeMeta   = "meta"
+)
+
+// SeverityConfiguration severity config by group
+type SeverityConfiguration struct {
+	Severity      Severity               `json:"severity"`
+	EvalCondition ConditionConfiguration `json:"evalCondition"`
+}
+
+type ConditionConfiguration struct {
+	Condition      string `json:"condition"`
+	CountCondition string `json:"countCondition"`
+}
+
+type JoinConfiguration struct {
+	Type      string `json:"type"`
+	Condition string `json:"condition"`
+}
+
+type GroupConfiguration struct {
+	Type   string   `json:"type"`
+	Fields []string `json:"fields"`
+}
+
+type Tag struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type Token struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+	Required    bool   `json:"required"`
+	Type        string `json:"type"`
+	Default     string `json:"default"`
+	Hide        bool   `json:"hide"`
+}
+
+type TemplateConfiguration struct {
+	Id          string            `json:"id"`
+	Type        string            `json:"type"`
+	Version     string            `json:"version"`
+	Lang        string            `json:"lang"`
+	Tokens      map[string]string `json:"tokens"`
+	Annotations map[string]string `json:"annotations"`
+}
+
+type PolicyConfiguration struct {
+	UseDefault     bool   `json:"useDefault"`
+	RepeatInterval string `json:"repeatInterval"`
+	AlertPolicyId  string `json:"alertPolicyId"`
+	ActionPolicyId string `json:"actionPolicyId"`
+}
 
 type Alert struct {
 	Name             string              `json:"name"`
@@ -66,16 +155,6 @@ func (alert *Alert) MarshalJSON() ([]byte, error) {
 	return json.Marshal(body)
 }
 
-type AlertConfiguration struct {
-	Condition        string          `json:"condition"`
-	Dashboard        string          `json:"dashboard"`
-	QueryList        []*AlertQuery   `json:"queryList"`
-	MuteUntil        int64           `json:"muteUntil"`
-	NotificationList []*Notification `json:"notificationList"`
-	NotifyThreshold  int32           `json:"notifyThreshold"`
-	Throttling       string          `json:"throttling"`
-}
-
 type AlertQuery struct {
 	ChartTitle   string `json:"chartTitle"`
 	LogStore     string `json:"logStore"`
@@ -83,6 +162,13 @@ type AlertQuery struct {
 	TimeSpanType string `json:"timeSpanType"`
 	Start        string `json:"start"`
 	End          string `json:"end"`
+
+	StoreType   string `json:"storeType"`
+	Project     string `json:"project"`
+	Store       string `json:"store"`
+	Region      string `json:"region"`
+	RoleArn     string `json:"roleArn"`
+	DashboardId string `json:"dashboardId"`
 }
 
 type Notification struct {
@@ -102,6 +188,33 @@ type Schedule struct {
 	Delay          int32  `json:"delay"`
 	DayOfWeek      int32  `json:"dayOfWeek"`
 	Hour           int32  `json:"hour"`
+}
+
+type AlertConfiguration struct {
+	Condition        string          `json:"condition"`
+	MuteUntil        int64           `json:"muteUntil"`
+	NotificationList []*Notification `json:"notificationList"`
+	NotifyThreshold  int32           `json:"notifyThreshold"`
+	Throttling       string          `json:"throttling"`
+
+	Version               string                 `json:"version"`
+	Type                  string                 `json:"type"`
+	TemplateConfiguration *TemplateConfiguration `json:"templateConfiguration"`
+
+	Dashboard              string                   `json:"dashboard"`
+	Threshold              int                      `json:"threshold"`
+	NoDataFire             bool                     `json:"noDataFire"`
+	NoDataSeverity         Severity                 `json:"noDataSeverity"`
+	SendResolved           bool                     `json:"sendResolved"`
+	QueryList              []*AlertQuery            `json:"queryList"`
+	Annotations            []*Tag                   `json:"annotations"`
+	Labels                 []*Tag                   `json:"labels"`
+	SeverityConfigurations []*SeverityConfiguration `json:"severityConfigurations"`
+
+	JoinConfigurations []*JoinConfiguration `json:"joinConfigurations"`
+	GroupConfiguration GroupConfiguration   `json:"groupConfiguration"`
+
+	PolicyConfiguration PolicyConfiguration `json:"policyConfiguration"`
 }
 
 func (c *Client) CreateSavedSearch(project string, savedSearch *SavedSearch) error {

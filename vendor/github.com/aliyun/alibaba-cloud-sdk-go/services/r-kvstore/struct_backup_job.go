@@ -23,4 +23,5 @@ type BackupJob struct {
 	Process              string `json:"Process" xml:"Process"`
 	StartTime            string `json:"StartTime" xml:"StartTime"`
 	TaskAction           string `json:"TaskAction" xml:"TaskAction"`
+	NodeId               string `json:"NodeId" xml:"NodeId"`
 }

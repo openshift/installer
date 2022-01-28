@@ -91,7 +91,7 @@ func CreateDescribeRoleZoneInfoRequest() (request *DescribeRoleZoneInfoRequest) 
 	request = &DescribeRoleZoneInfoRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeRoleZoneInfo", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeRoleZoneInfo", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

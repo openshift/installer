@@ -71,14 +71,14 @@ func (client *Client) RoamClientUserWithCallback(request *RoamClientUserRequest,
 // RoamClientUserRequest is the request struct for api RoamClientUser
 type RoamClientUserRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	OriginSmartAGId      string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	TargetSmartAGId      string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	OriginRegionId       string           `position:"Query"`
-	UserName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	OriginSmartAGId      string           `position:"Query" name:"OriginSmartAGId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	TargetSmartAGId      string           `position:"Query" name:"TargetSmartAGId"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	OriginRegionId       string           `position:"Query" name:"OriginRegionId"`
+	UserName             string           `position:"Query" name:"UserName"`
 }
 
 // RoamClientUserResponse is the response struct for api RoamClientUser

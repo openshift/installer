@@ -427,3 +427,128 @@ func (s *ConfigService) ConfigRuleStateRefreshFunc(id string, failStates []strin
 		return object, fmt.Sprint(object["ConfigRuleState"]), nil
 	}
 }
+
+func (s *ConfigService) StopConfigRule(id string) (err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewConfigClient()
+	if err != nil {
+		return WrapError(err)
+	}
+	action := "StopConfigRules"
+	request := map[string]interface{}{
+		"ConfigRuleIds": id,
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("GET"), StringPointer("2019-01-08"), StringPointer("AK"), request, nil, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if err != nil {
+		return WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	return nil
+}
+func (s *ConfigService) ActiveConfigRule(id string) (err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewConfigClient()
+	if err != nil {
+		return WrapError(err)
+	}
+	action := "ActiveConfigRules"
+	request := map[string]interface{}{
+		"ConfigRuleIds": id,
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("GET"), StringPointer("2019-01-08"), StringPointer("AK"), request, nil, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if err != nil {
+		return WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	return nil
+}
+
+func (s *ConfigService) ActiveAggregateConfigRules(id, aggregatorId string) (err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewConfigClient()
+	if err != nil {
+		return WrapError(err)
+	}
+	action := "ActiveAggregateConfigRules"
+	request := map[string]interface{}{
+		"ConfigRuleIds": id,
+		"AggregatorId":  aggregatorId,
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("GET"), StringPointer("2020-09-07"), StringPointer("AK"), request, nil, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if err != nil {
+		return WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	return nil
+}
+
+func (s *ConfigService) DeactiveAggregateConfigRules(id, aggregatorId string) (err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewConfigClient()
+	if err != nil {
+		return WrapError(err)
+	}
+	action := "DeactiveAggregateConfigRules"
+	request := map[string]interface{}{
+		"ConfigRuleIds": id,
+		"AggregatorId":  aggregatorId,
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("GET"), StringPointer("2020-09-07"), StringPointer("AK"), request, nil, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if err != nil {
+		return WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	return nil
+}

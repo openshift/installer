@@ -92,7 +92,7 @@ func CreateDescribeAvailableTimeRangeRequest() (request *DescribeAvailableTimeRa
 	request = &DescribeAvailableTimeRangeRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeAvailableTimeRange", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeAvailableTimeRange", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

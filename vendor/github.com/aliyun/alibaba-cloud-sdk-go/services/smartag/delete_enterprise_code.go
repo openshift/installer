@@ -71,9 +71,9 @@ func (client *Client) DeleteEnterpriseCodeWithCallback(request *DeleteEnterprise
 // DeleteEnterpriseCodeRequest is the request struct for api DeleteEnterpriseCode
 type DeleteEnterpriseCodeRequest struct {
 	*requests.RpcRequest
-	ClientToken    string           `position:"Query"`
-	EnterpriseCode string           `position:"Query"`
-	DryRun         requests.Boolean `position:"Query"`
+	ClientToken    string           `position:"Query" name:"ClientToken"`
+	EnterpriseCode string           `position:"Query" name:"EnterpriseCode"`
+	DryRun         requests.Boolean `position:"Query" name:"DryRun"`
 }
 
 // DeleteEnterpriseCodeResponse is the response struct for api DeleteEnterpriseCode

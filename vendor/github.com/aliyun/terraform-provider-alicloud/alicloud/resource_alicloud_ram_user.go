@@ -289,7 +289,7 @@ func resourceAlicloudRamUserDelete(d *schema.ResourceData, meta interface{}) err
 	})
 	if err != nil {
 		if IsExpectedErrors(err, []string{"DeleteConflict.User.AccessKey", "DeleteConflict.User.Group", "DeleteConflict.User.Policy", "DeleteConflict.User.LoginProfile", "DeleteConflict.User.MFADevice"}) {
-			return WrapError(Error("The user can not has any access keys or login profile or attached group or attached policies or attached mfa device while deleting the user.- you can set force with true to force delete the user."))
+			return WrapError(Error("The user can not be deleted if he has any access keys, login profile, groups, policies, or MFA device attached. You can force the deletion of the user by setting force equals true."))
 		}
 		return WrapErrorf(err, DefaultErrorMsg, d.Id(), request.GetActionName(), AlibabaCloudSdkGoERROR)
 	}

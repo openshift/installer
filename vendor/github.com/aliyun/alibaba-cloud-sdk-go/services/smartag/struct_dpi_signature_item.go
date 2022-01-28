@@ -17,9 +17,9 @@ package smartag
 
 // DpiSignatureItem is a nested struct in smartag response
 type DpiSignatureItem struct {
-	MinEngineVersion      string `json:"MinEngineVersion" xml:"MinEngineVersion"`
-	MinSignatureDbVersion string `json:"MinSignatureDbVersion" xml:"MinSignatureDbVersion"`
 	DpiSignatureId        string `json:"DpiSignatureId" xml:"DpiSignatureId"`
-	DpiSignatureName      string `json:"DpiSignatureName" xml:"DpiSignatureName"`
+	MinSignatureDbVersion string `json:"MinSignatureDbVersion" xml:"MinSignatureDbVersion"`
 	DpiGroupId            string `json:"DpiGroupId" xml:"DpiGroupId"`
+	MinEngineVersion      string `json:"MinEngineVersion" xml:"MinEngineVersion"`
+	DpiSignatureName      string `json:"DpiSignatureName" xml:"DpiSignatureName"`
 }

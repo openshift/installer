@@ -79,6 +79,7 @@ type CreateCenRouteMapRequest struct {
 	DestinationCidrBlocks              *[]string        `position:"Query" name:"DestinationCidrBlocks"  type:"Repeated"`
 	SystemPolicy                       requests.Boolean `position:"Query" name:"SystemPolicy"`
 	OriginalRouteTableIds              *[]string        `position:"Query" name:"OriginalRouteTableIds"  type:"Repeated"`
+	TransitRouterRouteTableId          string           `position:"Query" name:"TransitRouterRouteTableId"`
 	SourceInstanceIds                  *[]string        `position:"Query" name:"SourceInstanceIds"  type:"Repeated"`
 	SourceRegionIds                    *[]string        `position:"Query" name:"SourceRegionIds"  type:"Repeated"`
 	GatewayZoneId                      string           `position:"Query" name:"GatewayZoneId"`

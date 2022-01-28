@@ -90,6 +90,7 @@ type ModifyScalingConfigurationRequest struct {
 	InstanceName                    string                                            `position:"Query" name:"InstanceName"`
 	InternetChargeType              string                                            `position:"Query" name:"InternetChargeType"`
 	ZoneId                          string                                            `position:"Query" name:"ZoneId"`
+	InstancePatternInfo             *[]ModifyScalingConfigurationInstancePatternInfo  `position:"Query" name:"InstancePatternInfo"  type:"Repeated"`
 	Affinity                        string                                            `position:"Query" name:"Affinity"`
 	ImageId                         string                                            `position:"Query" name:"ImageId"`
 	Memory                          requests.Integer                                  `position:"Query" name:"Memory"`
@@ -127,6 +128,14 @@ type ModifyScalingConfigurationRequest struct {
 type ModifyScalingConfigurationSpotPriceLimit struct {
 	InstanceType string `name:"InstanceType"`
 	PriceLimit   string `name:"PriceLimit"`
+}
+
+// ModifyScalingConfigurationInstancePatternInfo is a repeated param struct in ModifyScalingConfigurationRequest
+type ModifyScalingConfigurationInstancePatternInfo struct {
+	Cores               string `name:"Cores"`
+	Memory              string `name:"Memory"`
+	InstanceFamilyLevel string `name:"InstanceFamilyLevel"`
+	MaxPrice            string `name:"MaxPrice"`
 }
 
 // ModifyScalingConfigurationDataDisk is a repeated param struct in ModifyScalingConfigurationRequest

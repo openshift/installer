@@ -71,14 +71,16 @@ func (client *Client) ModifySmartAccessGatewayClientUserWithCallback(request *Mo
 // ModifySmartAccessGatewayClientUserRequest is the request struct for api ModifySmartAccessGatewayClientUser
 type ModifySmartAccessGatewayClientUserRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	Email                string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	Bandwidth            requests.Integer `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	UserName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ClientIp             string           `position:"Query" name:"ClientIp"`
+	Email                string           `position:"Query" name:"Email"`
+	EnableStaticIp       requests.Boolean `position:"Query" name:"EnableStaticIp"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	Bandwidth            requests.Integer `position:"Query" name:"Bandwidth"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	UserName             string           `position:"Query" name:"UserName"`
 }
 
 // ModifySmartAccessGatewayClientUserResponse is the response struct for api ModifySmartAccessGatewayClientUser

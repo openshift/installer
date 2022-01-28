@@ -17,9 +17,9 @@ package smartag
 
 // EN is a nested struct in smartag response
 type EN struct {
+	ItemName  string   `json:"ItemName" xml:"ItemName"`
 	ItemLevel string   `json:"ItemLevel" xml:"ItemLevel"`
 	ItemType  string   `json:"ItemType" xml:"ItemType"`
-	ItemName  string   `json:"ItemName" xml:"ItemName"`
-	Details   []string `json:"Details" xml:"Details"`
 	Advice    []string `json:"Advice" xml:"Advice"`
+	Details   []string `json:"Details" xml:"Details"`
 }

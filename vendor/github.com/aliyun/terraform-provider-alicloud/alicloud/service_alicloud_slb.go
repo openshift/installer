@@ -202,49 +202,44 @@ func (s *SlbService) DescribeSlbListener(id string) (listener map[string]interfa
 	return
 }
 
-func (s *SlbService) DescribeSlbAcl(id string) (*slb.DescribeAccessControlListAttributeResponse, error) {
-	response := &slb.DescribeAccessControlListAttributeResponse{}
-	request := slb.CreateDescribeAccessControlListAttributeRequest()
-	request.RegionId = s.client.RegionId
-	request.AclId = id
-
-	raw, err := s.client.WithSlbClient(func(slbClient *slb.Client) (interface{}, error) {
-		return slbClient.DescribeAccessControlListAttribute(request)
-	})
+func (s *SlbService) DescribeSlbAcl(id string) (object map[string]interface{}, err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewSlbClient()
 	if err != nil {
-		if err != nil {
-			if IsExpectedErrors(err, []string{"AclNotExist"}) {
-				return response, WrapErrorf(err, NotFoundMsg, AlibabaCloudSdkGoERROR)
-			}
-			return response, WrapErrorf(err, DefaultErrorMsg, id, request.GetActionName(), AlibabaCloudSdkGoERROR)
-		}
+		return nil, WrapError(err)
 	}
-	addDebug(request.GetActionName(), raw, request.RpcRequest, request)
-	response, _ = raw.(*slb.DescribeAccessControlListAttributeResponse)
-	return response, nil
-}
-
-func (s *SlbService) WaitForSlbAcl(id string, status Status, timeout int) error {
-	deadline := time.Now().Add(time.Duration(timeout) * time.Second)
-	for {
-		object, err := s.DescribeSlbAcl(id)
-		if err != nil {
-			if NotFoundError(err) {
-				if status == Deleted {
-					return nil
-				}
-			} else {
-				return WrapError(err)
-			}
-		} else {
-			return nil
-		}
-
-		time.Sleep(DefaultIntervalShort * time.Second)
-		if time.Now().After(deadline) {
-			return WrapErrorf(err, WaitTimeoutMsg, id, GetFunc(1), timeout, object.AclId, id, ProviderERROR)
-		}
+	action := "DescribeAccessControlListAttribute"
+	request := map[string]interface{}{
+		"RegionId": s.client.RegionId,
+		"AclId":    id,
 	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-15"), StringPointer("AK"), nil, request, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if err != nil {
+		if IsExpectedErrors(err, []string{"AclNotExist"}) {
+			return object, WrapErrorf(Error(GetNotFoundMessage("SLB:Acl", id)), NotFoundMsg, ProviderERROR, fmt.Sprint(response["RequestId"]))
+		}
+		return object, WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	v, err := jsonpath.Get("$", response)
+	if err != nil {
+		return object, WrapErrorf(err, FailedGetAttributeMsg, id, "$", response)
+	}
+	object = v.(map[string]interface{})
+	return object, nil
 }
 
 func (s *SlbService) WaitForSlb(id string, status Status, timeout int) error {
@@ -675,7 +670,6 @@ func (s *SlbService) WaitForSlbDomainExtension(id string, status Status, timeout
 			return WrapErrorf(err, WaitTimeoutMsg, id, GetFunc(1), timeout, Null, string(status), ProviderERROR)
 		}
 	}
-	return nil
 }
 
 func (s *SlbService) setInstanceTags(d *schema.ResourceData, resourceType TagResourceType) error {
@@ -824,7 +818,7 @@ func (s *SlbService) DescribeTags(resourceId string, resourceTags map[string]int
 			return Client.ListTagResources(request)
 		})
 		if err != nil {
-			if IsExpectedErrors(err, []string{Throttling}) {
+			if IsExpectedErrors(err, []string{Throttling, "Throttling.User"}) {
 				time.Sleep(2 * time.Second)
 				return resource.RetryableError(err)
 			}
@@ -1073,4 +1067,66 @@ func (s *SlbService) DescribeSlbCaCertificate(id string) (object map[string]inte
 	}
 	object = v.([]interface{})[0].(map[string]interface{})
 	return object, nil
+}
+
+func (s *SlbService) DescribeSlbTlsCipherPolicy(id string) (object map[string]interface{}, err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewSlbClient()
+	if err != nil {
+		return nil, WrapError(err)
+	}
+	action := "ListTLSCipherPolicies"
+	request := map[string]interface{}{
+		"RegionId":          s.client.RegionId,
+		"TLSCipherPolicyId": id,
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-15"), StringPointer("AK"), nil, request, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if err != nil {
+		return object, WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	v, err := jsonpath.Get("$.TLSCipherPolicies", response)
+	if err != nil {
+		return object, WrapErrorf(err, FailedGetAttributeMsg, id, "$.TLSCipherPolicies", response)
+	}
+	if len(v.([]interface{})) < 1 {
+		return object, WrapErrorf(Error(GetNotFoundMessage("SLB", id)), NotFoundWithResponse, response)
+	} else {
+		if fmt.Sprint(v.([]interface{})[0].(map[string]interface{})["InstanceId"]) != id {
+			return object, WrapErrorf(Error(GetNotFoundMessage("SLB", id)), NotFoundWithResponse, response)
+		}
+	}
+	object = v.([]interface{})[0].(map[string]interface{})
+	return object, nil
+}
+
+func (s *SlbService) convertAclEntriesToString(v []interface{}) (string, error) {
+	arrayMaps := make([]interface{}, len(v))
+	for i, vv := range v {
+		item := vv.(map[string]interface{})
+		temp := map[string]interface{}{
+			"comment": item["comment"],
+			"entry":   item["entry"],
+		}
+
+		arrayMaps[i] = temp
+	}
+	maps, err := json.Marshal(arrayMaps)
+	if err != nil {
+		return "", WrapError(err)
+	}
+	return string(maps), nil
 }

@@ -85,7 +85,8 @@ type CreateParameterGroupRequest struct {
 // CreateParameterGroupResponse is the response struct for api CreateParameterGroup
 type CreateParameterGroupResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
+	RequestId        string `json:"RequestId" xml:"RequestId"`
+	ParameterGroupId string `json:"ParameterGroupId" xml:"ParameterGroupId"`
 }
 
 // CreateCreateParameterGroupRequest creates a request to invoke CreateParameterGroup API

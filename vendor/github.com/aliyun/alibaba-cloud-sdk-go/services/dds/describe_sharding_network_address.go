@@ -93,7 +93,7 @@ func CreateDescribeShardingNetworkAddressRequest() (request *DescribeShardingNet
 	request = &DescribeShardingNetworkAddressRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeShardingNetworkAddress", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeShardingNetworkAddress", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

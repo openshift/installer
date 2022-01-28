@@ -17,5 +17,5 @@ package bssopenapi
 
 // ItemsInQuerySettlementBill is a nested struct in bssopenapi response
 type ItemsInQuerySettlementBill struct {
-	Item []Item `json:"Item" xml:"Item"`
+	Item []ItemInQuerySettlementBill `json:"Item" xml:"Item"`
 }

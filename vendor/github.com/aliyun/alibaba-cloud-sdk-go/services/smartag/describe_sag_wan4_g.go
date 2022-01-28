@@ -71,12 +71,12 @@ func (client *Client) DescribeSagWan4GWithCallback(request *DescribeSagWan4GRequ
 // DescribeSagWan4GRequest is the request struct for api DescribeSagWan4G
 type DescribeSagWan4GRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
 }
 
 // DescribeSagWan4GResponse is the response struct for api DescribeSagWan4G
@@ -87,8 +87,8 @@ type DescribeSagWan4GResponse struct {
 	RequestId    string `json:"RequestId" xml:"RequestId"`
 	Priority     int    `json:"Priority" xml:"Priority"`
 	Ip           string `json:"Ip" xml:"Ip"`
-	Mac          string `json:"Mac" xml:"Mac"`
 	Strength     string `json:"Strength" xml:"Strength"`
+	Mac          string `json:"Mac" xml:"Mac"`
 }
 
 // CreateDescribeSagWan4GRequest creates a request to invoke DescribeSagWan4G API

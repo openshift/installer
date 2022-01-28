@@ -93,7 +93,7 @@ func CreateDescribeMongoDBLogConfigRequest() (request *DescribeMongoDBLogConfigR
 	request = &DescribeMongoDBLogConfigRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeMongoDBLogConfig", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeMongoDBLogConfig", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

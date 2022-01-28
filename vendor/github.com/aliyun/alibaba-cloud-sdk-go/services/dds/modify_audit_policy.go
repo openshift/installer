@@ -92,7 +92,7 @@ func CreateModifyAuditPolicyRequest() (request *ModifyAuditPolicyRequest) {
 	request = &ModifyAuditPolicyRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyAuditPolicy", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyAuditPolicy", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

@@ -91,7 +91,7 @@ func CreateDeleteDBInstanceRequest() (request *DeleteDBInstanceRequest) {
 	request = &DeleteDBInstanceRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DeleteDBInstance", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DeleteDBInstance", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

@@ -71,19 +71,19 @@ func (client *Client) DescribeSagCurrentDnsWithCallback(request *DescribeSagCurr
 // DescribeSagCurrentDnsRequest is the request struct for api DescribeSagCurrentDns
 type DescribeSagCurrentDnsRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
 }
 
 // DescribeSagCurrentDnsResponse is the response struct for api DescribeSagCurrentDns
 type DescribeSagCurrentDnsResponse struct {
 	*responses.BaseResponse
-	SlaveDns  string `json:"SlaveDns" xml:"SlaveDns"`
 	RequestId string `json:"RequestId" xml:"RequestId"`
+	SlaveDns  string `json:"SlaveDns" xml:"SlaveDns"`
 	MasterDns string `json:"MasterDns" xml:"MasterDns"`
 }
 

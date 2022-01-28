@@ -1,12 +1,15 @@
 package alicloud
 
 import (
+	"fmt"
 	"regexp"
 	"time"
 
+	"github.com/PaesslerAG/jsonpath"
+	util "github.com/alibabacloud-go/tea-utils/service"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/alikafka"
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -28,10 +31,32 @@ func dataSourceAlicloudAlikafkaTopics() *schema.Resource {
 				ValidateFunc: validation.ValidateRegexp,
 				ForceNew:     true,
 			},
+			// Computed values
+			"ids": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Computed: true,
+			},
+			"topic": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
 			"output_file": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+			"page_number": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"page_size": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  50,
 			},
 			// Computed values
 			"names": {
@@ -44,6 +69,10 @@ func dataSourceAlicloudAlikafkaTopics() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"topic": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -72,8 +101,21 @@ func dataSourceAlicloudAlikafkaTopics() *schema.Resource {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
+						"status_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"instance_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"tags": tagsSchema(),
 					},
 				},
+			},
+			"total_count": {
+				Type:     schema.TypeInt,
+				Computed: true,
 			},
 		},
 	}
@@ -81,91 +123,145 @@ func dataSourceAlicloudAlikafkaTopics() *schema.Resource {
 
 func dataSourceAlicloudAlikafkaTopicsRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
-	alikafkaService := AlikafkaService{client}
 
-	request := alikafka.CreateGetTopicListRequest()
-	request.InstanceId = d.Get("instance_id").(string)
-	request.RegionId = client.RegionId
-
-	wait := incrementalWait(3*time.Second, 5*time.Second)
-	var raw interface{}
-	var err error
-
-	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
-		raw, err = alikafkaService.client.WithAlikafkaClient(func(alikafkaClient *alikafka.Client) (interface{}, error) {
-			return alikafkaClient.GetTopicList(request)
-		})
-		if err != nil {
-			if IsExpectedErrors(err, []string{ThrottlingUser}) {
-				wait()
-				return resource.RetryableError(err)
-			}
-			return resource.NonRetryableError(err)
-		}
-		addDebug(request.GetActionName(), raw, request.RpcRequest, request)
-		return nil
-	})
-
+	action := "GetTopicList"
+	request := make(map[string]interface{})
+	conn, err := client.NewAlikafkaClient()
 	if err != nil {
-		return WrapErrorf(err, DataDefaultErrorMsg, "alicloud_alikafka_topics", request.GetActionName(), AlibabaCloudSdkGoERROR)
+		return WrapError(err)
 	}
-	response, _ := raw.(*alikafka.GetTopicListResponse)
+	request["RegionId"] = client.RegionId
+	request["InstanceId"] = d.Get("instance_id").(string)
+	if v, ok := d.GetOk("topic"); ok {
+		request["Topic"] = v
+	}
 
-	var filteredTopics []alikafka.TopicVO
-	nameRegex, ok := d.GetOk("name_regex")
-	if ok && nameRegex.(string) != "" {
-		var r *regexp.Regexp
-		if nameRegex != "" {
-			r, err = regexp.Compile(nameRegex.(string))
-			if err != nil {
-				return WrapError(err)
+	idsMap := make(map[string]string)
+	if v, ok := d.GetOk("ids"); ok {
+		for _, vv := range v.([]interface{}) {
+			if vv == nil {
+				continue
 			}
+			idsMap[vv.(string)] = vv.(string)
 		}
-		for _, topic := range response.TopicList.TopicVO {
-			if r != nil && !r.MatchString(topic.Topic) {
+	}
+	var nameRegex *regexp.Regexp
+	if v, ok := d.GetOk("name_regex"); ok {
+		nameRegex = regexp.MustCompile(v.(string))
+	}
+
+	var response map[string]interface{}
+
+	if v, ok := d.GetOk("page_number"); ok && v.(int) > 0 {
+		request["CurrentPage"] = v.(int)
+	} else {
+		request["CurrentPage"] = 1
+	}
+	if v, ok := d.GetOk("page_size"); ok && v.(int) > 0 {
+		request["PageSize"] = v.(int)
+	} else {
+		request["PageSize"] = PageSizeLarge
+	}
+
+	var objects []interface{}
+	for {
+		runtime := util.RuntimeOptions{}
+		runtime.SetAutoretry(true)
+		wait := incrementalWait(3*time.Second, 3*time.Second)
+		err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-09-16"), StringPointer("AK"), nil, request, &runtime)
+			if err != nil {
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			return nil
+		})
+		addDebug(action, response, request)
+		if err != nil {
+			return WrapErrorf(err, DataDefaultErrorMsg, "alicloud_alikafka_topics", action, AlibabaCloudSdkGoERROR)
+		}
+		resp, err := jsonpath.Get("$.TopicList.TopicVO", response)
+		if err != nil {
+			return WrapErrorf(err, FailedGetAttributeMsg, action, "$.TopicList.TopicVO", response)
+		}
+		result, _ := resp.([]interface{})
+		if isPagingRequest(d) {
+			objects = result
+			break
+		}
+		for _, v := range result {
+			item := v.(map[string]interface{})
+			if nameRegex != nil && !nameRegex.MatchString(fmt.Sprint(item["Topic"])) {
 				continue
 			}
 
-			filteredTopics = append(filteredTopics, topic)
+			if len(idsMap) > 0 {
+				if _, ok := idsMap[fmt.Sprint(item["InstanceId"], ":", item["Topic"])]; !ok {
+					continue
+				}
+			}
+			objects = append(objects, item)
 		}
-	} else {
-		filteredTopics = response.TopicList.TopicVO
+		if len(result) < request["PageSize"].(int) {
+			break
+		}
+		request["CurrentPage"] = request["CurrentPage"].(int) + 1
 	}
-	return alikafkaTopicsDecriptionAttributes(d, filteredTopics, meta)
-}
 
-func alikafkaTopicsDecriptionAttributes(d *schema.ResourceData, topicsInfo []alikafka.TopicVO, meta interface{}) error {
-	var names []string
-	var s []map[string]interface{}
+	ids := make([]string, 0)
+	names := make([]interface{}, 0)
 
-	for _, item := range topicsInfo {
+	s := make([]map[string]interface{}, 0)
+	for _, v := range objects {
+		object := v.(map[string]interface{})
 		mapping := map[string]interface{}{
-			"topic":         item.Topic,
-			"create_time":   time.Unix(int64(item.CreateTime)/1000, 0).Format("2006-01-02 03:04:05"),
-			"local_topic":   item.LocalTopic,
-			"compact_topic": item.CompactTopic,
-			"partition_num": item.PartitionNum,
-			"remark":        item.Remark,
-			"status":        item.Status,
+			"id":            fmt.Sprint(object["InstanceId"], ":", object["Topic"]),
+			"topic":         object["Topic"],
+			"create_time":   object["CreateTime"],
+			"local_topic":   object["LocalTopic"],
+			"compact_topic": object["CompactTopic"],
+			"partition_num": object["PartitionNum"],
+			"remark":        object["Remark"],
+			"status":        object["Status"],
+			"status_name":   object["StatusName"],
+			"instance_id":   object["InstanceId"],
 		}
-
-		names = append(names, item.Topic)
+		tags := make(map[string]interface{})
+		t, _ := jsonpath.Get("$.Tags.TagVO", object)
+		if t != nil {
+			for _, t := range t.([]interface{}) {
+				key := t.(map[string]interface{})["Key"].(string)
+				value := t.(map[string]interface{})["Value"].(string)
+				if !ignoredTags(key, value) {
+					tags[key] = value
+				}
+			}
+		}
+		mapping["tags"] = tags
+		ids = append(ids, fmt.Sprint(mapping["id"]))
+		names = append(names, mapping["name"])
 		s = append(s, mapping)
 	}
 
-	d.SetId(dataResourceIdHash(names))
-
+	d.SetId(dataResourceIdHash(ids))
+	if err := d.Set("ids", ids); err != nil {
+		return WrapError(err)
+	}
 	if err := d.Set("names", names); err != nil {
 		return WrapError(err)
 	}
 	if err := d.Set("topics", s); err != nil {
 		return WrapError(err)
 	}
-
-	// create a json file in current directory and write data source to it
+	if err := d.Set("total_count", formatInt(response["Total"])); err != nil {
+		return WrapError(err)
+	}
 	if output, ok := d.GetOk("output_file"); ok && output.(string) != "" {
 		writeToFile(output.(string), s)
 	}
-	return nil
 
+	return nil
 }

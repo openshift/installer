@@ -18,8 +18,8 @@ package smartag
 // Link is a nested struct in smartag response
 type Link struct {
 	CommodityType          string `json:"CommodityType" xml:"CommodityType"`
-	InstanceId             string `json:"InstanceId" xml:"InstanceId"`
 	Bandwidth              string `json:"Bandwidth" xml:"Bandwidth"`
+	InstanceId             string `json:"InstanceId" xml:"InstanceId"`
 	HealthCheckTargetIp    string `json:"HealthCheckTargetIp" xml:"HealthCheckTargetIp"`
 	RelateInstanceRegionId string `json:"RelateInstanceRegionId" xml:"RelateInstanceRegionId"`
 	Status                 string `json:"Status" xml:"Status"`

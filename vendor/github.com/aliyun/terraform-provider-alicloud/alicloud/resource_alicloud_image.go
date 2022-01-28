@@ -135,6 +135,12 @@ func resourceAliCloudImage() *schema.Resource {
 				Default:  false,
 			},
 			"tags": tagsSchema(),
+			// Not the public attribute and it used to automatically delete dependence snapshots while deleting the image.
+			// Available in 1.136.0
+			"delete_auto_snapshot": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 		},
 	}
 }

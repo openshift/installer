@@ -73,6 +73,7 @@ type CreateClusterRequest struct {
 	*requests.RpcRequest
 	ClientToken     string           `position:"Query" name:"ClientToken"`
 	ClusterName     string           `position:"Query" name:"ClusterName"`
+	ResourceGroupId string           `position:"Query" name:"ResourceGroupId"`
 	Password        string           `position:"Query" name:"Password"`
 	InstanceType    string           `position:"Query" name:"InstanceType"`
 	AutoRenewPeriod requests.Integer `position:"Query" name:"AutoRenewPeriod"`

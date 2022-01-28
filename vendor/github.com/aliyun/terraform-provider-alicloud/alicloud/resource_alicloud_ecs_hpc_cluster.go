@@ -77,6 +77,10 @@ func resourceAlicloudEcsHpcClusterRead(d *schema.ResourceData, meta interface{})
 }
 func resourceAlicloudEcsHpcClusterUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewEcsClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	update := false
 	request := map[string]interface{}{
@@ -93,10 +97,6 @@ func resourceAlicloudEcsHpcClusterUpdate(d *schema.ResourceData, meta interface{
 	}
 	if update {
 		action := "ModifyHpcClusterAttribute"
-		conn, err := client.NewEcsClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)
 		request["ClientToken"] = buildClientToken("ModifyHpcClusterAttribute")

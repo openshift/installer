@@ -206,6 +206,19 @@ func delEmptyPayloadIfExist(s string) (string, error) {
 	return string(out), err
 }
 
+func resolveFcTriggerConfig(s string) (string, error) {
+	if s == "" {
+		return s, nil
+	}
+	in := []byte(s)
+	var raw map[string]interface{}
+	if err := json.Unmarshal(in, &raw); err != nil {
+		return s, err
+	}
+	out, err := json.Marshal(raw)
+	return string(out), err
+}
+
 func (s *FcService) WaitForFcTrigger(id string, status Status, timeout int) error {
 	parts, err := ParseResourceId(id, 3)
 	if err != nil {

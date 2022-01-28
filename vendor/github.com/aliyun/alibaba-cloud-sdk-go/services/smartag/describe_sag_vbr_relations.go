@@ -71,12 +71,12 @@ func (client *Client) DescribeSagVbrRelationsWithCallback(request *DescribeSagVb
 // DescribeSagVbrRelationsRequest is the request struct for api DescribeSagVbrRelations
 type DescribeSagVbrRelationsRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
 	VbrInstanceIds       *[]string        `position:"Query" name:"VbrInstanceIds"  type:"Repeated"`
-	VbrRegionId          string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
+	VbrRegionId          string           `position:"Query" name:"VbrRegionId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
 }
 
 // DescribeSagVbrRelationsResponse is the response struct for api DescribeSagVbrRelations

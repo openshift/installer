@@ -44,6 +44,9 @@ type ResultInDescribeInstance struct {
 	HaveKibana                   bool                         `json:"haveKibana" xml:"haveKibana"`
 	ResourceGroupId              string                       `json:"resourceGroupId" xml:"resourceGroupId"`
 	EnableKibanaPrivateNetwork   bool                         `json:"enableKibanaPrivateNetwork" xml:"enableKibanaPrivateNetwork"`
+	IsNewDeployment              bool                         `json:"isNewDeployment" xml:"isNewDeployment"`
+	PostpaidServiceStatus        string                       `json:"postpaidServiceStatus" xml:"postpaidServiceStatus"`
+	ServiceVpc                   bool                         `json:"serviceVpc" xml:"serviceVpc"`
 	EsIPWhitelist                []string                     `json:"esIPWhitelist" xml:"esIPWhitelist"`
 	EsIPBlacklist                []string                     `json:"esIPBlacklist" xml:"esIPBlacklist"`
 	KibanaIPWhitelist            []string                     `json:"kibanaIPWhitelist" xml:"kibanaIPWhitelist"`

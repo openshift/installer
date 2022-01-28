@@ -83,8 +83,10 @@ type InsertK8sApplicationRequest struct {
 	IntranetSlbPort        requests.Integer `position:"Query" name:"IntranetSlbPort"`
 	DeployAcrossNodes      string           `position:"Query" name:"DeployAcrossNodes"`
 	PreStop                string           `position:"Query" name:"PreStop"`
+	BuildPackId            string           `position:"Query" name:"BuildPackId"`
 	LocalVolume            string           `position:"Query" name:"LocalVolume"`
 	UseBodyEncoding        requests.Boolean `position:"Query" name:"UseBodyEncoding"`
+	EmptyDirs              string           `position:"Query" name:"EmptyDirs"`
 	PackageType            string           `position:"Query" name:"PackageType"`
 	RuntimeClassName       string           `position:"Query" name:"RuntimeClassName"`
 	PostStart              string           `position:"Query" name:"PostStart"`

@@ -22,6 +22,11 @@ func resourceAlicloudLogStore() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(3 * time.Minute),
+			Delete: schema.DefaultTimeout(3 * time.Minute),
+			Read:   schema.DefaultTimeout(2 * time.Minute),
+		},
 
 		Schema: map[string]*schema.Schema{
 			"project": {
@@ -157,7 +162,7 @@ func resourceAlicloudLogStoreCreate(d *schema.ResourceData, meta interface{}) er
 		logstore.EncryptConf = encrypt
 	}
 	var requestinfo *sls.Client
-	err := resource.Retry(3*time.Minute, func() *resource.RetryError {
+	err := resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 
 		raw, err := client.WithLogClient(func(slsClient *sls.Client) (interface{}, error) {
 			requestinfo = slsClient
@@ -165,6 +170,7 @@ func resourceAlicloudLogStoreCreate(d *schema.ResourceData, meta interface{}) er
 		})
 		if err != nil {
 			if IsExpectedErrors(err, []string{"InternalServerError", LogClientTimeout}) {
+				time.Sleep(10 * time.Second)
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)
@@ -208,10 +214,11 @@ func resourceAlicloudLogStoreRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("retention_period", object.TTL)
 	d.Set("shard_count", object.ShardCount)
 	var shards []*sls.Shard
-	err = resource.Retry(2*time.Minute, func() *resource.RetryError {
+	err = resource.Retry(d.Timeout(schema.TimeoutRead), func() *resource.RetryError {
 		shards, err = object.ListShards()
 		if err != nil {
 			if IsExpectedErrors(err, []string{"InternalServerError"}) {
+				time.Sleep(10 * time.Second)
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)
@@ -326,24 +333,38 @@ func resourceAlicloudLogStoreUpdate(d *schema.ResourceData, meta interface{}) er
 func resourceAlicloudLogStoreDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	logService := LogService{client}
-
 	parts, err := ParseResourceId(d.Id(), 2)
 	if err != nil {
 		return WrapError(err)
 	}
-
-	project, err := logService.DescribeLogProject(parts[0])
-	if err != nil {
-		return WrapError(err)
-	}
-	err = project.DeleteLogStore(parts[1])
-	if err != nil {
-		if IsExpectedErrors(err, []string{"LogStoreNotExist"}) {
-			return nil
+	var raw interface{}
+	var requestInfo *sls.Client
+	err = resource.Retry(d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
+		raw, err = client.WithLogClient(func(slsClient *sls.Client) (interface{}, error) {
+			requestInfo = slsClient
+			return nil, slsClient.DeleteLogStore(parts[0], parts[1])
+		})
+		if err != nil {
+			if code, ok := err.(*sls.Error); ok {
+				if "LogStoreNotExist" == code.Code {
+					return nil
+				}
+			}
+			if IsExpectedErrors(err, []string{"ProjectForbidden", LogClientTimeout}) {
+				time.Sleep(10 * time.Second)
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
 		}
-		return WrapErrorf(err, DefaultErrorMsg, d.Id(), "DeleteLogStore", AliyunLogGoSdkERROR)
+		return nil
+	})
+	addDebug("DeleteLogStore", raw, requestInfo, map[string]interface{}{
+		"project":  parts[0],
+		"logstore": parts[1],
+	})
+	if err != nil {
+		return WrapErrorf(err, DefaultErrorMsg, "alicloud_log_store", "DeleteLogStore", AliyunLogGoSdkERROR)
 	}
-	addDebug("DeleteLogStore", nil)
 	return WrapError(logService.WaitForLogStore(d.Id(), Deleted, DefaultTimeout))
 }
 

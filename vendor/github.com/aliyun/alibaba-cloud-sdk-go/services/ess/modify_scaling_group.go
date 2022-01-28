@@ -82,6 +82,7 @@ type ModifyScalingGroupRequest struct {
 	DefaultCooldown                     requests.Integer                            `position:"Query" name:"DefaultCooldown"`
 	RemovalPolicy1                      string                                      `position:"Query" name:"RemovalPolicy.1"`
 	RemovalPolicy2                      string                                      `position:"Query" name:"RemovalPolicy.2"`
+	MultiAZPolicy                       string                                      `position:"Query" name:"MultiAZPolicy"`
 	HealthCheckType                     string                                      `position:"Query" name:"HealthCheckType"`
 	LaunchTemplateId                    string                                      `position:"Query" name:"LaunchTemplateId"`
 	DesiredCapacity                     requests.Integer                            `position:"Query" name:"DesiredCapacity"`

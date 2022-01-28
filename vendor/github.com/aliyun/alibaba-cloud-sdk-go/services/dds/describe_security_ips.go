@@ -92,7 +92,7 @@ func CreateDescribeSecurityIpsRequest() (request *DescribeSecurityIpsRequest) {
 	request = &DescribeSecurityIpsRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeSecurityIps", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "DescribeSecurityIps", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

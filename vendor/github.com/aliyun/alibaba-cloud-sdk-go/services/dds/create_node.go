@@ -75,9 +75,11 @@ type CreateNodeRequest struct {
 	NodeType             string           `position:"Query" name:"NodeType"`
 	ClientToken          string           `position:"Query" name:"ClientToken"`
 	ReadonlyReplicas     requests.Integer `position:"Query" name:"ReadonlyReplicas"`
+	CouponNo             string           `position:"Query" name:"CouponNo"`
 	NodeClass            string           `position:"Query" name:"NodeClass"`
 	SecurityToken        string           `position:"Query" name:"SecurityToken"`
 	DBInstanceId         string           `position:"Query" name:"DBInstanceId"`
+	BusinessInfo         string           `position:"Query" name:"BusinessInfo"`
 	AutoPay              requests.Boolean `position:"Query" name:"AutoPay"`
 	FromApp              string           `position:"Query" name:"FromApp"`
 	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
@@ -99,7 +101,7 @@ func CreateCreateNodeRequest() (request *CreateNodeRequest) {
 	request = &CreateNodeRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "CreateNode", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "CreateNode", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

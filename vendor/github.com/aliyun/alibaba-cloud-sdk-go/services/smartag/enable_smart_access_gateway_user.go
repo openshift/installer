@@ -71,12 +71,12 @@ func (client *Client) EnableSmartAccessGatewayUserWithCallback(request *EnableSm
 // EnableSmartAccessGatewayUserRequest is the request struct for api EnableSmartAccessGatewayUser
 type EnableSmartAccessGatewayUserRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	UserName             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	UserName             string           `position:"Query" name:"UserName"`
 }
 
 // EnableSmartAccessGatewayUserResponse is the response struct for api EnableSmartAccessGatewayUser

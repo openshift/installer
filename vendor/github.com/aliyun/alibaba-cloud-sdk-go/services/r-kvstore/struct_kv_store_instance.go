@@ -53,5 +53,7 @@ type KVStoreInstance struct {
 	ResourceGroupId     string                  `json:"ResourceGroupId" xml:"ResourceGroupId"`
 	ShardCount          int                     `json:"ShardCount" xml:"ShardCount"`
 	ProxyCount          int                     `json:"ProxyCount" xml:"ProxyCount"`
+	SecondaryZoneId     string                  `json:"SecondaryZoneId" xml:"SecondaryZoneId"`
+	GlobalInstanceId    string                  `json:"GlobalInstanceId" xml:"GlobalInstanceId"`
 	Tags                TagsInDescribeInstances `json:"Tags" xml:"Tags"`
 }

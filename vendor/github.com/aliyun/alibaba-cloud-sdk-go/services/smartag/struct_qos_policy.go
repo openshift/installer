@@ -24,8 +24,8 @@ type QosPolicy struct {
 	DestPortRange   string                               `json:"DestPortRange" xml:"DestPortRange"`
 	SourceCidr      string                               `json:"SourceCidr" xml:"SourceCidr"`
 	StartTime       string                               `json:"StartTime" xml:"StartTime"`
-	EndTime         string                               `json:"EndTime" xml:"EndTime"`
 	QosId           string                               `json:"QosId" xml:"QosId"`
+	EndTime         string                               `json:"EndTime" xml:"EndTime"`
 	DestCidr        string                               `json:"DestCidr" xml:"DestCidr"`
 	Description     string                               `json:"Description" xml:"Description"`
 	QosPolicyId     string                               `json:"QosPolicyId" xml:"QosPolicyId"`

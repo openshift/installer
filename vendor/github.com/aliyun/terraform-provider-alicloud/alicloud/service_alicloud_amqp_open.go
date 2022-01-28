@@ -277,3 +277,66 @@ func (s *AmqpOpenService) AmqpInstanceStateRefreshFunc(id string, failStates []s
 		return object, fmt.Sprint(object["Status"]), nil
 	}
 }
+
+func (s *AmqpOpenService) DescribeAmqpBinding(id string) (object map[string]interface{}, err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewOnsproxyClient()
+	if err != nil {
+		return nil, WrapError(err)
+	}
+	action := "ListBindings"
+	parts, err := ParseResourceId(id, 4)
+	if err != nil {
+		err = WrapError(err)
+		return
+	}
+	request := map[string]interface{}{
+		"InstanceId":  parts[0],
+		"VirtualHost": parts[1],
+		"MaxResults":  100,
+	}
+	idExist := false
+	for {
+		runtime := util.RuntimeOptions{}
+		runtime.SetAutoretry(true)
+		wait := incrementalWait(3*time.Second, 3*time.Second)
+		err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("GET"), StringPointer("2019-12-12"), StringPointer("AK"), request, nil, &runtime)
+			if err != nil {
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			return nil
+		})
+		addDebug(action, response, request)
+		if err != nil {
+			return object, WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+		}
+		v, err := jsonpath.Get("$.Data.Bindings", response)
+		if err != nil {
+			return object, WrapErrorf(err, FailedGetAttributeMsg, id, "$.Data.Bindings", response)
+		}
+		if len(v.([]interface{})) < 1 {
+			return object, WrapErrorf(Error(GetNotFoundMessage("Amqp", id)), NotFoundWithResponse, response)
+		}
+		for _, v := range v.([]interface{}) {
+			if fmt.Sprint(v.(map[string]interface{})["SourceExchange"]) == parts[2] {
+				idExist = true
+				return v.(map[string]interface{}), nil
+			}
+		}
+
+		if nextToken, ok := response["NextToken"].(string); ok && nextToken != "" {
+			request["NextToken"] = nextToken
+		} else {
+			break
+		}
+	}
+	if !idExist {
+		return object, WrapErrorf(Error(GetNotFoundMessage("Amqp", id)), NotFoundWithResponse, response)
+	}
+	return
+}

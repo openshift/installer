@@ -72,23 +72,23 @@ func (client *Client) AddACLRuleWithCallback(request *AddACLRuleRequest, callbac
 type AddACLRuleRequest struct {
 	*requests.RpcRequest
 	DpiGroupIds          *[]string        `position:"Query" name:"DpiGroupIds"  type:"Repeated"`
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SourcePortRange      string           `position:"Query"`
-	SourceCidr           string           `position:"Query"`
-	Description          string           `position:"Query"`
-	Type                 string           `position:"Query"`
-	DestCidr             string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SourcePortRange      string           `position:"Query" name:"SourcePortRange"`
+	SourceCidr           string           `position:"Query" name:"SourceCidr"`
+	Description          string           `position:"Query" name:"Description"`
+	Type                 string           `position:"Query" name:"Type"`
+	DestCidr             string           `position:"Query" name:"DestCidr"`
 	DpiSignatureIds      *[]string        `position:"Query" name:"DpiSignatureIds"  type:"Repeated"`
-	Direction            string           `position:"Query"`
-	Policy               string           `position:"Query"`
-	AclId                string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	IpProtocol           string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	Priority             requests.Integer `position:"Query"`
-	DestPortRange        string           `position:"Query"`
-	Name                 string           `position:"Query"`
+	Direction            string           `position:"Query" name:"Direction"`
+	Policy               string           `position:"Query" name:"Policy"`
+	AclId                string           `position:"Query" name:"AclId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	IpProtocol           string           `position:"Query" name:"IpProtocol"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	Priority             requests.Integer `position:"Query" name:"Priority"`
+	DestPortRange        string           `position:"Query" name:"DestPortRange"`
+	Name                 string           `position:"Query" name:"Name"`
 }
 
 // AddACLRuleResponse is the response struct for api AddACLRule
@@ -96,8 +96,8 @@ type AddACLRuleResponse struct {
 	*responses.BaseResponse
 	Policy          string                      `json:"Policy" xml:"Policy"`
 	Description     string                      `json:"Description" xml:"Description"`
-	SourcePortRange string                      `json:"SourcePortRange" xml:"SourcePortRange"`
 	RequestId       string                      `json:"RequestId" xml:"RequestId"`
+	SourcePortRange string                      `json:"SourcePortRange" xml:"SourcePortRange"`
 	SourceCidr      string                      `json:"SourceCidr" xml:"SourceCidr"`
 	Priority        int                         `json:"Priority" xml:"Priority"`
 	AclId           string                      `json:"AclId" xml:"AclId"`
@@ -105,12 +105,12 @@ type AddACLRuleResponse struct {
 	DestPortRange   string                      `json:"DestPortRange" xml:"DestPortRange"`
 	Direction       string                      `json:"Direction" xml:"Direction"`
 	Name            string                      `json:"Name" xml:"Name"`
-	GmtCreate       int64                       `json:"GmtCreate" xml:"GmtCreate"`
 	Type            string                      `json:"Type" xml:"Type"`
+	GmtCreate       int64                       `json:"GmtCreate" xml:"GmtCreate"`
 	DestCidr        string                      `json:"DestCidr" xml:"DestCidr"`
 	IpProtocol      string                      `json:"IpProtocol" xml:"IpProtocol"`
-	DpiSignatureIds DpiSignatureIdsInAddACLRule `json:"DpiSignatureIds" xml:"DpiSignatureIds"`
 	DpiGroupIds     DpiGroupIdsInAddACLRule     `json:"DpiGroupIds" xml:"DpiGroupIds"`
+	DpiSignatureIds DpiSignatureIdsInAddACLRule `json:"DpiSignatureIds" xml:"DpiSignatureIds"`
 }
 
 // CreateAddACLRuleRequest creates a request to invoke AddACLRule API

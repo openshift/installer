@@ -71,28 +71,30 @@ func (client *Client) CreateFlowLogWithCallback(request *CreateFlowLogRequest, c
 // CreateFlowLogRequest is the request struct for api CreateFlowLog
 type CreateFlowLogRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	NetflowVersion       string           `position:"Query"`
-	Description          string           `position:"Query"`
-	InactiveAging        requests.Integer `position:"Query"`
-	SlsRegionId          string           `position:"Query"`
-	ActiveAging          requests.Integer `position:"Query"`
-	OutputType           string           `position:"Query"`
-	ProjectName          string           `position:"Query"`
-	LogstoreName         string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	NetflowServerPort    requests.Integer `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	NetflowServerIp      string           `position:"Query"`
-	Name                 string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	NetflowVersion       string           `position:"Query" name:"NetflowVersion"`
+	Description          string           `position:"Query" name:"Description"`
+	InactiveAging        requests.Integer `position:"Query" name:"InactiveAging"`
+	ResourceGroupId      string           `position:"Query" name:"ResourceGroupId"`
+	SlsRegionId          string           `position:"Query" name:"SlsRegionId"`
+	ActiveAging          requests.Integer `position:"Query" name:"ActiveAging"`
+	OutputType           string           `position:"Query" name:"OutputType"`
+	ProjectName          string           `position:"Query" name:"ProjectName"`
+	LogstoreName         string           `position:"Query" name:"LogstoreName"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	NetflowServerPort    requests.Integer `position:"Query" name:"NetflowServerPort"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	NetflowServerIp      string           `position:"Query" name:"NetflowServerIp"`
+	Name                 string           `position:"Query" name:"Name"`
 }
 
 // CreateFlowLogResponse is the response struct for api CreateFlowLog
 type CreateFlowLogResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	FlowLogId string `json:"FlowLogId" xml:"FlowLogId"`
+	RequestId       string `json:"RequestId" xml:"RequestId"`
+	FlowLogId       string `json:"FlowLogId" xml:"FlowLogId"`
+	ResourceGroupId string `json:"ResourceGroupId" xml:"ResourceGroupId"`
 }
 
 // CreateCreateFlowLogRequest creates a request to invoke CreateFlowLog API

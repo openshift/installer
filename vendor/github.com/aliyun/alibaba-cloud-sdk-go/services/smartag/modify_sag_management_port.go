@@ -71,15 +71,15 @@ func (client *Client) ModifySagManagementPortWithCallback(request *ModifySagMana
 // ModifySagManagementPortRequest is the request struct for api ModifySagManagementPort
 type ModifySagManagementPortRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	Mask                 string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	IP                   string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
-	Gateway              string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	Mask                 string           `position:"Query" name:"Mask"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	IP                   string           `position:"Query" name:"IP"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
+	Gateway              string           `position:"Query" name:"Gateway"`
 }
 
 // ModifySagManagementPortResponse is the response struct for api ModifySagManagementPort

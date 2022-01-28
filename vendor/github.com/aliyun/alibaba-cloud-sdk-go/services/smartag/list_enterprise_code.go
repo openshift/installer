@@ -71,18 +71,18 @@ func (client *Client) ListEnterpriseCodeWithCallback(request *ListEnterpriseCode
 // ListEnterpriseCodeRequest is the request struct for api ListEnterpriseCode
 type ListEnterpriseCodeRequest struct {
 	*requests.RpcRequest
-	EnterpriseCode string           `position:"Query"`
-	NextToken      string           `position:"Query"`
-	IsDefault      requests.Boolean `position:"Query"`
-	MaxResults     requests.Integer `position:"Query"`
+	EnterpriseCode string           `position:"Query" name:"EnterpriseCode"`
+	NextToken      string           `position:"Query" name:"NextToken"`
+	IsDefault      requests.Boolean `position:"Query" name:"IsDefault"`
+	MaxResults     requests.Integer `position:"Query" name:"MaxResults"`
 }
 
 // ListEnterpriseCodeResponse is the response struct for api ListEnterpriseCode
 type ListEnterpriseCodeResponse struct {
 	*responses.BaseResponse
 	TotalCount      int              `json:"TotalCount" xml:"TotalCount"`
-	RequestId       string           `json:"RequestId" xml:"RequestId"`
 	NextToken       string           `json:"NextToken" xml:"NextToken"`
+	RequestId       string           `json:"RequestId" xml:"RequestId"`
 	MaxResults      int              `json:"MaxResults" xml:"MaxResults"`
 	EnterpriseCodes []EnterpriseCode `json:"EnterpriseCodes" xml:"EnterpriseCodes"`
 }

@@ -143,6 +143,10 @@ func resourceAlicloudCenTransitRouterRead(d *schema.ResourceData, meta interface
 func resourceAlicloudCenTransitRouterUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	cbnService := CbnService{client}
+	conn, err := client.NewCbnClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	update := false
 	parts, err1 := ParseResourceId(d.Id(), 2)
@@ -166,10 +170,6 @@ func resourceAlicloudCenTransitRouterUpdate(d *schema.ResourceData, meta interfa
 			request["DryRun"] = d.Get("dry_run")
 		}
 		action := "UpdateTransitRouter"
-		conn, err := client.NewCbnClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 5*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2017-09-12"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -226,6 +226,9 @@ func resourceAlicloudCenTransitRouterDelete(d *schema.ResourceData, meta interfa
 	})
 	addDebug(action, response, request)
 	if err != nil {
+		if IsExpectedErrors(err, []string{"ParameterInstanceId"}) {
+			return nil
+		}
 		return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
 	}
 	return nil

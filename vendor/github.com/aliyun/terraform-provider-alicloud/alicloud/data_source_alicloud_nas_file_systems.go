@@ -21,7 +21,7 @@ func dataSourceAlicloudFileSystems() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"Capacity", "Performance"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"Capacity", "Performance", "standard", "advance"}, false),
 			},
 			"protocol_type": {
 				Type:         schema.TypeString,
@@ -87,6 +87,22 @@ func dataSourceAlicloudFileSystems() *schema.Resource {
 						},
 						"encrypt_type": {
 							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"file_system_type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"capacity": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"kms_key_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"zone_id": {
+							Type:     schema.TypeString,
 							Computed: true,
 						},
 					},
@@ -171,14 +187,18 @@ func dataSourceAlicloudFileSystemsRead(d *schema.ResourceData, meta interface{})
 	s := make([]map[string]interface{}, 0)
 	for _, object := range objects {
 		mapping := map[string]interface{}{
-			"id":            fmt.Sprint(object["FileSystemId"]),
-			"region_id":     object["RegionId"],
-			"create_time":   object["CreateTime"],
-			"description":   object["Description"],
-			"protocol_type": object["ProtocolType"],
-			"storage_type":  object["StorageType"],
-			"metered_size":  formatInt(object["MeteredSize"]),
-			"encrypt_type":  object["EncryptType"],
+			"id":               fmt.Sprint(object["FileSystemId"]),
+			"region_id":        object["RegionId"],
+			"create_time":      object["CreateTime"],
+			"description":      object["Description"],
+			"protocol_type":    object["ProtocolType"],
+			"storage_type":     object["StorageType"],
+			"metered_size":     formatInt(object["MeteredSize"]),
+			"encrypt_type":     object["EncryptType"],
+			"file_system_type": object["FileSystemType"],
+			"capacity":         object["Capacity"],
+			"kms_key_id":       object["KMSKeyId"],
+			"zone_id":          object["ZoneId"],
 		}
 		ids = append(ids, fmt.Sprint(object["FileSystemId"]))
 		descriptions = append(descriptions, object["Description"])

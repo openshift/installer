@@ -71,19 +71,19 @@ func (client *Client) ModifySagLanWithCallback(request *ModifySagLanRequest, cal
 // ModifySagLanRequest is the request struct for api ModifySagLan
 type ModifySagLanRequest struct {
 	*requests.RpcRequest
-	EndIp                string           `position:"Query"`
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	Mask                 string           `position:"Query"`
-	StartIp              string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	IP                   string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	IPType               string           `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
-	PortName             string           `position:"Query"`
-	Lease                string           `position:"Query"`
+	EndIp                string           `position:"Query" name:"EndIp"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	Mask                 string           `position:"Query" name:"Mask"`
+	StartIp              string           `position:"Query" name:"StartIp"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	IP                   string           `position:"Query" name:"IP"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	IPType               string           `position:"Query" name:"IPType"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
+	PortName             string           `position:"Query" name:"PortName"`
+	Lease                string           `position:"Query" name:"Lease"`
 }
 
 // ModifySagLanResponse is the response struct for api ModifySagLan

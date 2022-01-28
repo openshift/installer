@@ -58,11 +58,23 @@ func dataSourceAlicloudHbrEcsBackupPlans() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"source_type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"create_time": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
 						"detail": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"created_time": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"updated_time": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -222,8 +234,11 @@ func dataSourceAlicloudHbrEcsBackupPlansRead(d *schema.ResourceData, meta interf
 	for _, object := range objects {
 		mapping := map[string]interface{}{
 			"backup_type":          object["BackupType"],
+			"source_type":          object["SourceType"],
 			"create_time":          fmt.Sprint(object["CreateTime"]),
 			"detail":               object["Detail"],
+			"created_time":         fmt.Sprint(object["CreatedTime"]),
+			"updated_time":         fmt.Sprint(object["UpdatedTime"]),
 			"disabled":             object["Disabled"],
 			"id":                   fmt.Sprint(object["PlanId"]),
 			"ecs_backup_plan_id":   fmt.Sprint(object["PlanId"]),

@@ -222,14 +222,20 @@ func resourceAlicloudGpdbElasticInstanceRead(d *schema.ResourceData, meta interf
 	d.Set("seg_storage_type", instance["StorageType"])
 	d.Set("seg_node_num", instance["SegNodeNum"])
 	d.Set("storage_size", instance["StorageSize"])
-	d.Set("payment_type", convertGpdbInstancePaymentTypeResponse(instance["PayType"].(string)))
-	d.Set("instance_spec", convertDBInstanceClassToInstanceSpec(instance["DBInstanceClass"].(string)))
 	d.Set("status", instance["DBInstanceStatus"])
 	d.Set("db_instance_description", instance["DBInstanceDescription"])
 	d.Set("instance_network_type", instance["InstanceNetworkType"])
 	d.Set("vswitch_id", instance["VSwitchId"])
 	d.Set("zone_id", instance["ZoneId"])
 	d.Set("connection_string", instance["ConnectionString"])
+
+	if v, exist := instance["DBInstanceClass"]; exist {
+		d.Set("instance_spec", convertDBInstanceClassToInstanceSpec(v.(string)))
+	}
+	if v, exist := instance["PayType"]; exist {
+		d.Set("payment_type", convertGpdbInstancePaymentTypeResponse(v.(string)))
+	}
+
 	securityIps, err := gpdbService.DescribeGpdbSecurityIps(d.Id())
 	if err != nil {
 		return WrapError(err)

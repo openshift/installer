@@ -70,6 +70,10 @@ func dataSourceAlicloudConfigAggregateConfigRules() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"aggregator_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"aggregate_config_rule_name": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -284,6 +288,11 @@ func dataSourceAlicloudConfigAggregateConfigRulesRead(d *schema.ResourceData, me
 			"source_owner":               object["SourceOwner"],
 			"status":                     object["ConfigRuleState"],
 		}
+		mapping["compliance"] = []map[string]interface{}{{
+			"compliance_type": object["Compliance"].(map[string]interface{})["ComplianceType"],
+			"count":           object["Compliance"].(map[string]interface{})["Count"],
+		}}
+		mapping["aggregator_id"] = object["CreateBy"].(map[string]interface{})["AggregatorId"]
 		if detailedEnabled := d.Get("enable_details"); !detailedEnabled.(bool) {
 			ids = append(ids, fmt.Sprint(mapping["id"]))
 			names = append(names, object["ConfigRuleName"])

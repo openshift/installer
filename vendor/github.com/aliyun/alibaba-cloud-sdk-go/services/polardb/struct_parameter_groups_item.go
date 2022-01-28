@@ -17,13 +17,13 @@ package polardb
 
 // ParameterGroupsItem is a nested struct in polardb response
 type ParameterGroupsItem struct {
+	DBType             string `json:"DBType" xml:"DBType"`
 	DBVersion          string `json:"DBVersion" xml:"DBVersion"`
-	ParameterGroupId   string `json:"ParameterGroupId" xml:"ParameterGroupId"`
-	ForceRestart       string `json:"ForceRestart" xml:"ForceRestart"`
 	ParameterGroupName string `json:"ParameterGroupName" xml:"ParameterGroupName"`
-	CreateTime         string `json:"CreateTime" xml:"CreateTime"`
-	ParameterGroupDesc string `json:"ParameterGroupDesc" xml:"ParameterGroupDesc"`
+	ForceRestart       string `json:"ForceRestart" xml:"ForceRestart"`
 	ParameterGroupType string `json:"ParameterGroupType" xml:"ParameterGroupType"`
 	ParameterCounts    int64  `json:"ParameterCounts" xml:"ParameterCounts"`
-	DBType             string `json:"DBType" xml:"DBType"`
+	ParameterGroupDesc string `json:"ParameterGroupDesc" xml:"ParameterGroupDesc"`
+	CreateTime         string `json:"CreateTime" xml:"CreateTime"`
+	ParameterGroupId   string `json:"ParameterGroupId" xml:"ParameterGroupId"`
 }

@@ -88,11 +88,11 @@ type QuerySettleBillRequest struct {
 // QuerySettleBillResponse is the response struct for api QuerySettleBill
 type QuerySettleBillResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                `json:"RequestId" xml:"RequestId"`
+	Success   bool                  `json:"Success" xml:"Success"`
+	Code      string                `json:"Code" xml:"Code"`
+	Message   string                `json:"Message" xml:"Message"`
+	Data      DataInQuerySettleBill `json:"Data" xml:"Data"`
 }
 
 // CreateQuerySettleBillRequest creates a request to invoke QuerySettleBill API

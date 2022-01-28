@@ -71,12 +71,12 @@ func (client *Client) UpdateSmartAGAccessPointWithCallback(request *UpdateSmartA
 // UpdateSmartAGAccessPointRequest is the request struct for api UpdateSmartAGAccessPoint
 type UpdateSmartAGAccessPointRequest struct {
 	*requests.RpcRequest
-	AccessPointId        requests.Integer `position:"Query"`
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
+	AccessPointId        requests.Integer `position:"Query" name:"AccessPointId"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
 }
 
 // UpdateSmartAGAccessPointResponse is the response struct for api UpdateSmartAGAccessPoint

@@ -90,6 +90,9 @@ type DescribeEngineVersionResponse struct {
 	EnableUpgradeMinorVersion bool   `json:"EnableUpgradeMinorVersion" xml:"EnableUpgradeMinorVersion"`
 	MajorVersion              string `json:"MajorVersion" xml:"MajorVersion"`
 	EnableUpgradeMajorVersion bool   `json:"EnableUpgradeMajorVersion" xml:"EnableUpgradeMajorVersion"`
+	ProxyMinorVersion         string `json:"ProxyMinorVersion" xml:"ProxyMinorVersion"`
+	DBVersionRelease          string `json:"DBVersionRelease" xml:"DBVersionRelease"`
+	ProxyVersionRelease       string `json:"ProxyVersionRelease" xml:"ProxyVersionRelease"`
 }
 
 // CreateDescribeEngineVersionRequest creates a request to invoke DescribeEngineVersion API

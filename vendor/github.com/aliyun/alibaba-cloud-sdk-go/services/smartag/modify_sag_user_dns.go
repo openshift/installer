@@ -71,14 +71,14 @@ func (client *Client) ModifySagUserDnsWithCallback(request *ModifySagUserDnsRequ
 // ModifySagUserDnsRequest is the request struct for api ModifySagUserDns
 type ModifySagUserDnsRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	SlaveDns             string           `position:"Query"`
-	MasterDns            string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	SlaveDns             string           `position:"Query" name:"SlaveDns"`
+	MasterDns            string           `position:"Query" name:"MasterDns"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
 }
 
 // ModifySagUserDnsResponse is the response struct for api ModifySagUserDns

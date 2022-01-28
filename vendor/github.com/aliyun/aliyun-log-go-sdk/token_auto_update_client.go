@@ -669,6 +669,26 @@ func (c *TokenAutoUpdateClient) GetHistograms(project, logstore string, topic st
 	return
 }
 
+func (c *TokenAutoUpdateClient) GetLogsV2(project, logstore string, req *GetLogRequest) (r *GetLogsResponse, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		r, err = c.logClient.GetLogsV2(project, logstore, req)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) GetLogLinesV2(project, logstore string, req *GetLogRequest) (r *GetLogLinesResponse, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		r, err = c.logClient.GetLogLinesV2(project, logstore, req)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
 func (c *TokenAutoUpdateClient) GetLogs(project, logstore string, topic string, from int64, to int64, queryExp string,
 	maxLineNum int64, offset int64, reverse bool) (r *GetLogsResponse, err error) {
 	for i := 0; i < c.maxTryTimes; i++ {
@@ -1173,6 +1193,249 @@ func (c *TokenAutoUpdateClient) ListTagResources(project string,
 	nextToken string) (respTags []*ResourceTagResponse, respNextToken string, err error) {
 	for i := 0; i < c.maxTryTimes; i++ {
 		respTags, respNextToken, err = c.logClient.ListTagResources(project, resourceType, resourceIDs, tags, nextToken)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+// ####################### Scheduled SQL API ######################
+func (c *TokenAutoUpdateClient) CreateScheduledSQL(project string, scheduledsql *ScheduledSQL) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.CreateScheduledSQL(project, scheduledsql)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) DeleteScheduledSQL(project string, name string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.DeleteScheduledSQL(project, name)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) UpdateScheduledSQL(project string, scheduledsql *ScheduledSQL) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.UpdateScheduledSQL(project, scheduledsql)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) GetScheduledSQL(project string, name string) (s *ScheduledSQL, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		s, err = c.logClient.GetScheduledSQL(project, name)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) ListScheduledSQL(project, name, displayName string, offset, size int) (scheduledsqls []*ScheduledSQL, total, count int, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		scheduledsqls, total, count, err = c.logClient.ListScheduledSQL(project, name, displayName, offset, size)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) GetScheduledSQLJobInstance(projectName, jobName, instanceId string, result bool) (instance *ScheduledSQLJobInstance, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		instance, err = c.logClient.GetScheduledSQLJobInstance(projectName, jobName, instanceId, result)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return instance, err
+}
+
+func (c *TokenAutoUpdateClient) ModifyScheduledSQLJobInstanceState(projectName, jobName, instanceId string, state ScheduledSQLState) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.ModifyScheduledSQLJobInstanceState(projectName, jobName, instanceId, state)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return err
+}
+
+func (c *TokenAutoUpdateClient) ListScheduledSQLJobInstances(projectName, jobName string, status *InstanceStatus) (instances []*ScheduledSQLJobInstance, total, count int64, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		instances, total, count, err = c.logClient.ListScheduledSQLJobInstances(projectName, jobName, status)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return instances, total, count, err
+}
+
+// ####################### Resource API ######################
+func (c *TokenAutoUpdateClient) ListResource(resourceType string, resourceName string, offset, size int) (resourceList []*Resource, count, total int, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		resourceList, total, count, err = c.logClient.ListResource(resourceType, resourceName, offset, size)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) GetResource(name string) (resource *Resource, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		resource, err = c.logClient.GetResource(name)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) GetResourceString(name string) (resource string, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		resource, err = c.logClient.GetResourceString(name)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) DeleteResource(name string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.DeleteResource(name)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) UpdateResource(resource *Resource) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.UpdateResource(resource)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) UpdateResourceString(resourceName, resourceStr string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.UpdateResourceString(resourceName, resourceStr)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) CreateResource(resource *Resource) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.CreateResource(resource)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) CreateResourceString(resourceStr string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.CreateResourceString(resourceStr)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+// ####################### Resource Record API ######################
+func (c *TokenAutoUpdateClient) ListResourceRecord(resourceName string, offset, size int) (recordList []*ResourceRecord, count, total int, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		recordList, total, count, err = c.logClient.ListResourceRecord(resourceName, offset, size)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) GetResourceRecord(resourceName, recordId string) (record *ResourceRecord, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		record, err = c.logClient.GetResourceRecord(resourceName, recordId)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) GetResourceRecordString(resourceName, name string) (record string, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		record, err = c.logClient.GetResourceRecordString(resourceName, name)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) DeleteResourceRecord(resourceName, recordId string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.DeleteResourceRecord(resourceName, recordId)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) UpdateResourceRecord(resourceName string, record *ResourceRecord) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.UpdateResourceRecord(resourceName, record)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) UpdateResourceRecordString(resourceName, recordStr string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.UpdateResourceString(resourceName, recordStr)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) CreateResourceRecord(resourceName string, record *ResourceRecord) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.CreateResourceRecord(resourceName, record)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) CreateResourceRecordString(resourceName, recordStr string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.CreateResourceRecordString(resourceName, recordStr)
 		if !c.processError(err) {
 			return
 		}

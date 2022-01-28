@@ -17,5 +17,6 @@ package bssopenapi
 
 // Tag is a nested struct in bssopenapi response
 type Tag struct {
-	TagKeyValue []TagKeyValue `json:"TagKeyValue" xml:"TagKeyValue"`
+	Key   string `json:"Key" xml:"Key"`
+	Value string `json:"Value" xml:"Value"`
 }

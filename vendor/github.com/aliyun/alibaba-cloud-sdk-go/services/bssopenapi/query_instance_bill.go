@@ -88,11 +88,11 @@ type QueryInstanceBillRequest struct {
 // QueryInstanceBillResponse is the response struct for api QueryInstanceBill
 type QueryInstanceBillResponse struct {
 	*responses.BaseResponse
-	RequestId string `json:"RequestId" xml:"RequestId"`
-	Success   bool   `json:"Success" xml:"Success"`
-	Code      string `json:"Code" xml:"Code"`
-	Message   string `json:"Message" xml:"Message"`
-	Data      Data   `json:"Data" xml:"Data"`
+	RequestId string                  `json:"RequestId" xml:"RequestId"`
+	Success   bool                    `json:"Success" xml:"Success"`
+	Code      string                  `json:"Code" xml:"Code"`
+	Message   string                  `json:"Message" xml:"Message"`
+	Data      DataInQueryInstanceBill `json:"Data" xml:"Data"`
 }
 
 // CreateQueryInstanceBillRequest creates a request to invoke QueryInstanceBill API

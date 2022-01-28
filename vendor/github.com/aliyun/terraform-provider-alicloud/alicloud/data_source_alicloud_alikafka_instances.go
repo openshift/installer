@@ -1,10 +1,14 @@
 package alicloud
 
 import (
+	"fmt"
 	"regexp"
 	"time"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/alikafka"
+	"github.com/PaesslerAG/jsonpath"
+	util "github.com/alibabacloud-go/tea-utils/service"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -38,6 +42,11 @@ func dataSourceAlicloudAlikafkaInstances() *schema.Resource {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"enable_details": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
 			},
 			"instances": {
 				Type:     schema.TypeList,
@@ -120,6 +129,89 @@ func dataSourceAlicloudAlikafkaInstances() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"expired_time": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"msg_retain": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"ssl_end_point": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"upgrade_service_detail_info": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"current2_open_source_version": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
+						"allowed_list": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"deploy_type": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"vpc_list": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"allowed_ip_list": {
+													Type:     schema.TypeList,
+													Computed: true,
+													Elem:     &schema.Schema{Type: schema.TypeString},
+												},
+												"port_range": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+											},
+										},
+									},
+									"internet_list": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"allowed_ip_list": {
+													Type:     schema.TypeList,
+													Computed: true,
+													Elem:     &schema.Schema{Type: schema.TypeString},
+												},
+												"port_range": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"domain_endpoint": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"ssl_domain_endpoint": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"sasl_domain_endpoint": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"tags": tagsSchema(),
 					},
 				},
 			},
@@ -129,10 +221,17 @@ func dataSourceAlicloudAlikafkaInstances() *schema.Resource {
 
 func dataSourceAlicloudAlikafkaInstancesRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
-	alikafkaService := AlikafkaService{client}
 
-	request := alikafka.CreateGetInstanceListRequest()
-	request.RegionId = client.RegionId
+	action := "GetInstanceList"
+	request := make(map[string]interface{})
+	conn, err := client.NewAlikafkaClient()
+	if err != nil {
+		return WrapError(err)
+	}
+
+	request["RegionId"] = client.RegionId
+
+	var objects []map[string]interface{}
 
 	idsMap := make(map[string]string)
 	if v, ok := d.GetOk("ids"); ok {
@@ -140,87 +239,166 @@ func dataSourceAlicloudAlikafkaInstancesRead(d *schema.ResourceData, meta interf
 			if vv == nil {
 				continue
 			}
-			idsMap[Trim(vv.(string))] = Trim(vv.(string))
+			idsMap[vv.(string)] = vv.(string)
 		}
 	}
-
-	raw, err := alikafkaService.client.WithAlikafkaClient(func(alikafkaClient *alikafka.Client) (interface{}, error) {
-		return alikafkaClient.GetInstanceList(request)
-	})
-	if err != nil {
-		return WrapErrorf(err, DataDefaultErrorMsg, "alicloud_alikafka_instances", request.GetActionName(), AlibabaCloudSdkGoERROR)
+	var nameRegex *regexp.Regexp
+	if v, ok := d.GetOk("name_regex"); ok {
+		nameRegex = regexp.MustCompile(v.(string))
 	}
-	addDebug(request.GetActionName(), raw, request.RpcRequest, request)
-	response, _ := raw.(*alikafka.GetInstanceListResponse)
 
-	var filteredInstances []alikafka.InstanceVO
-	nameRegex, ok := d.GetOk("name_regex")
-	if (ok && nameRegex.(string) != "") || (len(idsMap) > 0) {
-		var r *regexp.Regexp
-		if nameRegex != "" {
-			r, err = regexp.Compile(nameRegex.(string))
+	var response map[string]interface{}
+	pageNo, pageSize := 1, PageSizeLarge
+	for {
+		runtime := util.RuntimeOptions{}
+		runtime.SetAutoretry(true)
+		wait := incrementalWait(3*time.Second, 3*time.Second)
+		err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-09-16"), StringPointer("AK"), nil, request, &runtime)
 			if err != nil {
-				return WrapError(err)
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
 			}
+			return nil
+		})
+		addDebug(action, response, request)
+		if err != nil {
+			return WrapErrorf(err, DataDefaultErrorMsg, "alicloud_alikafka_instances", action, AlibabaCloudSdkGoERROR)
 		}
-		for _, instance := range response.InstanceList.InstanceVO {
-			if r != nil && !r.MatchString(instance.Name) {
+		resp, err := jsonpath.Get("$.InstanceList.InstanceVO", response)
+		if err != nil {
+			return WrapErrorf(err, FailedGetAttributeMsg, action, "$.InstanceList.InstanceVO", response)
+		}
+		result, _ := resp.([]interface{})
+		for _, v := range result {
+			item := v.(map[string]interface{})
+			if nameRegex != nil && !nameRegex.MatchString(fmt.Sprint(item["Name"])) {
 				continue
 			}
+
 			if len(idsMap) > 0 {
-				if _, ok := idsMap[instance.InstanceId]; !ok {
+				if _, ok := idsMap[fmt.Sprint(item["InstanceId"])]; !ok {
 					continue
 				}
 			}
-
-			filteredInstances = append(filteredInstances, instance)
+			objects = append(objects, item)
 		}
-	} else {
-		filteredInstances = response.InstanceList.InstanceVO
+		if len(result) < pageSize {
+			break
+		}
+		pageNo++
 	}
-	return alikafkaInstancesDecriptionAttributes(d, filteredInstances, meta)
-}
 
-func alikafkaInstancesDecriptionAttributes(d *schema.ResourceData, instancesInfo []alikafka.InstanceVO, meta interface{}) error {
-	var ids []string
-	var names []string
-	var s []map[string]interface{}
+	ids := make([]string, 0)
+	names := make([]interface{}, 0)
 
-	for _, item := range instancesInfo {
-
+	s := make([]map[string]interface{}, 0)
+	for _, object := range objects {
 		paidType := PostPaid
-		if item.PaidType == 0 {
+		if object["PaidType"] == 0 {
 			paidType = PrePaid
 		}
+
 		mapping := map[string]interface{}{
-			"id":              item.InstanceId,
-			"name":            item.Name,
-			"create_time":     time.Unix(int64(item.CreateTime)/1000, 0).Format("2006-01-02 03:04:05"),
-			"service_status":  item.ServiceStatus,
-			"deploy_type":     item.DeployType,
-			"vpc_id":          item.VpcId,
-			"vswitch_id":      item.VSwitchId,
-			"io_max":          item.IoMax,
-			"eip_max":         item.EipMax,
-			"disk_type":       item.DiskType,
-			"disk_size":       item.DiskSize,
-			"topic_quota":     item.TopicNumLimit,
-			"paid_type":       paidType,
-			"spec_type":       item.SpecType,
-			"zone_id":         item.ZoneId,
-			"end_point":       item.EndPoint,
-			"security_group":  item.SecurityGroup,
-			"service_version": item.UpgradeServiceDetailInfo.Current2OpenSourceVersion,
-			"config":          item.AllConfig,
+			"id":                   object["InstanceId"],
+			"name":                 object["Name"],
+			"create_time":          object["CreateTime"],
+			"service_status":       object["ServiceStatus"],
+			"deploy_type":          object["DeployType"],
+			"vpc_id":               object["VpcId"],
+			"vswitch_id":           object["VSwitchId"],
+			"io_max":               object["IoMax"],
+			"eip_max":              object["EipMax"],
+			"disk_type":            object["DiskType"],
+			"disk_size":            object["DiskSize"],
+			"topic_quota":          object["TopicNumLimit"],
+			"paid_type":            paidType,
+			"service_version":      object["UpgradeServiceDetailInfo"].(map[string]interface{})["Current2OpenSourceVersion"],
+			"spec_type":            object["SpecType"],
+			"zone_id":              object["ZoneId"],
+			"end_point":            object["EndPoint"],
+			"security_group":       object["SecurityGroup"],
+			"config":               object["AllConfig"],
+			"expired_time":         object["ExpiredTime"],
+			"msg_retain":           object["MsgRetain"],
+			"ssl_end_point":        object["SslEndPoint"],
+			"domain_endpoint":      object["DomainEndpoint"],
+			"ssl_domain_endpoint":  object["SslDomainEndpoint"],
+			"sasl_domain_endpoint": object["SaslDomainEndpoint"],
+		}
+		tags := make(map[string]interface{})
+		t, _ := jsonpath.Get("$.Tags.TagVO", object)
+		if t != nil {
+			for _, t := range t.([]interface{}) {
+				key := t.(map[string]interface{})["Key"].(string)
+				value := t.(map[string]interface{})["Value"].(string)
+				if !ignoredTags(key, value) {
+					tags[key] = value
+				}
+			}
+		}
+		mapping["tags"] = tags
+
+		DetailInfoMaps := make([]map[string]interface{}, 0)
+		if _, ok := object["UpgradeServiceDetailInfo"].(map[string]interface{}); ok {
+			UpgradeServiceDetailInfoMap := map[string]interface{}{}
+			UpgradeServiceDetailInfoMap["current2_open_source_version"] = object["UpgradeServiceDetailInfo"].(map[string]interface{})["Current2OpenSourceVersion"]
+			DetailInfoMaps = append(DetailInfoMaps, UpgradeServiceDetailInfoMap)
+		}
+		mapping["upgrade_service_detail_info"] = DetailInfoMaps
+
+		ids = append(ids, fmt.Sprint(mapping["id"]))
+		names = append(names, mapping["name"])
+		id := fmt.Sprint(object["InstanceId"])
+
+		AlikaService := AlikafkaService{client}
+		if d.Get("enable_details").(bool) {
+			getResp, err := AlikaService.GetAllowedIpList(id)
+			if err != nil {
+				return WrapError(err)
+			}
+
+			allowedListMaps := make([]map[string]interface{}, 0)
+			if defaultActionsList, ok := getResp["AllowedList"].(map[string]interface{}); ok {
+				defaultActionsMap := map[string]interface{}{}
+				defaultActionsMap["deploy_type"] = defaultActionsList["DeployType"]
+				if forwardGroupConfigArg, ok := defaultActionsList["VpcList"].([]interface{}); ok {
+					serverGroupTuplesMaps := make([]map[string]interface{}, 0)
+					for _, serverGroupTuples := range forwardGroupConfigArg {
+						serverGroupTuplesArg := serverGroupTuples.(map[string]interface{})
+						serverGroupTuplesMap := map[string]interface{}{}
+						serverGroupTuplesMap["port_range"] = serverGroupTuplesArg["PortRange"]
+						serverGroupTuplesMap["allowed_ip_list"] = serverGroupTuplesArg["AllowedIpList"]
+						serverGroupTuplesMaps = append(serverGroupTuplesMaps, serverGroupTuplesMap)
+					}
+					defaultActionsMap["vpc_list"] = serverGroupTuplesMaps
+				}
+
+				if forwardGroupConfigArg, ok := defaultActionsList["InternetList"].([]interface{}); ok {
+					serverGroupTuplesMaps := make([]map[string]interface{}, 0)
+					for _, serverGroupTuples := range forwardGroupConfigArg {
+						serverGroupTuplesArg := serverGroupTuples.(map[string]interface{})
+						serverGroupTuplesMap := map[string]interface{}{}
+						serverGroupTuplesMap["port_range"] = serverGroupTuplesArg["PortRange"]
+						serverGroupTuplesMap["allowed_ip_list"] = serverGroupTuplesArg["AllowedIpList"]
+						serverGroupTuplesMaps = append(serverGroupTuplesMaps, serverGroupTuplesMap)
+					}
+					defaultActionsMap["internet_list"] = serverGroupTuplesMaps
+				}
+
+				allowedListMaps = append(allowedListMaps, defaultActionsMap)
+
+			}
+			mapping["allowed_list"] = allowedListMaps
 		}
 
-		ids = append(ids, item.InstanceId)
-		names = append(names, item.Name)
 		s = append(s, mapping)
 	}
 
 	d.SetId(dataResourceIdHash(ids))
-
 	if err := d.Set("ids", ids); err != nil {
 		return WrapError(err)
 	}
@@ -230,11 +408,9 @@ func alikafkaInstancesDecriptionAttributes(d *schema.ResourceData, instancesInfo
 	if err := d.Set("instances", s); err != nil {
 		return WrapError(err)
 	}
-
-	// create a json file in current directory and write data source to it
 	if output, ok := d.GetOk("output_file"); ok && output.(string) != "" {
 		writeToFile(output.(string), s)
 	}
-	return nil
 
+	return nil
 }

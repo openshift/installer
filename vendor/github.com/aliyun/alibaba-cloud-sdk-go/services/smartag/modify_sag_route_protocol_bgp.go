@@ -71,17 +71,17 @@ func (client *Client) ModifySagRouteProtocolBgpWithCallback(request *ModifySagRo
 // ModifySagRouteProtocolBgpRequest is the request struct for api ModifySagRouteProtocolBgp
 type ModifySagRouteProtocolBgpRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	KeepAlive            requests.Integer `position:"Query"`
-	HoldTime             requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	AdvertiseIps         string           `position:"Query"`
-	RouterId             string           `position:"Query"`
-	LocalAs              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	KeepAlive            requests.Integer `position:"Query" name:"KeepAlive"`
+	HoldTime             requests.Integer `position:"Query" name:"HoldTime"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	AdvertiseIps         string           `position:"Query" name:"AdvertiseIps"`
+	RouterId             string           `position:"Query" name:"RouterId"`
+	LocalAs              requests.Integer `position:"Query" name:"LocalAs"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
 }
 
 // ModifySagRouteProtocolBgpResponse is the response struct for api ModifySagRouteProtocolBgp

@@ -93,7 +93,7 @@ func CreateModifyDBInstanceConnectionStringRequest() (request *ModifyDBInstanceC
 	request = &ModifyDBInstanceConnectionStringRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyDBInstanceConnectionString", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "ModifyDBInstanceConnectionString", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

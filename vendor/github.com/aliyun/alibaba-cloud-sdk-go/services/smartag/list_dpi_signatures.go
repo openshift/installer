@@ -71,23 +71,23 @@ func (client *Client) ListDpiSignaturesWithCallback(request *ListDpiSignaturesRe
 // ListDpiSignaturesRequest is the request struct for api ListDpiSignatures
 type ListDpiSignaturesRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
 	DpiSignatureNames    *[]string        `position:"Query" name:"DpiSignatureNames"  type:"Repeated"`
 	DpiSignatureIds      *[]string        `position:"Query" name:"DpiSignatureIds"  type:"Repeated"`
-	NextToken            string           `position:"Query"`
-	DpiGroupId           string           `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	MaxResults           requests.Integer `position:"Query"`
+	NextToken            string           `position:"Query" name:"NextToken"`
+	DpiGroupId           string           `position:"Query" name:"DpiGroupId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	MaxResults           requests.Integer `position:"Query" name:"MaxResults"`
 }
 
 // ListDpiSignaturesResponse is the response struct for api ListDpiSignatures
 type ListDpiSignaturesResponse struct {
 	*responses.BaseResponse
 	TotalCount   int                `json:"TotalCount" xml:"TotalCount"`
-	RequestId    string             `json:"RequestId" xml:"RequestId"`
 	NextToken    string             `json:"NextToken" xml:"NextToken"`
+	RequestId    string             `json:"RequestId" xml:"RequestId"`
 	DpiSignature []DpiSignatureItem `json:"DpiSignature" xml:"DpiSignature"`
 }
 

@@ -62,5 +62,6 @@ type DBInstanceAttribute struct {
 	GlobalInstanceId          string                          `json:"GlobalInstanceId" xml:"GlobalInstanceId"`
 	SecondaryZoneId           string                          `json:"SecondaryZoneId" xml:"SecondaryZoneId"`
 	ZoneType                  string                          `json:"ZoneType" xml:"ZoneType"`
+	BackupLogStartTime        string                          `json:"BackupLogStartTime" xml:"BackupLogStartTime"`
 	Tags                      TagsInDescribeInstanceAttribute `json:"Tags" xml:"Tags"`
 }

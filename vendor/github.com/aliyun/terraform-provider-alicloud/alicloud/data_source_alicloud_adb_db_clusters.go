@@ -229,6 +229,10 @@ func dataSourceAlicloudAdbDbClusters() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"mode": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -365,6 +369,8 @@ func dataSourceAlicloudAdbDbClustersRead(d *schema.ResourceData, meta interface{
 			"vpc_id":                  object["VPCId"],
 			"vswitch_id":              object["VSwitchId"],
 			"zone_id":                 object["ZoneId"],
+			"mode":                    object["Mode"],
+			"db_cluster_version":      object["DBVersion"],
 		}
 		descriptions = append(descriptions, object["DBClusterDescription"].(string))
 
@@ -408,12 +414,6 @@ func dataSourceAlicloudAdbDbClustersRead(d *schema.ResourceData, meta interface{
 		}
 		mapping["engine_version"] = getResp2["EngineVersion"]
 		mapping["maintain_time"] = getResp2["MaintainTime"]
-
-		getResp3, err := adbService.DescribeDBClusters(id)
-		if err != nil {
-			return WrapError(err)
-		}
-		mapping["db_cluster_version"] = getResp3["DBVersion"]
 
 		ids = append(ids, fmt.Sprint(object["DBClusterId"]))
 		s = append(s, mapping)

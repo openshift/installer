@@ -30,7 +30,6 @@ func resourceAlicloudCloudFirewallControlPolicy() *schema.Resource {
 			"acl_uuid": {
 				Type:     schema.TypeString,
 				Computed: true,
-				ForceNew: true,
 			},
 			"application_name": {
 				Type:         schema.TypeString,

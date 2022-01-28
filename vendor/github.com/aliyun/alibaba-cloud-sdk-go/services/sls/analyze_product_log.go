@@ -77,8 +77,8 @@ type AnalyzeProductLogRequest struct {
 	VariableMap   string           `position:"Query" name:"VariableMap"`
 	TTL           requests.Integer `position:"Query" name:"TTL"`
 	ClientIp      string           `position:"Query" name:"ClientIp"`
-	Region        string           `position:"Query" name:"Region"`
 	Lang          string           `position:"Query" name:"Lang"`
+	Region        string           `position:"Query" name:"Region"`
 	Logstore      string           `position:"Query" name:"Logstore"`
 	Overwrite     requests.Boolean `position:"Query" name:"Overwrite"`
 }
@@ -97,7 +97,7 @@ func CreateAnalyzeProductLogRequest() (request *AnalyzeProductLogRequest) {
 	request = &AnalyzeProductLogRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Sls", "2018-06-13", "AnalyzeProductLog", "", "")
+	request.InitWithApiInfo("Sls", "2019-10-23", "AnalyzeProductLog", "", "")
 	request.Method = requests.POST
 	return
 }

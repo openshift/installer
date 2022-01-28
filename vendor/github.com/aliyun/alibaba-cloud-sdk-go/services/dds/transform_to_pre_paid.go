@@ -98,7 +98,7 @@ func CreateTransformToPrePaidRequest() (request *TransformToPrePaidRequest) {
 	request = &TransformToPrePaidRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Dds", "2015-12-01", "TransformToPrePaid", "", "")
+	request.InitWithApiInfo("Dds", "2015-12-01", "TransformToPrePaid", "Dds", "openAPI")
 	request.Method = requests.POST
 	return
 }

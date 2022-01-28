@@ -71,23 +71,23 @@ func (client *Client) DescribeSagRouteProtocolBgpWithCallback(request *DescribeS
 // DescribeSagRouteProtocolBgpRequest is the request struct for api DescribeSagRouteProtocolBgp
 type DescribeSagRouteProtocolBgpRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
-	SmartAGId            string           `position:"Query"`
-	SmartAGSn            string           `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
+	SmartAGId            string           `position:"Query" name:"SmartAGId"`
+	SmartAGSn            string           `position:"Query" name:"SmartAGSn"`
 }
 
 // DescribeSagRouteProtocolBgpResponse is the response struct for api DescribeSagRouteProtocolBgp
 type DescribeSagRouteProtocolBgpResponse struct {
 	*responses.BaseResponse
 	HoldTime     int         `json:"HoldTime" xml:"HoldTime"`
-	AdvertiseIps string      `json:"AdvertiseIps" xml:"AdvertiseIps"`
 	RequestId    string      `json:"RequestId" xml:"RequestId"`
 	KeepAlive    int         `json:"KeepAlive" xml:"KeepAlive"`
-	RouterId     string      `json:"RouterId" xml:"RouterId"`
 	LocalAs      int         `json:"LocalAs" xml:"LocalAs"`
+	RouterId     string      `json:"RouterId" xml:"RouterId"`
+	AdvertiseIps string      `json:"AdvertiseIps" xml:"AdvertiseIps"`
 	TaskStates   []TaskState `json:"TaskStates" xml:"TaskStates"`
 }
 

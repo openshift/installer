@@ -71,11 +71,11 @@ func (client *Client) DescribeSagOnlineClientStatisticsWithCallback(request *Des
 // DescribeSagOnlineClientStatisticsRequest is the request struct for api DescribeSagOnlineClientStatistics
 type DescribeSagOnlineClientStatisticsRequest struct {
 	*requests.RpcRequest
-	ResourceOwnerId      requests.Integer `position:"Query"`
+	ResourceOwnerId      requests.Integer `position:"Query" name:"ResourceOwnerId"`
 	SmartAGIds           *[]string        `position:"Query" name:"SmartAGIds"  type:"Repeated"`
-	ResourceOwnerAccount string           `position:"Query"`
-	OwnerAccount         string           `position:"Query"`
-	OwnerId              requests.Integer `position:"Query"`
+	ResourceOwnerAccount string           `position:"Query" name:"ResourceOwnerAccount"`
+	OwnerAccount         string           `position:"Query" name:"OwnerAccount"`
+	OwnerId              requests.Integer `position:"Query" name:"OwnerId"`
 }
 
 // DescribeSagOnlineClientStatisticsResponse is the response struct for api DescribeSagOnlineClientStatistics

@@ -155,6 +155,10 @@ func dataSourceAlicloudAlidnsRecords() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"remark": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -285,6 +289,7 @@ func dataSourceAlicloudAlidnsRecordsRead(d *schema.ResourceData, meta interface{
 			"ttl":         object.TTL,
 			"type":        object.Type,
 			"value":       object.Value,
+			"remark":      object.Remark,
 		}
 		ids[i] = object.RecordId
 		s[i] = mapping

@@ -34,6 +34,7 @@ type Data struct {
 	ExtVServerGroupId               string                                   `json:"ExtVServerGroupId" xml:"ExtVServerGroupId"`
 	PodName                         string                                   `json:"PodName" xml:"PodName"`
 	Total                           int                                      `json:"Total" xml:"Total"`
+	HttpHeaders                     map[string]interface{}                   `json:"HttpHeaders" xml:"HttpHeaders"`
 	AppInfos                        string                                   `json:"AppInfos" xml:"AppInfos"`
 	Enabled                         bool                                     `json:"Enabled" xml:"Enabled"`
 	Enable                          bool                                     `json:"Enable" xml:"Enable"`
@@ -65,12 +66,15 @@ type Data struct {
 	TotalElements                   int                                      `json:"TotalElements" xml:"TotalElements"`
 	EntryRule                       string                                   `json:"EntryRule" xml:"EntryRule"`
 	SlbName                         string                                   `json:"SlbName" xml:"SlbName"`
+	Params                          map[string]interface{}                   `json:"Params" xml:"Params"`
 	ScMockItemJson                  string                                   `json:"ScMockItemJson" xml:"ScMockItemJson"`
 	NamespaceId                     string                                   `json:"NamespaceId" xml:"NamespaceId"`
 	GroupId                         int64                                    `json:"GroupId" xml:"GroupId"`
 	ProviderAppId                   string                                   `json:"ProviderAppId" xml:"ProviderAppId"`
 	Kind                            string                                   `json:"Kind" xml:"Kind"`
 	SlbIp                           string                                   `json:"SlbIp" xml:"SlbIp"`
+	Urls                            []string                                 `json:"Urls" xml:"Urls"`
+	RequestMethods                  []string                                 `json:"RequestMethods" xml:"RequestMethods"`
 	EntryApplication                EntryApplication                         `json:"EntryApplication" xml:"EntryApplication"`
 	Spec                            Spec                                     `json:"Spec" xml:"Spec"`
 	Metadata                        Metadata                                 `json:"Metadata" xml:"Metadata"`
