@@ -209,6 +209,7 @@ func validatePrivateZoneID(client *Client, ic *types.InstallConfig, path *field.
 func ValidateForProvisioning(client *Client, ic *types.InstallConfig, metadata *Metadata) error {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validateClusterName(client, ic)...)
+	allErrs = append(allErrs, validateNatGateway(client, ic)...)
 	return allErrs.ToAggregate()
 }
 
@@ -229,6 +230,20 @@ func validateClusterName(client *Client, ic *types.InstallConfig) field.ErrorLis
 			allErrs = append(allErrs, field.Invalid(namePath, ic.ObjectMeta.Name, fmt.Sprintf("cluster name is unavailable, private zone name %s already exists", zoneName)))
 			break
 		}
+	}
+	return allErrs
+}
+
+func validateNatGateway(client *Client, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	regionPath := field.NewPath("platform").Child("alibabacloud").Child("region")
+
+	natGatewayZones, err := client.ListEnhanhcedNatGatewayAvailableZones()
+	if err != nil {
+		return append(allErrs, field.InternalError(regionPath, err))
+	}
+	if len(natGatewayZones.Zones) == 0 {
+		allErrs = append(allErrs, field.Invalid(regionPath, ic.Platform.AlibabaCloud.Region, "enhanced NAT gateway is not supported in the current region"))
 	}
 	return allErrs
 }
