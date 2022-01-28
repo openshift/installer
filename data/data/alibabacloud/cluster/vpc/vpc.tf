@@ -43,6 +43,8 @@ resource "alicloud_vswitch" "vswitches" {
 }
 
 resource "alicloud_vswitch" "vswitch_nat_gateway" {
+  count = length(var.vswitch_ids) == 0 ? 1 : 0
+
   vswitch_name = "${local.prefix}-vswitch-nat-gateway"
   description  = local.description
   vpc_id       = local.vpc_id
