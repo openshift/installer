@@ -13,6 +13,103 @@ import (
 	"github.com/aws/aws-sdk-go/private/protocol/jsonrpc"
 )
 
+const opAssociateFileSystemAliases = "AssociateFileSystemAliases"
+
+// AssociateFileSystemAliasesRequest generates a "aws/request.Request" representing the
+// client's request for the AssociateFileSystemAliases operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See AssociateFileSystemAliases for more information on using the AssociateFileSystemAliases
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the AssociateFileSystemAliasesRequest method.
+//    req, resp := client.AssociateFileSystemAliasesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/fsx-2018-03-01/AssociateFileSystemAliases
+func (c *FSx) AssociateFileSystemAliasesRequest(input *AssociateFileSystemAliasesInput) (req *request.Request, output *AssociateFileSystemAliasesOutput) {
+	op := &request.Operation{
+		Name:       opAssociateFileSystemAliases,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &AssociateFileSystemAliasesInput{}
+	}
+
+	output = &AssociateFileSystemAliasesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// AssociateFileSystemAliases API operation for Amazon FSx.
+//
+// Use this action to associate one or more Domain Name Server (DNS) aliases
+// with an existing Amazon FSx for Windows File Server file system. A file systen
+// can have a maximum of 50 DNS aliases associated with it at any one time.
+// If you try to associate a DNS alias that is already associated with the file
+// system, FSx takes no action on that alias in the request. For more information,
+// see Working with DNS Aliases (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-dns-aliases.html)
+// and Walkthrough 5: Using DNS aliases to access your file system (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/walkthrough05-file-system-custom-CNAME.html),
+// including additional steps you must take to be able to access your file system
+// using a DNS alias.
+//
+// The system response shows the DNS aliases that Amazon FSx is attempting to
+// associate with the file system. Use the API operation to monitor the status
+// of the aliases Amazon FSx is associating with the file system.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon FSx's
+// API operation AssociateFileSystemAliases for usage and error information.
+//
+// Returned Error Types:
+//   * BadRequest
+//   A generic error indicating a failure with a client request.
+//
+//   * FileSystemNotFound
+//   No Amazon FSx file systems were found based upon supplied parameters.
+//
+//   * InternalServerError
+//   A generic error indicating a server-side failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/fsx-2018-03-01/AssociateFileSystemAliases
+func (c *FSx) AssociateFileSystemAliases(input *AssociateFileSystemAliasesInput) (*AssociateFileSystemAliasesOutput, error) {
+	req, out := c.AssociateFileSystemAliasesRequest(input)
+	return out, req.Send()
+}
+
+// AssociateFileSystemAliasesWithContext is the same as AssociateFileSystemAliases with the addition of
+// the ability to pass a context and additional request options.
+//
+// See AssociateFileSystemAliases for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FSx) AssociateFileSystemAliasesWithContext(ctx aws.Context, input *AssociateFileSystemAliasesInput, opts ...request.Option) (*AssociateFileSystemAliasesOutput, error) {
+	req, out := c.AssociateFileSystemAliasesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCancelDataRepositoryTask = "CancelDataRepositoryTask"
 
 // CancelDataRepositoryTaskRequest generates a "aws/request.Request" representing the
@@ -158,10 +255,22 @@ func (c *FSx) CreateBackupRequest(input *CreateBackupInput) (req *request.Reques
 
 // CreateBackup API operation for Amazon FSx.
 //
-// Creates a backup of an existing Amazon FSx for Windows File Server file system.
-// Creating regular backups for your file system is a best practice that complements
-// the replication that Amazon FSx for Windows File Server performs for your
-// file system. It also enables you to restore from user modification of data.
+// Creates a backup of an existing Amazon FSx file system. Creating regular
+// backups for your file system is a best practice, enabling you to restore
+// a file system from a backup if an issue arises with the original file system.
+//
+// For Amazon FSx for Lustre file systems, you can create a backup only for
+// file systems with the following configuration:
+//
+//    * a Persistent deployment type
+//
+//    * is not linked to a data respository.
+//
+// For more information about backing up Amazon FSx for Lustre file systems,
+// see Working with FSx for Lustre backups (https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-backups-fsx.html).
+//
+// For more information about backing up Amazon FSx for Windows file systems,
+// see Working with FSx for Windows backups (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/using-backups.html).
 //
 // If a backup with the specified client request token exists, and the parameters
 // match, this operation returns the description of the existing backup. If
@@ -181,10 +290,9 @@ func (c *FSx) CreateBackupRequest(input *CreateBackupInput) (req *request.Reques
 // created a backup, the operation returns a successful result because all the
 // parameters are the same.
 //
-// The CreateFileSystem operation returns while the backup's lifecycle state
-// is still CREATING. You can check the file system creation status by calling
-// the DescribeBackups operation, which returns the backup state along with
-// other information.
+// The CreateBackup operation returns while the backup's lifecycle state is
+// still CREATING. You can check the backup creation status by calling the DescribeBackups
+// operation, which returns the backup state along with other information.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -292,9 +400,9 @@ func (c *FSx) CreateDataRepositoryTaskRequest(input *CreateDataRepositoryTaskInp
 // and symbolic links (symlinks) from your FSx file system to its linked data
 // repository. A CreateDataRepositoryTask operation will fail if a data repository
 // is not linked to the FSx file system. To learn more about data repository
-// tasks, see Using Data Repository Tasks (https://docs.aws.amazon.com/fsx/latest/LustreGuide/data-repository-tasks.html).
-// To learn more about linking a data repository to your file system, see Setting
-// the Export Prefix (https://docs.aws.amazon.com/fsx/latest/LustreGuide/export-data-repository.html#export-prefix).
+// tasks, see Data Repository Tasks (https://docs.aws.amazon.com/fsx/latest/LustreGuide/data-repository-tasks.html).
+// To learn more about linking a data repository to your file system, see Linking
+// your file system to an S3 bucket (https://docs.aws.amazon.com/fsx/latest/LustreGuide/create-fs-linked-data-repo.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -538,8 +646,7 @@ func (c *FSx) CreateFileSystemFromBackupRequest(input *CreateFileSystemFromBacku
 
 // CreateFileSystemFromBackup API operation for Amazon FSx.
 //
-// Creates a new Amazon FSx file system from an existing Amazon FSx for Windows
-// File Server backup.
+// Creates a new Amazon FSx file system from an existing Amazon FSx backup.
 //
 // If a file system with the specified client request token exists and the parameters
 // match, this operation returns the description of the file system. If a client
@@ -596,6 +703,10 @@ func (c *FSx) CreateFileSystemFromBackupRequest(input *CreateFileSystemFromBacku
 //   or not part of the VPC specified. InvalidSecurityGroupIds returns the list
 //   of IDs for security groups that are either invalid or not part of the VPC
 //   specified.
+//
+//   * InvalidPerUnitStorageThroughput
+//   An invalid value for PerUnitStorageThroughput was provided. Please create
+//   your file system again, using a valid value.
 //
 //   * ServiceLimitExceeded
 //   An error indicating that a particular service limit was exceeded. You can
@@ -676,8 +787,8 @@ func (c *FSx) DeleteBackupRequest(input *DeleteBackupInput) (req *request.Reques
 
 // DeleteBackup API operation for Amazon FSx.
 //
-// Deletes an Amazon FSx for Windows File Server backup, deleting its contents.
-// After deletion, the backup no longer exists, and its data is gone.
+// Deletes an Amazon FSx backup, deleting its contents. After deletion, the
+// backup no longer exists, and its data is gone.
 //
 // The DeleteBackup call returns instantly. The backup will not show up in later
 // DescribeBackups calls.
@@ -898,10 +1009,9 @@ func (c *FSx) DescribeBackupsRequest(input *DescribeBackupsInput) (req *request.
 
 // DescribeBackups API operation for Amazon FSx.
 //
-// Returns the description of specific Amazon FSx for Windows File Server backups,
-// if a BackupIds value is provided for that backup. Otherwise, it returns all
-// backups owned by your AWS account in the AWS Region of the endpoint that
-// you're calling.
+// Returns the description of specific Amazon FSx backups, if a BackupIds value
+// is provided for that backup. Otherwise, it returns all backups owned by your
+// AWS account in the AWS Region of the endpoint that you're calling.
 //
 // When retrieving all backups, you can optionally specify the MaxResults parameter
 // to limit the number of backups in a response. If more backups remain, Amazon
@@ -1174,6 +1284,153 @@ func (c *FSx) DescribeDataRepositoryTasksPagesWithContext(ctx aws.Context, input
 	return p.Err()
 }
 
+const opDescribeFileSystemAliases = "DescribeFileSystemAliases"
+
+// DescribeFileSystemAliasesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeFileSystemAliases operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeFileSystemAliases for more information on using the DescribeFileSystemAliases
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeFileSystemAliasesRequest method.
+//    req, resp := client.DescribeFileSystemAliasesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/fsx-2018-03-01/DescribeFileSystemAliases
+func (c *FSx) DescribeFileSystemAliasesRequest(input *DescribeFileSystemAliasesInput) (req *request.Request, output *DescribeFileSystemAliasesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeFileSystemAliases,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &DescribeFileSystemAliasesInput{}
+	}
+
+	output = &DescribeFileSystemAliasesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeFileSystemAliases API operation for Amazon FSx.
+//
+// Returns the DNS aliases that are associated with the specified Amazon FSx
+// for Windows File Server file system. A history of all DNS aliases that have
+// been associated with and disassociated from the file system is available
+// in the list of AdministrativeAction provided in the DescribeFileSystems operation
+// response.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon FSx's
+// API operation DescribeFileSystemAliases for usage and error information.
+//
+// Returned Error Types:
+//   * BadRequest
+//   A generic error indicating a failure with a client request.
+//
+//   * FileSystemNotFound
+//   No Amazon FSx file systems were found based upon supplied parameters.
+//
+//   * InternalServerError
+//   A generic error indicating a server-side failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/fsx-2018-03-01/DescribeFileSystemAliases
+func (c *FSx) DescribeFileSystemAliases(input *DescribeFileSystemAliasesInput) (*DescribeFileSystemAliasesOutput, error) {
+	req, out := c.DescribeFileSystemAliasesRequest(input)
+	return out, req.Send()
+}
+
+// DescribeFileSystemAliasesWithContext is the same as DescribeFileSystemAliases with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeFileSystemAliases for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FSx) DescribeFileSystemAliasesWithContext(ctx aws.Context, input *DescribeFileSystemAliasesInput, opts ...request.Option) (*DescribeFileSystemAliasesOutput, error) {
+	req, out := c.DescribeFileSystemAliasesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// DescribeFileSystemAliasesPages iterates over the pages of a DescribeFileSystemAliases operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeFileSystemAliases method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeFileSystemAliases operation.
+//    pageNum := 0
+//    err := client.DescribeFileSystemAliasesPages(params,
+//        func(page *fsx.DescribeFileSystemAliasesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *FSx) DescribeFileSystemAliasesPages(input *DescribeFileSystemAliasesInput, fn func(*DescribeFileSystemAliasesOutput, bool) bool) error {
+	return c.DescribeFileSystemAliasesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeFileSystemAliasesPagesWithContext same as DescribeFileSystemAliasesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FSx) DescribeFileSystemAliasesPagesWithContext(ctx aws.Context, input *DescribeFileSystemAliasesInput, fn func(*DescribeFileSystemAliasesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeFileSystemAliasesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeFileSystemAliasesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*DescribeFileSystemAliasesOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opDescribeFileSystems = "DescribeFileSystems"
 
 // DescribeFileSystemsRequest generates a "aws/request.Request" representing the
@@ -1338,6 +1595,100 @@ func (c *FSx) DescribeFileSystemsPagesWithContext(ctx aws.Context, input *Descri
 	}
 
 	return p.Err()
+}
+
+const opDisassociateFileSystemAliases = "DisassociateFileSystemAliases"
+
+// DisassociateFileSystemAliasesRequest generates a "aws/request.Request" representing the
+// client's request for the DisassociateFileSystemAliases operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DisassociateFileSystemAliases for more information on using the DisassociateFileSystemAliases
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DisassociateFileSystemAliasesRequest method.
+//    req, resp := client.DisassociateFileSystemAliasesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/fsx-2018-03-01/DisassociateFileSystemAliases
+func (c *FSx) DisassociateFileSystemAliasesRequest(input *DisassociateFileSystemAliasesInput) (req *request.Request, output *DisassociateFileSystemAliasesOutput) {
+	op := &request.Operation{
+		Name:       opDisassociateFileSystemAliases,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DisassociateFileSystemAliasesInput{}
+	}
+
+	output = &DisassociateFileSystemAliasesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DisassociateFileSystemAliases API operation for Amazon FSx.
+//
+// Use this action to disassociate, or remove, one or more Domain Name Service
+// (DNS) aliases from an Amazon FSx for Windows File Server file system. If
+// you attempt to disassociate a DNS alias that is not associated with the file
+// system, Amazon FSx responds with a 400 Bad Request. For more information,
+// see Working with DNS Aliases (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-dns-aliases.html).
+//
+// The system generated response showing the DNS aliases that Amazon FSx is
+// attempting to disassociate from the file system. Use the API operation to
+// monitor the status of the aliases Amazon FSx is disassociating with the file
+// system.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon FSx's
+// API operation DisassociateFileSystemAliases for usage and error information.
+//
+// Returned Error Types:
+//   * BadRequest
+//   A generic error indicating a failure with a client request.
+//
+//   * FileSystemNotFound
+//   No Amazon FSx file systems were found based upon supplied parameters.
+//
+//   * InternalServerError
+//   A generic error indicating a server-side failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/fsx-2018-03-01/DisassociateFileSystemAliases
+func (c *FSx) DisassociateFileSystemAliases(input *DisassociateFileSystemAliasesInput) (*DisassociateFileSystemAliasesOutput, error) {
+	req, out := c.DisassociateFileSystemAliasesRequest(input)
+	return out, req.Send()
+}
+
+// DisassociateFileSystemAliasesWithContext is the same as DisassociateFileSystemAliases with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DisassociateFileSystemAliases for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FSx) DisassociateFileSystemAliasesWithContext(ctx aws.Context, input *DisassociateFileSystemAliasesInput, opts ...request.Option) (*DisassociateFileSystemAliasesOutput, error) {
+	req, out := c.DisassociateFileSystemAliasesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListTagsForResource = "ListTagsForResource"
@@ -1684,9 +2035,10 @@ func (c *FSx) UpdateFileSystemRequest(input *UpdateFileSystemInput) (req *reques
 // UpdateFileSystem API operation for Amazon FSx.
 //
 // Use this operation to update the configuration of an existing Amazon FSx
-// file system. For an Amazon FSx for Lustre file system, you can update only
-// the WeeklyMaintenanceStartTime. For an Amazon for Windows File Server file
-// system, you can update the following properties:
+// file system. You can update multiple properties in a single request.
+//
+// For Amazon FSx for Windows File Server file systems, you can update the following
+// properties:
 //
 //    * AutomaticBackupRetentionDays
 //
@@ -1700,7 +2052,17 @@ func (c *FSx) UpdateFileSystemRequest(input *UpdateFileSystemInput) (req *reques
 //
 //    * WeeklyMaintenanceStartTime
 //
-// You can update multiple properties in a single request.
+// For Amazon FSx for Lustre file systems, you can update the following properties:
+//
+//    * AutoImportPolicy
+//
+//    * AutomaticBackupRetentionDays
+//
+//    * DailyAutomaticBackupStartTime
+//
+//    * StorageCapacity
+//
+//    * WeeklyMaintenanceStartTime
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1856,8 +2218,8 @@ func (s *ActiveDirectoryError) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// Describes a specific Amazon FSx Administrative Action for the current Windows
-// file system.
+// Describes a specific Amazon FSx administrative action for the current Windows
+// or Lustre file system.
 type AdministrativeAction struct {
 	_ struct{} `type:"structure"`
 
@@ -1865,21 +2227,33 @@ type AdministrativeAction struct {
 	//
 	//    * FILE_SYSTEM_UPDATE - A file system update administrative action initiated
 	//    by the user from the Amazon FSx console, API (UpdateFileSystem), or CLI
-	//    (update-file-system). A
+	//    (update-file-system).
 	//
 	//    * STORAGE_OPTIMIZATION - Once the FILE_SYSTEM_UPDATE task to increase
 	//    a file system's storage capacity completes successfully, a STORAGE_OPTIMIZATION
-	//    task starts. Storage optimization is the process of migrating the file
-	//    system data to the new, larger disks. You can track the storage migration
-	//    progress using the ProgressPercent property. When STORAGE_OPTIMIZATION
-	//    completes successfully, the parent FILE_SYSTEM_UPDATE action status changes
-	//    to COMPLETED. For more information, see Managing Storage Capacity (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-storage-capacity.html).
+	//    task starts. For Windows, storage optimization is the process of migrating
+	//    the file system data to the new, larger disks. For Lustre, storage optimization
+	//    consists of rebalancing the data across the existing and newly added file
+	//    servers. You can track the storage optimization progress using the ProgressPercent
+	//    property. When STORAGE_OPTIMIZATION completes successfully, the parent
+	//    FILE_SYSTEM_UPDATE action status changes to COMPLETED. For more information,
+	//    see Managing storage capacity (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-storage-capacity.html)
+	//    in the Amazon FSx for Windows File Server User Guide and Managing storage
+	//    and throughput capacity (https://docs.aws.amazon.com/fsx/latest/LustreGuide/managing-storage-capacity.html)
+	//    in the Amazon FSx for Lustre User Guide.
+	//
+	//    * FILE_SYSTEM_ALIAS_ASSOCIATION - A file system update to associate a
+	//    new DNS alias with the file system. For more information, see .
+	//
+	//    * FILE_SYSTEM_ALIAS_DISASSOCIATION - A file system update to disassociate
+	//    a DNS alias from the file system. For more information, see .
 	AdministrativeActionType *string `type:"string" enum:"AdministrativeActionType"`
 
 	// Provides information about a failed administrative action.
 	FailureDetails *AdministrativeActionFailureDetails `type:"structure"`
 
 	// Provides the percent complete of a STORAGE_OPTIMIZATION administrative action.
+	// Does not apply to any other administrative action type.
 	ProgressPercent *int64 `type:"integer"`
 
 	// Time that the administrative action request was received.
@@ -1898,11 +2272,14 @@ type AdministrativeAction struct {
 	//    * UPDATED_OPTIMIZING - For a storage capacity increase update, Amazon
 	//    FSx has updated the file system with the new storage capacity, and is
 	//    now performing the storage optimization process. For more information,
-	//    see Managing Storage Capacity (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-storage-capacity.html).
+	//    see Managing storage capacity (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-storage-capacity.html)
+	//    in the Amazon FSx for Windows File Server User Guide and Managing storage
+	//    and throughput capacity (https://docs.aws.amazon.com/fsx/latest/LustreGuide/managing-storage-capacity.html)
+	//    in the Amazon FSx for Lustre User Guide.
 	Status *string `type:"string" enum:"Status"`
 
-	// Describes the target StorageCapacity or ThroughputCapacity value provided
-	// in the UpdateFileSystem operation. Returned for FILE_SYSTEM_UPDATE administrative
+	// Describes the target value for the administration action, provided in the
+	// UpdateFileSystem operation. Returned for FILE_SYSTEM_UPDATE administrative
 	// actions.
 	TargetFileSystemValues *FileSystem `type:"structure"`
 }
@@ -1957,7 +2334,7 @@ func (s *AdministrativeAction) SetTargetFileSystemValues(v *FileSystem) *Adminis
 type AdministrativeActionFailureDetails struct {
 	_ struct{} `type:"structure"`
 
-	// Error message providing details about the failure.
+	// Error message providing details about the failed administrative action.
 	Message *string `min:"1" type:"string"`
 }
 
@@ -1977,8 +2354,190 @@ func (s *AdministrativeActionFailureDetails) SetMessage(v string) *Administrativ
 	return s
 }
 
-// A backup of an Amazon FSx for Windows File Server file system. You can create
-// a new file system from a backup to protect against data loss.
+// A DNS alias that is associated with the file system. You can use a DNS alias
+// to access a file system using user-defined DNS names, in addition to the
+// default DNS name that Amazon FSx assigns to the file system. For more information,
+// see DNS aliases (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-dns-aliases.html)
+// in the FSx for Windows File Server User Guide.
+type Alias struct {
+	_ struct{} `type:"structure"`
+
+	// Describes the state of the DNS alias.
+	//
+	//    * AVAILABLE - The DNS alias is associated with an Amazon FSx file system.
+	//
+	//    * CREATING - Amazon FSx is creating the DNS alias and associating it with
+	//    the file system.
+	//
+	//    * CREATE_FAILED - Amazon FSx was unable to associate the DNS alias with
+	//    the file system.
+	//
+	//    * DELETING - Amazon FSx is disassociating the DNS alias from the file
+	//    system and deleting it.
+	//
+	//    * DELETE_FAILED - Amazon FSx was unable to disassocate the DNS alias from
+	//    the file system.
+	Lifecycle *string `type:"string" enum:"AliasLifecycle"`
+
+	// The name of the DNS alias. The alias name has to meet the following requirements:
+	//
+	//    * Formatted as a fully-qualified domain name (FQDN), hostname.domain,
+	//    for example, accounting.example.com.
+	//
+	//    * Can contain alphanumeric characters and the hyphen (-).
+	//
+	//    * Cannot start or end with a hyphen.
+	//
+	//    * Can start with a numeric.
+	//
+	// For DNS names, Amazon FSx stores alphabetic characters as lowercase letters
+	// (a-z), regardless of how you specify them: as uppercase letters, lowercase
+	// letters, or the corresponding letters in escape codes.
+	Name *string `min:"4" type:"string"`
+}
+
+// String returns the string representation
+func (s Alias) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Alias) GoString() string {
+	return s.String()
+}
+
+// SetLifecycle sets the Lifecycle field's value.
+func (s *Alias) SetLifecycle(v string) *Alias {
+	s.Lifecycle = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *Alias) SetName(v string) *Alias {
+	s.Name = &v
+	return s
+}
+
+// The request object specifying one or more DNS alias names to associate with
+// an Amazon FSx for Windows File Server file system.
+type AssociateFileSystemAliasesInput struct {
+	_ struct{} `type:"structure"`
+
+	// An array of one or more DNS alias names to associate with the file system.
+	// The alias name has to comply with the following formatting requirements:
+	//
+	//    * Formatted as a fully-qualified domain name (FQDN), hostname.domain ,
+	//    for example, accounting.corp.example.com.
+	//
+	//    * Can contain alphanumeric characters and the hyphen (-).
+	//
+	//    * Cannot start or end with a hyphen.
+	//
+	//    * Can start with a numeric.
+	//
+	// For DNS alias names, Amazon FSx stores alphabetic characters as lowercase
+	// letters (a-z), regardless of how you specify them: as uppercase letters,
+	// lowercase letters, or the corresponding letters in escape codes.
+	//
+	// Aliases is a required field
+	Aliases []*string `type:"list" required:"true"`
+
+	// (Optional) An idempotency token for resource creation, in a string of up
+	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// when you use the AWS Command Line Interface (AWS CLI) or an AWS SDK.
+	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
+
+	// Specifies the file system with which you want to associate one or more DNS
+	// aliases.
+	//
+	// FileSystemId is a required field
+	FileSystemId *string `min:"11" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s AssociateFileSystemAliasesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AssociateFileSystemAliasesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AssociateFileSystemAliasesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AssociateFileSystemAliasesInput"}
+	if s.Aliases == nil {
+		invalidParams.Add(request.NewErrParamRequired("Aliases"))
+	}
+	if s.ClientRequestToken != nil && len(*s.ClientRequestToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientRequestToken", 1))
+	}
+	if s.FileSystemId == nil {
+		invalidParams.Add(request.NewErrParamRequired("FileSystemId"))
+	}
+	if s.FileSystemId != nil && len(*s.FileSystemId) < 11 {
+		invalidParams.Add(request.NewErrParamMinLen("FileSystemId", 11))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAliases sets the Aliases field's value.
+func (s *AssociateFileSystemAliasesInput) SetAliases(v []*string) *AssociateFileSystemAliasesInput {
+	s.Aliases = v
+	return s
+}
+
+// SetClientRequestToken sets the ClientRequestToken field's value.
+func (s *AssociateFileSystemAliasesInput) SetClientRequestToken(v string) *AssociateFileSystemAliasesInput {
+	s.ClientRequestToken = &v
+	return s
+}
+
+// SetFileSystemId sets the FileSystemId field's value.
+func (s *AssociateFileSystemAliasesInput) SetFileSystemId(v string) *AssociateFileSystemAliasesInput {
+	s.FileSystemId = &v
+	return s
+}
+
+// The system generated response showing the DNS aliases that Amazon FSx is
+// attempting to associate with the file system. Use the API operation to monitor
+// the status of the aliases Amazon FSx is associating with the file system.
+// It can take up to 2.5 minutes for the alias status to change from CREATING
+// to AVAILABLE.
+type AssociateFileSystemAliasesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An array of the DNS aliases that Amazon FSx is associating with the file
+	// system.
+	Aliases []*Alias `type:"list"`
+}
+
+// String returns the string representation
+func (s AssociateFileSystemAliasesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AssociateFileSystemAliasesOutput) GoString() string {
+	return s.String()
+}
+
+// SetAliases sets the Aliases field's value.
+func (s *AssociateFileSystemAliasesOutput) SetAliases(v []*Alias) *AssociateFileSystemAliasesOutput {
+	s.Aliases = v
+	return s
+}
+
+// A backup of an Amazon FSx file system. For more information see:
+//
+//    * Working with backups for Windows file systems (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/using-backups.html)
+//
+//    * Working with backups for Lustre file systems (https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-backups-fsx.html)
 type Backup struct {
 	_ struct{} `type:"structure"`
 
@@ -2005,12 +2564,25 @@ type Backup struct {
 	// FileSystem is a required field
 	FileSystem *FileSystem `type:"structure" required:"true"`
 
-	// The ID of the AWS Key Management Service (AWS KMS) key used to encrypt this
-	// backup of the Amazon FSx for Windows file system's data at rest. Amazon FSx
-	// for Lustre does not support KMS encryption.
+	// The ID of the AWS Key Management Service (AWS KMS) key used to encrypt the
+	// backup of the Amazon FSx file system's data at rest.
 	KmsKeyId *string `min:"1" type:"string"`
 
 	// The lifecycle status of the backup.
+	//
+	//    * AVAILABLE - The backup is fully available.
+	//
+	//    * PENDING - For user-initiated backups on Lustre file systems only; Amazon
+	//    FSx has not started creating the backup.
+	//
+	//    * CREATING - Amazon FSx is creating the backup.
+	//
+	//    * TRANSFERRING - For user-initiated backups on Lustre file systems only;
+	//    Amazon FSx is transferring the backup to S3.
+	//
+	//    * DELETED - Amazon FSx deleted the backup and it is no longer available.
+	//
+	//    * FAILED - Amazon FSx could not complete the backup.
 	//
 	// Lifecycle is a required field
 	Lifecycle *string `type:"string" required:"true" enum:"BackupLifecycle"`
@@ -2024,7 +2596,7 @@ type Backup struct {
 	// Tags associated with a particular file system.
 	Tags []*Tag `min:"1" type:"list"`
 
-	// The type of the backup.
+	// The type of the file system backup.
 	//
 	// Type is a required field
 	Type *string `type:"string" required:"true" enum:"BackupType"`
@@ -2553,8 +3125,11 @@ type CreateBackupInput struct {
 	// FileSystemId is a required field
 	FileSystemId *string `min:"11" type:"string" required:"true"`
 
-	// The tags to apply to the backup at backup creation. The key value of the
-	// Name tag appears in the console as the backup name.
+	// (Optional) The tags to apply to the backup at backup creation. The key value
+	// of the Name tag appears in the console as the backup name. If you have set
+	// CopyTagsToBackups to true, and you specify one or more tags using the CreateBackup
+	// action, no existing file system tags are copied from the file system to the
+	// backup.
 	Tags []*Tag `min:"1" type:"list"`
 }
 
@@ -2802,10 +3377,13 @@ type CreateFileSystemFromBackupInput struct {
 	// BackupId is a required field
 	BackupId *string `min:"12" type:"string" required:"true"`
 
-	// (Optional) A string of up to 64 ASCII characters that Amazon FSx uses to
-	// ensure idempotent creation. This string is automatically filled on your behalf
-	// when you use the AWS Command Line Interface (AWS CLI) or an AWS SDK.
+	// A string of up to 64 ASCII characters that Amazon FSx uses to ensure idempotent
+	// creation. This string is automatically filled on your behalf when you use
+	// the AWS Command Line Interface (AWS CLI) or an AWS SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
+
+	// The Lustre configuration for the file system being created.
+	LustreConfiguration *CreateFileSystemLustreConfiguration `type:"structure"`
 
 	// A list of IDs for the security groups that apply to the specified network
 	// interfaces created for file system access. These security groups apply to
@@ -2880,6 +3458,11 @@ func (s *CreateFileSystemFromBackupInput) Validate() error {
 	if s.Tags != nil && len(s.Tags) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Tags", 1))
 	}
+	if s.LustreConfiguration != nil {
+		if err := s.LustreConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("LustreConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.Tags != nil {
 		for i, v := range s.Tags {
 			if v == nil {
@@ -2911,6 +3494,12 @@ func (s *CreateFileSystemFromBackupInput) SetBackupId(v string) *CreateFileSyste
 // SetClientRequestToken sets the ClientRequestToken field's value.
 func (s *CreateFileSystemFromBackupInput) SetClientRequestToken(v string) *CreateFileSystemFromBackupInput {
 	s.ClientRequestToken = &v
+	return s
+}
+
+// SetLustreConfiguration sets the LustreConfiguration field's value.
+func (s *CreateFileSystemFromBackupInput) SetLustreConfiguration(v *CreateFileSystemLustreConfiguration) *CreateFileSystemFromBackupInput {
+	s.LustreConfiguration = v
 	return s
 }
 
@@ -2972,9 +3561,9 @@ func (s *CreateFileSystemFromBackupOutput) SetFileSystem(v *FileSystem) *CreateF
 type CreateFileSystemInput struct {
 	_ struct{} `type:"structure"`
 
-	// (Optional) A string of up to 64 ASCII characters that Amazon FSx uses to
-	// ensure idempotent creation. This string is automatically filled on your behalf
-	// when you use the AWS Command Line Interface (AWS CLI) or an AWS SDK.
+	// A string of up to 64 ASCII characters that Amazon FSx uses to ensure idempotent
+	// creation. This string is automatically filled on your behalf when you use
+	// the AWS Command Line Interface (AWS CLI) or an AWS SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
 	// The type of Amazon FSx file system to create, either WINDOWS or LUSTRE.
@@ -3003,11 +3592,15 @@ type CreateFileSystemInput struct {
 	//
 	// For Lustre file systems:
 	//
-	//    * For SCRATCH_2 and PERSISTENT_1 deployment types, valid values are 1.2,
-	//    2.4, and increments of 2.4 TiB.
+	//    * For SCRATCH_2 and PERSISTENT_1 SSD deployment types, valid values are
+	//    1200 GiB, 2400 GiB, and increments of 2400 GiB.
 	//
-	//    * For SCRATCH_1 deployment type, valid values are 1.2, 2.4, and increments
-	//    of 3.6 TiB.
+	//    * For PERSISTENT HDD file systems, valid values are increments of 6000
+	//    GiB for 12 MB/s/TiB file systems and increments of 1800 GiB for 40 MB/s/TiB
+	//    file systems.
+	//
+	//    * For SCRATCH_1 deployment type, valid values are 1200 GiB, 2400 GiB,
+	//    and increments of 3600 GiB.
 	//
 	// For Windows file systems:
 	//
@@ -3018,17 +3611,19 @@ type CreateFileSystemInput struct {
 	// StorageCapacity is a required field
 	StorageCapacity *int64 `type:"integer" required:"true"`
 
-	// Sets the storage type for the Amazon FSx for Windows file system you're creating.
-	// Valid values are SSD and HDD.
+	// Sets the storage type for the file system you're creating. Valid values are
+	// SSD and HDD.
 	//
 	//    * Set to SSD to use solid state drive storage. SSD is supported on all
-	//    Windows deployment types.
+	//    Windows and Lustre deployment types.
 	//
 	//    * Set to HDD to use hard disk drive storage. HDD is supported on SINGLE_AZ_2
-	//    and MULTI_AZ_1 Windows file system deployment types.
+	//    and MULTI_AZ_1 Windows file system deployment types, and on PERSISTENT
+	//    Lustre file system deployment types.
 	//
 	// Default value is SSD. For more information, see Storage Type Options (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/optimize-fsx-costs.html#storage-type-options)
-	// in the Amazon FSx for Windows User Guide.
+	// in the Amazon FSx for Windows User Guide and Multiple Storage Options (https://docs.aws.amazon.com/fsx/latest/LustreGuide/what-is.html#storage-options)
+	// in the Amazon FSx for Lustre User Guide.
 	StorageType *string `type:"string" enum:"StorageType"`
 
 	// Specifies the IDs of the subnets that the file system will be accessible
@@ -3174,10 +3769,54 @@ func (s *CreateFileSystemInput) SetWindowsConfiguration(v *CreateFileSystemWindo
 type CreateFileSystemLustreConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// (Optional) Choose SCRATCH_1 and SCRATCH_2 deployment types when you need
-	// temporary storage and shorter-term processing of data. The SCRATCH_2 deployment
-	// type provides in-transit encryption of data and higher burst throughput capacity
-	// than SCRATCH_1.
+	// (Optional) When you create your file system, your existing S3 objects appear
+	// as file and directory listings. Use this property to choose how Amazon FSx
+	// keeps your file and directory listings up to date as you add or modify objects
+	// in your linked S3 bucket. AutoImportPolicy can have the following values:
+	//
+	//    * NONE - (Default) AutoImport is off. Amazon FSx only updates file and
+	//    directory listings from the linked S3 bucket when the file system is created.
+	//    FSx does not update file and directory listings for any new or changed
+	//    objects after choosing this option.
+	//
+	//    * NEW - AutoImport is on. Amazon FSx automatically imports directory listings
+	//    of any new objects added to the linked S3 bucket that do not currently
+	//    exist in the FSx file system.
+	//
+	//    * NEW_CHANGED - AutoImport is on. Amazon FSx automatically imports file
+	//    and directory listings of any new objects added to the S3 bucket and any
+	//    existing objects that are changed in the S3 bucket after you choose this
+	//    option.
+	//
+	// For more information, see Automatically import updates from your S3 bucket
+	// (https://docs.aws.amazon.com/fsx/latest/LustreGuide/autoimport-data-repo.html).
+	AutoImportPolicy *string `type:"string" enum:"AutoImportPolicyType"`
+
+	// The number of days to retain automatic backups. Setting this to 0 disables
+	// automatic backups. You can retain automatic backups for a maximum of 90 days.
+	// The default is 0.
+	AutomaticBackupRetentionDays *int64 `type:"integer"`
+
+	// (Optional) Not available to use with file systems that are linked to a data
+	// repository. A boolean flag indicating whether tags for the file system should
+	// be copied to backups. The default value is false. If it's set to true, all
+	// file system tags are copied to all automatic and user-initiated backups when
+	// the user doesn't specify any backup-specific tags. If this value is true,
+	// and you specify one or more backup tags, only the specified tags are copied
+	// to backups. If you specify one or more tags when creating a user-initiated
+	// backup, no tags are copied from the file system, regardless of this value.
+	//
+	// For more information, see Working with backups (https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-backups-fsx.html).
+	CopyTagsToBackups *bool `type:"boolean"`
+
+	// A recurring daily time, in the format HH:MM. HH is the zero-padded hour of
+	// the day (0-23), and MM is the zero-padded minute of the hour. For example,
+	// 05:00 specifies 5 AM daily.
+	DailyAutomaticBackupStartTime *string `min:"5" type:"string"`
+
+	// Choose SCRATCH_1 and SCRATCH_2 deployment types when you need temporary storage
+	// and shorter-term processing of data. The SCRATCH_2 deployment type provides
+	// in-transit encryption of data and higher burst throughput capacity than SCRATCH_1.
 	//
 	// Choose PERSISTENT_1 deployment type for longer-term storage and workloads
 	// and encryption of data in transit. To learn more about deployment types,
@@ -3192,6 +3831,14 @@ type CreateFileSystemLustreConfiguration struct {
 	// is supported when accessed from supported instance types in supported AWS
 	// Regions. To learn more, Encrypting Data in Transit (https://docs.aws.amazon.com/fsx/latest/LustreGuide/encryption-in-transit-fsxl.html).
 	DeploymentType *string `type:"string" enum:"LustreDeploymentType"`
+
+	// The type of drive cache used by PERSISTENT_1 file systems that are provisioned
+	// with HDD storage devices. This parameter is required when storage type is
+	// HDD. Set to READ, improve the performance for frequently accessed files and
+	// allows 20% of the total storage capacity of the file system to be cached.
+	//
+	// This parameter is required when StorageType is set to HDD.
+	DriveCacheType *string `type:"string" enum:"DriveCacheType"`
 
 	// (Optional) The path in Amazon S3 where the root of your Amazon FSx file system
 	// is exported. The path must use the same Amazon S3 bucket as specified in
@@ -3231,15 +3878,16 @@ type CreateFileSystemLustreConfiguration struct {
 	// and write throughput for each 1 tebibyte of storage, in MB/s/TiB. File system
 	// throughput capacity is calculated by multiplying ﬁle system storage capacity
 	// (TiB) by the PerUnitStorageThroughput (MB/s/TiB). For a 2.4 TiB ﬁle system,
-	// provisioning 50 MB/s/TiB of PerUnitStorageThroughput yields 117 MB/s of ﬁle
+	// provisioning 50 MB/s/TiB of PerUnitStorageThroughput yields 120 MB/s of ﬁle
 	// system throughput. You pay for the amount of throughput that you provision.
 	//
-	// Valid values are 50, 100, 200.
-	PerUnitStorageThroughput *int64 `min:"50" type:"integer"`
+	// Valid values for SSD storage: 50, 100, 200. Valid values for HDD storage:
+	// 12, 40.
+	PerUnitStorageThroughput *int64 `min:"12" type:"integer"`
 
-	// The preferred start time to perform weekly maintenance, formatted d:HH:MM
-	// in the UTC time zone, where d is the weekday number, from 1 through 7, beginning
-	// with Monday and ending with Sunday.
+	// (Optional) The preferred start time to perform weekly maintenance, formatted
+	// d:HH:MM in the UTC time zone, where d is the weekday number, from 1 through
+	// 7, beginning with Monday and ending with Sunday.
 	WeeklyMaintenanceStartTime *string `min:"7" type:"string"`
 }
 
@@ -3256,6 +3904,9 @@ func (s CreateFileSystemLustreConfiguration) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *CreateFileSystemLustreConfiguration) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "CreateFileSystemLustreConfiguration"}
+	if s.DailyAutomaticBackupStartTime != nil && len(*s.DailyAutomaticBackupStartTime) < 5 {
+		invalidParams.Add(request.NewErrParamMinLen("DailyAutomaticBackupStartTime", 5))
+	}
 	if s.ExportPath != nil && len(*s.ExportPath) < 3 {
 		invalidParams.Add(request.NewErrParamMinLen("ExportPath", 3))
 	}
@@ -3265,8 +3916,8 @@ func (s *CreateFileSystemLustreConfiguration) Validate() error {
 	if s.ImportedFileChunkSize != nil && *s.ImportedFileChunkSize < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("ImportedFileChunkSize", 1))
 	}
-	if s.PerUnitStorageThroughput != nil && *s.PerUnitStorageThroughput < 50 {
-		invalidParams.Add(request.NewErrParamMinValue("PerUnitStorageThroughput", 50))
+	if s.PerUnitStorageThroughput != nil && *s.PerUnitStorageThroughput < 12 {
+		invalidParams.Add(request.NewErrParamMinValue("PerUnitStorageThroughput", 12))
 	}
 	if s.WeeklyMaintenanceStartTime != nil && len(*s.WeeklyMaintenanceStartTime) < 7 {
 		invalidParams.Add(request.NewErrParamMinLen("WeeklyMaintenanceStartTime", 7))
@@ -3278,9 +3929,39 @@ func (s *CreateFileSystemLustreConfiguration) Validate() error {
 	return nil
 }
 
+// SetAutoImportPolicy sets the AutoImportPolicy field's value.
+func (s *CreateFileSystemLustreConfiguration) SetAutoImportPolicy(v string) *CreateFileSystemLustreConfiguration {
+	s.AutoImportPolicy = &v
+	return s
+}
+
+// SetAutomaticBackupRetentionDays sets the AutomaticBackupRetentionDays field's value.
+func (s *CreateFileSystemLustreConfiguration) SetAutomaticBackupRetentionDays(v int64) *CreateFileSystemLustreConfiguration {
+	s.AutomaticBackupRetentionDays = &v
+	return s
+}
+
+// SetCopyTagsToBackups sets the CopyTagsToBackups field's value.
+func (s *CreateFileSystemLustreConfiguration) SetCopyTagsToBackups(v bool) *CreateFileSystemLustreConfiguration {
+	s.CopyTagsToBackups = &v
+	return s
+}
+
+// SetDailyAutomaticBackupStartTime sets the DailyAutomaticBackupStartTime field's value.
+func (s *CreateFileSystemLustreConfiguration) SetDailyAutomaticBackupStartTime(v string) *CreateFileSystemLustreConfiguration {
+	s.DailyAutomaticBackupStartTime = &v
+	return s
+}
+
 // SetDeploymentType sets the DeploymentType field's value.
 func (s *CreateFileSystemLustreConfiguration) SetDeploymentType(v string) *CreateFileSystemLustreConfiguration {
 	s.DeploymentType = &v
+	return s
+}
+
+// SetDriveCacheType sets the DriveCacheType field's value.
+func (s *CreateFileSystemLustreConfiguration) SetDriveCacheType(v string) *CreateFileSystemLustreConfiguration {
+	s.DriveCacheType = &v
 	return s
 }
 
@@ -3347,9 +4028,39 @@ type CreateFileSystemWindowsConfiguration struct {
 	// that the file system should join when it's created.
 	ActiveDirectoryId *string `min:"12" type:"string"`
 
+	// An array of one or more DNS alias names that you want to associate with the
+	// Amazon FSx file system. Aliases allow you to use existing DNS names to access
+	// the data in your Amazon FSx file system. You can associate up to 50 aliases
+	// with a file system at any time. You can associate additional DNS aliases
+	// after you create the file system using the AssociateFileSystemAliases operation.
+	// You can remove DNS aliases from the file system after it is created using
+	// the DisassociateFileSystemAliases operation. You only need to specify the
+	// alias name in the request payload.
+	//
+	// For more information, see Working with DNS Aliases (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-dns-aliases.html)
+	// and Walkthrough 5: Using DNS aliases to access your file system (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/walkthrough05-file-system-custom-CNAME.html),
+	// including additional steps you must take to be able to access your file system
+	// using a DNS alias.
+	//
+	// An alias name has to meet the following requirements:
+	//
+	//    * Formatted as a fully-qualified domain name (FQDN), hostname.domain,
+	//    for example, accounting.example.com.
+	//
+	//    * Can contain alphanumeric characters and the hyphen (-).
+	//
+	//    * Cannot start or end with a hyphen.
+	//
+	//    * Can start with a numeric.
+	//
+	// For DNS alias names, Amazon FSx stores alphabetic characters as lowercase
+	// letters (a-z), regardless of how you specify them: as uppercase letters,
+	// lowercase letters, or the corresponding letters in escape codes.
+	Aliases []*string `type:"list"`
+
 	// The number of days to retain automatic backups. The default is to retain
 	// backups for 7 days. Setting this value to 0 disables the creation of automatic
-	// backups. The maximum retention period for backups is 35 days.
+	// backups. The maximum retention period for backups is 90 days.
 	AutomaticBackupRetentionDays *int64 `type:"integer"`
 
 	// A boolean flag indicating whether tags for the file system should be copied
@@ -3456,6 +4167,12 @@ func (s *CreateFileSystemWindowsConfiguration) SetActiveDirectoryId(v string) *C
 	return s
 }
 
+// SetAliases sets the Aliases field's value.
+func (s *CreateFileSystemWindowsConfiguration) SetAliases(v []*string) *CreateFileSystemWindowsConfiguration {
+	s.Aliases = v
+	return s
+}
+
 // SetAutomaticBackupRetentionDays sets the AutomaticBackupRetentionDays field's value.
 func (s *CreateFileSystemWindowsConfiguration) SetAutomaticBackupRetentionDays(v int64) *CreateFileSystemWindowsConfiguration {
 	s.AutomaticBackupRetentionDays = &v
@@ -3509,9 +4226,36 @@ func (s *CreateFileSystemWindowsConfiguration) SetWeeklyMaintenanceStartTime(v s
 type DataRepositoryConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// Describes the file system's linked S3 data repository's AutoImportPolicy.
+	// The AutoImportPolicy configures how Amazon FSx keeps your file and directory
+	// listings up to date as you add or modify objects in your linked S3 bucket.
+	// AutoImportPolicy can have the following values:
+	//
+	//    * NONE - (Default) AutoImport is off. Amazon FSx only updates file and
+	//    directory listings from the linked S3 bucket when the file system is created.
+	//    FSx does not update file and directory listings for any new or changed
+	//    objects after choosing this option.
+	//
+	//    * NEW - AutoImport is on. Amazon FSx automatically imports directory listings
+	//    of any new objects added to the linked S3 bucket that do not currently
+	//    exist in the FSx file system.
+	//
+	//    * NEW_CHANGED - AutoImport is on. Amazon FSx automatically imports file
+	//    and directory listings of any new objects added to the S3 bucket and any
+	//    existing objects that are changed in the S3 bucket after you choose this
+	//    option.
+	//
+	// For more information, see Automatically import updates from your S3 bucket
+	// (https://docs.aws.amazon.com/fsx/latest/LustreGuide/autoimport-data-repo.html).
+	AutoImportPolicy *string `type:"string" enum:"AutoImportPolicyType"`
+
 	// The export path to the Amazon S3 bucket (and prefix) that you are using to
 	// store new and changed Lustre file system files in S3.
 	ExportPath *string `min:"3" type:"string"`
+
+	// Provides detailed information about the data respository if its Lifecycle
+	// is set to MISCONFIGURED.
+	FailureDetails *DataRepositoryFailureDetails `type:"structure"`
 
 	// The import path to the Amazon S3 bucket (and optional prefix) that you're
 	// using as the data repository for your FSx for Lustre file system, for example
@@ -3528,6 +4272,25 @@ type DataRepositoryConfiguration struct {
 	// The default chunk size is 1,024 MiB (1 GiB) and can go as high as 512,000
 	// MiB (500 GiB). Amazon S3 objects have a maximum size of 5 TB.
 	ImportedFileChunkSize *int64 `min:"1" type:"integer"`
+
+	// Describes the state of the file system's S3 durable data repository, if it
+	// is configured with an S3 repository. The lifecycle can have the following
+	// values:
+	//
+	//    * CREATING - The data repository configuration between the FSx file system
+	//    and the linked S3 data repository is being created. The data repository
+	//    is unavailable.
+	//
+	//    * AVAILABLE - The data repository is available for use.
+	//
+	//    * MISCONFIGURED - Amazon FSx cannot automatically import updates from
+	//    the S3 bucket until the data repository configuration is corrected. For
+	//    more information, see Troubleshooting a Misconfigured linked S3 bucket
+	//    (https://docs.aws.amazon.com/fsx/latest/LustreGuide/troubleshooting.html#troubleshooting-misconfigured-data-repository).
+	//
+	//    * UPDATING - The data repository is undergoing a customer initiated update
+	//    and availability may be impacted.
+	Lifecycle *string `type:"string" enum:"DataRepositoryLifecycle"`
 }
 
 // String returns the string representation
@@ -3540,9 +4303,21 @@ func (s DataRepositoryConfiguration) GoString() string {
 	return s.String()
 }
 
+// SetAutoImportPolicy sets the AutoImportPolicy field's value.
+func (s *DataRepositoryConfiguration) SetAutoImportPolicy(v string) *DataRepositoryConfiguration {
+	s.AutoImportPolicy = &v
+	return s
+}
+
 // SetExportPath sets the ExportPath field's value.
 func (s *DataRepositoryConfiguration) SetExportPath(v string) *DataRepositoryConfiguration {
 	s.ExportPath = &v
+	return s
+}
+
+// SetFailureDetails sets the FailureDetails field's value.
+func (s *DataRepositoryConfiguration) SetFailureDetails(v *DataRepositoryFailureDetails) *DataRepositoryConfiguration {
+	s.FailureDetails = v
 	return s
 }
 
@@ -3555,6 +4330,37 @@ func (s *DataRepositoryConfiguration) SetImportPath(v string) *DataRepositoryCon
 // SetImportedFileChunkSize sets the ImportedFileChunkSize field's value.
 func (s *DataRepositoryConfiguration) SetImportedFileChunkSize(v int64) *DataRepositoryConfiguration {
 	s.ImportedFileChunkSize = &v
+	return s
+}
+
+// SetLifecycle sets the Lifecycle field's value.
+func (s *DataRepositoryConfiguration) SetLifecycle(v string) *DataRepositoryConfiguration {
+	s.Lifecycle = &v
+	return s
+}
+
+// Provides detailed information about the data respository if its Lifecycle
+// is set to MISCONFIGURED.
+type DataRepositoryFailureDetails struct {
+	_ struct{} `type:"structure"`
+
+	// A detailed error message.
+	Message *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s DataRepositoryFailureDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DataRepositoryFailureDetails) GoString() string {
+	return s.String()
+}
+
+// SetMessage sets the Message field's value.
+func (s *DataRepositoryFailureDetails) SetMessage(v string) *DataRepositoryFailureDetails {
+	s.Message = &v
 	return s
 }
 
@@ -4048,9 +4854,9 @@ type DeleteBackupInput struct {
 	// BackupId is a required field
 	BackupId *string `min:"12" type:"string" required:"true"`
 
-	// (Optional) A string of up to 64 ASCII characters that Amazon FSx uses to
-	// ensure idempotent deletion. This is automatically filled on your behalf when
-	// using the AWS CLI or SDK.
+	// A string of up to 64 ASCII characters that Amazon FSx uses to ensure idempotent
+	// deletion. This is automatically filled on your behalf when using the AWS
+	// CLI or SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 }
 
@@ -4132,15 +4938,19 @@ func (s *DeleteBackupOutput) SetLifecycle(v string) *DeleteBackupOutput {
 type DeleteFileSystemInput struct {
 	_ struct{} `type:"structure"`
 
-	// (Optional) A string of up to 64 ASCII characters that Amazon FSx uses to
-	// ensure idempotent deletion. This is automatically filled on your behalf when
-	// using the AWS CLI or SDK.
+	// A string of up to 64 ASCII characters that Amazon FSx uses to ensure idempotent
+	// deletion. This is automatically filled on your behalf when using the AWS
+	// CLI or SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
 	// The ID of the file system you want to delete.
 	//
 	// FileSystemId is a required field
 	FileSystemId *string `min:"11" type:"string" required:"true"`
+
+	// The configuration object for the Amazon FSx for Lustre file system being
+	// deleted in the DeleteFileSystem operation.
+	LustreConfiguration *DeleteFileSystemLustreConfiguration `type:"structure"`
 
 	// The configuration object for the Microsoft Windows file system used in the
 	// DeleteFileSystem operation.
@@ -4169,6 +4979,11 @@ func (s *DeleteFileSystemInput) Validate() error {
 	if s.FileSystemId != nil && len(*s.FileSystemId) < 11 {
 		invalidParams.Add(request.NewErrParamMinLen("FileSystemId", 11))
 	}
+	if s.LustreConfiguration != nil {
+		if err := s.LustreConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("LustreConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.WindowsConfiguration != nil {
 		if err := s.WindowsConfiguration.Validate(); err != nil {
 			invalidParams.AddNested("WindowsConfiguration", err.(request.ErrInvalidParams))
@@ -4193,9 +5008,112 @@ func (s *DeleteFileSystemInput) SetFileSystemId(v string) *DeleteFileSystemInput
 	return s
 }
 
+// SetLustreConfiguration sets the LustreConfiguration field's value.
+func (s *DeleteFileSystemInput) SetLustreConfiguration(v *DeleteFileSystemLustreConfiguration) *DeleteFileSystemInput {
+	s.LustreConfiguration = v
+	return s
+}
+
 // SetWindowsConfiguration sets the WindowsConfiguration field's value.
 func (s *DeleteFileSystemInput) SetWindowsConfiguration(v *DeleteFileSystemWindowsConfiguration) *DeleteFileSystemInput {
 	s.WindowsConfiguration = v
+	return s
+}
+
+// The configuration object for the Amazon FSx for Lustre file system being
+// deleted in the DeleteFileSystem operation.
+type DeleteFileSystemLustreConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Use if SkipFinalBackup is set to false, and you want to apply an array of
+	// tags to the final backup. If you have set the file system property CopyTagsToBackups
+	// to true, and you specify one or more FinalBackupTags when deleting a file
+	// system, Amazon FSx will not copy any existing file system tags to the backup.
+	FinalBackupTags []*Tag `min:"1" type:"list"`
+
+	// Set SkipFinalBackup to false if you want to take a final backup of the file
+	// system you are deleting. By default, Amazon FSx will not take a final backup
+	// on your behalf when the DeleteFileSystem operation is invoked. (Default =
+	// true)
+	SkipFinalBackup *bool `type:"boolean"`
+}
+
+// String returns the string representation
+func (s DeleteFileSystemLustreConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteFileSystemLustreConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteFileSystemLustreConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteFileSystemLustreConfiguration"}
+	if s.FinalBackupTags != nil && len(s.FinalBackupTags) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FinalBackupTags", 1))
+	}
+	if s.FinalBackupTags != nil {
+		for i, v := range s.FinalBackupTags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "FinalBackupTags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFinalBackupTags sets the FinalBackupTags field's value.
+func (s *DeleteFileSystemLustreConfiguration) SetFinalBackupTags(v []*Tag) *DeleteFileSystemLustreConfiguration {
+	s.FinalBackupTags = v
+	return s
+}
+
+// SetSkipFinalBackup sets the SkipFinalBackup field's value.
+func (s *DeleteFileSystemLustreConfiguration) SetSkipFinalBackup(v bool) *DeleteFileSystemLustreConfiguration {
+	s.SkipFinalBackup = &v
+	return s
+}
+
+// The response object for the Amazon FSx for Lustre file system being deleted
+// in the DeleteFileSystem operation.
+type DeleteFileSystemLustreResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the final backup for this file system.
+	FinalBackupId *string `min:"12" type:"string"`
+
+	// The set of tags applied to the final backup.
+	FinalBackupTags []*Tag `min:"1" type:"list"`
+}
+
+// String returns the string representation
+func (s DeleteFileSystemLustreResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteFileSystemLustreResponse) GoString() string {
+	return s.String()
+}
+
+// SetFinalBackupId sets the FinalBackupId field's value.
+func (s *DeleteFileSystemLustreResponse) SetFinalBackupId(v string) *DeleteFileSystemLustreResponse {
+	s.FinalBackupId = &v
+	return s
+}
+
+// SetFinalBackupTags sets the FinalBackupTags field's value.
+func (s *DeleteFileSystemLustreResponse) SetFinalBackupTags(v []*Tag) *DeleteFileSystemLustreResponse {
+	s.FinalBackupTags = v
 	return s
 }
 
@@ -4208,6 +5126,10 @@ type DeleteFileSystemOutput struct {
 
 	// The file system lifecycle for the deletion request. Should be DELETING.
 	Lifecycle *string `type:"string" enum:"FileSystemLifecycle"`
+
+	// The response object for the Amazon FSx for Lustre file system being deleted
+	// in the DeleteFileSystem operation.
+	LustreResponse *DeleteFileSystemLustreResponse `type:"structure"`
 
 	// The response object for the Microsoft Windows file system used in the DeleteFileSystem
 	// operation.
@@ -4233,6 +5155,12 @@ func (s *DeleteFileSystemOutput) SetFileSystemId(v string) *DeleteFileSystemOutp
 // SetLifecycle sets the Lifecycle field's value.
 func (s *DeleteFileSystemOutput) SetLifecycle(v string) *DeleteFileSystemOutput {
 	s.Lifecycle = &v
+	return s
+}
+
+// SetLustreResponse sets the LustreResponse field's value.
+func (s *DeleteFileSystemOutput) SetLustreResponse(v *DeleteFileSystemLustreResponse) *DeleteFileSystemOutput {
+	s.LustreResponse = v
 	return s
 }
 
@@ -4340,22 +5268,22 @@ func (s *DeleteFileSystemWindowsResponse) SetFinalBackupTags(v []*Tag) *DeleteFi
 type DescribeBackupsInput struct {
 	_ struct{} `type:"structure"`
 
-	// (Optional) IDs of the backups you want to retrieve (String). This overrides
-	// any filters. If any IDs are not found, BackupNotFound will be thrown.
+	// IDs of the backups you want to retrieve (String). This overrides any filters.
+	// If any IDs are not found, BackupNotFound will be thrown.
 	BackupIds []*string `type:"list"`
 
-	// (Optional) Filters structure. Supported names are file-system-id and backup-type.
+	// Filters structure. Supported names are file-system-id and backup-type.
 	Filters []*Filter `type:"list"`
 
-	// (Optional) Maximum number of backups to return in the response (integer).
-	// This parameter value must be greater than 0. The number of items that Amazon
-	// FSx returns is the minimum of the MaxResults parameter specified in the request
-	// and the service's internal maximum number of items per page.
+	// Maximum number of backups to return in the response (integer). This parameter
+	// value must be greater than 0. The number of items that Amazon FSx returns
+	// is the minimum of the MaxResults parameter specified in the request and the
+	// service's internal maximum number of items per page.
 	MaxResults *int64 `min:"1" type:"integer"`
 
-	// (Optional) Opaque pagination token returned from a previous DescribeBackups
-	// operation (String). If a token present, the action continues the list from
-	// where the returning call left off.
+	// Opaque pagination token returned from a previous DescribeBackups operation
+	// (String). If a token present, the action continues the list from where the
+	// returning call left off.
 	NextToken *string `min:"1" type:"string"`
 }
 
@@ -4548,23 +5476,142 @@ func (s *DescribeDataRepositoryTasksOutput) SetNextToken(v string) *DescribeData
 	return s
 }
 
+// The request object for DescribeFileSystemAliases operation.
+type DescribeFileSystemAliasesInput struct {
+	_ struct{} `type:"structure"`
+
+	// (Optional) An idempotency token for resource creation, in a string of up
+	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// when you use the AWS Command Line Interface (AWS CLI) or an AWS SDK.
+	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
+
+	// The ID of the file system to return the associated DNS aliases for (String).
+	//
+	// FileSystemId is a required field
+	FileSystemId *string `min:"11" type:"string" required:"true"`
+
+	// Maximum number of DNS aliases to return in the response (integer). This parameter
+	// value must be greater than 0. The number of items that Amazon FSx returns
+	// is the minimum of the MaxResults parameter specified in the request and the
+	// service's internal maximum number of items per page.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// Opaque pagination token returned from a previous DescribeFileSystemAliases
+	// operation (String). If a token is included in the request, the action continues
+	// the list from where the previous returning call left off.
+	NextToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeFileSystemAliasesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeFileSystemAliasesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeFileSystemAliasesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeFileSystemAliasesInput"}
+	if s.ClientRequestToken != nil && len(*s.ClientRequestToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientRequestToken", 1))
+	}
+	if s.FileSystemId == nil {
+		invalidParams.Add(request.NewErrParamRequired("FileSystemId"))
+	}
+	if s.FileSystemId != nil && len(*s.FileSystemId) < 11 {
+		invalidParams.Add(request.NewErrParamMinLen("FileSystemId", 11))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientRequestToken sets the ClientRequestToken field's value.
+func (s *DescribeFileSystemAliasesInput) SetClientRequestToken(v string) *DescribeFileSystemAliasesInput {
+	s.ClientRequestToken = &v
+	return s
+}
+
+// SetFileSystemId sets the FileSystemId field's value.
+func (s *DescribeFileSystemAliasesInput) SetFileSystemId(v string) *DescribeFileSystemAliasesInput {
+	s.FileSystemId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeFileSystemAliasesInput) SetMaxResults(v int64) *DescribeFileSystemAliasesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeFileSystemAliasesInput) SetNextToken(v string) *DescribeFileSystemAliasesInput {
+	s.NextToken = &v
+	return s
+}
+
+// The response object for DescribeFileSystemAliases operation.
+type DescribeFileSystemAliasesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An array of one or more DNS aliases currently associated with the specified
+	// file system.
+	Aliases []*Alias `type:"list"`
+
+	// Present if there are more DNS aliases than returned in the response (String).
+	// You can use the NextToken value in a later request to fetch additional descriptions.
+	NextToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeFileSystemAliasesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeFileSystemAliasesOutput) GoString() string {
+	return s.String()
+}
+
+// SetAliases sets the Aliases field's value.
+func (s *DescribeFileSystemAliasesOutput) SetAliases(v []*Alias) *DescribeFileSystemAliasesOutput {
+	s.Aliases = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeFileSystemAliasesOutput) SetNextToken(v string) *DescribeFileSystemAliasesOutput {
+	s.NextToken = &v
+	return s
+}
+
 // The request object for DescribeFileSystems operation.
 type DescribeFileSystemsInput struct {
 	_ struct{} `type:"structure"`
 
-	// (Optional) IDs of the file systems whose descriptions you want to retrieve
-	// (String).
+	// IDs of the file systems whose descriptions you want to retrieve (String).
 	FileSystemIds []*string `type:"list"`
 
-	// (Optional) Maximum number of file systems to return in the response (integer).
-	// This parameter value must be greater than 0. The number of items that Amazon
-	// FSx returns is the minimum of the MaxResults parameter specified in the request
+	// Maximum number of file systems to return in the response (integer). This
+	// parameter value must be greater than 0. The number of items that Amazon FSx
+	// returns is the minimum of the MaxResults parameter specified in the request
 	// and the service's internal maximum number of items per page.
 	MaxResults *int64 `min:"1" type:"integer"`
 
-	// (Optional) Opaque pagination token returned from a previous DescribeFileSystems
-	// operation (String). If a token present, the action continues the list from
-	// where the returning call left off.
+	// Opaque pagination token returned from a previous DescribeFileSystems operation
+	// (String). If a token present, the action continues the list from where the
+	// returning call left off.
 	NextToken *string `min:"1" type:"string"`
 }
 
@@ -4646,6 +5693,105 @@ func (s *DescribeFileSystemsOutput) SetNextToken(v string) *DescribeFileSystemsO
 	return s
 }
 
+// The request object of DNS aliases to disassociate from an Amazon FSx for
+// Windows File Server file system.
+type DisassociateFileSystemAliasesInput struct {
+	_ struct{} `type:"structure"`
+
+	// An array of one or more DNS alias names to disassociate, or remove, from
+	// the file system.
+	//
+	// Aliases is a required field
+	Aliases []*string `type:"list" required:"true"`
+
+	// (Optional) An idempotency token for resource creation, in a string of up
+	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// when you use the AWS Command Line Interface (AWS CLI) or an AWS SDK.
+	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
+
+	// Specifies the file system from which to disassociate the DNS aliases.
+	//
+	// FileSystemId is a required field
+	FileSystemId *string `min:"11" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DisassociateFileSystemAliasesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisassociateFileSystemAliasesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DisassociateFileSystemAliasesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DisassociateFileSystemAliasesInput"}
+	if s.Aliases == nil {
+		invalidParams.Add(request.NewErrParamRequired("Aliases"))
+	}
+	if s.ClientRequestToken != nil && len(*s.ClientRequestToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientRequestToken", 1))
+	}
+	if s.FileSystemId == nil {
+		invalidParams.Add(request.NewErrParamRequired("FileSystemId"))
+	}
+	if s.FileSystemId != nil && len(*s.FileSystemId) < 11 {
+		invalidParams.Add(request.NewErrParamMinLen("FileSystemId", 11))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAliases sets the Aliases field's value.
+func (s *DisassociateFileSystemAliasesInput) SetAliases(v []*string) *DisassociateFileSystemAliasesInput {
+	s.Aliases = v
+	return s
+}
+
+// SetClientRequestToken sets the ClientRequestToken field's value.
+func (s *DisassociateFileSystemAliasesInput) SetClientRequestToken(v string) *DisassociateFileSystemAliasesInput {
+	s.ClientRequestToken = &v
+	return s
+}
+
+// SetFileSystemId sets the FileSystemId field's value.
+func (s *DisassociateFileSystemAliasesInput) SetFileSystemId(v string) *DisassociateFileSystemAliasesInput {
+	s.FileSystemId = &v
+	return s
+}
+
+// The system generated response showing the DNS aliases that Amazon FSx is
+// attempting to disassociate from the file system. Use the API operation to
+// monitor the status of the aliases Amazon FSx is removing from the file system.
+type DisassociateFileSystemAliasesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An array of one or more DNS aliases that Amazon FSx is attempting to disassociate
+	// from the file system.
+	Aliases []*Alias `type:"list"`
+}
+
+// String returns the string representation
+func (s DisassociateFileSystemAliasesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisassociateFileSystemAliasesOutput) GoString() string {
+	return s.String()
+}
+
+// SetAliases sets the Aliases field's value.
+func (s *DisassociateFileSystemAliasesOutput) SetAliases(v []*Alias) *DisassociateFileSystemAliasesOutput {
+	s.Aliases = v
+	return s
+}
+
 // A description of a specific Amazon FSx file system.
 type FileSystem struct {
 	_ struct{} `type:"structure"`
@@ -4724,7 +5870,7 @@ type FileSystem struct {
 	// The Amazon Resource Name (ARN) for the file system resource.
 	ResourceARN *string `min:"8" type:"string"`
 
-	// The storage capacity of the file system in gigabytes (GB).
+	// The storage capacity of the file system in gibibytes (GiB).
 	StorageCapacity *int64 `type:"integer"`
 
 	// The storage type of the file system. Valid values are SSD and HDD. If set
@@ -5362,15 +6508,15 @@ func (s *InvalidPerUnitStorageThroughput) RequestID() string {
 type ListTagsForResourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// (Optional) Maximum number of tags to return in the response (integer). This
-	// parameter value must be greater than 0. The number of items that Amazon FSx
-	// returns is the minimum of the MaxResults parameter specified in the request
-	// and the service's internal maximum number of items per page.
+	// Maximum number of tags to return in the response (integer). This parameter
+	// value must be greater than 0. The number of items that Amazon FSx returns
+	// is the minimum of the MaxResults parameter specified in the request and the
+	// service's internal maximum number of items per page.
 	MaxResults *int64 `min:"1" type:"integer"`
 
-	// (Optional) Opaque pagination token returned from a previous ListTagsForResource
-	// operation (String). If a token present, the action continues the list from
-	// where the returning call left off.
+	// Opaque pagination token returned from a previous ListTagsForResource operation
+	// (String). If a token present, the action continues the list from where the
+	// returning call left off.
 	NextToken *string `min:"1" type:"string"`
 
 	// The ARN of the Amazon FSx resource that will have its tags listed.
@@ -5467,12 +6613,50 @@ func (s *ListTagsForResourceOutput) SetTags(v []*Tag) *ListTagsForResourceOutput
 type LustreFileSystemConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// The number of days to retain automatic backups. Setting this to 0 disables
+	// automatic backups. You can retain automatic backups for a maximum of 90 days.
+	// The default is 0.
+	AutomaticBackupRetentionDays *int64 `type:"integer"`
+
+	// A boolean flag indicating whether tags on the file system should be copied
+	// to backups. If it's set to true, all tags on the file system are copied to
+	// all automatic backups and any user-initiated backups where the user doesn't
+	// specify any tags. If this value is true, and you specify one or more tags,
+	// only the specified tags are copied to backups. If you specify one or more
+	// tags when creating a user-initiated backup, no tags are copied from the file
+	// system, regardless of this value. (Default = false)
+	CopyTagsToBackups *bool `type:"boolean"`
+
+	// A recurring daily time, in the format HH:MM. HH is the zero-padded hour of
+	// the day (0-23), and MM is the zero-padded minute of the hour. For example,
+	// 05:00 specifies 5 AM daily.
+	DailyAutomaticBackupStartTime *string `min:"5" type:"string"`
+
 	// The data repository configuration object for Lustre file systems returned
 	// in the response of the CreateFileSystem operation.
 	DataRepositoryConfiguration *DataRepositoryConfiguration `type:"structure"`
 
-	// The deployment type of the FSX for Lustre file system.
+	// The deployment type of the FSX for Lustre file system. Scratch deployment
+	// type is designed for temporary storage and shorter-term processing of data.
+	//
+	// SCRATCH_1 and SCRATCH_2 deployment types are best suited for when you need
+	// temporary storage and shorter-term processing of data. The SCRATCH_2 deployment
+	// type provides in-transit encryption of data and higher burst throughput capacity
+	// than SCRATCH_1.
+	//
+	// The PERSISTENT_1 deployment type is used for longer-term storage and workloads
+	// and encryption of data in transit. To learn more about deployment types,
+	// see FSx for Lustre Deployment Options (https://docs.aws.amazon.com/fsx/latest/LustreGuide/lustre-deployment-types.html).
+	// (Default = SCRATCH_1)
 	DeploymentType *string `type:"string" enum:"LustreDeploymentType"`
+
+	// The type of drive cache used by PERSISTENT_1 file systems that are provisioned
+	// with HDD storage devices. This parameter is required when storage type is
+	// HDD. Set to READ, improve the performance for frequently accessed files and
+	// allows 20% of the total storage capacity of the file system to be cached.
+	//
+	// This parameter is required when StorageType is set to HDD.
+	DriveCacheType *string `type:"string" enum:"DriveCacheType"`
 
 	// You use the MountName value when mounting the file system.
 	//
@@ -5484,9 +6668,11 @@ type LustreFileSystemConfiguration struct {
 	// Per unit storage throughput represents the megabytes per second of read or
 	// write throughput per 1 tebibyte of storage provisioned. File system throughput
 	// capacity is equal to Storage capacity (TiB) * PerUnitStorageThroughput (MB/s/TiB).
-	// This option is only valid for PERSISTENT_1 deployment types. Valid values
-	// are 50, 100, 200.
-	PerUnitStorageThroughput *int64 `min:"50" type:"integer"`
+	// This option is only valid for PERSISTENT_1 deployment types.
+	//
+	// Valid values for SSD storage: 50, 100, 200. Valid values for HDD storage:
+	// 12, 40.
+	PerUnitStorageThroughput *int64 `min:"12" type:"integer"`
 
 	// The preferred start time to perform weekly maintenance, formatted d:HH:MM
 	// in the UTC time zone. d is the weekday number, from 1 through 7, beginning
@@ -5504,6 +6690,24 @@ func (s LustreFileSystemConfiguration) GoString() string {
 	return s.String()
 }
 
+// SetAutomaticBackupRetentionDays sets the AutomaticBackupRetentionDays field's value.
+func (s *LustreFileSystemConfiguration) SetAutomaticBackupRetentionDays(v int64) *LustreFileSystemConfiguration {
+	s.AutomaticBackupRetentionDays = &v
+	return s
+}
+
+// SetCopyTagsToBackups sets the CopyTagsToBackups field's value.
+func (s *LustreFileSystemConfiguration) SetCopyTagsToBackups(v bool) *LustreFileSystemConfiguration {
+	s.CopyTagsToBackups = &v
+	return s
+}
+
+// SetDailyAutomaticBackupStartTime sets the DailyAutomaticBackupStartTime field's value.
+func (s *LustreFileSystemConfiguration) SetDailyAutomaticBackupStartTime(v string) *LustreFileSystemConfiguration {
+	s.DailyAutomaticBackupStartTime = &v
+	return s
+}
+
 // SetDataRepositoryConfiguration sets the DataRepositoryConfiguration field's value.
 func (s *LustreFileSystemConfiguration) SetDataRepositoryConfiguration(v *DataRepositoryConfiguration) *LustreFileSystemConfiguration {
 	s.DataRepositoryConfiguration = v
@@ -5513,6 +6717,12 @@ func (s *LustreFileSystemConfiguration) SetDataRepositoryConfiguration(v *DataRe
 // SetDeploymentType sets the DeploymentType field's value.
 func (s *LustreFileSystemConfiguration) SetDeploymentType(v string) *LustreFileSystemConfiguration {
 	s.DeploymentType = &v
+	return s
+}
+
+// SetDriveCacheType sets the DriveCacheType field's value.
+func (s *LustreFileSystemConfiguration) SetDriveCacheType(v string) *LustreFileSystemConfiguration {
+	s.DriveCacheType = &v
 	return s
 }
 
@@ -6129,13 +7339,17 @@ type Tag struct {
 
 	// A value that specifies the TagKey, the name of the tag. Tag keys must be
 	// unique for the resource to which they are attached.
-	Key *string `min:"1" type:"string"`
+	//
+	// Key is a required field
+	Key *string `min:"1" type:"string" required:"true"`
 
 	// A value that specifies the TagValue, the value assigned to the corresponding
 	// tag key. Tag values can be null and don't have to be unique in a tag set.
 	// For example, you can have a key-value pair in a tag set of finances : April
 	// and also of payroll : April.
-	Value *string `type:"string"`
+	//
+	// Value is a required field
+	Value *string `type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -6151,8 +7365,14 @@ func (s Tag) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *Tag) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "Tag"}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
 	if s.Key != nil && len(*s.Key) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Key", 1))
+	}
+	if s.Value == nil {
+		invalidParams.Add(request.NewErrParamRequired("Value"))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -6409,14 +7629,33 @@ type UpdateFileSystemInput struct {
 	// UpdateFileSystem operation.
 	LustreConfiguration *UpdateFileSystemLustreConfiguration `type:"structure"`
 
-	// Use this parameter to increase the storage capacity of an Amazon FSx for
-	// Windows File Server file system. Specifies the storage capacity target value,
-	// GiB, for the file system you're updating. The storage capacity target value
-	// must be at least 10 percent (%) greater than the current storage capacity
-	// value. In order to increase storage capacity, the file system needs to have
-	// at least 16 MB/s of throughput capacity. You cannot make a storage capacity
-	// increase request if there is an existing storage capacity increase request
-	// in progress. For more information, see Managing Storage Capacity (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-storage-capacity.html).
+	// Use this parameter to increase the storage capacity of an Amazon FSx file
+	// system. Specifies the storage capacity target value, GiB, to increase the
+	// storage capacity for the file system that you're updating. You cannot make
+	// a storage capacity increase request if there is an existing storage capacity
+	// increase request in progress.
+	//
+	// For Windows file systems, the storage capacity target value must be at least
+	// 10 percent (%) greater than the current storage capacity value. In order
+	// to increase storage capacity, the file system must have at least 16 MB/s
+	// of throughput capacity.
+	//
+	// For Lustre file systems, the storage capacity target value can be the following:
+	//
+	//    * For SCRATCH_2 and PERSISTENT_1 SSD deployment types, valid values are
+	//    in multiples of 2400 GiB. The value must be greater than the current storage
+	//    capacity.
+	//
+	//    * For PERSISTENT HDD file systems, valid values are multiples of 6000
+	//    GiB for 12 MB/s/TiB file systems and multiples of 1800 GiB for 40 MB/s/TiB
+	//    file systems. The values must be greater than the current storage capacity.
+	//
+	//    * For SCRATCH_1 file systems, you cannot increase the storage capacity.
+	//
+	// For more information, see Managing storage capacity (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-storage-capacity.html)
+	// in the Amazon FSx for Windows File Server User Guide and Managing storage
+	// and throughput capacity (https://docs.aws.amazon.com/fsx/latest/LustreGuide/managing-storage-capacity.html)
+	// in the Amazon FSx for Lustre User Guide.
 	StorageCapacity *int64 `type:"integer"`
 
 	// The configuration updates for an Amazon FSx for Windows File Server file
@@ -6498,9 +7737,42 @@ func (s *UpdateFileSystemInput) SetWindowsConfiguration(v *UpdateFileSystemWindo
 type UpdateFileSystemLustreConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// The preferred start time to perform weekly maintenance, formatted d:HH:MM
-	// in the UTC time zone. d is the weekday number, from 1 through 7, beginning
-	// with Monday and ending with Sunday.
+	// (Optional) When you create your file system, your existing S3 objects appear
+	// as file and directory listings. Use this property to choose how Amazon FSx
+	// keeps your file and directory listing up to date as you add or modify objects
+	// in your linked S3 bucket. AutoImportPolicy can have the following values:
+	//
+	//    * NONE - (Default) AutoImport is off. Amazon FSx only updates file and
+	//    directory listings from the linked S3 bucket when the file system is created.
+	//    FSx does not update the file and directory listing for any new or changed
+	//    objects after choosing this option.
+	//
+	//    * NEW - AutoImport is on. Amazon FSx automatically imports directory listings
+	//    of any new objects added to the linked S3 bucket that do not currently
+	//    exist in the FSx file system.
+	//
+	//    * NEW_CHANGED - AutoImport is on. Amazon FSx automatically imports file
+	//    and directory listings of any new objects added to the S3 bucket and any
+	//    existing objects that are changed in the S3 bucket after you choose this
+	//    option.
+	//
+	// For more information, see Automatically import updates from your S3 bucket
+	// (https://docs.aws.amazon.com/fsx/latest/LustreGuide/autoimport-data-repo.html).
+	AutoImportPolicy *string `type:"string" enum:"AutoImportPolicyType"`
+
+	// The number of days to retain automatic backups. Setting this to 0 disables
+	// automatic backups. You can retain automatic backups for a maximum of 90 days.
+	// The default is 0.
+	AutomaticBackupRetentionDays *int64 `type:"integer"`
+
+	// A recurring daily time, in the format HH:MM. HH is the zero-padded hour of
+	// the day (0-23), and MM is the zero-padded minute of the hour. For example,
+	// 05:00 specifies 5 AM daily.
+	DailyAutomaticBackupStartTime *string `min:"5" type:"string"`
+
+	// (Optional) The preferred start time to perform weekly maintenance, formatted
+	// d:HH:MM in the UTC time zone. d is the weekday number, from 1 through 7,
+	// beginning with Monday and ending with Sunday.
 	WeeklyMaintenanceStartTime *string `min:"7" type:"string"`
 }
 
@@ -6517,6 +7789,9 @@ func (s UpdateFileSystemLustreConfiguration) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *UpdateFileSystemLustreConfiguration) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "UpdateFileSystemLustreConfiguration"}
+	if s.DailyAutomaticBackupStartTime != nil && len(*s.DailyAutomaticBackupStartTime) < 5 {
+		invalidParams.Add(request.NewErrParamMinLen("DailyAutomaticBackupStartTime", 5))
+	}
 	if s.WeeklyMaintenanceStartTime != nil && len(*s.WeeklyMaintenanceStartTime) < 7 {
 		invalidParams.Add(request.NewErrParamMinLen("WeeklyMaintenanceStartTime", 7))
 	}
@@ -6525,6 +7800,24 @@ func (s *UpdateFileSystemLustreConfiguration) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAutoImportPolicy sets the AutoImportPolicy field's value.
+func (s *UpdateFileSystemLustreConfiguration) SetAutoImportPolicy(v string) *UpdateFileSystemLustreConfiguration {
+	s.AutoImportPolicy = &v
+	return s
+}
+
+// SetAutomaticBackupRetentionDays sets the AutomaticBackupRetentionDays field's value.
+func (s *UpdateFileSystemLustreConfiguration) SetAutomaticBackupRetentionDays(v int64) *UpdateFileSystemLustreConfiguration {
+	s.AutomaticBackupRetentionDays = &v
+	return s
+}
+
+// SetDailyAutomaticBackupStartTime sets the DailyAutomaticBackupStartTime field's value.
+func (s *UpdateFileSystemLustreConfiguration) SetDailyAutomaticBackupStartTime(v string) *UpdateFileSystemLustreConfiguration {
+	s.DailyAutomaticBackupStartTime = &v
+	return s
 }
 
 // SetWeeklyMaintenanceStartTime sets the WeeklyMaintenanceStartTime field's value.
@@ -6565,7 +7858,7 @@ type UpdateFileSystemWindowsConfiguration struct {
 
 	// The number of days to retain automatic daily backups. Setting this to zero
 	// (0) disables automatic daily backups. You can retain automatic daily backups
-	// for a maximum of 35 days. For more information, see Working with Automatic
+	// for a maximum of 90 days. For more information, see Working with Automatic
 	// Daily Backups (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/using-backups.html#automatic-backups).
 	AutomaticBackupRetentionDays *int64 `type:"integer"`
 
@@ -6664,8 +7957,19 @@ type WindowsFileSystemConfiguration struct {
 	// system should join when it's created.
 	ActiveDirectoryId *string `min:"12" type:"string"`
 
+	// An array of one or more DNS aliases that are currently associated with the
+	// Amazon FSx file system. Aliases allow you to use existing DNS names to access
+	// the data in your Amazon FSx file system. You can associate up to 50 aliases
+	// with a file system at any time. You can associate additional DNS aliases
+	// after you create the file system using the AssociateFileSystemAliases operation.
+	// You can remove DNS aliases from the file system after it is created using
+	// the DisassociateFileSystemAliases operation. You only need to specify the
+	// alias name in the request payload. For more information, see DNS aliases
+	// (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-dns-aliases.html).
+	Aliases []*Alias `type:"list"`
+
 	// The number of days to retain automatic backups. Setting this to 0 disables
-	// automatic backups. You can retain automatic backups for a maximum of 35 days.
+	// automatic backups. You can retain automatic backups for a maximum of 90 days.
 	AutomaticBackupRetentionDays *int64 `type:"integer"`
 
 	// A boolean flag indicating whether tags on the file system should be copied
@@ -6760,6 +8064,12 @@ func (s *WindowsFileSystemConfiguration) SetActiveDirectoryId(v string) *Windows
 	return s
 }
 
+// SetAliases sets the Aliases field's value.
+func (s *WindowsFileSystemConfiguration) SetAliases(v []*Alias) *WindowsFileSystemConfiguration {
+	s.Aliases = v
+	return s
+}
+
 // SetAutomaticBackupRetentionDays sets the AutomaticBackupRetentionDays field's value.
 func (s *WindowsFileSystemConfiguration) SetAutomaticBackupRetentionDays(v int64) *WindowsFileSystemConfiguration {
 	s.AutomaticBackupRetentionDays = &v
@@ -6846,28 +8156,127 @@ const (
 	ActiveDirectoryErrorTypeInvalidDomainStage = "INVALID_DOMAIN_STAGE"
 )
 
+// ActiveDirectoryErrorType_Values returns all elements of the ActiveDirectoryErrorType enum
+func ActiveDirectoryErrorType_Values() []string {
+	return []string{
+		ActiveDirectoryErrorTypeDomainNotFound,
+		ActiveDirectoryErrorTypeIncompatibleDomainMode,
+		ActiveDirectoryErrorTypeWrongVpc,
+		ActiveDirectoryErrorTypeInvalidDomainStage,
+	}
+}
+
 // Describes the type of administrative action, as follows:
 //
 //    * FILE_SYSTEM_UPDATE - A file system update administrative action initiated
 //    by the user from the Amazon FSx console, API (UpdateFileSystem), or CLI
-//    (update-file-system). A
+//    (update-file-system).
 //
 //    * STORAGE_OPTIMIZATION - Once the FILE_SYSTEM_UPDATE task to increase
 //    a file system's storage capacity completes successfully, a STORAGE_OPTIMIZATION
-//    task starts. Storage optimization is the process of migrating the file
-//    system data to the new, larger disks. You can track the storage migration
-//    progress using the ProgressPercent property. When STORAGE_OPTIMIZATION
-//    completes successfully, the parent FILE_SYSTEM_UPDATE action status changes
-//    to COMPLETED. For more information, see Managing Storage Capacity (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-storage-capacity.html).
+//    task starts. For Windows, storage optimization is the process of migrating
+//    the file system data to the new, larger disks. For Lustre, storage optimization
+//    consists of rebalancing the data across the existing and newly added file
+//    servers. You can track the storage optimization progress using the ProgressPercent
+//    property. When STORAGE_OPTIMIZATION completes successfully, the parent
+//    FILE_SYSTEM_UPDATE action status changes to COMPLETED. For more information,
+//    see Managing storage capacity (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-storage-capacity.html)
+//    in the Amazon FSx for Windows File Server User Guide and Managing storage
+//    and throughput capacity (https://docs.aws.amazon.com/fsx/latest/LustreGuide/managing-storage-capacity.html)
+//    in the Amazon FSx for Lustre User Guide.
+//
+//    * FILE_SYSTEM_ALIAS_ASSOCIATION - A file system update to associate a
+//    new DNS alias with the file system. For more information, see .
+//
+//    * FILE_SYSTEM_ALIAS_DISASSOCIATION - A file system update to disassociate
+//    a DNS alias from the file system. For more information, see .
 const (
 	// AdministrativeActionTypeFileSystemUpdate is a AdministrativeActionType enum value
 	AdministrativeActionTypeFileSystemUpdate = "FILE_SYSTEM_UPDATE"
 
 	// AdministrativeActionTypeStorageOptimization is a AdministrativeActionType enum value
 	AdministrativeActionTypeStorageOptimization = "STORAGE_OPTIMIZATION"
+
+	// AdministrativeActionTypeFileSystemAliasAssociation is a AdministrativeActionType enum value
+	AdministrativeActionTypeFileSystemAliasAssociation = "FILE_SYSTEM_ALIAS_ASSOCIATION"
+
+	// AdministrativeActionTypeFileSystemAliasDisassociation is a AdministrativeActionType enum value
+	AdministrativeActionTypeFileSystemAliasDisassociation = "FILE_SYSTEM_ALIAS_DISASSOCIATION"
 )
 
+// AdministrativeActionType_Values returns all elements of the AdministrativeActionType enum
+func AdministrativeActionType_Values() []string {
+	return []string{
+		AdministrativeActionTypeFileSystemUpdate,
+		AdministrativeActionTypeStorageOptimization,
+		AdministrativeActionTypeFileSystemAliasAssociation,
+		AdministrativeActionTypeFileSystemAliasDisassociation,
+	}
+}
+
+const (
+	// AliasLifecycleAvailable is a AliasLifecycle enum value
+	AliasLifecycleAvailable = "AVAILABLE"
+
+	// AliasLifecycleCreating is a AliasLifecycle enum value
+	AliasLifecycleCreating = "CREATING"
+
+	// AliasLifecycleDeleting is a AliasLifecycle enum value
+	AliasLifecycleDeleting = "DELETING"
+
+	// AliasLifecycleCreateFailed is a AliasLifecycle enum value
+	AliasLifecycleCreateFailed = "CREATE_FAILED"
+
+	// AliasLifecycleDeleteFailed is a AliasLifecycle enum value
+	AliasLifecycleDeleteFailed = "DELETE_FAILED"
+)
+
+// AliasLifecycle_Values returns all elements of the AliasLifecycle enum
+func AliasLifecycle_Values() []string {
+	return []string{
+		AliasLifecycleAvailable,
+		AliasLifecycleCreating,
+		AliasLifecycleDeleting,
+		AliasLifecycleCreateFailed,
+		AliasLifecycleDeleteFailed,
+	}
+}
+
+const (
+	// AutoImportPolicyTypeNone is a AutoImportPolicyType enum value
+	AutoImportPolicyTypeNone = "NONE"
+
+	// AutoImportPolicyTypeNew is a AutoImportPolicyType enum value
+	AutoImportPolicyTypeNew = "NEW"
+
+	// AutoImportPolicyTypeNewChanged is a AutoImportPolicyType enum value
+	AutoImportPolicyTypeNewChanged = "NEW_CHANGED"
+)
+
+// AutoImportPolicyType_Values returns all elements of the AutoImportPolicyType enum
+func AutoImportPolicyType_Values() []string {
+	return []string{
+		AutoImportPolicyTypeNone,
+		AutoImportPolicyTypeNew,
+		AutoImportPolicyTypeNewChanged,
+	}
+}
+
 // The lifecycle status of the backup.
+//
+//    * AVAILABLE - The backup is fully available.
+//
+//    * PENDING - For user-initiated backups on Lustre file systems only; Amazon
+//    FSx has not started creating the backup.
+//
+//    * CREATING - Amazon FSx is creating the new user-intiated backup
+//
+//    * TRANSFERRING - For user-initiated backups on Lustre file systems only;
+//    Amazon FSx is backing up the file system.
+//
+//    * DELETED - Amazon FSx deleted the backup and it is no longer available.
+//
+//    * FAILED - Amazon FSx could not complete the backup.
 const (
 	// BackupLifecycleAvailable is a BackupLifecycle enum value
 	BackupLifecycleAvailable = "AVAILABLE"
@@ -6875,12 +8284,30 @@ const (
 	// BackupLifecycleCreating is a BackupLifecycle enum value
 	BackupLifecycleCreating = "CREATING"
 
+	// BackupLifecycleTransferring is a BackupLifecycle enum value
+	BackupLifecycleTransferring = "TRANSFERRING"
+
 	// BackupLifecycleDeleted is a BackupLifecycle enum value
 	BackupLifecycleDeleted = "DELETED"
 
 	// BackupLifecycleFailed is a BackupLifecycle enum value
 	BackupLifecycleFailed = "FAILED"
+
+	// BackupLifecyclePending is a BackupLifecycle enum value
+	BackupLifecyclePending = "PENDING"
 )
+
+// BackupLifecycle_Values returns all elements of the BackupLifecycle enum
+func BackupLifecycle_Values() []string {
+	return []string{
+		BackupLifecycleAvailable,
+		BackupLifecycleCreating,
+		BackupLifecycleTransferring,
+		BackupLifecycleDeleted,
+		BackupLifecycleFailed,
+		BackupLifecyclePending,
+	}
+}
 
 // The type of the backup.
 const (
@@ -6889,7 +8316,47 @@ const (
 
 	// BackupTypeUserInitiated is a BackupType enum value
 	BackupTypeUserInitiated = "USER_INITIATED"
+
+	// BackupTypeAwsBackup is a BackupType enum value
+	BackupTypeAwsBackup = "AWS_BACKUP"
 )
+
+// BackupType_Values returns all elements of the BackupType enum
+func BackupType_Values() []string {
+	return []string{
+		BackupTypeAutomatic,
+		BackupTypeUserInitiated,
+		BackupTypeAwsBackup,
+	}
+}
+
+const (
+	// DataRepositoryLifecycleCreating is a DataRepositoryLifecycle enum value
+	DataRepositoryLifecycleCreating = "CREATING"
+
+	// DataRepositoryLifecycleAvailable is a DataRepositoryLifecycle enum value
+	DataRepositoryLifecycleAvailable = "AVAILABLE"
+
+	// DataRepositoryLifecycleMisconfigured is a DataRepositoryLifecycle enum value
+	DataRepositoryLifecycleMisconfigured = "MISCONFIGURED"
+
+	// DataRepositoryLifecycleUpdating is a DataRepositoryLifecycle enum value
+	DataRepositoryLifecycleUpdating = "UPDATING"
+
+	// DataRepositoryLifecycleDeleting is a DataRepositoryLifecycle enum value
+	DataRepositoryLifecycleDeleting = "DELETING"
+)
+
+// DataRepositoryLifecycle_Values returns all elements of the DataRepositoryLifecycle enum
+func DataRepositoryLifecycle_Values() []string {
+	return []string{
+		DataRepositoryLifecycleCreating,
+		DataRepositoryLifecycleAvailable,
+		DataRepositoryLifecycleMisconfigured,
+		DataRepositoryLifecycleUpdating,
+		DataRepositoryLifecycleDeleting,
+	}
+}
 
 const (
 	// DataRepositoryTaskFilterNameFileSystemId is a DataRepositoryTaskFilterName enum value
@@ -6898,6 +8365,14 @@ const (
 	// DataRepositoryTaskFilterNameTaskLifecycle is a DataRepositoryTaskFilterName enum value
 	DataRepositoryTaskFilterNameTaskLifecycle = "task-lifecycle"
 )
+
+// DataRepositoryTaskFilterName_Values returns all elements of the DataRepositoryTaskFilterName enum
+func DataRepositoryTaskFilterName_Values() []string {
+	return []string{
+		DataRepositoryTaskFilterNameFileSystemId,
+		DataRepositoryTaskFilterNameTaskLifecycle,
+	}
+}
 
 const (
 	// DataRepositoryTaskLifecyclePending is a DataRepositoryTaskLifecycle enum value
@@ -6919,10 +8394,45 @@ const (
 	DataRepositoryTaskLifecycleCanceling = "CANCELING"
 )
 
+// DataRepositoryTaskLifecycle_Values returns all elements of the DataRepositoryTaskLifecycle enum
+func DataRepositoryTaskLifecycle_Values() []string {
+	return []string{
+		DataRepositoryTaskLifecyclePending,
+		DataRepositoryTaskLifecycleExecuting,
+		DataRepositoryTaskLifecycleFailed,
+		DataRepositoryTaskLifecycleSucceeded,
+		DataRepositoryTaskLifecycleCanceled,
+		DataRepositoryTaskLifecycleCanceling,
+	}
+}
+
 const (
 	// DataRepositoryTaskTypeExportToRepository is a DataRepositoryTaskType enum value
 	DataRepositoryTaskTypeExportToRepository = "EXPORT_TO_REPOSITORY"
 )
+
+// DataRepositoryTaskType_Values returns all elements of the DataRepositoryTaskType enum
+func DataRepositoryTaskType_Values() []string {
+	return []string{
+		DataRepositoryTaskTypeExportToRepository,
+	}
+}
+
+const (
+	// DriveCacheTypeNone is a DriveCacheType enum value
+	DriveCacheTypeNone = "NONE"
+
+	// DriveCacheTypeRead is a DriveCacheType enum value
+	DriveCacheTypeRead = "READ"
+)
+
+// DriveCacheType_Values returns all elements of the DriveCacheType enum
+func DriveCacheType_Values() []string {
+	return []string{
+		DriveCacheTypeNone,
+		DriveCacheTypeRead,
+	}
+}
 
 // The lifecycle status of the file system.
 const (
@@ -6945,6 +8455,18 @@ const (
 	FileSystemLifecycleUpdating = "UPDATING"
 )
 
+// FileSystemLifecycle_Values returns all elements of the FileSystemLifecycle enum
+func FileSystemLifecycle_Values() []string {
+	return []string{
+		FileSystemLifecycleAvailable,
+		FileSystemLifecycleCreating,
+		FileSystemLifecycleFailed,
+		FileSystemLifecycleDeleting,
+		FileSystemLifecycleMisconfigured,
+		FileSystemLifecycleUpdating,
+	}
+}
+
 // An enumeration specifying the currently ongoing maintenance operation.
 const (
 	// FileSystemMaintenanceOperationPatching is a FileSystemMaintenanceOperation enum value
@@ -6953,6 +8475,14 @@ const (
 	// FileSystemMaintenanceOperationBackingUp is a FileSystemMaintenanceOperation enum value
 	FileSystemMaintenanceOperationBackingUp = "BACKING_UP"
 )
+
+// FileSystemMaintenanceOperation_Values returns all elements of the FileSystemMaintenanceOperation enum
+func FileSystemMaintenanceOperation_Values() []string {
+	return []string{
+		FileSystemMaintenanceOperationPatching,
+		FileSystemMaintenanceOperationBackingUp,
+	}
+}
 
 // The type of file system.
 const (
@@ -6963,6 +8493,14 @@ const (
 	FileSystemTypeLustre = "LUSTRE"
 )
 
+// FileSystemType_Values returns all elements of the FileSystemType enum
+func FileSystemType_Values() []string {
+	return []string{
+		FileSystemTypeWindows,
+		FileSystemTypeLustre,
+	}
+}
+
 // The name for a filter.
 const (
 	// FilterNameFileSystemId is a FilterName enum value
@@ -6970,7 +8508,19 @@ const (
 
 	// FilterNameBackupType is a FilterName enum value
 	FilterNameBackupType = "backup-type"
+
+	// FilterNameFileSystemType is a FilterName enum value
+	FilterNameFileSystemType = "file-system-type"
 )
+
+// FilterName_Values returns all elements of the FilterName enum
+func FilterName_Values() []string {
+	return []string{
+		FilterNameFileSystemId,
+		FilterNameBackupType,
+		FilterNameFileSystemType,
+	}
+}
 
 const (
 	// LustreDeploymentTypeScratch1 is a LustreDeploymentType enum value
@@ -6983,15 +8533,38 @@ const (
 	LustreDeploymentTypePersistent1 = "PERSISTENT_1"
 )
 
+// LustreDeploymentType_Values returns all elements of the LustreDeploymentType enum
+func LustreDeploymentType_Values() []string {
+	return []string{
+		LustreDeploymentTypeScratch1,
+		LustreDeploymentTypeScratch2,
+		LustreDeploymentTypePersistent1,
+	}
+}
+
 const (
 	// ReportFormatReportCsv20191124 is a ReportFormat enum value
 	ReportFormatReportCsv20191124 = "REPORT_CSV_20191124"
 )
 
+// ReportFormat_Values returns all elements of the ReportFormat enum
+func ReportFormat_Values() []string {
+	return []string{
+		ReportFormatReportCsv20191124,
+	}
+}
+
 const (
 	// ReportScopeFailedFilesOnly is a ReportScope enum value
 	ReportScopeFailedFilesOnly = "FAILED_FILES_ONLY"
 )
+
+// ReportScope_Values returns all elements of the ReportScope enum
+func ReportScope_Values() []string {
+	return []string{
+		ReportScopeFailedFilesOnly,
+	}
+}
 
 // The types of limits on your service utilization. Limits include file system
 // count, total throughput capacity, total storage, and total user-initiated
@@ -7011,6 +8584,16 @@ const (
 	ServiceLimitTotalUserInitiatedBackups = "TOTAL_USER_INITIATED_BACKUPS"
 )
 
+// ServiceLimit_Values returns all elements of the ServiceLimit enum
+func ServiceLimit_Values() []string {
+	return []string{
+		ServiceLimitFileSystemCount,
+		ServiceLimitTotalThroughputCapacity,
+		ServiceLimitTotalStorage,
+		ServiceLimitTotalUserInitiatedBackups,
+	}
+}
+
 const (
 	// StatusFailed is a Status enum value
 	StatusFailed = "FAILED"
@@ -7028,6 +8611,17 @@ const (
 	StatusUpdatedOptimizing = "UPDATED_OPTIMIZING"
 )
 
+// Status_Values returns all elements of the Status enum
+func Status_Values() []string {
+	return []string{
+		StatusFailed,
+		StatusInProgress,
+		StatusPending,
+		StatusCompleted,
+		StatusUpdatedOptimizing,
+	}
+}
+
 // The storage type for your Amazon FSx file system.
 const (
 	// StorageTypeSsd is a StorageType enum value
@@ -7036,6 +8630,14 @@ const (
 	// StorageTypeHdd is a StorageType enum value
 	StorageTypeHdd = "HDD"
 )
+
+// StorageType_Values returns all elements of the StorageType enum
+func StorageType_Values() []string {
+	return []string{
+		StorageTypeSsd,
+		StorageTypeHdd,
+	}
+}
 
 const (
 	// WindowsDeploymentTypeMultiAz1 is a WindowsDeploymentType enum value
@@ -7047,3 +8649,12 @@ const (
 	// WindowsDeploymentTypeSingleAz2 is a WindowsDeploymentType enum value
 	WindowsDeploymentTypeSingleAz2 = "SINGLE_AZ_2"
 )
+
+// WindowsDeploymentType_Values returns all elements of the WindowsDeploymentType enum
+func WindowsDeploymentType_Values() []string {
+	return []string{
+		WindowsDeploymentTypeMultiAz1,
+		WindowsDeploymentTypeSingleAz1,
+		WindowsDeploymentTypeSingleAz2,
+	}
+}

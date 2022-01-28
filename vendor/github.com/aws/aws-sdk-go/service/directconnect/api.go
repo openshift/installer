@@ -1620,10 +1620,8 @@ func (c *DirectConnect) CreateDirectConnectGatewayAssociationProposalRequest(inp
 // Creates a proposal to associate the specified virtual private gateway or
 // transit gateway with the specified Direct Connect gateway.
 //
-// You can only associate a Direct Connect gateway and virtual private gateway
-// or transit gateway when the account that owns the Direct Connect gateway
-// and the account that owns the virtual private gateway or transit gateway
-// have the same AWS Payer ID.
+// You can associate a Direct Connect gateway and virtual private gateway or
+// transit gateway that is owned by any AWS account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1816,24 +1814,24 @@ func (c *DirectConnect) CreateLagRequest(input *CreateLagInput) (req *request.Re
 // CreateLag API operation for AWS Direct Connect.
 //
 // Creates a link aggregation group (LAG) with the specified number of bundled
-// physical connections between the customer network and a specific AWS Direct
-// Connect location. A LAG is a logical interface that uses the Link Aggregation
-// Control Protocol (LACP) to aggregate multiple interfaces, enabling you to
-// treat them as a single interface.
+// physical dedicated connections between the customer network and a specific
+// AWS Direct Connect location. A LAG is a logical interface that uses the Link
+// Aggregation Control Protocol (LACP) to aggregate multiple interfaces, enabling
+// you to treat them as a single interface.
 //
-// All connections in a LAG must use the same bandwidth and must terminate at
-// the same AWS Direct Connect endpoint.
+// All connections in a LAG must use the same bandwidth (either 1Gbps or 10Gbps)
+// and must terminate at the same AWS Direct Connect endpoint.
 //
-// You can have up to 10 connections per LAG. Regardless of this limit, if you
-// request more connections for the LAG than AWS Direct Connect can allocate
+// You can have up to 10 dedicated connections per LAG. Regardless of this limit,
+// if you request more connections for the LAG than AWS Direct Connect can allocate
 // on a single endpoint, no LAG is created.
 //
-// You can specify an existing physical connection or interconnect to include
-// in the LAG (which counts towards the total number of connections). Doing
-// so interrupts the current physical connection or hosted connections, and
-// re-establishes them as a member of the LAG. The LAG will be created on the
-// same AWS Direct Connect endpoint to which the connection terminates. Any
-// virtual interfaces associated with the connection are automatically disassociated
+// You can specify an existing physical dedicated connection or interconnect
+// to include in the LAG (which counts towards the total number of connections).
+// Doing so interrupts the current physical dedicated connection, and re-establishes
+// them as a member of the LAG. The LAG will be created on the same AWS Direct
+// Connect endpoint to which the dedicated connection terminates. Any virtual
+// interfaces associated with the dedicated connection are automatically disassociated
 // and re-associated with the LAG. The connection ID does not change.
 //
 // If the AWS account used to create a LAG is a registered AWS Direct Connect
@@ -7131,12 +7129,11 @@ type CreateLagInput struct {
 	// The tags to associate with the automtically created LAGs.
 	ChildConnectionTags []*Tag `locationName:"childConnectionTags" min:"1" type:"list"`
 
-	// The ID of an existing connection to migrate to the LAG.
+	// The ID of an existing dedicated connection to migrate to the LAG.
 	ConnectionId *string `locationName:"connectionId" type:"string"`
 
-	// The bandwidth of the individual physical connections bundled by the LAG.
-	// The possible values are 50Mbps, 100Mbps, 200Mbps, 300Mbps, 400Mbps, 500Mbps,
-	// 1Gbps, 2Gbps, 5Gbps, and 10Gbps.
+	// The bandwidth of the individual physical dedicated connections bundled by
+	// the LAG. The possible values are 1Gbps and 10Gbps.
 	//
 	// ConnectionsBandwidth is a required field
 	ConnectionsBandwidth *string `locationName:"connectionsBandwidth" type:"string" required:"true"`
@@ -7151,8 +7148,8 @@ type CreateLagInput struct {
 	// Location is a required field
 	Location *string `locationName:"location" type:"string" required:"true"`
 
-	// The number of physical connections initially provisioned and bundled by the
-	// LAG.
+	// The number of physical dedicated connections initially provisioned and bundled
+	// by the LAG.
 	//
 	// NumberOfConnections is a required field
 	NumberOfConnections *int64 `locationName:"numberOfConnections" type:"integer" required:"true"`
@@ -9626,12 +9623,12 @@ type Lag struct {
 	// The location of the LAG.
 	Location *string `locationName:"location" type:"string"`
 
-	// The minimum number of physical connections that must be operational for the
-	// LAG itself to be operational.
+	// The minimum number of physical dedicated connections that must be operational
+	// for the LAG itself to be operational.
 	MinimumLinks *int64 `locationName:"minimumLinks" type:"integer"`
 
-	// The number of physical connections bundled by the LAG, up to a maximum of
-	// 10.
+	// The number of physical dedicated connections bundled by the LAG, up to a
+	// maximum of 10.
 	NumberOfConnections *int64 `locationName:"numberOfConnections" type:"integer"`
 
 	// The ID of the AWS account that owns the LAG.
@@ -12214,6 +12211,14 @@ const (
 	AddressFamilyIpv6 = "ipv6"
 )
 
+// AddressFamily_Values returns all elements of the AddressFamily enum
+func AddressFamily_Values() []string {
+	return []string{
+		AddressFamilyIpv4,
+		AddressFamilyIpv6,
+	}
+}
+
 const (
 	// BGPPeerStateVerifying is a BGPPeerState enum value
 	BGPPeerStateVerifying = "verifying"
@@ -12231,6 +12236,17 @@ const (
 	BGPPeerStateDeleted = "deleted"
 )
 
+// BGPPeerState_Values returns all elements of the BGPPeerState enum
+func BGPPeerState_Values() []string {
+	return []string{
+		BGPPeerStateVerifying,
+		BGPPeerStatePending,
+		BGPPeerStateAvailable,
+		BGPPeerStateDeleting,
+		BGPPeerStateDeleted,
+	}
+}
+
 const (
 	// BGPStatusUp is a BGPStatus enum value
 	BGPStatusUp = "up"
@@ -12241,6 +12257,15 @@ const (
 	// BGPStatusUnknown is a BGPStatus enum value
 	BGPStatusUnknown = "unknown"
 )
+
+// BGPStatus_Values returns all elements of the BGPStatus enum
+func BGPStatus_Values() []string {
+	return []string{
+		BGPStatusUp,
+		BGPStatusDown,
+		BGPStatusUnknown,
+	}
+}
 
 const (
 	// ConnectionStateOrdering is a ConnectionState enum value
@@ -12271,6 +12296,21 @@ const (
 	ConnectionStateUnknown = "unknown"
 )
 
+// ConnectionState_Values returns all elements of the ConnectionState enum
+func ConnectionState_Values() []string {
+	return []string{
+		ConnectionStateOrdering,
+		ConnectionStateRequested,
+		ConnectionStatePending,
+		ConnectionStateAvailable,
+		ConnectionStateDown,
+		ConnectionStateDeleting,
+		ConnectionStateDeleted,
+		ConnectionStateRejected,
+		ConnectionStateUnknown,
+	}
+}
+
 const (
 	// GatewayAssociationProposalStateRequested is a GatewayAssociationProposalState enum value
 	GatewayAssociationProposalStateRequested = "requested"
@@ -12281,6 +12321,15 @@ const (
 	// GatewayAssociationProposalStateDeleted is a GatewayAssociationProposalState enum value
 	GatewayAssociationProposalStateDeleted = "deleted"
 )
+
+// GatewayAssociationProposalState_Values returns all elements of the GatewayAssociationProposalState enum
+func GatewayAssociationProposalState_Values() []string {
+	return []string{
+		GatewayAssociationProposalStateRequested,
+		GatewayAssociationProposalStateAccepted,
+		GatewayAssociationProposalStateDeleted,
+	}
+}
 
 const (
 	// GatewayAssociationStateAssociating is a GatewayAssociationState enum value
@@ -12299,6 +12348,17 @@ const (
 	GatewayAssociationStateUpdating = "updating"
 )
 
+// GatewayAssociationState_Values returns all elements of the GatewayAssociationState enum
+func GatewayAssociationState_Values() []string {
+	return []string{
+		GatewayAssociationStateAssociating,
+		GatewayAssociationStateAssociated,
+		GatewayAssociationStateDisassociating,
+		GatewayAssociationStateDisassociated,
+		GatewayAssociationStateUpdating,
+	}
+}
+
 const (
 	// GatewayAttachmentStateAttaching is a GatewayAttachmentState enum value
 	GatewayAttachmentStateAttaching = "attaching"
@@ -12313,6 +12373,16 @@ const (
 	GatewayAttachmentStateDetached = "detached"
 )
 
+// GatewayAttachmentState_Values returns all elements of the GatewayAttachmentState enum
+func GatewayAttachmentState_Values() []string {
+	return []string{
+		GatewayAttachmentStateAttaching,
+		GatewayAttachmentStateAttached,
+		GatewayAttachmentStateDetaching,
+		GatewayAttachmentStateDetached,
+	}
+}
+
 const (
 	// GatewayAttachmentTypeTransitVirtualInterface is a GatewayAttachmentType enum value
 	GatewayAttachmentTypeTransitVirtualInterface = "TransitVirtualInterface"
@@ -12320,6 +12390,14 @@ const (
 	// GatewayAttachmentTypePrivateVirtualInterface is a GatewayAttachmentType enum value
 	GatewayAttachmentTypePrivateVirtualInterface = "PrivateVirtualInterface"
 )
+
+// GatewayAttachmentType_Values returns all elements of the GatewayAttachmentType enum
+func GatewayAttachmentType_Values() []string {
+	return []string{
+		GatewayAttachmentTypeTransitVirtualInterface,
+		GatewayAttachmentTypePrivateVirtualInterface,
+	}
+}
 
 const (
 	// GatewayStatePending is a GatewayState enum value
@@ -12335,6 +12413,16 @@ const (
 	GatewayStateDeleted = "deleted"
 )
 
+// GatewayState_Values returns all elements of the GatewayState enum
+func GatewayState_Values() []string {
+	return []string{
+		GatewayStatePending,
+		GatewayStateAvailable,
+		GatewayStateDeleting,
+		GatewayStateDeleted,
+	}
+}
+
 const (
 	// GatewayTypeVirtualPrivateGateway is a GatewayType enum value
 	GatewayTypeVirtualPrivateGateway = "virtualPrivateGateway"
@@ -12342,6 +12430,14 @@ const (
 	// GatewayTypeTransitGateway is a GatewayType enum value
 	GatewayTypeTransitGateway = "transitGateway"
 )
+
+// GatewayType_Values returns all elements of the GatewayType enum
+func GatewayType_Values() []string {
+	return []string{
+		GatewayTypeVirtualPrivateGateway,
+		GatewayTypeTransitGateway,
+	}
+}
 
 const (
 	// HasLogicalRedundancyUnknown is a HasLogicalRedundancy enum value
@@ -12353,6 +12449,15 @@ const (
 	// HasLogicalRedundancyNo is a HasLogicalRedundancy enum value
 	HasLogicalRedundancyNo = "no"
 )
+
+// HasLogicalRedundancy_Values returns all elements of the HasLogicalRedundancy enum
+func HasLogicalRedundancy_Values() []string {
+	return []string{
+		HasLogicalRedundancyUnknown,
+		HasLogicalRedundancyYes,
+		HasLogicalRedundancyNo,
+	}
+}
 
 const (
 	// InterconnectStateRequested is a InterconnectState enum value
@@ -12377,6 +12482,19 @@ const (
 	InterconnectStateUnknown = "unknown"
 )
 
+// InterconnectState_Values returns all elements of the InterconnectState enum
+func InterconnectState_Values() []string {
+	return []string{
+		InterconnectStateRequested,
+		InterconnectStatePending,
+		InterconnectStateAvailable,
+		InterconnectStateDown,
+		InterconnectStateDeleting,
+		InterconnectStateDeleted,
+		InterconnectStateUnknown,
+	}
+}
+
 const (
 	// LagStateRequested is a LagState enum value
 	LagStateRequested = "requested"
@@ -12400,10 +12518,30 @@ const (
 	LagStateUnknown = "unknown"
 )
 
+// LagState_Values returns all elements of the LagState enum
+func LagState_Values() []string {
+	return []string{
+		LagStateRequested,
+		LagStatePending,
+		LagStateAvailable,
+		LagStateDown,
+		LagStateDeleting,
+		LagStateDeleted,
+		LagStateUnknown,
+	}
+}
+
 const (
 	// LoaContentTypeApplicationPdf is a LoaContentType enum value
 	LoaContentTypeApplicationPdf = "application/pdf"
 )
+
+// LoaContentType_Values returns all elements of the LoaContentType enum
+func LoaContentType_Values() []string {
+	return []string{
+		LoaContentTypeApplicationPdf,
+	}
+}
 
 const (
 	// VirtualInterfaceStateConfirming is a VirtualInterfaceState enum value
@@ -12433,3 +12571,18 @@ const (
 	// VirtualInterfaceStateUnknown is a VirtualInterfaceState enum value
 	VirtualInterfaceStateUnknown = "unknown"
 )
+
+// VirtualInterfaceState_Values returns all elements of the VirtualInterfaceState enum
+func VirtualInterfaceState_Values() []string {
+	return []string{
+		VirtualInterfaceStateConfirming,
+		VirtualInterfaceStateVerifying,
+		VirtualInterfaceStatePending,
+		VirtualInterfaceStateAvailable,
+		VirtualInterfaceStateDown,
+		VirtualInterfaceStateDeleting,
+		VirtualInterfaceStateDeleted,
+		VirtualInterfaceStateRejected,
+		VirtualInterfaceStateUnknown,
+	}
+}

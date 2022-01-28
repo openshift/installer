@@ -3324,6 +3324,12 @@ func (c *Redshift) DescribeClusterDbRevisionsRequest(input *DescribeClusterDbRev
 		Name:       opDescribeClusterDbRevisions,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -3373,6 +3379,58 @@ func (c *Redshift) DescribeClusterDbRevisionsWithContext(ctx aws.Context, input 
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// DescribeClusterDbRevisionsPages iterates over the pages of a DescribeClusterDbRevisions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeClusterDbRevisions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeClusterDbRevisions operation.
+//    pageNum := 0
+//    err := client.DescribeClusterDbRevisionsPages(params,
+//        func(page *redshift.DescribeClusterDbRevisionsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *Redshift) DescribeClusterDbRevisionsPages(input *DescribeClusterDbRevisionsInput, fn func(*DescribeClusterDbRevisionsOutput, bool) bool) error {
+	return c.DescribeClusterDbRevisionsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeClusterDbRevisionsPagesWithContext same as DescribeClusterDbRevisionsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Redshift) DescribeClusterDbRevisionsPagesWithContext(ctx aws.Context, input *DescribeClusterDbRevisionsInput, fn func(*DescribeClusterDbRevisionsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeClusterDbRevisionsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeClusterDbRevisionsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*DescribeClusterDbRevisionsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
 }
 
 const opDescribeClusterParameterGroups = "DescribeClusterParameterGroups"
@@ -4179,6 +4237,12 @@ func (c *Redshift) DescribeClusterTracksRequest(input *DescribeClusterTracksInpu
 		Name:       opDescribeClusterTracks,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -4228,6 +4292,58 @@ func (c *Redshift) DescribeClusterTracksWithContext(ctx aws.Context, input *Desc
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// DescribeClusterTracksPages iterates over the pages of a DescribeClusterTracks operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeClusterTracks method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeClusterTracks operation.
+//    pageNum := 0
+//    err := client.DescribeClusterTracksPages(params,
+//        func(page *redshift.DescribeClusterTracksOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *Redshift) DescribeClusterTracksPages(input *DescribeClusterTracksInput, fn func(*DescribeClusterTracksOutput, bool) bool) error {
+	return c.DescribeClusterTracksPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeClusterTracksPagesWithContext same as DescribeClusterTracksPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Redshift) DescribeClusterTracksPagesWithContext(ctx aws.Context, input *DescribeClusterTracksInput, fn func(*DescribeClusterTracksOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeClusterTracksInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeClusterTracksRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*DescribeClusterTracksOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
 }
 
 const opDescribeClusterVersions = "DescribeClusterVersions"
@@ -6245,6 +6361,12 @@ func (c *Redshift) DescribeSnapshotCopyGrantsRequest(input *DescribeSnapshotCopy
 		Name:       opDescribeSnapshotCopyGrants,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -6302,6 +6424,58 @@ func (c *Redshift) DescribeSnapshotCopyGrantsWithContext(ctx aws.Context, input 
 	return out, req.Send()
 }
 
+// DescribeSnapshotCopyGrantsPages iterates over the pages of a DescribeSnapshotCopyGrants operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeSnapshotCopyGrants method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeSnapshotCopyGrants operation.
+//    pageNum := 0
+//    err := client.DescribeSnapshotCopyGrantsPages(params,
+//        func(page *redshift.DescribeSnapshotCopyGrantsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *Redshift) DescribeSnapshotCopyGrantsPages(input *DescribeSnapshotCopyGrantsInput, fn func(*DescribeSnapshotCopyGrantsOutput, bool) bool) error {
+	return c.DescribeSnapshotCopyGrantsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeSnapshotCopyGrantsPagesWithContext same as DescribeSnapshotCopyGrantsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Redshift) DescribeSnapshotCopyGrantsPagesWithContext(ctx aws.Context, input *DescribeSnapshotCopyGrantsInput, fn func(*DescribeSnapshotCopyGrantsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeSnapshotCopyGrantsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeSnapshotCopyGrantsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*DescribeSnapshotCopyGrantsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opDescribeSnapshotSchedules = "DescribeSnapshotSchedules"
 
 // DescribeSnapshotSchedulesRequest generates a "aws/request.Request" representing the
@@ -6333,6 +6507,12 @@ func (c *Redshift) DescribeSnapshotSchedulesRequest(input *DescribeSnapshotSched
 		Name:       opDescribeSnapshotSchedules,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -6374,6 +6554,58 @@ func (c *Redshift) DescribeSnapshotSchedulesWithContext(ctx aws.Context, input *
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// DescribeSnapshotSchedulesPages iterates over the pages of a DescribeSnapshotSchedules operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeSnapshotSchedules method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeSnapshotSchedules operation.
+//    pageNum := 0
+//    err := client.DescribeSnapshotSchedulesPages(params,
+//        func(page *redshift.DescribeSnapshotSchedulesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *Redshift) DescribeSnapshotSchedulesPages(input *DescribeSnapshotSchedulesInput, fn func(*DescribeSnapshotSchedulesOutput, bool) bool) error {
+	return c.DescribeSnapshotSchedulesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeSnapshotSchedulesPagesWithContext same as DescribeSnapshotSchedulesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Redshift) DescribeSnapshotSchedulesPagesWithContext(ctx aws.Context, input *DescribeSnapshotSchedulesInput, fn func(*DescribeSnapshotSchedulesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeSnapshotSchedulesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeSnapshotSchedulesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*DescribeSnapshotSchedulesOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
 }
 
 const opDescribeStorage = "DescribeStorage"
@@ -6481,6 +6713,12 @@ func (c *Redshift) DescribeTableRestoreStatusRequest(input *DescribeTableRestore
 		Name:       opDescribeTableRestoreStatus,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -6536,6 +6774,58 @@ func (c *Redshift) DescribeTableRestoreStatusWithContext(ctx aws.Context, input 
 	return out, req.Send()
 }
 
+// DescribeTableRestoreStatusPages iterates over the pages of a DescribeTableRestoreStatus operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeTableRestoreStatus method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeTableRestoreStatus operation.
+//    pageNum := 0
+//    err := client.DescribeTableRestoreStatusPages(params,
+//        func(page *redshift.DescribeTableRestoreStatusOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *Redshift) DescribeTableRestoreStatusPages(input *DescribeTableRestoreStatusInput, fn func(*DescribeTableRestoreStatusOutput, bool) bool) error {
+	return c.DescribeTableRestoreStatusPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeTableRestoreStatusPagesWithContext same as DescribeTableRestoreStatusPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Redshift) DescribeTableRestoreStatusPagesWithContext(ctx aws.Context, input *DescribeTableRestoreStatusInput, fn func(*DescribeTableRestoreStatusOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeTableRestoreStatusInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeTableRestoreStatusRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*DescribeTableRestoreStatusOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opDescribeTags = "DescribeTags"
 
 // DescribeTagsRequest generates a "aws/request.Request" representing the
@@ -6567,6 +6857,12 @@ func (c *Redshift) DescribeTagsRequest(input *DescribeTagsInput) (req *request.R
 		Name:       opDescribeTags,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -6638,6 +6934,58 @@ func (c *Redshift) DescribeTagsWithContext(ctx aws.Context, input *DescribeTagsI
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// DescribeTagsPages iterates over the pages of a DescribeTags operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeTags method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeTags operation.
+//    pageNum := 0
+//    err := client.DescribeTagsPages(params,
+//        func(page *redshift.DescribeTagsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *Redshift) DescribeTagsPages(input *DescribeTagsInput, fn func(*DescribeTagsOutput, bool) bool) error {
+	return c.DescribeTagsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeTagsPagesWithContext same as DescribeTagsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Redshift) DescribeTagsPagesWithContext(ctx aws.Context, input *DescribeTagsInput, fn func(*DescribeTagsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeTagsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeTagsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*DescribeTagsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
 }
 
 const opDescribeUsageLimits = "DescribeUsageLimits"
@@ -7316,6 +7664,12 @@ func (c *Redshift) GetReservedNodeExchangeOfferingsRequest(input *GetReservedNod
 		Name:       opGetReservedNodeExchangeOfferings,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -7379,6 +7733,58 @@ func (c *Redshift) GetReservedNodeExchangeOfferingsWithContext(ctx aws.Context, 
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// GetReservedNodeExchangeOfferingsPages iterates over the pages of a GetReservedNodeExchangeOfferings operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See GetReservedNodeExchangeOfferings method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a GetReservedNodeExchangeOfferings operation.
+//    pageNum := 0
+//    err := client.GetReservedNodeExchangeOfferingsPages(params,
+//        func(page *redshift.GetReservedNodeExchangeOfferingsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *Redshift) GetReservedNodeExchangeOfferingsPages(input *GetReservedNodeExchangeOfferingsInput, fn func(*GetReservedNodeExchangeOfferingsOutput, bool) bool) error {
+	return c.GetReservedNodeExchangeOfferingsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// GetReservedNodeExchangeOfferingsPagesWithContext same as GetReservedNodeExchangeOfferingsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Redshift) GetReservedNodeExchangeOfferingsPagesWithContext(ctx aws.Context, input *GetReservedNodeExchangeOfferingsInput, fn func(*GetReservedNodeExchangeOfferingsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *GetReservedNodeExchangeOfferingsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.GetReservedNodeExchangeOfferingsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*GetReservedNodeExchangeOfferingsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
 }
 
 const opModifyCluster = "ModifyCluster"
@@ -9032,8 +9438,9 @@ func (c *Redshift) ResizeClusterRequest(input *ResizeClusterInput) (req *request
 //
 // Elastic resize operations have the following restrictions:
 //
-//    * You can only resize clusters of the following types: dc2.large dc2.8xlarge
-//    ds2.xlarge ds2.8xlarge ra3.4xlarge ra3.16xlarge
+//    * You can only resize clusters of the following types: dc1.large (if your
+//    cluster is in a VPC) dc1.8xlarge (if your cluster is in a VPC) dc2.large
+//    dc2.8xlarge ds2.xlarge ds2.8xlarge ra3.4xlarge ra3.16xlarge
 //
 //    * The type of nodes that you add must match the node type for the cluster.
 //
@@ -10400,8 +10807,7 @@ type CancelResizeOutput struct {
 
 	// The type of encryption for the cluster after the resize is complete.
 	//
-	// Possible values are KMS and None. In the China region possible values are:
-	// Legacy and None.
+	// Possible values are KMS and None.
 	TargetEncryptionType *string `type:"string"`
 
 	// The node type that the cluster will have after the resize operation is complete.
@@ -10557,6 +10963,9 @@ type Cluster struct {
 
 	// The unique identifier of the cluster.
 	ClusterIdentifier *string `type:"string"`
+
+	// The namespace Amazon Resource Name (ARN) of the cluster.
+	ClusterNamespaceArn *string `type:"string"`
 
 	// The nodes in the cluster.
 	ClusterNodes []*ClusterNode `type:"list"`
@@ -10812,6 +11221,12 @@ func (s *Cluster) SetClusterCreateTime(v time.Time) *Cluster {
 // SetClusterIdentifier sets the ClusterIdentifier field's value.
 func (s *Cluster) SetClusterIdentifier(v string) *Cluster {
 	s.ClusterIdentifier = &v
+	return s
+}
+
+// SetClusterNamespaceArn sets the ClusterNamespaceArn field's value.
+func (s *Cluster) SetClusterNamespaceArn(v string) *Cluster {
+	s.ClusterNamespaceArn = &v
 	return s
 }
 
@@ -17322,8 +17737,7 @@ type DescribeResizeOutput struct {
 
 	// The type of encryption for the cluster after the resize is complete.
 	//
-	// Possible values are KMS and None. In the China region possible values are:
-	// Legacy and None.
+	// Possible values are KMS and None.
 	TargetEncryptionType *string `type:"string"`
 
 	// The node type that the cluster will have after the resize operation is complete.
@@ -19835,8 +20249,7 @@ type ModifyClusterInput struct {
 	// Indicates whether the cluster is encrypted. If the value is encrypted (true)
 	// and you provide a value for the KmsKeyId parameter, we encrypt the cluster
 	// with the provided KmsKeyId. If you don't provide a KmsKeyId, we encrypt with
-	// the default key. In the China region we use legacy encryption if you specify
-	// that the cluster is encrypted.
+	// the default key.
 	//
 	// If the value is not encrypted (false), then the cluster is decrypted.
 	Encrypted *bool `type:"boolean"`
@@ -20257,6 +20670,7 @@ func (s *ModifyClusterOutput) SetCluster(v *Cluster) *ModifyClusterOutput {
 	return s
 }
 
+// Describes a modify cluster parameter group operation.
 type ModifyClusterParameterGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -21572,6 +21986,8 @@ func (s *Parameter) SetSource(v string) *Parameter {
 	return s
 }
 
+// Describes a pause cluster operation. For example, a scheduled action to run
+// the PauseCluster API operation.
 type PauseClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -21610,6 +22026,8 @@ func (s *PauseClusterInput) SetClusterIdentifier(v string) *PauseClusterInput {
 	return s
 }
 
+// Describes a pause cluster operation. For example, a scheduled action to run
+// the PauseCluster API operation.
 type PauseClusterMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -21688,8 +22106,7 @@ type PendingModifiedValues struct {
 	// The pending or in-progress change of the service version.
 	ClusterVersion *string `type:"string"`
 
-	// The encryption type for a cluster. Possible values are: KMS and None. For
-	// the China region the possible values are None, and Legacy.
+	// The encryption type for a cluster. Possible values are: KMS and None.
 	EncryptionType *string `type:"string"`
 
 	// An option that specifies whether to create the cluster with enhanced VPC
@@ -22276,6 +22693,8 @@ func (s *ResetClusterParameterGroupInput) SetResetAllParameters(v bool) *ResetCl
 	return s
 }
 
+// Describes a resize cluster operation. For example, a scheduled action to
+// run the ResizeCluster API operation.
 type ResizeClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -22296,7 +22715,8 @@ type ResizeClusterInput struct {
 	// current node type is used.
 	NodeType *string `type:"string"`
 
-	// The new number of nodes for the cluster.
+	// The new number of nodes for the cluster. If not specified, the cluster's
+	// current number of nodes is used.
 	NumberOfNodes *int64 `type:"integer"`
 }
 
@@ -22353,6 +22773,8 @@ func (s *ResizeClusterInput) SetNumberOfNodes(v int64) *ResizeClusterInput {
 	return s
 }
 
+// Describes a resize cluster operation. For example, a scheduled action to
+// run the ResizeCluster API operation.
 type ResizeClusterMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -22373,7 +22795,8 @@ type ResizeClusterMessage struct {
 	// current node type is used.
 	NodeType *string `type:"string"`
 
-	// The new number of nodes for the cluster.
+	// The new number of nodes for the cluster. If not specified, the cluster's
+	// current number of nodes is used.
 	NumberOfNodes *int64 `type:"integer"`
 }
 
@@ -23113,6 +23536,8 @@ func (s *RestoreTableFromClusterSnapshotOutput) SetTableRestoreStatus(v *TableRe
 	return s
 }
 
+// Describes a resume cluster operation. For example, a scheduled action to
+// run the ResumeCluster API operation.
 type ResumeClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -23151,6 +23576,8 @@ func (s *ResumeClusterInput) SetClusterIdentifier(v string) *ResumeClusterInput 
 	return s
 }
 
+// Describes a resume cluster operation. For example, a scheduled action to
+// run the ResumeCluster API operation.
 type ResumeClusterMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -24830,6 +25257,15 @@ const (
 	ActionTypeResizeCluster = "resize-cluster"
 )
 
+// ActionType_Values returns all elements of the ActionType enum
+func ActionType_Values() []string {
+	return []string{
+		ActionTypeRestoreCluster,
+		ActionTypeRecommendNodeConfig,
+		ActionTypeResizeCluster,
+	}
+}
+
 const (
 	// ModeStandard is a Mode enum value
 	ModeStandard = "standard"
@@ -24837,6 +25273,14 @@ const (
 	// ModeHighPerformance is a Mode enum value
 	ModeHighPerformance = "high-performance"
 )
+
+// Mode_Values returns all elements of the Mode enum
+func Mode_Values() []string {
+	return []string{
+		ModeStandard,
+		ModeHighPerformance,
+	}
+}
 
 const (
 	// NodeConfigurationOptionsFilterNameNodeType is a NodeConfigurationOptionsFilterName enum value
@@ -24851,6 +25295,16 @@ const (
 	// NodeConfigurationOptionsFilterNameMode is a NodeConfigurationOptionsFilterName enum value
 	NodeConfigurationOptionsFilterNameMode = "Mode"
 )
+
+// NodeConfigurationOptionsFilterName_Values returns all elements of the NodeConfigurationOptionsFilterName enum
+func NodeConfigurationOptionsFilterName_Values() []string {
+	return []string{
+		NodeConfigurationOptionsFilterNameNodeType,
+		NodeConfigurationOptionsFilterNameNumberOfNodes,
+		NodeConfigurationOptionsFilterNameEstimatedDiskUtilizationPercent,
+		NodeConfigurationOptionsFilterNameMode,
+	}
+}
 
 const (
 	// OperatorTypeEq is a OperatorType enum value
@@ -24875,6 +25329,19 @@ const (
 	OperatorTypeBetween = "between"
 )
 
+// OperatorType_Values returns all elements of the OperatorType enum
+func OperatorType_Values() []string {
+	return []string{
+		OperatorTypeEq,
+		OperatorTypeLt,
+		OperatorTypeGt,
+		OperatorTypeLe,
+		OperatorTypeGe,
+		OperatorTypeIn,
+		OperatorTypeBetween,
+	}
+}
+
 const (
 	// ParameterApplyTypeStatic is a ParameterApplyType enum value
 	ParameterApplyTypeStatic = "static"
@@ -24883,6 +25350,14 @@ const (
 	ParameterApplyTypeDynamic = "dynamic"
 )
 
+// ParameterApplyType_Values returns all elements of the ParameterApplyType enum
+func ParameterApplyType_Values() []string {
+	return []string{
+		ParameterApplyTypeStatic,
+		ParameterApplyTypeDynamic,
+	}
+}
+
 const (
 	// ReservedNodeOfferingTypeRegular is a ReservedNodeOfferingType enum value
 	ReservedNodeOfferingTypeRegular = "Regular"
@@ -24890,6 +25365,14 @@ const (
 	// ReservedNodeOfferingTypeUpgradable is a ReservedNodeOfferingType enum value
 	ReservedNodeOfferingTypeUpgradable = "Upgradable"
 )
+
+// ReservedNodeOfferingType_Values returns all elements of the ReservedNodeOfferingType enum
+func ReservedNodeOfferingType_Values() []string {
+	return []string{
+		ReservedNodeOfferingTypeRegular,
+		ReservedNodeOfferingTypeUpgradable,
+	}
+}
 
 const (
 	// ScheduleStateModifying is a ScheduleState enum value
@@ -24902,6 +25385,15 @@ const (
 	ScheduleStateFailed = "FAILED"
 )
 
+// ScheduleState_Values returns all elements of the ScheduleState enum
+func ScheduleState_Values() []string {
+	return []string{
+		ScheduleStateModifying,
+		ScheduleStateActive,
+		ScheduleStateFailed,
+	}
+}
+
 const (
 	// ScheduledActionFilterNameClusterIdentifier is a ScheduledActionFilterName enum value
 	ScheduledActionFilterNameClusterIdentifier = "cluster-identifier"
@@ -24910,6 +25402,14 @@ const (
 	ScheduledActionFilterNameIamRole = "iam-role"
 )
 
+// ScheduledActionFilterName_Values returns all elements of the ScheduledActionFilterName enum
+func ScheduledActionFilterName_Values() []string {
+	return []string{
+		ScheduledActionFilterNameClusterIdentifier,
+		ScheduledActionFilterNameIamRole,
+	}
+}
+
 const (
 	// ScheduledActionStateActive is a ScheduledActionState enum value
 	ScheduledActionStateActive = "ACTIVE"
@@ -24917,6 +25417,14 @@ const (
 	// ScheduledActionStateDisabled is a ScheduledActionState enum value
 	ScheduledActionStateDisabled = "DISABLED"
 )
+
+// ScheduledActionState_Values returns all elements of the ScheduledActionState enum
+func ScheduledActionState_Values() []string {
+	return []string{
+		ScheduledActionStateActive,
+		ScheduledActionStateDisabled,
+	}
+}
 
 const (
 	// ScheduledActionTypeValuesResizeCluster is a ScheduledActionTypeValues enum value
@@ -24929,6 +25437,15 @@ const (
 	ScheduledActionTypeValuesResumeCluster = "ResumeCluster"
 )
 
+// ScheduledActionTypeValues_Values returns all elements of the ScheduledActionTypeValues enum
+func ScheduledActionTypeValues_Values() []string {
+	return []string{
+		ScheduledActionTypeValuesResizeCluster,
+		ScheduledActionTypeValuesPauseCluster,
+		ScheduledActionTypeValuesResumeCluster,
+	}
+}
+
 const (
 	// SnapshotAttributeToSortBySourceType is a SnapshotAttributeToSortBy enum value
 	SnapshotAttributeToSortBySourceType = "SOURCE_TYPE"
@@ -24940,6 +25457,15 @@ const (
 	SnapshotAttributeToSortByCreateTime = "CREATE_TIME"
 )
 
+// SnapshotAttributeToSortBy_Values returns all elements of the SnapshotAttributeToSortBy enum
+func SnapshotAttributeToSortBy_Values() []string {
+	return []string{
+		SnapshotAttributeToSortBySourceType,
+		SnapshotAttributeToSortByTotalSize,
+		SnapshotAttributeToSortByCreateTime,
+	}
+}
+
 const (
 	// SortByOrderAsc is a SortByOrder enum value
 	SortByOrderAsc = "ASC"
@@ -24947,6 +25473,14 @@ const (
 	// SortByOrderDesc is a SortByOrder enum value
 	SortByOrderDesc = "DESC"
 )
+
+// SortByOrder_Values returns all elements of the SortByOrder enum
+func SortByOrder_Values() []string {
+	return []string{
+		SortByOrderAsc,
+		SortByOrderDesc,
+	}
+}
 
 const (
 	// SourceTypeCluster is a SourceType enum value
@@ -24965,6 +25499,17 @@ const (
 	SourceTypeScheduledAction = "scheduled-action"
 )
 
+// SourceType_Values returns all elements of the SourceType enum
+func SourceType_Values() []string {
+	return []string{
+		SourceTypeCluster,
+		SourceTypeClusterParameterGroup,
+		SourceTypeClusterSecurityGroup,
+		SourceTypeClusterSnapshot,
+		SourceTypeScheduledAction,
+	}
+}
+
 const (
 	// TableRestoreStatusTypePending is a TableRestoreStatusType enum value
 	TableRestoreStatusTypePending = "PENDING"
@@ -24982,6 +25527,17 @@ const (
 	TableRestoreStatusTypeCanceled = "CANCELED"
 )
 
+// TableRestoreStatusType_Values returns all elements of the TableRestoreStatusType enum
+func TableRestoreStatusType_Values() []string {
+	return []string{
+		TableRestoreStatusTypePending,
+		TableRestoreStatusTypeInProgress,
+		TableRestoreStatusTypeSucceeded,
+		TableRestoreStatusTypeFailed,
+		TableRestoreStatusTypeCanceled,
+	}
+}
+
 const (
 	// UsageLimitBreachActionLog is a UsageLimitBreachAction enum value
 	UsageLimitBreachActionLog = "log"
@@ -24993,6 +25549,15 @@ const (
 	UsageLimitBreachActionDisable = "disable"
 )
 
+// UsageLimitBreachAction_Values returns all elements of the UsageLimitBreachAction enum
+func UsageLimitBreachAction_Values() []string {
+	return []string{
+		UsageLimitBreachActionLog,
+		UsageLimitBreachActionEmitMetric,
+		UsageLimitBreachActionDisable,
+	}
+}
+
 const (
 	// UsageLimitFeatureTypeSpectrum is a UsageLimitFeatureType enum value
 	UsageLimitFeatureTypeSpectrum = "spectrum"
@@ -25001,6 +25566,14 @@ const (
 	UsageLimitFeatureTypeConcurrencyScaling = "concurrency-scaling"
 )
 
+// UsageLimitFeatureType_Values returns all elements of the UsageLimitFeatureType enum
+func UsageLimitFeatureType_Values() []string {
+	return []string{
+		UsageLimitFeatureTypeSpectrum,
+		UsageLimitFeatureTypeConcurrencyScaling,
+	}
+}
+
 const (
 	// UsageLimitLimitTypeTime is a UsageLimitLimitType enum value
 	UsageLimitLimitTypeTime = "time"
@@ -25008,6 +25581,14 @@ const (
 	// UsageLimitLimitTypeDataScanned is a UsageLimitLimitType enum value
 	UsageLimitLimitTypeDataScanned = "data-scanned"
 )
+
+// UsageLimitLimitType_Values returns all elements of the UsageLimitLimitType enum
+func UsageLimitLimitType_Values() []string {
+	return []string{
+		UsageLimitLimitTypeTime,
+		UsageLimitLimitTypeDataScanned,
+	}
+}
 
 const (
 	// UsageLimitPeriodDaily is a UsageLimitPeriod enum value
@@ -25019,3 +25600,12 @@ const (
 	// UsageLimitPeriodMonthly is a UsageLimitPeriod enum value
 	UsageLimitPeriodMonthly = "monthly"
 )
+
+// UsageLimitPeriod_Values returns all elements of the UsageLimitPeriod enum
+func UsageLimitPeriod_Values() []string {
+	return []string{
+		UsageLimitPeriodDaily,
+		UsageLimitPeriodWeekly,
+		UsageLimitPeriodMonthly,
+	}
+}

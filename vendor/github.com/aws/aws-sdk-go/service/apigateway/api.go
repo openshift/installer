@@ -4624,6 +4624,9 @@ func (c *APIGateway) GetDeploymentsRequest(input *GetDeploymentsInput) (req *req
 //   The submitted request is not valid, for example, the input is incomplete
 //   or incorrect. See the accompanying error message for details.
 //
+//   * NotFoundException
+//   The requested resource is not found. Make sure that the request URI is correct.
+//
 //   * UnauthorizedException
 //   The request is denied because the caller has insufficient permissions.
 //
@@ -12716,6 +12719,11 @@ type CreateDomainNameInput struct {
 	// of the domain name.
 	EndpointConfiguration *EndpointConfiguration `locationName:"endpointConfiguration" type:"structure"`
 
+	// If specified, API Gateway performs two-way authentication between the client
+	// and the server. Clients must present a trusted certificate to access your
+	// custom domain name.
+	MutualTlsAuthentication *MutualTlsAuthenticationInput `locationName:"mutualTlsAuthentication" type:"structure"`
+
 	// The reference to an AWS-managed certificate that will be used by regional
 	// endpoint for this domain name. AWS Certificate Manager is the only supported
 	// source.
@@ -12797,6 +12805,12 @@ func (s *CreateDomainNameInput) SetDomainName(v string) *CreateDomainNameInput {
 // SetEndpointConfiguration sets the EndpointConfiguration field's value.
 func (s *CreateDomainNameInput) SetEndpointConfiguration(v *EndpointConfiguration) *CreateDomainNameInput {
 	s.EndpointConfiguration = v
+	return s
+}
+
+// SetMutualTlsAuthentication sets the MutualTlsAuthentication field's value.
+func (s *CreateDomainNameInput) SetMutualTlsAuthentication(v *MutualTlsAuthenticationInput) *CreateDomainNameInput {
+	s.MutualTlsAuthentication = v
 	return s
 }
 
@@ -13079,6 +13093,12 @@ type CreateRestApiInput struct {
 	// The description of the RestApi.
 	Description *string `locationName:"description" type:"string"`
 
+	// Specifies whether clients can invoke your API by using the default execute-api
+	// endpoint. By default, clients can invoke your API with the default https://{api_id}.execute-api.{region}.amazonaws.com
+	// endpoint. To require that clients use a custom domain name to invoke your
+	// API, disable the default endpoint.
+	DisableExecuteApiEndpoint *bool `locationName:"disableExecuteApiEndpoint" type:"boolean"`
+
 	// The endpoint configuration of this RestApi showing the endpoint types of
 	// the API.
 	EndpointConfiguration *EndpointConfiguration `locationName:"endpointConfiguration" type:"structure"`
@@ -13152,6 +13172,12 @@ func (s *CreateRestApiInput) SetCloneFrom(v string) *CreateRestApiInput {
 // SetDescription sets the Description field's value.
 func (s *CreateRestApiInput) SetDescription(v string) *CreateRestApiInput {
 	s.Description = &v
+	return s
+}
+
+// SetDisableExecuteApiEndpoint sets the DisableExecuteApiEndpoint field's value.
+func (s *CreateRestApiInput) SetDisableExecuteApiEndpoint(v bool) *CreateRestApiInput {
+	s.DisableExecuteApiEndpoint = &v
 	return s
 }
 
@@ -15536,6 +15562,12 @@ type DomainName struct {
 	// of the domain name.
 	EndpointConfiguration *EndpointConfiguration `locationName:"endpointConfiguration" type:"structure"`
 
+	// The mutual TLS authentication configuration for a custom domain name. If
+	// specified, API Gateway performs two-way authentication between the client
+	// and the server. Clients must present a trusted certificate to access your
+	// API.
+	MutualTlsAuthentication *MutualTlsAuthentication `locationName:"mutualTlsAuthentication" type:"structure"`
+
 	// The reference to an AWS-managed certificate that will be used for validating
 	// the regional domain name. AWS Certificate Manager is the only supported source.
 	RegionalCertificateArn *string `locationName:"regionalCertificateArn" type:"string"`
@@ -15624,6 +15656,12 @@ func (s *DomainName) SetDomainNameStatusMessage(v string) *DomainName {
 // SetEndpointConfiguration sets the EndpointConfiguration field's value.
 func (s *DomainName) SetEndpointConfiguration(v *EndpointConfiguration) *DomainName {
 	s.EndpointConfiguration = v
+	return s
+}
+
+// SetMutualTlsAuthentication sets the MutualTlsAuthentication field's value.
+func (s *DomainName) SetMutualTlsAuthentication(v *MutualTlsAuthentication) *DomainName {
+	s.MutualTlsAuthentication = v
 	return s
 }
 
@@ -17447,7 +17485,6 @@ func (s *GetGatewayResponsesInput) SetRestApiId(v string) *GetGatewayResponsesIn
 //  AWS4-HMAC-SHA256 Credential={access-key-id}/20170503/us-east-1/apigateway/aws4_request,
 //  SignedHeaders=content-type;host;x-amz-date, Signature=59b42fe54a76a5de8adf2c67baa6d39206f8e9ad49a1d77ccc6a5da3103a398a
 //  Cache-Control: no-cache Postman-Token: 5637af27-dc29-fc5c-9dfe-0645d52cb515
-//
 // Response
 //
 // The successful operation returns the 200 OK status code and a payload similar
@@ -20942,6 +20979,100 @@ func (s *Model) SetSchema(v string) *Model {
 	return s
 }
 
+// If specified, API Gateway performs two-way authentication between the client
+// and the server. Clients must present a trusted certificate to access your
+// custom domain name.
+type MutualTlsAuthentication struct {
+	_ struct{} `type:"structure"`
+
+	// An Amazon S3 URL that specifies the truststore for mutual TLS authentication,
+	// for example s3://bucket-name/key-name. The truststore can contain certificates
+	// from public or private certificate authorities. To update the truststore,
+	// upload a new version to S3, and then update your custom domain name to use
+	// the new version. To update the truststore, you must have permissions to access
+	// the S3 object.
+	TruststoreUri *string `locationName:"truststoreUri" type:"string"`
+
+	// The version of the S3 object that contains your truststore. To specify a
+	// version, you must have versioning enabled for the S3 bucket.
+	TruststoreVersion *string `locationName:"truststoreVersion" type:"string"`
+
+	// A list of warnings that API Gateway returns while processing your truststore.
+	// Invalid certificates produce warnings. Mutual TLS is still enabled, but some
+	// clients might not be able to access your API. To resolve warnings, upload
+	// a new truststore to S3, and then update you domain name to use the new version.
+	TruststoreWarnings []*string `locationName:"truststoreWarnings" type:"list"`
+}
+
+// String returns the string representation
+func (s MutualTlsAuthentication) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MutualTlsAuthentication) GoString() string {
+	return s.String()
+}
+
+// SetTruststoreUri sets the TruststoreUri field's value.
+func (s *MutualTlsAuthentication) SetTruststoreUri(v string) *MutualTlsAuthentication {
+	s.TruststoreUri = &v
+	return s
+}
+
+// SetTruststoreVersion sets the TruststoreVersion field's value.
+func (s *MutualTlsAuthentication) SetTruststoreVersion(v string) *MutualTlsAuthentication {
+	s.TruststoreVersion = &v
+	return s
+}
+
+// SetTruststoreWarnings sets the TruststoreWarnings field's value.
+func (s *MutualTlsAuthentication) SetTruststoreWarnings(v []*string) *MutualTlsAuthentication {
+	s.TruststoreWarnings = v
+	return s
+}
+
+// If specified, API Gateway performs two-way authentication between the client
+// and the server. Clients must present a trusted certificate to access your
+// custom domain name.
+type MutualTlsAuthenticationInput struct {
+	_ struct{} `type:"structure"`
+
+	// An Amazon S3 resource ARN that specifies the truststore for mutual TLS authentication,
+	// for example, s3://bucket-name/key-name. The truststore can contain certificates
+	// from public or private certificate authorities. To update the truststore,
+	// upload a new version to S3, and then update your custom domain name to use
+	// the new version. To update the truststore, you must have permissions to access
+	// the S3 object.
+	TruststoreUri *string `locationName:"truststoreUri" type:"string"`
+
+	// The version of the S3 object that contains your truststore. To specify a
+	// version, you must have versioning enabled for the S3 bucket.
+	TruststoreVersion *string `locationName:"truststoreVersion" type:"string"`
+}
+
+// String returns the string representation
+func (s MutualTlsAuthenticationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MutualTlsAuthenticationInput) GoString() string {
+	return s.String()
+}
+
+// SetTruststoreUri sets the TruststoreUri field's value.
+func (s *MutualTlsAuthenticationInput) SetTruststoreUri(v string) *MutualTlsAuthenticationInput {
+	s.TruststoreUri = &v
+	return s
+}
+
+// SetTruststoreVersion sets the TruststoreVersion field's value.
+func (s *MutualTlsAuthenticationInput) SetTruststoreVersion(v string) *MutualTlsAuthenticationInput {
+	s.TruststoreVersion = &v
+	return s
+}
+
 // The requested resource is not found. Make sure that the request URI is correct.
 type NotFoundException struct {
 	_            struct{}                  `type:"structure"`
@@ -22192,6 +22323,12 @@ type RestApi struct {
 	// The API's description.
 	Description *string `locationName:"description" type:"string"`
 
+	// Specifies whether clients can invoke your API by using the default execute-api
+	// endpoint. By default, clients can invoke your API with the default https://{api_id}.execute-api.{region}.amazonaws.com
+	// endpoint. To require that clients use a custom domain name to invoke your
+	// API, disable the default endpoint.
+	DisableExecuteApiEndpoint *bool `locationName:"disableExecuteApiEndpoint" type:"boolean"`
+
 	// The endpoint configuration of this RestApi showing the endpoint types of
 	// the API.
 	EndpointConfiguration *EndpointConfiguration `locationName:"endpointConfiguration" type:"structure"`
@@ -22256,6 +22393,12 @@ func (s *RestApi) SetCreatedDate(v time.Time) *RestApi {
 // SetDescription sets the Description field's value.
 func (s *RestApi) SetDescription(v string) *RestApi {
 	s.Description = &v
+	return s
+}
+
+// SetDisableExecuteApiEndpoint sets the DisableExecuteApiEndpoint field's value.
+func (s *RestApi) SetDisableExecuteApiEndpoint(v bool) *RestApi {
+	s.DisableExecuteApiEndpoint = &v
 	return s
 }
 
@@ -25456,10 +25599,25 @@ const (
 	ApiKeySourceTypeAuthorizer = "AUTHORIZER"
 )
 
+// ApiKeySourceType_Values returns all elements of the ApiKeySourceType enum
+func ApiKeySourceType_Values() []string {
+	return []string{
+		ApiKeySourceTypeHeader,
+		ApiKeySourceTypeAuthorizer,
+	}
+}
+
 const (
 	// ApiKeysFormatCsv is a ApiKeysFormat enum value
 	ApiKeysFormatCsv = "csv"
 )
+
+// ApiKeysFormat_Values returns all elements of the ApiKeysFormat enum
+func ApiKeysFormat_Values() []string {
+	return []string{
+		ApiKeysFormatCsv,
+	}
+}
 
 // The authorizer type. Valid values are TOKEN for a Lambda function using a
 // single authorization token submitted in a custom header, REQUEST for a Lambda
@@ -25475,6 +25633,15 @@ const (
 	// AuthorizerTypeCognitoUserPools is a AuthorizerType enum value
 	AuthorizerTypeCognitoUserPools = "COGNITO_USER_POOLS"
 )
+
+// AuthorizerType_Values returns all elements of the AuthorizerType enum
+func AuthorizerType_Values() []string {
+	return []string{
+		AuthorizerTypeToken,
+		AuthorizerTypeRequest,
+		AuthorizerTypeCognitoUserPools,
+	}
+}
 
 // Returns the size of the CacheCluster.
 const (
@@ -25503,6 +25670,20 @@ const (
 	CacheClusterSize237 = "237"
 )
 
+// CacheClusterSize_Values returns all elements of the CacheClusterSize enum
+func CacheClusterSize_Values() []string {
+	return []string{
+		CacheClusterSize05,
+		CacheClusterSize16,
+		CacheClusterSize61,
+		CacheClusterSize135,
+		CacheClusterSize284,
+		CacheClusterSize582,
+		CacheClusterSize118,
+		CacheClusterSize237,
+	}
+}
+
 // Returns the status of the CacheCluster.
 const (
 	// CacheClusterStatusCreateInProgress is a CacheClusterStatus enum value
@@ -25521,6 +25702,17 @@ const (
 	CacheClusterStatusFlushInProgress = "FLUSH_IN_PROGRESS"
 )
 
+// CacheClusterStatus_Values returns all elements of the CacheClusterStatus enum
+func CacheClusterStatus_Values() []string {
+	return []string{
+		CacheClusterStatusCreateInProgress,
+		CacheClusterStatusAvailable,
+		CacheClusterStatusDeleteInProgress,
+		CacheClusterStatusNotAvailable,
+		CacheClusterStatusFlushInProgress,
+	}
+}
+
 const (
 	// ConnectionTypeInternet is a ConnectionType enum value
 	ConnectionTypeInternet = "INTERNET"
@@ -25529,6 +25721,14 @@ const (
 	ConnectionTypeVpcLink = "VPC_LINK"
 )
 
+// ConnectionType_Values returns all elements of the ConnectionType enum
+func ConnectionType_Values() []string {
+	return []string{
+		ConnectionTypeInternet,
+		ConnectionTypeVpcLink,
+	}
+}
+
 const (
 	// ContentHandlingStrategyConvertToBinary is a ContentHandlingStrategy enum value
 	ContentHandlingStrategyConvertToBinary = "CONVERT_TO_BINARY"
@@ -25536,6 +25736,14 @@ const (
 	// ContentHandlingStrategyConvertToText is a ContentHandlingStrategy enum value
 	ContentHandlingStrategyConvertToText = "CONVERT_TO_TEXT"
 )
+
+// ContentHandlingStrategy_Values returns all elements of the ContentHandlingStrategy enum
+func ContentHandlingStrategy_Values() []string {
+	return []string{
+		ContentHandlingStrategyConvertToBinary,
+		ContentHandlingStrategyConvertToText,
+	}
+}
 
 const (
 	// DocumentationPartTypeApi is a DocumentationPartType enum value
@@ -25575,6 +25783,24 @@ const (
 	DocumentationPartTypeResponseBody = "RESPONSE_BODY"
 )
 
+// DocumentationPartType_Values returns all elements of the DocumentationPartType enum
+func DocumentationPartType_Values() []string {
+	return []string{
+		DocumentationPartTypeApi,
+		DocumentationPartTypeAuthorizer,
+		DocumentationPartTypeModel,
+		DocumentationPartTypeResource,
+		DocumentationPartTypeMethod,
+		DocumentationPartTypePathParameter,
+		DocumentationPartTypeQueryParameter,
+		DocumentationPartTypeRequestHeader,
+		DocumentationPartTypeRequestBody,
+		DocumentationPartTypeResponse,
+		DocumentationPartTypeResponseHeader,
+		DocumentationPartTypeResponseBody,
+	}
+}
+
 const (
 	// DomainNameStatusAvailable is a DomainNameStatus enum value
 	DomainNameStatusAvailable = "AVAILABLE"
@@ -25585,6 +25811,15 @@ const (
 	// DomainNameStatusPending is a DomainNameStatus enum value
 	DomainNameStatusPending = "PENDING"
 )
+
+// DomainNameStatus_Values returns all elements of the DomainNameStatus enum
+func DomainNameStatus_Values() []string {
+	return []string{
+		DomainNameStatusAvailable,
+		DomainNameStatusUpdating,
+		DomainNameStatusPending,
+	}
+}
 
 // The endpoint type. The valid values are EDGE for edge-optimized API setup,
 // most suitable for mobile applications; REGIONAL for regional API endpoint
@@ -25600,6 +25835,15 @@ const (
 	// EndpointTypePrivate is a EndpointType enum value
 	EndpointTypePrivate = "PRIVATE"
 )
+
+// EndpointType_Values returns all elements of the EndpointType enum
+func EndpointType_Values() []string {
+	return []string{
+		EndpointTypeRegional,
+		EndpointTypeEdge,
+		EndpointTypePrivate,
+	}
+}
 
 const (
 	// GatewayResponseTypeDefault4xx is a GatewayResponseType enum value
@@ -25663,6 +25907,32 @@ const (
 	GatewayResponseTypeQuotaExceeded = "QUOTA_EXCEEDED"
 )
 
+// GatewayResponseType_Values returns all elements of the GatewayResponseType enum
+func GatewayResponseType_Values() []string {
+	return []string{
+		GatewayResponseTypeDefault4xx,
+		GatewayResponseTypeDefault5xx,
+		GatewayResponseTypeResourceNotFound,
+		GatewayResponseTypeUnauthorized,
+		GatewayResponseTypeInvalidApiKey,
+		GatewayResponseTypeAccessDenied,
+		GatewayResponseTypeAuthorizerFailure,
+		GatewayResponseTypeAuthorizerConfigurationError,
+		GatewayResponseTypeInvalidSignature,
+		GatewayResponseTypeExpiredToken,
+		GatewayResponseTypeMissingAuthenticationToken,
+		GatewayResponseTypeIntegrationFailure,
+		GatewayResponseTypeIntegrationTimeout,
+		GatewayResponseTypeApiConfigurationError,
+		GatewayResponseTypeUnsupportedMediaType,
+		GatewayResponseTypeBadRequestParameters,
+		GatewayResponseTypeBadRequestBody,
+		GatewayResponseTypeRequestTooLarge,
+		GatewayResponseTypeThrottled,
+		GatewayResponseTypeQuotaExceeded,
+	}
+}
+
 // The integration type. The valid value is HTTP for integrating an API method
 // with an HTTP backend; AWS with any AWS service endpoints; MOCK for testing
 // without actually invoking the backend; HTTP_PROXY for integrating with the
@@ -25684,6 +25954,17 @@ const (
 	IntegrationTypeAwsProxy = "AWS_PROXY"
 )
 
+// IntegrationType_Values returns all elements of the IntegrationType enum
+func IntegrationType_Values() []string {
+	return []string{
+		IntegrationTypeHttp,
+		IntegrationTypeAws,
+		IntegrationTypeMock,
+		IntegrationTypeHttpProxy,
+		IntegrationTypeAwsProxy,
+	}
+}
+
 const (
 	// LocationStatusTypeDocumented is a LocationStatusType enum value
 	LocationStatusTypeDocumented = "DOCUMENTED"
@@ -25691,6 +25972,14 @@ const (
 	// LocationStatusTypeUndocumented is a LocationStatusType enum value
 	LocationStatusTypeUndocumented = "UNDOCUMENTED"
 )
+
+// LocationStatusType_Values returns all elements of the LocationStatusType enum
+func LocationStatusType_Values() []string {
+	return []string{
+		LocationStatusTypeDocumented,
+		LocationStatusTypeUndocumented,
+	}
+}
 
 const (
 	// OpAdd is a Op enum value
@@ -25712,6 +26001,18 @@ const (
 	OpTest = "test"
 )
 
+// Op_Values returns all elements of the Op enum
+func Op_Values() []string {
+	return []string{
+		OpAdd,
+		OpRemove,
+		OpReplace,
+		OpMove,
+		OpCopy,
+		OpTest,
+	}
+}
+
 const (
 	// PutModeMerge is a PutMode enum value
 	PutModeMerge = "merge"
@@ -25719,6 +26020,14 @@ const (
 	// PutModeOverwrite is a PutMode enum value
 	PutModeOverwrite = "overwrite"
 )
+
+// PutMode_Values returns all elements of the PutMode enum
+func PutMode_Values() []string {
+	return []string{
+		PutModeMerge,
+		PutModeOverwrite,
+	}
+}
 
 const (
 	// QuotaPeriodTypeDay is a QuotaPeriodType enum value
@@ -25731,6 +26040,15 @@ const (
 	QuotaPeriodTypeMonth = "MONTH"
 )
 
+// QuotaPeriodType_Values returns all elements of the QuotaPeriodType enum
+func QuotaPeriodType_Values() []string {
+	return []string{
+		QuotaPeriodTypeDay,
+		QuotaPeriodTypeWeek,
+		QuotaPeriodTypeMonth,
+	}
+}
+
 const (
 	// SecurityPolicyTls10 is a SecurityPolicy enum value
 	SecurityPolicyTls10 = "TLS_1_0"
@@ -25738,6 +26056,14 @@ const (
 	// SecurityPolicyTls12 is a SecurityPolicy enum value
 	SecurityPolicyTls12 = "TLS_1_2"
 )
+
+// SecurityPolicy_Values returns all elements of the SecurityPolicy enum
+func SecurityPolicy_Values() []string {
+	return []string{
+		SecurityPolicyTls10,
+		SecurityPolicyTls12,
+	}
+}
 
 const (
 	// UnauthorizedCacheControlHeaderStrategyFailWith403 is a UnauthorizedCacheControlHeaderStrategy enum value
@@ -25749,6 +26075,15 @@ const (
 	// UnauthorizedCacheControlHeaderStrategySucceedWithoutResponseHeader is a UnauthorizedCacheControlHeaderStrategy enum value
 	UnauthorizedCacheControlHeaderStrategySucceedWithoutResponseHeader = "SUCCEED_WITHOUT_RESPONSE_HEADER"
 )
+
+// UnauthorizedCacheControlHeaderStrategy_Values returns all elements of the UnauthorizedCacheControlHeaderStrategy enum
+func UnauthorizedCacheControlHeaderStrategy_Values() []string {
+	return []string{
+		UnauthorizedCacheControlHeaderStrategyFailWith403,
+		UnauthorizedCacheControlHeaderStrategySucceedWithResponseHeader,
+		UnauthorizedCacheControlHeaderStrategySucceedWithoutResponseHeader,
+	}
+}
 
 const (
 	// VpcLinkStatusAvailable is a VpcLinkStatus enum value
@@ -25763,3 +26098,13 @@ const (
 	// VpcLinkStatusFailed is a VpcLinkStatus enum value
 	VpcLinkStatusFailed = "FAILED"
 )
+
+// VpcLinkStatus_Values returns all elements of the VpcLinkStatus enum
+func VpcLinkStatus_Values() []string {
+	return []string{
+		VpcLinkStatusAvailable,
+		VpcLinkStatusPending,
+		VpcLinkStatusDeleting,
+		VpcLinkStatusFailed,
+	}
+}
