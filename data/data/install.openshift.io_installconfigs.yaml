@@ -1810,22 +1810,6 @@ spec:
                       cluster. If empty, a new resource group will be created for
                       the cluster."
                     type: string
-                  subnets:
-                    description: Subnets is a list of existing subnet IDs. Leave unset
-                      and the installer will create new subnets in the VPC network
-                      on your behalf.
-                    items:
-                      type: string
-                    type: array
-                  vpc:
-                    description: VPC is the ID of an existing VPC network. Leave unset
-                      and the installer will create a new VPC network on your behalf.
-                    type: string
-                  vpcResourceGroupName:
-                    description: VPCResourceGroupName specifies the resource group
-                      containing an existing VPC. This must be defined if `VPC` is
-                      defined.
-                    type: string
                 required:
                 - region
                 type: object

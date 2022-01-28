@@ -20,7 +20,5 @@ func Metadata(infraID string, config *types.InstallConfig, meta *icibmcloud.Meta
 		CISInstanceCRN:    cisCrn,
 		Region:            config.Platform.IBMCloud.Region,
 		ResourceGroupName: config.Platform.IBMCloud.ClusterResourceGroupName(infraID),
-		Subnets:           config.Platform.IBMCloud.Subnets,
-		VPC:               config.Platform.IBMCloud.VPC,
 	}
 }
