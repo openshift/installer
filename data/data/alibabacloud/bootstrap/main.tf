@@ -9,6 +9,7 @@ locals {
     },
     var.ali_extra_tags,
   )
+  is_external = var.ali_publish_strategy == "External" ? true : false
 }
 
 provider "alicloud" {
@@ -137,7 +138,7 @@ resource "alicloud_instance" "bootstrap" {
   image_id                   = var.ali_image_id
   vswitch_id                 = var.vswitch_ids[0]
   security_groups            = [alicloud_security_group.sg_bootstrap.id, var.sg_master_id]
-  internet_max_bandwidth_out = 5
+  internet_max_bandwidth_out = local.is_external ? 5 : 0
   role_name                  = alicloud_ram_role.role.name
 
   system_disk_name        = "${local.prefix}_sys_disk-bootstrap"

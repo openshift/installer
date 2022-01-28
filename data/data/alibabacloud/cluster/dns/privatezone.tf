@@ -3,6 +3,7 @@ locals {
   prefix          = var.cluster_id
   cluster_name    = split(".", var.cluster_domain)[0]
   private_zone_id = var.private_zone_id == "" ? alicloud_pvtz_zone.pvtz.0.id : var.private_zone_id
+  is_external     = var.publish_strategy == "External" ? true : false
 }
 
 // Using this data source can open Private Zone service automatically.

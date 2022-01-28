@@ -1,5 +1,6 @@
 locals {
   description = "Created By OpenShift Installer"
+  is_external = var.ali_publish_strategy == "External" ? true : false
   tags = merge(
     {
       "GISV"                                      = "ocp",
@@ -38,6 +39,7 @@ module "vpc" {
   resource_group_id   = module.resource_group.resource_group_id
   vpc_cidr_block      = var.machine_v4_cidrs[0]
   tags                = local.tags
+  publish_strategy    = var.ali_publish_strategy
 }
 
 module "dns" {
@@ -51,6 +53,7 @@ module "dns" {
   slb_external_ip   = module.vpc.slb_external_ip
   slb_internal_ip   = module.vpc.slb_internal_ip
   tags              = local.tags
+  publish_strategy  = var.ali_publish_strategy
 }
 
 module "ram" {
@@ -68,6 +71,7 @@ module "master" {
   az_to_vswitch_id     = module.vpc.az_to_vswitch_id
   sg_id                = module.vpc.sg_master_id
   slb_ids              = module.vpc.slb_ids
+  slb_group_length     = module.vpc.slb_group_length
   instance_type        = var.ali_master_instance_type
   instance_count       = var.master_count
   image_id             = var.ali_image_id
@@ -76,4 +80,5 @@ module "master" {
   user_data_ign        = var.ignition_master
   role_name            = module.ram.role_master_name
   tags                 = local.tags
+  publish_strategy     = var.ali_publish_strategy
 }

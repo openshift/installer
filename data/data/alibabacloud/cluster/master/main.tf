@@ -36,7 +36,7 @@ resource "alicloud_instance" "master" {
 }
 
 resource "alicloud_slb_backend_server" "slb_attachment_masters" {
-  count            = "${length(var.slb_ids) * length(alicloud_instance.master.*.id)}"
+  count            = "${var.slb_group_length * length(alicloud_instance.master.*.id)}"
   load_balancer_id = "${element(var.slb_ids, ceil(count.index / length(alicloud_instance.master.*.id)))}"
   backend_servers {
     server_id = "${element(alicloud_instance.master.*.id, count.index)}"
