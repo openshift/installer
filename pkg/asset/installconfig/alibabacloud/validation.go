@@ -2,6 +2,7 @@ package alibabacloud
 
 import (
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -126,16 +127,19 @@ func validatePlatform(client *Client, ic *types.InstallConfig, path *field.Path)
 
 func validateResourceGroup(client *Client, ic *types.InstallConfig, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	resourceGroups, err := client.ListResourceGroups()
+	resourceGroupID := ic.AlibabaCloud.ResourceGroupID
+	resourceGroups, err := client.ListResourceGroups(resourceGroupID)
 	if err != nil {
+		if strings.Contains(err.Error(), "InvalidParameter.ResourceGroupId") {
+			return append(allErrs, field.Invalid(path.Child("resourceGroupID"), resourceGroupID, "resourceGroupID is invalid"))
+		}
 		return append(allErrs, field.InternalError(path.Child("resourceGroupID"), err))
 	}
-	for _, rg := range resourceGroups.ResourceGroups.ResourceGroup {
-		if rg.Id == ic.AlibabaCloud.ResourceGroupID {
-			return allErrs
-		}
+	if resourceGroups.TotalCount == 0 {
+		return append(allErrs, field.NotFound(path.Child("resourceGroupID"), ic.AlibabaCloud.ResourceGroupID))
 	}
-	return append(allErrs, field.NotFound(path.Child("resourceGroupID"), ic.AlibabaCloud.ResourceGroupID))
+
+	return allErrs
 }
 
 func validateVpc(client *Client, ic *types.InstallConfig, path *field.Path) field.ErrorList {
