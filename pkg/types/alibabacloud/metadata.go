@@ -4,4 +4,5 @@ package alibabacloud
 type Metadata struct {
 	Region        string `json:"region"`
 	ClusterDomain string `json:"clusterDomain"`
+	PrivateZoneID string `json:"privateZoneID"`
 }
