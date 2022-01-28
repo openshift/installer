@@ -87,7 +87,9 @@ func (a *iLO5AccessDetails) PowerInterface() string {
 }
 
 func (a *iLO5AccessDetails) RAIDInterface() string {
-	return "ilo5"
+	// Disabled RAID in OpenShift because we are not ready to support it
+	//return "ilo5"
+	return "no-raid"
 }
 
 func (a *iLO5AccessDetails) VendorInterface() string {
