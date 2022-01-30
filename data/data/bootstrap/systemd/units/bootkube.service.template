@@ -3,6 +3,9 @@ Description=Bootstrap a Kubernetes cluster
 Requires=crio-configure.service
 Wants=kubelet.service
 After=kubelet.service crio-configure.service
+{{if .IsOKD -}}
+ConditionPathExists=/opt/openshift/.pivot-done
+{{end -}}
 ConditionPathExists=!/opt/openshift/.bootkube.done
 
 [Service]
