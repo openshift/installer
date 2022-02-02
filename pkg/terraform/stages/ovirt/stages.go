@@ -73,7 +73,7 @@ func extractOutputHostAddresses(s stages.SplitStage, directory string, ic *types
 			}
 			ip, err := findVirtualMachineIP(vmID, client)
 			if err != nil {
-				returnErr = errors.Wrapf(err, "could not find IP address for bootstrap instance %q", vmID)
+				returnErr = errors.Wrapf(err, "could not find IP address for control-plane instance %s", vmID)
 				return
 			}
 			controlPlaneIPs[i] = ip
@@ -87,7 +87,7 @@ func checkPortIsOpen(host string, port string) bool {
 	timeout := time.Second
 	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
 	if err != nil {
-		logrus.Debugf("connection error: %v", err)
+		logrus.Debugf("Connection error: %v", err)
 		return false
 	}
 	if conn != nil {
@@ -123,11 +123,16 @@ func getReportedDevices(c *ovirtsdk4.Connection, vmID string) (*ovirtsdk4.Report
 
 func findVirtualMachineIP(instanceID string, client *ovirtsdk4.Connection) (string, error) {
 	reportedDeviceSlice, err := getReportedDevices(client, instanceID)
-	if err == nil {
-		return "", errors.Wrapf(err, "could not Find IP Address for vm id: %s", instanceID)
+	if err != nil {
+		return "", errors.Wrapf(err, "error retrieving reported devices when determining IP address")
 	}
 
-	for _, reportedDevice := range reportedDeviceSlice.Slice() {
+	reportedDevices := reportedDeviceSlice.Slice()
+	if len(reportedDevices) == 0 {
+		return "", fmt.Errorf("no reported devices found when determining IP address")
+	}
+
+	for _, reportedDevice := range reportedDevices {
 		ips, hasIps := reportedDevice.Ips()
 		if hasIps {
 			for _, ip := range ips.Slice() {
@@ -141,5 +146,5 @@ func findVirtualMachineIP(instanceID string, client *ovirtsdk4.Connection) (stri
 			}
 		}
 	}
-	return "", fmt.Errorf("could not find usable IP address for vm id: %s", instanceID)
+	return "", fmt.Errorf("no usable IP addresses found")
 }
