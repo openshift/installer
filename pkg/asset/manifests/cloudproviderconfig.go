@@ -99,7 +99,10 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return nil
 		}
 		cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
-                // Add DataKey to address BZ 1926975. The newline is required or the yaml is invalid
+                // Include a non-empty kube config to appease components--such as the kube-apiserver--that
+                // expect there to be a kube config if the cloud-provider-config ConfigMap exists. See
+                // https://bugzilla.redhat.com/show_bug.cgi?id=1926975.
+                // Note that the newline is required in order to be valid yaml.
                 cm.Data[cloudProviderConfigDataKey] = `[Global]
 `
 	case alibabacloudtypes.Name:
