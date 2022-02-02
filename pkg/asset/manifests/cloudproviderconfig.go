@@ -95,7 +95,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	case awstypes.Name:
 		// Store the additional trust bundle in the ca-bundle.pem key if the cluster is being installed on a C2S region.
 		trustBundle := installConfig.Config.AdditionalTrustBundle
-		if trustBundle == "" || !awstypes.C2SRegions.Has(installConfig.Config.AWS.Region) {
+		if trustBundle == "" || !awstypes.IsSecretRegion(installConfig.Config.AWS.Region) {
 			return nil
 		}
 		cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
