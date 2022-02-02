@@ -99,6 +99,9 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return nil
 		}
 		cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
+                // Add DataKey to address BZ 1926975. The newline is required or the yaml is invalid
+                cm.Data[cloudProviderConfigDataKey] = `[Global]
+`
 	case alibabacloudtypes.Name:
 		alibabacloudConfig, err := alibabacloudmanifests.CloudConfig{
 			Global: alibabacloudmanifests.GlobalConfig{
