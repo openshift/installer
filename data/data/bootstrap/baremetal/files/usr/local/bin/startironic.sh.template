@@ -184,18 +184,6 @@ else
     IRONIC_HOST="${IRONIC_IP}"
 fi
 
-{{if .Proxy -}}
-{{if .Proxy.HTTPProxy -}}
-HTTP_PROXY="{{.Proxy.HTTPProxy}}"
-{{end -}}
-{{if .Proxy.HTTPSProxy -}}
-HTTPS_PROXY="{{.Proxy.HTTPSProxy}}"
-{{end -}}
-{{if .Proxy.NoProxy -}}
-NO_PROXY="{{.Proxy.NoProxy}}"
-{{end -}}
-{{end -}}
-
 # Create a podman secret for the image-customization-server 
 podman secret rm pull-secret || true
 base64 -w 0 /root/.docker/config.json | podman secret create pull-secret -
