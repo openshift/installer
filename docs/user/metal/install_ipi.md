@@ -33,7 +33,7 @@ accessible over the external network which may not be desirable.
       on this network.
   * ***NTP***
     * A time source must be accessible from this network.
-  * ***Reserved VIPs (Virtual IPs)*** - 3 IP addresses must be reserved on this
+  * ***Reserved VIPs (Virtual IPs)*** - 2 IP addresses must be reserved on this
 	network for use by the cluster. These Virtual IPs are managed using VRRP
 	(v2 for IPv4 and v3 for IPv6). Specifically, these IPs will serve the
     following purposes:
