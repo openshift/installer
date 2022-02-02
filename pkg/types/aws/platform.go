@@ -1,11 +1,6 @@
 package aws
 
-import "k8s.io/apimachinery/pkg/util/sets"
-
-var (
-	// C2SRegions are the C2S AWS regions.
-	C2SRegions = sets.NewString("us-iso-east-1")
-)
+import "github.com/aws/aws-sdk-go/aws/endpoints"
 
 // Platform stores all the global configuration that all machinesets
 // use.
@@ -73,4 +68,17 @@ type ServiceEndpoint struct {
 	//
 	// +kubebuilder:validation:Pattern=`^https://`
 	URL string `json:"url"`
+}
+
+// IsSecretRegion returns true if the region is part of either the ISO or ISOB partitions.
+func IsSecretRegion(region string) bool {
+	partition, ok := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region)
+	if !ok {
+		return false
+	}
+	switch partition.ID() {
+	case endpoints.AwsIsoPartitionID, endpoints.AwsIsoBPartitionID:
+		return true
+	}
+	return false
 }
