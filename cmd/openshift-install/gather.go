@@ -106,7 +106,16 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 	bootstrap := gatherBootstrapOpts.bootstrap
 	port := 22
 	masters := gatherBootstrapOpts.masters
-	if bootstrap == "" && len(masters) == 0 {
+
+	if len(masters) > 0 && bootstrap == "" {
+		return "", fmt.Errorf("when control plane IP addresses are provided, the bootstrap IP address is required")
+	}
+
+	if bootstrap != "" && len(masters) == 0 {
+		logrus.Warn("Only bootstrap IP address was supplied. Supplying control-plane IP addresses as well allows more complete log gathering.")
+	}
+
+	if bootstrap == "" {
 		config := &installconfig.InstallConfig{}
 		if err := assetStore.Fetch(config); err != nil {
 			return "", errors.Wrapf(err, "failed to fetch %s", config.Name())
@@ -115,24 +124,29 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 		for _, stage := range platformstages.StagesForPlatform(config.Config.Platform.Name()) {
 			stageBootstrap, stagePort, stageMasters, err := stage.ExtractHostAddresses(directory, config.Config)
 			if err != nil {
-				return "", err
+				logrus.Debugf("Error when obtaining host IP addresses, continuing with best effort. Error message: %s", err)
 			}
+
 			if stageBootstrap != "" {
 				bootstrap = stageBootstrap
 			}
+
 			if stagePort != 0 {
 				port = stagePort
 			}
+
 			if len(stageMasters) > 0 {
 				masters = stageMasters
 			}
 		}
+	}
 
-		if bootstrap == "" || len(masters) == 0 {
-			return "", errors.New("bootstrap host address and at least one control plane host address must be provided")
-		}
-	} else if bootstrap == "" || len(masters) == 0 {
-		return "", errors.New("must provide both bootstrap host address and at least one control plane host address when providing one")
+	if bootstrap == "" {
+		return "", fmt.Errorf("failed to obtain IP address for bootstrap host")
+	}
+
+	if len(masters) == 0 {
+		logrus.Warn("No control-plane IP addresses found. Attempting to gather logs from bootstrap host only...")
 	}
 
 	return logGatherBootstrap(bootstrap, port, masters, directory)
