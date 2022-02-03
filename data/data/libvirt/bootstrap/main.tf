@@ -34,7 +34,7 @@ resource "libvirt_domain" "bootstrap" {
     target_port = 0
   }
 
-  cpu = {
+  cpu {
     mode = "host-passthrough"
   }
 
