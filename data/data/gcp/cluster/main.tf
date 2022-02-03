@@ -26,6 +26,7 @@ module "master" {
   image          = local.gcp_image
   instance_count = var.master_count
   machine_type   = var.gcp_master_instance_type
+  project_id     = var.gcp_project_id
   cluster_id     = var.cluster_id
   ignition       = var.ignition_master
   subnet         = module.network.master_subnet
@@ -41,6 +42,7 @@ module "master" {
 module "iam" {
   source = "./iam"
 
+  project_id = var.gcp_project_id
   cluster_id = var.cluster_id
 }
 
