@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
+	"golang.org/x/net/proxy"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -328,7 +329,7 @@ func validateEndpointAccessibility(endpointURL string) error {
 	if port == "" {
 		port = "https"
 	}
-	conn, err := net.Dial("tcp", net.JoinHostPort(URL.Hostname(), port))
+	conn, err := proxy.Dial(context.Background(), "tcp", net.JoinHostPort(URL.Hostname(), port))
 	if err != nil {
 		return err
 	}
