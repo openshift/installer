@@ -19,8 +19,13 @@ provider "azurerm" {
   environment     = var.azure_environment
 }
 
+data "azurerm_storage_account" "storage_account" {
+  name                = var.storage_account_name
+  resource_group_name = var.resource_group_name
+}
+
 data "azurerm_storage_account_sas" "ignition" {
-  connection_string = var.storage_account.primary_connection_string
+  connection_string = data.azurerm_storage_account.storage_account.primary_connection_string
   https_only        = true
 
   resource_types {
@@ -53,14 +58,14 @@ data "azurerm_storage_account_sas" "ignition" {
 
 resource "azurerm_storage_container" "ignition" {
   name                  = "ignition"
-  storage_account_name  = var.storage_account.name
+  storage_account_name  = var.storage_account_name
   container_access_type = "private"
 }
 
 resource "azurerm_storage_blob" "ignition" {
   name                   = "bootstrap.ign"
   source                 = var.ignition_bootstrap_file
-  storage_account_name   = var.storage_account.name
+  storage_account_name   = var.storage_account_name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "Block"
 }
@@ -214,7 +219,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   custom_data   = base64encode(data.ignition_config.redirect.rendered)
 
   boot_diagnostics {
-    storage_account_uri = var.storage_account.primary_blob_endpoint
+    storage_account_uri = data.azurerm_storage_account.storage_account.primary_blob_endpoint
   }
 
   depends_on = [

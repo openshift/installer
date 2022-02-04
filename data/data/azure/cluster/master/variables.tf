@@ -77,9 +77,9 @@ variable "tags" {
   description = "tags to be applied to created resources."
 }
 
-variable "storage_account" {
+variable "storage_account_name" {
   type        = any
-  description = "the storage account for the cluster. It can be used for boot diagnostics."
+  description = "the name of the storage account for the cluster. It can be used for boot diagnostics."
 }
 
 variable "ignition" {
