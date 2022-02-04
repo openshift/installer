@@ -21,30 +21,7 @@ func Validate(ic *types.InstallConfig) error {
 		return errors.New(field.Required(field.NewPath("platform", "vsphere"), "vSphere validation requires a vSphere platform configuration").Error())
 	}
 
-	p := ic.Platform.VSphere
-	if errs := validation.ValidatePlatform(p, field.NewPath("platform").Child("vsphere")); len(errs) != 0 {
-		return errs.ToAggregate()
-	}
-
-	vim25Client, _, err := vspheretypes.CreateVSphereClients(context.TODO(),
-		p.VCenter,
-		p.Username,
-		p.Password)
-
-	if err != nil {
-		return errors.New(field.InternalError(field.NewPath("platform", "vsphere"), errors.Wrapf(err, "unable to connect to vCenter %s.", p.VCenter)).Error())
-	}
-	finder := NewFinder(vim25Client)
-	return validateResources(finder, ic)
-}
-
-func validateResources(finder Finder, ic *types.InstallConfig) error {
-	allErrs := field.ErrorList{}
-	p := ic.Platform.VSphere
-	if p.Network != "" {
-		allErrs = append(allErrs, validateNetwork(finder, p, field.NewPath("platform").Child("vsphere").Child("network"))...)
-	}
-	return allErrs.ToAggregate()
+	return validation.ValidatePlatform(ic.Platform.VSphere, field.NewPath("platform").Child("vsphere")).ToAggregate()
 }
 
 // ValidateForProvisioning performs platform validation specifically for installer-
@@ -74,6 +51,9 @@ func validateProvisioning(finder Finder, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validation.ValidateForProvisioning(ic.Platform.VSphere, field.NewPath("platform").Child("vsphere"))...)
 	allErrs = append(allErrs, folderExists(finder, ic, field.NewPath("platform").Child("vsphere").Child("folder"))...)
 	allErrs = append(allErrs, resourcePoolExists(finder, ic, field.NewPath("platform").Child("vsphere").Child("resourcePool"))...)
+	if p := ic.Platform.VSphere; p.Network != "" {
+		allErrs = append(allErrs, validateNetwork(finder, p, field.NewPath("platform").Child("vsphere").Child("network"))...)
+	}
 
 	return allErrs.ToAggregate()
 }
