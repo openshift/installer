@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -211,6 +212,17 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Status.PlatformStatus.Ovirt = &configv1.OvirtPlatformStatus{
 			APIServerInternalIP: installConfig.Config.Ovirt.APIVIP,
 			IngressIP:           installConfig.Config.Ovirt.IngressVIP,
+		}
+	case powervs.Name:
+		config.Spec.PlatformSpec.Type = configv1.PowerVSPlatformType
+		cisInstanceCRN, err := installConfig.PowerVS.CISInstanceCRN(context.TODO())
+		if err != nil {
+			return errors.Wrapf(err, "failed to get instance CRN")
+		}
+		config.Status.PlatformStatus.PowerVS = &configv1.PowerVSPlatformStatus{
+			Region:         installConfig.Config.Platform.PowerVS.Region,
+			Zone:           installConfig.Config.Platform.PowerVS.Zone,
+			CISInstanceCRN: cisInstanceCRN,
 		}
 	default:
 		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
