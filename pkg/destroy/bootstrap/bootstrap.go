@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
@@ -67,7 +66,7 @@ func Destroy(dir string) (err error) {
 			return errors.Wrap(err, "failed to copy state file to the temporary directory")
 		}
 
-		extraOpts := make([]tfexec.DestroyOption, 0, len(varFiles))
+		targetVarFiles := make([]string, 0, len(varFiles))
 		for _, filename := range varFiles {
 			sourcePath := filepath.Join(dir, filename)
 			targetPath := filepath.Join(tempDir, filename)
@@ -80,10 +79,10 @@ func Destroy(dir string) (err error) {
 				}
 				return errors.Wrapf(err, "failed to copy %s to the temporary directory", filename)
 			}
-			extraOpts = append(extraOpts, tfexec.VarFile(targetPath))
+			targetVarFiles = append(targetVarFiles, targetPath)
 		}
 
-		if err := stage.Destroy(tempDir, extraOpts); err != nil {
+		if err := stage.Destroy(tempDir, targetVarFiles); err != nil {
 			return err
 		}
 

@@ -31,12 +31,14 @@ var PlatformStages = []terraform.Stage{
 	),
 }
 
-// XXX: extraOpts is of type tfexec.DestroyOption, but really should be
-// tfexec.ApplyOption. Maybe we should provide custom Init/Apply/Destroy
-// function options?
-func removeFromLoadBalancers(s stages.SplitStage, directory string, extraOpts []tfexec.DestroyOption) error {
+func removeFromLoadBalancers(s stages.SplitStage, directory string, varFiles []string) error {
+	opts := make([]tfexec.ApplyOption, 0, len(varFiles)+1)
+	for _, varFile := range varFiles {
+		opts = append(opts, tfexec.VarFile(varFile))
+	}
+	opts = append(opts, tfexec.Var("gcp_bootstrap_lb=false"))
 	return errors.Wrap(
-		terraform.Apply(directory, gcptypes.Name, s, tfexec.Var("gcp_bootstrap_lb=false")),
+		terraform.Apply(directory, gcptypes.Name, s, opts...),
 		"failed disabling bootstrap load balancing",
 	)
 }
