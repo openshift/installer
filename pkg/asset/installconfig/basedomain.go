@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -71,7 +72,7 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 		if !(gcpconfig.IsForbidden(err) || gcpconfig.IsThrottled(err)) {
 			return err
 		}
-	case ibmcloud.Name:
+	case ibmcloud.Name, powervs.Name:
 		zone, err := ibmcloudconfig.GetDNSZone()
 		if err != nil {
 			return err
