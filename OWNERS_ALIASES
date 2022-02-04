@@ -33,6 +33,15 @@ aliases:
     - mdbooth
     - pierreprinetti
     - stephenfin
+  powervs-approvers:
+    - clnperez
+    - mkumatag
+    - Prashanth684
+  powervs-reviewers:
+    - clnperez
+    - mkumatag
+    - Prashanth684
+    - mjturek
   vsphere-approvers:
     - dav1x
     - jcpowermac
