@@ -3,6 +3,9 @@ set -ex
 
 . /usr/local/bin/release-image.sh
 
+# Must match ironic.service
+EXIT_CODE_NO_RESTART=42
+
 IRONIC_IMAGE=$(image_for ironic)
 IRONIC_AGENT_IMAGE=$(image_for ironic-agent)
 CUSTOMIZATION_IMAGE=$(image_for image-customization-controller)
@@ -256,6 +259,13 @@ podman run -d --name ironic-ramdisk-logs \
      --restart on-failure \
      --entrypoint /bin/runlogwatch.sh \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
+
+# Failure to start image-customization results in a very confusing error
+icc_id=$(podman ps --filter name=image-customization --filter status=running --format '{{`{{.ID}}`}}')
+if [ -z "$icc_id" ]; then
+    echo The image-customization service crashed after start, check its logs
+    exit $EXIT_CODE_NO_RESTART
+fi
 
 set +x
 AUTH_DIR=/opt/metal3/auth
