@@ -30,6 +30,7 @@ import (
 	awssession "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/version"
 )
 
@@ -101,8 +102,7 @@ func (o *ClusterUninstaller) validate() error {
 	if len(o.Filters) == 0 {
 		return errors.Errorf("you must specify at least one tag filter")
 	}
-	switch r := o.Region; r {
-	case "us-iso-east-1":
+	if r := o.Region; awstypes.IsSecretRegion(r) {
 		return errors.Errorf("cannot destroy cluster in region %q", r)
 	}
 	return nil

@@ -58,7 +58,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 		}
 
 		// Add delete permissions for non-C2S installs.
-		if !aws.C2SRegions.Has(ic.Config.AWS.Region) {
+		if !aws.IsSecretRegion(ic.Config.AWS.Region) {
 			permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteBase)
 			if usingExistingVPC {
 				permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteSharedNetworking)
