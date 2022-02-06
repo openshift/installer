@@ -66,11 +66,14 @@ func newGatherBootstrapCmd() *cobra.Command {
 			if err != nil {
 				logrus.Fatal(err)
 			}
+
 			if !gatherBootstrapOpts.skipAnalysis {
 				if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
 					logrus.Fatal(err)
 				}
 			}
+
+			logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
 		},
 	}
 	cmd.PersistentFlags().StringVar(&gatherBootstrapOpts.bootstrap, "bootstrap", "", "Hostname or IP of the bootstrap host")
@@ -135,10 +138,10 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 		return "", errors.New("must provide both bootstrap host address and at least one control plane host address when providing one")
 	}
 
-	return logGatherBootstrap(bootstrap, port, masters, directory)
+	return gatherBootstrap(bootstrap, port, masters, directory)
 }
 
-func logGatherBootstrap(bootstrap string, port int, masters []string, directory string) (string, error) {
+func gatherBootstrap(bootstrap string, port int, masters []string, directory string) (string, error) {
 	logrus.Info("Pulling debug logs from the bootstrap machine")
 	client, err := ssh.NewClient("core", net.JoinHostPort(bootstrap, strconv.Itoa(port)), gatherBootstrapOpts.sshKeys)
 	if err != nil {
@@ -160,7 +163,6 @@ func logGatherBootstrap(bootstrap string, port int, masters []string, directory 
 	if err != nil {
 		return "", errors.Wrap(err, "failed to stat log file")
 	}
-	logrus.Infof("Bootstrap gather logs captured here %q", path)
 	return path, nil
 }
 

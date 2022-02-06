@@ -113,17 +113,20 @@ var (
 
 				timer.StartTimer("Bootstrap Complete")
 				if err := waitForBootstrapComplete(ctx, config); err != nil {
-					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
-						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
+					bundlePath, gatherErr := runGatherBootstrapCmd(rootOpts.dir)
+					if gatherErr != nil {
+						logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
 					}
-					bundlePath, err2 := runGatherBootstrapCmd(rootOpts.dir)
-					if err2 != nil {
-						logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
+					if err := logClusterOperatorConditions(ctx, config); err != nil {
+						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err)
 					}
 					logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
 					logrus.Error(err.Error())
-					if err2 := service.AnalyzeGatherBundle(bundlePath); err2 != nil {
-						logrus.Error("Attempted to analyze the debug logs after installation failure: ", err2)
+					if gatherErr == nil {
+						if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
+							logrus.Error("Attempted to analyze the debug logs after installation failure: ", err)
+						}
+						logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
 					}
 					logrus.Fatal("Bootstrap failed to complete")
 				}
