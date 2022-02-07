@@ -725,7 +725,7 @@ readonly server_id
 
 # Drain the node
 oc adm cordon "$node_name"
-oc adm drain "$node_name" --delete-emptydir-data --ignore-daemonsets
+oc adm drain "$node_name" --delete-emptydir-data --ignore-daemonsets --force
 
 # Power off the server
 oc debug "node/${node_name}" -- chroot /host shutdown -h 1
