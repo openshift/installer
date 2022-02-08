@@ -50,6 +50,13 @@ function wait_for_cvo {
   done
 }
 
+function report_bootstrap_complete {
+  while ! oc create cm -n kube-system  bootstrap --from-literal=status=complete --dry-run=client -o yaml | kubectl apply -f -
+  do
+    sleep 5
+  done
+}
+
 function clean {
   if [ -d "/etc/kubernetes/bootstrap-secrets" ]; then
      rm -rf /etc/kubernetes/bootstrap-*
@@ -65,5 +72,6 @@ function clean {
 wait_for_api
 approve_csr
 restart_kubelet
+report_bootstrap_complete
 wait_for_cvo
 clean

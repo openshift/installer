@@ -26,7 +26,11 @@ while ! oc --kubeconfig="$KUBECONFIG" create -f - <<-EOF
 	  name: bootstrap
 	  namespace: kube-system
 	data:
+{{- if .BootstrapInPlace }}
+	  status: bootstrap-in-place
+{{ else }}
 	  status: complete
+{{ end -}}
 EOF
 do
 	sleep 5
