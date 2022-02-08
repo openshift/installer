@@ -311,14 +311,13 @@ You can view the Ironic logs by sshing to the bootstrap VM, and
 examining the logs of the `ironic` service, `journalctl -u ironic`. You
 may also view the logs of the individual containers:
 
-  - `podman logs ipa-downloader`
   - `podman logs coreos-downloader`
-  - `podman logs ironic-api`
-  - `podman logs ironic-conductor`
+  - `podman logs dnsmasq`
+  - `podman logs image-customization`
+  - `podman logs ironic`
   - `podman logs ironic-inspector`
-  - `podman logs ironic-dnsmasq`
-  - `podman logs ironic-deploy-ramdisk-logs`
-  - `podman logs ironic-inspector-ramdisk-logs`
+  - `podman logs ironic-ramdisk-logs`
+  - `podman logs httpd`
 
 
 ### Control Plane
