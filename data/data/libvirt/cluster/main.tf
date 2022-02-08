@@ -99,6 +99,11 @@ resource "libvirt_domain" "master" {
     hostname   = "${var.cluster_id}-master-${count.index}.${var.cluster_domain}"
     addresses  = [var.libvirt_master_ips[count.index]]
   }
+
+  graphics {
+    type        = "vnc"
+    listen_type = "address"
+  }
 }
 
 data "libvirt_network_dns_host_template" "bootstrap" {
