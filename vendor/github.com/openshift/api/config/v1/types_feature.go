@@ -111,9 +111,7 @@ var FeatureSets = map[FeatureSet]*FeatureGateEnabledDisabled{
 		Disabled: []string{},
 	},
 	TechPreviewNoUpgrade: newDefaultFeatures().
-		with("CSIDriverAzureDisk").          // sig-storage, jsafrane, OCP specific
 		with("CSIDriverAzureFile").          // sig-storage, fbertina, OCP specific
-		with("CSIDriverVSphere").            // sig-storage, jsafrane, OCP specific
 		with("CSIMigrationAWS").             // sig-storage, jsafrane, Kubernetes feature gate
 		with("CSIMigrationOpenStack").       // sig-storage, jsafrane, Kubernetes feature gate
 		with("CSIMigrationGCE").             // sig-storage, fbertina, Kubernetes feature gate
