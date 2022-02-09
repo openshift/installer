@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
+
+	data "github.com/openshift-agent-team/fleeting/data/data/agent"
 )
 
 const (
@@ -12,7 +14,7 @@ const (
 )
 
 func getIgnition() ([]byte, error) {
-	ignition, err := os.Open("data/test_ignition.ign")
+	ignition, err := data.IgnitionData.Open("ignition/test_ignition.ign")
 	if err != nil {
 		return nil, err
 	}
