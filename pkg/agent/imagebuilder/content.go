@@ -3,6 +3,7 @@ package imagebuilder
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"path"
 	"strings"
 
@@ -23,6 +24,14 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
 		},
+		Passwd: igntypes.Passwd{
+			Users: []igntypes.PasswdUser{
+				{
+					Name:              "core",
+					SSHAuthorizedKeys: c.getSSHPubKey(),
+				},
+			},
+		},
 	}
 
 	config.Storage.Files, err = c.getFiles()
@@ -36,6 +45,18 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 	}
 
 	return json.Marshal(config)
+}
+
+func (c ConfigBuilder) getSSHPubKey() (keys []igntypes.SSHAuthorizedKey) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+	pubkey, err := os.ReadFile(path.Join(home, ".ssh", "id_rsa.pub"))
+	if err != nil {
+		return
+	}
+	return append(keys, igntypes.SSHAuthorizedKey(pubkey))
 }
 
 func (c ConfigBuilder) getFiles() ([]igntypes.File, error) {
