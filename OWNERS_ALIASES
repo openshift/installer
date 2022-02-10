@@ -89,6 +89,14 @@ aliases:
   ibmcloud-reviewers:
     - bobbyradford
     - hasueki
+  nutanix-approvers:
+    - thunderboltsid
+    - yanhua121
+    - adiantum
+  nutanix-reviewers:
+    - thunderboltsid
+    - yanhua121
+    - adiantum
   # Keep in sync with the `coreos-approvers` and `coreos-reviewers` lists in https://github.com/openshift/release/blob/master/OWNERS_ALIASES
   coreos-approvers:
     - miabbott
