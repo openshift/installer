@@ -6,7 +6,7 @@ provider "ironic" {
   url                = var.ironic_uri
   inspector          = var.inspector_uri
   microversion       = "1.56"
-  timeout            = 3600
+  timeout            = 900
   auth_strategy      = "http_basic"
   ironic_username    = var.ironic_username
   ironic_password    = var.ironic_password
