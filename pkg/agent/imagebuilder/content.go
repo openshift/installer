@@ -30,6 +30,11 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 		return nil, err
 	}
 
+	config.Systemd.Units, err = c.getUnits()
+	if err != nil {
+		return nil, err
+	}
+
 	return json.Marshal(config)
 }
 
@@ -78,4 +83,30 @@ func (c ConfigBuilder) getFiles() ([]igntypes.File, error) {
 	}
 
 	return readDir("/", files)
+}
+
+func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
+	units := make([]igntypes.Unit, 0)
+	basePath := "systemd/units"
+
+	entries, err := data.IgnitionData.ReadDir(basePath)
+	if err != nil {
+		return units, fmt.Errorf("Failed to read systemd units: %w", err)
+	}
+
+	for _, e := range entries {
+		contents, err := data.IgnitionData.ReadFile(path.Join(basePath, e.Name()))
+		if err != nil {
+			return units, fmt.Errorf("Failed to read unit %s: %w", e.Name(), err)
+		}
+
+		unit := igntypes.Unit{
+			Name:     strings.TrimSuffix(e.Name(), ".template"),
+			Enabled:  ignutil.BoolToPtr(true),
+			Contents: ignutil.StrToPtr(string(contents)),
+		}
+		units = append(units, unit)
+	}
+
+	return units, nil
 }
