@@ -5,28 +5,14 @@ import (
 	"os"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
-
-	data "github.com/openshift-agent-team/fleeting/data/data/agent"
 )
 
 const (
 	outputImage = "output/fleeting.iso"
 )
 
-func getIgnition() ([]byte, error) {
-	ignition, err := data.IgnitionData.Open("ignition/test_ignition.ign")
-	if err != nil {
-		return nil, err
-	}
-	defer ignition.Close()
-
-	return io.ReadAll(ignition)
-
-	return nil
-}
-
 func BuildImage(baseImage string) error {
-	ignition, err := getIgnition()
+	ignition, err := ConfigBuilder{}.Ignition()
 	if err != nil {
 		return err
 	}
