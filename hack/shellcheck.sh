@@ -10,7 +10,11 @@ if [ "$IS_CONTAINER" != "" ]; then
     -o -path "${TOP_DIR}/pkg/terraform/exec/plugins/vendor" -prune \
     -o -type f -name '*.sh' -exec shellcheck --format=gcc {} \+
 else
-  podman run --rm \
+  ENGINE="podman"
+  if [ "$(uname)" = "Darwin" ]; then
+    ENGINE="docker"
+  fi
+  "$ENGINE" run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/workdir:ro,z" \
     --entrypoint sh \

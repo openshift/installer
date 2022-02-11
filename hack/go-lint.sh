@@ -4,7 +4,11 @@
 if [ "$IS_CONTAINER" != "" ]; then
   golint -set_exit_status "${@}"
 else
-  podman run --rm \
+  ENGINE="podman"
+  if [ "$(uname)" = "Darwin" ]; then
+    ENGINE="docker"
+  fi
+  "$ENGINE" run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \

@@ -8,7 +8,11 @@ if [ "$IS_CONTAINER" != "" ]; then
   set -x
   terraform fmt "${@}"
 else
-  podman run --rm \
+  ENGINE="podman"
+  if [ "$(uname)" = "Darwin" ]; then
+    ENGINE="docker"
+  fi
+  "$ENGINE" run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:${PWD}:z" \
     --workdir "${PWD}" \

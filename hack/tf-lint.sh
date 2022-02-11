@@ -2,7 +2,11 @@
 if [ "$IS_CONTAINER" != "" ]; then
   tflint
 else
-  podman run --rm \
+  ENGINE="podman"
+  if [ "$(uname)" = "Darwin" ]; then
+    ENGINE="docker"
+  fi
+  "$ENGINE" run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/data:z" \
     --entrypoint sh \
