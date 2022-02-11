@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+data:
+  ASSISTED_SERVICE_HOST: 127.0.0.1:8090
+  ASSISTED_SERVICE_SCHEME: http
+  AUTH_TYPE: none
+  DB_HOST: 127.0.0.1
+  DB_NAME: installer
+  DB_PASS: admin
+  DB_PORT: "5432"
+  DB_USER: admin
+  DEPLOY_TARGET: onprem
+  DISK_ENCRYPTION_SUPPORT: "true"
+  DUMMY_IGNITION: "false"
+  ENABLE_SINGLE_NODE_DNSMASQ: "true"
+  HW_VALIDATOR_REQUIREMENTS: '[{"version":"default","master":{"cpu_cores":4,"ram_mib":16384,"disk_size_gb":120,"installation_disk_speed_threshold_ms":10,"network_latency_threshold_ms":100,"packet_loss_percentage":0},"worker":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":120,"installation_disk_speed_threshold_ms":10,"network_latency_threshold_ms":1000,"packet_loss_percentage":10},"sno":{"cpu_cores":8,"ram_mib":16384,"disk_size_gb":120,"installation_disk_speed_threshold_ms":10}}]'
+  IMAGE_SERVICE_BASE_URL: http://127.0.0.1:8888
+  IPV6_SUPPORT: "true"
+  LISTEN_PORT: "8888"
+  NTP_DEFAULT_SERVER: ""
+  OS_IMAGES: '[{"openshift_version":"4.6","cpu_architecture":"x86_64","url":"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.6/4.6.8/rhcos-4.6.8-x86_64-live.x86_64.iso","rootfs_url":"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.6/4.6.8/rhcos-live-rootfs.x86_64.img","version":"46.82.202012051820-0"},{"openshift_version":"4.7","cpu_architecture":"x86_64","url":"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.7/4.7.33/rhcos-4.7.33-x86_64-live.x86_64.iso","rootfs_url":"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.7/4.7.33/rhcos-live-rootfs.x86_64.img","version":"47.84.202109241831-0"},{"openshift_version":"4.8","cpu_architecture":"x86_64","url":"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.8/4.8.14/rhcos-4.8.14-x86_64-live.x86_64.iso","rootfs_url":"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.8/4.8.14/rhcos-live-rootfs.x86_64.img","version":"48.84.202109241901-0"},{"openshift_version":"4.9","cpu_architecture":"x86_64","url":"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-x86_64-live.x86_64.iso","rootfs_url":"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-live-rootfs.x86_64.img","version":"49.84.202110081407-0"},{"openshift_version":"4.9","cpu_architecture":"arm64","url":"https://mirror.openshift.com/pub/openshift-v4/aarch64/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-aarch64-live.aarch64.iso","rootfs_url":"https://mirror.openshift.com/pub/openshift-v4/aarch64/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-aarch64-live-rootfs.aarch64.img","version":"49.84.202110080947-0"},{"openshift_version":"4.10","cpu_architecture":"x86_64","url":"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/4.10.0-rc.1/rhcos-4.10.0-rc.1-x86_64-live.x86_64.iso","rootfs_url":"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/4.10.0-rc.1/rhcos-4.10.0-rc.1-x86_64-live-rootfs.x86_64.img","version":"410.84.202201251210-0"}]'
+  POSTGRESQL_DATABASE: installer
+  POSTGRESQL_PASSWORD: admin
+  POSTGRESQL_USER: admin
+  PUBLIC_CONTAINER_REGISTRIES: 'quay.io'
+  RELEASE_IMAGES: '[{"openshift_version":"4.6","cpu_architecture":"x86_64","url":"quay.io/openshift-release-dev/ocp-release:4.6.16-x86_64","version":"4.6.16"},{"openshift_version":"4.7","cpu_architecture":"x86_64","url":"quay.io/openshift-release-dev/ocp-release:4.7.42-x86_64","version":"4.7.42"},{"openshift_version":"4.8","cpu_architecture":"x86_64","url":"quay.io/openshift-release-dev/ocp-release:4.8.29-x86_64","version":"4.8.29"},{"openshift_version":"4.9","cpu_architecture":"x86_64","url":"quay.io/openshift-release-dev/ocp-release:4.9.18-x86_64","version":"4.9.18","default":true},{"openshift_version":"4.9","cpu_architecture":"arm64","url":"quay.io/openshift-release-dev/ocp-release:4.9.18-aarch64","version":"4.9.18"},{"openshift_version":"4.10","cpu_architecture":"x86_64","url":"quay.io/openshift-release-dev/ocp-release:4.10.0-rc.1-x86_64","version":"4.10.0-rc.1"}]'
+  SERVICE_BASE_URL: http://127.0.0.1:8090
+  STORAGE: filesystem

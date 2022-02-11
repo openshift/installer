@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenShift Assisted Installation Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+ExecStart=/usr/local/bin/start-assisted-service.sh
+ExecStop=/bin/podman pod stop --ignore assisted-installer -t 10
+ExecStopPost=/bin/podman pod rm --ignore assisted-installer
+
+Restart=on-failure
+KillMode=none
+Type=forking
+
+[Install]
+WantedBy=multi-user.target

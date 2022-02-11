@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: assisted-installer
+  name: assisted-installer
+spec:
+  containers:
+  - args:
+    - run-postgresql
+    image: quay.io/centos7/postgresql-12-centos7:latest
+    name: db
+    envFrom:
+    - configMapRef:
+        name: config
+  - image: quay.io/edge-infrastructure/assisted-installer-ui:latest
+    name: ui
+    ports:
+    - hostPort: 8080
+    envFrom:
+    - configMapRef:
+        name: config
+  - image: quay.io/edge-infrastructure/assisted-image-service:latest
+    name: image-service
+    ports:
+    - hostPort: 8888
+    envFrom:
+    - configMapRef:
+        name: config
+  - image: quay.io/edge-infrastructure/assisted-service:latest
+    name: service
+    ports:
+    - hostPort: 8090
+    envFrom:
+    - configMapRef:
+        name: config
+  restartPolicy: Never
