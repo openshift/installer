@@ -8,7 +8,6 @@ aliases:
     - staebler
     - sdodson
     - smarterclayton
-    - wking
   installer-reviewers:
     - jhixson74
     - jstuever
