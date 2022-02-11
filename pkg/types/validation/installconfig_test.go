@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
@@ -1398,6 +1399,42 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Publish = types.InternalPublishingStrategy
 				return c
 			}(),
+		},
+		{
+			name: "valid baseline capability set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &configv1.ClusterVersionCapabilitiesSpec{BaselineCapabilitySet: "v4.11"}
+				return c
+			}(),
+		},
+		{
+			name: "invalid baseline capability set specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &configv1.ClusterVersionCapabilitiesSpec{BaselineCapabilitySet: "vNotValid"}
+				return c
+			}(),
+			expectedError: `"vNotValid": Unknown baseline set. Must specify one of the following \(.*\)`,
+		},
+		{
+			name: "valid additional enabled capability specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &configv1.ClusterVersionCapabilitiesSpec{BaselineCapabilitySet: "v4.11",
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"openshift-samples"}}
+				return c
+			}(),
+		},
+		{
+			name: "invalid additional enabled capability specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &configv1.ClusterVersionCapabilitiesSpec{BaselineCapabilitySet: "v4.11",
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"not-valid"}}
+				return c
+			}(),
+			expectedError: `"not-valid": Unknown capability. Must specify one of the following \(.*\)`,
 		},
 	}
 	for _, tc := range cases {

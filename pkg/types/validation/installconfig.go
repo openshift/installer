@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	dockerref "github.com/containers/image/docker/reference"
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
@@ -125,6 +126,9 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
 	}
 	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform)...)
+	if c.Capabilities != nil {
+		allErrs = append(allErrs, validateCapabilities(c.Capabilities, field.NewPath("capabilities"))...)
+	}
 
 	if c.Publish == types.InternalPublishingStrategy {
 		switch platformName := c.Platform.Name(); platformName {
@@ -695,6 +699,39 @@ func validateFIPSconfig(c *types.InstallConfig) field.ErrorList {
 		re := regexp.MustCompile(`^ecdsa-sha2-nistp\d{3}$|^ssh-rsa$`)
 		if !re.MatchString(sshKeyType) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, fmt.Sprintf("SSH key type %s unavailable when FIPS is enabled. Please use rsa or ecdsa.", sshKeyType)))
+		}
+	}
+	return allErrs
+}
+
+// validateCapabilities checks if additional, optional OpenShift components are specified in the
+// install-config to be included in the installation.
+func validateCapabilities(c *configv1.ClusterVersionCapabilitiesSpec, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	allAvailableCapabilities := map[string]bool{}
+	var allCaps, allSets []string
+	// Create a map and slice of *all* available sets and capabilities across all capability sets
+	for baselineSet, capabilities := range configv1.ClusterVersionCapabilitySets {
+		allSets = append(allSets, string(baselineSet))
+		for _, capability := range capabilities {
+			if _, found := allAvailableCapabilities[string(capability)]; !found {
+				allAvailableCapabilities[string(capability)] = true
+				allCaps = append(allCaps, string(capability))
+			}
+		}
+	}
+
+	if _, found := configv1.ClusterVersionCapabilitySets[c.BaselineCapabilitySet]; !found {
+		sort.Strings(allSets)
+		allErrs = append(allErrs, field.Invalid(fldPath, c.BaselineCapabilitySet, fmt.Sprintf("Unknown baseline set. Must specify one of the following (%s)", strings.Join(allSets, ", "))))
+	}
+
+	// Check to see the validity of additionalEnabledCapabilities specified by the user
+	for _, capability := range c.AdditionalEnabledCapabilities {
+		if _, found := allAvailableCapabilities[string(capability)]; !found {
+			sort.Strings(allCaps)
+			allErrs = append(allErrs, field.Invalid(fldPath, string(capability), fmt.Sprintf("Unknown capability. Must specify one of the following (%s)", strings.Join(allCaps, ", "))))
 		}
 	}
 	return allErrs
