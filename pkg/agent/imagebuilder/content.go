@@ -80,11 +80,10 @@ func (c ConfigBuilder) getFiles() ([]igntypes.File, error) {
 				if err != nil {
 					return files, fmt.Errorf("Failed to read file %s: %w", fullPath, err)
 				}
-				info, err := e.Info()
-				if err != nil {
-					return files, fmt.Errorf("Failed to get file %s info: %w", fullPath, err)
+				mode := 0600
+				if _, dirName := path.Split(dirPath); dirName == "bin" || dirName == "dispatcher.d" {
+					mode = 0555
 				}
-				mode := int(info.Mode())
 				file := igntypes.File{
 					Node: igntypes.Node{
 						Path:      fullPath,
