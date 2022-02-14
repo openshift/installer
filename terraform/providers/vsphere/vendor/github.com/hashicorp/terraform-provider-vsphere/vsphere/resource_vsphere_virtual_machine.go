@@ -888,6 +888,13 @@ func resourceVSphereVirtualMachineDelete(d *schema.ResourceData, meta interface{
 
 	// The final operation here is to destroy the VM.
 	if err := virtualmachine.Destroy(vm); err != nil {
+		if strings.Contains(err.Error(), "Permission to perform this operation was denied") {
+			permissionMessage := `[permission denied] error when trying to remove the cloned virtual machine! Check if the user has the required privileges on:
+			Virtual Machine:
+			*  Remove
+			`
+			return fmt.Errorf("%s %s", permissionMessage, err)
+		}
 		return fmt.Errorf("error destroying virtual machine: %s", err)
 	}
 	d.SetId("")
@@ -1490,6 +1497,22 @@ func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta inter
 			vm, err = virtualmachine.Clone(client, srcVM, fo, name, cloneSpec, timeout)
 		}
 		if err != nil {
+			if strings.Contains(err.Error(), "Permission to perform this operation was denied") {
+				permissionMessage := `[permission denied] error when trying to clone a virtual machine! Check if the user has the required privileges on:
+				Resource:
+				*  Assign virtual machine to resource pool
+				Virtual Machine:
+				*  Add existing disk
+				*  Add new disk
+				*  Add or remove device
+				*  Change Settings
+				*  Create from existing
+				*  Create new
+				*  Clone virtual machine
+				*  Deploy template
+			`
+				return nil, fmt.Errorf("%s %s", permissionMessage, err)
+			}
 			return nil, fmt.Errorf("error cloning virtual machine: %s", err)
 		}
 	}
@@ -1561,6 +1584,18 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	// Disks
 	devices, delta, err = virtualdevice.DiskPostCloneOperation(d, client, devices, postOvf)
 	if err != nil {
+		if strings.Contains(err.Error(), "ServerFaultCode: NoPermission") {
+			permissionMessage := `[permission denied] error processing disk changes post-cloning vm! Failed to append vdisk to cloned vm. Check if the user has the required privileges on:
+			Profile-driven storage:
+			*  Profile-driven storage view
+			`
+			return resourceVSphereVirtualMachineRollbackCreate(
+				d,
+				meta,
+				vm,
+				fmt.Errorf("%s %s", permissionMessage, err),
+			)
+		}
 		return resourceVSphereVirtualMachineRollbackCreate(
 			d,
 			meta,
@@ -1597,6 +1632,24 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	// Perform updates
 	err = virtualmachine.Reconfigure(vm, cfgSpec)
 	if err != nil {
+		if strings.Contains(err.Error(), "ServerFaultCode: Permission to perform this operation was denied.") {
+			permissionMessage := `[permission denied] error reconfiguring virtual machine! Failed reconfiguring the cloned vm. Check if the user has the required privileges
+			to configure the virtual machine according to the provided parameters. Some common missing privileges:
+			Virtual machine:
+			*  Change CPU count
+			*  Change Memory
+			*  Advanced configuration
+			*  Set annotation
+			*  Change Settings
+			* ...
+			`
+			return resourceVSphereVirtualMachineRollbackCreate(
+				d,
+				meta,
+				vm,
+				fmt.Errorf("%s %s", permissionMessage, err),
+			)
+		}
 		return resourceVSphereVirtualMachineRollbackCreate(
 			d,
 			meta,

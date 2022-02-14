@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -386,6 +387,20 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 		cisp)
 
 	if err != nil {
+		// If we get into this point and received a "permission
+		// denied" error, it is probably because of a lack of
+		// privilege on datastore, network or vapp categories.
+		if strings.Contains(err.Error(), "Permission to perform this operation was denied") {
+			permissionMessage := `[permission denied] error when trying to deploy a new OVF! Check if the user has the required privileges on:
+                       Datastore:
+                       *  Allocate space
+                       Network:
+                       *  Assign network
+                       vApp:
+                       *  Import
+			`
+			return fmt.Errorf("%s %s", permissionMessage, err)
+		}
 		return errors.Errorf("failed to create import spec: %s", err)
 	}
 	if spec.Error != nil {
@@ -405,11 +420,31 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 		importOvaParams.Host)
 
 	if err != nil {
+		// If we get into this point and received a "permission
+		// denied" error, it is probably because of a lack of
+		// privilege on virtual machine category as the privilege
+		// on the other resources has already been satisfied on
+		// previous steps.
+		if strings.Contains(err.Error(), "Permission to perform this operation was denied") {
+			permissionMessage := `[permission denied] error when trying to import an vApp! Check if the user has the required privileges on:
+                       Virtual machine:
+                       *  Add new disk
+			`
+			return fmt.Errorf("%s %s", permissionMessage, err)
+		}
 		return errors.Errorf("failed to import vapp: %s", err)
 	}
 
 	info, err := lease.Wait(ctx, spec.FileItem)
 	if err != nil {
+		// The "Invalid configuration for device 0" generally happens when
+		// the datastore provided on the install-config is not shared accross
+		// the nodes of the cluster.
+		if strings.Contains(err.Error(), "Invalid configuration for device") {
+			permissionMessage := `The datastore provided may not be shared across the nodes on cluster. Make sure it is accessible through all the nodes from installation.
+                       failed to lease wait: `
+			return fmt.Errorf("%s %s", permissionMessage, err)
+		}
 		return errors.Errorf("failed to lease wait: %s", err)
 	}
 
@@ -450,6 +485,13 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 	task, err := vm.UpgradeVM(ctx, importOvaParams.HardwareVersion)
 
 	if err != nil {
+		if strings.Contains(err.Error(), "Permission to perform this operation was denied.") {
+			permissionMessage := `[permission denied] error when trying to upgrade vm hardware version! Check if the user has the required privileges on:
+			Virtual machine:
+			*  Upgrade virtual machine compatibility
+			failed to mark vm as template: `
+			return fmt.Errorf("%s %s", permissionMessage, err)
+		}
 		return errors.Errorf("failed to upgrade vm to: %s, %s", importOvaParams.HardwareVersion, err)
 	}
 
@@ -463,6 +505,13 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 
 	err = vm.MarkAsTemplate(ctx)
 	if err != nil {
+		if strings.Contains(err.Error(), "Permission to perform this operation was denied.") {
+			permissionMessage := `[permission denied] error when trying to mark vm as template! Check if the user has the required privileges on:
+			Virtual machine:
+			*  Mark as template
+			failed to mark vm as template: `
+			return fmt.Errorf("%s %s", permissionMessage, err)
+		}
 		return errors.Errorf("failed to mark vm as template: %s", err)
 	}
 	log.Printf("[DEBUG] %s: mark as template complete", vm.Name())

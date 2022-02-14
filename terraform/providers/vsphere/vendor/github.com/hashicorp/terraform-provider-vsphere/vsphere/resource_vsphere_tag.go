@@ -57,6 +57,13 @@ func resourceVSphereTagCreate(d *schema.ResourceData, meta interface{}) error {
 	defer cancel()
 	id, err := tm.CreateTag(ctx, spec)
 	if err != nil {
+		if strings.Contains(err.Error(), "403 Forbidden") {
+			permissionMessage := `[permission denied] could not create category! Check if the user has the required privileges on:
+			vSphere Tagging
+			*  Create vSphere Tag
+	    `
+			return fmt.Errorf("%s %s", permissionMessage, err)
+		}
 		return fmt.Errorf("could not create tag: %s", err)
 	}
 	if id == "" {
