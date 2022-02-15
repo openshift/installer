@@ -118,7 +118,7 @@ func IsUnauthorized(err error) bool {
 	}
 	var gErr *googleapi.Error
 	if errors.As(err, &gErr) {
-		return gErr.Code == http.StatusUnauthorized
+		return gErr.Code == http.StatusUnauthorized || gErr.Code == http.StatusForbidden
 	}
 
 	if grpcCode := status.Code(errors.Cause(err)); grpcCode != codes.OK {
