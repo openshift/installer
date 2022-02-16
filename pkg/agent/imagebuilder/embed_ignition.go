@@ -11,6 +11,8 @@ const (
 	outputImage = "output/fleeting.iso"
 )
 
+// BuildImage builds an ISO with ignition content from a base image, and writes
+// the result to disk.
 func BuildImage(baseImage string) error {
 	ignition, err := ConfigBuilder{}.Ignition()
 	if err != nil {
