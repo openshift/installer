@@ -39,5 +39,9 @@ module "masters" {
   ovirt_affinity_group_count       = module.affinity_group.ovirt_affinity_group_count
   ovirt_master_auto_pinning_policy = var.ovirt_master_auto_pinning_policy
   ovirt_master_hugepages           = var.ovirt_master_hugepages
+  ovirt_master_sparse              = var.ovirt_master_sparse
+  ovirt_master_clone               = var.ovirt_master_clone
+  ovirt_master_format              = var.ovirt_master_format
+  ovirt_storage_domain_id          = var.ovirt_storage_domain_id
 }
 

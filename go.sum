@@ -1174,8 +1174,8 @@ github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-233678
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603/go.mod h1:7pQ9Bzha+ug/5zd+0ufbDEcnn2OnNlPwRwYrzhXk4NM=
 github.com/openshift/cluster-api-provider-openstack v0.0.0-20211111204942-611d320170af h1:PeF1obTACelTfyDhMBEwlgx3bTJdicgw2PuNxP0Ayzc=
 github.com/openshift/cluster-api-provider-openstack v0.0.0-20211111204942-611d320170af/go.mod h1:FimmVt2+i/aNr73dnD/lPC0oiXk2lOyuLM6heOroY3M=
-github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20211111151530-06177b773958 h1:VHY8kgsy4EyssUhlEN88rAIhsu5GmoZw+K0/rqWFSL0=
-github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20211111151530-06177b773958/go.mod h1:flNUjvyEfjs63P+zkSaRr66N4QrM4FSoeDvDiBunyyM=
+github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519 h1:foU7/s6DQczTFdZ/8H++pUC2Pzygqdz5ZgqUakksR5w=
+github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519/go.mod h1:C7unCUThP8eqT4xQfbvg3oIDn2S9TYtb0wbBoH/SR2U=
 github.com/openshift/cluster-autoscaler-operator v0.0.0-20190521201101-62768a6ba480/go.mod h1:/XmV44Fh28Vo3Ye93qFrxAbcFJ/Uy+7LPD+jGjmfJYc=
 github.com/openshift/library-go v0.0.0-20191003152030-97c62d8a2901/go.mod h1:NBttNjZpWwup/nthuLbPAPSYC8Qyo+BBK5bCtFoyYjo=
 github.com/openshift/library-go v0.0.0-20200512120242-21a1ff978534/go.mod h1:2kWwXTkpoQJUN3jZ3QW88EIY1hdRMqxgRs2hheEW/pg=
@@ -1855,6 +1855,7 @@ golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e h1:fLOSk5Q00efkSvAm+4xcoXD+R
 golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
+golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b/go.mod h1:jbD1KX2456YbFQfuXm/mYQcufACuNUgVhRMnK/tPxf8=
 golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 h1:JGgROgKl9N8DuW20oFS5gxc+lE67/N3FcwmBPMe7ArY=
 golang.org/x/term v0.0.0-20210927222741-03fcf44c2211/go.mod h1:jbD1KX2456YbFQfuXm/mYQcufACuNUgVhRMnK/tPxf8=

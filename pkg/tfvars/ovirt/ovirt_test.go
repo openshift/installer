@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+
 	"github.com/openshift/installer/pkg/types/ovirt"
 )
 
@@ -61,7 +62,10 @@ var defaultTerraformOvirtVarsJSON = `{
     "clusterName-xxxxx-controlplane"
   ],
   "ovirt_master_auto_pinning_policy": "none",
-  "ovirt_master_hugepages": 0
+  "ovirt_master_hugepages": 0,
+  "ovirt_master_clone": null,
+  "ovirt_master_sparse": null,
+  "ovirt_master_format": ""
 }`
 
 func TestSetPlatformDefaults(t *testing.T) {
