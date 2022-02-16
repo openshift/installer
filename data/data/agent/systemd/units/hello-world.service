@@ -1,9 +1,0 @@
-[Unit]
-Description=fleeting hello world
-
-[Service]
-ExecStart=/bin/bash -c "echo 'Hello, world!' >>/etc/issue"
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
