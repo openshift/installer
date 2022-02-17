@@ -36,7 +36,7 @@ type Host struct {
 	Name            string           `json:"name,omitempty" validate:"required,uniqueField"`
 	BMC             BMC              `json:"bmc"`
 	Role            string           `json:"role"`
-	BootMACAddress  string           `json:"bootMACAddress" validate:"required,uniqueField"`
+	BootMACAddress  string           `json:"bootMACAddress" validate:"required,uniqueField,mac"`
 	HardwareProfile string           `json:"hardwareProfile"`
 	RootDeviceHints *RootDeviceHints `json:"rootDeviceHints,omitempty"`
 	BootMode        BootMode         `json:"bootMode,omitempty"`

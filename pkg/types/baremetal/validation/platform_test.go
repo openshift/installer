@@ -206,6 +206,12 @@ func TestValidatePlatform(t *testing.T) {
 			expected: "baremetal.hosts\\[0\\].BootMACAddress: Required value: missing BootMACAddress",
 		},
 		{
+			name: "invalid_mac",
+			platform: platform().
+				Hosts(host1().BootMACAddress("00:00:00")).build(),
+			expected: "baremetal.hosts\\[0\\].BootMACAddress: Invalid value: \"00:00:00\": invalid BootMACAddress",
+		},
+		{
 			name: "duplicate_host_name",
 			platform: platform().
 				Hosts(

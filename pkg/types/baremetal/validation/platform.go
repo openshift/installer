@@ -218,6 +218,8 @@ func validateHostsBase(hosts []*baremetal.Host, fldPath *field.Path, filter vali
 					hostErrs = append(hostErrs, field.Required(childName, "missing "+err.Field()))
 				case "uniqueField":
 					hostErrs = append(hostErrs, field.Duplicate(childName, err.Value()))
+				case "mac":
+					hostErrs = append(hostErrs, field.Invalid(childName, err.Value(), "invalid "+err.Field()))
 				}
 			}
 		}
