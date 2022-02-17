@@ -1,11 +1,13 @@
 package imagebuilder
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path"
 	"strings"
+	template "text/template"
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
@@ -34,10 +36,29 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 		},
 	}
 
-	config.Storage.Files, err = c.getFiles()
+	files, err := c.getFiles()
 	if err != nil {
 		return nil, err
 	}
+	// pull secret not included in data/data/agent/files because embed.FS
+	// does not list directories with name starting with '.'
+	mode := 0420
+	pullSecretText := os.Getenv("PULL_SECRET")
+
+	pullSecret := igntypes.File{
+		Node: igntypes.Node{
+			Path:      "/root/.docker/config.json",
+			Overwrite: ignutil.BoolToPtr(true),
+		},
+		FileEmbedded1: igntypes.FileEmbedded1{
+			Mode: &mode,
+			Contents: igntypes.Resource{
+				Source: ignutil.StrToPtr(dataurl.EncodeBytes([]byte(pullSecretText))),
+			},
+		},
+	}
+	files = append(files, pullSecret)
+	config.Storage.Files = files
 
 	config.Systemd.Units, err = c.getUnits()
 	if err != nil {
@@ -120,13 +141,42 @@ func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 			return units, fmt.Errorf("Failed to read unit %s: %w", e.Name(), err)
 		}
 
+		templated, err := templateString(e.Name(), string(contents))
+		if err != nil {
+			return units, err
+		}
+
 		unit := igntypes.Unit{
 			Name:     strings.TrimSuffix(e.Name(), ".template"),
 			Enabled:  ignutil.BoolToPtr(true),
-			Contents: ignutil.StrToPtr(string(contents)),
+			Contents: ignutil.StrToPtr(string(templated)),
 		}
 		units = append(units, unit)
 	}
 
 	return units, nil
+}
+
+func templateString(name string, text string) (string, error) {
+	params := map[string]interface{}{
+		// TODO: try setting SERVICE_BASE_URL within agent.service
+		"ServiceBaseURL": os.Getenv("SERVICE_BASE_URL"),
+		// TODO: get id either from InfraEnv CR that is included
+		// with tool, or query the id from the REST_API
+		// curl http://SERVICE_BASE_URL/api/assisted-install/v2/infra-envs
+		"infraEnvId": os.Getenv("INFRA_ENV_ID"),
+		// TODO: needs appropriate value if AUTH_TYPE != none
+		"PullSecretToken": os.Getenv("PULL_SECRET_TOKEN"),
+	}
+
+	tmpl, err := template.New(name).Parse(string(text))
+	if err != nil {
+		return "", err
+	}
+	buf := &bytes.Buffer{}
+	if err = tmpl.Execute(buf, params); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }
