@@ -14,12 +14,12 @@ import (
 const (
 	outputFile = "output/coreos.iso"
 
-	isoUrl    = "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.10/410.84.202201251210-0/x86_64/rhcos-410.84.202201251210-0-live.x86_64.iso"
+	isoURL    = "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.10/410.84.202201251210-0/x86_64/rhcos-410.84.202201251210-0-live.x86_64.iso"
 	isoSha256 = "2905c1f0d85739e8600e8816c0d32711fb4002be4f845e0b20eeab35314e5b58"
 )
 
 func downloadIso(dest string) error {
-	resp, err := http.Get(isoUrl)
+	resp, err := http.Get(isoURL)
 	if err != nil {
 		return err
 	}
@@ -59,6 +59,7 @@ func haveValidIso(location string) bool {
 	return bytes.Equal(hash.Sum(nil), expectedChecksum)
 }
 
+// EnsureIso downloads the ISO if it is not already present
 func EnsureIso() (string, error) {
 	if !haveValidIso(outputFile) {
 		if err := downloadIso(outputFile); err != nil {
