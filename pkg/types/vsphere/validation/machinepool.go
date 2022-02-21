@@ -21,8 +21,19 @@ func ValidateMachinePool(p *vsphere.MachinePool, fldPath *field.Path) field.Erro
 	if p.NumCoresPerSocket < 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), p.NumCoresPerSocket, "cores per socket must be positive"))
 	}
-	if p.NumCoresPerSocket >= 0 && p.NumCPUs >= 0 && p.NumCoresPerSocket > p.NumCPUs {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), p.NumCoresPerSocket, "cores per socket must be less than number of CPUs"))
+
+	defaultCoresPerSocket := int32(4)
+	defaultNumCPUs := int32(4)
+	if p.NumCPUs > 0 {
+		if p.NumCoresPerSocket > p.NumCPUs {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), p.NumCoresPerSocket, "cores per socket must be less than number of CPUs"))
+		} else if p.NumCoresPerSocket > 0 && p.NumCPUs%p.NumCoresPerSocket != 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("cpus"), p.NumCPUs, "numCPUs specified should be a multiple of cores per socket"))
+		} else if p.NumCPUs%defaultCoresPerSocket != 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("cpus"), p.NumCPUs, "numCPUs specified should be a multiple of cores per socket which is by default 4"))
+		}
+	} else if p.NumCoresPerSocket > defaultNumCPUs {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), p.NumCoresPerSocket, "cores per socket must be less than number of CPUs which is by default 4"))
 	}
 	return allErrs
 }
