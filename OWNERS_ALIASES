@@ -74,15 +74,15 @@ aliases:
     - jhixson74
     - m1kola
   ovirt-approvers:
-    - rgolangh
-    - Gal-Zaidman
-    - eslutsky
     - janosdebugs
+    - eslutsky
+    - mmartinv
+    - bkhizgiy
   ovirt-reviewers:
-    - rgolangh
-    - Gal-Zaidman
-    - eslutsky
     - janosdebugs
+    - eslutsky
+    - mmartinv
+    - bkhizgiy
   ibmcloud-approvers:
     - bobbyradford
     - hasueki
