@@ -12,7 +12,8 @@ const (
 )
 
 func BuildImage(baseImage string) error {
-	ignition, err := ConfigBuilder{}.Ignition()
+	configBuilder := New()
+	ignition, err := configBuilder.Ignition()
 	if err != nil {
 		return err
 	}

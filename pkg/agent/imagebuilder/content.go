@@ -17,6 +17,36 @@ import (
 )
 
 type ConfigBuilder struct {
+	pullSecret      string
+	serviceBaseURL  string
+	infraEnvID      string
+	pullSecretToken string
+}
+
+func New() *ConfigBuilder {
+	pullSecret := getEnv("PULL_SECRET", "")
+	// TODO: try setting SERVICE_BASE_URL within agent.service
+	serviceBaseURL := getEnv("SERVICE_BASE_URL", "http://127.0.0.1")
+	// TODO: get id either from InfraEnv CR that is included
+	// with tool, or query the id from the REST_API
+	// curl http://SERVICE_BASE_URL/api/assisted-install/v2/infra-envs
+	infraEnvID := getEnv("INFRA_ENV_ID", "infra-env-id-missing")
+	// TODO: needs appropriate value if AUTH_TYPE != none
+	pullSecretToken := getEnv("PULL_SECRET_TOKEN", "")
+
+	return &ConfigBuilder{
+		pullSecret:      pullSecret,
+		serviceBaseURL:  serviceBaseURL,
+		infraEnvID:      infraEnvID,
+		pullSecretToken: pullSecretToken,
+	}
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
 
 func (c ConfigBuilder) Ignition() ([]byte, error) {
@@ -40,24 +70,26 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// pull secret not included in data/data/agent/files because embed.FS
 	// does not list directories with name starting with '.'
-	mode := 0420
-	pullSecretText := os.Getenv("PULL_SECRET")
-
-	pullSecret := igntypes.File{
-		Node: igntypes.Node{
-			Path:      "/root/.docker/config.json",
-			Overwrite: ignutil.BoolToPtr(true),
-		},
-		FileEmbedded1: igntypes.FileEmbedded1{
-			Mode: &mode,
-			Contents: igntypes.Resource{
-				Source: ignutil.StrToPtr(dataurl.EncodeBytes([]byte(pullSecretText))),
+	if c.pullSecret != "" {
+		mode := 0420
+		pullSecret := igntypes.File{
+			Node: igntypes.Node{
+				Path:      "/root/.docker/config.json",
+				Overwrite: ignutil.BoolToPtr(true),
 			},
-		},
+			FileEmbedded1: igntypes.FileEmbedded1{
+				Mode: &mode,
+				Contents: igntypes.Resource{
+					Source: ignutil.StrToPtr(dataurl.EncodeBytes([]byte(c.pullSecret))),
+				},
+			},
+		}
+		files = append(files, pullSecret)
 	}
-	files = append(files, pullSecret)
+
 	config.Storage.Files = files
 
 	config.Systemd.Units, err = c.getUnits()
@@ -141,7 +173,7 @@ func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 			return units, fmt.Errorf("Failed to read unit %s: %w", e.Name(), err)
 		}
 
-		templated, err := templateString(e.Name(), string(contents))
+		templated, err := c.templateString(e.Name(), string(contents))
 		if err != nil {
 			return units, err
 		}
@@ -157,16 +189,11 @@ func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 	return units, nil
 }
 
-func templateString(name string, text string) (string, error) {
+func (c ConfigBuilder) templateString(name string, text string) (string, error) {
 	params := map[string]interface{}{
-		// TODO: try setting SERVICE_BASE_URL within agent.service
-		"ServiceBaseURL": os.Getenv("SERVICE_BASE_URL"),
-		// TODO: get id either from InfraEnv CR that is included
-		// with tool, or query the id from the REST_API
-		// curl http://SERVICE_BASE_URL/api/assisted-install/v2/infra-envs
-		"infraEnvId": os.Getenv("INFRA_ENV_ID"),
-		// TODO: needs appropriate value if AUTH_TYPE != none
-		"PullSecretToken": os.Getenv("PULL_SECRET_TOKEN"),
+		"ServiceBaseURL":  c.serviceBaseURL,
+		"infraEnvId":      c.infraEnvID,
+		"PullSecretToken": c.pullSecretToken,
 	}
 
 	tmpl, err := template.New(name).Parse(string(text))
