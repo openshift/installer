@@ -111,6 +111,9 @@ func Test_PrintFields(t *testing.T) {
     none <object>
       None is the empty configuration used when installing on an unsupported platform.
 
+    nutanix <object>
+      Nutanix is the configuration used when installing on Nutanix.
+
     openstack <object>
       OpenStack is the configuration used when installing on OpenStack.
 
