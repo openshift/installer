@@ -10,6 +10,7 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/alidns"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/pvtz"
@@ -51,6 +52,8 @@ type ClusterUninstaller struct {
 		buckets        []ResourceArn
 		others         []ResourceArn
 	}
+
+	PrivateZoneRecords map[string]bool
 
 	ecsClient      *ecs.Client
 	dnsClient      *alidns.Client
@@ -155,6 +158,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 				"ack.aliyun.com": metadata.InfraID,
 			},
 		},
+		PrivateZoneRecords: map[string]bool{},
 	}, nil
 }
 
@@ -192,6 +196,7 @@ func (o *ClusterUninstaller) destroyCluster() error {
 			{name: "ECS instances", execute: o.deleteEcsInstances},
 		},
 		{
+			{name: "private zone records", execute: o.deletePrivateZoneRecords},
 			{name: "private zones", execute: o.deletePrivateZones},
 			{name: "ECS security groups", execute: o.deleteSecurityGroups},
 			{name: "Nat gateways", execute: o.deleteNatGateways},
@@ -1325,6 +1330,7 @@ func (o *ClusterUninstaller) listPrivateZoneRecords(zoneID string) ([]pvtz.Recor
 	request := pvtz.CreateDescribeZoneRecordsRequest()
 	request.Lang = "en"
 	request.ZoneId = zoneID
+	request.PageSize = "100"
 
 	response, err := o.pvtzClient.DescribeZoneRecords(request)
 	if err != nil {
@@ -1335,14 +1341,10 @@ func (o *ClusterUninstaller) listPrivateZoneRecords(zoneID string) ([]pvtz.Recor
 
 func (o *ClusterUninstaller) deleteDNSRecords(logger logrus.FieldLogger) (err error) {
 	logger.Debug("Searching DNS records")
-
-	// Get the base domain from the cluster domain. the format of cluster domain is '<cluster name>.<base domain>'.
-	domainParts := strings.Split(o.ClusterDomain, ".")
-	if len(domainParts) < 2 {
-		return errors.New("could not determine cluster name from cluster domain")
+	clusterName, baseDomain, err := o.splitClusterNameAndBaseDomain()
+	if err != nil {
+		return
 	}
-	clusterName := domainParts[0]
-	baseDomain := strings.Join(domainParts[1:], ".")
 
 	domains, err := o.listDomain(baseDomain)
 	if err != nil {
@@ -1350,10 +1352,6 @@ func (o *ClusterUninstaller) deleteDNSRecords(logger logrus.FieldLogger) (err er
 	}
 	if len(domains) == 0 {
 		return
-	}
-
-	recordSetKey := func(recordType string, rr string) string {
-		return fmt.Sprintf("%s %s", recordType, rr)
 	}
 
 	// Get the parsing record of privatezone and delete the record in publiczone
@@ -1390,6 +1388,7 @@ func (o *ClusterUninstaller) deleteDNSRecords(logger logrus.FieldLogger) (err er
 		recordLogger := logger.WithFields(logrus.Fields{"recordID": record.RecordId, "domain": baseDomain, "rr": record.RR})
 		key := recordSetKey(record.Type, record.RR)
 		if privateRecords[key] {
+			o.PrivateZoneRecords[key] = true
 			err = o.deleteRecord(record.RecordId, recordLogger)
 			if err != nil {
 				privateRecords[key] = false
@@ -1423,6 +1422,76 @@ func (o *ClusterUninstaller) deleteDNSRecords(logger logrus.FieldLogger) (err er
 
 	logger.Debug("Public DNS records deleted")
 	return lastErr
+}
+
+func (o *ClusterUninstaller) deletePrivateZoneRecords(logger logrus.FieldLogger) (err error) {
+	if o.PrivateZoneID == "" {
+		return nil
+	}
+
+	apiIntRr := "api-int"
+	privateZoneID := o.PrivateZoneID
+	privateRecords := o.PrivateZoneRecords
+	clusterName, _, err := o.splitClusterNameAndBaseDomain()
+	if err != nil {
+		return err
+	}
+
+	var lastErr error
+	apiIntKey := recordSetKey("A", fmt.Sprintf("%s.%s", apiIntRr, clusterName))
+	privateRecords[apiIntKey] = true
+
+	records, err := o.listPrivateZoneRecords(privateZoneID)
+	if err != nil {
+		return err
+	}
+	for _, record := range records {
+		key := recordSetKey(record.Type, fmt.Sprintf("%s.%s", record.Rr, clusterName))
+		if !privateRecords[key] {
+			continue
+		}
+		err = o.deletePrivateZoneRecord(record.RecordId, logger)
+		if err != nil {
+			if strings.Contains(err.Error(), "NotExists") {
+				privateRecords[key] = false
+			}
+			lastErr := errors.Wrap(err, fmt.Sprintf("private zone record %q", record.RecordId))
+			o.Logger.Info(lastErr)
+		}
+	}
+
+	// Wait for deletion to complete
+	err = wait.Poll(
+		2*time.Second,
+		2*time.Minute,
+		func() (bool, error) {
+			records, err := o.listPrivateZoneRecords(o.PrivateZoneID)
+			if err != nil {
+				return false, err
+			}
+			for _, record := range records {
+				key := recordSetKey(record.Type, fmt.Sprintf("%s.%s", record.Rr, clusterName))
+				if privateRecords[key] {
+					return false, nil
+				}
+			}
+			return true, nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	logger.Debug("Private zone records deleted")
+	return lastErr
+}
+
+func (o *ClusterUninstaller) deletePrivateZoneRecord(recordID int64, logger logrus.FieldLogger) (err error) {
+	logger.WithField("private zone recordID", recordID).Debug("Deleting private zone record")
+	request := pvtz.CreateDeleteZoneRecordRequest()
+	request.RecordId = requests.NewInteger64(recordID)
+	_, err = o.pvtzClient.DeleteZoneRecord(request)
+	return
 }
 
 func (o *ClusterUninstaller) deleteRecord(recordID string, logger logrus.FieldLogger) error {
@@ -1460,6 +1529,18 @@ func (o *ClusterUninstaller) listRecord(baseDomain string) ([]alidns.Record, err
 	return response.DomainRecords.Record, nil
 }
 
+func (o *ClusterUninstaller) splitClusterNameAndBaseDomain() (clusterName string, baseDomain string, err error) {
+	// Get the base domain from the cluster domain. the format of cluster domain is '<cluster name>.<base domain>'.
+	domainParts := strings.Split(o.ClusterDomain, ".")
+	if len(domainParts) < 2 {
+		return "", "", errors.New("could not determine cluster name from cluster domain")
+	}
+	clusterName = domainParts[0]
+	baseDomain = strings.Join(domainParts[1:], ".")
+
+	return clusterName, baseDomain, nil
+}
+
 func convertResourceArn(arn string) (resourceArn ResourceArn, err error) {
 	_arn := strings.Split(arn, "/")
 	serviceInfos := strings.Split(_arn[0], ":")
@@ -1471,4 +1552,8 @@ func convertResourceArn(arn string) (resourceArn ResourceArn, err error) {
 	resourceArn.ResourceID = _arn[1]
 	resourceArn.Arn = arn
 	return resourceArn, nil
+}
+
+func recordSetKey(recordType string, rr string) string {
+	return fmt.Sprintf("%s %s", recordType, rr)
 }
