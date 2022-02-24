@@ -12,6 +12,12 @@
       ],
       "url": "terraform-provider-azurerm_2.90.0_darwin_arm64.zip"
     },
+    "freebsd_amd64": {
+      "hashes": [
+        "h1:lfZ0g8nNoFIqqxWAirMHbrfR79qv9tdBq706Z87wyW8="
+      ],
+      "url": "terraform-provider-azurerm_2.90.0_freebsd_amd64.zip"
+    },
     "linux_amd64": {
       "hashes": [
         "h1:xVG6gA/U5FgStJebgKdKJP57aDfAUHL5kD1UClXHV0w="

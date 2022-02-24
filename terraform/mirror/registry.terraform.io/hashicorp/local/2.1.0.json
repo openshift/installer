@@ -12,6 +12,12 @@
       ],
       "url": "terraform-provider-local_2.1.0_darwin_arm64.zip"
     },
+    "freebsd_amd64": {
+      "hashes": [
+        "h1:sOEywNMpyFk7EDGqyLBHmRHAS3bmldoa/X8p+4wZJC8="
+      ],
+      "url": "terraform-provider-local_2.1.0_freebsd_amd64.zip"
+    },
     "linux_amd64": {
       "hashes": [
         "h1:EYZdckuGU3n6APs97nS2LxZm3dDtGqyM4qaIvsmac8o="

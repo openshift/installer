@@ -8,7 +8,7 @@ TERRAFORM_VERSION=1.0.11
 TARGET_OS_ARCHES=${1}
 if [ -z "${TARGET_OS_ARCHES}" ]
 then
-  TARGET_OS_ARCHES="linux_amd64 darwin_amd64 darwin_arm64"
+  TARGET_OS_ARCHES="linux_amd64 darwin_amd64 darwin_arm64 freebsd_amd64"
 fi
 
 for os_arch in ${TARGET_OS_ARCHES}

@@ -12,6 +12,12 @@
       ],
       "url": "terraform-provider-alicloud_1.148.0_darwin_arm64.zip"
     },
+    "freebsd_amd64": {
+      "hashes": [
+        "h1:6jRln2Hzv+M2SWJt8KlTCZ0g1wXLRxFnRHee4jIWzeo="
+      ],
+      "url": "terraform-provider-alicloud_1.148.0_freebsd_amd64.zip"
+    },
     "linux_amd64": {
       "hashes": [
         "h1:YrBqXa/YamP0Am7VFJtwb4zrQ0sF3L1LdZHvqsVaRwk="

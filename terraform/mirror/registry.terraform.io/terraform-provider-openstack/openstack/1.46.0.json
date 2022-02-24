@@ -12,6 +12,12 @@
       ],
       "url": "terraform-provider-openstack_1.46.0_darwin_arm64.zip"
     },
+    "freebsd_amd64": {
+      "hashes": [
+        "h1:Nfkv9dxVKUJMVcHsJNDnj3JRNabGtzvyc8doy7x/5jM="
+      ],
+      "url": "terraform-provider-openstack_1.46.0_freebsd_amd64.zip"
+    },
     "linux_amd64": {
       "hashes": [
         "h1:wufxfGcIYWkD3WUwF1y+qLJeOXrquAY2AHOWdN8qlnI="
