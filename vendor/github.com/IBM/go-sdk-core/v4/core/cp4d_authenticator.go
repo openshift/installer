@@ -1,6 +1,6 @@
 package core
 
-// (C) Copyright IBM Corp. 2019, 2021.
+// (C) Copyright IBM Corp. 2019.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,14 +21,21 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
+
+	jwt "github.com/form3tech-oss/jwt-go"
 )
 
-//
-// CloudPakForDataAuthenticator uses either a username/password pair or a
-// username/apikey pair to obtain a suitable bearer token from the CP4D authentication service,
-// and adds the bearer token to requests via an Authorization header of the form:
+// Constants for CP4D
+const (
+	PRE_AUTH_PATH = "/v1/preauth/validateAuth"
+)
+
+// CloudPakForDataAuthenticator uses a username and password pair to obtain a
+// suitable bearer token, and adds the bearer token to requests via an
+// Authorization header of the form:
 //
 // 		Authorization: Bearer <bearer-token>
 //
@@ -39,13 +46,8 @@ type CloudPakForDataAuthenticator struct {
 	// The username used to obtain a bearer token [required].
 	Username string
 
-	// The password used to obtain a bearer token [required if APIKey not specified].
-	// One of Password or APIKey must be specified.
+	// The password used to obtain a bearer token [required].
 	Password string
-
-	// The apikey used to obtain a bearer token [required if Password not specified].
-	// One of Password or APIKey must be specified.
-	APIKey string
 
 	// A flag that indicates whether verification of the server's SSL certificate
 	// should be disabled; defaults to false [optional].
@@ -66,47 +68,25 @@ var cp4dRequestTokenMutex sync.Mutex
 var cp4dNeedsRefreshMutex sync.Mutex
 
 // NewCloudPakForDataAuthenticator constructs a new CloudPakForDataAuthenticator
-// instance from a username/password pair.
-// This is the default way to create an authenticator and is a wrapper around
-// the NewCloudPakForDataAuthenticatorUsingPassword() function
+// instance.
 func NewCloudPakForDataAuthenticator(url string, username string, password string,
 	disableSSLVerification bool, headers map[string]string) (*CloudPakForDataAuthenticator, error) {
-	return NewCloudPakForDataAuthenticatorUsingPassword(url, username, password, disableSSLVerification, headers)
-}
 
-// NewCloudPakForDataAuthenticatorUsingPassword constructs a new CloudPakForDataAuthenticator
-// instance from a username/password pair.
-func NewCloudPakForDataAuthenticatorUsingPassword(url string, username string, password string,
-	disableSSLVerification bool, headers map[string]string) (*CloudPakForDataAuthenticator, error) {
-	return newAuthenticator(url, username, password, "", disableSSLVerification, headers)
-}
-
-// NewCloudPakForDataAuthenticatorUsingAPIKey constructs a new CloudPakForDataAuthenticator
-// instance from a username/apikey pair.
-func NewCloudPakForDataAuthenticatorUsingAPIKey(url string, username string, apikey string,
-	disableSSLVerification bool, headers map[string]string) (*CloudPakForDataAuthenticator, error) {
-	return newAuthenticator(url, username, "", apikey, disableSSLVerification, headers)
-}
-
-func newAuthenticator(url string, username string, password string, apikey string,
-	disableSSLVerification bool, headers map[string]string) (authenticator *CloudPakForDataAuthenticator, err error) {
-
-	authenticator = &CloudPakForDataAuthenticator{
+	authenticator := &CloudPakForDataAuthenticator{
 		Username:               username,
 		Password:               password,
-		APIKey:                 apikey,
 		URL:                    url,
 		DisableSSLVerification: disableSSLVerification,
 		Headers:                headers,
 	}
 
 	// Make sure the config is valid.
-	err = authenticator.Validate()
+	err := authenticator.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	return
+	return authenticator, nil
 }
 
 // newCloudPakForDataAuthenticatorFromMap : Constructs a new CloudPakForDataAuthenticator instance from a map.
@@ -119,10 +99,9 @@ func newCloudPakForDataAuthenticatorFromMap(properties map[string]string) (*Clou
 	if err != nil {
 		disableSSL = false
 	}
-
-	return newAuthenticator(properties[PROPNAME_AUTH_URL],
+	return NewCloudPakForDataAuthenticator(properties[PROPNAME_AUTH_URL],
 		properties[PROPNAME_USERNAME], properties[PROPNAME_PASSWORD],
-		properties[PROPNAME_APIKEY], disableSSL, nil)
+		disableSSL, nil)
 }
 
 // AuthenticationType returns the authentication type for this authenticator.
@@ -140,10 +119,8 @@ func (authenticator CloudPakForDataAuthenticator) Validate() error {
 		return fmt.Errorf(ERRORMSG_PROP_MISSING, "Username")
 	}
 
-	// The user should specify exactly one of APIKey or Password.
-	if (authenticator.APIKey == "" && authenticator.Password == "") ||
-		(authenticator.APIKey != "" && authenticator.Password != "") {
-		return fmt.Errorf(ERRORMSG_EXCLUSIVE_PROPS_ERROR, "APIKey", "Password")
+	if authenticator.Password == "" {
+		return fmt.Errorf(ERRORMSG_PROP_MISSING, "Password")
 	}
 
 	if authenticator.URL == "" {
@@ -217,49 +194,35 @@ func (authenticator *CloudPakForDataAuthenticator) synchronizedRequestToken() er
 	return authenticator.getTokenData()
 }
 
-// getTokenData: requests a new token from the token server and
+// getTokenData: requests a new token from the access server and
 // unmarshals the token information to the tokenData cache. Returns
 // an error if the token was unable to be fetched, otherwise returns nil
 func (authenticator *CloudPakForDataAuthenticator) getTokenData() error {
 	tokenResponse, err := authenticator.requestToken()
 	if err != nil {
-		authenticator.tokenData = nil
 		return err
 	}
 
 	authenticator.tokenData, err = newCp4dTokenData(tokenResponse)
 	if err != nil {
-		authenticator.tokenData = nil
 		return err
 	}
 
 	return nil
 }
 
-// cp4dRequestBody is a struct used to model the request body for the "POST /v1/authorize" operation.
-// Note: we list both Password and APIKey fields, although exactly one of those will be used for
-// a specific invocation of the POST /v1/authorize operation.
-type cp4dRequestBody struct {
-	Username string `json:"username"`
-	Password string `json:"password,omitempty"`
-	APIKey   string `json:"api_key,omitempty"`
-}
-
 // requestToken: fetches a new access token from the token server.
-func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse *cp4dTokenServerResponse, err error) {
-
-	// Create the request body (only one of APIKey or Password should be set
-	// on the authenticator so only one of them should end up in the serialized JSON).
-	body := &cp4dRequestBody{
-		Username: authenticator.Username,
-		Password: authenticator.Password,
-		APIKey:   authenticator.APIKey,
+func (authenticator *CloudPakForDataAuthenticator) requestToken() (*cp4dTokenServerResponse, error) {
+	// If the user-specified URL does not end with the required path,
+	// then add it now.
+	url := authenticator.URL
+	if !strings.HasSuffix(url, PRE_AUTH_PATH) {
+		url = fmt.Sprintf("%s%s", url, PRE_AUTH_PATH)
 	}
 
-	builder := NewRequestBuilder(POST)
-	_, err = builder.ResolveRequestURL(authenticator.URL, "/v1/authorize", nil)
+	builder, err := NewRequestBuilder(GET).ConstructHTTPURL(url, nil, nil)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	// Add user-defined headers to request.
@@ -267,20 +230,12 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	// Add the Content-Type header.
-	builder.AddHeader("Content-Type", "application/json")
-
-	// Add the request body to request.
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		return
-	}
-
-	// Build the request object.
 	req, err := builder.Build()
 	if err != nil {
-		return
+		return nil, err
 	}
+
+	req.SetBasicAuth(authenticator.Username, authenticator.Password)
 
 	// If the authenticator does not have a Client, create one now.
 	if authenticator.Client == nil {
@@ -300,7 +255,7 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 
 	resp, err := authenticator.Client.Do(req)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -314,30 +269,30 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 			RawResult:  buff.Bytes(),
 		}
 
-		err = NewAuthenticationError(detailedResponse, fmt.Errorf(buff.String()))
-		return
+		return nil, NewAuthenticationError(detailedResponse, fmt.Errorf(buff.String()))
 	}
 
-	tokenResponse = &cp4dTokenServerResponse{}
-	err = json.NewDecoder(resp.Body).Decode(tokenResponse)
+	tokenResponse := &cp4dTokenServerResponse{}
+	_ = json.NewDecoder(resp.Body).Decode(tokenResponse)
 	defer resp.Body.Close()
-	if err != nil {
-		err = fmt.Errorf(ERRORMSG_UNMARSHAL_AUTH_RESPONSE, err.Error())
-		tokenResponse = nil
-		return
-	}
-
-	return
+	return tokenResponse, nil
 }
 
-// cp4dTokenServerResponse is a struct that models a response received from the token server.
+// cp4dTokenServerResponse : This struct models a response received from the token server.
 type cp4dTokenServerResponse struct {
-	Token       string `json:"token,omitempty"`
-	MessageCode string `json:"_messageCode_,omitempty"`
-	Message     string `json:"message,omitempty"`
+	Username    string   `json:"username,omitempty"`
+	Role        string   `json:"role,omitempty"`
+	Permissions []string `json:"permissions,omitempty"`
+	Subject     string   `json:"sub,omitempty"`
+	Issuer      string   `json:"iss,omitempty"`
+	Audience    string   `json:"aud,omitempty"`
+	UID         string   `json:"uid,omitempty"`
+	AccessToken string   `json:"accessToken,omitempty"`
+	MessageCode string   `json:"_messageCode_,omitempty"`
+	Message     string   `json:"message,omitempty"`
 }
 
-// cp4dTokenData is a struct that represents the cached information related to a fetched access token.
+// cp4dTokenData : This struct represents the cached information related to a fetched access token.
 type cp4dTokenData struct {
 	AccessToken string
 	RefreshTime int64
@@ -346,29 +301,27 @@ type cp4dTokenData struct {
 
 // newCp4dTokenData: constructs a new Cp4dTokenData instance from the specified Cp4dTokenServerResponse instance.
 func newCp4dTokenData(tokenResponse *cp4dTokenServerResponse) (*cp4dTokenData, error) {
-	// Need to crack open the access token (a JWT) to get the expiration and issued-at times.
-	claims, err := parseJWT(tokenResponse.Token)
-	if err != nil {
-		return nil, err
+	// Need to crack open the access token (a JWToken) to get the expiration and issued-at times.
+	claims := &jwt.StandardClaims{}
+	if token, _ := jwt.ParseWithClaims(tokenResponse.AccessToken, claims, nil); token == nil {
+		return nil, fmt.Errorf("Error while trying to parse access token!")
 	}
-
 	// Compute the adjusted refresh time (expiration time - 20% of timeToLive)
 	timeToLive := claims.ExpiresAt - claims.IssuedAt
 	expireTime := claims.ExpiresAt
 	refreshTime := expireTime - int64(float64(timeToLive)*0.2)
 
 	tokenData := &cp4dTokenData{
-		AccessToken: tokenResponse.Token,
+		AccessToken: tokenResponse.AccessToken,
 		Expiration:  expireTime,
 		RefreshTime: refreshTime,
 	}
-
 	return tokenData, nil
 }
 
 // isTokenValid: returns true iff the Cp4dTokenData instance represents a valid (non-expired) access token.
-func (tokenData *cp4dTokenData) isTokenValid() bool {
-	if tokenData.AccessToken != "" && GetCurrentTime() < tokenData.Expiration {
+func (this *cp4dTokenData) isTokenValid() bool {
+	if this.AccessToken != "" && GetCurrentTime() < this.Expiration {
 		return true
 	}
 	return false
@@ -377,14 +330,16 @@ func (tokenData *cp4dTokenData) isTokenValid() bool {
 // needsRefresh: synchronously returns true iff the currently stored access token should be refreshed. This method also
 // updates the refresh time if it determines the token needs refreshed to prevent other threads from
 // making multiple refresh calls.
-func (tokenData *cp4dTokenData) needsRefresh() bool {
+func (this *cp4dTokenData) needsRefresh() bool {
 	cp4dNeedsRefreshMutex.Lock()
 	defer cp4dNeedsRefreshMutex.Unlock()
 
 	// Advance refresh by one minute
-	if tokenData.RefreshTime >= 0 && GetCurrentTime() > tokenData.RefreshTime {
-		tokenData.RefreshTime = GetCurrentTime() + 60
+	if this.RefreshTime >= 0 && GetCurrentTime() > this.RefreshTime {
+		this.RefreshTime = GetCurrentTime() + 60
 		return true
 	}
+
 	return false
+
 }

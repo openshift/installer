@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -22,10 +24,11 @@ type StageOption func(*SplitStage)
 // - The IP addresses for the bootstrap and control plane VMs will be output from the stage as bootstrap_ip and
 //   control_plane_ips, respectively. Only one stage for the platform should output a particular variable. This will
 //   likely be the same stage that creates the VM.
-func NewStage(platform, name string, opts ...StageOption) SplitStage {
+func NewStage(platform, name string, providers []providers.Provider, opts ...StageOption) SplitStage {
 	s := SplitStage{
-		platform: platform,
-		name:     name,
+		platform:  platform,
+		name:      name,
+		providers: providers,
 	}
 	for _, opt := range opts {
 		opt(&s)
@@ -59,13 +62,14 @@ func WithCustomExtractHostAddresses(extractHostAddresses ExtractFunc) StageOptio
 type SplitStage struct {
 	platform             string
 	name                 string
+	providers            []providers.Provider
 	destroyWithBootstrap bool
 	destroy              DestroyFunc
 	extractHostAddresses ExtractFunc
 }
 
 // DestroyFunc is a function for destroying the stage.
-type DestroyFunc func(s SplitStage, directory string, extraArgs []string) error
+type DestroyFunc func(s SplitStage, directory string, varFiles []string) error
 
 // ExtractFunc is a function for extracting host addresses.
 type ExtractFunc func(s SplitStage, directory string, ic *types.InstallConfig) (string, int, []string, error)
@@ -73,6 +77,11 @@ type ExtractFunc func(s SplitStage, directory string, ic *types.InstallConfig) (
 // Name implements pkg/terraform/Stage.Name
 func (s SplitStage) Name() string {
 	return s.name
+}
+
+// Providers is the list of providers that are used for the stage.
+func (s SplitStage) Providers() []providers.Provider {
+	return s.providers
 }
 
 // StateFilename implements pkg/terraform/Stage.StateFilename
@@ -91,8 +100,8 @@ func (s SplitStage) DestroyWithBootstrap() bool {
 }
 
 // Destroy implements pkg/terraform/Stage.Destroy
-func (s SplitStage) Destroy(directory string, extraArgs []string) error {
-	return s.destroy(s, directory, extraArgs)
+func (s SplitStage) Destroy(directory string, varFiles []string) error {
+	return s.destroy(s, directory, varFiles)
 }
 
 // ExtractHostAddresses implements pkg/terraform/Stage.ExtractHostAddresses
@@ -156,6 +165,10 @@ func normalExtractHostAddresses(s SplitStage, directory string, _ *types.Install
 	return bootstrap, 0, masters, nil
 }
 
-func normalDestroy(s SplitStage, directory string, extraArgs []string) error {
-	return errors.Wrap(terraform.Destroy(directory, s.platform, s, extraArgs...), "terraform destroy")
+func normalDestroy(s SplitStage, directory string, varFiles []string) error {
+	opts := make([]tfexec.DestroyOption, len(varFiles))
+	for i, varFile := range varFiles {
+		opts[i] = tfexec.VarFile(varFile)
+	}
+	return errors.Wrap(terraform.Destroy(directory, s.platform, s, opts...), "terraform destroy")
 }

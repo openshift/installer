@@ -90,7 +90,7 @@ resource "libvirt_domain" "master" {
     target_port = 0
   }
 
-  cpu = {
+  cpu {
     mode = "host-passthrough"
   }
 

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/terraform"
@@ -17,8 +18,18 @@ import (
 // PlatformStages are the stages to run to provision the infrastructure in
 // Bare Metal.
 var PlatformStages = []terraform.Stage{
-	stages.NewStage("baremetal", "bootstrap", stages.WithNormalBootstrapDestroy()),
-	stages.NewStage("baremetal", "masters", stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
+	stages.NewStage(
+		"baremetal",
+		"bootstrap",
+		[]providers.Provider{providers.Ironic, providers.Libvirt},
+		stages.WithNormalBootstrapDestroy(),
+	),
+	stages.NewStage(
+		"baremetal",
+		"masters",
+		[]providers.Provider{providers.Ironic},
+		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+	),
 }
 
 func extractOutputHostAddresses(s stages.SplitStage, directory string, config *types.InstallConfig) (bootstrap string, port int, masters []string, err error) {

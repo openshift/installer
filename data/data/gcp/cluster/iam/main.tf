@@ -9,11 +9,13 @@ resource "google_service_account" "worker-node-sa" {
 }
 
 resource "google_project_iam_member" "worker-compute-viewer" {
-  role   = "roles/compute.viewer"
-  member = "serviceAccount:${google_service_account.worker-node-sa.email}"
+  project = var.project_id
+  role    = "roles/compute.viewer"
+  member  = "serviceAccount:${google_service_account.worker-node-sa.email}"
 }
 
 resource "google_project_iam_member" "worker-storage-admin" {
-  role   = "roles/storage.admin"
-  member = "serviceAccount:${google_service_account.worker-node-sa.email}"
+  project = var.project_id
+  role    = "roles/storage.admin"
+  member  = "serviceAccount:${google_service_account.worker-node-sa.email}"
 }

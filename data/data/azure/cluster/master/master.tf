@@ -6,6 +6,11 @@ locals {
   ip_v6_configuration_name = "pipConfig-v6"
 }
 
+data "azurerm_storage_account" "storage_account" {
+  name                = var.storage_account_name
+  resource_group_name = var.resource_group_name
+}
+
 resource "azurerm_network_interface" "master" {
   count = var.instance_count
 
@@ -117,7 +122,7 @@ resource "azurerm_linux_virtual_machine" "master" {
   custom_data   = base64encode(var.ignition)
 
   boot_diagnostics {
-    storage_account_uri = var.storage_account.primary_blob_endpoint
+    storage_account_uri = data.azurerm_storage_account.storage_account.primary_blob_endpoint
   }
 }
 

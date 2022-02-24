@@ -42,10 +42,10 @@ func Delete(client *gophercloud.ServiceClient, tenantID string) (r DeleteResult)
 // All int-values are pointers so they can be nil if they are not needed.
 // You can use gopercloud.IntToPointer() for convenience
 type UpdateOpts struct {
-	// FixedIPs is number of fixed ips alloted this quota_set.
+	// FixedIPs is number of fixed ips allotted this quota_set.
 	FixedIPs *int `json:"fixed_ips,omitempty"`
 
-	// FloatingIPs is number of floating ips alloted this quota_set.
+	// FloatingIPs is number of floating ips allotted this quota_set.
 	FloatingIPs *int `json:"floating_ips,omitempty"`
 
 	// InjectedFileContentBytes is content bytes allowed for each injected file.

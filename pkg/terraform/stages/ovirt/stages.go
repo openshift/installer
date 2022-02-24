@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/openshift/installer/pkg/terraform/providers"
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -23,9 +24,25 @@ var bootstrapSSHPortAsString = strconv.Itoa(22)
 
 // PlatformStages are the stages to run to provision the infrastructure in oVirt.
 var PlatformStages = []terraform.Stage{
-	stages.NewStage(ovirttypes.Name, "image", stages.WithNormalBootstrapDestroy()),
-	stages.NewStage(ovirttypes.Name, "cluster", stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
-	stages.NewStage(ovirttypes.Name, "bootstrap", stages.WithNormalBootstrapDestroy(), stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
+	stages.NewStage(
+		ovirttypes.Name,
+		"image",
+		[]providers.Provider{providers.OVirt},
+		stages.WithNormalBootstrapDestroy(),
+	),
+	stages.NewStage(
+		ovirttypes.Name,
+		"cluster",
+		[]providers.Provider{providers.OVirt},
+		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+	),
+	stages.NewStage(
+		ovirttypes.Name,
+		"bootstrap",
+		[]providers.Provider{providers.OVirt},
+		stages.WithNormalBootstrapDestroy(),
+		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+	),
 }
 
 func extractOutputHostAddresses(s stages.SplitStage, directory string, ic *types.InstallConfig) (bootstrapIP string, sshPort int, controlPlaneIPs []string, returnErr error) {

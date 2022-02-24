@@ -1,0 +1,335 @@
+// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Licensed under the Mozilla Public License v2.0
+
+package ibm
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+func resourceIBMIAMAuthorizationPolicy() *schema.Resource {
+	return &schema.Resource{
+		Create:   resourceIBMIAMAuthorizationPolicyCreate,
+		Read:     resourceIBMIAMAuthorizationPolicyRead,
+		Update:   resourceIBMIAMAuthorizationPolicyUpdate,
+		Delete:   resourceIBMIAMAuthorizationPolicyDelete,
+		Exists:   resourceIBMIAMAuthorizationPolicyExists,
+		Importer: &schema.ResourceImporter{},
+
+		Schema: map[string]*schema.Schema{
+			"source_service_name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The source service name",
+				ForceNew:    true,
+			},
+
+			"target_service_name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The target service name",
+			},
+
+			"roles": {
+				Type:        schema.TypeList,
+				Required:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Role names of the policy definition",
+			},
+
+			"source_resource_instance_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The source resource instance Id",
+			},
+
+			"target_resource_instance_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The target resource instance Id",
+			},
+
+			"source_resource_group_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The source resource group Id",
+			},
+
+			"target_resource_group_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The target resource group Id",
+			},
+
+			"source_resource_type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Resource type of source service",
+			},
+
+			"target_resource_type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Resource type of target service",
+			},
+
+			"source_service_account": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "Account GUID of source service",
+			},
+
+			"version": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the Policy",
+			},
+		},
+	}
+}
+
+func resourceIBMIAMAuthorizationPolicyCreate(d *schema.ResourceData, meta interface{}) error {
+	sourceServiceName := d.Get("source_service_name").(string)
+	targetServiceName := d.Get("target_service_name").(string)
+	policyType := "authorization"
+
+	userDetails, err := meta.(ClientSession).BluemixUserDetails()
+	if err != nil {
+		return err
+	}
+
+	iampapClient, err := meta.(ClientSession).IAMPolicyManagementV1API()
+	if err != nil {
+		return err
+	}
+
+	sourceServiceAccount := userDetails.userAccount
+
+	if account, ok := d.GetOk("source_service_account"); ok {
+		sourceServiceAccount = account.(string)
+	}
+
+	accountIdSubjectAttribute := &iampolicymanagementv1.SubjectAttribute{
+		Name:  core.StringPtr("accountId"),
+		Value: &sourceServiceAccount,
+	}
+	serviceNameSubjectAttribute := &iampolicymanagementv1.SubjectAttribute{
+		Name:  core.StringPtr("serviceName"),
+		Value: &sourceServiceName,
+	}
+
+	policySubject := &iampolicymanagementv1.PolicySubject{
+		Attributes: []iampolicymanagementv1.SubjectAttribute{*accountIdSubjectAttribute, *serviceNameSubjectAttribute},
+	}
+
+	accountIDResourceAttribute := &iampolicymanagementv1.ResourceAttribute{
+		Name:     core.StringPtr("accountId"),
+		Value:    core.StringPtr(userDetails.userAccount),
+		Operator: core.StringPtr("stringEquals"),
+	}
+
+	serviceNameResourceAttribute := &iampolicymanagementv1.ResourceAttribute{
+		Name:     core.StringPtr("serviceName"),
+		Value:    core.StringPtr(targetServiceName),
+		Operator: core.StringPtr("stringEquals"),
+	}
+
+	policyResource := &iampolicymanagementv1.PolicyResource{
+		Attributes: []iampolicymanagementv1.ResourceAttribute{*accountIDResourceAttribute, *serviceNameResourceAttribute},
+	}
+
+	if sID, ok := d.GetOk("source_resource_instance_id"); ok {
+		serviceInstanceSubjectAttribute := iampolicymanagementv1.SubjectAttribute{
+			Name:  core.StringPtr("serviceInstance"),
+			Value: core.StringPtr(sID.(string)),
+		}
+		policySubject.Attributes = append(policySubject.Attributes, serviceInstanceSubjectAttribute)
+	}
+
+	if tID, ok := d.GetOk("target_resource_instance_id"); ok {
+		serviceInstanceResourceAttribute := iampolicymanagementv1.ResourceAttribute{
+			Name:  core.StringPtr("serviceInstance"),
+			Value: core.StringPtr(tID.(string)),
+		}
+		policyResource.Attributes = append(policyResource.Attributes, serviceInstanceResourceAttribute)
+	}
+
+	if sType, ok := d.GetOk("source_resource_type"); ok {
+		resourceTypeSubjectAttribute := iampolicymanagementv1.SubjectAttribute{
+			Name:  core.StringPtr("resourceType"),
+			Value: core.StringPtr(sType.(string)),
+		}
+		policySubject.Attributes = append(policySubject.Attributes, resourceTypeSubjectAttribute)
+	}
+
+	if tType, ok := d.GetOk("target_resource_type"); ok {
+		resourceTypeResourceAttribute := iampolicymanagementv1.ResourceAttribute{
+			Name:  core.StringPtr("resourceType"),
+			Value: core.StringPtr(tType.(string)),
+		}
+		policyResource.Attributes = append(policyResource.Attributes, resourceTypeResourceAttribute)
+	}
+
+	if sResGrpID, ok := d.GetOk("source_resource_group_id"); ok {
+		resourceGroupSubjectAttribute := iampolicymanagementv1.SubjectAttribute{
+			Name:  core.StringPtr("resourceGroupId"),
+			Value: core.StringPtr(sResGrpID.(string)),
+		}
+		policySubject.Attributes = append(policySubject.Attributes, resourceGroupSubjectAttribute)
+	}
+
+	if tResGrpID, ok := d.GetOk("target_resource_group_id"); ok {
+		resourceGroupResourceAttribute := iampolicymanagementv1.ResourceAttribute{
+			Name:  core.StringPtr("resourceGroupId"),
+			Value: core.StringPtr(tResGrpID.(string)),
+		}
+		policyResource.Attributes = append(policyResource.Attributes, resourceGroupResourceAttribute)
+	}
+
+	listRoleOptions := &iampolicymanagementv1.ListRolesOptions{
+		ServiceName:       &targetServiceName,
+		SourceServiceName: &sourceServiceName,
+		PolicyType:        &policyType,
+	}
+	roleList, resp, err := iampapClient.ListRoles(listRoleOptions)
+
+	if err != nil || roleList == nil {
+		return fmt.Errorf("[ERROR] Error in listing roles %s, %s", err, resp)
+	}
+
+	policyRoles := mapRoleListToPolicyRoles(*roleList)
+	roles, err := getRolesFromRoleNames(expandStringList(d.Get("roles").([]interface{})), policyRoles)
+
+	if err != nil {
+		return err
+	}
+
+	createPolicyOptions := iampapClient.NewCreatePolicyOptions(
+		"authorization",
+		[]iampolicymanagementv1.PolicySubject{*policySubject},
+		roles,
+		[]iampolicymanagementv1.PolicyResource{*policyResource},
+	)
+
+	if description, ok := d.GetOk("description"); ok {
+		des := description.(string)
+		createPolicyOptions.Description = &des
+	}
+
+	authPolicy, resp, err := iampapClient.CreatePolicy(createPolicyOptions)
+	if err != nil {
+		return fmt.Errorf("[ERROR] Error creating authorization policy: %s %s", err, resp)
+	}
+
+	d.SetId(*authPolicy.ID)
+
+	return resourceIBMIAMAuthorizationPolicyRead(d, meta)
+}
+
+func resourceIBMIAMAuthorizationPolicyRead(d *schema.ResourceData, meta interface{}) error {
+
+	iampapClient, err := meta.(ClientSession).IAMPolicyManagementV1API()
+	if err != nil {
+		return err
+	}
+
+	getPolicyOptions := &iampolicymanagementv1.GetPolicyOptions{
+		PolicyID: core.StringPtr(d.Id()),
+	}
+
+	authorizationPolicy, resp, err := iampapClient.GetPolicy(getPolicyOptions)
+	if err != nil {
+		return fmt.Errorf("[ERROR] Error retrieving authorizationPolicy: %s %s", err, resp)
+	}
+	roles := make([]string, len(authorizationPolicy.Roles))
+	for i, role := range authorizationPolicy.Roles {
+		roles[i] = *role.DisplayName
+	}
+	if authorizationPolicy.Description != nil {
+		d.Set("description", *authorizationPolicy.Description)
+	}
+	d.Set("roles", roles)
+	source := authorizationPolicy.Subjects[0]
+	target := authorizationPolicy.Resources[0]
+	d.Set("source_service_name", getSubjectAttribute("serviceName", source))
+	d.Set("target_service_name", getResourceAttribute("serviceName", target))
+	d.Set("source_resource_instance_id", getSubjectAttribute("serviceInstance", source))
+	d.Set("target_resource_instance_id", getResourceAttribute("serviceInstance", target))
+	d.Set("source_resource_type", getSubjectAttribute("resourceType", source))
+	d.Set("target_resource_type", getResourceAttribute("resourceType", target))
+	d.Set("source_service_account", getSubjectAttribute("accountId", source))
+	d.Set("source_resource_group_id", getSubjectAttribute("resourceGroupId", source))
+	d.Set("target_resource_group_id", getResourceAttribute("resourceGroupId", target))
+	return nil
+}
+
+// Returns nil, because ibmcloud iam cli authoirization policy does not have an update command
+func resourceIBMIAMAuthorizationPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
+	return nil
+}
+
+func resourceIBMIAMAuthorizationPolicyDelete(d *schema.ResourceData, meta interface{}) error {
+	iampapClient, err := meta.(ClientSession).IAMPolicyManagementV1API()
+	if err != nil {
+		return err
+	}
+
+	authorizationPolicyID := d.Id()
+
+	deletePolicyOptions := &iampolicymanagementv1.DeletePolicyOptions{
+		PolicyID: core.StringPtr(authorizationPolicyID),
+	}
+	resp, err := iampapClient.DeletePolicy(deletePolicyOptions)
+	if err != nil {
+		log.Printf(
+			"Error deleting authorization policy: %s, %s", err, resp)
+	}
+
+	d.SetId("")
+
+	return nil
+}
+
+func resourceIBMIAMAuthorizationPolicyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	iampapClient, err := meta.(ClientSession).IAMPolicyManagementV1API()
+	if err != nil {
+		return false, err
+	}
+
+	getPolicyOptions := &iampolicymanagementv1.GetPolicyOptions{
+		PolicyID: core.StringPtr(d.Id()),
+	}
+	authorizationPolicy, resp, err := iampapClient.GetPolicy(getPolicyOptions)
+	if err != nil || authorizationPolicy == nil {
+		if resp != nil && resp.StatusCode == 404 {
+			return false, nil
+		}
+		return false, fmt.Errorf("[ERROR] Error getting authorisation policy: %s\n%s", err, resp)
+	}
+
+	if authorizationPolicy != nil && authorizationPolicy.State != nil && *authorizationPolicy.State == "deleted" {
+		return false, nil
+	}
+
+	return *authorizationPolicy.ID == d.Id(), nil
+}

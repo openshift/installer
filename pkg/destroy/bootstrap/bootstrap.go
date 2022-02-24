@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/cluster"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
+	"github.com/openshift/installer/pkg/terraform"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -59,46 +60,37 @@ func Destroy(dir string) (err error) {
 		}
 		defer os.RemoveAll(tempDir)
 
-		if err := copyToTemp(stage.StateFilename(), dir, tempDir, false); err != nil {
-			return err
+		stateFilePathInInstallDir := filepath.Join(dir, stage.StateFilename())
+		stateFilePathInTempDir := filepath.Join(tempDir, terraform.StateFilename)
+		if err := copy(stateFilePathInInstallDir, stateFilePathInTempDir); err != nil {
+			return errors.Wrap(err, "failed to copy state file to the temporary directory")
 		}
 
-		extraArgs := make([]string, len(varFiles))
-		for i, filename := range varFiles {
-			allowMissing := filename == cluster.TfPlatformVarsFileName // platform may not need platform-specific Terraform variables
-			if err := copyToTemp(filename, dir, tempDir, allowMissing); err != nil {
-				return err
+		targetVarFiles := make([]string, 0, len(varFiles))
+		for _, filename := range varFiles {
+			sourcePath := filepath.Join(dir, filename)
+			targetPath := filepath.Join(tempDir, filename)
+			if err := copy(sourcePath, targetPath); err != nil {
+				// platform may not need platform-specific Terraform variables
+				if filename == cluster.TfPlatformVarsFileName {
+					if os.IsNotExist(err) && err.(*os.PathError).Path == sourcePath {
+						continue
+					}
+				}
+				return errors.Wrapf(err, "failed to copy %s to the temporary directory", filename)
 			}
-			extraArgs[i] = fmt.Sprintf("-var-file=%s", filepath.Join(tempDir, filename))
+			targetVarFiles = append(targetVarFiles, targetPath)
 		}
 
-		if err := stage.Destroy(tempDir, extraArgs); err != nil {
+		if err := stage.Destroy(tempDir, targetVarFiles); err != nil {
 			return err
 		}
 
-		tempStateFilePath := filepath.Join(dir, stage.StateFilename()+".new")
-		err = copy(filepath.Join(tempDir, stage.StateFilename()), tempStateFilePath)
-		if err != nil {
-			return errors.Wrapf(err, "failed to copy %s from the temporary directory", stage.StateFilename())
-		}
-		if err := os.Rename(tempStateFilePath, filepath.Join(dir, stage.StateFilename())); err != nil {
-			return err
+		if err := copy(stateFilePathInTempDir, stateFilePathInInstallDir); err != nil {
+			return errors.Wrap(err, "failed to copy state file from the temporary directory")
 		}
 	}
 
-	return nil
-}
-
-func copyToTemp(filename, sourceDir, tempDir string, allowMissing bool) error {
-	sourcePath := filepath.Join(sourceDir, filename)
-	targetPath := filepath.Join(tempDir, filename)
-	err := copy(sourcePath, targetPath)
-	if err != nil {
-		if os.IsNotExist(err) && err.(*os.PathError).Path == sourcePath && allowMissing {
-			return nil
-		}
-		return errors.Wrapf(err, "failed to copy %s to the temporary directory", filename)
-	}
 	return nil
 }
 

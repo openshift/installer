@@ -62,8 +62,8 @@ output "subnet_id" {
   value = local.master_subnet_id
 }
 
-output "storage_account" {
-  value = azurerm_storage_account.cluster
+output "storage_account_name" {
+  value = azurerm_storage_account.cluster.name
 }
 
 output "outbound_udr" {

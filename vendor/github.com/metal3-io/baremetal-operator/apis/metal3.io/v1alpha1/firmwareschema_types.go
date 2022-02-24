@@ -18,8 +18,6 @@ package v1alpha1
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -50,6 +48,9 @@ type SettingSchema struct {
 	// Whether or not this setting is read only.
 	ReadOnly *bool `json:"read_only,omitempty"`
 
+	// Whether or not a reset is required after changing this setting.
+	ResetRequired *bool `json:"reset_required,omitempty"`
+
 	// Whether or not this setting's value is unique to this node, e.g.
 	// a serial number.
 	Unique *bool `json:"unique,omitempty"`
@@ -70,10 +71,6 @@ func (schema *SettingSchema) Validate(name string, value intstr.IntOrString) err
 		return SchemaSettingError{name: name, message: "it is ReadOnly"}
 	}
 
-	if strings.Contains(name, "Password") {
-		return SchemaSettingError{name: name, message: "Password fields can't be set"}
-	}
-
 	// Check if valid based on type
 	switch schema.AttributeType {
 	case "Enumeration":
@@ -85,16 +82,11 @@ func (schema *SettingSchema) Validate(name string, value intstr.IntOrString) err
 		return SchemaSettingError{name: name, message: fmt.Sprintf("unknown enumeration value - %s", value.String())}
 
 	case "Integer":
-		if value.Type == intstr.String {
-			if _, err := strconv.Atoi(value.String()); err != nil {
-				return SchemaSettingError{name: name, message: fmt.Sprintf("String %s entered while integer expected", value.String())}
-			}
-		}
 		if schema.LowerBound != nil && value.IntValue() < *schema.LowerBound {
-			return SchemaSettingError{name: name, message: fmt.Sprintf("integer %d is below minimum value %d", value.IntValue(), *schema.LowerBound)}
+			return SchemaSettingError{name: name, message: fmt.Sprintf("integer %s is below minimum value %d", value.String(), *schema.LowerBound)}
 		}
 		if schema.UpperBound != nil && value.IntValue() > *schema.UpperBound {
-			return SchemaSettingError{name: name, message: fmt.Sprintf("integer %d is above maximum value %d", value.IntValue(), *schema.UpperBound)}
+			return SchemaSettingError{name: name, message: fmt.Sprintf("integer %s is above maximum value %d", value.String(), *schema.UpperBound)}
 		}
 		return nil
 

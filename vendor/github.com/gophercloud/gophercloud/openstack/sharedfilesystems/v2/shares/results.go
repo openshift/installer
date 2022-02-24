@@ -69,6 +69,8 @@ type Share struct {
 	// Used for filtering backends which either support or do not support share snapshots
 	SnapshotSupport          bool   `json:"snapshot_support"`
 	SourceCgsnapshotMemberID string `json:"source_cgsnapshot_member_id"`
+	// Used for filtering backends which either support or do not support creating shares from snapshots
+	CreateShareFromSnapshotSupport bool `json:"create_share_from_snapshot_support"`
 	// Timestamp when the share was created
 	CreatedAt time.Time `json:"-"`
 	// Timestamp when the share was updated

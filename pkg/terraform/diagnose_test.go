@@ -1,12 +1,13 @@
 package terraform
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDiagnose(t *testing.T) {
+func TestDiagnoseApplyError(t *testing.T) {
 	cases := []struct {
 		input string
 		err   string
@@ -111,9 +112,10 @@ Error: could not inspect: could not inspect node, node is currently 'inspect fai
 
 	for _, test := range cases {
 		t.Run("", func(t *testing.T) {
-			err := Diagnose(test.input)
+			inError := errors.New(test.input)
+			err := diagnoseApplyError(inError)
 			if test.err == "" {
-				assert.NoError(t, err)
+				assert.Equal(t, err, inError)
 			} else {
 				assert.Regexp(t, test.err, err)
 			}

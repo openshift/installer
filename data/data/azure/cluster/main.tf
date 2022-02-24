@@ -44,7 +44,7 @@ module "master" {
   ilb_backend_pool_v6_id = var.ilb_backend_pool_v6_id
   subnet_id              = var.master_subnet_id
   instance_count         = var.master_count
-  storage_account        = var.storage_account
+  storage_account_name   = var.storage_account_name
   os_volume_type         = var.azure_master_root_volume_type
   os_volume_size         = var.azure_master_root_volume_size
   private                = var.azure_private

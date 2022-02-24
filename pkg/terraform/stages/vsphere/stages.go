@@ -10,6 +10,7 @@ import (
 	vmwaretypes "github.com/vmware/govmomi/vim25/types"
 
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
 	"github.com/openshift/installer/pkg/types"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -17,9 +18,24 @@ import (
 
 // PlatformStages are the stages to run to provision the infrastructure in vsphere.
 var PlatformStages = []terraform.Stage{
-	stages.NewStage("vsphere", "pre-bootstrap"),
-	stages.NewStage("vsphere", "bootstrap", stages.WithNormalBootstrapDestroy(), stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
-	stages.NewStage("vsphere", "master", stages.WithCustomExtractHostAddresses(extractOutputHostAddresses)),
+	stages.NewStage(
+		"vsphere",
+		"pre-bootstrap",
+		[]providers.Provider{providers.VSphere, providers.VSpherePrivate},
+	),
+	stages.NewStage(
+		"vsphere",
+		"bootstrap",
+		[]providers.Provider{providers.VSphere},
+		stages.WithNormalBootstrapDestroy(),
+		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+	),
+	stages.NewStage(
+		"vsphere",
+		"master",
+		[]providers.Provider{providers.VSphere},
+		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+	),
 }
 
 func extractOutputHostAddresses(s stages.SplitStage, directory string, config *types.InstallConfig) (bootstrap string, port int, masters []string, err error) {

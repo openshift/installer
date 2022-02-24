@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/quota"
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
-	"github.com/openshift/installer/pkg/terraform/exec"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
@@ -106,15 +106,16 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		}
 		defer os.RemoveAll(tmpDir)
 
-		var extraArgs []string
+		var extraOpts []tfexec.ApplyOption
 		for _, file := range tfvarsFiles {
 			if err := ioutil.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0600); err != nil {
 				return err
 			}
-			extraArgs = append(extraArgs, fmt.Sprintf("-var-file=%s", filepath.Join(tmpDir, file.Filename)))
+			extraOpts = append(extraOpts, tfexec.VarFile(filepath.Join(tmpDir, file.Filename)))
+
 		}
 
-		outputs, err := c.applyTerraform(tmpDir, platform, stage, extraArgs)
+		outputs, err := c.applyTerraform(tmpDir, platform, stage, extraOpts...)
 		if err != nil {
 			return err
 		}
@@ -144,40 +145,30 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 	return false, nil
 }
 
-func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform.Stage, extraArgs []string) (*asset.File, error) {
+func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform.Stage, opts ...tfexec.ApplyOption) (*asset.File, error) {
 	timer.StartTimer(stage.Name())
 	defer timer.StopTimer(stage.Name())
 
-	stateFile, err := terraform.Apply(tmpDir, platform, stage, extraArgs...)
-	if err != nil {
-		err = errors.Wrap(err, "failed to create cluster")
-		if stateFile == "" {
-			return nil, err
-		}
-		// Store the error from the apply, but continue with the
-		// generation so that the Terraform state file is recovered from
-		// the temporary directory.
-	}
+	applyErr := terraform.Apply(tmpDir, platform, stage, opts...)
 
-	data, err2 := ioutil.ReadFile(stateFile)
-	if err2 == nil {
+	// Write the state file to the install directory even if the apply failed.
+	if data, err := ioutil.ReadFile(filepath.Join(tmpDir, terraform.StateFilename)); err == nil {
 		c.FileList = append(c.FileList, &asset.File{
 			Filename: stage.StateFilename(),
 			Data:     data,
 		})
-	} else {
-		logrus.Errorf("Failed to read tfstate: %v", err2)
-		if err == nil {
-			err2 = err
-		}
-	}
-	if err != nil {
-		return nil, err
+	} else if !os.IsNotExist(err) {
+		logrus.Errorf("Failed to read tfstate: %v", err)
+		return nil, errors.Wrap(err, "failed to read tfstate")
 	}
 
-	outputs, err := exec.Outputs(stateFile)
+	if applyErr != nil {
+		return nil, errors.Wrap(applyErr, "failed to create cluster")
+	}
+
+	outputs, err := terraform.Outputs(tmpDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not get outputs from state file %q", stateFile)
+		return nil, errors.Wrapf(err, "could not get outputs from stage %q", stage.Name())
 	}
 
 	outputsFile := &asset.File{
