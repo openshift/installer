@@ -18,5 +18,10 @@ var (
 func addKnownTypes(scheme *runtime.Scheme) error {
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 
+	scheme.AddKnownTypes(GroupVersion,
+		&AWSPlacementGroup{},
+		&AWSPlacementGroupList{},
+	)
+
 	return nil
 }

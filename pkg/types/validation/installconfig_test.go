@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
@@ -1398,6 +1399,61 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Publish = types.InternalPublishingStrategy
 				return c
 			}(),
+		},
+		{
+			name: "valid baseline capability set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11"}
+				return c
+			}(),
+		},
+		{
+			name: "invalid empty string baseline capability set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: ""}
+				return c
+			}(),
+			expectedError: `capabilities.baselineCapabilitySet: Unsupported value: "": supported values: .*`,
+		},
+		{
+			name: "invalid baseline capability set specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "vNotValid"}
+				return c
+			}(),
+			expectedError: `capabilities.baselineCapabilitySet: Unsupported value: "vNotValid": supported values: .*`,
+		},
+		{
+			name: "valid additional enabled capability specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11",
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"openshift-samples"}}
+				return c
+			}(),
+		},
+		{
+			name: "invalid empty additional enabled capability specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11",
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{""}}
+				return c
+			}(),
+			expectedError: `capabilities.additionalEnabledCapabilities\[0\]: Unsupported value: "": supported values: .*`,
+		},
+		{
+			name: "invalid additional enabled capability specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11",
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"not-valid"}}
+				return c
+			}(),
+			expectedError: `capabilities.additionalEnabledCapabilities\[0\]: Unsupported value: "not-valid": supported values: .*`,
 		},
 	}
 	for _, tc := range cases {

@@ -44,6 +44,31 @@ spec:
             required:
             - installationDisk
             type: object
+          capabilities:
+            description: Capabilities configures the installation of optional core
+              cluster components.
+            properties:
+              additionalEnabledCapabilities:
+                description: additionalEnabledCapabilities extends the set of managed
+                  capabilities beyond the baseline defined in baselineCapabilitySet.
+                  The default is an empty set.
+                items:
+                  description: ClusterVersionCapability enumerates optional, core
+                    cluster components.
+                  enum:
+                  - openshift-samples
+                  type: string
+                type: array
+              baselineCapabilitySet:
+                description: baselineCapabilitySet selects an initial set of optional
+                  capabilities to enable, which can be extended via additionalEnabledCapabilities.
+                  The default is vCurrent.
+                enum:
+                - None
+                - v4.11
+                - vCurrent
+                type: string
+            type: object
           compute:
             description: Compute is the configuration for the machines that comprise
               the compute nodes.
