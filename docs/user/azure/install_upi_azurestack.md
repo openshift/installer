@@ -512,7 +512,7 @@ You can also take advantage of the built in cluster scaling mechanisms and the m
 
 In this example, we'll manually launch three instances via the provided ARM template. Additional instances can be launched by editing the `06_workers.json` file.
 
-Copy the [`06_workers.json`](../../../upi/azure/06_workers.json) ARM template locally.
+Copy the [`06_workers.json`](../../../upi/azurestack/06_workers.json) ARM template locally.
 
 Create the deployment using the `az` client:
 
