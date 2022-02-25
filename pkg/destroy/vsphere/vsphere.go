@@ -3,11 +3,12 @@ package vsphere
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/pbm"
 	pbmtypes "github.com/vmware/govmomi/pbm/types"
@@ -17,6 +18,7 @@ import (
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	"github.com/openshift/installer/pkg/destroy/providers"
 	installertypes "github.com/openshift/installer/pkg/types"
@@ -187,13 +189,39 @@ func deleteTag(ctx context.Context, client *rest.Client, tagID string) error {
 	return err
 }
 
-func deleteTagCategory(ctx context.Context, client *rest.Client, categoryID string) error {
+func deleteTagCategory(ctx context.Context, client *rest.Client, categoryID string, logger logrus.FieldLogger) error {
+	tcLogger := logger.WithField("TagCategory", categoryID)
+
 	tagManager := tags.NewManager(client)
-	category, err := tagManager.GetCategory(ctx, categoryID)
-	if err == nil {
-		err = tagManager.DeleteCategory(ctx, category)
+	ids, err := tagManager.ListCategories(ctx)
+	if err != nil {
+		tcLogger.Errorln(err)
+		return err
 	}
-	return err
+
+	var errs []error
+	for _, id := range ids {
+		category, err := tagManager.GetCategory(ctx, id)
+		if err != nil {
+			if !strings.HasSuffix(err.Error(), http.StatusText(http.StatusNotFound)) {
+				errs = append(errs, errors.Wrapf(err, "could not get category %q", id))
+			}
+			continue
+		}
+		if category.Name == categoryID {
+			if err = tagManager.DeleteCategory(ctx, category); err != nil {
+				tcLogger.Errorln(err)
+				return err
+			}
+			tcLogger.Info("Destroyed")
+			return nil
+		}
+	}
+
+	if len(errs) == 0 {
+		tcLogger.Debug("Not found")
+	}
+	return utilerrors.NewAggregate(errs)
 }
 
 // Run is the entrypoint to start the uninstall process.
@@ -274,12 +302,9 @@ func (o *ClusterUninstaller) Run() (*installertypes.ClusterQuota, error) {
 	tagLogger.Info("Destroyed")
 
 	o.Logger.Debug("Delete tag category")
-	tcLogger := o.Logger.WithField("TagCategory", "openshift-"+o.InfraID)
-	if err = deleteTagCategory(context.TODO(), o.RestClient, "openshift-"+o.InfraID); err != nil {
-		tcLogger.Errorln(err)
+	if err = deleteTagCategory(context.TODO(), o.RestClient, "openshift-"+o.InfraID, o.Logger); err != nil {
 		return nil, err
 	}
-	tcLogger.Info("Destroyed")
 
 	return nil, nil
 }
