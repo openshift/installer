@@ -37,19 +37,16 @@ type SettingsConditionType string
 
 const (
 	// Indicates that the settings in the Spec are different than Status
-	UpdateRequested SettingsConditionType = "UpdateRequested"
+	FirmwareSettingsChangeDetected SettingsConditionType = "ChangeDetected"
 
 	// Indicates if the settings are valid and can be configured on the host
-	SettingsValid SettingsConditionType = "Valid"
+	FirmwareSettingsValid SettingsConditionType = "Valid"
 )
 
 // HostFirmwareSettingsSpec defines the desired state of HostFirmwareSettings
 type HostFirmwareSettingsSpec struct {
 
 	// Settings are the desired firmware settings stored as name/value pairs.
-	// This will be populated with the actual firmware settings and only
-	// contain the settings that can be modified (i.e. not ReadOnly), to
-	// facilitate making changes.
 	// +patchStrategy=merge
 	Settings DesiredSettingsMap `json:"settings" required:"true"`
 }
@@ -61,8 +58,12 @@ type HostFirmwareSettingsStatus struct {
 	// Namespace as the settings but it can be overwritten in the Spec
 	FirmwareSchema *SchemaReference `json:"schema,omitempty"`
 
-	// Settings are the actual firmware settings stored as name/value pairs
+	// Settings are the firmware settings stored as name/value pairs
 	Settings SettingsMap `json:"settings" required:"true"`
+
+	// Time that the status was last updated
+	// +optional
+	LastUpdated *metav1.Time `json:"lastUpdated,omitempty"`
 
 	// Track whether settings stored in the spec are valid based on the schema
 	// +patchMergeKey=type

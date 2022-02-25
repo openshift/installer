@@ -91,7 +91,9 @@ func (a *iDracAccessDetails) PowerInterface() string {
 }
 
 func (a *iDracAccessDetails) RAIDInterface() string {
-	return "idrac-wsman"
+	// Disabled RAID in OpenShift because we are not ready to support it
+	//return "idrac-wsman"
+	return "no-raid"
 }
 
 func (a *iDracAccessDetails) VendorInterface() string {

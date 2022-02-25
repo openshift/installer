@@ -2,7 +2,9 @@ package v1alpha1
 
 import (
 	"fmt"
+	"regexp"
 
+	"github.com/google/uuid"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	_ "github.com/metal3-io/baremetal-operator/pkg/hardwareutils/bmc"
@@ -17,6 +19,10 @@ func (host *BareMetalHost) validateHost() []error {
 	var errs []error
 
 	if err := validateRAID(host.Spec.RAID); err != nil {
+		errs = append(errs, err)
+	}
+
+	if err := validateBMHName(host.Name); err != nil {
 		errs = append(errs, err)
 	}
 
@@ -51,6 +57,21 @@ func validateRAID(r *RAIDConfig) error {
 
 	if len(r.HardwareRAIDVolumes) > 0 && len(r.SoftwareRAIDVolumes) > 0 {
 		return fmt.Errorf("hardwareRAIDVolumes and softwareRAIDVolumes can not be set at the same time")
+	}
+
+	return nil
+}
+
+func validateBMHName(bmhname string) error {
+
+	invalidname, _ := regexp.MatchString(`[^A-Za-z0-9\.\-\_]`, bmhname)
+	if invalidname {
+		return fmt.Errorf("BareMetalHost resource name cannot contain characters other than [A-Za-z0-9._-]")
+	}
+
+	_, err := uuid.Parse(bmhname)
+	if err == nil {
+		return fmt.Errorf("BareMetalHost resource name cannot be a UUID")
 	}
 
 	return nil
