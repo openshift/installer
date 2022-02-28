@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -83,6 +84,12 @@ func validGCPPlatform() *gcp.Platform {
 
 func validIBMCloudPlatform() *ibmcloud.Platform {
 	return &ibmcloud.Platform{
+		Region: "us-south",
+	}
+}
+
+func validPowerVSPlatform() *powervs.Platform {
+	return &powervs.Platform{
 		Region: "us-south",
 	}
 }
@@ -525,7 +532,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, openstack, ovirt, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, openstack, ovirt, powervs, vsphere\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -556,7 +563,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, openstack, ovirt, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, openstack, ovirt, powervs, vsphere\)$`,
 		},
 		{
 			name: "invalid libvirt platform",
@@ -568,7 +575,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt.URI = ""
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, openstack, ovirt, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
+			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, openstack, ovirt, powervs, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
 		},
 		{
 			name: "valid none platform",
@@ -1073,6 +1080,50 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^\Qplatform.ibmcloud.region: Required value: region must be specified\E$`,
+		},
+		{
+			name: "valid powervs platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					PowerVS: validPowerVSPlatform(),
+				}
+				return c
+			}(),
+		},
+		{
+			name: "valid powervs platform manual credential mod",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					PowerVS: validPowerVSPlatform(),
+				}
+				c.CredentialsMode = types.ManualCredentialsMode
+				return c
+			}(),
+		},
+		{
+			name: "invalid powervs platform mint credential mod",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					PowerVS: validPowerVSPlatform(),
+				}
+				c.CredentialsMode = types.MintCredentialsMode
+				return c
+			}(),
+			expectedError: `^credentialsMode: Unsupported value: "Mint": supported values: "Manual"$`,
+		},
+		{
+			name: "invalid powervs platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					PowerVS: &powervs.Platform{},
+				}
+				return c
+			}(),
+			expectedError: `^\Qplatform.powervs.region: Required value: region must be specified\E$`,
 		},
 		{
 			name: "valid azurestack platform",
