@@ -20,7 +20,8 @@ go-build: $(GO_BUILD_TARGETS)
 $(GO_BUILD_TARGETS):
 	dir=$(subst go-build.,,$@); cd $$dir; \
 	if [ -f main.go ]; then path="."; else path=./vendor/`grep _ tools.go|awk '{ print $$2 }'|sed 's|"||g'`; fi; \
-	go build -ldflags $(LDFLAGS) -o $(TFBINDIR)/terraform-provider-$$dir $$path;
+	go build -ldflags $(LDFLAGS) -o $(TFBINDIR)/terraform-provider-$$dir $$path; \
+	zip -9j $(TFBINDIR)/terraform-provider-$$dir.zip $(TFBINDIR)/terraform-provider-$$dir
 
 .PHONY: go-clean
 go-clean: $(GO_CLEAN_TARGETS)
