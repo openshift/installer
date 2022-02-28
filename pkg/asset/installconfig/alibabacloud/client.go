@@ -136,7 +136,7 @@ func askCredentials() (auth.Credential, error) {
 }
 
 func (client *Client) doActionWithSetDomain(request requests.AcsRequest, response responses.AcsResponse) (err error) {
-	endpoint := getEndpoint(strings.ToLower(request.GetProduct()), strings.ToLower(client.RegionID))
+	endpoint := client.getEndpoint(request)
 	request.SetDomain(endpoint)
 	err = client.DoAction(request, response)
 	return
@@ -324,14 +324,20 @@ func (client *Client) GetAvailableZonesByInstanceType(instanceType string) ([]st
 	return zones, nil
 }
 
-func getEndpoint(productName string, regionID string) string {
+func (client *Client) getEndpoint(request requests.AcsRequest) string {
+	productName := strings.ToLower(request.GetProduct())
+	regionID := strings.ToLower(client.RegionID)
+
 	if additionEndpoint, ok := additionEndpoint(productName, regionID); ok {
 		return additionEndpoint
 	}
 
 	endpoint, err := endpoints.Resolve(&endpoints.ResolveParam{
-		Product:  productName,
-		RegionId: regionID,
+		LocationProduct:      request.GetLocationServiceCode(),
+		LocationEndpointType: request.GetLocationEndpointType(),
+		Product:              productName,
+		RegionId:             regionID,
+		CommonApi:            client.ProcessCommonRequest,
 	})
 
 	if err != nil {
