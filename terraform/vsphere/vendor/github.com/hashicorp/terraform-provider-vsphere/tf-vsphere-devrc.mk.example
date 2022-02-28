@@ -1,0 +1,64 @@
+# This file is designed to assist you with configuring your environment for
+# testing the vSphere provider, and also serves as a catalog of the environment
+# variables that are required to test all of the resources in this provider.
+#
+# This should be copied to ~/.tf-vsphere-devrc.mk and edited accordingly.
+#
+# Note that the use of all of this file is not required - environment variables
+# can still be completely set from the command line or your existing
+# environment. In this case, don't use this file as it may cause conflicts.
+#
+# NOTE: Remove the annotations from any variables that have them inline, or
+# else make will add the whitespace to the variable as well.
+#
+# The essentials. None of the tests will run if you don't have these.
+export VSPHERE_SERVER                       =  vcenter.example.org
+export VSPHERE_USER                         =  'administrator@vcenter.example.org'
+export VSPHERE_PASSWORD                     =  changeme
+export VSPHERE_ALLOW_UNVERIFIED_SSL         =  true
+
+
+# The following variables must be altered for your environment
+export TF_VAR_VSPHERE_VCENTER_ISO           =  '/tmp/VMware-VCSA-all-6.7.0-16046470.iso'
+export TF_VAR_VSPHERE_ESXI1                 =  192.168.10.29
+export TF_VAR_VSPHERE_ESXI2                 =  192.168.10.34
+export TF_VAR_VSPHERE_ESXI1_THUMBPRINT      =  E6:A8:37:75:94:DF:B3:40:CF:DD:F6:35:70:A0:33:A9:9B:42:4C:74
+export TF_VAR_VSPHERE_ESXI2_THUMBPRINT      =  F0:CE:33:36:2F:BC:95:D2:9A:E8:39:EB:CE:00:FE:21:57:38:D0:AA
+export TF_VAR_VSPHERE_ESXI_USERNAME         =  root
+export TF_VAR_VSPHERE_ESXI1_PASSWORD        =  changeme
+export TF_VAR_VSPHERE_ESXI2_PASSWORD        =  changeme
+export TF_VAR_VSPHERE_LICENSE               =  00000-00000-00000-00000-00000
+export TF_VAR_VSPHERE_NAS_HOST              =  nas.example.org
+export TF_VAR_VSPHERE_NFS_PATH              =  /vSphereShared
+export TF_VAR_VSPHERE_ESXI_TRUNK_NIC        =  vmnic1
+export TF_VAR_VSPHERE_PXE_VLAN              =  34
+export TF_VAR_VSPHERE_VCENTER_ADDRESS       =  192.168.10.31
+export TF_VAR_VSPHERE_VCENTER_NETWORK_PREFIX=  24
+export TF_VAR_VSPHERE_VCENTER_GATEWAY       =  192.168.10.1
+export TF_VAR_VSPHERE_REST_SESSION_PATH     =  /home/user/.govmomi/rest_sessions
+export TF_VAR_VSPHERE_VIM_SESSION_PATH      =  /home/user/.govmomi/sessions
+
+# These can be changed, but will work at their defaults. They are used for
+# altering the default names acceptance tests will use.
+export TF_VAR_VSPHERE_DATACENTER            =  hashi-dc
+export TF_VAR_VSPHERE_CLUSTER               =  hashi-cluster
+export TF_VAR_VSPHERE_NFS_DS_NAME           =  nfs1
+export TF_VAR_VSPHERE_DVS_NAME              =  testacc-dvs
+export TF_VAR_VSPHERE_PG_NAME               =  terraform-test-portgroup
+export TF_VAR_VSPHERE_RESOURCE_POOL         =  hashi-resource-pool
+export TF_VAR_VSPHERE_TEMPLATE              =  template_test
+export TF_VAR_VSPHERE_INIT_TYPE             =  thin
+export TF_VAR_VSPHERE_ADAPTER_TYPE          =  lsiLogic
+export TF_VAR_VSPHERE_DC_FOLDER             =  dc-folder
+export TF_VAR_VSPHERE_DS_FOLDER             =  datastore-folder/foo
+export TF_VAR_VSPHERE_USE_LINKED_CLONE      =  true
+export TF_VAR_VSPHERE_PERSIST_SESSION       =  true
+export TF_VAR_VSPHERE_CLONED_VM_DISK_SIZE   =  32
+export TF_VAR_VSPHERE_CONTENT_LIBRARY_FILES =  '[ "https://acctest-images.storage.googleapis.com/template_test.ovf", "https://acctest-images.storage.googleapis.com/template_test.mf", "https://acctest-images.storage.googleapis.com/template_test-1.vmdk" ]'
+export TF_VAR_REMOTE_OVF_URL                =  https://acctest-images.storage.googleapis.com/template_test.ovf
+
+# These are added for compatibility with setup scripts.
+export TF_VAR_VSPHERE_SERVER                =  ${VSPHERE_SERVER}
+export TF_VAR_VSPHERE_USER                  =  ${VSPHERE_USER}
+export TF_VAR_VSPHERE_PASSWORD              =  ${VSPHERE_PASSWORD}
+export TF_VAR_VSPHERE_ALLOW_UNVERIFIED_SSL  =  ${VSPHERE_ALLOW_UNVERIFIED_SSL}

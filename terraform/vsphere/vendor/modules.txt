@@ -210,6 +210,7 @@ github.com/hashicorp/terraform-plugin-sdk/terraform
 github.com/hashicorp/terraform-plugin-test
 # github.com/hashicorp/terraform-provider-vsphere v1.24.3 => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
 ## explicit; go 1.13
+github.com/hashicorp/terraform-provider-vsphere
 github.com/hashicorp/terraform-provider-vsphere/vsphere
 github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/administrationroles
 github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource
