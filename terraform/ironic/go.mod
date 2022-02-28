@@ -2,10 +2,7 @@ module github.com/openshift/installer/terraform/ironic
 
 go 1.17
 
-require (
-	github.com/hashicorp/terraform-plugin-sdk v1.0.0
-	github.com/openshift-metal3/terraform-provider-ironic v0.2.7
-)
+require github.com/openshift-metal3/terraform-provider-ironic v0.2.7
 
 require (
 	cloud.google.com/go v0.45.1 // indirect
@@ -36,6 +33,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/hashicorp/hcl2 v0.0.0-20190821123243-0c888d1241f6 // indirect
 	github.com/hashicorp/hil v0.0.0-20190212132231-97b3a9cdfa93 // indirect
+	github.com/hashicorp/terraform-plugin-sdk v1.0.0 // indirect
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af // indirect
 	github.com/mattn/go-colorable v0.1.1 // indirect
