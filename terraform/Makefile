@@ -19,7 +19,8 @@ $(GO_MOD_TIDY_TARGETS)::
 go-build: $(GO_BUILD_TARGETS)
 $(GO_BUILD_TARGETS):
 	dir=$(subst go-build.,,$@); cd $$dir; \
-	go build -ldflags $(LDFLAGS) -o $(TFBINDIR)/terraform-provider-$$dir;
+	if [ -f main.go ]; then path="."; else path=./vendor/`grep _ tools.go|awk '{ print $$2 }'|sed 's|"||g'`; fi; \
+	go build -ldflags $(LDFLAGS) -o $(TFBINDIR)/terraform-provider-$$dir $$path;
 
 .PHONY: go-clean
 go-clean: $(GO_CLEAN_TARGETS)
