@@ -2,10 +2,7 @@ module github.com/openshift/installer/terraform/ovirt
 
 go 1.17
 
-require (
-	github.com/hashicorp/terraform-plugin-sdk v1.8.0
-	github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210628083913-78ce17b16709
-)
+require github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210628083913-78ce17b16709
 
 require (
 	cloud.google.com/go v0.45.1 // indirect
@@ -37,6 +34,7 @@ require (
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7 // indirect
 	github.com/hashicorp/terraform-json v0.4.0 // indirect
+	github.com/hashicorp/terraform-plugin-sdk v1.8.0 // indirect
 	github.com/hashicorp/terraform-plugin-test v1.2.0 // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20191011084731-65d371908596 // indirect
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
