@@ -2,10 +2,7 @@ module github.com/openshift/installer/terraform/ibm
 
 go 1.17
 
-require (
-	github.com/IBM-Cloud/terraform-provider-ibm v1.38.1
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.7.0
-)
+require github.com/IBM-Cloud/terraform-provider-ibm v1.38.1
 
 require (
 	cloud.google.com/go v0.65.0 // indirect
@@ -92,6 +89,7 @@ require (
 	github.com/hashicorp/terraform-exec v0.14.0 // indirect
 	github.com/hashicorp/terraform-json v0.12.0 // indirect
 	github.com/hashicorp/terraform-plugin-go v0.3.0 // indirect
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.7.0 // indirect
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20170213120834-e6b9231a2b1c // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
