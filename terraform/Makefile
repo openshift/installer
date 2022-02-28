@@ -1,4 +1,4 @@
-TFSUBDIRS:=	alicloud aws azureprivatedns azurestack ibm ignition ironic ovirt vsphere vsphereprivate
+TFSUBDIRS:=	alicloud aws azureprivatedns azurerm azurestack ibm ignition ironic ovirt vsphere vsphereprivate
 TFBINDIR?=	.
 
 GO_MOD_TIDY_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-mod-tidy-vendor.$(DIR),$(DIR)))
