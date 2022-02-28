@@ -7,7 +7,7 @@ cloud.google.com/go/monitoring/apiv3
 github.com/AlecAivazis/survey/v2
 github.com/AlecAivazis/survey/v2/core
 github.com/AlecAivazis/survey/v2/terminal
-# github.com/Azure/azure-sdk-for-go v51.2.0+incompatible
+# github.com/Azure/azure-sdk-for-go v55.3.0+incompatible
 ## explicit
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/compute/mgmt/compute
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns
