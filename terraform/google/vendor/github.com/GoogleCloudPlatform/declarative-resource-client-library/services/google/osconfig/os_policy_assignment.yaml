@@ -1,0 +1,834 @@
+# Copyright 2021 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: OSConfig/OSPolicyAssignment
+  description: Represents an OSPolicyAssignment resource.
+  x-dcl-struct-name: OSPolicyAssignment
+  x-dcl-has-iam: false
+  x-dcl-ref:
+    text: API documentation
+    url: https://cloud.google.com/compute/docs/osconfig/rest/v1/projects.locations.osPolicyAssignments
+paths:
+  get:
+    description: The function used to get information about a OSPolicyAssignment
+    parameters:
+    - name: OSPolicyAssignment
+      required: true
+      description: A full instance of a OSPolicyAssignment
+  apply:
+    description: The function used to apply information about a OSPolicyAssignment
+    parameters:
+    - name: OSPolicyAssignment
+      required: true
+      description: A full instance of a OSPolicyAssignment
+  delete:
+    description: The function used to delete a OSPolicyAssignment
+    parameters:
+    - name: OSPolicyAssignment
+      required: true
+      description: A full instance of a OSPolicyAssignment
+  deleteAll:
+    description: The function used to delete all OSPolicyAssignment
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many OSPolicyAssignment
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Exec:
+      x-dcl-has-iam: false
+      type: object
+      x-dcl-go-name: Validate
+      x-dcl-go-type: OSPolicyAssignmentExec
+      description: Required. What to run to validate this resource is in the desired
+        state. An exit code of 100 indicates "in desired state", and exit code of
+        101 indicates "not in desired state". Any other exit code indicates a failure
+        running validate.
+      required:
+      - interpreter
+      properties:
+        args:
+          type: array
+          x-dcl-go-name: Args
+          description: Optional arguments to pass to the source during execution.
+          x-dcl-send-empty: true
+          x-dcl-list-type: list
+          items:
+            type: string
+            x-dcl-go-type: string
+        file:
+          $ref: '#/components/schemas/File'
+          x-dcl-go-name: File
+        interpreter:
+          type: string
+          x-dcl-go-name: Interpreter
+          x-dcl-go-type: OSPolicyAssignmentExecInterpreterEnum
+          description: 'Required. The script interpreter to use. Possible values:
+            INTERPRETER_UNSPECIFIED, NONE, SHELL, POWERSHELL'
+          enum:
+          - INTERPRETER_UNSPECIFIED
+          - NONE
+          - SHELL
+          - POWERSHELL
+        outputFilePath:
+          type: string
+          x-dcl-go-name: OutputFilePath
+          description: Only recorded for enforce Exec. Path to an output file (that
+            is created by this Exec) whose content will be recorded in OSPolicyResourceCompliance
+            after a successful run. Absence or failure to read this file will result
+            in this ExecResource being non-compliant. Output file size is limited
+            to 100K bytes.
+        script:
+          type: string
+          x-dcl-go-name: Script
+          description: An inline script. The size of the script is limited to 1024
+            characters.
+    File:
+      x-dcl-has-iam: false
+      type: object
+      x-dcl-go-name: Source
+      x-dcl-go-type: OSPolicyAssignmentFile
+      description: Required. A deb package.
+      properties:
+        allowInsecure:
+          type: boolean
+          x-dcl-go-name: AllowInsecure
+          description: 'Defaults to false. When false, files are subject to validations
+            based on the file type: Remote: A checksum must be specified. Cloud Storage:
+            An object generation number must be specified.'
+        gcs:
+          type: object
+          x-dcl-go-name: Gcs
+          x-dcl-go-type: OSPolicyAssignmentFileGcs
+          description: A Cloud Storage object.
+          required:
+          - bucket
+          - object
+          properties:
+            bucket:
+              type: string
+              x-dcl-go-name: Bucket
+              description: Required. Bucket of the Cloud Storage object.
+            generation:
+              type: integer
+              format: int64
+              x-dcl-go-name: Generation
+              description: Generation number of the Cloud Storage object.
+            object:
+              type: string
+              x-dcl-go-name: Object
+              description: Required. Name of the Cloud Storage object.
+        localPath:
+          type: string
+          x-dcl-go-name: LocalPath
+          description: A local path within the VM to use.
+        remote:
+          type: object
+          x-dcl-go-name: Remote
+          x-dcl-go-type: OSPolicyAssignmentFileRemote
+          description: A generic remote file.
+          required:
+          - uri
+          properties:
+            sha256Checksum:
+              type: string
+              x-dcl-go-name: Sha256Checksum
+              description: SHA256 checksum of the remote file.
+            uri:
+              type: string
+              x-dcl-go-name: Uri
+              description: Required. URI from which to fetch the object. It should
+                contain both the protocol and path following the format `{protocol}://{location}`.
+    OSPolicyAssignment:
+      title: OSPolicyAssignment
+      x-dcl-id: projects/{{project}}/locations/{{location}}/osPolicyAssignments/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-has-iam: false
+      type: object
+      required:
+      - name
+      - osPolicies
+      - instanceFilter
+      - rollout
+      - project
+      - location
+      properties:
+        baseline:
+          type: boolean
+          x-dcl-go-name: Baseline
+          readOnly: true
+          description: Output only. Indicates that this revision has been successfully
+            rolled out in this zone and new VMs will be assigned OS policies from
+            this revision. For a given OS policy assignment, there is only one revision
+            with a value of `true` for this field.
+          x-kubernetes-immutable: true
+        deleted:
+          type: boolean
+          x-dcl-go-name: Deleted
+          readOnly: true
+          description: Output only. Indicates that this revision deletes the OS policy
+            assignment.
+          x-kubernetes-immutable: true
+        description:
+          type: string
+          x-dcl-go-name: Description
+          description: OS policy assignment description. Length of the description
+            is limited to 1024 characters.
+        etag:
+          type: string
+          x-dcl-go-name: Etag
+          readOnly: true
+          description: The etag for this OS policy assignment. If this is provided
+            on update, it must match the server's etag.
+          x-kubernetes-immutable: true
+        instanceFilter:
+          type: object
+          x-dcl-go-name: InstanceFilter
+          x-dcl-go-type: OSPolicyAssignmentInstanceFilter
+          description: Required. Filter to select VMs.
+          properties:
+            all:
+              type: boolean
+              x-dcl-go-name: All
+              description: Target all VMs in the project. If true, no other criteria
+                is permitted.
+              x-dcl-send-empty: true
+            exclusionLabels:
+              type: array
+              x-dcl-go-name: ExclusionLabels
+              description: List of label sets used for VM exclusion. If the list has
+                more than one label set, the VM is excluded if any of the label sets
+                are applicable for the VM.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: object
+                x-dcl-go-type: OSPolicyAssignmentInstanceFilterExclusionLabels
+                properties:
+                  labels:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    x-dcl-go-name: Labels
+                    description: Labels are identified by key/value pairs in this
+                      map. A VM should contain all the key/value pairs specified in
+                      this map to be selected.
+            inclusionLabels:
+              type: array
+              x-dcl-go-name: InclusionLabels
+              description: List of label sets used for VM inclusion. If the list has
+                more than one `LabelSet`, the VM is included if any of the label sets
+                are applicable for the VM.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: object
+                x-dcl-go-type: OSPolicyAssignmentInstanceFilterInclusionLabels
+                properties:
+                  labels:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    x-dcl-go-name: Labels
+                    description: Labels are identified by key/value pairs in this
+                      map. A VM should contain all the key/value pairs specified in
+                      this map to be selected.
+            inventories:
+              type: array
+              x-dcl-go-name: Inventories
+              description: List of inventories to select VMs. A VM is selected if
+                its inventory data matches at least one of the following inventories.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: object
+                x-dcl-go-type: OSPolicyAssignmentInstanceFilterInventories
+                required:
+                - osShortName
+                properties:
+                  osShortName:
+                    type: string
+                    x-dcl-go-name: OSShortName
+                    description: Required. The OS short name
+                  osVersion:
+                    type: string
+                    x-dcl-go-name: OSVersion
+                    description: The OS version Prefix matches are supported if asterisk(*)
+                      is provided as the last character. For example, to match all
+                      versions with a major version of `7`, specify the following
+                      value for this field `7.*` An empty string matches all OS versions.
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: The location for the resource
+          x-kubernetes-immutable: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: Resource name.
+          x-kubernetes-immutable: true
+        osPolicies:
+          type: array
+          x-dcl-go-name: OSPolicies
+          description: Required. List of OS policies to be applied to the VMs.
+          x-dcl-send-empty: true
+          x-dcl-list-type: list
+          items:
+            type: object
+            x-dcl-go-type: OSPolicyAssignmentOSPolicies
+            required:
+            - id
+            - mode
+            - resourceGroups
+            properties:
+              allowNoResourceGroupMatch:
+                type: boolean
+                x-dcl-go-name: AllowNoResourceGroupMatch
+                description: This flag determines the OS policy compliance status
+                  when none of the resource groups within the policy are applicable
+                  for a VM. Set this value to `true` if the policy needs to be reported
+                  as compliant even if the policy has nothing to validate or enforce.
+              description:
+                type: string
+                x-dcl-go-name: Description
+                description: Policy description. Length of the description is limited
+                  to 1024 characters.
+              id:
+                type: string
+                x-dcl-go-name: Id
+                description: 'Required. The id of the OS policy with the following
+                  restrictions: * Must contain only lowercase letters, numbers, and
+                  hyphens. * Must start with a letter. * Must be between 1-63 characters.
+                  * Must end with a number or a letter. * Must be unique within the
+                  assignment.'
+              mode:
+                type: string
+                x-dcl-go-name: Mode
+                x-dcl-go-type: OSPolicyAssignmentOSPoliciesModeEnum
+                description: 'Required. Policy mode Possible values: MODE_UNSPECIFIED,
+                  VALIDATION, ENFORCEMENT'
+                enum:
+                - MODE_UNSPECIFIED
+                - VALIDATION
+                - ENFORCEMENT
+              resourceGroups:
+                type: array
+                x-dcl-go-name: ResourceGroups
+                description: Required. List of resource groups for the policy. For
+                  a particular VM, resource groups are evaluated in the order specified
+                  and the first resource group that is applicable is selected and
+                  the rest are ignored. If none of the resource groups are applicable
+                  for a VM, the VM is considered to be non-compliant w.r.t this policy.
+                  This behavior can be toggled by the flag `allow_no_resource_group_match`
+                x-dcl-send-empty: true
+                x-dcl-list-type: list
+                items:
+                  type: object
+                  x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroups
+                  required:
+                  - resources
+                  properties:
+                    inventoryFilters:
+                      type: array
+                      x-dcl-go-name: InventoryFilters
+                      description: 'List of inventory filters for the resource group.
+                        The resources in this resource group are applied to the target
+                        VM if it satisfies at least one of the following inventory
+                        filters. For example, to apply this resource group to VMs
+                        running either `RHEL` or `CentOS` operating systems, specify
+                        2 items for the list with following values: inventory_filters[0].os_short_name=''rhel''
+                        and inventory_filters[1].os_short_name=''centos'' If the list
+                        is empty, this resource group will be applied to the target
+                        VM unconditionally.'
+                      x-dcl-send-empty: true
+                      x-dcl-list-type: list
+                      items:
+                        type: object
+                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters
+                        required:
+                        - osShortName
+                        properties:
+                          osShortName:
+                            type: string
+                            x-dcl-go-name: OSShortName
+                            description: Required. The OS short name
+                          osVersion:
+                            type: string
+                            x-dcl-go-name: OSVersion
+                            description: The OS version Prefix matches are supported
+                              if asterisk(*) is provided as the last character. For
+                              example, to match all versions with a major version
+                              of `7`, specify the following value for this field `7.*`
+                              An empty string matches all OS versions.
+                    resources:
+                      type: array
+                      x-dcl-go-name: Resources
+                      description: Required. List of resources configured for this
+                        resource group. The resources are executed in the exact order
+                        specified here.
+                      x-dcl-send-empty: true
+                      x-dcl-list-type: list
+                      items:
+                        type: object
+                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResources
+                        required:
+                        - id
+                        properties:
+                          exec:
+                            type: object
+                            x-dcl-go-name: Exec
+                            x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec
+                            description: Exec resource
+                            required:
+                            - validate
+                            properties:
+                              enforce:
+                                $ref: '#/components/schemas/Exec'
+                                x-dcl-go-name: Enforce
+                              validate:
+                                $ref: '#/components/schemas/Exec'
+                                x-dcl-go-name: Validate
+                          file:
+                            type: object
+                            x-dcl-go-name: File
+                            x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile
+                            description: File resource
+                            required:
+                            - path
+                            - state
+                            properties:
+                              content:
+                                type: string
+                                x-dcl-go-name: Content
+                                description: A a file with this content. The size
+                                  of the content is limited to 1024 characters.
+                              file:
+                                $ref: '#/components/schemas/File'
+                                x-dcl-go-name: File
+                              path:
+                                type: string
+                                x-dcl-go-name: Path
+                                description: Required. The absolute path of the file
+                                  within the VM.
+                              permissions:
+                                type: string
+                                x-dcl-go-name: Permissions
+                                readOnly: true
+                                description: 'Consists of three octal digits which
+                                  represent, in order, the permissions of the owner,
+                                  group, and other users for the file (similarly to
+                                  the numeric mode used in the linux chmod utility).
+                                  Each digit represents a three bit number with the
+                                  4 bit corresponding to the read permissions, the
+                                  2 bit corresponds to the write bit, and the one
+                                  bit corresponds to the execute permission. Default
+                                  behavior is 755. Below are some examples of permissions
+                                  and their associated values: read, write, and execute:
+                                  7 read and execute: 5 read and write: 6 read only:
+                                  4'
+                              state:
+                                type: string
+                                x-dcl-go-name: State
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum
+                                description: 'Required. Desired state of the file.
+                                  Possible values: OS_POLICY_COMPLIANCE_STATE_UNSPECIFIED,
+                                  COMPLIANT, NON_COMPLIANT, UNKNOWN, NO_OS_POLICIES_APPLICABLE'
+                                enum:
+                                - OS_POLICY_COMPLIANCE_STATE_UNSPECIFIED
+                                - COMPLIANT
+                                - NON_COMPLIANT
+                                - UNKNOWN
+                                - NO_OS_POLICIES_APPLICABLE
+                          id:
+                            type: string
+                            x-dcl-go-name: Id
+                            description: 'Required. The id of the resource with the
+                              following restrictions: * Must contain only lowercase
+                              letters, numbers, and hyphens. * Must start with a letter.
+                              * Must be between 1-63 characters. * Must end with a
+                              number or a letter. * Must be unique within the OS policy.'
+                          pkg:
+                            type: object
+                            x-dcl-go-name: Pkg
+                            x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg
+                            description: Package resource
+                            required:
+                            - desiredState
+                            properties:
+                              apt:
+                                type: object
+                                x-dcl-go-name: Apt
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt
+                                description: A package managed by Apt.
+                                required:
+                                - name
+                                properties:
+                                  name:
+                                    type: string
+                                    x-dcl-go-name: Name
+                                    description: Required. Package name.
+                              deb:
+                                type: object
+                                x-dcl-go-name: Deb
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb
+                                description: A deb package file.
+                                required:
+                                - source
+                                properties:
+                                  pullDeps:
+                                    type: boolean
+                                    x-dcl-go-name: PullDeps
+                                    description: 'Whether dependencies should also
+                                      be installed. - install when false: `dpkg -i
+                                      package` - install when true: `apt-get update
+                                      && apt-get -y install package.deb`'
+                                  source:
+                                    $ref: '#/components/schemas/File'
+                                    x-dcl-go-name: Source
+                              desiredState:
+                                type: string
+                                x-dcl-go-name: DesiredState
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum
+                                description: 'Required. The desired state the agent
+                                  should maintain for this package. Possible values:
+                                  DESIRED_STATE_UNSPECIFIED, INSTALLED, REMOVED'
+                                enum:
+                                - DESIRED_STATE_UNSPECIFIED
+                                - INSTALLED
+                                - REMOVED
+                              googet:
+                                type: object
+                                x-dcl-go-name: Googet
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget
+                                description: A package managed by GooGet.
+                                required:
+                                - name
+                                properties:
+                                  name:
+                                    type: string
+                                    x-dcl-go-name: Name
+                                    description: Required. Package name.
+                              msi:
+                                type: object
+                                x-dcl-go-name: Msi
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi
+                                description: An MSI package.
+                                required:
+                                - source
+                                properties:
+                                  properties:
+                                    type: array
+                                    x-dcl-go-name: Properties
+                                    description: Additional properties to use during
+                                      installation. This should be in the format of
+                                      Property=Setting. Appended to the defaults of
+                                      `ACTION=INSTALL REBOOT=ReallySuppress`.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
+                                  source:
+                                    $ref: '#/components/schemas/File'
+                                    x-dcl-go-name: Source
+                              rpm:
+                                type: object
+                                x-dcl-go-name: Rpm
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm
+                                description: An rpm package file.
+                                required:
+                                - source
+                                properties:
+                                  pullDeps:
+                                    type: boolean
+                                    x-dcl-go-name: PullDeps
+                                    description: 'Whether dependencies should also
+                                      be installed. - install when false: `rpm --upgrade
+                                      --replacepkgs package.rpm` - install when true:
+                                      `yum -y install package.rpm` or `zypper -y install
+                                      package.rpm`'
+                                  source:
+                                    $ref: '#/components/schemas/File'
+                                    x-dcl-go-name: Source
+                              yum:
+                                type: object
+                                x-dcl-go-name: Yum
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum
+                                description: A package managed by YUM.
+                                required:
+                                - name
+                                properties:
+                                  name:
+                                    type: string
+                                    x-dcl-go-name: Name
+                                    description: Required. Package name.
+                              zypper:
+                                type: object
+                                x-dcl-go-name: Zypper
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper
+                                description: A package managed by Zypper.
+                                required:
+                                - name
+                                properties:
+                                  name:
+                                    type: string
+                                    x-dcl-go-name: Name
+                                    description: Required. Package name.
+                          repository:
+                            type: object
+                            x-dcl-go-name: Repository
+                            x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository
+                            description: Package repository resource
+                            properties:
+                              apt:
+                                type: object
+                                x-dcl-go-name: Apt
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt
+                                description: An Apt Repository.
+                                required:
+                                - archiveType
+                                - uri
+                                - distribution
+                                - components
+                                properties:
+                                  archiveType:
+                                    type: string
+                                    x-dcl-go-name: ArchiveType
+                                    x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum
+                                    description: 'Required. Type of archive files
+                                      in this repository. Possible values: ARCHIVE_TYPE_UNSPECIFIED,
+                                      DEB, DEB_SRC'
+                                    enum:
+                                    - ARCHIVE_TYPE_UNSPECIFIED
+                                    - DEB
+                                    - DEB_SRC
+                                  components:
+                                    type: array
+                                    x-dcl-go-name: Components
+                                    description: Required. List of components for
+                                      this repository. Must contain at least one item.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
+                                  distribution:
+                                    type: string
+                                    x-dcl-go-name: Distribution
+                                    description: Required. Distribution of this repository.
+                                  gpgKey:
+                                    type: string
+                                    x-dcl-go-name: GpgKey
+                                    description: URI of the key file for this repository.
+                                      The agent maintains a keyring at `/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg`.
+                                  uri:
+                                    type: string
+                                    x-dcl-go-name: Uri
+                                    description: Required. URI for this repository.
+                              goo:
+                                type: object
+                                x-dcl-go-name: Goo
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo
+                                description: A Goo Repository.
+                                required:
+                                - name
+                                - url
+                                properties:
+                                  name:
+                                    type: string
+                                    x-dcl-go-name: Name
+                                    description: Required. The name of the repository.
+                                  url:
+                                    type: string
+                                    x-dcl-go-name: Url
+                                    description: Required. The url of the repository.
+                              yum:
+                                type: object
+                                x-dcl-go-name: Yum
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum
+                                description: A Yum Repository.
+                                required:
+                                - id
+                                - baseUrl
+                                properties:
+                                  baseUrl:
+                                    type: string
+                                    x-dcl-go-name: BaseUrl
+                                    description: Required. The location of the repository
+                                      directory.
+                                  displayName:
+                                    type: string
+                                    x-dcl-go-name: DisplayName
+                                    description: The display name of the repository.
+                                  gpgKeys:
+                                    type: array
+                                    x-dcl-go-name: GpgKeys
+                                    description: URIs of GPG keys.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
+                                  id:
+                                    type: string
+                                    x-dcl-go-name: Id
+                                    description: Required. A one word, unique name
+                                      for this repository. This is the `repo id` in
+                                      the yum config file and also the `display_name`
+                                      if `display_name` is omitted. This id is also
+                                      used as the unique identifier when checking
+                                      for resource conflicts.
+                              zypper:
+                                type: object
+                                x-dcl-go-name: Zypper
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper
+                                description: A Zypper Repository.
+                                required:
+                                - id
+                                - baseUrl
+                                properties:
+                                  baseUrl:
+                                    type: string
+                                    x-dcl-go-name: BaseUrl
+                                    description: Required. The location of the repository
+                                      directory.
+                                  displayName:
+                                    type: string
+                                    x-dcl-go-name: DisplayName
+                                    description: The display name of the repository.
+                                  gpgKeys:
+                                    type: array
+                                    x-dcl-go-name: GpgKeys
+                                    description: URIs of GPG keys.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
+                                  id:
+                                    type: string
+                                    x-dcl-go-name: Id
+                                    description: Required. A one word, unique name
+                                      for this repository. This is the `repo id` in
+                                      the zypper config file and also the `display_name`
+                                      if `display_name` is omitted. This id is also
+                                      used as the unique identifier when checking
+                                      for GuestPolicy conflicts.
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        reconciling:
+          type: boolean
+          x-dcl-go-name: Reconciling
+          readOnly: true
+          description: 'Output only. Indicates that reconciliation is in progress
+            for the revision. This value is `true` when the `rollout_state` is one
+            of: * IN_PROGRESS * CANCELLING'
+          x-kubernetes-immutable: true
+        revisionCreateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: RevisionCreateTime
+          readOnly: true
+          description: Output only. The timestamp that the revision was created.
+          x-kubernetes-immutable: true
+        revisionId:
+          type: string
+          x-dcl-go-name: RevisionId
+          readOnly: true
+          description: Output only. The assignment revision ID A new revision is committed
+            whenever a rollout is triggered for a OS policy assignment
+          x-kubernetes-immutable: true
+        rollout:
+          type: object
+          x-dcl-go-name: Rollout
+          x-dcl-go-type: OSPolicyAssignmentRollout
+          description: 'Required. Rollout to deploy the OS policy assignment. A rollout
+            is triggered in the following situations: 1) OSPolicyAssignment is created.
+            2) OSPolicyAssignment is updated and the update contains changes to one
+            of the following fields: - instance_filter - os_policies 3) OSPolicyAssignment
+            is deleted.'
+          required:
+          - disruptionBudget
+          - minWaitDuration
+          properties:
+            disruptionBudget:
+              type: object
+              x-dcl-go-name: DisruptionBudget
+              x-dcl-go-type: OSPolicyAssignmentRolloutDisruptionBudget
+              description: Required. The maximum number (or percentage) of VMs per
+                zone to disrupt at any given moment.
+              properties:
+                fixed:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: Fixed
+                  description: Specifies a fixed value.
+                percent:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: Percent
+                  description: Specifies the relative value defined as a percentage,
+                    which will be multiplied by a reference value.
+            minWaitDuration:
+              type: string
+              x-dcl-go-name: MinWaitDuration
+              description: Required. This determines the minimum duration of time
+                to wait after the configuration changes are applied through the current
+                rollout. A VM continues to count towards the `disruption_budget` at
+                least until this duration of time has passed after configuration changes
+                are applied.
+        rolloutState:
+          type: string
+          x-dcl-go-name: RolloutState
+          x-dcl-go-type: OSPolicyAssignmentRolloutStateEnum
+          readOnly: true
+          description: 'Output only. OS policy assignment rollout state Possible values:
+            ROLLOUT_STATE_UNSPECIFIED, IN_PROGRESS, CANCELLING, CANCELLED, SUCCEEDED'
+          x-kubernetes-immutable: true
+          enum:
+          - ROLLOUT_STATE_UNSPECIFIED
+          - IN_PROGRESS
+          - CANCELLING
+          - CANCELLED
+          - SUCCEEDED
+        uid:
+          type: string
+          x-dcl-go-name: Uid
+          readOnly: true
+          description: Output only. Server generated unique id for the OS policy assignment
+            resource.
+          x-kubernetes-immutable: true
