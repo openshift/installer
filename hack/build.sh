@@ -22,7 +22,8 @@ copy_terraform_to_mirror() {
       cp "$1" "$dstDir/terraform-provider-${providerName}_1.0.0_${targetOSArch}.zip"
     ' shell {} "${TARGET_OS_ARCH}" \;
 
-  cp -r "${PWD}/terraform/terraform/${TARGET_OS_ARCH}/" "${PWD}/pkg/terraform/providers/mirror/terraform/"
+  mkdir -p "${PWD}/pkg/terraform/providers/mirror/terraform/"
+  cp "${PWD}/terraform/bin/terraform" "${PWD}/pkg/terraform/providers/mirror/terraform/"
 }
 
 minimum_go_version=1.17
