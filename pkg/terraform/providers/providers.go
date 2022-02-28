@@ -14,37 +14,37 @@ import (
 
 var (
 	// AliCloud is the provider for creating resources in the alibaba cloud.
-	AliCloud = remoteProvider("hashicorp/alicloud")
+	AliCloud = provider("alicloud")
 	// AWS is the provider for creating resources in AWS.
-	AWS = remoteProvider("hashicorp/aws")
+	AWS = provider("aws")
 	// AzurePrivateDNS is an internal provider for creating private DNS zones in Azure.
-	AzurePrivateDNS = localProvider("azureprivatedns")
+	AzurePrivateDNS = provider("azureprivatedns")
 	// AzureRM is the provider for creating resources in the Azure clouds.
-	AzureRM = remoteProvider("hashicorp/azurerm")
+	AzureRM = provider("azurerm")
 	// AzureStack is the provider for creating resources in Azure Stack.
-	AzureStack = localProvider("azurestack")
+	AzureStack = provider("azurestack")
 	// Google is the provider for creating resources in GCP.
-	Google = remoteProvider("hashicorp/google")
+	Google = provider("google")
 	// IBM is the provider for creating resources in IBM Cloud.
-	IBM = localProvider("ibm")
+	IBM = provider("ibm")
 	// Ignition is the provider for creating ignition config files.
-	Ignition = localProvider("ignition")
+	Ignition = provider("ignition")
 	// Ironic is the provider for provisioning baremetal machines managed by Ironic.
-	Ironic = localProvider("ironic")
+	Ironic = provider("ironic")
 	// Libvirt is the provider for provisioning VMs on a libvirt host.
-	Libvirt = remoteProvider("dmacvicar/libvirt")
+	Libvirt = provider("libvirt")
 	// Local is the provider for creating local files.
-	Local = remoteProvider("hashicorp/local")
+	Local = provider("local")
 	// OpenStack is the provider for creating resources in OpenStack.
-	OpenStack = remoteProvider("terraform-provider-openstack/openstack")
+	OpenStack = provider("openstack")
 	// OVirt is the provider for creating resources in oVirt.
-	OVirt = localProvider("ovirt")
+	OVirt = provider("ovirt")
 	// Random is the provider for generating randomness.
-	Random = remoteProvider("hashicorp/random")
+	Random = provider("random")
 	// VSphere is the provider for creating resource in vSphere.
-	VSphere = localProvider("vsphere")
+	VSphere = provider("vsphere")
 	// VSpherePrivate is an internal provider augmenting the VSphere provider by adding functionality.
-	VSpherePrivate = localProvider("vsphereprivate")
+	VSpherePrivate = provider("vsphereprivate")
 )
 
 // Provider is a terraform provider.
@@ -55,25 +55,8 @@ type Provider struct {
 	Source string
 }
 
-// remoteProvider configures a provider downloaded from a remote registry.
-func remoteProvider(source string) Provider {
-	sourceParts := strings.Split(source, "/")
-	switch len(sourceParts) {
-	case 1:
-		source = "hashicorp/" + source
-		fallthrough
-	case 2:
-		source = "registry.terraform.io/" + source
-	}
-	name := sourceParts[len(sourceParts)-1]
-	return Provider{
-		Name:   name,
-		Source: source,
-	}
-}
-
-// localProvider configures a provider built locally.
-func localProvider(name string) Provider {
+// provider configures a provider built locally.
+func provider(name string) Provider {
 	return Provider{
 		Name:   name,
 		Source: fmt.Sprintf("openshift/local/%s", name),

@@ -20,11 +20,4 @@ do
   curl "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_${os_arch}.zip" -o "${terraform_dir}/terraform.zip" &&
     unzip "${terraform_dir}/terraform.zip" -d "./terraform/terraform/${os_arch}/"
   rm -rf "${terraform_dir}"
-
-  # Download providers specified in terraform/versions.tf.
-  podman run --rm \
-    --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
-    --workdir /go/src/github.com/openshift/installer \
-    docker.io/hashicorp/terraform:${TERRAFORM_VERSION} \
-    -chdir=terraform providers mirror -platform="${os_arch}" ./mirror
 done

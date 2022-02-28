@@ -22,17 +22,6 @@ copy_terraform_to_mirror() {
       cp "$1" "$dstDir"
     ' shell {} "${TARGET_OS_ARCH}" \;
 
-  # Copy remote terraform providers into data
-  find "${PWD}/terraform/mirror/" -maxdepth 4 -mindepth 4 -name "terraform-provider-*_${TARGET_OS_ARCH}.zip" -exec bash -c '
-      srcDir="$(dirname "$1")"
-      relativeDir="${srcDir#${PWD}/terraform/mirror/}"
-      dstDir="${PWD}/pkg/terraform/providers/mirror/$relativeDir"
-      mkdir -p "$dstDir"
-      echo "Copying $relativeDir provider to mirror"
-      cp "$srcDir"/*.json "$dstDir"
-      cp "$1" "$dstDir"
-    ' shell {} \;
-
   cp -r "${PWD}/terraform/terraform/${TARGET_OS_ARCH}/" "${PWD}/pkg/terraform/providers/mirror/terraform/"
 }
 
