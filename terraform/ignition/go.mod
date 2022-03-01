@@ -2,10 +2,7 @@ module github.com/openshift/installer/terraform/ignition
 
 go 1.17
 
-require (
-	github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.2
-	github.com/hashicorp/terraform-plugin-sdk v1.12.0
-)
+require github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.2
 
 require (
 	cloud.google.com/go v0.57.0 // indirect
@@ -39,10 +36,12 @@ require (
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.5.0 // indirect
+	github.com/hashicorp/terraform-plugin-sdk v1.12.0 // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20191119180714-d2e4933b9136 // indirect
 	github.com/hashicorp/yamux v0.0.0-20190923154419-df201c70410d // indirect
 	github.com/jmespath/go-jmespath v0.3.0 // indirect
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
+	github.com/kisielk/errcheck v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mitchellh/cli v1.1.1 // indirect
@@ -50,6 +49,8 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
+	github.com/mitchellh/gox v1.0.1 // indirect
+	github.com/mitchellh/iochan v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.3.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/oklog/run v1.1.0 // indirect

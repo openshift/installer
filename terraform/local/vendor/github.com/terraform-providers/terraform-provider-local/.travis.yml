@@ -1,0 +1,31 @@
+dist: trusty
+sudo: required
+services:
+- docker
+language: go
+go:
+  - stable
+  - tip
+
+env:
+  - GO111MODULE=on GOFLAGS=-mod=vendor
+
+install:
+# This script is used by the Travis build to install a cookie for
+# go.googlesource.com so rate limits are higher when using `go get` to fetch
+# packages that live there.
+# See: https://github.com/golang/go/issues/12933
+- bash scripts/gogetcookie.sh
+
+script:
+- make test
+- make vet
+- make testacc
+
+branches:
+  only:
+  - master
+matrix:
+  fast_finish: true
+  allow_failures:
+  - go: tip

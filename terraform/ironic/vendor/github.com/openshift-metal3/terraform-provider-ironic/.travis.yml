@@ -1,0 +1,29 @@
+dist:     xenial
+sudo:     false
+language: go
+env:
+  - TF_LOG=debug TF_ACC=true TAGS="acceptance"
+go:
+  - 1.13.x
+git:
+  depth: 1
+  go_import_path: github.com/openshift-metal3/terraform-provider-ironic
+install:        true
+services:
+  - docker
+before_install:
+  - sudo apt-get install -y genisoimage
+before_script:
+  - docker run -d --net host --privileged --name mariadb --entrypoint /bin/runmariadb quay.io/metal3-io/ironic:master
+  - docker run -d --net host --name ironic-api --entrypoint /bin/runironic-api -e "PROVISIONING_IP=127.0.0.1" quay.io/metal3-io/ironic:master
+  - docker run -d --net host --name ironic-conductor --entrypoint /bin/runironic-conductor -e "PROVISIONING_IP=127.0.0.1" quay.io/metal3-io/ironic:master
+  - docker run -d --net host --privileged -e "PROVISIONING_IP=127.0.0.1" --net host quay.io/metal3-io/ironic-inspector:master
+  - docker run --net host -e TARGETS=127.0.0.1:3306,127.0.0.1:6385,127.0.0.1:5050 -e TIMEOUT=60 waisbrot/wait
+script:
+  - make fmt
+  - make lint
+  - make test
+after_failure:
+  - docker logs mariadb
+  - docker exec ironic-api cat /shared/log/ironic/ironic-api.log
+  - docker exec ironic-conductor cat /shared/log/ironic/ironic-conductor.log

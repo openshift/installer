@@ -2,10 +2,7 @@ module github.com/openshift/installer/terraform/azurestack
 
 go 1.17
 
-require (
-	github.com/hashicorp/terraform-plugin-sdk v1.16.0
-	github.com/terraform-providers/terraform-provider-azurestack v0.10.0
-)
+require github.com/terraform-providers/terraform-provider-azurestack v0.10.0
 
 require (
 	cloud.google.com/go v0.61.0 // indirect
@@ -58,6 +55,7 @@ require (
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20191115094559-17f92b0546e8 // indirect
 	github.com/hashicorp/terraform-exec v0.10.0 // indirect
 	github.com/hashicorp/terraform-json v0.5.0 // indirect
+	github.com/hashicorp/terraform-plugin-sdk v1.16.0 // indirect
 	github.com/hashicorp/terraform-plugin-test/v2 v2.1.2 // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20191011084731-65d371908596 // indirect
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect

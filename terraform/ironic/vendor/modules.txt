@@ -228,6 +228,7 @@ github.com/mitchellh/reflectwalk
 github.com/oklog/run
 # github.com/openshift-metal3/terraform-provider-ironic v0.2.7
 ## explicit; go 1.13
+github.com/openshift-metal3/terraform-provider-ironic
 github.com/openshift-metal3/terraform-provider-ironic/ironic
 # github.com/posener/complete v1.2.1
 ## explicit

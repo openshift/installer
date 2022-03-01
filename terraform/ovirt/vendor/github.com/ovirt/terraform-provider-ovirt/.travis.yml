@@ -1,0 +1,29 @@
+dist: trusty
+sudo: required
+services:
+- docker
+language: go
+go_import_path: github.com/ovirt/terraform-provider-ovirt
+go:
+- "1.14.x"
+
+install:
+# This script is used by the Travis build to install a cookie for
+# go.googlesource.com so rate limits are higher when using `go get` to fetch
+# packages that live there.
+# See: https://github.com/golang/go/issues/12933
+- bash scripts/gogetcookie.sh
+
+script:
+- make test
+- make vet
+
+branches:
+  only:
+  - master
+matrix:
+  fast_finish: true
+  allow_failures:
+  - go: tip
+env:
+  - GOFLAGS=-mod=vendor GO111MODULE=on

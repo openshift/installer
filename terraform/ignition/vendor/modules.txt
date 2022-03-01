@@ -77,6 +77,7 @@ github.com/bgentry/go-netrc/netrc
 github.com/bgentry/speakeasy
 # github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.2
 ## explicit; go 1.13
+github.com/community-terraform-providers/terraform-provider-ignition/v2
 github.com/community-terraform-providers/terraform-provider-ignition/v2/ignition
 # github.com/coreos/go-json v0.0.0-20200220154158-5ae607161559
 ## explicit
@@ -222,6 +223,10 @@ github.com/jmespath/go-jmespath
 github.com/jstemmer/go-junit-report
 github.com/jstemmer/go-junit-report/formatter
 github.com/jstemmer/go-junit-report/parser
+# github.com/kisielk/errcheck v1.2.0
+## explicit
+github.com/kisielk/errcheck
+github.com/kisielk/errcheck/internal/errcheck
 # github.com/mattn/go-colorable v0.1.6
 ## explicit; go 1.13
 github.com/mattn/go-colorable
@@ -243,6 +248,12 @@ github.com/mitchellh/go-testing-interface
 # github.com/mitchellh/go-wordwrap v1.0.0
 ## explicit
 github.com/mitchellh/go-wordwrap
+# github.com/mitchellh/gox v1.0.1
+## explicit
+github.com/mitchellh/gox
+# github.com/mitchellh/iochan v1.0.0
+## explicit
+github.com/mitchellh/iochan
 # github.com/mitchellh/mapstructure v1.3.0
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
