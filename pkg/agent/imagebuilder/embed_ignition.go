@@ -14,7 +14,8 @@ const (
 // BuildImage builds an ISO with ignition content from a base image, and writes
 // the result to disk.
 func BuildImage(baseImage string) error {
-	ignition, err := ConfigBuilder{}.Ignition()
+	configBuilder := New()
+	ignition, err := configBuilder.Ignition()
 	if err != nil {
 		return err
 	}
