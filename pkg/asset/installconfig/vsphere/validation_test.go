@@ -1,17 +1,14 @@
 package vsphere
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	"github.com/vmware/govmomi/object"
-
 	"github.com/openshift/installer/pkg/asset/installconfig/vsphere/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -28,10 +25,10 @@ func validIPIInstallConfig() *types.InstallConfig {
 		Publish: types.ExternalPublishingStrategy,
 		Platform: types.Platform{
 			VSphere: &vsphere.Platform{
-				Cluster:          "valid_cluster",
-				Datacenter:       "valid_dc",
-				DefaultDatastore: "valid_ds",
-				Network:          "valid_network",
+				Cluster:          "DC0_C0",
+				Datacenter:       "DC0",
+				DefaultDatastore: "LocalDS_0",
+				Network:          "DC0_DVPG0",
 				Password:         "valid_password",
 				Username:         "valid_username",
 				VCenter:          "valid-vcenter",
@@ -43,6 +40,9 @@ func validIPIInstallConfig() *types.InstallConfig {
 }
 
 func TestValidate(t *testing.T) {
+	server := mock.StartSimulator()
+	defer server.Close()
+
 	tests := []struct {
 		name             string
 		installConfig    *types.InstallConfig
@@ -91,16 +91,17 @@ func TestValidate(t *testing.T) {
 	}}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
+	finder, _ := mock.GetFinder(server)
 
-	vsphereClient := mock.NewMockFinder(mockCtrl)
+	/*vsphereClient := mock.NewMockFinder(mockCtrl)
 	vsphereClient.EXPECT().Datacenter(gomock.Any(), "./valid_dc").Return(&object.Datacenter{Common: object.Common{InventoryPath: "valid_dc"}}, nil).AnyTimes()
 	vsphereClient.EXPECT().Datacenter(gomock.Any(), gomock.Not("./valid_dc")).Return(nil, fmt.Errorf("404")).AnyTimes()
 
 	vsphereClient.EXPECT().Network(gomock.Any(), "valid_dc/network/valid_network").Return(nil, nil).AnyTimes()
-	vsphereClient.EXPECT().Network(gomock.Any(), gomock.Not("valid_dc/network/valid_network")).Return(nil, fmt.Errorf("404")).AnyTimes()
+	vsphereClient.EXPECT().Network(gomock.Any(), gomock.Not("valid_dc/network/valid_network")).Return(nil, fmt.Errorf("404")).AnyTimes()*/
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.validationMethod(vsphereClient, test.installConfig)
+			err := test.validationMethod(finder, test.installConfig)
 			if test.expectErr == "" {
 				assert.NoError(t, err)
 			} else {
