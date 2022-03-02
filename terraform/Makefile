@@ -1,4 +1,4 @@
-TFSUBDIRS:=	alicloud aws azureprivatedns azurerm azurestack google ibm ignition ironic libvirt local openstack ovirt random vsphere vsphereprivate
+TFSUBDIRS:=	$(foreach DIR,$(shell find providers -maxdepth 1 -mindepth 1 -type d),$(subst providers/,,$(DIR)))
 
 GO_MOD_TIDY_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-mod-tidy-vendor.$(DIR),$(DIR)))
 GO_BUILD_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-build.$(DIR),$(DIR)))
@@ -13,17 +13,17 @@ all: go-build
 .PHONY: go-mod-tidy-vendor
 go-mod-tidy-vendor: $(GO_MOD_TIDY_TARGETS)
 $(GO_MOD_TIDY_TARGETS): go-mod-tidy-vendor.%:
-	cd $* && go mod tidy && go mod vendor
+	cd providers/$* && go mod tidy && go mod vendor
 
 .PHONY: go-build
 go-build: $(GO_BUILD_TARGETS) go-build-terraform
 $(GO_BUILD_TARGETS): go-build.%: bin/terraform-provider-%.zip
 
-$(TERRAFORM_PROVIDER_TARGETS): bin/terraform-provider-%.zip: %/go.mod
-	cd $*; \
+$(TERRAFORM_PROVIDER_TARGETS): bin/terraform-provider-%.zip: providers/%/go.mod
+	cd providers/$*; \
 	if [ -f main.go ]; then path="."; else path=./vendor/`grep _ tools.go|awk '{ print $$2 }'|sed 's|"||g'`; fi; \
-	go build -ldflags $(LDFLAGS) -o ../bin/terraform-provider-$* "$$path"; \
-	zip -9j ../bin/terraform-provider-$*.zip ../bin/terraform-provider-$*;
+	go build -ldflags $(LDFLAGS) -o ../../bin/terraform-provider-$* "$$path"; \
+	zip -9j ../../bin/terraform-provider-$*.zip ../../bin/terraform-provider-$*;
 
 .PHONY: go-build-terraform
 go-build-terraform: bin/terraform
