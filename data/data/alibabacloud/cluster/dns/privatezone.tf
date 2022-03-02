@@ -12,6 +12,8 @@ data "alicloud_pvtz_service" "open" {
 }
 
 resource "alicloud_alidns_record" "dns_public_record" {
+  count = local.is_external ? 1 : 0
+
   domain_name = var.base_domain
   rr          = "api.${local.cluster_name}"
   type        = "A"
