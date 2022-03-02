@@ -109,7 +109,7 @@ resource "azurestack_virtual_machine" "bootstrap" {
   location              = var.azure_region
   resource_group_name   = var.resource_group_name
   network_interface_ids = [azurestack_network_interface.bootstrap.id]
-  vm_size               = var.azure_bootstrap_vm_type
+  vm_size               = var.azure_master_vm_type
   availability_set_id   = var.availability_set_id
 
   os_profile {

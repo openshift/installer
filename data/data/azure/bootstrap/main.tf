@@ -193,7 +193,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   location              = var.azure_region
   resource_group_name   = var.resource_group_name
   network_interface_ids = [azurerm_network_interface.bootstrap.id]
-  size                  = var.azure_bootstrap_vm_type
+  size                  = var.azure_master_vm_type
   admin_username        = "core"
   # The password is normally applied by WALA (the Azure agent), but this
   # isn't installed in RHCOS. As a result, this password is never set. It is
@@ -209,7 +209,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   os_disk {
     name                 = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
     caching              = "ReadWrite"
-    storage_account_type = "Premium_LRS"
+    storage_account_type = var.azure_master_root_volume_type
     disk_size_gb         = 100
   }
 
