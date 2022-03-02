@@ -352,11 +352,18 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			)
 			mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Azure)
+
+			session, err := installConfig.Azure.Session()
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch session")
+			}
+
+			// Default to current subscription if one was not specified
+			if mpool.OSDisk.DiskEncryptionSet != nil && mpool.OSDisk.DiskEncryptionSet.SubscriptionID == "" {
+				mpool.OSDisk.DiskEncryptionSet.SubscriptionID = session.Credentials.SubscriptionID
+			}
+
 			if len(mpool.Zones) == 0 {
-				session, err := installConfig.Azure.Session()
-				if err != nil {
-					return errors.Wrap(err, "failed to fetch session for availability zones")
-				}
 				azs, err := azure.AvailabilityZones(session, ic.Platform.Azure.Region, mpool.InstanceType)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")

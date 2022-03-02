@@ -26,6 +26,8 @@ type config struct {
 	ExtraTags                       map[string]string `json:"azure_extra_tags,omitempty"`
 	MasterInstanceType              string            `json:"azure_master_vm_type,omitempty"`
 	MasterAvailabilityZones         []string          `json:"azure_master_availability_zones"`
+	MasterEncryptionAtHostEnabled   bool              `json:"azure_master_encryption_at_host_enabled"`
+	MasterDiskEncryptionSetID       string            `json:"azure_master_disk_encryption_set_id,omitempty"`
 	VolumeType                      string            `json:"azure_master_root_volume_type"`
 	VolumeSize                      int32             `json:"azure_master_root_volume_size"`
 	ImageURL                        string            `json:"azure_image_url,omitempty"`
@@ -77,6 +79,15 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, errors.Wrap(err, "could not determine Azure environment to use for Terraform")
 	}
 
+	masterEncryptionAtHostEnabled := masterConfig.SecurityProfile != nil &&
+		(*masterConfig.SecurityProfile).EncryptionAtHost != nil &&
+		*masterConfig.SecurityProfile.EncryptionAtHost
+
+	var masterDiskEncryptionSetID string
+	if masterConfig.OSDisk.ManagedDisk.DiskEncryptionSet != nil {
+		masterDiskEncryptionSetID = masterConfig.OSDisk.ManagedDisk.DiskEncryptionSet.ID
+	}
+
 	cfg := &config{
 		Auth:                            sources.Auth,
 		Environment:                     environment,
@@ -84,6 +95,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Region:                          region,
 		MasterInstanceType:              masterConfig.VMSize,
 		MasterAvailabilityZones:         masterAvailabilityZones,
+		MasterEncryptionAtHostEnabled:   masterEncryptionAtHostEnabled,
+		MasterDiskEncryptionSetID:       masterDiskEncryptionSetID,
 		VolumeType:                      masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                      masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                        sources.ImageURL,

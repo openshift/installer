@@ -23,6 +23,17 @@ variable "azure_master_vm_type" {
   description = "Instance type for the master node(s). Example: `Standard_D8s_v3`."
 }
 
+variable "azure_master_disk_encryption_set_id" {
+  type = string
+  default = null
+  description = "The ID of the Disk Encryption Set which should be used to encrypt OS disk for the master node(s)."
+}
+
+variable "azure_master_encryption_at_host_enabled" {
+  type = bool
+  description = "Enables encryption at the VM host for the master node(s)."
+}
+
 variable "azure_extra_tags" {
   type = map(string)
 

@@ -101,6 +101,7 @@ resource "azurerm_linux_virtual_machine" "master" {
   # included here because it is required by the Azure ARM API.
   admin_password                  = "NotActuallyApplied!"
   disable_password_authentication = false
+  encryption_at_host_enabled      = var.encryption_at_host_enabled
 
   identity {
     type         = "UserAssigned"
@@ -108,15 +109,16 @@ resource "azurerm_linux_virtual_machine" "master" {
   }
 
   os_disk {
-    name                 = "${var.cluster_id}-master-${count.index}_OSDisk" # os disk name needs to match cluster-api convention
-    caching              = "ReadOnly"
-    storage_account_type = var.os_volume_type
-    disk_size_gb         = var.os_volume_size
+    name                   = "${var.cluster_id}-master-${count.index}_OSDisk" # os disk name needs to match cluster-api convention
+    caching                = "ReadOnly"
+    storage_account_type   = var.os_volume_type
+    disk_size_gb           = var.os_volume_size
+    disk_encryption_set_id = var.disk_encryption_set_id
   }
 
   source_image_id = var.vm_image
 
-  //we don't provide a ssh key, because it is set with ignition. 
+  //we don't provide a ssh key, because it is set with ignition.
   //it is required to provide at least 1 auth method to deploy a linux vm
   computer_name = "${var.cluster_id}-master-${count.index}"
   custom_data   = base64encode(var.ignition)
@@ -125,4 +127,3 @@ resource "azurerm_linux_virtual_machine" "master" {
     storage_account_uri = data.azurerm_storage_account.storage_account.primary_blob_endpoint
   }
 }
-
