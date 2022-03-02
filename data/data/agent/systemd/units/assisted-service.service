@@ -1,7 +1,8 @@
 [Unit]
 Description=OpenShift Assisted Installation Service
-Wants=network-online.target
-After=network-online.target
+Wants=network-online.target node-zero.service
+After=network-online.target node-zero.service
+ConditionPathExists=/etc/assisted-service/node0
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
