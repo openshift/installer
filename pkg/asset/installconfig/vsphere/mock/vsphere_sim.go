@@ -4,6 +4,8 @@ import (
 	context2 "context"
 	"crypto/tls"
 	"encoding/pem"
+	"errors"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/simulator"
@@ -41,10 +43,13 @@ func GetClient(server *simulator.Server) (*vim25.Client, *session.Manager, error
 
 	context := context2.TODO()
 	soapClient := soap.NewClient(server.URL, false)
-	soapClient.SetRootCAs("/tmp/vcsimca/cacert.pem")
+	spew.Dump(tempFile.Name())
+	soapClient.SetRootCAs(tempFile.Name())
 	vimClient, err := vim25.NewClient(context, soapClient)
 	sessionMgr := session.NewManager(vimClient)
-	// Only login if the URL contains user information.
+	if sessionMgr == nil {
+		return nil, nil, errors.New("unable to retrieve session manager")
+	}
 	if server.URL.User != nil {
 		err = sessionMgr.Login(context2.TODO(), server.URL.User)
 		if err != nil {

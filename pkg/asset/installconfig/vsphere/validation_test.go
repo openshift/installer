@@ -91,8 +91,11 @@ func TestValidate(t *testing.T) {
 	}}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	finder, _ := mock.GetFinder(server)
-
+	finder, err := mock.GetFinder(server)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	/*vsphereClient := mock.NewMockFinder(mockCtrl)
 	vsphereClient.EXPECT().Datacenter(gomock.Any(), "./valid_dc").Return(&object.Datacenter{Common: object.Common{InventoryPath: "valid_dc"}}, nil).AnyTimes()
 	vsphereClient.EXPECT().Datacenter(gomock.Any(), gomock.Not("./valid_dc")).Return(nil, fmt.Errorf("404")).AnyTimes()
@@ -101,6 +104,7 @@ func TestValidate(t *testing.T) {
 	vsphereClient.EXPECT().Network(gomock.Any(), gomock.Not("valid_dc/network/valid_network")).Return(nil, fmt.Errorf("404")).AnyTimes()*/
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+
 			err := test.validationMethod(finder, test.installConfig)
 			if test.expectErr == "" {
 				assert.NoError(t, err)
