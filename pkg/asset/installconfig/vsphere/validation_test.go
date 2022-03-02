@@ -69,7 +69,7 @@ func TestValidate(t *testing.T) {
 			return c
 		}(),
 		validationMethod: validateProvisioning,
-		expectErr:        `^platform.vsphere.network: Invalid value: "invalid_dc": 404$`,
+		expectErr:        `^platform.vsphere.network: Invalid value: "invalid_dc": datacenter './invalid_dc' not found`,
 	}, {
 		name: "invalid IPI - invalid network",
 		installConfig: func() *types.InstallConfig {
