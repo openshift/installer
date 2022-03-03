@@ -62,9 +62,23 @@ github.com/Azure/go-autorest/tracing
 github.com/BurntSushi/toml
 # github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
 ## explicit; go 1.13
+github.com/IBM-Cloud/bluemix-go
+github.com/IBM-Cloud/bluemix-go/api/resource/resourcev2/controllerv2
+github.com/IBM-Cloud/bluemix-go/authentication
+github.com/IBM-Cloud/bluemix-go/bmxerror
+github.com/IBM-Cloud/bluemix-go/client
 github.com/IBM-Cloud/bluemix-go/crn
+github.com/IBM-Cloud/bluemix-go/endpoints
+github.com/IBM-Cloud/bluemix-go/helpers
+github.com/IBM-Cloud/bluemix-go/http
+github.com/IBM-Cloud/bluemix-go/models
+github.com/IBM-Cloud/bluemix-go/rest
+github.com/IBM-Cloud/bluemix-go/session
+github.com/IBM-Cloud/bluemix-go/trace
 # github.com/IBM-Cloud/power-go-client v1.1.4
 ## explicit; go 1.17
+github.com/IBM-Cloud/power-go-client/clients/instance
+github.com/IBM-Cloud/power-go-client/errors
 github.com/IBM-Cloud/power-go-client/helpers
 github.com/IBM-Cloud/power-go-client/ibmpisession
 github.com/IBM-Cloud/power-go-client/power/client
@@ -353,6 +367,9 @@ github.com/gobuffalo/flect
 ## explicit; go 1.15
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
+# github.com/golang-jwt/jwt v3.2.2+incompatible
+## explicit
+github.com/golang-jwt/jwt
 # github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
 ## explicit
 github.com/golang/groupcache/lru
@@ -766,6 +783,7 @@ golang.org/x/net/internal/socks
 golang.org/x/net/internal/timeseries
 golang.org/x/net/proxy
 golang.org/x/net/trace
+golang.org/x/net/websocket
 # golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 ## explicit; go 1.11
 golang.org/x/oauth2
