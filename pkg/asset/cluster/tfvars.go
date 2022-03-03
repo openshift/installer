@@ -687,7 +687,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case powervs.Name:
-		client, err := installConfig.PowerVS.Client()
+		APIKey, err := installConfig.PowerVS.APIKey(ctx)
 		if err != nil {
 			return err
 		}
@@ -713,7 +713,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				MasterConfigs:        masterConfigs,
 				Region:               installConfig.Config.Platform.PowerVS.Region,
 				Zone:                 installConfig.Config.Platform.PowerVS.Zone,
-				APIKey:               client.APIKey,
+				APIKey:               APIKey,
 				SSHKey:               installConfig.Config.SSHKey,
 				PowerVSResourceGroup: installConfig.Config.PowerVS.PowerVSResourceGroup,
 				ImageBucketFileName:  string(*rhcosImage),

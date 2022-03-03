@@ -213,6 +213,11 @@ func (c *BxClient) NewPISession() error {
 	return nil
 }
 
+// GetBxClientAPIKey returns the API key used by the Blue Mix Client.
+func (c *BxClient) GetBxClientAPIKey() string {
+	return c.APIKey
+}
+
 func getPISessionVarsFromAuthFile(pisv *PISessionVars) error {
 
 	if pisv == nil {
