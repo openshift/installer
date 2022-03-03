@@ -41,7 +41,7 @@ func NewGzipCompressionReader(uncompressedReader io.Reader) (io.Reader, error) {
 		// to the pipe only when the pipe reader is called to retrieve more bytes.
 		_, err := io.Copy(compressedWriter, uncompressedReader)
 		if err != nil {
-			panic(err)
+			_ = pipeWriter.CloseWithError(err)
 		}
 	}()
 	return pipeReader, nil

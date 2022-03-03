@@ -348,6 +348,13 @@ func (requestBuilder *RequestBuilder) Build() (req *http.Request, err error) {
 	// Headers
 	req.Header = requestBuilder.Header
 
+	// If "Host" was specified as a header, we need to explicitly copy it
+	// to the request's Host field since the "Host" header will be ignored by Request.Write().
+	host := req.Header.Get("Host")
+	if host != "" {
+		req.Host = host
+	}
+
 	// Query
 	query := req.URL.Query()
 	for k, l := range requestBuilder.Query {
