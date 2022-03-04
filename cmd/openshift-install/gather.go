@@ -145,7 +145,7 @@ func gatherBootstrap(bootstrap string, port int, masters []string, directory str
 	logrus.Info("Pulling debug logs from the bootstrap machine")
 	client, err := ssh.NewClient("core", net.JoinHostPort(bootstrap, strconv.Itoa(port)), gatherBootstrapOpts.sshKeys)
 	if err != nil {
-		if errors.Is(err, syscall.ECONNREFUSED) {
+		if errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ETIMEDOUT) {
 			return "", errors.Wrap(err, "failed to connect to the bootstrap machine")
 		}
 		return "", errors.Wrap(err, "failed to create SSH client")
