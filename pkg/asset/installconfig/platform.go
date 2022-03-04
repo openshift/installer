@@ -58,66 +58,33 @@ func (a *platform) Generate(asset.Parents) error {
 	switch platform {
 	case alibabacloud.Name:
 		a.AlibabaCloud, err = alibabacloudconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case aws.Name:
 		a.AWS, err = awsconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case azure.Name:
 		a.Azure, err = azureconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case baremetal.Name:
 		a.BareMetal, err = baremetalconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case gcp.Name:
 		a.GCP, err = gcpconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case ibmcloud.Name:
 		a.IBMCloud, err = ibmcloudconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case libvirt.Name:
 		a.Libvirt, err = libvirtconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case none.Name:
 		a.None = &none.Platform{}
 	case openstack.Name:
 		a.OpenStack, err = openstackconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case ovirt.Name:
 		a.Ovirt, err = ovirtconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case vsphere.Name:
 		a.VSphere, err = vsphereconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case powervs.Name:
 		a.PowerVS, err = powervsconfig.Platform()
-		if err != nil {
-			return err
-		}
 	default:
 		return fmt.Errorf("unknown platform type %q", platform)
 	}
 
-	return nil
+	return err
 }
 
 // Name returns the human-friendly name of the asset.

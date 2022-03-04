@@ -51,37 +51,18 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	switch platform {
 	case alibabacloud.Name:
 		_, err = ic.AlibabaCloud.Client()
-		if err != nil {
-			return errors.Wrap(err, "creating AlibabaCloud Cloud session")
-		}
-
 	case aws.Name:
-		_, err := ic.AWS.Session(ctx)
-		if err != nil {
-			return err
-		}
+		_, err = ic.AWS.Session(ctx)
 	case gcp.Name:
 		_, err = gcpconfig.GetSession(ctx)
-		if err != nil {
-			return errors.Wrap(err, "creating GCP session")
-		}
 	case ibmcloud.Name:
 		_, err = ibmcloudconfig.NewClient()
-		if err != nil {
-			return errors.Wrap(err, "creating IBM Cloud session")
-		}
 	case openstack.Name:
 		_, err = openstackconfig.GetSession(ic.Config.Platform.OpenStack.Cloud)
-		if err != nil {
-			return errors.Wrap(err, "creating OpenStack session")
-		}
 	case baremetal.Name, libvirt.Name, none.Name, vsphere.Name:
 		// no creds to check
 	case azure.Name:
 		_, err = ic.Azure.Session()
-		if err != nil {
-			return errors.Wrap(err, "creating Azure session")
-		}
 	case ovirt.Name:
 		con, err := ovirtconfig.NewConnection()
 		if err != nil {
@@ -99,7 +80,10 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
 	}
-
+	errMsg := fmt.Sprintf("creating %q session", platform)
+	if err != nil {
+		err = errors.Wrap(err, errMsg)
+	}
 	return err
 }
 

@@ -72,53 +72,32 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		return azconfig.ValidateForProvisioning(client, ic.Config)
 	case baremetal.Name:
 		err = bmconfig.ValidateProvisioning(ic.Config)
-		if err != nil {
-			return err
-		}
 	case gcp.Name:
-		client, err := gcpconfig.NewClient(context.TODO())
-		if err != nil {
-			return err
+		client, err2 := gcpconfig.NewClient(context.TODO())
+		if err2 != nil {
+			return err2
 		}
 		err = gcpconfig.ValidatePreExitingPublicDNS(client, ic.Config)
-		if err != nil {
-			return err
-		}
 	case ibmcloud.Name:
-		client, err := ibmcloudconfig.NewClient()
-		if err != nil {
-			return err
+		client, err2 := ibmcloudconfig.NewClient()
+		if err2 != nil {
+			return err2
 		}
 		err = ibmcloudconfig.ValidatePreExitingPublicDNS(client, ic.Config, ic.IBMCloud)
-		if err != nil {
-			return err
-		}
 	case openstack.Name:
 		err = osconfig.ValidateForProvisioning(ic.Config)
-		if err != nil {
-			return err
-		}
 	case vsphere.Name:
 		err = vsconfig.ValidateForProvisioning(ic.Config)
-		if err != nil {
-			return err
-		}
 	case ovirt.Name:
 		err = ovirtconfig.ValidateForProvisioning(ic.Config)
-		if err != nil {
-			return err
-		}
 	case alibabacloud.Name:
-		client, err := ic.AlibabaCloud.Client()
-		if err != nil {
-			return err
+		client, err2 := ic.AlibabaCloud.Client()
+		if err2 != nil {
+			return err2
 		}
 		err = alibabacloudconfig.ValidateForProvisioning(client, ic.Config, ic.AlibabaCloud)
 	case powervs.Name:
 		err = powervsconfig.ValidateForProvisioning()
-		if err != nil {
-			return err
-		}
 	case libvirt.Name, none.Name:
 		// no special provisioning requirements to check
 	default:
