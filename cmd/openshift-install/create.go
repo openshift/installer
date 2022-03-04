@@ -45,6 +45,13 @@ type target struct {
 	assets  []asset.WritableAsset
 }
 
+const (
+	exitCodeInstallConfigError = iota + 3
+	exitCodeInfrastructureFailed
+	exitCodeBootstrapFailed
+	exitCodeInstallFailed
+)
+
 // each target is a variable to preserve the order when creating subcommands and still
 // allow other functions to directly access each target individually.
 var (
@@ -128,7 +135,7 @@ var (
 						}
 						logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
 					}
-					logrus.Fatal("Bootstrap failed to complete")
+					logrus.Exit(exitCodeBootstrapFailed)
 				}
 				timer.StopTimer("Bootstrap Complete")
 				timer.StartTimer("Bootstrap Destroy")
@@ -151,7 +158,8 @@ var (
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
 					logTroubleshootingLink()
-					logrus.Fatal(err)
+					logrus.Error(err)
+					logrus.Exit(exitCodeInstallFailed)
 				}
 				timer.StopTimer(timer.TotalTimeElapsed)
 				timer.LogSummary()
@@ -267,6 +275,14 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 
 		err := runner(rootOpts.dir)
 		if err != nil {
+			if strings.Contains(err.Error(), asset.InstallConfigError) {
+				logrus.Error(err)
+				logrus.Exit(exitCodeInstallConfigError)
+			}
+			if strings.Contains(err.Error(), asset.ClusterCreationError) {
+				logrus.Error(err)
+				logrus.Exit(exitCodeInfrastructureFailed)
+			}
 			logrus.Fatal(err)
 		}
 		if cmd.Name() != "cluster" {

@@ -11,6 +11,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	// ClusterCreationError is the error when terraform fails, implying infrastructure failures
+	ClusterCreationError = "failed to create cluster"
+	// InstallConfigError wraps all configuration errors in one single error
+	InstallConfigError = "failed to create install config"
+)
+
 // Asset used to install OpenShift.
 type Asset interface {
 	// Dependencies returns the assets upon which this asset directly depends.
