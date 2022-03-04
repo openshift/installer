@@ -5,12 +5,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-
 	"github.com/Azure/azure-sdk-for-go/services/cdn/mgmt/2020-09-01/cdn"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/cdn/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/cdn/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
@@ -168,8 +168,8 @@ func resourceCdnEndpoint() *pluginsdk.Resource {
 							ValidateFunc: validation.StringInSlice([]string{
 								string(cdn.ActionTypeAllow),
 								string(cdn.ActionTypeBlock),
-							}, true),
-							DiffSuppressFunc: suppress.CaseDifference,
+							}, !features.ThreePointOh()),
+							DiffSuppressFunc: suppress.CaseDifferenceV2Only,
 						},
 						"country_codes": {
 							Type:     pluginsdk.TypeList,
@@ -191,8 +191,8 @@ func resourceCdnEndpoint() *pluginsdk.Resource {
 					string(cdn.OptimizationTypeGeneralWebDelivery),
 					string(cdn.OptimizationTypeLargeFileDownload),
 					string(cdn.OptimizationTypeVideoOnDemandMediaStreaming),
-				}, true),
-				DiffSuppressFunc: suppress.CaseDifference,
+				}, !features.ThreePointOh()),
+				DiffSuppressFunc: suppress.CaseDifferenceV2Only,
 			},
 
 			"host_name": {
