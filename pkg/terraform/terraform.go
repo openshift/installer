@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
@@ -30,6 +31,11 @@ func newTFExec(datadir string) (*tfexec.Terraform, error) {
 	tf.SetStdout(lpDebug)
 	tf.SetStderr(lpError)
 	tf.SetLogger(newPrintfer())
+
+	// Opt in to the beta of v3.0 of the azurerm terraform provider.
+	// Note that it would have been nice to use tf.SetEnv. Unfortunately, that prevents the environment variables from
+	// the OS from being used.
+	os.Setenv("ARM_THREEPOINTZERO_BETA", "true")
 
 	return tf, nil
 }
