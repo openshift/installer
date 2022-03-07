@@ -30,6 +30,7 @@ module "master" {
   subnet_id              = var.master_subnet_id
   instance_count         = var.master_count
   storage_account        = var.storage_account
+  os_volume_type         = var.azure_master_root_volume_type
   os_volume_size         = var.azure_master_root_volume_size
   private                = var.azure_private
   availability_set_id    = var.availability_set_id
