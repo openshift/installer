@@ -107,16 +107,15 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	case aws.Name:
 		config.Spec.PlatformSpec.Type = configv1.AWSPlatformType
 
-		var resourceTags []configv1.AWSResourceTag
-		if installConfig.Config.AWS.ExperimentalPropagateUserTag {
-			resourceTags = make([]configv1.AWSResourceTag, 0, len(installConfig.Config.AWS.UserTags))
-			for k, v := range installConfig.Config.AWS.UserTags {
-				resourceTags = append(resourceTags, configv1.AWSResourceTag{Key: k, Value: v})
-			}
+		resourceTags := make([]configv1.AWSResourceTag, 0, len(installConfig.Config.AWS.UserTags))
+		for k, v := range installConfig.Config.AWS.UserTags {
+			resourceTags = append(resourceTags, configv1.AWSResourceTag{Key: k, Value: v})
 		}
 		config.Status.PlatformStatus.AWS = &configv1.AWSPlatformStatus{
 			Region:       installConfig.Config.Platform.AWS.Region,
-			ResourceTags: resourceTags,
+		}
+		if installConfig.Config.AWS.ExperimentalPropagateUserTag {
+			config.Status.PlatformStatus.AWS.ResourceTags = resourceTags
 		}
 		config.Spec.PlatformSpec.AWS = &configv1.AWSPlatformSpec{
 			ResourceTags: resourceTags,
