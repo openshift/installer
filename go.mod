@@ -37,8 +37,8 @@ require (
 	github.com/metal3-io/baremetal-operator v0.0.0-20220128094204-28771f489634
 	github.com/metal3-io/baremetal-operator/apis v0.0.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0
-	github.com/openshift/api v0.0.0-20220222102030-354aa98a475c
-	github.com/openshift/client-go v0.0.0-20211025111749-96ca2abfc56c
+	github.com/openshift/api v0.0.0-20220302114424-24043075985b
+	github.com/openshift/client-go v0.0.0-20220302123837-25b55b99bd24
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20210924143856-c2d3ece4da38
 	github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20211008100740-4d7907adbd6b

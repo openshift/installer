@@ -28,6 +28,8 @@ type IngressExpansion interface{}
 
 type NetworkExpansion interface{}
 
+type NodeExpansion interface{}
+
 type OAuthExpansion interface{}
 
 type OperatorHubExpansion interface{}

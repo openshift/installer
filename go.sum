@@ -1036,8 +1036,8 @@ github.com/openshift/api v0.0.0-20210730095913-85e1d547cdee/go.mod h1:ntkQrC1Z6A
 github.com/openshift/api v0.0.0-20210816181336-8ff39b776da3/go.mod h1:x81TFA31x1OMT9SYWukQqJ/KbmeveRN6fo+XeGRK8g0=
 github.com/openshift/api v0.0.0-20211025104849-a11323ccb6ea/go.mod h1:RsQCVJu4qhUawxxDP7pGlwU3IA4F01wYm3qKEu29Su8=
 github.com/openshift/api v0.0.0-20211108165917-be1be0e89115/go.mod h1:RsQCVJu4qhUawxxDP7pGlwU3IA4F01wYm3qKEu29Su8=
-github.com/openshift/api v0.0.0-20220222102030-354aa98a475c h1:teP/Es0/vieKbpRde+xwoM0F1cWO5ZFLS4ihJ2WG7BQ=
-github.com/openshift/api v0.0.0-20220222102030-354aa98a475c/go.mod h1:F/eU6jgr6Q2VhMu1mSpMmygxAELd7+BUxs3NHZ25jV4=
+github.com/openshift/api v0.0.0-20220302114424-24043075985b h1:890sit8m/r2c98Ku1+lRHNzYa8x6Sv1VrLw01xBh1co=
+github.com/openshift/api v0.0.0-20220302114424-24043075985b/go.mod h1:F/eU6jgr6Q2VhMu1mSpMmygxAELd7+BUxs3NHZ25jV4=
 github.com/openshift/baremetal-operator v0.0.0-20211201170610-92ffa60c683d h1:4KkYItiWENIs2bV6lKOcIMdWUnZJA+GWT9Us7z0P1UA=
 github.com/openshift/baremetal-operator v0.0.0-20211201170610-92ffa60c683d/go.mod h1:p32F1DBUxfgd0JjM4rCuhJomFJokEoWR1Z/LZNL2LM8=
 github.com/openshift/baremetal-operator/apis v0.0.0-20211201170610-92ffa60c683d h1:DHGXCvXWsPExutf3tgQYD4TVDSAOviLXO7Vnc42oXhw=
@@ -1057,8 +1057,9 @@ github.com/openshift/client-go v0.0.0-20201214125552-e615e336eb49/go.mod h1:9/jG
 github.com/openshift/client-go v0.0.0-20210331195552-cf6c2669e01f/go.mod h1:hHaRJ6vp2MRd/CpuZ1oJkqnMGy5eEnoAkQmKPZKcUPI=
 github.com/openshift/client-go v0.0.0-20210409155308-a8e62c60e930/go.mod h1:uBPbAyIbjMuhPQy4NgF8q1alNGX2qA8bXIkAycsSDc0=
 github.com/openshift/client-go v0.0.0-20210730113412-1811c1b3fc0e/go.mod h1:P1pjphFOgm/nYjmtouHGaSLGtdP25dQICJnYtcYhfEs=
-github.com/openshift/client-go v0.0.0-20211025111749-96ca2abfc56c h1:2yUcA5LUiKqEnRnqW8MYaB3/7tEAFqCjLtVcbDFlIjg=
 github.com/openshift/client-go v0.0.0-20211025111749-96ca2abfc56c/go.mod h1:xigLF97kzy1PZuDsC0Lfu6GlzChRt62+2Ts/nG3sPHY=
+github.com/openshift/client-go v0.0.0-20220302123837-25b55b99bd24 h1:EvNHCp29kVyvrdUIriIrk57Ss/aqGEzugRISEDTUnTc=
+github.com/openshift/client-go v0.0.0-20220302123837-25b55b99bd24/go.mod h1:77ko09OuApMeawCvY3lBJrbClGhnAtRjltEnMNwN0d4=
 github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e h1:2gyl9UVyjHSWzdS56KUXxQwIhENbq2x2olqoMQSA/C8=
 github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e/go.mod h1:iPn+uhIe7nkP5BMHe2QnbLtg5m/AIQ1xvz9s3cig5ss=
 github.com/openshift/cluster-api v0.0.0-20190805113604-f8de78af80fc h1:6Nf3TaiooyEZNk+3ZHonNOujT+HacuSj9cxyeGTc/zg=
