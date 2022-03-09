@@ -7,8 +7,8 @@ ConditionPathExists=/etc/assisted-service/node0
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
 ExecStart=/usr/local/bin/start-assisted-service.sh
-ExecStop=/bin/podman pod stop --ignore assisted-installer -t 10
-ExecStopPost=/bin/podman pod rm --ignore assisted-installer
+ExecStop=/bin/podman pod stop --ignore assisted-service -t 10
+ExecStopPost=/bin/podman pod rm --ignore assisted-service
 
 Restart=on-failure
 KillMode=none
