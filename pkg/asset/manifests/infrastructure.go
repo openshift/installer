@@ -186,6 +186,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			Location:          installConfig.Config.Platform.IBMCloud.Region,
 			ResourceGroupName: installConfig.Config.Platform.IBMCloud.ClusterResourceGroupName(clusterID.InfraID),
 			CISInstanceCRN:    cisInstanceCRN,
+			ProviderType:      configv1.IBMCloudProviderTypeVPC,
 		}
 	case libvirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.LibvirtPlatformType
