@@ -19,6 +19,7 @@ var (
 		"jp-osa":   "Japan (Osaka)",
 		"au-syd":   "Australia (Sydney)",
 		"ca-tor":   "Canada (Toronto)",
+		"br-sao":   "Brazil (Sao Paulo)",
 	}
 
 	regionShortNames = func() []string {
