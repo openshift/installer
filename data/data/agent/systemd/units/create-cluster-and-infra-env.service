@@ -1,0 +1,14 @@
+[Unit]
+Description=Service that creates initial cluster and infra-env
+Wants=network-online.target assisted-service.service
+After=network-online.target assisted-service.service
+ConditionPathExists=/etc/assisted-service/node0
+
+[Service]
+ExecStart=/usr/local/bin/create-cluster-and-infra-env.sh
+
+KillMode=none
+Type=forking
+
+[Install]
+WantedBy=multi-user.target
