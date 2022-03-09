@@ -12,10 +12,9 @@ Environment=no_proxy=
 # TODO: If AUTH_TYPE != none, then PULL_SECRET_TOKEN needs to be updated
 # https://github.com/openshift/assisted-service/blob/master/internal/ignition/ignition.go#L1381
 Environment=PULL_SECRET_TOKEN={{.PullSecretToken}}
-TimeoutStartSec=180
+TimeoutStartSec=3000
 ExecStartPre=podman run --privileged --rm -v /usr/local/bin:/hostbin quay.io/edge-infrastructure/assisted-installer-agent:latest cp /usr/bin/agent /hostbin
-ExecStart=/usr/local/bin/agent --url {{.ServiceBaseURL}} --infra-env-id {{.infraEnvId}} --agent-version quay.io/edge-infrastructure/assisted-installer-agent:latest --insecure=true
-
+ExecStart=/usr/local/bin/start-agent.sh
 [Unit]
 Wants=network-online.target
 After=network-online.target
