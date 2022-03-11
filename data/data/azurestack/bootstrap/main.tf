@@ -99,7 +99,7 @@ resource "azurestack_network_interface" "bootstrap" {
     public_ip_address_id          = var.azure_private ? null : azurestack_public_ip.bootstrap_public_ip_v4[0].id
     load_balancer_backend_address_pools_ids = concat(
       [var.ilb_backend_pool_v4_id],
-      ! var.azure_private ? [var.elb_backend_pool_v4_id] : null
+      ! var.azure_private ? [var.elb_backend_pool_v4_id] : []
     )
   }
 }

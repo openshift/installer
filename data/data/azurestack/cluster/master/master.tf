@@ -18,7 +18,7 @@ resource "azurestack_network_interface" "master" {
     private_ip_address_allocation = "Dynamic"
     load_balancer_backend_address_pools_ids = concat(
       [var.ilb_backend_pool_v4_id],
-      ! var.private ? [var.elb_backend_pool_v4_id] : null
+      ! var.private ? [var.elb_backend_pool_v4_id] : []
     )
   }
 }
