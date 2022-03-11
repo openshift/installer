@@ -119,6 +119,8 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		}
 	}
 
+	ultraSSDCapability := machineapi.AzureUltraSSDCapabilityState(mpool.UltraSSDCapability)
+
 	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -140,6 +142,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 			},
 		},
 		SecurityProfile:      securityProfile,
+		UltraSSDCapability:   ultraSSDCapability,
 		Zone:                 az,
 		Subnet:               subnet,
 		ManagedIdentity:      managedIdentity,

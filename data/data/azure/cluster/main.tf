@@ -51,6 +51,7 @@ module "master" {
   os_volume_size             = var.azure_master_root_volume_size
   private                    = var.azure_private
   outbound_udr               = var.azure_outbound_user_defined_routing
+  ultra_ssd_enabled          = var.azure_control_plane_ultra_ssd_enabled
 
   use_ipv4 = var.use_ipv4
   use_ipv6 = var.use_ipv6

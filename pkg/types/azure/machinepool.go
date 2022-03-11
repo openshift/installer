@@ -24,6 +24,12 @@ type MachinePool struct {
 	//
 	// +optional
 	OSDisk `json:"osDisk"`
+
+	// ultraSSDCapability defines if the instance should use Ultra SSD disks.
+	// The valid values are Enabled, Disabled.
+	//
+	// +optional
+	UltraSSDCapability string `json:"ultraSSDCapability,omitempty"`
 }
 
 // Set sets the values from `required` to `a`.
@@ -54,5 +60,9 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.DiskEncryptionSet != nil {
 		a.DiskEncryptionSet = required.DiskEncryptionSet
+	}
+
+	if required.UltraSSDCapability != "" {
+		a.UltraSSDCapability = required.UltraSSDCapability
 	}
 }
