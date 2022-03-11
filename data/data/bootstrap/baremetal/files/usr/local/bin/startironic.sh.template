@@ -26,8 +26,10 @@ for name in ironic ironic-inspector ironic-ramdisk-logs dnsmasq httpd coreos-dow
 done
 
 # Start the provisioning nic if not already started
-PROVISIONING_NIC={{.PlatformData.BareMetal.ProvisioningInterface}}
 
+#Retrieve the provisioning interface name based on mac address (case insensitive).
+PROVISIONING_NIC=$(ip -j -o link | jq -r '.[] | select(.address != null)| select(.address | match ("{{.PlatformData.BareMetal.ProvisioningInterfaceMAC}}";"i")).ifname')
+echo "Provisioining interface: "$PROVISIONING_NIC
 {{ if .PlatformData.BareMetal.ProvisioningIP }}
 
 if ! nmcli -t device | grep "$PROVISIONING_NIC:ethernet:connected"; then

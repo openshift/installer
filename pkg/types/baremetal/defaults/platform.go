@@ -2,8 +2,10 @@ package defaults
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
 	"sort"
+	"time"
 
 	"github.com/openshift/installer/pkg/ipnet"
 
@@ -22,6 +24,8 @@ const (
 	APIVIP                  = ""
 	IngressVIP              = ""
 	BootMode                = baremetal.UEFI
+	ExternalMACAddress      = ""
+	ProvisioningMACAddress  = ""
 )
 
 // Wrapper for net.LookupHost so we can override in the test
@@ -29,10 +33,46 @@ var lookupHost = func(host string) (addrs []string, err error) {
 	return net.LookupHost(host)
 }
 
+// GenerateMAC a randomized MAC address with the libvirt prefix
+func GenerateMAC() (string, error) {
+	buf := make([]byte, 3)
+	rand.Seed(time.Now().UnixNano())
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+
+	// set local bit and unicast
+	buf[0] = (buf[0] | 2) & 0xfe
+
+	// avoid libvirt-reserved addresses
+	if buf[0] == 0xfe {
+		buf[0] = 0xee
+	}
+
+	return fmt.Sprintf("52:54:00:%02x:%02x:%02x", buf[0], buf[1], buf[2]), nil
+}
+
 // SetPlatformDefaults sets the defaults for the platform.
 func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 	if p.LibvirtURI == "" {
 		p.LibvirtURI = LibvirtURI
+	}
+
+	if p.ExternalMACAddress == "" {
+		mac, err := GenerateMAC()
+		if err != nil {
+			p.ExternalMACAddress = fmt.Sprintf("Failed to Generate an External MAC: %s", err.Error())
+		} else {
+			p.ExternalMACAddress = mac
+		}
+	}
+	if p.ProvisioningMACAddress == "" {
+		mac, err := GenerateMAC()
+		if err != nil {
+			p.ProvisioningMACAddress = fmt.Sprintf("Failed to Generate an Provisioning MAC: %s", err.Error())
+		} else {
+			p.ProvisioningMACAddress = mac
+		}
 	}
 
 	if p.ProvisioningNetwork == "" {
