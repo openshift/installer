@@ -138,7 +138,7 @@ var map_Placement = map[string]string{
 	"availabilityZone": "AvailabilityZone is the availability zone of the instance",
 	"tenancy":          "Tenancy indicates if instance should run on shared or single-tenant hardware. There are supported 3 options: default, dedicated and host.",
 	"group":            "Group specifies a reference to an AWSPlacementGroup resource to create the Machine within. If the group specified does not exist, the Machine will not be created and will enter the failed phase.",
-	"number":           "PartitionNumber specifies the numbered partition in which instances should be launched. It is recommended to only use this value if multiple MachineSets share a single Placement Group, in which case, each MachineSet should represent an individual partition number. If unset, when a Partition placement group is used, AWS will attempt to distribute instances evenly between partitions. If PartitionNumber is set when used with a non Partition type Placement Group, this will be considered an error.",
+	"partitionNumber":  "PartitionNumber specifies the numbered partition in which instances should be launched. It is recommended to only use this value if multiple MachineSets share a single Placement Group, in which case, each MachineSet should represent an individual partition number. If unset, when a Partition placement group is used, AWS will attempt to distribute instances evenly between partitions. If PartitionNumber is set when used with a non Partition type Placement Group, this will be considered an error.",
 }
 
 func (Placement) SwaggerDoc() map[string]string {
@@ -186,6 +186,7 @@ var map_AzureMachineProviderSpec = map[string]string{
 	"vmSize":                    "VMSize is the size of the VM to create.",
 	"image":                     "Image is the OS image to use to create the instance.",
 	"osDisk":                    "OSDisk represents the parameters for creating the OS disk.",
+	"dataDisks":                 "DataDisk specifies the parameters that are used to add one or more data disks to the machine.",
 	"sshPublicKey":              "SSHPublicKey is the public key to use to SSH to the virtual machine.",
 	"publicIP":                  "PublicIP if true a public IP will be used",
 	"tags":                      "Tags is a list of tags to apply to the machine.",
@@ -202,6 +203,7 @@ var map_AzureMachineProviderSpec = map[string]string{
 	"resourceGroup":             "ResourceGroup is the resource group for the virtual machine",
 	"spotVMOptions":             "SpotVMOptions allows the ability to specify the Machine should use a Spot VM",
 	"securityProfile":           "SecurityProfile specifies the Security profile settings for a virtual machine.",
+	"ultraSSDCapability":        "UltraSSDCapability enables or disables Azure UltraSSD capability for a virtual machine. This can be used to allow/disallow binding of Azure UltraSSD to the Machine both as Data Disks or via Persistent Volumes. This Azure feature is subject to a specific scope and certain limitations. More informations on this can be found in the official Azure documentation for Ultra Disks: (https://docs.microsoft.com/en-us/azure/virtual-machines/disks-enable-ultra-ssd?tabs=azure-portal#ga-scope-and-limitations).\n\nWhen omitted, if at least one Data Disk of type UltraSSD is specified, the platform will automatically enable the capability. If a Perisistent Volume backed by an UltraSSD is bound to a Pod on the Machine, when this field is ommitted, the platform will *not* automatically enable the capability (unless already enabled by the presence of an UltraSSD as Data Disk). This may manifest in the Pod being stuck in `ContainerCreating` phase. This defaulting behaviour may be subject to change in future.\n\nWhen set to \"Enabled\", if the capability is available for the Machine based on the scope and limitations described above, the capability will be set on the Machine. This will thus allow UltraSSD both as Data Disks and Persistent Volumes. If set to \"Enabled\" when the capability can't be available due to scope and limitations, the Machine will go into \"Failed\" state.\n\nWhen set to \"Disabled\", UltraSSDs will not be allowed either as Data Disks nor as Persistent Volumes. In this case if any UltraSSDs are specified as Data Disks on a Machine, the Machine will go into a \"Failed\" state. If instead any UltraSSDs are backing the volumes (via Persistent Volumes) of any Pods scheduled on a Node which is backed by the Machine, the Pod may get stuck in `ContainerCreating` phase.",
 	"acceleratedNetworking":     "AcceleratedNetworking enables or disables Azure accelerated networking feature. Set to false by default. If true, then this will depend on whether the requested VMSize is supported. If set to true with an unsupported VMSize, Azure will return an error.",
 	"availabilitySet":           "AvailabilitySet specifies the availability set to use for this instance. Availability set should be precreated, before using this field.",
 }
@@ -221,9 +223,32 @@ func (AzureMachineProviderStatus) SwaggerDoc() map[string]string {
 	return map_AzureMachineProviderStatus
 }
 
+var map_DataDisk = map[string]string{
+	"":            "DataDisk specifies the parameters that are used to add one or more data disks to the machine. A Data Disk is a managed disk that's attached to a virtual machine to store application data. It differs from an OS Disk as it doesn't come with a pre-installed OS, and it cannot contain the boot volume. It is registered as SCSI drive and labeled with the chosen `lun`. e.g. for `lun: 0` the raw disk device will be available at `/dev/disk/azure/scsi1/lun0`.\n\nAs the Data Disk disk device is attached raw to the virtual machine, it will need to be partitioned, formatted with a filesystem and mounted, in order for it to be usable. This can be done by creating a custom userdata Secret with custom Ignition configuration to achieve the desired initialization. At this stage the previously defined `lun` is to be used as the \"device\" key for referencing the raw disk device to be initialized. Once the custom userdata Secret has been created, it can be referenced in the Machine's `.providerSpec.userDataSecret`. For further guidance and examples, please refer to the official OpenShift docs.",
+	"nameSuffix":  "NameSuffix is the suffix to be appended to the machine name to generate the disk name. Each disk name will be in format <machineName>_<nameSuffix>. NameSuffix name must start and finish with an alphanumeric character and can only contain letters, numbers, underscores, periods or hyphens. The overall disk name must not exceed 80 chars in length.",
+	"diskSizeGB":  "DiskSizeGB is the size in GB to assign to the data disk.",
+	"managedDisk": "ManagedDisk specifies the Managed Disk parameters for the data disk. Empty value means no opinion and the platform chooses a default, which is subject to change over time. Currently the default is a ManagedDisk with with storageAccountType: \"Premium_LRS\" and diskEncryptionSet.id: \"Default\".",
+	"lun":         "Lun Specifies the logical unit number of the data disk. This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM. This value is also needed for referencing the data disks devices within userdata to perform disk initialization through Ignition (e.g. partition/format/mount). The value must be between 0 and 63.",
+	"cachingType": "CachingType specifies the caching requirements. Empty value means no opinion and the platform chooses a default, which is subject to change over time. Currently the default is CachingTypeNone.",
+}
+
+func (DataDisk) SwaggerDoc() map[string]string {
+	return map_DataDisk
+}
+
+var map_DataDiskManagedDiskParameters = map[string]string{
+	"":                   "DataDiskManagedDiskParameters is the parameters of a DataDisk managed disk.",
+	"storageAccountType": "StorageAccountType is the storage account type to use. Possible values include \"Standard_LRS\", \"Premium_LRS\" and \"UltraSSD_LRS\".",
+	"diskEncryptionSet":  "DiskEncryptionSet is the disk encryption set properties. Empty value means no opinion and the platform chooses a default, which is subject to change over time. Currently the default is a DiskEncryptionSet with id: \"Default\".",
+}
+
+func (DataDiskManagedDiskParameters) SwaggerDoc() map[string]string {
+	return map_DataDiskManagedDiskParameters
+}
+
 var map_DiskEncryptionSetParameters = map[string]string{
 	"":   "DiskEncryptionSetParameters is the disk encryption set properties",
-	"id": "ID is the disk encryption set ID",
+	"id": "ID is the disk encryption set ID Empty value means no opinion and the platform chooses a default, which is subject to change over time. Currently the default is: \"Default\".",
 }
 
 func (DiskEncryptionSetParameters) SwaggerDoc() map[string]string {
@@ -253,16 +278,6 @@ func (Image) SwaggerDoc() map[string]string {
 	return map_Image
 }
 
-var map_ManagedDiskParameters = map[string]string{
-	"":                   "ManagedDiskParameters is the parameters of a managed disk.",
-	"storageAccountType": "StorageAccountType is the storage account type to use. Possible values include \"Standard_LRS\" and \"Premium_LRS\".",
-	"diskEncryptionSet":  "DiskEncryptionSet is the disk encryption set properties",
-}
-
-func (ManagedDiskParameters) SwaggerDoc() map[string]string {
-	return map_ManagedDiskParameters
-}
-
 var map_OSDisk = map[string]string{
 	"osType":       "OSType is the operating system type of the OS disk. Possible values include \"Linux\" and \"Windows\".",
 	"managedDisk":  "ManagedDisk specifies the Managed Disk parameters for the OS disk.",
@@ -273,6 +288,16 @@ var map_OSDisk = map[string]string{
 
 func (OSDisk) SwaggerDoc() map[string]string {
 	return map_OSDisk
+}
+
+var map_OSDiskManagedDiskParameters = map[string]string{
+	"":                   "OSDiskManagedDiskParameters is the parameters of a OSDisk managed disk.",
+	"storageAccountType": "StorageAccountType is the storage account type to use. Possible values include \"Standard_LRS\", \"Premium_LRS\".",
+	"diskEncryptionSet":  "DiskEncryptionSet is the disk encryption set properties",
+}
+
+func (OSDiskManagedDiskParameters) SwaggerDoc() map[string]string {
+	return map_OSDiskManagedDiskParameters
 }
 
 var map_SecurityProfile = map[string]string{

@@ -57,6 +57,7 @@ spec:
                     cluster components.
                   enum:
                   - openshift-samples
+                  - baremetal
                   type: string
                 type: array
               baselineCapabilitySet:
