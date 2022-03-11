@@ -134,7 +134,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		OSDisk: machineapi.OSDisk{
 			OSType:     "Linux",
 			DiskSizeGB: mpool.OSDisk.DiskSizeGB,
-			ManagedDisk: machineapi.ManagedDiskParameters{
+			ManagedDisk: machineapi.OSDiskManagedDiskParameters{
 				StorageAccountType: mpool.OSDisk.DiskType,
 				DiskEncryptionSet:  diskEncryptionSet,
 			},
