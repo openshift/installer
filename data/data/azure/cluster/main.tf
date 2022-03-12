@@ -29,26 +29,28 @@ provider "azureprivatedns" {
 }
 
 module "master" {
-  source                 = "./master"
-  resource_group_name    = var.resource_group_name
-  cluster_id             = var.cluster_id
-  region                 = var.azure_region
-  availability_zones     = var.azure_master_availability_zones
-  vm_size                = var.azure_master_vm_type
-  vm_image               = var.vm_image
-  identity               = var.identity
-  ignition               = var.ignition_master
-  elb_backend_pool_v4_id = var.elb_backend_pool_v4_id
-  elb_backend_pool_v6_id = var.elb_backend_pool_v6_id
-  ilb_backend_pool_v4_id = var.ilb_backend_pool_v4_id
-  ilb_backend_pool_v6_id = var.ilb_backend_pool_v6_id
-  subnet_id              = var.master_subnet_id
-  instance_count         = var.master_count
-  storage_account_name   = var.storage_account_name
-  os_volume_type         = var.azure_master_root_volume_type
-  os_volume_size         = var.azure_master_root_volume_size
-  private                = var.azure_private
-  outbound_udr           = var.azure_outbound_user_defined_routing
+  source                     = "./master"
+  resource_group_name        = var.resource_group_name
+  cluster_id                 = var.cluster_id
+  region                     = var.azure_region
+  availability_zones         = var.azure_master_availability_zones
+  vm_size                    = var.azure_master_vm_type
+  disk_encryption_set_id     = var.azure_master_disk_encryption_set_id
+  encryption_at_host_enabled = var.azure_master_encryption_at_host_enabled
+  vm_image                   = var.vm_image
+  identity                   = var.identity
+  ignition                   = var.ignition_master
+  elb_backend_pool_v4_id     = var.elb_backend_pool_v4_id
+  elb_backend_pool_v6_id     = var.elb_backend_pool_v6_id
+  ilb_backend_pool_v4_id     = var.ilb_backend_pool_v4_id
+  ilb_backend_pool_v6_id     = var.ilb_backend_pool_v6_id
+  subnet_id                  = var.master_subnet_id
+  instance_count             = var.master_count
+  storage_account_name       = var.storage_account_name
+  os_volume_type             = var.azure_master_root_volume_type
+  os_volume_size             = var.azure_master_root_volume_size
+  private                    = var.azure_private
+  outbound_udr               = var.azure_outbound_user_defined_routing
 
   use_ipv4 = var.use_ipv4
   use_ipv6 = var.use_ipv6

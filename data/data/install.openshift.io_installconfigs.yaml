@@ -190,9 +190,33 @@ spec:
                       description: Azure is the configuration used when installing
                         on Azure.
                       properties:
+                        encryptionAtHost:
+                          description: EncryptionAtHost enables encryption at the
+                            VM host.
+                          type: boolean
                         osDisk:
                           description: OSDisk defines the storage for instance.
                           properties:
+                            diskEncryptionSet:
+                              description: DiskEncryptionSet defines a disk encryption
+                                set.
+                              properties:
+                                name:
+                                  description: Name is the name of the disk encryption
+                                    set.
+                                  type: string
+                                resourceGroup:
+                                  description: ResourceGroup defines the Azure resource
+                                    group used by the disk encryption set.
+                                  type: string
+                                subscriptionId:
+                                  description: SubscriptionID defines the Azure subscription
+                                    the disk encryption set is in.
+                                  type: string
+                              required:
+                              - name
+                              - resourceGroup
+                              type: object
                             diskSizeGB:
                               description: DiskSizeGB defines the size of disk in
                                 GB.
@@ -201,9 +225,9 @@ spec:
                               type: integer
                             diskType:
                               description: DiskType defines the type of disk. The
-                                valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS
+                                valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS.
                                 For control plane nodes, the valid values are Premium_LRS
-                                and StandardSSD_LRS. Default is Premium_LRS
+                                and StandardSSD_LRS. Default is Premium_LRS.
                               enum:
                               - Standard_LRS
                               - Premium_LRS
@@ -682,9 +706,33 @@ spec:
                     description: Azure is the configuration used when installing on
                       Azure.
                     properties:
+                      encryptionAtHost:
+                        description: EncryptionAtHost enables encryption at the VM
+                          host.
+                        type: boolean
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:
+                          diskEncryptionSet:
+                            description: DiskEncryptionSet defines a disk encryption
+                              set.
+                            properties:
+                              name:
+                                description: Name is the name of the disk encryption
+                                  set.
+                                type: string
+                              resourceGroup:
+                                description: ResourceGroup defines the Azure resource
+                                  group used by the disk encryption set.
+                                type: string
+                              subscriptionId:
+                                description: SubscriptionID defines the Azure subscription
+                                  the disk encryption set is in.
+                                type: string
+                            required:
+                            - name
+                            - resourceGroup
+                            type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
                             format: int32
@@ -692,9 +740,9 @@ spec:
                             type: integer
                           diskType:
                             description: DiskType defines the type of disk. The valid
-                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS
+                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS.
                               For control plane nodes, the valid values are Premium_LRS
-                              and StandardSSD_LRS. Default is Premium_LRS
+                              and StandardSSD_LRS. Default is Premium_LRS.
                             enum:
                             - Standard_LRS
                             - Premium_LRS
@@ -1445,9 +1493,33 @@ spec:
                       used when installing on Azure for machine pools which do not
                       define their own platform configuration.
                     properties:
+                      encryptionAtHost:
+                        description: EncryptionAtHost enables encryption at the VM
+                          host.
+                        type: boolean
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:
+                          diskEncryptionSet:
+                            description: DiskEncryptionSet defines a disk encryption
+                              set.
+                            properties:
+                              name:
+                                description: Name is the name of the disk encryption
+                                  set.
+                                type: string
+                              resourceGroup:
+                                description: ResourceGroup defines the Azure resource
+                                  group used by the disk encryption set.
+                                type: string
+                              subscriptionId:
+                                description: SubscriptionID defines the Azure subscription
+                                  the disk encryption set is in.
+                                type: string
+                            required:
+                            - name
+                            - resourceGroup
+                            type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
                             format: int32
@@ -1455,9 +1527,9 @@ spec:
                             type: integer
                           diskType:
                             description: DiskType defines the type of disk. The valid
-                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS
+                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS.
                               For control plane nodes, the valid values are Premium_LRS
-                              and StandardSSD_LRS. Default is Premium_LRS
+                              and StandardSSD_LRS. Default is Premium_LRS.
                             enum:
                             - Standard_LRS
                             - Premium_LRS
