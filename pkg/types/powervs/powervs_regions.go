@@ -1,5 +1,9 @@
 package powervs
 
+import (
+	"fmt"
+)
+
 // Since there is no API to query these, we have to hard-code them here.
 
 // Region describes resources associated with a region in Power VS.
@@ -11,7 +15,7 @@ type Region struct {
 	Zones       []string
 }
 
-// Regions holds the regions for IBM Power VS, and descriptions used during the survey
+// Regions holds the regions for IBM Power VS, and descriptions used during the survey.
 var Regions = map[string]Region{
 	"dal": {
 		Description: "Dallas, USA",
@@ -64,4 +68,13 @@ var Regions = map[string]Region{
 		VPCRegion:   "us-east",
 		Zones:       []string{"us-east"},
 	},
+}
+
+// VPCRegionForPowerVSRegion returns the VPC region for the specified PowerVS region.
+func VPCRegionForPowerVSRegion(region string) (string, error) {
+	if r, ok := Regions[region]; ok {
+		return r.VPCRegion, nil
+	}
+
+	return "", fmt.Errorf("VPC region corresponding to a PowerVS region %s not found ", region)
 }
