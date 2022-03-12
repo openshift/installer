@@ -73,7 +73,12 @@ func NormalizeDateTimeUTC(t time.Time) time.Time {
 }
 
 // ParseDate parses the specified RFC3339 full-date string (YYYY-MM-DD) and returns a strfmt.Date instance.
+// If the string is empty the return value will be the unix epoch (1970-01-01).
 func ParseDate(dateString string) (fmtDate strfmt.Date, err error) {
+	if dateString == "" {
+		return strfmt.Date(time.Unix(0, 0).UTC()), nil
+	}
+
 	formattedTime, err := time.Parse(strfmt.RFC3339FullDate, dateString)
 	if err == nil {
 		fmtDate = strfmt.Date(formattedTime)
@@ -82,6 +87,7 @@ func ParseDate(dateString string) (fmtDate strfmt.Date, err error) {
 }
 
 // ParseDateTime parses the specified date-time string and returns a strfmt.DateTime instance.
+// If the string is empty the return value will be the unix epoch (1970-01-01T00:00:00.000Z).
 func ParseDateTime(dateString string) (strfmt.DateTime, error) {
 	return strfmt.ParseDateTime(dateString)
 }

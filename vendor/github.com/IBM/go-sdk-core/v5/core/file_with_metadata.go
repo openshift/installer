@@ -56,8 +56,7 @@ func UnmarshalFileWithMetadata(m map[string]json.RawMessage, result interface{})
 	if err != nil {
 		return
 	}
-	/* #nosec G304 */
-	data, err = os.Open(pathToData)
+	data, err = os.Open(pathToData) // #nosec G304
 	if err != nil {
 		return
 	}

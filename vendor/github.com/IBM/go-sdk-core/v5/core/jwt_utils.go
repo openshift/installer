@@ -15,11 +15,10 @@ package core
 // limitations under the License.
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	jwt "github.com/form3tech-oss/jwt-go"
 )
 
 // coreJWTClaims are the fields within a JWT's "claims" segment that we're interested in.
@@ -39,7 +38,7 @@ func parseJWT(tokenString string) (claims *coreJWTClaims, err error) {
 
 	// Parse Claims segment.
 	var claimBytes []byte
-	claimBytes, err = jwt.DecodeSegment(segments[1])
+	claimBytes, err = decodeSegment(segments[1])
 	if err != nil {
 		err = fmt.Errorf("error decoding claims segment: %s", err.Error())
 		return
@@ -54,4 +53,14 @@ func parseJWT(tokenString string) (claims *coreJWTClaims, err error) {
 	}
 
 	return
+}
+
+// Decode JWT specific base64url encoding with padding stripped
+// Copied from https://github.com/golang-jwt/jwt/blob/main/token.go
+func decodeSegment(seg string) ([]byte, error) {
+	if l := len(seg) % 4; l > 0 {
+		seg += strings.Repeat("=", 4-l)
+	}
+
+	return base64.URLEncoding.DecodeString(seg)
 }

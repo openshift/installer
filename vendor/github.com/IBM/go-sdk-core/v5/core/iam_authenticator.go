@@ -1,6 +1,6 @@
 package core
 
-// (C) Copyright IBM Corp. 2019.
+// (C) Copyright IBM Corp. 2019, 2021.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,49 +20,43 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
-// IamAuthenticator-related constants.
-const (
-	DEFAULT_IAM_URL      = "https://iam.cloud.ibm.com"
-	OPERATION_PATH       = "/identity/token"
-	DEFAULT_CONTENT_TYPE = "application/x-www-form-urlencoded"
-	/* #nosec G101 */
-	REQUEST_TOKEN_GRANT_TYPE    = "urn:ibm:params:oauth:grant-type:apikey"
-	REQUEST_TOKEN_RESPONSE_TYPE = "cloud_iam"
-)
-
-// IamAuthenticator uses an apikey to obtain a suitable bearer token value,
-// and adds the bearer token to requests via an Authorization header
+// IamAuthenticator uses an apikey to obtain an IAM access token,
+// and adds the access token to requests via an Authorization header
 // of the form:
 //
-// 		Authorization: Bearer <bearer-token>
+// 		Authorization: Bearer <access-token>
 //
 type IamAuthenticator struct {
 
-	// The apikey used to fetch the bearer token from the IAM token server
-	// [required].
+	// The apikey used to fetch the bearer token from the IAM token server.
+	// You must specify either ApiKey or RefreshToken.
 	ApiKey string
+
+	// The refresh token used to fetch the bearer token from the IAM token server.
+	// You must specify either ApiKey or RefreshToken.
+	// If this property is specified, then you also must supply appropriate values
+	// for the ClientId and ClientSecret properties (i.e. they must be the same
+	// values that were used to obtain the refresh token).
+	RefreshToken string
 
 	// The URL representing the IAM token server's endpoint; If not specified,
 	// a suitable default value will be used [optional].
 	URL string
 
 	// The ClientId and ClientSecret fields are used to form a "basic auth"
-	// Authorization header for interactions with the IAM token server
+	// Authorization header for interactions with the IAM token server.
 
 	// If neither field is specified, then no Authorization header will be sent
 	// with token server requests [optional]. These fields are optional, but must
 	// be specified together.
-	ClientId string
-
-	// If neither field is specified, then no Authorization header will be sent
-	// with token server requests [optional]. These fields are optional, but must
-	// be specified together.
+	ClientId     string
 	ClientSecret string
 
 	// A flag that indicates whether verification of the server's SSL certificate
@@ -92,29 +86,103 @@ type IamAuthenticator struct {
 var iamRequestTokenMutex sync.Mutex
 var iamNeedsRefreshMutex sync.Mutex
 
-// NewIamAuthenticator constructs a new IamAuthenticator instance.
-func NewIamAuthenticator(apikey string, url string, clientId string, clientSecret string,
-	disableSSLVerification bool, headers map[string]string) (*IamAuthenticator, error) {
-	authenticator := &IamAuthenticator{
-		ApiKey:                 apikey,
-		URL:                    url,
-		ClientId:               clientId,
-		ClientSecret:           clientSecret,
-		DisableSSLVerification: disableSSLVerification,
-		Headers:                headers,
-	}
+const (
+	// The default (prod) IAM token server base endpoint address.
+	defaultIamTokenServerEndpoint = "https://iam.cloud.ibm.com" // #nosec G101
+	iamAuthOperationPathGetToken  = "/identity/token"
+	iamAuthGrantTypeApiKey        = "urn:ibm:params:oauth:grant-type:apikey" // #nosec G101
+	iamAuthGrantTypeRefreshToken  = "refresh_token"                          // #nosec G101
+)
+
+// IamAuthenticatorBuilder is used to construct an IamAuthenticator instance.
+type IamAuthenticatorBuilder struct {
+	IamAuthenticator
+}
+
+// NewIamAuthenticatorBuilder returns a new builder struct that
+// can be used to construct an IamAuthenticator instance.
+func NewIamAuthenticatorBuilder() *IamAuthenticatorBuilder {
+	return &IamAuthenticatorBuilder{}
+}
+
+// SetApiKey sets the ApiKey field in the builder.
+func (builder *IamAuthenticatorBuilder) SetApiKey(s string) *IamAuthenticatorBuilder {
+	builder.IamAuthenticator.ApiKey = s
+	return builder
+}
+
+// SetRefreshToken sets the RefreshToken field in the builder.
+func (builder *IamAuthenticatorBuilder) SetRefreshToken(s string) *IamAuthenticatorBuilder {
+	builder.IamAuthenticator.RefreshToken = s
+	return builder
+}
+
+// SetURL sets the URL field in the builder.
+func (builder *IamAuthenticatorBuilder) SetURL(s string) *IamAuthenticatorBuilder {
+	builder.IamAuthenticator.URL = s
+	return builder
+}
+
+// SetClientIDSecret sets the ClientId and ClientSecret fields in the builder.
+func (builder *IamAuthenticatorBuilder) SetClientIDSecret(clientID, clientSecret string) *IamAuthenticatorBuilder {
+	builder.IamAuthenticator.ClientId = clientID
+	builder.IamAuthenticator.ClientSecret = clientSecret
+	return builder
+}
+
+// SetDisableSSLVerification sets the DisableSSLVerification field in the builder.
+func (builder *IamAuthenticatorBuilder) SetDisableSSLVerification(b bool) *IamAuthenticatorBuilder {
+	builder.IamAuthenticator.DisableSSLVerification = b
+	return builder
+}
+
+// SetScope sets the Scope field in the builder.
+func (builder *IamAuthenticatorBuilder) SetScope(s string) *IamAuthenticatorBuilder {
+	builder.IamAuthenticator.Scope = s
+	return builder
+}
+
+// SetHeaders sets the Headers field in the builder.
+func (builder *IamAuthenticatorBuilder) SetHeaders(headers map[string]string) *IamAuthenticatorBuilder {
+	builder.IamAuthenticator.Headers = headers
+	return builder
+}
+
+// SetClient sets the Client field in the builder.
+func (builder *IamAuthenticatorBuilder) SetClient(client *http.Client) *IamAuthenticatorBuilder {
+	builder.IamAuthenticator.Client = client
+	return builder
+}
+
+// Build() returns a validated instance of the IamAuthenticator with the config that was set in the builder.
+func (builder *IamAuthenticatorBuilder) Build() (*IamAuthenticator, error) {
 
 	// Make sure the config is valid.
-	err := authenticator.Validate()
+	err := builder.IamAuthenticator.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	return authenticator, nil
+	return &builder.IamAuthenticator, nil
 }
 
-// NewIamAuthenticatorFromMap constructs a new IamAuthenticator instance from a
-// map.
+// NewIamAuthenticator constructs a new IamAuthenticator instance.
+// Deprecated - use the IamAuthenticatorBuilder instead.
+func NewIamAuthenticator(apiKey string, url string, clientId string, clientSecret string,
+	disableSSLVerification bool, headers map[string]string) (*IamAuthenticator, error) {
+
+	authenticator, err := NewIamAuthenticatorBuilder().
+		SetApiKey(apiKey).
+		SetURL(url).
+		SetClientIDSecret(clientId, clientSecret).
+		SetDisableSSLVerification(disableSSLVerification).
+		SetHeaders(headers).
+		Build()
+
+	return authenticator, err
+}
+
+// newIamAuthenticatorFromMap constructs a new IamAuthenticator instance from a map.
 func newIamAuthenticatorFromMap(properties map[string]string) (authenticator *IamAuthenticator, err error) {
 	if properties == nil {
 		return nil, fmt.Errorf(ERRORMSG_PROPS_MAP_NIL)
@@ -125,12 +193,15 @@ func newIamAuthenticatorFromMap(properties map[string]string) (authenticator *Ia
 		disableSSL = false
 	}
 
-	authenticator, err = NewIamAuthenticator(properties[PROPNAME_APIKEY], properties[PROPNAME_AUTH_URL],
-		properties[PROPNAME_CLIENT_ID], properties[PROPNAME_CLIENT_SECRET],
-		disableSSL, nil)
-	if authenticator != nil {
-		authenticator.Scope = properties[PROPNAME_SCOPE]
-	}
+	authenticator, err = NewIamAuthenticatorBuilder().
+		SetApiKey(properties[PROPNAME_APIKEY]).
+		SetRefreshToken(properties[PROPNAME_REFRESH_TOKEN]).
+		SetURL(properties[PROPNAME_AUTH_URL]).
+		SetClientIDSecret(properties[PROPNAME_CLIENT_ID], properties[PROPNAME_CLIENT_SECRET]).
+		SetDisableSSLVerification(disableSSL).
+		SetScope(properties[PROPNAME_SCOPE]).
+		Build()
+
 	return
 }
 
@@ -146,12 +217,12 @@ func (*IamAuthenticator) AuthenticationType() string {
 // 		Authorization: Bearer <bearer-token>
 //
 func (authenticator *IamAuthenticator) Authenticate(request *http.Request) error {
-	token, err := authenticator.getToken()
+	token, err := authenticator.GetToken()
 	if err != nil {
 		return err
 	}
 
-	request.Header.Set("Authorization", fmt.Sprintf(`Bearer %s`, token))
+	request.Header.Set("Authorization", "Bearer "+token)
 	return nil
 }
 
@@ -169,23 +240,40 @@ func (authenticator *IamAuthenticator) setTokenData(tokenData *iamTokenData) {
 	defer authenticator.tokenDataMutex.Unlock()
 
 	authenticator.tokenData = tokenData
+
+	// Next, we should save the just-returned refresh token back to the main
+	// authenticator struct.
+	// This is done so that if we were originally configured with
+	// a refresh token, then we'll be sure to use a "fresh"
+	// refresh token next time we invoke the "get token" operation.
+	// This was recommended by the IAM team to avoid problems in the future
+	// if the token service is changed to invalidate an existing refresh token
+	// when a new one is generated and returned in the response.
+	if tokenData != nil {
+		authenticator.RefreshToken = tokenData.RefreshToken
+	}
 }
 
 // Validate the authenticator's configuration.
 //
-// Ensures the ApiKey is valid, and the ClientId and ClientSecret pair are
-// mutually inclusive.
+// Ensures that the ApiKey and RefreshToken properties are mutually exclusive,
+// and that the ClientId and ClientSecret properties are mutually inclusive.
 func (this *IamAuthenticator) Validate() error {
-	if this.ApiKey == "" {
-		return fmt.Errorf(ERRORMSG_PROP_MISSING, "ApiKey")
+
+	// The user should specify exactly one of ApiKey or RefreshToken.
+	if this.ApiKey == "" && this.RefreshToken == "" ||
+		this.ApiKey != "" && this.RefreshToken != "" {
+		return fmt.Errorf(ERRORMSG_EXCLUSIVE_PROPS_ERROR, "ApiKey", "RefreshToken")
 	}
 
-	if HasBadFirstOrLastChar(this.ApiKey) {
+	if this.ApiKey != "" && HasBadFirstOrLastChar(this.ApiKey) {
 		return fmt.Errorf(ERRORMSG_PROP_INVALID, "ApiKey")
 	}
 
-	// Validate ClientId and ClientSecret.  They must both be specified togther or neither should be specified.
-	if this.ClientId == "" && this.ClientSecret == "" {
+	// Validate ClientId and ClientSecret.
+	// If RefreshToken is not specified, then both or neither should be specified.
+	// If RefreshToken is specified, then both must be specified.
+	if this.ClientId == "" && this.ClientSecret == "" && this.RefreshToken == "" {
 		// Do nothing as this is the valid scenario
 	} else {
 		// Since it is NOT the case that both properties are empty, make sure BOTH are specified.
@@ -201,10 +289,10 @@ func (this *IamAuthenticator) Validate() error {
 	return nil
 }
 
-// getToken: returns an access token to be used in an Authorization header.
+// GetToken: returns an access token to be used in an Authorization header.
 // Whenever a new token is needed (when a token doesn't yet exist, needs to be refreshed,
 // or the existing token has expired), a new access token is fetched from the token server.
-func (authenticator *IamAuthenticator) getToken() (string, error) {
+func (authenticator *IamAuthenticator) GetToken() (string, error) {
 	if authenticator.getTokenData() == nil || !authenticator.getTokenData().isTokenValid() {
 		// synchronously request the token
 		err := authenticator.synchronizedRequestToken()
@@ -259,26 +347,38 @@ func (authenticator *IamAuthenticator) invokeRequestTokenData() error {
 
 // RequestToken fetches a new access token from the token server.
 func (authenticator *IamAuthenticator) RequestToken() (*IamTokenServerResponse, error) {
+
 	// Use the default IAM URL if one was not specified by the user.
 	url := authenticator.URL
 	if url == "" {
-		url = DEFAULT_IAM_URL
+		url = defaultIamTokenServerEndpoint
 	} else {
 		// Canonicalize the URL by removing the operation path if it was specified by the user.
-		url = strings.TrimSuffix(url, OPERATION_PATH)
+		url = strings.TrimSuffix(url, iamAuthOperationPathGetToken)
 	}
 
 	builder := NewRequestBuilder(POST)
-	_, err := builder.ResolveRequestURL(url, OPERATION_PATH, nil)
+	_, err := builder.ResolveRequestURL(url, iamAuthOperationPathGetToken, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	builder.AddHeader(CONTENT_TYPE, DEFAULT_CONTENT_TYPE).
-		AddHeader(Accept, APPLICATION_JSON).
-		AddFormData("grant_type", "", "", REQUEST_TOKEN_GRANT_TYPE).
-		AddFormData("apikey", "", "", authenticator.ApiKey).
-		AddFormData("response_type", "", "", REQUEST_TOKEN_RESPONSE_TYPE)
+	builder.AddHeader(CONTENT_TYPE, "application/x-www-form-urlencoded")
+	builder.AddHeader(Accept, APPLICATION_JSON)
+	builder.AddFormData("response_type", "", "", "cloud_iam")
+
+	if authenticator.ApiKey != "" {
+		// If ApiKey was configured, then use grant_type "apikey" to obtain an access token.
+		builder.AddFormData("grant_type", "", "", iamAuthGrantTypeApiKey)
+		builder.AddFormData("apikey", "", "", authenticator.ApiKey)
+	} else if authenticator.RefreshToken != "" {
+		// Otherwise, if RefreshToken was configured then use grant_type "refresh_token".
+		builder.AddFormData("grant_type", "", "", iamAuthGrantTypeRefreshToken)
+		builder.AddFormData("refresh_token", "", "", authenticator.RefreshToken)
+	} else {
+		// We shouldn't ever get here due to prior validations, but just in case, let's log an error.
+		return nil, fmt.Errorf(ERRORMSG_EXCLUSIVE_PROPS_ERROR, "ApiKey", "RefreshToken")
+	}
 
 	// Add any optional parameters to the request.
 	if authenticator.Scope != "" {
@@ -297,6 +397,8 @@ func (authenticator *IamAuthenticator) RequestToken() (*IamTokenServerResponse, 
 
 	// If client id and secret were configured by the user, then set them on the request
 	// as a basic auth header.
+	// Our previous validation step would have made sure that both values are specified
+	// if the RefreshToken property was specified.
 	if authenticator.ClientId != "" && authenticator.ClientSecret != "" {
 		req.SetBasicAuth(authenticator.ClientId, authenticator.ClientSecret)
 	}
@@ -310,16 +412,38 @@ func (authenticator *IamAuthenticator) RequestToken() (*IamTokenServerResponse, 
 		// If the user told us to disable SSL verification, then do it now.
 		if authenticator.DisableSSLVerification {
 			transport := &http.Transport{
-				/* #nosec G402 */
+				// #nosec G402
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			}
 			authenticator.Client.Transport = transport
 		}
 	}
 
+	// If debug is enabled, then dump the request.
+	if GetLogger().IsLogLevelEnabled(LevelDebug) {
+		buf, dumpErr := httputil.DumpRequestOut(req, req.Body != nil)
+		if dumpErr == nil {
+			GetLogger().Debug("Request:\n%s\n", RedactSecrets(string(buf)))
+		} else {
+			GetLogger().Debug(fmt.Sprintf("error while attempting to log outbound request: %s", dumpErr.Error()))
+		}
+	}
+
+	GetLogger().Debug("Invoking IAM 'get token' operation: %s", builder.URL)
 	resp, err := authenticator.Client.Do(req)
 	if err != nil {
 		return nil, err
+	}
+	GetLogger().Debug("Returned from IAM 'get token' operation, received status code %d", resp.StatusCode)
+
+	// If debug is enabled, then dump the response.
+	if GetLogger().IsLogLevelEnabled(LevelDebug) {
+		buf, dumpErr := httputil.DumpResponse(resp, req.Body != nil)
+		if dumpErr == nil {
+			GetLogger().Debug("Response:\n%s\n", RedactSecrets(string(buf)))
+		} else {
+			GetLogger().Debug(fmt.Sprintf("error while attempting to log inbound response: %s", dumpErr.Error()))
+		}
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -358,9 +482,10 @@ type IamTokenServerResponse struct {
 
 // iamTokenData : This struct represents the cached information related to a fetched access token.
 type iamTokenData struct {
-	AccessToken string
-	RefreshTime int64
-	Expiration  int64
+	AccessToken  string
+	RefreshToken string
+	RefreshTime  int64
+	Expiration   int64
 }
 
 // newIamTokenData: constructs a new IamTokenData instance from the specified IamTokenServerResponse instance.
@@ -375,9 +500,10 @@ func newIamTokenData(tokenResponse *IamTokenServerResponse) (*iamTokenData, erro
 	refreshTime := expireTime - int64(float64(timeToLive)*0.2)
 
 	tokenData := &iamTokenData{
-		AccessToken: tokenResponse.AccessToken,
-		Expiration:  expireTime,
-		RefreshTime: refreshTime,
+		AccessToken:  tokenResponse.AccessToken,
+		RefreshToken: tokenResponse.RefreshToken,
+		Expiration:   expireTime,
+		RefreshTime:  refreshTime,
 	}
 
 	return tokenData, nil
@@ -405,5 +531,4 @@ func (this *iamTokenData) needsRefresh() bool {
 	}
 
 	return false
-
 }

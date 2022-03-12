@@ -241,8 +241,7 @@ func (service *BaseService) DisableSSLVerification() {
 	client := DefaultHTTPClient()
 	tr, ok := client.Transport.(*http.Transport)
 	if tr != nil && ok {
-		/* #nosec G402 */
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} // #nosec G402
 	}
 
 	service.SetHTTPClient(client)
@@ -306,6 +305,15 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 		for k, v := range service.DefaultHeaders {
 			req.Header.Add(k, strings.Join(v, ""))
 		}
+
+		// After adding the default headers, make one final check to see if the user
+		// specified the "Host" header within the default headers.
+		// This needs to be handled separately because it will be ignored by
+		// the Request.Write() method.
+		host := service.DefaultHeaders.Get("Host")
+		if host != "" {
+			req.Host = host
+		}
 	}
 
 	// Add the default User-Agent header if not already present.
@@ -334,9 +342,9 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 	if GetLogger().IsLogLevelEnabled(LevelDebug) {
 		buf, dumpErr := httputil.DumpRequestOut(req, req.Body != nil)
 		if dumpErr == nil {
-			GetLogger().Debug(fmt.Sprintf("Request:\n%s\n", string(buf)))
+			GetLogger().Debug("Request:\n%s\n", RedactSecrets(string(buf)))
 		} else {
-			GetLogger().Debug(fmt.Sprintf("error while attempting to log outbound request: %s", dumpErr.Error()))
+			GetLogger().Debug("error while attempting to log outbound request: %s", dumpErr.Error())
 		}
 	}
 
@@ -370,9 +378,9 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 	if GetLogger().IsLogLevelEnabled(LevelDebug) {
 		buf, dumpErr := httputil.DumpResponse(httpResponse, httpResponse.Body != nil)
 		if err == nil {
-			GetLogger().Debug(fmt.Sprintf("Response:\n%s\n", string(buf)))
+			GetLogger().Debug("Response:\n%s\n", RedactSecrets(string(buf)))
 		} else {
-			GetLogger().Debug(fmt.Sprintf("error while attempting to log inbound response: %s", dumpErr.Error()))
+			GetLogger().Debug("error while attempting to log inbound response: %s", dumpErr.Error())
 		}
 	}
 
@@ -430,10 +438,11 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 
 	// Operation was successful and we are expecting a response, so process the response.
 	if !IsNil(result) {
+		resultType := reflect.TypeOf(result).String()
 
 		// If 'result' is a io.ReadCloser, then pass the response body back reflectively via 'result'
 		// and bypass any further unmarshalling of the response.
-		if reflect.TypeOf(result).String() == "*io.ReadCloser" {
+		if resultType == "*io.ReadCloser" {
 			rResult := reflect.ValueOf(result).Elem()
 			rResult.Set(reflect.ValueOf(httpResponse.Body))
 			detailedResponse.Result = httpResponse.Body
@@ -472,24 +481,24 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 			// Check to see if the caller wanted the response body as a string.
 			// If the caller passed in 'result' as the address of *string,
 			// then we'll reflectively set result to point to it.
-			if reflect.TypeOf(result).String() == "**string" {
+			if resultType == "**string" {
 				responseString := string(responseBody)
 				rResult := reflect.ValueOf(result).Elem()
 				rResult.Set(reflect.ValueOf(&responseString))
 
 				// And set the string in the Result field.
 				detailedResponse.Result = &responseString
-			} else if reflect.TypeOf(result).String() == "*[]uint8" { // byte is an alias for uint8
+			} else if resultType == "*[]uint8" { // byte is an alias for uint8
 				rResult := reflect.ValueOf(result).Elem()
 				rResult.Set(reflect.ValueOf(responseBody))
 
 				// And set the byte slice in the Result field.
 				detailedResponse.Result = responseBody
 			} else {
-				// At this point, we don't know how to set the result field, so we have to return an error
+				// At this point, we don't know how to set the result field, so we have to return an error.
 				// But make sure we save the bytes we read in the DetailedResponse for debugging purposes
 				detailedResponse.Result = responseBody
-				err = fmt.Errorf(ERRORMSG_UNEXPECTED_RESPONSE)
+				err = fmt.Errorf(ERRORMSG_UNEXPECTED_RESPONSE, contentType, resultType)
 				return
 			}
 		}
@@ -600,7 +609,10 @@ type httpLogger struct {
 }
 
 func (l *httpLogger) Printf(format string, inserts ...interface{}) {
-	GetLogger().Log(LevelDebug, format, inserts...)
+	if GetLogger().IsLogLevelEnabled(LevelDebug) {
+		msg := fmt.Sprintf(format, inserts...)
+		GetLogger().Log(LevelDebug, RedactSecrets(msg))
+	}
 }
 
 // NewRetryableHTTPClient returns a new instance of go-retryablehttp.Client
@@ -678,16 +690,9 @@ func IBMCloudSDKRetryPolicy(ctx context.Context, resp *http.Response, err error)
 	// Now check the status code.
 
 	// A 429 should be retryable.
-	if resp.StatusCode == 429 {
+	// All codes in the 500's range except for 501 (Not Implemented) should be retryable.
+	if resp.StatusCode == 429 || (resp.StatusCode >= 500 && resp.StatusCode <= 599 && resp.StatusCode != 501) {
 		return true, nil
-	}
-
-	// Check the response code. We retry on 500-range responses to allow
-	// the server time to recover, as 500's are typically not permanent
-	// errors and may relate to outages on the server side. This will catch
-	// invalid response codes as well, like 0 and 999.
-	if resp.StatusCode == 0 || (resp.StatusCode >= 500 && resp.StatusCode != 501) {
-		return true, fmt.Errorf(ERRORMSG_UNEXPECTED_STATUS_CODE, resp.StatusCode, resp.Status)
 	}
 
 	return false, nil
