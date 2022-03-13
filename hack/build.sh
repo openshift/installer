@@ -35,10 +35,7 @@ if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version
 fi
 
 # build terraform binaries before setting environment variables since it messes up make
-# XXX: need to figure out a good way of determining of dependencies have changed
-if [ -z "${SKIP_TERRAFORM}" ]; then
-	env TFBINDIR="${PWD}/terraform/bin" make -C terraform all
-fi
+make -C terraform all
 
 # Copy terraform parts to embedded mirror.
 copy_terraform_to_mirror

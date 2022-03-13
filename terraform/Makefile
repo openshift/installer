@@ -1,9 +1,9 @@
-TFSUBDIRS:=	alicloud aws azureprivatedns azurerm azurestack google ibm ignition ironic libvirt local openstack ovirt random vsphere vsphereprivate
-TFBINDIR?=	.
+TFSUBDIRS:=	$(foreach DIR,$(shell find providers -maxdepth 1 -mindepth 1 -type d),$(subst providers/,,$(DIR)))
 
 GO_MOD_TIDY_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-mod-tidy-vendor.$(DIR),$(DIR)))
 GO_BUILD_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-build.$(DIR),$(DIR)))
 GO_CLEAN_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-clean.$(DIR),$(DIR)))
+TERRAFORM_PROVIDER_TARGETS := $(foreach DIR,$(TFSUBDIRS), bin/terraform-provider-$(DIR).zip)
 
 LDFLAGS:= "-s -w"
 
@@ -12,26 +12,38 @@ all: go-build
 
 .PHONY: go-mod-tidy-vendor
 go-mod-tidy-vendor: $(GO_MOD_TIDY_TARGETS)
-$(GO_MOD_TIDY_TARGETS)::
-	cd $(subst go-mod-tidy-vendor.,,$@) && go mod tidy && go mod vendor
+$(GO_MOD_TIDY_TARGETS): go-mod-tidy-vendor.%:
+	cd providers/$* && go mod tidy && go mod vendor
 
 .PHONY: go-build
 go-build: $(GO_BUILD_TARGETS) go-build-terraform
-$(GO_BUILD_TARGETS):
-	dir=$(subst go-build.,,$@); cd $$dir; \
+$(GO_BUILD_TARGETS): go-build.%: bin/terraform-provider-%.zip
+
+$(TERRAFORM_PROVIDER_TARGETS): bin/terraform-provider-%.zip: providers/%/go.mod
+	cd providers/$*; \
 	if [ -f main.go ]; then path="."; else path=./vendor/`grep _ tools.go|awk '{ print $$2 }'|sed 's|"||g'`; fi; \
-	go build -ldflags $(LDFLAGS) -o $(TFBINDIR)/terraform-provider-$$dir $$path; \
-	zip -9j $(TFBINDIR)/terraform-provider-$$dir.zip $(TFBINDIR)/terraform-provider-$$dir
+	go build -ldflags $(LDFLAGS) -o ../../bin/terraform-provider-$* "$$path"; \
+	zip -9j ../../bin/terraform-provider-$*.zip ../../bin/terraform-provider-$*;
 
 .PHONY: go-build-terraform
-go-build-terraform:
-	cd ./terraform; \
-	go build -ldflags $(LDFLAGS) -o $(TFBINDIR)/terraform ./vendor/github.com/hashicorp/terraform
+go-build-terraform: bin/terraform
+
+bin/terraform: terraform/go.mod
+	cd terraform; \
+	go build -ldflags $(LDFLAGS) -o ../bin/terraform ./vendor/github.com/hashicorp/terraform
 
 .PHONY: go-clean
-go-clean: $(GO_CLEAN_TARGETS)
-$(GO_CLEAN_TARGETS)::
-	rm -f $(TFBINDIR)/terraform-provider-$$dir
+go-clean: go-clean-providers go-clean-terraform
+
+$(GO_CLEAN_TARGETS): go-clean.%:
+	rm -f bin/terraform-provider-$*
+	rm -f bin/terraform-provider-$*.zip
+
+go-clean-providers:
+	rm -f bin/terraform-provider-*
+	
+go-clean-terraform:
+	rm -f bin/terraform
 
 .PHONY: clean
 clean: go-clean
