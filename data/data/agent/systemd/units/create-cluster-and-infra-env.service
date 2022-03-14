@@ -8,7 +8,7 @@ ConditionPathExists=/etc/assisted-service/node0
 ExecStart=/usr/local/bin/create-cluster-and-infra-env.sh
 
 KillMode=none
-Type=forking
+Type=oneshot
 
 [Install]
 WantedBy=multi-user.target
