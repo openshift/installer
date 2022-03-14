@@ -131,6 +131,10 @@ func resourceAlicloudEcdUserRead(d *schema.ResourceData, meta interface{}) error
 }
 func resourceAlicloudEcdUserUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewEdsuserClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	edsUserService := EdsUserService{client}
 	var response map[string]interface{}
 	d.Partial(true)
@@ -146,12 +150,7 @@ func resourceAlicloudEcdUserUpdate(d *schema.ResourceData, meta interface{}) err
 					request := map[string]interface{}{
 						"Users": []string{d.Id()},
 					}
-
 					action := "UnlockUsers"
-					conn, err := client.NewEdsuserClient()
-					if err != nil {
-						return WrapError(err)
-					}
 					wait := incrementalWait(3*time.Second, 3*time.Second)
 					err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 						response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2021-03-08"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -177,12 +176,7 @@ func resourceAlicloudEcdUserUpdate(d *schema.ResourceData, meta interface{}) err
 					request := map[string]interface{}{
 						"Users": []string{d.Id()},
 					}
-
 					action := "LockUsers"
-					conn, err := client.NewEdsuserClient()
-					if err != nil {
-						return WrapError(err)
-					}
 					wait := incrementalWait(3*time.Second, 3*time.Second)
 					err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 						response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2021-03-08"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

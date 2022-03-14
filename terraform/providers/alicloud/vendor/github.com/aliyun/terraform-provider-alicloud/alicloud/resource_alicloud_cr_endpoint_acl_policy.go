@@ -20,6 +20,10 @@ func resourceAlicloudCrEndpointAclPolicy() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"description": {
 				Type:     schema.TypeString,
@@ -75,7 +79,7 @@ func resourceAlicloudCrEndpointAclPolicyCreate(d *schema.ResourceData, meta inte
 	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2018-12-01"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
 		if err != nil {
-			if NeedRetry(err) {
+			if IsExpectedErrors(err, []string{"SLB_SERVICE_ERROR"}) || NeedRetry(err) {
 				wait()
 				return resource.RetryableError(err)
 			}
@@ -139,7 +143,7 @@ func resourceAlicloudCrEndpointAclPolicyDelete(d *schema.ResourceData, meta inte
 	err = resource.Retry(d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
 		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2018-12-01"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
 		if err != nil {
-			if NeedRetry(err) {
+			if IsExpectedErrors(err, []string{"SLB_SERVICE_ERROR"}) || NeedRetry(err) {
 				wait()
 				return resource.RetryableError(err)
 			}

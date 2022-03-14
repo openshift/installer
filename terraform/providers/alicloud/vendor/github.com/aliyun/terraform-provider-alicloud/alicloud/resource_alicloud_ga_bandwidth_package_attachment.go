@@ -149,7 +149,7 @@ func resourceAlicloudGaBandwidthPackageAttachmentDelete(d *schema.ResourceData, 
 		return nil
 	})
 	if err != nil {
-		if IsExpectedErrors(err, []string{"NotExist.BandwidthPackage"}) {
+		if IsExpectedErrors(err, []string{"NotExist.BandwidthPackage", "Exist.EndpointGroup"}) {
 			return nil
 		}
 		return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)

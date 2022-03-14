@@ -133,6 +133,10 @@ func resourceAlicloudOosServiceSettingRead(d *schema.ResourceData, meta interfac
 }
 func resourceAlicloudOosServiceSettingUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewOosClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	update := false
 	request := map[string]interface{}{}
@@ -168,10 +172,6 @@ func resourceAlicloudOosServiceSettingUpdate(d *schema.ResourceData, meta interf
 	}
 	if update {
 		action := "SetServiceSettings"
-		conn, err := client.NewOosClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		request["RegionId"] = client.RegionId
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {

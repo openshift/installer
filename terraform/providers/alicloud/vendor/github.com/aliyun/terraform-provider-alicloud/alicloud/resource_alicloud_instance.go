@@ -426,6 +426,14 @@ func resourceAliyunInstance() *schema.Resource {
 				Computed:      true,
 				ConflictsWith: []string{"secondary_private_ips"},
 			},
+			"deployment_set_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"deployment_set_group_no": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -492,6 +500,7 @@ func resourceAliyunInstanceRead(d *schema.ResourceData, meta interface{}) error 
 			d.SetId("")
 			return nil
 		}
+
 		return WrapError(err)
 	}
 	var disk ecs.Disk
@@ -534,6 +543,8 @@ func resourceAliyunInstanceRead(d *schema.ResourceData, meta interface{}) error 
 	d.Set("auto_release_time", instance.AutoReleaseTime)
 	d.Set("tags", ecsService.tagsToMap(instance.Tags.Tag))
 	d.Set("hpc_cluster_id", instance.HpcClusterId)
+	d.Set("deployment_set_id", instance.DeploymentSetId)
+	d.Set("deployment_set_group_no", instance.DeploymentSetGroupNo)
 	if len(instance.PublicIpAddress.IpAddress) > 0 {
 		d.Set("public_ip", instance.PublicIpAddress.IpAddress[0])
 	} else {
@@ -657,7 +668,10 @@ func resourceAliyunInstanceRead(d *schema.ResourceData, meta interface{}) error 
 func resourceAliyunInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	ecsService := EcsService{client}
-
+	conn, err := client.NewEcsClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	d.Partial(true)
 
 	if !d.IsNewResource() {
@@ -674,10 +688,6 @@ func resourceAliyunInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 			"ResourceId":      d.Id(),
 			"RegionId":        client.RegionId,
 			"ResourceGroupId": d.Get("resource_group_id"),
-		}
-		conn, err := client.NewEcsClient()
-		if err != nil {
-			return WrapError(err)
 		}
 		response, err := conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-26"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
 		if err != nil {
@@ -947,10 +957,6 @@ func resourceAliyunInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 				request[fmt.Sprintf("PrivateIpAddress.%d", index+1)] = val
 			}
 
-			conn, err := client.NewEcsClient()
-			if err != nil {
-				return WrapError(err)
-			}
 			wait := incrementalWait(3*time.Second, 3*time.Second)
 			err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 				response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-26"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -979,10 +985,6 @@ func resourceAliyunInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 			}
 			for index, val := range create {
 				request[fmt.Sprintf("PrivateIpAddress.%d", index+1)] = val
-			}
-			conn, err := client.NewEcsClient()
-			if err != nil {
-				return WrapError(err)
 			}
 			wait := incrementalWait(3*time.Second, 3*time.Second)
 			err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
@@ -1033,10 +1035,6 @@ func resourceAliyunInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 					"ClientToken":                    buildClientToken(action),
 					"SecondaryPrivateIpAddressCount": diff,
 				}
-				conn, err := client.NewEcsClient()
-				if err != nil {
-					return WrapError(err)
-				}
 				wait := incrementalWait(3*time.Second, 3*time.Second)
 				err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 					response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-26"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -1066,11 +1064,6 @@ func resourceAliyunInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 				for index, val := range privateIpList[:diff] {
 					request[fmt.Sprintf("PrivateIpAddress.%d", index+1)] = val
 				}
-
-				conn, err := client.NewEcsClient()
-				if err != nil {
-					return WrapError(err)
-				}
 				wait := incrementalWait(3*time.Second, 3*time.Second)
 				err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 					response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-26"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -1091,7 +1084,35 @@ func resourceAliyunInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 				d.SetPartial("secondary_private_ip_address_count")
 			}
 		}
-
+	}
+	if !d.IsNewResource() && d.HasChange("deployment_set_id") {
+		action := "ModifyInstanceDeployment"
+		var response map[string]interface{}
+		request := map[string]interface{}{
+			"RegionId":    client.RegionId,
+			"InstanceId":  d.Id(),
+			"ClientToken": buildClientToken(action),
+		}
+		if v, ok := d.GetOk("deployment_set_id"); ok {
+			request["DeploymentSetId"] = v
+		}
+		wait := incrementalWait(3*time.Second, 3*time.Second)
+		err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-26"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+			if err != nil {
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			return nil
+		})
+		addDebug(action, response, request)
+		if err != nil {
+			return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+		}
+		d.SetPartial("deployment_set_id")
 	}
 
 	d.Partial(false)
@@ -1346,6 +1367,10 @@ func buildAliyunInstanceArgs(d *schema.ResourceData, meta interface{}) (*ecs.Run
 
 	if v, ok := d.GetOk("hpc_cluster_id"); ok {
 		request.HpcClusterId = v.(string)
+	}
+
+	if v, ok := d.GetOk("deployment_set_id"); ok {
+		request.DeploymentSetId = v.(string)
 	}
 
 	return request, nil

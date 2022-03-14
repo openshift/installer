@@ -2,6 +2,9 @@ package alicloud
 
 import (
 	"strings"
+	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 
@@ -112,8 +115,21 @@ func dataSourceAlicloudEmrMainVersionsRead(d *schema.ResourceData, meta interfac
 				continue
 			}
 			versionRequest.EmrVersion = v.EmrVersion
-			versionRaw, err = client.WithEmrClient(func(emrClient *emr.Client) (interface{}, error) {
-				return emrClient.DescribeEmrMainVersion(versionRequest)
+			wait := incrementalWait(1*time.Second, 1*time.Second)
+			err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+				versionRaw, err = client.WithEmrClient(func(emrClient *emr.Client) (interface{}, error) {
+					return emrClient.DescribeEmrMainVersion(versionRequest)
+				})
+				if err != nil {
+					if IsExpectedErrors(err, []string{"Throttling.User"}) {
+						wait()
+						return resource.RetryableError(err)
+					}
+					return resource.NonRetryableError(err)
+				}
+				addDebug(request.GetActionName(), raw, request.RpcRequest, request)
+				versionResponse, _ = versionRaw.(*emr.DescribeEmrMainVersionResponse)
+				return nil
 			})
 			if err != nil {
 				return WrapErrorf(err, DataDefaultErrorMsg, "alicloud_emr_main_versions", request.GetActionName(), AlibabaCloudSdkGoERROR)

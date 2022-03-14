@@ -97,6 +97,30 @@ func dataSourceAlicloudPvtzRules() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"bind_vpcs": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"vpc_name": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"vpc_id": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"region_name": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"region_id": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -116,6 +140,7 @@ func dataSourceAlicloudPvtzRulesRead(d *schema.ResourceData, meta interface{}) e
 	request["Lang"] = "en"
 	request["PageSize"] = PageSizeLarge
 	request["PageNumber"] = 1
+	request["NeedDetailAttributes"] = true
 	var objects []map[string]interface{}
 	var ruleNameRegex *regexp.Regexp
 	if v, ok := d.GetOk("name_regex"); ok {
@@ -206,6 +231,20 @@ func dataSourceAlicloudPvtzRulesRead(d *schema.ResourceData, meta interface{}) e
 			}
 		}
 		mapping["forward_ips"] = forwardConfigsSli
+
+		bindVpcsSlice := make([]map[string]interface{}, 0)
+		if bindVpcs, ok := object["BindVpcs"].([]interface{}); ok {
+			for _, bindVpcsArgs := range bindVpcs {
+				bindVpcsArg := bindVpcsArgs.(map[string]interface{})
+				bindVpcsMap := make(map[string]interface{})
+				bindVpcsMap["vpc_id"] = bindVpcsArg["VpcId"]
+				bindVpcsMap["region_id"] = bindVpcsArg["RegionId"]
+				bindVpcsMap["vpc_name"] = bindVpcsArg["VpcName"]
+				bindVpcsMap["region_name"] = bindVpcsArg["RegionName"]
+				bindVpcsSlice = append(bindVpcsSlice, bindVpcsMap)
+			}
+		}
+		mapping["bind_vpcs"] = bindVpcsSlice
 		ids = append(ids, fmt.Sprint(mapping["id"]))
 		names = append(names, object["Name"])
 		s = append(s, mapping)

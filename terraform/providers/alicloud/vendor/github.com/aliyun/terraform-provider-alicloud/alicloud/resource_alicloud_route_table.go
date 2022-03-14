@@ -136,6 +136,10 @@ func resourceAlicloudRouteTableUpdate(d *schema.ResourceData, meta interface{}) 
 	client := meta.(*connectivity.AliyunClient)
 	vpcService := VpcService{client}
 	var response map[string]interface{}
+	conn, err := client.NewVpcClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	d.Partial(true)
 
 	if d.HasChange("tags") {
@@ -163,10 +167,6 @@ func resourceAlicloudRouteTableUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 	if update {
 		action := "ModifyRouteTableAttributes"
-		conn, err := client.NewVpcClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-04-28"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

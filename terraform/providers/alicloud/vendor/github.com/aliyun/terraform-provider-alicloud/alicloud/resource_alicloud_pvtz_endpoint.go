@@ -159,6 +159,10 @@ func resourceAlicloudPvtzEndpointRead(d *schema.ResourceData, meta interface{}) 
 }
 func resourceAlicloudPvtzEndpointUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewPvtzClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	request := map[string]interface{}{
 		"EndpointId": d.Id(),
@@ -185,10 +189,6 @@ func resourceAlicloudPvtzEndpointUpdate(d *schema.ResourceData, meta interface{}
 	request["Lang"] = "en"
 	if update {
 		action := "UpdateResolverEndpoint"
-		conn, err := client.NewPvtzClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2018-01-01"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

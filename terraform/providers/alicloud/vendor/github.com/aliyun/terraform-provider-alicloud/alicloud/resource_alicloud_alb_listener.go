@@ -993,7 +993,7 @@ func resourceAlicloudAlbListenerDelete(d *schema.ResourceData, meta interface{})
 	err = resource.Retry(d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
 		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2020-06-16"), StringPointer("AK"), nil, request, &runtime)
 		if err != nil {
-			if IsExpectedErrors(err, []string{"IdempotenceProcessing", "IncorrectBusinessStatus.LoadBalancer", "SystemBusy", "Throttling", "-22031"}) || NeedRetry(err) {
+			if IsExpectedErrors(err, []string{"IdempotenceProcessing", "ResourceInConfiguring.Listener", "IncorrectBusinessStatus.LoadBalancer", "SystemBusy", "Throttling", "-22031"}) || NeedRetry(err) {
 				wait()
 				return resource.RetryableError(err)
 			}

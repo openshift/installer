@@ -123,6 +123,10 @@ func resourceAlicloudKvstoreAuditLogConfigRead(d *schema.ResourceData, meta inte
 func resourceAlicloudKvstoreAuditLogConfigUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	rKvstoreService := RKvstoreService{client}
+	conn, err := client.NewRedisaClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	update := false
 	request := map[string]interface{}{
@@ -144,10 +148,6 @@ func resourceAlicloudKvstoreAuditLogConfigUpdate(d *schema.ResourceData, meta in
 	}
 	if update {
 		action := "ModifyAuditLogConfig"
-		conn, err := client.NewRedisaClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2015-01-01"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

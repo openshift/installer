@@ -23,7 +23,7 @@ func dataSourceAlicloudEipAddresses() *schema.Resource {
 				Elem:       &schema.Schema{Type: schema.TypeString},
 				ForceNew:   true,
 				MinItems:   1,
-				Deprecated: "Field 'ip_addresses' has been deprecated from provider version 1.126.0 and it will be remove in the future version. Please use the new attribute 'ip_address' instead.",
+				Deprecated: "Field 'ip_addresses' has been deprecated from provider version 1.126.0 and it will be removed in the future version. Please use the new attribute 'ip_address' instead.",
 			},
 			"in_use": {
 				Type:     schema.TypeBool,
@@ -253,7 +253,7 @@ func dataSourceAlicloudEipAddresses() *schema.Resource {
 			"eips": {
 				Type:       schema.TypeList,
 				Computed:   true,
-				Deprecated: "Field 'eips' has been deprecated from provider version 1.126.0 and it will be remove in the future version. Please use the new attribute 'addresses' instead.",
+				Deprecated: "Field 'eips' has been deprecated from provider version 1.126.0 and it will be removed in the future version. Please use the new attribute 'addresses' instead.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {

@@ -171,7 +171,7 @@ func resourceAliyunEipAssociationDelete(d *schema.ResourceData, meta interface{}
 		})
 		if err != nil {
 			if IsExpectedErrors(err, []string{"IncorrectInstanceStatus", "IncorrectHaVipStatus", "TaskConflict",
-				"InvalidIpStatus.HasBeenUsedBySnatTable", "InvalidIpStatus.HasBeenUsedByForwardEntry"}) {
+				"InvalidIpStatus.HasBeenUsedBySnatTable", "InvalidIpStatus.HasBeenUsedByForwardEntry", "InvalidStatus.EniStatusNotSupport"}) {
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)

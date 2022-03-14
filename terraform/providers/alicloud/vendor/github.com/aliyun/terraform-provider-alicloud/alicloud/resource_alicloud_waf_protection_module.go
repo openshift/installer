@@ -116,6 +116,10 @@ func resourceAlicloudWafProtectionModuleRead(d *schema.ResourceData, meta interf
 }
 func resourceAlicloudWafProtectionModuleUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewWafClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	parts, err := ParseResourceId(d.Id(), 3)
 	if err != nil {
@@ -139,10 +143,6 @@ func resourceAlicloudWafProtectionModuleUpdate(d *schema.ResourceData, meta inte
 
 	if update {
 		action := "ModifyProtectionModuleMode"
-		conn, err := client.NewWafClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-09-10"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -172,10 +172,6 @@ func resourceAlicloudWafProtectionModuleUpdate(d *schema.ResourceData, meta inte
 
 	if update {
 		action := "ModifyProtectionModuleStatus"
-		conn, err := client.NewWafClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-09-10"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

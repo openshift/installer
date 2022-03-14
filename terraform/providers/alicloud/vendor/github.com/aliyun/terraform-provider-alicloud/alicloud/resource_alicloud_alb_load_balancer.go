@@ -147,6 +147,10 @@ func resourceAlicloudAlbLoadBalancer() *schema.Resource {
 				},
 				ForceNew: true,
 			},
+			"dns_name": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -289,6 +293,7 @@ func resourceAlicloudAlbLoadBalancerRead(d *schema.ResourceData, meta interface{
 		d.Set("zone_mappings", zoneMappingsMaps)
 	}
 
+	d.Set("dns_name", object["DNSName"])
 	return nil
 }
 func resourceAlicloudAlbLoadBalancerUpdate(d *schema.ResourceData, meta interface{}) error {

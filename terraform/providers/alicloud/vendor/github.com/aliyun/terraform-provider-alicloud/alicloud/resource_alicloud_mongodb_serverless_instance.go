@@ -257,10 +257,7 @@ func resourceAlicloudMongodbServerlessInstanceRead(d *schema.ResourceData, meta 
 					securityIpGroupMaps = append(securityIpGroupMaps, iPArrayListItemMap)
 				}
 			}
-			err = d.Set("security_ip_groups", securityIpGroupMaps)
-			if err != nil {
-				panic(err)
-			}
+			d.Set("security_ip_groups", securityIpGroupMaps)
 		}
 	}
 	return nil

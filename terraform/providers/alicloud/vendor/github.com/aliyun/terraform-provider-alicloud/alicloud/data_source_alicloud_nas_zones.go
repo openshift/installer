@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+
 	"github.com/PaesslerAG/jsonpath"
 	util "github.com/alibabacloud-go/tea-utils/service"
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
@@ -14,6 +16,12 @@ func dataSourceAlicloudNasZones() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceAlicloudNasZonesRead,
 		Schema: map[string]*schema.Schema{
+			"file_system_type": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"standard", "extreme", "cpfs"}, false),
+			},
 			"output_file": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -56,6 +64,9 @@ func dataSourceAlicloudNasZonesRead(d *schema.ResourceData, meta interface{}) er
 	action := "DescribeZones"
 	request := make(map[string]interface{})
 	request["RegionId"] = client.RegionId
+	if v, ok := d.GetOk("file_system_type"); ok {
+		request["FileSystemType"] = v
+	}
 	var objects []map[string]interface{}
 	var response map[string]interface{}
 	conn, err := client.NewNasClient()

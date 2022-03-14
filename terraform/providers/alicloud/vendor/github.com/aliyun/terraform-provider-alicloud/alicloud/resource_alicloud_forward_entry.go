@@ -171,6 +171,10 @@ func resourceAlicloudForwardEntryUpdate(d *schema.ResourceData, meta interface{}
 	client := meta.(*connectivity.AliyunClient)
 	vpcService := VpcService{client}
 	var response map[string]interface{}
+	conn, err := client.NewVpcClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	if !strings.Contains(d.Id(), COLON_SEPARATED) {
 		d.SetId(d.Get("forward_table_id").(string) + COLON_SEPARATED + d.Id())
 	}
@@ -217,10 +221,6 @@ func resourceAlicloudForwardEntryUpdate(d *schema.ResourceData, meta interface{}
 			request["PortBreak"] = d.Get("port_break")
 		}
 		action := "ModifyForwardEntry"
-		conn, err := client.NewVpcClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-04-28"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

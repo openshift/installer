@@ -84,6 +84,15 @@ func dataSourceAlicloudVpcs() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"page_number": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"page_size": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  50,
+			},
 			"vpcs": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -172,6 +181,10 @@ func dataSourceAlicloudVpcs() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
+			"total_count": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -210,9 +223,17 @@ func dataSourceAlicloudVpcsRead(d *schema.ResourceData, meta interface{}) error 
 	if v, ok := d.GetOk("vpc_owner_id"); ok {
 		request["VpcOwnerId"] = v
 	}
-	request["PageSize"] = PageSizeLarge
-	request["PageNumber"] = 1
-	var objects []map[string]interface{}
+	if v, ok := d.GetOk("page_number"); ok && v.(int) > 0 {
+		request["PageNumber"] = v.(int)
+	} else {
+		request["PageNumber"] = 1
+	}
+	if v, ok := d.GetOk("page_size"); ok && v.(int) > 0 {
+		request["PageSize"] = v.(int)
+	} else {
+		request["PageSize"] = PageSizeLarge
+	}
+	var objects []interface{}
 	var vpcNameRegex *regexp.Regexp
 	if v, ok := d.GetOk("name_regex"); ok {
 		r, err := regexp.Compile(v.(string))
@@ -251,6 +272,10 @@ func dataSourceAlicloudVpcsRead(d *schema.ResourceData, meta interface{}) error 
 			return WrapErrorf(err, FailedGetAttributeMsg, action, "$.Vpcs.Vpc", response)
 		}
 		result, _ := resp.([]interface{})
+		if isPagingRequest(d) {
+			objects = result
+			break
+		}
 		for _, v := range result {
 			item := v.(map[string]interface{})
 			if v, ok := d.GetOk("cidr_block"); ok && v.(string) != "" && item["CidrBlock"].(string) != v.(string) {
@@ -274,7 +299,7 @@ func dataSourceAlicloudVpcsRead(d *schema.ResourceData, meta interface{}) error 
 			}
 			objects = append(objects, item)
 		}
-		if len(result) < PageSizeLarge {
+		if len(result) < request["PageSize"].(int) {
 			break
 		}
 		request["PageNumber"] = request["PageNumber"].(int) + 1
@@ -282,7 +307,8 @@ func dataSourceAlicloudVpcsRead(d *schema.ResourceData, meta interface{}) error 
 	ids := make([]string, 0)
 	names := make([]interface{}, 0)
 	s := make([]map[string]interface{}, 0)
-	for _, object := range objects {
+	for _, v := range objects {
+		object := v.(map[string]interface{})
 		mapping := map[string]interface{}{
 			"region_id":             object["RegionId"],
 			"creation_time":         object["CreationTime"],
@@ -343,6 +369,9 @@ func dataSourceAlicloudVpcsRead(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	if err := d.Set("vpcs", s); err != nil {
+		return WrapError(err)
+	}
+	if err := d.Set("total_count", formatInt(response["TotalCount"])); err != nil {
 		return WrapError(err)
 	}
 	if output, ok := d.GetOk("output_file"); ok && output.(string) != "" {

@@ -1,10 +1,14 @@
 package alicloud
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/PaesslerAG/jsonpath"
+	util "github.com/alibabacloud-go/tea-utils/service"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -735,6 +739,29 @@ func (s *AlikafkaService) ignoreTag(t alikafka.TagResource) bool {
 	return false
 }
 
+func (s *AlikafkaService) tagVOTagsToMap(tags []alikafka.TagVO) map[string]string {
+	result := make(map[string]string)
+	for _, t := range tags {
+		if !s.tagVOIgnoreTag(t) {
+			result[t.Key] = t.Value
+		}
+	}
+	return result
+}
+
+func (s *AlikafkaService) tagVOIgnoreTag(t alikafka.TagVO) bool {
+	filter := []string{"^aliyun", "^acs:", "^http://", "^https://"}
+	for _, v := range filter {
+		log.Printf("[DEBUG] Matching prefix %v with %v\n", v, t.Key)
+		ok, _ := regexp.MatchString(v, t.Key)
+		if ok {
+			log.Printf("[DEBUG] Found Alibaba Cloud specific t %s (val: %s), ignoring.\n", t.Key, t.Value)
+			return true
+		}
+	}
+	return false
+}
+
 func (s *AlikafkaService) diffTags(oldTags, newTags []alikafka.TagResourcesTag) ([]alikafka.TagResourcesTag, []alikafka.TagResourcesTag) {
 	// First, we're creating everything we have
 	create := make(map[string]interface{})
@@ -765,4 +792,173 @@ func (s *AlikafkaService) tagsFromMap(m map[string]interface{}) []alikafka.TagRe
 	}
 
 	return result
+}
+
+func (s *AlikafkaService) GetAllowedIpList(id string) (object map[string]interface{}, err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewAlikafkaClient()
+	if err != nil {
+		return nil, WrapError(err)
+	}
+	action := "GetAllowedIpList"
+	request := map[string]interface{}{
+		"RegionId":   s.client.RegionId,
+		"InstanceId": id,
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-09-16"), StringPointer("AK"), nil, request, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	v, err := jsonpath.Get("$", response)
+	if err != nil {
+		return object, WrapErrorf(err, FailedGetAttributeMsg, id, "$", response)
+	}
+	object = v.(map[string]interface{})
+	return object, nil
+}
+
+func (s *AlikafkaService) SetResourceTags(d *schema.ResourceData, resourceType string) error {
+	if d.HasChange("tags") {
+		added, removed := parsingTags(d)
+		conn, err := s.client.NewAlikafkaClient()
+		if err != nil {
+			return WrapError(err)
+		}
+
+		removedTagKeys := make([]string, 0)
+		for _, v := range removed {
+			if !ignoredTags(v, "") {
+				removedTagKeys = append(removedTagKeys, v)
+			}
+		}
+		if len(removedTagKeys) > 0 {
+			action := "UntagResources"
+			request := map[string]interface{}{
+				"RegionId":     s.client.RegionId,
+				"ResourceType": resourceType,
+				"ResourceId.1": d.Id(),
+			}
+			for i, key := range removedTagKeys {
+				request[fmt.Sprintf("TagKey.%d", i+1)] = key
+			}
+			wait := incrementalWait(2*time.Second, 1*time.Second)
+			err := resource.Retry(10*time.Minute, func() *resource.RetryError {
+				response, err := conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-09-16"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+				if err != nil {
+					if IsExpectedErrors(err, []string{ThrottlingUser, "ONS_SYSTEM_FLOW_CONTROL"}) || IsThrottling(err) {
+						wait()
+						return resource.RetryableError(err)
+
+					}
+					return resource.NonRetryableError(err)
+				}
+				addDebug(action, response, request)
+				return nil
+			})
+			if err != nil {
+				return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+			}
+		}
+		if len(added) > 0 {
+			action := "TagResources"
+			request := map[string]interface{}{
+				"RegionId":     s.client.RegionId,
+				"ResourceType": resourceType,
+				"ResourceId.1": d.Id(),
+			}
+			count := 1
+			for key, value := range added {
+				request[fmt.Sprintf("Tag.%d.Key", count)] = key
+				request[fmt.Sprintf("Tag.%d.Value", count)] = value
+				count++
+			}
+
+			wait := incrementalWait(2*time.Second, 1*time.Second)
+			err := resource.Retry(10*time.Minute, func() *resource.RetryError {
+				response, err := conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-09-16"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+				if err != nil {
+					if IsExpectedErrors(err, []string{ThrottlingUser, "ONS_SYSTEM_FLOW_CONTROL"}) || IsThrottling(err) {
+						wait()
+						return resource.RetryableError(err)
+
+					}
+					return resource.NonRetryableError(err)
+				}
+				addDebug(action, response, request)
+				return nil
+			})
+			if err != nil {
+				return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+			}
+		}
+		d.SetPartial("tags")
+	}
+	return nil
+}
+func (s *AlikafkaService) DescribeAliKafkaConsumerGroup(id string) (object map[string]interface{}, err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewAlikafkaClient()
+	if err != nil {
+		return nil, WrapError(err)
+	}
+	action := "GetConsumerList"
+	parts, err := ParseResourceId(id, 2)
+	if err != nil {
+		err = WrapError(err)
+		return
+	}
+	request := map[string]interface{}{
+		"RegionId":   s.client.RegionId,
+		"InstanceId": parts[0],
+	}
+	idExist := false
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-09-16"), StringPointer("AK"), nil, request, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if err != nil {
+		return object, WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	if fmt.Sprint(response["Success"]) == "false" {
+		return object, WrapError(fmt.Errorf("%s failed, response: %v", action, response))
+	}
+	v, err := jsonpath.Get("$.ConsumerList.ConsumerVO", response)
+	if err != nil {
+		return object, WrapErrorf(err, FailedGetAttributeMsg, id, "$.ConsumerList.ConsumerVO", response)
+	}
+	if len(v.([]interface{})) < 1 {
+		return object, WrapErrorf(Error(GetNotFoundMessage("AliKafka", id)), NotFoundWithResponse, response)
+	}
+	for _, v := range v.([]interface{}) {
+		if fmt.Sprint(v.(map[string]interface{})["ConsumerId"]) == parts[1] {
+			idExist = true
+			return v.(map[string]interface{}), nil
+		}
+	}
+	if !idExist {
+		return object, WrapErrorf(Error(GetNotFoundMessage("AliKafka", id)), NotFoundWithResponse, response)
+	}
+	return object, nil
 }

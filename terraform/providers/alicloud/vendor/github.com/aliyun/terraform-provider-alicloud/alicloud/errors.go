@@ -44,7 +44,7 @@ var SlbIsBusy = []string{"SystemBusy", "OperationBusy", "ServiceIsStopping", "Ba
 var EcsNotFound = []string{"InvalidInstanceId.NotFound", "Forbidden.InstanceNotFound"}
 var DiskInvalidOperation = []string{"IncorrectDiskStatus", "IncorrectInstanceStatus", "OperationConflict", "InternalError", "InvalidOperation.Conflict", "IncorrectDiskStatus.Initializing"}
 var NetworkInterfaceInvalidOperations = []string{"InvalidOperation.InvalidEniState", "InvalidOperation.InvalidEcsState", "OperationConflict", "ServiceUnavailable", "InternalError"}
-var OperationDeniedDBStatus = []string{"OperationDenied.DBStatus", "OperationDenied.DBInstanceStatus", "OperationDenied.DBClusterStatus", "InternalError", "OperationDenied.OutofUsage", "IncorrectDBInstanceState"}
+var OperationDeniedDBStatus = []string{"InstanceConnectTimeoutFault", "OperationDenied.DBStatus", "OperationDenied.DBInstanceStatus", "OperationDenied.DBClusterStatus", "InternalError", "OperationDenied.OutofUsage", "IncorrectDBInstanceState"}
 var DBReadInstanceNotReadyStatus = []string{"OperationDenied.ReadDBInstanceStatus", "OperationDenied.MasterDBInstanceState", "ReadDBInstance.Mismatch"}
 var NasNotFound = []string{"InvalidMountTarget.NotFound", "InvalidFileSystem.NotFound", "Forbidden.NasNotFound", "InvalidLBid.NotFound", "VolumeUnavailable"}
 var SnapshotInvalidOperations = []string{"OperationConflict", "ServiceUnavailable", "InternalError", "SnapshotCreatedDisk", "SnapshotCreatedImage"}
@@ -386,5 +386,6 @@ const FailedGetAttributeMsg = "Getting resource %s attribute by path %s failed!!
 
 const DefaultDebugMsg = "\n*************** %s Response *************** \n%s\n%s******************************\n\n"
 const FailedToReachTargetStatus = "Failed to reach target status. Current status is %s."
+const FailedToReachTargetStatusWithResponse = FailedToReachTargetStatus + " Response: %s"
 const FailedToReachTargetAttribute = "Failed to reach value for target attribute. Current value is %s."
 const RequiredWhenMsg = "attribute '%s' is required when '%s' is %v"

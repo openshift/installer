@@ -2,6 +2,7 @@ package alicloud
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -149,6 +150,34 @@ func (s *EssService) WaitForEssNotification(id string, status Status, timeout in
 	}
 }
 
+func (s *EssService) ActivityStateRefreshFunc(activityId string, failStates []string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+
+		request := ess.CreateDescribeScalingActivitiesRequest()
+		request.ScalingActivityId = &[]string{activityId}
+		request.RegionId = s.client.RegionId
+		raw, e := s.client.WithEssClient(func(essClient *ess.Client) (interface{}, error) {
+			return essClient.DescribeScalingActivities(request)
+		})
+		if e != nil {
+			return nil, "", WrapErrorf(e, activityId, request.GetActionName(), AlibabaCloudSdkGoERROR)
+		}
+
+		response, _ := raw.(*ess.DescribeScalingActivitiesResponse)
+		for _, v := range response.ScalingActivities.ScalingActivity {
+			if v.ScalingActivityId == activityId {
+				for _, failState := range failStates {
+					if fmt.Sprint(v.StatusCode) == failState {
+						return v, fmt.Sprint(v.StatusCode), WrapError(Error(FailedToReachTargetStatus, fmt.Sprint(v.StatusCode)))
+					}
+				}
+				return v, fmt.Sprint(v.StatusCode), nil
+			}
+		}
+		return nil, "", Error("activity not found")
+	}
+}
+
 func (s *EssService) DescribeEssScalingGroup(id string) (group ess.ScalingGroup, err error) {
 	request := ess.CreateDescribeScalingGroupsRequest()
 	request.ScalingGroupId = &[]string{id}
@@ -250,6 +279,19 @@ func (s *EssService) flattenDataDiskMappings(list []ess.DataDisk) []map[string]i
 			"description":             i.Description,
 			"auto_snapshot_policy_id": i.AutoSnapshotPolicyId,
 			"performance_level":       i.PerformanceLevel,
+		}
+		result = append(result, l)
+	}
+	return result
+}
+
+func (s *EssService) flattenSpotPriceLimitMappings(list []ess.SpotPriceModel) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(list))
+	for _, i := range list {
+		p, _ := strconv.ParseFloat(strconv.FormatFloat(i.PriceLimit, 'f', 2, 64), 64)
+		l := map[string]interface{}{
+			"instance_type": i.InstanceType,
+			"price_limit":   p,
 		}
 		result = append(result, l)
 	}

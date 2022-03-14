@@ -136,8 +136,16 @@ func resourceAlicloudEcsKeyPairCreate(d *schema.ResourceData, meta interface{}) 
 
 	d.SetId(fmt.Sprint(response["KeyPairName"]))
 	if file, ok := d.GetOk("key_file"); ok {
-		ioutil.WriteFile(file.(string), []byte(response["PrivateKeyBody"].(string)), 0600)
-		os.Chmod(file.(string), 0400)
+		if v, exist := response["PrivateKeyBody"]; exist {
+			err := ioutil.WriteFile(file.(string), []byte(v.(string)), 0600)
+			if err != nil {
+				return WrapError(err)
+			}
+			err = os.Chmod(file.(string), 0400)
+			if err != nil {
+				return WrapError(err)
+			}
+		}
 	}
 
 	return resourceAlicloudEcsKeyPairRead(d, meta)
@@ -170,6 +178,10 @@ func resourceAlicloudEcsKeyPairRead(d *schema.ResourceData, meta interface{}) er
 func resourceAlicloudEcsKeyPairUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	ecsService := EcsService{client}
+	conn, err := client.NewEcsClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	d.Partial(true)
 
@@ -191,10 +203,6 @@ func resourceAlicloudEcsKeyPairUpdate(d *schema.ResourceData, meta interface{}) 
 	request["ResourceType"] = "keypair"
 	if update {
 		action := "JoinResourceGroup"
-		conn, err := client.NewEcsClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-26"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

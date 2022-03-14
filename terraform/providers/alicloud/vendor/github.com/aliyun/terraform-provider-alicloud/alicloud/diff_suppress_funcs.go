@@ -381,6 +381,15 @@ func ecsSecurityGroupRulePortRangeDiffSuppressFunc(k, old, new string, d *schema
 	return true
 }
 
+func ecsSecurityGroupRulePreFixListIdDiffSuppressFunc(k, old, new string, d *schema.ResourceData) bool {
+	_, cidrIpExist := d.GetOk("cidr_ip")
+	_, SourceSecurityGroupIdExist := d.GetOk("source_security_group_id")
+	if cidrIpExist || SourceSecurityGroupIdExist {
+		return true
+	}
+	return false
+}
+
 func vpcTypeResourceDiffSuppressFunc(k, old, new string, d *schema.ResourceData) bool {
 	if len(Trim(d.Get("vswitch_id").(string))) > 0 {
 		return false

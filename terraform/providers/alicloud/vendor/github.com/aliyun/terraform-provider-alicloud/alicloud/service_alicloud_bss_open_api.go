@@ -14,7 +14,7 @@ type BssOpenApiService struct {
 	client *connectivity.AliyunClient
 }
 
-func (s *BssOpenApiService) QueryAvailableInstances(id, productCode, productType string) (object map[string]interface{}, err error) {
+func (s *BssOpenApiService) QueryAvailableInstances(id, productCode, productType, productTypeIntl string) (object map[string]interface{}, err error) {
 	var response map[string]interface{}
 	conn, err := s.client.NewBssopenapiClient()
 	if err != nil {
@@ -39,6 +39,9 @@ func (s *BssOpenApiService) QueryAvailableInstances(id, productCode, productType
 			}
 			if IsExpectedErrors(err, []string{"NotApplicable"}) {
 				conn.Endpoint = String(connectivity.BssOpenAPIEndpointInternational)
+				if len(productTypeIntl) != 0 {
+					request["ProductType"] = productTypeIntl
+				}
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)

@@ -47,6 +47,12 @@ func resourceAlicloudGaAccelerator() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.IntBetween(1, 9),
 			},
+			"pricing_cycle": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"Month", "Year"}, false),
+			},
 			"renewal_status": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -88,7 +94,11 @@ func resourceAlicloudGaAcceleratorCreate(d *schema.ResourceData, meta interface{
 		request["AutoUseCoupon"] = v
 	}
 	request["Duration"] = d.Get("duration")
-	request["PricingCycle"] = "Month"
+	if v, ok := d.GetOk("pricing_cycle"); ok {
+		request["PricingCycle"] = v
+	} else {
+		request["PricingCycle"] = "Month"
+	}
 	request["RegionId"] = client.RegionId
 	request["Spec"] = d.Get("spec")
 	runtime := util.RuntimeOptions{}
@@ -139,7 +149,10 @@ func resourceAlicloudGaAcceleratorUpdate(d *schema.ResourceData, meta interface{
 	gaService := GaService{client}
 	var response map[string]interface{}
 	d.Partial(true)
-
+	conn, err := client.NewGaplusClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	update := false
 	request := map[string]interface{}{
 		"AcceleratorId": d.Id(),
@@ -159,10 +172,6 @@ func resourceAlicloudGaAcceleratorUpdate(d *schema.ResourceData, meta interface{
 	}
 	if update {
 		action := "UpdateAcceleratorAutoRenewAttribute"
-		conn, err := client.NewGaplusClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		request["ClientToken"] = buildClientToken("UpdateAcceleratorAutoRenewAttribute")
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)
@@ -212,10 +221,6 @@ func resourceAlicloudGaAcceleratorUpdate(d *schema.ResourceData, meta interface{
 			updateAcceleratorReq["AutoUseCoupon"] = v
 		}
 		action := "UpdateAccelerator"
-		conn, err := client.NewGaplusClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)
 		request["ClientToken"] = buildClientToken("UpdateAccelerator")

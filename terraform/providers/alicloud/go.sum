@@ -108,8 +108,8 @@ github.com/aliyun/credentials-go v1.1.2 h1:qU1vwGIBb3UJ8BwunHDRFtAhS6jnQLnde/yk0
 github.com/aliyun/credentials-go v1.1.2/go.mod h1:ozcZaMR5kLM7pwtCMEpVmQ242suV6qTJya2bDq4X1Tw=
 github.com/aliyun/fc-go-sdk v0.0.0-20200925033337-c013428cbe21 h1:0kcRapGFTtwZIgbGSaM+N1y+GrnLaY4Vz78FqPnt164=
 github.com/aliyun/fc-go-sdk v0.0.0-20200925033337-c013428cbe21/go.mod h1:X4Pc3TFz4LRXaQPhyzBU4Ec8pL/QvaJ36CFtLJsroIM=
-github.com/aliyun/terraform-provider-alicloud v1.148.0 h1:mpf06ophnQHET06jHhT8vB5pN6BYhqdhPI/t4ZYFji8=
-github.com/aliyun/terraform-provider-alicloud v1.148.0/go.mod h1:aG6IOiv0rSEz6HYNQ4dir0VVXYbul4olQlMRpBBgqGo=
+github.com/aliyun/terraform-provider-alicloud v1.158.0 h1:sCpsUp0ovZg1L8mudkk8xtTzwf3YZfGqVf9qb0EtMqA=
+github.com/aliyun/terraform-provider-alicloud v1.158.0/go.mod h1:FOE0DUKxGNcX3SKUelZKu/rqnvpdJCAsEyv7ERbgxgE=
 github.com/andybalholm/brotli v1.0.1 h1:KqhlKozYbRtJvsPrrEeXcO+N2l6NYT5A2QAFmSULpEc=
 github.com/andybalholm/brotli v1.0.1/go.mod h1:loMXtMfwqflxFJPmdbJO0a3KNoPuLBgiu3qAvBg8x/Y=
 github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
@@ -167,10 +167,10 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/deckarep/golang-set v1.7.1 h1:SCQV0S6gTtp6itiFrTqI+pfmJ4LN85S1YzhDf9rTHJQ=
-github.com/deckarep/golang-set v1.7.1/go.mod h1:93vsz/8Wt4joVM7c2AVqh+YRMiUSc14yDtF28KmMOgQ=
-github.com/denverdino/aliyungo v0.0.0-20211122042034-c78a9788662a h1:86hp5rVR3OECcLLlL04b8qlysYJkV/d5Xv7vPZMAUX4=
-github.com/denverdino/aliyungo v0.0.0-20211122042034-c78a9788662a/go.mod h1:VVxx1gyGhdt369208nKOYLI0PVgrZqbU+EuWBZJQ1ZQ=
+github.com/deckarep/golang-set v1.8.0 h1:sk9/l/KqpunDwP7pSjUg0keiOOLEnOBHzykLrsPppp4=
+github.com/deckarep/golang-set v1.8.0/go.mod h1:5nI87KwE7wgsBU1F4GKAw2Qod7p5kyS383rP6+o6qqo=
+github.com/denverdino/aliyungo v0.0.0-20220218034049-d2eb7f483ee8 h1:Y86vVLW1CMFbrS2/S7EeGrsP/q3Ulljnszu4ju3dq+E=
+github.com/denverdino/aliyungo v0.0.0-20220218034049-d2eb7f483ee8/go.mod h1:VVxx1gyGhdt369208nKOYLI0PVgrZqbU+EuWBZJQ1ZQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
 github.com/dustin/go-humanize v0.0.0-20171111073723-bb3d318650d4/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
@@ -586,6 +586,7 @@ github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a/go.mod h1:v3UYOV
 github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/vmihailenco/msgpack v4.0.1+incompatible h1:RMF1enSPeKTlXrXdOcqjFUElywVZjjC6pqse21bKbEU=
 github.com/vmihailenco/msgpack v4.0.1+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
+github.com/waigani/diffparser v0.0.0-20190828052634-7391f219313d/go.mod h1:BzSc3WEF8R+lCaP5iGFRxd5kIXy4JKOZAwNe1w0cdc0=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.30/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

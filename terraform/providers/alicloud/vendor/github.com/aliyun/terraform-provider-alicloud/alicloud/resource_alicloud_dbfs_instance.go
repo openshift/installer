@@ -27,14 +27,6 @@ func resourceAlicloudDbfsInstance() *schema.Resource {
 			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
-			"attach_mode": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"attach_point": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"category": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -47,8 +39,9 @@ func resourceAlicloudDbfsInstance() *schema.Resource {
 				Optional: true,
 			},
 			"ecs_list": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:       schema.TypeSet,
+				Optional:   true,
+				Deprecated: "Field 'ecs_list' has been deprecated from provider version 1.156.0 and it will be removed in the future version. Please use the new resource 'alicloud_dbfs_instance_attachment' to attach ECS and DBFS.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ecs_id": {
@@ -102,10 +95,6 @@ func resourceAlicloudDbfsInstance() *schema.Resource {
 				Computed: true,
 			},
 			"tags": tagsSchema(),
-			"used_scene": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"zone_id": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -148,9 +137,6 @@ func resourceAlicloudDbfsInstanceCreate(d *schema.ResourceData, meta interface{}
 	request["SizeG"] = d.Get("size")
 	if v, ok := d.GetOk("snapshot_id"); ok {
 		request["SnapshotId"] = v
-	}
-	if v, ok := d.GetOk("used_scene"); ok {
-		request["UsedScene"] = v
 	}
 	request["ZoneId"] = d.Get("zone_id")
 	request["ClientToken"] = buildClientToken("CreateDbfs")

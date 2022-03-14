@@ -366,7 +366,7 @@ func resourceAlicloudRdsAccountDelete(d *schema.ResourceData, meta interface{}) 
 	err = resource.Retry(d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
 		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-08-15"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
 		if err != nil {
-			if NeedRetry(err) {
+			if NeedRetry(err) && IsExpectedErrors(err, []string{"InternalError", "OperationDenied.DBClusterStatus", "OperationDenied.DBInstanceStatus", "OperationDenied.DBStatus"}) {
 				wait()
 				return resource.RetryableError(err)
 			}

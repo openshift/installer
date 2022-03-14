@@ -40,6 +40,7 @@ func resourceAlicloudClickHouseDbCluster() *schema.Resource {
 						"db_cluster_ip_array_attribute": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Removed:  "Field 'db_cluster_ip_array_attribute' has been removed from provider",
 						},
 						"db_cluster_ip_array_name": {
 							Type:     schema.TypeString,
@@ -249,7 +250,7 @@ func resourceAlicloudClickHouseDbClusterRead(d *schema.ResourceData, meta interf
 			dBClusterAccessWhiteListMaps := make([]map[string]interface{}, 0)
 			for _, iPArrayListItem := range iPArrayList.([]interface{}) {
 				if v, ok := iPArrayListItem.(map[string]interface{}); ok {
-					if v["DBClusterIPArrayName"].(string) == "default" {
+					if v["DBClusterIPArrayName"].(string) == "default" || v["DBClusterIPArrayName"].(string) == "dms" {
 						continue
 					}
 					iPArrayListItemMap := make(map[string]interface{})

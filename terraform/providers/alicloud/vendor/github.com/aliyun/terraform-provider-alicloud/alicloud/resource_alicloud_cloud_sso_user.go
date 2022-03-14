@@ -66,7 +66,7 @@ func resourceAlicloudCloudSsoUser() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[\w-.@]{1,64}$`), "The name of the resource. The name must be 1 to 64 characters in length and  can contain letters, digits, underscores (_), and hyphens (-)."),
+				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[\w-.@]{1,64}$`), "The name of the resource. The name must be 1 to 64 characters in length and  can contain letters, digits, at signs (@), periods (.), underscores (_), and hyphens (-)."),
 			},
 		},
 	}

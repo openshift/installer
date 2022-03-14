@@ -103,6 +103,12 @@ func resourceAliyunSecurityGroupRule() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"prefix_list_id": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				DiffSuppressFunc: ecsSecurityGroupRulePreFixListIdDiffSuppressFunc,
+			},
 		},
 	}
 }
@@ -121,10 +127,11 @@ func resourceAliyunSecurityGroupRuleCreate(d *schema.ResourceData, meta interfac
 	policy := d.Get("policy").(string)
 	priority := d.Get("priority").(int)
 
-	if _, ok := d.GetOk("cidr_ip"); !ok {
-		if _, ok := d.GetOk("source_security_group_id"); !ok {
-			return WrapError(fmt.Errorf("Either 'cidr_ip' or 'source_security_group_id' must be specified."))
-		}
+	_, cidrExist := d.GetOk("cidr_ip")
+	_, sourceSecurityGroupIdExist := d.GetOk("source_security_group_id")
+	_, prefixListIdExist := d.GetOk("prefix_list_id")
+	if !cidrExist && !sourceSecurityGroupIdExist && !prefixListIdExist {
+		return WrapError(fmt.Errorf("you must specify one of the following field: cidr_ip, source_security_group_id, prefix_list_id"))
 	}
 
 	request, err := buildAliyunSGRuleRequest(d, meta)
@@ -218,10 +225,12 @@ func resourceAliyunSecurityGroupRuleRead(d *schema.ResourceData, meta interface{
 		d.Set("cidr_ip", object.SourceCidrIp)
 		d.Set("source_security_group_id", object.SourceGroupId)
 		d.Set("source_group_owner_account", object.SourceGroupOwnerAccount)
+		d.Set("prefix_list_id", object.SourcePrefixListId)
 	} else {
 		d.Set("cidr_ip", object.DestCidrIp)
 		d.Set("source_security_group_id", object.DestGroupId)
 		d.Set("source_group_owner_account", object.DestGroupOwnerAccount)
+		d.Set("prefix_list_id", object.DestPrefixListId)
 	}
 	return nil
 }
@@ -372,6 +381,13 @@ func buildAliyunSGRuleRequest(d *schema.ResourceData, meta interface{}) (*reques
 			request.QueryParams["SourceCidrIp"] = v.(string)
 		} else {
 			request.QueryParams["DestCidrIp"] = v.(string)
+		}
+	}
+	if v, ok := d.GetOk("prefix_list_id"); ok {
+		if direction == string(DirectionIngress) {
+			request.QueryParams["SourcePrefixListId"] = v.(string)
+		} else {
+			request.QueryParams["DestPrefixListId"] = v.(string)
 		}
 	}
 

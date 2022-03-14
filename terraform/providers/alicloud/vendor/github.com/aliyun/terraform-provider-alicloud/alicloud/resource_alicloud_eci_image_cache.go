@@ -153,7 +153,7 @@ func resourceAlicloudEciImageCacheCreate(d *schema.ResourceData, meta interface{
 	addDebug(request.GetActionName(), raw)
 	response, _ := raw.(*eci.CreateImageCacheResponse)
 	d.SetId(fmt.Sprintf("%v", response.ImageCacheId))
-	stateConf := BuildStateConf([]string{}, []string{"Ready"}, d.Timeout(schema.TimeoutCreate), 10*time.Second, eciService.EciImageCacheStateRefreshFunc(d.Id(), []string{"Failed"}))
+	stateConf := BuildStateConf([]string{"Preparing", "Creating"}, []string{"Ready"}, d.Timeout(schema.TimeoutCreate), 10*time.Second, eciService.EciImageCacheStateRefreshFunc(d.Id(), []string{"Failed"}))
 	if _, err := stateConf.WaitForState(); err != nil {
 		return WrapErrorf(err, IdMsg, d.Id())
 	}

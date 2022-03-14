@@ -165,6 +165,10 @@ func resourceAlicloudOosStateConfigurationRead(d *schema.ResourceData, meta inte
 }
 func resourceAlicloudOosStateConfigurationUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewOosClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	update := false
 	request := map[string]interface{}{
@@ -219,10 +223,6 @@ func resourceAlicloudOosStateConfigurationUpdate(d *schema.ResourceData, meta in
 	}
 	if update {
 		action := "UpdateStateConfiguration"
-		conn, err := client.NewOosClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		request["ClientToken"] = buildClientToken("UpdateStateConfiguration")
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)

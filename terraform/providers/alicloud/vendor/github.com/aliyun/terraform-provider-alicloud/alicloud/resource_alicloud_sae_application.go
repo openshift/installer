@@ -1151,6 +1151,10 @@ func resourceAlicloudSaeApplicationUpdate(d *schema.ResourceData, meta interface
 		}
 	}
 	d.Partial(false)
+	stateConf := BuildStateConf([]string{}, []string{"SUCCESS"}, d.Timeout(schema.TimeoutUpdate), 5*time.Second, saeService.SaeApplicationStateRefreshFunc(d.Id(), []string{"FAIL", "ABORT", "SYSTEM_FAIL"}))
+	if _, err := stateConf.WaitForState(); err != nil {
+		return WrapErrorf(err, IdMsg, d.Id())
+	}
 	return resourceAlicloudSaeApplicationRead(d, meta)
 }
 func resourceAlicloudSaeApplicationDelete(d *schema.ResourceData, meta interface{}) error {

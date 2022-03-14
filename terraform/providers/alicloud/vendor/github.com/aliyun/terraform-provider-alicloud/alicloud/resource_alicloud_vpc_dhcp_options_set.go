@@ -30,8 +30,9 @@ func resourceAlicloudVpcDhcpOptionsSet() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"associate_vpcs": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:       schema.TypeSet,
+				Optional:   true,
+				Deprecated: "Field 'associate_vpcs' has been deprecated from provider version 1.153.0 and it will be removed in the future version. Please use the new resource 'alicloud_vpc_dhcp_options_set_attachment' to attach DhcpOptionsSet and Vpc.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"vpc_id": {

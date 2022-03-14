@@ -170,7 +170,7 @@ func dataSourceAlicloudDbauditInstancesRead(d *schema.ResourceData, meta interfa
 		}
 		addDebug(request.GetActionName(), raw, request.RpcRequest, request)
 		response, _ := raw.(*yundun_dbaudit.ListTagResourcesResponse)
-		instanceTags = append(instanceTags, yundun_dbaudit.TagResources{response.TagResources})
+		instanceTags = append(instanceTags, yundun_dbaudit.TagResources{TagResource: response.TagResources})
 	}
 	return WrapError(extractDbauditInstance(d, instances, instanceTags))
 }

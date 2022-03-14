@@ -538,3 +538,23 @@ func (s *SaeService) UpdateSlb(d *schema.ResourceData) error {
 	}
 	return nil
 }
+
+func (s *SaeService) SaeApplicationStateRefreshFunc(id string, failStates []string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		object, err := s.DescribeApplicationStatus(id)
+		if err != nil {
+			if NotFoundError(err) {
+				// Set this to nil if nothing matched
+				return nil, "", nil
+			}
+			return nil, "", WrapError(err)
+		}
+
+		for _, failState := range failStates {
+			if fmt.Sprint(object["LastChangeOrderStatus"]) == failState {
+				return object, fmt.Sprint(object["LastChangeOrderStatus"]), WrapError(Error(FailedToReachTargetStatus, fmt.Sprint(object["LastChangeOrderStatus"])))
+			}
+		}
+		return object, fmt.Sprint(object["LastChangeOrderStatus"]), nil
+	}
+}

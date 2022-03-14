@@ -1,13 +1,15 @@
 package alicloud
 
 import (
+	"fmt"
 	"strings"
+
+	util "github.com/alibabacloud-go/tea-utils/service"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 
 	"time"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/slb"
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -66,25 +68,41 @@ func resourceAlicloudSlbAcl() *schema.Resource {
 
 func resourceAlicloudSlbAclCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
-
-	request := slb.CreateCreateAccessControlListRequest()
-	request.RegionId = client.RegionId
-	if v := d.Get("resource_group_id").(string); v != "" {
-		request.ResourceGroupId = v
-	}
-	request.AclName = strings.TrimSpace(d.Get("name").(string))
-	request.AddressIPVersion = d.Get("ip_version").(string)
-
-	raw, err := client.WithSlbClient(func(slbClient *slb.Client) (interface{}, error) {
-		return slbClient.CreateAccessControlList(request)
-	})
+	var response map[string]interface{}
+	action := "CreateAccessControlList"
+	request := make(map[string]interface{})
+	conn, err := client.NewSlbClient()
 	if err != nil {
-		return WrapErrorf(err, DefaultErrorMsg, "alicloud_slb_acl", request.GetActionName(), AlibabaCloudSdkGoERROR)
+		return WrapError(err)
 	}
-	addDebug(request.GetActionName(), raw, request.RpcRequest, request)
-	response, _ := raw.(*slb.CreateAccessControlListResponse)
+	request["RegionId"] = client.RegionId
+	if v := d.Get("resource_group_id").(string); v != "" {
+		request["ResourceGroupId"] = v
+	}
+	request["AclName"] = strings.TrimSpace(d.Get("name").(string))
+	if v, ok := d.GetOk("address_ip_version"); ok {
+		request["AddressIPVersion"] = v
+	}
 
-	d.SetId(response.AclId)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-15"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+
+	if err != nil {
+		return WrapErrorf(err, DefaultErrorMsg, "alicloud_slb_acl", action, AlibabaCloudSdkGoERROR)
+	}
+
+	d.SetId(fmt.Sprint(response["AclId"]))
 	return resourceAlicloudSlbAclUpdate(d, meta)
 }
 
@@ -106,12 +124,26 @@ func resourceAlicloudSlbAclRead(d *schema.ResourceData, meta interface{}) error 
 		}
 		return WrapError(err)
 	}
-	d.Set("name", object.AclName)
-	d.Set("resource_group_id", object.ResourceGroupId)
-	d.Set("ip_version", object.AddressIPVersion)
+	d.Set("name", object["AclName"])
+	d.Set("resource_group_id", object["ResourceGroupId"])
+	d.Set("ip_version", object["AddressIPVersion"])
 
-	if err := d.Set("entry_list", slbService.FlattenSlbAclEntryMappings(object.AclEntrys.AclEntry)); err != nil {
-		return WrapError(err)
+	if aclEntrys, ok := object["AclEntrys"]; ok {
+		if v, ok := aclEntrys.(map[string]interface{})["AclEntry"].([]interface{}); ok {
+			aclEntry := make([]map[string]interface{}, 0)
+			for _, val := range v {
+				item := val.(map[string]interface{})
+				temp := map[string]interface{}{
+					"comment": item["AclEntryComment"],
+					"entry":   item["AclEntryIP"],
+				}
+
+				aclEntry = append(aclEntry, temp)
+			}
+			if err := d.Set("entry_list", aclEntry); err != nil {
+				return WrapError(err)
+			}
+		}
 	}
 	return nil
 }
@@ -119,25 +151,45 @@ func resourceAlicloudSlbAclRead(d *schema.ResourceData, meta interface{}) error 
 func resourceAlicloudSlbAclUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	slbService := SlbService{client}
-
+	var response map[string]interface{}
 	d.Partial(true)
 
-	if err := slbService.setInstanceTags(d, TagResourceAcl); err != nil {
-		return WrapError(err)
+	if d.HasChange("tags") {
+		if err := slbService.setInstanceTags(d, TagResourceAcl); err != nil {
+			return WrapError(err)
+		}
+		d.SetPartial("tags")
 	}
 
 	if !d.IsNewResource() && d.HasChange("name") {
-		request := slb.CreateSetAccessControlListAttributeRequest()
-		request.RegionId = client.RegionId
-		request.AclId = d.Id()
-		request.AclName = d.Get("name").(string)
-		raw, err := client.WithSlbClient(func(slbClient *slb.Client) (interface{}, error) {
-			return slbClient.SetAccessControlListAttribute(request)
-		})
-		if err != nil {
-			return WrapErrorf(err, DefaultErrorMsg, d.Id(), request.GetActionName(), AlibabaCloudSdkGoERROR)
+		request := map[string]interface{}{
+			"AclId": d.Id(),
 		}
-		addDebug(request.GetActionName(), raw, request.RpcRequest, request)
+		if v, ok := d.GetOk("name"); ok {
+			request["AclName"] = v
+		}
+		request["RegionId"] = client.RegionId
+		action := "SetAccessControlListAttribute"
+		conn, err := client.NewSlbClient()
+		if err != nil {
+			return WrapError(err)
+		}
+		wait := incrementalWait(3*time.Second, 3*time.Second)
+		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-15"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+			if err != nil {
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			return nil
+		})
+		addDebug(action, response, request)
+		if err != nil {
+			return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+		}
 		d.SetPartial("name")
 	}
 
@@ -149,19 +201,78 @@ func resourceAlicloudSlbAclUpdate(d *schema.ResourceData, meta interface{}) erro
 		add := ne.Difference(oe).List()
 
 		if len(remove) > 0 {
-			if err := slbService.SlbRemoveAccessControlListEntry(remove, d.Id()); err != nil {
-				return WrapError(err)
+			removeList := SplitSlice(remove, 50)
+			for _, item := range removeList {
+				removedRequest := map[string]interface{}{
+					"AclId":    d.Id(),
+					"RegionId": client.RegionId,
+				}
+				aclEntries, err := slbService.convertAclEntriesToString(item)
+				if err != nil {
+					return WrapError(err)
+				}
+				removedRequest["AclEntrys"] = aclEntries
+				action := "RemoveAccessControlListEntry"
+				conn, err := client.NewSlbClient()
+				if err != nil {
+					return WrapError(err)
+				}
+				wait := incrementalWait(3*time.Second, 3*time.Second)
+				err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
+					response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-15"), StringPointer("AK"), nil, removedRequest, &util.RuntimeOptions{})
+					if err != nil {
+						if NeedRetry(err) {
+							wait()
+							return resource.RetryableError(err)
+						}
+						return resource.NonRetryableError(err)
+					}
+					return nil
+				})
+				addDebug(action, response, removedRequest)
+				if err != nil {
+					return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+				}
 			}
 		}
 
 		if len(add) > 0 {
-			if err := slbService.SlbAddAccessControlListEntry(add, d.Id()); err != nil {
-				return WrapError(err)
+			addList := SplitSlice(add, 50)
+			for _, item := range addList {
+				addedRequest := map[string]interface{}{
+					"AclId":    d.Id(),
+					"RegionId": client.RegionId,
+				}
+				aclEntries, err := slbService.convertAclEntriesToString(item)
+				if err != nil {
+					return WrapError(err)
+				}
+				addedRequest["AclEntrys"] = aclEntries
+				action := "AddAccessControlListEntry"
+				conn, err := client.NewSlbClient()
+				if err != nil {
+					return WrapError(err)
+				}
+				wait := incrementalWait(3*time.Second, 3*time.Second)
+				err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
+					response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-15"), StringPointer("AK"), nil, addedRequest, &util.RuntimeOptions{})
+					if err != nil {
+						if NeedRetry(err) {
+							wait()
+							return resource.RetryableError(err)
+						}
+						return resource.NonRetryableError(err)
+					}
+					return nil
+				})
+				addDebug(action, response, addedRequest)
+				if err != nil {
+					return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+				}
 			}
 		}
 		d.SetPartial("entry_list")
 	}
-
 	d.Partial(false)
 
 	return resourceAlicloudSlbAclRead(d, meta)
@@ -169,29 +280,35 @@ func resourceAlicloudSlbAclUpdate(d *schema.ResourceData, meta interface{}) erro
 
 func resourceAlicloudSlbAclDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
-	slbService := SlbService{client}
-	request := slb.CreateDeleteAccessControlListRequest()
-	request.RegionId = client.RegionId
-	request.AclId = d.Id()
-	err := resource.Retry(3*time.Minute, func() *resource.RetryError {
-		raw, err := client.WithSlbClient(func(slbClient *slb.Client) (interface{}, error) {
-			return slbClient.DeleteAccessControlList(request)
-		})
+	action := "DeleteAccessControlList"
+	var response map[string]interface{}
+	conn, err := client.NewSlbClient()
+	if err != nil {
+		return WrapError(err)
+	}
+	request := map[string]interface{}{
+		"AclId":    d.Id(),
+		"RegionId": client.RegionId,
+	}
+
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-15"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
 		if err != nil {
-			if IsExpectedErrors(err, []string{"AclInUsed"}) {
+			if NeedRetry(err) {
+				wait()
 				return resource.RetryableError(err)
 			}
 			return resource.NonRetryableError(err)
-
 		}
-		addDebug(request.GetActionName(), raw, request.RpcRequest, request)
 		return nil
 	})
-
+	addDebug(action, response, request)
 	if err != nil {
-		if !IsExpectedErrors(err, []string{"AclNotExist"}) {
-			return WrapErrorf(err, DefaultErrorMsg, d.Id(), request.GetActionName(), AlibabaCloudSdkGoERROR)
+		if IsExpectedErrors(err, []string{"AclNotExist"}) {
+			return nil
 		}
+		return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
 	}
-	return WrapError(slbService.WaitForSlbAcl(d.Id(), Deleted, DefaultTimeoutMedium))
+	return nil
 }

@@ -111,6 +111,10 @@ func resourceAlicloudOosPatchBaselineRead(d *schema.ResourceData, meta interface
 }
 func resourceAlicloudOosPatchBaselineUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewOosClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	update := false
 	request := map[string]interface{}{
@@ -128,10 +132,6 @@ func resourceAlicloudOosPatchBaselineUpdate(d *schema.ResourceData, meta interfa
 	}
 	if update {
 		action := "UpdatePatchBaseline"
-		conn, err := client.NewOosClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		request["ClientToken"] = buildClientToken("UpdatePatchBaseline")
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)

@@ -102,7 +102,36 @@ func dataSourceAlicloudEssScalingGroups() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"vpc_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"vswitch_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"health_check_type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"suspended_processes": {
+							Type:     schema.TypeList,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+							Computed: true,
+						},
+						"group_deletion_protection": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+						"modification_time": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"total_capacity": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"total_instance_count": {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
@@ -225,6 +254,13 @@ func scalingGroupsDescriptionAttribute(d *schema.ResourceData, scalingGroups []e
 			"active_capacity":              scalingGroup.ActiveCapacity,
 			"pending_capacity":             scalingGroup.PendingCapacity,
 			"removing_capacity":            scalingGroup.RemovingCapacity,
+			"total_instance_count":         scalingGroup.TotalInstanceCount,
+			"vpc_id":                       scalingGroup.VpcId,
+			"vswitch_id":                   scalingGroup.VSwitchId,
+			"health_check_type":            scalingGroup.HealthCheckType,
+			"suspended_processes":          scalingGroup.SuspendedProcesses.SuspendedProcess,
+			"group_deletion_protection":    scalingGroup.GroupDeletionProtection,
+			"modification_time":            scalingGroup.ModificationTime,
 			"creation_time":                scalingGroup.CreationTime,
 		}
 		ids = append(ids, scalingGroup.ScalingGroupId)

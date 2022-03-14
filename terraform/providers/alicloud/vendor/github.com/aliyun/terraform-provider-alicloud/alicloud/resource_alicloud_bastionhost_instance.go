@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	util "github.com/alibabacloud-go/tea-utils/service"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/yundun_bastionhost"
 
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -271,25 +271,6 @@ func resourceAlicloudBastionhostInstanceUpdate(d *schema.ResourceData, meta inte
 }
 
 func resourceAlicloudBastionhostInstanceDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*connectivity.AliyunClient)
-	bastionhostService := YundunBastionhostService{client}
-	request := yundun_bastionhost.CreateRefundInstanceRequest()
-	request.InstanceId = d.Id()
-
-	raw, err := bastionhostService.client.WithBastionhostClient(func(BastionhostClient *yundun_bastionhost.Client) (interface{}, error) {
-		return BastionhostClient.RefundInstance(request)
-	})
-
-	if err != nil {
-		return WrapErrorf(err, DefaultErrorMsg, d.Id(), request.GetActionName(), AlibabaCloudSdkGoERROR)
-	}
-	addDebug(request.GetActionName(), raw, request.RpcRequest, request)
-	// Wait for the release procedure of cloud resource dependencies. Instance can not be fetched through api as soon as release has
-	// been invoked, however the resources have not been fully destroyed yet. Therefore, a certain amount time of waiting
-	// is quite necessary (conservative estimation cloud be less then 3 minutes)
-	stateConf := BuildStateConf([]string{}, []string{}, d.Timeout(schema.TimeoutDelete), 5*time.Second, bastionhostService.BastionhostInstanceRefreshFunc(d.Id(), []string{}))
-	if _, err := stateConf.WaitForState(); err != nil {
-		return WrapErrorf(err, IdMsg, d.Id())
-	}
+	log.Printf("[WARN] Cannot destroy resourceBastionhostInstance. Terraform will remove this resource from the state file, however resources may remain.")
 	return nil
 }

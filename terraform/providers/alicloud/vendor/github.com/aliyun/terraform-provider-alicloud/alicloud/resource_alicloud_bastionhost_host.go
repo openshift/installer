@@ -158,6 +158,10 @@ func resourceAlicloudBastionhostHostRead(d *schema.ResourceData, meta interface{
 func resourceAlicloudBastionhostHostUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	var response map[string]interface{}
+	conn, err := client.NewBastionhostClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	parts, err := ParseResourceId(d.Id(), 2)
 	if err != nil {
 		return WrapError(err)
@@ -176,10 +180,6 @@ func resourceAlicloudBastionhostHostUpdate(d *schema.ResourceData, meta interfac
 	request["RegionId"] = client.RegionId
 	if update {
 		action := "ModifyHostsActiveAddressType"
-		conn, err := client.NewBastionhostClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-12-09"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -232,10 +232,6 @@ func resourceAlicloudBastionhostHostUpdate(d *schema.ResourceData, meta interfac
 	modifyHostReq["RegionId"] = client.RegionId
 	if update {
 		action := "ModifyHost"
-		conn, err := client.NewBastionhostClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-12-09"), StringPointer("AK"), nil, modifyHostReq, &util.RuntimeOptions{})

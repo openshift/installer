@@ -172,7 +172,7 @@ var loadSdkfromRemoteMutex = sync.Mutex{}
 var loadSdkEndpointMutex = sync.Mutex{}
 
 // The main version number that is being run at the moment.
-var providerVersion = "1.148.0"
+var providerVersion = "1.158.0"
 var terraformVersion = strings.TrimSuffix(schema.Provider{}.TerraformVersion, "-dev")
 
 // Temporarily maintain map for old ecs client methods and store special endpoint information
@@ -1789,6 +1789,9 @@ func (client *AliyunClient) NewAdbClient() (*rpc.Client, error) {
 	productCode := "ads"
 	endpoint := ""
 	if client.config.Endpoints[productCode] == nil {
+		if v := client.config.AdbEndpoint; v != "" {
+			client.config.Endpoints[productCode] = v
+		}
 		if err := client.loadEndpoint(productCode); err != nil {
 			return nil, err
 		}
@@ -3857,9 +3860,7 @@ func (client *AliyunClient) NewMhubClient() (*rpc.Client, error) {
 	endpoint := ""
 	if v, ok := client.config.Endpoints[productCode]; !ok || v.(string) == "" {
 		if err := client.loadEndpoint(productCode); err != nil {
-			endpoint = fmt.Sprintf("mhub.%s.aliyuncs.com", client.config.RegionId)
-			client.config.Endpoints[productCode] = endpoint
-			log.Printf("[ERROR] loading %s endpoint got an error: %#v. Using the endpoint %s instead.", productCode, err, endpoint)
+			return nil, fmt.Errorf("[ERROR] loading %s endpoint got an error: %#v. Using the endpoint %s instead.\"", productCode, err, fmt.Sprintf("mhub.%s.aliyuncs.com", client.config.RegionId))
 		}
 	}
 	if v, ok := client.config.Endpoints[productCode]; ok && v.(string) != "" {
@@ -3998,5 +3999,31 @@ func (client *AliyunClient) NewDdsClient() (*rpc.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the %s client: %#v", productCode, err)
 	}
+	return conn, nil
+}
+
+func (client *AliyunClient) NewAlikafkaClient() (*rpc.Client, error) {
+	productCode := "alikafka"
+	endpoint := ""
+	if v, ok := client.config.Endpoints[productCode]; !ok || v.(string) == "" {
+		if err := client.loadEndpoint(productCode); err != nil {
+			return nil, err
+		}
+	}
+	if v, ok := client.config.Endpoints[productCode]; ok && v.(string) != "" {
+		endpoint = v.(string)
+	}
+	if endpoint == "" {
+		return nil, fmt.Errorf("[ERROR] missing the product %s endpoint.", productCode)
+	}
+
+	sdkConfig := client.teaSdkConfig
+	sdkConfig.SetEndpoint(endpoint)
+
+	conn, err := rpc.NewClient(&sdkConfig)
+	if err != nil {
+		return nil, fmt.Errorf("unable to initialize the %s client: %#v", productCode, err)
+	}
+
 	return conn, nil
 }

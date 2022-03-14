@@ -291,6 +291,26 @@ func resourceAlicloudEssScalingConfiguration() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"spot_strategy": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"spot_price_limit": {
+				Optional: true,
+				Type:     schema.TypeSet,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"instance_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"price_limit": {
+							Type:     schema.TypeFloat,
+							Optional: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -527,6 +547,28 @@ func modifyEssScalingConfiguration(d *schema.ResourceData, meta interface{}) err
 		d.SetPartial("host_name")
 	}
 
+	if d.HasChange("spot_strategy") {
+		request.SpotStrategy = d.Get("spot_strategy").(string)
+		d.SetPartial("spot_strategy")
+	}
+
+	if d.HasChange("spot_price_limit") {
+		v, ok := d.GetOk("spot_price_limit")
+		if ok {
+			spotPriceLimits := make([]ess.ModifyScalingConfigurationSpotPriceLimit, 0)
+			for _, e := range v.(*schema.Set).List() {
+				pack := e.(map[string]interface{})
+				l := ess.ModifyScalingConfigurationSpotPriceLimit{
+					InstanceType: pack["instance_type"].(string),
+					PriceLimit:   strconv.FormatFloat(pack["price_limit"].(float64), 'f', 2, 64),
+				}
+				spotPriceLimits = append(spotPriceLimits, l)
+			}
+			request.SpotPriceLimit = &spotPriceLimits
+		}
+		d.SetPartial("spot_price_limit")
+	}
+
 	if d.HasChange("tags") {
 		if v, ok := d.GetOk("tags"); ok {
 			tags := "{"
@@ -689,6 +731,8 @@ func resourceAliyunEssScalingConfigurationRead(d *schema.ResourceData, meta inte
 	d.Set("password_inherit", object.PasswordInherit)
 	d.Set("resource_group_id", object.ResourceGroupId)
 	d.Set("host_name", object.HostName)
+	d.Set("spot_strategy", object.SpotStrategy)
+	d.Set("spot_price_limit", essService.flattenSpotPriceLimitMappings(object.SpotPriceLimit.SpotPriceModel))
 
 	if sg, ok := d.GetOk("security_group_id"); ok && sg.(string) != "" {
 		d.Set("security_group_id", object.SecurityGroupId)
@@ -958,6 +1002,24 @@ func buildAlicloudEssScalingConfigurationArgs(d *schema.ResourceData, meta inter
 
 	if v, ok := d.GetOk("host_name"); ok && v.(string) != "" {
 		request.HostName = v.(string)
+	}
+
+	if v, ok := d.GetOk("spot_strategy"); ok && v.(string) != "" {
+		request.SpotStrategy = v.(string)
+	}
+
+	v, ok := d.GetOk("spot_price_limit")
+	if ok {
+		spotPriceLimits := make([]ess.CreateScalingConfigurationSpotPriceLimit, 0)
+		for _, e := range v.(*schema.Set).List() {
+			pack := e.(map[string]interface{})
+			l := ess.CreateScalingConfigurationSpotPriceLimit{
+				InstanceType: pack["instance_type"].(string),
+				PriceLimit:   strconv.FormatFloat(pack["price_limit"].(float64), 'f', 2, 64),
+			}
+			spotPriceLimits = append(spotPriceLimits, l)
+		}
+		request.SpotPriceLimit = &spotPriceLimits
 	}
 
 	return request, nil

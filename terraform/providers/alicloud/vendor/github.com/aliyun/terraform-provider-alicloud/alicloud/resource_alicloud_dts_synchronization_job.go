@@ -590,7 +590,7 @@ func resourceAlicloudDtsSynchronizationJobUpdate(d *schema.ResourceData, meta in
 }
 func resourceAlicloudDtsSynchronizationJobDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
-	action := "ResetDtsJob"
+	action := "DeleteDtsJob"
 	var response map[string]interface{}
 	conn, err := client.NewDtsClient()
 	if err != nil {

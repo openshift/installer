@@ -188,6 +188,10 @@ func resourceAlicloudVpcTrafficMirrorFilterEgressRuleUpdate(d *schema.ResourceDa
 	client := meta.(*connectivity.AliyunClient)
 	vpcService := VpcService{client}
 	var response map[string]interface{}
+	conn, err := client.NewVpcClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	update := false
 	parts, err := ParseResourceId(d.Id(), 2)
 	if err != nil {
@@ -244,10 +248,6 @@ func resourceAlicloudVpcTrafficMirrorFilterEgressRuleUpdate(d *schema.ResourceDa
 			request["DryRun"] = v
 		}
 		action := "UpdateTrafficMirrorFilterRuleAttribute"
-		conn, err := client.NewVpcClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)
 		wait := incrementalWait(3*time.Second, 3*time.Second)

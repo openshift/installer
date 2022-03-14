@@ -213,6 +213,10 @@ func resourceAlicloudWafInstanceRead(d *schema.ResourceData, meta interface{}) e
 }
 func resourceAlicloudWafInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewBssopenapiClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	update := false
 	request := map[string]interface{}{
@@ -265,10 +269,6 @@ func resourceAlicloudWafInstanceUpdate(d *schema.ResourceData, meta interface{})
 	}
 	if update {
 		action := "ModifyInstance"
-		conn, err := client.NewBssopenapiClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 5*time.Second)
 		err = resource.Retry(3*time.Minute, func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2017-12-14"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

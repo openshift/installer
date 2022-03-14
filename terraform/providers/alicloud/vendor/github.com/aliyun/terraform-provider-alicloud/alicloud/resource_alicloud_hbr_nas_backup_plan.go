@@ -36,26 +36,15 @@ func resourceAlicloudHbrNasBackupPlan() *schema.Resource {
 				Optional: true,
 			},
 			"create_time": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"detail": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"exclude": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:       schema.TypeString,
+				Optional:   true,
+				Computed:   true,
+				Deprecated: "Field 'create_time' has been deprecated from provider version 1.153.0.",
 			},
 			"file_system_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-			},
-			"include": {
-				Type:     schema.TypeString,
-				Optional: true,
 			},
 			"nas_backup_plan_name": {
 				Type:     schema.TypeString,
@@ -73,15 +62,6 @@ func resourceAlicloudHbrNasBackupPlan() *schema.Resource {
 			"retention": {
 				Type:     schema.TypeString,
 				Required: true,
-			},
-			"speed_limit": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"update_paths": {
-				Type:       schema.TypeBool,
-				Optional:   true,
-				Deprecated: "Attribute update_paths has been deprecated in v1.139.0+ and you do not need to set it anymore.",
 			},
 			"schedule": {
 				Type:     schema.TypeString,
@@ -109,17 +89,8 @@ func resourceAlicloudHbrNasBackupPlanCreate(d *schema.ResourceData, meta interfa
 	if v, ok := d.GetOk("create_time"); ok {
 		request["CreateTime"] = ConvertNasFileSystemStringToUnix(v.(string))
 	}
-	if v, ok := d.GetOk("detail"); ok {
-		request["Detail"] = v
-	}
-	if v, ok := d.GetOk("exclude"); ok {
-		request["Exclude"] = v
-	}
 	if v, ok := d.GetOk("file_system_id"); ok {
 		request["FileSystemId"] = v
-	}
-	if v, ok := d.GetOk("include"); ok {
-		request["Include"] = v
 	}
 	request["PlanName"] = d.Get("nas_backup_plan_name")
 	if v, ok := d.GetOk("options"); ok {
@@ -130,9 +101,6 @@ func resourceAlicloudHbrNasBackupPlanCreate(d *schema.ResourceData, meta interfa
 	}
 	request["Schedule"] = d.Get("schedule")
 	request["SourceType"] = "NAS"
-	if v, ok := d.GetOk("speed_limit"); ok {
-		request["SpeedLimit"] = v
-	}
 	if v, ok := d.GetOk("vault_id"); ok {
 		request["VaultId"] = v
 	}
@@ -230,18 +198,6 @@ func resourceAlicloudHbrNasBackupPlanUpdate(d *schema.ResourceData, meta interfa
 	}
 	request["SourceType"] = "NAS"
 	if update {
-		if v, ok := d.GetOk("detail"); ok {
-			request["Detail"] = v
-		}
-		if v, ok := d.GetOk("exclude"); ok {
-			request["Exclude"] = v
-		}
-		if v, ok := d.GetOk("include"); ok {
-			request["Include"] = v
-		}
-		if v, ok := d.GetOk("speed_limit"); ok {
-			request["SpeedLimit"] = v
-		}
 		action := "UpdateBackupPlan"
 		conn, err := client.NewHbrClient()
 		if err != nil {

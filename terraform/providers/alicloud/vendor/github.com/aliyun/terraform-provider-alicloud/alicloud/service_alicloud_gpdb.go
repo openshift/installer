@@ -119,6 +119,9 @@ func (s *GpdbService) DescribeGpdbSecurityIps(id string) (ips []string, err erro
 		separator = COMMA_SEPARATED
 	}
 	for _, ip := range strings.Split(ipstr, COMMA_SEPARATED) {
+		if ip == LOCAL_HOST_IP {
+			continue
+		}
 		ipsMap[ip] = ip
 	}
 
@@ -383,4 +386,132 @@ func (s *GpdbService) GpdbAccountStateRefreshFunc(id string, failStates []string
 		}
 		return object, fmt.Sprint(object["AccountStatus"]), nil
 	}
+}
+
+func (s *GpdbService) ListTagResources(id string, resourceType string) (object interface{}, err error) {
+	conn, err := s.client.NewGpdbClient()
+	if err != nil {
+		return nil, WrapError(err)
+	}
+	action := "ListTagResources"
+	request := map[string]interface{}{
+		"RegionId":     s.client.RegionId,
+		"ResourceType": resourceType,
+		"ResourceId.1": id,
+	}
+	tags := make([]interface{}, 0)
+	var response map[string]interface{}
+
+	for {
+		wait := incrementalWait(3*time.Second, 5*time.Second)
+		err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+			response, err := conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-05-03"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+			if err != nil {
+				if IsExpectedErrors(err, []string{Throttling}) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			addDebug(action, response, request)
+			v, err := jsonpath.Get("$.TagResources", response)
+			if err != nil {
+				return resource.NonRetryableError(WrapErrorf(err, FailedGetAttributeMsg, id, "$.TagResources", response))
+			}
+			if v != nil {
+				tags = append(tags, v.([]interface{})...)
+			}
+			return nil
+		})
+		if err != nil {
+			err = WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+			return
+		}
+		if response["NextToken"] == nil {
+			break
+		}
+		request["NextToken"] = response["NextToken"]
+	}
+
+	return tags, nil
+}
+
+func (s *GpdbService) SetResourceTags(d *schema.ResourceData, resourceType string) error {
+
+	if d.HasChange("tags") {
+		added, removed := parsingTags(d)
+		conn, err := s.client.NewGpdbClient()
+		if err != nil {
+			return WrapError(err)
+		}
+
+		removedTagKeys := make([]string, 0)
+		for _, v := range removed {
+			if !ignoredTags(v, "") {
+				removedTagKeys = append(removedTagKeys, v)
+			}
+		}
+		if len(removedTagKeys) > 0 {
+			action := "UnTagResources"
+			request := map[string]interface{}{
+				"RegionId":     s.client.RegionId,
+				"ResourceType": resourceType,
+				"ResourceId.1": d.Id(),
+			}
+			for i, key := range removedTagKeys {
+				request[fmt.Sprintf("TagKey.%d", i+1)] = key
+			}
+			wait := incrementalWait(2*time.Second, 1*time.Second)
+			err := resource.Retry(10*time.Minute, func() *resource.RetryError {
+				response, err := conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-05-03"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+				if err != nil {
+					if IsThrottling(err) {
+						wait()
+						return resource.RetryableError(err)
+
+					}
+					return resource.NonRetryableError(err)
+				}
+				addDebug(action, response, request)
+				return nil
+			})
+			if err != nil {
+				return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+			}
+		}
+		if len(added) > 0 {
+			action := "TagResources"
+			request := map[string]interface{}{
+				"RegionId":     s.client.RegionId,
+				"ResourceType": resourceType,
+				"ResourceId.1": d.Id(),
+			}
+			count := 1
+			for key, value := range added {
+				request[fmt.Sprintf("Tag.%d.Key", count)] = key
+				request[fmt.Sprintf("Tag.%d.Value", count)] = value
+				count++
+			}
+
+			wait := incrementalWait(2*time.Second, 1*time.Second)
+			err := resource.Retry(10*time.Minute, func() *resource.RetryError {
+				response, err := conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-05-03"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+				if err != nil {
+					if IsThrottling(err) {
+						wait()
+						return resource.RetryableError(err)
+
+					}
+					return resource.NonRetryableError(err)
+				}
+				addDebug(action, response, request)
+				return nil
+			})
+			if err != nil {
+				return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+			}
+		}
+		d.SetPartial("tags")
+	}
+	return nil
 }

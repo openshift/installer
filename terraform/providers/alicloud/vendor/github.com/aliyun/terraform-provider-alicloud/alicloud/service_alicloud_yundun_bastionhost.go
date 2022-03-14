@@ -149,7 +149,7 @@ func (s *YundunBastionhostService) UpdateInstanceSpec(schemaSpecMap map[string]s
 
 	params := make([]bssopenapi.ModifyInstanceParameter, 0, len(schemaSpecMap))
 	for schemaName, spec := range schemaSpecMap {
-		params = append(params, bssopenapi.ModifyInstanceParameter{schemaName, d.Get(spec).(string)})
+		params = append(params, bssopenapi.ModifyInstanceParameter{Code: schemaName, Value: d.Get(spec).(string)})
 	}
 
 	request.Parameter = &params
@@ -668,7 +668,7 @@ func (s *YundunBastionhostService) DescribeBastionhostHost(id string) (object ma
 	})
 	addDebug(action, response, request)
 	if err != nil {
-		if IsExpectedErrors(err, []string{"Commodity.BizError.InvalidStatus", "OBJECT_NOT_FOUND"}) {
+		if IsExpectedErrors(err, []string{"Commodity.BizError.InvalidStatus", "OBJECT_NOT_FOUND", "HostNotFound"}) {
 			return object, WrapErrorf(Error(GetNotFoundMessage("Bastionhost:Host", id)), NotFoundMsg, ProviderERROR, fmt.Sprint(response["RequestId"]))
 		}
 		return object, WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
@@ -714,7 +714,7 @@ func (s *YundunBastionhostService) DescribeBastionhostHostAccount(id string) (ob
 	})
 	addDebug(action, response, request)
 	if err != nil {
-		if IsExpectedErrors(err, []string{"Commodity.BizError.InvalidStatus", "OBJECT_NOT_FOUND"}) {
+		if IsExpectedErrors(err, []string{"Commodity.BizError.InvalidStatus", "OBJECT_NOT_FOUND", "HostAccountNotFound"}) {
 			return object, WrapErrorf(Error(GetNotFoundMessage("Bastionhost:HostAccount", id)), NotFoundMsg, ProviderERROR, fmt.Sprint(response["RequestId"]))
 		}
 		return object, WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)

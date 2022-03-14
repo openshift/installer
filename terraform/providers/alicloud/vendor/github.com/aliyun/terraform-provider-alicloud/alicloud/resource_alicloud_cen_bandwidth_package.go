@@ -314,6 +314,10 @@ func resourceAlicloudCenBandwidthPackageUpdate(d *schema.ResourceData, meta inte
 	return resourceAlicloudCenBandwidthPackageRead(d, meta)
 }
 func resourceAlicloudCenBandwidthPackageDelete(d *schema.ResourceData, meta interface{}) error {
+	if d.Get("payment_type").(string) == "PrePaid" {
+		log.Printf("[WARN] Cannot destroy resource Alicloud Resource Cen BandwidthPackage. Terraform will remove this resource from the state file, however resources may remain.")
+		return nil
+	}
 	client := meta.(*connectivity.AliyunClient)
 	request := cbn.CreateDeleteCenBandwidthPackageRequest()
 	request.CenBandwidthPackageId = d.Id()

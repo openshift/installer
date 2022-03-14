@@ -110,7 +110,6 @@ func dataSourceAlicloudInstanceTypes() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				Default:      "cloud_efficiency",
 				ValidateFunc: validation.StringInSlice([]string{"cloud", "ephemeral_ssd", "cloud_essd", "cloud_efficiency", "cloud_ssd"}, false),
 			},
 			"output_file": {
@@ -231,15 +230,15 @@ func dataSourceAlicloudInstanceTypesRead(d *schema.ResourceData, meta interface{
 			continue
 		}
 		for _, r := range zone.AvailableResources.AvailableResource {
-			if r.Type == string(InstanceTypeResource) {
-				for _, t := range r.SupportedResources.SupportedResource {
-					if t.Status == string(SoldOut) {
-						continue
-					}
-
-					zones, _ := mapInstanceTypes[t.Value]
-					zones = append(zones, zone.ZoneId)
-					mapInstanceTypes[t.Value] = zones
+			for _, t := range r.SupportedResources.SupportedResource {
+				if t.Status == string(SoldOut) {
+					continue
+				}
+				if v, ok := mapInstanceTypes[t.Value]; ok {
+					v = append(v, zone.ZoneId)
+					mapInstanceTypes[t.Value] = v
+				} else {
+					mapInstanceTypes[t.Value] = []string{zone.ZoneId}
 				}
 			}
 		}

@@ -16,6 +16,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
 	"github.com/denverdino/aliyungo/cs"
 
 	"github.com/aliyun/aliyun-datahub-sdk-go/datahub"
@@ -1008,7 +1010,6 @@ func formatInt(src interface{}) int {
 	default:
 		panic(fmt.Sprintf("Not support type %s", attrType.String()))
 	}
-	return 0
 }
 
 func convertArrayObjectToJsonString(src interface{}) (string, error) {
@@ -1072,4 +1073,23 @@ func SplitSlice(xs []interface{}, chunkSize int) [][]interface{} {
 	}
 	divided[i] = xs[prev:]
 	return divided
+}
+
+func isPagingRequest(d *schema.ResourceData) bool {
+	v, ok := d.GetOk("page_number")
+	return ok && v.(int) > 0
+}
+
+func setPagingRequest(d *schema.ResourceData, request map[string]interface{}, maxPageSize int) {
+	if v, ok := d.GetOk("page_number"); ok && v.(int) > 0 {
+		request["PageNumber"] = v.(int)
+	} else {
+		request["PageNumber"] = 1
+	}
+	if v, ok := d.GetOk("page_size"); ok && v.(int) > 0 {
+		request["PageSize"] = v.(int)
+	} else {
+		request["PageSize"] = PageSizeLarge
+	}
+	return
 }

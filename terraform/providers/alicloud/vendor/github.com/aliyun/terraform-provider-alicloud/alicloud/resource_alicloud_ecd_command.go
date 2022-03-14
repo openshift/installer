@@ -98,7 +98,7 @@ func resourceAlicloudEcdCommandCreate(d *schema.ResourceData, meta interface{}) 
 	if _, err := stateConf.WaitForState(); err != nil {
 		return WrapErrorf(err, IdMsg, d.Id())
 	}
-	return resourceAlicloudEcdCommandUpdate(d, meta)
+	return resourceAlicloudEcdCommandRead(d, meta)
 }
 func resourceAlicloudEcdCommandRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)

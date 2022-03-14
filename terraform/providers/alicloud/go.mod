@@ -2,7 +2,7 @@ module alicloud
 
 go 1.17
 
-require github.com/aliyun/terraform-provider-alicloud v1.148.0
+require github.com/aliyun/terraform-provider-alicloud v1.158.0
 
 require (
 	cloud.google.com/go v0.54.0 // indirect
@@ -39,8 +39,8 @@ require (
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/deckarep/golang-set v1.7.1 // indirect
-	github.com/denverdino/aliyungo v0.0.0-20211122042034-c78a9788662a // indirect
+	github.com/deckarep/golang-set v1.8.0 // indirect
+	github.com/denverdino/aliyungo v0.0.0-20220218034049-d2eb7f483ee8 // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect

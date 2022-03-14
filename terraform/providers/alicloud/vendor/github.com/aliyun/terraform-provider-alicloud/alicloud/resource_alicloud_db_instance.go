@@ -2,6 +2,7 @@ package alicloud
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -215,6 +216,53 @@ func resourceAlicloudDBInstance() *schema.Resource {
 				Set:      parameterToHash,
 				Optional: true,
 				Computed: true,
+			},
+			"pg_hba_conf": {
+				Type: schema.TypeSet,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"mask": {
+							Type:     schema.TypeString,
+							Optional: true,
+							// if attribute contains Optional feature, need to add Default: "", otherwise when terraform plan is executed, unmodified items wil detect differences.
+							Default: "",
+						},
+						"database": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"priority_id": {
+							Type:     schema.TypeInt,
+							Required: true,
+						},
+						"address": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"user": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"method": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"option": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "",
+						},
+					},
+				},
+				Optional: true,
+				Computed: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return d.Get("engine").(string) != string(PostgreSQL)
+				},
 			},
 			"force_restart": {
 				Type:     schema.TypeBool,
@@ -450,7 +498,12 @@ func resourceAlicloudDBInstanceUpdate(d *schema.ResourceData, meta interface{}) 
 			return WrapError(err)
 		}
 	}
-
+	if d.HasChange("pg_hba_conf") {
+		err := rdsService.ModifyPgHbaConfig(d, "pg_hba_conf")
+		if err != nil {
+			return WrapError(err)
+		}
+	}
 	if err := rdsService.setInstanceTags(d); err != nil {
 		return WrapError(err)
 	}
@@ -1279,6 +1332,11 @@ func resourceAlicloudDBInstanceRead(d *schema.ResourceData, meta interface{}) er
 	if err = rdsService.RefreshParameters(d, "parameters"); err != nil {
 		return WrapError(err)
 	}
+	if instance["Engine"].(string) == string(PostgreSQL) && instance["DBInstanceStorageType"].(string) != "local_ssd" {
+		if err = rdsService.RefreshPgHbaConf(d, "pg_hba_conf"); err != nil {
+			return WrapError(err)
+		}
+	}
 	if err = rdsService.SetTimeZone(d); err != nil {
 		return WrapError(err)
 	}
@@ -1364,7 +1422,8 @@ func resourceAlicloudDBInstanceDelete(d *schema.ResourceData, meta interface{}) 
 		return WrapError(err)
 	}
 	if PayType(instance["PayType"].(string)) == Prepaid {
-		return WrapError(Error("At present, 'Prepaid' instance cannot be deleted and must wait it to be expired and release it automatically."))
+		log.Printf("[WARN] Cannot destroy Subscription resource: alicloud_db_instance. Terraform will remove this resource from the state file, however resources may remain.")
+		return nil
 	}
 	action := "DeleteDBInstance"
 	request := map[string]interface{}{

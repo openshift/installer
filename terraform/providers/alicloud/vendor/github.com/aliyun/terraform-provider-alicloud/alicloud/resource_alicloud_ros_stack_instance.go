@@ -170,10 +170,7 @@ func resourceAlicloudRosStackInstanceRead(d *schema.ResourceData, meta interface
 				parameterOverridesMaps = append(parameterOverridesMaps, parameterOverridesListItemMap)
 			}
 		}
-		err := d.Set("parameter_overrides", parameterOverridesMaps)
-		if err != nil {
-			panic(err)
-		}
+		d.Set("parameter_overrides", parameterOverridesMaps)
 	}
 
 	d.Set("status", object["Status"])

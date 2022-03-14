@@ -488,6 +488,10 @@ func resourceAlicloudNatGatewayUpdate(d *schema.ResourceData, meta interface{}) 
 	return resourceAlicloudNatGatewayRead(d, meta)
 }
 func resourceAlicloudNatGatewayDelete(d *schema.ResourceData, meta interface{}) error {
+	if d.Get("payment_type").(string) == "Subscription" || d.Get("instance_charge_type").(string) == "Prepaid" {
+		log.Printf("[WARN] Cannot destroy Subscription resource: alicloud_nat_gateway. Terraform will remove this resource from the state file, however resources may remain.")
+		return nil
+	}
 	client := meta.(*connectivity.AliyunClient)
 	vpcService := VpcService{client}
 	action := "DeleteNatGateway"

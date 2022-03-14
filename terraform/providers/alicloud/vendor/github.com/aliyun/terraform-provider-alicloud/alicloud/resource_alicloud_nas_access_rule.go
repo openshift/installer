@@ -101,6 +101,10 @@ func resourceAlicloudNasAccessRuleCreate(d *schema.ResourceData, meta interface{
 
 func resourceAlicloudNasAccessRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewNasClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	parts, err := ParseResourceId(d.Id(), 2)
 	if err != nil {
@@ -136,10 +140,6 @@ func resourceAlicloudNasAccessRuleUpdate(d *schema.ResourceData, meta interface{
 
 	if update {
 		action := "ModifyAccessRule"
-		conn, err := client.NewNasClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2017-06-26"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

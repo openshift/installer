@@ -160,6 +160,7 @@ type Config struct {
 	AcrEndpoint                 string
 	EdsuserEndpoint             string
 	GpdbEndpoint                string
+	GaplusEndpoint              string
 }
 
 func (c *Config) loadAndValidate() error {

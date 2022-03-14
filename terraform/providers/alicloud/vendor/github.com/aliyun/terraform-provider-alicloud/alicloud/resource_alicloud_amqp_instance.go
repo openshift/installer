@@ -27,6 +27,7 @@ func resourceAlicloudAmqpInstance() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"instance_name": {
 				Type:     schema.TypeString,
+				Computed: true,
 				Optional: true,
 			},
 			"instance_type": {
@@ -254,7 +255,7 @@ func resourceAlicloudAmqpInstanceRead(d *schema.ResourceData, meta interface{}) 
 	d.Set("status", object["Status"])
 	d.Set("support_eip", object["SupportEIP"])
 	bssOpenApiService := BssOpenApiService{client}
-	queryAvailableInstancesObject, err := bssOpenApiService.QueryAvailableInstances(d.Id(), "ons", "ons_onsproxy_pre")
+	queryAvailableInstancesObject, err := bssOpenApiService.QueryAvailableInstances(d.Id(), "ons", "ons_onsproxy_pre", "ons_onsproxy_public_intl")
 	if err != nil {
 		return WrapError(err)
 	}
@@ -268,6 +269,10 @@ func resourceAlicloudAmqpInstanceRead(d *schema.ResourceData, meta interface{}) 
 }
 func resourceAlicloudAmqpInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewBssopenapiClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	d.Partial(true)
 
@@ -312,27 +317,26 @@ func resourceAlicloudAmqpInstanceUpdate(d *schema.ResourceData, meta interface{}
 	setRenewalReq := map[string]interface{}{
 		"InstanceIDs": d.Id(),
 	}
+
 	if !d.IsNewResource() && d.HasChange("renewal_status") {
 		update = true
 	}
 	if v, ok := d.GetOk("renewal_status"); ok {
 		setRenewalReq["RenewalStatus"] = v
 	}
+	if !d.IsNewResource() && d.HasChange("renewal_duration") {
+		update = true
+	}
+	if v, ok := d.GetOk("renewal_duration"); ok {
+		setRenewalReq["RenewalPeriod"] = v
+	}
+
 	if !d.IsNewResource() && d.HasChange("payment_type") {
 		update = true
 		setRenewalReq["SubscriptionType"] = d.Get("payment_type")
 	}
 	setRenewalReq["ProductCode"] = "ons"
 	setRenewalReq["ProductType"] = "ons_onsproxy_pre"
-	if !d.IsNewResource() && d.HasChange("renewal_duration") {
-		update = true
-		if v, ok := d.GetOk("renewal_duration"); ok {
-			setRenewalReq["RenewalPeriod"] = v
-		} else if v, ok := d.GetOk("renewal_status"); ok && v.(string) == "AutoRenewal" {
-			return WrapError(fmt.Errorf("attribute '%s' is required when '%s' is %v ", "renewal_duration", "renewal_status", d.Get("renewal_status")))
-		}
-		setRenewalReq["RenewalStatus"] = d.Get("renewal_status")
-	}
 	if d.HasChange("renewal_duration_unit") {
 		update = true
 		if v, ok := d.GetOk("renewal_duration_unit"); ok {
@@ -344,10 +348,6 @@ func resourceAlicloudAmqpInstanceUpdate(d *schema.ResourceData, meta interface{}
 	}
 	if update {
 		action := "SetRenewal"
-		conn, err := client.NewBssopenapiClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2017-12-14"), StringPointer("AK"), nil, setRenewalReq, &util.RuntimeOptions{})
@@ -358,6 +358,7 @@ func resourceAlicloudAmqpInstanceUpdate(d *schema.ResourceData, meta interface{}
 				}
 				if IsExpectedErrors(err, []string{"NotApplicable"}) {
 					conn.Endpoint = String(connectivity.BssOpenAPIEndpointInternational)
+					setRenewalReq["ProductType"] = "ons_onsproxy_public_intl"
 					return resource.RetryableError(err)
 				}
 				return resource.NonRetryableError(err)
@@ -432,10 +433,6 @@ func resourceAlicloudAmqpInstanceUpdate(d *schema.ResourceData, meta interface{}
 			modifyInstanceReq["ModifyType"] = v
 		}
 		action := "ModifyInstance"
-		conn, err := client.NewBssopenapiClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		request["ClientToken"] = buildClientToken("ModifyInstance")
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)
@@ -449,6 +446,7 @@ func resourceAlicloudAmqpInstanceUpdate(d *schema.ResourceData, meta interface{}
 				}
 				if IsExpectedErrors(err, []string{"NotApplicable"}) {
 					conn.Endpoint = String(connectivity.BssOpenAPIEndpointInternational)
+					modifyInstanceReq["ProductType"] = "ons_onsproxy_public_intl"
 					return resource.RetryableError(err)
 				}
 				return resource.NonRetryableError(err)

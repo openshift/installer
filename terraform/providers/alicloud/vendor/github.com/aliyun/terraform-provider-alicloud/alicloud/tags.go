@@ -569,13 +569,12 @@ func elasticsearchTagIgnored(tagKey, tagValue string) bool {
 	return false
 }
 
-func ignoredTags(tagKey, tagValue string) bool {
+func ignoredTags(tagKey string, tagValue interface{}) bool {
 	filter := []string{"^aliyun", "^acs:", "^http://", "^https://"}
 	for _, v := range filter {
-		log.Printf("[DEBUG] Matching prefix %v with %v\n", v, tagKey)
 		ok, _ := regexp.MatchString(v, tagKey)
 		if ok {
-			log.Printf("[DEBUG] Found Alibaba Cloud specific tag %s (val: %s), ignoring.\n", tagKey, tagValue)
+			log.Printf("[DEBUG] Found Alibaba Cloud specific tag with key: %s and value: %s, ignoring.\n", tagKey, tagValue)
 			return true
 		}
 	}

@@ -251,6 +251,10 @@ func resourceAlicloudAlbHealthCheckTemplateRead(d *schema.ResourceData, meta int
 }
 func resourceAlicloudAlbHealthCheckTemplateUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewAlbClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	update := false
 	request := map[string]interface{}{
@@ -333,10 +337,6 @@ func resourceAlicloudAlbHealthCheckTemplateUpdate(d *schema.ResourceData, meta i
 			request["DryRun"] = v
 		}
 		action := "UpdateHealthCheckTemplateAttribute"
-		conn, err := client.NewAlbClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		request["ClientToken"] = buildClientToken("UpdateHealthCheckTemplateAttribute")
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)

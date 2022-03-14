@@ -98,6 +98,10 @@ func resourceAlicloudSlbTlsCipherPolicyRead(d *schema.ResourceData, meta interfa
 func resourceAlicloudSlbTlsCipherPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	var response map[string]interface{}
+	conn, err := client.NewSlbClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	update := false
 	request := map[string]interface{}{
 		"TLSCipherPolicyId": d.Id(),
@@ -117,10 +121,6 @@ func resourceAlicloudSlbTlsCipherPolicyUpdate(d *schema.ResourceData, meta inter
 	request["TLSVersions"] = d.Get("tls_versions")
 	if update {
 		action := "SetTLSCipherPolicyAttribute"
-		conn, err := client.NewSlbClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-15"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

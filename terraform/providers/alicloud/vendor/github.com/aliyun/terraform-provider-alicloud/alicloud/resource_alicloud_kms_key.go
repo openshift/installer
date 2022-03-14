@@ -227,6 +227,10 @@ func resourceAlicloudKmsKeyRead(d *schema.ResourceData, meta interface{}) error 
 func resourceAlicloudKmsKeyUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	kmsService := KmsService{client}
+	conn, err := client.NewKmsClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	d.Partial(true)
 
@@ -236,10 +240,6 @@ func resourceAlicloudKmsKeyUpdate(d *schema.ResourceData, meta interface{}) erro
 		}
 		request["Description"] = d.Get("description")
 		action := "UpdateKeyDescription"
-		conn, err := client.NewKmsClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-01-20"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -272,10 +272,6 @@ func resourceAlicloudKmsKeyUpdate(d *schema.ResourceData, meta interface{}) erro
 	}
 	if update {
 		action := "UpdateRotationPolicy"
-		conn, err := client.NewKmsClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-01-20"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -320,10 +316,6 @@ func resourceAlicloudKmsKeyUpdate(d *schema.ResourceData, meta interface{}) erro
 					"KeyId": d.Id(),
 				}
 				action := "DisableKey"
-				conn, err := client.NewKmsClient()
-				if err != nil {
-					return WrapError(err)
-				}
 				wait := incrementalWait(3*time.Second, 3*time.Second)
 				err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 					response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-01-20"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -346,10 +338,6 @@ func resourceAlicloudKmsKeyUpdate(d *schema.ResourceData, meta interface{}) erro
 					"KeyId": d.Id(),
 				}
 				action := "EnableKey"
-				conn, err := client.NewKmsClient()
-				if err != nil {
-					return WrapError(err)
-				}
 				wait := incrementalWait(3*time.Second, 3*time.Second)
 				err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 					response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-01-20"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

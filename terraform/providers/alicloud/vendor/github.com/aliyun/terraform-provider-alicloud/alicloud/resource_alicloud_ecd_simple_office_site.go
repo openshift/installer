@@ -179,6 +179,10 @@ func resourceAlicloudEcdSimpleOfficeSiteRead(d *schema.ResourceData, meta interf
 }
 func resourceAlicloudEcdSimpleOfficeSiteUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewGwsecdClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	d.Partial(true)
 	update := false
@@ -194,10 +198,6 @@ func resourceAlicloudEcdSimpleOfficeSiteUpdate(d *schema.ResourceData, meta inte
 	if update {
 		request["RegionId"] = client.RegionId
 		action := "ModifyOfficeSiteCrossDesktopAccess"
-		conn, err := client.NewGwsecdClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2020-09-30"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -230,10 +230,6 @@ func resourceAlicloudEcdSimpleOfficeSiteUpdate(d *schema.ResourceData, meta inte
 	if update {
 		request["RegionId"] = client.RegionId
 		action := "ModifyOfficeSiteMfaEnabled"
-		conn, err := client.NewGwsecdClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2020-09-30"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -266,10 +262,6 @@ func resourceAlicloudEcdSimpleOfficeSiteUpdate(d *schema.ResourceData, meta inte
 	}
 	if update {
 		action := "SetOfficeSiteSsoStatus"
-		conn, err := client.NewGwsecdClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2020-09-30"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
@@ -308,10 +300,6 @@ func resourceAlicloudEcdSimpleOfficeSiteUpdate(d *schema.ResourceData, meta inte
 	if update {
 		request["RegionId"] = client.RegionId
 		action := "ModifyOfficeSiteAttribute"
-		conn, err := client.NewGwsecdClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2020-09-30"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

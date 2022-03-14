@@ -376,3 +376,94 @@ func (s *CrService) CrEndpointAclServiceStateRefreshFunc(id string, failStates [
 		return object, fmt.Sprint(object["Status"]), nil
 	}
 }
+
+func (s *CrService) DescribeCrChartNamespace(id string) (object map[string]interface{}, err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewAcrClient()
+	if err != nil {
+		return nil, WrapError(err)
+	}
+	action := "GetChartNamespace"
+	parts, err := ParseResourceId(id, 2)
+	if err != nil {
+		err = WrapError(err)
+		return
+	}
+	request := map[string]interface{}{
+		"RegionId":      s.client.RegionId,
+		"InstanceId":    parts[0],
+		"NamespaceName": parts[1],
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2018-12-01"), StringPointer("AK"), nil, request, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if IsExpectedErrorCodes(fmt.Sprint(response["Code"]), []string{"CHART_NAMESPACE_NOT_EXIST"}) {
+		return object, WrapErrorf(Error(GetNotFoundMessage("CR", id)), NotFoundWithResponse, response)
+	}
+	if err != nil {
+		return object, WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	v, err := jsonpath.Get("$", response)
+	if err != nil {
+		return object, WrapErrorf(err, FailedGetAttributeMsg, id, "$", response)
+	}
+	object = v.(map[string]interface{})
+	return object, nil
+}
+func (s *CrService) DescribeCrChartRepository(id string) (object map[string]interface{}, err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewAcrClient()
+	if err != nil {
+		return nil, WrapError(err)
+	}
+	action := "GetChartRepository"
+	parts, err := ParseResourceId(id, 3)
+	if err != nil {
+		err = WrapError(err)
+		return
+	}
+	request := map[string]interface{}{
+		"RepoName":          parts[2],
+		"RepoNamespaceName": parts[1],
+		"InstanceId":        parts[0],
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2018-12-01"), StringPointer("AK"), nil, request, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if IsExpectedErrorCodes(fmt.Sprint(response["Code"]), []string{"CHART_REPO_NOT_EXIST"}) {
+		return object, WrapErrorf(Error(GetNotFoundMessage("CR", id)), NotFoundWithResponse, response)
+	}
+	if err != nil {
+		return object, WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	v, err := jsonpath.Get("$", response)
+	if err != nil {
+		return object, WrapErrorf(err, FailedGetAttributeMsg, id, "$", response)
+	}
+	object = v.(map[string]interface{})
+	return object, nil
+}

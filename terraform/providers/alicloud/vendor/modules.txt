@@ -135,7 +135,7 @@ github.com/aliyun/credentials-go/credentials/utils
 # github.com/aliyun/fc-go-sdk v0.0.0-20200925033337-c013428cbe21
 ## explicit
 github.com/aliyun/fc-go-sdk
-# github.com/aliyun/terraform-provider-alicloud v1.148.0
+# github.com/aliyun/terraform-provider-alicloud v1.158.0
 ## explicit; go 1.13
 github.com/aliyun/terraform-provider-alicloud
 github.com/aliyun/terraform-provider-alicloud/alicloud
@@ -205,10 +205,10 @@ github.com/cenkalti/backoff
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/deckarep/golang-set v1.7.1
-## explicit
+# github.com/deckarep/golang-set v1.8.0
+## explicit; go 1.17
 github.com/deckarep/golang-set
-# github.com/denverdino/aliyungo v0.0.0-20211122042034-c78a9788662a
+# github.com/denverdino/aliyungo v0.0.0-20220218034049-d2eb7f483ee8
 ## explicit; go 1.15
 github.com/denverdino/aliyungo/cdn
 github.com/denverdino/aliyungo/common

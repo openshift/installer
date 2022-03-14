@@ -128,6 +128,10 @@ func resourceAlicloudVpcIpv6GatewayRead(d *schema.ResourceData, meta interface{}
 func resourceAlicloudVpcIpv6GatewayUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	vpcService := VpcService{client}
+	conn, err := client.NewVpcClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	d.Partial(true)
 
@@ -144,10 +148,6 @@ func resourceAlicloudVpcIpv6GatewayUpdate(d *schema.ResourceData, meta interface
 	}
 	if update {
 		action := "ModifyIpv6GatewaySpec"
-		conn, err := client.NewVpcClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)
 		wait := incrementalWait(3*time.Second, 3*time.Second)
@@ -192,10 +192,6 @@ func resourceAlicloudVpcIpv6GatewayUpdate(d *schema.ResourceData, meta interface
 	}
 	if update {
 		action := "ModifyIpv6GatewayAttribute"
-		conn, err := client.NewVpcClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-04-28"), StringPointer("AK"), nil, modifyIpv6GatewayAttributeReq, &util.RuntimeOptions{})

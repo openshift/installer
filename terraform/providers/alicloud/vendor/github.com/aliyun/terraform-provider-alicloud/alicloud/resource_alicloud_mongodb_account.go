@@ -87,7 +87,7 @@ func resourceAlicloudMongodbAccountCreate(d *schema.ResourceData, meta interface
 	}
 	d.SetId(fmt.Sprint(request["DBInstanceId"], ":", request["AccountName"]))
 	MongoDBService := MongoDBService{client}
-	stateConf := BuildStateConf([]string{}, []string{"Available"}, d.Timeout(schema.TimeoutUpdate), 5*time.Second, MongoDBService.MongodbAccountStateRefreshFunc(d.Id(), []string{}))
+	stateConf := BuildStateConf([]string{}, []string{"Available"}, d.Timeout(schema.TimeoutCreate), 5*time.Second, MongoDBService.MongodbAccountStateRefreshFunc(d.Id(), []string{}))
 	if _, err := stateConf.WaitForState(); err != nil {
 		return WrapErrorf(err, IdMsg, d.Id())
 	}

@@ -74,11 +74,18 @@ func resourceAlicloudGpdbElasticInstance() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"2C16G", "4C32G", "16C128G"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"2C16G", "4C32G", "16C128G", "2C8G", "4C16G", "8C32G", "16C64G"}, false),
 			},
 			"db_instance_description": {
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"db_instance_category": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"Basic", "HighAvailability"}, false),
 			},
 			"instance_network_type": {
 				Type:         schema.TypeString,
@@ -106,6 +113,17 @@ func resourceAlicloudGpdbElasticInstance() *schema.Resource {
 				ValidateFunc:     validation.IntBetween(1, 12),
 				DiffSuppressFunc: PostPaidDiffSuppressFunc,
 			},
+			"encryption_key": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+			"encryption_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+			"tags": tagsSchema(),
 			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -161,6 +179,15 @@ func resourceAlicloudGpdbElasticInstanceCreate(d *schema.ResourceData, meta inte
 	request["RegionId"] = client.RegionId
 	if v, ok := d.GetOk("zone_id"); ok {
 		request["ZoneId"] = v
+	}
+	if v, ok := d.GetOk("db_instance_category"); ok {
+		request["DBInstanceCategory"] = v
+	}
+	if v, ok := d.GetOk("encryption_key"); ok {
+		request["EncryptionKey"] = v
+	}
+	if v, ok := d.GetOk("encryption_type"); ok {
+		request["EncryptionType"] = v
 	}
 
 	vswitchId := Trim(d.Get("vswitch_id").(string))
@@ -222,14 +249,22 @@ func resourceAlicloudGpdbElasticInstanceRead(d *schema.ResourceData, meta interf
 	d.Set("seg_storage_type", instance["StorageType"])
 	d.Set("seg_node_num", instance["SegNodeNum"])
 	d.Set("storage_size", instance["StorageSize"])
-	d.Set("payment_type", convertGpdbInstancePaymentTypeResponse(instance["PayType"].(string)))
-	d.Set("instance_spec", convertDBInstanceClassToInstanceSpec(instance["DBInstanceClass"].(string)))
 	d.Set("status", instance["DBInstanceStatus"])
 	d.Set("db_instance_description", instance["DBInstanceDescription"])
 	d.Set("instance_network_type", instance["InstanceNetworkType"])
 	d.Set("vswitch_id", instance["VSwitchId"])
 	d.Set("zone_id", instance["ZoneId"])
 	d.Set("connection_string", instance["ConnectionString"])
+	d.Set("db_instance_category", instance["DBInstanceCategory"])
+	d.Set("encryption_key", instance["EncryptionKey"])
+	d.Set("encryption_type", instance["EncryptionType"])
+	d.Set("tags", tagsToMap(instance["Tags"]))
+	d.Set("instance_spec", fmt.Sprintf("%dC%dG", formatInt(instance["CpuCores"]), formatInt(instance["MemorySize"])))
+
+	if v, exist := instance["PayType"]; exist {
+		d.Set("payment_type", convertGpdbInstancePaymentTypeResponse(v.(string)))
+	}
+
 	securityIps, err := gpdbService.DescribeGpdbSecurityIps(d.Id())
 	if err != nil {
 		return WrapError(err)
@@ -245,6 +280,12 @@ func resourceAlicloudGpdbElasticInstanceUpdate(d *schema.ResourceData, meta inte
 	conn, err := client.NewGpdbClient()
 	if err != nil {
 		return WrapError(err)
+	}
+	if d.HasChange("tags") {
+		if err := gpdbService.SetResourceTags(d, "ALIYUN::GPDB::INSTANCE"); err != nil {
+			return WrapError(err)
+		}
+		d.SetPartial("tags")
 	}
 	if d.HasChange("db_instance_description") {
 		action := "ModifyDBInstanceDescription"

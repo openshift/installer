@@ -41,7 +41,7 @@ func resourceAlicloudCloudSsoGroup() *schema.Resource {
 			"group_name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[\w-.]{1,128}$`), "The name of the resource. The name must be 1 to 128 characters in length and  can contain letters, digits, underscores (_), and hyphens (-)."),
+				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[\w-.]{1,128}$`), "The name of the resource. The name must be 1 to 128 characters in length and  can contain letters, digits, periods (.), underscores (_), and hyphens (-)."),
 			},
 		},
 	}

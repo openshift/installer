@@ -134,6 +134,10 @@ func resourceAlicloudEcsDeploymentSetRead(d *schema.ResourceData, meta interface
 }
 func resourceAlicloudEcsDeploymentSetUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
+	conn, err := client.NewEcsClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	update := false
 	request := map[string]interface{}{
@@ -154,10 +158,6 @@ func resourceAlicloudEcsDeploymentSetUpdate(d *schema.ResourceData, meta interfa
 	}
 	if update {
 		action := "ModifyDeploymentSetAttribute"
-		conn, err := client.NewEcsClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-26"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

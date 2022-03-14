@@ -469,6 +469,7 @@ func (s *MongoDBService) tagsFromMap(m map[string]interface{}) []dds.TagResource
 
 	return result
 }
+
 func (s *MongoDBService) DescribeMongodbAuditPolicy(id string) (object map[string]interface{}, err error) {
 	var response map[string]interface{}
 	conn, err := s.client.NewDdsClient()
@@ -801,4 +802,233 @@ func (s *MongoDBService) ListTagResources(id string, resourceType string) (objec
 	}
 
 	return tags, nil
+}
+
+func (s *MongoDBService) DescribeMongodbShardingNetworkPublicAddress(id string) (object map[string]interface{}, err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewDdsClient()
+	if err != nil {
+		return nil, WrapError(err)
+	}
+	action := "DescribeShardingNetworkAddress"
+	parts, err := ParseResourceId(id, 2)
+	if err != nil {
+		err = WrapError(err)
+		return
+	}
+	request := map[string]interface{}{
+		"DBInstanceId": parts[0],
+		"NodeId":       parts[1],
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2015-12-01"), StringPointer("AK"), nil, request, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if err != nil {
+		if IsExpectedErrors(err, []string{"InvalidDBInstanceId.NotFound"}) {
+			return object, WrapErrorf(err, NotFoundMsg, AlibabaCloudSdkGoERROR)
+		}
+		return object, WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	v, err := jsonpath.Get("$.NetworkAddresses.NetworkAddress", response)
+	if err != nil {
+		return object, WrapErrorf(err, FailedGetAttributeMsg, id, "$.NetworkAddresses.NetworkAddress", response)
+	}
+	exist := false
+	var networkAddress = make([]map[string]interface{}, 0)
+	if len(v.([]interface{})) < 1 {
+		return object, WrapErrorf(Error(GetNotFoundMessage("MongoDB", id)), NotFoundWithResponse, response)
+	} else {
+		for _, item := range v.([]interface{}) {
+			if item.(map[string]interface{})["NetworkType"].(string) == "Public" {
+				exist = true
+				networkAddress = append(networkAddress, item.(map[string]interface{}))
+			}
+		}
+		if !exist {
+			return object, WrapErrorf(Error(GetNotFoundMessage("MongoDB", id)), NotFoundWithResponse, response)
+		}
+	}
+	object = make(map[string]interface{}, 0)
+	object["NetworkAddress"] = networkAddress
+	return object, nil
+}
+
+func (s *MongoDBService) DescribeShardingNodeType(id string) (string, error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewDdsClient()
+	if err != nil {
+		return "", WrapError(err)
+	}
+	action := "DescribeShardingNetworkAddress"
+	parts, err := ParseResourceId(id, 2)
+	if err != nil {
+		return "", WrapError(err)
+	}
+	request := map[string]interface{}{
+		"DBInstanceId": parts[0],
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2015-12-01"), StringPointer("AK"), nil, request, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if err != nil {
+		if IsExpectedErrors(err, []string{"InvalidDBInstanceId.NotFound"}) {
+			return "", WrapErrorf(err, NotFoundMsg, AlibabaCloudSdkGoERROR)
+		}
+		return "", WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	v, err := jsonpath.Get("$.NetworkAddresses.NetworkAddress", response)
+	if err != nil {
+		return "", WrapErrorf(err, FailedGetAttributeMsg, id, "$.NetworkAddresses.NetworkAddress", response)
+	}
+
+	var nodeType string
+	if len(v.([]interface{})) < 1 {
+		return "", WrapErrorf(Error(GetNotFoundMessage("MongoDB", id)), NotFoundWithResponse, response)
+	} else {
+		for _, item := range v.([]interface{}) {
+			if item.(map[string]interface{})["NodeId"].(string) == parts[1] {
+				nodeType = fmt.Sprint(item.(map[string]interface{})["NodeType"])
+				break
+			}
+		}
+	}
+	if nodeType == "" {
+		return "", WrapErrorf(Error(GetNotFoundMessage("MongoDB", id)), NotFoundWithResponse, response)
+	}
+
+	return nodeType, nil
+}
+
+func (s *MongoDBService) MongodbShardingNetworkPublicAddressStateRefreshFunc(id, nodeType string, failStates []string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		parts, err := ParseResourceId(id, 2)
+		if err != nil {
+			return nil, "", WrapError(err)
+		}
+		object, err := s.DescribeMongodbServerlessInstance(parts[0])
+		if err != nil {
+			if NotFoundError(err) {
+				// Set this to nil as if we didn't find anything.
+				return nil, "", nil
+			}
+			return nil, "", WrapError(err)
+		}
+		var status string
+
+		switch nodeType {
+		case "mongos":
+			status = fmt.Sprint(object["DBInstanceStatus"])
+		case "db":
+			list := object["ShardList"].(map[string]interface{})["ShardAttribute"]
+			for _, item := range list.([]interface{}) {
+				mongos := item.(map[string]interface{})
+				if mongos["NodeId"] == parts[1] {
+					status = fmt.Sprint(mongos["Status"])
+					break
+				}
+			}
+		case "cs":
+			list := object["ConfigserverList"].(map[string]interface{})["ConfigserverAttribute"]
+			for _, item := range list.([]interface{}) {
+				mongos := item.(map[string]interface{})
+				if mongos["NodeId"] == parts[1] {
+					status = fmt.Sprint(mongos["Status"])
+					break
+				}
+			}
+		}
+
+		for _, failState := range failStates {
+			if status == failState {
+				return object, status, WrapError(Error(FailedToReachTargetStatus, status))
+			}
+		}
+
+		return object, status, nil
+	}
+}
+
+func (s *MongoDBService) DescribeMongodbShardingNetworkPrivateAddress(id string) (object map[string]interface{}, err error) {
+	var response map[string]interface{}
+	conn, err := s.client.NewDdsClient()
+	if err != nil {
+		return nil, WrapError(err)
+	}
+	action := "DescribeShardingNetworkAddress"
+	parts, err := ParseResourceId(id, 2)
+	if err != nil {
+		err = WrapError(err)
+		return
+	}
+	request := map[string]interface{}{
+		"DBInstanceId": parts[0],
+		"NodeId":       parts[1],
+	}
+	runtime := util.RuntimeOptions{}
+	runtime.SetAutoretry(true)
+	wait := incrementalWait(3*time.Second, 3*time.Second)
+	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
+		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2015-12-01"), StringPointer("AK"), nil, request, &runtime)
+		if err != nil {
+			if NeedRetry(err) {
+				wait()
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	addDebug(action, response, request)
+	if err != nil {
+		if IsExpectedErrors(err, []string{"InvalidDBInstanceId.NotFound"}) {
+			return object, WrapErrorf(err, NotFoundMsg, AlibabaCloudSdkGoERROR)
+		}
+		return object, WrapErrorf(err, DefaultErrorMsg, id, action, AlibabaCloudSdkGoERROR)
+	}
+	v, err := jsonpath.Get("$.NetworkAddresses.NetworkAddress", response)
+	if err != nil {
+		return object, WrapErrorf(err, FailedGetAttributeMsg, id, "$.NetworkAddresses.NetworkAddress", response)
+	}
+	exist := false
+	var networkAddress = make([]map[string]interface{}, 0)
+	if len(v.([]interface{})) < 1 {
+		return object, WrapErrorf(Error(GetNotFoundMessage("MongoDB", id)), NotFoundWithResponse, response)
+	} else {
+		for _, item := range v.([]interface{}) {
+			if item.(map[string]interface{})["NetworkType"].(string) != "Public" {
+				exist = true
+				networkAddress = append(networkAddress, item.(map[string]interface{}))
+			}
+		}
+		if !exist {
+			return object, WrapErrorf(Error(GetNotFoundMessage("MongoDB", id)), NotFoundWithResponse, response)
+		}
+	}
+	object = make(map[string]interface{}, 0)
+	object["NetworkAddress"] = networkAddress
+	return object, nil
 }

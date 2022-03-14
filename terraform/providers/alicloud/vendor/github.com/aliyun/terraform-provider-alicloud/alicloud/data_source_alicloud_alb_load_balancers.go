@@ -28,7 +28,7 @@ func dataSourceAlicloudAlbLoadBalancers() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice([]string{"Abnormal", "Normal"}, false),
-				Deprecated:   "Field 'load_balancer_bussiness_status' has been deprecated from provider version 1.142.0 and it will be remove in the future version. Please use the new attribute 'load_balancer_business_status' instead.",
+				Deprecated:   "Field 'load_balancer_bussiness_status' has been deprecated from provider version 1.142.0 and it will be removed in the future version. Please use the new attribute 'load_balancer_business_status' instead.",
 			},
 			"load_balancer_business_status": {
 				Type:         schema.TypeString,
@@ -169,7 +169,7 @@ func dataSourceAlicloudAlbLoadBalancers() *schema.Resource {
 						"load_balancer_bussiness_status": {
 							Type:       schema.TypeString,
 							Computed:   true,
-							Deprecated: "Field 'load_balancer_bussiness_status' has been deprecated from provider version 1.142.0 and it will be remove in the future version. Please use the new parameter 'load_balancer_business_status' instead.",
+							Deprecated: "Field 'load_balancer_bussiness_status' has been deprecated from provider version 1.142.0 and it will be removed in the future version. Please use the new parameter 'load_balancer_business_status' instead.",
 						},
 						"load_balancer_business_status": {
 							Type:     schema.TypeString,

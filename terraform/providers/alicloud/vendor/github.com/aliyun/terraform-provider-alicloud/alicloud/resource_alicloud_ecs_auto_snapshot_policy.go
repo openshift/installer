@@ -179,6 +179,10 @@ func resourceAlicloudEcsAutoSnapshotPolicyRead(d *schema.ResourceData, meta inte
 func resourceAlicloudEcsAutoSnapshotPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	ecsService := EcsService{client}
+	conn, err := client.NewEcsClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	d.Partial(true)
 
@@ -223,10 +227,6 @@ func resourceAlicloudEcsAutoSnapshotPolicyUpdate(d *schema.ResourceData, meta in
 	}
 	if update {
 		action := "ModifyAutoSnapshotPolicyEx"
-		conn, err := client.NewEcsClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 3*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2014-05-26"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

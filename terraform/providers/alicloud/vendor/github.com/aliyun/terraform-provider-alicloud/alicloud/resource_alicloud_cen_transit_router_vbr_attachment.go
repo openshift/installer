@@ -198,6 +198,10 @@ func resourceAlicloudCenTransitRouterVbrAttachmentRead(d *schema.ResourceData, m
 func resourceAlicloudCenTransitRouterVbrAttachmentUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	cbnService := CbnService{client}
+	conn, err := client.NewCbnClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	var response map[string]interface{}
 	parts, err1 := ParseResourceId(d.Id(), 2)
 	if err1 != nil {
@@ -228,10 +232,6 @@ func resourceAlicloudCenTransitRouterVbrAttachmentUpdate(d *schema.ResourceData,
 			request["DryRun"] = d.Get("dry_run")
 		}
 		action := "UpdateTransitRouterVbrAttachmentAttribute"
-		conn, err := client.NewCbnClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		wait := incrementalWait(3*time.Second, 5*time.Second)
 		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2017-09-12"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})

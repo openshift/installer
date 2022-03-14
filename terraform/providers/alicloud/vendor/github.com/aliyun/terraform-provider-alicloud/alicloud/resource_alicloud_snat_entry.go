@@ -49,12 +49,14 @@ func resourceAlicloudSnatEntry() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
+				Computed:      true,
 				ConflictsWith: strings.Fields("source_vswitch_id"),
 			},
 			"source_vswitch_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
+				Computed:      true,
 				ConflictsWith: strings.Fields("source_cidr"),
 			},
 			"status": {
@@ -94,7 +96,7 @@ func resourceAlicloudSnatEntryCreate(d *schema.ResourceData, meta interface{}) e
 		request["ClientToken"] = buildClientToken("CreateSnatEntry")
 		response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2016-04-28"), StringPointer("AK"), nil, request, &runtime)
 		if err != nil {
-			if IsExpectedErrors(err, []string{"EIP_NOT_IN_GATEWAY", "InternalError", "OperationFailed.Throttling", "OperationUnsupported.EipInBinding", "OperationUnsupported.EipNatBWPCheck"}) || NeedRetry(err) {
+			if IsExpectedErrors(err, []string{"EIP_NOT_IN_GATEWAY", "InternalError", "OperationFailed.Throttling", "OperationUnsupported.EipInBinding", "OperationUnsupported.EipNatBWPCheck", "OperationConflict"}) || NeedRetry(err) {
 				wait()
 				return resource.RetryableError(err)
 			}
@@ -139,11 +141,8 @@ func resourceAlicloudSnatEntryRead(d *schema.ResourceData, meta interface{}) err
 	d.Set("snat_table_id", parts[0])
 	d.Set("snat_entry_name", object["SnatEntryName"])
 	d.Set("snat_ip", object["SnatIp"])
-	if _, ok := d.GetOk("source_cidr"); ok {
-		d.Set("source_cidr", object["SourceCIDR"])
-	} else {
-		d.Set("source_vswitch_id", object["SourceVSwitchId"])
-	}
+	d.Set("source_cidr", object["SourceCIDR"])
+	d.Set("source_vswitch_id", object["SourceVSwitchId"])
 	d.Set("status", object["Status"])
 	return nil
 }

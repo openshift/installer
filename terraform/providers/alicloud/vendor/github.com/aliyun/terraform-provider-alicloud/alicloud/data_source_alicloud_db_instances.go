@@ -82,7 +82,15 @@ func dataSourceAlicloudDBInstances() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-
+			"page_number": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"page_size": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  100,
+			},
 			// Computed values
 			"names": {
 				Type:     schema.TypeList,
@@ -339,6 +347,10 @@ func dataSourceAlicloudDBInstances() *schema.Resource {
 					},
 				},
 			},
+			"total_count": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -347,10 +359,18 @@ func dataSourceAlicloudDBInstancesRead(d *schema.ResourceData, meta interface{})
 	client := meta.(*connectivity.AliyunClient)
 	action := "DescribeDBInstances"
 	request := map[string]interface{}{
-		"RegionId":   client.RegionId,
-		"SourceIp":   client.SourceIp,
-		"PageSize":   PageSizeLarge,
-		"PageNumber": 1,
+		"RegionId": client.RegionId,
+		"SourceIp": client.SourceIp,
+	}
+	if v, ok := d.GetOk("page_number"); ok && v.(int) > 0 {
+		request["PageNumber"] = v.(int)
+	} else {
+		request["PageNumber"] = 1
+	}
+	if v, ok := d.GetOk("page_size"); ok && v.(int) > 0 {
+		request["PageSize"] = v.(int)
+	} else {
+		request["PageSize"] = PageSizeLarge
 	}
 	if v, ok := d.GetOk("engine"); ok && v.(string) != "" {
 		request["Engine"] = v.(string)
@@ -385,7 +405,7 @@ func dataSourceAlicloudDBInstancesRead(d *schema.ResourceData, meta interface{})
 		return WrapError(err)
 	}
 
-	var objects []map[string]interface{}
+	var objects []interface{}
 
 	var nameRegex *regexp.Regexp
 	if v, ok := d.GetOk("name_regex"); ok {
@@ -431,6 +451,10 @@ func dataSourceAlicloudDBInstancesRead(d *schema.ResourceData, meta interface{})
 			return WrapErrorf(err, FailedGetAttributeMsg, action, "$.Items.DBInstance", response)
 		}
 		result, _ := resp.([]interface{})
+		if isPagingRequest(d) {
+			objects = result
+			break
+		}
 		for _, v := range result {
 			item := v.(map[string]interface{})
 			if nameRegex != nil {
@@ -445,15 +469,15 @@ func dataSourceAlicloudDBInstancesRead(d *schema.ResourceData, meta interface{})
 			}
 			objects = append(objects, item)
 		}
-		if len(result) < PageSizeLarge {
+		if len(result) < request["PageSize"].(int) {
 			break
 		}
 		request["PageNumber"] = request["PageNumber"].(int) + 1
 	}
-	return rdsInstancesDescription(d, meta, objects)
+	return rdsInstancesDescription(d, meta, objects, formatInt(response["TotalRecordCount"]))
 }
 
-func rdsInstancesDescription(d *schema.ResourceData, meta interface{}, objects []map[string]interface{}) error {
+func rdsInstancesDescription(d *schema.ResourceData, meta interface{}, objects []interface{}, totalCount int) error {
 	client := meta.(*connectivity.AliyunClient)
 	rdsService := RdsService{client}
 
@@ -461,7 +485,8 @@ func rdsInstancesDescription(d *schema.ResourceData, meta interface{}, objects [
 	var names []string
 	var s []map[string]interface{}
 
-	for _, item := range objects {
+	for _, v := range objects {
+		item := v.(map[string]interface{})
 		readOnlyInstanceIDs := []string{}
 		for _, id := range item["ReadOnlyDBInstanceIds"].(map[string]interface{})["ReadOnlyDBInstanceId"].([]interface{}) {
 			readOnlyInstanceIDs = append(readOnlyInstanceIDs, fmt.Sprint(id.(map[string]interface{})["DBInstanceId"]))
@@ -623,7 +648,9 @@ func rdsInstancesDescription(d *schema.ResourceData, meta interface{}, objects [
 	if err := d.Set("names", names); err != nil {
 		return WrapError(err)
 	}
-
+	if err := d.Set("total_count", totalCount); err != nil {
+		return WrapError(err)
+	}
 	// create a json file in current directory and write data source to it
 	if output, ok := d.GetOk("output_file"); ok && output.(string) != "" {
 		writeToFile(output.(string), s)

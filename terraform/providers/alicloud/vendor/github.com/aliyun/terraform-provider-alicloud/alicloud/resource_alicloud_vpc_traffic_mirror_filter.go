@@ -118,6 +118,10 @@ func resourceAlicloudVpcTrafficMirrorFilterRead(d *schema.ResourceData, meta int
 func resourceAlicloudVpcTrafficMirrorFilterUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*connectivity.AliyunClient)
 	var response map[string]interface{}
+	conn, err := client.NewVpcClient()
+	if err != nil {
+		return WrapError(err)
+	}
 	update := false
 	request := map[string]interface{}{
 		"TrafficMirrorFilterId": d.Id(),
@@ -140,10 +144,6 @@ func resourceAlicloudVpcTrafficMirrorFilterUpdate(d *schema.ResourceData, meta i
 			request["DryRun"] = v
 		}
 		action := "UpdateTrafficMirrorFilterAttribute"
-		conn, err := client.NewVpcClient()
-		if err != nil {
-			return WrapError(err)
-		}
 		runtime := util.RuntimeOptions{}
 		runtime.SetAutoretry(true)
 		wait := incrementalWait(3*time.Second, 3*time.Second)

@@ -328,10 +328,12 @@ func resourceAlicloudEcsLaunchTemplate() *schema.Resource {
 			"vpc_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"zone_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"system_disk_category": {
 				Type:          schema.TypeString,

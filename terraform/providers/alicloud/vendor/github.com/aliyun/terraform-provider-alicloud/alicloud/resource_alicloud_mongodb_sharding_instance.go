@@ -271,7 +271,7 @@ func buildMongoDBShardingCreateRequest(d *schema.ResourceData, meta interface{})
 			}
 			class := item["node_class"].(string)
 			nodeStorage := item["node_storage"].(int)
-			replicaSets = append(replicaSets, dds.CreateShardingDBInstanceReplicaSet{strconv.Itoa(readonlyReplicas), strconv.Itoa(nodeStorage), class})
+			replicaSets = append(replicaSets, dds.CreateShardingDBInstanceReplicaSet{ReadonlyReplicas: strconv.Itoa(readonlyReplicas), Storage: strconv.Itoa(nodeStorage), Class: class})
 		}
 		request.ReplicaSet = &replicaSets
 	}
@@ -282,12 +282,12 @@ func buildMongoDBShardingCreateRequest(d *schema.ResourceData, meta interface{})
 		for _, rew := range mongoList.([]interface{}) {
 			item := rew.(map[string]interface{})
 			class := item["node_class"].(string)
-			mongos = append(mongos, dds.CreateShardingDBInstanceMongos{class})
+			mongos = append(mongos, dds.CreateShardingDBInstanceMongos{Class: class})
 		}
 		request.Mongos = &mongos
 	}
 
-	request.ConfigServer = &[]dds.CreateShardingDBInstanceConfigServer{{"20", "dds.cs.mid"}}
+	request.ConfigServer = &[]dds.CreateShardingDBInstanceConfigServer{{Storage: "20", Class: "dds.cs.mid"}}
 
 	request.NetworkType = string(Classic)
 	vswitchId := Trim(d.Get("vswitch_id").(string))
