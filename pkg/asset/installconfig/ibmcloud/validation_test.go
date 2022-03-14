@@ -449,7 +449,7 @@ func TestValidatePreExitingPublicDNS(t *testing.T) {
 
 	dnsRecordName := fmt.Sprintf("api.%s.%s", validClusterName, validBaseDomain)
 
-	metadata := ibmcloud.NewMetadata(validBaseDomain, "us-south")
+	metadata := ibmcloud.NewMetadata(validBaseDomain, "us-south", nil, nil)
 	metadata.SetCISInstanceCRN(validCISInstanceCRN)
 
 	// Mocks: no pre-existing DNS records

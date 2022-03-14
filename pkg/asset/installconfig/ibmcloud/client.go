@@ -347,11 +347,17 @@ func (c *Client) GetSubnetByName(ctx context.Context, subnetName string, region 
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	c.SetVPCServiceURLForRegion(ctx, region)
+	err := c.SetVPCServiceURLForRegion(ctx, region)
+	if err != nil {
+		return nil, err
+	}
+
 	listSubnetsOptions := c.vpcAPI.NewListSubnetsOptions()
 	subnetCollection, detailedResponse, err := c.vpcAPI.ListSubnetsWithContext(ctx, listSubnetsOptions)
-	if detailedResponse.GetStatusCode() == http.StatusNotFound {
+	if err != nil {
 		return nil, err
+	} else if detailedResponse.GetStatusCode() == http.StatusNotFound {
+		return nil, &VPCResourceNotFoundError{}
 	}
 	for _, subnet := range subnetCollection.Subnets {
 		if subnetName == *subnet.Name {

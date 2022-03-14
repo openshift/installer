@@ -15,7 +15,7 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, subnets map[string]string, pool *types.MachinePool, role, userDataSecret string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != ibmcloud.Name {
 		return nil, fmt.Errorf("non-IBMCloud configuration: %q", configPlatform)
 	}
@@ -34,7 +34,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		azIndex := int(idx) % len(azs)
-		provider, err := provider(clusterID, platform, mpool, azIndex, role, userDataSecret)
+		provider, err := provider(clusterID, platform, subnets, mpool, azIndex, role, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -67,6 +67,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func provider(clusterID string,
 	platform *ibmcloud.Platform,
+	subnets map[string]string,
 	mpool *ibmcloud.MachinePool,
 	azIdx int,
 	role string,
@@ -74,7 +75,12 @@ func provider(clusterID string,
 ) (*ibmcloudprovider.IBMCloudMachineProviderSpec, error) {
 	az := mpool.Zones[azIdx]
 
-	var vpc = fmt.Sprintf("%s-vpc", clusterID)
+	var vpc string
+	if platform.VPCName != "" {
+		vpc = platform.VPCName
+	} else {
+		vpc = fmt.Sprintf("%s-vpc", clusterID)
+	}
 
 	var resourceGroup string
 	if platform.ResourceGroupName != "" {
@@ -83,7 +89,7 @@ func provider(clusterID string,
 		resourceGroup = clusterID
 	}
 
-	subnet, err := getSubnetName(clusterID, role, az)
+	subnet, err := getSubnet(subnets, clusterID, role, az)
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +143,17 @@ func getDedicatedHostNameForZone(clusterID string, role string, zone string) (st
 	default:
 		return "", fmt.Errorf("invalid machine role %v", role)
 	}
+}
+
+func getSubnet(subnets map[string]string, clusterID string, role string, zone string) (string, error) {
+	if len(subnets) == 0 {
+		return getSubnetName(clusterID, role, zone)
+	}
+
+	if subnet, found := subnets[zone]; found {
+		return subnet, nil
+	}
+	return "", fmt.Errorf("no subnet found for %s", zone)
 }
 
 func getSubnetName(clusterID string, role string, zone string) (string, error) {

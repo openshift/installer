@@ -12,21 +12,27 @@ import (
 // does not need to be user-supplied (e.g. because it can be retrieved
 // from external APIs).
 type Metadata struct {
-	BaseDomain string
-	Region     string
+	BaseDomain              string
+	ComputeSubnetNames      []string
+	ControlPlaneSubnetNames []string
+	Region                  string
 
-	accountID      string
-	cisInstanceCRN string
-	client         *Client
+	accountID           string
+	cisInstanceCRN      string
+	client              *Client
+	computeSubnets      map[string]Subnet
+	controlPlaneSubnets map[string]Subnet
 
 	mutex sync.Mutex
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(baseDomain string, region string) *Metadata {
+func NewMetadata(baseDomain string, region string, controlPlaneSubnets []string, computeSubnets []string) *Metadata {
 	return &Metadata{
-		BaseDomain: baseDomain,
-		Region:     region,
+		BaseDomain:              baseDomain,
+		ComputeSubnetNames:      computeSubnets,
+		ControlPlaneSubnetNames: controlPlaneSubnets,
+		Region:                  region,
 	}
 }
 
@@ -85,11 +91,55 @@ func (m *Metadata) SetCISInstanceCRN(crn string) {
 	m.cisInstanceCRN = crn
 }
 
+// ComputeSubnets gets the Subnet details for compute subnets
+func (m *Metadata) ComputeSubnets(ctx context.Context) (map[string]Subnet, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.ComputeSubnetNames) > 0 && len(m.computeSubnets) == 0 {
+		client, err := m.Client()
+		if err != nil {
+			return nil, err
+		}
+		m.computeSubnets, err = getSubnets(ctx, client, m.Region, m.ComputeSubnetNames)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return m.computeSubnets, nil
+}
+
+// ControlPlaneSubnets gets the Subnet details for control plane subnets
+func (m *Metadata) ControlPlaneSubnets(ctx context.Context) (map[string]Subnet, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.ControlPlaneSubnetNames) > 0 && len(m.controlPlaneSubnets) == 0 {
+		client, err := m.Client()
+		if err != nil {
+			return nil, err
+		}
+		m.controlPlaneSubnets, err = getSubnets(ctx, client, m.Region, m.ControlPlaneSubnetNames)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return m.controlPlaneSubnets, nil
+}
+
 // Client returns a client used for making API calls to IBM Cloud services.
 func (m *Metadata) Client() (*Client, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	if m.client == nil {
 		client, err := NewClient()
-		client.SetVPCServiceURLForRegion(context.TODO(), m.Region)
+		if err != nil {
+			return nil, err
+		}
+		err = client.SetVPCServiceURLForRegion(context.TODO(), m.Region)
 		if err != nil {
 			return nil, err
 		}
