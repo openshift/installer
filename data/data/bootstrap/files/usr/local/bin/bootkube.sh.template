@@ -42,11 +42,11 @@ wait_for_etcd_cluster() {
     done
 }
 
-MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
-MACHINE_CONFIG_OSCONTENT=$(image_for machine-os-content)
-MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
-MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
+# Extract all the image references, this will be passed to the MCO at least.
+podman run --quiet --rm --net=none --entrypoint cat "${RELEASE_IMAGE_DIGEST}" /release-manifests/image-references > image-references
 
+# Parse out operator images we may reference
+MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
 CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
 CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
@@ -302,13 +302,7 @@ then
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
 			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
-			--machine-config-operator-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
-			--machine-config-oscontent-image="${MACHINE_CONFIG_OSCONTENT}" \
-			--infra-image="${MACHINE_CONFIG_INFRA_IMAGE}" \
-			--keepalived-image="${KEEPALIVED_IMAGE}" \
-			--coredns-image="${COREDNS_IMAGE}" \
-			--haproxy-image="${HAPROXY_IMAGE}" \
-			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
+			--image-references=image-references \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
 			${ADDITIONAL_FLAGS}
 
