@@ -1,15 +1,3 @@
-locals {
-  # NOTE: Defined in ./vpc.tf
-  # prefix = var.cluster_id
-
-  # NOTE: Defined in ./lb-public.tf
-  # port_ingress_http   = 80
-  # port_ingress_https  = 443
-  # port_kubernetes_api = 6443
-
-  port_machine_config = 22623
-}
-
 ############################################
 # Load balancers
 ############################################
@@ -18,7 +6,7 @@ resource "ibm_is_lb" "kubernetes_api_private" {
   name            = "${local.prefix}-kubernetes-api-private"
   resource_group  = var.resource_group_id
   security_groups = [ibm_is_security_group.kubernetes_api_lb.id]
-  subnets         = ibm_is_subnet.control_plane.*.id
+  subnets         = local.control_plane_subnets[*].id
   tags            = var.tags
   type            = "private"
 }

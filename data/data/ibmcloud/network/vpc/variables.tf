@@ -25,3 +25,20 @@ variable "zones_master" {
 variable "zones_worker" {
   type = list(string)
 }
+
+variable "preexisting_vpc" {
+  type    = bool
+  default = false
+}
+
+variable "cluster_vpc" {
+  type = string
+}
+
+variable "control_plane_subnets" {
+  type = list(string)
+}
+
+variable "compute_subnets" {
+  type = list(string)
+}

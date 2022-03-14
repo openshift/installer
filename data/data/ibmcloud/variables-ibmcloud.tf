@@ -48,6 +48,30 @@ variable "ibmcloud_image_filepath" {
 # Top-level module variables (optional)
 #######################################
 
+variable "ibmcloud_preexisting_vpc" {
+  type        = bool
+  description = "Specifies whether an existing VPC should be used or a new one created for installation."
+  default     = false
+}
+
+variable "ibmcloud_vpc" {
+  type        = string
+  description = "The name of an existing cluster VPC."
+  default     = null
+}
+
+variable "ibmcloud_control_plane_subnets" {
+  type        = list(string)
+  description = "The names of the existing subnets for the control plane."
+  default     = []
+}
+
+variable "ibmcloud_compute_subnets" {
+  type        = list(string)
+  description = "The names of the existing subnets for the compute plane."
+  default     = []
+}
+
 variable "ibmcloud_master_dedicated_hosts" {
   type        = list(map(string))
   description = "(optional) The list of dedicated hosts in which to create the control plane nodes."

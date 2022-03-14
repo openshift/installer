@@ -1,10 +1,3 @@
-locals {
-  # NOTE: Defined in ./vpc.tf
-  # prefix = var.cluster_id
-
-  port_kubernetes_api = 6443
-}
-
 ############################################
 # Load balancers
 ############################################
@@ -15,7 +8,7 @@ resource "ibm_is_lb" "kubernetes_api_public" {
   name            = "${local.prefix}-kubernetes-api-public"
   resource_group  = var.resource_group_id
   security_groups = [ibm_is_security_group.kubernetes_api_lb.id]
-  subnets         = ibm_is_subnet.control_plane.*.id
+  subnets         = local.control_plane_subnets[*].id
   tags            = var.tags
   type            = "public"
 }
