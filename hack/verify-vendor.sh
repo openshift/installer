@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ "$IS_CONTAINER" != "" ]; then
-  set -euxo pipefail
+  set -eux
   go mod tidy
   go mod vendor
   go mod verify
@@ -11,6 +11,6 @@ else
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \
-    docker.io/openshift/origin-release:golang-1.16 \
+    docker.io/golang:1.17 \
     ./hack/verify-vendor.sh "${@}"
 fi

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"time"
@@ -153,7 +154,8 @@ func (l *Poller) FinalResponse(ctx context.Context, respType interface{}) (*http
 		log.Write(log.EventLRO, "final response specifies a response type but no payload was received")
 		return l.resp, nil
 	}
-	body, err := shared.Payload(l.resp)
+	body, err := ioutil.ReadAll(l.resp.Body)
+	l.resp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
