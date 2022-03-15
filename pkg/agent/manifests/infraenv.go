@@ -13,7 +13,7 @@ import (
 )
 
 func getInfraEnv() aiv1beta1.InfraEnv {
-	infraEnvData, err := os.ReadFile("/data/manifests/infraenv.yaml")
+	infraEnvData, err := os.ReadFile("./manifests/infraenv.yaml")
 	if err != nil {
 		fmt.Errorf("Error reading pull secret: %w", err)
 	}

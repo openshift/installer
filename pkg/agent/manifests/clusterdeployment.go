@@ -14,7 +14,7 @@ import (
 )
 
 func GetPullSecret() string {
-	secretData, err := os.ReadFile("./data/manifests/pull-secret.yaml")
+	secretData, err := os.ReadFile("./manifests/pull-secret.yaml")
 	if err != nil {
 		fmt.Errorf("Error reading pull secret: %w", err)
 	}
@@ -27,7 +27,7 @@ func GetPullSecret() string {
 }
 
 func getClusterDeployment() hivev1.ClusterDeployment {
-	cdData, err := os.ReadFile("./data/manifests/cluster-deployment.yaml")
+	cdData, err := os.ReadFile("./manifests/cluster-deployment.yaml")
 	if err != nil {
 		fmt.Errorf("Error reading cluster deployment CR: %w", err)
 	}
@@ -39,7 +39,7 @@ func getClusterDeployment() hivev1.ClusterDeployment {
 }
 
 func getAgentClusterInstall() hiveext.AgentClusterInstall {
-	aciData, err := os.ReadFile("./data/manifests/agent-cluster-install.yaml")
+	aciData, err := os.ReadFile("./manifests/agent-cluster-install.yaml")
 	if err != nil {
 		fmt.Errorf("Error reading AgentClusterInstall CR: %w", err)
 	}

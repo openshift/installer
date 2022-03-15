@@ -15,9 +15,10 @@ echo "cluster create response: $CLUSTER_CREATE_OUT"
 CLUSTER_ID=$(echo $CLUSTER_CREATE_OUT | jq .id)
 # trim quotes from CLUSTER_ID
 CLUSTER_ID=${CLUSTER_ID//\"}
+echo "CLUSTER_ID: $CLUSTER_ID"
 
 INFRA_ENV_PARAMS_JSON='{{.InfraEnvCreateParamsJSON}}'
 # replace "replace-cluster-id" with $CLUSTER_ID
 INFRA_ENV_PARAMS_JSON=${INFRA_ENV_PARAMS_JSON//"replace-cluster-id"/$CLUSTER_ID}
 
-curl -X POST -H "Content-Type: application/json" -d $INFRA_ENV_PARAMS_JSON {{.ServiceBaseURL}}/api/assisted-install/v2/infra-envs
+curl -X POST -H "Content-Type: application/json" -d "$INFRA_ENV_PARAMS_JSON" {{.ServiceBaseURL}}/api/assisted-install/v2/infra-envs
