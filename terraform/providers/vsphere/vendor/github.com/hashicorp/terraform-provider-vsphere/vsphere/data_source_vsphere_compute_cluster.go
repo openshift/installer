@@ -3,7 +3,7 @@ package vsphere
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource"
 )
 
@@ -42,9 +42,6 @@ func dataSourceVSphereComputeClusterRead(d *schema.ResourceData, meta interface{
 	}
 
 	d.SetId(cluster.Reference().Value)
-	if err := d.Set("resource_pool_id", props.ResourcePool.Value); err != nil {
-		return err
-	}
-
+	_ = d.Set("resource_pool_id", props.ResourcePool.Value)
 	return nil
 }

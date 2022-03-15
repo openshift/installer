@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/resourcepool"
@@ -331,7 +331,7 @@ func expandVAppContainerConfigSpec(d *schema.ResourceData) *types.ResourceConfig
 }
 
 func resourceVSphereVAppContainerClient(meta interface{}) (*govmomi.Client, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, err
 	}
@@ -370,7 +370,7 @@ func resourceVSphereVAppContainerApplyTags(d *schema.ResourceData, meta interfac
 // resourceVSphereVAppContainerReadTags reads the tags for
 // vsphere_vapp_container.
 func resourceVSphereVAppContainerReadTags(d *schema.ResourceData, meta interface{}, va *object.VirtualApp) error {
-	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
+	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
 		log.Printf("[DEBUG] %s: Reading tags", resourceVSphereVAppContainerIDString(d))
 		if err := readTagsForResource(tagsClient, va, d); err != nil {
 			return err

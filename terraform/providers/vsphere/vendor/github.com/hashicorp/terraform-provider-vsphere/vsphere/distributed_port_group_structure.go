@@ -1,8 +1,8 @@
 package vsphere
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -143,17 +143,17 @@ func expandVMwareDVSPortgroupPolicy(d *schema.ResourceData) *types.VMwareDVSPort
 // flattenVMwareDVSPortgroupPolicy reads various fields from a
 // VMwareDVSPortgroupPolicy into the passed in ResourceData.
 func flattenVMwareDVSPortgroupPolicy(d *schema.ResourceData, obj *types.VMwareDVSPortgroupPolicy) error {
-	d.Set("block_override_allowed", obj.BlockOverrideAllowed)
-	d.Set("shaping_override_allowed", obj.ShapingOverrideAllowed)
-	d.Set("live_port_moving_allowed", obj.LivePortMovingAllowed)
-	d.Set("port_config_reset_at_disconnect", obj.PortConfigResetAtDisconnect)
-	d.Set("vlan_override_allowed", obj.VlanOverrideAllowed)
-	d.Set("uplink_teaming_override_allowed", obj.UplinkTeamingOverrideAllowed)
-	d.Set("security_policy_override_allowed", obj.SecurityPolicyOverrideAllowed)
+	_ = d.Set("block_override_allowed", obj.BlockOverrideAllowed)
+	_ = d.Set("shaping_override_allowed", obj.ShapingOverrideAllowed)
+	_ = d.Set("live_port_moving_allowed", obj.LivePortMovingAllowed)
+	_ = d.Set("port_config_reset_at_disconnect", obj.PortConfigResetAtDisconnect)
+	_ = d.Set("vlan_override_allowed", obj.VlanOverrideAllowed)
+	_ = d.Set("uplink_teaming_override_allowed", obj.UplinkTeamingOverrideAllowed)
+	_ = d.Set("security_policy_override_allowed", obj.SecurityPolicyOverrideAllowed)
 
-	structure.SetBoolPtr(d, "network_resource_pool_override_allowed", obj.NetworkResourcePoolOverrideAllowed)
-	structure.SetBoolPtr(d, "traffic_filter_override_allowed", obj.TrafficFilterOverrideAllowed)
-	structure.SetBoolPtr(d, "netflow_override_allowed", obj.IpfixOverrideAllowed)
+	_ = structure.SetBoolPtr(d, "network_resource_pool_override_allowed", obj.NetworkResourcePoolOverrideAllowed)
+	_ = structure.SetBoolPtr(d, "traffic_filter_override_allowed", obj.TrafficFilterOverrideAllowed)
+	_ = structure.SetBoolPtr(d, "netflow_override_allowed", obj.IpfixOverrideAllowed)
 	return nil
 }
 
@@ -180,20 +180,17 @@ func expandDVPortgroupConfigSpec(d *schema.ResourceData) types.DVPortgroupConfig
 //
 // This is the flatten counterpart to expandDVPortgroupConfigSpec.
 func flattenDVPortgroupConfigInfo(d *schema.ResourceData, obj types.DVPortgroupConfigInfo) error {
-	d.Set("config_version", obj.ConfigVersion)
-	d.Set("name", obj.Name)
-	d.Set("number_of_ports", obj.NumPorts)
-	d.Set("port_name_format", obj.PortNameFormat)
-	d.Set("description", obj.Description)
-	d.Set("type", obj.Type)
-	structure.SetBoolPtr(d, "auto_expand", obj.AutoExpand)
-	d.Set("network_resource_pool_key", obj.VmVnicNetworkResourcePoolKey)
+	_ = d.Set("config_version", obj.ConfigVersion)
+	_ = d.Set("name", obj.Name)
+	_ = d.Set("number_of_ports", obj.NumPorts)
+	_ = d.Set("port_name_format", obj.PortNameFormat)
+	_ = d.Set("description", obj.Description)
+	_ = d.Set("type", obj.Type)
+	_ = structure.SetBoolPtr(d, "auto_expand", obj.AutoExpand)
+	_ = d.Set("network_resource_pool_key", obj.VmVnicNetworkResourcePoolKey)
 
 	if err := flattenVMwareDVSPortSetting(d, obj.DefaultPortConfig.(*types.VMwareDVSPortSetting)); err != nil {
 		return err
 	}
-	if err := flattenVMwareDVSPortgroupPolicy(d, obj.Policy.(*types.VMwareDVSPortgroupPolicy)); err != nil {
-		return err
-	}
-	return nil
+	return flattenVMwareDVSPortgroupPolicy(d, obj.Policy.(*types.VMwareDVSPortgroupPolicy))
 }

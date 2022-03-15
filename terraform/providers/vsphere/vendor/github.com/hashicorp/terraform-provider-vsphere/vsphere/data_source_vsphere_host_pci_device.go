@@ -1,12 +1,13 @@
 package vsphere
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
-	"github.com/vmware/govmomi/vim25/types"
 	"log"
 	"regexp"
 	"strconv"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 func dataSourceVSphereHostPciDevice() *schema.Resource {
@@ -45,7 +46,7 @@ func dataSourceVSphereHostPciDevice() *schema.Resource {
 
 func dataSourceVSphereHostPciDeviceRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] DataHostPCIDev: Beginning PCI device lookup on %s", d.Get("host_id").(string))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	host, err := hostsystem.FromID(client, d.Get("host_id").(string))
 	if err != nil {
 		return err
@@ -62,7 +63,7 @@ func dataSourceVSphereHostPciDeviceRead(d *schema.ResourceData, meta interface{}
 	for _, device := range devices {
 		// Match the class_id if it is set.
 		if class, exists := d.GetOk("class_id"); exists {
-			classInt, err := strconv.ParseInt(class.(string), 16, 32)
+			classInt, err := strconv.ParseInt(class.(string), 16, 16)
 			if err != nil {
 				return err
 			}
@@ -72,7 +73,7 @@ func dataSourceVSphereHostPciDeviceRead(d *schema.ResourceData, meta interface{}
 		}
 		// Now match the vendor_id if it is set.
 		if vendor, exists := d.GetOk("vendor_id"); exists {
-			vendorInt, err := strconv.ParseInt(vendor.(string), 16, 32)
+			vendorInt, err := strconv.ParseInt(vendor.(string), 16, 16)
 			if err != nil {
 				return err
 			}
@@ -83,9 +84,9 @@ func dataSourceVSphereHostPciDeviceRead(d *schema.ResourceData, meta interface{}
 		classHex := strconv.FormatInt(int64(device.ClassId), 16)
 		vendorHex := strconv.FormatInt(int64(device.VendorId), 16)
 		d.SetId(device.Id)
-		d.Set("name", device.DeviceName)
-		d.Set("class_id", classHex)
-		d.Set("vendor_id", vendorHex)
+		_ = d.Set("name", device.DeviceName)
+		_ = d.Set("class_id", classHex)
+		_ = d.Set("vendor_id", vendorHex)
 		log.Printf("[DEBUG] DataHostPCIDev: Matching PCI device found: %s", device.DeviceName)
 		return nil
 	}

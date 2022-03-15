@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datastore"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
@@ -12,10 +12,6 @@ import (
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi"
 	"github.com/vmware/govmomi/vim25/types"
 )
-
-// formatNasDatastoreIDMismatch is a error message format string that is given
-// when two NAS datastore IDs mismatch.
-const formatNasDatastoreIDMismatch = "datastore ID on host %q (%s) does not original datastore ID (%s)"
 
 func resourceVSphereNasDatastore() *schema.Resource {
 	s := map[string]*schema.Schema{
@@ -66,7 +62,7 @@ func resourceVSphereNasDatastore() *schema.Resource {
 }
 
 func resourceVSphereNasDatastoreCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	// Load up the tags client, which will validate a proper vCenter before
 	// attempting to proceed if we have tags defined.
@@ -81,11 +77,15 @@ func resourceVSphereNasDatastoreCreate(d *schema.ResourceData, meta interface{})
 	}
 
 	hosts := structure.SliceInterfacesToStrings(d.Get("host_system_ids").(*schema.Set).List())
+	volSpec, err := expandHostNasVolumeSpec(d)
+	if err != nil {
+		return err
+	}
 	p := &nasDatastoreMountProcessor{
 		client:   client,
 		oldHSIDs: nil,
 		newHSIDs: hosts,
-		volSpec:  expandHostNasVolumeSpec(d),
+		volSpec:  volSpec,
 	}
 	ds, err := p.processMountOperations()
 	if ds != nil {
@@ -126,7 +126,7 @@ func resourceVSphereNasDatastoreCreate(d *schema.ResourceData, meta interface{})
 }
 
 func resourceVSphereNasDatastoreRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	id := d.Id()
 	ds, err := datastore.FromID(client, id)
 	if err != nil {
@@ -160,7 +160,7 @@ func resourceVSphereNasDatastoreRead(d *schema.ResourceData, meta interface{}) e
 	}
 
 	// Read tags if we have the ability to do so
-	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
+	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
 		if err := readTagsForResource(tagsClient, ds, d); err != nil {
 			return err
 		}
@@ -168,14 +168,14 @@ func resourceVSphereNasDatastoreRead(d *schema.ResourceData, meta interface{}) e
 
 	// Read custom attributes
 	if customattribute.IsSupported(client) {
-		customattribute.ReadFromResource(client, props.Entity(), d)
+		customattribute.ReadFromResource(props.Entity(), d)
 	}
 
 	return nil
 }
 
 func resourceVSphereNasDatastoreUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	// Load up the tags client, which will validate a proper vCenter before
 	// attempting to proceed if we have tags defined.
@@ -229,12 +229,15 @@ func resourceVSphereNasDatastoreUpdate(d *schema.ResourceData, meta interface{})
 
 	// Process mount/unmount operations.
 	o, n := d.GetChange("host_system_ids")
-
+	volSpec, err := expandHostNasVolumeSpec(d)
+	if err != nil {
+		return err
+	}
 	p := &nasDatastoreMountProcessor{
 		client:   client,
 		oldHSIDs: structure.SliceInterfacesToStrings(o.(*schema.Set).List()),
 		newHSIDs: structure.SliceInterfacesToStrings(n.(*schema.Set).List()),
-		volSpec:  expandHostNasVolumeSpec(d),
+		volSpec:  volSpec,
 		ds:       ds,
 	}
 	// Unmount first
@@ -251,7 +254,7 @@ func resourceVSphereNasDatastoreUpdate(d *schema.ResourceData, meta interface{})
 }
 
 func resourceVSphereNasDatastoreDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	dsID := d.Id()
 	ds, err := datastore.FromID(client, dsID)
 	if err != nil {
@@ -261,11 +264,15 @@ func resourceVSphereNasDatastoreDelete(d *schema.ResourceData, meta interface{})
 	// Unmount the datastore from every host. Once the last host is unmounted we
 	// are done and the datastore will delete itself.
 	hosts := structure.SliceInterfacesToStrings(d.Get("host_system_ids").(*schema.Set).List())
+	volSpec, err := expandHostNasVolumeSpec(d)
+	if err != nil {
+		return err
+	}
 	p := &nasDatastoreMountProcessor{
 		client:   client,
 		oldHSIDs: hosts,
 		newHSIDs: nil,
-		volSpec:  expandHostNasVolumeSpec(d),
+		volSpec:  volSpec,
 		ds:       ds,
 	}
 	if err := p.processUnmountOperations(); err != nil {
@@ -279,7 +286,7 @@ func resourceVSphereNasDatastoreImport(d *schema.ResourceData, meta interface{})
 	// We support importing a MoRef - so we need to load the datastore and check
 	// to make sure 1) it exists, and 2) it's a VMFS datastore. If it is, we are
 	// good to go (rest of the stuff will be handled by read on refresh).
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	id := d.Id()
 	ds, err := datastore.FromID(client, id)
 	if err != nil {
@@ -307,7 +314,7 @@ func resourceVSphereNasDatastoreImport(d *schema.ResourceData, meta interface{})
 			return nil, errors.New("access_mode is inconsistent across configured hosts")
 		}
 	}
-	d.Set("access_mode", accessMode)
-	d.Set("type", t)
+	_ = d.Set("access_mode", accessMode)
+	_ = d.Set("type", t)
 	return []*schema.ResourceData{d}, nil
 }

@@ -1,10 +1,11 @@
 package vsphere
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/contentlibrary"
 	"log"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/contentlibrary"
 )
 
 func resourceVSphereContentLibrary() *schema.Resource {
@@ -129,7 +130,7 @@ func resourceVSphereContentLibrary() *schema.Resource {
 
 func resourceVSphereContentLibraryRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] resourceVSphereContentLibraryRead : Beginning Content Library (%s) read", d.Id())
-	c := meta.(*VSphereClient).restClient
+	c := meta.(*Client).restClient
 	lib, err := contentlibrary.FromID(c, d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404 Not Found") {
@@ -148,16 +149,16 @@ func resourceVSphereContentLibraryRead(d *schema.ResourceData, meta interface{})
 	if err = contentlibrary.FlattenStorageBackings(d, lib.Storage); err != nil {
 		return err
 	}
-	d.Set("name", lib.Name)
-	d.Set("description", lib.Description)
+	_ = d.Set("name", lib.Name)
+	_ = d.Set("description", lib.Description)
 	log.Printf("[DEBUG] resourceVSphereContentLibraryRead : Content Library (%s) read is complete", d.Id())
 	return nil
 }
 
 func resourceVSphereContentLibraryCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] resourceVSphereContentLibraryCreate : Beginning Content Library (%s) creation", d.Get("name").(string))
-	vimClient := meta.(*VSphereClient).vimClient
-	restClient := meta.(*VSphereClient).restClient
+	vimClient := meta.(*Client).vimClient
+	restClient := meta.(*Client).restClient
 	backings, err := contentlibrary.ExpandStorageBackings(vimClient, d)
 	if err != nil {
 		return err
@@ -173,7 +174,7 @@ func resourceVSphereContentLibraryCreate(d *schema.ResourceData, meta interface{
 
 func resourceVSphereContentLibraryDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] resourceVSphereContentLibraryDelete : Deleting Content Library (%s)", d.Id())
-	c := meta.(*VSphereClient).restClient
+	c := meta.(*Client).restClient
 	lib, err := contentlibrary.FromID(c, d.Id())
 	if err != nil {
 		return err
@@ -183,7 +184,7 @@ func resourceVSphereContentLibraryDelete(d *schema.ResourceData, meta interface{
 }
 
 func resourceVSphereContentLibraryImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*VSphereClient).restClient
+	client := meta.(*Client).restClient
 	_, err := contentlibrary.FromID(client, d.Id())
 	if err != nil {
 		return nil, err

@@ -1,7 +1,7 @@
 package vsphere
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/spbm"
 )
 
@@ -19,7 +19,7 @@ func dataSourceVSphereStoragePolicy() *schema.Resource {
 }
 
 func dataSourceVSphereStoragePolicyRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	id, err := spbm.PolicyIDByName(client, d.Get("name").(string))
 	if err != nil {

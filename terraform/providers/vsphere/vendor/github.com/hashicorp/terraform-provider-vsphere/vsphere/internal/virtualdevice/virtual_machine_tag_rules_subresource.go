@@ -1,7 +1,7 @@
 package virtualdevice
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func VirtualMachineTagRulesSchema() map[string]*schema.Schema {

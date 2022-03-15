@@ -10,7 +10,7 @@ import (
 
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualdisk"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
@@ -43,7 +43,7 @@ func resourceVSphereVirtualDisk() *schema.Resource {
 			"size": {
 				Type:     schema.TypeInt,
 				Required: true,
-				ForceNew: true, //TODO Can this be optional (resize)?
+				ForceNew: true, // TODO Can this be optional (resize)?
 			},
 
 			// TODO:
@@ -118,7 +118,7 @@ func resourceVSphereVirtualDisk() *schema.Resource {
 
 func resourceVSphereVirtualDiskCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Creating Virtual Disk")
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	vDisk := virtualDisk{
 		size: d.Get("size").(int),
@@ -166,15 +166,15 @@ func resourceVSphereVirtualDiskCreate(d *schema.ResourceData, meta interface{}) 
 	if vDisk.createDirectories {
 		directoryPathIndex := strings.LastIndex(vDisk.vmdkPath, "/")
 		if directoryPathIndex > 0 {
-			path := vDisk.vmdkPath[0:directoryPathIndex]
-			log.Printf("[DEBUG] Creating parent directories: %v", ds.Path(path))
-			err = fm.MakeDirectory(context.TODO(), ds.Path(path), dc, true)
+			vmdkPath := vDisk.vmdkPath[0:directoryPathIndex]
+			log.Printf("[DEBUG] Creating parent directories: %v", ds.Path(vmdkPath))
+			err = fm.MakeDirectory(context.TODO(), ds.Path(vmdkPath), dc, true)
 			if err != nil && !isAlreadyExists(err) {
 				log.Printf("[DEBUG] Failed to create parent directories:  %v", err)
 				return err
 			}
 
-			err = searchForDirectory(client, vDisk.datacenter, vDisk.datastore, path)
+			err = searchForDirectory(client, vDisk.datacenter, vDisk.datastore, vmdkPath)
 			if err != nil {
 				log.Printf("[DEBUG] Failed to find newly created parent directories:  %v", err)
 				return err
@@ -195,7 +195,7 @@ func resourceVSphereVirtualDiskCreate(d *schema.ResourceData, meta interface{}) 
 
 func resourceVSphereVirtualDiskRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Reading virtual disk.")
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	vDisk := virtualDisk{
 		size: d.Get("size").(int),
@@ -266,7 +266,7 @@ func resourceVSphereVirtualDiskRead(d *schema.ResourceData, meta interface{}) er
 
 	info, err := task.WaitForResult(context.TODO(), nil)
 	if err != nil {
-		if info == nil || info.Error != nil {
+		if info != nil && info.Error != nil {
 			_, ok := info.Error.Fault.(*types.FileNotFound)
 			if ok {
 				log.Printf("[DEBUG] resourceVSphereVirtualDiskRead - could not find: %v", vDisk.vmdkPath)
@@ -306,22 +306,21 @@ func resourceVSphereVirtualDiskRead(d *schema.ResourceData, meta interface{}) er
 
 	// adapter_type is deprecated, so just default.
 	rs := resourceVSphereVirtualDisk().Schema
-	d.Set("adapter_type", rs["adapter_type"].Default)
+	_ = d.Set("adapter_type", rs["adapter_type"].Default)
 
 	d.SetId(vDisk.vmdkPath)
 
-	d.Set("size", size)
-	d.Set("type", diskType)
-	d.Set("vmdk_path", vDisk.vmdkPath)
-	d.Set("datacenter", d.Get("datacenter"))
-	d.Set("datastore", d.Get("datastore"))
+	_ = d.Set("size", size)
+	_ = d.Set("type", diskType)
+	_ = d.Set("vmdk_path", vDisk.vmdkPath)
+	_ = d.Set("datacenter", d.Get("datacenter"))
+	_ = d.Set("datastore", d.Get("datastore"))
 
 	return nil
-
 }
 
 func resourceVSphereVirtualDiskDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	vDisk := virtualDisk{}
 
@@ -454,7 +453,7 @@ func searchForDirectory(client *govmomi.Client, datacenter string, datastore str
 
 	info, err := task.WaitForResult(context.TODO(), nil)
 	if err != nil {
-		if info == nil || info.Error != nil {
+		if info != nil && info.Error != nil {
 			_, ok := info.Error.Fault.(*types.FileNotFound)
 			if ok {
 				log.Printf("[DEBUG] searchForDirectory - could not find: %v", directoryPath)
@@ -484,7 +483,7 @@ func searchForDirectory(client *govmomi.Client, datacenter string, datastore str
 }
 
 func resourceVSphereVirtualDiskImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	p := d.Id()
 	if !strings.HasPrefix(p, "/") {
 		return nil, errors.New("ID must start with a trailing slash")
@@ -495,7 +494,7 @@ func resourceVSphereVirtualDiskImport(d *schema.ResourceData, meta interface{}) 
 	// the zero-th element will be empty (that is, everything before the / prefix).
 	addrParts := strings.SplitN(p, "/", 3)
 	if len(addrParts) != 3 {
-		return nil, errors.New("ID must be of the form /<datacenter>/[<datastore>] spath/to/vmdk")
+		return nil, errors.New("ID must be of the form /<datacenter>/[<datastore>] path/to/vmdk")
 	}
 
 	dc, err := getDatacenter(client, addrParts[1])
@@ -513,9 +512,9 @@ func resourceVSphereVirtualDiskImport(d *schema.ResourceData, meta interface{}) 
 		return nil, fmt.Errorf("Invalid datastore path '%s'", di.Name)
 	}
 
-	d.Set("datacenter", dc.Name())
-	d.Set("datastore", dp.Datastore)
-	d.Set("vmdk_path", dp.Path)
+	_ = d.Set("datacenter", dc.Name())
+	_ = d.Set("datastore", dp.Datastore)
+	_ = d.Set("vmdk_path", dp.Path)
 	d.SetId(dp.Path)
 
 	return []*schema.ResourceData{d}, nil

@@ -1,6 +1,6 @@
 package vsphere
 
-import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 func dataSourceVSphereTagCategory() *schema.Resource {
 	return &schema.Resource{
@@ -32,7 +32,7 @@ func dataSourceVSphereTagCategory() *schema.Resource {
 }
 
 func dataSourceVSphereTagCategoryRead(d *schema.ResourceData, meta interface{}) error {
-	tm, err := meta.(*VSphereClient).TagsManager()
+	tm, err := meta.(*Client).TagsManager()
 	if err != nil {
 		return err
 	}

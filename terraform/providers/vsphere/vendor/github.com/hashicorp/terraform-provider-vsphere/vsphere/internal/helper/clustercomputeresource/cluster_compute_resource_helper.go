@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/computeresource"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
@@ -164,25 +165,6 @@ func Delete(cluster *object.ClusterComputeResource) error {
 	return task.Wait(ctx)
 }
 
-// IsMember checks to see if a host is a member of the compute cluster
-// in question.
-//
-// This is a pretty basic operation that checks that the parent of the
-// compute is the ClusterComputeResource.
-func IsMember(cluster *object.ClusterComputeResource, host *object.HostSystem) (bool, error) {
-	hprops, err := hostsystem.Properties(host)
-	if err != nil {
-		return false, fmt.Errorf("error getting properties for cluster %q: %s", host.Name(), err)
-	}
-	if hprops.Parent == nil {
-		return false, nil
-	}
-	if *hprops.Parent != cluster.Reference() {
-		return false, nil
-	}
-	return true, nil
-}
-
 func Hosts(cluster *object.ClusterComputeResource) ([]*object.HostSystem, error) {
 	ctx := context.TODO()
 	return cluster.Hosts(ctx)
@@ -191,12 +173,51 @@ func Hosts(cluster *object.ClusterComputeResource) ([]*object.HostSystem, error)
 // MoveHostsInto moves all of the supplied hosts into the cluster. All virtual
 // machines are moved to the cluster's root resource pool and any resource
 // pools on the host itself are deleted.
-func MoveHostsInto(cluster *object.ClusterComputeResource, hosts []*object.HostSystem) error {
+func MoveHostsInto(client *govmomi.Client, cluster *object.ClusterComputeResource, hosts []*object.HostSystem) error {
 	var hsNames []string
 	var hsRefs []types.ManagedObjectReference
+
+	seenClusters := map[string]int{}
+
 	for _, hs := range hosts {
 		hsNames = append(hsNames, hs.Name())
 		hsRefs = append(hsRefs, hs.Reference())
+		hsProps, err := hostsystem.Properties(hs)
+		if err != nil {
+			return fmt.Errorf("while fetching properties for host %q: %s", hs.Reference().Value, err)
+		}
+
+		if hsProps.Parent.Type == "ClusterComputeResource" {
+			cRef := hsProps.Parent.Value
+			parentCluster, err := computeresource.BaseFromReference(client, hsProps.Parent.Reference())
+			if err != nil {
+				return fmt.Errorf("while retrieving parent cluster (%q) object for host %q: %s", cluster.Reference().Value, hs.Reference().Value, err)
+			}
+			c, err := computeresource.BaseProperties(parentCluster)
+			if err != nil {
+				return fmt.Errorf("while retrieving parent cluster (%q) properties for host %q: %s", cluster.Reference().Value, hs.Reference().Value, err)
+			}
+
+			var evacuate bool
+			hostsLeft, ok := seenClusters[cRef]
+			if !ok {
+				seenClusters[cRef] = len(c.Host)
+				if hostsLeft > 1 {
+					evacuate = true
+				}
+			} else {
+				evacuate = false
+				if hostsLeft > 1 {
+					evacuate = true
+				}
+			}
+
+			totalVMTimeout := provider.DefaultAPITimeout * time.Duration(len(hsProps.Vm)+1)
+			err = hostsystem.EnterMaintenanceMode(hs, totalVMTimeout, evacuate)
+			if err != nil {
+				return fmt.Errorf("while putting host %q in maintenance mode: %s", hs.Reference().Value, err)
+			}
+		}
 	}
 	log.Printf("[DEBUG] Adding hosts into cluster %q: %s", cluster.Name(), strings.Join(hsNames, ", "))
 
@@ -240,7 +261,8 @@ func MoveHostsOutOf(cluster *object.ClusterComputeResource, hosts []*object.Host
 
 func moveHostOutOf(cluster *object.ClusterComputeResource, host *object.HostSystem, timeout int) error {
 	// Place the host into maintenance mode. This blocks until the host is ready.
-	if err := hostsystem.EnterMaintenanceMode(host, timeout, true); err != nil {
+	timeoutDuration := time.Duration(timeout) * time.Second
+	if err := hostsystem.EnterMaintenanceMode(host, timeoutDuration, true); err != nil {
 		return fmt.Errorf("error putting host %q into maintenance mode: %s", host.Name(), err)
 	}
 
@@ -255,7 +277,7 @@ func moveHostOutOf(cluster *object.ClusterComputeResource, host *object.HostSyst
 	}
 
 	// Move the host out of maintenance mode now that it's out of the cluster.
-	if err := hostsystem.ExitMaintenanceMode(host, timeout); err != nil {
+	if err := hostsystem.ExitMaintenanceMode(host, timeoutDuration); err != nil {
 		return fmt.Errorf("error taking host %q out of maintenance mode: %s", host.Name(), err)
 	}
 

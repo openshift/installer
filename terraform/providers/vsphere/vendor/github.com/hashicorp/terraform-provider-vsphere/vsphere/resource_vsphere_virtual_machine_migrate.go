@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualmachine"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/virtualdevice"
 	"github.com/vmware/govmomi/object"
@@ -63,7 +63,7 @@ func migrateVSphereVirtualMachineStateV3(is *terraform.InstanceState, meta inter
 	// Read will handle most of the population post-migration as it does for
 	// import, and there will be an unavoidable diff for TF-only options on the
 	// next plan.
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	id := is.ID
 
 	log.Printf("[DEBUG] Migrate state for VM at UUID %q", id)
@@ -84,9 +84,9 @@ func migrateVSphereVirtualMachineStateV3(is *terraform.InstanceState, meta inter
 		if !ok {
 			return fmt.Errorf("corrupt state: key disk.%d.key not found", i)
 		}
-		key, err := strconv.Atoi(v)
+		key, err := strconv.ParseInt(v, 10, 32)
 		if err != nil {
-			return fmt.Errorf("corrupt state: strconv.Atoi error on disk.%d.key: %s", i, err)
+			return fmt.Errorf("while converting disk.%d.key key to int32: %s", i, err)
 		}
 		if key < 1 {
 			// This is a possibility during v1 -> v3 migrations, and would fail to
@@ -134,7 +134,7 @@ func migrateVSphereVirtualMachineStateV2(is *terraform.InstanceState, meta inter
 	// import, and there will be an unavoidable diff for TF-only options on the
 	// next plan. This diff should not require a reconfigure of the virtual
 	// machine.
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	name := is.ID
 	id := is.Attributes["uuid"]
 	if id == "" {
@@ -167,7 +167,10 @@ func migrateVSphereVirtualMachineStateV2(is *terraform.InstanceState, meta inter
 		if !regexp.MustCompile("disk\\.[0-9]+\\.key").MatchString(k) {
 			continue
 		}
-		key, _ := strconv.Atoi(v)
+		key, err := strconv.ParseInt(v, 10, 32)
+		if err != nil {
+			return fmt.Errorf("while converting key %s to int32: %s", k, err)
+		}
 		if key < 1 {
 			continue
 		}
@@ -185,8 +188,8 @@ func migrateVSphereVirtualMachineStateV2(is *terraform.InstanceState, meta inter
 	}
 
 	d := resourceVSphereVirtualMachine().Data(&terraform.InstanceState{})
-	d.Set("scsi_controller_count", maxBus+1)
-	if err := virtualdevice.DiskImportOperation(d, client, object.VirtualDeviceList(props.Config.Hardware.Device)); err != nil {
+	_ = d.Set("scsi_controller_count", maxBus+1)
+	if err := virtualdevice.DiskImportOperation(d, object.VirtualDeviceList(props.Config.Hardware.Device)); err != nil {
 		return err
 	}
 
@@ -226,7 +229,7 @@ func migrateVSphereVirtualMachineStateV2(is *terraform.InstanceState, meta inter
 	return nil
 }
 
-func migrateVSphereVirtualMachineStateV1(is *terraform.InstanceState, meta interface{}) error {
+func migrateVSphereVirtualMachineStateV1(is *terraform.InstanceState, _ interface{}) error {
 	if is.Empty() || is.Attributes == nil {
 		log.Println("[DEBUG] Empty VSphere Virtual Machine State; nothing to migrate.")
 		return nil

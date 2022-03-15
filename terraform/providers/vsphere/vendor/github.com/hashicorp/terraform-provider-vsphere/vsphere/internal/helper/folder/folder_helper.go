@@ -8,7 +8,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/provider"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi"
 	"github.com/vmware/govmomi"
@@ -139,26 +138,6 @@ const (
 	RootPathParticleDatastore = RootPathParticle(VSphereFolderTypeDatastore)
 )
 
-// datacenterPathFromHostSystemID returns the datacenter section of a
-// HostSystem's inventory path.
-func datacenterPathFromHostSystemID(client *govmomi.Client, hsID string) (string, error) {
-	hs, err := hostsystem.FromID(client, hsID)
-	if err != nil {
-		return "", err
-	}
-	return RootPathParticleHost.SplitDatacenter(hs.InventoryPath)
-}
-
-// datastoreRootPathFromHostSystemID returns the root datastore folder path
-// for a specific host system ID.
-func datastoreRootPathFromHostSystemID(client *govmomi.Client, hsID string) (string, error) {
-	hs, err := hostsystem.FromID(client, hsID)
-	if err != nil {
-		return "", err
-	}
-	return RootPathParticleHost.NewRootFromPath(hs.InventoryPath, RootPathParticleDatastore)
-}
-
 // FromAbsolutePath returns an *object.Folder from a given absolute path.
 // If no such folder is found, an appropriate error will be returned.
 func FromAbsolutePath(client *govmomi.Client, path string) (*object.Folder, error) {
@@ -249,18 +228,6 @@ func VirtualMachineFolderFromObject(client *govmomi.Client, obj interface{}, rel
 	return validateVirtualMachineFolder(folder)
 }
 
-// networkFolderFromObject returns an *object.Folder from a given object,
-// and relative network folder path. If no such folder is found, of if it is
-// not a network folder, an appropriate error will be returned.
-func networkFolderFromObject(client *govmomi.Client, obj interface{}, relative string) (*object.Folder, error) {
-	folder, err := folderFromObject(client, obj, RootPathParticleNetwork, relative)
-	if err != nil {
-		return nil, err
-	}
-
-	return validateNetworkFolder(folder)
-}
-
 // validateDatastoreFolder checks to make sure the folder is a datastore
 // folder, and returns it if it is, or an error if it isn't.
 func validateDatastoreFolder(folder *object.Folder) (*object.Folder, error) {
@@ -298,19 +265,6 @@ func validateVirtualMachineFolder(folder *object.Folder) (*object.Folder, error)
 		return nil, fmt.Errorf("%q is not a VM folder", folder.InventoryPath)
 	}
 	log.Printf("[DEBUG] Folder located: %q", folder.InventoryPath)
-	return folder, nil
-}
-
-// validateNetworkFolder checks to make sure the folder is a network folder,
-// and returns it if it is, or an error if it isn't.
-func validateNetworkFolder(folder *object.Folder) (*object.Folder, error) {
-	ft, err := FindType(folder)
-	if err != nil {
-		return nil, err
-	}
-	if ft != VSphereFolderTypeNetwork {
-		return nil, fmt.Errorf("%q is not a network folder", folder.InventoryPath)
-	}
 	return folder, nil
 }
 

@@ -3,7 +3,7 @@ package vsphere
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datastore"
 	"github.com/vmware/govmomi/object"
 )
@@ -28,7 +28,7 @@ func dataSourceVSphereDatastore() *schema.Resource {
 }
 
 func dataSourceVSphereDatastoreRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	name := d.Get("name").(string)
 	var dc *object.Datacenter

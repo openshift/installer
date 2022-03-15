@@ -7,7 +7,7 @@ import (
 
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/govmomi/license"
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/types"
@@ -68,7 +68,7 @@ func resourceVSphereLicense() *schema.Resource {
 func resourceVSphereLicenseCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Println("[INFO] Running the create method")
 
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	manager := license.NewManager(client.Client)
 
 	key := d.Get("license_key").(string)
@@ -117,17 +117,16 @@ func resourceVSphereLicenseCreate(d *schema.ResourceData, meta interface{}) erro
 func resourceVSphereLicenseRead(d *schema.ResourceData, meta interface{}) error {
 	log.Println("[INFO] Running the read method")
 
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	manager := license.NewManager(client.Client)
 
 	if info := getLicenseInfoFromKey(d.Get("license_key").(string), manager); info != nil {
 		log.Println("[INFO] Setting the values")
-		d.Set("edition_key", info.EditionKey)
-		d.Set("total", info.Total)
-		d.Set("used", info.Used)
-		d.Set("name", info.Name)
-		d.Set("labels", keyValuesToMap(info.Labels))
-
+		_ = d.Set("edition_key", info.EditionKey)
+		_ = d.Set("total", info.Total)
+		_ = d.Set("used", info.Used)
+		_ = d.Set("name", info.Name)
+		_ = d.Set("labels", keyValuesToMap(info.Labels))
 	} else {
 		return ErrNoSuchKeyFound
 	}
@@ -139,7 +138,7 @@ func resourceVSphereLicenseRead(d *schema.ResourceData, meta interface{}) error 
 func resourceVSphereLicenseUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Println("[INFO] Running the update method")
 
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	manager := license.NewManager(client.Client)
 
 	if key, ok := d.GetOk("license_key"); ok {
@@ -174,16 +173,14 @@ func updateLabels(manager *license.Manager, licenseKey string, labelMap map[stri
 func resourceVSphereLicenseDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Println("[INFO] Running the delete method")
 
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	manager := license.NewManager(client.Client)
 
 	if key := d.Get("license_key").(string); isKeyPresent(key, manager) {
-
 		err := manager.Remove(context.TODO(), key)
 
 		if err != nil {
 			return err
-
 		}
 
 		// if the key is still present

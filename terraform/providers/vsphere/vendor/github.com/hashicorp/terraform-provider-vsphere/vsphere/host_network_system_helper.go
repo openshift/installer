@@ -5,10 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
-	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/network"
-	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi"
 	"github.com/vmware/govmomi"
-	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
@@ -74,44 +71,4 @@ func hostPortGroupFromName(client *govmomi.Client, ns *object.HostNetworkSystem,
 	}
 
 	return nil, fmt.Errorf("could not find port group %s", name)
-}
-
-// networkObjectFromHostSystem locates the network object in vCenter for a
-// specific HostSystem and network name.
-//
-// It does this by searching for all networks in the folder hierarchy that
-// match the given network name for the HostSystem's managed object reference
-// ID. This match is returned - if nothing is found, an error is given.
-func networkObjectFromHostSystem(client *govmomi.Client, hs *object.HostSystem, name string) (*object.Network, error) {
-	// Validate vCenter as this function is only relevant there
-	if err := viapi.ValidateVirtualCenter(client); err != nil {
-		return nil, err
-	}
-	finder := find.NewFinder(client.Client, false)
-	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
-	defer cancel()
-	nets, err := finder.NetworkList(ctx, "*/"+name)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, n := range nets {
-		net, ok := n.(*object.Network)
-		if !ok {
-			// Not a standard port group (possibly DVS, etc), pass
-			continue
-		}
-		props, err := network.Properties(net)
-		if err != nil {
-			return nil, err
-		}
-		for _, hsRef := range props.Host {
-			if hsRef.Value == hs.Reference().Value {
-				// This is our network
-				return net, nil
-			}
-		}
-	}
-
-	return nil, fmt.Errorf("could not find a matching %q on host ID %q", name, hs.Reference().Value)
 }

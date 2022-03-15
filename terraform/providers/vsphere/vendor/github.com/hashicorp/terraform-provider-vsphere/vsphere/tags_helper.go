@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi"
 	"github.com/vmware/govmomi"
@@ -17,45 +17,29 @@ import (
 // A list of valid object types for tagging are below. These are referenced by
 // various helpers and tests.
 const (
-	vSphereTagTypeFolder                         = "Folder"
-	vSphereTagTypeClusterComputeResource         = "ClusterComputeResource"
-	vSphereTagTypeDatacenter                     = "Datacenter"
-	vSphereTagTypeDatastore                      = "Datastore"
-	vSphereTagTypeStoragePod                     = "StoragePod"
-	vSphereTagTypeDistributedVirtualPortgroup    = "DistributedVirtualPortgroup"
-	vSphereTagTypeDistributedVirtualSwitch       = "DistributedVirtualSwitch"
-	vSphereTagTypeVmwareDistributedVirtualSwitch = "VmwareDistributedVirtualSwitch"
-	vSphereTagTypeHostSystem                     = "HostSystem"
-	vSphereTagTypeContentLibrary                 = "com.vmware.content.Library"
-	vSphereTagTypeContentLibraryItem             = "com.vmware.content.library.Item"
-	vSphereTagTypeHostNetwork                    = "HostNetwork"
-	vSphereTagTypeNetwork                        = "Network"
-	vSphereTagTypeOpaqueNetwork                  = "OpaqueNetwork"
-	vSphereTagTypeResourcePool                   = "ResourcePool"
-	vSphereTagTypeVirtualApp                     = "VirtualApp"
-	vSphereTagTypeVirtualMachine                 = "VirtualMachine"
-
-	vSphereTagTypeAll = "All"
+	vSphereTagTypeDatastore      = "Datastore"
+	vSphereTagTypeVirtualMachine = "VirtualMachine"
 )
 
-// The following groups are type groups that are associated with the same type
-// selection in the vSphere Client tag category UI.
-var (
-	// vSphereTagTypesForDistributedVirtualSwitch represents
-	// types for virtual switches.
-	vSphereTagTypesForDistributedVirtualSwitch = []string{
-		vSphereTagTypeDistributedVirtualSwitch,
-		vSphereTagTypeVmwareDistributedVirtualSwitch,
-	}
-
-	// vSphereTagTypesForNetwork represents the types for
-	// networks.
-	vSphereTagTypesForNetwork = []string{
-		vSphereTagTypeHostNetwork,
-		vSphereTagTypeNetwork,
-		vSphereTagTypeOpaqueNetwork,
-	}
-)
+var vSphereTagTypes = []string{
+	"Folder",
+	"ClusterComputeResource",
+	"Datacenter",
+	vSphereTagTypeDatastore,
+	"StoragePod",
+	"DistributedVirtualPortgroup",
+	"DistributedVirtualSwitch",
+	"VmwareDistributedVirtualSwitch",
+	"HostSystem",
+	"com.vmware.content.Library",
+	"com.vmware.content.library.Item",
+	"HostNetwork",
+	"Network",
+	"OpaqueNetwork",
+	"ResourcePool",
+	"VirtualApp",
+	vSphereTagTypeVirtualMachine,
+}
 
 // vSphereTagCategorySearchErrMultiple is an error message format for a tag
 // category search that returned multiple results. This is a bug and needs to
@@ -165,27 +149,27 @@ func tagByName(tm *tags.Manager, name, categoryID string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
 	defer cancel()
 	allTags, err := tm.GetTagsForCategory(ctx, categoryID)
-	tags := []*tags.Tag{}
+	tagList := []*tags.Tag{}
 	if err != nil {
 		return "", fmt.Errorf("could not get tag for name %q: %s", name, err)
 	}
 	for i, tag := range allTags {
 		if tag.Name == name {
-			tags = append(tags, &allTags[i])
+			tagList = append(tagList, &allTags[i])
 		}
 	}
 
-	if len(tags) < 1 {
+	if len(tagList) < 1 {
 		return "", fmt.Errorf("tag name %q not found in category ID %q", name, categoryID)
 	}
-	if len(tags) > 1 {
+	if len(tagList) > 1 {
 		// This situation is very similar to the one in tagCategoryByName. The API
-		// docs even say that tags need to be unique in categories, yet
+		// docs even say that tagList need to be unique in categories, yet
 		// GetTagByNameForCategory still returns multiple results.
 		return "", fmt.Errorf(vSphereTagSearchErrMultiple, name)
 	}
 
-	return tags[0].ID, nil
+	return tagList[0].ID, nil
 }
 
 // tagsSchema returns the schema for the tags configuration attribute for each
@@ -200,41 +184,6 @@ func tagsSchema() *schema.Schema {
 		Optional:    true,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 	}
-}
-
-// tagTypeForObject takes an object.Reference and returns the tag type based on
-// its underlying type. If it's not in this list, we don't support it for
-// tagging and we return an error.
-func tagTypeForObject(obj object.Reference) (string, error) {
-	switch obj.(type) {
-	case *object.VirtualMachine:
-		return vSphereTagTypeVirtualMachine, nil
-	case *object.Datastore:
-		return vSphereTagTypeDatastore, nil
-	case *object.Network:
-		return vSphereTagTypeNetwork, nil
-	case *object.Folder:
-		return vSphereTagTypeFolder, nil
-	case *object.VmwareDistributedVirtualSwitch:
-		return vSphereTagTypeVmwareDistributedVirtualSwitch, nil
-	case *object.DistributedVirtualSwitch:
-		return vSphereTagTypeDistributedVirtualSwitch, nil
-	case *object.DistributedVirtualPortgroup:
-		return vSphereTagTypeDistributedVirtualPortgroup, nil
-	case *object.Datacenter:
-		return vSphereTagTypeDatacenter, nil
-	case *object.ClusterComputeResource:
-		return vSphereTagTypeClusterComputeResource, nil
-	case *object.HostSystem:
-		return vSphereTagTypeHostSystem, nil
-	case *object.StoragePod:
-		return vSphereTagTypeStoragePod, nil
-	case *object.ResourcePool:
-		return vSphereTagTypeResourcePool, nil
-	case *object.VirtualApp:
-		return vSphereTagTypeVirtualApp, nil
-	}
-	return "", fmt.Errorf("unsupported type for tagging: %T", obj)
 }
 
 // readTagsForResource reads the tags for a given reference and saves the list
@@ -346,10 +295,10 @@ func (p *tagDiffProcessor) processDetachOperations() error {
 // make sure it's worth proceeding with most of the operation. The returned
 // client should be checked for nil before passing it to processTagDiff.
 func tagsManagerIfDefined(d *schema.ResourceData, meta interface{}) (*tags.Manager, error) {
-	old, new := d.GetChange(vSphereTagAttributeKey)
-	if len(old.(*schema.Set).List()) > 0 || len(new.(*schema.Set).List()) > 0 {
+	old, newValue := d.GetChange(vSphereTagAttributeKey)
+	if len(old.(*schema.Set).List()) > 0 || len(newValue.(*schema.Set).List()) > 0 {
 		log.Printf("[DEBUG] tagsClientIfDefined: Loading tagging client")
-		tm, err := meta.(*VSphereClient).TagsManager()
+		tm, err := meta.(*Client).TagsManager()
 		if err != nil {
 			return nil, err
 		}
@@ -363,12 +312,12 @@ func tagsManagerIfDefined(d *schema.ResourceData, meta interface{}) (*tags.Manag
 // function that resources can use.
 func processTagDiff(tm *tags.Manager, d *schema.ResourceData, obj object.Reference) error {
 	log.Printf("[DEBUG] Processing tags for object %q", obj.Reference().Value)
-	old, new := d.GetChange(vSphereTagAttributeKey)
+	old, newValue := d.GetChange(vSphereTagAttributeKey)
 	tdp := &tagDiffProcessor{
 		manager:   tm,
 		subject:   obj,
 		oldTagIDs: structure.SliceInterfacesToStrings(old.(*schema.Set).List()),
-		newTagIDs: structure.SliceInterfacesToStrings(new.(*schema.Set).List()),
+		newTagIDs: structure.SliceInterfacesToStrings(newValue.(*schema.Set).List()),
 	}
 	if err := tdp.processDetachOperations(); err != nil {
 		return fmt.Errorf("error detaching tags to object ID %q: %s", obj.Reference().Value, err)

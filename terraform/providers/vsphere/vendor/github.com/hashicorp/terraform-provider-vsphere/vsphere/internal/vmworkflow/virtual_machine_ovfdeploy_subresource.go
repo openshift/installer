@@ -1,7 +1,7 @@
 package vmworkflow
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func VirtualMachineOvfDeploySchema() map[string]*schema.Schema {
@@ -36,6 +36,12 @@ func VirtualMachineOvfDeploySchema() map[string]*schema.Schema {
 			Description: "An optional disk provisioning. If set, all the disks in the deployed ovf will have the same specified disk type (e.g., thin provisioned).",
 			ForceNew:    true,
 		},
+		"deployment_option": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The Deployment option to be chosen. If empty, the default option is used.",
+			ForceNew:    true,
+		},
 		"ovf_network_map": {
 			Type:        schema.TypeMap,
 			Optional:    true,
@@ -46,8 +52,15 @@ func VirtualMachineOvfDeploySchema() map[string]*schema.Schema {
 		"allow_unverified_ssl_cert": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Default:     true,
+			DefaultFunc: schema.EnvDefaultFunc("VSPHERE_ALLOW_UNVERIFIED_SSL", false),
 			Description: "Allow unverified ssl certificates while deploying ovf/ova from url.",
+		},
+		"enable_hidden_properties": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Allow properties with ovf:userConfigurable=false to be set.",
+			ForceNew:    true,
 		},
 	}
 }
