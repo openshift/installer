@@ -8,9 +8,11 @@ import (
 	"sync"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/jongio/azidext/go/azidext"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -69,7 +71,7 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 		}
 	}
 
-	return newSessionFromCredentials(cloudEnv, credentials)
+	return newSessionFromCredentials(cloudEnv, credentials, cloudName)
 }
 
 // credentialsFromFileOrUser returns credentials found
@@ -216,7 +218,7 @@ func saveCredentials(credentials Credentials, filePath string) error {
 	return ioutil.WriteFile(filePath, jsonCreds, 0600)
 }
 
-func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials) (*Session, error) {
+func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials, cloudName azure.CloudEnvironment) (*Session, error) {
 	c := &auth.ClientCredentialsConfig{
 		TenantID:     credentials.TenantID,
 		ClientID:     credentials.ClientID,
@@ -224,9 +226,38 @@ func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Crede
 		AADEndpoint:  cloudEnv.ActiveDirectoryEndpoint,
 	}
 	c.Resource = cloudEnv.TokenAudience
-	authorizer, err := c.Authorizer()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get client credentials authorizer")
+
+	authHost := azidentity.AzurePublicCloud
+
+	var authorizer autorest.Authorizer
+	switch cloudName {
+	case azure.StackCloud:
+		logrus.Debug("Falling back to deprecated ADAL authentication")
+		// The new authorization method is not yet supported for private clouds
+		// See https://github.com/Azure/azure-sdk-for-go/pull/16942
+		var err error
+		authorizer, err = c.Authorizer()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get client credentials authorizer")
+		}
+	case azure.USGovernmentCloud:
+		authHost = azidentity.AzureGovernment
+		fallthrough
+	default:
+		options := &azidentity.ClientSecretCredentialOptions{AuthorityHost: authHost}
+		cred, err := azidentity.NewClientSecretCredential(credentials.TenantID, credentials.ClientID, credentials.ClientSecret, options)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get client credentials secret")
+		}
+
+		scopes := []string{endpointToScope(cloudEnv.ResourceManagerEndpoint)}
+		// Use an adapter so azidentity in the Azure SDK can be used as
+		// Authorizer when calling the Azure Management Packages, which we
+		// currently use. Once the Azure SDK clients (found in /sdk) move to
+		// stable, we can update our clients and they will be able to use the
+		// creds directly without the authorizer. The schedule is here:
+		// https://azure.github.io/azure-sdk/releases/latest/index.html#go
+		authorizer = azidext.NewTokenCredentialAdapter(cred, scopes)
 	}
 
 	c.Resource = cloudEnv.GraphEndpoint
@@ -240,4 +271,13 @@ func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Crede
 		Credentials:     *credentials,
 		Environment:     cloudEnv,
 	}, nil
+}
+
+const defaultScope = "/.default"
+
+func endpointToScope(endpoint string) string {
+	if endpoint[len(endpoint)-1] != '/' {
+		endpoint += "/"
+	}
+	return endpoint + defaultScope
 }
