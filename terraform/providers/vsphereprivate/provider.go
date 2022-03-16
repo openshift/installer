@@ -22,6 +22,7 @@ func Provider() *schema.Provider {
 	//Add our resources
 	vsphereProvider.ResourcesMap = map[string]*schema.Resource{
 		"vsphereprivate_import_ova": resourceVSpherePrivateImportOva(),
+		"vsphereprivate_tag_attach": resourceVSpherePrivateTagAttach(),
 	}
 
 	vsphereProvider.ConfigureFunc = providerConfigure
