@@ -11,8 +11,8 @@ import (
 const StateFilename = "terraform.tfstate"
 
 // Outputs reads the terraform state file and returns the outputs of the stage as json.
-func Outputs(dir string) ([]byte, error) {
-	tf, err := newTFExec(dir)
+func Outputs(dir string, terraformDir string) ([]byte, error) {
+	tf, err := newTFExec(dir, terraformDir)
 	if err != nil {
 		return nil, err
 	}

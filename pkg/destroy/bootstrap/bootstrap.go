@@ -47,6 +47,13 @@ func Destroy(dir string) (err error) {
 		varFiles = append(varFiles, stage.OutputsFilename())
 	}
 
+	terraformDir := filepath.Join(dir, "terraform")
+	if err := os.Mkdir(terraformDir, 0777); err != nil {
+		return errors.Wrap(err, "could not create the terraform directory")
+	}
+	defer os.RemoveAll(terraformDir)
+	terraform.UnpackTerraform(terraformDir, tfStages)
+
 	for i := len(tfStages) - 1; i >= 0; i-- {
 		stage := tfStages[i]
 
@@ -82,7 +89,7 @@ func Destroy(dir string) (err error) {
 			targetVarFiles = append(targetVarFiles, targetPath)
 		}
 
-		if err := stage.Destroy(tempDir, targetVarFiles); err != nil {
+		if err := stage.Destroy(tempDir, terraformDir, targetVarFiles); err != nil {
 			return err
 		}
 
