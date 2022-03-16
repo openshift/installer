@@ -28,7 +28,7 @@ func (o *ClusterUninstaller) listDNSRecords() (cloudResources, error) {
 
 		for _, record := range resources.Result {
 			// Match all of the cluster's DNS records
-			exp := fmt.Sprintf(`.*\Q%s.%s\E$`, o.ClusterName, o.BaseDomain)
+			exp := fmt.Sprintf(`.*\Q.%s.%s\E$`, o.ClusterName, o.BaseDomain)
 			nameMatches, _ := regexp.Match(exp, []byte(*record.Name))
 			contentMatches, _ := regexp.Match(exp, []byte(*record.Content))
 			if nameMatches || contentMatches {
