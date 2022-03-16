@@ -53,14 +53,18 @@ aliases:
     - jstuever
   baremetal-approvers:
     - andfasano
-    - ardaguclu
+    - dtantsur
+    - elfosardo
     - hardys
+    - iurygregory
     - sadasu
   baremetal-reviewers:
     - andfasano
-    - ardaguclu
     - celebdor
+    - dtantsur
+    - elfosardo
     - hardys
+    - iurygregory
     - sadasu
   aws-approvers:
     - jstuever
