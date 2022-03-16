@@ -9,8 +9,8 @@ import (
 
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datacenter"
 	"github.com/vmware/govmomi/find"
@@ -57,7 +57,7 @@ func resourceVSphereDatacenter() *schema.Resource {
 }
 
 func resourceVSphereDatacenterCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	// Load up the tags client, which will validate a proper vCenter before
 	// attempting to proceed if we have tags defined.
@@ -85,7 +85,7 @@ func resourceVSphereDatacenterCreate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	dc, err := f.CreateDatacenter(context.TODO(), name)
-	if err != nil || dc == nil {
+	if err != nil {
 		return fmt.Errorf("failed to create datacenter: %s", err)
 	}
 	// From govmomi code: "Response will be nil if this is an ESX host that does not belong to a vCenter"
@@ -146,7 +146,7 @@ func resourceVSphereDatacenterStateRefreshFunc(d *schema.ResourceData, meta inte
 }
 
 func datacenterExists(d *schema.ResourceData, meta interface{}) (*object.Datacenter, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	name := d.Id()
 
 	path := name
@@ -175,20 +175,20 @@ func resourceVSphereDatacenterRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 	// Read tags if we have the ability to do so
-	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
+	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
 		if err := readTagsForResource(tagsClient, dc, d); err != nil {
 			return err
 		}
 	}
 
 	// Read set custom attributes
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if customattribute.IsSupported(client) {
 		moDc, err := datacenterCustomAttributes(dc)
 		if err != nil {
 			return err
 		}
-		customattribute.ReadFromResource(client, moDc.Entity(), d)
+		customattribute.ReadFromResource(moDc.Entity(), d)
 	}
 
 	return nil
@@ -202,7 +202,7 @@ func resourceVSphereDatacenterUpdate(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 	// Verify a proper vCenter before proceeding if custom attributes are defined
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	attrsProcessor, err := customattribute.GetDiffProcessorIfAttributesDefined(client, d)
 	if err != nil {
 		return err
@@ -231,7 +231,7 @@ func resourceVSphereDatacenterUpdate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourceVSphereDatacenterDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	name := d.Get("name").(string)
 
 	path := name
@@ -275,7 +275,7 @@ func resourceVSphereDatacenterDelete(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourceVSphereDatacenterImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	p := d.Id()
 	if !strings.HasPrefix(p, "/") {
 		return nil, errors.New("path must start with a trailing slash")

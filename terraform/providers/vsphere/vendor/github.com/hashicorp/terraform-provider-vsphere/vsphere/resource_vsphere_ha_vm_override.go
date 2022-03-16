@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi"
@@ -34,6 +34,7 @@ var vmOverrideClusterDasConfigInfoServiceStateAllowedValues = []string{
 	string(types.ClusterDasVmSettingsRestartPriorityMedium),
 	string(types.ClusterDasVmSettingsRestartPriorityHigh),
 	string(types.ClusterDasVmSettingsRestartPriorityHighest),
+	string(types.ClusterDasVmSettingsRestartPriorityDisabled),
 }
 
 var vmOverrideClusterVMStorageProtectionForPDLAllowedValues = []string{
@@ -129,7 +130,7 @@ func resourceVSphereHAVMOverride() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     -1,
-				Description: "Controls the delay in minutes to wait after an APD timeout event to execute the response action defined in ha_datastore_apd_response. Specify -1 to use the cluster setting.",
+				Description: "Controls the delay in seconds to wait after an APD timeout event to execute the response action defined in ha_datastore_apd_response. Specify -1 to use the cluster setting.",
 			},
 			// VM monitoring
 			"ha_vm_monitoring_use_cluster_defaults": {
@@ -509,7 +510,7 @@ func resourceVSphereHAVMOverrideFetchObjects(
 }
 
 func resourceVSphereHAVMOverrideClient(meta interface{}) (*govmomi.Client, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, err
 	}

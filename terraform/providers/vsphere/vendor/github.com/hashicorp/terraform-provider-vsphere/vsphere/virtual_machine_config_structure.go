@@ -5,9 +5,11 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/mitchellh/copystructure"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/spbm"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi"
@@ -36,6 +38,11 @@ var virtualMachineSwapPlacementAllowedValues = []string{
 	string(types.VirtualMachineConfigInfoSwapPlacementTypeHostLocal),
 }
 
+var virtualMachineUpgradePolicyAllowedValues = []string{
+	string(types.UpgradePolicyManual),
+	string(types.UpgradePolicyUpgradeAtPowerCycle),
+}
+
 var virtualMachineFirmwareAllowedValues = []string{
 	string(types.GuestOsDescriptorFirmwareTypeBios),
 	string(types.GuestOsDescriptorFirmwareTypeEfi),
@@ -48,13 +55,13 @@ var virtualMachineLatencySensitivityAllowedValues = []string{
 	string(types.LatencySensitivitySensitivityLevelHigh),
 }
 
-// getWithRestart fetches the resoruce data specified at key. If the value has
+// getWithRestart fetches the resource data specified at key. If the value has
 // changed, a reboot is flagged in the virtual machine by setting
 // reboot_required to true.
 func getWithRestart(d *schema.ResourceData, key string) interface{} {
 	if d.HasChange(key) {
 		log.Printf("[DEBUG] %s: Resource argument %q requires a VM restart", resourceVSphereVirtualMachineIDString(d), key)
-		d.Set("reboot_required", true)
+		_ = d.Set("reboot_required", true)
 	}
 	return d.Get(key)
 }
@@ -66,7 +73,7 @@ func getWithRestart(d *schema.ResourceData, key string) interface{} {
 // This function always returns at least false, even if a value is unspecified.
 func getBoolWithRestart(d *schema.ResourceData, key string) *bool {
 	if d.HasChange(key) {
-		d.Set("reboot_required", true)
+		_ = d.Set("reboot_required", true)
 	}
 	return structure.GetBool(d, key)
 }
@@ -104,6 +111,16 @@ func schemaVirtualMachineConfigSpec() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Expose the UUIDs of attached virtual disks to the virtual machine, allowing access to them in the guest.",
 		},
+		"vbs_enabled": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Description: "Flag to specify if Virtualization-based security is enabled for this virtual machine.",
+		},
+		"vvtd_enabled": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Description: "Flag to specify if I/O MMU virtualization, also called Intel Virtualization Technology for Directed I/O (VT-d) and AMD I/O Virtualization (AMD-Vi or IOMMU), is enabled.",
+		},
 		"hv_mode": {
 			Type:         schema.TypeString,
 			Optional:     true,
@@ -123,10 +140,7 @@ func schemaVirtualMachineConfigSpec() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Enable logging on this virtual machine.",
 			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-				if len(d.Get("ovf_deploy").([]interface{})) > 0 {
-					return true
-				}
-				return false
+				return len(d.Get("ovf_deploy").([]interface{})) > 0
 			},
 		},
 
@@ -134,36 +148,48 @@ func schemaVirtualMachineConfigSpec() map[string]*schema.Schema {
 		"sync_time_with_host": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Description: "Enable guest clock synchronization with the host. Requires VMware tools to be installed.",
+			Description: "Enable guest clock synchronization with the host. On vSphere 7.0 U1 and above, with only this setting the clock is synchronized on startup and resume. Requires VMware Tools to be installed.",
+		},
+		"tools_upgrade_policy": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			Default:      string(types.UpgradePolicyManual),
+			Description:  "Set the upgrade policy for VMware Tools. Can be one of `manual` or `upgradeAtPowerCycle`.",
+			ValidateFunc: validation.StringInSlice(virtualMachineUpgradePolicyAllowedValues, false),
+		},
+		"sync_time_with_host_periodically": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Description: "Enable periodic clock synchronization with the host. Supported only on vSphere 7.0 U1 and above. On prior versions setting `sync_time_with_host` is enough for periodic synchronization. Requires VMware Tools to be installed.",
 		},
 		"run_tools_scripts_after_power_on": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
-			Description: "Enable the execution of post-power-on scripts when VMware tools is installed.",
+			Description: "Enable the run of scripts after virtual machine power-on when VMware Tools is installed.",
 		},
 		"run_tools_scripts_after_resume": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
-			Description: "Enable the execution of post-resume scripts when VMware tools is installed.",
+			Description: "Enable the run of scripts after virtual machine resume when when VMware Tools is installed.",
 		},
 		"run_tools_scripts_before_guest_reboot": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Description: "Enable the execution of pre-reboot scripts when VMware tools is installed.",
+			Description: "Enable the run of scripts before guest operating system reboot when VMware Tools is installed.",
 		},
 		"run_tools_scripts_before_guest_shutdown": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
-			Description: "Enable the execution of pre-shutdown scripts when VMware tools is installed.",
+			Description: "Enable the run of scripts before guest operating system shutdown when VMware Tools is installed.",
 		},
 		"run_tools_scripts_before_guest_standby": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
-			Description: "Enable the execution of pre-standby scripts when VMware tools is installed.",
+			Description: "Enable the run of scripts before guest operating system standby when VMware Tools is installed.",
 		},
 
 		// LatencySensitivity
@@ -235,6 +261,7 @@ func schemaVirtualMachineConfigSpec() map[string]*schema.Schema {
 		"annotation": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "User-provided description of the virtual machine.",
 		},
 		"guest_id": {
@@ -258,13 +285,13 @@ func schemaVirtualMachineConfigSpec() map[string]*schema.Schema {
 		"alternate_guest_name": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Description: "The guest name for the operating system when guest_id is other or other-64.",
+			Description: "The guest name for the operating system when guest_id is otherGuest or otherGuest64.",
 		},
 		"firmware": {
 			Type:         schema.TypeString,
 			Optional:     true,
 			Default:      string(types.GuestOsDescriptorFirmwareTypeBios),
-			Description:  "The firmware interface to use on the virtual machine. Can be one of bios or EFI.",
+			Description:  "The firmware interface to use on the virtual machine. Can be one of bios or efi.",
 			ValidateFunc: validation.StringInSlice(virtualMachineFirmwareAllowedValues, false),
 		},
 		"extra_config": {
@@ -272,6 +299,12 @@ func schemaVirtualMachineConfigSpec() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Extra configuration data for this virtual machine. Can be used to supply advanced parameters not normally in configuration, such as instance metadata, or configuration data for OVF images.",
 			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
+		"replace_trigger": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Triggers replacement of resource whenever it changes.",
+			ForceNew:    true,
 		},
 		"vapp": {
 			Type:        schema.TypeList,
@@ -305,7 +338,7 @@ func schemaVirtualMachineConfigSpec() map[string]*schema.Schema {
 		"hardware_version": {
 			Type:         schema.TypeInt,
 			Optional:     true,
-			ValidateFunc: validation.IntBetween(4, 17),
+			ValidateFunc: validation.IntBetween(4, 19),
 			Description:  "The hardware version for the virtual machine.",
 			Computed:     true,
 		},
@@ -348,58 +381,83 @@ func expandVirtualMachineBootOptions(d *schema.ResourceData, client *govmomi.Cli
 // flattenVirtualMachineBootOptions reads various fields from a
 // VirtualMachineBootOptions into the passed in ResourceData.
 func flattenVirtualMachineBootOptions(d *schema.ResourceData, obj *types.VirtualMachineBootOptions) error {
-	d.Set("boot_delay", obj.BootDelay)
-	structure.SetBoolPtr(d, "efi_secure_boot_enabled", obj.EfiSecureBootEnabled)
-	structure.SetBoolPtr(d, "boot_retry_enabled", obj.BootRetryEnabled)
-	d.Set("boot_retry_delay", obj.BootRetryDelay)
+	_ = d.Set("boot_delay", obj.BootDelay)
+	_ = structure.SetBoolPtr(d, "efi_secure_boot_enabled", obj.EfiSecureBootEnabled)
+	_ = structure.SetBoolPtr(d, "boot_retry_enabled", obj.BootRetryEnabled)
+	_ = d.Set("boot_retry_delay", obj.BootRetryDelay)
 	return nil
 }
 
 // expandVirtualMachineFlagInfo reads certain ResourceData keys and
 // returns a VirtualMachineFlagInfo.
-func expandVirtualMachineFlagInfo(d *schema.ResourceData) *types.VirtualMachineFlagInfo {
+func expandVirtualMachineFlagInfo(d *schema.ResourceData, client *govmomi.Client) *types.VirtualMachineFlagInfo {
 	obj := &types.VirtualMachineFlagInfo{
 		DiskUuidEnabled:  getBoolWithRestart(d, "enable_disk_uuid"),
 		VirtualExecUsage: getWithRestart(d, "hv_mode").(string),
 		VirtualMmuUsage:  getWithRestart(d, "ept_rvi_mode").(string),
 		EnableLogging:    getBoolWithRestart(d, "enable_logging"),
 	}
+	version := viapi.ParseVersionFromClient(client)
+	if version.AtLeast(viapi.VSphereVersion{Product: version.Product, Major: 6, Minor: 7}) {
+		obj.VbsEnabled = getBoolWithRestart(d, "vbs_enabled")
+		obj.VvtdEnabled = getBoolWithRestart(d, "vvtd_enabled")
+	}
 	return obj
 }
 
 // flattenVirtualMachineFlagInfo reads various fields from a
 // VirtualMachineFlagInfo into the passed in ResourceData.
-func flattenVirtualMachineFlagInfo(d *schema.ResourceData, obj *types.VirtualMachineFlagInfo) error {
-	d.Set("enable_disk_uuid", obj.DiskUuidEnabled)
-	d.Set("hv_mode", obj.VirtualExecUsage)
-	d.Set("ept_rvi_mode", obj.VirtualMmuUsage)
-	d.Set("enable_logging", obj.EnableLogging)
+func flattenVirtualMachineFlagInfo(d *schema.ResourceData, obj *types.VirtualMachineFlagInfo, client *govmomi.Client) error {
+	_ = d.Set("enable_disk_uuid", obj.DiskUuidEnabled)
+	_ = d.Set("hv_mode", obj.VirtualExecUsage)
+	_ = d.Set("ept_rvi_mode", obj.VirtualMmuUsage)
+	_ = d.Set("enable_logging", obj.EnableLogging)
+
+	version := viapi.ParseVersionFromClient(client)
+	if version.AtLeast(viapi.VSphereVersion{Product: version.Product, Major: 6, Minor: 7}) {
+		_ = d.Set("vbs_enabled", obj.VbsEnabled)
+		_ = d.Set("vvtd_enabled", obj.VvtdEnabled)
+	}
 	return nil
 }
 
 // expandToolsConfigInfo reads certain ResourceData keys and
 // returns a ToolsConfigInfo.
-func expandToolsConfigInfo(d *schema.ResourceData) *types.ToolsConfigInfo {
+func expandToolsConfigInfo(d *schema.ResourceData, client *govmomi.Client) *types.ToolsConfigInfo {
 	obj := &types.ToolsConfigInfo{
 		SyncTimeWithHost:    structure.GetBool(d, "sync_time_with_host"),
+		ToolsUpgradePolicy:  getWithRestart(d, "tools_upgrade_policy").(string),
 		AfterPowerOn:        getBoolWithRestart(d, "run_tools_scripts_after_power_on"),
 		AfterResume:         getBoolWithRestart(d, "run_tools_scripts_after_resume"),
 		BeforeGuestStandby:  getBoolWithRestart(d, "run_tools_scripts_before_guest_standby"),
 		BeforeGuestShutdown: getBoolWithRestart(d, "run_tools_scripts_before_guest_shutdown"),
 		BeforeGuestReboot:   getBoolWithRestart(d, "run_tools_scripts_before_guest_reboot"),
 	}
+
+	version := viapi.ParseVersionFromClient(client)
+	if version.AtLeast(viapi.VSphereVersion{Product: version.Product, Major: 7, Minor: 0, Patch: 1}) {
+		obj.SyncTimeWithHostAllowed = structure.GetBool(d, "sync_time_with_host")
+		obj.SyncTimeWithHost = structure.GetBool(d, "sync_time_with_host_periodically")
+	}
 	return obj
 }
 
 // flattenToolsConfigInfo reads various fields from a
 // ToolsConfigInfo into the passed in ResourceData.
-func flattenToolsConfigInfo(d *schema.ResourceData, obj *types.ToolsConfigInfo) error {
-	d.Set("sync_time_with_host", obj.SyncTimeWithHost)
-	d.Set("run_tools_scripts_after_power_on", obj.AfterPowerOn)
-	d.Set("run_tools_scripts_after_resume", obj.AfterResume)
-	d.Set("run_tools_scripts_before_guest_standby", obj.BeforeGuestStandby)
-	d.Set("run_tools_scripts_before_guest_shutdown", obj.BeforeGuestShutdown)
-	d.Set("run_tools_scripts_before_guest_reboot", obj.BeforeGuestReboot)
+func flattenToolsConfigInfo(d *schema.ResourceData, obj *types.ToolsConfigInfo, client *govmomi.Client) error {
+	_ = d.Set("sync_time_with_host", obj.SyncTimeWithHost)
+	_ = d.Set("tools_upgrade_policy", obj.ToolsUpgradePolicy)
+	_ = d.Set("run_tools_scripts_after_power_on", obj.AfterPowerOn)
+	_ = d.Set("run_tools_scripts_after_resume", obj.AfterResume)
+	_ = d.Set("run_tools_scripts_before_guest_standby", obj.BeforeGuestStandby)
+	_ = d.Set("run_tools_scripts_before_guest_shutdown", obj.BeforeGuestShutdown)
+	_ = d.Set("run_tools_scripts_before_guest_reboot", obj.BeforeGuestReboot)
+
+	version := viapi.ParseVersionFromClient(client)
+	if version.AtLeast(viapi.VSphereVersion{Product: version.Product, Major: 7, Minor: 0, Patch: 1}) {
+		_ = d.Set("sync_time_with_host", obj.SyncTimeWithHostAllowed)
+		_ = d.Set("sync_time_with_host_periodically", obj.SyncTimeWithHost)
+	}
 	return nil
 }
 
@@ -438,13 +496,13 @@ func schemaVirtualMachineResourceAllocation() map[string]*schema.Schema {
 			Type:         schema.TypeInt,
 			Optional:     true,
 			Default:      -1,
-			Description:  fmt.Sprintf(limitFmt, t),
+			Description:  limitFmt,
 			ValidateFunc: validation.IntAtLeast(-1),
 		}
 		s[reservationKey] = &schema.Schema{
 			Type:         schema.TypeInt,
 			Optional:     true,
-			Description:  fmt.Sprintf(reservationFmt, t),
+			Description:  reservationFmt,
 			ValidateFunc: validation.IntAtLeast(0),
 		}
 	}
@@ -501,11 +559,11 @@ func flattenVirtualMachineResourceAllocation(d *schema.ResourceData, obj *types.
 	limitKey := fmt.Sprintf("%s_limit", key)
 	reservationKey := fmt.Sprintf("%s_reservation", key)
 
-	structure.SetInt64Ptr(d, limitKey, obj.Limit)
-	structure.SetInt64Ptr(d, reservationKey, obj.Reservation)
+	_ = structure.SetInt64Ptr(d, limitKey, obj.Limit)
+	_ = structure.SetInt64Ptr(d, reservationKey, obj.Reservation)
 	if obj.Shares != nil {
-		d.Set(shareLevelKey, obj.Shares.Level)
-		d.Set(shareCountKey, obj.Shares.Shares)
+		_ = d.Set(shareLevelKey, obj.Shares.Level)
+		_ = d.Set(shareCountKey, obj.Shares.Shares)
 	}
 	return nil
 }
@@ -521,7 +579,7 @@ func expandExtraConfig(d *schema.ResourceData) []types.BaseOptionValue {
 		// While there's a possibility that modification of some settings in
 		// extraConfig may not require a restart, there's no real way for us to
 		// know, hence we just default to requiring a reboot here.
-		d.Set("reboot_required", true)
+		_ = d.Set("reboot_required", true)
 	} else {
 		// There's no change here, so we might as well just return a nil set, which
 		// is a no-op for modification of extraConfig.
@@ -530,10 +588,10 @@ func expandExtraConfig(d *schema.ResourceData) []types.BaseOptionValue {
 	var opts []types.BaseOptionValue
 
 	// Nil out removed values
-	old, new := d.GetChange("extra_config")
+	old, newValue := d.GetChange("extra_config")
 	for k1 := range old.(map[string]interface{}) {
 		var found bool
-		for k2 := range new.(map[string]interface{}) {
+		for k2 := range newValue.(map[string]interface{}) {
 			if k1 == k2 {
 				found = true
 			}
@@ -548,7 +606,7 @@ func expandExtraConfig(d *schema.ResourceData) []types.BaseOptionValue {
 	}
 
 	// Look for new values, in addition to changed values.
-	for k1, v1 := range new.(map[string]interface{}) {
+	for k1, v1 := range newValue.(map[string]interface{}) {
 		var found bool
 		for k2, v2 := range old.(map[string]interface{}) {
 			if k1 == k2 {
@@ -617,18 +675,22 @@ func expandVAppConfig(d *schema.ResourceData, client *govmomi.Client) (*types.Vm
 	// Many vApp config values, such as IP address, will require a
 	// restart of the machine to properly apply. We don't necessarily
 	// know which ones they are, so we will restart for every change.
-	d.Set("reboot_required", true)
+	_ = d.Set("reboot_required", true)
 
 	var props []types.VAppPropertySpec
 
-	_, new := d.GetChange("vapp")
+	_, newValue := d.GetChange("vapp")
 	newMap := make(map[string]interface{})
 
-	newVApps := new.([]interface{})
-	if newVApps != nil && len(newVApps) > 0 && newVApps[0] != nil {
+	newVApps := newValue.([]interface{})
+	if len(newVApps) > 0 && newVApps[0] != nil {
 		newVApp := newVApps[0].(map[string]interface{})
 		if props, ok := newVApp["properties"].(map[string]interface{}); ok {
-			newMap = props
+			propsCopy, err := copystructure.Copy(props)
+			if err != nil {
+				return nil, fmt.Errorf("while extracting vapp properties into a new map: %s", err)
+			}
+			newMap = propsCopy.(map[string]interface{})
 		}
 	}
 
@@ -650,12 +712,15 @@ func expandVAppConfig(d *schema.ResourceData, client *govmomi.Client) (*types.Vm
 	}
 	allProperties := vmProps.Config.VAppConfig.GetVmConfigInfo().Property
 
+	enableHiddenProperties := d.Get("ovf_deploy.0.enable_hidden_properties").(bool)
+
 	for _, p := range allProperties {
-		if *p.UserConfigurable == true {
+		if enableHiddenProperties {
 			defaultValue := " "
 			if p.DefaultValue != "" {
 				defaultValue = p.DefaultValue
 			}
+			userConfigurable := true
 			prop := types.VAppPropertySpec{
 				ArrayUpdateSpec: types.ArrayUpdateSpec{
 					Operation: types.ArrayUpdateOperationEdit,
@@ -664,7 +729,7 @@ func expandVAppConfig(d *schema.ResourceData, client *govmomi.Client) (*types.Vm
 					Key:              p.Key,
 					Id:               p.Id,
 					Value:            defaultValue,
-					UserConfigurable: p.UserConfigurable,
+					UserConfigurable: &userConfigurable,
 				},
 			}
 
@@ -675,9 +740,34 @@ func expandVAppConfig(d *schema.ResourceData, client *govmomi.Client) (*types.Vm
 			}
 			props = append(props, prop)
 		} else {
-			_, ok := newMap[p.Id]
-			if ok {
-				return nil, fmt.Errorf("vApp property with userConfigurable=false specified in vapp.properties: %+v", reflect.ValueOf(newMap).MapKeys())
+			if *p.UserConfigurable {
+				defaultValue := " "
+				if p.DefaultValue != "" {
+					defaultValue = p.DefaultValue
+				}
+				prop := types.VAppPropertySpec{
+					ArrayUpdateSpec: types.ArrayUpdateSpec{
+						Operation: types.ArrayUpdateOperationEdit,
+					},
+					Info: &types.VAppPropertyInfo{
+						Key:              p.Key,
+						Id:               p.Id,
+						Value:            defaultValue,
+						UserConfigurable: p.UserConfigurable,
+					},
+				}
+
+				newValue, ok := newMap[p.Id]
+				if ok {
+					prop.Info.Value = newValue.(string)
+					delete(newMap, p.Id)
+				}
+				props = append(props, prop)
+			} else {
+				_, ok := newMap[p.Id]
+				if ok {
+					return nil, fmt.Errorf("vApp property with userConfigurable=false specified in vapp.properties: %+v", reflect.ValueOf(newMap).MapKeys())
+				}
 			}
 		}
 	}
@@ -695,11 +785,11 @@ func expandVAppConfig(d *schema.ResourceData, client *govmomi.Client) (*types.Vm
 // and sets all keys in vapp.
 func flattenVAppConfig(d *schema.ResourceData, config types.BaseVmConfigInfo) error {
 	if config == nil {
-		d.Set("vapp_transport", []string{})
+		_ = d.Set("vapp_transport", []string{})
 		return nil
 	}
 	// Set `vapp_config here while config is available to avoid extra API calls
-	d.Set("vapp_transport", config.GetVmConfigInfo().OvfEnvironmentTransport)
+	_ = d.Set("vapp_transport", config.GetVmConfigInfo().OvfEnvironmentTransport)
 
 	props := config.GetVmConfigInfo().Property
 	if len(props) < 1 {
@@ -708,7 +798,7 @@ func flattenVAppConfig(d *schema.ResourceData, config types.BaseVmConfigInfo) er
 	}
 	vac := make(map[string]interface{})
 	for _, v := range props {
-		if *v.UserConfigurable == true {
+		if *v.UserConfigurable {
 			if v.Value != "" && v.Value != v.DefaultValue {
 				vac[v.Id] = v.Value
 			}
@@ -746,13 +836,13 @@ func expandCPUCountConfig(d *schema.ResourceData) int32 {
 		// Adding CPUs
 		if !currentHotAdd {
 			log.Printf("[DEBUG] %s: CPU operation requires a VM restart", resourceVSphereVirtualMachineIDString(d))
-			d.Set("reboot_required", true)
+			_ = d.Set("reboot_required", true)
 		}
 	case oldCPUCount > newCPUCount:
 		// Removing CPUs
 		if !currentHotRemove {
 			log.Printf("[DEBUG] %s: CPU operation requires a VM restart", resourceVSphereVirtualMachineIDString(d))
-			d.Set("reboot_required", true)
+			_ = d.Set("reboot_required", true)
 		}
 	}
 	return newCPUCount
@@ -774,12 +864,12 @@ func expandMemorySizeConfig(d *schema.ResourceData) int64 {
 		// Adding CPUs
 		if !currentHotAdd {
 			log.Printf("[DEBUG] %s: Memory operation requires a VM restart", resourceVSphereVirtualMachineIDString(d))
-			d.Set("reboot_required", true)
+			_ = d.Set("reboot_required", true)
 		}
 	case oldMem > newMem:
 		// Removing memory always requires a reboot
 		log.Printf("[DEBUG] %s: Memory operation requires a VM restart", resourceVSphereVirtualMachineIDString(d))
-		d.Set("reboot_required", true)
+		_ = d.Set("reboot_required", true)
 	}
 	return newMem
 }
@@ -808,8 +898,8 @@ func expandVirtualMachineConfigSpec(d *schema.ResourceData, client *govmomi.Clie
 		GuestId:                      getWithRestart(d, "guest_id").(string),
 		AlternateGuestName:           getWithRestart(d, "alternate_guest_name").(string),
 		Annotation:                   d.Get("annotation").(string),
-		Tools:                        expandToolsConfigInfo(d),
-		Flags:                        expandVirtualMachineFlagInfo(d),
+		Tools:                        expandToolsConfigInfo(d, client),
+		Flags:                        expandVirtualMachineFlagInfo(d, client),
 		NumCPUs:                      expandCPUCountConfig(d),
 		NumCoresPerSocket:            int32(getWithRestart(d, "num_cores_per_socket").(int)),
 		MemoryMB:                     expandMemorySizeConfig(d),
@@ -838,29 +928,29 @@ func expandVirtualMachineConfigSpec(d *schema.ResourceData, client *govmomi.Clie
 // VirtualMachineConfigInfo into the passed in ResourceData.
 //
 // This is the flatten counterpart to expandVirtualMachineConfigSpec.
-func flattenVirtualMachineConfigInfo(d *schema.ResourceData, obj *types.VirtualMachineConfigInfo) error {
-	d.Set("name", obj.Name)
-	d.Set("guest_id", obj.GuestId)
-	d.Set("alternate_guest_name", obj.AlternateGuestName)
-	d.Set("annotation", obj.Annotation)
-	d.Set("num_cpus", obj.Hardware.NumCPU)
-	d.Set("num_cores_per_socket", obj.Hardware.NumCoresPerSocket)
-	d.Set("memory", obj.Hardware.MemoryMB)
-	d.Set("memory_hot_add_enabled", obj.MemoryHotAddEnabled)
-	d.Set("cpu_hot_add_enabled", obj.CpuHotAddEnabled)
-	d.Set("cpu_hot_remove_enabled", obj.CpuHotRemoveEnabled)
-	d.Set("swap_placement_policy", obj.SwapPlacement)
-	d.Set("firmware", obj.Firmware)
-	d.Set("nested_hv_enabled", obj.NestedHVEnabled)
-	d.Set("cpu_performance_counters_enabled", obj.VPMCEnabled)
-	d.Set("change_version", obj.ChangeVersion)
-	d.Set("uuid", obj.Uuid)
-	d.Set("hardware_version", virtualmachine.GetHardwareVersionNumber(obj.Version))
+func flattenVirtualMachineConfigInfo(d *schema.ResourceData, obj *types.VirtualMachineConfigInfo, client *govmomi.Client) error {
+	_ = d.Set("name", obj.Name)
+	_ = d.Set("guest_id", obj.GuestId)
+	_ = d.Set("alternate_guest_name", obj.AlternateGuestName)
+	_ = d.Set("annotation", obj.Annotation)
+	_ = d.Set("num_cpus", obj.Hardware.NumCPU)
+	_ = d.Set("num_cores_per_socket", obj.Hardware.NumCoresPerSocket)
+	_ = d.Set("memory", obj.Hardware.MemoryMB)
+	_ = d.Set("memory_hot_add_enabled", obj.MemoryHotAddEnabled)
+	_ = d.Set("cpu_hot_add_enabled", obj.CpuHotAddEnabled)
+	_ = d.Set("cpu_hot_remove_enabled", obj.CpuHotRemoveEnabled)
+	_ = d.Set("swap_placement_policy", obj.SwapPlacement)
+	_ = d.Set("firmware", obj.Firmware)
+	_ = d.Set("nested_hv_enabled", obj.NestedHVEnabled)
+	_ = d.Set("cpu_performance_counters_enabled", obj.VPMCEnabled)
+	_ = d.Set("change_version", obj.ChangeVersion)
+	_ = d.Set("uuid", obj.Uuid)
+	_ = d.Set("hardware_version", virtualmachine.GetHardwareVersionNumber(obj.Version))
 
-	if err := flattenToolsConfigInfo(d, obj.Tools); err != nil {
+	if err := flattenToolsConfigInfo(d, obj.Tools, client); err != nil {
 		return err
 	}
-	if err := flattenVirtualMachineFlagInfo(d, &obj.Flags); err != nil {
+	if err := flattenVirtualMachineFlagInfo(d, &obj.Flags, client); err != nil {
 		return err
 	}
 	if err := flattenVirtualMachineResourceAllocation(d, obj.CpuAllocation, "cpu"); err != nil {
@@ -897,7 +987,10 @@ func expandVirtualMachineConfigSpecChanged(d *schema.ResourceData, client *govmo
 	oldData := resourceVSphereVirtualMachine().Data(&terraform.InstanceState{})
 	oldData.SetId(d.Id())
 	// Flatten the old config info into it
-	flattenVirtualMachineConfigInfo(oldData, info)
+	err := flattenVirtualMachineConfigInfo(oldData, info, client)
+	if err != nil {
+		return types.VirtualMachineConfigSpec{}, false, err
+	}
 	// Read state back in. This is necessary to ensure GetChange calls work
 	// correctly.
 	oldData = resourceVSphereVirtualMachine().Data(oldData.State())
@@ -910,15 +1003,17 @@ func expandVirtualMachineConfigSpecChanged(d *schema.ResourceData, client *govmo
 	log.Printf("[DEBUG] %s: Expanding of old config complete", resourceVSphereVirtualMachineIDString(d))
 
 	newSpec, err := expandVirtualMachineConfigSpec(d, client)
-	// Don't include the hardware version in the UpdateSpec. It is only needed
-	// when created new VMs.
-	newSpec.Version = ""
 	if err != nil {
 		return types.VirtualMachineConfigSpec{}, false, err
 	}
 
+	isVMConfigSpecChanged := !reflect.DeepEqual(oldSpec, newSpec)
+	// Don't include the hardware version in the UpdateSpec. It is only needed
+	// when creating new VMs.
+	newSpec.Version = ""
+
 	// Return the new spec and compare
-	return newSpec, !reflect.DeepEqual(oldSpec, newSpec), nil
+	return newSpec, isVMConfigSpecChanged, nil
 }
 
 // getMemoryReservationLockedToMax determines if the memory_reservation is not

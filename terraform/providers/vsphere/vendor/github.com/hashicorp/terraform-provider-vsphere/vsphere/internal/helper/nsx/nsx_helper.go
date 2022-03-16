@@ -36,7 +36,7 @@ func OpaqueNetworkFromNetworkID(client *govmomi.Client, id string) (*object.Opaq
 	defer func() {
 		dctx, dcancel := context.WithTimeout(context.Background(), provider.DefaultAPITimeout)
 		defer dcancel()
-		v.Destroy(dctx)
+		_ = v.Destroy(dctx)
 	}()
 
 	var networks []mo.OpaqueNetwork

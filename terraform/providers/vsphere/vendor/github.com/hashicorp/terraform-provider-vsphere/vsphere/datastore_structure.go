@@ -3,7 +3,7 @@ package vsphere
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datastore"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/storagepod"
@@ -62,19 +62,17 @@ func schemaDatastoreSummary() map[string]*schema.Schema {
 // flattenDatastoreSummary reads various fields from a DatastoreSummary into
 // the passed in ResourceData.
 func flattenDatastoreSummary(d *schema.ResourceData, obj *types.DatastoreSummary) error {
-	d.Set("accessible", obj.Accessible)
-	d.Set("capacity", structure.ByteToMB(obj.Capacity))
-	d.Set("free_space", structure.ByteToMB(obj.FreeSpace))
-	d.Set("maintenance_mode", obj.MaintenanceMode)
-	d.Set("multiple_host_access", obj.MultipleHostAccess)
-	d.Set("uncommitted_space", structure.ByteToMB(obj.Uncommitted))
-	d.Set("url", obj.Url)
+	_ = d.Set("accessible", obj.Accessible)
+	_ = d.Set("capacity", structure.ByteToMB(obj.Capacity))
+	_ = d.Set("free_space", structure.ByteToMB(obj.FreeSpace))
+	_ = d.Set("maintenance_mode", obj.MaintenanceMode)
+	_ = d.Set("multiple_host_access", obj.MultipleHostAccess)
+	_ = d.Set("uncommitted_space", structure.ByteToMB(obj.Uncommitted))
+	_ = d.Set("url", obj.Url)
 
 	// Set the name attribute off of the name here - since we do not track this
 	// here we check for errors
-	if err := d.Set("name", obj.Name); err != nil {
-		return err
-	}
+	_ = d.Set("name", obj.Name)
 	return nil
 }
 
@@ -95,7 +93,7 @@ func resourceVSphereDatastoreApplyFolderOrStorageClusterPath(d *schema.ResourceD
 }
 
 func resourceVSphereDatastoreStorageClusterPathNormalized(meta interface{}, id string) (string, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	pod, err := storagepod.FromID(client, id)
 	if err != nil {
 		return "", err

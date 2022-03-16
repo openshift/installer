@@ -5,7 +5,7 @@ import (
 
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 )
 
@@ -56,7 +56,7 @@ func resourceVSphereHostVirtualSwitch() *schema.Resource {
 }
 
 func resourceVSphereHostVirtualSwitchCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	name := d.Get("name").(string)
 	hsID := d.Get("host_system_id").(string)
 	ns, err := hostNetworkSystemFromHostSystemID(client, hsID)
@@ -77,7 +77,7 @@ func resourceVSphereHostVirtualSwitchCreate(d *schema.ResourceData, meta interfa
 }
 
 func resourceVSphereHostVirtualSwitchRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	hsID, name, err := virtualSwitchIDsFromResourceID(d)
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ func resourceVSphereHostVirtualSwitchRead(d *schema.ResourceData, meta interface
 }
 
 func resourceVSphereHostVirtualSwitchUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	hsID, name, err := virtualSwitchIDsFromResourceID(d)
 	if err != nil {
 		return err
@@ -121,7 +121,7 @@ func resourceVSphereHostVirtualSwitchUpdate(d *schema.ResourceData, meta interfa
 }
 
 func resourceVSphereHostVirtualSwitchDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	hsID, name, err := virtualSwitchIDsFromResourceID(d)
 	if err != nil {
 		return err
@@ -140,7 +140,7 @@ func resourceVSphereHostVirtualSwitchDelete(d *schema.ResourceData, meta interfa
 	return nil
 }
 
-func resourceVSphereHostVirtualSwitchImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVSphereHostVirtualSwitchImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 	hostID, switchName, err := splitHostVirtualSwitchID(d.Id())
 	if err != nil {
 		return []*schema.ResourceData{}, err
@@ -159,7 +159,7 @@ func resourceVSphereHostVirtualSwitchImport(d *schema.ResourceData, meta interfa
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceVSphereHostVirtualSwitchCustomizeDiff(d *schema.ResourceDiff, meta interface{}) error {
+func resourceVSphereHostVirtualSwitchCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 	// We want to quickly validate that each NIC that is in either active_nics or
 	// standby_nics will be a part of the bridge.
 	bridgeNics := d.Get("network_adapters").([]interface{})

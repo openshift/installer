@@ -73,32 +73,6 @@ func resourcepoolsByPath(client *govmomi.Client, path string) ([]*object.Resourc
 	return rps, nil
 }
 
-func getChildren(client *govmomi.Client, parent *object.ResourcePool) ([]*object.ResourcePool, error) {
-	ctx := context.TODO()
-	finder := find.NewFinder(client.Client, false)
-	var rps []*object.ResourcePool
-	es, err := finder.ManagedObjectListChildren(ctx, parent.InventoryPath+"/*", "pool")
-	if err != nil {
-		return nil, err
-	}
-	for _, rpId := range es {
-		if rpId.Object.Reference().Type != "ResourcePool" {
-			continue
-		}
-		rp, err := FromID(client, rpId.Object.Reference().Value)
-		if err != nil {
-			return nil, err
-		}
-		rps = append(rps, rp)
-		children, err := getChildren(client, rp)
-		if err != nil {
-			return nil, err
-		}
-		rps = append(rps, children...)
-	}
-	return rps, nil
-}
-
 // FromID locates a ResourcePool by its managed object reference ID.
 func FromID(client *govmomi.Client, id string) (*object.ResourcePool, error) {
 	log.Printf("[DEBUG] Locating resource pool with ID %s", id)
@@ -199,7 +173,7 @@ func Create(rp *object.ResourcePool, name string, spec *types.ResourceConfigSpec
 
 // Update updates a ResourcePool.
 func Update(rp *object.ResourcePool, name string, spec *types.ResourceConfigSpec) error {
-	log.Printf("[DEBUG] Updating resource pool %q", fmt.Sprintf("%s", rp.InventoryPath))
+	log.Printf("[DEBUG] Updating resource pool %q", rp.InventoryPath)
 	ctx, cancel := context.WithTimeout(context.Background(), provider.DefaultAPITimeout)
 	defer cancel()
 	return rp.UpdateConfig(ctx, name, spec)

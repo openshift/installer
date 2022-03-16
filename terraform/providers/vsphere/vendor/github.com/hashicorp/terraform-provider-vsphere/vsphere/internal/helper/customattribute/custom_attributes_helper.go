@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
@@ -57,7 +57,7 @@ func IsSupported(client *govmomi.Client) bool {
 // data into the supplied ResourceData.
 //
 // TODO: Add error handling and reporting to this method.
-func ReadFromResource(client *govmomi.Client, entity *mo.ManagedEntity, d *schema.ResourceData) {
+func ReadFromResource(entity *mo.ManagedEntity, d *schema.ResourceData) {
 	customAttrs := make(map[string]interface{})
 	if len(entity.CustomValue) > 0 {
 		for _, fv := range entity.CustomValue {
@@ -67,10 +67,10 @@ func ReadFromResource(client *govmomi.Client, entity *mo.ManagedEntity, d *schem
 			}
 		}
 	}
-	d.Set(ConfigKey, customAttrs)
+	_ = d.Set(ConfigKey, customAttrs)
 }
 
-type CustomAttributeDiffProcessor struct {
+type DiffProcessor struct {
 	// The field manager
 	fm *object.CustomFieldsManager
 
@@ -81,7 +81,7 @@ type CustomAttributeDiffProcessor struct {
 	newAttributes map[string]interface{}
 }
 
-func (p *CustomAttributeDiffProcessor) clearRemovedAttributes(subject object.Reference) error {
+func (p *DiffProcessor) clearRemovedAttributes(subject object.Reference) error {
 	for k := range p.oldAttributes {
 		_, ok := p.newAttributes[k]
 		if !ok {
@@ -98,7 +98,7 @@ func (p *CustomAttributeDiffProcessor) clearRemovedAttributes(subject object.Ref
 	return nil
 }
 
-func (p *CustomAttributeDiffProcessor) setNewAttributes(subject object.Reference) error {
+func (p *DiffProcessor) setNewAttributes(subject object.Reference) error {
 	for k, v := range p.newAttributes {
 		key, err := strconv.ParseInt(k, 10, 32)
 		if err != nil {
@@ -112,7 +112,7 @@ func (p *CustomAttributeDiffProcessor) setNewAttributes(subject object.Reference
 	return nil
 }
 
-func (p *CustomAttributeDiffProcessor) ProcessDiff(subject object.Reference) error {
+func (p *DiffProcessor) ProcessDiff(subject object.Reference) error {
 	if err := p.clearRemovedAttributes(subject); err != nil {
 		return fmt.Errorf("error clearing removed attributes for object ID %q: %s", subject.Reference().Value, err)
 	}
@@ -122,9 +122,9 @@ func (p *CustomAttributeDiffProcessor) ProcessDiff(subject object.Reference) err
 	return nil
 }
 
-func GetDiffProcessorIfAttributesDefined(client *govmomi.Client, d *schema.ResourceData) (*CustomAttributeDiffProcessor, error) {
-	old, new := d.GetChange(ConfigKey)
-	if len(old.(map[string]interface{})) > 0 || len(new.(map[string]interface{})) > 0 {
+func GetDiffProcessorIfAttributesDefined(client *govmomi.Client, d *schema.ResourceData) (*DiffProcessor, error) {
+	old, newValue := d.GetChange(ConfigKey)
+	if len(old.(map[string]interface{})) > 0 || len(newValue.(map[string]interface{})) > 0 {
 		if err := VerifySupport(client); err != nil {
 			return nil, err
 		}
@@ -136,10 +136,10 @@ func GetDiffProcessorIfAttributesDefined(client *govmomi.Client, d *schema.Resou
 	if err != nil {
 		return nil, err
 	}
-	return &CustomAttributeDiffProcessor{
+	return &DiffProcessor{
 		fm:            fm,
 		oldAttributes: old.(map[string]interface{}),
-		newAttributes: new.(map[string]interface{}),
+		newAttributes: newValue.(map[string]interface{}),
 	}, nil
 }
 

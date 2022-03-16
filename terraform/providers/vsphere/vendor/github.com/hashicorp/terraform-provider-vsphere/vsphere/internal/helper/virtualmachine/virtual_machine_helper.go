@@ -13,7 +13,7 @@ import (
 	"github.com/vmware/govmomi/vapi/library"
 	"github.com/vmware/govmomi/vapi/vcenter"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/provider"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
@@ -28,8 +28,6 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 )
-
-const powerOnWaitMilli = 500
 
 var errGuestShutdownTimeout = errors.New("the VM did not power off within the specified amount of time")
 
@@ -210,7 +208,7 @@ func virtualMachineFromContainerView(ctx context.Context, client *govmomi.Client
 	}
 
 	switch {
-	case len(vms) < 1:
+	case len(vms) == 0:
 		return nil, newUUIDNotFoundError(fmt.Sprintf("virtual machine with UUID %q not found", uuid))
 	case len(vms) > 1:
 		return nil, fmt.Errorf("multiple virtual machines with UUID %q found", uuid)
@@ -269,7 +267,6 @@ func Properties(vm *object.VirtualMachine) (*mo.VirtualMachine, error) {
 // ConfigOptions is a convenience method that wraps fetching the VirtualMachine ConfigOptions
 // as returned by QueryConfigOption.
 func ConfigOptions(vm *object.VirtualMachine) (*types.VirtualMachineConfigOption, error) {
-
 	// First grab the properties so that we can sneak the EnvironmentBrowser out of it
 	props, err := Properties(vm)
 	if err != nil {
@@ -459,7 +456,7 @@ func skipIPAddrForWaiter(ip net.IP, ignoredGuestIPs []interface{}) bool {
 	return false
 }
 
-func blockUntilReadyForMethod(method string, vm *object.VirtualMachine, ctx context.Context) error {
+func blockUntilReadyForMethod(ctx context.Context, method string, vm *object.VirtualMachine) error {
 	log.Printf("[DEBUG] blockUntilReadyForMethod: Going to block until %q is no longer in the Disabled Methods list for vm %s", method, vm.Reference().Value)
 
 	for {
@@ -626,12 +623,12 @@ func (deployData *VCenterDeploy) deployOvf() (*types.ManagedObjectReference, err
 func VAppProperties(propertyMap map[string]interface{}) []vcenter.Property {
 	properties := []vcenter.Property{}
 	for key, value := range propertyMap {
-		property := vcenter.Property{
+		vcenterProperty := vcenter.Property{
 			ID:    key,
 			Label: "",
 			Value: value.(string),
 		}
-		properties = append(properties, property)
+		properties = append(properties, vcenterProperty)
 	}
 	return properties
 }
@@ -680,7 +677,7 @@ func PowerOn(vm *object.VirtualMachine, pTimeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), ctxTimeout)
 	defer cancel()
 
-	err := blockUntilReadyForMethod("PowerOnVM_Task", vm, ctx)
+	err := blockUntilReadyForMethod(ctx, "PowerOnVM_Task", vm)
 	if err != nil {
 		return err
 	}
@@ -770,8 +767,7 @@ func ShutdownGuest(client *govmomi.Client, vm *object.VirtualMachine, timeout in
 				continue
 			}
 
-			switch v := c.Val.(type) {
-			case types.VirtualMachinePowerState:
+			if v, ok := c.Val.(types.VirtualMachinePowerState); ok {
 				if v == types.VirtualMachinePowerStatePoweredOff {
 					return true
 				}
@@ -792,7 +788,7 @@ func ShutdownGuest(client *govmomi.Client, vm *object.VirtualMachine, timeout in
 }
 
 // GracefulPowerOff is a meta-operation that handles powering down of virtual
-// machines. A graceful shutdown is attempted first if possible (VMware tools
+// machines. A graceful shutdown is attempted first if possible (VMware Tools
 // is installed, and the guest state is not suspended), and then, if allowed, a
 // power-off is forced if that fails.
 func GracefulPowerOff(client *govmomi.Client, vm *object.VirtualMachine, timeout int, force bool) error {
@@ -800,7 +796,7 @@ func GracefulPowerOff(client *govmomi.Client, vm *object.VirtualMachine, timeout
 	if err != nil {
 		return err
 	}
-	// First we attempt a guest shutdown if we have VMware tools and if the VM is
+	// First we attempt a guest shutdown if we have VMware Tools and if the VM is
 	// actually powered on (we don't expect that a graceful shutdown would
 	// complete on a suspended VM, so there's really no point in trying).
 	if vprops.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn && vprops.Guest != nil && vprops.Guest.ToolsRunningStatus == string(types.VirtualMachineToolsRunningStatusGuestToolsRunning) {
@@ -1019,7 +1015,6 @@ func GetHardwareVersionNumber(vstring string) int {
 // SetHardwareVersion sets the virtual machine's hardware version. The virtual
 // machine must be powered off, and the version can only be increased.
 func SetHardwareVersion(vm *object.VirtualMachine, target int) error {
-
 	// First query for the configuration options of the vm
 	copts, err := ConfigOptions(vm)
 	if err != nil {
@@ -1048,6 +1043,9 @@ func SetHardwareVersion(vm *object.VirtualMachine, target int) error {
 
 	log.Printf("[DEBUG] Upgrading VM from hw version %d to hw version %d", current, target)
 	task, err := vm.UpgradeVM(ctx, GetHardwareVersionID(target))
+	if err != nil {
+		return err
+	}
 	_, err = task.WaitForResult(ctx, nil)
 	return err
 }
@@ -1059,7 +1057,7 @@ func ValidateHardwareVersion(current, target int) error {
 	case target == 0:
 		return nil
 	case target < current:
-		return fmt.Errorf("Cannot downgrade virtual machine hardware version. current: %d, target: %d", current, target)
+		return fmt.Errorf("cannot downgrade virtual machine hardware version, current: %d, target: %d", current, target)
 	}
 	return nil
 }

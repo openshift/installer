@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datastore"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/resourcepool"
@@ -112,7 +112,7 @@ func ValidateVirtualMachineClone(d *schema.ResourceDiff, c *govmomi.Client) erro
 			// We need to set the vApp transport types here so that it is available
 			// later in CustomizeDiff where transport requirements are validated in
 			// ValidateVAppTransport
-			d.SetNew("vapp_transport", vconfig.GetVmConfigInfo().OvfEnvironmentTransport)
+			_ = d.SetNew("vapp_transport", vconfig.GetVmConfigInfo().OvfEnvironmentTransport)
 		}
 	} else {
 		log.Printf("[DEBUG] ValidateVirtualMachineClone: template_uuid is not available. Skipping template validation.")
@@ -143,9 +143,7 @@ func ValidateVirtualMachineClone(d *schema.ResourceDiff, c *govmomi.Client) erro
 // validateCloneSnapshots checks a VM to make sure it has a single snapshot
 // with no children, to make sure there is no ambiguity when selecting a
 // snapshot for linked clones.
-func validateCloneSnapshots(props *mo.VirtualMachine) error {
-
-	// Ensure that the virtual machine has a snapshot attribute that we can check
+func validateCloneSnapshots(props *mo.VirtualMachine) error { // Ensure that the virtual machine has a snapshot attribute that we can check
 	if props.Snapshot == nil {
 		return fmt.Errorf("virtual machine %s must have a snapshot to be used as a linked clone", props.Config.Uuid)
 	}
@@ -207,7 +205,6 @@ func ExpandVirtualMachineCloneSpec(d *schema.ResourceData, c *govmomi.Client) (t
 		if vprops.Config.Template {
 			log.Printf("[DEBUG] Virtual machine %s was marked as a template", tUUID)
 			spec.Location.DiskMoveType = string(types.VirtualMachineRelocateDiskMoveOptionsMoveAllDiskBackingsAndAllowSharing)
-
 		} else {
 			// Otherwise this is a virtual machine, and in order to use our default option
 			// we'll need to ensure that there's a snapshot that we can clone the disk from.

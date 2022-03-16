@@ -1,5 +1,9 @@
-[![Build Status](https://travis-ci.org/vmware/govmomi.png?branch=master)](https://travis-ci.org/vmware/govmomi)
+[![Build](https://github.com/vmware/govmomi/actions/workflows/govmomi-build.yaml/badge.svg)](https://github.com/vmware/govmomi/actions/workflows/govmomi-build.yaml)
+[![Tests](https://github.com/vmware/govmomi/actions/workflows/govmomi-go-tests.yaml/badge.svg)](https://github.com/vmware/govmomi/actions/workflows/govmomi-go-tests.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vmware/govmomi)](https://goreportcard.com/report/github.com/vmware/govmomi)
+[![Latest Release](https://img.shields.io/github/release/vmware/govmomi.svg?logo=github&style=flat-square)](https://github.com/vmware/govmomi/releases/latest)
+[![Go Reference](https://pkg.go.dev/badge/github.com/vmware/govmomi.svg)](https://pkg.go.dev/github.com/vmware/govmomi)
+[![go.mod Go version](https://img.shields.io/github/go-mod/go-version/vmware/govmomi)](https://github.com/vmware/govmomi)
 
 # govmomi
 
@@ -87,12 +91,24 @@ Refer to the [CHANGELOG](CHANGELOG.md) for version to version changes.
 
 * [vSphere 7.0](https://docs.vmware.com/en/VMware-vSphere/7.0/rn/vsphere-esxi-vcenter-server-7-vsphere-with-kubernetes-release-notes.html)
 
+* [OPS](https://github.com/nanovms/ops)
+
+* [VMware Event Broker Appliance](https://github.com/vmware-samples/vcenter-event-broker-appliance/tree/development/vmware-event-router)
+
 ## Related projects
 
 * [rbvmomi](https://github.com/vmware/rbvmomi)
 
 * [pyvmomi](https://github.com/vmware/pyvmomi)
 
+* [go-vmware-nsxt](https://github.com/vmware/go-vmware-nsxt)
+
 ## License
 
 govmomi is available under the [Apache 2 license](LICENSE.txt).
+
+## Name
+
+Pronounced "go-v-mom-ie"
+
+Follows pyvmomi and rbvmomi: language prefix + the vSphere acronym "VM Object Management Infrastructure".

@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -42,6 +42,7 @@ var infrastructureTrafficClassValues = []string{
 	string(types.DistributedVirtualSwitchHostInfrastructureTrafficClassHbr),
 	string(types.DistributedVirtualSwitchHostInfrastructureTrafficClassVsan),
 	string(types.DistributedVirtualSwitchHostInfrastructureTrafficClassVdp),
+	string(types.DistributedVirtualSwitchHostInfrastructureTrafficClassBackupNfc),
 }
 
 var sharesLevelAllowedValues = []string{
@@ -77,9 +78,8 @@ func schemaVMwareDVSConfigSpec() map[string]*schema.Schema {
 					// DistributedVirtualSwitchHostMemberPnicSpec
 					"devices": {
 						Type:        schema.TypeList,
+						Optional:    true,
 						Description: "Name of the physical NIC to be added to the proxy switch.",
-						Required:    true,
-						MinItems:    1,
 						Elem:        &schema.Schema{Type: schema.TypeString},
 					},
 					"host_system_id": {
@@ -265,8 +265,8 @@ func expandDVSContactInfo(d *schema.ResourceData) *types.DVSContactInfo {
 // flattenDVSContactInfo reads various fields from a
 // DVSContactInfo into the passed in ResourceData.
 func flattenDVSContactInfo(d *schema.ResourceData, obj types.DVSContactInfo) error {
-	d.Set("contact_name", obj.Name)
-	d.Set("conatct_detail", obj.Contact)
+	_ = d.Set("contact_name", obj.Name)
+	_ = d.Set("contact_detail", obj.Contact)
 	return nil
 }
 
@@ -386,10 +386,7 @@ func flattenSliceOfDistributedVirtualSwitchHostMember(d *schema.ResourceData, me
 	for _, m := range members {
 		hosts = append(hosts, flattenDistributedVirtualSwitchHostMember(m))
 	}
-	if err := d.Set("host", hosts); err != nil {
-		return err
-	}
-	return nil
+	return d.Set("host", hosts)
 }
 
 // expandVMwareDVSPvlanConfigSpec reads certain keys from a Set object map
@@ -496,10 +493,7 @@ func flattenSliceOfVMwareDVSPvlanMapEntry(d *schema.ResourceData, entries []type
 			mappings = append(mappings, flattened)
 		}
 	}
-	if err := d.Set("pvlan_mapping", mappings); err != nil {
-		return err
-	}
-	return nil
+	return d.Set("pvlan_mapping", mappings)
 }
 
 // expandVMwareIpfixConfig reads certain ResourceData keys and
@@ -520,13 +514,13 @@ func expandVMwareIpfixConfig(d *schema.ResourceData) *types.VMwareIpfixConfig {
 // flattenVMwareIpfixConfig reads various fields from a
 // VMwareIpfixConfig into the passed in ResourceData.
 func flattenVMwareIpfixConfig(d *schema.ResourceData, obj *types.VMwareIpfixConfig) error {
-	d.Set("netflow_active_flow_timeout", obj.ActiveFlowTimeout)
-	d.Set("netflow_collector_ip_address", obj.CollectorIpAddress)
-	d.Set("netflow_collector_port", obj.CollectorPort)
-	d.Set("netflow_idle_flow_timeout", obj.IdleFlowTimeout)
-	d.Set("netflow_internal_flows_only", obj.InternalFlowsOnly)
-	d.Set("netflow_observation_domain_id", obj.ObservationDomainId)
-	d.Set("netflow_sampling_rate", obj.SamplingRate)
+	_ = d.Set("netflow_active_flow_timeout", obj.ActiveFlowTimeout)
+	_ = d.Set("netflow_collector_ip_address", obj.CollectorIpAddress)
+	_ = d.Set("netflow_collector_port", obj.CollectorPort)
+	_ = d.Set("netflow_idle_flow_timeout", obj.IdleFlowTimeout)
+	_ = d.Set("netflow_internal_flows_only", obj.InternalFlowsOnly)
+	_ = d.Set("netflow_observation_domain_id", obj.ObservationDomainId)
+	_ = d.Set("netflow_sampling_rate", obj.SamplingRate)
 	return nil
 }
 
@@ -622,11 +616,11 @@ func flattenDvsHostInfrastructureTrafficResource(d *schema.ResourceData, obj typ
 	maxMbitKey := fmt.Sprintf("%s_maximum_mbit", strings.ToLower(key))
 	resMbitKey := fmt.Sprintf("%s_reservation_mbit", strings.ToLower(key))
 
-	structure.SetInt64Ptr(d, maxMbitKey, obj.AllocationInfo.Limit)
-	structure.SetInt64Ptr(d, resMbitKey, obj.AllocationInfo.Reservation)
+	_ = structure.SetInt64Ptr(d, maxMbitKey, obj.AllocationInfo.Limit)
+	_ = structure.SetInt64Ptr(d, resMbitKey, obj.AllocationInfo.Reservation)
 	if obj.AllocationInfo.Shares != nil {
-		d.Set(shareLevelKey, obj.AllocationInfo.Shares.Level)
-		d.Set(shareCountKey, obj.AllocationInfo.Shares.Shares)
+		_ = d.Set(shareLevelKey, obj.AllocationInfo.Shares.Level)
+		_ = d.Set(shareCountKey, obj.AllocationInfo.Shares.Shares)
 	}
 	return nil
 }
@@ -670,10 +664,7 @@ func expandDVSNameArrayUplinkPortPolicy(d *schema.ResourceData) *types.DVSNameAr
 // flattenDVSNameArrayUplinkPortPolicy reads various fields from a
 // DVSNameArrayUplinkPortPolicy into the passed in ResourceData.
 func flattenDVSNameArrayUplinkPortPolicy(d *schema.ResourceData, obj *types.DVSNameArrayUplinkPortPolicy) error {
-	if err := d.Set("uplinks", obj.UplinkPortName); err != nil {
-		return err
-	}
-	return nil
+	return d.Set("uplinks", obj.UplinkPortName)
 }
 
 // expandVMwareDVSConfigSpec reads certain ResourceData keys and
@@ -709,21 +700,21 @@ func expandVMwareDVSConfigSpec(d *schema.ResourceData) *types.VMwareDVSConfigSpe
 // configuration info from a DVS comes back as this type instead of a specific
 // ConfigSpec.
 func flattenVMwareDVSConfigInfo(d *schema.ResourceData, obj *types.VMwareDVSConfigInfo) error {
-	d.Set("name", obj.Name)
-	d.Set("config_version", obj.ConfigVersion)
-	d.Set("description", obj.Description)
-	d.Set("ipv4_address", obj.SwitchIpAddress)
-	d.Set("max_mtu", obj.MaxMtu)
-	d.Set("lacp_api_version", obj.LacpApiVersion)
-	d.Set("multicast_filtering_mode", obj.MulticastFilteringMode)
-	d.Set("network_resource_control_version", obj.NetworkResourceControlVersion)
+	_ = d.Set("name", obj.Name)
+	_ = d.Set("config_version", obj.ConfigVersion)
+	_ = d.Set("description", obj.Description)
+	_ = d.Set("ipv4_address", obj.SwitchIpAddress)
+	_ = d.Set("max_mtu", obj.MaxMtu)
+	_ = d.Set("lacp_api_version", obj.LacpApiVersion)
+	_ = d.Set("multicast_filtering_mode", obj.MulticastFilteringMode)
+	_ = d.Set("network_resource_control_version", obj.NetworkResourceControlVersion)
 	// This is not available in ConfigSpec but is available in ConfigInfo, so
 	// flatten it here.
-	d.Set("network_resource_control_enabled", obj.NetworkResourceManagementEnabled)
+	_ = d.Set("network_resource_control_enabled", obj.NetworkResourceManagementEnabled)
 
 	// Version is set in this object too as ConfigInfo has the productInfo
 	// property that is outside of this ConfigSpec structure.
-	d.Set("version", obj.ProductInfo.Version)
+	_ = d.Set("version", obj.ProductInfo.Version)
 
 	if err := flattenDVSNameArrayUplinkPortPolicy(d, obj.UplinkPortPolicy.(*types.DVSNameArrayUplinkPortPolicy)); err != nil {
 		return err
@@ -746,10 +737,7 @@ func flattenVMwareDVSConfigInfo(d *schema.ResourceData, obj *types.VMwareDVSConf
 	if err := flattenLinkDiscoveryProtocolConfig(d, obj.LinkDiscoveryProtocolConfig); err != nil {
 		return err
 	}
-	if err := flattenVMwareIpfixConfig(d, obj.IpfixConfig); err != nil {
-		return err
-	}
-	return nil
+	return flattenVMwareIpfixConfig(d, obj.IpfixConfig)
 }
 
 // schemaDVSCreateSpec returns schema items for resources that
@@ -760,7 +748,7 @@ func schemaDVSCreateSpec() map[string]*schema.Schema {
 		"version": {
 			Type:         schema.TypeString,
 			Computed:     true,
-			Description:  "The version of this virtual switch. Allowed versions are 6.5.0, 6.0.0, 5.5.0, 5.1.0, and 5.0.0.",
+			Description:  "The version of this virtual switch. Allowed versions are 7.0.3, 7.0.0, 6.6.0, 6.5.0, 6.0.0, 5.5.0, 5.1.0, and 5.0.0.",
 			Optional:     true,
 			ValidateFunc: validation.StringInSlice(dvsVersions, false),
 		},

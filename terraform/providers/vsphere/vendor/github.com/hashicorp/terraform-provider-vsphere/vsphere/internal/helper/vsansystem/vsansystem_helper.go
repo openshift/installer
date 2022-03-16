@@ -12,7 +12,7 @@ import (
 )
 
 // Properties Returns the HostVsanSystem ManagedObject for the HostVsanSystem object.
-func Properties(client *govmomi.Client, hss *object.HostVsanSystem, apiTimeout time.Duration) (*mo.HostVsanSystem, error) {
+func Properties(hss *object.HostVsanSystem, apiTimeout time.Duration) (*mo.HostVsanSystem, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), apiTimeout)
 	defer cancel()
 	var hvsProps mo.HostVsanSystem
@@ -24,7 +24,7 @@ func Properties(client *govmomi.Client, hss *object.HostVsanSystem, apiTimeout t
 }
 
 // FromHost returns a host's HostVsanSystem object.
-func FromHost(client *govmomi.Client, host *object.HostSystem, apiTimeout time.Duration) (*object.HostVsanSystem, error) {
+func FromHost(host *object.HostSystem, apiTimeout time.Duration) (*object.HostVsanSystem, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), apiTimeout)
 	defer cancel()
 	return host.ConfigManager().VsanSystem(ctx)
@@ -67,7 +67,6 @@ func RemoveDiskMapping(client *govmomi.Client, host *object.HostSystem, hvs *obj
 		if err := task.Wait(ctx); err != nil {
 			return err
 		}
-
 	}
 	return nil
 }
@@ -87,8 +86,5 @@ func InitializeDisks(client *govmomi.Client, host *object.HostSystem, hvs *objec
 		return err
 	}
 	task := object.NewTask(client.Client, resp.Returnval)
-	if err := task.Wait(ctx); err != nil {
-		return err
-	}
-	return nil
+	return task.Wait(ctx)
 }

@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/vappcontainer"
@@ -176,9 +176,6 @@ func resourceVSphereVAppEntityUpdate(d *schema.ResourceData, meta interface{}) e
 	if err != nil {
 		return err
 	}
-	if err != nil {
-		return err
-	}
 	container, err := vappcontainer.FromID(client, d.Get("container_id").(string))
 	if err != nil {
 		return err
@@ -258,7 +255,7 @@ func resourceVSphereVAppEntityIDString(d structure.ResourceIDStringer) string {
 	return structure.ResourceIDString(d, resourceVSphereVAppEntityName)
 }
 
-func flattenVAppEntityConfigSpec(client *govmomi.Client, d *schema.ResourceData, obj *types.VAppEntityConfigInfo) error {
+func flattenVAppEntityConfigSpec(_ *govmomi.Client, d *schema.ResourceData, obj *types.VAppEntityConfigInfo) error {
 	return structure.SetBatch(d, map[string]interface{}{
 		"start_action":   obj.StartAction,
 		"start_delay":    obj.StartDelay,
@@ -291,7 +288,7 @@ func expandVAppEntityConfigSpec(client *govmomi.Client, d *schema.ResourceData) 
 }
 
 func resourceVSphereVAppEntityClient(meta interface{}) (*govmomi.Client, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, err
 	}

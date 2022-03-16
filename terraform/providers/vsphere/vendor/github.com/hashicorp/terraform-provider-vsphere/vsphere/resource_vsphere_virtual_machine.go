@@ -13,8 +13,8 @@ import (
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/contentlibrary"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/ovfdeploy"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datastore"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
@@ -30,7 +30,6 @@ import (
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/vmworkflow"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
-	"github.com/vmware/govmomi/ovf"
 	"github.com/vmware/govmomi/vapi/vcenter"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -262,7 +261,7 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 		"vmware_tools_status": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "The state of VMware tools in the guest. This will determine the proper course of action for some device operations.",
+			Description: "The state of VMware Tools in the guest. This will determine the proper course of action for some device operations.",
 		},
 		"vmx_path": {
 			Type:        schema.TypeString,
@@ -277,7 +276,12 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 		"moid": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "The machine object ID from VMWare",
+			Description: "The machine object ID from VMware vSphere.",
+		},
+		"power_state": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "The power state of the virtual machine.",
 		},
 		vSphereTagAttributeKey:    tagsSchema(),
 		customattribute.ConfigKey: customattribute.ConfigSchema(),
@@ -302,7 +306,7 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 
 func resourceVSphereVirtualMachineCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning create", resourceVSphereVirtualMachineIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	tagsClient, err := tagsManagerIfDefined(d, meta)
 	if err != nil {
 		return err
@@ -405,7 +409,7 @@ func resourceVSphereVirtualMachineCreate(d *schema.ResourceData, meta interface{
 
 func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Reading state of virtual machine", resourceVSphereVirtualMachineIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	id := d.Id()
 	vm, err := virtualmachine.FromUUID(client, id)
 	if err != nil {
@@ -424,20 +428,20 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 
 	// Set the managed object id.
 	moid := vm.Reference().Value
-	d.Set("moid", moid)
+	_ = d.Set("moid", moid)
 	log.Printf("[DEBUG] MOID for VM %q is %q", vm.InventoryPath, moid)
 
 	// Reset reboot_required. This is an update only variable and should not be
 	// set across TF runs.
-	d.Set("reboot_required", false)
-	// Check to see if VMware tools is running.
+	_ = d.Set("reboot_required", false)
+	// Check to see if VMware Tools is running.
 	if vprops.Guest != nil {
-		d.Set("vmware_tools_status", vprops.Guest.ToolsRunningStatus)
+		_ = d.Set("vmware_tools_status", vprops.Guest.ToolsRunningStatus)
 	}
 
 	// Resource pool
 	if vprops.ResourcePool != nil {
-		d.Set("resource_pool_id", vprops.ResourcePool.Value)
+		_ = d.Set("resource_pool_id", vprops.ResourcePool.Value)
 	}
 	// If the VM is part of a vApp, InventoryPath will point to a host path
 	// rather than a VM path, so this step must be skipped.
@@ -452,11 +456,11 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 		if err != nil {
 			return fmt.Errorf("error parsing virtual machine path %q: %s", vm.InventoryPath, err)
 		}
-		d.Set("folder", folder.NormalizePath(f))
+		_ = d.Set("folder", folder.NormalizePath(f))
 	}
 	// Set VM's current host ID if available
 	if vprops.Runtime.Host != nil {
-		d.Set("host_system_id", vprops.Runtime.Host.Value)
+		_ = d.Set("host_system_id", vprops.Runtime.Host.Value)
 	}
 
 	// Set the VMX path and default datastore
@@ -486,27 +490,30 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 	if ds == nil {
 		return fmt.Errorf("VMX datastore %s not found", dp.Datastore)
 	}
-	d.Set("datastore_id", ds.Reference().Value)
-	d.Set("vmx_path", dp.Path)
+	_ = d.Set("datastore_id", ds.Reference().Value)
+	_ = d.Set("vmx_path", dp.Path)
 
 	// Read general VM config info
-	if err := flattenVirtualMachineConfigInfo(d, vprops.Config); err != nil {
+	if err := flattenVirtualMachineConfigInfo(d, vprops.Config, client); err != nil {
 		return fmt.Errorf("error reading virtual machine configuration: %s", err)
 	}
 
-	// Read the VM Home storage policy if associated.
-	polID, err := spbm.PolicyIDByVirtualMachine(client, moid)
-	if err != nil {
-		return err
+	// Check if running for ESXi or vCenter.
+	if spbm.IsSupported(client) {
+		// Read the VM Home storage policy if associated.
+		polID, err := spbm.PolicyIDByVirtualMachine(client, moid)
+		if err != nil {
+			return err
+		}
+		d.Set("storage_policy_id", polID)
 	}
-	d.Set("storage_policy_id", polID)
 
 	// Read the PCI passthrough devices.
 	var pciDevs []string
 	for _, dev := range vprops.Config.Hardware.Device {
 		if pci, ok := dev.(*types.VirtualPCIPassthrough); ok {
-			devId := pci.Backing.(*types.VirtualPCIPassthroughDeviceBackingInfo).Id
-			pciDevs = append(pciDevs, devId)
+			devID := pci.Backing.(*types.VirtualPCIPassthroughDeviceBackingInfo).Id
+			pciDevs = append(pciDevs, devID)
 		}
 	}
 	err = d.Set("pci_device_id", pciDevs)
@@ -517,8 +524,8 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 	// Perform pending device read operations.
 	devices := object.VirtualDeviceList(vprops.Config.Hardware.Device)
 	// Read the state of the SCSI bus.
-	d.Set("scsi_type", virtualdevice.ReadSCSIBusType(devices, d.Get("scsi_controller_count").(int)))
-	d.Set("scsi_bus_sharing", virtualdevice.ReadSCSIBusSharing(devices, d.Get("scsi_controller_count").(int)))
+	_ = d.Set("scsi_type", virtualdevice.ReadSCSIBusType(devices, d.Get("scsi_controller_count").(int)))
+	_ = d.Set("scsi_bus_sharing", virtualdevice.ReadSCSIBusSharing(devices, d.Get("scsi_controller_count").(int)))
 	// Disks first
 	if err := virtualdevice.DiskRefreshOperation(d, client, devices); err != nil {
 		return err
@@ -533,7 +540,7 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 	}
 
 	// Read tags if we have the ability to do so
-	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
+	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
 		if err := readTagsForResource(tagsClient, vm, d); err != nil {
 			return err
 		}
@@ -541,7 +548,7 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 
 	// Read set custom attributes
 	if customattribute.IsSupported(client) {
-		customattribute.ReadFromResource(client, vprops.Entity(), d)
+		customattribute.ReadFromResource(vprops.Entity(), d)
 	}
 
 	// Finally, select a valid IP address for use by the VM for purposes of
@@ -553,13 +560,23 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 		}
 	}
 
+	// Get the power state for the virtual machine.
+	switch vprops.Runtime.PowerState {
+	case types.VirtualMachinePowerStatePoweredOn:
+		d.Set("power_state", "on")
+	case types.VirtualMachinePowerStatePoweredOff:
+		d.Set("power_state", "off")
+	case types.VirtualMachinePowerStateSuspended:
+		d.Set("power_state", "suspended")
+	}
+
 	log.Printf("[DEBUG] %s: Read complete", resourceVSphereVirtualMachineIDString(d))
 	return nil
 }
 
 func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Performing update", resourceVSphereVirtualMachineIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	tagsClient, err := tagsManagerIfDefined(d, meta)
 	if err != nil {
 		return err
@@ -614,7 +631,7 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 		} else {
 			// If we're migrating away from the current host we're setting the host system ID
 			// to nothing. It will be populated after the migration step, once we call Read().
-			d.Set("host_system_id", "")
+			_ = d.Set("host_system_id", "")
 		}
 		// If a VM is moved into or out of a vApp container, the VM's InventoryPath
 		// will change. This can affect steps later in the update process such as
@@ -628,9 +645,9 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 
 	// Update folder if necessary
 	if d.HasChange("folder") && !vappcontainer.IsVApp(client, d.Get("resource_pool_id").(string)) {
-		folder := d.Get("folder").(string)
-		if err := virtualmachine.MoveToFolder(client, vm, folder); err != nil {
-			return fmt.Errorf("could not move virtual machine to folder %q: %s", folder, err)
+		vmFolder := d.Get("folder").(string)
+		if err := virtualmachine.MoveToFolder(client, vm, vmFolder); err != nil {
+			return fmt.Errorf("could not move virtual machine to folder %q: %s", vmFolder, err)
 		}
 	}
 
@@ -670,10 +687,10 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 	cv := virtualmachine.GetHardwareVersionNumber(vprops.Config.Version)
 	tv := d.Get("hardware_version").(int)
 	if tv > cv {
-		d.Set("reboot_required", true)
+		_ = d.Set("reboot_required", true)
 	}
 	if changed || len(spec.DeviceChange) > 0 {
-		//Check to see if we need to shutdown the VM for this process.
+		// Check to see if we need to shutdown the VM for this process.
 		if d.Get("reboot_required").(bool) && vprops.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff {
 			// Attempt a graceful shutdown of this process. We wrap this in a VM helper.
 			timeout := d.Get("shutdown_wait_timeout").(int)
@@ -732,6 +749,9 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 		} else {
 			err = virtualmachine.Reconfigure(vm, spec)
 		}
+		if err != nil {
+			return err
+		}
 
 		// Upgrade the VM's hardware version if needed.
 		err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
@@ -742,9 +762,6 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 		// Regardless of the result we no longer need to watch for pending questions.
 		gChan <- true
 
-		if err != nil {
-			return fmt.Errorf("error reconfiguring virtual machine: %s", err)
-		}
 		// Re-fetch properties
 		vprops, err = virtualmachine.Properties(vm)
 		if err != nil {
@@ -785,7 +802,7 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 
 	// Now safe to turn off partial mode.
 	d.Partial(false)
-	d.Set("reboot_required", false)
+	_ = d.Set("reboot_required", false)
 
 	// Now that any pending changes have been done (namely, any disks that don't
 	// need to be migrated have been deleted), proceed with vMotion if we have
@@ -816,7 +833,7 @@ func resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(
 		return virtualmachine.Reconfigure(vm, spec)
 	}
 
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return fmt.Errorf("connection ineligible to use datastore_cluster_id: %s", err)
 	}
@@ -836,7 +853,7 @@ func resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(
 
 func resourceVSphereVirtualMachineDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Performing delete", resourceVSphereVirtualMachineIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	id := d.Id()
 	vm, err := virtualmachine.FromUUID(client, id)
 	if err != nil {
@@ -878,9 +895,9 @@ func resourceVSphereVirtualMachineDelete(d *schema.ResourceData, meta interface{
 	return nil
 }
 
-func resourceVSphereVirtualMachineCustomizeDiff(d *schema.ResourceDiff, meta interface{}) error {
+func resourceVSphereVirtualMachineCustomizeDiff(_ context.Context, d *schema.ResourceDiff, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Performing diff customization and validation", resourceVSphereVirtualMachineIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	// Block certain options from being set depending on the vSphere version.
 	version := viapi.ParseVersionFromClient(client)
@@ -890,16 +907,20 @@ func resourceVSphereVirtualMachineCustomizeDiff(d *schema.ResourceDiff, meta int
 		}
 	}
 
-	// Validate cdrom sub-resources when not deploying from ovf
-	if len(d.Get("ovf_deploy").([]interface{})) == 0 {
-		if err := virtualdevice.CdromDiffOperation(d, client); err != nil {
-			return err
+	if d.Get("vbs_enabled").(bool) {
+		if version.Older(viapi.VSphereVersion{Product: version.Product, Major: 6, Minor: 7}) {
+			return fmt.Errorf("vbs_enabled is only supported on vSphere 6.7 and higher")
+		}
+	}
+
+	if d.Get("vvtd_enabled").(bool) {
+		if version.Older(viapi.VSphereVersion{Product: version.Product, Major: 6, Minor: 7}) {
+			return fmt.Errorf("vvtd_enabled is only supported on vSphere 6.7 and higher")
 		}
 	}
 
 	if len(d.Get("ovf_deploy").([]interface{})) == 0 && len(d.Get("network_interface").([]interface{})) == 0 {
 		return fmt.Errorf("network_interface parameter is required when not deploying from ovf template")
-
 	}
 	// Validate network device sub-resources
 	if err := virtualdevice.NetworkInterfaceDiffOperation(d, client); err != nil {
@@ -918,10 +939,8 @@ func resourceVSphereVirtualMachineCustomizeDiff(d *schema.ResourceDiff, meta int
 
 	// Validate and normalize disk sub-resources when not deploying from ovf
 	if len(d.Get("ovf_deploy").([]interface{})) == 0 {
-		if len(d.Get("clone").([]interface{})) == 0 {
-			if err := virtualdevice.DiskDiffOperation(d, client); err != nil {
-				return err
-			}
+		if err := virtualdevice.DiskDiffOperation(d, client); err != nil {
+			return err
 		}
 	}
 	// When a VM is a member of a vApp container, it is no longer part of the VM
@@ -935,14 +954,13 @@ func resourceVSphereVirtualMachineCustomizeDiff(d *schema.ResourceDiff, meta int
 	}
 
 	if len(d.Get("ovf_deploy").([]interface{})) > 0 {
-
 		localOvfPath := d.Get("ovf_deploy.0.local_ovf_path").(string)
-		remoteOvfUrl := d.Get("ovf_deploy.0.remote_ovf_url").(string)
+		remoteOvfURL := d.Get("ovf_deploy.0.remote_ovf_url").(string)
 
-		if localOvfPath == "" && remoteOvfUrl == "" {
+		if localOvfPath == "" && remoteOvfURL == "" {
 			return fmt.Errorf("either local ovf/ova path or remote ovf/ova url is required, both can't be empty")
 		}
-		if localOvfPath != "" && remoteOvfUrl != "" {
+		if localOvfPath != "" && remoteOvfURL != "" {
 			return fmt.Errorf("both local ovf/ova path and remote ovf/ova url are provided, please specify only one source")
 		}
 		if localOvfPath != "" {
@@ -965,9 +983,9 @@ func resourceVSphereVirtualMachineCustomizeDiff(d *schema.ResourceDiff, meta int
 			// sub-resource block persisted to state without forcing a new resource.
 			// Any changes after that will be properly tracked as a ForceNew, by
 			// flagging the imported flag to off.
-			d.SetNew("imported", false)
+			_ = d.SetNew("imported", false)
 		case d.Id() == "":
-			if contentlibrary.IsContentLibraryItem(meta.(*VSphereClient).restClient, d.Get("clone.0.template_uuid").(string)) {
+			if contentlibrary.IsContentLibraryItem(meta.(*Client).restClient, d.Get("clone.0.template_uuid").(string)) {
 				if _, ok := d.GetOk("datastore_cluster_id"); ok {
 					return fmt.Errorf("Cannot use datastore_cluster_id with Content Library source")
 				}
@@ -987,19 +1005,22 @@ func resourceVSphereVirtualMachineCustomizeDiff(d *schema.ResourceDiff, meta int
 				if k == "clone.0.timeout" {
 					continue
 				}
-				d.ForceNew(k)
+				_ = d.ForceNew(k)
 			}
 		}
 	}
 
 	// Validate hardware version changes.
 	cv, tv := d.GetChange("hardware_version")
-	virtualmachine.ValidateHardwareVersion(cv.(int), tv.(int))
+	err := virtualmachine.ValidateHardwareVersion(cv.(int), tv.(int))
+	if err != nil {
+		return err
+	}
 
 	// Validate that the config has the necessary components for vApp support.
 	// Note that for clones the data is prepopulated in
 	// ValidateVirtualMachineClone.
-	if err := virtualdevice.VerifyVAppTransport(d, client); err != nil {
+	if err = virtualdevice.VerifyVAppTransport(d); err != nil {
 		return err
 	}
 
@@ -1087,7 +1108,7 @@ func datastoreClusterDiffOperationCheckMembership(d *schema.ResourceDiff, client
 }
 
 func resourceVSphereVirtualMachineImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	name := d.Id()
 	if name == "" {
@@ -1126,31 +1147,31 @@ func resourceVSphereVirtualMachineImport(d *schema.ResourceData, meta interface{
 			ideBus[dev.GetVirtualController().BusNumber] = true
 		}
 	}
-	d.Set("scsi_controller_count", controllerCount(scsiBus))
-	d.Set("sata_controller_count", controllerCount(sataBus))
-	d.Set("ide_controller_count", controllerCount(ideBus))
+	_ = d.Set("scsi_controller_count", controllerCount(scsiBus))
+	_ = d.Set("sata_controller_count", controllerCount(sataBus))
+	_ = d.Set("ide_controller_count", controllerCount(ideBus))
 
 	// Validate the disks in the VM to make sure that they will work with the
 	// resource. This is mainly ensuring that all disks are SCSI disks, but a
 	// Read operation is attempted as well to make sure it will survive that.
-	if err := virtualdevice.DiskImportOperation(d, client, object.VirtualDeviceList(props.Config.Hardware.Device)); err != nil {
+	if err := virtualdevice.DiskImportOperation(d, object.VirtualDeviceList(props.Config.Hardware.Device)); err != nil {
 		return nil, err
 	}
 	// The VM should be ready for reading now
 	log.Printf("[DEBUG] VM UUID for %q is %q", name, props.Config.Uuid)
 	d.SetId(props.Config.Uuid)
-	d.Set("imported", true)
+	_ = d.Set("imported", true)
 
 	// Set some defaults. This helps possibly prevent diffs where these values
 	// have not been changed.
 	rs := resourceVSphereVirtualMachine().Schema
-	d.Set("force_power_off", rs["force_power_off"].Default)
-	d.Set("migrate_wait_timeout", rs["migrate_wait_timeout"].Default)
-	d.Set("shutdown_wait_timeout", rs["shutdown_wait_timeout"].Default)
-	d.Set("wait_for_guest_ip_timeout", rs["wait_for_guest_ip_timeout"].Default)
-	d.Set("wait_for_guest_net_timeout", rs["wait_for_guest_net_timeout"].Default)
-	d.Set("wait_for_guest_net_routable", rs["wait_for_guest_net_routable"].Default)
-	d.Set("poweron_timeout", rs["poweron_timeout"].Default)
+	_ = d.Set("force_power_off", rs["force_power_off"].Default)
+	_ = d.Set("migrate_wait_timeout", rs["migrate_wait_timeout"].Default)
+	_ = d.Set("shutdown_wait_timeout", rs["shutdown_wait_timeout"].Default)
+	_ = d.Set("wait_for_guest_ip_timeout", rs["wait_for_guest_ip_timeout"].Default)
+	_ = d.Set("wait_for_guest_net_timeout", rs["wait_for_guest_net_timeout"].Default)
+	_ = d.Set("wait_for_guest_net_routable", rs["wait_for_guest_net_routable"].Default)
+	_ = d.Set("poweron_timeout", rs["poweron_timeout"].Default)
 
 	log.Printf("[DEBUG] %s: Import complete, resource is ready for read", resourceVSphereVirtualMachineIDString(d))
 	return []*schema.ResourceData{d}, nil
@@ -1171,7 +1192,7 @@ func controllerCount(bus []bool) int {
 // deploy path. The VM is returned.
 func resourceVSphereVirtualMachineCreateBare(d *schema.ResourceData, meta interface{}) (*object.VirtualMachine, error) {
 	log.Printf("[DEBUG] %s: VM being created from scratch", resourceVSphereVirtualMachineIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	poolID := d.Get("resource_pool_id").(string)
 	pool, err := resourcepool.FromID(client, poolID)
 	if err != nil {
@@ -1210,7 +1231,7 @@ func resourceVSphereVirtualMachineCreateBare(d *schema.ResourceData, meta interf
 	// environment info in the resource pool, which we can then filter through
 	// our device CRUD lifecycles to get a full deviceChange attribute for our
 	// configspec.
-	guestID := "other-64"
+	guestID := "otherGuest64"
 	if guestInterface, ok := d.GetOk("guest_id"); ok {
 		guestID = guestInterface.(string)
 	}
@@ -1269,7 +1290,7 @@ func resourceVSphereVirtualMachineCreateBareWithSDRS(
 	pool *object.ResourcePool,
 	hs *object.HostSystem,
 ) (*object.VirtualMachine, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, fmt.Errorf("connection ineligible to use datastore_cluster_id: %s", err)
 	}
@@ -1280,7 +1301,7 @@ func resourceVSphereVirtualMachineCreateBareWithSDRS(
 		return nil, fmt.Errorf("error getting datastore cluster: %s", err)
 	}
 
-	timeout := meta.(*VSphereClient).timeout
+	timeout := meta.(*Client).timeout
 	vm, err := storagepod.CreateVM(client, fo, spec, pool, hs, pod, timeout)
 	if err != nil {
 		return nil, fmt.Errorf("error creating virtual machine on datastore cluster %q: %s", pod.Name(), err)
@@ -1299,7 +1320,7 @@ func resourceVSphereVirtualMachineCreateBareStandard(
 	pool *object.ResourcePool,
 	hs *object.HostSystem,
 ) (*object.VirtualMachine, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	// Set the datastore for the VM.
 	ds, err := datastore.FromID(client, d.Get("datastore_id").(string))
@@ -1310,7 +1331,7 @@ func resourceVSphereVirtualMachineCreateBareStandard(
 		VmPathName: fmt.Sprintf("[%s]", ds.Name()),
 	}
 
-	timeout := meta.(*VSphereClient).timeout
+	timeout := meta.(*Client).timeout
 	vm, err := virtualmachine.Create(client, fo, spec, pool, hs, timeout)
 	if err != nil {
 		return nil, fmt.Errorf("error creating virtual machine: %s", err)
@@ -1320,106 +1341,35 @@ func resourceVSphereVirtualMachineCreateBareStandard(
 
 // Deploy vm from ovf/ova template
 func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interface{}) (*object.VirtualMachine, error) {
+	client := meta.(*Client).vimClient
 
-	localOvfPath := d.Get("ovf_deploy.0.local_ovf_path").(string)
-	remoteOvfUrl := d.Get("ovf_deploy.0.remote_ovf_url").(string)
-
-	// check if Ovf or Ova is to be deployed from local/remote
-	deployOva := false
-	fromLocal := true
-	filePath := localOvfPath
-
-	if remoteOvfUrl != "" {
-		fromLocal = false
-		filePath = remoteOvfUrl
-	}
-	if strings.HasSuffix(filePath, ".ova") {
-		deployOva = true
-	}
-	log.Printf("[DEBUG] VM is being deployed from ovf/ova template %s", filePath)
-
-	dataCenterId := d.Get("datacenter_id").(string)
-	if dataCenterId == "" {
-		return nil, fmt.Errorf("data center ID is required for ovf deployment")
-	}
-
-	client := meta.(*VSphereClient).vimClient
-	name := d.Get("name").(string)
-	var vm *object.VirtualMachine
-
-	poolID := d.Get("resource_pool_id").(string)
-	poolObj, err := resourcepool.FromID(client, poolID)
+	ovfParams := NewOvfHelperParamsFromVMResource(d)
+	ovfHelper, err := ovfdeploy.NewOvfHelper(client, ovfParams)
 	if err != nil {
-		return nil, fmt.Errorf("could not find resource pool ID %q: %s", poolID, err)
+		return nil, fmt.Errorf("while extracting OVF parameters: %s", err)
 	}
-	resourcePoolMor := poolObj.Reference()
 
-	folderObj, err := folder.VirtualMachineFolderFromObject(client, poolObj, d.Get("folder").(string))
+	ovfImportspec, err := ovfHelper.GetImportSpec(client)
 	if err != nil {
-		return nil, err
-	}
-
-	hostId := d.Get("host_system_id").(string)
-	if hostId == "" {
-		return nil, fmt.Errorf("host system ID is required for ovf deployment")
-	}
-	hostObj, err := hostsystem.FromID(client, hostId)
-	if err != nil {
-		return nil, fmt.Errorf("could not find host with ID %q: %s", hostId, err)
-	}
-	hostMor := hostObj.Reference()
-
-	dsId := d.Get("datastore_id").(string)
-	if dsId == "" {
-		return nil, fmt.Errorf("data store ID is required for ovf deployment")
-	}
-	dsObj, err := datastore.FromID(client, dsId)
-	if err != nil {
-		return nil, fmt.Errorf("could not find datastore with ID %q: %s", dsId, err)
-	}
-	dsMor := dsObj.Reference()
-
-	allowUnverifiedSSL := d.Get("ovf_deploy.0.allow_unverified_ssl_cert").(bool)
-	networkMapping, err := ovfdeploy.GetNetworkMapping(client, d)
-	if err != nil {
-		return nil, err
-	}
-	importSpecParam := types.OvfCreateImportSpecParams{
-		EntityName:         name,
-		HostSystem:         &hostMor,
-		NetworkMapping:     networkMapping,
-		IpAllocationPolicy: d.Get("ovf_deploy.0.ip_allocation_policy").(string),
-		IpProtocol:         d.Get("ovf_deploy.0.ip_protocol").(string),
-		DiskProvisioning:   d.Get("ovf_deploy.0.disk_provisioning").(string),
-	}
-
-	ovfDescriptor, err := ovfdeploy.GetOvfDescriptor(filePath, deployOva, fromLocal, allowUnverifiedSSL)
-	if err != nil {
-		return nil, fmt.Errorf("error while reading the ovf file %s, %s ", filePath, err)
-	}
-
-	if ovfDescriptor == "" {
-		return nil, fmt.Errorf("the given ovf file %s is empty", filePath)
-	}
-
-	ovfManager := ovf.NewManager(client.Client)
-	ovfCreateImportSpecResult, err := ovfManager.CreateImportSpec(context.Background(), ovfDescriptor,
-		resourcePoolMor, dsMor, importSpecParam)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("while retrieving ovf import spec from the API: %s", err)
 	}
 
 	log.Print(" [DEBUG] start deploying from ovf/ova Template")
-	err = ovfdeploy.DeployOvfAndGetResult(ovfCreateImportSpecResult, poolObj, folderObj, hostObj, filePath, deployOva, fromLocal, allowUnverifiedSSL)
+	err = ovfHelper.DeployOvf(ovfImportspec)
 	if err != nil {
 		return nil, fmt.Errorf("error while importing ovf/ova template, %s", err)
 	}
 
-	datacenterObj, err := datacenterFromID(client, dataCenterId)
-	if err != nil {
-		return nil, fmt.Errorf("error while getting datacenter with id %s %s", dataCenterId, err)
+	dataCenterID := d.Get("datacenter_id").(string)
+	if dataCenterID == "" {
+		return nil, fmt.Errorf("data center ID is required for ovf deployment")
 	}
-	vm, err = virtualmachine.FromPath(client, name, datacenterObj)
+	datacenterObj, err := datacenterFromID(client, dataCenterID)
+	if err != nil {
+		return nil, fmt.Errorf("error while getting datacenter with id %s %s", dataCenterID, err)
+	}
+
+	vm, err := virtualmachine.FromPath(client, ovfHelper.Name, datacenterObj)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching the created vm, %s", err)
 	}
@@ -1446,12 +1396,13 @@ func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interfac
 			return nil, fmt.Errorf("error while applying vapp config %s", err)
 		}
 	}
-	return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
+
+	return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm, true)
 }
 
 func createVCenterDeploy(d *schema.ResourceData, meta interface{}) (*virtualmachine.VCenterDeploy, error) {
-	restClient := meta.(*VSphereClient).restClient
-	vimClient := meta.(*VSphereClient).vimClient
+	restClient := meta.(*Client).restClient
+	vimClient := meta.(*Client).vimClient
 	vCenterManager := vcenter.NewManager(restClient)
 
 	item, err := contentlibrary.ItemFromID(restClient, d.Get("clone.0.template_uuid").(string))
@@ -1490,7 +1441,7 @@ func createVCenterDeploy(d *schema.ResourceData, meta interface{}) (*virtualmach
 // path. The VM is returned.
 func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta interface{}) (*object.VirtualMachine, error) {
 	log.Printf("[DEBUG] %s: VM being created from clone", resourceVSphereVirtualMachineIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	// Find the folder based off the path to the resource pool. Basically what we
 	// are saying here is that the VM folder that we are placing this VM in needs
@@ -1510,7 +1461,7 @@ func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta inter
 	name := d.Get("name").(string)
 	timeout := d.Get("clone.0.timeout").(int)
 	var vm *object.VirtualMachine
-	switch contentlibrary.IsContentLibraryItem(meta.(*VSphereClient).restClient, d.Get("clone.0.template_uuid").(string)) {
+	switch contentlibrary.IsContentLibraryItem(meta.(*Client).restClient, d.Get("clone.0.template_uuid").(string)) {
 	case true:
 		deploySpec, err := createVCenterDeploy(d, meta)
 		if err != nil {
@@ -1526,7 +1477,7 @@ func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta inter
 		}
 		// There is not currently a way to pull config values from Content Library items. If we do not send the values,
 		// the defaults from the template will be used.
-		d.Set("guest_id", "")
+		_ = d.Set("guest_id", "")
 	case false:
 		// Expand the clone spec. We get the source VM here too.
 		cloneSpec, srcVM, err := vmworkflow.ExpandVirtualMachineCloneSpec(d, client)
@@ -1542,7 +1493,7 @@ func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta inter
 			return nil, fmt.Errorf("error cloning virtual machine: %s", err)
 		}
 	}
-	return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm)
+	return vm, resourceVSphereVirtualMachinePostDeployChanges(d, meta, vm, false)
 }
 
 // resourceVSphereVirtualMachinePostDeployChanges will do post-clone
@@ -1552,10 +1503,19 @@ func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta inter
 //
 // It's generally safe to not rollback after the initial re-configuration is
 // fully complete and we move on to sending the customization spec.
-func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta interface{}, vm *object.VirtualMachine) error {
-	client := meta.(*VSphereClient).vimClient
+func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta interface{}, vm *object.VirtualMachine, postOvf bool) error {
+	client := meta.(*Client).vimClient
 	poolID := d.Get("resource_pool_id").(string)
 	pool, err := resourcepool.FromID(client, poolID)
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("cannot retrieve resource pool of created virtual machine: %s", err),
+		)
+	}
+
 	vprops, err := virtualmachine.Properties(vm)
 	if err != nil {
 		return resourceVSphereVirtualMachineRollbackCreate(
@@ -1599,7 +1559,7 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	}
 	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
 	// Disks
-	devices, delta, err = virtualdevice.DiskPostCloneOperation(d, client, devices)
+	devices, delta, err = virtualdevice.DiskPostCloneOperation(d, client, devices, postOvf)
 	if err != nil {
 		return resourceVSphereVirtualMachineRollbackCreate(
 			d,
@@ -1635,11 +1595,7 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
 
 	// Perform updates
-	if _, ok := d.GetOk("datastore_cluster_id"); ok {
-		err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, cfgSpec)
-	} else {
-		err = virtualmachine.Reconfigure(vm, cfgSpec)
-	}
+	err = virtualmachine.Reconfigure(vm, cfgSpec)
 	if err != nil {
 		return resourceVSphereVirtualMachineRollbackCreate(
 			d,
@@ -1655,7 +1611,7 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 	}
 
 	// This should only change if deploying from a Content Library item.
-	d.Set("guest_id", vmprops.Config.GuestId)
+	_ = d.Set("guest_id", vmprops.Config.GuestId)
 
 	// Upgrade the VM's hardware version if needed.
 	err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
@@ -1710,7 +1666,7 @@ func resourceVSphereVirtualMachineCreateCloneWithSDRS(
 	spec types.VirtualMachineCloneSpec,
 	timeout int,
 ) (*object.VirtualMachine, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, fmt.Errorf("connection ineligible to use datastore_cluster_id: %s", err)
 	}
@@ -1762,7 +1718,7 @@ func resourceVSphereVirtualMachineRollbackCreate(
 // disks, we call out to relocate functionality in the disk sub-resource.
 func resourceVSphereVirtualMachineUpdateLocation(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Checking for pending migration operations", resourceVSphereVirtualMachineIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	// A little bit of duplication of VM object data is done here to keep the
 	// method signature lean.
@@ -1851,7 +1807,7 @@ func resourceVSphereVirtualMachineUpdateLocationRelocateWithSDRS(
 	spec types.VirtualMachineRelocateSpec,
 	timeout int,
 ) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return fmt.Errorf("connection ineligible to use datastore_cluster_id: %s", err)
 	}
@@ -1884,7 +1840,7 @@ func applyVirtualDevices(d *schema.ResourceData, c *govmomi.Client, l object.Vir
 	}
 	if len(delta) > 0 {
 		log.Printf("[DEBUG] %s: SCSI bus has changed and requires a VM restart", resourceVSphereVirtualMachineIDString(d))
-		d.Set("reboot_required", true)
+		_ = d.Set("reboot_required", true)
 	}
 	spec = virtualdevice.AppendDeviceChangeSpec(spec, delta...)
 	// Disks
@@ -1920,4 +1876,23 @@ func applyVirtualDevices(d *schema.ResourceData, c *govmomi.Client, l object.Vir
 // vsphere_virtual_machine resource.
 func resourceVSphereVirtualMachineIDString(d structure.ResourceIDStringer) string {
 	return structure.ResourceIDString(d, "vsphere_virtual_machine")
+}
+
+func NewOvfHelperParamsFromVMResource(d *schema.ResourceData) *ovfdeploy.OvfHelperParams {
+	ovfParams := &ovfdeploy.OvfHelperParams{
+		AllowUnverifiedSSL: d.Get("ovf_deploy.0.allow_unverified_ssl_cert").(bool),
+		DatastoreID:        d.Get("datastore_id").(string),
+		DeploymentOption:   d.Get("ovf_deploy.0.deployment_option").(string),
+		DiskProvisioning:   d.Get("ovf_deploy.0.disk_provisioning").(string),
+		FilePath:           d.Get("ovf_deploy.0.local_ovf_path").(string),
+		Folder:             d.Get("folder").(string),
+		HostID:             d.Get("host_system_id").(string),
+		IPAllocationPolicy: d.Get("ovf_deploy.0.ip_allocation_policy").(string),
+		IPProtocol:         d.Get("ovf_deploy.0.ip_protocol").(string),
+		Name:               d.Get("name").(string),
+		NetworkMappings:    d.Get("ovf_deploy.0.ovf_network_map").(map[string]interface{}),
+		OvfURL:             d.Get("ovf_deploy.0.remote_ovf_url").(string),
+		PoolID:             d.Get("resource_pool_id").(string),
+	}
+	return ovfParams
 }

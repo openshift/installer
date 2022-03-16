@@ -3,12 +3,13 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/vmware/govmomi/object"
-	"github.com/vmware/govmomi/vim25/types"
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 func dataSourceVsphereRole() *schema.Resource {
@@ -42,7 +43,7 @@ func dataSourceVsphereRole() *schema.Resource {
 
 func dataSourceVSphereRoleRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] : Reading vsphere role with label %s", d.Get("label"))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	authorizationManager := object.NewAuthorizationManager(client.Client)
 
 	label := d.Get("label").(string)
@@ -64,15 +65,15 @@ func dataSourceVSphereRoleRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(strconv.Itoa(int(foundRole.RoleId)))
-	d.Set("name", foundRole.Name)
-	d.Set("description", foundRole.Info.GetDescription().Summary)
+	_ = d.Set("name", foundRole.Name)
+	_ = d.Set("description", foundRole.Info.GetDescription().Summary)
 
 	var arr []string
 	for _, str := range foundRole.Privilege {
-		if strings.Split(str, ".")[0] != SYSTEM_ROLE {
+		if strings.Split(str, ".")[0] != SystemRole {
 			arr = append(arr, str)
 		}
 	}
-	d.Set("role_privileges", arr)
+	_ = d.Set("role_privileges", arr)
 	return nil
 }

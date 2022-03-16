@@ -2,18 +2,18 @@ package utils
 
 import (
 	"context"
+	"log"
+
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualmachine"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/types"
-	"log"
 )
 
 const VM = "VirtualMachine"
-const DISTRIBUTED_VIRTUAL_SWITCH = "VmwareDistributedVirtualSwitch"
+const DISTRIBUTEDVIRTUALSWITCH = "VmwareDistributedVirtualSwitch"
 
 func GetMoid(client *govmomi.Client, entityType string, id string) (string, error) {
-
 	switch entityType {
 	case VM:
 		vm, err := virtualmachine.FromUUID(client, id)
@@ -22,7 +22,7 @@ func GetMoid(client *govmomi.Client, entityType string, id string) (string, erro
 			return id, nil
 		}
 		return vm.Reference().Value, nil
-	case DISTRIBUTED_VIRTUAL_SWITCH:
+	case DISTRIBUTEDVIRTUALSWITCH:
 		dvsm := types.ManagedObjectReference{Type: "DistributedVirtualSwitchManager", Value: "DVSManager"}
 		req := &types.QueryDvsByUuid{
 			This: dvsm,

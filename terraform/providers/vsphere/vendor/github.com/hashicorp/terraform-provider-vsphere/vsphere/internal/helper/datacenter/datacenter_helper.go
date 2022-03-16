@@ -19,8 +19,8 @@ func FromPath(client *govmomi.Client, path string) (*object.Datacenter, error) {
 	return finder.Datacenter(ctx, path)
 }
 
-// DatacenterFromInventoryPath returns the Datacenter object which is part of a given InventoryPath
-func DatacenterFromInventoryPath(client *govmomi.Client, inventoryPath string) (*object.Datacenter, error) {
+// FromInventoryPath returns the Datacenter object which is part of a given InventoryPath
+func FromInventoryPath(client *govmomi.Client, inventoryPath string) (*object.Datacenter, error) {
 	dcPath, err := folder.RootPathParticleDatastore.SplitDatacenter(inventoryPath)
 	if err != nil {
 		return nil, err

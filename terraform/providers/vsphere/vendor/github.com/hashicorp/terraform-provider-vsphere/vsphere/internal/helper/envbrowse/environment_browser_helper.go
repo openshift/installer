@@ -100,9 +100,9 @@ func (b *EnvironmentBrowser) OSFamily(ctx context.Context, guest string) (string
 	return "", fmt.Errorf("could not find guest ID %q", guest)
 }
 
-// SystemId fetches the host SystemId which is used in creating PCI passthrough
+// SystemID fetches the host SystemId which is used in creating PCI passthrough
 // devices.
-func (b *EnvironmentBrowser) SystemId(ctx context.Context, host *types.ManagedObjectReference) (string, error) {
+func (b *EnvironmentBrowser) SystemID(ctx context.Context, host *types.ManagedObjectReference) (string, error) {
 	var eb mo.EnvironmentBrowser
 
 	err := b.Properties(ctx, b.Reference(), nil, &eb)

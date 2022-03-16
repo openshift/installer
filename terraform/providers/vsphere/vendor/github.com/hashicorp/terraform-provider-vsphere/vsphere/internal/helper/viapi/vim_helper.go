@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/provider"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
-	"github.com/vmware/govmomi/task"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/soap"
@@ -44,43 +43,11 @@ func vimSoapFault(err error) (types.AnyType, bool) {
 	return nil, false
 }
 
-// taskFault extracts the task fault from a supplied task.Error. Check the
-// returned boolean value to see if the fault was extracted correctly, after
-// which you will need to do further checking.
-func taskFault(err error) (types.BaseMethodFault, bool) {
-	if te, ok := err.(task.Error); ok {
-		return te.Fault(), true
-	}
-	return nil, false
-}
-
 // IsManagedObjectNotFoundError checks an error to see if it's of the
 // ManagedObjectNotFound type.
 func IsManagedObjectNotFoundError(err error) bool {
 	if f, ok := vimSoapFault(err); ok {
 		if _, ok := f.(types.ManagedObjectNotFound); ok {
-			return true
-		}
-	}
-	return false
-}
-
-// IsInvalidStateError checks an error to see if it's of the
-// InvalidState type.
-func IsInvalidStateError(err error) bool {
-	if f, ok := vimSoapFault(err); ok {
-		if _, ok := f.(types.InvalidState); ok {
-			return true
-		}
-	}
-	return false
-}
-
-// IsInvalidPowerStateError checks an error to see if it's of the
-// InvalidState type.
-func IsInvalidPowerStateError(err error) bool {
-	if f, ok := vimSoapFault(err); ok {
-		if _, ok := f.(types.InvalidPowerState); ok {
 			return true
 		}
 	}
@@ -118,26 +85,6 @@ func IsAnyNotFoundError(err error) bool {
 func IsResourceInUseError(err error) bool {
 	if f, ok := vimSoapFault(err); ok {
 		if _, ok := f.(types.ResourceInUse); ok {
-			return true
-		}
-	}
-	return false
-}
-
-// isConcurrentAccessError checks an error to see if it's of the
-// ConcurrentAccess type.
-func isConcurrentAccessError(err error) bool {
-	// ConcurrentAccess comes from a task more than it usually does from a direct
-	// SOAP call, so we need to handle both here.
-	var f types.AnyType
-	var ok bool
-	f, ok = vimSoapFault(err)
-	if !ok {
-		f, ok = taskFault(err)
-	}
-	if ok {
-		switch f.(type) {
-		case types.ConcurrentAccess, *types.ConcurrentAccess:
 			return true
 		}
 	}
@@ -275,6 +222,15 @@ func (v VSphereVersion) newerVersion(other VSphereVersion) bool {
 	vc := v.Major<<16 + v.Minor<<8 + v.Patch
 	vo := other.Major<<16 + other.Minor<<8 + other.Patch
 	return vc > vo
+}
+
+// AtLeast returns true if this version's product is equal or greater than the one required
+func (v VSphereVersion) AtLeast(other VSphereVersion) bool {
+	if !v.ProductEqual(other) {
+		return false
+	}
+
+	return v.Equal(other) || v.Newer(other)
 }
 
 // Newer returns true if this version's product is the same, and composite of

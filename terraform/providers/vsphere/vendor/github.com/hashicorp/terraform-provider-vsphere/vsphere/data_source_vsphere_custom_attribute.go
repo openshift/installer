@@ -3,7 +3,7 @@ package vsphere
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/vmware/govmomi/object"
 )
@@ -27,7 +27,7 @@ func dataSourceVSphereCustomAttribute() *schema.Resource {
 }
 
 func dataSourceVSphereCustomAttributeRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	err := customattribute.VerifySupport(client)
 	if err != nil {
 		return err
@@ -43,6 +43,6 @@ func dataSourceVSphereCustomAttributeRead(d *schema.ResourceData, meta interface
 		return err
 	}
 	d.SetId(fmt.Sprint(field.Key))
-	d.Set("managed_object_type", field.ManagedObjectType)
+	_ = d.Set("managed_object_type", field.ManagedObjectType)
 	return nil
 }
