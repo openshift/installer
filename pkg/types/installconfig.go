@@ -149,7 +149,7 @@ type InstallConfig struct {
 	// For each of the following platforms, the field can set to the specified values. For all other platforms, the
 	// field must not be set.
 	// AWS: "Mint", "Passthrough", "Manual"
-	// Azure: "Mint", "Passthrough", "Manual"
+	// Azure: "Passthrough", "Manual"
 	// AzureStack: "Manual"
 	// GCP: "Mint", "Passthrough", "Manual"
 	// IBMCloud: "Manual"
