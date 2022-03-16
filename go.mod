@@ -32,8 +32,8 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.7
 	github.com/google/uuid v1.2.0
-	github.com/gophercloud/gophercloud v0.22.0
-	github.com/gophercloud/utils v0.0.0-20210720165645-8a3ad2ad9e70
+	github.com/gophercloud/gophercloud v0.24.0
+	github.com/gophercloud/utils v0.0.0-20220307143606-8e7800759d16
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/terraform-exec v0.16.0
 	github.com/jongio/azidext/go/azidext v0.3.0
@@ -64,7 +64,7 @@ require (
 	github.com/ulikunitz/xz v0.5.8
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.24.0
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
