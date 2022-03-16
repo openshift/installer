@@ -3,6 +3,7 @@ package network
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/provider"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
@@ -33,8 +34,7 @@ func FromPath(client *govmomi.Client, name string, dc *object.Datacenter) (objec
 	return finder.Network(ctx, name)
 }
 
-func FromNameAndDVSUuid(client *govmomi.Client, name string, dc *object.Datacenter, dvsUuid string) (object.NetworkReference, error) {
-
+func FromNameAndDVSUuid(client *govmomi.Client, name string, dc *object.Datacenter, dvsUUID string) (object.NetworkReference, error) {
 	finder := find.NewFinder(client.Client, false)
 	if dc != nil {
 		finder.SetDatacenter(dc)
@@ -50,20 +50,17 @@ func FromNameAndDVSUuid(client *govmomi.Client, name string, dc *object.Datacent
 		return nil, fmt.Errorf("%s %s not found", "Network", name)
 	}
 
-	if len(networks) == 1 && dvsUuid == "" {
+	switch {
+	case len(networks) == 1 && dvsUUID == "":
 		return networks[0], nil
-	} else if len(networks) > 1 && dvsUuid == "" {
+	case len(networks) > 1 && dvsUUID == "":
 		return nil, fmt.Errorf("path '%s' resolves to multiple %ss, Please specify", name, "network")
-
-		//handle cases with same port group names by checking the dv switch.
-	} else if dvsUuid != "" {
-
-		dvsObj, err := dvsFromUUID(client, dvsUuid)
+	case dvsUUID != "":
+		dvsObj, err := dvsFromUUID(client, dvsUUID)
 		if err != nil {
 			return nil, err
 		}
 		dvsMoid := dvsObj.Reference().Value
-
 		for _, network := range networks {
 			if network.Reference().Type == "DistributedVirtualPortgroup" {
 				dvPortGroup := object.NewDistributedVirtualPortgroup(client.Client, network.Reference())
@@ -81,7 +78,7 @@ func FromNameAndDVSUuid(client *govmomi.Client, name string, dc *object.Datacent
 				}
 			}
 		}
-		return nil, fmt.Errorf("error while getting Network with name %s and Distributed virtual switch %s", name, dvsUuid)
+		return nil, fmt.Errorf("error while getting Network with name %s and Distributed virtual switch %s", name, dvsUUID)
 	}
 	return nil, fmt.Errorf("%s %s not found", "Network", name)
 }
@@ -138,7 +135,7 @@ func FromID(client *govmomi.Client, id string) (object.NetworkReference, error) 
 	defer func() {
 		dctx, dcancel := context.WithTimeout(context.Background(), provider.DefaultAPITimeout)
 		defer dcancel()
-		v.Destroy(dctx)
+		_ = v.Destroy(dctx)
 	}()
 
 	var networks []mo.Network
@@ -163,47 +160,6 @@ func FromID(client *govmomi.Client, id string) (object.NetworkReference, error) 
 		}
 	}
 	return nil, fmt.Errorf("could not find network with ID %q", id)
-}
-
-// ReferenceProperties is a convenience method that wraps fetching the Network
-// MO from a NetworkReference.
-//
-// Note that regardless of the network type, this only fetches the Network MO
-// and not any of the extended properties of that network.
-func ReferenceProperties(client *govmomi.Client, net object.NetworkReference) (*mo.Network, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), provider.DefaultAPITimeout)
-	defer cancel()
-	var props mo.Network
-	nc := object.NewCommon(client.Client, net.Reference())
-	if err := nc.Properties(ctx, nc.Reference(), nil, &props); err != nil {
-		return nil, err
-	}
-	return &props, nil
-}
-
-// Properties gets the properties for a specific Network.
-//
-// By itself, the Network type usually represents a standard port group in
-// vCenter - it has been set up on a host or a set of hosts, and is usually
-// configured via through an appropriate HostNetworkSystem. vCenter, however,
-// groups up these networks and displays them as a single network that VM can
-// use across hosts, facilitating HA and vMotion for VMs that use standard port
-// groups versus DVS port groups. Hence the "Network" object is mainly a
-// read-only MO and is only useful for checking some very base level
-// attributes.
-//
-// While other network MOs extend the base network object (such as DV port
-// groups and opaque networks), this only works with the base object only.
-// Refer to functions more specific to the MO to get a fully extended property
-// set for the extended objects if you are dealing with those object types.
-func Properties(net *object.Network) (*mo.Network, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), provider.DefaultAPITimeout)
-	defer cancel()
-	var props mo.Network
-	if err := net.Properties(ctx, net.Reference(), nil, &props); err != nil {
-		return nil, err
-	}
-	return &props, nil
 }
 
 func dvsFromMOID(client *govmomi.Client, id string) (*object.VmwareDistributedVirtualSwitch, error) {

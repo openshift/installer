@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datastore"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/mitchellh/copystructure"
@@ -226,20 +226,18 @@ func CdromRefreshOperation(d *schema.ResourceData, c *govmomi.Client, l object.V
 			}
 			// We should have our device -> resource match, so read now.
 			r := NewCdromSubresource(c, d, m, nil, n)
-			vApp, err := verifyVAppCdromIso(d, device.(*types.VirtualCdrom), l, c)
+			vApp, err := verifyVAppCdromIso(d, device.(*types.VirtualCdrom))
 			if err != nil {
 				return err
 			}
-			if vApp == true && r.Get("client_device") == true {
+			if vApp && r.Get("client_device") == true {
 				log.Printf("[DEBUG] CdromRefreshOperation: %s: Skipping read since CDROM is in use for vApp ISO transport", r)
 				// Set the CDROM properties to match a client device so there won't be a diff.
 				r.Set("client_device", true)
 				r.Set("datastore_id", "")
 				r.Set("path", "")
-			} else {
-				if err := r.Read(l); err != nil {
-					return fmt.Errorf("%s: %s", r.Addr(), err)
-				}
+			} else if err := r.Read(l); err != nil {
+				return fmt.Errorf("%s: %s", r.Addr(), err)
 			}
 			// Done reading, push this onto our new set and remove the device from
 			// the list
@@ -399,26 +397,6 @@ func CdromPostCloneOperation(d *schema.ResourceData, c *govmomi.Client, l object
 	return l, spec, nil
 }
 
-// CdromDiffOperation performs operations relevant to managing the
-// diff on cdrom sub-resources
-func CdromDiffOperation(d *schema.ResourceDiff, c *govmomi.Client) error {
-	log.Printf("[DEBUG] CdromDiffOperation: Beginning diff validation")
-	cr := d.Get(subresourceTypeCdrom)
-	for ci, ce := range cr.([]interface{}) {
-		cm := ce.(map[string]interface{})
-		r := NewCdromSubresource(c, d, cm, nil, ci)
-		if !structure.ValuesAvailable(fmt.Sprintf("%s.%d.", subresourceTypeCdrom, ci), []string{"datastore_id", "path"}, d) {
-			log.Printf("[DEBUG] CdromDiffOperation: Cdrom contains a value that depends on a computed value from another resource. Skipping validation")
-			return nil
-		}
-		if err := r.ValidateDiff(); err != nil {
-			return fmt.Errorf("%s: %s", r.Addr(), err)
-		}
-	}
-	log.Printf("[DEBUG] CdromDiffOperation: Diff validation complete")
-	return nil
-}
-
 // ValidateDiff performs any complex validation of an individual
 // cdrom sub-resource that can't be done in schema alone.
 func (r *CdromSubresource) ValidateDiff() error {
@@ -439,9 +417,13 @@ func (r *CdromSubresource) ValidateDiff() error {
 // Create creates a vsphere_virtual_machine cdrom sub-resource.
 func (r *CdromSubresource) Create(l object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
 	log.Printf("[DEBUG] %s: Running create", r)
+	err := r.ValidateDiff()
+	if err != nil {
+		return nil, err
+	}
 	var spec []types.BaseVirtualDeviceConfigSpec
 	var ctlr types.BaseVirtualController
-	ctlr, err := r.ControllerForCreateUpdate(l, SubresourceControllerTypeIDE, 0)
+	ctlr, err = r.ControllerForCreateUpdate(l, SubresourceControllerTypeIDE, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -452,7 +434,10 @@ func (r *CdromSubresource) Create(l object.VirtualDeviceList) ([]types.BaseVirtu
 		return nil, err
 	}
 	// Map the CDROM to the correct device
-	r.mapCdrom(device, l)
+	err = r.mapCdrom(device, l)
+	if err != nil {
+		return nil, err
+	}
 	// Done here. Save IDs, push the device to the new device list and return.
 	if err := r.SaveDevIDs(device, ctlr); err != nil {
 		return nil, err
@@ -520,6 +505,10 @@ func (r *CdromSubresource) Read(l object.VirtualDeviceList) error {
 // Update updates a vsphere_virtual_machine cdrom sub-resource.
 func (r *CdromSubresource) Update(l object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
 	log.Printf("[DEBUG] %s: Beginning update", r)
+	err := r.ValidateDiff()
+	if err != nil {
+		return nil, err
+	}
 	d, err := r.FindVirtualDevice(l)
 	if err != nil {
 		return nil, fmt.Errorf("cannot find disk device: %s", err)
@@ -530,7 +519,10 @@ func (r *CdromSubresource) Update(l object.VirtualDeviceList) ([]types.BaseVirtu
 	}
 
 	// Map the CDROM to the correct device
-	r.mapCdrom(device, l)
+	err = r.mapCdrom(device, l)
+	if err != nil {
+		return nil, err
+	}
 	spec, err := object.VirtualDeviceList{device}.ConfigSpec(types.VirtualDeviceConfigSpecOperationEdit)
 	if err != nil {
 		return nil, err
@@ -582,26 +574,29 @@ func (r *CdromSubresource) mapCdrom(device *types.VirtualCdrom, l object.Virtual
 			Path:      path,
 		}
 		device = l.InsertIso(device, dsPath.String())
-		l.Connect(device)
+		err = l.Connect(device)
+		if err != nil {
+			return err
+		}
 		return nil
-	case clientDevice == true:
+	case clientDevice:
 		// If set to use the client device, then the CDROM will be mapped to a remote device.
 		device.Backing = &types.VirtualCdromRemoteAtapiBackingInfo{
 			VirtualDeviceRemoteDeviceBackingInfo: types.VirtualDeviceRemoteDeviceBackingInfo{},
 		}
 		return nil
 	}
-	panic(fmt.Sprintf("%s: no CDROM types specified", r))
+	return fmt.Errorf("%s: no CDROM types specified", r)
 }
 
 // VerifyVAppTransport validates that all the required components are included in
 // the virtual machine configuration if vApp properties are set.
-func VerifyVAppTransport(d *schema.ResourceDiff, c *govmomi.Client) error {
+func VerifyVAppTransport(d *schema.ResourceDiff) error {
 	log.Printf("[DEBUG] VAppDiffOperation: Verifying configuration meets requirements for vApp transport")
 	// Check if there is a client CDROM device configured.
 	cl := d.Get("cdrom")
 	for _, c := range cl.([]interface{}) {
-		if c.(map[string]interface{})["client_device"].(bool) == true {
+		if c.(map[string]interface{})["client_device"].(bool) {
 			// There is a device configured that can support vApp ISO transport if needed
 			log.Printf("[DEBUG] VAppDiffOperation: Client CDROM device exists which can support ISO transport")
 			return nil
@@ -623,7 +618,7 @@ func VerifyVAppTransport(d *schema.ResourceDiff, c *govmomi.Client) error {
 // that matches the vApp ISO naming pattern. If it does, then the next step is
 // to see if vApp ISO transport is supported on the VM. If both of those
 // conditions are met, then the CDROM is considered in use for vApp transport.
-func verifyVAppCdromIso(d *schema.ResourceData, device *types.VirtualCdrom, l object.VirtualDeviceList, c *govmomi.Client) (bool, error) {
+func verifyVAppCdromIso(d *schema.ResourceData, device *types.VirtualCdrom) (bool, error) {
 	log.Printf("[DEBUG] IsVAppCdrom: Checking if CDROM is using a vApp ISO")
 	// If the CDROM is using VirtualCdromIsoBackingInfo and matches the ISO
 	// naming pattern, it has been used as a vApp CDROM, and we can move on to

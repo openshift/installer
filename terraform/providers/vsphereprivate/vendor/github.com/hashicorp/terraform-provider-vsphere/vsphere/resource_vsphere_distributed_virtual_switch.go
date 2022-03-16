@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
@@ -51,7 +51,7 @@ func resourceVSphereDistributedVirtualSwitch() *schema.Resource {
 }
 
 func resourceVSphereDistributedVirtualSwitchCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}
@@ -101,7 +101,10 @@ func resourceVSphereDistributedVirtualSwitchCreate(d *schema.ResourceData, meta 
 
 	// Enable network resource I/O control if it needs to be enabled
 	if d.Get("network_resource_control_enabled").(bool) {
-		enableDVSNetworkResourceManagement(client, dvs, true)
+		err = enableDVSNetworkResourceManagement(client, dvs, true)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Apply any pending tags now
@@ -122,7 +125,7 @@ func resourceVSphereDistributedVirtualSwitchCreate(d *schema.ResourceData, meta 
 }
 
 func resourceVSphereDistributedVirtualSwitchRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}
@@ -145,14 +148,14 @@ func resourceVSphereDistributedVirtualSwitchRead(d *schema.ResourceData, meta in
 	if err != nil {
 		return fmt.Errorf("error locating datacenter: %s", err)
 	}
-	d.Set("datacenter_id", dc.Reference().Value)
+	_ = d.Set("datacenter_id", dc.Reference().Value)
 
 	// Set the folder
 	f, err := folder.RootPathParticleNetwork.SplitRelativeFolder(dvs.InventoryPath)
 	if err != nil {
 		return fmt.Errorf("error parsing DVS path %q: %s", dvs.InventoryPath, err)
 	}
-	d.Set("folder", folder.NormalizePath(f))
+	_ = d.Set("folder", folder.NormalizePath(f))
 
 	// Read in config info
 	if err := flattenVMwareDVSConfigInfo(d, props.Config.(*types.VMwareDVSConfigInfo)); err != nil {
@@ -160,7 +163,7 @@ func resourceVSphereDistributedVirtualSwitchRead(d *schema.ResourceData, meta in
 	}
 
 	// Read tags if we have the ability to do so
-	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
+	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
 		if err := readTagsForResource(tagsClient, dvs, d); err != nil {
 			return fmt.Errorf("error reading tags: %s", err)
 		}
@@ -168,14 +171,14 @@ func resourceVSphereDistributedVirtualSwitchRead(d *schema.ResourceData, meta in
 
 	// Read set custom attributes
 	if customattribute.IsSupported(client) {
-		customattribute.ReadFromResource(client, props.Entity(), d)
+		customattribute.ReadFromResource(props.Entity(), d)
 	}
 
 	return nil
 }
 
 func resourceVSphereDistributedVirtualSwitchUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}
@@ -197,20 +200,20 @@ func resourceVSphereDistributedVirtualSwitchUpdate(d *schema.ResourceData, meta 
 
 	// If we have a pending version upgrade, do that first.
 	if d.HasChange("version") {
-		old, new := d.GetChange("version")
+		old, newValue := d.GetChange("version")
 		var ovi, nvi int
 		for n, v := range dvsVersions {
 			if old.(string) == v {
 				ovi = n
 			}
-			if new.(string) == v {
+			if newValue.(string) == v {
 				nvi = n
 			}
 		}
 		if nvi < ovi {
-			return fmt.Errorf("downgrading dvSwitches are not allowed (old: %s new: %s)", old, new)
+			return fmt.Errorf("downgrading dvSwitches are not allowed (old: %s new: %s)", old, newValue)
 		}
-		if err := upgradeDVS(client, dvs, new.(string)); err != nil {
+		if err := upgradeDVS(client, dvs, newValue.(string)); err != nil {
 			return fmt.Errorf("could not upgrade DVS: %s", err)
 		}
 		props, err := dvsProperties(dvs)
@@ -220,17 +223,20 @@ func resourceVSphereDistributedVirtualSwitchUpdate(d *schema.ResourceData, meta 
 		// ConfigVersion increments after a DVS upgrade, which means this needs to
 		// be updated before the post-update read to ensure that we don't run into
 		// ConcurrentAccess errors on the update operation below.
-		d.Set("config_version", props.Config.(*types.VMwareDVSConfigInfo).ConfigVersion)
+		_ = d.Set("config_version", props.Config.(*types.VMwareDVSConfigInfo).ConfigVersion)
 	}
 
 	spec := expandVMwareDVSConfigSpec(d)
-	if err := updateDVSConfiguration(client, dvs, spec); err != nil {
+	if err := updateDVSConfiguration(dvs, spec); err != nil {
 		return fmt.Errorf("could not update DVS: %s", err)
 	}
 
 	// Modify network I/O control if necessary
 	if d.HasChange("network_resource_control_enabled") {
-		enableDVSNetworkResourceManagement(client, dvs, d.Get("network_resource_control_enabled").(bool))
+		err = enableDVSNetworkResourceManagement(client, dvs, d.Get("network_resource_control_enabled").(bool))
+		if err != nil {
+			return err
+		}
 	}
 
 	// Apply any pending tags now
@@ -251,7 +257,7 @@ func resourceVSphereDistributedVirtualSwitchUpdate(d *schema.ResourceData, meta 
 }
 
 func resourceVSphereDistributedVirtualSwitchDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}
@@ -280,7 +286,7 @@ func resourceVSphereDistributedVirtualSwitchImport(d *schema.ResourceData, meta 
 	// Due to the relative difficulty in trying to fetch a DVS's UUID, we use the
 	// inventory path to the DVS instead, and just run it through finder. A full
 	// path is required unless the default datacenter can be utilized.
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, err
 	}

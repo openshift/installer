@@ -3,15 +3,17 @@ package virtualdevice
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/computeresource"
-	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
-	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualmachine"
 	"log"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/computeresource"
+	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
+	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualmachine"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/mitchellh/copystructure"
 	"github.com/vmware/govmomi"
@@ -101,13 +103,6 @@ var SCSIBusTypeAllowedValues = []string{
 	SubresourceControllerTypeLsiLogicSAS,
 }
 
-// newSubresourceFunc is a method signature for the wrapper methods that create
-// a new instance of a specific subresource  that is derived from the base
-// subresoruce object. It's used in the general apply and read operation
-// methods, which themselves are called usually from higher-level apply
-// functions for virtual devices.
-type newSubresourceFunc func(*govmomi.Client, int, int, *schema.ResourceData) SubresourceInstance
-
 // SubresourceInstance is an interface for derivative objects of Subresource.
 // It's used on the general apply and read operation methods, and contains both
 // exported methods of the base Subresource type and the CRUD methods that
@@ -134,7 +129,7 @@ type SubresourceInstance interface {
 type pciApplyConfig struct {
 	Client        *govmomi.Client
 	ResourceData  *schema.ResourceData
-	SystemId      string
+	SystemID      string
 	Spec          []types.BaseVirtualDeviceConfigSpec
 	VirtualDevice object.VirtualDeviceList
 }
@@ -268,13 +263,13 @@ func (r *Subresource) HasChange(key string) bool {
 
 // GetChange gets the old and new values for the value specified by key.
 func (r *Subresource) GetChange(key string) (interface{}, interface{}) {
-	new := r.data[key]
-	// No old data means no change,  so we use the new value as a placeholder.
+	newValue := r.data[key]
+	// No old data means no change,  so we use the newValue value as a placeholder.
 	old := r.data[key]
 	if r.olddata != nil {
 		old = r.olddata[key]
 	}
-	return old, new
+	return old, newValue
 }
 
 // GetWithRestart checks to see if a field has been modified, returns the new
@@ -291,8 +286,8 @@ func (r *Subresource) GetWithRestart(key string) interface{} {
 // fashion that would otherwise result in forcing a new resource.
 func (r *Subresource) GetWithVeto(key string) (interface{}, error) {
 	if r.HasChange(key) {
-		old, new := r.GetChange(key)
-		return r.Get(key), fmt.Errorf("cannot change the value of %q - (old: %v new: %v)", key, old, new)
+		old, newValue := r.GetChange(key)
+		return r.Get(key), fmt.Errorf("cannot change the value of %q - (old: %v newValue: %v)", key, old, newValue)
 	}
 	return r.Get(key), nil
 }
@@ -303,9 +298,9 @@ func (r *Subresource) SetRestart(key string) {
 	log.Printf("[DEBUG] %s: Resource argument %q requires a VM restart", r, key)
 	switch d := r.rdd.(type) {
 	case *schema.ResourceData:
-		d.Set("reboot_required", true)
+		_ = d.Set("reboot_required", true)
 	case *schema.ResourceDiff:
-		d.SetNew("reboot_required", true)
+		_ = d.SetNew("reboot_required", true)
 	default:
 		// This should never happen, but log if it does.
 		log.Printf("[WARN] %s: Could not flag reboot_required: invalid type %T", r, r.rdd)
@@ -416,7 +411,7 @@ func findVirtualDeviceInListControllerSelectFunc(ct string, cb int) func(types.B
 			}
 		}
 		vc := device.(types.BaseVirtualController).GetVirtualController()
-		if vc.BusNumber == int32(cb) {
+		if cb <= math.MaxInt32 && vc.BusNumber == int32(cb) {
 			return true
 		}
 		return false
@@ -429,7 +424,7 @@ func findVirtualDeviceInListControllerSelectFunc(ct string, cb int) func(types.B
 func findVirtualDeviceInListDeviceSelectFunc(ckey int32, du int) func(types.BaseVirtualDevice) bool {
 	return func(d types.BaseVirtualDevice) bool {
 		vd := d.GetVirtualDevice()
-		if vd.ControllerKey == ckey && vd.UnitNumber != nil && *vd.UnitNumber == int32(du) {
+		if vd.ControllerKey == ckey && vd.UnitNumber != nil && du <= math.MaxInt32 && *vd.UnitNumber == int32(du) {
 			return true
 		}
 		return false
@@ -631,7 +626,7 @@ func NormalizeBus(l object.VirtualDeviceList, d *schema.ResourceData) (object.Vi
 	for n, ctlr := range ideCtlrs {
 		if ctlr == nil {
 			log.Printf("[DEBUG] NormalizeBus: Creating IDE controller at bus number %d", n)
-			cspec, err := createIDEController(&l, n)
+			cspec, err := createIDEController(&l)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -660,7 +655,7 @@ func setSCSIBusSharing(l *object.VirtualDeviceList, ctlr types.BaseVirtualSCSICo
 }
 
 // createIDEController creates a new IDE controller.
-func createIDEController(l *object.VirtualDeviceList, bus int) ([]types.BaseVirtualDeviceConfigSpec, error) {
+func createIDEController(l *object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
 	ide, _ := l.CreateIDEController()
 	cspec, err := object.VirtualDeviceList{ide}.ConfigSpec(types.VirtualDeviceConfigSpecOperationAdd)
 	*l = applyDeviceChange(*l, cspec)
@@ -742,19 +737,19 @@ func pickController(l object.VirtualDeviceList, bus int, ct string) (types.BaseV
 	l = l.Select(func(device types.BaseVirtualDevice) bool {
 		switch d := device.(type) {
 		case types.BaseVirtualSCSIController:
-			if ct == "scsi" {
+			if ct == SubresourceControllerTypeSCSI {
 				return d.GetVirtualSCSIController().BusNumber == int32(bus)
 			}
 		case types.BaseVirtualSATAController:
-			if ct == "sata" {
+			if ct == SubresourceControllerTypeSATA {
 				return d.GetVirtualSATAController().BusNumber == int32(bus)
 			}
 		case *types.VirtualIDEController:
-			if ct == "ide" {
+			if ct == SubresourceControllerTypeIDE {
 				return d.GetVirtualController().BusNumber == int32(bus)
 			}
 		case *types.VirtualPCIController:
-			if ct == "pci" {
+			if ct == SubresourceControllerTypePCI {
 				return d.GetVirtualController().BusNumber == int32(bus)
 			}
 		}
@@ -928,13 +923,6 @@ func AppendDeviceChangeSpec(
 	return spec
 }
 
-// ApiToPciId is a helper to convert PCI DeviceIDs to their actual value.
-// vSphere appears to store the PCI information in hex, but converts it to
-// an int16 for the API. With large numbers, this overflows the int16.
-func ApiToPciId(i int16) string {
-	return strconv.FormatInt(int64(uint16(i)), 16)
-}
-
 // getHostPciDevice returns a HostPciDevice from a host based on the DeviceId.
 func (c *pciApplyConfig) getHostPciDevice(id string) (*types.HostPciDevice, error) {
 	host, err := hostsystem.FromID(c.Client, c.ResourceData.Get("host_system_id").(string))
@@ -955,7 +943,7 @@ func (c *pciApplyConfig) getHostPciDevice(id string) (*types.HostPciDevice, erro
 
 // getPciSysId fetchs the PCI SystemId of a host. The SystemId is required for
 // PCI passthrough devices.
-func (c *pciApplyConfig) getPciSysId() error {
+func (c *pciApplyConfig) getPciSysID() error {
 	host, err := hostsystem.FromID(c.Client, c.ResourceData.Get("host_system_id").(string))
 	if err != nil {
 		return err
@@ -965,11 +953,11 @@ func (c *pciApplyConfig) getPciSysId() error {
 	if err != nil {
 		return err
 	}
-	sysId, err := e.SystemId(context.TODO(), &hostRef)
+	sysID, err := e.SystemID(context.TODO(), &hostRef)
 	if err != nil {
 		return err
 	}
-	c.SystemId = sysId
+	c.SystemID = sysID
 	return nil
 }
 
@@ -989,7 +977,7 @@ func (c *pciApplyConfig) modifyVirtualPciDevices(devList *schema.Set, op types.V
 				Backing: &types.VirtualPCIPassthroughDeviceBackingInfo{
 					VirtualDeviceDeviceBackingInfo: types.VirtualDeviceDeviceBackingInfo{},
 					Id:                             pciDev.Id,
-					SystemId:                       c.SystemId,
+					SystemId:                       c.SystemID,
 					VendorId:                       pciDev.VendorId,
 				},
 			},
@@ -1025,9 +1013,9 @@ func (c *pciApplyConfig) modifyVirtualPciDevices(devList *schema.Set, op types.V
 // PCI passthrough devices and creates config specs to apply apply to the
 // virtual machine.
 func PciPassthroughApplyOperation(d *schema.ResourceData, c *govmomi.Client, l object.VirtualDeviceList) (object.VirtualDeviceList, []types.BaseVirtualDeviceConfigSpec, error) {
-	old, new := d.GetChange("pci_device_id")
+	old, newValue := d.GetChange("pci_device_id")
 	oldDevIds := old.(*schema.Set)
-	newDevIds := new.(*schema.Set)
+	newDevIds := newValue.(*schema.Set)
 
 	delDevs := oldDevIds.Difference(newDevIds)
 	addDevs := newDevIds.Difference(oldDevIds)
@@ -1041,8 +1029,8 @@ func PciPassthroughApplyOperation(d *schema.ResourceData, c *govmomi.Client, l o
 		return applyConfig.VirtualDevice, applyConfig.Spec, nil
 	}
 
-	d.Set("reboot_required", true)
-	err := applyConfig.getPciSysId()
+	_ = d.Set("reboot_required", true)
+	err := applyConfig.getPciSysID()
 	if err != nil {
 		return nil, nil, err
 	}

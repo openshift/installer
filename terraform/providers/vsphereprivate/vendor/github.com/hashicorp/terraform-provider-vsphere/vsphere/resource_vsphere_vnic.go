@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
@@ -43,13 +43,13 @@ func vNicSchema() map[string]*schema.Schema {
 func resourceVsphereNicRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] starting resource_vnic")
 	ctx := context.TODO()
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
-	hostId, nicId := splitHostIdNicId(d)
+	hostID, nicID := splitHostIDNicID(d)
 
-	vnic, err := getVnicFromHost(ctx, client, hostId, nicId)
+	vnic, err := getVnicFromHost(ctx, client, hostID, nicID)
 	if err != nil {
-		log.Printf("[DEBUG] Nic (%s) not found. Probably deleted.", nicId)
+		log.Printf("[DEBUG] Nic (%s) not found. Probably deleted.", nicID)
 		d.SetId("")
 		return nil
 	}
@@ -99,7 +99,7 @@ func resourceVsphereNicRead(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 		if (len(addrList) == 0) && !*vnic.Spec.Ip.IpV6Config.DhcpV6Enabled && !*vnic.Spec.Ip.IpV6Config.AutoConfigurationEnabled {
-			d.Set("ipv6", nil)
+			_ = d.Set("ipv6", nil)
 		} else {
 			ipv6dict["addresses"] = addrList
 
@@ -119,13 +119,13 @@ func resourceVsphereNicRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVsphereNicCreate(d *schema.ResourceData, meta interface{}) error {
-	nicId, err := createVNic(d, meta)
+	nicID, err := createVNic(d, meta)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Created NIC with ID: %s", nicId)
-	hostId := d.Get("host")
-	tfNicID := fmt.Sprintf("%s_%s", hostId, nicId)
+	log.Printf("[DEBUG] Created NIC with ID: %s", nicID)
+	hostID := d.Get("host")
+	tfNicID := fmt.Sprintf("%s_%s", hostID, nicID)
 	d.SetId(tfNicID)
 	return resourceVsphereNicRead(d, meta)
 }
@@ -146,18 +146,18 @@ func resourceVsphereNicUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVsphereNicDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
-	hostId, nicId := splitHostIdNicId(d)
+	client := meta.(*Client).vimClient
+	hostID, nicID := splitHostIDNicID(d)
 
-	err := removeVnic(client, hostId, nicId)
+	err := removeVnic(client, hostID, nicID)
 	if err != nil {
 		return err
 	}
 	return resourceVsphereNicRead(d, meta)
 }
 
-func resourceVSphereNicImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	hostID, _ := splitHostIdNicId(d)
+func resourceVSphereNicImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	hostID, _ := splitHostIDNicID(d)
 
 	err := d.Set("host", hostID)
 	if err != nil {
@@ -167,7 +167,7 @@ func resourceVSphereNicImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	return []*schema.ResourceData{d}, nil
 }
 
-// VmKernelSchema returns the schema required to represent a vNIC adapter on an ESX Host.
+// BaseVMKernelSchema returns the schema required to represent a vNIC adapter on an ESX Host.
 // We make this public so we can pull this from the host resource as well.
 func BaseVMKernelSchema() map[string]*schema.Schema {
 	sch := map[string]*schema.Schema{
@@ -235,22 +235,16 @@ func BaseVMKernelSchema() map[string]*schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
-					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-						if strings.ToLower(old) == strings.ToLower(new) {
-							return true
-						}
-						return false
+					DiffSuppressFunc: func(k, old, newValue string, d *schema.ResourceData) bool {
+						return strings.EqualFold(old, newValue)
 					},
 				},
 				"gw": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "IP address of the default gateway, if DHCP or autoconfig is not set.",
-					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-						if strings.ToLower(old) == strings.ToLower(new) {
-							return true
-						}
-						return false
+					DiffSuppressFunc: func(k, old, newValue string, d *schema.ResourceData) bool {
+						return strings.EqualFold(old, newValue)
 					},
 				},
 			}},
@@ -270,8 +264,8 @@ func BaseVMKernelSchema() map[string]*schema.Schema {
 		"netstack": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Description: "TCP/IP stack setting for this interface. Possible values are 'default', 'vmotion', 'provisioning'",
-			Default:     "default",
+			Description: "TCP/IP stack setting for this interface. Possible values are 'defaultTcpipStack', 'vmotion', 'provisioning'",
+			Default:     "defaultTcpipStack",
 			ForceNew:    true,
 		},
 	}
@@ -279,8 +273,8 @@ func BaseVMKernelSchema() map[string]*schema.Schema {
 }
 
 func updateVNic(d *schema.ResourceData, meta interface{}) (string, error) {
-	client := meta.(*VSphereClient).vimClient
-	hostId, nicId := splitHostIdNicId(d)
+	client := meta.(*Client).vimClient
+	hostID, nicID := splitHostIDNicID(d)
 	ctx := context.TODO()
 
 	nic, err := getNicSpecFromSchema(d)
@@ -288,21 +282,21 @@ func updateVNic(d *schema.ResourceData, meta interface{}) (string, error) {
 		return "", err
 	}
 
-	hns, err := getHostNetworkSystem(client, hostId)
+	hns, err := getHostNetworkSystem(client, hostID)
 	if err != nil {
 		return "", err
 	}
 
-	err = hns.UpdateVirtualNic(ctx, nicId, *nic)
+	err = hns.UpdateVirtualNic(ctx, nicID, *nic)
 	if err != nil {
 		return "", err
 	}
 
-	return nicId, nil
+	return nicID, nil
 }
 
 func createVNic(d *schema.ResourceData, meta interface{}) (string, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	ctx := context.TODO()
 
 	nic, err := getNicSpecFromSchema(d)
@@ -310,45 +304,34 @@ func createVNic(d *schema.ResourceData, meta interface{}) (string, error) {
 		return "", err
 	}
 
-	hostId := d.Get("host").(string)
-	hns, err := getHostNetworkSystem(client, hostId)
+	hostID := d.Get("host").(string)
+	hns, err := getHostNetworkSystem(client, hostID)
 	if err != nil {
 		return "", err
 	}
 
 	portgroup := d.Get("portgroup").(string)
-	nicId, err := hns.AddVirtualNic(ctx, portgroup, *nic)
+	nicID, err := hns.AddVirtualNic(ctx, portgroup, *nic)
 	if err != nil {
 		return "", err
 	}
-	d.SetId(fmt.Sprintf("%s_%s", hostId, nicId))
-	return nicId, nil
+	d.SetId(fmt.Sprintf("%s_%s", hostID, nicID))
+	return nicID, nil
 }
 
-func removeVnic(client *govmomi.Client, hostId, nicId string) error {
-	hns, err := getHostNetworkSystem(client, hostId)
+func removeVnic(client *govmomi.Client, hostID, nicID string) error {
+	hns, err := getHostNetworkSystem(client, hostID)
 	if err != nil {
 		return err
 	}
 
-	return hns.RemoveVirtualNic(context.TODO(), nicId)
+	return hns.RemoveVirtualNic(context.TODO(), nicID)
 }
 
-func getHostConfigManager(client *govmomi.Client, hostId string) (*object.HostConfigManager, error) {
-	host, err := hostsystem.FromID(client, hostId)
-	if err != nil {
-		return nil, err
-	}
-	cmRef := host.ConfigManager().Reference()
-	cm := object.NewHostConfigManager(client.Client, cmRef)
-
-	return cm, nil
-}
-
-func getHostNetworkSystem(client *govmomi.Client, hostId string) (*object.HostNetworkSystem, error) {
+func getHostNetworkSystem(client *govmomi.Client, hostID string) (*object.HostNetworkSystem, error) {
 	ctx := context.TODO()
 
-	host, err := hostsystem.FromID(client, hostId)
+	host, err := hostsystem.FromID(client, hostID)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +367,7 @@ func getNicSpecFromSchema(d *schema.ResourceData) (*types.HostVirtualNicSpec, er
 	}
 
 	ipConfig := &types.HostIpConfig{}
-	routeConfig := &types.HostIpRouteConfig{} //routeConfig := r.IpRouteConfig.GetHostIpRouteConfig()
+	routeConfig := &types.HostIpRouteConfig{} // routeConfig := r.IpRouteConfig.GetHostIpRouteConfig()
 	if ipv4, ok := d.GetOk("ipv4.0"); ok {
 		ipv4Config := ipv4.(map[string]interface{})
 
@@ -395,12 +378,10 @@ func getNicSpecFromSchema(d *schema.ResourceData) (*types.HostVirtualNicSpec, er
 
 		if dhcp {
 			ipConfig.Dhcp = dhcp
-		} else {
-			if ipv4Address != "" && ipv4Netmask != "" {
-				ipConfig.IpAddress = ipv4Address
-				ipConfig.SubnetMask = ipv4Netmask
-				routeConfig.DefaultGateway = ipv4Gateway
-			}
+		} else if ipv4Address != "" && ipv4Netmask != "" {
+			ipConfig.IpAddress = ipv4Address
+			ipConfig.SubnetMask = ipv4Netmask
+			routeConfig.DefaultGateway = ipv4Gateway
 		}
 	}
 
@@ -410,7 +391,7 @@ func getNicSpecFromSchema(d *schema.ResourceData) (*types.HostVirtualNicSpec, er
 
 		dhcpv6 := ipv6Config["dhcp"].(bool)
 		autoconfig := ipv6Config["autoconfig"].(bool)
-		//ipv6addrs := ipv6Config["addresses"].([]interface{})
+		// ipv6addrs := ipv6Config["addresses"].([]interface{})
 		ipv6Gateway := ipv6Config["gw"].(string)
 		ipv6Spec.DhcpV6Enabled = &dhcpv6
 		ipv6Spec.AutoConfigurationEnabled = &autoconfig
@@ -447,7 +428,6 @@ func getNicSpecFromSchema(d *schema.ResourceData) (*types.HostVirtualNicSpec, er
 			if !addrFound {
 				addAddrs = append(addAddrs, newAddr.(string))
 			}
-
 		}
 
 		if len(removeAddrs) > 0 || len(addAddrs) > 0 {
@@ -505,11 +485,10 @@ func getNicSpecFromSchema(d *schema.ResourceData) (*types.HostVirtualNicSpec, er
 		NetStackInstanceKey:    netStackInstance,
 	}
 	return vnic, nil
-
 }
 
-func getVnicFromHost(ctx context.Context, client *govmomi.Client, hostId, nicId string) (*types.HostVirtualNic, error) {
-	host, err := hostsystem.FromID(client, hostId)
+func getVnicFromHost(ctx context.Context, client *govmomi.Client, hostID, nicID string) (*types.HostVirtualNic, error) {
+	host, err := hostsystem.FromID(client, hostID)
 	if err != nil {
 		return nil, err
 	}
@@ -524,19 +503,19 @@ func getVnicFromHost(ctx context.Context, client *govmomi.Client, hostId, nicId 
 	nicIdx := -1
 	for idx, vnic := range vNics {
 		log.Printf("[DEBUG] Evaluating nic: %s", vnic.Device)
-		if vnic.Device == nicId {
+		if vnic.Device == nicID {
 			nicIdx = idx
 			break
 		}
 	}
 
 	if nicIdx == -1 {
-		return nil, fmt.Errorf("vNic interface with id %s not found", nicId)
+		return nil, fmt.Errorf("vNic interface with id %s not found", nicID)
 	}
 	return &vNics[nicIdx], nil
 }
 
-func splitHostIdNicId(d *schema.ResourceData) (string, string) {
+func splitHostIDNicID(d *schema.ResourceData) (string, string) {
 	idParts := strings.Split(d.Id(), "_")
 	return idParts[0], idParts[1]
 }

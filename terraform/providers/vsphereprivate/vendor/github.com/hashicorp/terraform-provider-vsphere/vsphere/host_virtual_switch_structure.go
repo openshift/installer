@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -75,7 +75,7 @@ func expandHostVirtualSwitchBeaconConfig(d *schema.ResourceData) *types.HostVirt
 // flattenHostVirtualSwitchBeaconConfig reads various fields from a
 // HostVirtualSwitchBeaconConfig into the passed in ResourceData.
 func flattenHostVirtualSwitchBeaconConfig(d *schema.ResourceData, obj *types.HostVirtualSwitchBeaconConfig) error {
-	d.Set("beacon_interval", obj.Interval)
+	_ = d.Set("beacon_interval", obj.Interval)
 	return nil
 }
 
@@ -92,8 +92,8 @@ func expandLinkDiscoveryProtocolConfig(d *schema.ResourceData) *types.LinkDiscov
 // flattenLinkDiscoveryProtocolConfig reads various fields from a
 // LinkDiscoveryProtocolConfig into the passed in ResourceData.
 func flattenLinkDiscoveryProtocolConfig(d *schema.ResourceData, obj *types.LinkDiscoveryProtocolConfig) error {
-	d.Set("link_discovery_operation", obj.Operation)
-	d.Set("link_discovery_protocol", obj.Protocol)
+	_ = d.Set("link_discovery_operation", obj.Operation)
+	_ = d.Set("link_discovery_protocol", obj.Protocol)
 	return nil
 }
 
@@ -111,16 +111,11 @@ func expandHostVirtualSwitchBondBridge(d *schema.ResourceData) *types.HostVirtua
 // flattenHostVirtualSwitchBondBridge reads various fields from a
 // HostVirtualSwitchBondBridge into the passed in ResourceData.
 func flattenHostVirtualSwitchBondBridge(d *schema.ResourceData, obj *types.HostVirtualSwitchBondBridge) error {
-	if err := d.Set("network_adapters", structure.SliceStringsToInterfaces(obj.NicDevice)); err != nil {
-		return err
-	}
+	_ = d.Set("network_adapters", structure.SliceStringsToInterfaces(obj.NicDevice))
 	if err := flattenHostVirtualSwitchBeaconConfig(d, obj.Beacon); err != nil {
 		return err
 	}
-	if err := flattenLinkDiscoveryProtocolConfig(d, obj.LinkDiscoveryProtocolConfig); err != nil {
-		return err
-	}
-	return nil
+	return flattenLinkDiscoveryProtocolConfig(d, obj.LinkDiscoveryProtocolConfig)
 }
 
 // schemaHostVirtualSwitchSpec returns schema items for resources that need to
@@ -168,17 +163,14 @@ func expandHostVirtualSwitchSpec(d *schema.ResourceData) *types.HostVirtualSwitc
 // flattenHostVirtualSwitchSpec reads various fields from a
 // HostVirtualSwitchSpec into the passed in ResourceData.
 func flattenHostVirtualSwitchSpec(d *schema.ResourceData, obj *types.HostVirtualSwitchSpec) error {
-	d.Set("mtu", obj.Mtu)
-	d.Set("number_of_ports", obj.NumPorts)
+	_ = d.Set("mtu", obj.Mtu)
+	_ = d.Set("number_of_ports", obj.NumPorts)
 	if obj.Bridge != nil {
 		if err := flattenHostVirtualSwitchBondBridge(d, obj.Bridge.(*types.HostVirtualSwitchBondBridge)); err != nil {
 			return err
 		}
 	}
-	if err := flattenHostNetworkPolicy(d, obj.Policy); err != nil {
-		return err
-	}
-	return nil
+	return flattenHostNetworkPolicy(d, obj.Policy)
 }
 
 // saveHostVirtualSwitchID sets a special ID for a host virtual switch,

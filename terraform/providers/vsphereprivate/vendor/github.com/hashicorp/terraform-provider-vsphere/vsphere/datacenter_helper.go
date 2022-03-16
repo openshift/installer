@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"fmt"
+
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
@@ -67,7 +68,7 @@ func dcsByPath(client *govmomi.Client, path string) ([]*object.Datacenter, error
 	var dcs []*object.Datacenter
 	finder := find.NewFinder(client.Client, false)
 	if path != "/" {
-		path = path + "/*"
+		path += "/*"
 	}
 	es, err := finder.ManagedObjectListChildren(ctx, path, "datacenter", "folder")
 	if err != nil {

@@ -5,7 +5,8 @@ import (
 	"crypto/sha1"
 	"crypto/tls"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceVSphereHostThumbprint() *schema.Resource {
@@ -32,7 +33,7 @@ func dataSourceVSphereHostThumbprint() *schema.Resource {
 	}
 }
 
-func dataSourceVSphereHostThumbprintRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceVSphereHostThumbprintRead(d *schema.ResourceData, _ interface{}) error {
 	config := &tls.Config{}
 	config.InsecureSkipVerify = d.Get("insecure").(bool)
 	conn, err := tls.Dial("tcp", d.Get("address").(string)+":"+d.Get("port").(string), config)
@@ -45,9 +46,9 @@ func dataSourceVSphereHostThumbprintRead(d *schema.ResourceData, meta interface{
 	var buf bytes.Buffer
 	for i, f := range fingerprint {
 		if i > 0 {
-			fmt.Fprintf(&buf, ":")
+			_, _ = fmt.Fprintf(&buf, ":")
 		}
-		fmt.Fprintf(&buf, "%02X", f)
+		_, _ = fmt.Fprintf(&buf, "%02X", f)
 	}
 	d.SetId(buf.String())
 	return nil

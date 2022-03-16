@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi"
@@ -308,9 +308,9 @@ func resourceVSphereComputeClusterVMAffinityRuleParseID(id string) (string, int3
 		return "", 0, fmt.Errorf("bad ID %q", id)
 	}
 
-	key, err := strconv.Atoi(parts[1])
+	key, err := strconv.ParseInt(parts[1], 10, 32)
 	if err != nil {
-		return "", 0, fmt.Errorf("bad key in ID %q: %s", parts[1], err)
+		return "", 0, fmt.Errorf("while converting key in ID %q to int32: %s", parts[1], err)
 	}
 
 	return parts[0], int32(key), nil
@@ -436,7 +436,7 @@ func resourceVSphereComputeClusterVMAffinityRuleFetchObjects(
 }
 
 func resourceVSphereComputeClusterVMAffinityRuleClient(meta interface{}) (*govmomi.Client, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, err
 	}

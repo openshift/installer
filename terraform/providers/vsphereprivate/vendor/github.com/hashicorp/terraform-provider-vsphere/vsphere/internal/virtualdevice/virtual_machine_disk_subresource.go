@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datastore"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/spbm"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/storagepod"
@@ -23,23 +23,6 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 )
-
-// diskNameDeprecationNotice is the deprecation warning for the "name"
-// attribute, which will removed in 2.0. The notice is verbose, so we format it
-// so it looks a little better over CLI.
-//
-// TODO: Remove this in 2.0.
-const diskNameDeprecationNotice = `
-The name attribute for virtual disks will be removed in favor of "label" in
-future releases. To transition existing disks, rename the "name" attribute to
-"label". When doing so, ensure the value of the attribute stays the same.
-
-Note that "label" does not control the name of a VMDK and does not need to bear
-the name of one on new disks or virtual machines. For more information, see the
-documentation for the label attribute at: 
-
-https://www.terraform.io/docs/providers/vsphere/r/virtual_machine.html#label
-`
 
 // diskDatastoreComputedName is a friendly display for disks with datastores
 // marked as computed. This happens in datastore cluster workflows.
@@ -83,18 +66,6 @@ func DiskSubresourceSchema() map[string]*schema.Schema {
 			Computed:      true,
 			ConflictsWith: []string{"datastore_cluster_id"},
 			Description:   "The datastore ID for this virtual disk, if different than the virtual machine.",
-		},
-		"name": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "The file name of the disk. This can be either a name or path relative to the root of the datastore. If simply a name, the disk is located with the virtual machine.",
-			ValidateFunc: func(v interface{}, _ string) ([]string, []error) {
-				if path.Ext(v.(string)) != ".vmdk" {
-					return nil, []error{fmt.Errorf("disk name %s must end in .vmdk", v.(string))}
-				}
-				return nil, nil
-			},
-			Deprecated: diskNameDeprecationNotice,
 		},
 		"path": {
 			Type:          schema.TypeString,
@@ -188,7 +159,7 @@ func DiskSubresourceSchema() map[string]*schema.Schema {
 		// Complex terraform-local things
 		"label": {
 			Type:        schema.TypeString,
-			Optional:    true,
+			Required:    true,
 			Description: "A unique label for this disk.",
 			ValidateFunc: func(v interface{}, _ string) ([]string, []error) {
 				if strings.HasPrefix(v.(string), diskOrphanedPrefix) {
@@ -327,7 +298,7 @@ func diskApplyOperationDelete(
 		newData := newDisk.(map[string]interface{})
 		var name string
 		var err error
-		if name, err = diskLabelOrName(newData); err != nil {
+		if name, err = getDiskLabel(newData); err != nil {
 			return err
 		}
 		if (name == diskDeletedName || name == diskDetachedName) && oldData["uuid"] == newData["uuid"] {
@@ -363,7 +334,7 @@ func diskApplyOperationCreateUpdate(
 ) error {
 	var name string
 	var err error
-	if name, err = diskLabelOrName(newData); err != nil {
+	if name, err = getDiskLabel(newData); err != nil {
 		return err
 	}
 	if name == diskDeletedName || name == diskDetachedName {
@@ -387,10 +358,6 @@ func diskApplyOperationCreateUpdate(
 			oldCopy := omc.(map[string]interface{})
 			oldCopy["datastore_id"] = newData["datastore_id"]
 			oldCopy["keep_on_remove"] = newData["keep_on_remove"]
-			// TODO: Remove these in 2.0, when all attributes should bear a label and
-			// name is gone, and we won't need to exempt transitions.
-			oldCopy["label"] = newData["label"]
-			oldCopy["name"] = newData["name"]
 			if reflect.DeepEqual(oldCopy, newData) {
 				*updates = append(*updates, r.Data())
 				return nil
@@ -553,7 +520,6 @@ func DiskDestroyOperation(d *schema.ResourceData, c *govmomi.Client, l object.Vi
 
 	log.Printf("[DEBUG] DiskDestroyOperation: Detaching devices with keep_on_remove enabled")
 	for oi, oe := range ds {
-
 		m := oe.(map[string]interface{})
 		if !m["keep_on_remove"].(bool) && !m["attach"].(bool) {
 			// We don't care about disks we haven't set to keep
@@ -600,7 +566,7 @@ func DiskDiffOperation(d *schema.ResourceDiff, c *govmomi.Client) error {
 	}
 	for ni, ne := range n.([]interface{}) {
 		nm := ne.(map[string]interface{})
-		name, err := diskLabelOrName(nm)
+		name, err := getDiskLabel(nm)
 		if err != nil {
 			return fmt.Errorf("disk.%d: %s", ni, err)
 		}
@@ -611,15 +577,15 @@ func DiskDiffOperation(d *schema.ResourceDiff, c *govmomi.Client) error {
 		curDiskPath := fmt.Sprintf("disk.%d.path", ni)
 		pathKnown := d.NewValueKnown(curDiskPath)
 		if nm["attach"].(bool) {
-			path := diskPathOrName(nm)
+			diskPath := getDiskPath(nm)
 			if pathKnown {
-				if path == "" {
+				if diskPath == "" {
 					return fmt.Errorf("disk.%d: path or name cannot be empty when using attach", ni)
 				}
-				if _, ok := attachments[path]; ok {
-					return fmt.Errorf("disk: multiple entries trying to attach external disk %s", path)
+				if _, ok := attachments[diskPath]; ok {
+					return fmt.Errorf("disk: multiple entries trying to attach external disk %s", diskPath)
 				}
-				attachments[path] = struct{}{}
+				attachments[diskPath] = struct{}{}
 			} else {
 				log.Printf("[DEBUG] Disk path for disk %d is not known yet.", ni)
 			}
@@ -669,10 +635,10 @@ nextNew:
 			om := oe.(map[string]interface{})
 			var oname, nname string
 			var err error
-			if oname, err = diskLabelOrName(om); err != nil {
+			if oname, err = getDiskLabel(om); err != nil {
 				return fmt.Errorf("disk.%d: %s", oi, err)
 			}
-			if nname, err = diskLabelOrName(nm); err != nil {
+			if nname, err = getDiskLabel(nm); err != nil {
 				return fmt.Errorf("disk.%d: %s", oi, err)
 			}
 			// We extrapolate using the label as a "primary key" of sorts.
@@ -718,9 +684,6 @@ nextNew:
 			return fmt.Errorf("disk.%d: error making updated diff of deleted entry: %s", ni, err)
 		}
 		nm := nv.(map[string]interface{})
-		// Clear out the name. We put the message in label now, even if name was
-		// the item defined.  TODO: Remove this after 2.0.
-		nm["name"] = ""
 		switch {
 		case nm["keep_on_remove"].(bool):
 			fallthrough
@@ -797,7 +760,7 @@ func DiskCloneValidateOperation(d *schema.ResourceDiff, c *govmomi.Client, l obj
 
 		// Do some pre-clone validation. This is mainly to make sure that the disks
 		// clone in a way that is consistent with configuration.
-		targetName, err := diskLabelOrName(tr.Data())
+		targetName, err := getDiskLabel(tr.Data())
 		if err != nil {
 			return fmt.Errorf("%s: %s", tr.Addr(), err)
 		}
@@ -853,7 +816,9 @@ func DiskMigrateRelocateOperation(d *schema.ResourceData, c *govmomi.Client, l o
 	ods, nds := d.GetChange(subresourceTypeDisk)
 
 	var relocators []types.VirtualMachineRelocateSpecDiskLocator
-	var relocateOK bool
+
+	// We definitely need to relocate if the datastore cluster changed
+	relocateOK := d.HasChange("datastore_cluster_id")
 
 	// We are only concerned with resources that would normally be updated, as
 	// incoming or outgoing disks obviously won't need migrating. Hence, this is
@@ -862,7 +827,7 @@ func DiskMigrateRelocateOperation(d *schema.ResourceData, c *govmomi.Client, l o
 		nm := ne.(map[string]interface{})
 		var name string
 		var err error
-		if name, err = diskLabelOrName(nm); err != nil {
+		if name, err = getDiskLabel(nm); err != nil {
 			return nil, false, fmt.Errorf("disk.%d: %s", ni, err)
 		}
 		if name == diskDeletedName || name == diskDetachedName {
@@ -1034,7 +999,7 @@ func DiskPostCloneOperation(d *schema.ResourceData, c *govmomi.Client, l object.
 		if err := rOld.Read(l); err != nil {
 			return nil, nil, fmt.Errorf("%s: %s", rOld.Addr(), err)
 		}
-		new, err := copystructure.Copy(rOld.Data())
+		newValue, err := copystructure.Copy(rOld.Data())
 		if err != nil {
 			return nil, nil, fmt.Errorf("error copying current device state for disk at unit_number %d: %s", src["unit_number"].(int), err)
 		}
@@ -1042,10 +1007,8 @@ func DiskPostCloneOperation(d *schema.ResourceData, c *govmomi.Client, l object.
 			// Skip label, path (path will always be computed here as cloned disks
 			// are not being attached externally), name, datastore_id, and uuid. Also
 			// skip share_count if we the share level isn't custom.
-			//
-			// TODO: Remove "name" after 2.0.
 			switch k {
-			case "path", "name", "datastore_id", "uuid", "thin_provisioned", "eagerly_scrub":
+			case "path", "datastore_id", "uuid", "thin_provisioned", "eagerly_scrub":
 				continue
 			case "io_share_count":
 				if src["io_share_level"] != string(types.SharesLevelCustom) {
@@ -1056,9 +1019,9 @@ func DiskPostCloneOperation(d *schema.ResourceData, c *govmomi.Client, l object.
 					continue
 				}
 			}
-			new.(map[string]interface{})[k] = v
+			newValue.(map[string]interface{})[k] = v
 		}
-		rNew := NewDiskSubresource(c, d, new.(map[string]interface{}), rOld.Data(), i)
+		rNew := NewDiskSubresource(c, d, newValue.(map[string]interface{}), rOld.Data(), i)
 		if !reflect.DeepEqual(rNew.Data(), rOld.Data()) {
 			uspec, err := rNew.Update(l)
 			if err != nil {
@@ -1098,7 +1061,7 @@ func DiskPostCloneOperation(d *schema.ResourceData, c *govmomi.Client, l object.
 // machine's VirtualDeviceList to ensure it will be imported properly, and also
 // saves device addresses into state for disks defined in config. Both the
 // imported device list is sorted by the device's unit number on the SCSI bus.
-func DiskImportOperation(d *schema.ResourceData, c *govmomi.Client, l object.VirtualDeviceList) error {
+func DiskImportOperation(d *schema.ResourceData, l object.VirtualDeviceList) error {
 	log.Printf("[DEBUG] DiskImportOperation: Performing pre-read import and validation of virtual disks")
 	devices := SelectDisks(l, d.Get("scsi_controller_count").(int), d.Get("sata_controller_count").(int), d.Get("ide_controller_count").(int))
 	// Sort the device list, in case it's not sorted already.
@@ -1339,18 +1302,20 @@ func (r *DiskSubresource) Read(l object.VirtualDeviceList) error {
 		}
 	}
 
-	// Set storage policy if the VM exists.
-	vmUUID := r.rdd.Id()
-	if vmUUID != "" {
-		result, err := virtualmachine.MOIDForUUID(r.client, vmUUID)
-		if err != nil {
-			return err
+	if spbm.IsSupported(r.client) {
+		// Set storage policy if the VM exists.
+		vmUUID := r.rdd.Id()
+		if vmUUID != "" {
+			result, err := virtualmachine.MOIDForUUID(r.client, vmUUID)
+			if err != nil {
+				return err
+			}
+			polID, err := spbm.PolicyIDByVirtualDisk(r.client, result.MOID, r.Get("key").(int))
+			if err != nil {
+				return err
+			}
+			r.Set("storage_policy_id", polID)
 		}
-		polID, err := spbm.PolicyIDByVirtualDisk(r.client, result.MOID, r.Get("key").(int))
-		if err != nil {
-			return err
-		}
-		r.Set("storage_policy_id", polID)
 	}
 
 	log.Printf("[DEBUG] %s: Read finished (key and device address may have changed)", r)
@@ -1437,21 +1402,9 @@ func (r *DiskSubresource) Delete(l object.VirtualDeviceList) ([]types.BaseVirtua
 // and old diffs.
 func (r *DiskSubresource) DiffExisting() error {
 	log.Printf("[DEBUG] %s: Beginning normalization of existing disk", r)
-	name, err := diskLabelOrName(r.data)
+	name, err := getDiskLabel(r.data)
 	if err != nil {
 		return err
-	}
-	// Prevent a backward migration of label -> name. TODO: Remove this after
-	// 2.0.
-	olabel, nlabel := r.GetChange("label")
-	if olabel != "" && nlabel == "" {
-		return errors.New("cannot migrate from label to name")
-	}
-	// Carry forward the name attribute like we used to if no label is defined.
-	// TODO: Remove this after 2.0.
-	if nlabel == "" {
-		oname, _ := r.GetChange("name")
-		r.Set("name", oname.(string))
 	}
 
 	// set some computed fields: key, device_address, and uuid will always be
@@ -1534,7 +1487,7 @@ func (r *DiskSubresource) DiffExisting() error {
 // that can't be done in schema alone. Should be run on new and existing disks.
 func (r *DiskSubresource) DiffGeneral() error {
 	log.Printf("[DEBUG] %s: Beginning diff validation", r)
-	name, err := diskLabelOrName(r.data)
+	name, err := getDiskLabel(r.data)
 	if err != nil {
 		return err
 	}
@@ -1578,11 +1531,8 @@ func (r *DiskSubresource) DiffGeneral() error {
 		case r.Get("keep_on_remove").(bool):
 			return fmt.Errorf("keep_on_remove for disk %q is implicit when attach is set, please remove this setting", name)
 		}
-	} else {
-		// Enforce size as a required field when attach is not set
-		if r.Get("size").(int) < 1 {
-			return fmt.Errorf("size for disk %q: required option not set", name)
-		}
+	} else if r.Get("size").(int) < 1 {
+		return fmt.Errorf("size for disk %q: required option not set", name)
 	}
 	// Block certain options from being set depending on the vSphere version.
 	version := viapi.ParseVersionFromClient(r.client)
@@ -1683,7 +1633,7 @@ func (r *DiskSubresource) blockRelocateAttachedDisks() error {
 		return nil
 	}
 	if attach.(bool) {
-		return fmt.Errorf("externally attached disk %q cannot be migrated", diskPathOrName(r.data))
+		return fmt.Errorf("externally attached disk %q cannot be migrated", getDiskPath(r.data))
 	}
 	return nil
 }
@@ -1744,7 +1694,7 @@ func (r *DiskSubresource) Relocate(l object.VirtualDeviceList, clone bool) (type
 // time of instantiation, the path of the disk, and the current device
 // key and address.
 func (r *DiskSubresource) String() string {
-	p := diskPathOrName(r.data)
+	p := getDiskPath(r.data)
 	if p == "" {
 		p = "<unknown>"
 	}
@@ -1840,7 +1790,6 @@ func (r *DiskSubresource) assignBackingInfo(disk *types.VirtualDisk) error {
 				return fmt.Errorf("no datastore was set and was unable to find a default to fall back to")
 			}
 			dsID = vmprops.Datastore[0].Value
-
 		}
 	}
 	ds, err := datastore.FromID(r.client, dsID)
@@ -1854,7 +1803,7 @@ func (r *DiskSubresource) assignBackingInfo(disk *types.VirtualDisk) error {
 		// No path interpolation is performed any more for attached disks - the
 		// provided path must be the full path to the virtual disk you want to
 		// attach.
-		diskName = diskPathOrName(r.data)
+		diskName = getDiskPath(r.data)
 	}
 
 	backing := disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo)
@@ -2001,15 +1950,15 @@ func (r *Subresource) findControllerInfo(l object.VirtualDeviceList, disk *types
 		if unit > sc.GetVirtualSCSIController().ScsiCtlrUnitNumber {
 			unit--
 		}
-		unit = unit + 15*sc.GetVirtualSCSIController().BusNumber
+		unit += 15 * sc.GetVirtualSCSIController().BusNumber
 		return int(unit), ctlr.(types.BaseVirtualController), nil
 	case types.BaseVirtualSATAController:
 		unit := *disk.UnitNumber
-		unit = unit + 30*sc.GetVirtualSATAController().BusNumber
+		unit += 30 * sc.GetVirtualSATAController().BusNumber
 		return int(unit), ctlr.(types.BaseVirtualController), nil
 	case *types.VirtualIDEController:
 		unit := *disk.UnitNumber
-		unit = unit + 2*sc.GetVirtualController().BusNumber
+		unit += 2 * sc.GetVirtualController().BusNumber
 		return int(unit), ctlr.(types.BaseVirtualController), nil
 	}
 	return 0, nil, fmt.Errorf("unable to locate controller info for disk: %d", disk.Key)
@@ -2100,16 +2049,6 @@ func (s virtualDiskSubresourceSorter) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-// datastorePathHasBase is a helper to check if a datastore path's file matches
-// a supplied file name.
-func datastorePathHasBase(p, b string) bool {
-	dp := &object.DatastorePath{}
-	if ok := dp.FromString(p); !ok {
-		return false
-	}
-	return path.Base(dp.Path) == path.Base(b)
-}
-
 // SelectDisks looks for disks that Terraform is supposed to manage. count is
 // the number of controllers that Terraform is managing and serves as an upper
 // limit (count - 1) of the SCSI bus number for a controller that eligible
@@ -2141,54 +2080,27 @@ func SelectDisks(l object.VirtualDeviceList, scsiCount, sataCount, ideCount int)
 	return devices
 }
 
-// diskLabelOrName is a helper method that returns the unique label for a disk
-// - either its label or name. An error is returned if both are defined.
-//
-// TODO: This method will be removed in future releases.
-func diskLabelOrName(data map[string]interface{}) (string, error) {
-	var label, name string
+// getDiskLabel is a helper method that returns the unique label for a disk
+func getDiskLabel(data map[string]interface{}) (string, error) {
+	var label string
 	if v, ok := data["label"]; ok && v != nil {
 		label = v.(string)
-	}
-	if v, ok := data["name"]; ok && v != nil {
-		name = v.(string)
-	}
-	if name != "" {
-		name = path.Base(name)
+	} else {
+		return "", errors.New("disk label must be defined and cannot be computed")
 	}
 
-	log.Printf("[DEBUG] diskLabelOrName: label: %q name: %q", label, name)
-	switch {
-	case label == "" && name == "":
-		return "", errors.New("disk label or name must be defined and cannot be computed")
-	case label != "" && name != "":
-		return "", errors.New("disk label and name cannot be defined at the same time")
-	case label != "":
-		log.Printf("[DEBUG] diskLabelOrName: Using defined label value %q", label)
-		return label, nil
-	}
-	log.Printf("[DEBUG] diskLabelOrName: Using defined name value as fallback %q", name)
-	return name, nil
+	return label, nil
 }
 
-// diskPathOrName is a helper method that returns the path for a disk - either
-// its path attribute or name as a fallback.
-//
-// TODO: This method will be removed in future releases.
-func diskPathOrName(data map[string]interface{}) string {
-	var path, name string
+// getDiskPath is a helper method that returns the path for a disk
+// or an empty string if one is not set.
+func getDiskPath(data map[string]interface{}) string {
+	var diskPath string
 	if v, ok := data["path"]; ok && v != nil {
-		path = v.(string)
+		diskPath = v.(string)
 	}
-	if v, ok := data["name"]; ok && v != nil {
-		name = v.(string)
-	}
-	if path != "" {
-		log.Printf("[DEBUG] diskPathOrName: Using defined path value %q", path)
-		return path
-	}
-	log.Printf("[DEBUG] diskPathOrName: Using defined name value as fallback %q", name)
-	return name
+
+	return diskPath
 }
 
 // findVirtualDisk locates a virtual disk by it UUID, or by its device address
@@ -2251,11 +2163,11 @@ func diskUUIDMatch(device types.BaseVirtualDevice, uuid string) bool {
 // data gets cleared, which seems to happen on upgrades.
 func diskCapacityInGiB(disk *types.VirtualDisk) int {
 	if disk.CapacityInBytes > 0 {
-		return int(structure.ByteToGiB(disk.CapacityInBytes).(int64))
+		return structure.ByteToGiB(disk.CapacityInBytes)
 	}
 	log.Printf(
 		"[DEBUG] diskCapacityInGiB: capacityInBytes missing for for %s, falling back to capacityInKB",
 		object.VirtualDeviceList{}.Name(disk),
 	)
-	return int(structure.ByteToGiB(disk.CapacityInKB * 1024).(int64))
+	return structure.ByteToGiB(disk.CapacityInKB * 1024)
 }

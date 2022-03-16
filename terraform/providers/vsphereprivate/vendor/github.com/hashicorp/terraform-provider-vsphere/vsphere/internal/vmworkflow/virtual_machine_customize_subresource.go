@@ -6,8 +6,8 @@ import (
 	"net"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -150,6 +150,7 @@ func VirtualMachineCustomizeSchema() map[string]*schema.Schema {
 					Optional:      true,
 					ConflictsWith: []string{cWindowsKeyPrefix + "." + "workgroup"},
 					Description:   "The user account of the domain administrator used to join this virtual machine to the domain.",
+					RequiredWith:  []string{cWindowsKeyPrefix + "." + "join_domain"},
 				},
 				"domain_admin_password": {
 					Type:          schema.TypeString,
@@ -157,12 +158,14 @@ func VirtualMachineCustomizeSchema() map[string]*schema.Schema {
 					Sensitive:     true,
 					ConflictsWith: []string{cWindowsKeyPrefix + "." + "workgroup"},
 					Description:   "The password of the domain administrator used to join this virtual machine to the domain.",
+					RequiredWith:  []string{cWindowsKeyPrefix + "." + "join_domain"},
 				},
 				"join_domain": {
 					Type:          schema.TypeString,
 					Optional:      true,
 					ConflictsWith: []string{cWindowsKeyPrefix + "." + "workgroup"},
 					Description:   "The domain that the virtual machine should join.",
+					RequiredWith:  []string{cWindowsKeyPrefix + "." + "domain_admin_user", cWindowsKeyPrefix + "." + "domain_admin_password"},
 				},
 				"workgroup": {
 					Type:          schema.TypeString,

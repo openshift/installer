@@ -3,8 +3,8 @@ package vsphere
 import (
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -243,7 +243,7 @@ func expandVmwareDistributedVirtualSwitchVlanIDSpec(d *schema.ResourceData) *typ
 // flattenVmwareDistributedVirtualSwitchVlanIDSpec reads various fields from a
 // VmwareDistributedVirtualSwitchVlanIdSpec into the passed in ResourceData.
 func flattenVmwareDistributedVirtualSwitchVlanIDSpec(d *schema.ResourceData, obj *types.VmwareDistributedVirtualSwitchVlanIdSpec) error {
-	d.Set("vlan_id", obj.VlanId)
+	_ = d.Set("vlan_id", obj.VlanId)
 	return nil
 }
 
@@ -284,9 +284,7 @@ func flattenVmwareDistributedVirtualSwitchTrunkVlanSpec(d *schema.ResourceData, 
 		m["max_vlan"] = rng.End
 		s = append(s, m)
 	}
-	if err := d.Set("vlan_range", s); err != nil {
-		return err
-	}
+	_ = d.Set("vlan_range", s)
 	return nil
 }
 
@@ -302,7 +300,7 @@ func expandVmwareDistributedVirtualSwitchPvlanSpec(d *schema.ResourceData) *type
 // flattenVmwareDistributedVirtualSwitchPvlanSpec reads various fields from a
 // VmwareDistributedVirtualSwitchPvlanSpec into the passed in ResourceData.
 func flattenVmwareDistributedVirtualSwitchPvlanSpec(d *schema.ResourceData, obj *types.VmwareDistributedVirtualSwitchPvlanSpec) error {
-	d.Set("port_private_secondary_vlan_id", obj.PvlanId)
+	_ = d.Set("port_private_secondary_vlan_id", obj.PvlanId)
 	return nil
 }
 
@@ -368,7 +366,7 @@ func flattenDVSFailureCriteria(d *schema.ResourceData, obj *types.DVSFailureCrit
 		return nil
 	}
 
-	structure.SetBoolPolicy(d, "check_beacon", obj.CheckBeacon)
+	_ = structure.SetBoolPolicy(d, "check_beacon", obj.CheckBeacon)
 	return nil
 }
 
@@ -396,9 +394,7 @@ func flattenVMwareUplinkPortOrderPolicy(d *schema.ResourceData, obj *types.VMwar
 	if err := d.Set("active_uplinks", obj.ActiveUplinkPort); err != nil {
 		return err
 	}
-	if err := d.Set("standby_uplinks", obj.StandbyUplinkPort); err != nil {
-		return err
-	}
+	_ = d.Set("standby_uplinks", obj.StandbyUplinkPort)
 	return nil
 }
 
@@ -426,16 +422,14 @@ func flattenVmwareUplinkPortTeamingPolicy(d *schema.ResourceData, obj *types.Vmw
 		return nil
 	}
 
-	structure.SetStringPolicy(d, "teaming_policy", obj.Policy)
-	structure.SetBoolPolicy(d, "notify_switches", obj.NotifySwitches)
-	structure.SetBoolPolicyReverse(d, "failback", obj.RollingOrder)
+	_ = structure.SetStringPolicy(d, "teaming_policy", obj.Policy)
+	_ = structure.SetBoolPolicy(d, "notify_switches", obj.NotifySwitches)
+	_ = structure.SetBoolPolicyReverse(d, "failback", obj.RollingOrder)
 
 	if err := flattenDVSFailureCriteria(d, obj.FailureCriteria); err != nil {
 		return err
 	}
-	if err := flattenVMwareUplinkPortOrderPolicy(d, obj.UplinkPortOrder); err != nil {
-		return err
-	}
+	_ = flattenVMwareUplinkPortOrderPolicy(d, obj.UplinkPortOrder)
 	return nil
 }
 
@@ -461,9 +455,9 @@ func flattenDVSSecurityPolicy(d *schema.ResourceData, obj *types.DVSSecurityPoli
 		return nil
 	}
 
-	structure.SetBoolPolicy(d, "allow_promiscuous", obj.AllowPromiscuous)
-	structure.SetBoolPolicy(d, "allow_mac_changes", obj.MacChanges)
-	structure.SetBoolPolicy(d, "allow_forged_transmits", obj.ForgedTransmits)
+	_ = structure.SetBoolPolicy(d, "allow_promiscuous", obj.AllowPromiscuous)
+	_ = structure.SetBoolPolicy(d, "allow_mac_changes", obj.MacChanges)
+	_ = structure.SetBoolPolicy(d, "allow_forged_transmits", obj.ForgedTransmits)
 	return nil
 }
 
@@ -488,8 +482,8 @@ func flattenVMwareUplinkLacpPolicy(d *schema.ResourceData, obj *types.VMwareUpli
 		return nil
 	}
 
-	structure.SetBoolPolicy(d, "lacp_enabled", obj.Enable)
-	structure.SetStringPolicy(d, "lacp_mode", obj.Mode)
+	_ = structure.SetBoolPolicy(d, "lacp_enabled", obj.Enable)
+	_ = structure.SetStringPolicy(d, "lacp_mode", obj.Mode)
 	return nil
 }
 
@@ -516,10 +510,10 @@ func flattenDVSTrafficShapingPolicyIngress(d *schema.ResourceData, obj *types.DV
 		return nil
 	}
 
-	structure.SetBoolPolicy(d, "ingress_shaping_enabled", obj.Enabled)
-	structure.SetLongPolicy(d, "ingress_shaping_average_bandwidth", obj.AverageBandwidth)
-	structure.SetLongPolicy(d, "ingress_shaping_peak_bandwidth", obj.PeakBandwidth)
-	structure.SetLongPolicy(d, "ingress_shaping_burst_size", obj.BurstSize)
+	_ = structure.SetBoolPolicy(d, "ingress_shaping_enabled", obj.Enabled)
+	_ = structure.SetLongPolicy(d, "ingress_shaping_average_bandwidth", obj.AverageBandwidth)
+	_ = structure.SetLongPolicy(d, "ingress_shaping_peak_bandwidth", obj.PeakBandwidth)
+	_ = structure.SetLongPolicy(d, "ingress_shaping_burst_size", obj.BurstSize)
 
 	return nil
 }
@@ -547,17 +541,17 @@ func flattenDVSTrafficShapingPolicyEgress(d *schema.ResourceData, obj *types.DVS
 		return nil
 	}
 
-	structure.SetBoolPolicy(d, "egress_shaping_enabled", obj.Enabled)
-	structure.SetLongPolicy(d, "egress_shaping_average_bandwidth", obj.AverageBandwidth)
-	structure.SetLongPolicy(d, "egress_shaping_peak_bandwidth", obj.PeakBandwidth)
-	structure.SetLongPolicy(d, "egress_shaping_burst_size", obj.BurstSize)
+	_ = structure.SetBoolPolicy(d, "egress_shaping_enabled", obj.Enabled)
+	_ = structure.SetLongPolicy(d, "egress_shaping_average_bandwidth", obj.AverageBandwidth)
+	_ = structure.SetLongPolicy(d, "egress_shaping_peak_bandwidth", obj.PeakBandwidth)
+	_ = structure.SetLongPolicy(d, "egress_shaping_burst_size", obj.BurstSize)
 	return nil
 }
 
 // expandVMwareDVSPortSetting reads certain ResourceData keys and
 // returns a VMwareDVSPortSetting.
 func expandVMwareDVSPortSetting(d *schema.ResourceData, resourceType string) *types.VMwareDVSPortSetting {
-	var lacpPolicy *types.VMwareUplinkLacpPolicy = nil
+	var lacpPolicy *types.VMwareUplinkLacpPolicy
 	if resourceType == "distributed_virtual_switch" {
 		lacpPolicy = expandVMwareUplinkLacpPolicy(d)
 	}
@@ -589,10 +583,10 @@ func flattenVMwareDVSPortSetting(d *schema.ResourceData, obj *types.VMwareDVSPor
 		return nil
 	}
 
-	structure.SetBoolPolicy(d, "block_all_ports", obj.Blocked)
-	structure.SetBoolPolicy(d, "netflow_enabled", obj.IpfixEnabled)
-	structure.SetBoolPolicy(d, "tx_uplink", obj.TxUplink)
-	structure.SetBoolPolicy(d, "directpath_gen2_allowed", obj.VmDirectPathGen2Allowed)
+	_ = structure.SetBoolPolicy(d, "block_all_ports", obj.Blocked)
+	_ = structure.SetBoolPolicy(d, "netflow_enabled", obj.IpfixEnabled)
+	_ = structure.SetBoolPolicy(d, "tx_uplink", obj.TxUplink)
+	_ = structure.SetBoolPolicy(d, "directpath_gen2_allowed", obj.VmDirectPathGen2Allowed)
 
 	if err := flattenDVSTrafficShapingPolicyIngress(d, obj.InShapingPolicy); err != nil {
 		return err
@@ -609,8 +603,5 @@ func flattenVMwareDVSPortSetting(d *schema.ResourceData, obj *types.VMwareDVSPor
 	if err := flattenDVSSecurityPolicy(d, obj.SecurityPolicy); err != nil {
 		return err
 	}
-	if err := flattenVMwareUplinkLacpPolicy(d, obj.LacpPolicy); err != nil {
-		return err
-	}
-	return nil
+	return flattenVMwareUplinkLacpPolicy(d, obj.LacpPolicy)
 }

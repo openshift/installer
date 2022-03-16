@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/dvportgroup"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
@@ -47,7 +47,7 @@ func resourceVSphereDistributedPortGroup() *schema.Resource {
 }
 
 func resourceVSphereDistributedPortGroupCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func resourceVSphereDistributedPortGroupCreate(d *schema.ResourceData, meta inte
 	}
 
 	d.SetId(pg.Reference().Value)
-	d.Set("key", props.Key)
+	_ = d.Set("key", props.Key)
 
 	// Apply any pending tags now
 	if tagsClient != nil {
@@ -108,7 +108,7 @@ func resourceVSphereDistributedPortGroupCreate(d *schema.ResourceData, meta inte
 }
 
 func resourceVSphereDistributedPortGroupRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}
@@ -122,27 +122,27 @@ func resourceVSphereDistributedPortGroupRead(d *schema.ResourceData, meta interf
 		return fmt.Errorf("error fetching portgroup properties: %s", err)
 	}
 
-	d.Set("key", props.Key)
+	_ = d.Set("key", props.Key)
 
 	if err := flattenDVPortgroupConfigInfo(d, props.Config); err != nil {
 		return err
 	}
 
-	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
+	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
 		if err := readTagsForResource(tagsClient, pg, d); err != nil {
 			return fmt.Errorf("error reading tags: %s", err)
 		}
 	}
 
 	if customattribute.IsSupported(client) {
-		customattribute.ReadFromResource(client, props.Entity(), d)
+		customattribute.ReadFromResource(props.Entity(), d)
 	}
 
 	return nil
 }
 
 func resourceVSphereDistributedPortGroupUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func resourceVSphereDistributedPortGroupUpdate(d *schema.ResourceData, meta inte
 }
 
 func resourceVSphereDistributedPortGroupDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}
@@ -222,12 +222,12 @@ func resourceVSphereDistributedPortGroupImport(d *schema.ResourceData, meta inte
 	// subsequent plans, if it is not, the resource will be in an unusable state
 	// as all query calls for DVS CRUD calls require the correct DVS UUID in
 	// addition to the portgroup UUID.
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, err
 	}
-	moId := d.Id()
-	pg, err := dvportgroup.FromPath(client, moId, nil)
+	moID := d.Id()
+	pg, err := dvportgroup.FromPath(client, moID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error locating portgroup: %s", err)
 	}
@@ -249,7 +249,7 @@ func resourceVSphereDistributedPortGroupImport(d *schema.ResourceData, meta inte
 		return nil, fmt.Errorf("error fetching DVS properties: %s", err)
 	}
 
-	d.Set("distributed_virtual_switch_uuid", dvProps.Uuid)
+	_ = d.Set("distributed_virtual_switch_uuid", dvProps.Uuid)
 
 	return []*schema.ResourceData{d}, nil
 }

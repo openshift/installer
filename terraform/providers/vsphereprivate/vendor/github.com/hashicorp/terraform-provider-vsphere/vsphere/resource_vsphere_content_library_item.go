@@ -1,10 +1,11 @@
 package vsphere
 
 import (
+	"context"
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/contentlibrary"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualmachine"
 )
@@ -67,7 +68,7 @@ func resourceVSphereContentLibraryItem() *schema.Resource {
 	}
 }
 
-func resourceVSphereContentLibraryItemUpgradeV0(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func resourceVSphereContentLibraryItemUpgradeV0(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
 	if len(rawState["file_url"].([]interface{})) < 1 {
 		rawState["file_url"] = interface{}("")
 		return rawState, nil
@@ -86,7 +87,7 @@ func resourceVSphereContentLibraryItemUpgradeV0(rawState map[string]interface{},
 
 func resourceVSphereContentLibraryItemRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] resourceVSphereContentLibraryItemRead : Reading Content Library item (%s)", d.Id())
-	rc := meta.(*VSphereClient).restClient
+	rc := meta.(*Client).restClient
 	item, err := contentlibrary.ItemFromID(rc, d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404 Not Found") {
@@ -95,24 +96,24 @@ func resourceVSphereContentLibraryItemRead(d *schema.ResourceData, meta interfac
 		}
 		return err
 	}
-	d.Set("name", item.Name)
-	d.Set("description", item.Description)
-	d.Set("type", item.Type)
-	d.Set("library_id", item.LibraryID)
+	_ = d.Set("name", item.Name)
+	_ = d.Set("description", item.Description)
+	_ = d.Set("type", item.Type)
+	_ = d.Set("library_id", item.LibraryID)
 	log.Printf("[DEBUG] resourceVSphereContentLibraryItemRead : Content Library item (%s) read is complete", d.Id())
 	return nil
 }
 
 func resourceVSphereContentLibraryItemCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] resourceVSphereContentLibraryItemCreate : Beginning Content Library item (%s) creation", d.Get("name").(string))
-	rc := meta.(*VSphereClient).restClient
+	rc := meta.(*Client).restClient
 	lib, err := contentlibrary.FromID(rc, d.Get("library_id").(string))
 	if err != nil {
 		return err
 	}
 	var moid virtualmachine.MOIDForUUIDResult
 	if uuid, ok := d.GetOk("source_uuid"); ok {
-		moid, err = virtualmachine.MOIDForUUID(meta.(*VSphereClient).vimClient, uuid.(string))
+		moid, err = virtualmachine.MOIDForUUID(meta.(*Client).vimClient, uuid.(string))
 		if err != nil {
 			return err
 		}
@@ -128,7 +129,7 @@ func resourceVSphereContentLibraryItemCreate(d *schema.ResourceData, meta interf
 
 func resourceVSphereContentLibraryItemDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] resourceVSphereContentLibraryItemDelete : Deleting Content Library item (%s)", d.Id())
-	rc := meta.(*VSphereClient).restClient
+	rc := meta.(*Client).restClient
 	item, err := contentlibrary.ItemFromID(rc, d.Id())
 	if err != nil {
 		return err
@@ -137,7 +138,7 @@ func resourceVSphereContentLibraryItemDelete(d *schema.ResourceData, meta interf
 }
 
 func resourceVSphereContentLibraryItemImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*VSphereClient).restClient
+	client := meta.(*Client).restClient
 	_, err := contentlibrary.ItemFromID(client, d.Id())
 	if err != nil {
 		return nil, err

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -57,12 +57,9 @@ func expandHostPortGroupSpec(d *schema.ResourceData) *types.HostPortGroupSpec {
 // flattenHostPortGroupSpec reads various fields from a HostPortGroupSpec into
 // the passed in ResourceData.
 func flattenHostPortGroupSpec(d *schema.ResourceData, obj *types.HostPortGroupSpec) error {
-	d.Set("vlan_id", obj.VlanId)
-	d.Set("virtual_switch_name", obj.VswitchName)
-	if err := flattenHostNetworkPolicy(d, &obj.Policy); err != nil {
-		return err
-	}
-	return nil
+	_ = d.Set("vlan_id", obj.VlanId)
+	_ = d.Set("virtual_switch_name", obj.VswitchName)
+	return flattenHostNetworkPolicy(d, &obj.Policy)
 }
 
 // calculateComputedPolicy is a utility function to compute a map of state

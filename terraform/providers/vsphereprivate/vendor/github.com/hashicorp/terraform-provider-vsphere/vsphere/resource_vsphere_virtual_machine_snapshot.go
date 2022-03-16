@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualmachine"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -58,7 +58,7 @@ func resourceVSphereVirtualMachineSnapshot() *schema.Resource {
 }
 
 func resourceVSphereVirtualMachineSnapshotCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	vm, err := virtualmachine.FromUUID(client, d.Get("virtual_machine_uuid").(string))
 	if err != nil {
 		return fmt.Errorf("Error while getting the VirtualMachine :%s", err)
@@ -67,16 +67,14 @@ func resourceVSphereVirtualMachineSnapshotCreate(d *schema.ResourceData, meta in
 	defer cancel()
 	task, err := vm.CreateSnapshot(ctx, d.Get("snapshot_name").(string), d.Get("description").(string), d.Get("memory").(bool), d.Get("quiesce").(bool))
 	if err != nil {
-		return fmt.Errorf("Error while creating snapshot: %s", err)
+		log.Printf("[DEBUG] Error While Creating the Task for Create Snapshot: %v", err)
+		return fmt.Errorf("error While Creating the Task for Create Snapshot:: %s", err)
 	}
+	log.Printf("[DEBUG] Task created for Create Snapshot: %v", task)
+
 	tctx, tcancel := context.WithTimeout(context.Background(), defaultAPITimeout)
 	defer tcancel()
 	taskInfo, err := task.WaitForResult(tctx, nil)
-	if err != nil {
-		log.Printf("[DEBUG] Error While Creating the Task for Create Snapshot: %v", err)
-		return fmt.Errorf(" Error While Creating the Task for Create Snapshot: %s", err)
-	}
-	log.Printf("[DEBUG] Task created for Create Snapshot: %v", task)
 	if err != nil {
 		log.Printf("[DEBUG] Error While waiting for the Task for Create Snapshot: %v", err)
 		return fmt.Errorf(" Error While waiting for the Task for Create Snapshot: %s", err)
@@ -88,12 +86,12 @@ func resourceVSphereVirtualMachineSnapshotCreate(d *schema.ResourceData, meta in
 }
 
 func resourceVSphereVirtualMachineSnapshotDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	vm, err := virtualmachine.FromUUID(client, d.Get("virtual_machine_uuid").(string))
 	if err != nil {
 		return fmt.Errorf("Error while getting the VirtualMachine :%s", err)
 	}
-	resourceVSphereVirtualMachineSnapshotRead(d, meta)
+
 	if d.Id() == "" {
 		log.Printf("[DEBUG] Error While finding the Snapshot: %v", err)
 		return nil
@@ -106,7 +104,6 @@ func resourceVSphereVirtualMachineSnapshotDelete(d *schema.ResourceData, meta in
 		consolidate := v.(bool)
 		consolidatePtr = &consolidate
 	} else {
-
 		consolidate := true
 		consolidatePtr = &consolidate
 	}
@@ -135,7 +132,7 @@ func resourceVSphereVirtualMachineSnapshotDelete(d *schema.ResourceData, meta in
 }
 
 func resourceVSphereVirtualMachineSnapshotRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	vm, err := virtualmachine.FromUUID(client, d.Get("virtual_machine_uuid").(string))
 	if err != nil {
 		return fmt.Errorf("Error while getting the VirtualMachine :%s", err)
