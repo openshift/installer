@@ -36,6 +36,8 @@ import (
 	ibmcloudvalidation "github.com/openshift/installer/pkg/types/ibmcloud/validation"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	libvirtvalidation "github.com/openshift/installer/pkg/types/libvirt/validation"
+	"github.com/openshift/installer/pkg/types/nutanix"
+	nutanixvalidation "github.com/openshift/installer/pkg/types/nutanix/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 	"github.com/openshift/installer/pkg/types/ovirt"
@@ -507,6 +509,11 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 	if platform.Ovirt != nil {
 		validate(ovirt.Name, platform.Ovirt, func(f *field.Path) field.ErrorList {
 			return ovirtvalidation.ValidatePlatform(platform.Ovirt, f)
+		})
+	}
+	if platform.Nutanix != nil {
+		validate(nutanix.Name, platform.Nutanix, func(f *field.Path) field.ErrorList {
+			return nutanixvalidation.ValidatePlatform(platform.Nutanix, f)
 		})
 	}
 	return allErrs
