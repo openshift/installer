@@ -1,4 +1,36 @@
-## 0.23.0 (Unreleased)
+## 0.24.0 (December 13, 2021)
+
+UPGRADE NOTES
+
+* Set Go minimum version to 1.14 [GH-2294](https://github.com/gophercloud/gophercloud/pull/2294)
+
+IMPROVEMENTS
+
+* Added `blockstorage/v3/qos.Get` [GH-2283](https://github.com/gophercloud/gophercloud/pull/2283)
+* Added `blockstorage/v3/qos.Update` [GH-2283](https://github.com/gophercloud/gophercloud/pull/2283)
+* Added `blockstorage/v3/qos.DeleteKeys` [GH-2283](https://github.com/gophercloud/gophercloud/pull/2283)
+* Added `blockstorage/v3/qos.Associate` [GH-2284](https://github.com/gophercloud/gophercloud/pull/2284)
+* Added `blockstorage/v3/qos.Disassociate` [GH-2284](https://github.com/gophercloud/gophercloud/pull/2284)
+* Added `blockstorage/v3/qos.DisassociateAll` [GH-2284](https://github.com/gophercloud/gophercloud/pull/2284)
+* Added `blockstorage/v3/qos.ListAssociations` [GH-2284](https://github.com/gophercloud/gophercloud/pull/2284)
+
+## 0.23.0 (November 12, 2021)
+
+IMPROVEMENTS
+
+* Added `networking/v2/extensions/agents.ListBGPSpeakers` [GH-2229](https://github.com/gophercloud/gophercloud/pull/2229)
+* Added `networking/v2/extensions/bgp/speakers.BGPSpeaker` [GH-2229](https://github.com/gophercloud/gophercloud/pull/2229)
+* Added `identity/v3/roles.Project.Domain` [GH-2235](https://github.com/gophercloud/gophercloud/pull/2235)
+* Added `identity/v3/roles.User.Domain` [GH-2235](https://github.com/gophercloud/gophercloud/pull/2235)
+* Added `identity/v3/roles.Group.Domain` [GH-2235](https://github.com/gophercloud/gophercloud/pull/2235)
+* Added `loadbalancer/v2/pools.CreateOpts.Tags` [GH-2237](https://github.com/gophercloud/gophercloud/pull/2237)
+* Added `loadbalancer/v2/pools.UpdateOpts.Tags` [GH-2237](https://github.com/gophercloud/gophercloud/pull/2237)
+* Added `loadbalancer/v2/pools.Pool.Tags` [GH-2237](https://github.com/gophercloud/gophercloud/pull/2237)
+* Added `networking/v2/extensions/bgp/speakers.List` [GH-2238](https://github.com/gophercloud/gophercloud/pull/2238)
+* Added `networking/v2/extensions/bgp/speakers.Get` [GH-2238](https://github.com/gophercloud/gophercloud/pull/2238)
+* Added `compute/v2/extensions/keypairs.CreateOpts.Type` [GH-2231](https://github.com/gophercloud/gophercloud/pull/2231)
+* When doing Keystone re-authentification, keep the error if it failed [GH-2259](https://github.com/gophercloud/gophercloud/pull/2259)
+* Added new loadbalancer pool monitor types (TLS-HELLO, UDP-CONNECT and SCTP) [GH-2237](https://github.com/gophercloud/gophercloud/pull/2261)
 
 ## 0.22.0 (October 7, 2021)
 

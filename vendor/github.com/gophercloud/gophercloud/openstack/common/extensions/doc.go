@@ -26,11 +26,11 @@ Example of Retrieving Compute Extensions
 		Region: os.Getenv("OS_REGION_NAME"),
 	})
 
-	allPages, err := extensions.List(computeClient).Allpages()
+	allPages, err := extensions.List(computeClient).AllPages()
 	allExtensions, err := extensions.ExtractExtensions(allPages)
 
 	for _, extension := range allExtensions{
-		fmt.Println("%+v\n", extension)
+		fmt.Printf("%+v\n", extension)
 	}
 
 
@@ -42,11 +42,11 @@ Example of Retrieving Network Extensions
 		Region: os.Getenv("OS_REGION_NAME"),
 	})
 
-	allPages, err := extensions.List(networkClient).Allpages()
+	allPages, err := extensions.List(networkClient).AllPages()
 	allExtensions, err := extensions.ExtractExtensions(allPages)
 
 	for _, extension := range allExtensions{
-		fmt.Println("%+v\n", extension)
+		fmt.Printf("%+v\n", extension)
 	}
 */
 package extensions

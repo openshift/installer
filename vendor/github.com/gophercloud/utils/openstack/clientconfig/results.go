@@ -126,6 +126,13 @@ type AuthInfo struct {
 	// DefaultDomain is the domain ID to fall back on if no other domain has
 	// been specified and a domain is required for scope.
 	DefaultDomain string `yaml:"default_domain,omitempty" json:"default_domain,omitempty"`
+
+	// AllowReauth should be set to true if you grant permission for Gophercloud to
+	// cache your credentials in memory, and to allow Gophercloud to attempt to
+	// re-authenticate automatically if/when your token expires.  If you set it to
+	// false, it will not cache these settings, but re-authentication will not be
+	// possible.  This setting defaults to false.
+	AllowReauth bool `yaml:"allow_reauth,omitempty" json:"allow_reauth,omitempty"`
 }
 
 // Region represents a region included as part of cloud in clouds.yaml
