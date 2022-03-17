@@ -27,6 +27,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	aztypes "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -298,7 +299,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-
 		auth := azuretfvars.Auth{
 			SubscriptionID: session.Credentials.SubscriptionID,
 			ClientID:       session.Credentials.ClientID,
@@ -320,6 +320,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		workerConfigs := make([]*machinev1beta1.AzureMachineProviderSpec, len(workers))
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec)
+		}
+		client := aztypes.NewClient(session)
+		hyperVGeneration, err := client.GetHyperVGenerationVersion(context.TODO(), masterConfigs[0].VMSize,
+			masterConfigs[0].OSDisk.ManagedDisk.StorageAccountType, masterConfigs[0].Location)
+		if err != nil {
+			return err
 		}
 
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
@@ -351,6 +357,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				OutboundType:                    installConfig.Config.Azure.OutboundType,
 				BootstrapIgnStub:                bootstrapIgnStub,
 				BootstrapIgnitionURLPlaceholder: bootstrapIgnURLPlaceholder,
+				HyperVGeneration:                hyperVGeneration,
 			},
 		)
 		if err != nil {

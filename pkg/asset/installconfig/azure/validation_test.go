@@ -96,7 +96,6 @@ var (
 	nonpremiumInstanceTypeDiskControlPlane = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.InstanceType = "Standard_D_v4" }
 	premiumDiskDefault                     = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.OSDisk.DiskType = "Premium_LRS" }
 	nonpremiumInstanceTypeDiskDefault      = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.InstanceType = "Standard_D_v4" }
-	unsupportedHyperVGeneration            = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.InstanceType = "Standard_Dc4_v4" }
 	enabledSSDCapabilityControlPlane       = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.UltraSSDCapability = "Enabled" }
 	enabledSSDCapabilityCompute            = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.UltraSSDCapability = "Enabled" }
 	enabledSSDCapabilityDefault            = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.UltraSSDCapability = "Enabled" }
@@ -306,11 +305,6 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			name:     "Non-premium instance disk type for control-plane",
 			edits:    editFunctions{premiumDiskControlPlane, nonpremiumInstanceTypeDiskControlPlane},
 			errorMsg: `controlPlane.platform.azure.osDisk.diskType: Invalid value: "Premium_LRS": PremiumIO not supported for instance type Standard_D_v4$`,
-		},
-		{
-			name:     "Unsupported HyperVGeneration",
-			edits:    editFunctions{unsupportedHyperVGeneration},
-			errorMsg: `^\[controlPlane.platform.azure.type: Invalid value: "Standard_Dc4_v4": only disks with HyperVGeneration V1 are supported, compute\[0\].platform.azure.type: Invalid value: "Standard_Dc4_v4": only disks with HyperVGeneration V1 are supported\]$`,
 		},
 		{
 			name:     "Unsupported UltraSSD capability in Control Plane",
