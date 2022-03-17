@@ -1,0 +1,33 @@
+issues:
+  max-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - dogsled
+    - errcheck
+    - errname
+    - exportloopref
+    - goconst
+    - gofmt
+    - gomnd
+    - gosimple
+    - ineffassign
+    - misspell
+    - staticcheck
+    - structcheck
+    - unconvert
+    - unparam
+    - unused
+    - typecheck
+    - varcheck
+    - vet
+
+linters-settings:
+  gomnd:
+    settings:
+      mnd:
+        ignored-functions:
+          - strings.SplitN

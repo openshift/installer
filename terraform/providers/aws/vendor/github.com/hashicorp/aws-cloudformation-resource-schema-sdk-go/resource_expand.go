@@ -16,13 +16,13 @@ func (r *Resource) Expand() error {
 	err := r.ResolveProperties(r.Definitions)
 
 	if err != nil {
-		return fmt.Errorf("error expanding Resource (%s) Definitions: %w", *r.TypeName, err)
+		return fmt.Errorf("expanding Resource (%s) Definitions: %w", *r.TypeName, err)
 	}
 
 	err = r.ResolveProperties(r.Properties)
 
 	if err != nil {
-		return fmt.Errorf("error expanding Resource (%s) Properties: %w", *r.TypeName, err)
+		return fmt.Errorf("expanding Resource (%s) Properties: %w", *r.TypeName, err)
 	}
 
 	return nil
@@ -40,7 +40,7 @@ func (r *Resource) ResolveProperties(properties map[string]*Property) error {
 		resolved, err := r.ResolveProperty(property)
 
 		if err != nil {
-			return fmt.Errorf("error resolving %s: %w", propertyName, err)
+			return fmt.Errorf("resolving %s: %w", propertyName, err)
 		}
 
 		if resolved {
@@ -56,17 +56,40 @@ func (r *Resource) ResolveProperties(properties map[string]*Property) error {
 			//     "$ref": "#/definitions/CapacityProviderStrategyItem"
 			//   }
 			// },
-			_, err = r.ResolveProperty(property.Items)
+			resolved, err = r.ResolveProperty(property.Items)
 
 			if err != nil {
-				return fmt.Errorf("error resolving %s Items: %w", propertyName, err)
+				return fmt.Errorf("resolving %s Items: %w", propertyName, err)
+			}
+
+			if resolved {
+				continue
+			}
+
+			if property.Items.Type.String() == PropertyTypeObject {
+				// For example:
+				// "Tags": {
+				// 	"type": "array",
+				// 	"items": {
+				// 		"type": "object",
+				// 		"properties": {
+				// 			"Key": {"$ref": "#/definitions/Key"},
+				// 			"Value": {"$ref": "#/definitions/Value"}
+				// 		},
+				// 	},
+				// }
+				err = r.ResolveProperties(property.Items.Properties)
+
+				if err != nil {
+					return fmt.Errorf("resolving %s Items.Properties: %w", propertyName, err)
+				}
 			}
 
 		case PropertyTypeObject:
 			err = r.UnwrapOneOfProperties(property)
 
 			if err != nil {
-				return fmt.Errorf("error unwrapping %s OneOf Properties: %w", propertyName, err)
+				return fmt.Errorf("unwrapping %s OneOf Properties: %w", propertyName, err)
 			}
 
 			// For example:
@@ -81,7 +104,7 @@ func (r *Resource) ResolveProperties(properties map[string]*Property) error {
 			err = r.ResolveProperties(property.Properties)
 
 			if err != nil {
-				return fmt.Errorf("error resolving %s Properties: %w", propertyName, err)
+				return fmt.Errorf("resolving %s Properties: %w", propertyName, err)
 			}
 
 			// For example:
@@ -101,14 +124,14 @@ func (r *Resource) ResolveProperties(properties map[string]*Property) error {
 			err = r.ResolveProperties(property.PatternProperties)
 
 			if err != nil {
-				return fmt.Errorf("error resolving %s PatternProperties: %w", propertyName, err)
+				return fmt.Errorf("resolving %s PatternProperties: %w", propertyName, err)
 			}
 
 		case "":
 			err = r.UnwrapOneOfProperties(property)
 
 			if err != nil {
-				return fmt.Errorf("error unwrapping %s OneOf Properties: %w", propertyName, err)
+				return fmt.Errorf("unwrapping %s OneOf Properties: %w", propertyName, err)
 			}
 
 			if len(property.Properties) > 0 {
@@ -126,7 +149,7 @@ func (r *Resource) ResolveProperties(properties map[string]*Property) error {
 				err = r.ResolveProperties(property.Properties)
 
 				if err != nil {
-					return fmt.Errorf("error resolving %s Properties: %w", propertyName, err)
+					return fmt.Errorf("resolving %s Properties: %w", propertyName, err)
 				}
 			}
 		}

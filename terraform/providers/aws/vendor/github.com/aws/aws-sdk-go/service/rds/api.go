@@ -939,8 +939,6 @@ func (c *RDS) CopyDBClusterSnapshotRequest(input *CopyDBClusterSnapshotInput) (r
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1403,14 +1401,19 @@ func (c *RDS) CreateCustomDBEngineVersionRequest(input *CreateCustomDBEngineVers
 // CreateCustomDBEngineVersion API operation for Amazon Relational Database Service.
 //
 // Creates a custom DB engine version (CEV). A CEV is a binary volume snapshot
-// of a database engine and specific AMI. The only supported engine is Oracle
-// Database 19c Enterprise Edition with the January 2021 or later RU/RUR.
+// of a database engine and specific AMI. The supported engines are the following:
+//
+//    * Oracle Database 12.1 Enterprise Edition with the January 2021 or later
+//    RU/RUR
+//
+//    * Oracle Database 19c Enterprise Edition with the January 2021 or later
+//    RU/RUR
 //
 // Amazon RDS, which is a fully managed service, supplies the Amazon Machine
 // Image (AMI) and database software. The Amazon RDS database software is preinstalled,
 // so you need only select a DB engine and version, and create your database.
-// With Amazon RDS Custom, you upload your database installation files in Amazon
-// S3.
+// With Amazon RDS Custom for Oracle, you upload your database installation
+// files in Amazon S3.
 //
 // When you create a custom engine version, you specify the files in a JSON
 // document called a CEV manifest. This document describes installation .zip
@@ -1534,8 +1537,6 @@ func (c *RDS) CreateDBClusterRequest(input *CreateDBClusterInput) (req *request.
 // For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
-//
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1810,8 +1811,6 @@ func (c *RDS) CreateDBClusterParameterGroupRequest(input *CreateDBClusterParamet
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1901,8 +1900,6 @@ func (c *RDS) CreateDBClusterSnapshotRequest(input *CreateDBClusterSnapshotInput
 // For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
-//
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2867,12 +2864,12 @@ func (c *RDS) CreateEventSubscriptionRequest(input *CreateEventSubscriptionInput
 // = Availability, Backup.
 //
 // If you specify both the SourceType and SourceIds, such as SourceType = db-instance
-// and SourceIdentifier = myDBInstance1, you are notified of all the db-instance
-// events for the specified source. If you specify a SourceType but do not specify
-// a SourceIdentifier, you receive notice of the events for that source type
-// for all your RDS sources. If you don't specify either the SourceType or the
-// SourceIdentifier, you are notified of events generated from all RDS sources
-// belonging to your customer account.
+// and SourceIds = myDBInstance1, you are notified of all the db-instance events
+// for the specified source. If you specify a SourceType but do not specify
+// SourceIds, you receive notice of the events for that source type for all
+// your RDS sources. If you don't specify either the SourceType or the SourceIds,
+// you are notified of events generated from all RDS sources belonging to your
+// customer account.
 //
 // RDS event notification is only available for unencrypted SNS topics. If you
 // specify an encrypted SNS topic, event notifications aren't sent for the topic.
@@ -2892,7 +2889,7 @@ func (c *RDS) CreateEventSubscriptionRequest(input *CreateEventSubscriptionInput
 //   The supplied subscription name already exists.
 //
 //   * ErrCodeSNSInvalidTopicFault "SNSInvalidTopic"
-//   SNS has responded that there is a problem with the SND topic specified.
+//   SNS has responded that there is a problem with the SNS topic specified.
 //
 //   * ErrCodeSNSNoAuthorizationFault "SNSNoAuthorization"
 //   You do not have permission to publish to the SNS topic ARN.
@@ -3359,8 +3356,6 @@ func (c *RDS) DeleteDBClusterRequest(input *DeleteDBClusterInput) (req *request.
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -3549,8 +3544,6 @@ func (c *RDS) DeleteDBClusterParameterGroupRequest(input *DeleteDBClusterParamet
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -3644,8 +3637,6 @@ func (c *RDS) DeleteDBClusterSnapshotRequest(input *DeleteDBClusterSnapshotInput
 // For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
-//
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5533,8 +5524,6 @@ func (c *RDS) DescribeDBClusterParameterGroupsRequest(input *DescribeDBClusterPa
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -5679,8 +5668,6 @@ func (c *RDS) DescribeDBClusterParametersRequest(input *DescribeDBClusterParamet
 // For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
-//
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5919,8 +5906,6 @@ func (c *RDS) DescribeDBClusterSnapshotsRequest(input *DescribeDBClusterSnapshot
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -6066,8 +6051,6 @@ func (c *RDS) DescribeDBClustersRequest(input *DescribeDBClustersInput) (req *re
 // For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
-//
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
 //
 // This operation can also return information for Amazon Neptune DB instances
 // and Amazon DocumentDB instances.
@@ -8325,9 +8308,10 @@ func (c *RDS) DescribeEventCategoriesRequest(input *DescribeEventCategoriesInput
 // DescribeEventCategories API operation for Amazon Relational Database Service.
 //
 // Displays a list of categories for all event source types, or, if specified,
-// for a specified source type. You can see a list of the event categories and
-// source types in Events (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html)
-// in the Amazon RDS User Guide.
+// for a specified source type. You can also see this list in the "Amazon RDS
+// event categories and event messages" section of the Amazon RDS User Guide
+// (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Messages.html)
+// or the Amazon Aurora User Guide (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Events.Messages.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -8549,12 +8533,12 @@ func (c *RDS) DescribeEventsRequest(input *DescribeEventsInput) (req *request.Re
 // DescribeEvents API operation for Amazon Relational Database Service.
 //
 // Returns events related to DB instances, DB clusters, DB parameter groups,
-// DB security groups, DB snapshots, and DB cluster snapshots for the past 14
-// days. Events specific to a particular DB instances, DB clusters, DB parameter
-// groups, DB security groups, DB snapshots, and DB cluster snapshots group
-// can be obtained by providing the name as a parameter.
+// DB security groups, DB snapshots, DB cluster snapshots, and RDS Proxies for
+// the past 14 days. Events specific to a particular DB instance, DB cluster,
+// DB parameter group, DB security group, DB snapshot, DB cluster snapshot group,
+// or RDS Proxy can be obtained by providing the name as a parameter.
 //
-// By default, the past hour of events are returned.
+// By default, RDS returns events that were generated in the past hour.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -10305,8 +10289,6 @@ func (c *RDS) FailoverDBClusterRequest(input *FailoverDBClusterInput) (req *requ
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -10994,8 +10976,6 @@ func (c *RDS) ModifyDBClusterRequest(input *ModifyDBClusterInput) (req *request.
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -11232,8 +11212,6 @@ func (c *RDS) ModifyDBClusterParameterGroupRequest(input *ModifyDBClusterParamet
 // For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
-//
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -12237,7 +12215,7 @@ func (c *RDS) ModifyEventSubscriptionRequest(input *ModifyEventSubscriptionInput
 //   The subscription name does not exist.
 //
 //   * ErrCodeSNSInvalidTopicFault "SNSInvalidTopic"
-//   SNS has responded that there is a problem with the SND topic specified.
+//   SNS has responded that there is a problem with the SNS topic specified.
 //
 //   * ErrCodeSNSNoAuthorizationFault "SNSNoAuthorization"
 //   You do not have permission to publish to the SNS topic ARN.
@@ -12762,8 +12740,7 @@ func (c *RDS) RebootDBClusterRequest(input *RebootDBClusterInput) (req *request.
 // DB cluster results in a momentary outage, during which the DB cluster status
 // is set to rebooting.
 //
-// Use this operation only for a non-Aurora Multi-AZ DB cluster. The Multi-AZ
-// DB clusters feature is in preview and is subject to change.
+// Use this operation only for a non-Aurora Multi-AZ DB cluster.
 //
 // For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
@@ -13158,8 +13135,6 @@ func (c *RDS) RemoveRoleFromDBClusterRequest(input *RemoveRoleFromDBClusterInput
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -13531,8 +13506,6 @@ func (c *RDS) ResetDBClusterParameterGroupRequest(input *ResetDBClusterParameter
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -13868,8 +13841,6 @@ func (c *RDS) RestoreDBClusterFromSnapshotRequest(input *RestoreDBClusterFromSna
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
 //
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -14029,8 +14000,6 @@ func (c *RDS) RestoreDBClusterToPointInTimeRequest(input *RestoreDBClusterToPoin
 // For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
-//
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -15937,6 +15906,8 @@ type AddSourceIdentifierToSubscriptionInput struct {
 	//    * If the source type is a DB cluster snapshot, a DBClusterSnapshotIdentifier
 	//    value must be supplied.
 	//
+	//    * If the source type is an RDS Proxy, a DBProxyName value must be supplied.
+	//
 	// SourceIdentifier is a required field
 	SourceIdentifier *string `type:"string" required:"true"`
 
@@ -17150,8 +17121,8 @@ type ConnectionPoolConfiguration struct {
 	InitQuery *string `type:"string"`
 
 	// The maximum size of the connection pool for each target in a target group.
-	// For Aurora MySQL, it is expressed as a percentage of the max_connections
-	// setting for the RDS DB instance or Aurora DB cluster used by the target group.
+	// The value is expressed as a percentage of the max_connections setting for
+	// the RDS DB instance or Aurora DB cluster used by the target group.
 	//
 	// Default: 100
 	//
@@ -17159,11 +17130,11 @@ type ConnectionPoolConfiguration struct {
 	MaxConnectionsPercent *int64 `type:"integer"`
 
 	// Controls how actively the proxy closes idle database connections in the connection
-	// pool. A high value enables the proxy to leave a high percentage of idle connections
-	// open. A low value causes the proxy to close idle client connections and return
-	// the underlying database connections to the connection pool. For Aurora MySQL,
-	// it is expressed as a percentage of the max_connections setting for the RDS
-	// DB instance or Aurora DB cluster used by the target group.
+	// pool. The value is expressed as a percentage of the max_connections setting
+	// for the RDS DB instance or Aurora DB cluster used by the target group. With
+	// a high value, the proxy leaves a high percentage of idle database connections
+	// open. A low value causes the proxy to close more idle connections and return
+	// them to the database.
 	//
 	// Default: 50
 	//
@@ -17246,16 +17217,16 @@ type ConnectionPoolConfigurationInfo struct {
 	InitQuery *string `type:"string"`
 
 	// The maximum size of the connection pool for each target in a target group.
-	// For Aurora MySQL, it is expressed as a percentage of the max_connections
-	// setting for the RDS DB instance or Aurora DB cluster used by the target group.
+	// The value is expressed as a percentage of the max_connections setting for
+	// the RDS DB instance or Aurora DB cluster used by the target group.
 	MaxConnectionsPercent *int64 `type:"integer"`
 
 	// Controls how actively the proxy closes idle database connections in the connection
-	// pool. A high value enables the proxy to leave a high percentage of idle connections
-	// open. A low value causes the proxy to close idle client connections and return
-	// the underlying database connections to the connection pool. For Aurora MySQL,
-	// it is expressed as a percentage of the max_connections setting for the RDS
-	// DB instance or Aurora DB cluster used by the target group.
+	// pool. The value is expressed as a percentage of the max_connections setting
+	// for the RDS DB instance or Aurora DB cluster used by the target group. With
+	// a high value, the proxy leaves a high percentage of idle database connections
+	// open. A low value causes the proxy to close more idle connections and return
+	// them to the database.
 	MaxIdleConnectionsPercent *int64 `type:"integer"`
 
 	// Each item in the list represents a class of SQL operations that normally
@@ -18373,9 +18344,9 @@ type CreateCustomDBEngineVersionInput struct {
 	Engine *string `min:"1" type:"string" required:"true"`
 
 	// The name of your CEV. The name format is 19.customized_string . For example,
-	// a valid name is 19.my_cev1. This setting is required for RDS Custom, but
-	// optional for Amazon RDS. The combination of Engine and EngineVersion is unique
-	// per customer per Region.
+	// a valid name is 19.my_cev1. This setting is required for RDS Custom for Oracle,
+	// but optional for Amazon RDS. The combination of Engine and EngineVersion
+	// is unique per customer per Region.
 	//
 	// EngineVersion is a required field
 	EngineVersion *string `min:"1" type:"string" required:"true"`
@@ -18630,6 +18601,10 @@ type CreateCustomDBEngineVersionOutput struct {
 	// of the CreateDBInstance action.
 	SupportedTimezones []*Timezone `locationNameList:"Timezone" type:"list"`
 
+	// A value that indicates whether the engine version supports Babelfish for
+	// Aurora PostgreSQL.
+	SupportsBabelfish *bool `type:"boolean"`
+
 	// A value that indicates whether you can use Aurora global databases with a
 	// specific DB engine version.
 	SupportsGlobalDatabases *bool `type:"boolean"`
@@ -18783,6 +18758,12 @@ func (s *CreateCustomDBEngineVersionOutput) SetSupportedNcharCharacterSets(v []*
 // SetSupportedTimezones sets the SupportedTimezones field's value.
 func (s *CreateCustomDBEngineVersionOutput) SetSupportedTimezones(v []*Timezone) *CreateCustomDBEngineVersionOutput {
 	s.SupportedTimezones = v
+	return s
+}
+
+// SetSupportsBabelfish sets the SupportsBabelfish field's value.
+func (s *CreateCustomDBEngineVersionOutput) SetSupportsBabelfish(v bool) *CreateCustomDBEngineVersionOutput {
+	s.SupportsBabelfish = &v
 	return s
 }
 
@@ -19122,7 +19103,7 @@ type CreateDBClusterInput struct {
 	// A value that indicates whether to copy all tags from the DB cluster to snapshots
 	// of the DB cluster. The default is not to copy them.
 	//
-	// Valid for: Aurora DB clusters only
+	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	CopyTagsToSnapshot *bool `type:"boolean"`
 
 	// The DB cluster identifier. This parameter is stored as a lowercase string.
@@ -19174,7 +19155,7 @@ type CreateDBClusterInput struct {
 	// Constraints: Must match the name of an existing DBSubnetGroup. Must not be
 	// default.
 	//
-	// Example: mySubnetgroup
+	// Example: mydbsubnetgroup
 	//
 	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	DBSubnetGroupName *string `type:"string"`
@@ -19214,9 +19195,15 @@ type CreateDBClusterInput struct {
 	DomainIAMRoleName *string `type:"string"`
 
 	// The list of log types that need to be enabled for exporting to CloudWatch
-	// Logs. The values in the list depend on the DB engine being used. For more
-	// information, see Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
-	// in the Amazon Aurora User Guide.
+	// Logs. The values in the list depend on the DB engine being used.
+	//
+	// RDS for MySQL
+	//
+	// Possible values are error, general, and slowquery.
+	//
+	// RDS for PostgreSQL
+	//
+	// Possible values are postgresql and upgrade.
 	//
 	// Aurora MySQL
 	//
@@ -19226,7 +19213,15 @@ type CreateDBClusterInput struct {
 	//
 	// Possible value is postgresql.
 	//
-	// Valid for: Aurora DB clusters only
+	// For more information about exporting CloudWatch Logs for Amazon RDS, see
+	// Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
+	// in the Amazon Relational Database Service User Guide.
+	//
+	// For more information about exporting CloudWatch Logs for Amazon Aurora, see
+	// Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
+	// in the Amazon Aurora User Guide.
+	//
+	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	EnableCloudwatchLogsExports []*string `type:"list"`
 
 	// A value that indicates whether to enable this DB cluster to forward write
@@ -19282,7 +19277,7 @@ type CreateDBClusterInput struct {
 	//
 	//    * aurora (for MySQL 5.6-compatible Aurora)
 	//
-	//    * aurora-mysql (for MySQL 5.7-compatible Aurora)
+	//    * aurora-mysql (for MySQL 5.7-compatible and MySQL 8.0-compatible Aurora)
 	//
 	//    * aurora-postgresql
 	//
@@ -19331,8 +19326,8 @@ type CreateDBClusterInput struct {
 	//
 	// aws rds describe-db-engine-versions --engine aurora --query "DBEngineVersions[].EngineVersion"
 	//
-	// To list all of the available engine versions for MySQL 5.7-compatible Aurora,
-	// use the following command:
+	// To list all of the available engine versions for MySQL 5.7-compatible and
+	// MySQL 8.0-compatible Aurora, use the following command:
 	//
 	// aws rds describe-db-engine-versions --engine aurora-mysql --query "DBEngineVersions[].EngineVersion"
 	//
@@ -19653,11 +19648,11 @@ type CreateDBClusterInput struct {
 	//
 	// This setting is required to create a Multi-AZ DB cluster.
 	//
-	// Valid values: standard | gp2 | io1
+	// Valid values: io1
 	//
-	// If you specify io1, also include a value for the Iops parameter.
+	// When specified, a value for the Iops parameter is required.
 	//
-	// Default: io1 if the Iops parameter is specified, otherwise gp2
+	// Default: io1
 	//
 	// Valid for: Multi-AZ DB clusters only
 	StorageType *string `type:"string"`
@@ -20004,8 +19999,6 @@ type CreateDBClusterOutput struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -20054,7 +20047,7 @@ type CreateDBClusterParameterGroupInput struct {
 	//
 	// Aurora MySQL
 	//
-	// Example: aurora5.6, aurora-mysql5.7
+	// Example: aurora5.6, aurora-mysql5.7, aurora-mysql8.0
 	//
 	// Aurora PostgreSQL
 	//
@@ -20086,7 +20079,7 @@ type CreateDBClusterParameterGroupInput struct {
 	//
 	//    * aurora (for MySQL 5.6-compatible Aurora)
 	//
-	//    * aurora-mysql (for MySQL 5.7-compatible Aurora)
+	//    * aurora-mysql (for MySQL 5.7-compatible and MySQL 8.0-compatible Aurora)
 	//
 	//    * aurora-postgresql
 	//
@@ -20339,9 +20332,11 @@ type CreateDBInstanceInput struct {
 	//
 	// Constraints to the amount of storage for each storage type are the following:
 	//
-	//    * General Purpose (SSD) storage (gp2): Must be an integer from 40 to 65536.
+	//    * General Purpose (SSD) storage (gp2): Must be an integer from 40 to 65536
+	//    for RDS Custom for Oracle, 16384 for RDS Custom for SQL Server.
 	//
-	//    * Provisioned IOPS storage (io1): Must be an integer from 40 to 65536.
+	//    * Provisioned IOPS storage (io1): Must be an integer from 40 to 65536
+	//    for RDS Custom for Oracle, 16384 for RDS Custom for SQL Server.
 	//
 	// MySQL
 	//
@@ -20388,15 +20383,15 @@ type CreateDBInstanceInput struct {
 	// Constraints to the amount of storage for each storage type are the following:
 	//
 	//    * General Purpose (SSD) storage (gp2): Enterprise and Standard editions:
-	//    Must be an integer from 200 to 16384. Web and Express editions: Must be
+	//    Must be an integer from 20 to 16384. Web and Express editions: Must be
 	//    an integer from 20 to 16384.
 	//
 	//    * Provisioned IOPS storage (io1): Enterprise and Standard editions: Must
-	//    be an integer from 200 to 16384. Web and Express editions: Must be an
+	//    be an integer from 100 to 16384. Web and Express editions: Must be an
 	//    integer from 100 to 16384.
 	//
 	//    * Magnetic storage (standard): Enterprise and Standard editions: Must
-	//    be an integer from 200 to 1024. Web and Express editions: Must be an integer
+	//    be an integer from 20 to 1024. Web and Express editions: Must be an integer
 	//    from 20 to 1024.
 	AllocatedStorage *int64 `type:"integer"`
 
@@ -20411,6 +20406,10 @@ type CreateDBInstanceInput struct {
 	// The Availability Zone (AZ) where the database will be created. For information
 	// on Amazon Web Services Regions and Availability Zones, see Regions and Availability
 	// Zones (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html).
+	//
+	// Amazon Aurora
+	//
+	// Not applicable. Availability Zones are managed by the DB cluster.
 	//
 	// Default: A random, system-chosen Availability Zone in the endpoint's Amazon
 	// Web Services Region.
@@ -20446,7 +20445,7 @@ type CreateDBInstanceInput struct {
 	//
 	//    * Can't be set to 0 if the DB instance is a source to read replicas
 	//
-	//    * Can't be set to 0 or 35 for an RDS Custom DB instance
+	//    * Can't be set to 0 or 35 for an RDS Custom for Oracle DB instance
 	BackupRetentionPeriod *int64 `type:"integer"`
 
 	// Specifies where automated backups and manual snapshots are stored.
@@ -20585,7 +20584,7 @@ type CreateDBInstanceInput struct {
 	//
 	//    * Can't be longer than 8 characters
 	//
-	// Amazon RDS Custom
+	// Amazon RDS Custom for Oracle
 	//
 	// The Oracle System ID (SID) of the created RDS Custom DB instance. If you
 	// don't specify a value, the default value is ORCL.
@@ -20599,6 +20598,10 @@ type CreateDBInstanceInput struct {
 	//    * It must contain a letter.
 	//
 	//    * It can't be a word reserved by the database engine.
+	//
+	// Amazon RDS Custom for SQL Server
+	//
+	// Not applicable. Must be null.
 	//
 	// SQL Server
 	//
@@ -20655,7 +20658,10 @@ type CreateDBInstanceInput struct {
 
 	// A DB subnet group to associate with this DB instance.
 	//
-	// If there is no DB subnet group, then it is a non-VPC DB instance.
+	// Constraints: Must match the name of an existing DBSubnetGroup. Must not be
+	// default.
+	//
+	// Example: mydbsubnetgroup
 	DBSubnetGroupName *string `type:"string"`
 
 	// A value that indicates whether the DB instance has deletion protection enabled.
@@ -20765,11 +20771,17 @@ type CreateDBInstanceInput struct {
 	//
 	//    * aurora (for MySQL 5.6-compatible Aurora)
 	//
-	//    * aurora-mysql (for MySQL 5.7-compatible Aurora)
+	//    * aurora-mysql (for MySQL 5.7-compatible and MySQL 8.0-compatible Aurora)
 	//
 	//    * aurora-postgresql
 	//
-	//    * custom-oracle-ee (for RDS Custom instances)
+	//    * custom-oracle-ee (for RDS Custom for Oracle instances)
+	//
+	//    * custom-sqlserver-ee (for RDS Custom for SQL Server instances)
+	//
+	//    * custom-sqlserver-se (for RDS Custom for SQL Server instances)
+	//
+	//    * custom-sqlserver-web (for RDS Custom for SQL Server instances)
 	//
 	//    * mariadb
 	//
@@ -20809,13 +20821,18 @@ type CreateDBInstanceInput struct {
 	// Not applicable. The version number of the database engine to be used by the
 	// DB instance is managed by the DB cluster.
 	//
-	// Amazon RDS Custom
+	// Amazon RDS Custom for Oracle
 	//
 	// A custom engine version (CEV) that you have previously created. This setting
-	// is required for RDS Custom. The CEV name has the following format: 19.customized_string
-	// . An example identifier is 19.my_cev1. For more information, see Creating
-	// an RDS Custom DB instance (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/custom-creating.html#custom-creating.create)
+	// is required for RDS Custom for Oracle. The CEV name has the following format:
+	// 19.customized_string . An example identifier is 19.my_cev1. For more information,
+	// see Creating an RDS Custom for Oracle DB instance (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/custom-creating.html#custom-creating.create)
 	// in the Amazon RDS User Guide..
+	//
+	// Amazon RDS Custom for SQL Server
+	//
+	// See RDS Custom for SQL Server general requirements (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/custom-reqs-limits.html#custom-reqs-limits.reqsMS)
+	// in the Amazon RDS User Guide.
 	//
 	// MariaDB
 	//
@@ -20872,10 +20889,10 @@ type CreateDBInstanceInput struct {
 	//
 	// Amazon RDS Custom
 	//
-	// A KMS key is required for RDS Custom Oracle instances. For most RDS engines,
-	// if you leave this parameter empty while enabling StorageEncrypted, the engine
-	// uses the default KMS key. However, RDS Custom for Oracle doesn't use the
-	// default key when this parameter is empty. You must explicitly specify a key.
+	// A KMS key is required for RDS Custom instances. For most RDS engines, if
+	// you leave this parameter empty while enabling StorageEncrypted, the engine
+	// uses the default KMS key. However, RDS Custom doesn't use the default key
+	// when this parameter is empty. You must explicitly specify a key.
 	KmsKeyId *string `type:"string"`
 
 	// License model information for this DB instance.
@@ -21150,8 +21167,8 @@ type CreateDBInstanceInput struct {
 	// A value that indicates whether the DB instance is encrypted. By default,
 	// it isn't encrypted.
 	//
-	// For RDS Custom Oracle instances, either set this parameter to true or leave
-	// it unset. If you set this parameter to false, RDS reports an error.
+	// For RDS Custom instances, either set this parameter to true or leave it unset.
+	// If you set this parameter to false, RDS reports an error.
 	//
 	// Amazon Aurora
 	//
@@ -21665,7 +21682,7 @@ type CreateDBInstanceReadReplicaInput struct {
 	//    Not specify a DB subnet group. All these read replicas are created outside
 	//    of any VPC.
 	//
-	// Example: mySubnetgroup
+	// Example: mydbsubnetgroup
 	DBSubnetGroupName *string `type:"string"`
 
 	// A value that indicates whether the DB instance has deletion protection enabled.
@@ -22298,7 +22315,7 @@ type CreateDBParameterGroupInput struct {
 	//
 	//    * aurora (for MySQL 5.6-compatible Aurora)
 	//
-	//    * aurora-mysql (for MySQL 5.7-compatible Aurora)
+	//    * aurora-mysql (for MySQL 5.7-compatible and MySQL 8.0-compatible Aurora)
 	//
 	//    * aurora-postgresql
 	//
@@ -23032,10 +23049,16 @@ type CreateDBSubnetGroupInput struct {
 
 	// The name for the DB subnet group. This value is stored as a lowercase string.
 	//
-	// Constraints: Must contain no more than 255 letters, numbers, periods, underscores,
-	// spaces, or hyphens. Must not be default.
+	// Constraints:
 	//
-	// Example: mySubnetgroup
+	//    * Must contain no more than 255 letters, numbers, periods, underscores,
+	//    spaces, or hyphens.
+	//
+	//    * Must not be default.
+	//
+	//    * First character must be a letter.
+	//
+	// Example: mydbsubnetgroup
 	//
 	// DBSubnetGroupName is a required field
 	DBSubnetGroupName *string `type:"string" required:"true"`
@@ -23154,8 +23177,10 @@ type CreateEventSubscriptionInput struct {
 
 	// A list of event categories for a particular source type (SourceType) that
 	// you want to subscribe to. You can see a list of the categories for a given
-	// source type in Events (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html)
-	// in the Amazon RDS User Guide or by using the DescribeEventCategories operation.
+	// source type in the "Amazon RDS event categories and event messages" section
+	// of the Amazon RDS User Guide (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Messages.html)
+	// or the Amazon Aurora User Guide (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Events.Messages.html).
+	// You can also see this list by using the DescribeEventCategories operation.
 	EventCategories []*string `locationNameList:"EventCategory" type:"list"`
 
 	// The Amazon Resource Name (ARN) of the SNS topic created for event notification.
@@ -23191,14 +23216,17 @@ type CreateEventSubscriptionInput struct {
 	//
 	//    * If the source type is a DB cluster snapshot, a DBClusterSnapshotIdentifier
 	//    value must be supplied.
+	//
+	//    * If the source type is an RDS Proxy, a DBProxyName value must be supplied.
 	SourceIds []*string `locationNameList:"SourceId" type:"list"`
 
 	// The type of source that is generating the events. For example, if you want
 	// to be notified of events generated by a DB instance, you set this parameter
-	// to db-instance. If this value isn't specified, all events are returned.
+	// to db-instance. For RDS Proxy events, specify db-proxy. If this value isn't
+	// specified, all events are returned.
 	//
 	// Valid values: db-instance | db-cluster | db-parameter-group | db-security-group
-	// | db-snapshot | db-cluster-snapshot
+	// | db-snapshot | db-cluster-snapshot | db-proxy
 	SourceType *string `type:"string"`
 
 	// The name of the subscription.
@@ -23688,8 +23716,6 @@ func (s *CustomAvailabilityZone) SetVpnDetails(v *VpnDetails) *CustomAvailabilit
 // For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 // two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 // in the Amazon RDS User Guide.
-//
-// The Multi-AZ DB clusters feature is in preview and is subject to change.
 type DBCluster struct {
 	_ struct{} `type:"structure"`
 
@@ -24002,7 +24028,7 @@ type DBCluster struct {
 	// Specifies whether the DB cluster is encrypted.
 	StorageEncrypted *bool `type:"boolean"`
 
-	// The storage type associated with DB instance.
+	// The storage type associated with the DB cluster.
 	//
 	// This setting is only for non-Aurora Multi-AZ DB clusters.
 	StorageType *string `type:"string"`
@@ -24916,7 +24942,14 @@ type DBClusterSnapshot struct {
 	// a null value.
 	SourceDBClusterSnapshotArn *string `type:"string"`
 
-	// Specifies the status of this DB cluster snapshot.
+	// Specifies the status of this DB cluster snapshot. Valid statuses are the
+	// following:
+	//
+	//    * available
+	//
+	//    * copying
+	//
+	//    * creating
 	Status *string `type:"string"`
 
 	// Specifies whether the DB cluster snapshot is encrypted.
@@ -25266,6 +25299,10 @@ type DBEngineVersion struct {
 	// of the CreateDBInstance action.
 	SupportedTimezones []*Timezone `locationNameList:"Timezone" type:"list"`
 
+	// A value that indicates whether the engine version supports Babelfish for
+	// Aurora PostgreSQL.
+	SupportsBabelfish *bool `type:"boolean"`
+
 	// A value that indicates whether you can use Aurora global databases with a
 	// specific DB engine version.
 	SupportsGlobalDatabases *bool `type:"boolean"`
@@ -25419,6 +25456,12 @@ func (s *DBEngineVersion) SetSupportedNcharCharacterSets(v []*CharacterSet) *DBE
 // SetSupportedTimezones sets the SupportedTimezones field's value.
 func (s *DBEngineVersion) SetSupportedTimezones(v []*Timezone) *DBEngineVersion {
 	s.SupportedTimezones = v
+	return s
+}
+
+// SetSupportsBabelfish sets the SupportsBabelfish field's value.
+func (s *DBEngineVersion) SetSupportsBabelfish(v bool) *DBEngineVersion {
+	s.SupportsBabelfish = &v
 	return s
 }
 
@@ -28318,6 +28361,10 @@ type DeleteCustomDBEngineVersionOutput struct {
 	// of the CreateDBInstance action.
 	SupportedTimezones []*Timezone `locationNameList:"Timezone" type:"list"`
 
+	// A value that indicates whether the engine version supports Babelfish for
+	// Aurora PostgreSQL.
+	SupportsBabelfish *bool `type:"boolean"`
+
 	// A value that indicates whether you can use Aurora global databases with a
 	// specific DB engine version.
 	SupportsGlobalDatabases *bool `type:"boolean"`
@@ -28471,6 +28518,12 @@ func (s *DeleteCustomDBEngineVersionOutput) SetSupportedNcharCharacterSets(v []*
 // SetSupportedTimezones sets the SupportedTimezones field's value.
 func (s *DeleteCustomDBEngineVersionOutput) SetSupportedTimezones(v []*Timezone) *DeleteCustomDBEngineVersionOutput {
 	s.SupportedTimezones = v
+	return s
+}
+
+// SetSupportsBabelfish sets the SupportsBabelfish field's value.
+func (s *DeleteCustomDBEngineVersionOutput) SetSupportsBabelfish(v bool) *DeleteCustomDBEngineVersionOutput {
+	s.SupportsBabelfish = &v
 	return s
 }
 
@@ -28800,8 +28853,6 @@ type DeleteDBClusterOutput struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -29617,12 +29668,10 @@ type DeleteDBSubnetGroupInput struct {
 	//
 	// You can't delete the default subnet group.
 	//
-	// Constraints:
-	//
 	// Constraints: Must match the name of an existing DBSubnetGroup. Must not be
 	// default.
 	//
-	// Example: mySubnetgroup
+	// Example: mydbsubnetgroup
 	//
 	// DBSubnetGroupName is a required field
 	DBSubnetGroupName *string `type:"string" required:"true"`
@@ -31394,18 +31443,18 @@ type DescribeDBClustersInput struct {
 	//
 	// Supported filters:
 	//
-	//    * clone-group-id - Accepts clone group identifiers. The results list will
-	//    only include information about the DB clusters associated with these clone
+	//    * clone-group-id - Accepts clone group identifiers. The results list only
+	//    includes information about the DB clusters associated with these clone
 	//    groups.
 	//
 	//    * db-cluster-id - Accepts DB cluster identifiers and DB cluster Amazon
-	//    Resource Names (ARNs). The results list will only include information
-	//    about the DB clusters identified by these ARNs.
+	//    Resource Names (ARNs). The results list only includes information about
+	//    the DB clusters identified by these ARNs.
 	//
-	//    * domain - Accepts Active Directory directory IDs. The results list will
-	//    only include information about the DB clusters associated with these domains.
+	//    * domain - Accepts Active Directory directory IDs. The results list only
+	//    includes information about the DB clusters associated with these domains.
 	//
-	//    * engine - Accepts engine names. The results list will only include information
+	//    * engine - Accepts engine names. The results list only includes information
 	//    about the DB clusters for these engines.
 	Filters []*Filter `locationNameList:"Filter" type:"list"`
 
@@ -31558,7 +31607,7 @@ type DescribeDBEngineVersionsInput struct {
 	//
 	//    * aurora (for MySQL 5.6-compatible Aurora)
 	//
-	//    * aurora-mysql (for MySQL 5.7-compatible Aurora)
+	//    * aurora-mysql (for MySQL 5.7-compatible and MySQL 8.0-compatible Aurora)
 	//
 	//    * aurora-postgresql
 	//
@@ -31590,7 +31639,28 @@ type DescribeDBEngineVersionsInput struct {
 	// Example: 5.1.49
 	EngineVersion *string `type:"string"`
 
-	// This parameter isn't currently supported.
+	// A filter that specifies one or more DB engine versions to describe.
+	//
+	// Supported filters:
+	//
+	//    * db-parameter-group-family - Accepts parameter groups family names. The
+	//    results list only includes information about the DB engine versions for
+	//    these parameter group families.
+	//
+	//    * engine - Accepts engine names. The results list only includes information
+	//    about the DB engine versions for these engines.
+	//
+	//    * engine-mode - Accepts DB engine modes. The results list only includes
+	//    information about the DB engine versions for these engine modes. Valid
+	//    DB engine modes are the following: global multimaster parallelquery provisioned
+	//    serverless
+	//
+	//    * engine-version - Accepts engine versions. The results list only includes
+	//    information about the DB engine versions for these engine versions.
+	//
+	//    * status - Accepts engine version statuses. The results list only includes
+	//    information about the DB engine versions for these statuses. Valid statuses
+	//    are the following: available deprecated
 	Filters []*Filter `locationNameList:"Filter" type:"list"`
 
 	// A value that indicates whether to include engine versions that aren't available
@@ -31961,23 +32031,21 @@ type DescribeDBInstancesInput struct {
 	// Supported filters:
 	//
 	//    * db-cluster-id - Accepts DB cluster identifiers and DB cluster Amazon
-	//    Resource Names (ARNs). The results list will only include information
-	//    about the DB instances associated with the DB clusters identified by these
-	//    ARNs.
+	//    Resource Names (ARNs). The results list only includes information about
+	//    the DB instances associated with the DB clusters identified by these ARNs.
 	//
 	//    * db-instance-id - Accepts DB instance identifiers and DB instance Amazon
-	//    Resource Names (ARNs). The results list will only include information
-	//    about the DB instances identified by these ARNs.
+	//    Resource Names (ARNs). The results list only includes information about
+	//    the DB instances identified by these ARNs.
 	//
 	//    * dbi-resource-id - Accepts DB instance resource identifiers. The results
 	//    list will only include information about the DB instances identified by
 	//    these DB instance resource identifiers.
 	//
-	//    * domain - Accepts Active Directory directory IDs. The results list will
-	//    only include information about the DB instances associated with these
-	//    domains.
+	//    * domain - Accepts Active Directory directory IDs. The results list only
+	//    includes information about the DB instances associated with these domains.
 	//
-	//    * engine - Accepts engine names. The results list will only include information
+	//    * engine - Accepts engine names. The results list only includes information
 	//    about the DB instances for these engines.
 	Filters []*Filter `locationNameList:"Filter" type:"list"`
 
@@ -34017,10 +34085,11 @@ type DescribeEventCategoriesInput struct {
 	// This parameter isn't currently supported.
 	Filters []*Filter `locationNameList:"Filter" type:"list"`
 
-	// The type of source that is generating the events.
+	// The type of source that is generating the events. For RDS Proxy events, specify
+	// db-proxy.
 	//
 	// Valid values: db-instance | db-cluster | db-parameter-group | db-security-group
-	// | db-snapshot | db-cluster-snapshot
+	// | db-snapshot | db-cluster-snapshot | db-proxy
 	SourceType *string `type:"string"`
 }
 
@@ -34295,6 +34364,8 @@ type DescribeEventsInput struct {
 	//
 	//    * If the source type is a DB cluster snapshot, a DBClusterSnapshotIdentifier
 	//    value must be supplied.
+	//
+	//    * If the source type is an RDS Proxy, a DBProxyName value must be supplied.
 	//
 	//    * Can't end with a hyphen or contain two consecutive hyphens.
 	SourceIdentifier *string `type:"string"`
@@ -35232,7 +35303,7 @@ type DescribeOrderableDBInstanceOptionsInput struct {
 	//
 	//    * aurora (for MySQL 5.6-compatible Aurora)
 	//
-	//    * aurora-mysql (for MySQL 5.7-compatible Aurora)
+	//    * aurora-mysql (for MySQL 5.7-compatible and MySQL 8.0-compatible Aurora)
 	//
 	//    * aurora-postgresql
 	//
@@ -35445,12 +35516,12 @@ type DescribePendingMaintenanceActionsInput struct {
 	// Supported filters:
 	//
 	//    * db-cluster-id - Accepts DB cluster identifiers and DB cluster Amazon
-	//    Resource Names (ARNs). The results list will only include pending maintenance
+	//    Resource Names (ARNs). The results list only includes pending maintenance
 	//    actions for the DB clusters identified by these ARNs.
 	//
 	//    * db-instance-id - Accepts DB instance identifiers and DB instance ARNs.
-	//    The results list will only include pending maintenance actions for the
-	//    DB instances identified by these ARNs.
+	//    The results list only includes pending maintenance actions for the DB
+	//    instances identified by these ARNs.
 	Filters []*Filter `locationNameList:"Filter" type:"list"`
 
 	// An optional pagination token provided by a previous DescribePendingMaintenanceActions
@@ -37135,8 +37206,6 @@ type FailoverDBClusterOutput struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -38413,8 +38482,8 @@ type ModifyCustomDBEngineVersionInput struct {
 	Engine *string `min:"1" type:"string" required:"true"`
 
 	// The custom engine version (CEV) that you want to modify. This option is required
-	// for RDS Custom, but optional for Amazon RDS. The combination of Engine and
-	// EngineVersion is unique per customer per Amazon Web Services Region.
+	// for RDS Custom for Oracle, but optional for Amazon RDS. The combination of
+	// Engine and EngineVersion is unique per customer per Amazon Web Services Region.
 	//
 	// EngineVersion is a required field
 	EngineVersion *string `min:"1" type:"string" required:"true"`
@@ -38590,6 +38659,10 @@ type ModifyCustomDBEngineVersionOutput struct {
 	// of the CreateDBInstance action.
 	SupportedTimezones []*Timezone `locationNameList:"Timezone" type:"list"`
 
+	// A value that indicates whether the engine version supports Babelfish for
+	// Aurora PostgreSQL.
+	SupportsBabelfish *bool `type:"boolean"`
+
 	// A value that indicates whether you can use Aurora global databases with a
 	// specific DB engine version.
 	SupportsGlobalDatabases *bool `type:"boolean"`
@@ -38743,6 +38816,12 @@ func (s *ModifyCustomDBEngineVersionOutput) SetSupportedNcharCharacterSets(v []*
 // SetSupportedTimezones sets the SupportedTimezones field's value.
 func (s *ModifyCustomDBEngineVersionOutput) SetSupportedTimezones(v []*Timezone) *ModifyCustomDBEngineVersionOutput {
 	s.SupportedTimezones = v
+	return s
+}
+
+// SetSupportsBabelfish sets the SupportsBabelfish field's value.
+func (s *ModifyCustomDBEngineVersionOutput) SetSupportsBabelfish(v bool) *ModifyCustomDBEngineVersionOutput {
+	s.SupportsBabelfish = &v
 	return s
 }
 
@@ -39063,15 +39142,40 @@ type ModifyDBClusterInput struct {
 	BackupRetentionPeriod *int64 `type:"integer"`
 
 	// The configuration setting for the log types to be enabled for export to CloudWatch
-	// Logs for a specific DB cluster.
+	// Logs for a specific DB cluster. The values in the list depend on the DB engine
+	// being used.
 	//
-	// Valid for: Aurora DB clusters only
+	// RDS for MySQL
+	//
+	// Possible values are error, general, and slowquery.
+	//
+	// RDS for PostgreSQL
+	//
+	// Possible values are postgresql and upgrade.
+	//
+	// Aurora MySQL
+	//
+	// Possible values are audit, error, general, and slowquery.
+	//
+	// Aurora PostgreSQL
+	//
+	// Possible value is postgresql.
+	//
+	// For more information about exporting CloudWatch Logs for Amazon RDS, see
+	// Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
+	// in the Amazon Relational Database Service User Guide.
+	//
+	// For more information about exporting CloudWatch Logs for Amazon Aurora, see
+	// Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
+	// in the Amazon Aurora User Guide.
+	//
+	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	CloudwatchLogsExportConfiguration *CloudwatchLogsExportConfiguration `type:"structure"`
 
 	// A value that indicates whether to copy all tags from the DB cluster to snapshots
 	// of the DB cluster. The default is not to copy them.
 	//
-	// Valid for: Aurora DB clusters only
+	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	CopyTagsToSnapshot *bool `type:"boolean"`
 
 	// The DB cluster identifier for the cluster being modified. This parameter
@@ -39104,8 +39208,8 @@ type ModifyDBClusterInput struct {
 	// The name of the DB parameter group to apply to all instances of the DB cluster.
 	//
 	// When you apply a parameter group using the DBInstanceParameterGroupName parameter,
-	// the DB cluster isn't rebooted automatically. Also, parameter changes aren't
-	// applied during the next maintenance window but instead are applied immediately.
+	// the DB cluster isn't rebooted automatically. Also, parameter changes are
+	// applied immediately rather than during the next maintenance window.
 	//
 	// Default: The existing name setting
 	//
@@ -39114,8 +39218,8 @@ type ModifyDBClusterInput struct {
 	//    * The DB parameter group must be in the same DB parameter group family
 	//    as this DB cluster.
 	//
-	//    * The DBInstanceParameterGroupName parameter is only valid in combination
-	//    with the AllowMajorVersionUpgrade parameter.
+	//    * The DBInstanceParameterGroupName parameter is valid in combination with
+	//    the AllowMajorVersionUpgrade parameter for a major version upgrade only.
 	//
 	// Valid for: Aurora DB clusters only
 	DBInstanceParameterGroupName *string `type:"string"`
@@ -39199,8 +39303,8 @@ type ModifyDBClusterInput struct {
 	//
 	// aws rds describe-db-engine-versions --engine aurora --query "DBEngineVersions[].EngineVersion"
 	//
-	// To list all of the available engine versions for MySQL 5.7-compatible Aurora,
-	// use the following command:
+	// To list all of the available engine versions for MySQL 5.7-compatible and
+	// MySQL 8.0-compatible Aurora, use the following command:
 	//
 	// aws rds describe-db-engine-versions --engine aurora-mysql --query "DBEngineVersions[].EngineVersion"
 	//
@@ -39365,11 +39469,11 @@ type ModifyDBClusterInput struct {
 
 	// Specifies the storage type to be associated with the DB cluster.
 	//
-	// Valid values: standard | gp2 | io1
+	// Valid values: io1
 	//
-	// If you specify io1, you must also include a value for the Iops parameter.
+	// When specified, a value for the Iops parameter is required.
 	//
-	// Default: io1 if the Iops parameter is specified, otherwise gp2
+	// Default: io1
 	//
 	// Valid for: Multi-AZ DB clusters only
 	StorageType *string `type:"string"`
@@ -39636,8 +39740,6 @@ type ModifyDBClusterOutput struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -39906,9 +40008,8 @@ type ModifyDBInstanceInput struct {
 	// the next maintenance window. Some parameter changes can cause an outage and
 	// are applied on the next call to RebootDBInstance, or the next failure reboot.
 	// Review the table of parameters in Modifying a DB Instance (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html)
-	// in the Amazon RDS User Guide. to see the impact of enabling or disabling
-	// ApplyImmediately for each modified parameter and to determine when the changes
-	// are applied.
+	// in the Amazon RDS User Guide to see the impact of enabling or disabling ApplyImmediately
+	// for each modified parameter and to determine when the changes are applied.
 	ApplyImmediately *bool `type:"boolean"`
 
 	// A value that indicates whether minor version upgrades are applied automatically
@@ -39963,7 +40064,7 @@ type ModifyDBInstanceInput struct {
 	//
 	//    * It must be a value from 0 to 35. It can't be set to 0 if the DB instance
 	//    is a source to read replicas. It can't be set to 0 or 35 for an RDS Custom
-	//    DB instance.
+	//    for Oracle DB instance.
 	//
 	//    * It can be specified for a MySQL read replica only if the source is running
 	//    MySQL 5.6 or later.
@@ -40030,7 +40131,7 @@ type ModifyDBInstanceInput struct {
 	// The change is applied during the next maintenance window, unless ApplyImmediately
 	// is enabled for this request.
 	//
-	// This setting doesn't apply to RDS Custom.
+	// This setting doesn't apply to RDS Custom for Oracle.
 	//
 	// Default: Uses existing setting
 	DBInstanceClass *string `type:"string"`
@@ -40136,7 +40237,7 @@ type ModifyDBInstanceInput struct {
 	//
 	// Constraints: If supplied, must match the name of an existing DBSubnetGroup.
 	//
-	// Example: mySubnetGroup
+	// Example: mydbsubnetgroup
 	DBSubnetGroupName *string `type:"string"`
 
 	// A value that indicates whether the DB instance has deletion protection enabled.
@@ -40213,8 +40314,8 @@ type ModifyDBInstanceInput struct {
 	// to the default minor version if the current minor version is lower. For information
 	// about valid engine versions, see CreateDBInstance, or call DescribeDBEngineVersions.
 	//
-	// In RDS Custom, this parameter is supported for read replicas only if they
-	// are in the PATCH_DB_FAILURE lifecycle.
+	// In RDS Custom for Oracle, this parameter is supported for read replicas only
+	// if they are in the PATCH_DB_FAILURE lifecycle.
 	EngineVersion *string `type:"string"`
 
 	// The new Provisioned IOPS (I/O operations per second) value for the RDS instance.
@@ -40476,8 +40577,6 @@ type ModifyDBInstanceInput struct {
 	//
 	// Changes to the PubliclyAccessible parameter are applied immediately regardless
 	// of the value of the ApplyImmediately parameter.
-	//
-	// This setting doesn't apply to RDS Custom.
 	PubliclyAccessible *bool `type:"boolean"`
 
 	// A value that sets the open mode of a replica database to either mounted or
@@ -40923,7 +41022,7 @@ type ModifyDBParameterGroupInput struct {
 
 	// An array of parameter names, values, and the application methods for the
 	// parameter update. At least one parameter name, value, and application method
-	// method must be supplied; later arguments are optional. A maximum of 20 parameters
+	// must be supplied; later arguments are optional. A maximum of 20 parameters
 	// can be modified in a single request.
 	//
 	// Valid Values (for the application method): immediate | pending-reboot
@@ -40933,9 +41032,17 @@ type ModifyDBParameterGroupInput struct {
 	//
 	// When the application method is immediate, changes to dynamic parameters are
 	// applied immediately to the DB instances associated with the parameter group.
+	//
 	// When the application method is pending-reboot, changes to dynamic and static
 	// parameters are applied after a reboot without failover to the DB instances
 	// associated with the parameter group.
+	//
+	// You can't use pending-reboot with dynamic parameters on RDS for SQL Server
+	// DB instances. Use immediate.
+	//
+	// For more information on modifying DB parameters, see Working with DB parameter
+	// groups (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithParamGroups.html)
+	// in the Amazon RDS User Guide.
 	//
 	// Parameters is a required field
 	Parameters []*Parameter `locationNameList:"Parameter" type:"list" required:"true"`
@@ -41629,7 +41736,7 @@ type ModifyDBSubnetGroupInput struct {
 	// Constraints: Must match the name of an existing DBSubnetGroup. Must not be
 	// default.
 	//
-	// Example: mySubnetgroup
+	// Example: mydbsubnetgroup
 	//
 	// DBSubnetGroupName is a required field
 	DBSubnetGroupName *string `type:"string" required:"true"`
@@ -41745,10 +41852,11 @@ type ModifyEventSubscriptionInput struct {
 
 	// The type of source that is generating the events. For example, if you want
 	// to be notified of events generated by a DB instance, you would set this parameter
-	// to db-instance. If this value isn't specified, all events are returned.
+	// to db-instance. For RDS Proxy events, specify db-proxy. If this value isn't
+	// specified, all events are returned.
 	//
 	// Valid values: db-instance | db-cluster | db-parameter-group | db-security-group
-	// | db-snapshot | db-cluster-snapshot
+	// | db-snapshot | db-cluster-snapshot | db-proxy
 	SourceType *string `type:"string"`
 
 	// The name of the RDS event notification subscription.
@@ -41880,7 +41988,7 @@ type ModifyGlobalClusterInput struct {
 	// == `true`].[EngineVersion]'
 	//
 	// To list all of the available engine versions for aurora-mysql (for MySQL
-	// 5.7-compatible Aurora), use the following command:
+	// 5.7-compatible and MySQL 8.0-compatible Aurora), use the following command:
 	//
 	// aws rds describe-db-engine-versions --engine aurora-mysql --query '*[]|[?SupportsGlobalDatabases
 	// == `true`].[EngineVersion]'
@@ -42955,8 +43063,6 @@ type OrderableDBInstanceOption struct {
 
 	// Whether DB instances can be configured as a Multi-AZ DB cluster.
 	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
-	//
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
@@ -43837,8 +43943,6 @@ type PromoteReadReplicaDBClusterOutput struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -44234,8 +44338,6 @@ type RebootDBClusterOutput struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -45505,7 +45607,7 @@ type RestoreDBClusterFromS3Input struct {
 	//
 	// Constraints: If supplied, must match the name of an existing DBSubnetGroup.
 	//
-	// Example: mySubnetgroup
+	// Example: mydbsubnetgroup
 	DBSubnetGroupName *string `type:"string"`
 
 	// The database name for the restored DB cluster.
@@ -45530,8 +45632,18 @@ type RestoreDBClusterFromS3Input struct {
 	DomainIAMRoleName *string `type:"string"`
 
 	// The list of logs that the restored DB cluster is to export to CloudWatch
-	// Logs. The values in the list depend on the DB engine being used. For more
-	// information, see Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
+	// Logs. The values in the list depend on the DB engine being used.
+	//
+	// Aurora MySQL
+	//
+	// Possible values are audit, error, general, and slowquery.
+	//
+	// Aurora PostgreSQL
+	//
+	// Possible value is postgresql.
+	//
+	// For more information about exporting CloudWatch Logs for Amazon Aurora, see
+	// Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
 	// in the Amazon Aurora User Guide.
 	EnableCloudwatchLogsExports []*string `type:"list"`
 
@@ -45546,7 +45658,7 @@ type RestoreDBClusterFromS3Input struct {
 	// The name of the database engine to be used for this DB cluster.
 	//
 	// Valid Values: aurora (for MySQL 5.6-compatible Aurora), aurora-mysql (for
-	// MySQL 5.7-compatible Aurora), and aurora-postgresql
+	// MySQL 5.7-compatible and MySQL 8.0-compatible Aurora), and aurora-postgresql
 	//
 	// Engine is a required field
 	Engine *string `type:"string" required:"true"`
@@ -45559,7 +45671,7 @@ type RestoreDBClusterFromS3Input struct {
 	// aws rds describe-db-engine-versions --engine aurora --query "DBEngineVersions[].EngineVersion"
 	//
 	// To list all of the available engine versions for aurora-mysql (for MySQL
-	// 5.7-compatible Aurora), use the following command:
+	// 5.7-compatible and MySQL 8.0-compatible Aurora), use the following command:
 	//
 	// aws rds describe-db-engine-versions --engine aurora-mysql --query "DBEngineVersions[].EngineVersion"
 	//
@@ -45570,7 +45682,8 @@ type RestoreDBClusterFromS3Input struct {
 	//
 	// Aurora MySQL
 	//
-	// Example: 5.6.10a, 5.6.mysql_aurora.1.19.2, 5.7.12, 5.7.mysql_aurora.2.04.5
+	// Example: 5.6.10a, 5.6.mysql_aurora.1.19.2, 5.7.12, 5.7.mysql_aurora.2.04.5,
+	// 8.0.mysql_aurora.3.01.0
 	//
 	// Aurora PostgreSQL
 	//
@@ -45965,8 +46078,6 @@ type RestoreDBClusterFromS3Output struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -46021,7 +46132,7 @@ type RestoreDBClusterFromSnapshotInput struct {
 	// A value that indicates whether to copy all tags from the restored DB cluster
 	// to snapshots of the restored DB cluster. The default is not to copy them.
 	//
-	// Valid for: Aurora DB clusters only
+	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	CopyTagsToSnapshot *bool `type:"boolean"`
 
 	// The name of the DB cluster to create from the DB snapshot or DB cluster snapshot.
@@ -46050,7 +46161,7 @@ type RestoreDBClusterFromSnapshotInput struct {
 	// see DB Instance Class (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.html)
 	// in the Amazon RDS User Guide.
 	//
-	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
+	// Valid for: Multi-AZ DB clusters only
 	DBClusterInstanceClass *string `type:"string"`
 
 	// The name of the DB cluster parameter group to associate with this DB cluster.
@@ -46075,7 +46186,7 @@ type RestoreDBClusterFromSnapshotInput struct {
 	//
 	// Constraints: If supplied, must match the name of an existing DB subnet group.
 	//
-	// Example: mySubnetgroup
+	// Example: mydbsubnetgroup
 	//
 	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	DBSubnetGroupName *string `type:"string"`
@@ -46112,11 +46223,31 @@ type RestoreDBClusterFromSnapshotInput struct {
 	// The list of logs that the restored DB cluster is to export to Amazon CloudWatch
 	// Logs. The values in the list depend on the DB engine being used.
 	//
-	// For more information, see Publishing Database Logs to Amazon CloudWatch Logs
-	// (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
+	// RDS for MySQL
+	//
+	// Possible values are error, general, and slowquery.
+	//
+	// RDS for PostgreSQL
+	//
+	// Possible values are postgresql and upgrade.
+	//
+	// Aurora MySQL
+	//
+	// Possible values are audit, error, general, and slowquery.
+	//
+	// Aurora PostgreSQL
+	//
+	// Possible value is postgresql.
+	//
+	// For more information about exporting CloudWatch Logs for Amazon RDS, see
+	// Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
+	// in the Amazon Relational Database Service User Guide.
+	//
+	// For more information about exporting CloudWatch Logs for Amazon Aurora, see
+	// Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
 	// in the Amazon Aurora User Guide.
 	//
-	// Valid for: Aurora DB clusters only
+	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	EnableCloudwatchLogsExports []*string `type:"list"`
 
 	// A value that indicates whether to enable mapping of Amazon Web Services Identity
@@ -46155,8 +46286,8 @@ type RestoreDBClusterFromSnapshotInput struct {
 	//
 	// aws rds describe-db-engine-versions --engine aurora --query "DBEngineVersions[].EngineVersion"
 	//
-	// To list all of the available engine versions for MySQL 5.7-compatible Aurora,
-	// use the following command:
+	// To list all of the available engine versions for MySQL 5.7-compatible and
+	// MySQL 8.0-compatible Aurora, use the following command:
 	//
 	// aws rds describe-db-engine-versions --engine aurora-mysql --query "DBEngineVersions[].EngineVersion"
 	//
@@ -46305,11 +46436,11 @@ type RestoreDBClusterFromSnapshotInput struct {
 	// Specifies the storage type to be associated with the each DB instance in
 	// the Multi-AZ DB cluster.
 	//
-	// Valid values: standard | gp2 | io1
+	// Valid values: io1
 	//
-	// If you specify io1, you must also include a value for the Iops parameter.
+	// When specified, a value for the Iops parameter is required.
 	//
-	// Default: io1 if the Iops parameter is specified, otherwise gp2
+	// Default: io1
 	//
 	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	StorageType *string `type:"string"`
@@ -46539,8 +46670,6 @@ type RestoreDBClusterFromSnapshotOutput struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -46587,7 +46716,7 @@ type RestoreDBClusterToPointInTimeInput struct {
 	// A value that indicates whether to copy all tags from the restored DB cluster
 	// to snapshots of the restored DB cluster. The default is not to copy them.
 	//
-	// Valid for: Aurora DB clusters only
+	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	CopyTagsToSnapshot *bool `type:"boolean"`
 
 	// The name of the new DB cluster to be created.
@@ -46638,7 +46767,7 @@ type RestoreDBClusterToPointInTimeInput struct {
 	//
 	// Constraints: If supplied, must match the name of an existing DBSubnetGroup.
 	//
-	// Example: mySubnetgroup
+	// Example: mydbsubnetgroup
 	//
 	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	DBSubnetGroupName *string `type:"string"`
@@ -46670,11 +46799,31 @@ type RestoreDBClusterToPointInTimeInput struct {
 	// The list of logs that the restored DB cluster is to export to CloudWatch
 	// Logs. The values in the list depend on the DB engine being used.
 	//
-	// For more information, see Publishing Database Logs to Amazon CloudWatch Logs
-	// (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
+	// RDS for MySQL
+	//
+	// Possible values are error, general, and slowquery.
+	//
+	// RDS for PostgreSQL
+	//
+	// Possible values are postgresql and upgrade.
+	//
+	// Aurora MySQL
+	//
+	// Possible values are audit, error, general, and slowquery.
+	//
+	// Aurora PostgreSQL
+	//
+	// Possible value is postgresql.
+	//
+	// For more information about exporting CloudWatch Logs for Amazon RDS, see
+	// Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
+	// in the Amazon Relational Database Service User Guide.
+	//
+	// For more information about exporting CloudWatch Logs for Amazon Aurora, see
+	// Publishing Database Logs to Amazon CloudWatch Logs (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html#USER_LogAccess.Procedural.UploadtoCloudWatch)
 	// in the Amazon Aurora User Guide.
 	//
-	// Valid for: Aurora DB clusters only
+	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	EnableCloudwatchLogsExports []*string `type:"list"`
 
 	// A value that indicates whether to enable mapping of Amazon Web Services Identity
@@ -46844,11 +46993,11 @@ type RestoreDBClusterToPointInTimeInput struct {
 	// Specifies the storage type to be associated with the each DB instance in
 	// the Multi-AZ DB cluster.
 	//
-	// Valid values: standard | gp2 | io1
+	// Valid values: io1
 	//
-	// If you specify io1, also include a value for the Iops parameter.
+	// When specified, a value for the Iops parameter is required.
 	//
-	// Default: io1 if the Iops parameter is specified, otherwise gp2
+	// Default: io1
 	//
 	// Valid for: Multi-AZ DB clusters only
 	StorageType *string `type:"string"`
@@ -47077,8 +47226,6 @@ type RestoreDBClusterToPointInTimeOutput struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -47137,7 +47284,16 @@ type RestoreDBInstanceFromDBSnapshotInput struct {
 	BackupTarget *string `type:"string"`
 
 	// A value that indicates whether to copy all tags from the restored DB instance
-	// to snapshots of the DB instance. By default, tags are not copied.
+	// to snapshots of the DB instance.
+	//
+	// In most cases, tags aren't copied by default. However, when you restore a
+	// DB instance from a DB snapshot, RDS checks whether you specify new tags.
+	// If yes, the new tags are added to the restored DB instance. If there are
+	// no new tags, RDS looks for the tags from the source DB instance for the DB
+	// snapshot, and then adds those tags to the restored DB instance.
+	//
+	// For more information, see Copying tags to DB instance snapshots (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html#USER_Tagging.CopyTags)
+	// in the Amazon RDS User Guide.
 	CopyTagsToSnapshot *bool `type:"boolean"`
 
 	// The instance profile associated with the underlying Amazon EC2 instance of
@@ -47153,7 +47309,7 @@ type RestoreDBInstanceFromDBSnapshotInput struct {
 	//
 	// For the list of permissions required for the IAM role, see Configure IAM
 	// and your VPC (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/custom-setup-orcl.html#custom-setup-orcl.iam-vpc)
-	// in the Amazon Relational Database Service User Guide.
+	// in the Amazon RDS User Guide.
 	//
 	// This setting is required for RDS Custom.
 	CustomIamInstanceProfile *string `type:"string"`
@@ -47223,7 +47379,7 @@ type RestoreDBInstanceFromDBSnapshotInput struct {
 	//
 	// Constraints: If supplied, must match the name of an existing DBSubnetGroup.
 	//
-	// Example: mySubnetgroup
+	// Example: mydbsubnetgroup
 	DBSubnetGroupName *string `type:"string"`
 
 	// A value that indicates whether the DB instance has deletion protection enabled.
@@ -47763,6 +47919,10 @@ type RestoreDBInstanceFromS3Input struct {
 	DBSecurityGroups []*string `locationNameList:"DBSecurityGroupName" type:"list"`
 
 	// A DB subnet group to associate with this DB instance.
+	//
+	// Constraints: If supplied, must match the name of an existing DBSubnetGroup.
+	//
+	// Example: mydbsubnetgroup
 	DBSubnetGroupName *string `type:"string"`
 
 	// A value that indicates whether the DB instance has deletion protection enabled.
@@ -48455,7 +48615,7 @@ type RestoreDBInstanceToPointInTimeInput struct {
 	//
 	// Constraints: If supplied, must match the name of an existing DBSubnetGroup.
 	//
-	// Example: mySubnetgroup
+	// Example: mydbsubnetgroup
 	DBSubnetGroupName *string `type:"string"`
 
 	// A value that indicates whether the DB instance has deletion protection enabled.
@@ -49686,8 +49846,6 @@ type StartDBClusterOutput struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -50444,8 +50602,6 @@ type StopDBClusterOutput struct {
 	// For more information on Multi-AZ DB clusters, see Multi-AZ deployments with
 	// two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
 	// in the Amazon RDS User Guide.
-	//
-	// The Multi-AZ DB clusters feature is in preview and is subject to change.
 	DBCluster *DBCluster `type:"structure"`
 }
 
@@ -50872,6 +51028,10 @@ type UpgradeTarget struct {
 	// A list of the supported DB engine modes for the target engine version.
 	SupportedEngineModes []*string `type:"list"`
 
+	// A value that indicates whether you can use Babelfish for Aurora PostgreSQL
+	// with the target engine version.
+	SupportsBabelfish *bool `type:"boolean"`
+
 	// A value that indicates whether you can use Aurora global databases with the
 	// target engine version.
 	SupportsGlobalDatabases *bool `type:"boolean"`
@@ -50932,6 +51092,12 @@ func (s *UpgradeTarget) SetIsMajorVersionUpgrade(v bool) *UpgradeTarget {
 // SetSupportedEngineModes sets the SupportedEngineModes field's value.
 func (s *UpgradeTarget) SetSupportedEngineModes(v []*string) *UpgradeTarget {
 	s.SupportedEngineModes = v
+	return s
+}
+
+// SetSupportsBabelfish sets the SupportsBabelfish field's value.
+func (s *UpgradeTarget) SetSupportsBabelfish(v bool) *UpgradeTarget {
+	s.SupportsBabelfish = &v
 	return s
 }
 
@@ -51625,6 +51791,9 @@ const (
 
 	// SourceTypeCustomEngineVersion is a SourceType enum value
 	SourceTypeCustomEngineVersion = "custom-engine-version"
+
+	// SourceTypeDbProxy is a SourceType enum value
+	SourceTypeDbProxy = "db-proxy"
 )
 
 // SourceType_Values returns all elements of the SourceType enum
@@ -51637,6 +51806,7 @@ func SourceType_Values() []string {
 		SourceTypeDbCluster,
 		SourceTypeDbClusterSnapshot,
 		SourceTypeCustomEngineVersion,
+		SourceTypeDbProxy,
 	}
 }
 

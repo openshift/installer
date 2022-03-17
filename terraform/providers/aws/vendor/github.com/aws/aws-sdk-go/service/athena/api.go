@@ -3360,6 +3360,91 @@ func (c *Athena) UpdateDataCatalogWithContext(ctx aws.Context, input *UpdateData
 	return out, req.Send()
 }
 
+const opUpdateNamedQuery = "UpdateNamedQuery"
+
+// UpdateNamedQueryRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateNamedQuery operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateNamedQuery for more information on using the UpdateNamedQuery
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateNamedQueryRequest method.
+//    req, resp := client.UpdateNamedQueryRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UpdateNamedQuery
+func (c *Athena) UpdateNamedQueryRequest(input *UpdateNamedQueryInput) (req *request.Request, output *UpdateNamedQueryOutput) {
+	op := &request.Operation{
+		Name:       opUpdateNamedQuery,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateNamedQueryInput{}
+	}
+
+	output = &UpdateNamedQueryOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UpdateNamedQuery API operation for Amazon Athena.
+//
+// Updates a NamedQuery object. The database or workgroup cannot be updated.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Athena's
+// API operation UpdateNamedQuery for usage and error information.
+//
+// Returned Error Types:
+//   * InternalServerException
+//   Indicates a platform issue, which may be due to a transient condition or
+//   outage.
+//
+//   * InvalidRequestException
+//   Indicates that something is wrong with the input to the request. For example,
+//   a required parameter may be missing or out of range.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UpdateNamedQuery
+func (c *Athena) UpdateNamedQuery(input *UpdateNamedQueryInput) (*UpdateNamedQueryOutput, error) {
+	req, out := c.UpdateNamedQueryRequest(input)
+	return out, req.Send()
+}
+
+// UpdateNamedQueryWithContext is the same as UpdateNamedQuery with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateNamedQuery for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Athena) UpdateNamedQueryWithContext(ctx aws.Context, input *UpdateNamedQueryInput, opts ...request.Option) (*UpdateNamedQueryOutput, error) {
+	req, out := c.UpdateNamedQueryRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdatePreparedStatement = "UpdatePreparedStatement"
 
 // UpdatePreparedStatementRequest generates a "aws/request.Request" representing the
@@ -3532,6 +3617,60 @@ func (c *Athena) UpdateWorkGroupWithContext(ctx aws.Context, input *UpdateWorkGr
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// Provides information about an Athena query error. The AthenaError feature
+// provides standardized error information to help you understand failed queries
+// and take steps after a query failure occurs. AthenaError includes an ErrorCategory
+// field that specifies whether the cause of the failed query is due to system
+// error, user error, or other error.
+type AthenaError struct {
+	_ struct{} `type:"structure"`
+
+	// An integer value that specifies the category of a query failure error. The
+	// following list shows the category for each integer value.
+	//
+	// 1 - System
+	//
+	// 2 - User
+	//
+	// 3 - Other
+	ErrorCategory *int64 `min:"1" type:"integer"`
+
+	// An integer value that provides specific information about an Athena query
+	// error. For the meaning of specific values, see the Error Type Reference (https://docs.aws.amazon.com/athena/latest/ug/error-reference.html#error-reference-error-type-reference)
+	// in the Amazon Athena User Guide.
+	ErrorType *int64 `type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AthenaError) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AthenaError) GoString() string {
+	return s.String()
+}
+
+// SetErrorCategory sets the ErrorCategory field's value.
+func (s *AthenaError) SetErrorCategory(v int64) *AthenaError {
+	s.ErrorCategory = &v
+	return s
+}
+
+// SetErrorType sets the ErrorType field's value.
+func (s *AthenaError) SetErrorType(v int64) *AthenaError {
+	s.ErrorType = &v
+	return s
 }
 
 type BatchGetNamedQueryInput struct {
@@ -3890,8 +4029,9 @@ type CreateDataCatalogInput struct {
 	Description *string `min:"1" type:"string"`
 
 	// The name of the data catalog to create. The catalog name must be unique for
-	// the Amazon Web Services account and can use a maximum of 128 alphanumeric,
-	// underscore, at sign, or hyphen characters.
+	// the Amazon Web Services account and can use a maximum of 127 alphanumeric,
+	// underscore, at sign, or hyphen characters. The remainder of the length constraint
+	// of 256 is reserved for use by Athena.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -4426,8 +4566,9 @@ type DataCatalog struct {
 	Description *string `min:"1" type:"string"`
 
 	// The name of the data catalog. The catalog name must be unique for the Amazon
-	// Web Services account and can use a maximum of 128 alphanumeric, underscore,
-	// at sign, or hyphen characters.
+	// Web Services account and can use a maximum of 127 alphanumeric, underscore,
+	// at sign, or hyphen characters. The remainder of the length constraint of
+	// 256 is reserved for use by Athena.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -4509,7 +4650,10 @@ func (s *DataCatalog) SetType(v string) *DataCatalog {
 type DataCatalogSummary struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the data catalog.
+	// The name of the data catalog. The catalog name is unique for the Amazon Web
+	// Services account and can use a maximum of 127 alphanumeric, underscore, at
+	// sign, or hyphen characters. The remainder of the length constraint of 256
+	// is reserved for use by Athena.
 	CatalogName *string `min:"1" type:"string"`
 
 	// The data catalog type.
@@ -7008,8 +7152,7 @@ func (s *MetadataException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// A query, where QueryString is the list of SQL query statements that comprise
-// the query.
+// A query, where QueryString contains the SQL statements that make up the query.
 type NamedQuery struct {
 	_ struct{} `type:"structure"`
 
@@ -7029,7 +7172,7 @@ type NamedQuery struct {
 	// The unique identifier of the query.
 	NamedQueryId *string `type:"string"`
 
-	// The SQL query statements that comprise the query.
+	// The SQL statements that make up the query.
 	//
 	// QueryString is a required field
 	QueryString *string `min:"1" type:"string" required:"true"`
@@ -7478,6 +7621,9 @@ func (s *QueryExecutionStatistics) SetTotalExecutionTimeInMillis(v int64) *Query
 type QueryExecutionStatus struct {
 	_ struct{} `type:"structure"`
 
+	// Provides information about an Athena query error.
+	AthenaError *AthenaError `type:"structure"`
+
 	// The date and time that the query completed.
 	CompletionDateTime *time.Time `type:"timestamp"`
 
@@ -7516,6 +7662,12 @@ func (s QueryExecutionStatus) String() string {
 // value will be replaced with "sensitive".
 func (s QueryExecutionStatus) GoString() string {
 	return s.String()
+}
+
+// SetAthenaError sets the AthenaError field's value.
+func (s *QueryExecutionStatus) SetAthenaError(v *AthenaError) *QueryExecutionStatus {
+	s.AthenaError = v
+	return s
 }
 
 // SetCompletionDateTime sets the CompletionDateTime field's value.
@@ -7624,6 +7776,20 @@ type ResultConfiguration struct {
 	// Override Client-Side Settings (https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html).
 	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
 
+	// The Amazon Web Services account ID that you expect to be the owner of the
+	// Amazon S3 bucket specified by ResultConfiguration$OutputLocation. If set,
+	// Athena uses the value for ExpectedBucketOwner when it makes Amazon S3 calls
+	// to your specified output location. If the ExpectedBucketOwner Amazon Web
+	// Services account ID does not match the actual owner of the Amazon S3 bucket,
+	// the call fails with a permissions error.
+	//
+	// This is a client-side setting. If workgroup settings override client-side
+	// settings, then the query uses the ExpectedBucketOwner setting that is specified
+	// for the workgroup, and also uses the location for storing query results specified
+	// in the workgroup. See WorkGroupConfiguration$EnforceWorkGroupConfiguration
+	// and Workgroup Settings Override Client-Side Settings (https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html).
+	ExpectedBucketOwner *string `type:"string"`
+
 	// The location in Amazon S3 where your query results are stored, such as s3://path/to/query/bucket/.
 	// To run the query, you must specify the query results location using one of
 	// the ways: either for individual queries using either this setting (client-side),
@@ -7674,6 +7840,12 @@ func (s *ResultConfiguration) SetEncryptionConfiguration(v *EncryptionConfigurat
 	return s
 }
 
+// SetExpectedBucketOwner sets the ExpectedBucketOwner field's value.
+func (s *ResultConfiguration) SetExpectedBucketOwner(v string) *ResultConfiguration {
+	s.ExpectedBucketOwner = &v
+	return s
+}
+
 // SetOutputLocation sets the OutputLocation field's value.
 func (s *ResultConfiguration) SetOutputLocation(v string) *ResultConfiguration {
 	s.OutputLocation = &v
@@ -7687,6 +7859,20 @@ type ResultConfigurationUpdates struct {
 
 	// The encryption configuration for the query results.
 	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
+
+	// The Amazon Web Services account ID that you expect to be the owner of the
+	// Amazon S3 bucket specified by ResultConfiguration$OutputLocation. If set,
+	// Athena uses the value for ExpectedBucketOwner when it makes Amazon S3 calls
+	// to your specified output location. If the ExpectedBucketOwner Amazon Web
+	// Services account ID does not match the actual owner of the Amazon S3 bucket,
+	// the call fails with a permissions error.
+	//
+	// If workgroup settings override client-side settings, then the query uses
+	// the ExpectedBucketOwner setting that is specified for the workgroup, and
+	// also uses the location for storing query results specified in the workgroup.
+	// See WorkGroupConfiguration$EnforceWorkGroupConfiguration and Workgroup Settings
+	// Override Client-Side Settings (https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html).
+	ExpectedBucketOwner *string `type:"string"`
 
 	// The location in Amazon S3 where your query results are stored, such as s3://path/to/query/bucket/.
 	// For more information, see Query Results (https://docs.aws.amazon.com/athena/latest/ug/querying.html)
@@ -7705,6 +7891,14 @@ type ResultConfigurationUpdates struct {
 	// will be updated with the new value. For more information, see Workgroup Settings
 	// Override Client-Side Settings (https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html).
 	RemoveEncryptionConfiguration *bool `type:"boolean"`
+
+	// If set to "true", removes the Amazon Web Services account ID previously specified
+	// for ResultConfiguration$ExpectedBucketOwner. If set to "false" or not set,
+	// and a value is present in the ExpectedBucketOwner in ResultConfigurationUpdates
+	// (the client-side setting), the ExpectedBucketOwner in the workgroup's ResultConfiguration
+	// is updated with the new value. For more information, see Workgroup Settings
+	// Override Client-Side Settings (https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html).
+	RemoveExpectedBucketOwner *bool `type:"boolean"`
 
 	// If set to "true", indicates that the previously-specified query results location
 	// (also known as a client-side setting) for queries in this workgroup should
@@ -7755,6 +7949,12 @@ func (s *ResultConfigurationUpdates) SetEncryptionConfiguration(v *EncryptionCon
 	return s
 }
 
+// SetExpectedBucketOwner sets the ExpectedBucketOwner field's value.
+func (s *ResultConfigurationUpdates) SetExpectedBucketOwner(v string) *ResultConfigurationUpdates {
+	s.ExpectedBucketOwner = &v
+	return s
+}
+
 // SetOutputLocation sets the OutputLocation field's value.
 func (s *ResultConfigurationUpdates) SetOutputLocation(v string) *ResultConfigurationUpdates {
 	s.OutputLocation = &v
@@ -7767,13 +7967,19 @@ func (s *ResultConfigurationUpdates) SetRemoveEncryptionConfiguration(v bool) *R
 	return s
 }
 
+// SetRemoveExpectedBucketOwner sets the RemoveExpectedBucketOwner field's value.
+func (s *ResultConfigurationUpdates) SetRemoveExpectedBucketOwner(v bool) *ResultConfigurationUpdates {
+	s.RemoveExpectedBucketOwner = &v
+	return s
+}
+
 // SetRemoveOutputLocation sets the RemoveOutputLocation field's value.
 func (s *ResultConfigurationUpdates) SetRemoveOutputLocation(v bool) *ResultConfigurationUpdates {
 	s.RemoveOutputLocation = &v
 	return s
 }
 
-// The metadata and rows that comprise a query result set. The metadata describes
+// The metadata and rows that make up a query result set. The metadata describes
 // the column structure and data types. To return a ResultSet object, use GetQueryResults.
 type ResultSet struct {
 	_ struct{} `type:"structure"`
@@ -7849,7 +8055,7 @@ func (s *ResultSetMetadata) SetColumnInfo(v []*ColumnInfo) *ResultSetMetadata {
 	return s
 }
 
-// The rows that comprise a query result table.
+// The rows that make up a query result table.
 type Row struct {
 	_ struct{} `type:"structure"`
 
@@ -8593,8 +8799,9 @@ type UpdateDataCatalogInput struct {
 	Description *string `min:"1" type:"string"`
 
 	// The name of the data catalog to update. The catalog name must be unique for
-	// the Amazon Web Services account and can use a maximum of 128 alphanumeric,
-	// underscore, at sign, or hyphen characters.
+	// the Amazon Web Services account and can use a maximum of 127 alphanumeric,
+	// underscore, at sign, or hyphen characters. The remainder of the length constraint
+	// of 256 is reserved for use by Athena.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -8704,6 +8911,117 @@ func (s UpdateDataCatalogOutput) String() string {
 // be included in the string output. The member name will be present, but the
 // value will be replaced with "sensitive".
 func (s UpdateDataCatalogOutput) GoString() string {
+	return s.String()
+}
+
+type UpdateNamedQueryInput struct {
+	_ struct{} `type:"structure"`
+
+	// The query description.
+	Description *string `type:"string"`
+
+	// The name of the query.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+
+	// The unique identifier (UUID) of the query.
+	//
+	// NamedQueryId is a required field
+	NamedQueryId *string `type:"string" required:"true"`
+
+	// The contents of the query with all query statements.
+	//
+	// QueryString is a required field
+	QueryString *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateNamedQueryInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateNamedQueryInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateNamedQueryInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateNamedQueryInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.NamedQueryId == nil {
+		invalidParams.Add(request.NewErrParamRequired("NamedQueryId"))
+	}
+	if s.QueryString == nil {
+		invalidParams.Add(request.NewErrParamRequired("QueryString"))
+	}
+	if s.QueryString != nil && len(*s.QueryString) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("QueryString", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDescription sets the Description field's value.
+func (s *UpdateNamedQueryInput) SetDescription(v string) *UpdateNamedQueryInput {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *UpdateNamedQueryInput) SetName(v string) *UpdateNamedQueryInput {
+	s.Name = &v
+	return s
+}
+
+// SetNamedQueryId sets the NamedQueryId field's value.
+func (s *UpdateNamedQueryInput) SetNamedQueryId(v string) *UpdateNamedQueryInput {
+	s.NamedQueryId = &v
+	return s
+}
+
+// SetQueryString sets the QueryString field's value.
+func (s *UpdateNamedQueryInput) SetQueryString(v string) *UpdateNamedQueryInput {
+	s.QueryString = &v
+	return s
+}
+
+type UpdateNamedQueryOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateNamedQueryOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateNamedQueryOutput) GoString() string {
 	return s.String()
 }
 

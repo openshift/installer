@@ -14026,7 +14026,7 @@ func (c *SSM) TerminateSessionRequest(input *TerminateSessionInput) (req *reques
 // TerminateSession API operation for Amazon Simple Systems Manager (SSM).
 //
 // Permanently ends a session and closes the data connection between the Session
-// Manager client and SSM Agent on the managed node. A terminated session isn't
+// Manager client and SSM Agent on the managed node. A terminated session can't
 // be resumed.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -14037,14 +14037,6 @@ func (c *SSM) TerminateSessionRequest(input *TerminateSessionInput) (req *reques
 // API operation TerminateSession for usage and error information.
 //
 // Returned Error Types:
-//   * DoesNotExistException
-//   Error returned when the ID specified for a resource, such as a maintenance
-//   window or patch baseline, doesn't exist.
-//
-//   For information about resource quotas in Amazon Web Services Systems Manager,
-//   see Systems Manager service quotas (https://docs.aws.amazon.com/general/latest/gr/ssm.html#limits_ssm)
-//   in the Amazon Web Services General Reference.
-//
 //   * InternalServerError
 //   An error occurred on the server side.
 //
@@ -14206,7 +14198,13 @@ func (c *SSM) UpdateAssociationRequest(input *UpdateAssociationInput) (req *requ
 //
 // Updates an association. You can update the association name and version,
 // the document version, schedule, parameters, and Amazon Simple Storage Service
-// (Amazon S3) output.
+// (Amazon S3) output. When you call UpdateAssociation, the system removes all
+// optional parameters from the request and overwrites the association with
+// null values for those parameters. This is by design. You must specify all
+// optional parameters in the call, even if you are not changing the parameters.
+// This includes the Name parameter. Before calling this API action, we recommend
+// that you call the DescribeAssociation API operation and make a note of all
+// optional parameters required for your UpdateAssociation call.
 //
 // In order to call this API operation, your Identity and Access Management
 // (IAM) user account, group, or role must be configured with permission to
@@ -14217,7 +14215,8 @@ func (c *SSM) UpdateAssociationRequest(input *UpdateAssociationInput) (req *requ
 // resource: <resource_arn>
 //
 // When you update an association, the association immediately runs against
-// the specified targets.
+// the specified targets. You can add the ApplyOnlyAtCronInterval parameter
+// to run the association during the next schedule run.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -16161,6 +16160,13 @@ type Association struct {
 	AssociationVersion *string `type:"string"`
 
 	// The version of the document used in the association.
+	//
+	// State Manager doesn't support running associations that use a new version
+	// of a document if that document is shared from another account. State Manager
+	// always runs the default version of a document if shared from another account,
+	// even though the Systems Manager console shows that a new version was processed.
+	// If you want to run an association using a new version of a document shared
+	// form another account, you must set the document version to default.
 	DocumentVersion *string `type:"string"`
 
 	// The managed node ID.
@@ -19268,7 +19274,7 @@ type Command struct {
 
 	// The number of targets for which the command invocation reached a terminal
 	// state. Terminal states include the following: Success, Failed, Execution
-	// Timed Out, Delivery Timed Out, Canceled, Terminated, or Undeliverable.
+	// Timed Out, Delivery Timed Out, Cancelled, Terminated, or Undeliverable.
 	CompletedCount *int64 `type:"integer"`
 
 	// The number of targets for which the status is Delivery Timed Out.
@@ -19370,8 +19376,8 @@ type Command struct {
 	//    more invocations doesn't have a value of Success but not enough invocations
 	//    failed for the status to be Failed. This is a terminal state.
 	//
-	//    * Canceled: The command was terminated before it was completed. This is
-	//    a terminal state.
+	//    * Cancelled: The command was terminated before it was completed. This
+	//    is a terminal state.
 	//
 	//    * Rate Exceeded: The number of managed nodes targeted by the command exceeded
 	//    the account limit for pending invocations. The system has canceled the
@@ -19748,8 +19754,8 @@ type CommandInvocation struct {
 	//    Invocation failures count against the MaxErrors limit of the parent command.
 	//    This is a terminal state.
 	//
-	//    * Canceled: The command was terminated before it was completed. This is
-	//    a terminal state.
+	//    * Cancelled: The command was terminated before it was completed. This
+	//    is a terminal state.
 	//
 	//    * Undeliverable: The command can't be delivered to the managed node. The
 	//    managed node might not exist or might not be responding. Undeliverable
@@ -19980,8 +19986,8 @@ type CommandPlugin struct {
 	//    Invocation failures count against the MaxErrors limit of the parent command.
 	//    This is a terminal state.
 	//
-	//    * Canceled: The command was terminated before it was completed. This is
-	//    a terminal state.
+	//    * Cancelled: The command was terminated before it was completed. This
+	//    is a terminal state.
 	//
 	//    * Undeliverable: The command can't be delivered to the managed node. The
 	//    managed node might not exist, or it might not be responding. Undeliverable
@@ -21207,6 +21213,13 @@ type CreateAssociationInput struct {
 
 	// The document version you want to associate with the target(s). Can be a specific
 	// version or the default version.
+	//
+	// State Manager doesn't support running associations that use a new version
+	// of a document if that document is shared from another account. State Manager
+	// always runs the default version of a document if shared from another account,
+	// even though the Systems Manager console shows that a new version was processed.
+	// If you want to run an association using a new version of a document shared
+	// form another account, you must set the document version to default.
 	DocumentVersion *string `type:"string"`
 
 	// The managed node ID.
@@ -21542,6 +21555,9 @@ type CreateDocumentInput struct {
 	DocumentFormat *string `type:"string" enum:"DocumentFormat"`
 
 	// The type of document to create.
+	//
+	// The DeploymentStrategy document type is an internal-use-only document type
+	// reserved for AppConfig.
 	DocumentType *string `type:"string" enum:"DocumentType"`
 
 	// A name for the SSM document.
@@ -28646,7 +28662,7 @@ func (s *DocumentDefaultVersionDescription) SetName(v string) *DocumentDefaultVe
 	return s
 }
 
-// Describes a Amazon Web Services Systems Manager document (SSM document).
+// Describes an Amazon Web Services Systems Manager document (SSM document).
 type DocumentDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -28659,6 +28675,13 @@ type DocumentDescription struct {
 
 	// The user in your organization who created the document.
 	Author *string `type:"string"`
+
+	// The classification of a document to help you identify and categorize its
+	// use.
+	Category []*string `type:"list"`
+
+	// The value that identifies a document's category.
+	CategoryEnum []*string `type:"list"`
 
 	// The date when the document was created.
 	CreatedDate *time.Time `type:"timestamp"`
@@ -28707,7 +28730,7 @@ type DocumentDescription struct {
 	// The version of the document that is currently under review.
 	PendingReviewVersion *string `type:"string"`
 
-	// The list of OS platforms compatible with this SSM document.
+	// The list of operating system (OS) platforms compatible with this SSM document.
 	PlatformTypes []*string `type:"list"`
 
 	// A list of SSM documents required by a document. For example, an ApplicationConfiguration
@@ -28781,6 +28804,18 @@ func (s *DocumentDescription) SetAttachmentsInformation(v []*AttachmentInformati
 // SetAuthor sets the Author field's value.
 func (s *DocumentDescription) SetAuthor(v string) *DocumentDescription {
 	s.Author = &v
+	return s
+}
+
+// SetCategory sets the Category field's value.
+func (s *DocumentDescription) SetCategory(v []*string) *DocumentDescription {
+	s.Category = v
+	return s
+}
+
+// SetCategoryEnum sets the CategoryEnum field's value.
+func (s *DocumentDescription) SetCategoryEnum(v []*string) *DocumentDescription {
+	s.CategoryEnum = v
 	return s
 }
 
@@ -29182,8 +29217,6 @@ func (s *DocumentIdentifier) SetVersionName(v string) *DocumentIdentifier {
 //    * ChangeCalendar
 //
 //    * Command
-//
-//    * DeploymentStrategy
 //
 //    * Package
 //
@@ -30833,8 +30866,8 @@ type GetCommandInvocationOutput struct {
 	//    wasn't zero. Invocation failures count against the MaxErrors limit of
 	//    the parent command. This is a terminal state.
 	//
-	//    * Canceled: The command was terminated before it was completed. This is
-	//    a terminal state.
+	//    * Cancelled: The command was terminated before it was completed. This
+	//    is a terminal state.
 	//
 	//    * Undeliverable: The command can't be delivered to the managed node. The
 	//    node might not exist or might not be responding. Undeliverable invocations
@@ -33459,8 +33492,8 @@ type GetParametersByPathInput struct {
 	ParameterFilters []*ParameterStringFilter `type:"list"`
 
 	// The hierarchy for the parameter. Hierarchies start with a forward slash (/).
-	// The hierachy is the parameter name except the last part of the parameter.
-	// For the API call to succeeed, the last part of the parameter name can't be
+	// The hierarchy is the parameter name except the last part of the parameter.
+	// For the API call to succeed, the last part of the parameter name can't be
 	// in the path. A parameter name hierarchy can have a maximum of 15 levels.
 	// Here is an example of a hierarchy: /Finance/Prod/IAD/WinServ2016/license33
 	//
@@ -42993,9 +43026,25 @@ type MaintenanceWindowTask struct {
 	LoggingInfo *LoggingInfo `type:"structure"`
 
 	// The maximum number of targets this task can be run for, in parallel.
+	//
+	// Although this element is listed as "Required: No", a value can be omitted
+	// only when you are registering or updating a targetless task (https://docs.aws.amazon.com/systems-manager/latest/userguide/maintenance-windows-targetless-tasks.html)
+	// You must provide a value in all other cases.
+	//
+	// For maintenance window tasks without a target specified, you can't supply
+	// a value for this option. Instead, the system inserts a placeholder value
+	// of 1. This value doesn't affect the running of your task.
 	MaxConcurrency *string `min:"1" type:"string"`
 
 	// The maximum number of errors allowed before this task stops being scheduled.
+	//
+	// Although this element is listed as "Required: No", a value can be omitted
+	// only when you are registering or updating a targetless task (https://docs.aws.amazon.com/systems-manager/latest/userguide/maintenance-windows-targetless-tasks.html)
+	// You must provide a value in all other cases.
+	//
+	// For maintenance window tasks without a target specified, you can't supply
+	// a value for this option. Instead, the system inserts a placeholder value
+	// of 1. This value doesn't affect the running of your task.
 	MaxErrors *string `min:"1" type:"string"`
 
 	// The task name.
@@ -45904,9 +45953,15 @@ type Parameter struct {
 
 	// The type of parameter. Valid values include the following: String, StringList,
 	// and SecureString.
+	//
+	// If type is StringList, the system returns a comma-separated string with no
+	// spaces between commas in the Value field.
 	Type *string `type:"string" enum:"ParameterType"`
 
 	// The parameter value.
+	//
+	// If type is StringList, the system returns a comma-separated string with no
+	// spaces between commas in the Value field.
 	//
 	// Value is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by Parameter's
@@ -46217,7 +46272,7 @@ type ParameterInlinePolicy struct {
 	// The JSON text of the policy.
 	PolicyText *string `type:"string"`
 
-	// The type of policy. Parameter Store, a capablility of Amazon Web Services
+	// The type of policy. Parameter Store, a capability of Amazon Web Services
 	// Systems Manager, supports the following policy types: Expiration, ExpirationNotification,
 	// and NoChangeNotification.
 	PolicyType *string `type:"string"`
@@ -47295,7 +47350,7 @@ type PatchComplianceData struct {
 	// KBId is a required field
 	KBId *string `type:"string" required:"true"`
 
-	// The severity of the patchsuch as Critical, Important, and Moderate.
+	// The severity of the patch such as Critical, Important, and Moderate.
 	//
 	// Severity is a required field
 	Severity *string `type:"string" required:"true"`
@@ -48375,6 +48430,8 @@ type PutParameterInput struct {
 	//
 	//    * aws:ec2:image
 	//
+	//    * aws:ssm:integration
+	//
 	// When you create a String parameter and specify aws:ec2:image, Amazon Web
 	// Services Systems Manager validates the parameter value is in the required
 	// format, such as ami-12345abcdeEXAMPLE, and that the specified AMI is available
@@ -49179,7 +49236,11 @@ type RegisterTaskWithMaintenanceWindowInput struct {
 	// for the supported maintenance window task types, see MaintenanceWindowTaskInvocationParameters.
 	LoggingInfo *LoggingInfo `type:"structure"`
 
-	// The maximum number of targets this task can be run for in parallel.
+	// The maximum number of targets this task can be run for, in parallel.
+	//
+	// Although this element is listed as "Required: No", a value can be omitted
+	// only when you are registering or updating a targetless task (https://docs.aws.amazon.com/systems-manager/latest/userguide/maintenance-windows-targetless-tasks.html)
+	// You must provide a value in all other cases.
 	//
 	// For maintenance window tasks without a target specified, you can't supply
 	// a value for this option. Instead, the system inserts a placeholder value
@@ -49187,6 +49248,10 @@ type RegisterTaskWithMaintenanceWindowInput struct {
 	MaxConcurrency *string `min:"1" type:"string"`
 
 	// The maximum number of errors allowed before this task stops being scheduled.
+	//
+	// Although this element is listed as "Required: No", a value can be omitted
+	// only when you are registering or updating a targetless task (https://docs.aws.amazon.com/systems-manager/latest/userguide/maintenance-windows-targetless-tasks.html)
+	// You must provide a value in all other cases.
 	//
 	// For maintenance window tasks without a target specified, you can't supply
 	// a value for this option. Instead, the system inserts a placeholder value
@@ -55014,6 +55079,13 @@ type UpdateAssociationInput struct {
 	ComplianceSeverity *string `type:"string" enum:"AssociationComplianceSeverity"`
 
 	// The document version you want update for the association.
+	//
+	// State Manager doesn't support running associations that use a new version
+	// of a document if that document is shared from another account. State Manager
+	// always runs the default version of a document if shared from another account,
+	// even though the Systems Manager console shows that a new version was processed.
+	// If you want to run an association using a new version of a document shared
+	// form another account, you must set the document version to default.
 	DocumentVersion *string `type:"string"`
 
 	// The maximum number of targets allowed to run the association at the same
@@ -55827,10 +55899,9 @@ type UpdateMaintenanceWindowInput struct {
 	// (https://www.iana.org/time-zones) on the IANA website.
 	ScheduleTimezone *string `type:"string"`
 
-	// The time zone that the scheduled maintenance window executions are based
-	// on, in Internet Assigned Numbers Authority (IANA) format. For example: "America/Los_Angeles",
-	// "UTC", or "Asia/Seoul". For more information, see the Time Zone Database
-	// (https://www.iana.org/time-zones) on the IANA website.
+	// The date and time, in ISO-8601 Extended format, for when you want the maintenance
+	// window to become active. StartDate allows you to delay activation of the
+	// maintenance window until the specified future date.
 	StartDate *string `type:"string"`
 
 	// The ID of the maintenance window to update.
@@ -56370,21 +56441,27 @@ type UpdateMaintenanceWindowTaskInput struct {
 	LoggingInfo *LoggingInfo `type:"structure"`
 
 	// The new MaxConcurrency value you want to specify. MaxConcurrency is the number
-	// of targets that are allowed to run this task in parallel.
+	// of targets that are allowed to run this task, in parallel.
+	//
+	// Although this element is listed as "Required: No", a value can be omitted
+	// only when you are registering or updating a targetless task (https://docs.aws.amazon.com/systems-manager/latest/userguide/maintenance-windows-targetless-tasks.html)
+	// You must provide a value in all other cases.
 	//
 	// For maintenance window tasks without a target specified, you can't supply
 	// a value for this option. Instead, the system inserts a placeholder value
-	// of 1, which may be reported in the response to this command. This value doesn't
-	// affect the running of your task and can be ignored.
+	// of 1. This value doesn't affect the running of your task.
 	MaxConcurrency *string `min:"1" type:"string"`
 
 	// The new MaxErrors value to specify. MaxErrors is the maximum number of errors
 	// that are allowed before the task stops being scheduled.
 	//
+	// Although this element is listed as "Required: No", a value can be omitted
+	// only when you are registering or updating a targetless task (https://docs.aws.amazon.com/systems-manager/latest/userguide/maintenance-windows-targetless-tasks.html)
+	// You must provide a value in all other cases.
+	//
 	// For maintenance window tasks without a target specified, you can't supply
 	// a value for this option. Instead, the system inserts a placeholder value
-	// of 1, which may be reported in the response to this command. This value doesn't
-	// affect the running of your task and can be ignored.
+	// of 1. This value doesn't affect the running of your task.
 	MaxErrors *string `min:"1" type:"string"`
 
 	// The new task name to specify.
@@ -57152,7 +57229,7 @@ type UpdateOpsMetadataInput struct {
 	// Metadata to add to an OpsMetadata object.
 	MetadataToUpdate map[string]*MetadataValue `min:"1" type:"map"`
 
-	// The Amazon Resoure Name (ARN) of the OpsMetadata Object to update.
+	// The Amazon Resource Name (ARN) of the OpsMetadata Object to update.
 	//
 	// OpsMetadataArn is a required field
 	OpsMetadataArn *string `min:"1" type:"string" required:"true"`

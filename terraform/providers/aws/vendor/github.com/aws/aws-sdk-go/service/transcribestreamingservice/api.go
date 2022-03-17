@@ -83,6 +83,7 @@ func (c *TranscribeStreamingService) StartMedicalStreamTranscriptionRequest(inpu
 		"X-Amz-Content-Sha256": "STREAMING-AWS4-HMAC-SHA256-EVENTS",
 	}))
 	req.Handlers.Build.Swap(restjson.BuildHandler.Name, rest.BuildHandler)
+	eventstreamapi.ApplyHTTPTransportFixes(req)
 	req.Handlers.Send.Swap(client.LogHTTPRequestHandler.Name, client.LogHTTPRequestHeaderHandler)
 	req.Handlers.Unmarshal.PushBack(es.runInputStream)
 
@@ -193,7 +194,7 @@ type StartMedicalStreamTranscriptionEventStream struct {
 //
 // The Reader member must be set before reading events from the stream.
 //
-//   es := NewStartMedicalStreamTranscriptionEventStream(func(o *StartMedicalStreamTranscriptionEventStream{
+//   es := NewStartMedicalStreamTranscriptionEventStream(func(o *StartMedicalStreamTranscriptionEventStream){
 //       es.Writer = myMockStreamWriter
 //       es.Reader = myMockStreamReader
 //   })
@@ -462,6 +463,7 @@ func (c *TranscribeStreamingService) StartStreamTranscriptionRequest(input *Star
 		"X-Amz-Content-Sha256": "STREAMING-AWS4-HMAC-SHA256-EVENTS",
 	}))
 	req.Handlers.Build.Swap(restjson.BuildHandler.Name, rest.BuildHandler)
+	eventstreamapi.ApplyHTTPTransportFixes(req)
 	req.Handlers.Send.Swap(client.LogHTTPRequestHandler.Name, client.LogHTTPRequestHeaderHandler)
 	req.Handlers.Unmarshal.PushBack(es.runInputStream)
 
@@ -585,7 +587,7 @@ type StartStreamTranscriptionEventStream struct {
 //
 // The Reader member must be set before reading events from the stream.
 //
-//   es := NewStartStreamTranscriptionEventStream(func(o *StartStreamTranscriptionEventStream{
+//   es := NewStartStreamTranscriptionEventStream(func(o *StartStreamTranscriptionEventStream){
 //       es.Writer = myMockStreamWriter
 //       es.Reader = myMockStreamReader
 //   })

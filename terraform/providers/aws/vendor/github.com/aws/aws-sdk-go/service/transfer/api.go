@@ -3677,8 +3677,9 @@ func (s *ConflictException) RequestID() string {
 type CopyStepDetails struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies the location for the file being copied. Only applicable for the
-	// Copy type of workflow steps.
+	// Specifies the location for the file being copied. Only applicable for Copy
+	// type workflow steps. Use ${Transfer:username} in this field to parametrize
+	// the destination prefix by username.
 	DestinationFileLocation *InputFileLocation `type:"structure"`
 
 	// The name of the step, used as an identifier.
@@ -3687,6 +3688,17 @@ type CopyStepDetails struct {
 	// A flag that indicates whether or not to overwrite an existing file of the
 	// same name. The default is FALSE.
 	OverwriteExisting *string `type:"string" enum:"OverwriteExisting"`
+
+	// Specifies which file to use as input to the workflow step: either the output
+	// from the previous step, or the originally uploaded file for the workflow.
+	//
+	//    * Enter ${previous.file} to use the previous file as the input. In this
+	//    case, this workflow step uses the output file from the previous workflow
+	//    step as input. This is the default value.
+	//
+	//    * Enter ${original.file} to use the originally-uploaded file location
+	//    as input for this step.
+	SourceFileLocation *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -3740,6 +3752,12 @@ func (s *CopyStepDetails) SetOverwriteExisting(v string) *CopyStepDetails {
 	return s
 }
 
+// SetSourceFileLocation sets the SourceFileLocation field's value.
+func (s *CopyStepDetails) SetSourceFileLocation(v string) *CopyStepDetails {
+	s.SourceFileLocation = &v
+	return s
+}
+
 type CreateAccessInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3788,14 +3806,6 @@ type CreateAccessInput struct {
 	// The following is an Entry and Target pair example for chroot.
 	//
 	// [ { "Entry:": "/", "Target": "/bucket_name/home/mydirectory" } ]
-	//
-	// If the target of a logical directory entry does not exist in Amazon S3 or
-	// EFS, the entry is ignored. As a workaround, you can use the Amazon S3 API
-	// or EFS API to create 0 byte objects as place holders for your directory.
-	// If using the CLI, use the s3api or efsapi call instead of s3 or efs so you
-	// can use the put-object operation. For example, you use the following: aws
-	// s3api put-object --bucket bucketname --key path/to/folder/. Make sure that
-	// the end of the key name ends in a / for it to be considered a folder.
 	HomeDirectoryMappings []*HomeDirectoryMapEntry `min:"1" type:"list"`
 
 	// The type of landing directory (folder) you want your users' home directory
@@ -4113,9 +4123,9 @@ type CreateServerInput struct {
 	// endpoint URL to call for authentication using the IdentityProviderDetails
 	// parameter.
 	//
-	// Use the LAMBDA value to directly use a Lambda function as your identity provider.
-	// If you choose this value, you must specify the ARN for the lambda function
-	// in the Function parameter for the IdentityProviderDetails data type.
+	// Use the AWS_LAMBDA value to directly use a Lambda function as your identity
+	// provider. If you choose this value, you must specify the ARN for the lambda
+	// function in the Function parameter for the IdentityProviderDetails data type.
 	IdentityProviderType *string `type:"string" enum:"IdentityProviderType"`
 
 	// Specifies the Amazon Resource Name (ARN) of the Amazon Web Services Identity
@@ -4123,6 +4133,21 @@ type CreateServerInput struct {
 	// logging for Amazon S3 or Amazon EFS events. When set, user activity can be
 	// viewed in your CloudWatch logs.
 	LoggingRole *string `min:"20" type:"string"`
+
+	PostAuthenticationLoginBanner *string `type:"string"`
+
+	PreAuthenticationLoginBanner *string `type:"string"`
+
+	// The protocol settings that are configured for your server.
+	//
+	// Use the PassiveIp parameter to indicate passive mode (for FTP and FTPS protocols).
+	// Enter a single dotted-quad IPv4 address, such as the external IP address
+	// of a firewall, router, or load balancer.
+	//
+	// Use the TlsSessionResumptionMode parameter to determine whether or not your
+	// Transfer server resumes recent, negotiated sessions through a unique session
+	// ID.
+	ProtocolDetails *ProtocolDetails `type:"structure"`
 
 	// Specifies the file transfer protocol or protocols over which your file transfer
 	// protocol client can connect to your server's endpoint. The available protocols
@@ -4269,6 +4294,24 @@ func (s *CreateServerInput) SetLoggingRole(v string) *CreateServerInput {
 	return s
 }
 
+// SetPostAuthenticationLoginBanner sets the PostAuthenticationLoginBanner field's value.
+func (s *CreateServerInput) SetPostAuthenticationLoginBanner(v string) *CreateServerInput {
+	s.PostAuthenticationLoginBanner = &v
+	return s
+}
+
+// SetPreAuthenticationLoginBanner sets the PreAuthenticationLoginBanner field's value.
+func (s *CreateServerInput) SetPreAuthenticationLoginBanner(v string) *CreateServerInput {
+	s.PreAuthenticationLoginBanner = &v
+	return s
+}
+
+// SetProtocolDetails sets the ProtocolDetails field's value.
+func (s *CreateServerInput) SetProtocolDetails(v *ProtocolDetails) *CreateServerInput {
+	s.ProtocolDetails = v
+	return s
+}
+
 // SetProtocols sets the Protocols field's value.
 func (s *CreateServerInput) SetProtocols(v []*string) *CreateServerInput {
 	s.Protocols = v
@@ -4355,14 +4398,6 @@ type CreateUserInput struct {
 	// The following is an Entry and Target pair example for chroot.
 	//
 	// [ { "Entry:": "/", "Target": "/bucket_name/home/mydirectory" } ]
-	//
-	// If the target of a logical directory entry does not exist in Amazon S3 or
-	// EFS, the entry is ignored. As a workaround, you can use the Amazon S3 API
-	// or EFS API to create 0 byte objects as place holders for your directory.
-	// If using the CLI, use the s3api or efsapi call instead of s3 or efs so you
-	// can use the put-object operation. For example, you use the following: aws
-	// s3api put-object --bucket bucketname --key path/to/folder/. Make sure that
-	// the end of the key name ends in a / for it to be considered a folder.
 	HomeDirectoryMappings []*HomeDirectoryMapEntry `min:"1" type:"list"`
 
 	// The type of landing directory (folder) you want your users' home directory
@@ -4416,6 +4451,9 @@ type CreateUserInput struct {
 
 	// The public portion of the Secure Shell (SSH) key used to authenticate the
 	// user to the server.
+	//
+	// Currently, Transfer Family does not accept elliptical curve keys (keys beginning
+	// with ecdsa).
 	SshPublicKeyBody *string `type:"string"`
 
 	// Key-value pairs that can be used to group and search for users. Tags are
@@ -4781,6 +4819,17 @@ type CustomStepDetails struct {
 	// The name of the step, used as an identifier.
 	Name *string `type:"string"`
 
+	// Specifies which file to use as input to the workflow step: either the output
+	// from the previous step, or the originally uploaded file for the workflow.
+	//
+	//    * Enter ${previous.file} to use the previous file as the input. In this
+	//    case, this workflow step uses the output file from the previous workflow
+	//    step as input. This is the default value.
+	//
+	//    * Enter ${original.file} to use the originally-uploaded file location
+	//    as input for this step.
+	SourceFileLocation *string `type:"string"`
+
 	// The ARN for the lambda function that is being called.
 	Target *string `type:"string"`
 
@@ -4822,6 +4871,12 @@ func (s *CustomStepDetails) Validate() error {
 // SetName sets the Name field's value.
 func (s *CustomStepDetails) SetName(v string) *CustomStepDetails {
 	s.Name = &v
+	return s
+}
+
+// SetSourceFileLocation sets the SourceFileLocation field's value.
+func (s *CustomStepDetails) SetSourceFileLocation(v string) *CustomStepDetails {
+	s.SourceFileLocation = &v
 	return s
 }
 
@@ -5122,6 +5177,17 @@ type DeleteStepDetails struct {
 
 	// The name of the step, used as an identifier.
 	Name *string `type:"string"`
+
+	// Specifies which file to use as input to the workflow step: either the output
+	// from the previous step, or the originally uploaded file for the workflow.
+	//
+	//    * Enter ${previous.file} to use the previous file as the input. In this
+	//    case, this workflow step uses the output file from the previous workflow
+	//    step as input. This is the default value.
+	//
+	//    * Enter ${original.file} to use the originally-uploaded file location
+	//    as input for this step.
+	SourceFileLocation *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -5145,6 +5211,12 @@ func (s DeleteStepDetails) GoString() string {
 // SetName sets the Name field's value.
 func (s *DeleteStepDetails) SetName(v string) *DeleteStepDetails {
 	s.Name = &v
+	return s
+}
+
+// SetSourceFileLocation sets the SourceFileLocation field's value.
+func (s *DeleteStepDetails) SetSourceFileLocation(v string) *DeleteStepDetails {
+	s.SourceFileLocation = &v
 	return s
 }
 
@@ -6273,9 +6345,9 @@ type DescribedServer struct {
 	// endpoint URL to call for authentication using the IdentityProviderDetails
 	// parameter.
 	//
-	// Use the LAMBDA value to directly use a Lambda function as your identity provider.
-	// If you choose this value, you must specify the ARN for the lambda function
-	// in the Function parameter for the IdentityProviderDetails data type.
+	// Use the AWS_LAMBDA value to directly use a Lambda function as your identity
+	// provider. If you choose this value, you must specify the ARN for the lambda
+	// function in the Function parameter for the IdentityProviderDetails data type.
 	IdentityProviderType *string `type:"string" enum:"IdentityProviderType"`
 
 	// Specifies the Amazon Resource Name (ARN) of the Amazon Web Services Identity
@@ -6283,6 +6355,10 @@ type DescribedServer struct {
 	// logging for Amazon S3 or Amazon EFS events. When set, user activity can be
 	// viewed in your CloudWatch logs.
 	LoggingRole *string `min:"20" type:"string"`
+
+	PostAuthenticationLoginBanner *string `type:"string"`
+
+	PreAuthenticationLoginBanner *string `type:"string"`
 
 	// The protocol settings that are configured for your server.
 	//
@@ -6401,6 +6477,18 @@ func (s *DescribedServer) SetIdentityProviderType(v string) *DescribedServer {
 // SetLoggingRole sets the LoggingRole field's value.
 func (s *DescribedServer) SetLoggingRole(v string) *DescribedServer {
 	s.LoggingRole = &v
+	return s
+}
+
+// SetPostAuthenticationLoginBanner sets the PostAuthenticationLoginBanner field's value.
+func (s *DescribedServer) SetPostAuthenticationLoginBanner(v string) *DescribedServer {
+	s.PostAuthenticationLoginBanner = &v
+	return s
+}
+
+// SetPreAuthenticationLoginBanner sets the PreAuthenticationLoginBanner field's value.
+func (s *DescribedServer) SetPreAuthenticationLoginBanner(v string) *DescribedServer {
+	s.PreAuthenticationLoginBanner = &v
 	return s
 }
 
@@ -7053,14 +7141,6 @@ func (s *FileLocation) SetS3FileLocation(v *S3FileLocation) *FileLocation {
 // The following is an Entry and Target pair example for chroot.
 //
 // [ { "Entry:": "/", "Target": "/bucket_name/home/mydirectory" } ]
-//
-// If the target of a logical directory entry does not exist in Amazon S3 or
-// EFS, the entry is ignored. As a workaround, you can use the Amazon S3 API
-// or EFS API to create 0 byte objects as place holders for your directory.
-// If using the CLI, use the s3api or efsapi call instead of s3 or efs so you
-// can use the put-object operation. For example, you use the following: aws
-// s3api put-object --bucket bucketname --key path/to/folder/. Make sure that
-// the end of the key name ends in a / for it to be considered a folder.
 type HomeDirectoryMapEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -7127,7 +7207,7 @@ func (s *HomeDirectoryMapEntry) SetTarget(v string) *HomeDirectoryMapEntry {
 type IdentityProviderDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the Amazon Web ServicesDirectory Service directory that
+	// The identifier of the Amazon Web Services Directory Service directory that
 	// you want to stop sharing.
 	DirectoryId *string `min:"12" type:"string"`
 
@@ -8637,9 +8717,9 @@ type ListedServer struct {
 	// endpoint URL to call for authentication using the IdentityProviderDetails
 	// parameter.
 	//
-	// Use the LAMBDA value to directly use a Lambda function as your identity provider.
-	// If you choose this value, you must specify the ARN for the lambda function
-	// in the Function parameter for the IdentityProviderDetails data type.
+	// Use the AWS_LAMBDA value to directly use a Lambda function as your identity
+	// provider. If you choose this value, you must specify the ARN for the lambda
+	// function in the Function parameter for the IdentityProviderDetails data type.
 	IdentityProviderType *string `type:"string" enum:"IdentityProviderType"`
 
 	// Specifies the Amazon Resource Name (ARN) of the Amazon Web Services Identity
@@ -9005,8 +9085,6 @@ func (s *PosixProfile) SetUid(v int64) *PosixProfile {
 }
 
 // The protocol settings that are configured for your server.
-//
-// This type is only valid in the UpdateServer API.
 type ProtocolDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -9024,6 +9102,31 @@ type ProtocolDetails struct {
 	// in a NAT environment, see Configuring your FTPS server behind a firewall
 	// or NAT with Amazon Web Services Transfer Family (http://aws.amazon.com/blogs/storage/configuring-your-ftps-server-behind-a-firewall-or-nat-with-aws-transfer-family/).
 	PassiveIp *string `type:"string"`
+
+	// A property used with Transfer servers that use the FTPS protocol. TLS Session
+	// Resumption provides a mechanism to resume or share a negotiated secret key
+	// between the control and data connection for an FTPS session. TlsSessionResumptionMode
+	// determines whether or not the server resumes recent, negotiated sessions
+	// through a unique session ID. This property is available during CreateServer
+	// and UpdateServer calls. If a TlsSessionResumptionMode value is not specified
+	// during CreateServer, it is set to ENFORCED by default.
+	//
+	//    * DISABLED: the server does not process TLS session resumption client
+	//    requests and creates a new TLS session for each request.
+	//
+	//    * ENABLED: the server processes and accepts clients that are performing
+	//    TLS session resumption. The server doesn't reject client data connections
+	//    that do not perform the TLS session resumption client processing.
+	//
+	//    * ENFORCED: the server processes and accepts clients that are performing
+	//    TLS session resumption. The server rejects client data connections that
+	//    do not perform the TLS session resumption client processing. Before you
+	//    set the value to ENFORCED, test your clients. Not all FTPS clients perform
+	//    TLS session resumption. So, if you choose to enforce TLS session resumption,
+	//    you prevent any connections from FTPS clients that don't perform the protocol
+	//    negotiation. To determine whether or not you can use the ENFORCED value,
+	//    you need to test your clients.
+	TlsSessionResumptionMode *string `type:"string" enum:"TlsSessionResumptionMode"`
 }
 
 // String returns the string representation.
@@ -9047,6 +9150,12 @@ func (s ProtocolDetails) GoString() string {
 // SetPassiveIp sets the PassiveIp field's value.
 func (s *ProtocolDetails) SetPassiveIp(v string) *ProtocolDetails {
 	s.PassiveIp = &v
+	return s
+}
+
+// SetTlsSessionResumptionMode sets the TlsSessionResumptionMode field's value.
+func (s *ProtocolDetails) SetTlsSessionResumptionMode(v string) *ProtocolDetails {
+	s.TlsSessionResumptionMode = &v
 	return s
 }
 
@@ -9987,6 +10096,17 @@ type TagStepDetails struct {
 	// The name of the step, used as an identifier.
 	Name *string `type:"string"`
 
+	// Specifies which file to use as input to the workflow step: either the output
+	// from the previous step, or the originally uploaded file for the workflow.
+	//
+	//    * Enter ${previous.file} to use the previous file as the input. In this
+	//    case, this workflow step uses the output file from the previous workflow
+	//    step as input. This is the default value.
+	//
+	//    * Enter ${original.file} to use the originally-uploaded file location
+	//    as input for this step.
+	SourceFileLocation *string `type:"string"`
+
 	// Array that contains from 1 to 10 key/value pairs.
 	Tags []*S3Tag `min:"1" type:"list"`
 }
@@ -10035,6 +10155,12 @@ func (s *TagStepDetails) Validate() error {
 // SetName sets the Name field's value.
 func (s *TagStepDetails) SetName(v string) *TagStepDetails {
 	s.Name = &v
+	return s
+}
+
+// SetSourceFileLocation sets the SourceFileLocation field's value.
+func (s *TagStepDetails) SetSourceFileLocation(v string) *TagStepDetails {
+	s.SourceFileLocation = &v
 	return s
 }
 
@@ -10154,6 +10280,9 @@ type TestIdentityProviderOutput struct {
 	_ struct{} `type:"structure"`
 
 	// A message that indicates whether the test was successful or not.
+	//
+	// If an empty string is returned, the most likely cause is that the authentication
+	// failed due to an incorrect username or password.
 	Message *string `type:"string"`
 
 	// The response that is returned from your API Gateway.
@@ -10420,14 +10549,6 @@ type UpdateAccessInput struct {
 	// The following is an Entry and Target pair example for chroot.
 	//
 	// [ { "Entry:": "/", "Target": "/bucket_name/home/mydirectory" } ]
-	//
-	// If the target of a logical directory entry does not exist in Amazon S3 or
-	// EFS, the entry is ignored. As a workaround, you can use the Amazon S3 API
-	// or EFS API to create 0 byte objects as place holders for your directory.
-	// If using the CLI, use the s3api or efsapi call instead of s3 or efs so you
-	// can use the put-object operation. For example, you use the following: aws
-	// s3api put-object --bucket bucketname --key path/to/folder/. Make sure that
-	// the end of the key name ends in a / for it to be considered a folder.
 	HomeDirectoryMappings []*HomeDirectoryMapEntry `min:"1" type:"list"`
 
 	// The type of landing directory (folder) you want your users' home directory
@@ -10720,11 +10841,19 @@ type UpdateServerInput struct {
 	// viewed in your CloudWatch logs.
 	LoggingRole *string `type:"string"`
 
+	PostAuthenticationLoginBanner *string `type:"string"`
+
+	PreAuthenticationLoginBanner *string `type:"string"`
+
 	// The protocol settings that are configured for your server.
 	//
 	// Use the PassiveIp parameter to indicate passive mode (for FTP and FTPS protocols).
 	// Enter a single dotted-quad IPv4 address, such as the external IP address
 	// of a firewall, router, or load balancer.
+	//
+	// Use the TlsSessionResumptionMode parameter to determine whether or not your
+	// Transfer server resumes recent, negotiated sessions through a unique session
+	// ID.
 	ProtocolDetails *ProtocolDetails `type:"structure"`
 
 	// Specifies the file transfer protocol or protocols over which your file transfer
@@ -10853,6 +10982,18 @@ func (s *UpdateServerInput) SetLoggingRole(v string) *UpdateServerInput {
 	return s
 }
 
+// SetPostAuthenticationLoginBanner sets the PostAuthenticationLoginBanner field's value.
+func (s *UpdateServerInput) SetPostAuthenticationLoginBanner(v string) *UpdateServerInput {
+	s.PostAuthenticationLoginBanner = &v
+	return s
+}
+
+// SetPreAuthenticationLoginBanner sets the PreAuthenticationLoginBanner field's value.
+func (s *UpdateServerInput) SetPreAuthenticationLoginBanner(v string) *UpdateServerInput {
+	s.PreAuthenticationLoginBanner = &v
+	return s
+}
+
 // SetProtocolDetails sets the ProtocolDetails field's value.
 func (s *UpdateServerInput) SetProtocolDetails(v *ProtocolDetails) *UpdateServerInput {
 	s.ProtocolDetails = v
@@ -10946,14 +11087,6 @@ type UpdateUserInput struct {
 	// The following is an Entry and Target pair example for chroot.
 	//
 	// [ { "Entry:": "/", "Target": "/bucket_name/home/mydirectory" } ]
-	//
-	// If the target of a logical directory entry does not exist in Amazon S3 or
-	// EFS, the entry is ignored. As a workaround, you can use the Amazon S3 API
-	// or EFS API to create 0 byte objects as place holders for your directory.
-	// If using the CLI, use the s3api or efsapi call instead of s3 or efs so you
-	// can use the put-object operation. For example, you use the following: aws
-	// s3api put-object --bucket bucketname --key path/to/folder/. Make sure that
-	// the end of the key name ends in a / for it to be considered a folder.
 	HomeDirectoryMappings []*HomeDirectoryMapEntry `min:"1" type:"list"`
 
 	// The type of landing directory (folder) you want your users' home directory
@@ -11678,6 +11811,26 @@ func State_Values() []string {
 		StateStopping,
 		StateStartFailed,
 		StateStopFailed,
+	}
+}
+
+const (
+	// TlsSessionResumptionModeDisabled is a TlsSessionResumptionMode enum value
+	TlsSessionResumptionModeDisabled = "DISABLED"
+
+	// TlsSessionResumptionModeEnabled is a TlsSessionResumptionMode enum value
+	TlsSessionResumptionModeEnabled = "ENABLED"
+
+	// TlsSessionResumptionModeEnforced is a TlsSessionResumptionMode enum value
+	TlsSessionResumptionModeEnforced = "ENFORCED"
+)
+
+// TlsSessionResumptionMode_Values returns all elements of the TlsSessionResumptionMode enum
+func TlsSessionResumptionMode_Values() []string {
+	return []string{
+		TlsSessionResumptionModeDisabled,
+		TlsSessionResumptionModeEnabled,
+		TlsSessionResumptionModeEnforced,
 	}
 }
 

@@ -64,7 +64,7 @@ func newJsonSchemaDocument(document string) (*jsonSchema, error) {
 	schema, err := gojsonschema.NewSchema(schemaLoader)
 
 	if err != nil {
-		return nil, fmt.Errorf("error loading JSON Schema (%s): %w", document, err)
+		return nil, fmt.Errorf("loading JSON Schema (%s): %w", document, err)
 	}
 
 	return &jsonSchema{
@@ -81,13 +81,13 @@ func newJsonSchemaPath(path string) (*jsonSchema, error) {
 	f, err := os.ReadFile(path)
 
 	if err != nil {
-		return nil, fmt.Errorf("error reading file (%s): %w", path, err)
+		return nil, fmt.Errorf("reading file (%s): %w", path, err)
 	}
 
 	cwd, err := os.Getwd()
 
 	if err != nil {
-		return nil, fmt.Errorf("error getting current directory: %w", err)
+		return nil, fmt.Errorf("getting current directory: %w", err)
 	}
 
 	defer func() {

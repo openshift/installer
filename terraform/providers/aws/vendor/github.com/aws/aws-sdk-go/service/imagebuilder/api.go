@@ -162,7 +162,13 @@ func (c *Imagebuilder) CreateComponentRequest(input *CreateComponentInput) (req 
 // CreateComponent API operation for EC2 Image Builder.
 //
 // Creates a new component that can be used to build, validate, test, and assess
-// your image.
+// your image. The component is based on a YAML document that you specify using
+// exactly one of the following methods:
+//
+//    * Inline, using the data property in the request body.
+//
+//    * A URL that points to a YAML document file stored in Amazon S3, using
+//    the uri property in the request body.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2780,6 +2786,101 @@ func (c *Imagebuilder) ImportComponent(input *ImportComponentInput) (*ImportComp
 // for more information on using Contexts.
 func (c *Imagebuilder) ImportComponentWithContext(ctx aws.Context, input *ImportComponentInput, opts ...request.Option) (*ImportComponentOutput, error) {
 	req, out := c.ImportComponentRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opImportVmImage = "ImportVmImage"
+
+// ImportVmImageRequest generates a "aws/request.Request" representing the
+// client's request for the ImportVmImage operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ImportVmImage for more information on using the ImportVmImage
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ImportVmImageRequest method.
+//    req, resp := client.ImportVmImageRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/imagebuilder-2019-12-02/ImportVmImage
+func (c *Imagebuilder) ImportVmImageRequest(input *ImportVmImageInput) (req *request.Request, output *ImportVmImageOutput) {
+	op := &request.Operation{
+		Name:       opImportVmImage,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/ImportVmImage",
+	}
+
+	if input == nil {
+		input = &ImportVmImageInput{}
+	}
+
+	output = &ImportVmImageOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ImportVmImage API operation for EC2 Image Builder.
+//
+// When you export your virtual machine (VM) from its virtualization environment,
+// that process creates a set of one or more disk container files that act as
+// snapshots of your VM’s environment, settings, and data. The Amazon EC2
+// API ImportImage (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ImportImage.html)
+// action uses those files to import your VM and create an AMI. To import using
+// the CLI command, see import-image (https://docs.aws.amazon.com/cli/latest/reference/ec2/import-image.html)
+//
+// You can reference the task ID from the VM import to pull in the AMI that
+// the import created as the base image for your Image Builder recipe.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for EC2 Image Builder's
+// API operation ImportVmImage for usage and error information.
+//
+// Returned Error Types:
+//   * ServiceException
+//   This exception is thrown when the service encounters an unrecoverable exception.
+//
+//   * ClientException
+//   These errors are usually caused by a client action, such as using an action
+//   or resource on behalf of a user that doesn't have permissions to use the
+//   action or resource, or specifying an invalid resource identifier.
+//
+//   * ServiceUnavailableException
+//   The service is unable to process your request at this time.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/imagebuilder-2019-12-02/ImportVmImage
+func (c *Imagebuilder) ImportVmImage(input *ImportVmImageInput) (*ImportVmImageOutput, error) {
+	req, out := c.ImportVmImageRequest(input)
+	return out, req.Send()
+}
+
+// ImportVmImageWithContext is the same as ImportVmImage with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ImportVmImage for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Imagebuilder) ImportVmImageWithContext(ctx aws.Context, input *ImportVmImageInput, opts ...request.Option) (*ImportVmImageOutput, error) {
+	req, out := c.ImportVmImageRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -5671,6 +5772,15 @@ type AdditionalInstanceConfiguration struct {
 	// have added to ensure that Systems Manager is installed on your Linux build
 	// instance. If you override the user data, make sure that you add commands
 	// to install Systems Manager, if it is not pre-installed on your base image.
+	//
+	// The user data is always base 64 encoded. For example, the following commands
+	// are encoded as IyEvYmluL2Jhc2gKbWtkaXIgLXAgL3Zhci9iYi8KdG91Y2ggL3Zhci$:
+	//
+	// #!/bin/bash
+	//
+	// mkdir -p /var/bb/
+	//
+	// touch /var
 	UserDataOverride *string `locationName:"userDataOverride" min:"1" type:"string"`
 }
 
@@ -5971,7 +6081,9 @@ func (s *CallRateLimitExceededException) RequestID() string {
 type CancelImageCreationInput struct {
 	_ struct{} `type:"structure"`
 
-	// The idempotency token used to make this request idempotent.
+	// Unique, case-sensitive identifier you provide to ensure idempotency of the
+	// request. For more information, see Ensuring idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
+	// in the Amazon EC2 API Reference.
 	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
 
 	// The Amazon Resource Name (ARN) of the image whose creation you want to cancel.
@@ -6029,7 +6141,7 @@ func (s *CancelImageCreationInput) SetImageBuildVersionArn(v string) *CancelImag
 type CancelImageCreationOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The idempotency token used to make this request idempotent.
+	// The idempotency token that was used for this request.
 	ClientToken *string `locationName:"clientToken" min:"1" type:"string"`
 
 	// The Amazon Resource Name (ARN) of the image whose creation has been cancelled.
@@ -6151,7 +6263,7 @@ type Component struct {
 	// The change description of the component.
 	ChangeDescription *string `locationName:"changeDescription" min:"1" type:"string"`
 
-	// The data of the component.
+	// Component data contains the YAML document content for the component.
 	Data *string `locationName:"data" type:"string"`
 
 	// The date that the component was created.
@@ -7258,8 +7370,9 @@ type CreateComponentInput struct {
 	// The idempotency token of the component.
 	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
 
-	// The data of the component. Used to specify the data inline. Either data or
-	// uri can be used to specify the data within the component.
+	// Component data contains inline YAML document content for the component. Alternatively,
+	// you can specify the uri of a YAML document file stored in Amazon S3. However,
+	// you cannot specify both properties.
 	Data *string `locationName:"data" min:"1" type:"string"`
 
 	// The description of the component. Describes the contents of the component.
@@ -7304,10 +7417,13 @@ type CreateComponentInput struct {
 	// The tags of the component.
 	Tags map[string]*string `locationName:"tags" min:"1" type:"map"`
 
-	// The uri of the component. Must be an Amazon S3 URL and the requester must
-	// have permission to access the Amazon S3 bucket. If you use Amazon S3, you
-	// can specify component content up to your service quota. Either data or uri
-	// can be used to specify the data within the component.
+	// The uri of a YAML component document file. This must be an S3 URL (s3://bucket/key),
+	// and the requester must have permission to access the S3 bucket it points
+	// to. If you use Amazon S3, you can specify component content up to your service
+	// quota.
+	//
+	// Alternatively, you can specify the YAML document inline, using the component
+	// data property. You cannot specify both properties.
 	Uri *string `locationName:"uri" type:"string"`
 }
 
@@ -8658,7 +8774,13 @@ type CreateInfrastructureConfigurationInput struct {
 	// Amazon EC2 AMI.
 	SecurityGroupIds []*string `locationName:"securityGroupIds" type:"list"`
 
-	// The SNS topic on which to send image build events.
+	// The Amazon Resource Name (ARN) for the SNS topic to which we send image build
+	// event notifications.
+	//
+	// EC2 Image Builder is unable to send notifications to SNS topics that are
+	// encrypted using keys from other accounts. The key that is used to encrypt
+	// the SNS topic must reside in the account that the Image Builder service runs
+	// under.
 	SnsTopicArn *string `locationName:"snsTopicArn" type:"string"`
 
 	// The subnet ID in which to place the instance used to customize your Amazon
@@ -9489,6 +9611,9 @@ type Distribution struct {
 	// a specific Region.
 	ContainerDistributionConfiguration *ContainerDistributionConfiguration `locationName:"containerDistributionConfiguration" type:"structure"`
 
+	// The Windows faster-launching configurations to use for AMI distribution.
+	FastLaunchConfigurations []*FastLaunchConfiguration `locationName:"fastLaunchConfigurations" min:"1" type:"list"`
+
 	// A group of launchTemplateConfiguration settings that apply to image distribution
 	// for specified accounts.
 	LaunchTemplateConfigurations []*LaunchTemplateConfiguration `locationName:"launchTemplateConfigurations" min:"1" type:"list"`
@@ -9501,6 +9626,10 @@ type Distribution struct {
 	//
 	// Region is a required field
 	Region *string `locationName:"region" min:"1" type:"string" required:"true"`
+
+	// Configure export settings to deliver disk images created from your image
+	// build, using a file format that is compatible with your VMs in that Region.
+	S3ExportConfiguration *S3ExportConfiguration `locationName:"s3ExportConfiguration" type:"structure"`
 }
 
 // String returns the string representation.
@@ -9524,6 +9653,9 @@ func (s Distribution) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *Distribution) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "Distribution"}
+	if s.FastLaunchConfigurations != nil && len(s.FastLaunchConfigurations) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FastLaunchConfigurations", 1))
+	}
 	if s.LaunchTemplateConfigurations != nil && len(s.LaunchTemplateConfigurations) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("LaunchTemplateConfigurations", 1))
 	}
@@ -9546,6 +9678,16 @@ func (s *Distribution) Validate() error {
 			invalidParams.AddNested("ContainerDistributionConfiguration", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.FastLaunchConfigurations != nil {
+		for i, v := range s.FastLaunchConfigurations {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "FastLaunchConfigurations", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
 	if s.LaunchTemplateConfigurations != nil {
 		for i, v := range s.LaunchTemplateConfigurations {
 			if v == nil {
@@ -9554,6 +9696,11 @@ func (s *Distribution) Validate() error {
 			if err := v.Validate(); err != nil {
 				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "LaunchTemplateConfigurations", i), err.(request.ErrInvalidParams))
 			}
+		}
+	}
+	if s.S3ExportConfiguration != nil {
+		if err := s.S3ExportConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("S3ExportConfiguration", err.(request.ErrInvalidParams))
 		}
 	}
 
@@ -9575,6 +9722,12 @@ func (s *Distribution) SetContainerDistributionConfiguration(v *ContainerDistrib
 	return s
 }
 
+// SetFastLaunchConfigurations sets the FastLaunchConfigurations field's value.
+func (s *Distribution) SetFastLaunchConfigurations(v []*FastLaunchConfiguration) *Distribution {
+	s.FastLaunchConfigurations = v
+	return s
+}
+
 // SetLaunchTemplateConfigurations sets the LaunchTemplateConfigurations field's value.
 func (s *Distribution) SetLaunchTemplateConfigurations(v []*LaunchTemplateConfiguration) *Distribution {
 	s.LaunchTemplateConfigurations = v
@@ -9590,6 +9743,12 @@ func (s *Distribution) SetLicenseConfigurationArns(v []*string) *Distribution {
 // SetRegion sets the Region field's value.
 func (s *Distribution) SetRegion(v string) *Distribution {
 	s.Region = &v
+	return s
+}
+
+// SetS3ExportConfiguration sets the S3ExportConfiguration field's value.
+func (s *Distribution) SetS3ExportConfiguration(v *S3ExportConfiguration) *Distribution {
+	s.S3ExportConfiguration = v
 	return s
 }
 
@@ -9894,6 +10053,226 @@ func (s *EbsInstanceBlockDeviceSpecification) SetVolumeSize(v int64) *EbsInstanc
 // SetVolumeType sets the VolumeType field's value.
 func (s *EbsInstanceBlockDeviceSpecification) SetVolumeType(v string) *EbsInstanceBlockDeviceSpecification {
 	s.VolumeType = &v
+	return s
+}
+
+// Define and configure faster launching for output Windows AMIs.
+type FastLaunchConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The owner account ID for the fast-launch enabled Windows AMI.
+	AccountId *string `locationName:"accountId" type:"string"`
+
+	// A Boolean that represents the current state of faster launching for the Windows
+	// AMI. Set to true to start using Windows faster launching, or false to stop
+	// using it.
+	//
+	// Enabled is a required field
+	Enabled *bool `locationName:"enabled" type:"boolean" required:"true"`
+
+	// The launch template that the fast-launch enabled Windows AMI uses when it
+	// launches Windows instances to create pre-provisioned snapshots.
+	LaunchTemplate *FastLaunchLaunchTemplateSpecification `locationName:"launchTemplate" type:"structure"`
+
+	// The maximum number of parallel instances that are launched for creating resources.
+	MaxParallelLaunches *int64 `locationName:"maxParallelLaunches" min:"1" type:"integer"`
+
+	// Configuration settings for managing the number of snapshots that are created
+	// from pre-provisioned instances for the Windows AMI when faster launching
+	// is enabled.
+	SnapshotConfiguration *FastLaunchSnapshotConfiguration `locationName:"snapshotConfiguration" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FastLaunchConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FastLaunchConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *FastLaunchConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "FastLaunchConfiguration"}
+	if s.Enabled == nil {
+		invalidParams.Add(request.NewErrParamRequired("Enabled"))
+	}
+	if s.MaxParallelLaunches != nil && *s.MaxParallelLaunches < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxParallelLaunches", 1))
+	}
+	if s.LaunchTemplate != nil {
+		if err := s.LaunchTemplate.Validate(); err != nil {
+			invalidParams.AddNested("LaunchTemplate", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.SnapshotConfiguration != nil {
+		if err := s.SnapshotConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("SnapshotConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAccountId sets the AccountId field's value.
+func (s *FastLaunchConfiguration) SetAccountId(v string) *FastLaunchConfiguration {
+	s.AccountId = &v
+	return s
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *FastLaunchConfiguration) SetEnabled(v bool) *FastLaunchConfiguration {
+	s.Enabled = &v
+	return s
+}
+
+// SetLaunchTemplate sets the LaunchTemplate field's value.
+func (s *FastLaunchConfiguration) SetLaunchTemplate(v *FastLaunchLaunchTemplateSpecification) *FastLaunchConfiguration {
+	s.LaunchTemplate = v
+	return s
+}
+
+// SetMaxParallelLaunches sets the MaxParallelLaunches field's value.
+func (s *FastLaunchConfiguration) SetMaxParallelLaunches(v int64) *FastLaunchConfiguration {
+	s.MaxParallelLaunches = &v
+	return s
+}
+
+// SetSnapshotConfiguration sets the SnapshotConfiguration field's value.
+func (s *FastLaunchConfiguration) SetSnapshotConfiguration(v *FastLaunchSnapshotConfiguration) *FastLaunchConfiguration {
+	s.SnapshotConfiguration = v
+	return s
+}
+
+// Identifies the launch template that the associated Windows AMI uses for launching
+// an instance when faster launching is enabled.
+//
+// You can specify either the launchTemplateName or the launchTemplateId, but
+// not both.
+type FastLaunchLaunchTemplateSpecification struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the launch template to use for faster launching for a Windows AMI.
+	LaunchTemplateId *string `locationName:"launchTemplateId" type:"string"`
+
+	// The name of the launch template to use for faster launching for a Windows
+	// AMI.
+	LaunchTemplateName *string `locationName:"launchTemplateName" min:"1" type:"string"`
+
+	// The version of the launch template to use for faster launching for a Windows
+	// AMI.
+	LaunchTemplateVersion *string `locationName:"launchTemplateVersion" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FastLaunchLaunchTemplateSpecification) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FastLaunchLaunchTemplateSpecification) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *FastLaunchLaunchTemplateSpecification) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "FastLaunchLaunchTemplateSpecification"}
+	if s.LaunchTemplateName != nil && len(*s.LaunchTemplateName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LaunchTemplateName", 1))
+	}
+	if s.LaunchTemplateVersion != nil && len(*s.LaunchTemplateVersion) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LaunchTemplateVersion", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLaunchTemplateId sets the LaunchTemplateId field's value.
+func (s *FastLaunchLaunchTemplateSpecification) SetLaunchTemplateId(v string) *FastLaunchLaunchTemplateSpecification {
+	s.LaunchTemplateId = &v
+	return s
+}
+
+// SetLaunchTemplateName sets the LaunchTemplateName field's value.
+func (s *FastLaunchLaunchTemplateSpecification) SetLaunchTemplateName(v string) *FastLaunchLaunchTemplateSpecification {
+	s.LaunchTemplateName = &v
+	return s
+}
+
+// SetLaunchTemplateVersion sets the LaunchTemplateVersion field's value.
+func (s *FastLaunchLaunchTemplateSpecification) SetLaunchTemplateVersion(v string) *FastLaunchLaunchTemplateSpecification {
+	s.LaunchTemplateVersion = &v
+	return s
+}
+
+// Configuration settings for creating and managing pre-provisioned snapshots
+// for a fast-launch enabled Windows AMI.
+type FastLaunchSnapshotConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The number of pre-provisioned snapshots to keep on hand for a fast-launch
+	// enabled Windows AMI.
+	TargetResourceCount *int64 `locationName:"targetResourceCount" min:"1" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FastLaunchSnapshotConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FastLaunchSnapshotConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *FastLaunchSnapshotConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "FastLaunchSnapshotConfiguration"}
+	if s.TargetResourceCount != nil && *s.TargetResourceCount < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("TargetResourceCount", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetTargetResourceCount sets the TargetResourceCount field's value.
+func (s *FastLaunchSnapshotConfiguration) SetTargetResourceCount(v int64) *FastLaunchSnapshotConfiguration {
+	s.TargetResourceCount = &v
 	return s
 }
 
@@ -11057,6 +11436,18 @@ type Image struct {
 	// a specific version of an object.
 	Arn *string `locationName:"arn" type:"string"`
 
+	// Indicates the type of build that created this image. The build can be initiated
+	// in the following ways:
+	//
+	//    * USER_INITIATED – A manual pipeline build request.
+	//
+	//    * SCHEDULED – A pipeline build initiated by a cron expression in the
+	//    Image Builder pipeline, or from EventBridge.
+	//
+	//    * IMPORT – A VM import created the image to use as the base image for
+	//    the recipe.
+	BuildType *string `locationName:"buildType" type:"string" enum:"BuildType"`
+
 	// The recipe that is used to create an Image Builder container image.
 	ContainerRecipe *ContainerRecipe `locationName:"containerRecipe" type:"structure"`
 
@@ -11151,6 +11542,12 @@ func (s Image) GoString() string {
 // SetArn sets the Arn field's value.
 func (s *Image) SetArn(v string) *Image {
 	s.Arn = &v
+	return s
+}
+
+// SetBuildType sets the BuildType field's value.
+func (s *Image) SetBuildType(v string) *Image {
+	s.BuildType = &v
 	return s
 }
 
@@ -11767,6 +12164,18 @@ type ImageSummary struct {
 	// The Amazon Resource Name (ARN) of the image.
 	Arn *string `locationName:"arn" type:"string"`
 
+	// Indicates the type of build that created this image. The build can be initiated
+	// in the following ways:
+	//
+	//    * USER_INITIATED – A manual pipeline build request.
+	//
+	//    * SCHEDULED – A pipeline build initiated by a cron expression in the
+	//    Image Builder pipeline, or from EventBridge.
+	//
+	//    * IMPORT – A VM import created the image to use as the base image for
+	//    the recipe.
+	BuildType *string `locationName:"buildType" type:"string" enum:"BuildType"`
+
 	// The date on which this image was created.
 	DateCreated *string `locationName:"dateCreated" type:"string"`
 
@@ -11820,6 +12229,12 @@ func (s ImageSummary) GoString() string {
 // SetArn sets the Arn field's value.
 func (s *ImageSummary) SetArn(v string) *ImageSummary {
 	s.Arn = &v
+	return s
+}
+
+// SetBuildType sets the BuildType field's value.
+func (s *ImageSummary) SetBuildType(v string) *ImageSummary {
+	s.BuildType = &v
 	return s
 }
 
@@ -11883,11 +12298,14 @@ func (s *ImageSummary) SetVersion(v string) *ImageSummary {
 	return s
 }
 
-// Image tests configuration.
+// Configure image tests for your pipeline build. Tests run after building the
+// image, to verify that the AMI or container image is valid before distributing
+// it.
 type ImageTestsConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// Defines if tests should be executed when building this image.
+	// Determines if tests should run after building the image. Image Builder defaults
+	// to enable tests to run following the image build, before image distribution.
 	ImageTestsEnabled *bool `locationName:"imageTestsEnabled" type:"boolean"`
 
 	// The maximum time in minutes that tests are permitted to run.
@@ -11957,6 +12375,18 @@ type ImageVersion struct {
 	// a specific version of an object.
 	Arn *string `locationName:"arn" type:"string"`
 
+	// Indicates the type of build that created this image. The build can be initiated
+	// in the following ways:
+	//
+	//    * USER_INITIATED – A manual pipeline build request.
+	//
+	//    * SCHEDULED – A pipeline build initiated by a cron expression in the
+	//    Image Builder pipeline, or from EventBridge.
+	//
+	//    * IMPORT – A VM import created the image to use as the base image for
+	//    the recipe.
+	BuildType *string `locationName:"buildType" type:"string" enum:"BuildType"`
+
 	// The date on which this specific version of the Image Builder image was created.
 	DateCreated *string `locationName:"dateCreated" type:"string"`
 
@@ -12019,6 +12449,12 @@ func (s ImageVersion) GoString() string {
 // SetArn sets the Arn field's value.
 func (s *ImageVersion) SetArn(v string) *ImageVersion {
 	s.Arn = &v
+	return s
+}
+
+// SetBuildType sets the BuildType field's value.
+func (s *ImageVersion) SetBuildType(v string) *ImageVersion {
+	s.BuildType = &v
 	return s
 }
 
@@ -12312,6 +12748,217 @@ func (s *ImportComponentOutput) SetRequestId(v string) *ImportComponentOutput {
 	return s
 }
 
+type ImportVmImageInput struct {
+	_ struct{} `type:"structure"`
+
+	// Unique, case-sensitive identifier you provide to ensure idempotency of the
+	// request. For more information, see Ensuring idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
+	// in the Amazon EC2 API Reference.
+	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
+
+	// The description for the base image that is created by the import process.
+	Description *string `locationName:"description" min:"1" type:"string"`
+
+	// The name of the base image that is created by the import process.
+	//
+	// Name is a required field
+	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
+
+	// The operating system version for the imported VM.
+	OsVersion *string `locationName:"osVersion" min:"1" type:"string"`
+
+	// The operating system platform for the imported VM.
+	//
+	// Platform is a required field
+	Platform *string `locationName:"platform" type:"string" required:"true" enum:"Platform"`
+
+	// The semantic version to attach to the base image that was created during
+	// the import process. This version follows the semantic version syntax.
+	//
+	// The semantic version has four nodes: <major>.<minor>.<patch>/<build>. You
+	// can assign values for the first three, and can filter on all of them.
+	//
+	// Assignment: For the first three nodes you can assign any positive integer
+	// value, including zero, with an upper limit of 2^30-1, or 1073741823 for each
+	// node. Image Builder automatically assigns the build number to the fourth
+	// node.
+	//
+	// Patterns: You can use any numeric pattern that adheres to the assignment
+	// requirements for the nodes that you can assign. For example, you might choose
+	// a software version pattern, such as 1.0.0, or a date, such as 2021.01.01.
+	//
+	// SemanticVersion is a required field
+	SemanticVersion *string `locationName:"semanticVersion" type:"string" required:"true"`
+
+	// Tags that are attached to the import resources.
+	Tags map[string]*string `locationName:"tags" min:"1" type:"map"`
+
+	// The importTaskId (API) or ImportTaskId (CLI) from the Amazon EC2 VM import
+	// process. Image Builder retrieves information from the import process to pull
+	// in the AMI that is created from the VM source as the base image for your
+	// recipe.
+	//
+	// VmImportTaskId is a required field
+	VmImportTaskId *string `locationName:"vmImportTaskId" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ImportVmImageInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ImportVmImageInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ImportVmImageInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ImportVmImageInput"}
+	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
+	}
+	if s.Description != nil && len(*s.Description) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Description", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.OsVersion != nil && len(*s.OsVersion) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("OsVersion", 1))
+	}
+	if s.Platform == nil {
+		invalidParams.Add(request.NewErrParamRequired("Platform"))
+	}
+	if s.SemanticVersion == nil {
+		invalidParams.Add(request.NewErrParamRequired("SemanticVersion"))
+	}
+	if s.Tags != nil && len(s.Tags) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Tags", 1))
+	}
+	if s.VmImportTaskId == nil {
+		invalidParams.Add(request.NewErrParamRequired("VmImportTaskId"))
+	}
+	if s.VmImportTaskId != nil && len(*s.VmImportTaskId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VmImportTaskId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *ImportVmImageInput) SetClientToken(v string) *ImportVmImageInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *ImportVmImageInput) SetDescription(v string) *ImportVmImageInput {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *ImportVmImageInput) SetName(v string) *ImportVmImageInput {
+	s.Name = &v
+	return s
+}
+
+// SetOsVersion sets the OsVersion field's value.
+func (s *ImportVmImageInput) SetOsVersion(v string) *ImportVmImageInput {
+	s.OsVersion = &v
+	return s
+}
+
+// SetPlatform sets the Platform field's value.
+func (s *ImportVmImageInput) SetPlatform(v string) *ImportVmImageInput {
+	s.Platform = &v
+	return s
+}
+
+// SetSemanticVersion sets the SemanticVersion field's value.
+func (s *ImportVmImageInput) SetSemanticVersion(v string) *ImportVmImageInput {
+	s.SemanticVersion = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *ImportVmImageInput) SetTags(v map[string]*string) *ImportVmImageInput {
+	s.Tags = v
+	return s
+}
+
+// SetVmImportTaskId sets the VmImportTaskId field's value.
+func (s *ImportVmImageInput) SetVmImportTaskId(v string) *ImportVmImageInput {
+	s.VmImportTaskId = &v
+	return s
+}
+
+type ImportVmImageOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The idempotency token that was used for this request.
+	ClientToken *string `locationName:"clientToken" min:"1" type:"string"`
+
+	// The Amazon Resource Name (ARN) of the AMI that was created during the VM
+	// import process. This AMI is used as the base image for the recipe that imported
+	// the VM.
+	ImageArn *string `locationName:"imageArn" type:"string"`
+
+	// The request ID that uniquely identifies this request.
+	RequestId *string `locationName:"requestId" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ImportVmImageOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ImportVmImageOutput) GoString() string {
+	return s.String()
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *ImportVmImageOutput) SetClientToken(v string) *ImportVmImageOutput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetImageArn sets the ImageArn field's value.
+func (s *ImportVmImageOutput) SetImageArn(v string) *ImportVmImageOutput {
+	s.ImageArn = &v
+	return s
+}
+
+// SetRequestId sets the RequestId field's value.
+func (s *ImportVmImageOutput) SetRequestId(v string) *ImportVmImageOutput {
+	s.RequestId = &v
+	return s
+}
+
 // Details of the infrastructure configuration.
 type InfrastructureConfiguration struct {
 	_ struct{} `type:"structure"`
@@ -12352,7 +12999,13 @@ type InfrastructureConfiguration struct {
 	// The security group IDs of the infrastructure configuration.
 	SecurityGroupIds []*string `locationName:"securityGroupIds" type:"list"`
 
-	// The SNS topic Amazon Resource Name (ARN) of the infrastructure configuration.
+	// The Amazon Resource Name (ARN) for the SNS topic to which we send image build
+	// event notifications.
+	//
+	// EC2 Image Builder is unable to send notifications to SNS topics that are
+	// encrypted using keys from other accounts. The key that is used to encrypt
+	// the SNS topic must reside in the account that the Image Builder service runs
+	// under.
 	SnsTopicArn *string `locationName:"snsTopicArn" min:"1" type:"string"`
 
 	// The subnet ID of the infrastructure configuration.
@@ -15780,14 +16433,118 @@ func (s *ResourceNotFoundException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Properties that configure export from your build instance to a compatible
+// file format for your VM.
+type S3ExportConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Export the updated image to one of the following supported disk image formats:
+	//
+	//    * Virtual Hard Disk (VHD) – Compatible with Citrix Xen and Microsoft
+	//    Hyper-V virtualization products.
+	//
+	//    * Stream-optimized ESX Virtual Machine Disk (VMDK) – Compatible with
+	//    VMware ESX and VMware vSphere versions 4, 5, and 6.
+	//
+	//    * Raw – Raw format.
+	//
+	// DiskImageFormat is a required field
+	DiskImageFormat *string `locationName:"diskImageFormat" type:"string" required:"true" enum:"DiskImageFormat"`
+
+	// The name of the role that grants VM Import/Export permission to export images
+	// to your S3 bucket.
+	//
+	// RoleName is a required field
+	RoleName *string `locationName:"roleName" min:"1" type:"string" required:"true"`
+
+	// The S3 bucket in which to store the output disk images for your VM.
+	//
+	// S3Bucket is a required field
+	S3Bucket *string `locationName:"s3Bucket" min:"1" type:"string" required:"true"`
+
+	// The Amazon S3 path for the bucket where the output disk images for your VM
+	// are stored.
+	S3Prefix *string `locationName:"s3Prefix" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3ExportConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3ExportConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3ExportConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3ExportConfiguration"}
+	if s.DiskImageFormat == nil {
+		invalidParams.Add(request.NewErrParamRequired("DiskImageFormat"))
+	}
+	if s.RoleName == nil {
+		invalidParams.Add(request.NewErrParamRequired("RoleName"))
+	}
+	if s.RoleName != nil && len(*s.RoleName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RoleName", 1))
+	}
+	if s.S3Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("S3Bucket"))
+	}
+	if s.S3Bucket != nil && len(*s.S3Bucket) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("S3Bucket", 1))
+	}
+	if s.S3Prefix != nil && len(*s.S3Prefix) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("S3Prefix", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDiskImageFormat sets the DiskImageFormat field's value.
+func (s *S3ExportConfiguration) SetDiskImageFormat(v string) *S3ExportConfiguration {
+	s.DiskImageFormat = &v
+	return s
+}
+
+// SetRoleName sets the RoleName field's value.
+func (s *S3ExportConfiguration) SetRoleName(v string) *S3ExportConfiguration {
+	s.RoleName = &v
+	return s
+}
+
+// SetS3Bucket sets the S3Bucket field's value.
+func (s *S3ExportConfiguration) SetS3Bucket(v string) *S3ExportConfiguration {
+	s.S3Bucket = &v
+	return s
+}
+
+// SetS3Prefix sets the S3Prefix field's value.
+func (s *S3ExportConfiguration) SetS3Prefix(v string) *S3ExportConfiguration {
+	s.S3Prefix = &v
+	return s
+}
+
 // Amazon S3 logging configuration.
 type S3Logs struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon S3 bucket in which to store the logs.
+	// The S3 bucket in which to store the logs.
 	S3BucketName *string `locationName:"s3BucketName" min:"1" type:"string"`
 
-	// The Amazon S3 path in which to store the logs.
+	// The Amazon S3 path to the bucket where the logs are stored.
 	S3KeyPrefix *string `locationName:"s3KeyPrefix" min:"1" type:"string"`
 }
 
@@ -16904,7 +17661,13 @@ type UpdateInfrastructureConfigurationInput struct {
 	// Amazon EC2 AMI.
 	SecurityGroupIds []*string `locationName:"securityGroupIds" type:"list"`
 
-	// The SNS topic on which to send image build events.
+	// The Amazon Resource Name (ARN) for the SNS topic to which we send image build
+	// event notifications.
+	//
+	// EC2 Image Builder is unable to send notifications to SNS topics that are
+	// encrypted using keys from other accounts. The key that is used to encrypt
+	// the SNS topic must reside in the account that the Image Builder service runs
+	// under.
 	SnsTopicArn *string `locationName:"snsTopicArn" type:"string"`
 
 	// The subnet ID to place the instance used to customize your Amazon EC2 AMI
@@ -17108,6 +17871,26 @@ func (s *UpdateInfrastructureConfigurationOutput) SetRequestId(v string) *Update
 }
 
 const (
+	// BuildTypeUserInitiated is a BuildType enum value
+	BuildTypeUserInitiated = "USER_INITIATED"
+
+	// BuildTypeScheduled is a BuildType enum value
+	BuildTypeScheduled = "SCHEDULED"
+
+	// BuildTypeImport is a BuildType enum value
+	BuildTypeImport = "IMPORT"
+)
+
+// BuildType_Values returns all elements of the BuildType enum
+func BuildType_Values() []string {
+	return []string{
+		BuildTypeUserInitiated,
+		BuildTypeScheduled,
+		BuildTypeImport,
+	}
+}
+
+const (
 	// ComponentFormatShell is a ComponentFormat enum value
 	ComponentFormatShell = "SHELL"
 )
@@ -17168,6 +17951,26 @@ const (
 func ContainerType_Values() []string {
 	return []string{
 		ContainerTypeDocker,
+	}
+}
+
+const (
+	// DiskImageFormatVmdk is a DiskImageFormat enum value
+	DiskImageFormatVmdk = "VMDK"
+
+	// DiskImageFormatRaw is a DiskImageFormat enum value
+	DiskImageFormatRaw = "RAW"
+
+	// DiskImageFormatVhd is a DiskImageFormat enum value
+	DiskImageFormatVhd = "VHD"
+)
+
+// DiskImageFormat_Values returns all elements of the DiskImageFormat enum
+func DiskImageFormat_Values() []string {
+	return []string{
+		DiskImageFormatVmdk,
+		DiskImageFormatRaw,
+		DiskImageFormatVhd,
 	}
 }
 

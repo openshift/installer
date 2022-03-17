@@ -3752,9 +3752,9 @@ type Channel struct {
 	// The timestamp of when the channel was created.
 	CreationTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
 
-	// Contains information about the slate used to fill gaps between programs in
-	// the schedule. You must configure FillerSlate if your channel uses an LINEAR
-	// PlaybackMode.
+	// The slate used to fill gaps between programs in the schedule. You must configure
+	// filler slate if your channel uses the LINEAR PlaybackMode. MediaTailor doesn't
+	// support filler slate for channels using the LOOP PlaybackMode.
 	FillerSlate *SlateSource `type:"structure"`
 
 	// The timestamp of when the channel was last modified.
@@ -3970,7 +3970,8 @@ type CreateChannelInput struct {
 	ChannelName *string `location:"uri" locationName:"channelName" type:"string" required:"true"`
 
 	// The slate used to fill gaps between programs in the schedule. You must configure
-	// filler slate if your channel uses a LINEAR PlaybackMode.
+	// filler slate if your channel uses the LINEAR PlaybackMode. MediaTailor doesn't
+	// support filler slate for channels using the LOOP PlaybackMode.
 	FillerSlate *SlateSource `type:"structure"`
 
 	// The channel's output properties.
@@ -4585,6 +4586,9 @@ type CreateSourceLocationInput struct {
 	// HttpConfiguration is a required field
 	HttpConfiguration *HttpConfiguration `type:"structure" required:"true"`
 
+	// An array of segment delivery configurations for this source location.
+	SegmentDeliveryConfigurations []*SegmentDeliveryConfiguration `type:"list"`
+
 	// SourceLocationName is a required field
 	SourceLocationName *string `location:"uri" locationName:"sourceLocationName" type:"string" required:"true"`
 
@@ -4652,6 +4656,12 @@ func (s *CreateSourceLocationInput) SetHttpConfiguration(v *HttpConfiguration) *
 	return s
 }
 
+// SetSegmentDeliveryConfigurations sets the SegmentDeliveryConfigurations field's value.
+func (s *CreateSourceLocationInput) SetSegmentDeliveryConfigurations(v []*SegmentDeliveryConfiguration) *CreateSourceLocationInput {
+	s.SegmentDeliveryConfigurations = v
+	return s
+}
+
 // SetSourceLocationName sets the SourceLocationName field's value.
 func (s *CreateSourceLocationInput) SetSourceLocationName(v string) *CreateSourceLocationInput {
 	s.SourceLocationName = &v
@@ -4686,6 +4696,8 @@ type CreateSourceLocationOutput struct {
 	HttpConfiguration *HttpConfiguration `type:"structure"`
 
 	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	SegmentDeliveryConfigurations []*SegmentDeliveryConfiguration `type:"list"`
 
 	SourceLocationName *string `type:"string"`
 
@@ -4743,6 +4755,12 @@ func (s *CreateSourceLocationOutput) SetHttpConfiguration(v *HttpConfiguration) 
 // SetLastModifiedTime sets the LastModifiedTime field's value.
 func (s *CreateSourceLocationOutput) SetLastModifiedTime(v time.Time) *CreateSourceLocationOutput {
 	s.LastModifiedTime = &v
+	return s
+}
+
+// SetSegmentDeliveryConfigurations sets the SegmentDeliveryConfigurations field's value.
+func (s *CreateSourceLocationOutput) SetSegmentDeliveryConfigurations(v []*SegmentDeliveryConfiguration) *CreateSourceLocationOutput {
+	s.SegmentDeliveryConfigurations = v
 	return s
 }
 
@@ -6064,6 +6082,9 @@ type DescribeSourceLocationOutput struct {
 	// The timestamp that indicates when the source location was last modified.
 	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
 
+	// An array of segment delivery configurations for this source location.
+	SegmentDeliveryConfigurations []*SegmentDeliveryConfiguration `type:"list"`
+
 	// The name of the source location.
 	SourceLocationName *string `type:"string"`
 
@@ -6122,6 +6143,12 @@ func (s *DescribeSourceLocationOutput) SetHttpConfiguration(v *HttpConfiguration
 // SetLastModifiedTime sets the LastModifiedTime field's value.
 func (s *DescribeSourceLocationOutput) SetLastModifiedTime(v time.Time) *DescribeSourceLocationOutput {
 	s.LastModifiedTime = &v
+	return s
+}
+
+// SetSegmentDeliveryConfigurations sets the SegmentDeliveryConfigurations field's value.
+func (s *DescribeSourceLocationOutput) SetSegmentDeliveryConfigurations(v []*SegmentDeliveryConfiguration) *DescribeSourceLocationOutput {
+	s.SegmentDeliveryConfigurations = v
 	return s
 }
 
@@ -9282,6 +9309,51 @@ func (s *SecretsManagerAccessTokenConfiguration) SetSecretStringKey(v string) *S
 	return s
 }
 
+type SegmentDeliveryConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The base URL of the host or path of the segment delivery server that you're
+	// using to serve segments. This is typically a content delivery network (CDN).
+	// The URL can be absolute or relative. To use an absolute URL include the protocol,
+	// such as https://example.com/some/path. To use a relative URL specify the
+	// relative path, such as /some/path.
+	BaseUrl *string `type:"string"`
+
+	// A unique identifier used to distinguish between multiple segment delivery
+	// configurations in a source location.
+	Name *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SegmentDeliveryConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SegmentDeliveryConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetBaseUrl sets the BaseUrl field's value.
+func (s *SegmentDeliveryConfiguration) SetBaseUrl(v string) *SegmentDeliveryConfiguration {
+	s.BaseUrl = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *SegmentDeliveryConfiguration) SetName(v string) *SegmentDeliveryConfiguration {
+	s.Name = &v
+	return s
+}
+
 // Slate VOD source configuration.
 type SlateSource struct {
 	_ struct{} `type:"structure"`
@@ -9350,6 +9422,9 @@ type SourceLocation struct {
 	// The timestamp that indicates when the source location was last modified.
 	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
 
+	// An array of segment delivery configurations for this source location.
+	SegmentDeliveryConfigurations []*SegmentDeliveryConfiguration `type:"list"`
+
 	// The name of the source location.
 	//
 	// SourceLocationName is a required field
@@ -9410,6 +9485,12 @@ func (s *SourceLocation) SetHttpConfiguration(v *HttpConfiguration) *SourceLocat
 // SetLastModifiedTime sets the LastModifiedTime field's value.
 func (s *SourceLocation) SetLastModifiedTime(v time.Time) *SourceLocation {
 	s.LastModifiedTime = &v
+	return s
+}
+
+// SetSegmentDeliveryConfigurations sets the SegmentDeliveryConfigurations field's value.
+func (s *SourceLocation) SetSegmentDeliveryConfigurations(v []*SegmentDeliveryConfiguration) *SourceLocation {
+	s.SegmentDeliveryConfigurations = v
 	return s
 }
 
@@ -9894,6 +9975,11 @@ type UpdateChannelInput struct {
 	// ChannelName is a required field
 	ChannelName *string `location:"uri" locationName:"channelName" type:"string" required:"true"`
 
+	// The slate used to fill gaps between programs in the schedule. You must configure
+	// filler slate if your channel uses the LINEAR PlaybackMode. MediaTailor doesn't
+	// support filler slate for channels using the LOOP PlaybackMode.
+	FillerSlate *SlateSource `type:"structure"`
+
 	// The channel's output properties.
 	//
 	// Outputs is a required field
@@ -9950,6 +10036,12 @@ func (s *UpdateChannelInput) Validate() error {
 // SetChannelName sets the ChannelName field's value.
 func (s *UpdateChannelInput) SetChannelName(v string) *UpdateChannelInput {
 	s.ChannelName = &v
+	return s
+}
+
+// SetFillerSlate sets the FillerSlate field's value.
+func (s *UpdateChannelInput) SetFillerSlate(v *SlateSource) *UpdateChannelInput {
+	s.FillerSlate = v
 	return s
 }
 
@@ -10070,6 +10162,9 @@ type UpdateSourceLocationInput struct {
 	// HttpConfiguration is a required field
 	HttpConfiguration *HttpConfiguration `type:"structure" required:"true"`
 
+	// An array of segment delivery configurations for this source location.
+	SegmentDeliveryConfigurations []*SegmentDeliveryConfiguration `type:"list"`
+
 	// SourceLocationName is a required field
 	SourceLocationName *string `location:"uri" locationName:"sourceLocationName" type:"string" required:"true"`
 }
@@ -10134,6 +10229,12 @@ func (s *UpdateSourceLocationInput) SetHttpConfiguration(v *HttpConfiguration) *
 	return s
 }
 
+// SetSegmentDeliveryConfigurations sets the SegmentDeliveryConfigurations field's value.
+func (s *UpdateSourceLocationInput) SetSegmentDeliveryConfigurations(v []*SegmentDeliveryConfiguration) *UpdateSourceLocationInput {
+	s.SegmentDeliveryConfigurations = v
+	return s
+}
+
 // SetSourceLocationName sets the SourceLocationName field's value.
 func (s *UpdateSourceLocationInput) SetSourceLocationName(v string) *UpdateSourceLocationInput {
 	s.SourceLocationName = &v
@@ -10162,6 +10263,8 @@ type UpdateSourceLocationOutput struct {
 	HttpConfiguration *HttpConfiguration `type:"structure"`
 
 	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	SegmentDeliveryConfigurations []*SegmentDeliveryConfiguration `type:"list"`
 
 	SourceLocationName *string `type:"string"`
 
@@ -10219,6 +10322,12 @@ func (s *UpdateSourceLocationOutput) SetHttpConfiguration(v *HttpConfiguration) 
 // SetLastModifiedTime sets the LastModifiedTime field's value.
 func (s *UpdateSourceLocationOutput) SetLastModifiedTime(v time.Time) *UpdateSourceLocationOutput {
 	s.LastModifiedTime = &v
+	return s
+}
+
+// SetSegmentDeliveryConfigurations sets the SegmentDeliveryConfigurations field's value.
+func (s *UpdateSourceLocationOutput) SetSegmentDeliveryConfigurations(v []*SegmentDeliveryConfiguration) *UpdateSourceLocationOutput {
+	s.SegmentDeliveryConfigurations = v
 	return s
 }
 
