@@ -232,7 +232,7 @@ func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Crede
 	var authorizer autorest.Authorizer
 	switch cloudName {
 	case azure.StackCloud:
-		logrus.Debug("Falling back to deprecated ADAL authentication")
+		logrus.Debug("Falling back to ADAL authentication")
 		// The new authorization method is not yet supported for private clouds
 		// See https://github.com/Azure/azure-sdk-for-go/pull/16942
 		var err error
