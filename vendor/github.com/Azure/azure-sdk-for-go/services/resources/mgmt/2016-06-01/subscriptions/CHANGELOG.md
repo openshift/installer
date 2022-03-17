@@ -1,9 +1,5 @@
-# Change History
+Generated from https://github.com/Azure/azure-rest-api-specs/tree/3c764635e7d442b3e74caf593029fcd440b3ef82//specification/resources/resource-manager/readme.md tag: `package-subscriptions-2016-06`
 
-## Additive Changes
+Code generator @microsoft.azure/autorest.go@2.1.171
 
-### New Funcs
 
-1. Location.MarshalJSON() ([]byte, error)
-1. Policies.MarshalJSON() ([]byte, error)
-1. TenantIDDescription.MarshalJSON() ([]byte, error)

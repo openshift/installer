@@ -1,16 +1,5 @@
-# Change History
+Generated from https://github.com/Azure/azure-rest-api-specs/tree/3c764635e7d442b3e74caf593029fcd440b3ef82//specification/network/resource-manager/readme.md tag: `package-2017-10`
 
-## Additive Changes
+Code generator @microsoft.azure/autorest.go@2.1.171
 
-### New Funcs
 
-1. ApplicationSecurityGroupPropertiesFormat.MarshalJSON() ([]byte, error)
-1. BgpPeerStatus.MarshalJSON() ([]byte, error)
-1. ConnectivityHop.MarshalJSON() ([]byte, error)
-1. ConnectivityInformation.MarshalJSON() ([]byte, error)
-1. ConnectivityIssue.MarshalJSON() ([]byte, error)
-1. GatewayRoute.MarshalJSON() ([]byte, error)
-1. TunnelConnectionHealth.MarshalJSON() ([]byte, error)
-1. VirtualNetworkUsage.MarshalJSON() ([]byte, error)
-1. VirtualNetworkUsageName.MarshalJSON() ([]byte, error)
-1. WatcherPropertiesFormat.MarshalJSON() ([]byte, error)

@@ -1,12 +1,5 @@
-# Change History
+Generated from https://github.com/Azure/azure-rest-api-specs/tree/3c764635e7d442b3e74caf593029fcd440b3ef82//specification/resources/resource-manager/readme.md tag: `package-resources-2018-05`
 
-## Additive Changes
+Code generator @microsoft.azure/autorest.go@2.1.171
 
-### New Funcs
 
-1. DeploymentOperationProperties.MarshalJSON() ([]byte, error)
-1. ErrorAdditionalInfo.MarshalJSON() ([]byte, error)
-1. ErrorResponse.MarshalJSON() ([]byte, error)
-1. GroupProperties.MarshalJSON() ([]byte, error)
-1. IdentityUserAssignedIdentitiesValue.MarshalJSON() ([]byte, error)
-1. ManagementErrorWithDetails.MarshalJSON() ([]byte, error)
