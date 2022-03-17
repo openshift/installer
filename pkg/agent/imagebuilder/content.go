@@ -14,34 +14,43 @@ import (
 	"github.com/vincent-petithory/dataurl"
 
 	data "github.com/openshift-agent-team/fleeting/data/data/agent"
+	"github.com/openshift-agent-team/fleeting/pkg/agent/manifests"
 )
 
 // ConfigBuilder builds an Ignition config
 type ConfigBuilder struct {
-	pullSecret      string
-	serviceBaseURL  string
-	infraEnvID      string
-	pullSecretToken string
-	nodeZeroIP      string
+	pullSecret               string
+	serviceBaseURL           string
+	pullSecretToken          string
+	nodeZeroIP               string
+	createClusterParamsJSON  string
+	createInfraEnvParamsJSON string
 }
 
 func New(nodeZeroIP string) *ConfigBuilder {
-	pullSecret := getEnv("PULL_SECRET", "")
+	pullSecret := manifests.GetPullSecret()
 	// TODO: try setting SERVICE_BASE_URL within agent.service
 	serviceBaseURL := getEnv("SERVICE_BASE_URL", "http://"+nodeZeroIP+":8090")
-	// TODO: get id either from InfraEnv CR that is included
-	// with tool, or query the id from the REST_API
-	// curl http://SERVICE_BASE_URL/api/assisted-install/v2/infra-envs
-	infraEnvID := getEnv("INFRA_ENV_ID", "infra-env-id-missing")
 	// TODO: needs appropriate value if AUTH_TYPE != none
 	pullSecretToken := getEnv("PULL_SECRET_TOKEN", "")
+	clusterParams := manifests.CreateClusterParams()
+	clusterJSON, err := json.Marshal(clusterParams)
+	if err != nil {
+		fmt.Errorf("Error marshalling cluster params into json: %w", err)
+	}
 
+	infraEnvParams := manifests.CreateInfraEnvParams()
+	infraEnvJSON, err := json.Marshal(infraEnvParams)
+	if err != nil {
+		fmt.Errorf("Error marshal infra env params into json: %w", err)
+	}
 	return &ConfigBuilder{
-		pullSecret:      pullSecret,
-		serviceBaseURL:  serviceBaseURL,
-		infraEnvID:      infraEnvID,
-		pullSecretToken: pullSecretToken,
-		nodeZeroIP:      nodeZeroIP,
+		pullSecret:               pullSecret,
+		serviceBaseURL:           serviceBaseURL,
+		pullSecretToken:          pullSecretToken,
+		nodeZeroIP:               nodeZeroIP,
+		createClusterParamsJSON:  string(clusterJSON),
+		createInfraEnvParamsJSON: string(infraEnvJSON),
 	}
 }
 
@@ -200,10 +209,11 @@ func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 
 func (c ConfigBuilder) templateString(name string, text string) (string, error) {
 	params := map[string]interface{}{
-		"ServiceBaseURL":  c.serviceBaseURL,
-		"infraEnvId":      c.infraEnvID,
-		"PullSecretToken": c.pullSecretToken,
-		"NodeZeroIP":      c.nodeZeroIP,
+		"ServiceBaseURL":           c.serviceBaseURL,
+		"PullSecretToken":          c.pullSecretToken,
+		"NodeZeroIP":               c.nodeZeroIP,
+		"ClusterCreateParamsJSON":  c.createClusterParamsJSON,
+		"InfraEnvCreateParamsJSON": c.createInfraEnvParamsJSON,
 	}
 
 	tmpl, err := template.New(name).Parse(string(text))
