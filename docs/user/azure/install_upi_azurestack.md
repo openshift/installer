@@ -630,7 +630,8 @@ DEBUG Route found in openshift-console namespace: console
 DEBUG Route found in openshift-console namespace: downloads
 DEBUG OpenShift console route is created
 INFO Install complete!
-INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=${PWD}/auth/kubeconfig'
+INFO To access the cluster as the system:admin user when using 'oc', run
+    export KUBECONFIG=${PWD}/auth/kubeconfig
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.cluster.basedomain.com
 INFO Login to the console with user: kubeadmin, password: REDACTED
 ```

@@ -419,7 +419,8 @@ Look for a message like this to verify that your install succeeded:
 
 ```txt
 INFO Install complete!
-INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/home/stack/ostest/auth/kubeconfig'
+INFO To access the cluster as the system:admin user when using 'oc', run
+    export KUBECONFIG=/home/stack/ostest/auth/kubeconfig
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.ostest.shiftstack.com
 INFO Login to the console with user: kubeadmin, password: xxx
 ```
