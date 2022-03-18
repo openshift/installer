@@ -1,4 +1,4 @@
-module libvirt
+module github.com/openshift/installer/terraform/providers/libvirt
 
 go 1.17
 

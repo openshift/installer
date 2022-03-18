@@ -1,4 +1,4 @@
-module google
+module github.com/openshift/installer/terraform/providers/google
 
 go 1.17
 

@@ -1,4 +1,4 @@
-module local
+module github.com/openshift/installer/terraform/providers/local
 
 go 1.17
 

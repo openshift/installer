@@ -1,4 +1,4 @@
-module openstack
+module github.com/openshift/installer/terraform/providers/openstack
 
 go 1.17
 

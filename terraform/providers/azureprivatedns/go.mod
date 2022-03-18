@@ -1,4 +1,4 @@
-module github.com/openshift/installer/terraform/azureprivatedns
+module github.com/openshift/installer/terraform/providers/azureprivatedns
 
 go 1.17
 
