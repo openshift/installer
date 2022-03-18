@@ -1,25 +1,5 @@
-# Change History
+Generated from https://github.com/Azure/azure-rest-api-specs/tree/3c764635e7d442b3e74caf593029fcd440b3ef82//specification/compute/resource-manager/readme.md tag: `package-compute-2017-03`
 
-## Additive Changes
+Code generator @microsoft.azure/autorest.go@2.1.171
 
-### New Funcs
 
-1. AccessURIRaw.MarshalJSON() ([]byte, error)
-1. BootDiagnosticsInstanceView.MarshalJSON() ([]byte, error)
-1. DataDiskImage.MarshalJSON() ([]byte, error)
-1. OperationStatusResponse.MarshalJSON() ([]byte, error)
-1. ResourceSku.MarshalJSON() ([]byte, error)
-1. ResourceSkuCapabilities.MarshalJSON() ([]byte, error)
-1. ResourceSkuCapacity.MarshalJSON() ([]byte, error)
-1. ResourceSkuCosts.MarshalJSON() ([]byte, error)
-1. ResourceSkuRestrictions.MarshalJSON() ([]byte, error)
-1. RollingUpgradeProgressInfo.MarshalJSON() ([]byte, error)
-1. RollingUpgradeRunningStatus.MarshalJSON() ([]byte, error)
-1. RollingUpgradeStatusInfoProperties.MarshalJSON() ([]byte, error)
-1. SubResourceReadOnly.MarshalJSON() ([]byte, error)
-1. VirtualMachineHealthStatus.MarshalJSON() ([]byte, error)
-1. VirtualMachineScaleSetInstanceViewStatusesSummary.MarshalJSON() ([]byte, error)
-1. VirtualMachineScaleSetSku.MarshalJSON() ([]byte, error)
-1. VirtualMachineScaleSetSkuCapacity.MarshalJSON() ([]byte, error)
-1. VirtualMachineScaleSetVMExtensionsSummary.MarshalJSON() ([]byte, error)
-1. VirtualMachineStatusCodeCount.MarshalJSON() ([]byte, error)
