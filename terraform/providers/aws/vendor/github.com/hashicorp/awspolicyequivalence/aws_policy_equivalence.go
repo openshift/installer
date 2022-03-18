@@ -403,6 +403,9 @@ func newStringSet(members interface{}) stringSet {
 				return nil
 			}
 		}
+		if len(actions) == 0 {
+			return stringSet{}
+		}
 		return stringSet(actions)
 	default:
 		return nil

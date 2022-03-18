@@ -6935,7 +6935,7 @@ func (c *ElastiCache) RebootCacheClusterRequest(input *RebootCacheClusterInput) 
 // enabled) clusters.
 //
 // If you make changes to parameters that require a Redis (cluster mode enabled)
-// cluster reboot for the changes to be applied, see Rebooting a Cluster (http://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/Clusters.Rebooting.html)
+// cluster reboot for the changes to be applied, see Rebooting a Cluster (http://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/nodes.rebooting.html)
 // for an alternate process.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -8036,7 +8036,7 @@ type CacheCluster struct {
 	//    M5 node types: cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge,
 	//    cache.m5.12xlarge, cache.m5.24xlarge M4 node types: cache.m4.large, cache.m4.xlarge,
 	//    cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge T4g node types (available
-	//    only for Redis engine version 5.0.6 onward and for Memcached engine version
+	//    only for Redis engine version 6.0 onward and for Memcached engine version
 	//    1.5.16 onward): cache.t4g.micro, cache.t4g.small, cache.t4g.medium T3
 	//    node types: cache.t3.micro, cache.t3.small, cache.t3.medium T2 node types:
 	//    cache.t2.micro, cache.t2.small, cache.t2.medium Previous generation: (not
@@ -8476,7 +8476,7 @@ func (s *CacheEngineVersion) SetEngineVersion(v string) *CacheEngineVersion {
 //    M5 node types: cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge,
 //    cache.m5.12xlarge, cache.m5.24xlarge M4 node types: cache.m4.large, cache.m4.xlarge,
 //    cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge T4g node types (available
-//    only for Redis engine version 5.0.6 onward and for Memcached engine version
+//    only for Redis engine version 6.0 onward and for Memcached engine version
 //    1.5.16 onward): cache.t4g.micro, cache.t4g.small, cache.t4g.medium T3
 //    node types: cache.t3.micro, cache.t3.small, cache.t3.medium T2 node types:
 //    cache.t2.micro, cache.t2.small, cache.t2.medium Previous generation: (not
@@ -8871,7 +8871,7 @@ type CacheParameterGroup struct {
 	// is compatible with.
 	//
 	// Valid values are: memcached1.4 | memcached1.5 | memcached1.6 | redis2.6 |
-	// redis2.8 | redis3.2 | redis4.0 | redis5.0 | redis6.0 |
+	// redis2.8 | redis3.2 | redis4.0 | redis5.0 | redis6.x |
 	CacheParameterGroupFamily *string `type:"string"`
 
 	// The name of the cache parameter group.
@@ -9625,7 +9625,7 @@ type CreateCacheClusterInput struct {
 	//    M5 node types: cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge,
 	//    cache.m5.12xlarge, cache.m5.24xlarge M4 node types: cache.m4.large, cache.m4.xlarge,
 	//    cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge T4g node types (available
-	//    only for Redis engine version 5.0.6 onward and Memcached engine version
+	//    only for Redis engine version 6.0 onward and Memcached engine version
 	//    1.5.16 onward): cache.t4g.micro, cache.t4g.small, cache.t4g.medium T3
 	//    node types: cache.t3.micro, cache.t3.small, cache.t3.medium T2 node types:
 	//    cache.t2.micro, cache.t2.small, cache.t2.medium Previous generation: (not
@@ -9635,11 +9635,6 @@ type CreateCacheClusterInput struct {
 	//
 	//    * Compute optimized: Previous generation: (not recommended) C1 node types:
 	//    cache.c1.xlarge
-	//
-	//    * Memory optimized with data tiering: Current generation: R6gd node types
-	//    (available only for Redis engine version 6.2 onward). cache.r6gd.xlarge,
-	//    cache.r6gd.2xlarge, cache.r6gd.4xlarge, cache.r6gd.8xlarge, cache.r6gd.12xlarge,
-	//    cache.r6gd.16xlarge
 	//
 	//    * Memory optimized: Current generation: R6g node types (available only
 	//    for Redis engine version 5.0.6 onward and for Memcached engine version
@@ -9757,8 +9752,7 @@ type CreateCacheClusterInput struct {
 
 	// Specifies the weekly time range during which maintenance on the cluster is
 	// performed. It is specified as a range in the format ddd:hh24:mi-ddd:hh24:mi
-	// (24H Clock UTC). The minimum maintenance window is a 60 minute period. Valid
-	// values for ddd are:
+	// (24H Clock UTC). The minimum maintenance window is a 60 minute period.
 	PreferredMaintenanceWindow *string `type:"string"`
 
 	// The outpost ARN in which the cache cluster is created.
@@ -10058,7 +10052,7 @@ type CreateCacheParameterGroupInput struct {
 	// can be used with.
 	//
 	// Valid values are: memcached1.4 | memcached1.5 | memcached1.6 | redis2.6 |
-	// redis2.8 | redis3.2 | redis4.0 | redis5.0 | redis6.0 | redis6.2
+	// redis2.8 | redis3.2 | redis4.0 | redis5.0 | redis6.x
 	//
 	// CacheParameterGroupFamily is a required field
 	CacheParameterGroupFamily *string `type:"string" required:"true"`
@@ -10590,7 +10584,7 @@ type CreateReplicationGroupInput struct {
 	//    M5 node types: cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge,
 	//    cache.m5.12xlarge, cache.m5.24xlarge M4 node types: cache.m4.large, cache.m4.xlarge,
 	//    cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge T4g node types (available
-	//    only for Redis engine version 5.0.6 onward and Memcached engine version
+	//    only for Redis engine version 6.0 onward and Memcached engine version
 	//    1.5.16 onward): cache.t4g.micro, cache.t4g.small, cache.t4g.medium T3
 	//    node types: cache.t3.micro, cache.t3.small, cache.t3.medium T2 node types:
 	//    cache.t2.micro, cache.t2.small, cache.t2.medium Previous generation: (not
@@ -14051,7 +14045,7 @@ type DescribeReservedCacheNodesInput struct {
 	//    M5 node types: cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge,
 	//    cache.m5.12xlarge, cache.m5.24xlarge M4 node types: cache.m4.large, cache.m4.xlarge,
 	//    cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge T4g node types (available
-	//    only for Redis engine version 5.0.6 onward and for Memcached engine version
+	//    only for Redis engine version 6.0 onward and for Memcached engine version
 	//    1.5.16 onward): cache.t4g.micro, cache.t4g.small, cache.t4g.medium T3
 	//    node types: cache.t3.micro, cache.t3.small, cache.t3.medium T2 node types:
 	//    cache.t2.micro, cache.t2.small, cache.t2.medium Previous generation: (not
@@ -14216,7 +14210,7 @@ type DescribeReservedCacheNodesOfferingsInput struct {
 	//    M5 node types: cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge,
 	//    cache.m5.12xlarge, cache.m5.24xlarge M4 node types: cache.m4.large, cache.m4.xlarge,
 	//    cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge T4g node types (available
-	//    only for Redis engine version 5.0.6 onward and for Memcached engine version
+	//    only for Redis engine version 6.0 onward and for Memcached engine version
 	//    1.5.16 onward): cache.t4g.micro, cache.t4g.small, cache.t4g.medium T3
 	//    node types: cache.t3.micro, cache.t3.small, cache.t3.medium T2 node types:
 	//    cache.t2.micro, cache.t2.small, cache.t2.medium Previous generation: (not
@@ -16396,7 +16390,7 @@ type LogDeliveryConfiguration struct {
 	// Returns the log format, either JSON or TEXT.
 	LogFormat *string `type:"string" enum:"LogFormat"`
 
-	// Refers to slow-log (https://redis.io/commands/slowlog).
+	// Refers to slow-log (https://redis.io/commands/slowlog) or engine-log.
 	LogType *string `type:"string" enum:"LogType"`
 
 	// Returns an error message for the log delivery configuration.
@@ -16478,7 +16472,7 @@ type LogDeliveryConfigurationRequest struct {
 	// Specifies either JSON or TEXT
 	LogFormat *string `type:"string" enum:"LogFormat"`
 
-	// Refers to slow-log (https://redis.io/commands/slowlog).
+	// Refers to slow-log (https://redis.io/commands/slowlog) or engine-log..
 	LogType *string `type:"string" enum:"LogType"`
 }
 
@@ -18901,7 +18895,7 @@ type PendingLogDeliveryConfiguration struct {
 	// Returns the log format, either JSON or TEXT
 	LogFormat *string `type:"string" enum:"LogFormat"`
 
-	// Refers to slow-log (https://redis.io/commands/slowlog).
+	// Refers to slow-log (https://redis.io/commands/slowlog) or engine-log..
 	LogType *string `type:"string" enum:"LogType"`
 }
 
@@ -19994,7 +19988,7 @@ type ReservedCacheNode struct {
 	//    M5 node types: cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge,
 	//    cache.m5.12xlarge, cache.m5.24xlarge M4 node types: cache.m4.large, cache.m4.xlarge,
 	//    cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge T4g node types (available
-	//    only for Redis engine version 5.0.6 onward and Memcached engine version
+	//    only for Redis engine version 6.0 onward and Memcached engine version
 	//    1.5.16 onward): cache.t4g.micro, cache.t4g.small, cache.t4g.medium T3
 	//    node types: cache.t3.micro, cache.t3.small, cache.t3.medium T2 node types:
 	//    cache.t2.micro, cache.t2.small, cache.t2.medium Previous generation: (not
@@ -20184,7 +20178,7 @@ type ReservedCacheNodesOffering struct {
 	//    M5 node types: cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge,
 	//    cache.m5.12xlarge, cache.m5.24xlarge M4 node types: cache.m4.large, cache.m4.xlarge,
 	//    cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge T4g node types (available
-	//    only for Redis engine version 5.0.6 onward and Memcached engine version
+	//    only for Redis engine version 6.0 onward and Memcached engine version
 	//    1.5.16 onward): cache.t4g.micro, cache.t4g.small, cache.t4g.medium T3
 	//    node types: cache.t3.micro, cache.t3.small, cache.t3.medium T2 node types:
 	//    cache.t2.micro, cache.t2.small, cache.t2.medium Previous generation: (not
@@ -20832,7 +20826,7 @@ type Snapshot struct {
 	//    M5 node types: cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge,
 	//    cache.m5.12xlarge, cache.m5.24xlarge M4 node types: cache.m4.large, cache.m4.xlarge,
 	//    cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge T4g node types (available
-	//    only for Redis engine version 5.0.6 onward and Memcached engine version
+	//    only for Redis engine version 6.0 onward and Memcached engine version
 	//    1.5.16 onward): cache.t4g.micro, cache.t4g.small, cache.t4g.medium T3
 	//    node types: cache.t3.micro, cache.t3.small, cache.t3.medium T2 node types:
 	//    cache.t2.micro, cache.t2.small, cache.t2.medium Previous generation: (not
@@ -22278,12 +22272,16 @@ func LogFormat_Values() []string {
 const (
 	// LogTypeSlowLog is a LogType enum value
 	LogTypeSlowLog = "slow-log"
+
+	// LogTypeEngineLog is a LogType enum value
+	LogTypeEngineLog = "engine-log"
 )
 
 // LogType_Values returns all elements of the LogType enum
 func LogType_Values() []string {
 	return []string{
 		LogTypeSlowLog,
+		LogTypeEngineLog,
 	}
 }
 

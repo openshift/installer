@@ -439,8 +439,8 @@ func (c *Redshift) AuthorizeDataShareRequest(input *AuthorizeDataShareInput) (re
 // AuthorizeDataShare API operation for Amazon Redshift.
 //
 // From a data producer account, authorizes the sharing of a datashare with
-// one or more consumer accounts. To authorize a datashare for a data consumer,
-// the producer account must have the correct access privileges.
+// one or more consumer accounts or managing entities. To authorize a datashare
+// for a data consumer, the producer account must have the correct access privileges.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2287,8 +2287,8 @@ func (c *Redshift) CreateSnapshotCopyGrantRequest(input *CreateSnapshotCopyGrant
 
 // CreateSnapshotCopyGrant API operation for Amazon Redshift.
 //
-// Creates a snapshot copy grant that permits Amazon Redshift to use a customer
-// master key (CMK) from Key Management Service (KMS) to encrypt copied snapshots
+// Creates a snapshot copy grant that permits Amazon Redshift to use an encrypted
+// symmetric key from Key Management Service (KMS) to encrypt copied snapshots
 // in a destination region.
 //
 // For more information about managing snapshot copy grants, go to Amazon Redshift
@@ -9175,9 +9175,9 @@ func (c *Redshift) DisableSnapshotCopyRequest(input *DisableSnapshotCopyInput) (
 // Disables the automatic copying of snapshots from one region to another region
 // for a specified cluster.
 //
-// If your cluster and its snapshots are encrypted using a customer master key
-// (CMK) from Key Management Service, use DeleteSnapshotCopyGrant to delete
-// the grant that grants Amazon Redshift permission to the CMK in the destination
+// If your cluster and its snapshots are encrypted using an encrypted symmetric
+// key from Key Management Service, use DeleteSnapshotCopyGrant to delete the
+// grant that grants Amazon Redshift permission to the key in the destination
 // region.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -10398,7 +10398,9 @@ func (c *Redshift) ModifyClusterIamRolesRequest(input *ModifyClusterIamRolesInpu
 // Modifies the list of Identity and Access Management (IAM) roles that can
 // be used by the cluster to access other Amazon Web Services services.
 //
-// A cluster can have up to 10 IAM roles associated at any time.
+// The maximum number of IAM roles that you can associate is subject to a quota.
+// For more information, go to Quotas and limits (https://docs.aws.amazon.com/redshift/latest/mgmt/amazon-redshift-limits.html)
+// in the Amazon Redshift Cluster Management Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -13248,6 +13250,10 @@ type AssociateDataShareConsumerInput struct {
 	// datashare.
 	ConsumerArn *string `type:"string"`
 
+	// From a datashare consumer account, associates a datashare with all existing
+	// and future namespaces in the specified Amazon Web Services Region.
+	ConsumerRegion *string `type:"string"`
+
 	// The Amazon Resource Name (ARN) of the datashare that the consumer is to use
 	// with the account or the namespace.
 	//
@@ -13298,6 +13304,12 @@ func (s *AssociateDataShareConsumerInput) SetConsumerArn(v string) *AssociateDat
 	return s
 }
 
+// SetConsumerRegion sets the ConsumerRegion field's value.
+func (s *AssociateDataShareConsumerInput) SetConsumerRegion(v string) *AssociateDataShareConsumerInput {
+	s.ConsumerRegion = &v
+	return s
+}
+
 // SetDataShareArn sets the DataShareArn field's value.
 func (s *AssociateDataShareConsumerInput) SetDataShareArn(v string) *AssociateDataShareConsumerInput {
 	s.DataShareArn = &v
@@ -13320,6 +13332,9 @@ type AssociateDataShareConsumerOutput struct {
 	// A value that specifies when the datashare has an association between a producer
 	// and data consumers.
 	DataShareAssociations []*DataShareAssociation `type:"list"`
+
+	// The identifier of a datashare to show its managing entity.
+	ManagedBy *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the producer.
 	ProducerArn *string `type:"string"`
@@ -13358,6 +13373,12 @@ func (s *AssociateDataShareConsumerOutput) SetDataShareArn(v string) *AssociateD
 // SetDataShareAssociations sets the DataShareAssociations field's value.
 func (s *AssociateDataShareConsumerOutput) SetDataShareAssociations(v []*DataShareAssociation) *AssociateDataShareConsumerOutput {
 	s.DataShareAssociations = v
+	return s
+}
+
+// SetManagedBy sets the ManagedBy field's value.
+func (s *AssociateDataShareConsumerOutput) SetManagedBy(v string) *AssociateDataShareConsumerOutput {
+	s.ManagedBy = &v
 	return s
 }
 
@@ -13553,7 +13574,8 @@ type AuthorizeDataShareInput struct {
 	_ struct{} `type:"structure"`
 
 	// The identifier of the data consumer that is authorized to access the datashare.
-	// This identifier is an Amazon Web Services account ID.
+	// This identifier is an Amazon Web Services account ID or a keyword, such as
+	// ADX.
 	//
 	// ConsumerIdentifier is a required field
 	ConsumerIdentifier *string `type:"string" required:"true"`
@@ -13628,6 +13650,9 @@ type AuthorizeDataShareOutput struct {
 	// and data consumers.
 	DataShareAssociations []*DataShareAssociation `type:"list"`
 
+	// The identifier of a datashare to show its managing entity.
+	ManagedBy *string `type:"string"`
+
 	// The Amazon Resource Name (ARN) of the producer.
 	ProducerArn *string `type:"string"`
 }
@@ -13665,6 +13690,12 @@ func (s *AuthorizeDataShareOutput) SetDataShareArn(v string) *AuthorizeDataShare
 // SetDataShareAssociations sets the DataShareAssociations field's value.
 func (s *AuthorizeDataShareOutput) SetDataShareAssociations(v []*DataShareAssociation) *AuthorizeDataShareOutput {
 	s.DataShareAssociations = v
+	return s
+}
+
+// SetManagedBy sets the ManagedBy field's value.
+func (s *AuthorizeDataShareOutput) SetManagedBy(v string) *AuthorizeDataShareOutput {
+	s.ManagedBy = &v
 	return s
 }
 
@@ -16191,10 +16222,11 @@ type CreateClusterInput struct {
 
 	// A list of Identity and Access Management (IAM) roles that can be used by
 	// the cluster to access other Amazon Web Services services. You must supply
-	// the IAM roles in their Amazon Resource Name (ARN) format. You can supply
-	// up to 10 IAM roles in a single request.
+	// the IAM roles in their Amazon Resource Name (ARN) format.
 	//
-	// A cluster can have up to 10 IAM roles associated with it at any time.
+	// The maximum number of IAM roles that you can associate is subject to a quota.
+	// For more information, go to Quotas and limits (https://docs.aws.amazon.com/redshift/latest/mgmt/amazon-redshift-limits.html)
+	// in the Amazon Redshift Cluster Management Guide.
 	IamRoles []*string `locationNameList:"IamRoleArn" type:"list"`
 
 	// The Key Management Service (KMS) key ID of the encryption key that you want
@@ -16226,8 +16258,8 @@ type CreateClusterInput struct {
 	//
 	//    * Must contain one number.
 	//
-	//    * Can be any printable ASCII character (ASCII code 33 to 126) except '
-	//    (single quote), " (double quote), \, /, @, or space.
+	//    * Can be any printable ASCII character (ASCII code 33-126) except ' (single
+	//    quote), " (double quote), \, /, or @.
 	//
 	// MasterUserPassword is a required field
 	MasterUserPassword *string `type:"string" required:"true"`
@@ -17985,8 +18017,8 @@ func (s *CreateScheduledActionOutput) SetTargetAction(v *ScheduledActionType) *C
 type CreateSnapshotCopyGrantInput struct {
 	_ struct{} `type:"structure"`
 
-	// The unique identifier of the customer master key (CMK) to which to grant
-	// Amazon Redshift permission. If no key is specified, the default key is used.
+	// The unique identifier of the encrypted symmetric key to which to grant Amazon
+	// Redshift permission. If no key is specified, the default key is used.
 	KmsKeyId *string `type:"string"`
 
 	// The name of the snapshot copy grant. This name must be unique in the region
@@ -18064,8 +18096,8 @@ type CreateSnapshotCopyGrantOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The snapshot copy grant that grants Amazon Redshift permission to encrypt
-	// copied snapshots with the specified customer master key (CMK) from Amazon
-	// Web Services KMS in the destination region.
+	// copied snapshots with the specified encrypted symmetric key from Amazon Web
+	// Services KMS in the destination region.
 	//
 	// For more information about managing snapshot copy grants, go to Amazon Redshift
 	// Database Encryption (https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html)
@@ -18374,7 +18406,8 @@ type CreateUsageLimitInput struct {
 	// The type of limit. Depending on the feature type, this can be based on a
 	// time duration or data size. If FeatureType is spectrum, then LimitType must
 	// be data-scanned. If FeatureType is concurrency-scaling, then LimitType must
-	// be time.
+	// be time. If FeatureType is cross-region-datasharing, then LimitType must
+	// be data-scanned.
 	//
 	// LimitType is a required field
 	LimitType *string `type:"string" required:"true" enum:"UsageLimitLimitType"`
@@ -18591,6 +18624,9 @@ type DataShare struct {
 	// and data consumers.
 	DataShareAssociations []*DataShareAssociation `type:"list"`
 
+	// The identifier of a datashare to show its managing entity.
+	ManagedBy *string `type:"string"`
+
 	// The Amazon Resource Name (ARN) of the producer.
 	ProducerArn *string `type:"string"`
 }
@@ -18631,6 +18667,12 @@ func (s *DataShare) SetDataShareAssociations(v []*DataShareAssociation) *DataSha
 	return s
 }
 
+// SetManagedBy sets the ManagedBy field's value.
+func (s *DataShare) SetManagedBy(v string) *DataShare {
+	s.ManagedBy = &v
+	return s
+}
+
 // SetProducerArn sets the ProducerArn field's value.
 func (s *DataShare) SetProducerArn(v string) *DataShare {
 	s.ProducerArn = &v
@@ -18644,6 +18686,10 @@ type DataShareAssociation struct {
 	// The name of the consumer accounts that have an association with a producer
 	// datashare.
 	ConsumerIdentifier *string `type:"string"`
+
+	// The Amazon Web Services Region of the consumer accounts that have an association
+	// with a producer datashare.
+	ConsumerRegion *string `type:"string"`
 
 	// The creation date of the datashare that is associated.
 	CreatedDate *time.Time `type:"timestamp"`
@@ -18676,6 +18722,12 @@ func (s DataShareAssociation) GoString() string {
 // SetConsumerIdentifier sets the ConsumerIdentifier field's value.
 func (s *DataShareAssociation) SetConsumerIdentifier(v string) *DataShareAssociation {
 	s.ConsumerIdentifier = &v
+	return s
+}
+
+// SetConsumerRegion sets the ConsumerRegion field's value.
+func (s *DataShareAssociation) SetConsumerRegion(v string) *DataShareAssociation {
+	s.ConsumerRegion = &v
 	return s
 }
 
@@ -18780,7 +18832,8 @@ type DeauthorizeDataShareInput struct {
 	_ struct{} `type:"structure"`
 
 	// The identifier of the data consumer that is to have authorization removed
-	// from the datashare. This identifier is an Amazon Web Services account ID.
+	// from the datashare. This identifier is an Amazon Web Services account ID
+	// or a keyword, such as ADX.
 	//
 	// ConsumerIdentifier is a required field
 	ConsumerIdentifier *string `type:"string" required:"true"`
@@ -18854,6 +18907,9 @@ type DeauthorizeDataShareOutput struct {
 	// and data consumers.
 	DataShareAssociations []*DataShareAssociation `type:"list"`
 
+	// The identifier of a datashare to show its managing entity.
+	ManagedBy *string `type:"string"`
+
 	// The Amazon Resource Name (ARN) of the producer.
 	ProducerArn *string `type:"string"`
 }
@@ -18891,6 +18947,12 @@ func (s *DeauthorizeDataShareOutput) SetDataShareArn(v string) *DeauthorizeDataS
 // SetDataShareAssociations sets the DataShareAssociations field's value.
 func (s *DeauthorizeDataShareOutput) SetDataShareAssociations(v []*DataShareAssociation) *DeauthorizeDataShareOutput {
 	s.DataShareAssociations = v
+	return s
+}
+
+// SetManagedBy sets the ManagedBy field's value.
+func (s *DeauthorizeDataShareOutput) SetManagedBy(v string) *DeauthorizeDataShareOutput {
+	s.ManagedBy = &v
 	return s
 }
 
@@ -25220,6 +25282,11 @@ type DisassociateDataShareConsumerInput struct {
 	// is removed from.
 	ConsumerArn *string `type:"string"`
 
+	// From a datashare consumer account, removes association of a datashare from
+	// all the existing and future namespaces in the specified Amazon Web Services
+	// Region.
+	ConsumerRegion *string `type:"string"`
+
 	// The Amazon Resource Name (ARN) of the datashare to remove association for.
 	//
 	// DataShareArn is a required field
@@ -25267,6 +25334,12 @@ func (s *DisassociateDataShareConsumerInput) SetConsumerArn(v string) *Disassoci
 	return s
 }
 
+// SetConsumerRegion sets the ConsumerRegion field's value.
+func (s *DisassociateDataShareConsumerInput) SetConsumerRegion(v string) *DisassociateDataShareConsumerInput {
+	s.ConsumerRegion = &v
+	return s
+}
+
 // SetDataShareArn sets the DataShareArn field's value.
 func (s *DisassociateDataShareConsumerInput) SetDataShareArn(v string) *DisassociateDataShareConsumerInput {
 	s.DataShareArn = &v
@@ -25295,6 +25368,9 @@ type DisassociateDataShareConsumerOutput struct {
 	// A value that specifies when the datashare has an association between a producer
 	// and data consumers.
 	DataShareAssociations []*DataShareAssociation `type:"list"`
+
+	// The identifier of a datashare to show its managing entity.
+	ManagedBy *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the producer.
 	ProducerArn *string `type:"string"`
@@ -25333,6 +25409,12 @@ func (s *DisassociateDataShareConsumerOutput) SetDataShareArn(v string) *Disasso
 // SetDataShareAssociations sets the DataShareAssociations field's value.
 func (s *DisassociateDataShareConsumerOutput) SetDataShareAssociations(v []*DataShareAssociation) *DisassociateDataShareConsumerOutput {
 	s.DataShareAssociations = v
+	return s
+}
+
+// SetManagedBy sets the ManagedBy field's value.
+func (s *DisassociateDataShareConsumerOutput) SetManagedBy(v string) *DisassociateDataShareConsumerOutput {
+	s.ManagedBy = &v
 	return s
 }
 
@@ -27387,8 +27469,7 @@ type ModifyClusterIamRolesInput struct {
 	_ struct{} `type:"structure"`
 
 	// Zero or more IAM roles to associate with the cluster. The roles must be in
-	// their Amazon Resource Name (ARN) format. You can associate up to 10 IAM roles
-	// with a single cluster in a single request.
+	// their Amazon Resource Name (ARN) format.
 	AddIamRoles []*string `locationNameList:"IamRoleArn" type:"list"`
 
 	// The unique identifier of the cluster for which you want to associate or disassociate
@@ -27401,8 +27482,7 @@ type ModifyClusterIamRolesInput struct {
 	// the cluster when the cluster was last modified.
 	DefaultIamRoleArn *string `type:"string"`
 
-	// Zero or more IAM roles in ARN format to disassociate from the cluster. You
-	// can disassociate up to 10 IAM roles from a single cluster in a single request.
+	// Zero or more IAM roles in ARN format to disassociate from the cluster.
 	RemoveIamRoles []*string `locationNameList:"IamRoleArn" type:"list"`
 }
 
@@ -27656,8 +27736,8 @@ type ModifyClusterInput struct {
 	//
 	//    * Must contain one number.
 	//
-	//    * Can be any printable ASCII character (ASCII code 33 to 126) except '
-	//    (single quote), " (double quote), \, /, @, or space.
+	//    * Can be any printable ASCII character (ASCII code 33-126) except ' (single
+	//    quote), " (double quote), \, /, or @.
 	MasterUserPassword *string `type:"string"`
 
 	// The new identifier for the cluster.
@@ -30389,6 +30469,9 @@ type RejectDataShareOutput struct {
 	// and data consumers.
 	DataShareAssociations []*DataShareAssociation `type:"list"`
 
+	// The identifier of a datashare to show its managing entity.
+	ManagedBy *string `type:"string"`
+
 	// The Amazon Resource Name (ARN) of the producer.
 	ProducerArn *string `type:"string"`
 }
@@ -30426,6 +30509,12 @@ func (s *RejectDataShareOutput) SetDataShareArn(v string) *RejectDataShareOutput
 // SetDataShareAssociations sets the DataShareAssociations field's value.
 func (s *RejectDataShareOutput) SetDataShareAssociations(v []*DataShareAssociation) *RejectDataShareOutput {
 	s.DataShareAssociations = v
+	return s
+}
+
+// SetManagedBy sets the ManagedBy field's value.
+func (s *RejectDataShareOutput) SetManagedBy(v string) *RejectDataShareOutput {
+	s.ManagedBy = &v
 	return s
 }
 
@@ -31334,10 +31423,11 @@ type RestoreFromClusterSnapshotInput struct {
 
 	// A list of Identity and Access Management (IAM) roles that can be used by
 	// the cluster to access other Amazon Web Services services. You must supply
-	// the IAM roles in their Amazon Resource Name (ARN) format. You can supply
-	// up to 10 IAM roles in a single request.
+	// the IAM roles in their Amazon Resource Name (ARN) format.
 	//
-	// A cluster can have up to 10 IAM roles associated at any time.
+	// The maximum number of IAM roles that you can associate is subject to a quota.
+	// For more information, go to Quotas and limits (https://docs.aws.amazon.com/redshift/latest/mgmt/amazon-redshift-limits.html)
+	// in the Amazon Redshift Cluster Management Guide.
 	IamRoles []*string `locationNameList:"IamRoleArn" type:"list"`
 
 	// The Key Management Service (KMS) key ID of the encryption key that you want
@@ -33216,8 +33306,8 @@ func (s *Snapshot) SetVpcId(v string) *Snapshot {
 }
 
 // The snapshot copy grant that grants Amazon Redshift permission to encrypt
-// copied snapshots with the specified customer master key (CMK) from Amazon
-// Web Services KMS in the destination region.
+// copied snapshots with the specified encrypted symmetric key from Amazon Web
+// Services KMS in the destination region.
 //
 // For more information about managing snapshot copy grants, go to Amazon Redshift
 // Database Encryption (https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html)
@@ -33225,7 +33315,7 @@ func (s *Snapshot) SetVpcId(v string) *Snapshot {
 type SnapshotCopyGrant struct {
 	_ struct{} `type:"structure"`
 
-	// The unique identifier of the customer master key (CMK) in Amazon Web Services
+	// The unique identifier of the encrypted symmetric key in Amazon Web Services
 	// KMS to which Amazon Redshift is granted permission.
 	KmsKeyId *string `type:"string"`
 
@@ -34782,6 +34872,9 @@ const (
 
 	// UsageLimitFeatureTypeConcurrencyScaling is a UsageLimitFeatureType enum value
 	UsageLimitFeatureTypeConcurrencyScaling = "concurrency-scaling"
+
+	// UsageLimitFeatureTypeCrossRegionDatasharing is a UsageLimitFeatureType enum value
+	UsageLimitFeatureTypeCrossRegionDatasharing = "cross-region-datasharing"
 )
 
 // UsageLimitFeatureType_Values returns all elements of the UsageLimitFeatureType enum
@@ -34789,6 +34882,7 @@ func UsageLimitFeatureType_Values() []string {
 	return []string{
 		UsageLimitFeatureTypeSpectrum,
 		UsageLimitFeatureTypeConcurrencyScaling,
+		UsageLimitFeatureTypeCrossRegionDatasharing,
 	}
 }
 

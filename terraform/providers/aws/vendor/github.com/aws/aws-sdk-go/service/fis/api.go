@@ -59,11 +59,11 @@ func (c *FIS) CreateExperimentTemplateRequest(input *CreateExperimentTemplateInp
 //
 // Creates an experiment template.
 //
-// To create a template, specify the following information:
+// An experiment template includes the following components:
 //
-//    * Targets: A target can be a specific resource in your AWS environment,
-//    or one or more resources that match criteria that you specify, for example,
-//    resources that have specific tags.
+//    * Targets: A target can be a specific resource in your Amazon Web Services
+//    environment, or one or more resources that match criteria that you specify,
+//    for example, resources that have specific tags.
 //
 //    * Actions: The actions to carry out on the target. You can specify multiple
 //    actions, the duration of each action, and when to start each action during
@@ -73,7 +73,8 @@ func (c *FIS) CreateExperimentTemplateRequest(input *CreateExperimentTemplateInp
 //    is running, the experiment is automatically stopped. You can define a
 //    stop condition as a CloudWatch alarm.
 //
-// For more information, see the AWS Fault Injection Simulator User Guide (https://docs.aws.amazon.com/fis/latest/userguide/).
+// For more information, see Experiment templates (https://docs.aws.amazon.com/fis/latest/userguide/experiment-templates.html)
+// in the Fault Injection Simulator User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -245,7 +246,7 @@ func (c *FIS) GetActionRequest(input *GetActionInput) (req *request.Request, out
 
 // GetAction API operation for AWS Fault Injection Simulator.
 //
-// Gets information about the specified AWS FIS action.
+// Gets information about the specified FIS action.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -450,6 +451,89 @@ func (c *FIS) GetExperimentTemplateWithContext(ctx aws.Context, input *GetExperi
 	return out, req.Send()
 }
 
+const opGetTargetResourceType = "GetTargetResourceType"
+
+// GetTargetResourceTypeRequest generates a "aws/request.Request" representing the
+// client's request for the GetTargetResourceType operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetTargetResourceType for more information on using the GetTargetResourceType
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetTargetResourceTypeRequest method.
+//    req, resp := client.GetTargetResourceTypeRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/fis-2020-12-01/GetTargetResourceType
+func (c *FIS) GetTargetResourceTypeRequest(input *GetTargetResourceTypeInput) (req *request.Request, output *GetTargetResourceTypeOutput) {
+	op := &request.Operation{
+		Name:       opGetTargetResourceType,
+		HTTPMethod: "GET",
+		HTTPPath:   "/targetResourceTypes/{resourceType}",
+	}
+
+	if input == nil {
+		input = &GetTargetResourceTypeInput{}
+	}
+
+	output = &GetTargetResourceTypeOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetTargetResourceType API operation for AWS Fault Injection Simulator.
+//
+// Gets information about the specified resource type.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Fault Injection Simulator's
+// API operation GetTargetResourceType for usage and error information.
+//
+// Returned Error Types:
+//   * ValidationException
+//   The specified input is not valid, or fails to satisfy the constraints for
+//   the request.
+//
+//   * ResourceNotFoundException
+//   The specified resource cannot be found.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/fis-2020-12-01/GetTargetResourceType
+func (c *FIS) GetTargetResourceType(input *GetTargetResourceTypeInput) (*GetTargetResourceTypeOutput, error) {
+	req, out := c.GetTargetResourceTypeRequest(input)
+	return out, req.Send()
+}
+
+// GetTargetResourceTypeWithContext is the same as GetTargetResourceType with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetTargetResourceType for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FIS) GetTargetResourceTypeWithContext(ctx aws.Context, input *GetTargetResourceTypeInput, opts ...request.Option) (*GetTargetResourceTypeOutput, error) {
+	req, out := c.GetTargetResourceTypeRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opListActions = "ListActions"
 
 // ListActionsRequest generates a "aws/request.Request" representing the
@@ -500,7 +584,7 @@ func (c *FIS) ListActionsRequest(input *ListActionsInput) (req *request.Request,
 
 // ListActions API operation for AWS Fault Injection Simulator.
 //
-// Lists the available AWS FIS actions.
+// Lists the available FIS actions.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -938,6 +1022,144 @@ func (c *FIS) ListTagsForResourceWithContext(ctx aws.Context, input *ListTagsFor
 	return out, req.Send()
 }
 
+const opListTargetResourceTypes = "ListTargetResourceTypes"
+
+// ListTargetResourceTypesRequest generates a "aws/request.Request" representing the
+// client's request for the ListTargetResourceTypes operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListTargetResourceTypes for more information on using the ListTargetResourceTypes
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListTargetResourceTypesRequest method.
+//    req, resp := client.ListTargetResourceTypesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/fis-2020-12-01/ListTargetResourceTypes
+func (c *FIS) ListTargetResourceTypesRequest(input *ListTargetResourceTypesInput) (req *request.Request, output *ListTargetResourceTypesOutput) {
+	op := &request.Operation{
+		Name:       opListTargetResourceTypes,
+		HTTPMethod: "GET",
+		HTTPPath:   "/targetResourceTypes",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"nextToken"},
+			OutputTokens:    []string{"nextToken"},
+			LimitToken:      "maxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListTargetResourceTypesInput{}
+	}
+
+	output = &ListTargetResourceTypesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListTargetResourceTypes API operation for AWS Fault Injection Simulator.
+//
+// Lists the target resource types.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Fault Injection Simulator's
+// API operation ListTargetResourceTypes for usage and error information.
+//
+// Returned Error Types:
+//   * ValidationException
+//   The specified input is not valid, or fails to satisfy the constraints for
+//   the request.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/fis-2020-12-01/ListTargetResourceTypes
+func (c *FIS) ListTargetResourceTypes(input *ListTargetResourceTypesInput) (*ListTargetResourceTypesOutput, error) {
+	req, out := c.ListTargetResourceTypesRequest(input)
+	return out, req.Send()
+}
+
+// ListTargetResourceTypesWithContext is the same as ListTargetResourceTypes with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTargetResourceTypes for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FIS) ListTargetResourceTypesWithContext(ctx aws.Context, input *ListTargetResourceTypesInput, opts ...request.Option) (*ListTargetResourceTypesOutput, error) {
+	req, out := c.ListTargetResourceTypesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListTargetResourceTypesPages iterates over the pages of a ListTargetResourceTypes operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListTargetResourceTypes method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListTargetResourceTypes operation.
+//    pageNum := 0
+//    err := client.ListTargetResourceTypesPages(params,
+//        func(page *fis.ListTargetResourceTypesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *FIS) ListTargetResourceTypesPages(input *ListTargetResourceTypesInput, fn func(*ListTargetResourceTypesOutput, bool) bool) error {
+	return c.ListTargetResourceTypesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListTargetResourceTypesPagesWithContext same as ListTargetResourceTypesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FIS) ListTargetResourceTypesPagesWithContext(ctx aws.Context, input *ListTargetResourceTypesInput, fn func(*ListTargetResourceTypesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListTargetResourceTypesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListTargetResourceTypesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListTargetResourceTypesOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opStartExperiment = "StartExperiment"
 
 // StartExperimentRequest generates a "aws/request.Request" representing the
@@ -1346,8 +1568,8 @@ func (c *FIS) UpdateExperimentTemplateWithContext(ctx aws.Context, input *Update
 	return out, req.Send()
 }
 
-// Describes an action. For more information, see AWS FIS actions (https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html)
-// in the AWS Fault Injection Simulator User Guide.
+// Describes an action. For more information, see FIS actions (https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html)
+// in the Fault Injection Simulator User Guide.
 type Action struct {
 	_ struct{} `type:"structure"`
 
@@ -1612,10 +1834,13 @@ func (s *ConflictException) RequestID() string {
 }
 
 // Specifies an action for an experiment template.
+//
+// For more information, see Actions (https://docs.aws.amazon.com/fis/latest/userguide/actions.html)
+// in the Fault Injection Simulator User Guide.
 type CreateExperimentTemplateActionInput struct {
 	_ struct{} `type:"structure"`
 
-	// The ID of the action.
+	// The ID of the action. The format of the action ID is: aws:service-name:action-type.
 	//
 	// ActionId is a required field
 	ActionId *string `locationName:"actionId" type:"string" required:"true"`
@@ -1707,13 +1932,15 @@ type CreateExperimentTemplateInput struct {
 	// of the request.
 	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
 
-	// A description for the experiment template. Can contain up to 64 letters (A-Z
-	// and a-z).
+	// A description for the experiment template.
 	//
 	// Description is a required field
 	Description *string `locationName:"description" type:"string" required:"true"`
 
-	// The Amazon Resource Name (ARN) of an IAM role that grants the AWS FIS service
+	// The configuration for experiment logging.
+	LogConfiguration *CreateExperimentTemplateLogConfigurationInput_ `locationName:"logConfiguration" type:"structure"`
+
+	// The Amazon Resource Name (ARN) of an IAM role that grants the FIS service
 	// permission to perform service actions on your behalf.
 	//
 	// RoleArn is a required field
@@ -1780,6 +2007,11 @@ func (s *CreateExperimentTemplateInput) Validate() error {
 			}
 		}
 	}
+	if s.LogConfiguration != nil {
+		if err := s.LogConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("LogConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.StopConditions != nil {
 		for i, v := range s.StopConditions {
 			if v == nil {
@@ -1825,6 +2057,12 @@ func (s *CreateExperimentTemplateInput) SetDescription(v string) *CreateExperime
 	return s
 }
 
+// SetLogConfiguration sets the LogConfiguration field's value.
+func (s *CreateExperimentTemplateInput) SetLogConfiguration(v *CreateExperimentTemplateLogConfigurationInput_) *CreateExperimentTemplateInput {
+	s.LogConfiguration = v
+	return s
+}
+
 // SetRoleArn sets the RoleArn field's value.
 func (s *CreateExperimentTemplateInput) SetRoleArn(v string) *CreateExperimentTemplateInput {
 	s.RoleArn = &v
@@ -1846,6 +2084,81 @@ func (s *CreateExperimentTemplateInput) SetTags(v map[string]*string) *CreateExp
 // SetTargets sets the Targets field's value.
 func (s *CreateExperimentTemplateInput) SetTargets(v map[string]*CreateExperimentTemplateTargetInput) *CreateExperimentTemplateInput {
 	s.Targets = v
+	return s
+}
+
+// Specifies the configuration for experiment logging.
+type CreateExperimentTemplateLogConfigurationInput_ struct {
+	_ struct{} `type:"structure"`
+
+	// The configuration for experiment logging to Amazon CloudWatch Logs.
+	CloudWatchLogsConfiguration *ExperimentTemplateCloudWatchLogsLogConfigurationInput_ `locationName:"cloudWatchLogsConfiguration" type:"structure"`
+
+	// The schema version.
+	//
+	// LogSchemaVersion is a required field
+	LogSchemaVersion *int64 `locationName:"logSchemaVersion" type:"integer" required:"true"`
+
+	// The configuration for experiment logging to Amazon S3.
+	S3Configuration *ExperimentTemplateS3LogConfigurationInput_ `locationName:"s3Configuration" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateExperimentTemplateLogConfigurationInput_) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateExperimentTemplateLogConfigurationInput_) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateExperimentTemplateLogConfigurationInput_) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateExperimentTemplateLogConfigurationInput_"}
+	if s.LogSchemaVersion == nil {
+		invalidParams.Add(request.NewErrParamRequired("LogSchemaVersion"))
+	}
+	if s.CloudWatchLogsConfiguration != nil {
+		if err := s.CloudWatchLogsConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("CloudWatchLogsConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3Configuration != nil {
+		if err := s.S3Configuration.Validate(); err != nil {
+			invalidParams.AddNested("S3Configuration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCloudWatchLogsConfiguration sets the CloudWatchLogsConfiguration field's value.
+func (s *CreateExperimentTemplateLogConfigurationInput_) SetCloudWatchLogsConfiguration(v *ExperimentTemplateCloudWatchLogsLogConfigurationInput_) *CreateExperimentTemplateLogConfigurationInput_ {
+	s.CloudWatchLogsConfiguration = v
+	return s
+}
+
+// SetLogSchemaVersion sets the LogSchemaVersion field's value.
+func (s *CreateExperimentTemplateLogConfigurationInput_) SetLogSchemaVersion(v int64) *CreateExperimentTemplateLogConfigurationInput_ {
+	s.LogSchemaVersion = &v
+	return s
+}
+
+// SetS3Configuration sets the S3Configuration field's value.
+func (s *CreateExperimentTemplateLogConfigurationInput_) SetS3Configuration(v *ExperimentTemplateS3LogConfigurationInput_) *CreateExperimentTemplateLogConfigurationInput_ {
+	s.S3Configuration = v
 	return s
 }
 
@@ -1945,11 +2258,17 @@ func (s *CreateExperimentTemplateStopConditionInput) SetValue(v string) *CreateE
 // Specifies a target for an experiment. You must specify at least one Amazon
 // Resource Name (ARN) or at least one resource tag. You cannot specify both
 // ARNs and tags.
+//
+// For more information, see Targets (https://docs.aws.amazon.com/fis/latest/userguide/targets.html)
+// in the Fault Injection Simulator User Guide.
 type CreateExperimentTemplateTargetInput struct {
 	_ struct{} `type:"structure"`
 
 	// The filters to apply to identify target resources using specific attributes.
 	Filters []*ExperimentTemplateTargetInputFilter `locationName:"filters" type:"list"`
+
+	// The resource type parameters.
+	Parameters map[string]*string `locationName:"parameters" type:"map"`
 
 	// The Amazon Resource Names (ARNs) of the resources.
 	ResourceArns []*string `locationName:"resourceArns" type:"list"`
@@ -1957,7 +2276,7 @@ type CreateExperimentTemplateTargetInput struct {
 	// The tags for the target resources.
 	ResourceTags map[string]*string `locationName:"resourceTags" type:"map"`
 
-	// The AWS resource type. The resource type must be supported for the specified
+	// The resource type. The resource type must be supported for the specified
 	// action.
 	//
 	// ResourceType is a required field
@@ -2028,6 +2347,12 @@ func (s *CreateExperimentTemplateTargetInput) Validate() error {
 // SetFilters sets the Filters field's value.
 func (s *CreateExperimentTemplateTargetInput) SetFilters(v []*ExperimentTemplateTargetInputFilter) *CreateExperimentTemplateTargetInput {
 	s.Filters = v
+	return s
+}
+
+// SetParameters sets the Parameters field's value.
+func (s *CreateExperimentTemplateTargetInput) SetParameters(v map[string]*string) *CreateExperimentTemplateTargetInput {
+	s.Parameters = v
 	return s
 }
 
@@ -2142,7 +2467,7 @@ type Experiment struct {
 	// The actions for the experiment.
 	Actions map[string]*ExperimentAction `locationName:"actions" type:"map"`
 
-	// The time the experiment was created.
+	// The time that the experiment was created.
 	CreationTime *time.Time `locationName:"creationTime" type:"timestamp"`
 
 	// The time that the experiment ended.
@@ -2154,11 +2479,14 @@ type Experiment struct {
 	// The ID of the experiment.
 	Id *string `locationName:"id" type:"string"`
 
-	// The Amazon Resource Name (ARN) of an IAM role that grants the AWS FIS service
+	// The configuration for experiment logging.
+	LogConfiguration *ExperimentLogConfiguration `locationName:"logConfiguration" type:"structure"`
+
+	// The Amazon Resource Name (ARN) of an IAM role that grants the FIS service
 	// permission to perform service actions on your behalf.
 	RoleArn *string `locationName:"roleArn" min:"20" type:"string"`
 
-	// The time that the experiment was started.
+	// The time that the experiment started.
 	StartTime *time.Time `locationName:"startTime" type:"timestamp"`
 
 	// The state of the experiment.
@@ -2222,6 +2550,12 @@ func (s *Experiment) SetId(v string) *Experiment {
 	return s
 }
 
+// SetLogConfiguration sets the LogConfiguration field's value.
+func (s *Experiment) SetLogConfiguration(v *ExperimentLogConfiguration) *Experiment {
+	s.LogConfiguration = v
+	return s
+}
+
 // SetRoleArn sets the RoleArn field's value.
 func (s *Experiment) SetRoleArn(v string) *Experiment {
 	s.RoleArn = &v
@@ -2268,11 +2602,17 @@ type ExperimentAction struct {
 	// The description for the action.
 	Description *string `locationName:"description" type:"string"`
 
+	// The time that the action ended.
+	EndTime *time.Time `locationName:"endTime" type:"timestamp"`
+
 	// The parameters for the action.
 	Parameters map[string]*string `locationName:"parameters" type:"map"`
 
 	// The name of the action that must be completed before this action starts.
 	StartAfter []*string `locationName:"startAfter" type:"list"`
+
+	// The time that the action started.
+	StartTime *time.Time `locationName:"startTime" type:"timestamp"`
 
 	// The state of the action.
 	State *ExperimentActionState `locationName:"state" type:"structure"`
@@ -2311,6 +2651,12 @@ func (s *ExperimentAction) SetDescription(v string) *ExperimentAction {
 	return s
 }
 
+// SetEndTime sets the EndTime field's value.
+func (s *ExperimentAction) SetEndTime(v time.Time) *ExperimentAction {
+	s.EndTime = &v
+	return s
+}
+
 // SetParameters sets the Parameters field's value.
 func (s *ExperimentAction) SetParameters(v map[string]*string) *ExperimentAction {
 	s.Parameters = v
@@ -2320,6 +2666,12 @@ func (s *ExperimentAction) SetParameters(v map[string]*string) *ExperimentAction
 // SetStartAfter sets the StartAfter field's value.
 func (s *ExperimentAction) SetStartAfter(v []*string) *ExperimentAction {
 	s.StartAfter = v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *ExperimentAction) SetStartTime(v time.Time) *ExperimentAction {
+	s.StartTime = &v
 	return s
 }
 
@@ -2373,6 +2725,130 @@ func (s *ExperimentActionState) SetReason(v string) *ExperimentActionState {
 // SetStatus sets the Status field's value.
 func (s *ExperimentActionState) SetStatus(v string) *ExperimentActionState {
 	s.Status = &v
+	return s
+}
+
+// Describes the configuration for experiment logging to Amazon CloudWatch Logs.
+type ExperimentCloudWatchLogsLogConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the destination Amazon CloudWatch Logs
+	// log group.
+	LogGroupArn *string `locationName:"logGroupArn" min:"20" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentCloudWatchLogsLogConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentCloudWatchLogsLogConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetLogGroupArn sets the LogGroupArn field's value.
+func (s *ExperimentCloudWatchLogsLogConfiguration) SetLogGroupArn(v string) *ExperimentCloudWatchLogsLogConfiguration {
+	s.LogGroupArn = &v
+	return s
+}
+
+// Describes the configuration for experiment logging.
+type ExperimentLogConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The configuration for experiment logging to Amazon CloudWatch Logs.
+	CloudWatchLogsConfiguration *ExperimentCloudWatchLogsLogConfiguration `locationName:"cloudWatchLogsConfiguration" type:"structure"`
+
+	// The schema version.
+	LogSchemaVersion *int64 `locationName:"logSchemaVersion" type:"integer"`
+
+	// The configuration for experiment logging to Amazon S3.
+	S3Configuration *ExperimentS3LogConfiguration `locationName:"s3Configuration" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentLogConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentLogConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetCloudWatchLogsConfiguration sets the CloudWatchLogsConfiguration field's value.
+func (s *ExperimentLogConfiguration) SetCloudWatchLogsConfiguration(v *ExperimentCloudWatchLogsLogConfiguration) *ExperimentLogConfiguration {
+	s.CloudWatchLogsConfiguration = v
+	return s
+}
+
+// SetLogSchemaVersion sets the LogSchemaVersion field's value.
+func (s *ExperimentLogConfiguration) SetLogSchemaVersion(v int64) *ExperimentLogConfiguration {
+	s.LogSchemaVersion = &v
+	return s
+}
+
+// SetS3Configuration sets the S3Configuration field's value.
+func (s *ExperimentLogConfiguration) SetS3Configuration(v *ExperimentS3LogConfiguration) *ExperimentLogConfiguration {
+	s.S3Configuration = v
+	return s
+}
+
+// Describes the configuration for experiment logging to Amazon S3.
+type ExperimentS3LogConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the destination bucket.
+	BucketName *string `locationName:"bucketName" min:"3" type:"string"`
+
+	// The bucket prefix.
+	Prefix *string `locationName:"prefix" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentS3LogConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentS3LogConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetBucketName sets the BucketName field's value.
+func (s *ExperimentS3LogConfiguration) SetBucketName(v string) *ExperimentS3LogConfiguration {
+	s.BucketName = &v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *ExperimentS3LogConfiguration) SetPrefix(v string) *ExperimentS3LogConfiguration {
+	s.Prefix = &v
 	return s
 }
 
@@ -2533,6 +3009,9 @@ type ExperimentTarget struct {
 	// The filters to apply to identify target resources using specific attributes.
 	Filters []*ExperimentTargetFilter `locationName:"filters" type:"list"`
 
+	// The resource type parameters.
+	Parameters map[string]*string `locationName:"parameters" type:"map"`
+
 	// The Amazon Resource Names (ARNs) of the resources.
 	ResourceArns []*string `locationName:"resourceArns" type:"list"`
 
@@ -2567,6 +3046,12 @@ func (s ExperimentTarget) GoString() string {
 // SetFilters sets the Filters field's value.
 func (s *ExperimentTarget) SetFilters(v []*ExperimentTargetFilter) *ExperimentTarget {
 	s.Filters = v
+	return s
+}
+
+// SetParameters sets the Parameters field's value.
+func (s *ExperimentTarget) SetParameters(v map[string]*string) *ExperimentTarget {
+	s.Parameters = v
 	return s
 }
 
@@ -2654,6 +3139,9 @@ type ExperimentTemplate struct {
 	// The time the experiment template was last updated.
 	LastUpdateTime *time.Time `locationName:"lastUpdateTime" type:"timestamp"`
 
+	// The configuration for experiment logging.
+	LogConfiguration *ExperimentTemplateLogConfiguration `locationName:"logConfiguration" type:"structure"`
+
 	// The Amazon Resource Name (ARN) of an IAM role.
 	RoleArn *string `locationName:"roleArn" min:"20" type:"string"`
 
@@ -2712,6 +3200,12 @@ func (s *ExperimentTemplate) SetId(v string) *ExperimentTemplate {
 // SetLastUpdateTime sets the LastUpdateTime field's value.
 func (s *ExperimentTemplate) SetLastUpdateTime(v time.Time) *ExperimentTemplate {
 	s.LastUpdateTime = &v
+	return s
+}
+
+// SetLogConfiguration sets the LogConfiguration field's value.
+func (s *ExperimentTemplate) SetLogConfiguration(v *ExperimentTemplateLogConfiguration) *ExperimentTemplate {
+	s.LogConfiguration = v
 	return s
 }
 
@@ -2804,6 +3298,243 @@ func (s *ExperimentTemplateAction) SetStartAfter(v []*string) *ExperimentTemplat
 // SetTargets sets the Targets field's value.
 func (s *ExperimentTemplateAction) SetTargets(v map[string]*string) *ExperimentTemplateAction {
 	s.Targets = v
+	return s
+}
+
+// Describes the configuration for experiment logging to Amazon CloudWatch Logs.
+type ExperimentTemplateCloudWatchLogsLogConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the destination Amazon CloudWatch Logs
+	// log group.
+	LogGroupArn *string `locationName:"logGroupArn" min:"20" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentTemplateCloudWatchLogsLogConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentTemplateCloudWatchLogsLogConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetLogGroupArn sets the LogGroupArn field's value.
+func (s *ExperimentTemplateCloudWatchLogsLogConfiguration) SetLogGroupArn(v string) *ExperimentTemplateCloudWatchLogsLogConfiguration {
+	s.LogGroupArn = &v
+	return s
+}
+
+// Specifies the configuration for experiment logging to Amazon CloudWatch Logs.
+type ExperimentTemplateCloudWatchLogsLogConfigurationInput_ struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the destination Amazon CloudWatch Logs
+	// log group.
+	//
+	// LogGroupArn is a required field
+	LogGroupArn *string `locationName:"logGroupArn" min:"20" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentTemplateCloudWatchLogsLogConfigurationInput_) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentTemplateCloudWatchLogsLogConfigurationInput_) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ExperimentTemplateCloudWatchLogsLogConfigurationInput_) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ExperimentTemplateCloudWatchLogsLogConfigurationInput_"}
+	if s.LogGroupArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("LogGroupArn"))
+	}
+	if s.LogGroupArn != nil && len(*s.LogGroupArn) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("LogGroupArn", 20))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLogGroupArn sets the LogGroupArn field's value.
+func (s *ExperimentTemplateCloudWatchLogsLogConfigurationInput_) SetLogGroupArn(v string) *ExperimentTemplateCloudWatchLogsLogConfigurationInput_ {
+	s.LogGroupArn = &v
+	return s
+}
+
+// Describes the configuration for experiment logging.
+type ExperimentTemplateLogConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The configuration for experiment logging to Amazon CloudWatch Logs.
+	CloudWatchLogsConfiguration *ExperimentTemplateCloudWatchLogsLogConfiguration `locationName:"cloudWatchLogsConfiguration" type:"structure"`
+
+	// The schema version.
+	LogSchemaVersion *int64 `locationName:"logSchemaVersion" type:"integer"`
+
+	// The configuration for experiment logging to Amazon S3.
+	S3Configuration *ExperimentTemplateS3LogConfiguration `locationName:"s3Configuration" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentTemplateLogConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentTemplateLogConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetCloudWatchLogsConfiguration sets the CloudWatchLogsConfiguration field's value.
+func (s *ExperimentTemplateLogConfiguration) SetCloudWatchLogsConfiguration(v *ExperimentTemplateCloudWatchLogsLogConfiguration) *ExperimentTemplateLogConfiguration {
+	s.CloudWatchLogsConfiguration = v
+	return s
+}
+
+// SetLogSchemaVersion sets the LogSchemaVersion field's value.
+func (s *ExperimentTemplateLogConfiguration) SetLogSchemaVersion(v int64) *ExperimentTemplateLogConfiguration {
+	s.LogSchemaVersion = &v
+	return s
+}
+
+// SetS3Configuration sets the S3Configuration field's value.
+func (s *ExperimentTemplateLogConfiguration) SetS3Configuration(v *ExperimentTemplateS3LogConfiguration) *ExperimentTemplateLogConfiguration {
+	s.S3Configuration = v
+	return s
+}
+
+// Describes the configuration for experiment logging to Amazon S3.
+type ExperimentTemplateS3LogConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the destination bucket.
+	BucketName *string `locationName:"bucketName" min:"3" type:"string"`
+
+	// The bucket prefix.
+	Prefix *string `locationName:"prefix" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentTemplateS3LogConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentTemplateS3LogConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetBucketName sets the BucketName field's value.
+func (s *ExperimentTemplateS3LogConfiguration) SetBucketName(v string) *ExperimentTemplateS3LogConfiguration {
+	s.BucketName = &v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *ExperimentTemplateS3LogConfiguration) SetPrefix(v string) *ExperimentTemplateS3LogConfiguration {
+	s.Prefix = &v
+	return s
+}
+
+// Specifies the configuration for experiment logging to Amazon S3.
+type ExperimentTemplateS3LogConfigurationInput_ struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the destination bucket.
+	//
+	// BucketName is a required field
+	BucketName *string `locationName:"bucketName" min:"3" type:"string" required:"true"`
+
+	// The bucket prefix.
+	Prefix *string `locationName:"prefix" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentTemplateS3LogConfigurationInput_) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExperimentTemplateS3LogConfigurationInput_) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ExperimentTemplateS3LogConfigurationInput_) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ExperimentTemplateS3LogConfigurationInput_"}
+	if s.BucketName == nil {
+		invalidParams.Add(request.NewErrParamRequired("BucketName"))
+	}
+	if s.BucketName != nil && len(*s.BucketName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("BucketName", 3))
+	}
+	if s.Prefix != nil && len(*s.Prefix) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Prefix", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucketName sets the BucketName field's value.
+func (s *ExperimentTemplateS3LogConfigurationInput_) SetBucketName(v string) *ExperimentTemplateS3LogConfigurationInput_ {
+	s.BucketName = &v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *ExperimentTemplateS3LogConfigurationInput_) SetPrefix(v string) *ExperimentTemplateS3LogConfigurationInput_ {
+	s.Prefix = &v
 	return s
 }
 
@@ -2923,6 +3654,9 @@ type ExperimentTemplateTarget struct {
 	// The filters to apply to identify target resources using specific attributes.
 	Filters []*ExperimentTemplateTargetFilter `locationName:"filters" type:"list"`
 
+	// The resource type parameters.
+	Parameters map[string]*string `locationName:"parameters" type:"map"`
+
 	// The Amazon Resource Names (ARNs) of the targets.
 	ResourceArns []*string `locationName:"resourceArns" type:"list"`
 
@@ -2957,6 +3691,12 @@ func (s ExperimentTemplateTarget) GoString() string {
 // SetFilters sets the Filters field's value.
 func (s *ExperimentTemplateTarget) SetFilters(v []*ExperimentTemplateTargetFilter) *ExperimentTemplateTarget {
 	s.Filters = v
+	return s
+}
+
+// SetParameters sets the Parameters field's value.
+func (s *ExperimentTemplateTarget) SetParameters(v map[string]*string) *ExperimentTemplateTarget {
+	s.Parameters = v
 	return s
 }
 
@@ -3025,7 +3765,10 @@ func (s *ExperimentTemplateTargetFilter) SetValues(v []*string) *ExperimentTempl
 	return s
 }
 
-// Describes a filter used for the target resource input in an experiment template.
+// Specifies a filter used for the target resource input in an experiment template.
+//
+// For more information, see Resource filters (https://docs.aws.amazon.com/fis/latest/userguide/targets.html#target-filters)
+// in the Fault Injection Simulator User Guide.
 type ExperimentTemplateTargetInputFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -3323,6 +4066,86 @@ func (s GetExperimentTemplateOutput) GoString() string {
 // SetExperimentTemplate sets the ExperimentTemplate field's value.
 func (s *GetExperimentTemplateOutput) SetExperimentTemplate(v *ExperimentTemplate) *GetExperimentTemplateOutput {
 	s.ExperimentTemplate = v
+	return s
+}
+
+type GetTargetResourceTypeInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The resource type.
+	//
+	// ResourceType is a required field
+	ResourceType *string `location:"uri" locationName:"resourceType" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetTargetResourceTypeInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetTargetResourceTypeInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetTargetResourceTypeInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetTargetResourceTypeInput"}
+	if s.ResourceType == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceType"))
+	}
+	if s.ResourceType != nil && len(*s.ResourceType) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceType", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *GetTargetResourceTypeInput) SetResourceType(v string) *GetTargetResourceTypeInput {
+	s.ResourceType = &v
+	return s
+}
+
+type GetTargetResourceTypeOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the resource type.
+	TargetResourceType *TargetResourceType `locationName:"targetResourceType" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetTargetResourceTypeOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetTargetResourceTypeOutput) GoString() string {
+	return s.String()
+}
+
+// SetTargetResourceType sets the TargetResourceType field's value.
+func (s *GetTargetResourceTypeOutput) SetTargetResourceType(v *TargetResourceType) *GetTargetResourceTypeOutput {
+	s.TargetResourceType = v
 	return s
 }
 
@@ -3697,6 +4520,104 @@ func (s ListTagsForResourceOutput) GoString() string {
 // SetTags sets the Tags field's value.
 func (s *ListTagsForResourceOutput) SetTags(v map[string]*string) *ListTagsForResourceOutput {
 	s.Tags = v
+	return s
+}
+
+type ListTargetResourceTypesInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The maximum number of results to return with a single call. To retrieve the
+	// remaining results, make another call with the returned nextToken value.
+	MaxResults *int64 `location:"querystring" locationName:"maxResults" min:"1" type:"integer"`
+
+	// The token for the next page of results.
+	NextToken *string `location:"querystring" locationName:"nextToken" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListTargetResourceTypesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListTargetResourceTypesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListTargetResourceTypesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListTargetResourceTypesInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListTargetResourceTypesInput) SetMaxResults(v int64) *ListTargetResourceTypesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListTargetResourceTypesInput) SetNextToken(v string) *ListTargetResourceTypesInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListTargetResourceTypesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The token to use to retrieve the next page of results. This value is null
+	// when there are no more results to return.
+	NextToken *string `locationName:"nextToken" min:"1" type:"string"`
+
+	// The target resource types.
+	TargetResourceTypes []*TargetResourceTypeSummary `locationName:"targetResourceTypes" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListTargetResourceTypesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListTargetResourceTypesOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListTargetResourceTypesOutput) SetNextToken(v string) *ListTargetResourceTypesOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetTargetResourceTypes sets the TargetResourceTypes field's value.
+func (s *ListTargetResourceTypesOutput) SetTargetResourceTypes(v []*TargetResourceTypeSummary) *ListTargetResourceTypesOutput {
+	s.TargetResourceTypes = v
 	return s
 }
 
@@ -4092,6 +5013,139 @@ func (s TagResourceOutput) GoString() string {
 	return s.String()
 }
 
+// Describes a resource type.
+type TargetResourceType struct {
+	_ struct{} `type:"structure"`
+
+	// A description of the resource type.
+	Description *string `locationName:"description" type:"string"`
+
+	// The parameters for the resource type.
+	Parameters map[string]*TargetResourceTypeParameter `locationName:"parameters" type:"map"`
+
+	// The resource type.
+	ResourceType *string `locationName:"resourceType" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TargetResourceType) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TargetResourceType) GoString() string {
+	return s.String()
+}
+
+// SetDescription sets the Description field's value.
+func (s *TargetResourceType) SetDescription(v string) *TargetResourceType {
+	s.Description = &v
+	return s
+}
+
+// SetParameters sets the Parameters field's value.
+func (s *TargetResourceType) SetParameters(v map[string]*TargetResourceTypeParameter) *TargetResourceType {
+	s.Parameters = v
+	return s
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *TargetResourceType) SetResourceType(v string) *TargetResourceType {
+	s.ResourceType = &v
+	return s
+}
+
+// Describes the parameters for a resource type. Use parameters to determine
+// which tasks are identified during target resolution.
+type TargetResourceTypeParameter struct {
+	_ struct{} `type:"structure"`
+
+	// A description of the parameter.
+	Description *string `locationName:"description" type:"string"`
+
+	// Indicates whether the parameter is required.
+	Required *bool `locationName:"required" type:"boolean"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TargetResourceTypeParameter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TargetResourceTypeParameter) GoString() string {
+	return s.String()
+}
+
+// SetDescription sets the Description field's value.
+func (s *TargetResourceTypeParameter) SetDescription(v string) *TargetResourceTypeParameter {
+	s.Description = &v
+	return s
+}
+
+// SetRequired sets the Required field's value.
+func (s *TargetResourceTypeParameter) SetRequired(v bool) *TargetResourceTypeParameter {
+	s.Required = &v
+	return s
+}
+
+// Describes a resource type.
+type TargetResourceTypeSummary struct {
+	_ struct{} `type:"structure"`
+
+	// A description of the resource type.
+	Description *string `locationName:"description" type:"string"`
+
+	// The resource type.
+	ResourceType *string `locationName:"resourceType" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TargetResourceTypeSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TargetResourceTypeSummary) GoString() string {
+	return s.String()
+}
+
+// SetDescription sets the Description field's value.
+func (s *TargetResourceTypeSummary) SetDescription(v string) *TargetResourceTypeSummary {
+	s.Description = &v
+	return s
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *TargetResourceTypeSummary) SetResourceType(v string) *TargetResourceTypeSummary {
+	s.ResourceType = &v
+	return s
+}
+
 type UntagResourceInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
@@ -4255,7 +5309,10 @@ type UpdateExperimentTemplateInput struct {
 	// Id is a required field
 	Id *string `location:"uri" locationName:"id" type:"string" required:"true"`
 
-	// The Amazon Resource Name (ARN) of an IAM role that grants the AWS FIS service
+	// The configuration for experiment logging.
+	LogConfiguration *UpdateExperimentTemplateLogConfigurationInput_ `locationName:"logConfiguration" type:"structure"`
+
+	// The Amazon Resource Name (ARN) of an IAM role that grants the FIS service
 	// permission to perform service actions on your behalf.
 	RoleArn *string `locationName:"roleArn" min:"20" type:"string"`
 
@@ -4295,6 +5352,11 @@ func (s *UpdateExperimentTemplateInput) Validate() error {
 	}
 	if s.RoleArn != nil && len(*s.RoleArn) < 20 {
 		invalidParams.Add(request.NewErrParamMinLen("RoleArn", 20))
+	}
+	if s.LogConfiguration != nil {
+		if err := s.LogConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("LogConfiguration", err.(request.ErrInvalidParams))
+		}
 	}
 	if s.StopConditions != nil {
 		for i, v := range s.StopConditions {
@@ -4341,6 +5403,12 @@ func (s *UpdateExperimentTemplateInput) SetId(v string) *UpdateExperimentTemplat
 	return s
 }
 
+// SetLogConfiguration sets the LogConfiguration field's value.
+func (s *UpdateExperimentTemplateInput) SetLogConfiguration(v *UpdateExperimentTemplateLogConfigurationInput_) *UpdateExperimentTemplateInput {
+	s.LogConfiguration = v
+	return s
+}
+
 // SetRoleArn sets the RoleArn field's value.
 func (s *UpdateExperimentTemplateInput) SetRoleArn(v string) *UpdateExperimentTemplateInput {
 	s.RoleArn = &v
@@ -4356,6 +5424,76 @@ func (s *UpdateExperimentTemplateInput) SetStopConditions(v []*UpdateExperimentT
 // SetTargets sets the Targets field's value.
 func (s *UpdateExperimentTemplateInput) SetTargets(v map[string]*UpdateExperimentTemplateTargetInput) *UpdateExperimentTemplateInput {
 	s.Targets = v
+	return s
+}
+
+// Specifies the configuration for experiment logging.
+type UpdateExperimentTemplateLogConfigurationInput_ struct {
+	_ struct{} `type:"structure"`
+
+	// The configuration for experiment logging to Amazon CloudWatch Logs.
+	CloudWatchLogsConfiguration *ExperimentTemplateCloudWatchLogsLogConfigurationInput_ `locationName:"cloudWatchLogsConfiguration" type:"structure"`
+
+	// The schema version.
+	LogSchemaVersion *int64 `locationName:"logSchemaVersion" type:"integer"`
+
+	// The configuration for experiment logging to Amazon S3.
+	S3Configuration *ExperimentTemplateS3LogConfigurationInput_ `locationName:"s3Configuration" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateExperimentTemplateLogConfigurationInput_) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateExperimentTemplateLogConfigurationInput_) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateExperimentTemplateLogConfigurationInput_) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateExperimentTemplateLogConfigurationInput_"}
+	if s.CloudWatchLogsConfiguration != nil {
+		if err := s.CloudWatchLogsConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("CloudWatchLogsConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3Configuration != nil {
+		if err := s.S3Configuration.Validate(); err != nil {
+			invalidParams.AddNested("S3Configuration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCloudWatchLogsConfiguration sets the CloudWatchLogsConfiguration field's value.
+func (s *UpdateExperimentTemplateLogConfigurationInput_) SetCloudWatchLogsConfiguration(v *ExperimentTemplateCloudWatchLogsLogConfigurationInput_) *UpdateExperimentTemplateLogConfigurationInput_ {
+	s.CloudWatchLogsConfiguration = v
+	return s
+}
+
+// SetLogSchemaVersion sets the LogSchemaVersion field's value.
+func (s *UpdateExperimentTemplateLogConfigurationInput_) SetLogSchemaVersion(v int64) *UpdateExperimentTemplateLogConfigurationInput_ {
+	s.LogSchemaVersion = &v
+	return s
+}
+
+// SetS3Configuration sets the S3Configuration field's value.
+func (s *UpdateExperimentTemplateLogConfigurationInput_) SetS3Configuration(v *ExperimentTemplateS3LogConfigurationInput_) *UpdateExperimentTemplateLogConfigurationInput_ {
+	s.S3Configuration = v
 	return s
 }
 
@@ -4460,13 +5598,16 @@ type UpdateExperimentTemplateTargetInput struct {
 	// The filters to apply to identify target resources using specific attributes.
 	Filters []*ExperimentTemplateTargetInputFilter `locationName:"filters" type:"list"`
 
+	// The resource type parameters.
+	Parameters map[string]*string `locationName:"parameters" type:"map"`
+
 	// The Amazon Resource Names (ARNs) of the targets.
 	ResourceArns []*string `locationName:"resourceArns" type:"list"`
 
 	// The tags for the target resources.
 	ResourceTags map[string]*string `locationName:"resourceTags" type:"map"`
 
-	// The AWS resource type. The resource type must be supported for the specified
+	// The resource type. The resource type must be supported for the specified
 	// action.
 	//
 	// ResourceType is a required field
@@ -4525,6 +5666,12 @@ func (s *UpdateExperimentTemplateTargetInput) Validate() error {
 // SetFilters sets the Filters field's value.
 func (s *UpdateExperimentTemplateTargetInput) SetFilters(v []*ExperimentTemplateTargetInputFilter) *UpdateExperimentTemplateTargetInput {
 	s.Filters = v
+	return s
+}
+
+// SetParameters sets the Parameters field's value.
+func (s *UpdateExperimentTemplateTargetInput) SetParameters(v map[string]*string) *UpdateExperimentTemplateTargetInput {
+	s.Parameters = v
 	return s
 }
 

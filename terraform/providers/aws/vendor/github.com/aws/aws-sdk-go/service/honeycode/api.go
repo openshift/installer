@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/private/protocol"
+	"github.com/aws/aws-sdk-go/private/protocol/restjson"
 )
 
 const opBatchCreateTableRows = "BatchCreateTableRows"
@@ -528,6 +529,9 @@ func (c *Honeycode) DescribeTableDataImportJobRequest(input *DescribeTableDataIm
 //   Request is invalid. The message in the response contains details on why the
 //   request is invalid.
 //
+//   * RequestTimeoutException
+//   The request timed out.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/honeycode-2020-03-01/DescribeTableDataImportJob
 func (c *Honeycode) DescribeTableDataImportJob(input *DescribeTableDataImportJobInput) (*DescribeTableDataImportJobOutput, error) {
 	req, out := c.DescribeTableDataImportJobRequest(input)
@@ -740,6 +744,9 @@ func (c *Honeycode) InvokeScreenAutomationRequest(input *InvokeScreenAutomationI
 //
 //   * RequestTimeoutException
 //   The request timed out.
+//
+//   * ServiceQuotaExceededException
+//   The request caused service quota to be breached.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/honeycode-2020-03-01/InvokeScreenAutomation
 func (c *Honeycode) InvokeScreenAutomation(input *InvokeScreenAutomationInput) (*InvokeScreenAutomationOutput, error) {
@@ -1242,6 +1249,107 @@ func (c *Honeycode) ListTablesPagesWithContext(ctx aws.Context, input *ListTable
 	return p.Err()
 }
 
+const opListTagsForResource = "ListTagsForResource"
+
+// ListTagsForResourceRequest generates a "aws/request.Request" representing the
+// client's request for the ListTagsForResource operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListTagsForResource for more information on using the ListTagsForResource
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListTagsForResourceRequest method.
+//    req, resp := client.ListTagsForResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/honeycode-2020-03-01/ListTagsForResource
+func (c *Honeycode) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
+	op := &request.Operation{
+		Name:       opListTagsForResource,
+		HTTPMethod: "GET",
+		HTTPPath:   "/tags/{resourceArn}",
+	}
+
+	if input == nil {
+		input = &ListTagsForResourceInput{}
+	}
+
+	output = &ListTagsForResourceOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListTagsForResource API operation for Amazon Honeycode.
+//
+// The ListTagsForResource API allows you to return a resource's tags.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Honeycode's
+// API operation ListTagsForResource for usage and error information.
+//
+// Returned Error Types:
+//   * AccessDeniedException
+//   You do not have sufficient access to perform this action. Check that the
+//   workbook is owned by you and your IAM policy allows access to the resource
+//   in the request.
+//
+//   * InternalServerException
+//   There were unexpected errors from the server.
+//
+//   * RequestTimeoutException
+//   The request timed out.
+//
+//   * ResourceNotFoundException
+//   A Workbook, Table, App, Screen or Screen Automation was not found with the
+//   given ID.
+//
+//   * ServiceUnavailableException
+//   Remote service is unreachable.
+//
+//   * ThrottlingException
+//   Tps(transactions per second) rate reached.
+//
+//   * ValidationException
+//   Request is invalid. The message in the response contains details on why the
+//   request is invalid.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/honeycode-2020-03-01/ListTagsForResource
+func (c *Honeycode) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
+	req, out := c.ListTagsForResourceRequest(input)
+	return out, req.Send()
+}
+
+// ListTagsForResourceWithContext is the same as ListTagsForResource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTagsForResource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Honeycode) ListTagsForResourceWithContext(ctx aws.Context, input *ListTagsForResourceInput, opts ...request.Option) (*ListTagsForResourceOutput, error) {
+	req, out := c.ListTagsForResourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opQueryTableRows = "QueryTableRows"
 
 // QueryTableRowsRequest generates a "aws/request.Request" representing the
@@ -1481,6 +1589,12 @@ func (c *Honeycode) StartTableDataImportJobRequest(input *StartTableDataImportJo
 //   Request is invalid. The message in the response contains details on why the
 //   request is invalid.
 //
+//   * RequestTimeoutException
+//   The request timed out.
+//
+//   * ServiceQuotaExceededException
+//   The request caused service quota to be breached.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/honeycode-2020-03-01/StartTableDataImportJob
 func (c *Honeycode) StartTableDataImportJob(input *StartTableDataImportJobInput) (*StartTableDataImportJobOutput, error) {
 	req, out := c.StartTableDataImportJobRequest(input)
@@ -1498,6 +1612,212 @@ func (c *Honeycode) StartTableDataImportJob(input *StartTableDataImportJobInput)
 // for more information on using Contexts.
 func (c *Honeycode) StartTableDataImportJobWithContext(ctx aws.Context, input *StartTableDataImportJobInput, opts ...request.Option) (*StartTableDataImportJobOutput, error) {
 	req, out := c.StartTableDataImportJobRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opTagResource = "TagResource"
+
+// TagResourceRequest generates a "aws/request.Request" representing the
+// client's request for the TagResource operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See TagResource for more information on using the TagResource
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the TagResourceRequest method.
+//    req, resp := client.TagResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/honeycode-2020-03-01/TagResource
+func (c *Honeycode) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
+	op := &request.Operation{
+		Name:       opTagResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/tags/{resourceArn}",
+	}
+
+	if input == nil {
+		input = &TagResourceInput{}
+	}
+
+	output = &TagResourceOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// TagResource API operation for Amazon Honeycode.
+//
+// The TagResource API allows you to add tags to an ARN-able resource. Resource
+// includes workbook, table, screen and screen-automation.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Honeycode's
+// API operation TagResource for usage and error information.
+//
+// Returned Error Types:
+//   * AccessDeniedException
+//   You do not have sufficient access to perform this action. Check that the
+//   workbook is owned by you and your IAM policy allows access to the resource
+//   in the request.
+//
+//   * InternalServerException
+//   There were unexpected errors from the server.
+//
+//   * RequestTimeoutException
+//   The request timed out.
+//
+//   * ResourceNotFoundException
+//   A Workbook, Table, App, Screen or Screen Automation was not found with the
+//   given ID.
+//
+//   * ServiceUnavailableException
+//   Remote service is unreachable.
+//
+//   * ThrottlingException
+//   Tps(transactions per second) rate reached.
+//
+//   * ValidationException
+//   Request is invalid. The message in the response contains details on why the
+//   request is invalid.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/honeycode-2020-03-01/TagResource
+func (c *Honeycode) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
+	req, out := c.TagResourceRequest(input)
+	return out, req.Send()
+}
+
+// TagResourceWithContext is the same as TagResource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See TagResource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Honeycode) TagResourceWithContext(ctx aws.Context, input *TagResourceInput, opts ...request.Option) (*TagResourceOutput, error) {
+	req, out := c.TagResourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUntagResource = "UntagResource"
+
+// UntagResourceRequest generates a "aws/request.Request" representing the
+// client's request for the UntagResource operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UntagResource for more information on using the UntagResource
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UntagResourceRequest method.
+//    req, resp := client.UntagResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/honeycode-2020-03-01/UntagResource
+func (c *Honeycode) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
+	op := &request.Operation{
+		Name:       opUntagResource,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/tags/{resourceArn}",
+	}
+
+	if input == nil {
+		input = &UntagResourceInput{}
+	}
+
+	output = &UntagResourceOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UntagResource API operation for Amazon Honeycode.
+//
+// The UntagResource API allows you to removes tags from an ARN-able resource.
+// Resource includes workbook, table, screen and screen-automation.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Honeycode's
+// API operation UntagResource for usage and error information.
+//
+// Returned Error Types:
+//   * AccessDeniedException
+//   You do not have sufficient access to perform this action. Check that the
+//   workbook is owned by you and your IAM policy allows access to the resource
+//   in the request.
+//
+//   * InternalServerException
+//   There were unexpected errors from the server.
+//
+//   * RequestTimeoutException
+//   The request timed out.
+//
+//   * ResourceNotFoundException
+//   A Workbook, Table, App, Screen or Screen Automation was not found with the
+//   given ID.
+//
+//   * ServiceUnavailableException
+//   Remote service is unreachable.
+//
+//   * ThrottlingException
+//   Tps(transactions per second) rate reached.
+//
+//   * ValidationException
+//   Request is invalid. The message in the response contains details on why the
+//   request is invalid.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/honeycode-2020-03-01/UntagResource
+func (c *Honeycode) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
+	req, out := c.UntagResourceRequest(input)
+	return out, req.Send()
+}
+
+// UntagResourceWithContext is the same as UntagResource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UntagResource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Honeycode) UntagResourceWithContext(ctx aws.Context, input *UntagResourceInput, opts ...request.Option) (*UntagResourceOutput, error) {
+	req, out := c.UntagResourceRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2401,6 +2721,12 @@ type Cell struct {
 	// raw and formatted values.
 	FormattedValue *string `locationName:"formattedValue" type:"string"`
 
+	// A list of formatted values of the cell. This field is only returned when
+	// the cell is ROWSET format (aka multi-select or multi-record picklist). Values
+	// in the list are always represented as strings. The formattedValue field will
+	// be empty if this field is returned.
+	FormattedValues []*string `locationName:"formattedValues" type:"list"`
+
 	// The formula contained in the cell. This field is empty if a cell does not
 	// have a formula.
 	//
@@ -2447,6 +2773,20 @@ type Cell struct {
 	// task status might have "Completed" as the formatted value and "row:dfcefaee-5b37-4355-8f28-40c3e4ff5dd4/ca432b2f-b8eb-431d-9fb5-cbe0342f9f03"
 	// as the raw value.
 	//
+	// Cells with format ROWSET (aka multi-select or multi-record picklist) will
+	// by default have the first column of each of the linked rows as the formatted
+	// value in the list, and the rowset id of the linked rows as the raw value.
+	// For example, a cell containing a multi-select picklist to a table that contains
+	// items might have "Item A", "Item B" in the formatted value list and "rows:b742c1f4-6cb0-4650-a845-35eb86fcc2bb/
+	// [fdea123b-8f68-474a-aa8a-5ff87aa333af,6daf41f0-a138-4eee-89da-123086d36ecf]"
+	// as the raw value.
+	//
+	// Cells with format ATTACHMENT will have the name of the attachment as the
+	// formatted value and the attachment id as the raw value. For example, a cell
+	// containing an attachment named "image.jpeg" will have "image.jpeg" as the
+	// formatted value and "attachment:ca432b2f-b8eb-431d-9fb5-cbe0342f9f03" as
+	// the raw value.
+	//
 	// Cells with format AUTO or cells without any format that are auto-detected
 	// as one of the formats above will contain the raw and formatted values as
 	// mentioned above, based on the auto-detected formats. If there is no auto-detected
@@ -2485,6 +2825,12 @@ func (s *Cell) SetFormattedValue(v string) *Cell {
 	return s
 }
 
+// SetFormattedValues sets the FormattedValues field's value.
+func (s *Cell) SetFormattedValues(v []*string) *Cell {
+	s.FormattedValues = v
+	return s
+}
+
 // SetFormula sets the Formula field's value.
 func (s *Cell) SetFormula(v string) *Cell {
 	s.Formula = &v
@@ -2499,6 +2845,9 @@ func (s *Cell) SetRawValue(v string) *Cell {
 
 // CellInput object contains the data needed to create or update cells in a
 // table.
+//
+// CellInput object has only a facts field or a fact field, but not both. A
+// 400 bad request will be thrown if both fact and facts field are present.
 type CellInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2509,6 +2858,11 @@ type CellInput struct {
 	// replaced with "sensitive" in string returned by CellInput's
 	// String and GoString methods.
 	Fact *string `locationName:"fact" type:"string" sensitive:"true"`
+
+	// A list representing the values that are entered into a ROWSET cell. Facts
+	// list can have either only values or rowIDs, and rowIDs should from the same
+	// table.
+	Facts []*string `locationName:"facts" type:"list"`
 }
 
 // String returns the string representation.
@@ -2532,6 +2886,12 @@ func (s CellInput) GoString() string {
 // SetFact sets the Fact field's value.
 func (s *CellInput) SetFact(v string) *CellInput {
 	s.Fact = &v
+	return s
+}
+
+// SetFacts sets the Facts field's value.
+func (s *CellInput) SetFacts(v []*string) *CellInput {
+	s.Facts = v
 	return s
 }
 
@@ -2882,6 +3242,9 @@ func (s *DescribeTableDataImportJobInput) SetWorkbookId(v string) *DescribeTable
 type DescribeTableDataImportJobOutput struct {
 	_ struct{} `type:"structure"`
 
+	// If job status is failed, error code to understand reason for the failure.
+	ErrorCode *string `locationName:"errorCode" type:"string" enum:"ErrorCode"`
+
 	// The metadata about the job that was submitted for import.
 	//
 	// JobMetadata is a required field
@@ -2914,6 +3277,12 @@ func (s DescribeTableDataImportJobOutput) String() string {
 // value will be replaced with "sensitive".
 func (s DescribeTableDataImportJobOutput) GoString() string {
 	return s.String()
+}
+
+// SetErrorCode sets the ErrorCode field's value.
+func (s *DescribeTableDataImportJobOutput) SetErrorCode(v string) *DescribeTableDataImportJobOutput {
+	s.ErrorCode = &v
+	return s
 }
 
 // SetJobMetadata sets the JobMetadata field's value.
@@ -3109,7 +3478,7 @@ func (s *Filter) SetFormula(v string) *Filter {
 type GetScreenDataInput struct {
 	_ struct{} `type:"structure"`
 
-	// The ID of the app that contains the screem.
+	// The ID of the app that contains the screen.
 	//
 	// AppId is a required field
 	AppId *string `locationName:"appId" min:"36" type:"string" required:"true"`
@@ -3364,7 +3733,11 @@ type ImportDataSourceConfig struct {
 	_ struct{} `type:"structure"`
 
 	// The URL from which source data will be downloaded for the import request.
-	DataSourceUrl *string `locationName:"dataSourceUrl" min:"1" type:"string"`
+	//
+	// DataSourceUrl is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by ImportDataSourceConfig's
+	// String and GoString methods.
+	DataSourceUrl *string `locationName:"dataSourceUrl" min:"1" type:"string" sensitive:"true"`
 }
 
 // String returns the string representation.
@@ -4230,6 +4603,86 @@ func (s *ListTablesOutput) SetTables(v []*Table) *ListTablesOutput {
 // SetWorkbookCursor sets the WorkbookCursor field's value.
 func (s *ListTablesOutput) SetWorkbookCursor(v int64) *ListTablesOutput {
 	s.WorkbookCursor = &v
+	return s
+}
+
+type ListTagsForResourceInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The resource's Amazon Resource Name (ARN).
+	//
+	// ResourceArn is a required field
+	ResourceArn *string `location:"uri" locationName:"resourceArn" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListTagsForResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListTagsForResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListTagsForResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListTagsForResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+	if s.ResourceArn != nil && len(*s.ResourceArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceArn", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *ListTagsForResourceInput) SetResourceArn(v string) *ListTagsForResourceInput {
+	s.ResourceArn = &v
+	return s
+}
+
+type ListTagsForResourceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The resource's tags.
+	Tags map[string]*string `locationName:"tags" type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListTagsForResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListTagsForResourceOutput) GoString() string {
+	return s.String()
+}
+
+// SetTags sets the Tags field's value.
+func (s *ListTagsForResourceOutput) SetTags(v map[string]*string) *ListTagsForResourceOutput {
+	s.Tags = v
 	return s
 }
 
@@ -5226,6 +5679,91 @@ func (s *TableRow) SetRowId(v string) *TableRow {
 	return s
 }
 
+type TagResourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The resource's Amazon Resource Name (ARN).
+	//
+	// ResourceArn is a required field
+	ResourceArn *string `location:"uri" locationName:"resourceArn" min:"1" type:"string" required:"true"`
+
+	// A list of tags to apply to the resource.
+	//
+	// Tags is a required field
+	Tags map[string]*string `locationName:"tags" type:"map" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TagResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TagResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TagResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TagResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+	if s.ResourceArn != nil && len(*s.ResourceArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceArn", 1))
+	}
+	if s.Tags == nil {
+		invalidParams.Add(request.NewErrParamRequired("Tags"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *TagResourceInput) SetResourceArn(v string) *TagResourceInput {
+	s.ResourceArn = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *TagResourceInput) SetTags(v map[string]*string) *TagResourceInput {
+	s.Tags = v
+	return s
+}
+
+type TagResourceOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TagResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TagResourceOutput) GoString() string {
+	return s.String()
+}
+
 // Tps(transactions per second) rate reached.
 type ThrottlingException struct {
 	_            struct{}                  `type:"structure"`
@@ -5288,6 +5826,91 @@ func (s *ThrottlingException) StatusCode() int {
 // RequestID returns the service's response RequestID for request.
 func (s *ThrottlingException) RequestID() string {
 	return s.RespMetadata.RequestID
+}
+
+type UntagResourceInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The resource's Amazon Resource Name (ARN).
+	//
+	// ResourceArn is a required field
+	ResourceArn *string `location:"uri" locationName:"resourceArn" min:"1" type:"string" required:"true"`
+
+	// A list of tag keys to remove from the resource.
+	//
+	// TagKeys is a required field
+	TagKeys []*string `location:"querystring" locationName:"tagKeys" type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UntagResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UntagResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UntagResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UntagResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+	if s.ResourceArn != nil && len(*s.ResourceArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceArn", 1))
+	}
+	if s.TagKeys == nil {
+		invalidParams.Add(request.NewErrParamRequired("TagKeys"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *UntagResourceInput) SetResourceArn(v string) *UntagResourceInput {
+	s.ResourceArn = &v
+	return s
+}
+
+// SetTagKeys sets the TagKeys field's value.
+func (s *UntagResourceInput) SetTagKeys(v []*string) *UntagResourceInput {
+	s.TagKeys = v
+	return s
+}
+
+type UntagResourceOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UntagResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UntagResourceOutput) GoString() string {
+	return s.String()
 }
 
 // Data needed to create a single row in a table as part of the BatchCreateTableRows
@@ -5625,6 +6248,70 @@ func (s *VariableValue) SetRawValue(v string) *VariableValue {
 }
 
 const (
+	// ErrorCodeAccessDenied is a ErrorCode enum value
+	ErrorCodeAccessDenied = "ACCESS_DENIED"
+
+	// ErrorCodeInvalidUrlError is a ErrorCode enum value
+	ErrorCodeInvalidUrlError = "INVALID_URL_ERROR"
+
+	// ErrorCodeInvalidImportOptionsError is a ErrorCode enum value
+	ErrorCodeInvalidImportOptionsError = "INVALID_IMPORT_OPTIONS_ERROR"
+
+	// ErrorCodeInvalidTableIdError is a ErrorCode enum value
+	ErrorCodeInvalidTableIdError = "INVALID_TABLE_ID_ERROR"
+
+	// ErrorCodeInvalidTableColumnIdError is a ErrorCode enum value
+	ErrorCodeInvalidTableColumnIdError = "INVALID_TABLE_COLUMN_ID_ERROR"
+
+	// ErrorCodeTableNotFoundError is a ErrorCode enum value
+	ErrorCodeTableNotFoundError = "TABLE_NOT_FOUND_ERROR"
+
+	// ErrorCodeFileEmptyError is a ErrorCode enum value
+	ErrorCodeFileEmptyError = "FILE_EMPTY_ERROR"
+
+	// ErrorCodeInvalidFileTypeError is a ErrorCode enum value
+	ErrorCodeInvalidFileTypeError = "INVALID_FILE_TYPE_ERROR"
+
+	// ErrorCodeFileParsingError is a ErrorCode enum value
+	ErrorCodeFileParsingError = "FILE_PARSING_ERROR"
+
+	// ErrorCodeFileSizeLimitError is a ErrorCode enum value
+	ErrorCodeFileSizeLimitError = "FILE_SIZE_LIMIT_ERROR"
+
+	// ErrorCodeFileNotFoundError is a ErrorCode enum value
+	ErrorCodeFileNotFoundError = "FILE_NOT_FOUND_ERROR"
+
+	// ErrorCodeUnknownError is a ErrorCode enum value
+	ErrorCodeUnknownError = "UNKNOWN_ERROR"
+
+	// ErrorCodeResourceNotFoundError is a ErrorCode enum value
+	ErrorCodeResourceNotFoundError = "RESOURCE_NOT_FOUND_ERROR"
+
+	// ErrorCodeSystemLimitError is a ErrorCode enum value
+	ErrorCodeSystemLimitError = "SYSTEM_LIMIT_ERROR"
+)
+
+// ErrorCode_Values returns all elements of the ErrorCode enum
+func ErrorCode_Values() []string {
+	return []string{
+		ErrorCodeAccessDenied,
+		ErrorCodeInvalidUrlError,
+		ErrorCodeInvalidImportOptionsError,
+		ErrorCodeInvalidTableIdError,
+		ErrorCodeInvalidTableColumnIdError,
+		ErrorCodeTableNotFoundError,
+		ErrorCodeFileEmptyError,
+		ErrorCodeInvalidFileTypeError,
+		ErrorCodeFileParsingError,
+		ErrorCodeFileSizeLimitError,
+		ErrorCodeFileNotFoundError,
+		ErrorCodeUnknownError,
+		ErrorCodeResourceNotFoundError,
+		ErrorCodeSystemLimitError,
+	}
+}
+
+const (
 	// FormatAuto is a Format enum value
 	FormatAuto = "AUTO"
 
@@ -5657,6 +6344,9 @@ const (
 
 	// FormatRowlink is a Format enum value
 	FormatRowlink = "ROWLINK"
+
+	// FormatRowset is a Format enum value
+	FormatRowset = "ROWSET"
 )
 
 // Format_Values returns all elements of the Format enum
@@ -5673,6 +6363,7 @@ func Format_Values() []string {
 		FormatAccounting,
 		FormatContact,
 		FormatRowlink,
+		FormatRowset,
 	}
 }
 

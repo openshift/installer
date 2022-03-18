@@ -513,6 +513,105 @@ func (c *LookoutMetrics) CreateMetricSetWithContext(ctx aws.Context, input *Crea
 	return out, req.Send()
 }
 
+const opDeactivateAnomalyDetector = "DeactivateAnomalyDetector"
+
+// DeactivateAnomalyDetectorRequest generates a "aws/request.Request" representing the
+// client's request for the DeactivateAnomalyDetector operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeactivateAnomalyDetector for more information on using the DeactivateAnomalyDetector
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeactivateAnomalyDetectorRequest method.
+//    req, resp := client.DeactivateAnomalyDetectorRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DeactivateAnomalyDetector
+func (c *LookoutMetrics) DeactivateAnomalyDetectorRequest(input *DeactivateAnomalyDetectorInput) (req *request.Request, output *DeactivateAnomalyDetectorOutput) {
+	op := &request.Operation{
+		Name:       opDeactivateAnomalyDetector,
+		HTTPMethod: "POST",
+		HTTPPath:   "/DeactivateAnomalyDetector",
+	}
+
+	if input == nil {
+		input = &DeactivateAnomalyDetectorInput{}
+	}
+
+	output = &DeactivateAnomalyDetectorOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeactivateAnomalyDetector API operation for Amazon Lookout for Metrics.
+//
+// Deactivates an anomaly detector.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Metrics's
+// API operation DeactivateAnomalyDetector for usage and error information.
+//
+// Returned Error Types:
+//   * ValidationException
+//   The input fails to satisfy the constraints specified by the AWS service.
+//   Check your input values and try again.
+//
+//   * ConflictException
+//   There was a conflict processing the request. Try your request again.
+//
+//   * ResourceNotFoundException
+//   The specified resource cannot be found. Check the ARN of the resource and
+//   try again.
+//
+//   * AccessDeniedException
+//   You do not have sufficient permissions to perform this action.
+//
+//   * TooManyRequestsException
+//   The request was denied due to too many requests being submitted at the same
+//   time.
+//
+//   * InternalServerException
+//   The request processing has failed because of an unknown error, exception,
+//   or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DeactivateAnomalyDetector
+func (c *LookoutMetrics) DeactivateAnomalyDetector(input *DeactivateAnomalyDetectorInput) (*DeactivateAnomalyDetectorOutput, error) {
+	req, out := c.DeactivateAnomalyDetectorRequest(input)
+	return out, req.Send()
+}
+
+// DeactivateAnomalyDetectorWithContext is the same as DeactivateAnomalyDetector with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeactivateAnomalyDetector for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutMetrics) DeactivateAnomalyDetectorWithContext(ctx aws.Context, input *DeactivateAnomalyDetectorInput, opts ...request.Option) (*DeactivateAnomalyDetectorOutput, error) {
+	req, out := c.DeactivateAnomalyDetectorRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteAlert = "DeleteAlert"
 
 // DeleteAlertRequest generates a "aws/request.Request" representing the
@@ -1816,6 +1915,160 @@ func (c *LookoutMetrics) ListAnomalyDetectorsPagesWithContext(ctx aws.Context, i
 	return p.Err()
 }
 
+const opListAnomalyGroupRelatedMetrics = "ListAnomalyGroupRelatedMetrics"
+
+// ListAnomalyGroupRelatedMetricsRequest generates a "aws/request.Request" representing the
+// client's request for the ListAnomalyGroupRelatedMetrics operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListAnomalyGroupRelatedMetrics for more information on using the ListAnomalyGroupRelatedMetrics
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListAnomalyGroupRelatedMetricsRequest method.
+//    req, resp := client.ListAnomalyGroupRelatedMetricsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAnomalyGroupRelatedMetrics
+func (c *LookoutMetrics) ListAnomalyGroupRelatedMetricsRequest(input *ListAnomalyGroupRelatedMetricsInput) (req *request.Request, output *ListAnomalyGroupRelatedMetricsOutput) {
+	op := &request.Operation{
+		Name:       opListAnomalyGroupRelatedMetrics,
+		HTTPMethod: "POST",
+		HTTPPath:   "/ListAnomalyGroupRelatedMetrics",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListAnomalyGroupRelatedMetricsInput{}
+	}
+
+	output = &ListAnomalyGroupRelatedMetricsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListAnomalyGroupRelatedMetrics API operation for Amazon Lookout for Metrics.
+//
+// Returns a list of measures that are potential causes or effects of an anomaly
+// group.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Metrics's
+// API operation ListAnomalyGroupRelatedMetrics for usage and error information.
+//
+// Returned Error Types:
+//   * ResourceNotFoundException
+//   The specified resource cannot be found. Check the ARN of the resource and
+//   try again.
+//
+//   * ValidationException
+//   The input fails to satisfy the constraints specified by the AWS service.
+//   Check your input values and try again.
+//
+//   * InternalServerException
+//   The request processing has failed because of an unknown error, exception,
+//   or failure.
+//
+//   * AccessDeniedException
+//   You do not have sufficient permissions to perform this action.
+//
+//   * TooManyRequestsException
+//   The request was denied due to too many requests being submitted at the same
+//   time.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAnomalyGroupRelatedMetrics
+func (c *LookoutMetrics) ListAnomalyGroupRelatedMetrics(input *ListAnomalyGroupRelatedMetricsInput) (*ListAnomalyGroupRelatedMetricsOutput, error) {
+	req, out := c.ListAnomalyGroupRelatedMetricsRequest(input)
+	return out, req.Send()
+}
+
+// ListAnomalyGroupRelatedMetricsWithContext is the same as ListAnomalyGroupRelatedMetrics with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListAnomalyGroupRelatedMetrics for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutMetrics) ListAnomalyGroupRelatedMetricsWithContext(ctx aws.Context, input *ListAnomalyGroupRelatedMetricsInput, opts ...request.Option) (*ListAnomalyGroupRelatedMetricsOutput, error) {
+	req, out := c.ListAnomalyGroupRelatedMetricsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListAnomalyGroupRelatedMetricsPages iterates over the pages of a ListAnomalyGroupRelatedMetrics operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListAnomalyGroupRelatedMetrics method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListAnomalyGroupRelatedMetrics operation.
+//    pageNum := 0
+//    err := client.ListAnomalyGroupRelatedMetricsPages(params,
+//        func(page *lookoutmetrics.ListAnomalyGroupRelatedMetricsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *LookoutMetrics) ListAnomalyGroupRelatedMetricsPages(input *ListAnomalyGroupRelatedMetricsInput, fn func(*ListAnomalyGroupRelatedMetricsOutput, bool) bool) error {
+	return c.ListAnomalyGroupRelatedMetricsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListAnomalyGroupRelatedMetricsPagesWithContext same as ListAnomalyGroupRelatedMetricsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutMetrics) ListAnomalyGroupRelatedMetricsPagesWithContext(ctx aws.Context, input *ListAnomalyGroupRelatedMetricsInput, fn func(*ListAnomalyGroupRelatedMetricsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListAnomalyGroupRelatedMetricsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListAnomalyGroupRelatedMetricsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListAnomalyGroupRelatedMetricsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListAnomalyGroupSummaries = "ListAnomalyGroupSummaries"
 
 // ListAnomalyGroupSummariesRequest generates a "aws/request.Request" representing the
@@ -2813,6 +3066,10 @@ func (c *LookoutMetrics) UpdateMetricSetRequest(input *UpdateMetricSetInput) (re
 //   The request was denied due to too many requests being submitted at the same
 //   time.
 //
+//   * ServiceQuotaExceededException
+//   The request exceeded the service's quotas. Check the service quotas and try
+//   again.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/UpdateMetricSet
 func (c *LookoutMetrics) UpdateMetricSet(input *UpdateMetricSetInput) (*UpdateMetricSetOutput, error) {
 	req, out := c.UpdateMetricSetRequest(input)
@@ -3726,15 +3983,11 @@ type AppFlowConfig struct {
 	_ struct{} `type:"structure"`
 
 	// name of the flow.
-	//
-	// FlowName is a required field
-	FlowName *string `type:"string" required:"true"`
+	FlowName *string `type:"string"`
 
 	// An IAM role that gives Amazon Lookout for Metrics permission to access the
 	// flow.
-	//
-	// RoleArn is a required field
-	RoleArn *string `type:"string" required:"true"`
+	RoleArn *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -3753,22 +4006,6 @@ func (s AppFlowConfig) String() string {
 // value will be replaced with "sensitive".
 func (s AppFlowConfig) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *AppFlowConfig) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "AppFlowConfig"}
-	if s.FlowName == nil {
-		invalidParams.Add(request.NewErrParamRequired("FlowName"))
-	}
-	if s.RoleArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("RoleArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // SetFlowName sets the FlowName field's value.
@@ -3857,9 +4094,7 @@ type CloudWatchConfig struct {
 
 	// An IAM role that gives Amazon Lookout for Metrics permission to access data
 	// in Amazon CloudWatch.
-	//
-	// RoleArn is a required field
-	RoleArn *string `type:"string" required:"true"`
+	RoleArn *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -3878,19 +4113,6 @@ func (s CloudWatchConfig) String() string {
 // value will be replaced with "sensitive".
 func (s CloudWatchConfig) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CloudWatchConfig) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CloudWatchConfig"}
-	if s.RoleArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("RoleArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // SetRoleArn sets the RoleArn field's value.
@@ -4578,6 +4800,74 @@ func (s *CsvFormatDescriptor) SetQuoteSymbol(v string) *CsvFormatDescriptor {
 	return s
 }
 
+type DeactivateAnomalyDetectorInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the anomaly detector.
+	//
+	// AnomalyDetectorArn is a required field
+	AnomalyDetectorArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeactivateAnomalyDetectorInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeactivateAnomalyDetectorInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeactivateAnomalyDetectorInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeactivateAnomalyDetectorInput"}
+	if s.AnomalyDetectorArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AnomalyDetectorArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAnomalyDetectorArn sets the AnomalyDetectorArn field's value.
+func (s *DeactivateAnomalyDetectorInput) SetAnomalyDetectorArn(v string) *DeactivateAnomalyDetectorInput {
+	s.AnomalyDetectorArn = &v
+	return s
+}
+
+type DeactivateAnomalyDetectorOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeactivateAnomalyDetectorOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeactivateAnomalyDetectorOutput) GoString() string {
+	return s.String()
+}
+
 type DeleteAlertInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4975,8 +5265,11 @@ type DescribeAnomalyDetectorOutput struct {
 	// The time at which the detector was created.
 	CreationTime *time.Time `type:"timestamp"`
 
-	// The reason that the detector failed, if any.
+	// The reason that the detector failed.
 	FailureReason *string `type:"string"`
+
+	// The process that caused the detector to fail.
+	FailureType *string `type:"string" enum:"AnomalyDetectorFailureType"`
 
 	// The ARN of the KMS key to use to encrypt your data.
 	KmsKeyArn *string `min:"20" type:"string"`
@@ -5039,6 +5332,12 @@ func (s *DescribeAnomalyDetectorOutput) SetCreationTime(v time.Time) *DescribeAn
 // SetFailureReason sets the FailureReason field's value.
 func (s *DescribeAnomalyDetectorOutput) SetFailureReason(v string) *DescribeAnomalyDetectorOutput {
 	s.FailureReason = &v
+	return s
+}
+
+// SetFailureType sets the FailureType field's value.
+func (s *DescribeAnomalyDetectorOutput) SetFailureType(v string) *DescribeAnomalyDetectorOutput {
+	s.FailureType = &v
 	return s
 }
 
@@ -5771,6 +6070,68 @@ func (s *GetSampleDataOutput) SetSampleRows(v [][]*string) *GetSampleDataOutput 
 	return s
 }
 
+// Aggregated details about the measures contributing to the anomaly group,
+// and the measures potentially impacted by the anomaly group.
+type InterMetricImpactDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the anomaly group.
+	AnomalyGroupId *string `type:"string"`
+
+	// For potential causes (CAUSE_OF_INPUT_ANOMALY_GROUP), the percentage contribution
+	// the measure has in causing the anomalies.
+	ContributionPercentage *float64 `type:"double"`
+
+	// The name of the measure.
+	MetricName *string `type:"string"`
+
+	// Whether a measure is a potential cause of the anomaly group (CAUSE_OF_INPUT_ANOMALY_GROUP),
+	// or whether the measure is impacted by the anomaly group (EFFECT_OF_INPUT_ANOMALY_GROUP).
+	RelationshipType *string `type:"string" enum:"RelationshipType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InterMetricImpactDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InterMetricImpactDetails) GoString() string {
+	return s.String()
+}
+
+// SetAnomalyGroupId sets the AnomalyGroupId field's value.
+func (s *InterMetricImpactDetails) SetAnomalyGroupId(v string) *InterMetricImpactDetails {
+	s.AnomalyGroupId = &v
+	return s
+}
+
+// SetContributionPercentage sets the ContributionPercentage field's value.
+func (s *InterMetricImpactDetails) SetContributionPercentage(v float64) *InterMetricImpactDetails {
+	s.ContributionPercentage = &v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *InterMetricImpactDetails) SetMetricName(v string) *InterMetricImpactDetails {
+	s.MetricName = &v
+	return s
+}
+
+// SetRelationshipType sets the RelationshipType field's value.
+func (s *InterMetricImpactDetails) SetRelationshipType(v string) *InterMetricImpactDetails {
+	s.RelationshipType = &v
+	return s
+}
+
 // The request processing has failed because of an unknown error, exception,
 // or failure.
 type InternalServerException struct {
@@ -6182,6 +6543,142 @@ func (s *ListAnomalyDetectorsOutput) SetAnomalyDetectorSummaryList(v []*AnomalyD
 
 // SetNextToken sets the NextToken field's value.
 func (s *ListAnomalyDetectorsOutput) SetNextToken(v string) *ListAnomalyDetectorsOutput {
+	s.NextToken = &v
+	return s
+}
+
+type ListAnomalyGroupRelatedMetricsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the anomaly detector.
+	//
+	// AnomalyDetectorArn is a required field
+	AnomalyDetectorArn *string `type:"string" required:"true"`
+
+	// The ID of the anomaly group.
+	//
+	// AnomalyGroupId is a required field
+	AnomalyGroupId *string `type:"string" required:"true"`
+
+	// The maximum number of results to return.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// Specify the pagination token that's returned by a previous request to retrieve
+	// the next page of results.
+	NextToken *string `min:"1" type:"string"`
+
+	// Filter for potential causes (CAUSE_OF_INPUT_ANOMALY_GROUP) or downstream
+	// effects (EFFECT_OF_INPUT_ANOMALY_GROUP) of the anomaly group.
+	RelationshipTypeFilter *string `type:"string" enum:"RelationshipType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListAnomalyGroupRelatedMetricsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListAnomalyGroupRelatedMetricsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListAnomalyGroupRelatedMetricsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListAnomalyGroupRelatedMetricsInput"}
+	if s.AnomalyDetectorArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AnomalyDetectorArn"))
+	}
+	if s.AnomalyGroupId == nil {
+		invalidParams.Add(request.NewErrParamRequired("AnomalyGroupId"))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAnomalyDetectorArn sets the AnomalyDetectorArn field's value.
+func (s *ListAnomalyGroupRelatedMetricsInput) SetAnomalyDetectorArn(v string) *ListAnomalyGroupRelatedMetricsInput {
+	s.AnomalyDetectorArn = &v
+	return s
+}
+
+// SetAnomalyGroupId sets the AnomalyGroupId field's value.
+func (s *ListAnomalyGroupRelatedMetricsInput) SetAnomalyGroupId(v string) *ListAnomalyGroupRelatedMetricsInput {
+	s.AnomalyGroupId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListAnomalyGroupRelatedMetricsInput) SetMaxResults(v int64) *ListAnomalyGroupRelatedMetricsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListAnomalyGroupRelatedMetricsInput) SetNextToken(v string) *ListAnomalyGroupRelatedMetricsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetRelationshipTypeFilter sets the RelationshipTypeFilter field's value.
+func (s *ListAnomalyGroupRelatedMetricsInput) SetRelationshipTypeFilter(v string) *ListAnomalyGroupRelatedMetricsInput {
+	s.RelationshipTypeFilter = &v
+	return s
+}
+
+type ListAnomalyGroupRelatedMetricsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Aggregated details about the measures contributing to the anomaly group,
+	// and the measures potentially impacted by the anomaly group.
+	InterMetricImpactList []*InterMetricImpactDetails `type:"list"`
+
+	// The pagination token that's included if more results are available.
+	NextToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListAnomalyGroupRelatedMetricsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListAnomalyGroupRelatedMetricsOutput) GoString() string {
+	return s.String()
+}
+
+// SetInterMetricImpactList sets the InterMetricImpactList field's value.
+func (s *ListAnomalyGroupRelatedMetricsOutput) SetInterMetricImpactList(v []*InterMetricImpactDetails) *ListAnomalyGroupRelatedMetricsOutput {
+	s.InterMetricImpactList = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListAnomalyGroupRelatedMetricsOutput) SetNextToken(v string) *ListAnomalyGroupRelatedMetricsOutput {
 	s.NextToken = &v
 	return s
 }
@@ -6931,16 +7428,6 @@ func (s MetricSource) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *MetricSource) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "MetricSource"}
-	if s.AppFlowConfig != nil {
-		if err := s.AppFlowConfig.Validate(); err != nil {
-			invalidParams.AddNested("AppFlowConfig", err.(request.ErrInvalidParams))
-		}
-	}
-	if s.CloudWatchConfig != nil {
-		if err := s.CloudWatchConfig.Validate(); err != nil {
-			invalidParams.AddNested("CloudWatchConfig", err.(request.ErrInvalidParams))
-		}
-	}
 	if s.RDSSourceConfig != nil {
 		if err := s.RDSSourceConfig.Validate(); err != nil {
 			invalidParams.AddNested("RDSSourceConfig", err.(request.ErrInvalidParams))
@@ -7085,45 +7572,29 @@ type RDSSourceConfig struct {
 	_ struct{} `type:"structure"`
 
 	// A string identifying the database instance.
-	//
-	// DBInstanceIdentifier is a required field
-	DBInstanceIdentifier *string `min:"1" type:"string" required:"true"`
+	DBInstanceIdentifier *string `min:"1" type:"string"`
 
 	// The host name of the database.
-	//
-	// DatabaseHost is a required field
-	DatabaseHost *string `min:"1" type:"string" required:"true"`
+	DatabaseHost *string `min:"1" type:"string"`
 
 	// The name of the RDS database.
-	//
-	// DatabaseName is a required field
-	DatabaseName *string `min:"1" type:"string" required:"true"`
+	DatabaseName *string `min:"1" type:"string"`
 
 	// The port number where the database can be accessed.
-	//
-	// DatabasePort is a required field
-	DatabasePort *int64 `min:"1" type:"integer" required:"true"`
+	DatabasePort *int64 `min:"1" type:"integer"`
 
 	// The Amazon Resource Name (ARN) of the role.
-	//
-	// RoleArn is a required field
-	RoleArn *string `type:"string" required:"true"`
+	RoleArn *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the AWS Secrets Manager role.
-	//
-	// SecretManagerArn is a required field
-	SecretManagerArn *string `type:"string" required:"true"`
+	SecretManagerArn *string `type:"string"`
 
 	// The name of the table in the database.
-	//
-	// TableName is a required field
-	TableName *string `min:"1" type:"string" required:"true"`
+	TableName *string `min:"1" type:"string"`
 
 	// An object containing information about the Amazon Virtual Private Cloud (VPC)
 	// configuration.
-	//
-	// VpcConfiguration is a required field
-	VpcConfiguration *VpcConfiguration `type:"structure" required:"true"`
+	VpcConfiguration *VpcConfiguration `type:"structure"`
 }
 
 // String returns the string representation.
@@ -7147,44 +7618,20 @@ func (s RDSSourceConfig) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *RDSSourceConfig) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "RDSSourceConfig"}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
 	if s.DBInstanceIdentifier != nil && len(*s.DBInstanceIdentifier) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DBInstanceIdentifier", 1))
-	}
-	if s.DatabaseHost == nil {
-		invalidParams.Add(request.NewErrParamRequired("DatabaseHost"))
 	}
 	if s.DatabaseHost != nil && len(*s.DatabaseHost) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DatabaseHost", 1))
 	}
-	if s.DatabaseName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DatabaseName"))
-	}
 	if s.DatabaseName != nil && len(*s.DatabaseName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DatabaseName", 1))
-	}
-	if s.DatabasePort == nil {
-		invalidParams.Add(request.NewErrParamRequired("DatabasePort"))
 	}
 	if s.DatabasePort != nil && *s.DatabasePort < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("DatabasePort", 1))
 	}
-	if s.RoleArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("RoleArn"))
-	}
-	if s.SecretManagerArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("SecretManagerArn"))
-	}
-	if s.TableName == nil {
-		invalidParams.Add(request.NewErrParamRequired("TableName"))
-	}
 	if s.TableName != nil && len(*s.TableName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("TableName", 1))
-	}
-	if s.VpcConfiguration == nil {
-		invalidParams.Add(request.NewErrParamRequired("VpcConfiguration"))
 	}
 	if s.VpcConfiguration != nil {
 		if err := s.VpcConfiguration.Validate(); err != nil {
@@ -7251,44 +7698,28 @@ type RedshiftSourceConfig struct {
 	_ struct{} `type:"structure"`
 
 	// A string identifying the Redshift cluster.
-	//
-	// ClusterIdentifier is a required field
-	ClusterIdentifier *string `min:"1" type:"string" required:"true"`
+	ClusterIdentifier *string `min:"1" type:"string"`
 
 	// The name of the database host.
-	//
-	// DatabaseHost is a required field
-	DatabaseHost *string `min:"1" type:"string" required:"true"`
+	DatabaseHost *string `min:"1" type:"string"`
 
 	// The Redshift database name.
-	//
-	// DatabaseName is a required field
-	DatabaseName *string `min:"1" type:"string" required:"true"`
+	DatabaseName *string `min:"1" type:"string"`
 
 	// The port number where the database can be accessed.
-	//
-	// DatabasePort is a required field
-	DatabasePort *int64 `min:"1" type:"integer" required:"true"`
+	DatabasePort *int64 `min:"1" type:"integer"`
 
 	// The Amazon Resource Name (ARN) of the role providing access to the database.
-	//
-	// RoleArn is a required field
-	RoleArn *string `type:"string" required:"true"`
+	RoleArn *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the AWS Secrets Manager role.
-	//
-	// SecretManagerArn is a required field
-	SecretManagerArn *string `type:"string" required:"true"`
+	SecretManagerArn *string `type:"string"`
 
 	// The table name of the Redshift database.
-	//
-	// TableName is a required field
-	TableName *string `min:"1" type:"string" required:"true"`
+	TableName *string `min:"1" type:"string"`
 
 	// Contains information about the Amazon Virtual Private Cloud (VPC) configuration.
-	//
-	// VpcConfiguration is a required field
-	VpcConfiguration *VpcConfiguration `type:"structure" required:"true"`
+	VpcConfiguration *VpcConfiguration `type:"structure"`
 }
 
 // String returns the string representation.
@@ -7312,44 +7743,20 @@ func (s RedshiftSourceConfig) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *RedshiftSourceConfig) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "RedshiftSourceConfig"}
-	if s.ClusterIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
-	}
 	if s.ClusterIdentifier != nil && len(*s.ClusterIdentifier) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("ClusterIdentifier", 1))
-	}
-	if s.DatabaseHost == nil {
-		invalidParams.Add(request.NewErrParamRequired("DatabaseHost"))
 	}
 	if s.DatabaseHost != nil && len(*s.DatabaseHost) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DatabaseHost", 1))
 	}
-	if s.DatabaseName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DatabaseName"))
-	}
 	if s.DatabaseName != nil && len(*s.DatabaseName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DatabaseName", 1))
-	}
-	if s.DatabasePort == nil {
-		invalidParams.Add(request.NewErrParamRequired("DatabasePort"))
 	}
 	if s.DatabasePort != nil && *s.DatabasePort < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("DatabasePort", 1))
 	}
-	if s.RoleArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("RoleArn"))
-	}
-	if s.SecretManagerArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("SecretManagerArn"))
-	}
-	if s.TableName == nil {
-		invalidParams.Add(request.NewErrParamRequired("TableName"))
-	}
 	if s.TableName != nil && len(*s.TableName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("TableName", 1))
-	}
-	if s.VpcConfiguration == nil {
-		invalidParams.Add(request.NewErrParamRequired("VpcConfiguration"))
 	}
 	if s.VpcConfiguration != nil {
 		if err := s.VpcConfiguration.Validate(); err != nil {
@@ -7495,9 +7902,7 @@ type S3SourceConfig struct {
 
 	// The ARN of an IAM role that has read and write access permissions to the
 	// source S3 bucket.
-	//
-	// RoleArn is a required field
-	RoleArn *string `type:"string" required:"true"`
+	RoleArn *string `type:"string"`
 
 	// A list of templated paths to the source files.
 	TemplatedPathList []*string `min:"1" type:"list"`
@@ -7526,9 +7931,6 @@ func (s *S3SourceConfig) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "S3SourceConfig"}
 	if s.HistoricalDataPathList != nil && len(s.HistoricalDataPathList) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("HistoricalDataPathList", 1))
-	}
-	if s.RoleArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("RoleArn"))
 	}
 	if s.TemplatedPathList != nil && len(s.TemplatedPathList) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("TemplatedPathList", 1))
@@ -8719,6 +9121,30 @@ func AnomalyDetectionTaskStatus_Values() []string {
 }
 
 const (
+	// AnomalyDetectorFailureTypeActivationFailure is a AnomalyDetectorFailureType enum value
+	AnomalyDetectorFailureTypeActivationFailure = "ACTIVATION_FAILURE"
+
+	// AnomalyDetectorFailureTypeBackTestActivationFailure is a AnomalyDetectorFailureType enum value
+	AnomalyDetectorFailureTypeBackTestActivationFailure = "BACK_TEST_ACTIVATION_FAILURE"
+
+	// AnomalyDetectorFailureTypeDeletionFailure is a AnomalyDetectorFailureType enum value
+	AnomalyDetectorFailureTypeDeletionFailure = "DELETION_FAILURE"
+
+	// AnomalyDetectorFailureTypeDeactivationFailure is a AnomalyDetectorFailureType enum value
+	AnomalyDetectorFailureTypeDeactivationFailure = "DEACTIVATION_FAILURE"
+)
+
+// AnomalyDetectorFailureType_Values returns all elements of the AnomalyDetectorFailureType enum
+func AnomalyDetectorFailureType_Values() []string {
+	return []string{
+		AnomalyDetectorFailureTypeActivationFailure,
+		AnomalyDetectorFailureTypeBackTestActivationFailure,
+		AnomalyDetectorFailureTypeDeletionFailure,
+		AnomalyDetectorFailureTypeDeactivationFailure,
+	}
+}
+
+const (
 	// AnomalyDetectorStatusActive is a AnomalyDetectorStatus enum value
 	AnomalyDetectorStatusActive = "ACTIVE"
 
@@ -8745,6 +9171,12 @@ const (
 
 	// AnomalyDetectorStatusBackTestComplete is a AnomalyDetectorStatus enum value
 	AnomalyDetectorStatusBackTestComplete = "BACK_TEST_COMPLETE"
+
+	// AnomalyDetectorStatusDeactivated is a AnomalyDetectorStatus enum value
+	AnomalyDetectorStatusDeactivated = "DEACTIVATED"
+
+	// AnomalyDetectorStatusDeactivating is a AnomalyDetectorStatus enum value
+	AnomalyDetectorStatusDeactivating = "DEACTIVATING"
 )
 
 // AnomalyDetectorStatus_Values returns all elements of the AnomalyDetectorStatus enum
@@ -8759,6 +9191,8 @@ func AnomalyDetectorStatus_Values() []string {
 		AnomalyDetectorStatusBackTestActivating,
 		AnomalyDetectorStatusBackTestActive,
 		AnomalyDetectorStatusBackTestComplete,
+		AnomalyDetectorStatusDeactivated,
+		AnomalyDetectorStatusDeactivating,
 	}
 }
 
@@ -8815,6 +9249,22 @@ func JsonFileCompression_Values() []string {
 	return []string{
 		JsonFileCompressionNone,
 		JsonFileCompressionGzip,
+	}
+}
+
+const (
+	// RelationshipTypeCauseOfInputAnomalyGroup is a RelationshipType enum value
+	RelationshipTypeCauseOfInputAnomalyGroup = "CAUSE_OF_INPUT_ANOMALY_GROUP"
+
+	// RelationshipTypeEffectOfInputAnomalyGroup is a RelationshipType enum value
+	RelationshipTypeEffectOfInputAnomalyGroup = "EFFECT_OF_INPUT_ANOMALY_GROUP"
+)
+
+// RelationshipType_Values returns all elements of the RelationshipType enum
+func RelationshipType_Values() []string {
+	return []string{
+		RelationshipTypeCauseOfInputAnomalyGroup,
+		RelationshipTypeEffectOfInputAnomalyGroup,
 	}
 }
 

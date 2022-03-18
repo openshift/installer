@@ -21,7 +21,7 @@ func (s *ResourceJsonSchema) Resource() (*Resource, error) {
 	err := json.Unmarshal(s.source, &result)
 
 	if err != nil {
-		return nil, fmt.Errorf("error parsing JSON Schema into Resource: %w", err)
+		return nil, fmt.Errorf("parsing JSON Schema into Resource: %w", err)
 	}
 
 	return &result, nil

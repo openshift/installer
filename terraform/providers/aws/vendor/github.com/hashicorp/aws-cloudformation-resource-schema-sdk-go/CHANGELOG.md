@@ -1,3 +1,11 @@
+## v0.16.0 (February 20, 2022)
+
+`Santize` now only removes property `pattern` regexes not supported by Go.
+
+## v0.15.0 (January 26, 2022)
+
+Expand properties in arrays of objects.
+
 ## v0.14.0 (October 21, 2021)
 
 Expand properties wrapped inside `oneOf`.

@@ -5806,8 +5806,8 @@ func (s *EC2Specification) SetOfferingClass(v string) *EC2Specification {
 	return s
 }
 
-// Details about the Amazon ES instances that Amazon Web Services recommends
-// that you purchase.
+// Details about the Amazon OpenSearch Service instances that Amazon Web Services
+// recommends that you purchase.
 type ESInstanceDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -6511,6 +6511,12 @@ type GetCostAndUsageInput struct {
 	// with that account's usage of that service. You can nest Expression objects
 	// to define any combination of dimension filters. For more information, see
 	// Expression (https://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_Expression.html).
+	//
+	// Valid values for MatchOptions for CostCategories and Tags are EQUALS, ABSENT,
+	// and CASE_SENSITIVE.
+	//
+	// The default values are EQUALS and CASE_SENSITIVE. Valid values for MatchOptions
+	// for Dimensions are EQUALS and CASE_SENSITIVE.
 	Filter *Expression `type:"structure"`
 
 	// Sets the Amazon Web Services cost granularity to MONTHLY or DAILY, or HOURLY.
@@ -6524,8 +6530,8 @@ type GetCostAndUsageInput struct {
 	// either dimensions, tag keys, cost categories, or any two group by types.
 	//
 	// Valid values for the DIMENSION type are AZ, INSTANCE_TYPE, LEGAL_ENTITY_NAME,
-	// LINKED_ACCOUNT, OPERATION, PLATFORM, PURCHASE_TYPE, SERVICE, TENANCY, RECORD_TYPE,
-	// and USAGE_TYPE.
+	// INVOICING_ENTITY, LINKED_ACCOUNT, OPERATION, PLATFORM, PURCHASE_TYPE, SERVICE,
+	// TENANCY, RECORD_TYPE, and USAGE_TYPE.
 	//
 	// When you group by the TAG type and include a valid tag key, you get all tag
 	// values, including empty strings.
@@ -6722,6 +6728,12 @@ type GetCostAndUsageWithResourcesInput struct {
 	// The GetCostAndUsageWithResources operation requires that you either group
 	// by or filter by a ResourceId. It requires the Expression (https://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_Expression.html)
 	// "SERVICE = Amazon Elastic Compute Cloud - Compute" in the filter.
+	//
+	// Valid values for MatchOptions for CostCategories and Tags are EQUALS, ABSENT,
+	// and CASE_SENSITIVE.
+	//
+	// The default values are EQUALS and CASE_SENSITIVE. Valid values for MatchOptions
+	// for Dimensions are EQUALS and CASE_SENSITIVE.
 	//
 	// Filter is a required field
 	Filter *Expression `type:"structure" required:"true"`
@@ -7413,10 +7425,31 @@ type GetDimensionValuesInput struct {
 	//
 	//    * AZ - The Availability Zone. An example is us-east-1a.
 	//
+	//    * BILLING_ENTITY - The Amazon Web Services seller that your account is
+	//    with. Possible values are the following: - Amazon Web Services(Amazon
+	//    Web Services): The entity that sells Amazon Web Services services. - AISPL
+	//    (Amazon Internet Services Pvt. Ltd.): The local Indian entity that is
+	//    an acting reseller for Amazon Web Services services in India. - Amazon
+	//    Web Services Marketplace: The entity that supports the sale of solutions
+	//    built on Amazon Web Services by third-party software providers.
+	//
+	//    * CACHE_ENGINE - The Amazon ElastiCache operating system. Examples are
+	//    Windows or Linux.
+	//
+	//    * DEPLOYMENT_OPTION - The scope of Amazon Relational Database Service
+	//    deployments. Valid values are SingleAZ and MultiAZ.
+	//
 	//    * DATABASE_ENGINE - The Amazon Relational Database Service database. Examples
 	//    are Aurora or MySQL.
 	//
 	//    * INSTANCE_TYPE - The type of Amazon EC2 instance. An example is m4.xlarge.
+	//
+	//    * INSTANCE_TYPE_FAMILY - A family of instance types optimized to fit different
+	//    use cases. Examples are Compute Optimized (C4, C5, C6g, C7g etc.), Memory
+	//    Optimization (R4, R5n, R5b, R6g etc).
+	//
+	//    * INVOICING_ENTITY - The name of the entity issuing the Amazon Web Services
+	//    invoice.
 	//
 	//    * LEGAL_ENTITY_NAME - The name of the organization that sells you Amazon
 	//    Web Services services, such as Amazon Web Services.
@@ -7436,7 +7469,16 @@ type GetDimensionValuesInput struct {
 	//    is related. Examples include On-Demand Instances and Standard Reserved
 	//    Instances.
 	//
+	//    * RESERVATION_ID - The unique identifier for an Amazon Web Services Reservation
+	//    Instance.
+	//
+	//    * SAVINGS_PLAN_ARN - The unique identifier for your Savings Plans.
+	//
+	//    * SAVINGS_PLANS_TYPE - Type of Savings Plans (EC2 Instance or Compute).
+	//
 	//    * SERVICE - The Amazon Web Services service such as Amazon DynamoDB.
+	//
+	//    * TENANCY - The tenancy of a resource. Examples are shared or dedicated.
 	//
 	//    * USAGE_TYPE - The type of usage. An example is DataTransfer-In-Bytes.
 	//    The response for the GetDimensionValues operation includes a unit attribute.
@@ -7500,7 +7542,7 @@ type GetDimensionValuesInput struct {
 	//    the full name of the member account. The value field contains the Amazon
 	//    Web Services ID of the member account.
 	//
-	//    * SAVINGS_PLAN_ARN - The unique identifier for your Savings Plan
+	//    * SAVINGS_PLAN_ARN - The unique identifier for your Savings Plans.
 	Context *string `type:"string" enum:"Context"`
 
 	// The name of the dimension. Each Dimension is available for a different Context.
@@ -7918,6 +7960,8 @@ type GetReservationCoverageInput struct {
 	//    * DEPLOYMENT_OPTION
 	//
 	//    * INSTANCE_TYPE
+	//
+	//    * INVOICING_ENTITY
 	//
 	//    * LINKED_ACCOUNT
 	//
@@ -10188,7 +10232,8 @@ type InstanceDetails struct {
 	// The Amazon EC2 instances that Amazon Web Services recommends that you purchase.
 	EC2InstanceDetails *EC2InstanceDetails `type:"structure"`
 
-	// The Amazon ES instances that Amazon Web Services recommends that you purchase.
+	// The Amazon OpenSearch Service instances that Amazon Web Services recommends
+	// that you purchase.
 	ESInstanceDetails *ESInstanceDetails `type:"structure"`
 
 	// The ElastiCache instances that Amazon Web Services recommends that you purchase.
@@ -14522,6 +14567,9 @@ const (
 
 	// DimensionAgreementEndDateTimeBefore is a Dimension enum value
 	DimensionAgreementEndDateTimeBefore = "AGREEMENT_END_DATE_TIME_BEFORE"
+
+	// DimensionInvoicingEntity is a Dimension enum value
+	DimensionInvoicingEntity = "INVOICING_ENTITY"
 )
 
 // Dimension_Values returns all elements of the Dimension enum
@@ -14558,6 +14606,7 @@ func Dimension_Values() []string {
 		DimensionPaymentOption,
 		DimensionAgreementEndDateTimeAfter,
 		DimensionAgreementEndDateTimeBefore,
+		DimensionInvoicingEntity,
 	}
 }
 
