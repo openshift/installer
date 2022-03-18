@@ -18,7 +18,7 @@ import (
 // getFileData reads a YAML file and unmarshals the contents
 func getFileData(fileName string, output interface{}) error {
 
-	path := filepath.Join("./manifests", fileName)
+	path := filepath.Join("./manifests/", fileName)
 
 	contents, err := os.ReadFile(path)
 	if err != nil {
