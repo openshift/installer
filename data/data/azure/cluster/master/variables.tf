@@ -129,3 +129,8 @@ This is required because terraform cannot calculate counts during plan phase com
 conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
 EOF
 }
+
+variable "ultra_ssd_enabled" {
+  type = bool
+  description = "Determines if the control plane should have UltraSSD Enabled."
+}

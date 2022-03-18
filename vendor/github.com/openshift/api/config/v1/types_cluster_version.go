@@ -225,7 +225,7 @@ type UpdateHistory struct {
 type ClusterID string
 
 // ClusterVersionCapability enumerates optional, core cluster components.
-// +kubebuilder:validation:Enum=openshift-samples
+// +kubebuilder:validation:Enum=openshift-samples;baremetal
 type ClusterVersionCapability string
 
 const (
@@ -235,6 +235,11 @@ const (
 	// needed for the image streams to import the images they
 	// reference.
 	ClusterVersionCapabilityOpenShiftSamples ClusterVersionCapability = "openshift-samples"
+
+	// ClusterVersionCapabilityBaremetal manages the cluster
+	// baremetal operator which is responsible for running the metal3
+	// deployment.
+	ClusterVersionCapabilityBaremetal ClusterVersionCapability = "baremetal"
 )
 
 // ClusterVersionCapabilitySet defines sets of cluster version capabilities.
@@ -263,9 +268,11 @@ var ClusterVersionCapabilitySets = map[ClusterVersionCapabilitySet][]ClusterVers
 	ClusterVersionCapabilitySetNone: {},
 	ClusterVersionCapabilitySet4_11: {
 		ClusterVersionCapabilityOpenShiftSamples,
+		ClusterVersionCapabilityBaremetal,
 	},
 	ClusterVersionCapabilitySetCurrent: {
 		ClusterVersionCapabilityOpenShiftSamples,
+		ClusterVersionCapabilityBaremetal,
 	},
 }
 

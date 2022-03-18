@@ -57,6 +57,11 @@ variable "azure_master_root_volume_size" {
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
+variable "azure_control_plane_ultra_ssd_enabled" {
+  type        = bool
+  description = "Determines if the control plane should have UltraSSD Enabled."
+}
+
 variable "azure_base_domain_resource_group_name" {
   type        = string
   description = "The resource group that contains the dns zone used as base domain for the cluster."

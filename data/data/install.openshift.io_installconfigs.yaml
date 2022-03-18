@@ -57,6 +57,7 @@ spec:
                     cluster components.
                   enum:
                   - openshift-samples
+                  - baremetal
                   type: string
                 type: array
               baselineCapabilitySet:
@@ -239,6 +240,11 @@ spec:
                         type:
                           description: InstanceType defines the azure instance type.
                             eg. Standard_DS_V2
+                          type: string
+                        ultraSSDCapability:
+                          description: ultraSSDCapability defines if the instance
+                            should use Ultra SSD disks. The valid values are Enabled,
+                            Disabled.
                           type: string
                         zones:
                           description: Zones is list of availability zones that can
@@ -783,6 +789,10 @@ spec:
                       type:
                         description: InstanceType defines the azure instance type.
                           eg. Standard_DS_V2
+                        type: string
+                      ultraSSDCapability:
+                        description: ultraSSDCapability defines if the instance should
+                          use Ultra SSD disks. The valid values are Enabled, Disabled.
                         type: string
                       zones:
                         description: Zones is list of availability zones that can
@@ -1597,6 +1607,10 @@ spec:
                       type:
                         description: InstanceType defines the azure instance type.
                           eg. Standard_DS_V2
+                        type: string
+                      ultraSSDCapability:
+                        description: ultraSSDCapability defines if the instance should
+                          use Ultra SSD disks. The valid values are Enabled, Disabled.
                         type: string
                       zones:
                         description: Zones is list of availability zones that can

@@ -103,6 +103,10 @@ resource "azurerm_linux_virtual_machine" "master" {
   disable_password_authentication = false
   encryption_at_host_enabled      = var.encryption_at_host_enabled
 
+  additional_capabilities {
+    ultra_ssd_enabled = var.ultra_ssd_enabled
+  }
+
   identity {
     type         = "UserAssigned"
     identity_ids = [var.identity]

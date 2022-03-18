@@ -28,6 +28,15 @@ func ValidateMachinePool(p *azure.MachinePool, fldPath *field.Path) field.ErrorL
 		}
 	}
 
+	if p.UltraSSDCapability != "" {
+		ultraSSDCapabilities := sets.NewString("Enabled", "Disabled")
+		if !ultraSSDCapabilities.Has(p.UltraSSDCapability) {
+			allErrs = append(allErrs,
+				field.NotSupported(fldPath.Child("ultraSSDCapability"),
+					p.UltraSSDCapability, ultraSSDCapabilities.List()))
+		}
+	}
+
 	return allErrs
 }
 

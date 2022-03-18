@@ -200,7 +200,7 @@ type Placement struct {
 	// +kubebuilder:validation:Minimum:=1
 	// +kubebuilder:validation:Maximum:=7
 	// +optional
-	PartitionNumber int32 `json:"number,omitempty"`
+	PartitionNumber int32 `json:"partitionNumber,omitempty"`
 }
 
 // LocalAWSPlacementGroupReference contains enough information to let you locate the

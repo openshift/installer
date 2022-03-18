@@ -28,6 +28,7 @@ type config struct {
 	MasterAvailabilityZones         []string          `json:"azure_master_availability_zones"`
 	MasterEncryptionAtHostEnabled   bool              `json:"azure_master_encryption_at_host_enabled"`
 	MasterDiskEncryptionSetID       string            `json:"azure_master_disk_encryption_set_id,omitempty"`
+	ControlPlaneUltraSSDEnabled     bool              `json:"azure_control_plane_ultra_ssd_enabled"`
 	VolumeType                      string            `json:"azure_master_root_volume_type"`
 	VolumeSize                      int32             `json:"azure_master_root_volume_size"`
 	ImageURL                        string            `json:"azure_image_url,omitempty"`
@@ -74,6 +75,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		masterAvailabilityZones[i] = to.String(c.Zone)
 	}
 
+	controlPlaneUltraSSDEnabled := false
+	if masterConfig.UltraSSDCapability == machineapi.AzureUltraSSDCapabilityTrue {
+		controlPlaneUltraSSDEnabled = true
+	}
+
 	environment, err := environment(sources.CloudName)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not determine Azure environment to use for Terraform")
@@ -97,6 +103,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterAvailabilityZones:         masterAvailabilityZones,
 		MasterEncryptionAtHostEnabled:   masterEncryptionAtHostEnabled,
 		MasterDiskEncryptionSetID:       masterDiskEncryptionSetID,
+		ControlPlaneUltraSSDEnabled:     controlPlaneUltraSSDEnabled,
 		VolumeType:                      masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                      masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                        sources.ImageURL,
