@@ -1,0 +1,22 @@
+[Unit]
+Description=Service that creates initial cluster and infraenv
+Wants=network-online.target assisted-service.service
+PartOf=assisted-service-pod.service
+After=network-online.target assisted-service.service
+ConditionPathExists=/etc/assisted-service/node0
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+Environment=SERVICE_BASE_URL={{.ServiceBaseURL}}
+ExecStartPre=/bin/rm -f %t/%n.ctr-id
+ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
+ExecStart=podman run --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --rm --pod-id-file=%t/assisted-service-pod.pod-id --sdnotify=conmon --replace -d --name=create-cluster-and-infraenv -v /etc/assisted/manifests:/manifests --env SERVICE_BASE_URL quay.io/edge-infrastructure/assisted-service:latest /ephemeral-installer-register-cluster-and-infraenv
+ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
+ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
+
+KillMode=none
+Type=oneshot
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

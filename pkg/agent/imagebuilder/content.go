@@ -26,15 +26,13 @@ const NMCONNECTIONS_DIR = "/etc/assisted/network"
 
 // ConfigBuilder builds an Ignition config
 type ConfigBuilder struct {
-	pullSecret               string
-	serviceBaseURL           url.URL
-	pullSecretToken          string
-	createClusterParamsJSON  string
-	createInfraEnvParamsJSON string
-	apiVip                   string
-	controlPlaneAgents       int
-	workerAgents             int
-	staticNetworkConfig      []*models.HostStaticNetworkConfig
+	pullSecret          string
+	serviceBaseURL      url.URL
+	pullSecretToken     string
+	apiVip              string
+	controlPlaneAgents  int
+	workerAgents        int
+	staticNetworkConfig []*models.HostStaticNetworkConfig
 }
 
 func New() *ConfigBuilder {
@@ -52,35 +50,25 @@ func New() *ConfigBuilder {
 		Path:   "/",
 	}
 
-	clusterParams := manifests.CreateClusterParams()
-	clusterJSON, err := json.Marshal(clusterParams)
-	if err != nil {
-		logrus.Errorf("Error marshalling cluster params into json: %v", err)
-	}
-
-	infraEnvParams, err := manifests.CreateInfraEnvParams()
-	if err != nil {
-		logrus.Errorf("Error building infra env params: %v", err)
-	}
-
-	infraEnvJSON, err := json.Marshal(infraEnvParams)
-	if err != nil {
-		logrus.Errorf("Error marshal infra env params into json: %v", err)
-	}
-
 	aci := manifests.GetAgentClusterInstall()
 	clusterInstall := &aci
 
+	infraEnv := manifests.GetInfraEnv()
+
+	staticNetworkConfig, err := manifests.ProcessNMStateConfig(infraEnv)
+	if err != nil {
+		logrus.Errorf("Error marshal infra env params into json: %w", err)
+		os.Exit(1)
+	}
+
 	return &ConfigBuilder{
-		pullSecret:               pullSecret,
-		serviceBaseURL:           serviceBaseURL,
-		pullSecretToken:          pullSecretToken,
-		createClusterParamsJSON:  string(clusterJSON),
-		createInfraEnvParamsJSON: string(infraEnvJSON),
-		apiVip:                   clusterInstall.Spec.APIVIP,
-		controlPlaneAgents:       clusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
-		workerAgents:             clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
-		staticNetworkConfig:      infraEnvParams.StaticNetworkConfig,
+		pullSecret:          pullSecret,
+		serviceBaseURL:      serviceBaseURL,
+		pullSecretToken:     pullSecretToken,
+		apiVip:              clusterInstall.Spec.APIVIP,
+		controlPlaneAgents:  clusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
+		workerAgents:        clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
+		staticNetworkConfig: staticNetworkConfig,
 	}
 }
 
@@ -254,16 +242,14 @@ func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 
 func (c ConfigBuilder) templateString(name string, text string) (string, error) {
 	params := map[string]interface{}{
-		"ServiceProtocol":          c.serviceBaseURL.Scheme,
-		"ServiceBaseURL":           c.serviceBaseURL.String(),
-		"PullSecretToken":          c.pullSecretToken,
-		"NodeZeroIP":               c.serviceBaseURL.Hostname(),
-		"AssistedServiceHost":      c.serviceBaseURL.Host,
-		"ClusterCreateParamsJSON":  c.createClusterParamsJSON,
-		"InfraEnvCreateParamsJSON": c.createInfraEnvParamsJSON,
-		"APIVIP":                   c.apiVip,
-		"ControlPlaneAgents":       c.controlPlaneAgents,
-		"WorkerAgents":             c.workerAgents,
+		"ServiceProtocol":     c.serviceBaseURL.Scheme,
+		"ServiceBaseURL":      c.serviceBaseURL.String(),
+		"PullSecretToken":     c.pullSecretToken,
+		"NodeZeroIP":          c.serviceBaseURL.Hostname(),
+		"AssistedServiceHost": c.serviceBaseURL.Host,
+		"APIVIP":              c.apiVip,
+		"ControlPlaneAgents":  c.controlPlaneAgents,
+		"WorkerAgents":        c.workerAgents,
 	}
 
 	tmpl, err := template.New(name).Parse(string(text))
