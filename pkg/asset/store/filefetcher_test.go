@@ -46,14 +46,10 @@ func TestFetchByName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tempDir, err := ioutil.TempDir("", "openshift-install-")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.RemoveAll(tempDir)
+			tempDir := t.TempDir()
 
 			for filename, data := range tt.files {
-				err = ioutil.WriteFile(filepath.Join(tempDir, filename), data, 0666)
+				err := ioutil.WriteFile(filepath.Join(tempDir, filename), data, 0666)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -74,11 +70,7 @@ func TestFetchByName(t *testing.T) {
 }
 
 func TestFetchByPattern(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "openshift-install-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir()
 
 	files := map[string][]byte{
 		"master-0.ign":   []byte("some data 0"),
@@ -105,7 +97,7 @@ func TestFetchByPattern(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		err = ioutil.WriteFile(filepath.Join(tempDir, path), data, 0666)
+		err := ioutil.WriteFile(filepath.Join(tempDir, path), data, 0666)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -2,7 +2,6 @@ package store
 
 import (
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -87,11 +86,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			tempDir, err := ioutil.TempDir("", "TestCreatedAssetsAreNotDirty")
-			if err != nil {
-				t.Fatalf("could not create the temp dir: %v", err)
-			}
-			defer os.RemoveAll(tempDir)
+			tempDir := t.TempDir()
 
 			for name, contents := range tc.files {
 				if err := ioutil.WriteFile(filepath.Join(tempDir, name), []byte(contents), 0666); err != nil {

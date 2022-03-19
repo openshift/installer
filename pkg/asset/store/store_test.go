@@ -1,7 +1,6 @@
 package store
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -260,13 +259,8 @@ func TestStoreFetch(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			clearAssetBehaviors()
-			dir, err := ioutil.TempDir("", "TestStoreFetch")
-			if err != nil {
-				t.Fatalf("failed to create temporary directory: %v", err)
-			}
-			defer os.RemoveAll(dir)
 			store := &storeImpl{
-				directory: dir,
+				directory: t.TempDir(),
 				assets:    map[reflect.Type]*assetState{},
 			}
 			assets := make(map[string]asset.Asset, len(tc.assets))
@@ -287,7 +281,7 @@ func TestStoreFetch(t *testing.T) {
 					source: generatedSource,
 				}
 			}
-			err = store.Fetch(assets[tc.target])
+			err := store.Fetch(assets[tc.target])
 			assert.NoError(t, err, "error fetching asset")
 			assert.EqualValues(t, tc.expectedGenerationLog, generationLog)
 		})
@@ -392,11 +386,7 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 func TestStoreFetchIdempotency(t *testing.T) {
 	clearAssetBehaviors()
 
-	tempDir, err := ioutil.TempDir("", "TestStoreFetchIdempotency")
-	if err != nil {
-		t.Fatalf("could not create the temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir()
 
 	for i := 0; i < 2; i++ {
 		store, err := newStore(tempDir)
