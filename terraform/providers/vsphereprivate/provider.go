@@ -3,8 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere"
 )
 
@@ -13,16 +12,19 @@ import (
 const defaultAPITimeout = time.Minute * 5
 
 // Provider returns a terraform.ResourceProvider.
-func Provider() terraform.ResourceProvider {
+func Provider() *schema.Provider {
+	// reusing the terraform-provider-vsphere Provider() function
 	vsphereProvider := vsphere.Provider()
 
-	vsphereProvider.(*schema.Provider).DataSourcesMap = map[string]*schema.Resource{}
+	// Since we are not using Data, empty that map
+	vsphereProvider.DataSourcesMap = map[string]*schema.Resource{}
 
-	vsphereProvider.(*schema.Provider).ResourcesMap = map[string]*schema.Resource{
+	//Add our resources
+	vsphereProvider.ResourcesMap = map[string]*schema.Resource{
 		"vsphereprivate_import_ova": resourceVSpherePrivateImportOva(),
 	}
 
-	vsphereProvider.(*schema.Provider).ConfigureFunc = providerConfigure
+	vsphereProvider.ConfigureFunc = providerConfigure
 
 	return vsphereProvider
 }

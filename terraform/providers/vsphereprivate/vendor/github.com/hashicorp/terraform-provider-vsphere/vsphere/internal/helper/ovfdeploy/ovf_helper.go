@@ -50,8 +50,8 @@ func (pr *ProgressReader) Read(p []byte) (n int, err error) {
 func DeployOvfAndGetResult(ovfCreateImportSpecResult *types.OvfCreateImportSpecResult, resourcePoolObj *object.ResourcePool,
 	folder *object.Folder, host *object.HostSystem, filePath string, deployOva bool, fromLocal bool, allowUnverifiedSSL bool) error {
 
-	var currBytesRead int64 = 0
-	var totalBytes int64 = 0
+	var currBytesRead int64
+	var totalBytes int64
 
 	nfcLease, err := resourcePoolObj.ImportVApp(context.Background(), ovfCreateImportSpecResult.ImportSpec, folder, host)
 	if err != nil {
@@ -93,7 +93,6 @@ func DeployOvfAndGetResult(ovfCreateImportSpecResult *types.OvfCreateImportSpecR
 
 	for _, ovfFileItem := range ovfCreateImportSpecResult.FileItem {
 		for _, deviceObj := range leaseInfo.DeviceUrl {
-
 			if ovfFileItem.DeviceId != deviceObj.ImportKey {
 				continue
 			}
@@ -101,13 +100,13 @@ func DeployOvfAndGetResult(ovfCreateImportSpecResult *types.OvfCreateImportSpecR
 				if fromLocal {
 					err = uploadDisksFromLocal(filePath, ovfFileItem, deviceObj, &currBytesRead)
 				} else {
-					err = uploadDisksFromUrl(filePath, ovfFileItem, deviceObj, &currBytesRead, allowUnverifiedSSL)
+					err = uploadDisksFromURL(filePath, ovfFileItem, deviceObj, &currBytesRead, allowUnverifiedSSL)
 				}
 			} else {
 				if fromLocal {
 					err = uploadOvaDisksFromLocal(filePath, ovfFileItem, deviceObj, &currBytesRead)
 				} else {
-					err = uploadOvaDisksFromUrl(filePath, ovfFileItem, deviceObj, &currBytesRead, allowUnverifiedSSL)
+					err = uploadOvaDisksFromURL(filePath, ovfFileItem, deviceObj, &currBytesRead, allowUnverifiedSSL)
 				}
 			}
 			if err != nil {
@@ -121,14 +120,10 @@ func DeployOvfAndGetResult(ovfCreateImportSpecResult *types.OvfCreateImportSpecR
 	if err != nil {
 		return err
 	}
-	if err = nfcLease.Complete(context.Background()); err != nil {
-		return err
-	}
-	return nil
+	return nfcLease.Complete(context.Background())
 }
 
 func upload(ctx context.Context, item types.OvfFileItem, f io.Reader, url string, size int64, totalBytesRead *int64) error {
-
 	u, err := soap.ParseURL(url)
 	if err != nil {
 		return err
@@ -175,7 +170,9 @@ func upload(ctx context.Context, item types.OvfFileItem, f io.Reader, url string
 		return err
 	}
 
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
 
 	switch res.StatusCode {
 	case http.StatusOK:
@@ -208,7 +205,7 @@ func uploadDisksFromLocal(filePath string, ovfFileItem types.OvfFileItem, device
 	return nil
 }
 
-func uploadDisksFromUrl(filePath string, ovfFileItem types.OvfFileItem, deviceObj types.HttpNfcLeaseDeviceUrl, currBytesRead *int64,
+func uploadDisksFromURL(filePath string, ovfFileItem types.OvfFileItem, deviceObj types.HttpNfcLeaseDeviceUrl, currBytesRead *int64,
 	allowUnverifiedSSL bool) error {
 	absoluteFilePath := ""
 	if strings.Contains(filePath, "/") {
@@ -221,7 +218,9 @@ func uploadDisksFromUrl(filePath string, ovfFileItem types.OvfFileItem, deviceOb
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	err = upload(context.Background(), ovfFileItem, resp.Body, deviceObj.Url, ovfFileItem.Size, currBytesRead)
 	return err
 }
@@ -232,13 +231,15 @@ func uploadOvaDisksFromLocal(filePath string, ovfFileItem types.OvfFileItem, dev
 	if err != nil {
 		return err
 	}
-	defer ovaFile.Close()
+	defer func(ovaFile *os.File) {
+		_ = ovaFile.Close()
+	}(ovaFile)
 
 	err = findAndUploadDiskFromOva(ovaFile, diskName, ovfFileItem, deviceObj, currBytesRead)
 	return err
 }
 
-func uploadOvaDisksFromUrl(filePath string, ovfFileItem types.OvfFileItem, deviceObj types.HttpNfcLeaseDeviceUrl, currBytesRead *int64,
+func uploadOvaDisksFromURL(filePath string, ovfFileItem types.OvfFileItem, deviceObj types.HttpNfcLeaseDeviceUrl, currBytesRead *int64,
 	allowUnverifiedSSL bool) error {
 	diskName := ovfFileItem.Path
 	client := getClient(allowUnverifiedSSL)
@@ -246,7 +247,9 @@ func uploadOvaDisksFromUrl(filePath string, ovfFileItem types.OvfFileItem, devic
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	if resp.StatusCode == http.StatusOK {
 		err = findAndUploadDiskFromOva(resp.Body, diskName, ovfFileItem, deviceObj, currBytesRead)
 		if err != nil {
@@ -259,7 +262,6 @@ func uploadOvaDisksFromUrl(filePath string, ovfFileItem types.OvfFileItem, devic
 }
 
 func GetOvfDescriptor(filePath string, deployOva bool, fromLocal bool, allowUnverifiedSSL bool) (string, error) {
-
 	ovfDescriptor := ""
 	if !deployOva {
 		if fromLocal {
@@ -274,7 +276,9 @@ func GetOvfDescriptor(filePath string, deployOva bool, fromLocal bool, allowUnve
 			if err != nil {
 				return "", err
 			}
-			defer resp.Body.Close()
+			defer func(Body io.ReadCloser) {
+				_ = Body.Close()
+			}(resp.Body)
 
 			if resp.StatusCode == http.StatusOK {
 				bodyBytes, err := ioutil.ReadAll(resp.Body)
@@ -290,22 +294,24 @@ func GetOvfDescriptor(filePath string, deployOva bool, fromLocal bool, allowUnve
 			if err != nil {
 				return "", err
 			}
-			defer ovaFile.Close()
+			defer func(ovaFile *os.File) {
+				_ = ovaFile.Close()
+			}(ovaFile)
 			ovfDescriptor, err = getOvfDescriptorFromOva(ovaFile)
 			if err != nil {
 				return "", err
 			}
-
 		} else {
 			client := getClient(allowUnverifiedSSL)
 			resp, err := client.Get(filePath)
 			if err != nil {
 				return "", err
 			}
-			defer resp.Body.Close()
+			defer func(Body io.ReadCloser) {
+				_ = Body.Close()
+			}(resp.Body)
 
 			if resp.StatusCode == http.StatusOK {
-
 				ovfDescriptor, err = getOvfDescriptorFromOva(resp.Body)
 				if err != nil {
 					return "", err
@@ -377,9 +383,8 @@ func getClient(allowUnverifiedSSL bool) *http.Client {
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 		return &http.Client{Transport: tr}
-	} else {
-		return &http.Client{}
 	}
+	return &http.Client{}
 }
 
 func CheckDeploymentOption(client *govmomi.Client, deploymentOption, ovfDescriptor string) error {
@@ -412,26 +417,26 @@ type OvfHelper struct {
 	IsLocal            bool
 	Name               string
 	HostSystem         *object.HostSystem
-	IpAllocationPolicy string
-	IpProtocol         string
+	IPAllocationPolicy string
+	IPProtocol         string
 	NetworkMapping     []types.OvfNetworkMapping
 	ResourcePool       *object.ResourcePool
 }
 
 type OvfHelperParams struct {
 	AllowUnverifiedSSL bool
-	DatastoreId        string
+	DatastoreID        string
 	DeploymentOption   string
 	DiskProvisioning   string
 	FilePath           string
 	Folder             string
-	HostId             string
-	IpAllocationPolicy string
-	IpProtocol         string
+	HostID             string
+	IPAllocationPolicy string
+	IPProtocol         string
 	Name               string
 	NetworkMappings    map[string]interface{}
-	OvfUrl             string
-	PoolId             string
+	OvfURL             string
+	PoolID             string
 }
 
 func NewOvfHelper(client *govmomi.Client, o *OvfHelperParams) (*OvfHelper, error) {
@@ -439,8 +444,8 @@ func NewOvfHelper(client *govmomi.Client, o *OvfHelperParams) (*OvfHelper, error
 		AllowUnverifiedSSL: o.AllowUnverifiedSSL,
 		DeploymentOption:   o.DeploymentOption,
 		DiskProvisioning:   o.DiskProvisioning,
-		IpAllocationPolicy: o.IpAllocationPolicy,
-		IpProtocol:         o.IpProtocol,
+		IPAllocationPolicy: o.IPAllocationPolicy,
+		IPProtocol:         o.IPProtocol,
 		Name:               o.Name,
 	}
 
@@ -448,18 +453,18 @@ func NewOvfHelper(client *govmomi.Client, o *OvfHelperParams) (*OvfHelper, error
 	ovfParams.IsLocal = true
 	ovfParams.FilePath = o.FilePath
 
-	ovfUrl := o.OvfUrl
-	if ovfUrl != "" {
+	ovfURL := o.OvfURL
+	if ovfURL != "" {
 		ovfParams.IsLocal = false
-		ovfParams.FilePath = ovfUrl
+		ovfParams.FilePath = ovfURL
 	}
 
 	if strings.HasSuffix(ovfParams.FilePath, ".ova") {
 		ovfParams.DeployOva = true
 	}
 
-	//Resource pool
-	poolID := o.PoolId
+	// Resource pool
+	poolID := o.PoolID
 	poolObj, err := resourcepool.FromID(client, poolID)
 	if err != nil {
 		return nil, fmt.Errorf("could not find resource pool ID %q: %s", poolID, err)
@@ -473,29 +478,29 @@ func NewOvfHelper(client *govmomi.Client, o *OvfHelperParams) (*OvfHelper, error
 	}
 	ovfParams.Folder = folderObj
 
-	//Host
-	hostId := o.HostId
-	if hostId == "" {
+	// Host
+	hostID := o.HostID
+	if hostID == "" {
 		return nil, fmt.Errorf("host system ID is required for ovf deployment")
 	}
-	hostObj, err := hostsystem.FromID(client, hostId)
+	hostObj, err := hostsystem.FromID(client, hostID)
 	if err != nil {
-		return nil, fmt.Errorf("could not find host with ID %q: %s", hostId, err)
+		return nil, fmt.Errorf("could not find host with ID %q: %s", hostID, err)
 	}
 	ovfParams.HostSystem = hostObj
 
-	//Datastore
-	dsId := o.DatastoreId
-	if dsId == "" {
+	// Datastore
+	dsID := o.DatastoreID
+	if dsID == "" {
 		return nil, fmt.Errorf("data store ID is required for ovf deployment")
 	}
-	dsObj, err := datastore.FromID(client, dsId)
+	dsObj, err := datastore.FromID(client, dsID)
 	if err != nil {
-		return nil, fmt.Errorf("could not find datastore with ID %q: %s", dsId, err)
+		return nil, fmt.Errorf("could not find datastore with ID %q: %s", dsID, err)
 	}
 	ovfParams.Datastore = dsObj
 
-	//Network Mapping
+	// Network Mapping
 	networkMapping, err := GetNetworkMapping(client, o.NetworkMappings)
 	if err != nil {
 		return nil, fmt.Errorf("while getting OVF network mapping: %s", err)
@@ -506,14 +511,13 @@ func NewOvfHelper(client *govmomi.Client, o *OvfHelperParams) (*OvfHelper, error
 }
 
 func (o *OvfHelper) GetImportSpec(client *govmomi.Client) (*types.OvfCreateImportSpecResult, error) {
-
 	hsRef := o.HostSystem.Reference()
 	importSpecParam := types.OvfCreateImportSpecParams{
 		EntityName:         o.Name,
 		HostSystem:         &hsRef,
 		NetworkMapping:     o.NetworkMapping,
-		IpAllocationPolicy: o.IpAllocationPolicy,
-		IpProtocol:         o.IpProtocol,
+		IpAllocationPolicy: o.IPAllocationPolicy,
+		IpProtocol:         o.IPProtocol,
 		DiskProvisioning:   o.DiskProvisioning,
 	}
 
@@ -538,8 +542,11 @@ func (o *OvfHelper) GetImportSpec(client *govmomi.Client) (*types.OvfCreateImpor
 
 	is, err := ovfManager.CreateImportSpec(context.Background(), ovfDescriptor,
 		o.ResourcePool.Reference(), o.Datastore.Reference(), importSpecParam)
+	if err != nil {
+		return nil, fmt.Errorf("while getting ovf import spec: %s", err)
+	}
 	if len(is.Error) > 0 {
-		out := "while getting ovf import spec: \n"
+		out := "while creating import spec: \n"
 		for _, e := range is.Error {
 			out = fmt.Sprintf("%s\n- %s", out, e.LocalizedMessage)
 		}

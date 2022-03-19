@@ -10,13 +10,12 @@ import (
 
 	"github.com/vmware/govmomi/vim25/types"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/vmworkflow"
 )
 
 func dataSourceVSphereOvfVMTemplate() *schema.Resource {
-
 	vmConfigSpecSchema := map[string]*schema.Schema{
 		"num_cpus": {
 			Type:        schema.TypeInt,
@@ -76,12 +75,12 @@ func dataSourceVSphereOvfVMTemplate() *schema.Resource {
 		"alternate_guest_name": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "The guest name for the operating system when guest_id is other or other-64.",
+			Description: "The guest name for the operating system when guest_id is otherGuest or otherGuest64.",
 		},
 		"firmware": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "The firmware interface to use on the virtual machine. Can be one of bios or EFI.",
+			Description: "The firmware interface to use on the virtual machine. Can be one of bios or efi.",
 		},
 		"sata_controller_count": {
 			Type:        schema.TypeInt,
@@ -145,24 +144,24 @@ func dataSourceVSphereOvfVMTemplate() *schema.Resource {
 func NewOvfHelperParamsFromVMDatasource(d *schema.ResourceData) *ovfdeploy.OvfHelperParams {
 	ovfParams := &ovfdeploy.OvfHelperParams{
 		AllowUnverifiedSSL: d.Get("allow_unverified_ssl_cert").(bool),
-		DatastoreId:        d.Get("datastore_id").(string),
+		DatastoreID:        d.Get("datastore_id").(string),
 		DeploymentOption:   d.Get("deployment_option").(string),
 		DiskProvisioning:   d.Get("disk_provisioning").(string),
 		FilePath:           d.Get("local_ovf_path").(string),
 		Folder:             d.Get("folder").(string),
-		HostId:             d.Get("host_system_id").(string),
-		IpAllocationPolicy: d.Get("ip_allocation_policy").(string),
-		IpProtocol:         d.Get("ip_protocol").(string),
+		HostID:             d.Get("host_system_id").(string),
+		IPAllocationPolicy: d.Get("ip_allocation_policy").(string),
+		IPProtocol:         d.Get("ip_protocol").(string),
 		Name:               d.Get("name").(string),
 		NetworkMappings:    d.Get("ovf_network_map").(map[string]interface{}),
-		OvfUrl:             d.Get("remote_ovf_url").(string),
-		PoolId:             d.Get("resource_pool_id").(string),
+		OvfURL:             d.Get("remote_ovf_url").(string),
+		PoolID:             d.Get("resource_pool_id").(string),
 	}
 	return ovfParams
 }
 
 func dataSourceVSphereOvfVMTemplateRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	ovfParams := NewOvfHelperParamsFromVMDatasource(d)
 	ovfHelper, err := ovfdeploy.NewOvfHelper(client, ovfParams)
 	if err != nil {
@@ -201,25 +200,25 @@ func dataSourceVSphereOvfVMTemplateRead(d *schema.ResourceData, meta interface{}
 			} else if scsiType != "lsilogic" {
 				return fmt.Errorf("multiple scsi controller types are not supported (found %s and %s)", scsiType, "lsilogic")
 			}
-			controllers["scsi"] = controllers["scsi"] + 1
+			controllers["scsi"]++
 		case reflect.TypeOf(&types.VirtualLsiLogicSASController{}):
 			if scsiType == "" {
 				scsiType = "lsilogic-sas"
 			} else if scsiType != "lsilogic-sas" {
 				return fmt.Errorf("multiple scsi controller types are not supported (found %s and %s)", scsiType, "lsilogic-sas")
 			}
-			controllers["scsi"] = controllers["scsi"] + 1
+			controllers["scsi"]++
 		case reflect.TypeOf(&types.ParaVirtualSCSIController{}):
 			if scsiType == "" {
 				scsiType = "pvscsi"
 			} else if scsiType != "pvscsi" {
 				return fmt.Errorf("multiple scsi controller types are not supported (found %s and %s)", scsiType, "pvsci")
 			}
-			controllers["scsi"] = controllers["scsi"] + 1
+			controllers["scsi"]++
 		case reflect.TypeOf(&types.VirtualSATAController{}):
-			controllers["sata"] = controllers["sata"] + 1
+			controllers["sata"]++
 		case reflect.TypeOf(&types.VirtualIDEController{}):
-			controllers["ide"] = controllers["ide"] + 1
+			controllers["ide"]++
 		}
 	}
 

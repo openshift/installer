@@ -3,19 +3,20 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"log"
+	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/virtualdevice"
 	"github.com/vmware/govmomi/pbm"
 	types2 "github.com/vmware/govmomi/pbm/types"
 	"github.com/vmware/govmomi/vapi/tags"
-	"log"
-	"strings"
 )
 
-const TAG_NAMESPACE = "http://www.vmware.com/storage/tag"
-const TAG_PLACEMENT = "Tag based placement"
+const TagNamespace = "http://www.vmware.com/storage/tag"
+const TagPlacement = "Tag based placement"
 
-func resourceVmStoragePolicy() *schema.Resource {
+func resourceVMStoragePolicy() *schema.Resource {
 	sch := map[string]*schema.Schema{
 		"name": {
 			Type:        schema.TypeString,
@@ -36,18 +37,18 @@ func resourceVmStoragePolicy() *schema.Resource {
 	}
 
 	return &schema.Resource{
-		Create: resourceVmStoragePolicyCreate,
-		Read:   resourceVmStoragePolicyRead,
-		Update: resourceVmStoragePolicyUpdate,
-		Delete: resourceVmStoragePolicyDelete,
+		Create: resourceVMStoragePolicyCreate,
+		Read:   resourceVMStoragePolicyRead,
+		Update: resourceVMStoragePolicyUpdate,
+		Delete: resourceVMStoragePolicyDelete,
 		Schema: sch,
 	}
 }
 
-func resourceVmStoragePolicyCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVMStoragePolicyCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Beginning create storage policy profile %s", d.Get("name").(string))
-	client := meta.(*VSphereClient).vimClient
-	rc := meta.(*VSphereClient).restClient
+	client := meta.(*Client).vimClient
+	rc := meta.(*Client).restClient
 
 	pbmClient, err := pbm.NewClient(context.Background(), client.Client)
 	if err != nil {
@@ -60,7 +61,6 @@ func resourceVmStoragePolicyCreate(d *schema.ResourceData, meta interface{}) err
 	var capabilities []pbm.Capability
 
 	for _, tagRule := range tagRules {
-
 		tagCategory := tagRule.(map[string]interface{})["tag_category"].(string)
 		_, err := tagCategoryByName(tagsManager, tagCategory)
 		if err != nil {
@@ -88,7 +88,7 @@ func resourceVmStoragePolicyCreate(d *schema.ResourceData, meta interface{}) err
 		})
 		capability := pbm.Capability{
 			ID:           tagCategory,
-			Namespace:    TAG_NAMESPACE,
+			Namespace:    TagNamespace,
 			PropertyList: properties,
 		}
 		capabilities = append(capabilities, capability)
@@ -101,7 +101,7 @@ func resourceVmStoragePolicyCreate(d *schema.ResourceData, meta interface{}) err
 		Name:           name,
 		Description:    description,
 		CapabilityList: capabilities,
-		SubProfileName: TAG_PLACEMENT,
+		SubProfileName: TagPlacement,
 	}
 	pbmCapabilityProfileCreateSpec, err := pbm.CreateCapabilityProfileSpec(capabilityProfileCreateSpec)
 	if err != nil {
@@ -116,20 +116,20 @@ func resourceVmStoragePolicyCreate(d *schema.ResourceData, meta interface{}) err
 	d.SetId(profileID.UniqueId)
 	log.Printf("[DEBUG] Storage policy create complete with Id %s", profileID.UniqueId)
 
-	return resourceVmStoragePolicyRead(d, meta)
+	return resourceVMStoragePolicyRead(d, meta)
 }
 
-func resourceVmStoragePolicyRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVMStoragePolicyRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Reading vm storage policy profile", resourceVSphereVirtualMachineIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	pbmClient, err := pbm.NewClient(context.Background(), client.Client)
 	if err != nil {
 		return fmt.Errorf("error while creating pbm client %s", err)
 	}
-	profileId := types2.PbmProfileId{
+	profileID := types2.PbmProfileId{
 		UniqueId: d.Id(),
 	}
-	pbmProfileIds := []types2.PbmProfileId{profileId}
+	pbmProfileIds := []types2.PbmProfileId{profileID}
 
 	vmStoragePolicies, err := pbmClient.RetrieveContent(context.Background(), pbmProfileIds)
 	if err != nil {
@@ -147,8 +147,8 @@ func resourceVmStoragePolicyRead(d *schema.ResourceData, meta interface{}) error
 
 	pbmCapabilityProfile := vmStoragePolicies[0].(*types2.PbmCapabilityProfile)
 	d.SetId(pbmCapabilityProfile.ProfileId.UniqueId)
-	d.Set("name", pbmCapabilityProfile.Name)
-	d.Set("description", pbmCapabilityProfile.Description)
+	_ = d.Set("name", pbmCapabilityProfile.Name)
+	_ = d.Set("description", pbmCapabilityProfile.Description)
 
 	var tagRules []map[string]interface{}
 	if pbmCapabilityProfile.Constraints != nil {
@@ -158,13 +158,12 @@ func resourceVmStoragePolicyRead(d *schema.ResourceData, meta interface{}) error
 		}
 		pbmSubProfiles := pbmSubProfileConstraints.SubProfiles
 		for _, subProfile := range pbmSubProfiles {
-			if subProfile.Name != TAG_PLACEMENT {
+			if subProfile.Name != TagPlacement {
 				continue
 			}
 			capabilities := subProfile.Capability
 			for _, capability := range capabilities {
-
-				if capability.Id.Namespace != TAG_NAMESPACE {
+				if capability.Id.Namespace != TagNamespace {
 					continue
 				}
 				tagCategory := capability.Id.Id
@@ -192,14 +191,14 @@ func resourceVmStoragePolicyRead(d *schema.ResourceData, meta interface{}) error
 			}
 		}
 	}
-	d.Set("tag_rules", tagRules)
+	_ = d.Set("tag_rules", tagRules)
 	return nil
 }
 
-func resourceVmStoragePolicyUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVMStoragePolicyUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Print("[DEBUG] :  Performing update")
-	client := meta.(*VSphereClient).vimClient
-	rc := meta.(*VSphereClient).restClient
+	client := meta.(*Client).vimClient
+	rc := meta.(*Client).restClient
 	pbmClient, err := pbm.NewClient(context.Background(), client.Client)
 	if err != nil {
 		return fmt.Errorf("error while creating pbm client %s", err)
@@ -212,13 +211,11 @@ func resourceVmStoragePolicyUpdate(d *schema.ResourceData, meta interface{}) err
 	log.Print("update spec ", updateSpec)
 
 	if d.HasChange("tag_rules") {
-
 		tagsManager := tags.NewManager(rc)
 		tagRules := d.Get("tag_rules").([]interface{})
 		var capabilities []pbm.Capability
 
 		for _, tagRule := range tagRules {
-
 			tagCategory := tagRule.(map[string]interface{})["tag_category"].(string)
 			_, err := tagCategoryByName(tagsManager, tagCategory)
 			if err != nil {
@@ -246,7 +243,7 @@ func resourceVmStoragePolicyUpdate(d *schema.ResourceData, meta interface{}) err
 			})
 			capability := pbm.Capability{
 				ID:           tagCategory,
-				Namespace:    TAG_NAMESPACE,
+				Namespace:    TagNamespace,
 				PropertyList: properties,
 			}
 			capabilities = append(capabilities, capability)
@@ -254,7 +251,7 @@ func resourceVmStoragePolicyUpdate(d *schema.ResourceData, meta interface{}) err
 
 		capabilityProfileCreateSpec := pbm.CapabilityProfileCreateSpec{
 			CapabilityList: capabilities,
-			SubProfileName: TAG_PLACEMENT,
+			SubProfileName: TagPlacement,
 		}
 		pbmCapabilityProfileCreateSpec, err := pbm.CreateCapabilityProfileSpec(capabilityProfileCreateSpec)
 		if err != nil {
@@ -263,21 +260,20 @@ func resourceVmStoragePolicyUpdate(d *schema.ResourceData, meta interface{}) err
 		updateSpec.Constraints = pbmCapabilityProfileCreateSpec.Constraints
 	}
 
-	policyIdToUpdate := types2.PbmProfileId{
+	policyIDToUpdate := types2.PbmProfileId{
 		UniqueId: d.Id(),
 	}
-	err = pbmClient.UpdateProfile(context.Background(), policyIdToUpdate, updateSpec)
+	err = pbmClient.UpdateProfile(context.Background(), policyIDToUpdate, updateSpec)
 	if err != nil {
 		return fmt.Errorf("error while performing profile update for Id %s %s", d.Id(), err)
-
 	}
 	log.Print("[DEBUG] : update complete")
-	return resourceVmStoragePolicyRead(d, meta)
+	return resourceVMStoragePolicyRead(d, meta)
 }
 
-func resourceVmStoragePolicyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVMStoragePolicyDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Performing create of VM storage policy with ID %s", d.Id())
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	pbmClient, err := pbm.NewClient(context.Background(), client.Client)
 	if err != nil {
 		return fmt.Errorf("error while creating pbm client %s", err)

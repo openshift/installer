@@ -3,7 +3,7 @@ package vsphere
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
@@ -35,7 +35,7 @@ func dataSourceVSphereDistributedVirtualSwitch() *schema.Resource {
 }
 
 func dataSourceVSphereDistributedVirtualSwitchRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}
@@ -60,9 +60,7 @@ func dataSourceVSphereDistributedVirtualSwitchRead(d *schema.ResourceData, meta 
 
 	d.SetId(props.Uuid)
 	uplinkPolicy := props.Config.(*types.VMwareDVSConfigInfo).UplinkPortPolicy.(*types.DVSNameArrayUplinkPortPolicy)
-	if err := flattenDVSNameArrayUplinkPortPolicy(d, uplinkPolicy); err != nil {
-		return err
-	}
+	_ = flattenDVSNameArrayUplinkPortPolicy(d, uplinkPolicy)
 
 	return nil
 }

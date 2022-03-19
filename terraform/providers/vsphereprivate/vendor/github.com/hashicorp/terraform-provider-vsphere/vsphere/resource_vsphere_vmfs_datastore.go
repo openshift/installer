@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datastore"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
@@ -93,7 +93,7 @@ func resourceVSphereVmfsDatastore() *schema.Resource {
 }
 
 func resourceVSphereVmfsDatastoreCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	// Load up the tags client, which will validate a proper vCenter before
 	// attempting to proceed if we have tags defined.
@@ -191,7 +191,7 @@ func resourceVSphereVmfsDatastoreCreate(d *schema.ResourceData, meta interface{}
 }
 
 func resourceVSphereVmfsDatastoreRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	id := d.Id()
 	ds, err := datastore.FromID(client, id)
 	if err != nil {
@@ -220,7 +220,7 @@ func resourceVSphereVmfsDatastoreRead(d *schema.ResourceData, meta interface{}) 
 	}
 
 	// Read tags if we have the ability to do so
-	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
+	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
 		if err := readTagsForResource(tagsClient, ds, d); err != nil {
 			return err
 		}
@@ -228,14 +228,14 @@ func resourceVSphereVmfsDatastoreRead(d *schema.ResourceData, meta interface{}) 
 
 	// Read custom attributes
 	if customattribute.IsSupported(client) {
-		customattribute.ReadFromResource(client, props.Entity(), d)
+		customattribute.ReadFromResource(props.Entity(), d)
 	}
 
 	return nil
 }
 
 func resourceVSphereVmfsDatastoreUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 
 	// Load up the tags client, which will validate a proper vCenter before
 	// attempting to proceed if we have tags defined.
@@ -295,10 +295,10 @@ func resourceVSphereVmfsDatastoreUpdate(d *schema.ResourceData, meta interface{}
 
 	// Veto this update if it means a disk was removed. Shrinking
 	// datastores/removing extents is not supported.
-	old, new := d.GetChange("disks")
+	old, newValue := d.GetChange("disks")
 	for _, v1 := range old.([]interface{}) {
 		var found bool
-		for _, v2 := range new.([]interface{}) {
+		for _, v2 := range newValue.([]interface{}) {
 			if v1.(string) == v2.(string) {
 				found = true
 			}
@@ -310,7 +310,7 @@ func resourceVSphereVmfsDatastoreUpdate(d *schema.ResourceData, meta interface{}
 
 	// Now we basically reverse what we did above when we were checking for
 	// removed disks, and add any new disks that have been added.
-	for _, v1 := range new.([]interface{}) {
+	for _, v1 := range newValue.([]interface{}) {
 		var found bool
 		for _, v2 := range old.([]interface{}) {
 			if v1.(string) == v2.(string) {
@@ -336,7 +336,7 @@ func resourceVSphereVmfsDatastoreUpdate(d *schema.ResourceData, meta interface{}
 }
 
 func resourceVSphereVmfsDatastoreDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	hsID := d.Get("host_system_id").(string)
 	dss, err := hostDatastoreSystemFromHostSystemID(client, hsID)
 	if err != nil {
@@ -419,7 +419,7 @@ func resourceVSphereVmfsDatastoreDelete(d *schema.ResourceData, meta interface{}
 	return nil
 }
 
-func resourceVSphereVmfsDatastoreCustomizeDiff(d *schema.ResourceDiff, meta interface{}) error {
+func resourceVSphereVmfsDatastoreCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 	// Check all disks and make sure that the entries are not nil, empty, or duplicates.
 	disks := make(map[string]struct{})
 	for i, v := range d.Get("disks").([]interface{}) {
@@ -445,7 +445,7 @@ func resourceVSphereVmfsDatastoreImport(d *schema.ResourceData, meta interface{}
 
 	id := ids[0]
 	hsID := ids[1]
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	ds, err := datastore.FromID(client, id)
 	if err != nil {
 		return nil, fmt.Errorf("cannot find datastore: %s", err)
@@ -470,7 +470,7 @@ func resourceVSphereVmfsDatastoreImport(d *schema.ResourceData, meta interface{}
 		return nil, fmt.Errorf("configured host_system_id %q not found as a mounted host on datastore", hsID)
 	}
 	d.SetId(id)
-	d.Set("host_system_id", hsID)
+	_ = d.Set("host_system_id", hsID)
 
 	return []*schema.ResourceData{d}, nil
 }

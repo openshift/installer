@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/govmomi/vim25/types"
 )
 
@@ -83,40 +83,6 @@ func MergeSchema(dst, src map[string]*schema.Schema) {
 		}
 		dst[k] = v
 	}
-}
-
-// StringPtr makes a *string out of the value passed in through v.
-//
-// vSphere uses nil values in strings to omit values in the SOAP XML request,
-// and helps denote inheritance in certain cases.
-func StringPtr(v string) *string {
-	return &v
-}
-
-// GetStringPtr reads a ResourceData and returns an appropriate *string for the
-// state of the definition. nil is returned if it does not exist.
-func GetStringPtr(d *schema.ResourceData, key string) *string {
-	v, e := d.GetOkExists(key)
-	if e {
-		return StringPtr(v.(string))
-	}
-	return nil
-}
-
-// GetString reads a ResourceData and returns a *string. This differs from
-// GetStringPtr in that a nil value is never returned.
-func GetString(d *schema.ResourceData, key string) *string {
-	return StringPtr(d.Get(key).(string))
-}
-
-// SetStringPtr sets a ResourceData field depending on if a *string exists or
-// not.  The field is not set if it's nil.
-func SetStringPtr(d *schema.ResourceData, key string, val *string) error {
-	if val == nil {
-		return nil
-	}
-	err := d.Set(key, val)
-	return err
 }
 
 // BoolPtr makes a *bool out of the value passed in through v.
@@ -285,36 +251,15 @@ func ByteToMB(n interface{}) interface{} {
 	panic(fmt.Errorf("non-integer type %T for value", n))
 }
 
-// ByteToGB returns n/1000000000. The input must be an integer that can be
-// divisible by 1000000000.
+// ByteToGiB returns n/1024^3, *rounded up*.
 //
-// Remember that int32 overflows at 2GB, so any values higher than that will
-// produce an inaccurate result.
-func ByteToGB(n interface{}) interface{} {
-	switch v := n.(type) {
-	case int:
-		return v / 1000000000
-	case int32:
-		return v / 1000000000
-	case int64:
-		return v / 1000000000
-	}
-	panic(fmt.Errorf("non-integer type %T for value", n))
-}
-
-// ByteToGiB returns n/1024^3. The input must be an integer that can be
-// appropriately divisible.
-//
-// Remember that int32 overflows at approximately 2GiB, so any values higher
-// than that will produce an inaccurate result.
-func ByteToGiB(n interface{}) interface{} {
-	switch v := n.(type) {
-	case int:
-		return v / int(math.Pow(1024, 3))
-	case int32:
-		return v / int32(math.Pow(1024, 3))
-	case int64:
-		return v / int64(math.Pow(1024, 3))
+// Standard integer division results in fractional GiB being discarded,
+// resulting in errors errors cloning virtual machines having disk size
+// in non-integer GiB. The result is rounded up to avoid this edge case.
+func ByteToGiB(n interface{}) int {
+	switch n.(type) {
+	case int, int32, int64:
+		return int(math.Ceil(float64(n.(int64)) / math.Pow(1024, 3)))
 	}
 	panic(fmt.Errorf("non-integer type %T for value", n))
 }
@@ -331,22 +276,6 @@ func GiBToByte(n interface{}) int64 {
 		return int64(v * int32(math.Pow(1024, 3)))
 	case int64:
 		return v * int64(math.Pow(1024, 3))
-	}
-	panic(fmt.Errorf("non-integer type %T for value", n))
-}
-
-// GBToByte returns n*1000000000.
-//
-// The output is returned as int64 - if another type is needed, it needs to be
-// cast. Remember that int32 overflows at 2GB and uint32 will overflow at 4GB.
-func GBToByte(n interface{}) int64 {
-	switch v := n.(type) {
-	case int:
-		return int64(v * 1000000000)
-	case int32:
-		return int64(v * 1000000000)
-	case int64:
-		return v * 1000000000
 	}
 	panic(fmt.Errorf("non-integer type %T for value", n))
 }
@@ -485,22 +414,13 @@ func AllFieldsEmpty(v interface{}) bool {
 
 	t := reflect.TypeOf(v)
 	if t.Kind() != reflect.Struct && (t.Kind() == reflect.Ptr && t.Elem().Kind() != reflect.Struct) {
-		if reflect.Zero(t).Interface() != reflect.ValueOf(v).Interface() {
-			return false
-		}
-		return true
+		return reflect.Zero(t).Interface() == reflect.ValueOf(v).Interface()
 	}
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
 	for i := 0; i < t.NumField(); i++ {
-		var fv reflect.Value
-		if reflect.ValueOf(v).Kind() == reflect.Ptr {
-			fv = reflect.ValueOf(v).Elem().Field(i)
-		} else {
-			fv = reflect.ValueOf(v).Elem().Field(i)
-		}
-
+		fv := reflect.ValueOf(v).Elem().Field(i)
 		ft := t.Field(i).Type
 		fz := reflect.Zero(ft)
 		switch ft.Kind() {
@@ -636,7 +556,7 @@ func DiffSlice(a, b []interface{}) []interface{} {
 				found = true
 			}
 		}
-		if found == false {
+		if !found {
 			c = append(c, aa)
 		}
 	}

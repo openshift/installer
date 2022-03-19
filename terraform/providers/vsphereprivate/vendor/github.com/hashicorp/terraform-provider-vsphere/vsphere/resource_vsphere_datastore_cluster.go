@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datacenter"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
@@ -303,14 +303,14 @@ func resourceVSphereDatastoreClusterImport(d *schema.ResourceData, meta interfac
 	if err != nil {
 		return nil, fmt.Errorf("error loading datastore cluster: %s", err)
 	}
-	client := meta.(*VSphereClient).vimClient
-	dc, err := datacenter.DatacenterFromInventoryPath(client, pod.InventoryPath)
+	client := meta.(*Client).vimClient
+	dc, err := datacenter.FromInventoryPath(client, pod.InventoryPath)
 	if err != nil {
 		return nil, fmt.Errorf("error getting datacenter of datastore cluster: %s", err)
 	}
 
 	d.SetId(pod.Reference().Value)
-	d.Set("datacenter_id", dc.Reference().Value)
+	_ = d.Set("datacenter_id", dc.Reference().Value)
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -318,7 +318,7 @@ func resourceVSphereDatastoreClusterImport(d *schema.ResourceData, meta interfac
 // resourceVSphereDatastoreClusterCreate.
 func resourceVSphereDatastoreClusterApplyCreate(d *schema.ResourceData, meta interface{}) (*object.StoragePod, error) {
 	log.Printf("[DEBUG] %s: Processing datastore cluster creation", resourceVSphereDatastoreClusterIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, err
 	}
@@ -370,7 +370,7 @@ func resourceVSphereDatastoreClusterApplyTags(d *schema.ResourceData, meta inter
 // resourceVSphereDatastoreClusterReadTags reads the tags for
 // vsphere_datastore_cluster.
 func resourceVSphereDatastoreClusterReadTags(d *schema.ResourceData, meta interface{}, pod *object.StoragePod) error {
-	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
+	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
 		log.Printf("[DEBUG] %s: Reading tags", resourceVSphereDatastoreClusterIDString(d))
 		if err := readTagsForResource(tagsClient, pod, d); err != nil {
 			return err
@@ -384,7 +384,7 @@ func resourceVSphereDatastoreClusterReadTags(d *schema.ResourceData, meta interf
 // resourceVSphereDatastoreClusterApplyCustomAttributes processes the custom
 // attributes step for both create and update for vsphere_datastore_cluster.
 func resourceVSphereDatastoreClusterApplyCustomAttributes(d *schema.ResourceData, meta interface{}, pod *object.StoragePod) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	// Verify a proper vCenter before proceeding if custom attributes are defined
 	attrsProcessor, err := customattribute.GetDiffProcessorIfAttributesDefined(client, d)
 	if err != nil {
@@ -403,7 +403,7 @@ func resourceVSphereDatastoreClusterApplyCustomAttributes(d *schema.ResourceData
 // resourceVSphereDatastoreClusterReadCustomAttributes reads the custom
 // attributes for vsphere_datastore_cluster.
 func resourceVSphereDatastoreClusterReadCustomAttributes(d *schema.ResourceData, meta interface{}, pod *object.StoragePod) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	// Read custom attributes
 	if customattribute.IsSupported(client) {
 		log.Printf("[DEBUG] %s: Reading custom attributes", resourceVSphereDatastoreClusterIDString(d))
@@ -411,7 +411,7 @@ func resourceVSphereDatastoreClusterReadCustomAttributes(d *schema.ResourceData,
 		if err != nil {
 			return err
 		}
-		customattribute.ReadFromResource(client, props.Entity(), d)
+		customattribute.ReadFromResource(props.Entity(), d)
 	} else {
 		log.Printf("[DEBUG] %s: Custom attributes unsupported on this connection, skipping", resourceVSphereDatastoreClusterIDString(d))
 	}
@@ -429,7 +429,7 @@ func resourceVSphereDatastoreClusterApplySDRSConfig(d *schema.ResourceData, meta
 	}
 
 	log.Printf("[DEBUG] %s: Applying SDRS configuration", resourceVSphereDatastoreClusterIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}
@@ -488,7 +488,7 @@ func resourceVSphereDatastoreClusterHasSDRSConfigChangeExcluded(k string) bool {
 // in the supplied ResourceData.
 func resourceVSphereDatastoreClusterGetPod(d structure.ResourceIDStringer, meta interface{}) (*object.StoragePod, error) {
 	log.Printf("[DEBUG] %s: Fetching StoragePod object from resource ID", resourceVSphereDatastoreClusterIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, err
 	}
@@ -499,7 +499,7 @@ func resourceVSphereDatastoreClusterGetPod(d structure.ResourceIDStringer, meta 
 // resourceVSphereDatastoreClusterGetPodFromPath gets the StoragePod from a
 // supplied path. If no datacenter is supplied, the path must be a full path.
 func resourceVSphereDatastoreClusterGetPodFromPath(meta interface{}, path string, dcID string) (*object.StoragePod, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	var dc *object.Datacenter
 	if dcID != "" {
 		var err error
@@ -599,7 +599,7 @@ func resourceVSphereDatastoreClusterApplyFolderChange(
 
 	if d.HasChange("folder") {
 		f := d.Get("folder").(string)
-		client := meta.(*VSphereClient).vimClient
+		client := meta.(*Client).vimClient
 		if err = storagepod.MoveToFolder(client, pod, f); err != nil {
 			return nil, fmt.Errorf("could not move datastore cluster to folder %q: %s", f, err)
 		}
@@ -660,7 +660,7 @@ func resourceVSphereDatastoreClusterApplyDelete(d *schema.ResourceData, pod *obj
 // tags, and custom attributes.
 func resourceVSphereDatastoreClusterFlattenSDRSData(d *schema.ResourceData, meta interface{}, pod *object.StoragePod) error {
 	log.Printf("[DEBUG] %s: Saving datastore cluster attributes", resourceVSphereDatastoreClusterIDString(d))
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return err
 	}

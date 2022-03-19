@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/vmware/govmomi/vapi/tags"
 )
@@ -60,7 +60,7 @@ func resourceVSphereTagCategory() *schema.Resource {
 			},
 			"associable_types": {
 				Type:        schema.TypeSet,
-				Description: "Object types to which this category's tags can be attached.",
+				Description: "Object types to which this category's tags can be attached. Valid types include: Folder, ClusterComputeResource, Datacenter, Datastore, StoragePod, DistributedVirtualPortgroup, DistributedVirtualSwitch, VmwareDistributedVirtualSwitch, HostSystem, com.vmware.content.Library, com.vmware.content.library.Item, HostNetwork, Network, OpaqueNetwork, ResourcePool, VirtualApp, VirtualMachine.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Required:    true,
 			},
@@ -69,11 +69,14 @@ func resourceVSphereTagCategory() *schema.Resource {
 }
 
 func resourceVSphereTagCategoryCreate(d *schema.ResourceData, meta interface{}) error {
-	tm, err := meta.(*VSphereClient).TagsManager()
+	tm, err := meta.(*Client).TagsManager()
 	if err != nil {
 		return err
 	}
 	associableTypesRaw := structure.SliceInterfacesToStrings(d.Get("associable_types").(*schema.Set).List())
+	if err := validateAssociableTypes(associableTypesRaw); err != nil {
+		return err
+	}
 	associableTypes := appendPrefix(associableTypesRaw)
 
 	spec := &tags.Category{
@@ -96,7 +99,7 @@ func resourceVSphereTagCategoryCreate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceVSphereTagCategoryRead(d *schema.ResourceData, meta interface{}) error {
-	tm, err := meta.(*VSphereClient).TagsManager()
+	tm, err := meta.(*Client).TagsManager()
 	if err != nil {
 		return err
 	}
@@ -107,16 +110,16 @@ func resourceVSphereTagCategoryRead(d *schema.ResourceData, meta interface{}) er
 	defer cancel()
 	category, err := tm.GetCategory(ctx, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "com.vmware.vapi.std.errors.not_found") {
+		if strings.Contains(err.Error(), "com.vmware.vapi.std.errors.not_found") || strings.Contains(err.Error(), "404 Not Found") {
 			log.Printf("[DEBUG] Tag category %s: Resource has been deleted", id)
 			d.SetId("")
 			return nil
 		}
 		return err
 	}
-	d.Set("name", category.Name)
-	d.Set("description", category.Description)
-	d.Set("cardinality", category.Cardinality)
+	_ = d.Set("name", category.Name)
+	_ = d.Set("description", category.Description)
+	_ = d.Set("cardinality", category.Cardinality)
 
 	if err := d.Set("associable_types", category.AssociableTypes); err != nil {
 		return fmt.Errorf("could not set associable type data for category: %s", err)
@@ -126,7 +129,7 @@ func resourceVSphereTagCategoryRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceVSphereTagCategoryUpdate(d *schema.ResourceData, meta interface{}) error {
-	tm, err := meta.(*VSphereClient).TagsManager()
+	tm, err := meta.(*Client).TagsManager()
 	if err != nil {
 		return err
 	}
@@ -147,6 +150,9 @@ func resourceVSphereTagCategoryUpdate(d *schema.ResourceData, meta interface{}) 
 
 	id := d.Id()
 	associableTypesRaw := structure.SliceInterfacesToStrings(d.Get("associable_types").(*schema.Set).List())
+	if err := validateAssociableTypes(associableTypesRaw); err != nil {
+		return err
+	}
 	associableTypes := appendPrefix(associableTypesRaw)
 
 	spec := &tags.Category{
@@ -166,7 +172,7 @@ func resourceVSphereTagCategoryUpdate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceVSphereTagCategoryDelete(d *schema.ResourceData, meta interface{}) error {
-	tm, err := meta.(*VSphereClient).TagsManager()
+	tm, err := meta.(*Client).TagsManager()
 	if err != nil {
 		return err
 	}
@@ -186,7 +192,7 @@ func resourceVSphereTagCategoryDelete(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceVSphereTagCategoryImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	tm, err := meta.(*VSphereClient).TagsManager()
+	tm, err := meta.(*Client).TagsManager()
 	if err != nil {
 		return nil, err
 	}
@@ -200,10 +206,28 @@ func resourceVSphereTagCategoryImport(d *schema.ResourceData, meta interface{}) 
 }
 
 func appendPrefix(associableTypes []string) []string {
-
 	var appendedTypes []string
 	for _, associableType := range associableTypes {
 		appendedTypes = append(appendedTypes, vim25Prefix+associableType)
 	}
 	return appendedTypes
+}
+
+func validateAssociableTypes(types []string) error {
+
+	mapOf := func(s []string) map[string]struct{} {
+		m := make(map[string]struct{}, len(s))
+		for _, k := range s {
+			m[k] = struct{}{}
+		}
+		return m
+	}
+
+	validTypesMap := mapOf(vSphereTagTypes)
+	for _, t := range types {
+		if _, exists := validTypesMap[t]; !exists {
+			return fmt.Errorf("%s is not a valid associable_type, valid types include: %v", t, vSphereTagTypes)
+		}
+	}
+	return nil
 }

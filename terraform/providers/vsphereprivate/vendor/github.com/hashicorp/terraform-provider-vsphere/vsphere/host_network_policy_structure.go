@@ -1,8 +1,8 @@
 package vsphere
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -128,7 +128,7 @@ func expandHostNicFailureCriteria(d *schema.ResourceData) *types.HostNicFailureC
 // HostNicFailureCriteria into the passed in ResourceData.
 func flattenHostNicFailureCriteria(d *schema.ResourceData, obj *types.HostNicFailureCriteria) error {
 	if obj.CheckBeacon != nil {
-		d.Set("check_beacon", obj.CheckBeacon)
+		_ = d.Set("check_beacon", obj.CheckBeacon)
 	}
 	return nil
 }
@@ -153,12 +153,8 @@ func flattenHostNicOrderPolicy(d *schema.ResourceData, obj *types.HostNicOrderPo
 	if obj == nil {
 		return nil
 	}
-	if err := d.Set("active_nics", structure.SliceStringsToInterfaces(obj.ActiveNic)); err != nil {
-		return err
-	}
-	if err := d.Set("standby_nics", structure.SliceStringsToInterfaces(obj.StandbyNic)); err != nil {
-		return err
-	}
+	_ = d.Set("active_nics", structure.SliceStringsToInterfaces(obj.ActiveNic))
+	_ = d.Set("standby_nics", structure.SliceStringsToInterfaces(obj.StandbyNic))
 	return nil
 }
 
@@ -189,21 +185,17 @@ func expandHostNicTeamingPolicy(d *schema.ResourceData) *types.HostNicTeamingPol
 func flattenHostNicTeamingPolicy(d *schema.ResourceData, obj *types.HostNicTeamingPolicy) error {
 	if obj.RollingOrder != nil {
 		v := *obj.RollingOrder
-		d.Set("failback", !v)
+		_ = d.Set("failback", !v)
 	}
 	if obj.NotifySwitches != nil {
-		d.Set("notify_switches", obj.NotifySwitches)
+		_ = d.Set("notify_switches", obj.NotifySwitches)
 	}
-	d.Set("teaming_policy", obj.Policy)
+	_ = d.Set("teaming_policy", obj.Policy)
 	if obj.FailureCriteria != nil {
-		if err := flattenHostNicFailureCriteria(d, obj.FailureCriteria); err != nil {
-			return err
-		}
+		_ = flattenHostNicFailureCriteria(d, obj.FailureCriteria)
 	}
-	if err := flattenHostNicOrderPolicy(d, obj.NicOrder); err != nil {
-		return err
-	}
-	return nil
+
+	return flattenHostNicOrderPolicy(d, obj.NicOrder)
 }
 
 // expandHostNetworkSecurityPolicy reads certain ResourceData keys and returns
@@ -226,13 +218,13 @@ func expandHostNetworkSecurityPolicy(d *schema.ResourceData) *types.HostNetworkS
 // HostNetworkSecurityPolicy into the passed in ResourceData.
 func flattenHostNetworkSecurityPolicy(d *schema.ResourceData, obj *types.HostNetworkSecurityPolicy) error {
 	if obj.AllowPromiscuous != nil {
-		d.Set("allow_promiscuous", obj.AllowPromiscuous)
+		_ = d.Set("allow_promiscuous", obj.AllowPromiscuous)
 	}
 	if obj.ForgedTransmits != nil {
-		d.Set("allow_forged_transmits", obj.ForgedTransmits)
+		_ = d.Set("allow_forged_transmits", obj.ForgedTransmits)
 	}
 	if obj.MacChanges != nil {
-		d.Set("allow_mac_changes", obj.MacChanges)
+		_ = d.Set("allow_mac_changes", obj.MacChanges)
 	}
 	return nil
 }
@@ -255,11 +247,11 @@ func expandHostNetworkTrafficShapingPolicy(d *schema.ResourceData) *types.HostNe
 // HostNetworkTrafficShapingPolicy into the passed in ResourceData.
 func flattenHostNetworkTrafficShapingPolicy(d *schema.ResourceData, obj *types.HostNetworkTrafficShapingPolicy) error {
 	if obj.Enabled != nil {
-		d.Set("shaping_enabled", obj.Enabled)
+		_ = d.Set("shaping_enabled", obj.Enabled)
 	}
-	d.Set("shaping_average_bandwidth", obj.AverageBandwidth)
-	d.Set("shaping_burst_size", obj.BurstSize)
-	d.Set("shaping_peak_bandwidth", obj.PeakBandwidth)
+	_ = d.Set("shaping_average_bandwidth", obj.AverageBandwidth)
+	_ = d.Set("shaping_burst_size", obj.BurstSize)
+	_ = d.Set("shaping_peak_bandwidth", obj.PeakBandwidth)
 	return nil
 }
 

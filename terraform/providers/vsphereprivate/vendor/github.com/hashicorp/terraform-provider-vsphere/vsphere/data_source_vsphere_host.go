@@ -3,7 +3,7 @@ package vsphere
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
 )
 
@@ -32,7 +32,7 @@ func dataSourceVSphereHost() *schema.Resource {
 }
 
 func dataSourceVSphereHostRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	name := d.Get("name").(string)
 	dcID := d.Get("datacenter_id").(string)
 	dc, err := datacenterFromID(client, dcID)

@@ -3,7 +3,7 @@ package vsphere
 import (
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
 )
 
@@ -52,7 +52,7 @@ func resourceVSphereFolderMigrateStateV1(s *terraform.InstanceState, meta interf
 
 	// Discover our datacenter first. This field can be empty, so we have to
 	// search for it as we normally would.
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	dc, err := getDatacenter(client, dcp)
 	if err != nil {
 		return err
@@ -62,17 +62,17 @@ func resourceVSphereFolderMigrateStateV1(s *terraform.InstanceState, meta interf
 	// we can derive our full path by combining the VM path particle and our
 	// relative path.
 	fp := folder.RootPathParticleVM.PathFromDatacenter(dc, p)
-	folder, err := folder.FromAbsolutePath(client, fp)
+	vmFolder, err := folder.FromAbsolutePath(client, fp)
 	if err != nil {
 		return err
 	}
 
-	// We got our folder!
+	// We got our vmFolder!
 	//
 	// Read will handle everything except for the ID, so just wipe attributes,
 	// update the ID, and let read take care of the rest.
 	s.Attributes = make(map[string]string)
-	s.ID = folder.Reference().Value
+	s.ID = vmFolder.Reference().Value
 
 	return nil
 }

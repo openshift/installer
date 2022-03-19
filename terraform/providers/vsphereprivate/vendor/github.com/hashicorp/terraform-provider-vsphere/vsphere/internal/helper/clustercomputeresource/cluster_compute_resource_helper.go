@@ -165,25 +165,6 @@ func Delete(cluster *object.ClusterComputeResource) error {
 	return task.Wait(ctx)
 }
 
-// IsMember checks to see if a host is a member of the compute cluster
-// in question.
-//
-// This is a pretty basic operation that checks that the parent of the
-// compute is the ClusterComputeResource.
-func IsMember(cluster *object.ClusterComputeResource, host *object.HostSystem) (bool, error) {
-	hprops, err := hostsystem.Properties(host)
-	if err != nil {
-		return false, fmt.Errorf("error getting properties for cluster %q: %s", host.Name(), err)
-	}
-	if hprops.Parent == nil {
-		return false, nil
-	}
-	if *hprops.Parent != cluster.Reference() {
-		return false, nil
-	}
-	return true, nil
-}
-
 func Hosts(cluster *object.ClusterComputeResource) ([]*object.HostSystem, error) {
 	ctx := context.TODO()
 	return cluster.Hosts(ctx)
@@ -193,7 +174,6 @@ func Hosts(cluster *object.ClusterComputeResource) ([]*object.HostSystem, error)
 // machines are moved to the cluster's root resource pool and any resource
 // pools on the host itself are deleted.
 func MoveHostsInto(client *govmomi.Client, cluster *object.ClusterComputeResource, hosts []*object.HostSystem) error {
-
 	var hsNames []string
 	var hsRefs []types.ManagedObjectReference
 
@@ -232,8 +212,8 @@ func MoveHostsInto(client *govmomi.Client, cluster *object.ClusterComputeResourc
 				}
 			}
 
-			totalVmTimeout := provider.DefaultAPITimeout * time.Duration(len(hsProps.Vm)+1)
-			err = hostsystem.EnterMaintenanceMode(hs, totalVmTimeout, evacuate)
+			totalVMTimeout := provider.DefaultAPITimeout * time.Duration(len(hsProps.Vm)+1)
+			err = hostsystem.EnterMaintenanceMode(hs, totalVMTimeout, evacuate)
 			if err != nil {
 				return fmt.Errorf("while putting host %q in maintenance mode: %s", hs.Reference().Value, err)
 			}

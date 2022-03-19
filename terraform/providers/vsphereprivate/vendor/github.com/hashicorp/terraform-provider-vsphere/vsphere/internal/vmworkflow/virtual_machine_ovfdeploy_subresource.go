@@ -1,7 +1,7 @@
 package vmworkflow
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func VirtualMachineOvfDeploySchema() map[string]*schema.Schema {
@@ -54,6 +54,13 @@ func VirtualMachineOvfDeploySchema() map[string]*schema.Schema {
 			Optional:    true,
 			DefaultFunc: schema.EnvDefaultFunc("VSPHERE_ALLOW_UNVERIFIED_SSL", false),
 			Description: "Allow unverified ssl certificates while deploying ovf/ova from url.",
+		},
+		"enable_hidden_properties": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Allow properties with ovf:userConfigurable=false to be set.",
+			ForceNew:    true,
 		},
 	}
 }

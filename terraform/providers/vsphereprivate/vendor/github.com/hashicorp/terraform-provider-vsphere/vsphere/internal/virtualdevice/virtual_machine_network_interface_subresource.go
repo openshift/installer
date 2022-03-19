@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/dvportgroup"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/network"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/nsx"
@@ -39,10 +39,6 @@ var networkInterfaceSubresourceTypeAllowedValues = []string{
 	networkInterfaceSubresourceTypeE1000,
 	networkInterfaceSubresourceTypeE1000e,
 	networkInterfaceSubresourceTypeVmxnet3,
-}
-
-var networkInterfaceSubresourceMACAddressTypeAllowedValues = []string{
-	string(types.VirtualEthernetCardMacTypeManual),
 }
 
 // NetworkInterfaceSubresourceSchema returns the schema for the disk
@@ -535,6 +531,64 @@ func ReadNetworkInterfaceTypes(l object.VirtualDeviceList) ([]string, error) {
 	return out, nil
 }
 
+// ReadNetworkInterfaces returns a list of network interfaces. This is used
+// in the VM data source to discover the properties of the network interfaces on the
+// virtual machine. The list is sorted by the order that they would be added in
+// if a clone were to be done.
+func ReadNetworkInterfaces(l object.VirtualDeviceList) ([]map[string]interface{}, error) {
+	log.Printf("[DEBUG] ReadNetworkInterfaces: Fetching network interfaces")
+	devices := l.Select(func(device types.BaseVirtualDevice) bool {
+		if _, ok := device.(types.BaseVirtualEthernetCard); ok {
+			return true
+		}
+		return false
+	})
+	log.Printf("[DEBUG] ReadNetworkInterface: Network devices located: %s", DeviceListString(devices))
+	// Sort the device list, in case it's not sorted already.
+	devSort := virtualDeviceListSorter{
+		Sort:       devices,
+		DeviceList: l,
+	}
+	sort.Sort(devSort)
+	devices = devSort.Sort
+	log.Printf("[DEBUG] ReadNetworkInterfaceTypes: Network devices order after sort: %s", DeviceListString(devices))
+	var out []map[string]interface{}
+	for _, device := range devices {
+		m := make(map[string]interface{})
+
+		ethernetCard := device.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard()
+
+		// Determine the network from the backing object
+		var networkID string
+
+		switch backing := ethernetCard.Backing.(type) {
+		case *types.VirtualEthernetCardNetworkBackingInfo:
+			if backing.Network != nil {
+				networkID = backing.Network.Value
+			}
+		case *types.VirtualEthernetCardOpaqueNetworkBackingInfo:
+			networkID = backing.OpaqueNetworkId
+		case *types.VirtualEthernetCardDistributedVirtualPortBackingInfo:
+			networkID = backing.Port.PortgroupKey
+		default:
+		}
+
+		// Set properties
+
+		m["adapter_type"] = virtualEthernetCardString(device.(types.BaseVirtualEthernetCard))
+		m["bandwidth_limit"] = ethernetCard.ResourceAllocation.Limit
+		m["bandwidth_reservation"] = ethernetCard.ResourceAllocation.Reservation
+		m["bandwidth_share_level"] = ethernetCard.ResourceAllocation.Share.Level
+		m["bandwidth_share_count"] = ethernetCard.ResourceAllocation.Share.Shares
+		m["mac_address"] = ethernetCard.MacAddress
+		m["network_id"] = networkID
+
+		out = append(out, m)
+	}
+	log.Printf("[DEBUG] ReadNetworkInterfaces: Network interfaces returned: %+v", out)
+	return out, nil
+}
+
 // baseVirtualEthernetCardToBaseVirtualDevice converts a
 // BaseVirtualEthernetCard value into a BaseVirtualDevice.
 func baseVirtualEthernetCardToBaseVirtualDevice(v types.BaseVirtualEthernetCard) types.BaseVirtualDevice {
@@ -619,7 +673,10 @@ func (r *NetworkInterfaceSubresource) Create(l object.VirtualDeviceList) ([]type
 		return nil, err
 	}
 	// Ensure the device starts connected
-	l.Connect(device)
+	err = l.Connect(device)
+	if err != nil && !strings.Contains(err.Error(), "is not connectable") {
+		return nil, err
+	}
 
 	// Set base-level card bits now
 	card := device.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard()
@@ -770,14 +827,13 @@ func (r *NetworkInterfaceSubresource) Update(l object.VirtualDeviceList) ([]type
 		// Copy controller attributes and unit number
 		newCard.ControllerKey = card.ControllerKey
 		if card.UnitNumber != nil {
-			var un int32
-			un = *card.UnitNumber
+			un := *card.UnitNumber
 			newCard.UnitNumber = &un
 		}
 		// Ensure the device starts connected
 		// Set the key
 		newCard.Key = l.NewKey()
-		// If VMware tools is not running, this operation requires a reboot
+		// If VMware Tools is not running, this operation requires a reboot
 		if r.rdd.Get("vmware_tools_status").(string) != string(types.VirtualMachineToolsRunningStatusGuestToolsRunning) {
 			r.SetRestart("adapter_type")
 		}
@@ -872,7 +928,7 @@ func (r *NetworkInterfaceSubresource) Delete(l object.VirtualDeviceList) ([]type
 	if err != nil {
 		return nil, err
 	}
-	// If VMware tools is not running, this operation requires a reboot
+	// If VMware Tools is not running, this operation requires a reboot
 	if r.rdd.Get("vmware_tools_status").(string) != string(types.VirtualMachineToolsRunningStatusGuestToolsRunning) {
 		r.SetRestart("<device delete>")
 	}

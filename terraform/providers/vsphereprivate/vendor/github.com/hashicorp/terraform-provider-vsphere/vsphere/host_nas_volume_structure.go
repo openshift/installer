@@ -3,8 +3,8 @@ package vsphere
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -84,7 +84,7 @@ func schemaHostNasVolumeSpec() map[string]*schema.Schema {
 			),
 		},
 		"protocol_endpoint": {
-			Type:        schema.TypeString,
+			Type:        schema.TypeBool,
 			Description: "Indicates that this NAS volume is a protocol endpoint. This field is only populated if the host supports virtual datastores.",
 			Computed:    true,
 		},
@@ -98,9 +98,8 @@ func expandHostNasVolumeSpec(d *schema.ResourceData) (*types.HostNasVolumeSpec, 
 	var remoteHost string
 	if len(remoteHosts) == 0 || (len(remoteHosts) > 0 && remoteHosts[0] == nil) {
 		return nil, fmt.Errorf("remote hosts cannot be empty")
-	} else {
-		remoteHost = remoteHosts[0].(string)
 	}
+	remoteHost = remoteHosts[0].(string)
 	obj := &types.HostNasVolumeSpec{
 		AccessMode:      d.Get("access_mode").(string),
 		LocalPath:       d.Get("name").(string),
@@ -120,13 +119,10 @@ func expandHostNasVolumeSpec(d *schema.ResourceData) (*types.HostNasVolumeSpec, 
 // Note the name attribute is not set here, bur rather set in
 // flattenDatastoreSummary and sourced from there.
 func flattenHostNasVolume(d *schema.ResourceData, obj *types.HostNasVolume) error {
-	d.Set("remote_path", obj.RemotePath)
-	d.Set("security_type", obj.SecurityType)
-	d.Set("protocol_endpoint", obj.ProtocolEndpoint)
-
-	if err := d.Set("remote_hosts", obj.RemoteHostNames); err != nil {
-		return err
-	}
+	_ = d.Set("remote_path", obj.RemotePath)
+	_ = d.Set("security_type", obj.SecurityType)
+	_ = d.Set("protocol_endpoint", obj.ProtocolEndpoint)
+	_ = d.Set("remote_hosts", obj.RemoteHostNames)
 	return nil
 }
 

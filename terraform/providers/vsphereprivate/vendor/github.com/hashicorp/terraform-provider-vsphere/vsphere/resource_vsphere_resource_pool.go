@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/resourcepool"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure"
@@ -317,7 +317,7 @@ func expandResourcePoolMemoryAllocation(d *schema.ResourceData) types.ResourceAl
 }
 
 func resourceVSphereResourcePoolClient(meta interface{}) (*govmomi.Client, error) {
-	client := meta.(*VSphereClient).vimClient
+	client := meta.(*Client).vimClient
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return nil, err
 	}
@@ -356,7 +356,7 @@ func resourceVSphereResourcePoolApplyTags(d *schema.ResourceData, meta interface
 // resourceVSphereResourcePoolReadTags reads the tags for
 // vsphere_resource_pool.
 func resourceVSphereResourcePoolReadTags(d *schema.ResourceData, meta interface{}, rp *object.ResourcePool) error {
-	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
+	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
 		log.Printf("[DEBUG] %s: Reading tags", resourceVSphereResourcePoolIDString(d))
 		if err := readTagsForResource(tagsClient, rp, d); err != nil {
 			return err

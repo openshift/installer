@@ -107,7 +107,6 @@ func HostInMaintenance(host *object.HostSystem) (bool, error) {
 	}
 
 	return hostObject.Runtime.InMaintenanceMode, nil
-
 }
 
 // EnterMaintenanceMode puts a host into maintenance mode. If evacuate is set
@@ -120,6 +119,9 @@ func EnterMaintenanceMode(host *object.HostSystem, timeout time.Duration, evacua
 	}
 
 	maintMode, err := HostInMaintenance(host)
+	if err != nil {
+		return err
+	}
 	if maintMode {
 		log.Printf("[DEBUG] Host %q is already in maintenance mode", host.Name())
 		return nil
@@ -146,7 +148,7 @@ func EnterMaintenanceMode(host *object.HostSystem, timeout time.Duration, evacua
 	}
 
 	if to.Info.State != "success" {
-		return fmt.Errorf("Error while putting host(%s) in maintenance mode: %s", host.Reference(), to.Info.Error)
+		return fmt.Errorf("error while putting host(%s) in maintenance mode: %s", host.Reference(), to.Info.Error)
 	}
 	return nil
 }
@@ -154,6 +156,9 @@ func EnterMaintenanceMode(host *object.HostSystem, timeout time.Duration, evacua
 // ExitMaintenanceMode takes a host out of maintenance mode.
 func ExitMaintenanceMode(host *object.HostSystem, timeout time.Duration) error {
 	maintMode, err := HostInMaintenance(host)
+	if err != nil {
+		return err
+	}
 	if !maintMode {
 		log.Printf("[DEBUG] Host %q is already not in maintenance mode", host.Name())
 		return nil
@@ -180,7 +185,7 @@ func ExitMaintenanceMode(host *object.HostSystem, timeout time.Duration) error {
 	}
 
 	if to.Info.State != "success" {
-		return fmt.Errorf("Error while getting host(%s) out of maintenance mode: %s", host.Reference(), to.Info.Error)
+		return fmt.Errorf("error while getting host(%s) out of maintenance mode: %s", host.Reference(), to.Info.Error)
 	}
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/govmomi/vim25/types"
 )
 
@@ -34,7 +34,7 @@ func (a int32arr) Len() int           { return len(a) }
 func (a int32arr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a int32arr) Less(i, j int) bool { return a[i] < a[j] }
 
-// buildAndSelectGuestIPs builds a list of IP addresses known to VMware tools.
+// buildAndSelectGuestIPs builds a list of IP addresses known to VMware Tools.
 // From this list, it selects the first IP address it seems that's associated
 // with a default gateway - first IPv4, and then IPv6 if criteria can't be
 // satisfied - and sets that as the default_ip_address and also the IP address
@@ -77,13 +77,13 @@ func buildAndSelectGuestIPs(d *schema.ResourceData, guest types.GuestInfo) error
 				if ip.To4() != nil {
 					v4net2addrs[n.DeviceConfigId] = append(v4net2addrs[n.DeviceConfigId], addr.IpAddress)
 					mask = net.CIDRMask(int(addr.PrefixLength), 32)
-					if ip.Mask(mask).Equal(v4gw.Mask(mask)) && v4primary == nil {
+					if v4gw != nil && ip.Mask(mask).Equal(v4gw.Mask(mask)) && v4primary == nil {
 						v4primary = ip
 					}
 				} else {
 					v6net2addrs[n.DeviceConfigId] = append(v6net2addrs[n.DeviceConfigId], addr.IpAddress)
 					mask = net.CIDRMask(int(addr.PrefixLength), 128)
-					if ip.Mask(mask).Equal(v6gw.Mask(mask)) && v6primary == nil {
+					if v6gw != nil && ip.Mask(mask).Equal(v6gw.Mask(mask)) && v6primary == nil {
 						v6primary = ip
 					}
 				}
@@ -92,9 +92,9 @@ func buildAndSelectGuestIPs(d *schema.ResourceData, guest types.GuestInfo) error
 	}
 
 	sort.Sort(deviceConfigIds)
-	for _, deviceConfigId := range deviceConfigIds {
-		addrs = append(addrs, v4net2addrs[deviceConfigId]...)
-		addrs = append(addrs, v6net2addrs[deviceConfigId]...)
+	for _, deviceConfigID := range deviceConfigIds {
+		addrs = append(addrs, v4net2addrs[deviceConfigID]...)
+		addrs = append(addrs, v6net2addrs[deviceConfigID]...)
 	}
 
 	// Fall back to the IpAddress property in GuestInfo directly when the
@@ -106,7 +106,7 @@ func buildAndSelectGuestIPs(d *schema.ResourceData, guest types.GuestInfo) error
 
 	if len(addrs) < 1 {
 		// No IP addresses were discovered. This more than likely means that the VM
-		// is powered off, or VMware tools is not installed. We can return here,
+		// is powered off, or VMware Tools is not installed. We can return here,
 		// setting the empty set of addresses to avoid spurious diffs.
 		log.Printf("[DEBUG] %s: No IP addresses found in guest state", resourceVSphereVirtualMachineIDString(d))
 		return d.Set("guest_ip_addresses", addrs)
@@ -121,7 +121,7 @@ func buildAndSelectGuestIPs(d *schema.ResourceData, guest types.GuestInfo) error
 		primary = addrs[0]
 	}
 	log.Printf("[DEBUG] %s: Primary IP address: %s", resourceVSphereVirtualMachineIDString(d), primary)
-	d.Set("default_ip_address", primary)
+	_ = d.Set("default_ip_address", primary)
 	log.Printf("[DEBUG] %s: All IP addresses: %s", resourceVSphereVirtualMachineIDString(d), strings.Join(addrs, ","))
 	if err := d.Set("guest_ip_addresses", addrs); err != nil {
 		return err

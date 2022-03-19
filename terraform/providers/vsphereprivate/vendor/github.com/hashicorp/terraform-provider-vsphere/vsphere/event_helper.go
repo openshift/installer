@@ -12,10 +12,8 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-// A list of known event IDs that we use for querying events.
 const (
-	eventTypeVmPoweredOffEvent      = "VmPoweredOffEvent"
-	eventTypeCustomizationSucceeded = "CustomizationSucceeded"
+	eventTypeVMPoweredOffEvent = "VmPoweredOffEvent"
 )
 
 // virtualMachineCustomizationWaiter is an object that waits for customization
