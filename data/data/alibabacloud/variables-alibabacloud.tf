@@ -94,3 +94,9 @@ The stub Ignition configuration used to boot the bootstrap ECS instance. This al
 specified in ‘ali_ignition_bucket’.
 EOF
 }
+
+variable "ali_bootstrap_lb" {
+  type        = bool
+  description = "Setting this to false allows the bootstrap resources to be removed from the cluster load balancers."
+  default     = true
+}
