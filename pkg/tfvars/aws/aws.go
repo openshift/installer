@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 
-	configaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
@@ -34,7 +33,6 @@ type config struct {
 	PublicSubnets           *[]string         `json:"aws_public_subnets,omitempty"`
 	InternalZone            string            `json:"aws_internal_zone,omitempty"`
 	PublishStrategy         string            `json:"aws_publish_strategy,omitempty"`
-	SkipRegionCheck         bool              `json:"aws_skip_region_validation"`
 	IgnitionBucket          string            `json:"aws_ignition_bucket"`
 	BootstrapIgnitionStub   string            `json:"aws_bootstrap_stub_ignition"`
 	MasterIAMRoleName       string            `json:"aws_master_iam_role_name,omitempty"`
@@ -128,7 +126,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PrivateSubnets:          sources.PrivateSubnets,
 		InternalZone:            sources.InternalZone,
 		PublishStrategy:         string(sources.Publish),
-		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region, sources.Architecture),
 		IgnitionBucket:          sources.IgnitionBucket,
 		MasterIAMRoleName:       sources.MasterIAMRoleName,
 		WorkerIAMRoleName:       sources.WorkerIAMRoleName,
