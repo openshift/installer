@@ -1,5 +1,5 @@
 {
-  "stream": "rhcos-4.10",
+  "stream": "rhcos-4.11",
   "metadata": {
     "last-modified": "2022-03-19T00:15:57Z",
     "generator": "plume cosa2stream 0.13.0+21-g434af80e2-dirty"
