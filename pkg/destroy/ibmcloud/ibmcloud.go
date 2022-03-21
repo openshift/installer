@@ -21,6 +21,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/version"
@@ -173,20 +174,16 @@ func (o *ClusterUninstaller) executeStageFunction(f struct {
 
 func (o *ClusterUninstaller) loadSDKServices() error {
 	apiKey := os.Getenv("IC_API_KEY")
-	authenticator := &core.IamAuthenticator{
-		ApiKey: apiKey,
-	}
-
-	err := authenticator.Validate()
-	if err != nil {
-		return err
-	}
 
 	userAgentString := fmt.Sprintf("OpenShift/4.x Destroyer/%s", version.Raw)
 
 	// ResourceManagerV2
+	rmAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	if err != nil {
+		return err
+	}
 	o.managementSvc, err = resourcemanagerv2.NewResourceManagerV2(&resourcemanagerv2.ResourceManagerV2Options{
-		Authenticator: authenticator,
+		Authenticator: rmAuthenticator,
 	})
 	if err != nil {
 		return err
@@ -194,8 +191,12 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	o.managementSvc.Service.SetUserAgent(userAgentString)
 
 	// ResourceControllerV2
+	rcAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	if err != nil {
+		return err
+	}
 	o.controllerSvc, err = resourcecontrollerv2.NewResourceControllerV2(&resourcecontrollerv2.ResourceControllerV2Options{
-		Authenticator: authenticator,
+		Authenticator: rcAuthenticator,
 	})
 	if err != nil {
 		return err
@@ -203,8 +204,12 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	o.controllerSvc.Service.SetUserAgent(userAgentString)
 
 	// IamPolicyManagementV1
+	ipmAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	if err != nil {
+		return err
+	}
 	o.iamPolicyManagementSvc, err = iampolicymanagementv1.NewIamPolicyManagementV1(&iampolicymanagementv1.IamPolicyManagementV1Options{
-		Authenticator: authenticator,
+		Authenticator: ipmAuthenticator,
 	})
 	if err != nil {
 		return err
@@ -212,8 +217,12 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	o.iamPolicyManagementSvc.Service.SetUserAgent(userAgentString)
 
 	// ZonesV1
+	zAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	if err != nil {
+		return err
+	}
 	o.zonesSvc, err = zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
-		Authenticator: authenticator,
+		Authenticator: zAuthenticator,
 		Crn:           core.StringPtr(o.CISInstanceCRN),
 	})
 	if err != nil {
@@ -239,8 +248,12 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	}
 
 	// DnsRecordsV1
+	dnsAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	if err != nil {
+		return err
+	}
 	o.dnsRecordsSvc, err = dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
-		Authenticator:  authenticator,
+		Authenticator:  dnsAuthenticator,
 		Crn:            core.StringPtr(o.CISInstanceCRN),
 		ZoneIdentifier: core.StringPtr(zoneID),
 	})
@@ -250,8 +263,12 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	o.dnsRecordsSvc.Service.SetUserAgent(userAgentString)
 
 	// VpcV1
+	vpcAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	if err != nil {
+		return err
+	}
 	o.vpcSvc, err = vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
-		Authenticator: authenticator,
+		Authenticator: vpcAuthenticator,
 	})
 	if err != nil {
 		return err

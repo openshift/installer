@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sync"
+
+	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 // Metadata holds additional metadata for InstallConfig resources that
@@ -89,4 +91,9 @@ func (m *Metadata) Client() (*Client, error) {
 		m.client = client
 	}
 	return m.client, nil
+}
+
+// NewIamAuthenticator returns a new IamAuthenticator for using IBM Cloud services.
+func NewIamAuthenticator(apiKey string) (*core.IamAuthenticator, error) {
+	return core.NewIamAuthenticatorBuilder().SetApiKey(apiKey).Build()
 }

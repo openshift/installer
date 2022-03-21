@@ -39,10 +39,11 @@ type API interface {
 
 // Client makes calls to the IBM Cloud API.
 type Client struct {
+	APIKey string
+
 	managementAPI *resourcemanagerv2.ResourceManagerV2
 	controllerAPI *resourcecontrollerv2.ResourceControllerV2
 	vpcAPI        *vpcv1.VpcV1
-	Authenticator *core.IamAuthenticator
 }
 
 // cisServiceID is the Cloud Internet Services' catalog service ID.
@@ -82,12 +83,9 @@ type EncryptionKeyResponse struct{}
 // NewClient initializes a client with a session.
 func NewClient() (*Client, error) {
 	apiKey := os.Getenv("IC_API_KEY")
-	authenticator := &core.IamAuthenticator{
-		ApiKey: apiKey,
-	}
 
 	client := &Client{
-		Authenticator: authenticator,
+		APIKey: apiKey,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
@@ -117,15 +115,19 @@ func (c *Client) loadSDKServices() error {
 // GetAuthenticatorAPIKeyDetails gets detailed information on the API key used
 // for authentication to the IBM Cloud APIs
 func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return nil, err
+	}
 	iamIdentityService, err := iamidentityv1.NewIamIdentityV1(&iamidentityv1.IamIdentityV1Options{
-		Authenticator: c.Authenticator,
+		Authenticator: authenticator,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	options := iamIdentityService.NewGetAPIKeysDetailsOptions()
-	options.SetIamAPIKey(c.Authenticator.ApiKey)
+	options.SetIamAPIKey(c.APIKey)
 	details, _, err := iamIdentityService.GetAPIKeysDetailsWithContext(ctx, options)
 	if err != nil {
 		return nil, err
@@ -188,9 +190,13 @@ func (c *Client) GetDedicatedHostProfiles(ctx context.Context, region string) ([
 // GetDNSRecordsByName gets DNS records in specific Cloud Internet Services instance
 // by its CRN, zone ID, and DNS record name.
 func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error) {
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return nil, err
+	}
 	// Set CIS DNS record service
 	dnsService, err := dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
-		Authenticator:  c.Authenticator,
+		Authenticator:  authenticator,
 		Crn:            core.StringPtr(crnstr),
 		ZoneIdentifier: core.StringPtr(zoneID),
 	})
@@ -241,9 +247,13 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
 
 	var allZones []DNSZoneResponse
 	for _, instance := range listResourceInstancesResponse.Resources {
+		authenticator, err := NewIamAuthenticator(c.APIKey)
+		if err != nil {
+			return nil, err
+		}
 		crnstr := instance.CRN
 		zonesService, err := zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
-			Authenticator: c.Authenticator,
+			Authenticator: authenticator,
 			Crn:           crnstr,
 		})
 		if err != nil {
@@ -396,8 +406,12 @@ func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
 }
 
 func (c *Client) loadResourceManagementAPI() error {
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return err
+	}
 	options := &resourcemanagerv2.ResourceManagerV2Options{
-		Authenticator: c.Authenticator,
+		Authenticator: authenticator,
 	}
 	resourceManagerV2Service, err := resourcemanagerv2.NewResourceManagerV2(options)
 	if err != nil {
@@ -408,8 +422,12 @@ func (c *Client) loadResourceManagementAPI() error {
 }
 
 func (c *Client) loadResourceControllerAPI() error {
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return err
+	}
 	options := &resourcecontrollerv2.ResourceControllerV2Options{
-		Authenticator: c.Authenticator,
+		Authenticator: authenticator,
 	}
 	resourceControllerV2Service, err := resourcecontrollerv2.NewResourceControllerV2(options)
 	if err != nil {
@@ -420,8 +438,12 @@ func (c *Client) loadResourceControllerAPI() error {
 }
 
 func (c *Client) loadVPCV1API() error {
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return err
+	}
 	vpcService, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
-		Authenticator: c.Authenticator,
+		Authenticator: authenticator,
 	})
 	if err != nil {
 		return err
