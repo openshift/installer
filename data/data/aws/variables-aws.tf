@@ -137,11 +137,6 @@ variable "aws_publish_strategy" {
   description = "The cluster publishing strategy, either Internal or External"
 }
 
-variable "aws_skip_region_validation" {
-  type        = bool
-  description = "This decides if the AWS provider should validate if the region is known."
-}
-
 variable "aws_ignition_bucket" {
   type        = string
   description = "The S3 bucket where the ignition configuration is stored"
