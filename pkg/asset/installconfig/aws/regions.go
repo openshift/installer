@@ -7,10 +7,10 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-// knownRegions is a list of AWS regions that the installer recognizes.
-// This is subset of AWS regions and the regions where RHEL CoreOS images are published.
-// The result is a map of region identifier to region description
-func knownRegions(architecture types.Architecture) map[string]string {
+// knownPublicRegions is the subset of public AWS regions where RHEL CoreOS images are published.
+// This subset does not include supported regions which are found in other partitions, such as us-gov-east-1.
+// Returns: a map of region identifier to region description.
+func knownPublicRegions(architecture types.Architecture) map[string]string {
 	required := rhcos.AMIRegions(architecture)
 
 	regions := make(map[string]string)
@@ -22,10 +22,10 @@ func knownRegions(architecture types.Architecture) map[string]string {
 	return regions
 }
 
-// IsKnownRegion return true is a specified region is Known to the installer.
-// A known region is subset of AWS regions and the regions where RHEL CoreOS images are published.
-func IsKnownRegion(region string, architecture types.Architecture) bool {
-	if _, ok := knownRegions(architecture)[region]; ok {
+// IsKnownPublicRegion returns true if a specified region is Known to the installer.
+// A known region is the subset of public AWS regions where RHEL CoreOS images are published.
+func IsKnownPublicRegion(region string, architecture types.Architecture) bool {
+	if _, ok := knownPublicRegions(architecture)[region]; ok {
 		return true
 	}
 	return false
