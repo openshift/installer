@@ -12,9 +12,7 @@ wait_for_assisted_service
 CLUSTER_CREATE_OUT=$(curl -X POST -H "Content-Type: application/json" -d '{{.ClusterCreateParamsJSON}}' {{.ServiceBaseURL}}/api/assisted-install/v2/clusters)
 echo "cluster create response: $CLUSTER_CREATE_OUT"
 # pick cluster_id out from cluster create response
-CLUSTER_ID=$(echo $CLUSTER_CREATE_OUT | jq .id)
-# trim quotes from CLUSTER_ID
-CLUSTER_ID=${CLUSTER_ID//\"}
+CLUSTER_ID=$(echo $CLUSTER_CREATE_OUT | jq -r .id)
 echo "CLUSTER_ID: $CLUSTER_ID"
 
 INFRA_ENV_PARAMS_JSON='{{.InfraEnvCreateParamsJSON}}'
