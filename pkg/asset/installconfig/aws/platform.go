@@ -17,7 +17,7 @@ import (
 // Platform collects AWS-specific configuration.
 func Platform() (*aws.Platform, error) {
 	architecture := version.DefaultArch()
-	regions := knownRegions(architecture)
+	regions := knownPublicRegions(architecture)
 	longRegions := make([]string, 0, len(regions))
 	shortRegions := make([]string, 0, len(regions))
 	for id, location := range regions {
@@ -35,7 +35,7 @@ func Platform() (*aws.Platform, error) {
 	}
 
 	defaultRegion := "us-east-1"
-	if !IsKnownRegion(defaultRegion, architecture) {
+	if !IsKnownPublicRegion(defaultRegion, architecture) {
 		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
 	}
 
@@ -46,7 +46,7 @@ func Platform() (*aws.Platform, error) {
 
 	defaultRegionPointer := ssn.Config.Region
 	if defaultRegionPointer != nil && *defaultRegionPointer != "" {
-		if IsKnownRegion(*defaultRegionPointer, architecture) {
+		if IsKnownPublicRegion(*defaultRegionPointer, architecture) {
 			defaultRegion = *defaultRegionPointer
 		} else {
 			logrus.Warnf("Unrecognized AWS region %q, defaulting to %s", *defaultRegionPointer, defaultRegion)
