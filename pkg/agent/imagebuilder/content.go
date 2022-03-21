@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"path"
 	"strings"
@@ -29,10 +30,12 @@ type ConfigBuilder struct {
 
 func New(nodeZeroIP string) *ConfigBuilder {
 	pullSecret := manifests.GetPullSecret()
-	// TODO: try setting SERVICE_BASE_URL within agent.service
-	serviceBaseURL := getEnv("SERVICE_BASE_URL", "http://"+nodeZeroIP+":8090")
 	// TODO: needs appropriate value if AUTH_TYPE != none
 	pullSecretToken := getEnv("PULL_SECRET_TOKEN", "")
+
+	serviceBaseURL := fmt.Sprintf("http://%s/",
+		net.JoinHostPort(nodeZeroIP, "8090"))
+
 	clusterParams := manifests.CreateClusterParams()
 	clusterJSON, err := json.Marshal(clusterParams)
 	if err != nil {
