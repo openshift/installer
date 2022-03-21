@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
-	"golang.org/x/net/proxy"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -321,20 +321,12 @@ func validateEndpointAccessibility(endpointURL string) error {
 	if endpointURL == "e2e.local" {
 		return nil
 	}
-	URL, err := url.Parse(endpointURL)
+	_, err := url.Parse(endpointURL)
 	if err != nil {
 		return err
 	}
-	port := URL.Port()
-	if port == "" {
-		port = "https"
-	}
-	conn, err := proxy.Dial(context.Background(), "tcp", net.JoinHostPort(URL.Hostname(), port))
-	if err != nil {
-		return err
-	}
-	conn.Close()
-	return nil
+	_, err = http.Head(endpointURL)
+	return err
 }
 
 var requiredServices = []string{
