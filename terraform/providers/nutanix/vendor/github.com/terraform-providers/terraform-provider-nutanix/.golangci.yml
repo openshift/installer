@@ -1,0 +1,66 @@
+linters-settings:
+  govet:
+    check-shadowing: true
+  golint:
+    min-confidence: 0
+  maligned:
+    suggest-new: true
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  depguard:
+    list-type: blacklist
+    packages:
+      # logging is allowed only by logutils.Log, logrus
+      # is allowed to use only in logutils package
+      - github.com/sirupsen/logrus
+  misspell:
+    locale: US
+  lll:
+    # Default is 120. '\t' is counted as 1 character.
+    # set our project to 200, as things like v3_structs with inline comments end up being a touch long
+    # also, for anyone using vscode, use the following configs:
+    # "rewrap.wrappingColumn": 200 ... requires the rewrap plugin
+    # "editor.rulers": [200]
+    line-length: 200
+
+linters:
+  enable-all: true
+  disable:
+    - gocyclo
+      # disabled gocyclo as we do have a lot of large methods to iterate thru the large JSON specs
+    - dupl
+      # disabled dupl as we do have a lot of duplicated code between resources and their tests, which gets flagged by this
+    - errcheck
+      # errocheck disabled to silience errors here: https://travis-ci.com/nutanix/terraform-provider-nutanix/jobs/131154435
+      # Example error:
+      # nutanix/data_source_nutanix_image.go:61:7: Error return value of `d.Set` is not checked (errcheck)
+      # d.Set("name", utils.StringValue(resp.Status.Name))
+      # waiting on terraform/hashi to let us know how they want us to changle those errors
+      # see Error return value of `d.Set` is not checked (errcheck)
+    - typecheck
+    - gosec
+    - gochecknoinits
+    - gochecknoglobals
+    - funlen
+    - gocognit
+    - godox
+    - wsl
+    - nestif
+    - godot
+    - goconst
+
+issues:
+  exclude:
+    - composite literal uses unkeyed fields
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - testpackage
+      # part of the golangci govet package is picking up things that go vet doesn't. Seems flaky, shutting that specific error off
+
+run:
+  # which dirs to skip: they won't be analyzed;
+  skip-dirs:
+    - vendor
+    - future
