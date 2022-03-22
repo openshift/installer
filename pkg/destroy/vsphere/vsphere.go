@@ -20,9 +20,9 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
+	"github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	installertypes "github.com/openshift/installer/pkg/types"
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
@@ -38,8 +38,7 @@ type ClusterUninstaller struct {
 
 // New returns an VSphere destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (providers.Destroyer, error) {
-
-	vim25Client, restClient, err := vspheretypes.CreateVSphereClients(context.TODO(),
+	vim25Client, restClient, err := vsphere.CreateVSphereClients(context.TODO(),
 		metadata.ClusterPlatformMetadata.VSphere.VCenter,
 		metadata.ClusterPlatformMetadata.VSphere.Username,
 		metadata.ClusterPlatformMetadata.VSphere.Password)
