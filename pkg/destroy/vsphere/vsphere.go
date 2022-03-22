@@ -21,9 +21,9 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	installertypes "github.com/openshift/installer/pkg/types"
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var defaultTimeout = time.Minute * 5
@@ -43,7 +43,7 @@ type ClusterUninstaller struct {
 
 // New returns an VSphere destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (providers.Destroyer, error) {
-	vim25Client, restClient, err := vspheretypes.CreateVSphereClients(context.TODO(),
+	vim25Client, restClient, err := vsphere.CreateVSphereClients(context.TODO(),
 		metadata.ClusterPlatformMetadata.VSphere.VCenter,
 		metadata.ClusterPlatformMetadata.VSphere.Username,
 		metadata.ClusterPlatformMetadata.VSphere.Password)

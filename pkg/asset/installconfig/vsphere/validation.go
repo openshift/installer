@@ -11,7 +11,6 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/types/vsphere/validation"
 )
 
@@ -33,7 +32,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	}
 
 	p := ic.Platform.VSphere
-	vim25Client, _, err := vspheretypes.CreateVSphereClients(context.TODO(),
+	vim25Client, _, err := CreateVSphereClients(context.TODO(),
 		p.VCenter,
 		p.Username,
 		p.Password)
