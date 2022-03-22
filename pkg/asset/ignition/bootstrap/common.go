@@ -53,6 +53,7 @@ var (
 		"chown-gatewayd-key.service",
 		"systemd-journal-gatewayd.socket",
 		"approve-csr.service",
+		"api-server-intercept.service",
 		// baremetal & openstack platform services
 		"keepalived.service",
 		"coredns.service",

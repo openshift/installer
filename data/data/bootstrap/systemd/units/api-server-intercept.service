@@ -1,0 +1,13 @@
+[Unit]
+Description=Intercept in-bound traffic for API server to redirect to logs gatherer
+
+[Service]
+User=root
+ExecStart=iptables -t nat -I PREROUTING -p tcp --dport 6443 -j REDIRECT --to-ports 6444
+ExecStart=podman run --name api-interceptor --net host --user root --volume "/usr/local/bin/api-interceptor.js:/opt/app-root/src/api-interceptor.js" --volume "/opt/openshift/tls/:/opt/app-root/src/" registry.access.redhat.com/ubi8/nodejs-16 node api-interceptor.js
+
+Type=oneshot
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
