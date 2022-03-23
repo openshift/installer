@@ -26,9 +26,10 @@ type ConfigBuilder struct {
 	nodeZeroIP               string
 	createClusterParamsJSON  string
 	createInfraEnvParamsJSON string
+	apiVip                   string
 }
 
-func New(nodeZeroIP string) *ConfigBuilder {
+func New(nodeZeroIP string, apiVip string) *ConfigBuilder {
 	pullSecret := manifests.GetPullSecret()
 	// TODO: needs appropriate value if AUTH_TYPE != none
 	pullSecretToken := getEnv("PULL_SECRET_TOKEN", "")
@@ -54,6 +55,7 @@ func New(nodeZeroIP string) *ConfigBuilder {
 		nodeZeroIP:               nodeZeroIP,
 		createClusterParamsJSON:  string(clusterJSON),
 		createInfraEnvParamsJSON: string(infraEnvJSON),
+		apiVip:                   apiVip,
 	}
 }
 
@@ -217,6 +219,7 @@ func (c ConfigBuilder) templateString(name string, text string) (string, error) 
 		"NodeZeroIP":               c.nodeZeroIP,
 		"ClusterCreateParamsJSON":  c.createClusterParamsJSON,
 		"InfraEnvCreateParamsJSON": c.createInfraEnvParamsJSON,
+		"APIVIP":                   c.apiVip,
 	}
 
 	tmpl, err := template.New(name).Parse(string(text))
