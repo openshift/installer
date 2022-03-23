@@ -23,7 +23,7 @@ $(TERRAFORM_PROVIDER_TARGETS): bin/terraform-provider-%.zip: providers/%/go.mod
 	cd providers/$*; \
 	if [ -f main.go ]; then path="."; else path=./vendor/`grep _ tools.go|awk '{ print $$2 }'|sed 's|"||g'`; fi; \
 	go build -ldflags $(LDFLAGS) -o ../../bin/terraform-provider-$* "$$path"; \
-	zip -9j ../../bin/terraform-provider-$*.zip ../../bin/terraform-provider-$*;
+	zip -1j ../../bin/terraform-provider-$*.zip ../../bin/terraform-provider-$*;
 
 .PHONY: go-build-terraform
 go-build-terraform: bin/terraform
