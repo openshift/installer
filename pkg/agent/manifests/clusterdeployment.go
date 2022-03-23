@@ -38,7 +38,7 @@ func getClusterDeployment() hivev1.ClusterDeployment {
 	return cd
 }
 
-func getAgentClusterInstall() hiveext.AgentClusterInstall {
+func GetAgentClusterInstall() hiveext.AgentClusterInstall {
 	aciData, err := os.ReadFile("./manifests/agent-cluster-install.yaml")
 	if err != nil {
 		fmt.Errorf("Error reading AgentClusterInstall CR: %w", err)
@@ -56,7 +56,7 @@ func getAgentClusterInstall() hiveext.AgentClusterInstall {
 //       After the refactoring most of the code below goes away, especially the helper functions that are being carried over here.
 func CreateClusterParams() *models.ClusterCreateParams {
 	cd := getClusterDeployment()
-	aci := getAgentClusterInstall()
+	aci := GetAgentClusterInstall()
 	clusterInstall := &aci
 	// TODO: Have single source for image version and cpu arch
 	releaseImageVersion := "4.10.0-rc.1"

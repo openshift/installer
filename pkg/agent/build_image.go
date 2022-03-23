@@ -10,10 +10,9 @@ import (
 
 func BuildImage() error {
 	nodeZeroIP := flag.String("node-zero-ip", "", "IP of the node to run OpenShift Assisted Installation Service on. (Required)")
-	apiVip := flag.String("apivip", "", "API Virtual IP. (Required)")
 	flag.Parse()
 
-	if *nodeZeroIP == "" || *apiVip == "" {
+	if *nodeZeroIP == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -23,7 +22,7 @@ func BuildImage() error {
 		return err
 	}
 
-	err = imagebuilder.BuildImage(baseImage, *nodeZeroIP, *apiVip)
+	err = imagebuilder.BuildImage(baseImage, *nodeZeroIP)
 	if err != nil {
 		return err
 	}

@@ -29,7 +29,7 @@ type ConfigBuilder struct {
 	apiVip                   string
 }
 
-func New(nodeZeroIP string, apiVip string) *ConfigBuilder {
+func New(nodeZeroIP string) *ConfigBuilder {
 	pullSecret := manifests.GetPullSecret()
 	// TODO: needs appropriate value if AUTH_TYPE != none
 	pullSecretToken := getEnv("PULL_SECRET_TOKEN", "")
@@ -48,6 +48,10 @@ func New(nodeZeroIP string, apiVip string) *ConfigBuilder {
 	if err != nil {
 		fmt.Errorf("Error marshal infra env params into json: %w", err)
 	}
+
+	aci := manifests.GetAgentClusterInstall()
+	clusterInstall := &aci
+
 	return &ConfigBuilder{
 		pullSecret:               pullSecret,
 		serviceBaseURL:           serviceBaseURL,
@@ -55,7 +59,7 @@ func New(nodeZeroIP string, apiVip string) *ConfigBuilder {
 		nodeZeroIP:               nodeZeroIP,
 		createClusterParamsJSON:  string(clusterJSON),
 		createInfraEnvParamsJSON: string(infraEnvJSON),
-		apiVip:                   apiVip,
+		apiVip:                   clusterInstall.Spec.APIVIP,
 	}
 }
 
