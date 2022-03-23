@@ -1,8 +1,8 @@
 [Unit]
-Description=Assisted Service container
+Description=Assisted Service UI container
 Wants=network.target
 RequiresMountsFor=%t/containers
-Requires=assisted-service-db.service
+Requires=assisted-service.service
 BindsTo=assisted-service-pod.service
 After=network-online.target assisted-service-pod.service
 
@@ -11,7 +11,7 @@ Environment=PODMAN_SYSTEMD_UNIT=%n
 Restart=on-failure
 TimeoutStopSec=300
 ExecStartPre=/bin/rm -f %t/%n.ctr-id
-ExecStart=/usr/bin/podman run --cidfile=%t/%n.ctr-id --cgroups=no-conmon --rm --pod-id-file=%t/assisted-service-pod.pod-id --sdnotify=conmon --replace -d --name=service --env-file=/usr/local/share/assisted-service/environment quay.io/edge-infrastructure/assisted-service:latest
+ExecStart=/usr/bin/podman run --cidfile=%t/%n.ctr-id --cgroups=no-conmon --rm --pod-id-file=%t/assisted-service-pod.pod-id --sdnotify=conmon --replace -d --name=ui --env-file=/usr/local/share/assisted-service/environment quay.io/edge-infrastructure/assisted-installer-ui:latest
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
 Type=notify

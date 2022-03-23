@@ -1,0 +1,23 @@
+[Unit]
+Description=Assisted Service pod
+Wants=network.target node-zero.service
+After=network-online.target node-zero.service
+ConditionPathExists=/etc/assisted-service/node0
+RequiresMountsFor=
+Requires=assisted-service-db.service assisted-image-service.service assisted-service.service assisted-service-ui.service
+Before=assisted-service-db.service assisted-image-service.service assisted-service.service assisted-service-ui.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+Restart=on-failure
+TimeoutStopSec=70
+ExecStartPre=/bin/rm -f %t/%n.pid %t/%N.pod-id
+ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/%n.pid --pod-id-file %t/%N.pod-id -n assisted-service --publish=8090:8090 --publish=8080:8080 --publish=8888:8888
+ExecStart=/usr/bin/podman pod start --pod-id-file=%t/%N.pod-id
+ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file=%t/%N.pod-id -t 10
+ExecStopPost=/usr/bin/podman pod rm --ignore -f --pod-id-file=%t/%N.pod-id
+PIDFile=%t/%n.pid
+Type=forking
+
+[Install]
+WantedBy=multi-user.target
