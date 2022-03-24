@@ -7,7 +7,7 @@ ConditionPathExists=/etc/assisted-service/node0
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
 TimeoutStartSec=300
-ExecStart=/usr/local/bin/start-assisted-service.sh
+ExecStart=/bin/podman play kube --configmap /usr/local/share/assisted-service/configmap.yml /usr/local/share/assisted-service/pod.yml
 ExecStop=/bin/podman pod stop --ignore assisted-service -t 10
 ExecStopPost=/bin/podman pod rm --ignore assisted-service
 
