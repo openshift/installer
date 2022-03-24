@@ -16,23 +16,48 @@ func getConversion(in cty.Type, out cty.Type, unsafe bool) conversion {
 
 	// Wrap the conversion in some standard checks that we don't want to
 	// have to repeat in every conversion function.
-	return func(in cty.Value, path cty.Path) (cty.Value, error) {
+	var ret conversion
+	ret = func(in cty.Value, path cty.Path) (cty.Value, error) {
+		if in.IsMarked() {
+			// We must unmark during the conversion and then re-apply the
+			// same marks to the result.
+			in, inMarks := in.Unmark()
+			v, err := ret(in, path)
+			if v != cty.NilVal {
+				v = v.WithMarks(inMarks)
+			}
+			return v, err
+		}
+
 		if out == cty.DynamicPseudoType {
 			// Conversion to DynamicPseudoType always just passes through verbatim.
 			return in, nil
 		}
-		if !in.IsKnown() {
-			return cty.UnknownVal(out), nil
-		}
-		if in.IsNull() {
-			// We'll pass through nulls, albeit type converted, and let
-			// the caller deal with whatever handling they want to do in
-			// case null values are considered valid in some applications.
-			return cty.NullVal(out), nil
+		if isKnown, isNull := in.IsKnown(), in.IsNull(); !isKnown || isNull {
+			// Avoid constructing unknown or null values with types which
+			// include optional attributes. Known or non-null object values
+			// will be passed to a conversion function which drops the optional
+			// attributes from the type. Unknown and null pass through values
+			// must do the same to ensure that homogeneous collections have a
+			// single element type.
+			out = out.WithoutOptionalAttributesDeep()
+
+			if !isKnown {
+				return cty.UnknownVal(out), nil
+			}
+
+			if isNull {
+				// We'll pass through nulls, albeit type converted, and let
+				// the caller deal with whatever handling they want to do in
+				// case null values are considered valid in some applications.
+				return cty.NullVal(out), nil
+			}
 		}
 
 		return conv(in, path)
 	}
+
+	return ret
 }
 
 func getConversionKnown(in cty.Type, out cty.Type, unsafe bool) conversion {
@@ -123,6 +148,39 @@ func getConversionKnown(in cty.Type, out cty.Type, unsafe bool) conversion {
 	case out.IsMapType() && in.IsObjectType():
 		outEty := out.ElementType()
 		return conversionObjectToMap(in, outEty, unsafe)
+
+	case out.IsObjectType() && in.IsMapType():
+		if !unsafe {
+			// Converting a map to an object is an "unsafe" conversion,
+			// because we don't know if all the map keys will correspond to
+			// object attributes.
+			return nil
+		}
+		return conversionMapToObject(in, out, unsafe)
+
+	case in.IsCapsuleType() || out.IsCapsuleType():
+		if !unsafe {
+			// Capsule types can only participate in "unsafe" conversions,
+			// because we don't know enough about their conversion behaviors
+			// to be sure that they will always be safe.
+			return nil
+		}
+		if in.Equals(out) {
+			// conversion to self is never allowed
+			return nil
+		}
+		if out.IsCapsuleType() {
+			if fn := out.CapsuleOps().ConversionTo; fn != nil {
+				return conversionToCapsule(in, out, fn)
+			}
+		}
+		if in.IsCapsuleType() {
+			if fn := in.CapsuleOps().ConversionFrom; fn != nil {
+				return conversionFromCapsule(in, out, fn)
+			}
+		}
+		// No conversion operation is available, then.
+		return nil
 
 	default:
 		return nil

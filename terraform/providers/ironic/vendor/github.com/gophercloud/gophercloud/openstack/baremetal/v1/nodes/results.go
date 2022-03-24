@@ -48,6 +48,42 @@ func ExtractNodesInto(r pagination.Page, v interface{}) error {
 	return r.(NodePage).Result.ExtractIntoSlicePtr(v, "nodes")
 }
 
+// Extract interprets a BIOSSettingsResult as an array of BIOSSetting structs, if possible.
+func (r ListBIOSSettingsResult) Extract() ([]BIOSSetting, error) {
+	var s struct {
+		Settings []BIOSSetting `json:"bios"`
+	}
+
+	err := r.ExtractInto(&s)
+	return s.Settings, err
+}
+
+// Extract interprets a SingleBIOSSettingResult as a BIOSSetting struct, if possible.
+func (r GetBIOSSettingResult) Extract() (*BIOSSetting, error) {
+	var s SingleBIOSSetting
+	err := r.ExtractInto(&s)
+	return &s.Setting, err
+}
+
+// Extract interprets a VendorPassthruMethod as
+func (r VendorPassthruMethodsResult) Extract() (*VendorPassthruMethods, error) {
+	var s VendorPassthruMethods
+	err := r.ExtractInto(&s)
+	return &s, err
+}
+
+func (r GetAllSubscriptionsVendorPassthruResult) Extract() (*GetAllSubscriptionsVendorPassthru, error) {
+	var s GetAllSubscriptionsVendorPassthru
+	err := r.ExtractInto(&s)
+	return &s, err
+}
+
+func (r SubscriptionVendorPassthruResult) Extract() (*SubscriptionVendorPassthru, error) {
+	var s SubscriptionVendorPassthru
+	err := r.ExtractInto(&s)
+	return &s, err
+}
+
 // Node represents a node in the OpenStack Bare Metal API.
 type Node struct {
 	// Whether automated cleaning is enabled or disabled on this node.
@@ -145,6 +181,9 @@ type Node struct {
 	// For more details, see: https://docs.openstack.org/ironic/latest/install/configure-nova-flavors.html
 	ResourceClass string `json:"resource_class"`
 
+	// BIOS interface for a Node, e.g. “redfish”.
+	BIOSInterface string `json:"bios_interface"`
+
 	// Boot interface for a Node, e.g. “pxe”.
 	BootInterface string `json:"boot_interface"`
 
@@ -192,6 +231,9 @@ type Node struct {
 
 	// A string or UUID of the tenant who owns the baremetal node.
 	Owner string `json:"owner"`
+
+	// Static network configuration to use during deployment and cleaning.
+	NetworkData map[string]interface{} `json:"network_data"`
 }
 
 // NodePage abstracts the raw results of making a List() request against
@@ -270,7 +312,7 @@ type BootDeviceResult struct {
 	gophercloud.Result
 }
 
-// BootDeviceResult is the response from a GetBootDevice operation. Call its Extract
+// SetBootDeviceResult is the response from a SetBootDevice operation. Call its Extract
 // method to interpret it as a BootDeviceOpts struct.
 type SetBootDeviceResult struct {
 	gophercloud.ErrResult
@@ -288,6 +330,42 @@ type ChangePowerStateResult struct {
 	gophercloud.ErrResult
 }
 
+// ListBIOSSettingsResult is the response from a ListBIOSSettings operation. Call its Extract
+// method to interpret it as an array of BIOSSetting structs.
+type ListBIOSSettingsResult struct {
+	gophercloud.Result
+}
+
+// GetBIOSSettingResult is the response from a GetBIOSSetting operation. Call its Extract
+// method to interpret it as a BIOSSetting struct.
+type GetBIOSSettingResult struct {
+	gophercloud.Result
+}
+
+// VendorPassthruMethodsResult is the response from a GetVendorPassthruMethods operation. Call its Extract
+// method to interpret it as an array of allowed vendor methods.
+type VendorPassthruMethodsResult struct {
+	gophercloud.Result
+}
+
+// GetAllSubscriptionsVendorPassthruResult is the response from GetAllSubscriptions operation. Call its
+// Extract method to interpret it as a GetAllSubscriptionsVendorPassthru struct.
+type GetAllSubscriptionsVendorPassthruResult struct {
+	gophercloud.Result
+}
+
+// SubscriptionVendorPassthruResult is the response from GetSubscription and CreateSubscription operation. Call its Extract
+// method to interpret it as a SubscriptionVendorPassthru struct.
+type SubscriptionVendorPassthruResult struct {
+	gophercloud.Result
+}
+
+// DeleteSubscriptionVendorPassthruResult is the response from DeleteSubscription operation. Call its
+// ExtractErr method to determine if the call succeeded of failed.
+type DeleteSubscriptionVendorPassthruResult struct {
+	gophercloud.ErrResult
+}
+
 // Each element in the response will contain a “result” variable, which will have a value of “true” or “false”, and
 // also potentially a reason. A value of nil indicates that the Node’s driver does not support that interface.
 type DriverValidation struct {
@@ -298,6 +376,7 @@ type DriverValidation struct {
 //  Ironic validates whether the Node’s driver has enough information to manage the Node. This polls each interface on
 //  the driver, and returns the status of that interface as an DriverValidation struct.
 type NodeValidation struct {
+	BIOS       DriverValidation `json:"bios"`
 	Boot       DriverValidation `json:"boot"`
 	Console    DriverValidation `json:"console"`
 	Deploy     DriverValidation `json:"deploy"`
@@ -310,8 +389,115 @@ type NodeValidation struct {
 	Storage    DriverValidation `json:"storage"`
 }
 
+// A particular BIOS setting for a node in the OpenStack Bare Metal API.
+type BIOSSetting struct {
+
+	// Identifier for the BIOS setting.
+	Name string `json:"name"`
+
+	// Value of the BIOS setting.
+	Value string `json:"value"`
+
+	// The following fields are returned in microversion 1.74 or later
+	// when using the `details` option
+
+	// The type of setting - Enumeration, String, Integer, or Boolean.
+	AttributeType string `json:"attribute_type"`
+
+	// The allowable value for an Enumeration type setting.
+	AllowableValues []string `json:"allowable_values"`
+
+	// The lowest value for an Integer type setting.
+	LowerBound *int `json:"lower_bound"`
+
+	// The highest value for an Integer type setting.
+	UpperBound *int `json:"upper_bound"`
+
+	// Minimum length for a String type setting.
+	MinLength *int `json:"min_length"`
+
+	// Maximum length for a String type setting.
+	MaxLength *int `json:"max_length"`
+
+	// Whether or not this setting is read only.
+	ReadOnly *bool `json:"read_only"`
+
+	// Whether or not a reset is required after changing this setting.
+	ResetRequired *bool `json:"reset_required"`
+
+	// Whether or not this setting's value is unique to this node, e.g.
+	// a serial number.
+	Unique *bool `json:"unique"`
+}
+
+type SingleBIOSSetting struct {
+	Setting BIOSSetting
+}
+
 // ChangeStateResult is the response from any state change operation. Call its ExtractErr
 // method to determine if the call succeeded or failed.
 type ChangeStateResult struct {
 	gophercloud.ErrResult
+}
+
+type VendorPassthruMethods struct {
+	CreateSubscription  CreateSubscriptionMethod  `json:"create_subscription,omitempty"`
+	DeleteSubscription  DeleteSubscriptionMethod  `json:"delete_subscription,omitempty"`
+	GetSubscription     GetSubscriptionMethod     `json:"get_subscription,omitempty"`
+	GetAllSubscriptions GetAllSubscriptionsMethod `json:"get_all_subscriptions,omitempty"`
+}
+
+// Below you can find all vendor passthru methods structs
+
+type CreateSubscriptionMethod struct {
+	HTTPMethods          []string `json:"http_methods"`
+	Async                bool     `json:"async"`
+	Description          string   `json:"description"`
+	Attach               bool     `json:"attach"`
+	RequireExclusiveLock bool     `json:"require_exclusive_lock"`
+}
+
+type DeleteSubscriptionMethod struct {
+	HTTPMethods          []string `json:"http_methods"`
+	Async                bool     `json:"async"`
+	Description          string   `json:"description"`
+	Attach               bool     `json:"attach"`
+	RequireExclusiveLock bool     `json:"require_exclusive_lock"`
+}
+
+type GetSubscriptionMethod struct {
+	HTTPMethods          []string `json:"http_methods"`
+	Async                bool     `json:"async"`
+	Description          string   `json:"description"`
+	Attach               bool     `json:"attach"`
+	RequireExclusiveLock bool     `json:"require_exclusive_lock"`
+}
+
+type GetAllSubscriptionsMethod struct {
+	HTTPMethods          []string `json:"http_methods"`
+	Async                bool     `json:"async"`
+	Description          string   `json:"description"`
+	Attach               bool     `json:"attach"`
+	RequireExclusiveLock bool     `json:"require_exclusive_lock"`
+}
+
+// A List of subscriptions from a node in the OpenStack Bare Metal API.
+type GetAllSubscriptionsVendorPassthru struct {
+	Context      string              `json:"@odata.context"`
+	Etag         string              `json:"@odata.etag"`
+	Id           string              `json:"@odata.id"`
+	Type         string              `json:"@odata.type"`
+	Description  string              `json:"Description"`
+	Name         string              `json:"Name"`
+	Members      []map[string]string `json:"Members"`
+	MembersCount int                 `json:"Members@odata.count"`
+}
+
+// A Subscription from a node in the OpenStack Bare Metal API.
+type SubscriptionVendorPassthru struct {
+	Id          string   `json:"Id"`
+	Context     string   `json:"Context"`
+	Destination string   `json:"Destination"`
+	EventTypes  []string `json:"EventTypes"`
+	Protocol    string   `json:"Protocol"`
 }
