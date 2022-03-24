@@ -4,12 +4,12 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
-
-	"github.com/google/renameio"
 )
 
 // Fetch an artifact, validating its checksum.  If applicable,
@@ -63,26 +63,34 @@ func (a *Artifact) Download(destdir string) (string, error) {
 		return "", err
 	}
 	destfile := filepath.Join(destdir, name)
-	w, err := renameio.TempFile("", destfile)
+	w, err := ioutil.TempFile(destdir, ".coreos-artifact-")
 	if err != nil {
 		return "", err
 	}
-
+	finalized := false
 	defer func() {
-		// Ignore an error to unlink
-		_ = w.Cleanup()
+		if !finalized {
+			// Ignore an error to unlink
+			_ = os.Remove(w.Name())
+		}
 	}()
-	err = a.Fetch(w)
-	if err != nil {
+
+	if err := a.Fetch(w); err != nil {
 		return "", err
 	}
-	if err := w.File.Chmod(0644); err != nil {
+	if err := w.Sync(); err != nil {
 		return "", err
 	}
-	err = w.CloseAtomicallyReplace()
-	if err != nil {
+	if err := w.Chmod(0644); err != nil {
 		return "", err
 	}
+	if err := w.Close(); err != nil {
+		return "", err
+	}
+	if err := os.Rename(w.Name(), destfile); err != nil {
+		return "", err
+	}
+	finalized = true
 
 	return destfile, nil
 }
