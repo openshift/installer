@@ -4,8 +4,8 @@ Wants=network.target node-zero.service
 After=network-online.target node-zero.service
 ConditionPathExists=/etc/assisted-service/node0
 RequiresMountsFor=
-Requires=assisted-service-db.service assisted-image-service.service assisted-service.service assisted-service-ui.service
-Before=assisted-service-db.service assisted-image-service.service assisted-service.service assisted-service-ui.service
+Requires=assisted-service-db.service assisted-service.service assisted-service-ui.service
+Before=assisted-service-db.service assisted-service.service assisted-service-ui.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
