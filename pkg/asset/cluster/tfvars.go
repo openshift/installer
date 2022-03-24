@@ -610,6 +610,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.BareMetal.ProvisioningBridge,
 			installConfig.Config.Platform.BareMetal.ProvisioningMACAddress,
 			installConfig.Config.Platform.BareMetal.Hosts,
+			mastersAsset.HostFiles,
 			string(*rhcosImage),
 			ironicCreds.Username,
 			ironicCreds.Password,
