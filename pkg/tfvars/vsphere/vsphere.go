@@ -7,28 +7,29 @@ import (
 	"github.com/pkg/errors"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
-	"github.com/openshift/installer/pkg/types/vsphere"
+	vtypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 type config struct {
-	VSphereURL        string           `json:"vsphere_url"`
-	VSphereUsername   string           `json:"vsphere_username"`
-	VSpherePassword   string           `json:"vsphere_password"`
-	MemoryMiB         int64            `json:"vsphere_control_plane_memory_mib"`
-	DiskGiB           int32            `json:"vsphere_control_plane_disk_gib"`
-	NumCPUs           int32            `json:"vsphere_control_plane_num_cpus"`
-	NumCoresPerSocket int32            `json:"vsphere_control_plane_cores_per_socket"`
-	Cluster           string           `json:"vsphere_cluster"`
-	ResourcePool      string           `json:"vsphere_resource_pool"`
-	Datacenter        string           `json:"vsphere_datacenter"`
-	Datastore         string           `json:"vsphere_datastore"`
-	Folder            string           `json:"vsphere_folder"`
-	Network           string           `json:"vsphere_network"`
-	Template          string           `json:"vsphere_template"`
-	OvaFilePath       string           `json:"vsphere_ova_filepath"`
-	PreexistingFolder bool             `json:"vsphere_preexisting_folder"`
-	DiskType          vsphere.DiskType `json:"vsphere_disk_type"`
+	VSphereURL        string          `json:"vsphere_url"`
+	VSphereUsername   string          `json:"vsphere_username"`
+	VSpherePassword   string          `json:"vsphere_password"`
+	MemoryMiB         int64           `json:"vsphere_control_plane_memory_mib"`
+	DiskGiB           int32           `json:"vsphere_control_plane_disk_gib"`
+	NumCPUs           int32           `json:"vsphere_control_plane_num_cpus"`
+	NumCoresPerSocket int32           `json:"vsphere_control_plane_cores_per_socket"`
+	Cluster           string          `json:"vsphere_cluster"`
+	ResourcePool      string          `json:"vsphere_resource_pool"`
+	Datacenter        string          `json:"vsphere_datacenter"`
+	Datastore         string          `json:"vsphere_datastore"`
+	Folder            string          `json:"vsphere_folder"`
+	Network           string          `json:"vsphere_network"`
+	Template          string          `json:"vsphere_template"`
+	OvaFilePath       string          `json:"vsphere_ova_filepath"`
+	PreexistingFolder bool            `json:"vsphere_preexisting_folder"`
+	DiskType          vtypes.DiskType `json:"vsphere_disk_type"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -39,7 +40,8 @@ type TFVarsSources struct {
 	Cluster             string
 	ImageURL            string
 	PreexistingFolder   bool
-	DiskType            vsphere.DiskType
+	DiskType            vtypes.DiskType
+	NetworkID           string
 }
 
 //TFVars generate vSphere-specific Terraform variables
@@ -69,7 +71,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Datacenter:        controlPlaneConfig.Workspace.Datacenter,
 		Datastore:         controlPlaneConfig.Workspace.Datastore,
 		Folder:            folderRelPath,
-		Network:           controlPlaneConfig.Network.Devices[0].NetworkName,
+		Network:           sources.NetworkID,
 		Template:          controlPlaneConfig.Template,
 		OvaFilePath:       cachedImage,
 		PreexistingFolder: sources.PreexistingFolder,
