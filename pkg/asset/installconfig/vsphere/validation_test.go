@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/vmware/govmomi/vim25"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/vsphere/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -43,11 +44,10 @@ func validIPIInstallConfig() *types.InstallConfig {
 func TestValidate(t *testing.T) {
 	server := mock.StartSimulator()
 	defer server.Close()
-
 	tests := []struct {
 		name             string
 		installConfig    *types.InstallConfig
-		validationMethod func(Finder, *types.InstallConfig) error
+		validationMethod func(*vim25.Client, Finder, *types.InstallConfig) error
 		expectErr        string
 	}{{
 		name:             "valid IPI install config",
@@ -97,11 +97,15 @@ func TestValidate(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	client, _, err := mock.GetClient(server)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
-			err := test.validationMethod(finder, test.installConfig)
+			err := test.validationMethod(client, finder, test.installConfig)
 			if test.expectErr == "" {
 				assert.NoError(t, err)
 			} else {
