@@ -17,6 +17,7 @@ import (
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
+	icpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/types"
 	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -141,7 +142,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			config.Spec.PublicZone = &configv1.DNSZone{ID: zone.Name}
 		}
 		config.Spec.PrivateZone = &configv1.DNSZone{ID: fmt.Sprintf("%s-private-zone", clusterID.InfraID)}
-	case ibmcloudtypes.Name, powervstypes.Name:
+	case ibmcloudtypes.Name:
 		client, err := icibmcloud.NewClient()
 		if err != nil {
 			return errors.Wrap(err, "failed to get IBM Cloud client")
@@ -149,7 +150,26 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 
 		zoneID, err := client.GetDNSZoneIDByName(context.TODO(), installConfig.Config.BaseDomain)
 		if err != nil {
-			return errors.Wrap(err, "failed ot get DNS zone ID")
+			return errors.Wrap(err, "failed to get DNS zone ID")
+		}
+
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+			config.Spec.PublicZone = &configv1.DNSZone{
+				ID: zoneID,
+			}
+		}
+		config.Spec.PrivateZone = &configv1.DNSZone{
+			ID: zoneID,
+		}
+	case powervstypes.Name:
+		client, err := icpowervs.NewClient()
+		if err != nil {
+			return errors.Wrap(err, "failed to get IBM PowerVS client")
+		}
+
+		zoneID, err := client.GetDNSZoneIDByName(context.TODO(), installConfig.Config.BaseDomain)
+		if err != nil {
+			return errors.Wrap(err, "failed to get DNS zone ID")
 		}
 
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
