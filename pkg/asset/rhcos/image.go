@@ -12,7 +12,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	configaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
@@ -87,8 +86,10 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return config.Platform.AWS.AMIID, nil
 		}
 		region := config.Platform.AWS.Region
-		if !configaws.IsKnownRegion(config.Platform.AWS.Region, config.ControlPlane.Architecture) {
-			region = "us-east-1"
+		if !rhcos.AMIRegions(config.ControlPlane.Architecture).Has(region) {
+			const globalResourceRegion = "us-east-1"
+			logrus.Debugf("No AMI found in %s. Using AMI from %s.", region, globalResourceRegion)
+			region = globalResourceRegion
 		}
 		osimage, err := st.GetAMI(archName, region)
 		if err != nil {
