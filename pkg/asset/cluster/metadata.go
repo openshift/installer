@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/gcp"
 	"github.com/openshift/installer/pkg/asset/cluster/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/cluster/libvirt"
+	"github.com/openshift/installer/pkg/asset/cluster/nutanix"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/cluster/ovirt"
 	"github.com/openshift/installer/pkg/asset/cluster/powervs"
@@ -30,6 +31,7 @@ import (
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
@@ -98,6 +100,8 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 	case powervstypes.Name:
 		metadata.ClusterPlatformMetadata.PowerVS = powervs.Metadata(installConfig.Config, installConfig.PowerVS)
 	case nonetypes.Name:
+	case nutanixtypes.Name:
+		metadata.ClusterPlatformMetadata.Nutanix = nutanix.Metadata(installConfig.Config)
 	default:
 		return errors.Errorf("no known platform")
 	}
