@@ -6,12 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/parse"
-
 	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-04-01/storage"
 	azautorest "github.com/Azure/go-autorest/autorest"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -71,6 +70,7 @@ func dataSourceStorageAccount() *pluginsdk.Resource {
 				},
 			},
 
+			// TODO 4.0: change this from enable_* to *_enabled
 			"enable_https_traffic_only": {
 				Type:     pluginsdk.TypeBool,
 				Computed: true,
@@ -267,6 +267,11 @@ func dataSourceStorageAccount() *pluginsdk.Resource {
 				Computed: true,
 			},
 
+			"infrastructure_encryption_enabled": {
+				Type:     pluginsdk.TypeBool,
+				Computed: true,
+			},
+
 			"tags": tags.SchemaDataSource(),
 		},
 	}
@@ -396,6 +401,12 @@ func dataSourceStorageAccountRead(d *pluginsdk.ResourceData, meta interface{}) e
 		}
 		d.Set("table_encryption_key_type", tableEncryptionKeyType)
 		d.Set("queue_encryption_key_type", queueEncryptionKeyType)
+
+		infrastructure_encryption := false
+		if encryption := props.Encryption; encryption != nil && encryption.RequireInfrastructureEncryption != nil {
+			infrastructure_encryption = *encryption.RequireInfrastructureEncryption
+		}
+		d.Set("infrastructure_encryption_enabled", infrastructure_encryption)
 	}
 
 	if accessKeys := accountKeys; accessKeys != nil {

@@ -2,10 +2,10 @@ module azurerm
 
 go 1.17
 
-require github.com/hashicorp/terraform-provider-azurerm v1.44.1-0.20211217024327-380455caea81 // v2.90.0
+require github.com/hashicorp/terraform-provider-azurerm v1.44.1-0.20220225024458-1b6330b3d064 // v2.98.0
 
 require (
-	github.com/Azure/azure-sdk-for-go v59.3.0+incompatible // indirect
+	github.com/Azure/azure-sdk-for-go v61.4.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.22 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.17 // indirect
@@ -27,7 +27,7 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-azure-helpers v0.19.1 // indirect
+	github.com/hashicorp/go-azure-helpers v0.25.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320 // indirect
@@ -45,11 +45,11 @@ require (
 	github.com/hashicorp/terraform-json v0.13.0 // indirect
 	github.com/hashicorp/terraform-plugin-go v0.5.0 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.2.0 // indirect
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.0 // indirect
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1 // indirect
 	github.com/hashicorp/terraform-registry-address v0.0.0-20210412075316-9b2996cce896 // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
 	github.com/hashicorp/yamux v0.0.0-20210316155119-a95892c5f864 // indirect
-	github.com/manicminer/hamilton v0.35.0 // indirect
+	github.com/manicminer/hamilton v0.37.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -62,7 +62,7 @@ require (
 	github.com/rickb777/date v1.12.5-0.20200422084442-6300e543c4d9 // indirect
 	github.com/rickb777/plural v1.2.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
-	github.com/tombuildsstuff/giovanni v0.17.0 // indirect
+	github.com/tombuildsstuff/giovanni v0.18.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/zclconf/go-cty v1.9.1 // indirect
 	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa // indirect
