@@ -1306,6 +1306,28 @@ type IngressControllerTuningOptions struct {
 	// +kubebuilder:validation:Format=duration
 	// +optional
 	TLSInspectDelay *metav1.Duration `json:"tlsInspectDelay,omitempty"`
+
+	// healthCheckInterval defines how long the router waits between two consecutive
+	// health checks on its configured backends.  This value is applied globally as
+	// a default for all routes, but may be overridden per-route by the route annotation
+	// "router.openshift.io/haproxy.health.check.interval".
+	//
+	// Setting this to less than 5s can cause excess traffic due to too frequent
+	// TCP health checks and accompanying SYN packet storms.  Alternatively, setting
+	// this too high can result in increased latency, due to backend servers that are no
+	// longer available, but haven't yet been detected as such.
+	//
+	// An empty or zero healthCheckInterval means no opinion and IngressController chooses
+	// a default, which is subject to change over time.
+	// Currently the default healthCheckInterval value is 5s.
+	//
+	// Currently the minimum allowed value is 1s and the maximum allowed value is
+	// 2147483647ms (24.85 days).  Both are subject to change over time.
+	//
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Format=duration
+	// +optional
+	HealthCheckInterval *metav1.Duration `json:"healthCheckInterval,omitempty"`
 }
 
 // HTTPEmptyRequestsPolicy indicates how HTTP connections for which no request
@@ -1397,6 +1419,14 @@ type IngressControllerStatus struct {
 	// observedGeneration is the most recent generation observed.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// namespaceSelector is the actual namespaceSelector in use.
+	// +optional
+	NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector,omitempty"`
+
+	// routeSelector is the actual routeSelector in use.
+	// +optional
+	RouteSelector *metav1.LabelSelector `json:"routeSelector,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -122,8 +122,10 @@ spec:
                     - machines_v1beta1_machine_openshift_io
                   properties:
                     machineType:
-                      description: MachineType determines the type of Machines that should be managed by the ControlPlaneMachineSet. Currently, the only valid value is machine.v1beta1.machine.openshift.io.
+                      description: MachineType determines the type of Machines that should be managed by the ControlPlaneMachineSet. Currently, the only valid value is machines_v1beta1_machine_openshift_io.
                       type: string
+                      enum:
+                        - machines_v1beta1_machine_openshift_io
                     machines_v1beta1_machine_openshift_io:
                       description: OpenShiftMachineV1Beta1Machine defines the template for creating Machines from the v1beta1.machine.openshift.io API group.
                       type: object

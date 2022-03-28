@@ -1126,6 +1126,24 @@ spec:
                     format: int32
                     minimum: 4096
                     type: integer
+                  healthCheckInterval:
+                    description: "healthCheckInterval defines how long the router
+                      waits between two consecutive health checks on its configured
+                      backends.  This value is applied globally as a default for all
+                      routes, but may be overridden per-route by the route annotation
+                      \"router.openshift.io/haproxy.health.check.interval\". \n Setting
+                      this to less than 5s can cause excess traffic due to too frequent
+                      TCP health checks and accompanying SYN packet storms.  Alternatively,
+                      setting this too high can result in increased latency, due to
+                      backend servers that are no longer available, but haven't yet
+                      been detected as such. \n An empty or zero healthCheckInterval
+                      means no opinion and IngressController chooses a default, which
+                      is subject to change over time. Currently the default healthCheckInterval
+                      value is 5s. \n Currently the minimum allowed value is 1s and
+                      the maximum allowed value is 2147483647ms (24.85 days).  Both
+                      are subject to change over time."
+                    format: duration
+                    type: string
                   serverFinTimeout:
                     description: "serverFinTimeout defines how long a connection will
                       be held open while waiting for the server/backend response to
@@ -1418,10 +1436,99 @@ spec:
                 required:
                 - type
                 type: object
+              namespaceSelector:
+                description: namespaceSelector is the actual namespaceSelector in
+                  use.
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: A label selector requirement is a selector that
+                        contains values, a key, and an operator that relates the key
+                        and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: operator represents a key's relationship to
+                            a set of values. Valid operators are In, NotIn, Exists
+                            and DoesNotExist.
+                          type: string
+                        values:
+                          description: values is an array of string values. If the
+                            operator is In or NotIn, the values array must be non-empty.
+                            If the operator is Exists or DoesNotExist, the values
+                            array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: matchLabels is a map of {key,value} pairs. A single
+                      {key,value} in the matchLabels map is equivalent to an element
+                      of matchExpressions, whose key field is "key", the operator
+                      is "In", and the values array contains only "value". The requirements
+                      are ANDed.
+                    type: object
+                type: object
               observedGeneration:
                 description: observedGeneration is the most recent generation observed.
                 format: int64
                 type: integer
+              routeSelector:
+                description: routeSelector is the actual routeSelector in use.
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: A label selector requirement is a selector that
+                        contains values, a key, and an operator that relates the key
+                        and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: operator represents a key's relationship to
+                            a set of values. Valid operators are In, NotIn, Exists
+                            and DoesNotExist.
+                          type: string
+                        values:
+                          description: values is an array of string values. If the
+                            operator is In or NotIn, the values array must be non-empty.
+                            If the operator is Exists or DoesNotExist, the values
+                            array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: matchLabels is a map of {key,value} pairs. A single
+                      {key,value} in the matchLabels map is equivalent to an element
+                      of matchExpressions, whose key field is "key", the operator
+                      is "In", and the values array contains only "value". The requirements
+                      are ANDed.
+                    type: object
+                type: object
               selector:
                 description: selector is a label selector, in string format, for ingress
                   controller pods corresponding to the IngressController. The number

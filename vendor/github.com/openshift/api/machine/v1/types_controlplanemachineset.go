@@ -73,7 +73,7 @@ type ControlPlaneMachineSetSpec struct {
 // + future version of the Machine API Machine.
 type ControlPlaneMachineSetTemplate struct {
 	// MachineType determines the type of Machines that should be managed by the ControlPlaneMachineSet.
-	// Currently, the only valid value is machine.v1beta1.machine.openshift.io.
+	// Currently, the only valid value is machines_v1beta1_machine_openshift_io.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Required
 	MachineType ControlPlaneMachineSetMachineType `json:"machineType"`
@@ -86,6 +86,7 @@ type ControlPlaneMachineSetTemplate struct {
 
 // ControlPlaneMachineSetMachineType is a enumeration of valid Machine types
 // supported by the ControlPlaneMachineSet.
+// +kubebuilder:validation:Enum:=machines_v1beta1_machine_openshift_io
 type ControlPlaneMachineSetMachineType string
 
 const (

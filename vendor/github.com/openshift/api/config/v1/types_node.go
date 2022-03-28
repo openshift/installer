@@ -1,6 +1,10 @@
 package v1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // +genclient
 // +genclient:nonNamespaced
@@ -10,6 +14,8 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 //
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
+// +kubebuilder:resource:path=nodes,scope=Cluster
+// +kubebuilder:subresource:status
 type Node struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -41,6 +47,7 @@ type NodeStatus struct {
 	WorkerLatencyProfileStatus WorkerLatencyProfileStatus `json:"workerLatencyProfileStatus,omitempty"`
 }
 
+// +kubebuilder:validation:Enum=v1;v2;""
 type CgroupMode string
 
 const (
@@ -50,6 +57,7 @@ const (
 	CgroupModeDefault CgroupMode = CgroupModeV1
 )
 
+// +kubebuilder:validation:Enum=Default;MediumUpdateAverageReaction;LowUpdateSlowReaction
 type WorkerLatencyProfileType string
 
 const (
@@ -61,6 +69,35 @@ const (
 
 	// Default values of relavent Kubelet, Kube Controller Manager and Kube API Server
 	DefaultUpdateDefaultReaction WorkerLatencyProfileType = "Default"
+)
+
+const (
+	// DefaultNodeStatusUpdateFrequency refers to the "--node-status-update-frequency" of the kubelet in case of DefaultUpdateDefaultReaction WorkerLatencyProfile type
+	DefaultNodeStatusUpdateFrequency = 10 * time.Second
+	// DefaultNodeMonitorGracePeriod refers to the "--node-monitor-grace-period" of the Kube Controller Manager in case of DefaultUpdateDefaultReaction WorkerLatencyProfile type
+	DefaultNodeMonitorGracePeriod = 40 * time.Second
+	// DefaultNotReadyTolerationSeconds refers to the "--default-not-ready-toleration-seconds" of the Kube API Server in case of DefaultUpdateDefaultReaction WorkerLatencyProfile type
+	DefaultNotReadyTolerationSeconds = 300
+	// DefaultUnreachableTolerationSeconds refers to the "--default-unreachable-toleration-seconds" of the Kube API Server in case of DefaultUpdateDefaultReaction WorkerLatencyProfile type
+	DefaultUnreachableTolerationSeconds = 300
+
+	// MediumNodeStatusUpdateFrequency refers to the "--node-status-update-frequency" of the kubelet in case of MediumUpdateAverageReaction WorkerLatencyProfile type
+	MediumNodeStatusUpdateFrequency = 20 * time.Second
+	// MediumNodeMonitorGracePeriod refers to the "--node-monitor-grace-period" of the Kube Controller Manager in case of MediumUpdateAverageReaction WorkerLatencyProfile type
+	MediumNodeMonitorGracePeriod = 2 * time.Minute
+	// MediumNotReadyTolerationSeconds refers to the "--default-not-ready-toleration-seconds" of the Kube API Server in case of MediumUpdateAverageReaction WorkerLatencyProfile type
+	MediumNotReadyTolerationSeconds = 60
+	// MediumUnreachableTolerationSeconds refers to the "--default-unreachable-toleration-seconds" of the Kube API Server in case of MediumUpdateAverageReaction WorkerLatencyProfile type
+	MediumUnreachableTolerationSeconds = 60
+
+	// LowNodeStatusUpdateFrequency refers to the "--node-status-update-frequency" of the kubelet in case of LowUpdateSlowReaction WorkerLatencyProfile type
+	LowNodeStatusUpdateFrequency = 1 * time.Minute
+	// LowNodeMonitorGracePeriod refers to the "--node-monitor-grace-period" of the Kube Controller Manager in case of LowUpdateSlowReaction WorkerLatencyProfile type
+	LowNodeMonitorGracePeriod = 5 * time.Minute
+	// LowNotReadyTolerationSeconds refers to the "--default-not-ready-toleration-seconds" of the Kube API Server in case of LowUpdateSlowReaction WorkerLatencyProfile type
+	LowNotReadyTolerationSeconds = 60
+	// LowUnreachableTolerationSeconds refers to the "--default-unreachable-toleration-seconds" of the Kube API Server in case of LowUpdateSlowReaction WorkerLatencyProfile type
+	LowUnreachableTolerationSeconds = 60
 )
 
 // WorkerLatencyProfileStatus provides status information about the WorkerLatencyProfile rollout
