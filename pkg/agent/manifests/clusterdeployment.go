@@ -10,43 +10,36 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/yaml"
 )
 
 func GetPullSecret() string {
-	secretData, err := os.ReadFile("./manifests/pull-secret.yaml")
-	if err != nil {
-		fmt.Errorf("Error reading pull secret: %w", err)
-	}
 	var secret corev1.Secret
-	if err := yaml.Unmarshal(secretData, &secret); err != nil {
-		fmt.Errorf("Error unmarshalling pull secret: %w", err)
+	if err := GetFileData("pull-secret.yaml", &secret); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
+
 	pullSecret := secret.StringData[".dockerconfigjson"]
 	return pullSecret
 }
 
 func getClusterDeployment() hivev1.ClusterDeployment {
-	cdData, err := os.ReadFile("./manifests/cluster-deployment.yaml")
-	if err != nil {
-		fmt.Errorf("Error reading cluster deployment CR: %w", err)
-	}
 	var cd hivev1.ClusterDeployment
-	if err := yaml.Unmarshal(cdData, &cd); err != nil {
-		fmt.Errorf("Error unmarshalling cluster deployment CR: %w", err)
+	if err := GetFileData("cluster-deployment.yaml", &cd); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
+
 	return cd
 }
 
 func getAgentClusterInstall() hiveext.AgentClusterInstall {
-	aciData, err := os.ReadFile("./manifests/agent-cluster-install.yaml")
-	if err != nil {
-		fmt.Errorf("Error reading AgentClusterInstall CR: %w", err)
-	}
 	var aci hiveext.AgentClusterInstall
-	if err := yaml.Unmarshal(aciData, &aci); err != nil {
-		fmt.Errorf("Error unmarshalling AgentClusterInstall CR: %w", err)
+	if err := GetFileData("agent-cluster-install.yaml", &aci); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
+
 	return aci
 }
 
