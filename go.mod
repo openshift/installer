@@ -35,6 +35,7 @@ require (
 	github.com/gophercloud/utils v0.0.0-20220307143606-8e7800759d16
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/terraform-exec v0.16.0
+	github.com/kdomanski/iso9660 v0.2.1
 	github.com/libvirt/libvirt-go v5.10.0+incompatible
 	github.com/metal3-io/baremetal-operator v0.0.0-20220128094204-28771f489634
 	github.com/metal3-io/baremetal-operator/apis v0.0.0
@@ -47,6 +48,7 @@ require (
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20211111151530-06177b773958
 	github.com/openshift/library-go v0.0.0-20211214183058-58531ccbde67
+	github.com/openshift/machine-api-provider-nutanix v0.0.0-20220217170301-9c5eed11237a
 	github.com/openshift/machine-api-provider-powervs v0.0.0-20220303154846-89bb5bec120e
 	github.com/openshift/machine-config-operator v0.0.0
 	github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
@@ -59,6 +61,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
+	github.com/terraform-providers/terraform-provider-nutanix v1.1.0
 	github.com/ulikunitz/xz v0.5.8
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.24.0
@@ -132,7 +135,9 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
 	github.com/hashicorp/go-version v1.4.0 // indirect
+	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-json v0.13.0 // indirect
+	github.com/hashicorp/terraform-plugin-sdk v1.7.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -203,3 +208,5 @@ replace k8s.io/client-go => k8s.io/client-go v0.23.0
 
 // Needed so that the InstallConfig CRD can be created. Later versions of controller-gen balk at using IPNet as a field.
 replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
+
+replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.2.2-0.20211029075448-e21f85ac2cf7

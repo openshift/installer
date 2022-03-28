@@ -18,6 +18,8 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+	nutanixapi "github.com/openshift/machine-api-provider-nutanix/pkg/apis"
+	nutanixprovider "github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1"
 	powervsapi "github.com/openshift/machine-api-provider-powervs/pkg/apis"
 	powervsprovider "github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
@@ -41,6 +43,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
+	"github.com/openshift/installer/pkg/asset/machines/nutanix"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines/powervs"
@@ -58,6 +61,7 @@ import (
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
@@ -168,6 +172,17 @@ func defaultPowerVSMachinePoolPlatform() powervstypes.MachinePool {
 		Processors: "0.5",
 		ProcType:   powervstypes.Shared,
 		SysType:    "s922",
+	}
+}
+
+func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
+	return nutanixtypes.MachinePool{
+		NumCPUs:           2,
+		NumCoresPerSocket: 2,
+		MemoryMiB:         8192,
+		OSDisk: nutanixtypes.OSDisk{
+			DiskSizeMiB: decimalRootVolumeSize * 1024,
+		},
 	}
 }
 
@@ -520,6 +535,20 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				machineSets = append(machineSets, set)
 			}
 		case nonetypes.Name:
+		case nutanixtypes.Name:
+			mpool := defaultNutanixMachinePoolPlatform()
+			mpool.Set(ic.Platform.Nutanix.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.Nutanix)
+			pool.Platform.Nutanix = &mpool
+			imageName := nutanixtypes.RHCOSImageName(clusterID.InfraID)
+
+			sets, err := nutanix.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		default:
 			return fmt.Errorf("invalid Platform")
 		}
@@ -597,6 +626,7 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	scheme := runtime.NewScheme()
 	awsapi.AddToScheme(scheme)
 	baremetalapi.AddToScheme(scheme)
+	nutanixapi.AddToScheme(scheme)
 	ibmcloudapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
@@ -616,6 +646,7 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 		baremetalprovider.SchemeGroupVersion,
 		ibmcloudprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
+		nutanixprovider.SchemeGroupVersion,
 		openstackprovider.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
 		powervsprovider.GroupVersion,
