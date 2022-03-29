@@ -17,6 +17,13 @@ variable "ibmcloud_bootstrap_instance_type" {
 variable "ibmcloud_cis_crn" {
   type        = string
   description = "The CRN of CIS instance to use."
+  default     = ""
+}
+
+variable "ibmcloud_dns_id" {
+  type        = string
+  description = "The ID of DNS Service instance to use."
+  default     = ""
 }
 
 variable "ibmcloud_region" {
