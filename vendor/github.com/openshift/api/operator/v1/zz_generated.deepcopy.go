@@ -1703,6 +1703,16 @@ func (in *IngressControllerStatus) DeepCopyInto(out *IngressControllerStatus) {
 		*out = new(configv1.TLSProfileSpec)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.NamespaceSelector != nil {
+		in, out := &in.NamespaceSelector, &out.NamespaceSelector
+		*out = new(metav1.LabelSelector)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.RouteSelector != nil {
+		in, out := &in.RouteSelector, &out.RouteSelector
+		*out = new(metav1.LabelSelector)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
@@ -1746,6 +1756,11 @@ func (in *IngressControllerTuningOptions) DeepCopyInto(out *IngressControllerTun
 	}
 	if in.TLSInspectDelay != nil {
 		in, out := &in.TLSInspectDelay, &out.TLSInspectDelay
+		*out = new(metav1.Duration)
+		**out = **in
+	}
+	if in.HealthCheckInterval != nil {
+		in, out := &in.HealthCheckInterval, &out.HealthCheckInterval
 		*out = new(metav1.Duration)
 		**out = **in
 	}

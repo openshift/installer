@@ -58,6 +58,7 @@ spec:
                   enum:
                   - openshift-samples
                   - baremetal
+                  - marketplace
                   type: string
                 type: array
               baselineCapabilitySet:

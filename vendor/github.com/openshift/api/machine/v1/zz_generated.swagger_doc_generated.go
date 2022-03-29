@@ -292,7 +292,7 @@ func (ControlPlaneMachineSetStrategy) SwaggerDoc() map[string]string {
 
 var map_ControlPlaneMachineSetTemplate = map[string]string{
 	"":                                      "ControlPlaneMachineSetTemplate is a template used by the ControlPlaneMachineSet to create the Machines that it will manage in the future. ",
-	"machineType":                           "MachineType determines the type of Machines that should be managed by the ControlPlaneMachineSet. Currently, the only valid value is machine.v1beta1.machine.openshift.io.",
+	"machineType":                           "MachineType determines the type of Machines that should be managed by the ControlPlaneMachineSet. Currently, the only valid value is machines_v1beta1_machine_openshift_io.",
 	"machines_v1beta1_machine_openshift_io": "OpenShiftMachineV1Beta1Machine defines the template for creating Machines from the v1beta1.machine.openshift.io API group.",
 }
 
@@ -350,6 +350,44 @@ var map_OpenStackFailureDomain = map[string]string{
 
 func (OpenStackFailureDomain) SwaggerDoc() map[string]string {
 	return map_OpenStackFailureDomain
+}
+
+var map_NutanixMachineProviderConfig = map[string]string{
+	"":                  "NutanixMachineProviderConfig is the Schema for the nutanixmachineproviderconfigs API Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
+	"cluster":           "cluster is to identify the cluster (the Prism Element under management of the Prism Central), in which the Machine's VM will be created. The cluster identifier (uuid or name) can be obtained from the Prism Central console or using the prism_central API.",
+	"image":             "image is to identify the rhcos image uploaded to the Prism Central (PC) The image identifier (uuid or name) can be obtained from the Prism Central console or using the prism_central API.",
+	"subnet":            "subnet is to identify the cluster's network subnet to use for the Machine's VM The cluster identifier (uuid or name) can be obtained from the Prism Central console or using the prism_central API.",
+	"vcpusPerSocket":    "vcpusPerSocket is the number of vCPUs per socket of the VM",
+	"vcpuSockets":       "vcpuSockets is the number of vCPU sockets of the VM",
+	"memorySize":        "memorySize is the memory size (in Quantity format) of the VM The minimum memorySize is 2Gi bytes",
+	"systemDiskSize":    "systemDiskSize is size (in Quantity format) of the system disk of the VM The minimum systemDiskSize is 20Gi bytes",
+	"userDataSecret":    "userDataSecret is a local reference to a secret that contains the UserData to apply to the VM",
+	"credentialsSecret": "credentialsSecret is a local reference to a secret that contains the credentials data to access Nutanix PC client",
+}
+
+func (NutanixMachineProviderConfig) SwaggerDoc() map[string]string {
+	return map_NutanixMachineProviderConfig
+}
+
+var map_NutanixMachineProviderStatus = map[string]string{
+	"":           "NutanixMachineProviderStatus is the type that will be embedded in a Machine.Status.ProviderStatus field. It contains nutanix-specific status information. Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
+	"conditions": "conditions is a set of conditions associated with the Machine to indicate errors or other status",
+	"vmUUID":     "vmUUID is the Machine associated VM's UUID The field is missing before the VM is created. Once the VM is created, the field is filled with the VM's UUID and it will not change. The vmUUID is used to find the VM when updating the Machine status, and to delete the VM when the Machine is deleted.",
+}
+
+func (NutanixMachineProviderStatus) SwaggerDoc() map[string]string {
+	return map_NutanixMachineProviderStatus
+}
+
+var map_NutanixResourceIdentifier = map[string]string{
+	"":     "NutanixResourceIdentifier holds the identity of a Nutanix PC resource (cluster, image, subnet, etc.)",
+	"type": "Type is the identifier type to use for this resource.",
+	"uuid": "uuid is the UUID of the resource in the PC.",
+	"name": "name is the resource name in the PC",
+}
+
+func (NutanixResourceIdentifier) SwaggerDoc() map[string]string {
+	return map_NutanixResourceIdentifier
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE
