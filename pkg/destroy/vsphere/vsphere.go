@@ -19,11 +19,14 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/installer/pkg/destroy/providers"
 	installertypes "github.com/openshift/installer/pkg/types"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
+
+var defaultTimeout = time.Minute * 5
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
@@ -34,16 +37,16 @@ type ClusterUninstaller struct {
 	RestClient *rest.Client
 
 	Logger logrus.FieldLogger
+
+	context context.Context
 }
 
 // New returns an VSphere destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (providers.Destroyer, error) {
-
 	vim25Client, restClient, err := vspheretypes.CreateVSphereClients(context.TODO(),
 		metadata.ClusterPlatformMetadata.VSphere.VCenter,
 		metadata.ClusterPlatformMetadata.VSphere.Username,
 		metadata.ClusterPlatformMetadata.VSphere.Password)
-
 	if err != nil {
 		return nil, err
 	}
@@ -54,50 +57,102 @@ func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (p
 		Client:     vim25Client,
 		RestClient: restClient,
 		Logger:     logger,
+		context:    context.Background(),
 	}, nil
 }
 
-func deleteVirtualMachines(ctx context.Context, client *vim25.Client, virtualMachineMoList []mo.VirtualMachine, logger logrus.FieldLogger) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
+func isNotFound(err error) bool {
+	return err != nil && strings.HasSuffix(err.Error(), http.StatusText(http.StatusNotFound))
+}
+
+func (o *ClusterUninstaller) contextWithTimeout() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(o.context, defaultTimeout)
+}
+
+func (o *ClusterUninstaller) getAttachedObjectsOnTag(objType string) ([]types.ManagedObjectReference, error) {
+	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
-	if len(virtualMachineMoList) != 0 {
-		for _, vmMO := range virtualMachineMoList {
-			virtualMachineLogger := logger.WithField("VirtualMachine", vmMO.Name)
-			vm := object.NewVirtualMachine(client, vmMO.Reference())
-			if vmMO.Summary.Runtime.PowerState == "poweredOn" {
-				task, err := vm.PowerOff(ctx)
-				if err != nil {
-					return err
-				}
-				task.Wait(ctx)
-				virtualMachineLogger.Debug("Powered off")
-			}
+	o.Logger.Debugf("Find attached %s on tag", objType)
+	tagManager := tags.NewManager(o.RestClient)
+	attached, err := tagManager.GetAttachedObjectsOnTags(ctx, []string{o.InfraID})
+	if err != nil && !isNotFound(err) {
+		return nil, err
+	}
 
-			task, err := vm.Destroy(ctx)
-			if err != nil {
-				return err
+	// Separate the objects attached to the tag based on type
+	var objectList []types.ManagedObjectReference
+	for _, attachedObject := range attached {
+		for _, ref := range attachedObject.ObjectIDs {
+			if ref.Reference().Type == objType {
+				objectList = append(objectList, ref.Reference())
 			}
-			task.Wait(ctx)
-			virtualMachineLogger.Info("Destroyed")
 		}
 	}
-	return nil
+
+	return objectList, nil
 }
-func deleteFolder(ctx context.Context, client *vim25.Client, folderMoList []mo.Folder, logger logrus.FieldLogger) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*60)
+
+func (o *ClusterUninstaller) getFolderManagedObjects(moRef []types.ManagedObjectReference) ([]mo.Folder, error) {
+	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
-	// If there are no children in the folder go ahead an remove it
-	if len(folderMoList[0].ChildEntity) == 0 {
-		folderLogger := logger.WithField("Folder", folderMoList[0].Name)
-
-		folder := object.NewFolder(client, folderMoList[0].Reference())
-		task, err := folder.Destroy(ctx)
+	var folderMoList []mo.Folder
+	if len(moRef) > 0 {
+		pc := property.DefaultCollector(o.Client)
+		err := pc.Retrieve(ctx, moRef, nil, &folderMoList)
 		if err != nil {
+			return nil, err
+		}
+	}
+	return folderMoList, nil
+}
+
+func (o *ClusterUninstaller) listFolders() ([]mo.Folder, error) {
+	folderList, err := o.getAttachedObjectsOnTag("Folder")
+	if err != nil {
+		return nil, err
+	}
+
+	return o.getFolderManagedObjects(folderList)
+}
+
+func (o *ClusterUninstaller) deleteFolder() error {
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
+	o.Logger.Debug("Delete Folder")
+
+	folderMoList, err := o.listFolders()
+	if err != nil {
+		return err
+	}
+
+	// The installer should create at most one parent,
+	// the parent to the VirtualMachines.
+	// If there are more or less fail with error message.
+	if len(folderMoList) > 1 {
+		return errors.Errorf("Expected 1 Folder per tag but got %d", len(folderMoList))
+	}
+
+	if len(folderMoList) == 0 {
+		o.Logger.Debug("All folders deleted")
+		return nil
+	}
+
+	// If there are no children in the folder, go ahead and remove it
+	if len(folderMoList[0].ChildEntity) == 0 {
+		folderLogger := o.Logger.WithField("Folder", folderMoList[0].Name)
+
+		folder := object.NewFolder(o.Client, folderMoList[0].Reference())
+		task, err := folder.Destroy(ctx)
+		if err == nil {
+			err = task.Wait(ctx)
+		}
+		if err != nil {
+			folderLogger.Debug(err)
 			return err
 		}
-		task.Wait(ctx)
 		folderLogger.Info("Destroyed")
 	} else {
 		return errors.Errorf("Expected Folder %s to be empty", folderMoList[0].Name)
@@ -105,47 +160,19 @@ func deleteFolder(ctx context.Context, client *vim25.Client, folderMoList []mo.F
 
 	return nil
 }
-func getFolderManagedObjects(ctx context.Context, client *vim25.Client, moRef []types.ManagedObjectReference) ([]mo.Folder, error) {
-	var folderMoList []mo.Folder
-	pc := property.DefaultCollector(client)
-	err := pc.Retrieve(ctx, moRef, nil, &folderMoList)
-	if err != nil {
-		return nil, err
-	}
-	return folderMoList, nil
-}
-func getVirtualMachineManagedObjects(ctx context.Context, client *vim25.Client, moRef []types.ManagedObjectReference) ([]mo.VirtualMachine, error) {
-	var virtualMachineMoList []mo.VirtualMachine
 
-	pc := property.DefaultCollector(client)
-	err := pc.Retrieve(ctx, moRef, nil, &virtualMachineMoList)
-	if err != nil {
-		return nil, err
-	}
-	return virtualMachineMoList, nil
-}
-
-func getAttachedObjectsOnTag(ctx context.Context, client *rest.Client, tagName string) ([]tags.AttachedObjects, error) {
-	tagManager := tags.NewManager(client)
-	attached, err := tagManager.GetAttachedObjectsOnTags(ctx, []string{tagName})
-	if err != nil {
-		return nil, err
-	}
-
-	return attached, nil
-}
-
-func deleteStoragePolicy(ctx context.Context, client *vim25.Client, infraID string, logger logrus.FieldLogger) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
+func (o *ClusterUninstaller) deleteStoragePolicy() error {
+	ctx, cancel := context.WithTimeout(o.context, time.Minute*30)
 	defer cancel()
 
+	o.Logger.Debug("Delete Storage Policy")
 	rtype := pbmtypes.PbmProfileResourceType{
 		ResourceType: string(pbmtypes.PbmProfileResourceTypeEnumSTORAGE),
 	}
 
 	category := pbmtypes.PbmProfileCategoryEnumREQUIREMENT
 
-	pbmClient, err := pbm.NewClient(ctx, client)
+	pbmClient, err := pbm.NewClient(ctx, o.Client)
 	if err != nil {
 		return err
 	}
@@ -159,8 +186,8 @@ func deleteStoragePolicy(ctx context.Context, client *vim25.Client, infraID stri
 	if err != nil {
 		return err
 	}
-	policyName := fmt.Sprintf("openshift-storage-policy-%s", infraID)
-	policyLogger := logger.WithField("StoragePolicy", policyName)
+	policyName := fmt.Sprintf("openshift-storage-policy-%s", o.InfraID)
+	policyLogger := o.Logger.WithField("StoragePolicy", policyName)
 
 	matchingProfileIds := []pbmtypes.PbmProfileId{}
 	for _, p := range profiles {
@@ -180,19 +207,36 @@ func deleteStoragePolicy(ctx context.Context, client *vim25.Client, infraID stri
 	return nil
 }
 
-func deleteTag(ctx context.Context, client *rest.Client, tagID string) error {
-	tagManager := tags.NewManager(client)
-	tag, err := tagManager.GetTag(ctx, tagID)
+func (o *ClusterUninstaller) deleteTag() error {
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
+	tagLogger := o.Logger.WithField("Tag", o.InfraID)
+	tagLogger.Debug("Delete")
+
+	tagManager := tags.NewManager(o.RestClient)
+	tag, err := tagManager.GetTag(ctx, o.InfraID)
 	if err == nil {
 		err = tagManager.DeleteTag(ctx, tag)
+		if err == nil {
+			tagLogger.Info("Deleted")
+		}
+	}
+	if isNotFound(err) {
+		return nil
 	}
 	return err
 }
 
-func deleteTagCategory(ctx context.Context, client *rest.Client, categoryID string, logger logrus.FieldLogger) error {
-	tcLogger := logger.WithField("TagCategory", categoryID)
+func (o *ClusterUninstaller) deleteTagCategory() error {
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
-	tagManager := tags.NewManager(client)
+	categoryID := "openshift-" + o.InfraID
+	tcLogger := o.Logger.WithField("TagCategory", categoryID)
+	tcLogger.Debug("Delete")
+
+	tagManager := tags.NewManager(o.RestClient)
 	ids, err := tagManager.ListCategories(ctx)
 	if err != nil {
 		tcLogger.Errorln(err)
@@ -203,7 +247,7 @@ func deleteTagCategory(ctx context.Context, client *rest.Client, categoryID stri
 	for _, id := range ids {
 		category, err := tagManager.GetCategory(ctx, id)
 		if err != nil {
-			if !strings.HasSuffix(err.Error(), http.StatusText(http.StatusNotFound)) {
+			if !isNotFound(err) {
 				errs = append(errs, errors.Wrapf(err, "could not get category %q", id))
 			}
 			continue
@@ -213,7 +257,7 @@ func deleteTagCategory(ctx context.Context, client *rest.Client, categoryID stri
 				tcLogger.Errorln(err)
 				return err
 			}
-			tcLogger.Info("Destroyed")
+			tcLogger.Info("Deleted")
 			return nil
 		}
 	}
@@ -224,86 +268,47 @@ func deleteTagCategory(ctx context.Context, client *rest.Client, categoryID stri
 	return utilerrors.NewAggregate(errs)
 }
 
+func (o *ClusterUninstaller) destroyCluster() (bool, error) {
+	stagedFuncs := [][]struct {
+		name    string
+		execute func() error
+	}{{
+		{name: "Stop virtual machines", execute: o.stopVirtualMachines},
+	}, {
+		{name: "Virtual Machines", execute: o.deleteVirtualMachines},
+	}, {
+		{name: "Folder", execute: o.deleteFolder},
+	}, {
+		{name: "Storage Policy", execute: o.deleteStoragePolicy},
+		{name: "Tag", execute: o.deleteTag},
+		{name: "Tag Category", execute: o.deleteTagCategory},
+	}}
+
+	stageFailed := false
+	for _, stage := range stagedFuncs {
+		if stageFailed {
+			break
+		}
+		for _, f := range stage {
+			err := f.execute()
+			if err != nil {
+				o.Logger.Debugf("%s: %v", f.name, err)
+				stageFailed = true
+			}
+		}
+	}
+
+	return !stageFailed, nil
+}
+
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run() (*installertypes.ClusterQuota, error) {
-	var folderList []types.ManagedObjectReference
-	var virtualMachineList []types.ManagedObjectReference
-
-	o.Logger.Debug("Find attached objects on tag")
-	tagAttachedObjects, err := getAttachedObjectsOnTag(context.TODO(), o.RestClient, o.InfraID)
+	err := wait.PollImmediateInfinite(
+		time.Second*10,
+		o.destroyCluster,
+	)
 	if err != nil {
-		return nil, err
-	}
-
-	// Seperate the objects attached to the tag based on type
-	// We only need Folder and VirtualMachine
-	for _, attachedObject := range tagAttachedObjects {
-		for _, ref := range attachedObject.ObjectIDs {
-			if ref.Reference().Type == "Folder" {
-				folderList = append(folderList, ref.Reference())
-			}
-			if ref.Reference().Type == "VirtualMachine" {
-				virtualMachineList = append(virtualMachineList, ref.Reference())
-			}
-		}
-	}
-
-	// The installer should create at most one parent,
-	// the parent to the VirtualMachines.
-	// If there are more or less fail with error message.
-	if len(folderList) > 1 {
-		return nil, errors.Errorf("Expected 1 Folder per tag but got %d", len(folderList))
-	}
-
-	if len(virtualMachineList) > 0 {
-		o.Logger.Debug("Find VirtualMachine objects")
-		virtualMachineMoList, err := getVirtualMachineManagedObjects(context.TODO(), o.Client, virtualMachineList)
-		if err != nil {
-			return nil, err
-		}
-		o.Logger.Debug("Delete VirtualMachines")
-		err = deleteVirtualMachines(context.TODO(), o.Client, virtualMachineMoList, o.Logger)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		o.Logger.Debug("No VirtualMachines found")
-	}
-
-	if len(folderList) > 0 {
-		o.Logger.Debug("Find Folder objects")
-		folderMoList, err := getFolderManagedObjects(context.TODO(), o.Client, folderList)
-		if err != nil {
-			o.Logger.Errorln(err)
-			return nil, err
-		}
-
-		o.Logger.Debug("Delete Folder")
-		err = deleteFolder(context.TODO(), o.Client, folderMoList, o.Logger)
-		if err != nil {
-			o.Logger.Errorln(err)
-			return nil, err
-		}
-	} else {
-		o.Logger.Debug("No managed Folder found")
-	}
-
-	err = deleteStoragePolicy(context.TODO(), o.Client, o.InfraID, o.Logger)
-	if err != nil {
-		return nil, errors.Errorf("error deleting storage policy: %v", err)
-	}
-
-	o.Logger.Debug("Delete tag")
-	tagLogger := o.Logger.WithField("Tag", o.InfraID)
-	if err = deleteTag(context.TODO(), o.RestClient, o.InfraID); err != nil {
-		tagLogger.Errorln(err)
-		return nil, err
-	}
-	tagLogger.Info("Destroyed")
-
-	o.Logger.Debug("Delete tag category")
-	if err = deleteTagCategory(context.TODO(), o.RestClient, "openshift-"+o.InfraID, o.Logger); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to destroy cluster")
 	}
 
 	return nil, nil
