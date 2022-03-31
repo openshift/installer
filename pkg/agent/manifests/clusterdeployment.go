@@ -10,43 +10,36 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/yaml"
 )
 
 func GetPullSecret() string {
-	secretData, err := os.ReadFile("./manifests/pull-secret.yaml")
-	if err != nil {
-		fmt.Errorf("Error reading pull secret: %w", err)
-	}
 	var secret corev1.Secret
-	if err := yaml.Unmarshal(secretData, &secret); err != nil {
-		fmt.Errorf("Error unmarshalling pull secret: %w", err)
+	if err := GetFileData("pull-secret.yaml", &secret); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
+
 	pullSecret := secret.StringData[".dockerconfigjson"]
 	return pullSecret
 }
 
 func getClusterDeployment() hivev1.ClusterDeployment {
-	cdData, err := os.ReadFile("./manifests/cluster-deployment.yaml")
-	if err != nil {
-		fmt.Errorf("Error reading cluster deployment CR: %w", err)
-	}
 	var cd hivev1.ClusterDeployment
-	if err := yaml.Unmarshal(cdData, &cd); err != nil {
-		fmt.Errorf("Error unmarshalling cluster deployment CR: %w", err)
+	if err := GetFileData("cluster-deployment.yaml", &cd); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
+
 	return cd
 }
 
-func GetAgentClusterInstall() hiveext.AgentClusterInstall {
-	aciData, err := os.ReadFile("./manifests/agent-cluster-install.yaml")
-	if err != nil {
-		fmt.Errorf("Error reading AgentClusterInstall CR: %w", err)
-	}
+func getAgentClusterInstall() hiveext.AgentClusterInstall {
 	var aci hiveext.AgentClusterInstall
-	if err := yaml.Unmarshal(aciData, &aci); err != nil {
-		fmt.Errorf("Error unmarshalling AgentClusterInstall CR: %w", err)
+	if err := GetFileData("agent-cluster-install.yaml", &aci); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
+
 	return aci
 }
 
@@ -56,7 +49,7 @@ func GetAgentClusterInstall() hiveext.AgentClusterInstall {
 //       After the refactoring most of the code below goes away, especially the helper functions that are being carried over here.
 func CreateClusterParams() *models.ClusterCreateParams {
 	cd := getClusterDeployment()
-	aci := GetAgentClusterInstall()
+	aci := getAgentClusterInstall()
 	clusterInstall := &aci
 	// TODO: Have single source for image version and cpu arch
 	releaseImageVersion := "4.10.0-rc.1"
