@@ -28,6 +28,7 @@ type ConfigBuilder struct {
 	createInfraEnvParamsJSON string
 	apiVip                   string
 	controlPlaneAgents       int
+	workerAgents             int
 }
 
 func New(nodeZeroIP string) *ConfigBuilder {
@@ -62,6 +63,7 @@ func New(nodeZeroIP string) *ConfigBuilder {
 		createInfraEnvParamsJSON: string(infraEnvJSON),
 		apiVip:                   clusterInstall.Spec.APIVIP,
 		controlPlaneAgents:       clusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
+		workerAgents:             clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
 	}
 }
 
@@ -227,6 +229,7 @@ func (c ConfigBuilder) templateString(name string, text string) (string, error) 
 		"InfraEnvCreateParamsJSON": c.createInfraEnvParamsJSON,
 		"APIVIP":                   c.apiVip,
 		"ControlPlaneAgents":       c.controlPlaneAgents,
+		"WorkerAgents":             c.workerAgents,
 	}
 
 	tmpl, err := template.New(name).Parse(string(text))
