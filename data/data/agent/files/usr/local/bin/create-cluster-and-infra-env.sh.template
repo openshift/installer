@@ -11,7 +11,7 @@ wait_for_assisted_service
 
 set -e
 
-CLUSTER_CREATE_OUT=$(curl -s -S -X POST -H "Content-Type: application/json" -d '{{.ClusterCreateParamsJSON}}' {{.ServiceBaseURL}}/api/assisted-install/v2/clusters)
+CLUSTER_CREATE_OUT=$(curl -f -s -S -X POST -H "Content-Type: application/json" -d '{{.ClusterCreateParamsJSON}}' {{.ServiceBaseURL}}/api/assisted-install/v2/clusters)
 echo "cluster create response: $CLUSTER_CREATE_OUT"
 # pick cluster_id out from cluster create response
 CLUSTER_ID=$(echo $CLUSTER_CREATE_OUT | jq -r .id)
@@ -21,4 +21,4 @@ INFRA_ENV_PARAMS_JSON='{{.InfraEnvCreateParamsJSON}}'
 # replace "replace-cluster-id" with $CLUSTER_ID
 INFRA_ENV_PARAMS_JSON=${INFRA_ENV_PARAMS_JSON//"replace-cluster-id"/$CLUSTER_ID}
 
-curl -s -S -X POST -H "Content-Type: application/json" -d "$INFRA_ENV_PARAMS_JSON" {{.ServiceBaseURL}}/api/assisted-install/v2/infra-envs
+curl -f -s -S -X POST -H "Content-Type: application/json" -d "$INFRA_ENV_PARAMS_JSON" {{.ServiceBaseURL}}/api/assisted-install/v2/infra-envs
