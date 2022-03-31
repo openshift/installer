@@ -9,18 +9,15 @@ import (
 	"github.com/go-openapi/swag"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
-	"sigs.k8s.io/yaml"
 )
 
 func getInfraEnv() aiv1beta1.InfraEnv {
-	infraEnvData, err := os.ReadFile("./manifests/infraenv.yaml")
-	if err != nil {
-		fmt.Errorf("Error reading pull secret: %w", err)
-	}
 	var infraEnv aiv1beta1.InfraEnv
-	if err := yaml.Unmarshal(infraEnvData, &infraEnv); err != nil {
-		fmt.Errorf("Error unmarshalling pull secret: %w", err)
+	if err := GetFileData("infraenv.yaml", &infraEnv); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
+
 	return infraEnv
 }
 
