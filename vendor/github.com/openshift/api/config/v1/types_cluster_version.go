@@ -225,7 +225,7 @@ type UpdateHistory struct {
 type ClusterID string
 
 // ClusterVersionCapability enumerates optional, core cluster components.
-// +kubebuilder:validation:Enum=openshift-samples;baremetal
+// +kubebuilder:validation:Enum=openshift-samples;baremetal;marketplace
 type ClusterVersionCapability string
 
 const (
@@ -240,6 +240,11 @@ const (
 	// baremetal operator which is responsible for running the metal3
 	// deployment.
 	ClusterVersionCapabilityBaremetal ClusterVersionCapability = "baremetal"
+
+	// ClusterVersionCapabilityMarketplace manages the Marketplace operator which
+	// supplies Operator Lifecycle Manager (OLM) users with default catalogs of
+	// "optional" operators.
+	ClusterVersionCapabilityMarketplace ClusterVersionCapability = "marketplace"
 )
 
 // ClusterVersionCapabilitySet defines sets of cluster version capabilities.
@@ -269,10 +274,12 @@ var ClusterVersionCapabilitySets = map[ClusterVersionCapabilitySet][]ClusterVers
 	ClusterVersionCapabilitySet4_11: {
 		ClusterVersionCapabilityOpenShiftSamples,
 		ClusterVersionCapabilityBaremetal,
+		ClusterVersionCapabilityMarketplace,
 	},
 	ClusterVersionCapabilitySetCurrent: {
 		ClusterVersionCapabilityOpenShiftSamples,
 		ClusterVersionCapabilityBaremetal,
+		ClusterVersionCapabilityMarketplace,
 	},
 }
 

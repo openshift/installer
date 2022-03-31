@@ -76,7 +76,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	controlPlaneUltraSSDEnabled := false
-	if masterConfig.UltraSSDCapability == machineapi.AzureUltraSSDCapabilityTrue {
+	if masterConfig.UltraSSDCapability == machineapi.AzureUltraSSDCapabilityEnabled {
 		controlPlaneUltraSSDEnabled = true
 	}
 
