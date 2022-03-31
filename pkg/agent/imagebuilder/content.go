@@ -26,6 +26,9 @@ type ConfigBuilder struct {
 	nodeZeroIP               string
 	createClusterParamsJSON  string
 	createInfraEnvParamsJSON string
+	apiVip                   string
+	controlPlaneAgents       int
+	workerAgents             int
 }
 
 func New(nodeZeroIP string) *ConfigBuilder {
@@ -47,6 +50,10 @@ func New(nodeZeroIP string) *ConfigBuilder {
 	if err != nil {
 		fmt.Errorf("Error marshal infra env params into json: %w", err)
 	}
+
+	aci := manifests.GetAgentClusterInstall()
+	clusterInstall := &aci
+
 	return &ConfigBuilder{
 		pullSecret:               pullSecret,
 		serviceBaseURL:           serviceBaseURL,
@@ -54,6 +61,9 @@ func New(nodeZeroIP string) *ConfigBuilder {
 		nodeZeroIP:               nodeZeroIP,
 		createClusterParamsJSON:  string(clusterJSON),
 		createInfraEnvParamsJSON: string(infraEnvJSON),
+		apiVip:                   clusterInstall.Spec.APIVIP,
+		controlPlaneAgents:       clusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
+		workerAgents:             clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
 	}
 }
 
@@ -217,6 +227,9 @@ func (c ConfigBuilder) templateString(name string, text string) (string, error) 
 		"NodeZeroIP":               c.nodeZeroIP,
 		"ClusterCreateParamsJSON":  c.createClusterParamsJSON,
 		"InfraEnvCreateParamsJSON": c.createInfraEnvParamsJSON,
+		"APIVIP":                   c.apiVip,
+		"ControlPlaneAgents":       c.controlPlaneAgents,
+		"WorkerAgents":             c.workerAgents,
 	}
 
 	tmpl, err := template.New(name).Parse(string(text))
