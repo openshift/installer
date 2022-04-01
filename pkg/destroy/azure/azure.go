@@ -224,7 +224,6 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 	var errs []error
 
 	zonesPage, err := dnsClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
-	logger.Debug(err)
 	if err != nil {
 		if zonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
 			logger.Debug("already deleted the AzureStack zones")
@@ -255,8 +254,10 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 			}
 			for _, record := range recordPages.Values() {
 				metadata := to.StringMap(record.Metadata)
+				appsRecordName := fmt.Sprintf("*.apps.%s", o.InfraID)
 				_, found := metadata[clusterTag]
-				if found {
+				nameMatch := strings.HasPrefix(to.String(record.Name), appsRecordName)
+				if found || nameMatch {
 					resp, err := recordsClient.Delete(ctx, rgName, zone, to.String(record.Name), toAzureStackRecordType(to.String(record.Type)), "")
 					if err != nil {
 						if wasNotFound(resp.Response) {
