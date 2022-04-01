@@ -9,11 +9,16 @@ aliases:
     - sdodson
     - smarterclayton
   installer-reviewers:
+    - AnnaZivkovic
+    - barbacbd
     - jhixson74
     - jstuever
     - kirankt
     - patrickdillon
+    - r4f4
     - rna-afk
+    - sadasu
+    - staebler
   libvirt-approvers:
     - praveenkumar
     - cfergeau
