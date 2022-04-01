@@ -10,6 +10,7 @@ require (
 	github.com/openshift/assisted-image-service v0.0.0-20220307202600-054a1afa8d28
 	github.com/openshift/assisted-service v1.0.10-0.20220116113517-db25501e204a
 	github.com/openshift/hive/apis v0.0.0-20210506000654-5c038fb05190
+	github.com/pkg/errors v0.9.1
 	github.com/thoas/go-funk v0.9.1
 	github.com/vincent-petithory/dataurl v1.0.0
 	k8s.io/api v0.21.1
