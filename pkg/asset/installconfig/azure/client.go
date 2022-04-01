@@ -9,6 +9,7 @@ import (
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
+	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 )
@@ -27,6 +28,7 @@ type API interface {
 	GetGroup(ctx context.Context, groupName string) (*azres.Group, error)
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
+	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
 }
 
 // Client makes calls to the Azure API.
@@ -249,4 +251,19 @@ func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) 
 		}
 	}
 	return nil, nil
+}
+
+// GetDiskEncryptionSet retrieves the specified disk encryption set.
+func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error) {
+	client := azenc.NewDiskEncryptionSetsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, subscriptionID)
+	client.Authorizer = c.ssn.Authorizer
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	diskEncryptionSet, err := client.Get(ctx, groupName, diskEncryptionSetName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get disk encryption set")
+	}
+
+	return &diskEncryptionSet, nil
 }

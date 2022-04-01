@@ -10,6 +10,7 @@ import (
 	network "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	resources "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	subscriptions "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
+	compute0 "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -185,4 +186,19 @@ func (m *MockAPI) GetStorageEndpointSuffix(ctx context.Context) (string, error) 
 func (mr *MockAPIMockRecorder) GetStorageEndpointSuffix(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStorageEndpointSuffix", reflect.TypeOf((*MockAPI)(nil).GetStorageEndpointSuffix), ctx)
+}
+
+// GetDiskEncryptionSet mocks base method
+func (m *MockAPI) GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName, diskEncryptionSetName string) (*compute0.DiskEncryptionSet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDiskEncryptionSet", ctx, subscriptionID, groupName, diskEncryptionSetName)
+	ret0, _ := ret[0].(*compute0.DiskEncryptionSet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDiskEncryptionSet indicates an expected call of GetDiskEncryptionSet
+func (mr *MockAPIMockRecorder) GetDiskEncryptionSet(ctx, subscriptionID, groupName, diskEncryptionSetName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDiskEncryptionSet", reflect.TypeOf((*MockAPI)(nil).GetDiskEncryptionSet), ctx, subscriptionID, groupName, diskEncryptionSetName)
 }
