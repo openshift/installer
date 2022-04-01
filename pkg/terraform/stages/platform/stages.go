@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/terraform/stages/gcp"
 	"github.com/openshift/installer/pkg/terraform/stages/ibmcloud"
 	"github.com/openshift/installer/pkg/terraform/stages/libvirt"
+	"github.com/openshift/installer/pkg/terraform/stages/nutanix"
 	"github.com/openshift/installer/pkg/terraform/stages/openstack"
 	"github.com/openshift/installer/pkg/terraform/stages/ovirt"
 	"github.com/openshift/installer/pkg/terraform/stages/vsphere"
@@ -21,6 +22,7 @@ import (
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -45,6 +47,8 @@ func StagesForPlatform(platform string) []terraform.Stage {
 		return ibmcloud.PlatformStages
 	case libvirttypes.Name:
 		return libvirt.PlatformStages
+	case nutanixtypes.Name:
+		return nutanix.PlatformStages
 	case openstacktypes.Name:
 		return openstack.PlatformStages
 	case ovirttypes.Name:
