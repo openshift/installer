@@ -16,7 +16,11 @@ import (
 
 	data "github.com/openshift-agent-team/fleeting/data/data/agent"
 	"github.com/openshift-agent-team/fleeting/pkg/agent/manifests"
+
+	"github.com/openshift/assisted-service/models"
 )
+
+const NMCONNECTIONS_DIR = "/etc/assisted/network"
 
 // ConfigBuilder builds an Ignition config
 type ConfigBuilder struct {
@@ -29,6 +33,7 @@ type ConfigBuilder struct {
 	apiVip                   string
 	controlPlaneAgents       int
 	workerAgents             int
+	staticNetworkConfig      []*models.HostStaticNetworkConfig
 }
 
 func New(nodeZeroIP string) *ConfigBuilder {
@@ -68,6 +73,7 @@ func New(nodeZeroIP string) *ConfigBuilder {
 		apiVip:                   clusterInstall.Spec.APIVIP,
 		controlPlaneAgents:       clusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
 		workerAgents:             clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
+		staticNetworkConfig:      infraEnvParams.StaticNetworkConfig,
 	}
 }
 
@@ -76,6 +82,18 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func ignitionFileEmbed(path string, mode int, overwrite bool, data []byte) igntypes.File {
+	source := ignutil.StrToPtr(dataurl.EncodeBytes(data))
+
+	return igntypes.File{
+		Node: igntypes.Node{Path: path, Overwrite: &overwrite},
+		FileEmbedded1: igntypes.FileEmbedded1{
+			Contents: igntypes.Resource{Source: source},
+			Mode:     &mode,
+		},
+	}
 }
 
 // Ignition builds an ignition file and returns the bytes
@@ -104,20 +122,29 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 	// pull secret not included in data/data/agent/files because embed.FS
 	// does not list directories with name starting with '.'
 	if c.pullSecret != "" {
-		mode := 0420
-		pullSecret := igntypes.File{
-			Node: igntypes.Node{
-				Path:      "/root/.docker/config.json",
-				Overwrite: ignutil.BoolToPtr(true),
-			},
-			FileEmbedded1: igntypes.FileEmbedded1{
-				Mode: &mode,
-				Contents: igntypes.Resource{
-					Source: ignutil.StrToPtr(dataurl.EncodeBytes([]byte(c.pullSecret))),
-				},
-			},
-		}
+		pullSecret := ignitionFileEmbed("/root/.docker/config.json", 0420, true, []byte(c.pullSecret))
 		files = append(files, pullSecret)
+	}
+
+	if len(c.staticNetworkConfig) > 0 {
+		// Get the static network configuration from nmstate and generate NetworkManager ignition files
+		filesList, err := manifests.GetNMIgnitionFiles(c.staticNetworkConfig)
+		if err == nil {
+			for i := range filesList {
+				nmFilePath := path.Join(NMCONNECTIONS_DIR, filesList[i].FilePath)
+				nmStateIgnFile := ignitionFileEmbed(nmFilePath, 0600, true, []byte(filesList[i].FileContents))
+				files = append(files, nmStateIgnFile)
+			}
+
+			nmStateScriptFilePath := "/usr/local/bin/pre-network-manager-config.sh"
+			// A local version of the assisted-service internal script is currently used
+			nmStateScript := ignitionFileEmbed(nmStateScriptFilePath, 0755, true, []byte(manifests.PreNetworkConfigScript))
+			files = append(files, nmStateScript)
+		} else {
+			// If manifest files are invalid, terminate to avoid networking problems at boot
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 	}
 
 	config.Storage.Files = files
@@ -172,18 +199,7 @@ func (c ConfigBuilder) getFiles() ([]igntypes.File, error) {
 				if _, dirName := path.Split(dirPath); dirName == "bin" || dirName == "dispatcher.d" {
 					mode = 0555
 				}
-				file := igntypes.File{
-					Node: igntypes.Node{
-						Path:      fullPath,
-						Overwrite: ignutil.BoolToPtr(true),
-					},
-					FileEmbedded1: igntypes.FileEmbedded1{
-						Mode: &mode,
-						Contents: igntypes.Resource{
-							Source: ignutil.StrToPtr(dataurl.EncodeBytes([]byte(templated))),
-						},
-					},
-				}
+				file := ignitionFileEmbed(strings.TrimSuffix(fullPath, ".template"), mode, true, []byte(templated))
 				files = append(files, file)
 			}
 		}
@@ -196,6 +212,7 @@ func (c ConfigBuilder) getFiles() ([]igntypes.File, error) {
 func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 	units := make([]igntypes.Unit, 0)
 	basePath := "systemd/units"
+	staticNetworkService := "pre-network-manager-config.service"
 
 	entries, err := data.IgnitionData.ReadDir(basePath)
 	if err != nil {
@@ -203,6 +220,10 @@ func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 	}
 
 	for _, e := range entries {
+		if len(c.staticNetworkConfig) == 0 && e.Name() == staticNetworkService {
+			continue
+		}
+
 		contents, err := data.IgnitionData.ReadFile(path.Join(basePath, e.Name()))
 		if err != nil {
 			return units, fmt.Errorf("failed to read unit %s: %w", e.Name(), err)
