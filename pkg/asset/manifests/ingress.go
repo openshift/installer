@@ -78,6 +78,27 @@ func (ing *Ingress) Generate(dependencies asset.Parents) error {
 }
 
 func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, error) {
+	controlPlaneTopology, _ := determineTopologies(config)
+
+	isSingleControlPlaneNode := controlPlaneTopology == configv1.SingleReplicaTopologyMode
+
+	defaultPlacement := configv1.DefaultPlacementWorkers
+	if config.Platform.None != nil && isSingleControlPlaneNode {
+		// A none-platform single control-plane node cluster doesn't need a
+		// load balancer, the API and ingress traffic for such cluster can be
+		// directed at the single node directly. We want to maintain that even
+		// when worker nodes are added to such cluster. We do that by asking
+		// the Cluster Ingress Operator to place the ingress pod on the single
+		// control plane node. This would ensure that the ingress pod won't
+		// ever be scheduled on the added workers, as that would create a
+		// requirement for a load-balancer. Even when a single control-plane
+		// node cluster is installed with one or more worker nodes since day 1,
+		// we still want control-plane ingress default placement, for the sake
+		// of consistency. Users can override this decision manually if they
+		// wish.
+		defaultPlacement = configv1.DefaultPlacementControlPlane
+	}
+
 	obj := &configv1.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.GroupVersion.String(),
@@ -89,6 +110,9 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 		},
 		Spec: configv1.IngressSpec{
 			Domain: fmt.Sprintf("apps.%s", config.ClusterDomain()),
+		},
+		Status: configv1.IngressStatus{
+			DefaultPlacement: defaultPlacement,
 		},
 	}
 	return yaml.Marshal(obj)

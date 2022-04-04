@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
 )
 
 func TestGenerateInfrastructe(t *testing.T) {
@@ -95,6 +96,15 @@ func (b icBuildNamespace) forAWS() icOption {
 			return
 		}
 		ic.Platform.AWS = &awstypes.Platform{}
+	}
+}
+
+func (b icBuildNamespace) forNone() icOption {
+	return func(ic *types.InstallConfig) {
+		if ic.Platform.None != nil {
+			return
+		}
+		ic.Platform.None = &nonetypes.Platform{}
 	}
 }
 
