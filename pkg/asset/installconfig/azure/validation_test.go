@@ -43,7 +43,7 @@ var (
 		{Name: to.StringPtr("Standard_D2_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("2")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("8")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}}},
 		{Name: to.StringPtr("Standard_D4_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}}},
 		{Name: to.StringPtr("Standard_D2s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}}},
-		{Name: to.StringPtr("Standard_D8s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}}},
+		{Name: to.StringPtr("Standard_D8s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("UltraSSDAvailable"), Value: to.StringPtr("True")}}},
 		{Name: to.StringPtr("Standard_D_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("False")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}}},
 		{Name: to.StringPtr("Standard_Dc4_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V2")}}},
 	}
@@ -70,6 +70,10 @@ var (
 		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Dne_D2_v4"
 	}
 
+	ultraSSDAvailableInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D8s_v3"
+	}
+
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
 		ic.MachineNetwork = []types.MachineNetworkEntry{
@@ -93,6 +97,9 @@ var (
 	premiumDiskDefault                     = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.OSDisk.DiskType = "Premium_LRS" }
 	nonpremiumInstanceTypeDiskDefault      = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.InstanceType = "Standard_D_v4" }
 	unsupportedHyperVGeneration            = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.InstanceType = "Standard_Dc4_v4" }
+	enabledSSDCapabilityControlPlane       = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.UltraSSDCapability = "Enabled" }
+	enabledSSDCapabilityCompute            = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.UltraSSDCapability = "Enabled" }
+	enabledSSDCapabilityDefault            = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.UltraSSDCapability = "Enabled" }
 
 	virtualNetworkAPIResult = &aznetwork.VirtualNetwork{
 		Name: &validVirtualNetwork,
@@ -304,6 +311,36 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			name:     "Unsupported HyperVGeneration",
 			edits:    editFunctions{unsupportedHyperVGeneration},
 			errorMsg: `^\[controlPlane.platform.azure.type: Invalid value: "Standard_Dc4_v4": only disks with HyperVGeneration V1 are supported, compute\[0\].platform.azure.type: Invalid value: "Standard_Dc4_v4": only disks with HyperVGeneration V1 are supported\]$`,
+		},
+		{
+			name:     "Unsupported UltraSSD capability in Control Plane",
+			edits:    editFunctions{enabledSSDCapabilityControlPlane, validInstanceTypes},
+			errorMsg: `controlPlane.platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the centralus region$`,
+		},
+		{
+			name:     "Unsupported UltraSSD capability in Compute",
+			edits:    editFunctions{enabledSSDCapabilityCompute, validInstanceTypes},
+			errorMsg: `compute\[0\].platform.azure.type: Invalid value: "Standard_D2_v4": UltraSSD capability not supported for this instance type in the centralus region$`,
+		},
+		{
+			name:     "Unsupported UltraSSD capability as default",
+			edits:    editFunctions{enabledSSDCapabilityDefault, validInstanceTypes},
+			errorMsg: `^\[controlPlane.platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the centralus region, compute\[0\].platform.azure.type: Invalid value: "Standard_D2_v4": UltraSSD capability not supported for this instance type in the centralus region\]$`,
+		},
+		{
+			name:     "Supported UltraSSD capability in Control Plane",
+			edits:    editFunctions{ultraSSDAvailableInstanceTypes, enabledSSDCapabilityControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported UltraSSD capability in Compute",
+			edits:    editFunctions{ultraSSDAvailableInstanceTypes, enabledSSDCapabilityCompute},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported UltraSSD capability as default",
+			edits:    editFunctions{ultraSSDAvailableInstanceTypes, enabledSSDCapabilityDefault},
+			errorMsg: "",
 		},
 	}
 
