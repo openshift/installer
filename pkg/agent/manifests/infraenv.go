@@ -58,15 +58,15 @@ func CreateInfraEnvParams() (*models.InfraEnvCreateParams, error) {
 	createParams.ClusterID = &tempClusterID
 	createParams.OpenshiftVersion = &releaseImageVersion
 
-	staticNetworkConfig, err := ProcessNMStateConfig(infraEnv)
-	if err != nil {
-		return nil, err
-	}
-	if len(staticNetworkConfig) > 0 {
-		// TODO: Use logging
-		// fmt.Printf("the amount of nmStateConfigs included in the image is: %d", len(staticNetworkConfig))
-		createParams.StaticNetworkConfig = staticNetworkConfig
-	}
+	// staticNetworkConfig, err := ProcessNMStateConfig(infraEnv)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if len(staticNetworkConfig) > 0 {
+	// 	// TODO: Use logging
+	// 	// fmt.Printf("the amount of nmStateConfigs included in the image is: %d", len(staticNetworkConfig))
+	// 	createParams.StaticNetworkConfig = staticNetworkConfig
+	// }
 
 	return createParams, nil
 }
