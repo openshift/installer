@@ -9,11 +9,11 @@ import (
 	"github.com/vmware/govmomi/vim25"
 	vmwaretypes "github.com/vmware/govmomi/vim25/types"
 
+	"github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
 	"github.com/openshift/installer/pkg/types"
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // PlatformStages are the stages to run to provision the infrastructure in vsphere.
@@ -88,7 +88,7 @@ func extractOutputHostAddresses(s stages.SplitStage, directory string, config *t
 
 // hostIP returns the ip address for a host
 func hostIP(config *types.InstallConfig, moid string) (string, error) {
-	client, _, err := vspheretypes.CreateVSphereClients(context.TODO(), config.VSphere.VCenter, config.VSphere.Username, config.VSphere.Password)
+	client, _, err := vsphere.CreateVSphereClients(context.TODO(), config.VSphere.VCenter, config.VSphere.Username, config.VSphere.Password)
 	if err != nil {
 		return "", err
 	}
