@@ -89,6 +89,7 @@ variable "machine_cidr" {
 // Bootstrap machine variables
 /////////
 
+/*
 variable "bootstrap_ignition_path" {
   type    = string
   default = "./bootstrap.ign"
@@ -108,19 +109,22 @@ variable "lb_ip_address" {
   type    = string
   default = ""
 }
+*/
 
 ///////////
 // control-plane machine variables
 ///////////
 
+/*
 variable "control_plane_ignition_path" {
   type    = string
   default = "./master.ign"
 }
+*/
 
 variable "control_plane_count" {
   type    = string
-  default = "3"
+  default = "1"
 }
 
 variable "control_plane_ip_addresses" {
@@ -129,13 +133,14 @@ variable "control_plane_ip_addresses" {
 }
 variable "control_plane_memory" {
   type    = string
-  default = "16384"
+  default = "32768"
 }
 
 variable "control_plane_num_cpus" {
   type    = string
-  default = "4"
+  default = "8"
 }
+/*
 
 //////////
 // compute machine variables
@@ -165,8 +170,9 @@ variable "compute_num_cpus" {
   type    = string
   default = "4"
 }
+*/
 
 variable "ssh_public_key_path" {
   type    = string
-  default = "~/.ssh/id_rsa.pub"
+  default = "~/.ssh/openshift-dev.pub"
 }

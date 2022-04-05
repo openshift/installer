@@ -53,7 +53,7 @@ resource "vsphere_folder" "folder" {
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-// Request from phpIPAM a new IP address for the bootstrap node
+/*// Request from phpIPAM a new IP address for the bootstrap node
 module "ipam_bootstrap" {
   source = "./ipam"
 
@@ -71,7 +71,7 @@ module "ipam_bootstrap" {
 
   static_ip_addresses = var.bootstrap_ip_address == "" ? [] : [var.bootstrap_ip_address]
 
-}
+}*/
 
 // Request from phpIPAM a new IP addresses for the control-plane nodes
 module "ipam_control_plane" {
@@ -82,6 +82,7 @@ module "ipam_control_plane" {
   machine_cidr        = var.machine_cidr
   static_ip_addresses = var.control_plane_ip_addresses
 }
+/*
 
 // Request from phpIPAM a new IP addresses for the compute nodes
 module "ipam_compute" {
@@ -92,6 +93,8 @@ module "ipam_compute" {
   machine_cidr        = var.machine_cidr
   static_ip_addresses = var.compute_ip_addresses
 }
+*/
+/*
 
 // Request from phpIPAM a new IP addresses for the load balancer nodes
 module "ipam_lb" {
@@ -102,6 +105,8 @@ module "ipam_lb" {
   machine_cidr        = var.machine_cidr
   static_ip_addresses = var.lb_ip_address == "" ? [] : [var.lb_ip_address]
 }
+*/
+/*
 
 module "lb" {
   source        = "./lb"
@@ -115,6 +120,7 @@ module "lb" {
   ingress_backend_addresses = module.ipam_compute.ip_addresses
   ssh_public_key_path       = var.ssh_public_key_path
 }
+*/
 
 module "dns_cluster_domain" {
   source         = "./cluster_domain"
@@ -122,6 +128,7 @@ module "dns_cluster_domain" {
   base_domain    = var.base_domain
 }
 
+/*
 module "lb_a_records" {
   source  = "./host_a_record"
   zone_id = module.dns_cluster_domain.zone_id
@@ -130,6 +137,7 @@ module "lb_a_records" {
     [for name in local.api_lb_fqdns : module.ipam_lb.ip_addresses[0]]
   )
 }
+*/
 
 module "control_plane_a_records" {
   source  = "./host_a_record"
@@ -137,13 +145,13 @@ module "control_plane_a_records" {
   records = zipmap(local.control_plane_fqdns, module.ipam_control_plane.ip_addresses)
 }
 
-module "compute_a_records" {
+/*module "compute_a_records" {
   source  = "./host_a_record"
   zone_id = module.dns_cluster_domain.zone_id
   records = zipmap(local.compute_fqdns, module.ipam_compute.ip_addresses)
-}
+}*/
 
-module "lb_vm" {
+/*module "lb_vm" {
   source = "./vm"
 
   ignition               = module.lb.ignition
@@ -164,8 +172,9 @@ module "lb_vm" {
   num_cpus      = 2
   memory        = 2096
   dns_addresses = var.vm_dns_addresses
-}
+}*/
 
+/*
 module "bootstrap" {
   source = "./vm"
 
@@ -192,6 +201,7 @@ module "bootstrap" {
   memory        = 8192
   dns_addresses = var.vm_dns_addresses
 }
+*/
 
 module "control_plane_vm" {
   source = "./vm"
@@ -224,6 +234,7 @@ module "control_plane_vm" {
   dns_addresses = var.vm_dns_addresses
 }
 
+/*
 module "compute_vm" {
   source = "./vm"
 
@@ -250,3 +261,4 @@ module "compute_vm" {
   memory        = var.compute_memory
   dns_addresses = var.vm_dns_addresses
 }
+*/
