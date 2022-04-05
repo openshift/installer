@@ -75,11 +75,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		masterAvailabilityZones[i] = to.String(c.Zone)
 	}
 
-	controlPlaneUltraSSDEnabled := false
-	if masterConfig.UltraSSDCapability == machineapi.AzureUltraSSDCapabilityEnabled {
-		controlPlaneUltraSSDEnabled = true
-	}
-
 	environment, err := environment(sources.CloudName)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not determine Azure environment to use for Terraform")
@@ -103,7 +98,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterAvailabilityZones:         masterAvailabilityZones,
 		MasterEncryptionAtHostEnabled:   masterEncryptionAtHostEnabled,
 		MasterDiskEncryptionSetID:       masterDiskEncryptionSetID,
-		ControlPlaneUltraSSDEnabled:     controlPlaneUltraSSDEnabled,
+		ControlPlaneUltraSSDEnabled:     masterConfig.UltraSSDCapability == machineapi.AzureUltraSSDCapabilityEnabled,
 		VolumeType:                      masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                      masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                        sources.ImageURL,
