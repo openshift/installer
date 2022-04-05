@@ -25,7 +25,7 @@ done
 
 echo "Gathering master journals ..."
 mkdir -p "${ARTIFACTS}/journals"
-for service in kubelet crio machine-config-master-firstboot machine-config-daemon-host pivot openshift-azure-routes openshift-gcp-routes
+for service in crio kubelet machine-config-daemon-host machine-config-master-firstboot openshift-azure-routes openshift-gcp-routes pivot sssd
 do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/journals/${service}.log"
 done
