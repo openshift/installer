@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/powervs"
@@ -91,7 +92,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 		// TODO: IBM[#90]: platformpermscheck
 	case powervs.Name:
 		//@TODO add check that the account plan is anything but "lite"
-	case azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name, alibabacloud.Name:
+	case azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name, alibabacloud.Name, nutanix.Name:
 		// no permissions to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
