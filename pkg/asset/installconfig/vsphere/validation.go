@@ -32,7 +32,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	}
 
 	p := ic.Platform.VSphere
-	vim25Client, _, err := CreateVSphereClients(context.TODO(),
+	vim25Client, _, cleanup, err := CreateVSphereClients(context.TODO(),
 		p.VCenter,
 		p.Username,
 		p.Password)
@@ -40,6 +40,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	if err != nil {
 		return errors.New(field.InternalError(field.NewPath("platform", "vsphere"), errors.Wrapf(err, "unable to connect to vCenter %s.", p.VCenter)).Error())
 	}
+	defer cleanup()
 
 	finder := NewFinder(vim25Client)
 	return validateProvisioning(vim25Client, finder, ic)

@@ -136,7 +136,7 @@ func getClients() (*vCenterClient, error) {
 
 	// There is a noticeable delay when creating the client, so let the user know what's going on.
 	logrus.Infof("Connecting to vCenter %s", vcenter)
-	vim25Client, restClient, err := CreateVSphereClients(context.TODO(),
+	vim25Client, restClient, cleanup, err := CreateVSphereClients(context.TODO(),
 		vcenter,
 		username,
 		password)
@@ -146,6 +146,8 @@ func getClients() (*vCenterClient, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to connect to vCenter %s. Ensure provided information is correct and client certs have been added to system trust.", vcenter)
 	}
+
+	defer cleanup()
 
 	return &vCenterClient{
 		VCenter:    vcenter,

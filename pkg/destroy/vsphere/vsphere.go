@@ -43,13 +43,14 @@ type ClusterUninstaller struct {
 
 // New returns an VSphere destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (providers.Destroyer, error) {
-	vim25Client, restClient, err := vsphere.CreateVSphereClients(context.TODO(),
+	vim25Client, restClient, cleanup, err := vsphere.CreateVSphereClients(context.TODO(),
 		metadata.ClusterPlatformMetadata.VSphere.VCenter,
 		metadata.ClusterPlatformMetadata.VSphere.Username,
 		metadata.ClusterPlatformMetadata.VSphere.Password)
 	if err != nil {
 		return nil, err
 	}
+	defer cleanup()
 
 	return &ClusterUninstaller{
 		ClusterID:  metadata.ClusterID,

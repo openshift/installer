@@ -20,6 +20,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -690,13 +691,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		// instead of the name since port group names aren't always unique in vSphere.
 		// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
 		controlPlaneConfig := controlPlaneConfigs[0]
-		vim25Client, _, err := vsphereconfig.CreateVSphereClients(context.TODO(),
+		vim25Client, _, cleanup, err := vsphereconfig.CreateVSphereClients(context.TODO(),
 			controlPlaneConfig.Workspace.Server,
 			installConfig.Config.VSphere.Username,
 			installConfig.Config.VSphere.Password)
 		if err != nil {
 			return errors.Wrapf(err, "unable to connect to vCenter %s. Ensure provided information is correct and client certs have been added to system trust.", controlPlaneConfig.Workspace.Server)
 		}
+		defer cleanup()
 
 		finder := vsphereconfig.NewFinder(vim25Client)
 		networkID, err := vsphereconfig.GetNetworkMoID(context.TODO(),
