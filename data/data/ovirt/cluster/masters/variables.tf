@@ -77,3 +77,33 @@ variable "ovirt_master_hugepages" {
   type        = string
   description = "master VM hugepages size in KiB"
 }
+
+variable "ovirt_master_sparse" {
+  type        = bool
+  description = "make master VM disks sparse."
+  default     = null
+}
+
+variable "ovirt_master_clone" {
+  type        = bool
+  description = "clone master VM disk from template instead of linking. Defaults to false for desktop ovirt_master_vm_type, true otherwise."
+  default     = null
+}
+
+variable "ovirt_master_format" {
+  type        = string
+  description = "master VM disk format, can be empty, 'raw', or 'cow'"
+  validation {
+    condition     = var.ovirt_master_format == "" || var.ovirt_master_format == "cow" || var.ovirt_master_format == "raw"
+    error_message = "The ovirt_master_format must be one of 'raw' or 'cow'."
+  }
+}
+
+variable "ovirt_storage_domain_id" {
+  type        = string
+  description = "The ID of Storage Domain for the template"
+  validation {
+    condition     = var.ovirt_storage_domain_id != ""
+    error_message = "The ovirt_storage_domain_id must not be empty."
+  }
+}

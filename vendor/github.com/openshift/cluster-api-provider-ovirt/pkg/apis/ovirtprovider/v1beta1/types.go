@@ -88,6 +88,26 @@ type OvirtMachineProviderSpec struct {
 
 	// GuaranteedMemoryMB is the size of a VM's guaranteed memory in MiBs.
 	GuaranteedMemoryMB int32 `json:"guaranteed_memory_mb,omitempty"`
+
+	// Clone makes sure that the disks are cloned from the template and are not linked.
+	// Defaults to true for high performance and server VM types, false for desktop types.
+	//
+	// Note: this option is not documented in the OpenShift documentation. This is intentional as it has sane defaults
+	// that shouldn't be changed unless needed for debugging or resolving issues in cooperation with Red Hat support.
+	//
+	// +optional
+	Clone *bool `json:"clone,omitempty"`
+
+	// Sparse indicates that sparse provisioning should not be used and disks should be preallocated.
+	// Defaults to true.
+	// +optional
+	Sparse *bool `json:"sparse,omitempty"`
+
+	// Format is the disk format that the disks are in. Can be "cow" or "raw". "raw" disables several features that
+	// may be needed, such as incremental backups. Defaults to "cow".
+	// +kubebuilder:validation:Enum="";raw;cow
+	// +optional
+	Format string `json:"format,omitempty"`
 }
 
 // CPU defines the VM cpu, made of (Sockets * Cores * Threads)

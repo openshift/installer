@@ -2,7 +2,7 @@ module github.com/openshift/installer/terraform/ovirt
 
 go 1.17
 
-require github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210628083913-78ce17b16709
+require github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20220324064245-e8b700618a5a
 
 require (
 	cloud.google.com/go v0.45.1 // indirect

@@ -252,7 +252,7 @@ github.com/oklog/run
 # github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
 ## explicit; go 1.12
 github.com/ovirt/go-ovirt
-# github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210628083913-78ce17b16709
+# github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20220324064245-e8b700618a5a
 ## explicit; go 1.14
 github.com/ovirt/terraform-provider-ovirt
 github.com/ovirt/terraform-provider-ovirt/ovirt

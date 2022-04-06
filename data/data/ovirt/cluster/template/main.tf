@@ -15,8 +15,9 @@ resource "ovirt_template" "releaseimage_template" {
   count = var.tmp_import_vm_id != "" ? 1 : 0
 
   // name the template after the openshift cluster id
-  name       = local.image_name
-  cluster_id = var.ovirt_cluster_id
+  name        = local.image_name
+  description = "Template in use by OpenShift. Do not delete!"
+  cluster_id  = var.ovirt_cluster_id
   // create from vm
   vm_id = var.tmp_import_vm_id
   timeouts {

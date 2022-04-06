@@ -46,7 +46,7 @@ require (
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20210924143856-c2d3ece4da38
 	github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20211008100740-4d7907adbd6b
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
-	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20211111151530-06177b773958
+	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
 	github.com/openshift/library-go v0.0.0-20211214183058-58531ccbde67
 	github.com/openshift/machine-api-provider-nutanix v0.0.0-20220217170301-9c5eed11237a
 	github.com/openshift/machine-api-provider-powervs v0.0.0-20220303154846-89bb5bec120e

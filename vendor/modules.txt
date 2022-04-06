@@ -596,8 +596,8 @@ github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1b
 ## explicit
 github.com/openshift/cluster-api-provider-libvirt/pkg/apis
 github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1
-# github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20211111151530-06177b773958
-## explicit; go 1.16
+# github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
+## explicit; go 1.17
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
 # github.com/openshift/library-go v0.0.0-20211214183058-58531ccbde67
