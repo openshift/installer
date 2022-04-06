@@ -86,6 +86,21 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 
 	rg := platform.ClusterResourceGroupName(clusterID)
 
+	var image machineapi.Image
+	if mpool.OSImage.Publisher != "" {
+		image.Type = machineapi.AzureImageTypeMarketplaceWithPlan
+		image.Publisher = mpool.OSImage.Publisher
+		image.Offer = mpool.OSImage.Offer
+		image.SKU = mpool.OSImage.SKU
+		image.Version = mpool.OSImage.Version
+	} else {
+		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
+		if hyperVGen == "V2" {
+			imageID += "-gen2"
+		}
+		image.ResourceID = imageID
+	}
+
 	networkResourceGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role)
 	if err != nil {
 		return nil, err
@@ -118,10 +133,6 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 			EncryptionAtHost: &mpool.EncryptionAtHost,
 		}
 	}
-	image := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
-	if hyperVGen == "V2" {
-		image += "-gen2"
-	}
 
 	ultraSSDCapability := machineapi.AzureUltraSSDCapabilityState(mpool.UltraSSDCapability)
 
@@ -134,9 +145,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		CredentialsSecret: &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		Location:          platform.Region,
 		VMSize:            mpool.InstanceType,
-		Image: machineapi.Image{
-			ResourceID: image,
-		},
+		Image:             image,
 		OSDisk: machineapi.OSDisk{
 			OSType:     "Linux",
 			DiskSizeGB: mpool.OSDisk.DiskSizeGB,
