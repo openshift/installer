@@ -39,6 +39,10 @@ type MachinePool struct {
 	// +kubebuilder:validation:Enum="Accelerated"; "Basic"
 	// +optional
 	VMNetworkingType string `json:"vmNetworkingType,omitempty"`
+
+	// OSImage defines the image to use for the OS.
+	// +optional
+	OSImage OSImage `json:"osImage,omitempty"`
 }
 
 // VMNetworkingCapability defines the states for accelerated networking feature
@@ -93,4 +97,21 @@ func (a *MachinePool) Set(required *MachinePool) {
 	if required.VMNetworkingType != "" {
 		a.VMNetworkingType = required.VMNetworkingType
 	}
+
+	var emptyOSImage OSImage
+	if required.OSImage != emptyOSImage {
+		a.OSImage = required.OSImage
+	}
+}
+
+// OSImage is the image to use for the OS of a machine.
+type OSImage struct {
+	// Publisher is the publisher of the image.
+	Publisher string `json:"publisher"`
+	// Offer is the offer of the image.
+	Offer string `json:"offer"`
+	// SKU is the SKU of the image.
+	SKU string `json:"sku"`
+	// Version is the version of the image.
+	Version string `json:"version"`
 }

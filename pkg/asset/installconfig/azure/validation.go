@@ -49,6 +49,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 		}
 		allErrs = append(allErrs, validateAzureStackClusterOSImage(StorageEndpointSuffix, ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
+	allErrs = append(allErrs, validateMarketplaceImage(client, ic)...)
 	return allErrs.ToAggregate()
 }
 
@@ -428,6 +429,42 @@ func validateAzureStackClusterOSImage(StorageEndpointSuffix string, ClusterOSIma
 	// If the URL for the image isn't in the Azure Stack environment we can't use it.
 	if !strings.HasSuffix(imageParsedURL.Host, StorageEndpointSuffix) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), ClusterOSImage, "clusterOSImage must be in the Azure Stack environment"))
+	}
+	return allErrs
+}
+
+func validateMarketplaceImage(client API, installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+	for i, compute := range installConfig.Compute {
+		platform := compute.Platform.Azure
+		if platform == nil {
+			continue
+		}
+		if platform.OSImage.Publisher == "" {
+			continue
+		}
+		osImageFieldPath := field.NewPath("compute").Index(i).Child("platform", "azure", "osImage")
+		_, err := client.GetMarketplaceImage(
+			context.Background(),
+			installConfig.Platform.Azure.Region,
+			platform.OSImage.Publisher,
+			platform.OSImage.Offer,
+			platform.OSImage.SKU,
+			platform.OSImage.Version,
+		)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(osImageFieldPath, platform.OSImage, err.Error()))
+			continue
+		}
+		termsAccepted, err := client.AreMarketplaceImageTermsAccepted(context.Background(), platform.OSImage.Publisher, platform.OSImage.Offer, platform.OSImage.SKU)
+		if err == nil {
+			if !termsAccepted {
+				allErrs = append(allErrs, field.Invalid(osImageFieldPath, platform.OSImage, "the license terms for the marketplace image have not been accepted"))
+			}
+		} else {
+			allErrs = append(allErrs, field.Invalid(osImageFieldPath, platform.OSImage,
+				fmt.Sprintf("could not determine if the license terms for the marketplace image have been accepted: %v", err)))
+		}
 	}
 	return allErrs
 }

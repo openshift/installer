@@ -56,7 +56,8 @@ func TestValidateMachinePool(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateMachinePool(tc.pool, field.NewPath("test-path")).ToAggregate()
+			azurePlatform := &azure.Platform{CloudName: azure.PublicCloud}
+			err := ValidateMachinePool(tc.pool, "worker", azurePlatform, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
@@ -92,7 +93,7 @@ func TestValidateMasterDiskType(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.diskType: Invalid value: "Standard_LRS": Standard_LRS not compatible with control planes.$`,
+			expected: `^test-path\.diskType: Unsupported value: "Standard_LRS": supported values: "Premium_LRS", "StandardSSD_LRS"$`,
 		},
 		{
 			name: "supported disk worker",
@@ -110,7 +111,8 @@ func TestValidateMasterDiskType(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateMasterDiskType(tc.pool, field.NewPath("test-path")).ToAggregate()
+			azurePlatform := &azure.Platform{CloudName: azure.PublicCloud}
+			err := ValidateMachinePool(tc.pool.Platform.Azure, tc.pool.Name, azurePlatform, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
