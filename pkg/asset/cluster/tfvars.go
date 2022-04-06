@@ -13,6 +13,7 @@ import (
 	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+	nutanixprovider "github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
@@ -43,6 +44,7 @@ import (
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
 	ibmcloudtfvars "github.com/openshift/installer/pkg/tfvars/ibmcloud"
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
+	nutanixtfvars "github.com/openshift/installer/pkg/tfvars/nutanix"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
 	vspheretfvars "github.com/openshift/installer/pkg/tfvars/vsphere"
@@ -55,6 +57,7 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -788,6 +791,38 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
 				Architecture:          installConfig.Config.ControlPlane.Architecture,
 				Publish:               installConfig.Config.Publish,
+			},
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: TfPlatformVarsFileName,
+			Data:     data,
+		})
+	case nutanix.Name:
+		if rhcosImage == nil {
+			return errors.New("unable to retrieve rhcos image")
+		}
+		controlPlanes, err := mastersAsset.Machines()
+		if err != nil {
+			return errors.Wrapf(err, "error getting control plane machines")
+		}
+		controlPlaneConfigs := make([]*nutanixprovider.NutanixMachineProviderConfig, len(controlPlanes))
+		for i, c := range controlPlanes {
+			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*nutanixprovider.NutanixMachineProviderConfig)
+		}
+
+		data, err = nutanixtfvars.TFVars(
+			nutanixtfvars.TFVarsSources{
+				PrismCentralAddress:   installConfig.Config.Nutanix.PrismCentral,
+				Port:                  installConfig.Config.Nutanix.Port,
+				Username:              installConfig.Config.Nutanix.Username,
+				Password:              installConfig.Config.Nutanix.Password,
+				ImageURL:              string(*rhcosImage),
+				BootstrapIgnitionData: bootstrapIgn,
+				ClusterID:             clusterID.InfraID,
+				ControlPlaneConfigs:   controlPlaneConfigs,
 			},
 		)
 		if err != nil {
