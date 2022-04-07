@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -25,9 +26,8 @@ const NMCONNECTIONS_DIR = "/etc/assisted/network"
 // ConfigBuilder builds an Ignition config
 type ConfigBuilder struct {
 	pullSecret               string
-	serviceBaseURL           string
+	serviceBaseURL           url.URL
 	pullSecretToken          string
-	nodeZeroIP               string
 	createClusterParamsJSON  string
 	createInfraEnvParamsJSON string
 	apiVip                   string
@@ -42,8 +42,11 @@ func New() *ConfigBuilder {
 	// TODO: needs appropriate value if AUTH_TYPE != none
 	pullSecretToken := getEnv("PULL_SECRET_TOKEN", "")
 
-	serviceBaseURL := fmt.Sprintf("http://%s/",
-		net.JoinHostPort(nodeZeroIP, "8090"))
+	serviceBaseURL := url.URL{
+		Scheme: "http",
+		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
+		Path:   "/",
+	}
 
 	clusterParams := manifests.CreateClusterParams()
 	clusterJSON, err := json.Marshal(clusterParams)
@@ -68,7 +71,6 @@ func New() *ConfigBuilder {
 		pullSecret:               pullSecret,
 		serviceBaseURL:           serviceBaseURL,
 		pullSecretToken:          pullSecretToken,
-		nodeZeroIP:               nodeZeroIP,
 		createClusterParamsJSON:  string(clusterJSON),
 		createInfraEnvParamsJSON: string(infraEnvJSON),
 		apiVip:                   clusterInstall.Spec.APIVIP,
@@ -248,9 +250,9 @@ func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 
 func (c ConfigBuilder) templateString(name string, text string) (string, error) {
 	params := map[string]interface{}{
-		"ServiceBaseURL":           c.serviceBaseURL,
+		"ServiceBaseURL":           c.serviceBaseURL.String(),
 		"PullSecretToken":          c.pullSecretToken,
-		"NodeZeroIP":               c.nodeZeroIP,
+		"NodeZeroIP":               c.serviceBaseURL.Hostname(),
 		"ClusterCreateParamsJSON":  c.createClusterParamsJSON,
 		"InfraEnvCreateParamsJSON": c.createInfraEnvParamsJSON,
 		"APIVIP":                   c.apiVip,
