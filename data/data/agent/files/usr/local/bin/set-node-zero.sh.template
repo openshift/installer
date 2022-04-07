@@ -1,11 +1,11 @@
 #!/bin/bash
 
-source common.sh
+set -e
 
-HOST=$(get_host)
-echo Using hostname ${HOST} 1>&2
+IS_NODE_ZERO=$(ip -j address | jq '[.[].addr_info] | flatten | map(.local=="{{.NodeZeroIP}}") | any')
 
-if [[ ${HOST} == {{.NodeZeroIP}} ]] ;then
+if [ "${IS_NODE_ZERO}" = "true" ]; then
+    echo "Node 0 IP {{.NodeZeroIP}} found on this host" 1>&2
 
     NODE0_PATH=/etc/assisted-service/node0
     mkdir -p "$(dirname "${NODE0_PATH}")"
