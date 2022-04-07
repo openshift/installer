@@ -250,6 +250,7 @@ func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 
 func (c ConfigBuilder) templateString(name string, text string) (string, error) {
 	params := map[string]interface{}{
+		"ServiceProtocol":          c.serviceBaseURL.Scheme,
 		"ServiceBaseURL":           c.serviceBaseURL.String(),
 		"PullSecretToken":          c.pullSecretToken,
 		"NodeZeroIP":               c.serviceBaseURL.Hostname(),
