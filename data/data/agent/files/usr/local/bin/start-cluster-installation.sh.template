@@ -5,7 +5,7 @@ source common.sh
 
 wait_for_assisted_service
 
-BASE_URL="http://{{.NodeZeroIP}}:8090/api/assisted-install/v2"
+BASE_URL="http://{{.AssistedServiceHost}}/api/assisted-install/v2"
 
 # Get cluster id
 cluster_id=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].id)

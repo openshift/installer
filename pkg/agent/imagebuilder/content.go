@@ -253,6 +253,7 @@ func (c ConfigBuilder) templateString(name string, text string) (string, error) 
 		"ServiceBaseURL":           c.serviceBaseURL.String(),
 		"PullSecretToken":          c.pullSecretToken,
 		"NodeZeroIP":               c.serviceBaseURL.Hostname(),
+		"AssistedServiceHost":      c.serviceBaseURL.Host,
 		"ClusterCreateParamsJSON":  c.createClusterParamsJSON,
 		"InfraEnvCreateParamsJSON": c.createInfraEnvParamsJSON,
 		"APIVIP":                   c.apiVip,
