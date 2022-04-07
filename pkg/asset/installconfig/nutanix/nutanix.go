@@ -50,21 +50,15 @@ func Platform() (*nutanix.Platform, error) {
 		return nil, errors.Wrap(err, "failed to get VIPs")
 	}
 
-	defaultStorageContainer, err := getDefaultStorageContainer()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get default storage container")
-	}
-
 	platform := &nutanix.Platform{
-		PrismCentral:            nutanixClient.PrismCentral,
-		Port:                    nutanixClient.Port,
-		Username:                nutanixClient.Username,
-		Password:                nutanixClient.Password,
-		PrismElementUUID:        peUUID,
-		SubnetUUID:              subnetUUID,
-		DefaultStorageContainer: defaultStorageContainer,
-		APIVIP:                  apiVIP,
-		IngressVIP:              ingressVIP,
+		PrismCentral:     nutanixClient.PrismCentral,
+		Port:             nutanixClient.Port,
+		Username:         nutanixClient.Username,
+		Password:         nutanixClient.Password,
+		PrismElementUUID: peUUID,
+		SubnetUUID:       subnetUUID,
+		APIVIP:           apiVIP,
+		IngressVIP:       ingressVIP,
 	}
 	return platform, nil
 
@@ -280,21 +274,4 @@ func getVIPs() (string, string, error) {
 	}
 
 	return apiVIP, ingressVIP, nil
-}
-
-func getDefaultStorageContainer() (string, error) {
-	var defaultStorageContainer string
-	if err := survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Password{
-				Message: "Default Storage Container",
-				Help:    "The name of the default storage container for the cluster.",
-			},
-			Validate: survey.Required,
-		},
-	}, &defaultStorageContainer); err != nil {
-		return "", errors.Wrap(err, "failed UserInput")
-	}
-
-	return defaultStorageContainer, nil
 }

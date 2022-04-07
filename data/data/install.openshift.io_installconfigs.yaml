@@ -2173,10 +2173,6 @@ spec:
                             type: integer
                         type: object
                     type: object
-                  defaultStorageContainer:
-                    description: DefaultStorageContainer is the default datastore
-                      to use for provisioning volumes.
-                    type: string
                   ingressVIP:
                     description: IngressVIP is the virtual IP address for ingress
                     type: string
@@ -2204,7 +2200,6 @@ spec:
                       to the Prism Central.
                     type: string
                 required:
-                - defaultStorageContainer
                 - password
                 - port
                 - prismCentral

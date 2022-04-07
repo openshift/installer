@@ -17,9 +17,6 @@ type Platform struct {
 	// PrismElementUUID is the UUID of the Prism Element cluster to use in the Prism Central.
 	PrismElementUUID string `json:"prismElementUUID"`
 
-	// DefaultStorageContainer is the default datastore to use for provisioning volumes.
-	DefaultStorageContainer string `json:"defaultStorageContainer"`
-
 	// ClusterOSImage overrides the url provided in rhcos.json to download the RHCOS Image
 	//
 	// +optional

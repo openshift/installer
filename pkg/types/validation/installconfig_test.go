@@ -165,13 +165,12 @@ func validOpenStackPlatform() *openstack.Platform {
 
 func validNutanixPlatform() *nutanix.Platform {
 	return &nutanix.Platform{
-		PrismCentral:            "test-pc",
-		PrismElementUUID:        "test-pe",
-		DefaultStorageContainer: "test-storage-container",
-		Username:                "test-username",
-		Password:                "test-password",
-		SubnetUUID:              "test-subnet",
-		Port:                    "8080",
+		PrismCentral:     "test-pc",
+		PrismElementUUID: "test-pe",
+		Username:         "test-username",
+		Password:         "test-password",
+		SubnetUUID:       "test-subnet",
+		Port:             "8080",
 	}
 }
 
