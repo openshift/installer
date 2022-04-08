@@ -11,13 +11,12 @@ import (
 
 func validPlatform() *nutanix.Platform {
 	return &nutanix.Platform{
-		PrismCentral:            "test-pc",
-		PrismElementUUID:        "12992bc3-e919-454b-980e-8b51e217c9bd",
-		DefaultStorageContainer: "test-storage-container",
-		Username:                "test-username",
-		Password:                "test-password",
-		SubnetUUID:              "b06179c8-dea3-4f8e-818a-b2e88fbc2201",
-		Port:                    "8080",
+		PrismCentral:     "test-pc",
+		PrismElementUUID: "12992bc3-e919-454b-980e-8b51e217c9bd",
+		Username:         "test-username",
+		Password:         "test-password",
+		SubnetUUID:       "b06179c8-dea3-4f8e-818a-b2e88fbc2201",
+		Port:             "8080",
 	}
 }
 
@@ -66,15 +65,6 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expectedError: `^test-path\.prismElement: Required value: must specify the Prism Element$`,
-		},
-		{
-			name: "missing default storage container",
-			platform: func() *nutanix.Platform {
-				p := validPlatform()
-				p.DefaultStorageContainer = ""
-				return p
-			}(),
-			expectedError: `^test-path\.defaultStorageContainer: Required value: must specify the default storage container$`,
 		},
 		{
 			name: "valid VIPs",

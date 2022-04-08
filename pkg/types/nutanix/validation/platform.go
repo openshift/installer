@@ -26,9 +26,6 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path) field.ErrorList 
 	if len(p.Port) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("port"), "must specify the port"))
 	}
-	if len(p.DefaultStorageContainer) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("defaultStorageContainer"), "must specify the default storage container"))
-	}
 	if len(p.SubnetUUID) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("subnet"), "must specify the subnet"))
 	}
