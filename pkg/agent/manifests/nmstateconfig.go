@@ -1,23 +1,25 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
-	"os"
 	"reflect"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
+	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
-func getNMStateConfig() aiv1beta1.NMStateConfig {
+func getNMStateConfig() (aiv1beta1.NMStateConfig, error) {
 	var nmStateConfig aiv1beta1.NMStateConfig
 	if err := GetFileData("nmstateconfig.yaml", &nmStateConfig); err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		// This file is optional if DHCP addressing is used
+		return nmStateConfig, err
 	}
 
-	return nmStateConfig
+	return nmStateConfig, nil
 }
 
 func validateNMStateConfigAndInfraEnv(nmStateConfig aiv1beta1.NMStateConfig, infraEnv aiv1beta1.InfraEnv) error {
@@ -50,11 +52,42 @@ func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInter
 	return macInterfaceMap
 }
 
+// Get the NetworkManager configuration files
+func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) ([]staticnetworkconfig.StaticNetworkConfigData, error) {
+	log := logrus.New()
+	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{2})
+
+	// Validate the network config
+	if err := staticNetworkConfigGenerator.ValidateStaticConfigParams(context.Background(), staticNetworkConfig); err != nil {
+		err = fmt.Errorf("StaticNetwork configuration is not valid: %w", err)
+		return nil, err
+	}
+
+	networkConfigStr, err := staticNetworkConfigGenerator.FormatStaticNetworkConfigForDB(staticNetworkConfig)
+	if err != nil {
+		err = fmt.Errorf("Error marshalling StaticNetwork configuration: %w", err)
+		return nil, err
+	}
+
+	filesList, err := staticNetworkConfigGenerator.GenerateStaticNetworkConfigData(context.Background(), networkConfigStr)
+	if err != nil {
+		err = fmt.Errorf("Failed to create StaticNetwork config data: %w", err)
+		return nil, err
+	}
+
+	return filesList, err
+}
+
 func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetworkConfig, error) {
 
-	nmStateConfig := getNMStateConfig()
+	nmStateConfig, err := getNMStateConfig()
 
-	err := validateNMStateConfigAndInfraEnv(nmStateConfig, infraEnv)
+	if err != nil {
+		fmt.Println("A nmstateconfig file has not been provided, no static addresses set in iso")
+		return nil, nil
+	}
+
+	err = validateNMStateConfigAndInfraEnv(nmStateConfig, infraEnv)
 	if err != nil {
 		return nil, err
 	}
