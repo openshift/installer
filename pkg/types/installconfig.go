@@ -155,6 +155,7 @@ type InstallConfig struct {
 	// IBMCloud: "Manual"
 	// AlibabaCloud: "Manual"
 	// PowerVS: "Manual"
+	// Nutanix: "Manual"
 	// +optional
 	CredentialsMode CredentialsMode `json:"credentialsMode,omitempty"`
 
