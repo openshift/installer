@@ -76,9 +76,7 @@ func validateNMStateConfigAndInfraEnv(nmStateConfig aiv1beta1.NMStateConfig, inf
 func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInterfaceMap {
 	macInterfaceMap := make(models.MacInterfaceMap, 0, len(nmStateConfig.Spec.Interfaces))
 	for _, cfg := range nmStateConfig.Spec.Interfaces {
-		// ToDo: Use logging
-		// fmt.Println("adding MAC interface map to host static network config - Name: %s, MacAddress: %s ,",
-		// 	cfg.Name, cfg.MacAddress)
+		logrus.Println("adding MAC interface map to host static network config - Name: ", cfg.Name, " MacAddress:", cfg.MacAddress)
 		macInterfaceMap = append(macInterfaceMap, &models.MacInterfaceMapItems0{
 			MacAddress:     cfg.MacAddress,
 			LogicalNicName: cfg.Name,
