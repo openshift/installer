@@ -1871,6 +1871,18 @@ spec:
                     description: APIVIP is the VIP to use for internal API communication
                     format: ip
                     type: string
+                  bootstrapExternalStaticGateway:
+                    description: BootstrapExternalStaticGateway is the static network
+                      gateway of the bootstrap node. This can be useful in environments
+                      without a DHCP server.
+                    format: ip
+                    type: string
+                  bootstrapExternalStaticIP:
+                    description: BootstrapExternalStaticIP is the static IP address
+                      of the bootstrap node. This can be useful in environments without
+                      a DHCP server.
+                    format: ip
+                    type: string
                   bootstrapOSImage:
                     description: BootstrapOSImage is a URL to override the default
                       OS image for the bootstrap node. The URL must contain a sha256

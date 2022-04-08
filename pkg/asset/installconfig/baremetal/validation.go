@@ -20,3 +20,20 @@ func ValidateProvisioning(ic *types.InstallConfig) error {
 
 	return allErrs.ToAggregate()
 }
+
+// ValidateStaticBootstrapNetworking ensures that both or neither of  BootstrapExternalStaticIP and BootstrapExternalStaticGateway are set
+func ValidateStaticBootstrapNetworking(ic *types.InstallConfig) error {
+	if ic.Platform.BareMetal == nil {
+		return errors.New(field.Required(field.NewPath("platform", "baremetal"), "Baremetal validation requires a baremetal platform configuration").Error())
+	}
+
+	if ic.Platform.BareMetal.BootstrapExternalStaticIP != "" && ic.Platform.BareMetal.BootstrapExternalStaticGateway == "" {
+		return errors.New(field.Required(field.NewPath("platform", "baremetal"), "You must specify a value for BootstrapExternalStaticGateway when BootstrapExternalStaticIP is set.").Error())
+	}
+
+	if ic.Platform.BareMetal.BootstrapExternalStaticGateway != "" && ic.Platform.BareMetal.BootstrapExternalStaticIP == "" {
+		return errors.New(field.Required(field.NewPath("platform", "baremetal"), "You must specify a value for BootstrapExternalStaticIP when BootstrapExternalStaticGateway is set.").Error())
+	}
+
+	return nil
+}

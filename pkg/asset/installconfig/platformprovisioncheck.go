@@ -77,6 +77,10 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		err = bmconfig.ValidateStaticBootstrapNetworking(ic.Config)
+		if err != nil {
+			return err
+		}
 	case gcp.Name:
 		client, err := gcpconfig.NewClient(context.TODO())
 		if err != nil {
