@@ -24,7 +24,7 @@ func getInfraEnv() aiv1beta1.InfraEnv {
 // createInfraEnvParams body was copied from
 // https://github.com/openshift/assisted-service/blob/5d4d836747862f43fa2ec882e5871648bd12c780/internal/controller/controllers/infraenv_controller.go#L339
 // TODO: Refactor infraenv_controller to have a CreateInfraEnvParams function that can be used in controller and here.
-func CreateInfraEnvParams() (*models.InfraEnvCreateParams, error) {
+func CreateInfraEnvParams() *models.InfraEnvCreateParams {
 	infraEnv := getInfraEnv()
 	// TODO: Have single source for image version and cpu arch
 	releaseImageVersion := "4.10.0-rc.1"
@@ -58,15 +58,12 @@ func CreateInfraEnvParams() (*models.InfraEnvCreateParams, error) {
 	createParams.ClusterID = &tempClusterID
 	createParams.OpenshiftVersion = releaseImageVersion
 
-	staticNetworkConfig, err := ProcessNMStateConfig(infraEnv)
-	if err != nil {
-		return nil, err
-	}
+	staticNetworkConfig := GetStaticNetworkConfig()
 	if len(staticNetworkConfig) > 0 {
 		// TODO: Use logging
 		// fmt.Printf("the amount of nmStateConfigs included in the image is: %d", len(staticNetworkConfig))
 		createParams.StaticNetworkConfig = staticNetworkConfig
 	}
 
-	return createParams, nil
+	return createParams
 }

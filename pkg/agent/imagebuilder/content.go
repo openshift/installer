@@ -36,8 +36,9 @@ type ConfigBuilder struct {
 	staticNetworkConfig      []*models.HostStaticNetworkConfig
 }
 
-func New(nodeZeroIP string) *ConfigBuilder {
+func New() *ConfigBuilder {
 	pullSecret := manifests.GetPullSecret()
+	nodeZeroIP := manifests.GetNodeZeroIP()
 	// TODO: needs appropriate value if AUTH_TYPE != none
 	pullSecretToken := getEnv("PULL_SECRET_TOKEN", "")
 
@@ -50,10 +51,7 @@ func New(nodeZeroIP string) *ConfigBuilder {
 		fmt.Errorf("Error marshalling cluster params into json: %w", err)
 	}
 
-	infraEnvParams, err := manifests.CreateInfraEnvParams()
-	if err != nil {
-		fmt.Errorf("Error building infra env params: %w", err)
-	}
+	infraEnvParams := manifests.CreateInfraEnvParams()
 
 	infraEnvJSON, err := json.Marshal(infraEnvParams)
 	if err != nil {
