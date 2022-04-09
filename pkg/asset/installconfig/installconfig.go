@@ -126,7 +126,7 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
-		return false, err
+		return false, errors.Wrap(err, asset.InstallConfigError)
 	}
 
 	config := &types.InstallConfig{}
@@ -135,18 +135,18 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 			err = errors.Wrapf(err, "failed to parse first occurence of unknown field")
 		}
 		err = errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
-		return false, err
+		return false, errors.Wrap(err, asset.InstallConfigError)
 	}
 	a.Config = config
 
 	// Upconvert any deprecated fields
 	if err := conversion.ConvertInstallConfig(a.Config); err != nil {
-		return false, errors.Wrap(err, "failed to upconvert install config")
+		return false, errors.Wrap(errors.Wrap(err, "failed to upconvert install config"), asset.InstallConfigError)
 	}
 
 	err = a.finish(installConfigFilename)
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, asset.InstallConfigError)
 	}
 	return true, nil
 }

@@ -163,7 +163,7 @@ func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform
 	}
 
 	if applyErr != nil {
-		return nil, errors.Wrap(applyErr, "failed to create cluster")
+		return nil, errors.Wrap(applyErr, asset.ClusterCreationError)
 	}
 
 	outputs, err := terraform.Outputs(tmpDir)
