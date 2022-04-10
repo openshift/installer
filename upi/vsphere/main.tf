@@ -4,11 +4,8 @@ provider "ignition" {
 }
 
 locals {
-  bootstrap_fqdns     = ["bootstrap-0.${var.cluster_domain}"]
-  lb_fqdns            = ["lb-0.${var.cluster_domain}"]
   api_lb_fqdns        = formatlist("%s.%s", ["api", "api-int", "*.apps"], var.cluster_domain)
   control_plane_fqdns = [for idx in range(var.control_plane_count) : "control-plane-${idx}.${var.cluster_domain}"]
-  compute_fqdns       = [for idx in range(var.compute_count) : "compute-${idx}.${var.cluster_domain}"]
 }
 
 provider "vsphere" {
@@ -48,7 +45,7 @@ resource "vsphere_resource_pool" "resource_pool" {
 }
 
 resource "vsphere_folder" "folder" {
-  path          = var.cluster_id
+  path          = var.folder
   type          = "vm"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
