@@ -73,7 +73,7 @@ module "ipam_bootstrap" {
 // Request from phpIPAM a new IP addresses for the control-plane nodes
 module "ipam_control_plane" {
   source              = "./ipam"
-  hostnames           = local.api_lb_fqdns
+  hostnames           = local.control_plane_fqdns
   ipam                = var.ipam
   ipam_token          = var.ipam_token
   machine_cidr        = var.machine_cidr
@@ -227,6 +227,10 @@ module "control_plane_vm" {
   guest_id              = data.vsphere_virtual_machine.template.guest_id
   template_uuid         = data.vsphere_virtual_machine.template.id
   disk_thin_provisioned = data.vsphere_virtual_machine.template.disks[0].thin_provisioned
+  cdrom {
+    datastore_id = data.vsphere_datacenter.dc.id
+    path         = "/ISO/rhcos-410.84.202201251210-0-live.x86_64_last1.iso"
+  }
 
   cluster_domain = var.cluster_domain
   machine_cidr   = var.machine_cidr
