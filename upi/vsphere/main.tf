@@ -125,6 +125,7 @@ module "dns_cluster_domain" {
   base_domain    = var.base_domain
 }
 
+
 /*
 module "lb_a_records" {
   source  = "./host_a_record"
@@ -136,10 +137,14 @@ module "lb_a_records" {
 }
 */
 
+
 module "control_plane_a_records" {
   source  = "./host_a_record"
   zone_id = module.dns_cluster_domain.zone_id
-  records = zipmap(local.control_plane_fqdns, module.ipam_control_plane.ip_addresses)
+  records = zipmap(
+    local.api_lb_fqdns,
+    [for name in local.api_lb_fqdns : module.ipam_control_plane.ip_addresses[0]]
+        )
 }
 
 /*module "compute_a_records" {
