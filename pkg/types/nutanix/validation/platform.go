@@ -69,33 +69,5 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, field.Required(fldPath.Child("subnet"), "must specify the subnet"))
 	}
 
-	// If all VIPs are empty, skip IP validation.  All VIPs are required to be defined together.
-	if p.APIVIP != "" || p.IngressVIP != "" {
-		allErrs = append(allErrs, validateVIPs(p, fldPath)...)
-	}
-
-	return allErrs
-}
-
-// validateVIPs checks that all required VIPs are provided and are valid IP addresses.
-func validateVIPs(p *nutanix.Platform, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if len(p.APIVIP) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("apiVIP"), "must specify a VIP for the API"))
-	} else if err := validate.IP(p.APIVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
-	}
-
-	if len(p.IngressVIP) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("ingressVIP"), "must specify a VIP for Ingress"))
-	} else if err := validate.IP(p.IngressVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
-	}
-
-	if p.APIVIP == p.IngressVIP {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, "IPs for both API and Ingress should not be the same"))
-	}
-
 	return allErrs
 }

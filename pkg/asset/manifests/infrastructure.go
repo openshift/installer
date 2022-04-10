@@ -146,8 +146,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	case baremetal.Name:
 		config.Spec.PlatformSpec.Type = configv1.BareMetalPlatformType
 		config.Status.PlatformStatus.BareMetal = &configv1.BareMetalPlatformStatus{
-			APIServerInternalIP: installConfig.Config.Platform.BareMetal.APIVIP,
-			IngressIP:           installConfig.Config.Platform.BareMetal.IngressVIP,
+			APIServerInternalIP:  installConfig.Config.Platform.BareMetal.APIVIPs[0],
+			IngressIP:            installConfig.Config.Platform.BareMetal.IngressVIPs[0],
+			APIServerInternalIPs: installConfig.Config.Platform.BareMetal.APIVIPs,
+			IngressIPs:           installConfig.Config.Platform.BareMetal.IngressVIPs,
 		}
 	case gcp.Name:
 		config.Spec.PlatformSpec.Type = configv1.GCPPlatformType
@@ -183,15 +185,19 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	case openstack.Name:
 		config.Spec.PlatformSpec.Type = configv1.OpenStackPlatformType
 		config.Status.PlatformStatus.OpenStack = &configv1.OpenStackPlatformStatus{
-			APIServerInternalIP: installConfig.Config.OpenStack.APIVIP,
-			IngressIP:           installConfig.Config.OpenStack.IngressVIP,
+			APIServerInternalIP:  installConfig.Config.OpenStack.APIVIPs[0],
+			IngressIP:            installConfig.Config.OpenStack.IngressVIPs[0],
+			APIServerInternalIPs: installConfig.Config.OpenStack.APIVIPs,
+			IngressIPs:           installConfig.Config.OpenStack.IngressVIPs,
 		}
 	case vsphere.Name:
 		config.Spec.PlatformSpec.Type = configv1.VSpherePlatformType
-		if installConfig.Config.VSphere.APIVIP != "" {
+		if len(installConfig.Config.VSphere.APIVIPs) > 0 {
 			config.Status.PlatformStatus.VSphere = &configv1.VSpherePlatformStatus{
-				APIServerInternalIP: installConfig.Config.VSphere.APIVIP,
-				IngressIP:           installConfig.Config.VSphere.IngressVIP,
+				APIServerInternalIP:  installConfig.Config.VSphere.APIVIPs[0],
+				IngressIP:            installConfig.Config.VSphere.IngressVIPs[0],
+				APIServerInternalIPs: installConfig.Config.VSphere.APIVIPs,
+				IngressIPs:           installConfig.Config.VSphere.IngressVIPs,
 			}
 		}
 		if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
@@ -201,8 +207,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	case ovirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.OvirtPlatformType
 		config.Status.PlatformStatus.Ovirt = &configv1.OvirtPlatformStatus{
-			APIServerInternalIP: installConfig.Config.Ovirt.APIVIP,
-			IngressIP:           installConfig.Config.Ovirt.IngressVIP,
+			APIServerInternalIP:  installConfig.Config.Ovirt.APIVIPs[0],
+			IngressIP:            installConfig.Config.Ovirt.IngressVIPs[0],
+			APIServerInternalIPs: installConfig.Config.Ovirt.APIVIPs,
+			IngressIPs:           installConfig.Config.Ovirt.IngressVIPs,
 		}
 	case powervs.Name:
 		config.Spec.PlatformSpec.Type = configv1.PowerVSPlatformType
@@ -253,10 +261,12 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			}},
 		}
 
-		if installConfig.Config.Nutanix.APIVIP != "" {
+		if len(installConfig.Config.Nutanix.APIVIPs) > 0 {
 			config.Status.PlatformStatus.Nutanix = &configv1.NutanixPlatformStatus{
-				APIServerInternalIP: installConfig.Config.Nutanix.APIVIP,
-				IngressIP:           installConfig.Config.Nutanix.IngressVIP,
+				APIServerInternalIP:  installConfig.Config.Nutanix.APIVIPs[0],
+				IngressIP:            installConfig.Config.Nutanix.IngressVIPs[0],
+				APIServerInternalIPs: installConfig.Config.Nutanix.APIVIPs,
+				IngressIPs:           installConfig.Config.Nutanix.IngressVIPs,
 			}
 		}
 	default:

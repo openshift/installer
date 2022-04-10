@@ -5,11 +5,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	utilsslice "k8s.io/utils/strings/slices"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 func TestConvertInstallConfig(t *testing.T) {
@@ -298,6 +303,54 @@ func TestConvertInstallConfig(t *testing.T) {
 			expectedError: "provisioningHostIP is deprecated; only clusterProvisioningIP needs to be specified",
 		},
 		{
+			name: "baremetal deprecated apiVIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						DeprecatedAPIVIP: "1.2.3.4",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						DeprecatedAPIVIP: "1.2.3.4",
+						APIVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
+		{
+			name: "baremetal deprecated ingressVIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						DeprecatedIngressVIP: "1.2.3.4",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						DeprecatedIngressVIP: "1.2.3.4",
+						IngressVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
+		{
 			name: "deprecated OpenStack computeFlavor",
 			config: &types.InstallConfig{
 				TypeMeta: metav1.TypeMeta{
@@ -340,6 +393,198 @@ func TestConvertInstallConfig(t *testing.T) {
 			},
 			expectedError: "cannot specify computeFlavor and type in defaultMachinePlatform together",
 		},
+		{
+			name: "openstack deprecated apiVIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{
+						DeprecatedAPIVIP: "1.2.3.4",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{
+						DeprecatedAPIVIP: "1.2.3.4",
+						APIVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
+		{
+			name: "openstack deprecated ingressVIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{
+						DeprecatedIngressVIP: "1.2.3.4",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{
+						DeprecatedIngressVIP: "1.2.3.4",
+						IngressVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
+		{
+			name: "vsphere deprecated apiVIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					VSphere: &vsphere.Platform{
+						DeprecatedAPIVIP: "1.2.3.4",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					VSphere: &vsphere.Platform{
+						DeprecatedAPIVIP: "1.2.3.4",
+						APIVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
+		{
+			name: "vsphere deprecated ingressVIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					VSphere: &vsphere.Platform{
+						DeprecatedIngressVIP: "1.2.3.4",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					VSphere: &vsphere.Platform{
+						DeprecatedIngressVIP: "1.2.3.4",
+						IngressVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
+		{
+			name: "ovirt deprecated apiVIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					Ovirt: &ovirt.Platform{
+						DeprecatedAPIVIP: "1.2.3.4",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					Ovirt: &ovirt.Platform{
+						DeprecatedAPIVIP: "1.2.3.4",
+						APIVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
+		{
+			name: "ovirt deprecated ingressVIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					Ovirt: &ovirt.Platform{
+						DeprecatedIngressVIP: "1.2.3.4",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					Ovirt: &ovirt.Platform{
+						DeprecatedIngressVIP: "1.2.3.4",
+						IngressVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
+		{
+			name: "nutanix deprecated apiVIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					Nutanix: &nutanix.Platform{
+						DeprecatedAPIVIP: "1.2.3.4",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					Nutanix: &nutanix.Platform{
+						DeprecatedAPIVIP: "1.2.3.4",
+						APIVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
+		{
+			name: "nutanix deprecated ingressVIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					Nutanix: &nutanix.Platform{
+						DeprecatedIngressVIP: "1.2.3.4",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					Nutanix: &nutanix.Platform{
+						DeprecatedIngressVIP: "1.2.3.4",
+						IngressVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -350,6 +595,67 @@ func TestConvertInstallConfig(t *testing.T) {
 				assert.Equal(t, tc.expected, tc.config, "unexpected install config")
 			} else {
 				assert.Regexp(t, tc.expectedError, err)
+			}
+		})
+	}
+}
+
+func Test_upconvertVIPs(t *testing.T) {
+	tests := []struct {
+		name     string
+		vips     []string
+		oldVIP   string
+		wantErr  bool
+		wantVIPs []string
+	}{
+		{
+			name:     "should return error if both fields are set and all are unique",
+			vips:     []string{"foo", "bar"},
+			oldVIP:   "baz",
+			wantErr:  true,
+			wantVIPs: []string{},
+		},
+		{
+			name:     "should set VIPs if old VIPs is set",
+			vips:     []string{},
+			oldVIP:   "baz",
+			wantErr:  false,
+			wantVIPs: []string{"baz"},
+		},
+		{
+			name:     "should return VIPs if only new VIPs is set",
+			vips:     []string{"foo", "bar"},
+			oldVIP:   "",
+			wantErr:  false,
+			wantVIPs: []string{"foo", "bar"},
+		},
+		{
+			name:     "should return no error if old VIP is contained in new VIPs",
+			vips:     []string{"foo", "bar"},
+			oldVIP:   "bar",
+			wantErr:  false,
+			wantVIPs: []string{"foo", "bar"},
+		},
+		{
+			name:     "should not fail on nil",
+			vips:     nil,
+			oldVIP:   "",
+			wantErr:  false,
+			wantVIPs: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := upconvertVIP(&tt.vips, tt.oldVIP, "new", "old", field.NewPath("test")); (err != nil) != tt.wantErr {
+				t.Errorf("upconvertVIP() error = %v, wantErr %v", err, tt.wantErr)
+			} else {
+				if !tt.wantErr {
+					for _, wantVIP := range tt.wantVIPs {
+						if !utilsslice.Contains(tt.vips, wantVIP) {
+							t.Errorf("upconvertVIP() didn't update VIPs field (expected \"%v\" to contain \"%s\")", tt.vips, wantVIP)
+						}
+					}
+				}
 			}
 		})
 	}

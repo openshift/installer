@@ -71,8 +71,8 @@ func Platform() (*nutanix.Platform, error) {
 		PrismCentral:  pc,
 		PrismElements: []nutanixtypes.PrismElement{*pe},
 		SubnetUUIDs:   []string{subnetUUID},
-		APIVIP:        apiVIP,
-		IngressVIP:    ingressVIP,
+		APIVIPs:       []string{apiVIP},
+		IngressVIPs:   []string{ingressVIP},
 	}
 	return platform, nil
 
@@ -266,6 +266,7 @@ func getSubnet(ctx context.Context, client *nutanixclientv3.Client, peUUID strin
 func getVIPs() (string, string, error) {
 	var apiVIP, ingressVIP string
 
+	//TODO: Add support to specify multiple VIPs (-> dual-stack)
 	if err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{

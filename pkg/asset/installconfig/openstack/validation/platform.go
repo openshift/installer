@@ -28,7 +28,7 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	// validate floating ips
 	allErrs = append(allErrs, validateFloatingIPs(p, ci, fldPath)...)
 
-	// validate vips
+	// validate vips (on OpenStack we need some additional checks)
 	allErrs = append(allErrs, validateVIPs(p, ci, fldPath)...)
 
 	// validate custom cluster os image
@@ -92,16 +92,10 @@ func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Pa
 	return allErrs
 }
 
+// validateVIPs adds some OpenStack specific VIP validation. The universal
+// platform VIP validation is done in pkg/types/validation/installconfig.go,
+// validateAPIAndIngressVIPs().
 func validateVIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
-	apiVIP := net.ParseIP(p.APIVIP)
-	ingressVIP := net.ParseIP(p.IngressVIP)
-
-	if apiVIP != nil && ingressVIP != nil {
-		if apiVIP.Equal(ingressVIP) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, "ingressVIP can not be the same as apiVIP"))
-		}
-	}
-
 	// If the subnet is not found in the CloudInfo object, abandon validation
 	if ci.MachinesSubnet != nil {
 		for _, allocationPool := range ci.MachinesSubnet.AllocationPools {
@@ -113,15 +107,18 @@ func validateVIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (al
 				continue
 			}
 
-			if apiVIP != nil {
+			for _, apiVIPString := range p.APIVIPs {
+				apiVIP := net.ParseIP(apiVIPString)
 				if bytes.Compare(start, apiVIP) <= 0 && bytes.Compare(end, apiVIP) >= 0 {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, "apiVIP can not fall in a MachineNetwork allocation pool"))
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIPs"), apiVIPString, "apiVIP can not fall in a MachineNetwork allocation pool"))
 				}
+
 			}
 
-			if ingressVIP != nil {
+			for _, ingressVIPString := range p.IngressVIPs {
+				ingressVIP := net.ParseIP(ingressVIPString)
 				if bytes.Compare(start, ingressVIP) <= 0 && bytes.Compare(end, ingressVIP) >= 0 {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, "ingressVIP can not fall in a MachineNetwork allocation pool"))
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIPs"), ingressVIPString, "ingressVIP can not fall in a MachineNetwork allocation pool"))
 				}
 			}
 		}

@@ -178,7 +178,6 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 				p.ExternalNetwork = ""
 				p.APIFloatingIP = ""
 				p.IngressFloatingIP = ""
-				p.APIVIP = ""
 				return p
 			}(),
 			cloudInfo: func() *CloudInfo {
@@ -213,36 +212,10 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			expectedErrMsg: "platform.openstack.externalNetwork: Not found: \"valid-external-network\"",
 		},
 		{
-			name: "APIVIP and IngressVIP are the same",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.APIVIP = "128.35.27.8"
-				p.IngressVIP = "128.35.27.8"
-				return p
-			}(),
-			cloudInfo:      validPlatformCloudInfo(),
-			networking:     validNetworking(),
-			expectedError:  true,
-			expectedErrMsg: "platform.openstack.ingressVIP: Invalid value: \"128.35.27.8\": ingressVIP can not be the same as apiVIP",
-		},
-		{
-			name: "APIVIP and IngressVIP are synonyms",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.APIVIP = "2001:db8::5"
-				p.IngressVIP = "2001:db8:0::5"
-				return p
-			}(),
-			cloudInfo:      validPlatformCloudInfo(),
-			networking:     validNetworking(),
-			expectedError:  true,
-			expectedErrMsg: "platform.openstack.ingressVIP: Invalid value: \"2001:db8:0::5\": ingressVIP can not be the same as apiVIP",
-		},
-		{
 			name: "APIVIP inside subnet allocation pool",
 			platform: func() *openstack.Platform {
 				p := validPlatform()
-				p.APIVIP = "10.0.128.10"
+				p.APIVIPs = []string{"10.0.128.10"}
 				return p
 			}(),
 			cloudInfo: validPlatformCloudInfo(withMachinesSubnet(
@@ -252,13 +225,13 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			)),
 			networking:     validNetworking(),
 			expectedError:  true,
-			expectedErrMsg: "platform.openstack.apiVIP: Invalid value: \"10.0.128.10\": apiVIP can not fall in a MachineNetwork allocation pool",
+			expectedErrMsg: "platform.openstack.apiVIPs: Invalid value: \"10.0.128.10\": apiVIP can not fall in a MachineNetwork allocation pool",
 		},
 		{
 			name: "ingressVIP inside subnet allocation pool",
 			platform: func() *openstack.Platform {
 				p := validPlatform()
-				p.IngressVIP = "10.0.128.42"
+				p.IngressVIPs = []string{"10.0.128.42"}
 				return p
 			}(),
 			cloudInfo: validPlatformCloudInfo(withMachinesSubnet(
@@ -268,7 +241,7 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			)),
 			networking:     validNetworking(),
 			expectedError:  true,
-			expectedErrMsg: "platform.openstack.ingressVIP: Invalid value: \"10.0.128.42\": ingressVIP can not fall in a MachineNetwork allocation pool",
+			expectedErrMsg: "platform.openstack.ingressVIPs: Invalid value: \"10.0.128.42\": ingressVIP can not fall in a MachineNetwork allocation pool",
 		},
 	}
 

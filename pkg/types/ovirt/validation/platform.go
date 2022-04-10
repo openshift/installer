@@ -19,15 +19,9 @@ func ValidatePlatform(p *ovirt.Platform, fldPath *field.Path) field.ErrorList {
 	if err := validate.UUID(p.StorageDomainID); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ovirt_storage_domain_id"), p.StorageDomainID, err.Error()))
 	}
-	if err := validate.IP(p.APIVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("api_vip"), p.APIVIP, err.Error()))
-	}
-	if err := validate.IP(p.IngressVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingress_vip"), p.IngressVIP, err.Error()))
-	}
 	if p.VNICProfileID != "" {
 		if err := validate.UUID(p.VNICProfileID); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("vnicProfileID"), p.IngressVIP, err.Error()))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("vnicProfileID"), p.VNICProfileID, err.Error()))
 		}
 	}
 	if p.AffinityGroups != nil {
@@ -37,6 +31,7 @@ func ValidatePlatform(p *ovirt.Platform, fldPath *field.Path) field.ErrorList {
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
+
 	return allErrs
 }
 

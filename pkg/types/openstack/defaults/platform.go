@@ -26,9 +26,9 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 	// of the Kubernetes API server for use by components inside the
 	// cluster. The DNS static pods running on the nodes resolve the
 	// api-int record to APIVIP.
-	if p.APIVIP == "" {
+	if len(p.APIVIPs) == 0 && p.DeprecatedAPIVIP == "" {
 		vip, _ := cidr.Host(&n.MachineNetwork[0].CIDR.IPNet, 5)
-		p.APIVIP = vip.String()
+		p.APIVIPs = []string{vip.String()}
 	}
 
 	// IngressVIP returns the internal virtual IP address (VIP) put in
@@ -36,8 +36,8 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 	// accessibility to the internal pods running on the worker nodes,
 	// e.g. `console`. The DNS static pods running on the nodes resolve
 	// the wildcard apps record to IngressVIP.
-	if p.IngressVIP == "" {
+	if len(p.IngressVIPs) == 0 && p.DeprecatedIngressVIP == "" {
 		vip, _ := cidr.Host(&n.MachineNetwork[0].CIDR.IPNet, 7)
-		p.IngressVIP = vip.String()
+		p.IngressVIPs = []string{vip.String()}
 	}
 }

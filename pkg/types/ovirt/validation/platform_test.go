@@ -15,8 +15,8 @@ func validPlatform() *ovirt.Platform {
 		StorageDomainID:        "57e42205-02ac-46e1-a6d1-07459d94bc51",
 		VNICProfileID:          "57e42205-02ac-46e1-a6d1-07459d94bc52",
 		NetworkName:            "ocp-blue",
-		APIVIP:                 "10.0.0.1",
-		IngressVIP:             "10.0.0.3",
+		APIVIPs:                []string{"10.0.0.1"},
+		IngressVIPs:            []string{"10.0.0.3"},
 		DefaultMachinePlatform: nil,
 	}
 }
@@ -46,24 +46,6 @@ func TestValidatePlatform(t *testing.T) {
 			platform: func() *ovirt.Platform {
 				p := validPlatform()
 				p.StorageDomainID = ""
-				return p
-			}(),
-			valid: false,
-		},
-		{
-			name: "invalid when API VIP is invalid",
-			platform: func() *ovirt.Platform {
-				p := validPlatform()
-				p.APIVIP = "1."
-				return p
-			}(),
-			valid: false,
-		},
-		{
-			name: "invalid when INGRESS VIP is invalid",
-			platform: func() *ovirt.Platform {
-				p := validPlatform()
-				p.APIVIP = "1."
 				return p
 			}(),
 			valid: false,

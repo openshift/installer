@@ -167,15 +167,38 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
-	// APIVIP is the VIP to use for internal API communication
+	// DeprecatedAPIVIP is the VIP to use for internal API communication
+	// Deprecated: Use APIVIPs
 	//
 	// +kubebuilder:validation:Format=ip
-	APIVIP string `json:"apiVIP"`
+	// +optional
+	DeprecatedAPIVIP string `json:"apiVIP,omitempty"`
 
-	// IngressVIP is the VIP to use for ingress traffic
+	// APIVIPs contains the VIP(s) to use for internal API communication. In
+	// dual stack clusters it contains an IPv4 and IPv6 address, otherwise only
+	// one VIP
+	//
+	// +kubebuilder:validation:MaxItems=2
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:Format=ip
+	// +optional
+	APIVIPs []string `json:"apiVIPs,omitempty"`
+
+	// DeprecatedIngressVIP is the VIP to use for ingress traffic
+	// Deprecated: Use IngressVIPs
 	//
 	// +kubebuilder:validation:Format=ip
-	IngressVIP string `json:"ingressVIP"`
+	// +optional
+	DeprecatedIngressVIP string `json:"ingressVIP,omitempty"`
+
+	// IngressVIPs contains the VIP(s) to use for ingress traffic. In dual stack
+	// clusters it contains an IPv4 and IPv6 address, otherwise only one VIP
+	//
+	// +kubebuilder:validation:MaxItems=2
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:Format=ip
+	// +optional
+	IngressVIPs []string `json:"ingressVIPs,omitempty"`
 
 	// BootstrapOSImage is a URL to override the default OS image
 	// for the bootstrap node. The URL must contain a sha256 hash of the image

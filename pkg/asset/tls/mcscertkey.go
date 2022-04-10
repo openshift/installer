@@ -45,30 +45,25 @@ func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
 		Validity:     ValidityTenYears,
 	}
 
+	var vips []string
 	switch installConfig.Config.Platform.Name() {
 	case baremetaltypes.Name:
-		cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.BareMetal.APIVIP)}
-		cfg.DNSNames = []string{hostname, installConfig.Config.BareMetal.APIVIP}
+		vips = installConfig.Config.BareMetal.APIVIPs
 	case nutanixtypes.Name:
-		cfg.DNSNames = []string{hostname}
-		if installConfig.Config.Nutanix.APIVIP != "" {
-			cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.Nutanix.APIVIP)}
-			cfg.DNSNames = append(cfg.DNSNames, installConfig.Config.Nutanix.APIVIP)
-		}
+		vips = installConfig.Config.Nutanix.APIVIPs
 	case openstacktypes.Name:
-		cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.OpenStack.APIVIP)}
-		cfg.DNSNames = []string{hostname, installConfig.Config.OpenStack.APIVIP}
+		vips = installConfig.Config.OpenStack.APIVIPs
 	case ovirttypes.Name:
-		cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.Ovirt.APIVIP)}
-		cfg.DNSNames = []string{hostname, installConfig.Config.Ovirt.APIVIP}
+		vips = installConfig.Config.Ovirt.APIVIPs
 	case vspheretypes.Name:
-		cfg.DNSNames = []string{hostname}
-		if installConfig.Config.VSphere.APIVIP != "" {
-			cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.VSphere.APIVIP)}
-			cfg.DNSNames = append(cfg.DNSNames, installConfig.Config.VSphere.APIVIP)
-		}
-	default:
-		cfg.DNSNames = []string{hostname}
+		vips = installConfig.Config.VSphere.APIVIPs
+	}
+
+	cfg.IPAddresses = []net.IP{}
+	cfg.DNSNames = []string{hostname}
+	for _, vip := range vips {
+		cfg.IPAddresses = append(cfg.IPAddresses, net.ParseIP(vip))
+		cfg.DNSNames = append(cfg.DNSNames, vip)
 	}
 
 	return a.SignedCertKey.Generate(cfg, ca, "machine-config-server", DoNotAppendParent)

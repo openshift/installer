@@ -39,8 +39,8 @@ func validIPIInstallConfig(dcName string, fName string) *types.InstallConfig {
 				Password:         "valid_password",
 				Username:         "valid_username",
 				VCenter:          "valid-vcenter",
-				APIVIP:           "192.168.111.0",
-				IngressVIP:       "192.168.111.1",
+				APIVIPs:          []string{"192.168.111.0"},
+				IngressVIPs:      []string{"192.168.111.1"},
 			},
 		},
 	}

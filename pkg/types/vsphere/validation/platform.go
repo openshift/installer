@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
+
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -291,30 +292,6 @@ func ValidateForProvisioning(p *vsphere.Platform, fldPath *field.Path) field.Err
 
 	if len(p.Network) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must specify the network"))
-	}
-
-	allErrs = append(allErrs, validateVIPs(p, fldPath)...)
-	return allErrs
-}
-
-// validateVIPs checks that all required VIPs are provided and are valid IP addresses.
-func validateVIPs(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if len(p.APIVIP) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("apiVIP"), "must specify a VIP for the API"))
-	} else if err := validate.IP(p.APIVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
-	}
-
-	if len(p.IngressVIP) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("ingressVIP"), "must specify a VIP for Ingress"))
-	} else if err := validate.IP(p.IngressVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
-	}
-
-	if len(p.APIVIP) != 0 && len(p.IngressVIP) != 0 && p.APIVIP == p.IngressVIP {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, "IPs for both API and Ingress should not be the same."))
 	}
 
 	return allErrs

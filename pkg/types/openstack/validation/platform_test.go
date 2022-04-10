@@ -93,66 +93,6 @@ func TestValidatePlatform(t *testing.T) {
 			networking: validNetworking(),
 			valid:      true,
 		},
-		{
-			name: "valid custom API vip",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.APIVIP = "10.0.0.9"
-				return p
-			}(),
-			networking: validNetworking(),
-			valid:      true,
-		},
-		{
-			name: "incorrect network custom API vip",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.APIVIP = "11.1.0.5"
-				return p
-			}(),
-			networking: validNetworking(),
-			valid:      false,
-		},
-		{
-			name: "valid custom ingress vip",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.IngressVIP = "10.0.0.9"
-				return p
-			}(),
-			networking: validNetworking(),
-			valid:      true,
-		},
-		{
-			name: "incorrect network custom ingress vip",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.IngressVIP = "11.1.0.5"
-				return p
-			}(),
-			networking: validNetworking(),
-			valid:      false,
-		},
-		{
-			name: "invalid network custom ingress vip",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.IngressVIP = "banana"
-				return p
-			}(),
-			networking: validNetworking(),
-			valid:      false,
-		},
-		{
-			name: "invalid network custom API vip",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.APIVIP = "banana"
-				return p
-			}(),
-			networking: validNetworking(),
-			valid:      false,
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
