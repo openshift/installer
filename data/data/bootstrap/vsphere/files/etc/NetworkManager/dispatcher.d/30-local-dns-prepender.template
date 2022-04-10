@@ -20,11 +20,13 @@ EOF
     set +e
     if systemctl -q is-enabled systemd-resolved; then
         >&2 echo "NM resolv-prepender: Setting up systemd-resolved for local DNS"
-        if [[ ! -f /etc/systemd/resolved.conf.d/60-kni.conf ]]; then
+        DOMAIN=$(/bin/vmtoolsd --cmd 'info-get guestinfo.domain');
+        if [[ -n "$DOMAIN" && ! -f /etc/systemd/resolved.conf.d/60-kni.conf ]]; then
             >&2 echo "NM resolv-prepender: Creating /etc/systemd/resolved.conf.d/60-kni.conf"
             mkdir -p /etc/systemd/resolved.conf.d
             echo "[Resolve]" > /etc/systemd/resolved.conf.d/60-kni.conf
             echo "DNS=$DNS_IP" >> /etc/systemd/resolved.conf.d/60-kni.conf
+            echo "Domains=$DOMAIN" >> /etc/systemd/resolved.conf.d/60-kni.conf
             if systemctl -q is-active systemd-resolved; then
                 >&2 echo "NM resolv-prepender: restarting systemd-resolved"
                 systemctl restart systemd-resolved
