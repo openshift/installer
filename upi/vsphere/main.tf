@@ -215,7 +215,7 @@ module "control_plane_vm" {
     module.ipam_control_plane.ip_addresses
   )
 
-  ignition = file(var.control_plane_ignition_path)
+//  ignition = file(var.control_plane_ignition_path)
 
   resource_pool_id      = vsphere_resource_pool.resource_pool.id
   datastore_id          = data.vsphere_datastore.datastore.id
