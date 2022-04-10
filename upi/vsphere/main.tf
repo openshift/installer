@@ -4,7 +4,7 @@ provider "ignition" {
 }
 
 locals {
-  api_lb_fqdns        = formatlist("%s.%s", ["api", "api-int", "*.apps"], var.cluster_domain)
+  api_lb_fqdns        = formatlist("%s.%s", ["control-plane0","api", "api-int", "*.apps"], var.cluster_domain)
   control_plane_fqdns = [for idx in range(var.control_plane_count) : "control-plane-${idx}.${var.cluster_domain}"]
 }
 
@@ -73,7 +73,7 @@ module "ipam_bootstrap" {
 // Request from phpIPAM a new IP addresses for the control-plane nodes
 module "ipam_control_plane" {
   source              = "./ipam"
-  hostnames           = local.control_plane_fqdns
+  hostnames           = local.api_lb_fqdns
   ipam                = var.ipam
   ipam_token          = var.ipam_token
   machine_cidr        = var.machine_cidr
