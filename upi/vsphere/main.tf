@@ -227,10 +227,6 @@ module "control_plane_vm" {
   guest_id              = data.vsphere_virtual_machine.template.guest_id
   template_uuid         = data.vsphere_virtual_machine.template.id
   disk_thin_provisioned = data.vsphere_virtual_machine.template.disks[0].thin_provisioned
-  cdrom {
-    datastore_id = data.vsphere_datacenter.dc.id
-    path         = "/ISO/rhcos-410.84.202201251210-0-live.x86_64_last1.iso"
-  }
 
   cluster_domain = var.cluster_domain
   machine_cidr   = var.machine_cidr
