@@ -77,7 +77,7 @@ module "ipam_control_plane" {
   ipam                = var.ipam
   ipam_token          = var.ipam_token
   machine_cidr        = var.machine_cidr
-  static_ip_addresses = var.control_plane_ip_addresses
+  static_ip_addresses = var.control_plane_ip_addresses == "" ? [] : [var.control_plane_ip_addresses]
 }
 /*
 
