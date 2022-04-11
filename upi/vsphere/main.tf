@@ -6,7 +6,7 @@ provider "ignition" {
 locals {
   api_lb_fqdns        = formatlist("%s.%s", ["control-plane0","api", "api-int", "*.apps"], var.cluster_domain)
   api_fqdn = ["api.${var.cluster_domain}"]
-  apps_fqdn = ["*apps${var.cluster_domain}"]
+  apps_fqdn = ["*apps.${var.cluster_domain}"]
   control_plane_fqdns = [for idx in range(var.control_plane_count) : "control-plane-${idx}.${var.cluster_domain}"]
 }
 
