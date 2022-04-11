@@ -5,6 +5,8 @@ provider "ignition" {
 
 locals {
   api_lb_fqdns        = formatlist("%s.%s", ["control-plane0","api", "api-int", "*.apps"], var.cluster_domain)
+  api_fqdn = "api.${var.cluster_domain}"
+  apps_fqdn = "*apps${var.cluster_domain}"
   control_plane_fqdns = [for idx in range(var.control_plane_count) : "control-plane-${idx}.${var.cluster_domain}"]
 }
 
@@ -141,10 +143,21 @@ module "lb_a_records" {
 module "control_plane_a_records" {
   source  = "./host_a_record"
   zone_id = module.dns_cluster_domain.zone_id
-  records = zipmap(
-    local.api_lb_fqdns,
-    [module.ipam_control_plane.ip_addresses, module.ipam_control_plane.ip_addresses, module.ipam_control_plane.ip_addresses, module.ipam_control_plane.ip_addresses]
-        )
+  records = zipmap(local.control_plane_fqdns, module.ipam_control_plane.ip_addresses)
+
+}
+
+
+module "api_a_record" {
+  source  = "./host_a_record"
+  zone_id = module.dns_cluster_domain.zone_id
+  records = zipmap(local.api_fqdn, module.ipam_control_plane.ip_addresses)
+}
+
+module "apps_a_record" {
+          source  = "./host_a_record"
+  zone_id = module.dns_cluster_domain.zone_id
+  records = zipmap(local.apps_fqdn, module.ipam_control_plane.ip_addresses)
 }
 
 /*module "compute_a_records" {
