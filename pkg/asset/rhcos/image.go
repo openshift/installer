@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -163,6 +164,20 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return "", err
 		}
 		return osimage, nil
+	case powervs.Name:
+		// Check for image URL override
+		if config.Platform.PowerVS.ClusterOSImage != "" {
+			return config.Platform.PowerVS.ClusterOSImage, nil
+		}
+
+		if streamArch.Images.PowerVS != nil {
+			vpcRegion := powervs.Regions[config.Platform.PowerVS.Region].VPCRegion
+			img := streamArch.Images.PowerVS.Regions[vpcRegion]
+			logrus.Debug("Power VS using image ", img.Object)
+			return img.Object, nil
+		}
+
+		return "", fmt.Errorf("%s: No Power VS build found", st.FormatPrefix(archName))
 	case none.Name:
 		return "", nil
 	case nutanix.Name:

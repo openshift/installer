@@ -3,7 +3,6 @@ package powervs
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
@@ -55,9 +54,13 @@ type DNSZoneResponse struct {
 
 // NewClient initializes a client with a session.
 func NewClient() (*Client, error) {
-	apiKey := os.Getenv("IC_API_KEY")
+	ssn, err := GetSession()
+	if err != nil {
+		return nil, err
+	}
+
 	client := &Client{
-		APIKey: apiKey,
+		APIKey: ssn.APIKey,
 	}
 
 	if err := client.loadSDKServices(); err != nil {

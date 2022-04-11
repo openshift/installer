@@ -45,16 +45,23 @@ type ImageFormat struct {
 // Artifact represents one image file, plus its metadata
 type Artifact struct {
 	Location           string `json:"location"`
-	Signature          string `json:"signature"`
+	Signature          string `json:"signature,omitempty"`
 	Sha256             string `json:"sha256"`
 	UncompressedSha256 string `json:"uncompressed-sha256,omitempty"`
 }
 
+type KubeVirtContainerDisk struct {
+	Image string `json:"image"`
+}
+
 // Images contains images available in cloud providers
 type Images struct {
-	Aliyun *ReplicatedImage `json:"aliyun,omitempty"`
-	Aws    *AwsImage        `json:"aws,omitempty"`
-	Gcp    *GcpImage        `json:"gcp,omitempty"`
+	Aliyun   *ReplicatedImage       `json:"aliyun,omitempty"`
+	Aws      *AwsImage              `json:"aws,omitempty"`
+	Gcp      *GcpImage              `json:"gcp,omitempty"`
+	Ibmcloud *ReplicatedObject      `json:"ibmcloud,omitempty"`
+	KubeVirt *KubeVirtContainerDisk `json:"kubevirt,omitempty"`
+	PowerVS  *ReplicatedObject      `json:"powervs,omitempty"`
 }
 
 // ReplicatedImage represents an image in all regions of an AWS-like cloud
@@ -76,7 +83,21 @@ type AwsRegionImage = RegionImage
 
 // GcpImage represents a GCP cloud image
 type GcpImage struct {
-	Project string `json:"project,omitempty"`
+	Release string `json:"release"`
+	Project string `json:"project"`
 	Family  string `json:"family,omitempty"`
-	Name    string `json:"name,omitempty"`
+	Name    string `json:"name"`
+}
+
+// ReplicatedObject represents an object in all regions of an IBMCloud-like cloud
+type ReplicatedObject struct {
+	Regions map[string]RegionObject `json:"regions,omitempty"`
+}
+
+// RegionObject represents an IBMCloud/PowerVS cloud image
+type RegionObject struct {
+	Release string `json:"release"`
+	Object  string `json:"object"`
+	Bucket  string `json:"bucket"`
+	Url     string `json:"url"`
 }
