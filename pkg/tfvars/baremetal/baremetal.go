@@ -88,6 +88,7 @@ func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, boo
 		driverInfo["deploy_ramdisk"] = fmt.Sprintf("http://%s/%s.initramfs", net.JoinHostPort(imageCacheIP, "8084"), host.Name)
 		driverInfo["deploy_iso"] = fmt.Sprintf("http://%s/%s.iso", net.JoinHostPort(imageCacheIP, "8084"), host.Name)
 
+		// Just comment to trigger e2e-metal-ipi-ovn-ipv6-required ci
 		// Host Details
 		hostMap := map[string]interface{}{
 			"name":                 host.Name,
