@@ -77,7 +77,7 @@ module "ipam_control_plane" {
   ipam                = var.ipam
   ipam_token          = var.ipam_token
   machine_cidr        = var.machine_cidr
-  static_ip_addresses = var.control_plane_ip_addresses == "" ? [] : [var.control_plane_ip_addresses]
+  static_ip_addresses = var.control_plane_ip_addresses
 }
 /*
 
@@ -143,7 +143,7 @@ module "control_plane_a_records" {
   zone_id = module.dns_cluster_domain.zone_id
   records = zipmap(
     local.api_lb_fqdns,
-    [for name in local.api_lb_fqdns : module.ipam_control_plane.ip_addresses[0]]
+    [module.ipam_control_plane.ip_addresses, module.ipam_control_plane.ip_addresses, module.ipam_control_plane.ip_addresses, module.ipam_control_plane.ip_addresses]
         )
 }
 
