@@ -25,6 +25,11 @@ type NMStateConfig struct {
 						IP string `yaml:"ip,omitempty"`
 					} `yaml:"address,omitempty"`
 				} `yaml:"ipv4,omitempty"`
+				IPV6 struct {
+					Address []struct {
+						IP string `yaml:"ip,omitempty"`
+					} `yaml:"address,omitempty"`
+				} `yaml:"ipv6,omitempty"`
 			} `yaml:"interfaces,omitempty"`
 		} `yaml:"config,omitempty"`
 		Interfaces []struct {
