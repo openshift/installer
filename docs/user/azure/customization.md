@@ -102,9 +102,6 @@ platform:
   azure:
     region: centralus
     baseDomainResourceGroupName: os4-common
-    osDisk:
-        diskSizeGB: 512
-        diskType: Premium_LRS
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
