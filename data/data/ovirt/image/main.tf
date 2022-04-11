@@ -12,11 +12,11 @@ provider "ovirt" {
 }
 
 // upload the disk if we don't have an existing template
-resource "ovirt_image_transfer" "releaseimage" {
+resource "ovirt_disk" "releaseimage" {
   count = length(var.ovirt_base_image_name) == 0 ? 1 : 0
 
   alias             = local.image_name
-  source_url        = var.ovirt_base_image_local_file_path
+  path              = var.ovirt_base_image_local_file_path
   storage_domain_id = var.ovirt_storage_domain_id
   sparse            = true
   timeouts {
@@ -30,20 +30,25 @@ resource "ovirt_vm" "tmp_import_vm" {
 
   name       = "tmpvm-for-${ovirt_image_transfer.releaseimage.0.alias}"
   cluster_id = var.ovirt_cluster_id
-  auto_start = false
-  block_device {
-    disk_id   = ovirt_image_transfer.releaseimage.0.disk_id
-    interface = "virtio_scsi"
-  }
+  // TODO implement os.
   os {
     type = "rhcos_x64"
-  }
-  nics {
-    name            = "nic1"
-    vnic_profile_id = var.ovirt_vnic_profile_id
   }
   timeouts {
     create = "20m"
   }
   depends_on = [ovirt_image_transfer.releaseimage]
+}
+
+resource "ovirt_nic" "tmp_import_vm" {
+  count = length(var.ovirt_base_image_name) == 0 ? 1 : 0
+  name  = "nic1"
+  vm_id = ovirt_vm.tmp_import_vm[0].id
+  vnic_profile_id = var.ovirt_vnic_profile_id
+}
+
+resource "ovirt_disk_attachment" "tmp_import_vm" {
+  vm_id = ovirt_vm.tmp_import_vm[0].id
+  disk_id = ovirt_disk.releaseimage[0].id
+  disk_interface = "virtio_scsi"
 }
