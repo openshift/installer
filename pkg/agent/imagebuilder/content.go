@@ -51,7 +51,10 @@ func New() *ConfigBuilder {
 		fmt.Errorf("Error marshalling cluster params into json: %w", err)
 	}
 
-	infraEnvParams := manifests.CreateInfraEnvParams()
+	infraEnvParams, err := manifests.CreateInfraEnvParams()
+	if err != nil {
+		fmt.Errorf("Error building infra env params: %w", err)
+	}
 
 	infraEnvJSON, err := json.Marshal(infraEnvParams)
 	if err != nil {
