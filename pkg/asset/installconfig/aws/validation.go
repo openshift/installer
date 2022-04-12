@@ -361,8 +361,8 @@ func ValidateForProvisioning(session *session.Session, ic *types.InstallConfig, 
 	client := route53.New(session)
 
 	if ic.AWS.HostedZone != "" {
-		zoneName := ic.AWS.HostedZone
-		zonePath := field.NewPath("aws", "hostedZone")
+		zoneName = ic.AWS.HostedZone
+		zonePath = field.NewPath("aws", "hostedZone")
 		zoneOutput, errors := getHostedZone(client, zonePath, zoneName)
 		if len(errors) > 0 {
 			allErrs = append(allErrs, errors...)
@@ -374,8 +374,8 @@ func ValidateForProvisioning(session *session.Session, ic *types.InstallConfig, 
 
 		zone = zoneOutput.HostedZone
 	} else {
-		zoneName := ic.BaseDomain
-		zonePath := field.NewPath("baseDomain")
+		zoneName = ic.BaseDomain
+		zonePath = field.NewPath("baseDomain")
 		zone, errors = getBaseDomain(session, zonePath, zoneName)
 		if len(errors) > 0 {
 			allErrs = append(allErrs, errors...)
