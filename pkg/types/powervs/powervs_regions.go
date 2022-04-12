@@ -78,3 +78,14 @@ func VPCRegionForPowerVSRegion(region string) (string, error) {
 
 	return "", fmt.Errorf("VPC region corresponding to a PowerVS region %s not found ", region)
 }
+
+// RegionShortNames returns the list of region names
+func RegionShortNames() []string {
+	keys := make([]string, len(Regions))
+	i := 0
+	for r := range Regions {
+		keys[i] = r
+		i++
+	}
+	return keys
+}
