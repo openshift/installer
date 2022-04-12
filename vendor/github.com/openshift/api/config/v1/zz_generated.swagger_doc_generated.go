@@ -1206,7 +1206,7 @@ func (KubevirtPlatformStatus) SwaggerDoc() map[string]string {
 
 var map_NutanixPlatformSpec = map[string]string{
 	"":              "NutanixPlatformSpec holds the desired state of the Nutanix infrastructure provider. This only includes fields that can be modified in the cluster.",
-	"prismCentral":  "prismCentral holds the endpoint address and port to access the Nutanix Prism Central. When a cluster-wide proxy is installed, this endpoint will not be accessed via the proxy.",
+	"prismCentral":  "prismCentral holds the endpoint address and port to access the Nutanix Prism Central. When a cluster-wide proxy is installed, by default, this endpoint will be accessed via the proxy. Should you wish for communication with this endpoint not to be proxied, please add the endpoint to the proxy spec.noProxy list.",
 	"prismElements": "prismElements holds one or more endpoint address and port data to access the Nutanix Prism Elements (clusters) of the Nutanix Prism Central. Currently we only support one Prism Element (cluster) for an OpenShift cluster, where all the Nutanix resources (VMs, subnets, volumes, etc.) used in the OpenShift cluster are located. In the future, we may support Nutanix resources (VMs, etc.) spread over multiple Prism Elements (clusters) of the Prism Central.",
 }
 
@@ -1227,7 +1227,7 @@ func (NutanixPlatformStatus) SwaggerDoc() map[string]string {
 var map_NutanixPrismElementEndpoint = map[string]string{
 	"":         "NutanixPrismElementEndpoint holds the name and endpoint data for a Prism Element (cluster)",
 	"name":     "name is the name of the Prism Element (cluster). This value will correspond with the cluster field configured on other resources (eg Machines, PVCs, etc).",
-	"endpoint": "endpoint holds the endpoint address and port data of the Prism Element (cluster). When a cluster-wide proxy is installed, this endpoint will not be accessed via the proxy.",
+	"endpoint": "endpoint holds the endpoint address and port data of the Prism Element (cluster). When a cluster-wide proxy is installed, by default, this endpoint will be accessed via the proxy. Should you wish for communication with this endpoint not to be proxied, please add the endpoint to the proxy spec.noProxy list.",
 }
 
 func (NutanixPrismElementEndpoint) SwaggerDoc() map[string]string {
@@ -1583,24 +1583,11 @@ func (NodeStatus) SwaggerDoc() map[string]string {
 
 var map_WorkerLatencyProfileStatus = map[string]string{
 	"":           "WorkerLatencyProfileStatus provides status information about the WorkerLatencyProfile rollout",
-	"conditions": "conditions describes the state of the WorkerLatencyProfile and related components (Kubelet or Controller Manager or Kube API Server)",
+	"conditions": "conditions describes the state of the WorkerLatencyProfile and related components (Kubelet or Controller Manager or Kube API Server) whether progressing, degraded or complete",
 }
 
 func (WorkerLatencyProfileStatus) SwaggerDoc() map[string]string {
 	return map_WorkerLatencyProfileStatus
-}
-
-var map_WorkerLatencyStatusCondition = map[string]string{
-	"owner":              "Owner specifies the operator that is updating this condition",
-	"type":               "type specifies the aspect reported by this condition.",
-	"status":             "status of the condition, one of True, False, Unknown.",
-	"lastTransitionTime": "lastTransitionTime is the time of the last update to the current status property.",
-	"reason":             "reason is the CamelCase reason for the condition's current status.",
-	"message":            "message provides additional information about the current condition. This is only to be consumed by humans.  It may contain Line Feed characters (U+000A), which should be rendered as new lines.",
-}
-
-func (WorkerLatencyStatusCondition) SwaggerDoc() map[string]string {
-	return map_WorkerLatencyStatusCondition
 }
 
 var map_BasicAuthIdentityProvider = map[string]string{

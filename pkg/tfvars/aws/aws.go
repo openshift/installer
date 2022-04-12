@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
-	"github.com/pkg/errors"
-	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
-
 	"github.com/openshift/installer/pkg/types"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
+	"github.com/pkg/errors"
 )
 
 type config struct {
@@ -50,7 +49,7 @@ type TFVarsSources struct {
 
 	AMIID, AMIRegion string
 
-	MasterConfigs, WorkerConfigs []*v1beta1.AWSMachineProviderConfig
+	MasterConfigs, WorkerConfigs []*machinev1beta1.AWSMachineProviderConfig
 
 	IgnitionBucket, IgnitionPresignedURL string
 

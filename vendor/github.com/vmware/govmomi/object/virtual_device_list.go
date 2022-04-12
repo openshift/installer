@@ -68,7 +68,13 @@ func EthernetCardTypes() VirtualDeviceList {
 		&types.VirtualSriovEthernetCard{},
 	}).Select(func(device types.BaseVirtualDevice) bool {
 		c := device.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard()
-		c.GetVirtualDevice().Key = int32(rand.Uint32()) * -1
+
+		key := rand.Int31() * -1
+		if key == 0 {
+			key = -1
+		}
+
+		c.GetVirtualDevice().Key = key
 		return true
 	})
 }
@@ -135,6 +141,9 @@ func (l VirtualDeviceList) SelectByBackingInfo(backing types.BaseVirtualDeviceBa
 			b := backing.(*types.VirtualEthernetCardDistributedVirtualPortBackingInfo)
 			return a.Port.SwitchUuid == b.Port.SwitchUuid &&
 				a.Port.PortgroupKey == b.Port.PortgroupKey
+		case *types.VirtualEthernetCardOpaqueNetworkBackingInfo:
+			b := backing.(*types.VirtualEthernetCardOpaqueNetworkBackingInfo)
+			return a.OpaqueNetworkId == b.OpaqueNetworkId
 		case *types.VirtualDiskFlatVer2BackingInfo:
 			b := backing.(*types.VirtualDiskFlatVer2BackingInfo)
 			if a.Parent != nil && b.Parent != nil {

@@ -21,8 +21,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(GroupVersion,
 		&AWSPlacementGroup{},
 		&AWSPlacementGroupList{},
-		&ControlPlaneMachineSet{},
-		&ControlPlaneMachineSetList{},
 	)
 
 	return nil
