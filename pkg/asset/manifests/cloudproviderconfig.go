@@ -217,26 +217,36 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 		cm.Data[cloudProviderConfigDataKey] = ibmcloudConfig
 	case powervstypes.Name:
-		var vpcRegion string
-		var err error
+		var (
+			accountID, vpcRegion string
+			err                  error
+		)
 
-		accountID, err := installConfig.PowerVS.AccountID(context.TODO())
-		if err != nil {
+		if accountID, err = installConfig.PowerVS.AccountID(context.TODO()); err != nil {
 			return err
 		}
 
-		vpcRegion, err = powervstypes.VPCRegionForPowerVSRegion(installConfig.Config.PowerVS.Region)
-		if err != nil {
+		if vpcRegion, err = powervstypes.VPCRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
 			return err
+		}
+
+		vpc := installConfig.Config.PowerVS.VPC
+		vpcSubnets := installConfig.Config.PowerVS.Subnets
+		if vpc == "" {
+			vpc = fmt.Sprintf("vpc-%s", clusterID.InfraID)
+		}
+
+		if len(vpcSubnets) == 0 {
+			vpcSubnets = append(vpcSubnets, fmt.Sprintf("vpc-subnet-%s", clusterID.InfraID))
 		}
 
 		powervsConfig, err := powervsmanifests.CloudProviderConfig(
 			clusterID.InfraID,
 			accountID,
-			installConfig.Config.PowerVS.VPC,
+			vpc,
 			vpcRegion,
 			installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
-			installConfig.Config.PowerVS.Subnets,
+			vpcSubnets,
 			installConfig.Config.PowerVS.ServiceInstanceID,
 			installConfig.Config.PowerVS.Region,
 			installConfig.Config.PowerVS.Zone,

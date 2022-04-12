@@ -58,9 +58,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	// @TODO: Align this with a region later.
 	rand.Seed(time.Now().UnixNano())
 	// All supported Regions are MZRs and have Zones named "region-[1-3]"
-	vpcZone := fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(3))
+	vpcZone := fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1)
 
-	//@TODO: Add resource group to platform
 	cfg := &config{
 		ServiceInstanceID:    masterConfig.ServiceInstanceID,
 		APIKey:               sources.APIKey,
@@ -72,7 +71,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PowerVSResourceGroup: sources.PowerVSResourceGroup,
 		CISInstanceCRN:       sources.CISInstanceCRN,
 		ImageBucketFileName:  sources.ImageBucketFileName,
-		NetworkName:          *masterConfig.Network.Name,
 		VPCName:              sources.VPCName,
 		VPCSubnetName:        sources.VPCSubnetName,
 		BootstrapMemory:      masterConfig.Memory,
@@ -81,6 +79,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterProcessors:     masterConfig.Processors,
 		ProcType:             masterConfig.ProcType,
 		SysType:              masterConfig.SysType,
+	}
+	if masterConfig.Network.Name != nil {
+		cfg.NetworkName = *masterConfig.Network.Name
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

@@ -29,7 +29,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	// Only the service instance is guaranteed to exist and be passed via the install config
 	// The other two, we should standardize a name including the cluster id.
 	image := fmt.Sprintf("rhcos-%s", clusterID)
-	network := fmt.Sprintf("pvs-net-%s", clusterID)
+	var network string
 	if platform.ClusterOSImage != "" {
 		image = platform.ClusterOSImage
 	}
@@ -74,9 +74,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func provider(clusterID string, platform *powervs.Platform, mpool *powervs.MachinePool, userDataSecret string, image string, network string) (*powervsprovider.PowerVSMachineProviderConfig, error) {
 
-	if clusterID == "" || platform == nil || mpool == nil || userDataSecret == "" || image == "" || network == "" {
+	if clusterID == "" || platform == nil || mpool == nil || userDataSecret == "" || image == "" {
 		return nil, fmt.Errorf("invalid value passed to provider")
 	}
+
+	dhcpNetRegex := "^DHCPSERVER[0-9a-z]{32}_Private$"
 
 	//Setting only the mandatory parameters
 	config := &powervsprovider.PowerVSMachineProviderConfig{
@@ -93,8 +95,12 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 		ProcType:          string(mpool.ProcType),
 		Processors:        mpool.Processors,
 		Memory:            mpool.Memory,
-		Network:           powervsprovider.PowerVSResourceReference{Name: &network},
 		KeyPairName:       fmt.Sprintf("%s-key", clusterID),
+	}
+	if network != "" {
+		config.Network = powervsprovider.PowerVSResourceReference{Name: &network}
+	} else {
+		config.Network = powervsprovider.PowerVSResourceReference{RegEx: &dhcpNetRegex}
 	}
 	return config, nil
 }
