@@ -32,6 +32,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -142,7 +143,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 			return summarizeFailingReport(reports)
 		}
 		summarizeReport(reports)
-	case alibabacloud.Name, azure.Name, baremetal.Name, ibmcloud.Name, libvirt.Name, none.Name, ovirt.Name, vsphere.Name, nutanix.Name:
+	case alibabacloud.Name, azure.Name, baremetal.Name, ibmcloud.Name, libvirt.Name, none.Name, ovirt.Name, powervs.Name, vsphere.Name, nutanix.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
