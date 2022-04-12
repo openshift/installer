@@ -6,6 +6,11 @@ variable "folder" {
   type = string
 }
 
+variable "bootstrap_moid" {
+  type    = string
+  default = ""
+}
+
 variable "datastore" {
   type = string
 }
