@@ -112,6 +112,24 @@ type IngressStatus struct {
 	// hostnames and serving certificates can be customized by the cluster-admin.
 	// +optional
 	ComponentRoutes []ComponentRouteStatus `json:"componentRoutes,omitempty"`
+
+	// defaultPlacement is set at installation time to control which
+	// nodes will host the ingress router pods by default. The options are
+	// control-plane nodes or worker nodes.
+	//
+	// This field works by dictating how the Cluster Ingress Operator will
+	// consider unset replicas and nodePlacement fields in IngressController
+	// resources when creating the corresponding Deployments.
+	//
+	// See the documentation for the IngressController replicas and nodePlacement
+	// fields for more information.
+	//
+	// When omitted, the default value is Workers
+	//
+	// +kubebuilder:validation:Enum:="ControlPlane";"Workers"
+	// +kubebuilder:default:="Workers"
+	// +optional
+	DefaultPlacement DefaultPlacement `json:"defaultPlacement"`
 }
 
 // ComponentRouteSpec allows for configuration of a route's hostname and serving certificate.
@@ -222,3 +240,14 @@ type IngressList struct {
 
 	Items []Ingress `json:"items"`
 }
+
+// DefaultPlacement defines the default placement of ingress router pods.
+type DefaultPlacement string
+
+const (
+	// "Workers" is for having router pods placed on worker nodes by default.
+	DefaultPlacementWorkers DefaultPlacement = "Workers"
+
+	// "ControlPlane" is for having router pods placed on control-plane nodes by default.
+	DefaultPlacementControlPlane DefaultPlacement = "ControlPlane"
+)
