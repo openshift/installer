@@ -226,9 +226,8 @@ spec:
                               minimum: 0
                               type: integer
                             diskType:
-                              description: DiskType defines the type of disk. The
-                                valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS.
-                                For control plane nodes, the valid values are Premium_LRS
+                              description: DiskType defines the type of disk. For
+                                control plane nodes, the valid values are Premium_LRS
                                 and StandardSSD_LRS. Default is Premium_LRS.
                               enum:
                               - Standard_LRS
@@ -775,10 +774,9 @@ spec:
                             minimum: 0
                             type: integer
                           diskType:
-                            description: DiskType defines the type of disk. The valid
-                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS.
-                              For control plane nodes, the valid values are Premium_LRS
-                              and StandardSSD_LRS. Default is Premium_LRS.
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid values are Premium_LRS and StandardSSD_LRS.
+                              Default is Premium_LRS.
                             enum:
                             - Standard_LRS
                             - Premium_LRS
@@ -1593,10 +1591,9 @@ spec:
                             minimum: 0
                             type: integer
                           diskType:
-                            description: DiskType defines the type of disk. The valid
-                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS.
-                              For control plane nodes, the valid values are Premium_LRS
-                              and StandardSSD_LRS. Default is Premium_LRS.
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid values are Premium_LRS and StandardSSD_LRS.
+                              Default is Premium_LRS.
                             enum:
                             - Standard_LRS
                             - Premium_LRS

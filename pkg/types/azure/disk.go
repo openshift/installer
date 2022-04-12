@@ -20,7 +20,6 @@ type OSDisk struct {
 	// +kubebuilder:validation:Minimum=0
 	DiskSizeGB int32 `json:"diskSizeGB"`
 	// DiskType defines the type of disk.
-	// The valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS.
 	// For control plane nodes, the valid values are Premium_LRS and StandardSSD_LRS.
 	// Default is Premium_LRS.
 	// +optional
