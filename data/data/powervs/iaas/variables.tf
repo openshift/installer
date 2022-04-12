@@ -17,8 +17,9 @@ variable "powervs_region" {
 }
 
 variable "cluster_id" {
-  type    = string
-  default = ""
+  type        = string
+  description = "The ID created by the installer to uniquely identify the created cluster."
+  default     = ""
 }
 
 variable "service_tags" {

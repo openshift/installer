@@ -1,5 +1,5 @@
 output "bootstrap_ip" {
-  value = module.loadbalancer.powervs_lb_hostname
+  value = module.bootstrap.bootstrap_ip
 }
 
 output "control_plane_ips" {
