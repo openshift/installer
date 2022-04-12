@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kdomanski/iso9660"
 	"github.com/pkg/errors"
-	nutanixClientV3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
+	nutanixclientv3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
@@ -48,7 +48,6 @@ func CreateBootstrapISO(infraID, userData string) (string, error) {
 	metaObj := &metadataCloudInit{
 		UUID: id.String(),
 	}
-
 	metadata, err := json.Marshal(metaObj)
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("failed to marshal metadata struct to json"))
@@ -97,9 +96,10 @@ func CreateBootstrapISO(infraID, userData string) (string, error) {
 	return fullISOFile, nil
 }
 
-func waitForTasks(clientV3 nutanixClientV3.Service, taskUUIDs []string) error {
+// WaitForTasks is a wrapper for WaitForTask
+func WaitForTasks(clientV3 nutanixclientv3.Service, taskUUIDs []string) error {
 	for _, t := range taskUUIDs {
-		err := waitForTask(clientV3, t)
+		err := WaitForTask(clientV3, t)
 		if err != nil {
 			return err
 		}
@@ -107,7 +107,8 @@ func waitForTasks(clientV3 nutanixClientV3.Service, taskUUIDs []string) error {
 	return nil
 }
 
-func waitForTask(clientV3 nutanixClientV3.Service, taskUUID string) error {
+// WaitForTask waits until a queued task has been finished or timeout has been reached
+func WaitForTask(clientV3 nutanixclientv3.Service, taskUUID string) error {
 	finished := false
 	var err error
 	for start := time.Now(); time.Since(start) < timeout; {
@@ -127,7 +128,7 @@ func waitForTask(clientV3 nutanixClientV3.Service, taskUUID string) error {
 	return nil
 }
 
-func isTaskFinished(clientV3 nutanixClientV3.Service, taskUUID string) (bool, error) {
+func isTaskFinished(clientV3 nutanixclientv3.Service, taskUUID string) (bool, error) {
 	isFinished := map[string]bool{
 		"QUEUED":    false,
 		"RUNNING":   false,
@@ -140,11 +141,10 @@ func isTaskFinished(clientV3 nutanixClientV3.Service, taskUUID string) (bool, er
 	if val, ok := isFinished[status]; ok {
 		return val, nil
 	}
-	return false, errors.Errorf("Retrieved unexpected task status: %s", status)
-
+	return false, errors.Errorf("retrieved unexpected task status: %s", status)
 }
 
-func getTaskStatus(clientV3 nutanixClientV3.Service, taskUUID string) (string, error) {
+func getTaskStatus(clientV3 nutanixclientv3.Service, taskUUID string) (string, error) {
 	v, err := clientV3.GetTask(taskUUID)
 
 	if err != nil {
