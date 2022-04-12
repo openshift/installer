@@ -16,11 +16,17 @@ func ValidateMachinePool(p *powervs.MachinePool, fldPath *field.Path) field.Erro
 	allErrs := field.ErrorList{}
 
 	// Validate VolumeIDs
+	volumes := make(map[string]bool)
 	for i, volumeID := range p.VolumeIDs {
 		_, err := uuid.Parse(volumeID)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("volumeIDs").Index(i), volumeID, "volume ID must be a valid UUID"))
 		}
+		if _, ok := volumes[volumeID]; ok {
+			allErrs = append(allErrs, field.Duplicate(fldPath.Child("volumeIDs").Index(i), volumeID))
+			continue
+		}
+		volumes[volumeID] = true
 	}
 
 	// Validate Memory

@@ -32,6 +32,19 @@ func TestValidateMachinePool(t *testing.T) {
 			expected: `^test-path\.volumeIDs\[1]: Invalid value: "abc123": volume ID must be a valid UUID$`,
 		},
 		{
+			name: "unique volumeIDs",
+			pool: &powervs.MachinePool{
+				VolumeIDs: []string{"c8b709c4-93f1-499e-915e-0820bcc51406", "c8b709c4-93f1-499e-915e-0820bcc51510"},
+			},
+		},
+		{
+			name: "duplicate volumeIDs",
+			pool: &powervs.MachinePool{
+				VolumeIDs: []string{"c8b709c4-93f1-499e-915e-0820bcc51406", "c8b709c4-93f1-499e-915e-0820bcc51406"},
+			},
+			expected: `^test-path\.volumeIDs\[1]: Duplicate value: "c8b709c4-93f1-499e-915e-0820bcc51406"$`,
+		},
+		{
 			name: "valid memory",
 			pool: &powervs.MachinePool{
 				Memory: "5",
