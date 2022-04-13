@@ -1,0 +1,27 @@
+{
+  "ignition": { "version": "3.0.0" },
+    "systemd": {
+    "units": [{
+      "name": "haproxy.service",
+      "enabled": true,
+      "contents": ${haproxyservice}
+    }]
+  },
+  "storage": {
+    "files": [{
+      "path": "/etc/haproxy/haproxy.conf",
+      "mode": 420,
+      "contents": {"source": "data:text/plain;charset=utf-8;base64,${haproxyconf}"}
+    }]
+  },
+  "passwd": {
+    "users": [
+      {
+        "name": "coreos",
+        "sshAuthorizedKeys": [
+          "${sshAuthorizedKey}"
+        ]
+      }
+    ]
+  }
+}
