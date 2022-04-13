@@ -1,4 +1,4 @@
-module random
+module github.com/openshift/installer/terraform/providers/random
 
 go 1.17
 

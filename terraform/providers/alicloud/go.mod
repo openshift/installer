@@ -1,4 +1,4 @@
-module alicloud
+module github.com/openshift/installer/terraform/providers/alicloud
 
 go 1.17
 

@@ -1,4 +1,4 @@
-module github.com/openshift/installer/terraform/ibm
+module github.com/openshift/installer/terraform/providers/ibm
 
 go 1.17
 

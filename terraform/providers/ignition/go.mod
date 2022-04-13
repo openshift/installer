@@ -1,4 +1,4 @@
-module github.com/openshift/installer/terraform/ignition
+module github.com/openshift/installer/terraform/providers/ignition
 
 go 1.17
 

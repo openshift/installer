@@ -1,4 +1,4 @@
-module github.com/openshift/installer/terraform/azurestack
+module github.com/openshift/installer/terraform/providers/azurestack
 
 go 1.17
 

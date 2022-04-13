@@ -1,4 +1,4 @@
-module aws
+module github.com/openshift/installer/terraform/providers/aws
 
 go 1.17
 

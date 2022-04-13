@@ -1,4 +1,4 @@
-module github.com/openshift/installer/terraform/vsphereprivate
+module github.com/openshift/installer/terraform/providers/vsphereprivate
 
 go 1.17
 

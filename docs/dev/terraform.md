@@ -11,17 +11,10 @@ binaries. At installation time, the terraform binaries are extracted from the in
 ### Building terraform binaries
 
 The terraform binary and all of the terraform provider binaries are built from the ./terraform directory. For example,
-the aws terraform provider is built from ./terraform/aws. The terraform binary is built from ./terraform/terraform.
-Each of the terraform providers is compressed into its own zip file to reduce the size of the installer binary.
-Terraform can use the zipped terraform providers as is without the installer having to unzip the providers first.
-
-Building and zipping the terraform binaries significantly increases the time that it takes to build the installer
-binary. However, they only need to be built when updates are made to the versions used. If you do not need or want to
-re-build the terraform binaries, then set the SKIP_TERRAFORM environment variable to non-empty value.
-
-```shell
-SKIP_TERRAFORM=1 ./hack/build.sh
-```
+the aws terraform provider is built from ./terraform/providers/aws. The terraform binary is built from
+./terraform/terraform. Each of the terraform providers is compressed into its own zip file to reduce the size of the
+installer binary. Terraform can use the zipped terraform providers as is without the installer having to unzip the
+providers first.
 
 ### Embedding terraform binaries
 
@@ -41,15 +34,15 @@ binaries to the local file system. Every terraform stage must define which terra
 The installer will use that information to (1) build a version.tf file to tell terraform which providers to use and (2)
 extract only the needed providers.
 
-For example, the "bootstrap" gcp stage requires the google and ignition terraform providers. The installer will extract
-the terraform binary to ${stage-dir}/bin/terraform. The installer will extract the google and ignition terraform
-providers to ${stage-dir}/plugins. The terraform exec is configured to use ${stage-dir}/plugins as the explicit
-directory for the plugins.
+For example, the set of terraform providers required for the gcp stages are the google and ignition terraform providers.
+The installer will extract the terraform binary to ${install-dir}/terraform/bin/terraform. The installer will extract
+the google and ignition terraform providers to ${install-dir}/terraform/plugins. The terraform exec is configured to use
+${install-dir}/terraform/plugins as the explicit directory for the plugins.
 
 ## Adding a new terraform provider
 
-To add a new terraform provider, create a directory under ./terraform. For example, if you want to add a terraform
-provider named mycloud, then you would create the ./terraform/mycloud directory.
+To add a new terraform provider, create a directory under ./terraform/providers. For example, if you want to add a
+terraform provider named mycloud, then you would create the ./terraform/providers/mycloud directory.
 
 ### Public terraform provider
 
@@ -62,7 +55,7 @@ github.com/hashicorp/terraform-provider-mycloud repository. The main package of 
 github.com/hashicorp/terraform-provider-mycloud. The version of the terraform provider is v1.2.3.
 
 ```go
-// ./terraform/mycloud/tools.go
+// ./terraform/providers/mycloud/tools.go
 package main
 
 import (
@@ -71,22 +64,20 @@ import (
 ```
 
 ```go
-// ./terraform/mycloud/go.mod
-module aws
+// ./terraform/providers/mycloud/go.mod
+module github.com/openshift/installer/terraform/providers/mycloud
 
 go 1.17
 
 require github.com/hashicorp/terraform-provider-mycloud v1.2.3
 ```
 
-After creating the directory and adding the tools.go and go.mod file, run the following commands in the mycloud
-sub-pacakge.
-1. `go mod tidy`
-2. `go mod vendor`
+After creating the directory and adding the tools.go and go.mod file, run the following command.
+1. `make -C terraform go-mod-tidy-vendor.mycloud`
 
 When there is a tools.go file, the Makefile will build the terraform provider from the package referenced in the unnamed
 import in the tools.go file. For the example mycloud terraform provider, the terraform provider will be built from the
-./terraform/mycloud/vendor/github.com/hashicorp/terraform/provider-mycloud directory.
+./terraform/providers/mycloud/vendor/github.com/hashicorp/terraform/provider-mycloud directory.
 
 ### Custom terraform provider
 
@@ -98,12 +89,11 @@ terraform provider.
 
 ## Update the version of terraform or a provider
 
-To update the version of terraform or a provider, modify the version in the go.mod file for the relevant sub-package.
+To update the version of terraform or a provider, modify the version in the go.mod file for the relevant sub-module.
 To update the version of terraform, change the version of the required module in ./terraform/terraform/go.mod. To update
-the version of the aws terraform provider, change the version of the required module in ./terraform/aws/go.mod.
+the version of the aws terraform provider, change the version of the required module in ./terraform/providers/aws/go.mod.
 
-After updating the require statement in the go.mod file, perform the following actions in the sub-package.
+After updating the require statement in the go.mod file, perform the following actions in the sub-module.
 1. Remove the require stanza in the go.mod file for the indirect requires.
 2. Match the replaces in the go.mod file with the replaces from the go.mod file in the upstream terraform provider.
-3. Run `go mod tidy`.
-4. Run `go mod vendor`.
+3. Run `make -C terraform go-mod-tidy-vendor`.

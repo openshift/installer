@@ -1,4 +1,4 @@
-module github.com/openshift/installer/terraform/ovirt
+module github.com/openshift/installer/terraform/providers/ovirt
 
 go 1.17
 

@@ -1,4 +1,4 @@
-module github.com/openshift/installer/terraform/ironic
+module github.com/openshift/installer/terraform/providers/ironic
 
 go 1.17
 
