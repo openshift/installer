@@ -468,6 +468,9 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 	}
 	switch {
 	case platform.BareMetal != nil:
+		ensureIPv4IsFirstInDualStackSlice(&platform.BareMetal.APIVIPs)
+		ensureIPv4IsFirstInDualStackSlice(&platform.BareMetal.IngressVIPs)
+
 		virtualIPs = vips{
 			API:     platform.BareMetal.APIVIPs,
 			Ingress: platform.BareMetal.IngressVIPs,
@@ -475,6 +478,9 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(baremetal.Name))...)
 	case platform.Nutanix != nil:
+		ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.APIVIPs)
+		ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.IngressVIPs)
+
 		virtualIPs = vips{
 			API:     platform.Nutanix.APIVIPs,
 			Ingress: platform.Nutanix.IngressVIPs,
@@ -482,6 +488,9 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(nutanix.Name))...)
 	case platform.OpenStack != nil:
+		ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.APIVIPs)
+		ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.IngressVIPs)
+
 		virtualIPs = vips{
 			API:     platform.OpenStack.APIVIPs,
 			Ingress: platform.OpenStack.IngressVIPs,
@@ -489,6 +498,9 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(openstack.Name))...)
 	case platform.VSphere != nil:
+		ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.APIVIPs)
+		ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.IngressVIPs)
+
 		virtualIPs = vips{
 			API:     platform.VSphere.APIVIPs,
 			Ingress: platform.VSphere.IngressVIPs,
@@ -496,6 +508,9 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(vsphere.Name))...)
 	case platform.Ovirt != nil:
+		ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.APIVIPs)
+		ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.IngressVIPs)
+
 		newVIPsFields = vipFields{
 			APIVIPs:     "api_vips",
 			IngressVIPs: "ingress_vips",
@@ -511,6 +526,25 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 	}
 
 	return allErrs
+}
+
+func ensureIPv4IsFirstInDualStackSlice(vips *[]string) error {
+	isDualStack, err := utilsnet.IsDualStackIPStrings(*vips)
+	if err != nil {
+		return err
+	}
+
+	if isDualStack {
+		if len(*vips) == 2 {
+			if utilsnet.IsIPv4String((*vips)[1]) && utilsnet.IsIPv6String((*vips)[0]) {
+				(*vips)[0], (*vips)[1] = (*vips)[1], (*vips)[0]
+			}
+		} else {
+			return fmt.Errorf("wrong number of VIPs given. Expecting 2 VIPs for dual stack")
+		}
+	}
+
+	return nil
 }
 
 // validateAPIAndIngressVIPs validates the API and Ingress VIPs

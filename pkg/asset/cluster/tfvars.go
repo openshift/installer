@@ -603,7 +603,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	case baremetal.Name:
 		var imageCacheIP string
 		if installConfig.Config.Platform.BareMetal.ProvisioningNetwork == baremetal.DisabledProvisioningNetwork {
-			imageCacheIP = installConfig.Config.Platform.BareMetal.DeprecatedAPIVIP
+			imageCacheIP = installConfig.Config.Platform.BareMetal.APIVIPs[0]
 		} else {
 			imageCacheIP = installConfig.Config.Platform.BareMetal.BootstrapProvisioningIP
 		}
@@ -611,7 +611,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		data, err = baremetaltfvars.TFVars(
 			*installConfig.Config.ControlPlane.Replicas,
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
-			installConfig.Config.Platform.BareMetal.DeprecatedAPIVIP,
+			installConfig.Config.Platform.BareMetal.APIVIPs[0],
 			imageCacheIP,
 			string(*rhcosBootstrapImage),
 			installConfig.Config.Platform.BareMetal.ExternalBridge,

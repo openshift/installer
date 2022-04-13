@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
+	utilsslice "k8s.io/utils/strings/slices"
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -1989,6 +1990,50 @@ func TestValidateInstallConfig(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Regexp(t, tc.expectedError, err)
+			}
+		})
+	}
+}
+
+func Test_ensureIPv4IsFirstInDualStackSlice(t *testing.T) {
+	tests := []struct {
+		name    string
+		vips    []string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "should switch VIPs",
+			vips:    []string{"fe80::0", "192.168.1.1"},
+			want:    []string{"192.168.1.1", "fe80::0"},
+			wantErr: false,
+		},
+		{
+			name:    "should do nothing on single stack",
+			vips:    []string{"192.168.1.1"},
+			want:    []string{"192.168.1.1"},
+			wantErr: false,
+		},
+		{
+			name:    "should do nothing on correct order",
+			vips:    []string{"192.168.1.1", "fe80::0"},
+			want:    []string{"192.168.1.1", "fe80::0"},
+			wantErr: false,
+		},
+		{
+			name:    "return error on invalid number of vips",
+			vips:    []string{"192.168.1.1", "fe80::0", "192.168.1.1"},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ensureIPv4IsFirstInDualStackSlice(&tt.vips); (err != nil) != tt.wantErr {
+				t.Errorf("ensureIPv4IsFirstInDualStackSlice() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !tt.wantErr && !utilsslice.Equal(tt.vips, tt.want) && len(tt.vips) == 2 {
+				t.Errorf("ensureIPv4IsFirstInDualStackSlice() changed to %v, expected %v", tt.vips, tt.want)
 			}
 		})
 	}
