@@ -15,6 +15,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
+type NMConfig struct {
+	nmConfig func() ([]aiv1beta1.NMStateConfig, error)
+}
+
+func NewNMConfig() NMConfig {
+	return NMConfig{nmConfig: getNMStateConfig}
+}
+
 type NMStateConfig struct {
 	Interfaces []struct {
 		IPV4 struct {
@@ -137,28 +145,28 @@ func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetw
 }
 
 // Retrieve the first IP from the user provided NMStateConfig yaml file to set as node0 IP
-func GetNodeZeroIP() string {
-	configList, err := getNMStateConfig()
+func (n NMConfig) GetNodeZeroIP() string {
+	configList, err := n.nmConfig()
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
-	var nmconfig NMStateConfig
+	var nmStateConfig NMStateConfig
 	// Use entry for first host
-	err = yaml.Unmarshal(configList[0].Spec.NetConfig.Raw, &nmconfig)
+	err = yaml.Unmarshal(configList[0].Spec.NetConfig.Raw, &nmStateConfig)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
 	var nodeZeroIP string
-	if nmconfig.Interfaces != nil {
-		if nmconfig.Interfaces[0].IPV4.Address != nil {
-			nodeZeroIP = nmconfig.Interfaces[0].IPV4.Address[0].IP
+	if nmStateConfig.Interfaces != nil {
+		if nmStateConfig.Interfaces[0].IPV4.Address != nil {
+			nodeZeroIP = nmStateConfig.Interfaces[0].IPV4.Address[0].IP
 		}
-		if nmconfig.Interfaces[0].IPV6.Address != nil {
-			nodeZeroIP = nmconfig.Interfaces[0].IPV6.Address[0].IP
+		if nmStateConfig.Interfaces[0].IPV6.Address != nil {
+			nodeZeroIP = nmStateConfig.Interfaces[0].IPV6.Address[0].IP
 
 		}
 		if net.ParseIP(nodeZeroIP) == nil {
