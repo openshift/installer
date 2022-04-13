@@ -83,7 +83,8 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		}
 		q, err := quotaaws.Load(context.TODO(), session, ic.AWS.Region, services...)
 		if quotaaws.IsUnauthorized(err) {
-			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `servicequotas:ListAWSDefaultServiceQuotas` permission available to the user.", err)
+			logrus.Debugf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `servicequotas:ListAWSDefaultServiceQuotas` permission available to the user.", err)
+			logrus.Info("Skipping quota checks")
 			return nil
 		}
 		if err != nil {
