@@ -539,6 +539,7 @@ func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []s
 		ctx,
 		&iam.ListRolesInput{},
 		func(results *iam.ListRolesOutput, lastPage bool) bool {
+			search.logger.Debugf("iterating over a page of %d IAM roles", len(results.Roles))
 			for _, role := range results.Roles {
 				if _, ok := search.unmatched[*role.Arn]; ok {
 					continue
@@ -598,6 +599,7 @@ func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 		ctx,
 		&iam.ListUsersInput{},
 		func(results *iam.ListUsersOutput, lastPage bool) bool {
+			search.logger.Debugf("iterating over a page of %d IAM users", len(results.Users))
 			for _, user := range results.Users {
 				if _, ok := search.unmatched[*user.Arn]; ok {
 					continue
@@ -1484,6 +1486,7 @@ func deleteElasticLoadBalancerClassicByVPC(ctx context.Context, client *elb.ELB,
 		ctx,
 		&elb.DescribeLoadBalancersInput{},
 		func(results *elb.DescribeLoadBalancersOutput, lastPage bool) bool {
+			logger.Debugf("iterating over a page of %d v1 load balancers", len(results.LoadBalancerDescriptions))
 			for _, lb := range results.LoadBalancerDescriptions {
 				lbLogger := logger.WithField("classic load balancer", *lb.LoadBalancerName)
 
@@ -1545,6 +1548,7 @@ func deleteElasticLoadBalancerV2ByVPC(ctx context.Context, client *elbv2.ELBV2, 
 		ctx,
 		&elbv2.DescribeLoadBalancersInput{},
 		func(results *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
+			logger.Debugf("iterating over a page of %d v2 load balancers", len(results.LoadBalancers))
 			for _, lb := range results.LoadBalancers {
 				if lb.VpcId == nil {
 					logger.WithField("load balancer", *lb.LoadBalancerArn).Warn("load balancer does not have a VPC ID so could not determine whether it should be deleted")
