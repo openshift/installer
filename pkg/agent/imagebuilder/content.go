@@ -36,8 +36,9 @@ type ConfigBuilder struct {
 	staticNetworkConfig      []*models.HostStaticNetworkConfig
 }
 
-func New(nodeZeroIP string) *ConfigBuilder {
+func New() *ConfigBuilder {
 	pullSecret := manifests.GetPullSecret()
+	nodeZeroIP := manifests.GetNodeZeroIP()
 	// TODO: needs appropriate value if AUTH_TYPE != none
 	pullSecretToken := getEnv("PULL_SECRET_TOKEN", "")
 

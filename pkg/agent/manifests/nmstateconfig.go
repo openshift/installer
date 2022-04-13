@@ -3,6 +3,8 @@ package manifests
 import (
 	"context"
 	"fmt"
+	"net"
+	"os"
 	"reflect"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -10,13 +12,29 @@ import (
 	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
+
+type NMStateConfig struct {
+	Interfaces []struct {
+		IPV4 struct {
+			Address []struct {
+				IP string `yaml:"ip,omitempty"`
+			} `yaml:"address,omitempty"`
+		} `yaml:"ipv4,omitempty"`
+		IPV6 struct {
+			Address []struct {
+				IP string `yaml:"ip,omitempty"`
+			} `yaml:"address,omitempty"`
+		} `yaml:"ipv6,omitempty"`
+	} `yaml:"interfaces,omitempty"`
+}
 
 func getNMStateConfig() (aiv1beta1.NMStateConfig, error) {
 	var nmStateConfig aiv1beta1.NMStateConfig
 	if err := GetFileData("nmstateconfig.yaml", &nmStateConfig); err != nil {
-		// This file is optional if DHCP addressing is used
-		return nmStateConfig, err
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 
 	return nmStateConfig, nil
@@ -98,4 +116,40 @@ func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetw
 		NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
 	})
 	return staticNetworkConfig, nil
+}
+
+// Retrieve the first IP from the user provided NMStateConfig yaml file to set as node0 IP
+func GetNodeZeroIP() string {
+	config, err := getNMStateConfig()
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
+	var nmconfig NMStateConfig
+	err = yaml.Unmarshal(config.Spec.NetConfig.Raw, &nmconfig)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
+	var nodeZeroIP string
+	if nmconfig.Interfaces != nil {
+		if nmconfig.Interfaces[0].IPV4.Address != nil {
+			nodeZeroIP = nmconfig.Interfaces[0].IPV4.Address[0].IP
+		}
+		if nmconfig.Interfaces[0].IPV6.Address != nil {
+			nodeZeroIP = nmconfig.Interfaces[0].IPV6.Address[0].IP
+
+		}
+		if net.ParseIP(nodeZeroIP) == nil {
+			fmt.Errorf("Invalid YAML - NMStateconfig")
+			os.Exit(1)
+		}
+	} else {
+		fmt.Errorf("Invalid YAML - NMStateconfig: No valid interfaces set.")
+		os.Exit(1)
+	}
+
+	return nodeZeroIP
 }

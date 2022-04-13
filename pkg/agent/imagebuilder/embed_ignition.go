@@ -13,8 +13,8 @@ const (
 
 // BuildImage builds an ISO with ignition content from a base image, and writes
 // the result to disk.
-func BuildImage(baseImage string, nodeZeroIP string) error {
-	configBuilder := New(nodeZeroIP)
+func BuildImage(baseImage string) error {
+	configBuilder := New()
 	ignition, err := configBuilder.Ignition()
 	if err != nil {
 		return err
