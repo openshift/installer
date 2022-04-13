@@ -35,6 +35,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
@@ -405,7 +406,13 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			pool.Platform.Azure = &mpool
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName)
+			client := icazure.NewClient(session)
+			hyperVGen, err := client.GetHyperVGenerationVersion(context.TODO(), mpool.InstanceType, mpool.OSDisk.DiskType, installConfig.Config.Platform.Azure.Region)
+			if err != nil {
+				return err
+			}
+
+			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, hyperVGen)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

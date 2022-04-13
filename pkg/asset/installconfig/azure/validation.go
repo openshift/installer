@@ -13,7 +13,6 @@ import (
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -112,16 +111,6 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 			if cpus < float64(req.minimumVCpus) {
 				errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d vCPUsAvailable", req.minimumVCpus)
 				allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
-			}
-		} else if strings.EqualFold(*capability.Name, "HyperVGenerations") {
-			generations := sets.NewString()
-			for _, g := range strings.Split(to.String(capability.Value), ",") {
-				g = strings.TrimSpace(g)
-				g = strings.ToUpper(g)
-				generations.Insert(g)
-			}
-			if !generations.Has("V1") {
-				allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, "only disks with HyperVGeneration V1 are supported"))
 			}
 		} else if strings.EqualFold(*capability.Name, "MemoryGB") {
 			memory, err := strconv.ParseFloat(*capability.Value, 0)

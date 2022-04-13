@@ -163,3 +163,10 @@ This determined whether User defined routing will be used for egress to Internet
 When false, Standard LB will be used for egress to the Internet.
 EOF
 }
+
+variable "azure_hypervgeneration_version" {
+  type = string
+  description = <<EOF
+This determines the HyperVGeneration disk type to use for the control plane VMs.
+EOF
+}

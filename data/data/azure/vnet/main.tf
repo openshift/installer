@@ -102,3 +102,16 @@ resource "azurerm_image" "cluster" {
     blob_uri = azurerm_storage_blob.rhcos_image.url
   }
 }
+
+resource "azurerm_image" "clustergen2" {
+  name                = "${var.cluster_id}-gen2"
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.azure_region
+  hyper_v_generation  = "V2"
+
+  os_disk {
+    os_type  = "Linux"
+    os_state = "Generalized"
+    blob_uri = azurerm_storage_blob.rhcos_image.url
+  }
+}
