@@ -236,7 +236,11 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			installConfig.Config.PowerVS.VPC,
 			vpcRegion,
 			installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
-			installConfig.Config.PowerVS.Subnets)
+			installConfig.Config.PowerVS.Subnets,
+			installConfig.Config.PowerVS.ServiceInstanceID,
+			installConfig.Config.PowerVS.Region,
+			installConfig.Config.PowerVS.Zone,
+		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
