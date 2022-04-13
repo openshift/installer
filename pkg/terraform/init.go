@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/data"
 	prov "github.com/openshift/installer/pkg/terraform/providers"
@@ -45,7 +46,7 @@ func unpack(dir string, platform string, target string) (err error) {
 
 // unpackAndInit unpacks the platform-specific Terraform modules into
 // the given directory and then runs 'terraform init'.
-func unpackAndInit(dir string, platform string, target string, providers []prov.Provider) (err error) {
+func unpackAndInit(dir string, platform string, target string, terraformDir string, providers []prov.Provider) (err error) {
 	err = unpack(dir, platform, target)
 	if err != nil {
 		return errors.Wrap(err, "failed to unpack Terraform modules")
@@ -55,11 +56,7 @@ func unpackAndInit(dir string, platform string, target string, providers []prov.
 		return errors.Wrap(err, "failed to write versions.tf files")
 	}
 
-	if err := setupEmbeddedPlugins(dir, providers); err != nil {
-		return errors.Wrap(err, "failed to setup embedded Terraform plugins")
-	}
-
-	tf, err := newTFExec(dir)
+	tf, err := newTFExec(dir, terraformDir)
 	if err != nil {
 		return errors.Wrap(err, "failed to create a new tfexec")
 	}
@@ -70,7 +67,7 @@ func unpackAndInit(dir string, platform string, target string, providers []prov.
 	})
 
 	return errors.Wrap(
-		tf.Init(context.Background(), tfexec.PluginDir(filepath.Join(dir, "plugins"))),
+		tf.Init(context.Background(), tfexec.PluginDir(filepath.Join(terraformDir, "plugins"))),
 		"failed doing terraform init",
 	)
 }
@@ -114,16 +111,24 @@ func addFileToAllDirectories(name string, data []byte, dir string) error {
 	return nil
 }
 
-func setupEmbeddedPlugins(dir string, providers []prov.Provider) error {
+// UnpackTerraform unpacks the terraform binary and the specified provider binaries into the specified directory.
+func UnpackTerraform(dir string, stages []Stage) error {
 	// Unpack the terraform binary.
 	if err := prov.UnpackTerraformBinary(filepath.Join(dir, "bin")); err != nil {
 		return err
 	}
 
 	// Unpack the providers.
-	for _, provider := range providers {
-		if err := provider.Extract(filepath.Join(dir, "plugins")); err != nil {
-			return err
+	providers := sets.NewString()
+	for _, stage := range stages {
+		for _, provider := range stage.Providers() {
+			if providers.Has(provider.Name) {
+				continue
+			}
+			if err := provider.Extract(filepath.Join(dir, "plugins")); err != nil {
+				return err
+			}
+			providers.Insert(provider.Name)
 		}
 	}
 
