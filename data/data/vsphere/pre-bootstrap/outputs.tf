@@ -10,10 +10,6 @@ output "folder" {
   value = local.folder
 }
 
-output "network" {
-  value = data.vsphere_network.network.id
-}
-
 output "datacenter" {
   value = data.vsphere_datacenter.datacenter.id
 }

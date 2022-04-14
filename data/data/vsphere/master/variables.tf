@@ -10,10 +10,6 @@ variable "datastore" {
   type = string
 }
 
-variable "network" {
-  type = string
-}
-
 variable "datacenter" {
   type = string
 }

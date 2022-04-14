@@ -35,11 +35,6 @@ data "vsphere_datastore" "datastore" {
   datacenter_id = data.vsphere_datacenter.datacenter.id
 }
 
-data "vsphere_network" "network" {
-  name          = var.vsphere_network
-  datacenter_id = data.vsphere_datacenter.datacenter.id
-}
-
 data "vsphere_virtual_machine" "template" {
   name          = vsphereprivate_import_ova.import.name
   datacenter_id = data.vsphere_datacenter.datacenter.id

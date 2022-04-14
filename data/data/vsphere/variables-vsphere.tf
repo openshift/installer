@@ -49,7 +49,7 @@ variable "vsphere_template" {
 
 variable "vsphere_network" {
   type        = string
-  description = "This is the name of the publicly accessible network for cluster ingress and access."
+  description = "This is the Managed Object ID of the publicly accessible network for cluster ingress and access."
 }
 
 variable "vsphere_folder" {
