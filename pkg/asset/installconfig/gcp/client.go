@@ -12,6 +12,8 @@ import (
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/option"
 	"google.golang.org/api/serviceusage/v1"
+
+	gcpValidation "github.com/openshift/installer/pkg/types/gcp/validation"
 )
 
 //go:generate mockgen -source=./client.go -destination=./mock/gcpclient_generated.go -package=mock
@@ -24,6 +26,7 @@ type API interface {
 	GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error)
 	GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error)
 	GetProjects(ctx context.Context) (map[string]string, error)
+	GetRegions(ctx context.Context, project string) (map[string]string, error)
 	GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error)
 	GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error)
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
@@ -220,6 +223,34 @@ func (c *Client) GetProjects(ctx context.Context) (map[string]string, error) {
 		return nil, err
 	}
 	return projects, nil
+}
+
+// GetRegions gets the regions that are valid for the project. An error is returned when unsuccessful
+func (c *Client) GetRegions(ctx context.Context, project string) (map[string]string, error) {
+	computeCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	svc, err := c.getComputeService(computeCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	regionCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	gcpRegionsList, err := svc.Regions.List(project).Context(regionCtx).Do()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get regions for project %s", project)
+	}
+
+	validatedRegions := make(map[string]string)
+	for _, region := range gcpRegionsList.Items {
+		// Only add validated regions
+		if value, ok := gcpValidation.Regions[region.Name]; ok {
+			validatedRegions[region.Name] = value
+		}
+	}
+
+	return validatedRegions, nil
 }
 
 // GetZones uses the GCP Compute Service API to get a list of zones from a project.
