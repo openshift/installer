@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"testing"
@@ -22,6 +23,7 @@ type editFunctions []func(ic *types.InstallConfig)
 var (
 	validNetworkName   = "valid-vpc"
 	validProjectName   = "valid-project"
+	invalidProjectName = "invalid-project"
 	validRegion        = "us-east1"
 	validZone          = "us-east1-b"
 	validComputeSubnet = "valid-compute-subnet"
@@ -361,4 +363,54 @@ func TestGCPEnabledServicesList(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetProjectRegions(t *testing.T) {
+	cases := []struct {
+		name    string
+		project string
+		region  string
+		err     string
+	}{{
+		name:    "valid region in project",
+		project: validProjectName,
+		region:  validRegion,
+	}, {
+		name:    "invalid region in project",
+		project: validProjectName,
+		region:  "invalid-region",
+		err:     "the following region is invalid: invalid-region",
+	}, {
+		name:    "invalid project",
+		project: invalidProjectName,
+		region:  validRegion,
+		err:     fmt.Sprintf("project: %s cannot be found", invalidProjectName),
+	}}
+
+	validRegions := map[string]string{
+		"valid-region-1": "valid-region-longname-1",
+		validRegion:      validRegion,
+		"valid-region-2": "valid-region-longname-2",
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	gcpClient := mock.NewMockAPI(mockCtrl)
+
+	gcpClient.EXPECT().GetRegions(gomock.Any(), validProjectName).Return(validRegions, nil).AnyTimes()
+
+	gcpClient.EXPECT().GetRegions(gomock.Any(), invalidProjectName).Return(nil, fmt.Errorf("project: %s cannot be found", invalidProjectName)).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := ValidateProjectRegion(context.TODO(), gcpClient, tc.project, tc.region)
+			if tc.err != "" {
+				assert.Regexp(t, tc.err, errs)
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+
 }
