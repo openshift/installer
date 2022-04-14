@@ -248,3 +248,17 @@ func ValidateEnabledServices(ctx context.Context, client API, project string) er
 	}
 	return nil
 }
+
+// ValidateProjectRegion determines whether the region is valid for the project
+func ValidateProjectRegion(ctx context.Context, client API, project string, region string) error {
+	validRegions, err := client.GetRegions(ctx, project)
+	if err != nil {
+		return err
+	}
+
+	if _, ok := validRegions[region]; !ok {
+		return fmt.Errorf("the following region is invalid: %s", region)
+	}
+
+	return nil
+}
