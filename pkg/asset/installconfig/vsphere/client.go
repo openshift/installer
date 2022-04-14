@@ -39,31 +39,38 @@ func NewFinder(client *vim25.Client, all ...bool) Finder {
 	return find.NewFinder(client, all...)
 }
 
+// ClientLogout is empty function that logs out of vSphere clients
+type ClientLogout func()
+
 // CreateVSphereClients creates the SOAP and REST client to access
 // different portions of the vSphere API
 // e.g. tags are only available in REST
-func CreateVSphereClients(ctx context.Context, vcenter, username, password string) (*vim25.Client, *rest.Client, error) {
+func CreateVSphereClients(ctx context.Context, vcenter, username, password string) (*vim25.Client, *rest.Client, ClientLogout, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
 	u, err := soap.ParseURL(vcenter)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	u.User = url.UserPassword(username, password)
 	c, err := govmomi.NewClient(ctx, u, false)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	restClient := rest.NewClient(c.Client)
 	err = restClient.Login(ctx, u.User)
 	if err != nil {
-		return nil, nil, err
+		c.Logout(context.TODO())
+		return nil, nil, nil, err
 	}
 
-	return c.Client, restClient, nil
+	return c.Client, restClient, func() {
+		c.Logout(context.TODO())
+		restClient.Logout(context.TODO())
+	}, nil
 }
 
 // getNetworks returns a slice of Managed Object references for networks in the given vSphere Cluster.

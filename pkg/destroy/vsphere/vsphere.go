@@ -32,6 +32,9 @@ var defaultTimeout = time.Minute * 5
 type ClusterUninstaller struct {
 	ClusterID string
 	InfraID   string
+	vCenter   string
+	username  string
+	password  string
 
 	Client     *vim25.Client
 	RestClient *rest.Client
@@ -43,21 +46,14 @@ type ClusterUninstaller struct {
 
 // New returns an VSphere destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (providers.Destroyer, error) {
-	vim25Client, restClient, err := vsphere.CreateVSphereClients(context.TODO(),
-		metadata.ClusterPlatformMetadata.VSphere.VCenter,
-		metadata.ClusterPlatformMetadata.VSphere.Username,
-		metadata.ClusterPlatformMetadata.VSphere.Password)
-	if err != nil {
-		return nil, err
-	}
-
 	return &ClusterUninstaller{
-		ClusterID:  metadata.ClusterID,
-		InfraID:    metadata.InfraID,
-		Client:     vim25Client,
-		RestClient: restClient,
-		Logger:     logger,
-		context:    context.Background(),
+		ClusterID: metadata.ClusterID,
+		InfraID:   metadata.InfraID,
+		vCenter:   metadata.VSphere.VCenter,
+		username:  metadata.VSphere.Username,
+		password:  metadata.VSphere.Password,
+		Logger:    logger,
+		context:   context.Background(),
 	}, nil
 }
 
@@ -303,7 +299,19 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run() (*installertypes.ClusterQuota, error) {
-	err := wait.PollImmediateInfinite(
+	vim25Client, restClient, cleanup, err := vsphere.CreateVSphereClients(context.TODO(),
+		o.vCenter,
+		o.username,
+		o.password)
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup()
+
+	o.Client = vim25Client
+	o.RestClient = restClient
+
+	err = wait.PollImmediateInfinite(
 		time.Second*10,
 		o.destroyCluster,
 	)
