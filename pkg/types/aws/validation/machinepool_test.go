@@ -67,6 +67,23 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path\.size: Invalid value: -10: Storage size must be positive$`,
 		},
+		{
+			name: "valid metadata auth option",
+			pool: &aws.MachinePool{
+				EC2Metadata: aws.EC2Metadata{
+					Authentication: "Optional",
+				},
+			},
+		},
+		{
+			name: "invalid metadata auth option",
+			pool: &aws.MachinePool{
+				EC2Metadata: aws.EC2Metadata{
+					Authentication: "foobarbaz",
+				},
+			},
+			expected: `^test-path\.authentication: Invalid value: \"foobarbaz\": must be either Required or Optional$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -146,6 +146,11 @@ resource "aws_instance" "master" {
     ignore_changes = [ami]
   }
 
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = var.instance_metadata_authentication
+  }
+
   tags = merge(
     {
       "Name" = "${var.cluster_id}-master-${count.index}"
