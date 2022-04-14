@@ -65,6 +65,7 @@ require (
 	github.com/ulikunitz/xz v0.5.8
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.24.0
+	github.com/yookoala/realpath v1.0.0
 	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd

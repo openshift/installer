@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/yookoala/realpath"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
@@ -92,8 +93,14 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	if err := os.Mkdir(terraformDir, 0777); err != nil {
 		return errors.Wrap(err, "could not create the terraform directory")
 	}
+
+	terraformDirRp, err := realpath.Realpath(terraformDir)
+	if err != nil {
+		return errors.Wrap(err, "cannot get real path of terraform directory")
+	}
+
 	defer os.RemoveAll(terraformDir)
-	terraform.UnpackTerraform(terraformDir, stages)
+	terraform.UnpackTerraform(terraformDirRp, stages)
 
 	logrus.Infof("Creating infrastructure resources...")
 	switch platform {
@@ -113,7 +120,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	for _, stage := range stages {
-		outputs, err := c.applyStage(platform, stage, terraformDir, tfvarsFiles)
+		outputs, err := c.applyStage(platform, stage, terraformDirRp, tfvarsFiles)
 		if err != nil {
 			return errors.Wrapf(err, "failure applying terraform for %q stage", stage.Name())
 		}
