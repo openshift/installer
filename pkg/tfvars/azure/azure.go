@@ -45,6 +45,7 @@ type config struct {
 	BootstrapIgnitionStub           string            `json:"azure_bootstrap_ignition_stub"`
 	BootstrapIgnitionURLPlaceholder string            `json:"azure_bootstrap_ignition_url_placeholder"`
 	HyperVGeneration                string            `json:"azure_hypervgeneration_version"`
+	VMNetworkingType                bool              `json:"azure_control_plane_vm_networking_type"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -116,6 +117,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		BootstrapIgnitionStub:           sources.BootstrapIgnStub,
 		BootstrapIgnitionURLPlaceholder: sources.BootstrapIgnitionURLPlaceholder,
 		HyperVGeneration:                sources.HyperVGeneration,
+		VMNetworkingType:                masterConfig.AcceleratedNetworking,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

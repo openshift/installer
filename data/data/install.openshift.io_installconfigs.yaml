@@ -247,6 +247,16 @@ spec:
                             should use Ultra SSD disks. The valid values are Enabled,
                             Disabled.
                           type: string
+                        vmNetworkingType:
+                          description: 'VMNetworkingType specifies whether to enable
+                            accelerated networking. Accelerated networking enables
+                            single root I/O virtualization (SR-IOV) to a VM, greatly
+                            improving its networking performance. eg. values: "Accelerated",
+                            "Basic"'
+                          enum:
+                          - Accelerated
+                          - Basic
+                          type: string
                         zones:
                           description: Zones is list of availability zones that can
                             be used. eg. ["1", "2", "3"]
@@ -816,6 +826,15 @@ spec:
                       ultraSSDCapability:
                         description: ultraSSDCapability defines if the instance should
                           use Ultra SSD disks. The valid values are Enabled, Disabled.
+                        type: string
+                      vmNetworkingType:
+                        description: 'VMNetworkingType specifies whether to enable
+                          accelerated networking. Accelerated networking enables single
+                          root I/O virtualization (SR-IOV) to a VM, greatly improving
+                          its networking performance. eg. values: "Accelerated", "Basic"'
+                        enum:
+                        - Accelerated
+                        - Basic
                         type: string
                       zones:
                         description: Zones is list of availability zones that can
@@ -1656,6 +1675,15 @@ spec:
                       ultraSSDCapability:
                         description: ultraSSDCapability defines if the instance should
                           use Ultra SSD disks. The valid values are Enabled, Disabled.
+                        type: string
+                      vmNetworkingType:
+                        description: 'VMNetworkingType specifies whether to enable
+                          accelerated networking. Accelerated networking enables single
+                          root I/O virtualization (SR-IOV) to a VM, greatly improving
+                          its networking performance. eg. values: "Accelerated", "Basic"'
+                        enum:
+                        - Accelerated
+                        - Basic
                         type: string
                       zones:
                         description: Zones is list of availability zones that can
