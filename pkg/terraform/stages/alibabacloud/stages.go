@@ -36,14 +36,14 @@ var PlatformStages = []terraform.Stage{
 	),
 }
 
-func removeFromLoadBalancers(s stages.SplitStage, directory string, terraformDir string, varFiles []string) error {
+func removeFromLoadBalancers(s stages.SplitStage, directory string, varFiles []string) error {
 	opts := make([]tfexec.ApplyOption, 0, len(varFiles)+1)
 	for _, varFile := range varFiles {
 		opts = append(opts, tfexec.VarFile(varFile))
 	}
 	opts = append(opts, tfexec.Var("ali_bootstrap_lb=false"))
 	return errors.Wrap(
-		terraform.Apply(directory, alitypes.Name, s, terraformDir, opts...),
+		terraform.Apply(directory, alitypes.Name, s, opts...),
 		"failed disabling bootstrap load balancing",
 	)
 }

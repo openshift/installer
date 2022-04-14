@@ -24,11 +24,6 @@ import (
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 )
 
-var (
-	// InstallDir is the directory containing install assets.
-	InstallDir string
-)
-
 // Cluster uses the terraform executable to launch a cluster
 // with the given terraform tfvar and generated templates.
 type Cluster struct {
@@ -63,10 +58,6 @@ func (c *Cluster) Dependencies() []asset.Asset {
 
 // Generate launches the cluster and generates the terraform state file on disk.
 func (c *Cluster) Generate(parents asset.Parents) (err error) {
-	if InstallDir == "" {
-		logrus.Fatalf("InstallDir has not been set for the %q asset", c.Name())
-	}
-
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	terraformVariables := &TerraformVariables{}
@@ -88,13 +79,6 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	stages := platformstages.StagesForPlatform(platform)
 
-	terraformDir := filepath.Join(InstallDir, "terraform")
-	if err := os.Mkdir(terraformDir, 0777); err != nil {
-		return errors.Wrap(err, "could not create the terraform directory")
-	}
-	defer os.RemoveAll(terraformDir)
-	terraform.UnpackTerraform(terraformDir, stages)
-
 	logrus.Infof("Creating infrastructure resources...")
 	switch platform {
 	case typesaws.Name:
@@ -113,12 +97,30 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	for _, stage := range stages {
-		outputs, err := c.applyStage(platform, stage, terraformDir, tfvarsFiles)
+
+		// Copy the terraform.tfvars to a temp directory where the terraform
+		// will be invoked within.
+		tmpDir, err := ioutil.TempDir("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
 		if err != nil {
-			return errors.Wrapf(err, "failure applying terraform for %q stage", stage.Name())
+			return errors.Wrap(err, "failed to create temp dir for terraform execution")
 		}
+		defer os.RemoveAll(tmpDir)
+
+		var extraOpts []tfexec.ApplyOption
+		for _, file := range tfvarsFiles {
+			if err := ioutil.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0600); err != nil {
+				return err
+			}
+			extraOpts = append(extraOpts, tfexec.VarFile(filepath.Join(tmpDir, file.Filename)))
+
+		}
+
+		outputs, err := c.applyTerraform(tmpDir, platform, stage, extraOpts...)
+		if err != nil {
+			return err
+		}
+
 		tfvarsFiles = append(tfvarsFiles, outputs)
-		c.FileList = append(c.FileList, outputs)
 	}
 
 	return nil
@@ -143,30 +145,11 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 	return false, nil
 }
 
-func (c *Cluster) applyStage(platform string, stage terraform.Stage, terraformDir string, tfvarsFiles []*asset.File) (*asset.File, error) {
-	// Copy the terraform.tfvars to a temp directory which will contain the terraform plan.
-	tmpDir, err := ioutil.TempDir("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create temp dir for terraform execution")
-	}
-	defer os.RemoveAll(tmpDir)
-
-	var extraOpts []tfexec.ApplyOption
-	for _, file := range tfvarsFiles {
-		if err := ioutil.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0600); err != nil {
-			return nil, err
-		}
-		extraOpts = append(extraOpts, tfexec.VarFile(filepath.Join(tmpDir, file.Filename)))
-	}
-
-	return c.applyTerraform(tmpDir, platform, stage, terraformDir, extraOpts...)
-}
-
-func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform.Stage, terraformDir string, opts ...tfexec.ApplyOption) (*asset.File, error) {
+func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform.Stage, opts ...tfexec.ApplyOption) (*asset.File, error) {
 	timer.StartTimer(stage.Name())
 	defer timer.StopTimer(stage.Name())
 
-	applyErr := terraform.Apply(tmpDir, platform, stage, terraformDir, opts...)
+	applyErr := terraform.Apply(tmpDir, platform, stage, opts...)
 
 	// Write the state file to the install directory even if the apply failed.
 	if data, err := ioutil.ReadFile(filepath.Join(tmpDir, terraform.StateFilename)); err == nil {
@@ -183,7 +166,7 @@ func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform
 		return nil, errors.Wrap(applyErr, asset.ClusterCreationError)
 	}
 
-	outputs, err := terraform.Outputs(tmpDir, terraformDir)
+	outputs, err := terraform.Outputs(tmpDir)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not get outputs from stage %q", stage.Name())
 	}
@@ -192,5 +175,6 @@ func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform
 		Filename: stage.OutputsFilename(),
 		Data:     outputs,
 	}
+	c.FileList = append(c.FileList, outputsFile)
 	return outputsFile, nil
 }

@@ -13,12 +13,11 @@ import (
 )
 
 // newTFExec creates a tfexec.Terraform for executing Terraform CLI commands.
-// The `datadir` is the location to which the terraform plan (tf files, etc) has been unpacked.
-// The `terraformDir` is the location to which the terraform and provider binaries have been unpacked.
+// The `datadir` is the location where the terraform parts (binaries, tf files, etc) have been unpacked to.
 // The stdout and stderr will be sent to the logger at the debug and error levels,
 // respectively.
-func newTFExec(datadir string, terraformDir string) (*tfexec.Terraform, error) {
-	tfPath := filepath.Join(terraformDir, "bin", "terraform")
+func newTFExec(datadir string) (*tfexec.Terraform, error) {
+	tfPath := filepath.Join(datadir, "bin", "terraform")
 	tf, err := tfexec.NewTerraform(datadir, tfPath)
 	if err != nil {
 		return nil, err
@@ -44,12 +43,12 @@ func newTFExec(datadir string, terraformDir string) (*tfexec.Terraform, error) {
 // Apply unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
 // apply'.
-func Apply(dir string, platform string, stage Stage, terraformDir string, extraOpts ...tfexec.ApplyOption) error {
-	if err := unpackAndInit(dir, platform, stage.Name(), terraformDir, stage.Providers()); err != nil {
+func Apply(dir string, platform string, stage Stage, extraOpts ...tfexec.ApplyOption) error {
+	if err := unpackAndInit(dir, platform, stage.Name(), stage.Providers()); err != nil {
 		return err
 	}
 
-	tf, err := newTFExec(dir, terraformDir)
+	tf, err := newTFExec(dir)
 	if err != nil {
 		return errors.Wrap(err, "failed to create a new tfexec")
 	}
@@ -60,12 +59,12 @@ func Apply(dir string, platform string, stage Stage, terraformDir string, extraO
 // Destroy unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
 // destroy'.
-func Destroy(dir string, platform string, stage Stage, terraformDir string, extraOpts ...tfexec.DestroyOption) error {
-	if err := unpackAndInit(dir, platform, stage.Name(), terraformDir, stage.Providers()); err != nil {
+func Destroy(dir string, platform string, stage Stage, extraOpts ...tfexec.DestroyOption) error {
+	if err := unpackAndInit(dir, platform, stage.Name(), stage.Providers()); err != nil {
 		return err
 	}
 
-	tf, err := newTFExec(dir, terraformDir)
+	tf, err := newTFExec(dir)
 	if err != nil {
 		return errors.Wrap(err, "failed to create a new tfexec")
 	}
