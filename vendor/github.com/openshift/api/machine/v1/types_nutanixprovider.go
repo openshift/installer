@@ -6,6 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // NutanixMachineProviderConfig is the Schema for the nutanixmachineproviderconfigs API
@@ -29,11 +30,12 @@ type NutanixMachineProviderConfig struct {
 	// +kubebuilder:validation:Required
 	Image NutanixResourceIdentifier `json:"image"`
 
-	// subnet is to identify the cluster's network subnet to use for the Machine's VM
-	// The cluster identifier (uuid or name) can be obtained from the Prism Central console
-	// or using the prism_central API.
+	// subnets holds a list of identifiers (one or more) of the cluster's network subnets
+	// for the Machine's VM to connect to. The subnet identifiers (uuid or name) can be
+	// obtained from the Prism Central console or using the prism_central API.
 	// +kubebuilder:validation:Required
-	Subnet NutanixResourceIdentifier `json:"subnet"`
+	// +kubebuilder:validation:MinItems=1
+	Subnets []NutanixResourceIdentifier `json:"subnets"`
 
 	// vcpusPerSocket is the number of vCPUs per socket of the VM
 	// +kubebuilder:validation:Required
