@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
@@ -14,8 +15,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+//go:generate mockgen -source=./client.go -destination=./mock/powervsclient_generated.go -package=mock
+
 // API represents the calls made to the API.
 type API interface {
+	GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error)
 	GetDNSZoneIDByName(ctx context.Context, name string) (string, error)
 	GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error)
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
@@ -85,6 +89,34 @@ func (c *Client) loadSDKServices() error {
 	}
 
 	return nil
+}
+
+// GetDNSRecordsByName gets DNS records in specific Cloud Internet Services instance
+// by its CRN, zone ID, and DNS record name.
+func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error) {
+	authenticator := &core.IamAuthenticator{
+		ApiKey: c.APIKey,
+	}
+
+	// Set CIS DNS record service
+	dnsService, err := dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
+		Authenticator:  authenticator,
+		Crn:            core.StringPtr(crnstr),
+		ZoneIdentifier: core.StringPtr(zoneID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Get CIS DNS records by name
+	records, _, err := dnsService.ListAllDnsRecordsWithContext(ctx, &dnsrecordsv1.ListAllDnsRecordsOptions{
+		Name: core.StringPtr(recordName),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "could not retrieve DNS records")
+	}
+
+	return records.Result, nil
 }
 
 // GetDNSZoneIDByName gets the CIS zone ID from its domain name.

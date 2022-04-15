@@ -233,6 +233,9 @@ func (a *InstallConfig) platformValidation() error {
 	if a.Config.Platform.OpenStack != nil {
 		return icopenstack.Validate(a.Config)
 	}
+	if a.Config.Platform.PowerVS != nil {
+		return icpowervs.Validate(a.Config)
+	}
 	if a.Config.Platform.Nutanix != nil {
 		return icnutanix.Validate(a.Config)
 	}

@@ -117,10 +117,11 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		}
 		err = alibabacloudconfig.ValidateForProvisioning(client, ic.Config, ic.AlibabaCloud)
 	case powervs.Name:
-		err = powervsconfig.ValidateForProvisioning()
+		client, err := powervsconfig.NewClient()
 		if err != nil {
 			return err
 		}
+		err = powervsconfig.ValidatePreExistingPublicDNS(client, ic.Config, ic.PowerVS)
 	case libvirt.Name, none.Name:
 		// no special provisioning requirements to check
 	case nutanix.Name:
