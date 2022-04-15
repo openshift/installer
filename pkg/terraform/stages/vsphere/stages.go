@@ -88,10 +88,11 @@ func extractOutputHostAddresses(s stages.SplitStage, directory string, config *t
 
 // hostIP returns the ip address for a host
 func hostIP(config *types.InstallConfig, moid string) (string, error) {
-	client, _, err := vsphere.CreateVSphereClients(context.TODO(), config.VSphere.VCenter, config.VSphere.Username, config.VSphere.Password)
+	client, _, cleanup, err := vsphere.CreateVSphereClients(context.TODO(), config.VSphere.VCenter, config.VSphere.Username, config.VSphere.Password)
 	if err != nil {
 		return "", err
 	}
+	defer cleanup()
 
 	var errs []error
 	ip, err := waitForVirtualMachineIP(client, moid)
