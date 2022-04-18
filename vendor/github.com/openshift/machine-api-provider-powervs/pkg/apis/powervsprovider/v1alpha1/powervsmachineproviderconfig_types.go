@@ -32,8 +32,12 @@ type PowerVSMachineProviderConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// Deprecated: Please use ServiceInstance instead.
 	// ServiceInstanceID is the PowerVS service ID
 	ServiceInstanceID string `json:"serviceInstanceID"`
+
+	// ServiceInstance is the reference to the Power VS ServiceInstance on which the machine instance will be created.
+	ServiceInstance PowerVSResourceReference `json:"serviceInstance"`
 
 	// Image is the reference to the Image from which to create the machine instance.
 	Image PowerVSResourceReference `json:"image"`
@@ -74,6 +78,10 @@ type PowerVSResourceReference struct {
 	// Name of resource
 	// +optional
 	Name *string `json:"name,omitempty"`
+
+	// Regex to find resource
+	// +optional
+	RegEx *string `json:"regex,omitempty"`
 }
 
 //+kubebuilder:object:root=true

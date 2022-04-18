@@ -67,7 +67,7 @@ github.com/BurntSushi/toml
 # github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
 ## explicit; go 1.13
 github.com/IBM-Cloud/bluemix-go/crn
-# github.com/IBM-Cloud/power-go-client v1.1.4
+# github.com/IBM-Cloud/power-go-client v1.1.5
 ## explicit; go 1.17
 github.com/IBM-Cloud/power-go-client/helpers
 github.com/IBM-Cloud/power-go-client/ibmpisession
@@ -603,7 +603,7 @@ github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
 ## explicit; go 1.17
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/route/routeapihelpers
-# github.com/openshift/machine-api-provider-powervs v0.0.0-20220303154846-89bb5bec120e
+# github.com/openshift/machine-api-provider-powervs v0.0.2-0.20220404072532-0bd184db2e40
 ## explicit; go 1.17
 github.com/openshift/machine-api-provider-powervs/pkg/apis
 github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1

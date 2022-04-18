@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/IBM-Cloud/power-go-client/power/client"
@@ -71,4 +72,19 @@ func getPIClient(debug bool, host string, scheme string) *client.PowerIaasAPI {
 	transport.SetLogger(IBMPILogger{})
 	transport.Consumers[runtime.JSONMime] = powerJSONConsumer()
 	return client.New(transport, nil)
+}
+
+// costructRegionFromZone Calculate region based on location/zone
+func costructRegionFromZone(zone string) string {
+	var regex string
+	if strings.Contains(zone, "-") {
+		// it's a region or AZ
+		regex = "-[0-9]+$"
+	} else {
+		// it's a datacenter
+		regex = "[0-9]+$"
+	}
+
+	reg, _ := regexp.Compile(regex)
+	return reg.ReplaceAllString(zone, "")
 }
