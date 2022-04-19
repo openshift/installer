@@ -111,13 +111,15 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case alibabacloud.Name:
-		client, err := ic.AlibabaCloud.Client()
+		var client *alibabacloudconfig.Client
+		client, err = ic.AlibabaCloud.Client()
 		if err != nil {
 			return err
 		}
 		err = alibabacloudconfig.ValidateForProvisioning(client, ic.Config, ic.AlibabaCloud)
 	case powervs.Name:
-		client, err := powervsconfig.NewClient()
+		var client *powervsconfig.Client
+		client, err = powervsconfig.NewClient()
 		if err != nil {
 			return err
 		}
