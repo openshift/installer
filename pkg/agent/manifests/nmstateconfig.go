@@ -12,7 +12,7 @@ import (
 	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"sigs.k8s.io/yaml"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 type NMStateConfig struct {
@@ -30,14 +30,31 @@ type NMStateConfig struct {
 	} `yaml:"interfaces,omitempty"`
 }
 
-func getNMStateConfig() (aiv1beta1.NMStateConfig, error) {
-	var nmStateConfig aiv1beta1.NMStateConfig
-	if err := GetFileData("nmstateconfig.yaml", &nmStateConfig); err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+type NMStateConfigYamlDecoder int
+
+func (d *NMStateConfigYamlDecoder) NewDecodedYaml(yamlDecoder *yaml.YAMLToJSONDecoder) (interface{}, error) {
+	decodedData := new(aiv1beta1.NMStateConfig)
+	err := yamlDecoder.Decode(&decodedData)
+
+	return decodedData, err
+}
+
+// Get a list of NMStateConfig objects from the manifest file
+func getNMStateConfig() ([]aiv1beta1.NMStateConfig, error) {
+	var decoder NMStateConfigYamlDecoder
+	yamlList, err := GetFileMultipleYamls("nmstateconfig.yaml", &decoder)
+
+	var nmStateConfigList []aiv1beta1.NMStateConfig
+	for i := range yamlList {
+		nmStateConfigList = append(nmStateConfigList, *yamlList[i].(*aiv1beta1.NMStateConfig))
 	}
 
-	return nmStateConfig, nil
+	if err != nil {
+		err = fmt.Errorf("Error reading nmstateconfig file %w", err)
+		return nil, err
+	}
+
+	return nmStateConfigList, nil
 }
 
 func validateNMStateConfigAndInfraEnv(nmStateConfig aiv1beta1.NMStateConfig, infraEnv aiv1beta1.InfraEnv) error {
@@ -98,36 +115,40 @@ func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) (
 
 func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetworkConfig, error) {
 
-	nmStateConfig, err := getNMStateConfig()
+	nmStateConfigList, err := getNMStateConfig()
 
 	if err != nil {
-		fmt.Println("A nmstateconfig file has not been provided, no static addresses set in iso")
-		return nil, nil
-	}
-
-	err = validateNMStateConfigAndInfraEnv(nmStateConfig, infraEnv)
-	if err != nil {
+		err = fmt.Errorf("Error with nmstateconfig file: %w", err)
 		return nil, err
 	}
 
 	var staticNetworkConfig []*models.HostStaticNetworkConfig
-	staticNetworkConfig = append(staticNetworkConfig, &models.HostStaticNetworkConfig{
-		MacInterfaceMap: buildMacInterfaceMap(nmStateConfig),
-		NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
-	})
+	for _, nmStateConfig := range nmStateConfigList {
+
+		err = validateNMStateConfigAndInfraEnv(nmStateConfig, infraEnv)
+		if err != nil {
+			return nil, err
+		}
+
+		staticNetworkConfig = append(staticNetworkConfig, &models.HostStaticNetworkConfig{
+			MacInterfaceMap: buildMacInterfaceMap(nmStateConfig),
+			NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
+		})
+	}
 	return staticNetworkConfig, nil
 }
 
 // Retrieve the first IP from the user provided NMStateConfig yaml file to set as node0 IP
 func GetNodeZeroIP() string {
-	config, err := getNMStateConfig()
+	configList, err := getNMStateConfig()
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
 	var nmconfig NMStateConfig
-	err = yaml.Unmarshal(config.Spec.NetConfig.Raw, &nmconfig)
+	// Use entry for first host
+	err = yaml.Unmarshal(configList[0].Spec.NetConfig.Raw, &nmconfig)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
