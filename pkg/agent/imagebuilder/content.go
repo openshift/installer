@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -33,6 +34,7 @@ type ConfigBuilder struct {
 	controlPlaneAgents  int
 	workerAgents        int
 	staticNetworkConfig []*models.HostStaticNetworkConfig
+	manifestPath        string
 }
 
 func New() *ConfigBuilder {
@@ -61,6 +63,8 @@ func New() *ConfigBuilder {
 		os.Exit(1)
 	}
 
+	manifestPath := getEnv("MANIFEST_PATH", "manifests/")
+
 	return &ConfigBuilder{
 		pullSecret:          pullSecret,
 		serviceBaseURL:      serviceBaseURL,
@@ -69,6 +73,7 @@ func New() *ConfigBuilder {
 		controlPlaneAgents:  clusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
 		workerAgents:        clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
 		staticNetworkConfig: staticNetworkConfig,
+		manifestPath:        manifestPath,
 	}
 }
 
@@ -141,6 +146,13 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 			os.Exit(1)
 		}
 	}
+
+	// add manifests to ignition
+	manifests, err := c.getManifests(c.manifestPath)
+	if err != nil {
+		return nil, err
+	}
+	files = append(files, manifests...)
 
 	config.Storage.Files = files
 
@@ -238,6 +250,32 @@ func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 	}
 
 	return units, nil
+}
+
+// Reads manifests from manifestsPath and adds each file to /etc/assisted/manifests
+// in the ignition.
+func (c ConfigBuilder) getManifests(manifestPath string) ([]igntypes.File, error) {
+	files := make([]igntypes.File, 0)
+	entries, err := ioutil.ReadDir(manifestPath)
+	if err != nil {
+		return files, fmt.Errorf("failed to open file dir \"%s\": %w", manifestPath, err)
+	}
+	for _, e := range entries {
+		localPath := path.Join(manifestPath, e.Name())
+		ignitionPath := path.Join("/etc/assisted/manifests", e.Name())
+		if e.IsDir() {
+			// ignore subdirectories
+		} else {
+			contents, err := ioutil.ReadFile(path.Join(localPath))
+			if err != nil {
+				return files, fmt.Errorf("failed to read file %s: %w", localPath, err)
+			}
+			mode := 0600
+			file := ignitionFileEmbed(ignitionPath, mode, true, contents)
+			files = append(files, file)
+		}
+	}
+	return files, nil
 }
 
 func (c ConfigBuilder) templateString(name string, text string) (string, error) {
