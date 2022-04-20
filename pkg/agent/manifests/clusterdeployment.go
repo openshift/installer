@@ -1,13 +1,13 @@
 package manifests
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/go-openapi/swag"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	"github.com/sirupsen/logrus"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -15,7 +15,7 @@ import (
 func GetPullSecret() string {
 	var secret corev1.Secret
 	if err := GetFileData("pull-secret.yaml", &secret); err != nil {
-		fmt.Println(err.Error())
+		logrus.Println(err.Error())
 		os.Exit(1)
 	}
 
@@ -26,7 +26,7 @@ func GetPullSecret() string {
 func getClusterDeployment() hivev1.ClusterDeployment {
 	var cd hivev1.ClusterDeployment
 	if err := GetFileData("cluster-deployment.yaml", &cd); err != nil {
-		fmt.Println(err.Error())
+		logrus.Println(err.Error())
 		os.Exit(1)
 	}
 
@@ -36,7 +36,7 @@ func getClusterDeployment() hivev1.ClusterDeployment {
 func GetAgentClusterInstall() hiveext.AgentClusterInstall {
 	var aci hiveext.AgentClusterInstall
 	if err := GetFileData("agent-cluster-install.yaml", &aci); err != nil {
-		fmt.Println(err.Error())
+		logrus.Println(err.Error())
 		os.Exit(1)
 	}
 

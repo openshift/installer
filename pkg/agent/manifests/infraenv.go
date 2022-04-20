@@ -1,7 +1,6 @@
 package manifests
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -9,12 +8,13 @@ import (
 	"github.com/go-openapi/swag"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
+	"github.com/sirupsen/logrus"
 )
 
 func getInfraEnv() aiv1beta1.InfraEnv {
 	var infraEnv aiv1beta1.InfraEnv
 	if err := GetFileData("infraenv.yaml", &infraEnv); err != nil {
-		fmt.Println(err.Error())
+		logrus.Println(err.Error())
 		os.Exit(1)
 	}
 
