@@ -13,6 +13,7 @@ import (
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -34,6 +35,8 @@ var computeReq = resourceRequirements{
 	minimumVCpus:  2,
 	minimumMemory: 8,
 }
+
+const ultraSSDCapability string = "UltraSSDAvailable"
 
 // Validate executes platform-specific validation.
 func Validate(client API, ic *types.InstallConfig) error {
@@ -88,7 +91,7 @@ func ValidateDiskEncryptionSet(client API, ic *types.InstallConfig) field.ErrorL
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType string, diskType string, req resourceRequirements, ultraSSDEnabled bool, vmNetworkingType string) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType string, diskType string, req resourceRequirements, ultraSSDEnabled bool, vmNetworkingType string, icZones []string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	typeMeta, err := client.GetVirtualMachineSku(context.TODO(), instanceType, region)
@@ -136,6 +139,38 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 		}
 	}
 
+	// Convenience check so the tests don't have to define LocationInfo if it's not used
+	if ultraSSDEnabled && typeMeta.LocationInfo != nil {
+		for _, locationInfo := range *typeMeta.LocationInfo {
+			// If Availability Zones are not supported (e.g StackCloud)
+			if locationInfo.ZoneDetails == nil || len(to.StringSlice(locationInfo.Zones)) == 0 {
+				errMsg := fmt.Sprintf("UltraSSD capability is not compatible with Availability Sets which are used because region %s does not support Availability Zones", region)
+				return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+			}
+			for _, zoneDetails := range *locationInfo.ZoneDetails {
+				for _, capability := range *zoneDetails.Capabilities {
+					if !strings.EqualFold(*capability.Name, ultraSSDCapability) {
+						continue
+					}
+					if strings.EqualFold(*capability.Value, "True") {
+						zones := icZones
+						// If no zones are set in the install config, then all the
+						// available zones in the region are used
+						if len(zones) == 0 {
+							zones = to.StringSlice(locationInfo.Zones)
+						}
+						ultraSSDZones := sets.NewString(to.StringSlice(zoneDetails.Name)...)
+						if !ultraSSDZones.HasAll(zones...) {
+							errMsg := fmt.Sprintf("UltraSSD capability only supported in zones %v for this instance type in the %s region", to.StringSlice(zoneDetails.Name), region)
+							return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+						}
+						ultraSSDAvailable = true
+					}
+				}
+			}
+		}
+	}
+
 	// The UltraSSDAvailable capability might not be present at all, in which case it must assumed to be false
 	if ultraSSDEnabled && !ultraSSDAvailable {
 		errMsg := fmt.Sprintf("UltraSSD capability not supported for this instance type in the %s region", region)
@@ -153,6 +188,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	defaultInstanceType := ""
 	defaultUltraSSDCapability := "Disabled"
 	defaultVMNetworkingType := ""
+	defaultZones := []string{}
 
 	if ic.Platform.Azure.DefaultMachinePlatform != nil {
 		if ic.Platform.Azure.DefaultMachinePlatform.OSDisk.DiskType != "" {
@@ -167,6 +203,9 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if ic.Platform.Azure.DefaultMachinePlatform.VMNetworkingType != "" {
 			defaultVMNetworkingType = ic.Platform.Azure.DefaultMachinePlatform.VMNetworkingType
 		}
+		if ic.Platform.Azure.DefaultMachinePlatform.Zones != nil {
+			defaultZones = ic.Platform.Azure.DefaultMachinePlatform.Zones
+		}
 	}
 
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil {
@@ -175,6 +214,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		instanceType := ic.ControlPlane.Platform.Azure.InstanceType
 		ultraSSDCapability := ic.ControlPlane.Platform.Azure.UltraSSDCapability
 		vmNetworkingType := ic.ControlPlane.Platform.Azure.VMNetworkingType
+		zones := ic.ControlPlane.Platform.Azure.Zones
 
 		if diskType == "" {
 			diskType = defaultDiskType
@@ -185,6 +225,9 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if instanceType == "" {
 			instanceType = defaults.ControlPlaneInstanceType(ic.Azure.CloudName, ic.Azure.Region)
 		}
+		if len(zones) == 0 {
+			zones = defaultZones
+		}
 		if ultraSSDCapability == "" {
 			ultraSSDCapability = defaultUltraSSDCapability
 		}
@@ -192,7 +235,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			vmNetworkingType = defaultVMNetworkingType
 		}
 		ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
-		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath, ic.Azure.Region, instanceType, diskType, controlPlaneReq, ultraSSDEnabled, vmNetworkingType)...)
+		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath, ic.Azure.Region, instanceType, diskType, controlPlaneReq, ultraSSDEnabled, vmNetworkingType, zones)...)
 	}
 
 	for idx, compute := range ic.Compute {
@@ -202,6 +245,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			instanceType := compute.Platform.Azure.InstanceType
 			ultraSSDCapability := compute.Platform.Azure.UltraSSDCapability
 			vmNetworkingType := compute.Platform.Azure.VMNetworkingType
+			zones := compute.Platform.Azure.Zones
 
 			if diskType == "" {
 				diskType = defaultDiskType
@@ -218,9 +262,12 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			if vmNetworkingType == "" {
 				vmNetworkingType = defaultVMNetworkingType
 			}
+			if len(zones) == 0 {
+				zones = defaultZones
+			}
 			ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
 			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "azure"),
-				ic.Azure.Region, instanceType, diskType, computeReq, ultraSSDEnabled, vmNetworkingType)...)
+				ic.Azure.Region, instanceType, diskType, computeReq, ultraSSDEnabled, vmNetworkingType, zones)...)
 		}
 	}
 
