@@ -32,15 +32,6 @@ type vCenterClient struct {
 	RestClient *rest.Client
 }
 
-// networkNamer declares an interface for the object.Common.Name() function.
-// This is needed because find.NetworkList() returns the interface object.NetworkReference.
-// All of the types that implement object.NetworkReference (OpaqueNetwork,
-// DistributedVirtualPortgroup, & DistributedVirtualSwitch) and perhaps all
-// types in general embed object.Common.
-type networkNamer interface {
-	Name() string
-}
-
 // Platform collects vSphere-specific configuration.
 func Platform() (*vsphere.Platform, error) {
 	vCenter, err := getClients()
