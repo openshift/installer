@@ -83,7 +83,11 @@ func New() (*ConfigBuilder, error) {
 		workerAgents:        clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
 		staticNetworkConfig: staticNetworkConfig,
 		manifestPath:        manifestPath,
+<<<<<<< HEAD
 	}, nil
+=======
+	}
+>>>>>>> b34f36f36... AGENT-56 Read manifests from a specified path during runtime
 }
 
 func getEnv(key, fallback string) string {
