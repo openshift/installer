@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -122,6 +123,16 @@ func validServiceEndpoints() []aws.ServiceEndpoint {
 	}}
 }
 
+func invalidServiceEndpoint() []aws.ServiceEndpoint {
+	return []aws.ServiceEndpoint{{
+		Name: "testing",
+		URL:  "testing",
+	}, {
+		Name: "test",
+		URL:  "http://testing.non",
+	}}
+}
+
 func validInstanceTypes() map[string]InstanceType {
 	return map[string]InstanceType{
 		"t2.small": {
@@ -146,6 +157,7 @@ func TestValidate(t *testing.T) {
 		privateSubnets map[string]Subnet
 		publicSubnets  map[string]Subnet
 		instanceTypes  map[string]InstanceType
+		proxy          string
 		expectErr      string
 	}{{
 		name: "valid no byo",
@@ -570,6 +582,46 @@ func TestValidate(t *testing.T) {
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
 		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
+		name: "invalid endpoint URL",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-east-1"
+			c.Platform.AWS.ServiceEndpoints = invalidServiceEndpoint()
+			c.Platform.AWS.AMIID = "custom-ami"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		expectErr:      `^\Q[platform.aws.serviceEndpoints[0].url: Invalid value: "testing": Head "testing": unsupported protocol scheme "", platform.aws.serviceEndpoints[1].url: Invalid value: "http://testing.non": Head "http://testing.non": dial tcp: lookup testing.non\E.*: no such host\]$`,
+	}, {
+		name: "invalid proxy URL but valid URL",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-east-1"
+			c.Platform.AWS.AMIID = "custom-ami"
+			c.Platform.AWS.ServiceEndpoints = []aws.ServiceEndpoint{{Name: "test", URL: "http://testing.com"}}
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		proxy:          "proxy",
+	}, {
+		name: "invalid proxy URL and invalid URL",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-east-1"
+			c.Platform.AWS.AMIID = "custom-ami"
+			c.Platform.AWS.ServiceEndpoints = []aws.ServiceEndpoint{{Name: "test", URL: "http://test"}}
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		proxy:          "http://proxy.com",
+		expectErr:      `^\Qplatform.aws.serviceEndpoints[0].url: Invalid value: "http://test": Head "http://test": dial tcp: lookup test\E.*: no such host$`,
 	}}
 
 	for _, test := range tests {
@@ -579,6 +631,11 @@ func TestValidate(t *testing.T) {
 				privateSubnets:    test.privateSubnets,
 				publicSubnets:     test.publicSubnets,
 				instanceTypes:     test.instanceTypes,
+			}
+			if test.proxy != "" {
+				os.Setenv("HTTP_PROXY", test.proxy)
+			} else {
+				os.Unsetenv("HTTP_PROXY")
 			}
 			err := Validate(context.TODO(), meta, test.installConfig)
 			if test.expectErr == "" {

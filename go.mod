@@ -67,7 +67,6 @@ require (
 	github.com/vmware/govmomi v0.27.4
 	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
 	google.golang.org/api v0.44.0
@@ -188,6 +187,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 )
 
 // OpenShift Forks
