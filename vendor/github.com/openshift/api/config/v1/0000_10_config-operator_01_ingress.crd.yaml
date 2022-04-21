@@ -271,10 +271,10 @@ spec:
                 defaultPlacement:
                   description: "defaultPlacement is set at installation time to control which nodes will host the ingress router pods by default. The options are control-plane nodes or worker nodes. \n This field works by dictating how the Cluster Ingress Operator will consider unset replicas and nodePlacement fields in IngressController resources when creating the corresponding Deployments. \n See the documentation for the IngressController replicas and nodePlacement fields for more information. \n When omitted, the default value is Workers"
                   type: string
-                  default: Workers
                   enum:
                     - ControlPlane
                     - Workers
+                    - ""
       served: true
       storage: true
       subresources:

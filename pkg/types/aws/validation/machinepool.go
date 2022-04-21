@@ -25,6 +25,8 @@ var (
 		}
 		return v
 	}()
+
+	validMetadataAuthValues = sets.NewString("Required", "Optional")
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
@@ -42,6 +44,11 @@ func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *fi
 	if p.Size < 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("size"), p.Size, "Storage size must be positive"))
 	}
+
+	if p.EC2Metadata.Authentication != "" && !validMetadataAuthValues.Has(p.EC2Metadata.Authentication) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("authentication"), p.EC2Metadata.Authentication, "must be either Required or Optional"))
+	}
+
 	return allErrs
 }
 

@@ -103,25 +103,28 @@ const (
 // WorkerLatencyProfileStatus provides status information about the WorkerLatencyProfile rollout
 type WorkerLatencyProfileStatus struct {
 	// conditions describes the state of the WorkerLatencyProfile and related components
-	// (Kubelet or Controller Manager or Kube API Server)
+	// (Kubelet or Controller Manager or Kube API Server) whether progressing, degraded or complete
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +optional
-	Conditions []WorkerLatencyStatusCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
-// WorkerLatencyStatusConditionType is an aspect of WorkerLatencyProfile state.
-type WorkerLatencyStatusConditionType string
-
+// Different condition types to be used by KubeletOperator, Kube Controller
+// Manager Operator and Kube API Server Operator
 const (
 	// Progressing indicates that the updates to component (Kubelet or Controller
 	// Manager or Kube API Server) is actively rolling out, propagating changes to the
 	// respective arguments.
-	WorkerLatencyProfileProgressing WorkerLatencyStatusConditionType = "Progressing"
+	KubeletProgressing               = "KubeletProgressing"
+	KubeControllerManagerProgressing = "KubeControllerManagerProgressing"
+	KubeAPIServerProgressing         = "KubeAPIServerProgressing"
 
 	// Complete indicates whether the component (Kubelet or Controller Manager or Kube API Server)
 	// is successfully updated the respective arguments.
-	WorkerLatencyProfileComplete WorkerLatencyStatusConditionType = "Complete"
+	KubeletComplete               = "KubeletComplete"
+	KubeControllerManagerComplete = "KubeControllerManagerComplete"
+	KubeAPIServerComplete         = "KubeAPIServerComplete"
 
 	// Degraded indicates that the component (Kubelet or Controller Manager or Kube API Server)
 	// does not reach the state 'Complete' over a period of time
@@ -129,53 +132,10 @@ const (
 	// If the component enters in this state, "Default" WorkerLatencyProfileType
 	// rollout will be initiated to restore the respective default arguments of all
 	// components.
-	WorkerLatencyProfileDegraded WorkerLatencyStatusConditionType = "Degraded"
+	KubeletDegraded               = "KubeletDegraded"
+	KubeControllerManagerDegraded = "KubeControllerManagerDegraded"
+	KubeAPIServerDegraded         = "KubeAPIServerDegraded"
 )
-
-type WorkerLatencyStatusConditionOwner string
-
-const (
-	// Machine Config Operator will update condition status by setting this as owner
-	MachineConfigOperator WorkerLatencyStatusConditionOwner = "MachineConfigOperator"
-
-	// Kube Controller Manager Operator will update condition status  by setting this as owner
-	KubeControllerManagerOperator WorkerLatencyStatusConditionOwner = "KubeControllerManagerOperator"
-
-	// Kube API Server Operator will update condition status by setting this as owner
-	KubeAPIServerOperator WorkerLatencyStatusConditionOwner = "KubeAPIServerOperator"
-)
-
-type WorkerLatencyStatusCondition struct {
-	// Owner specifies the operator that is updating this condition
-	// +kubebuilder:validation:Required
-	// +required
-	Owner WorkerLatencyStatusConditionOwner `json:"owner"`
-
-	// type specifies the aspect reported by this condition.
-	// +kubebuilder:validation:Required
-	// +required
-	Type WorkerLatencyStatusConditionType `json:"type"`
-
-	// status of the condition, one of True, False, Unknown.
-	// +kubebuilder:validation:Required
-	// +required
-	Status ConditionStatus `json:"status"`
-
-	// lastTransitionTime is the time of the last update to the current status property.
-	// +kubebuilder:validation:Required
-	// +required
-	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
-
-	// reason is the CamelCase reason for the condition's current status.
-	// +optional
-	Reason string `json:"reason,omitempty"`
-
-	// message provides additional information about the current condition.
-	// This is only to be consumed by humans.  It may contain Line Feed
-	// characters (U+000A), which should be rendered as new lines.
-	// +optional
-	Message string `json:"message,omitempty"`
-}
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 

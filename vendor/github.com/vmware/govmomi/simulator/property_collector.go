@@ -332,7 +332,7 @@ func (rr *retrieveResult) collect(ctx *Context, ref types.ManagedObjectReference
 	rval, ok := getObject(ctx, ref)
 	if !ok {
 		// Possible if a test uses Map.Remove instead of Destroy_Task
-		log.Printf("object %s no longer exists", ref)
+		tracef("object %s no longer exists", ref)
 		return
 	}
 
@@ -485,8 +485,8 @@ func (pc *PropertyCollector) DestroyPropertyCollector(ctx *Context, c *types.Des
 		filter.DestroyPropertyFilter(ctx, &types.DestroyPropertyFilter{This: ref})
 	}
 
-	ctx.Session.Remove(c.This)
-	ctx.Map.Remove(c.This)
+	ctx.Session.Remove(ctx, c.This)
+	ctx.Map.Remove(ctx, c.This)
 
 	body.Res = &types.DestroyPropertyCollectorResponse{}
 
@@ -579,7 +579,7 @@ func (pc *PropertyCollector) UpdateObject(o mo.Reference, changes []types.Proper
 	})
 }
 
-func (pc *PropertyCollector) RemoveObject(ref types.ManagedObjectReference) {
+func (pc *PropertyCollector) RemoveObject(_ *Context, ref types.ManagedObjectReference) {
 	pc.update(types.ObjectUpdate{
 		Obj:       ref,
 		Kind:      types.ObjectUpdateKindLeave,
@@ -667,13 +667,13 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 	}
 
 	if r.Version == "" {
+		ctx.Map.AddHandler(pc) // Listen for create, update, delete of managed objects
 		apply()                // Collect current state
 		set.Version = "-"      // Next request with Version set will wait via loop below
-		ctx.Map.AddHandler(pc) // Listen for create, update, delete of managed objects
 		return body
 	}
 
-	ticker := time.NewTicker(250 * time.Millisecond) // allow for updates to accumulate
+	ticker := time.NewTicker(20 * time.Millisecond) // allow for updates to accumulate
 	defer ticker.Stop()
 	// Start the wait loop, returning on one of:
 	// - Client calls CancelWaitForUpdates
@@ -685,11 +685,11 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 			body.Res.Returnval = nil
 			switch wait.Err() {
 			case context.Canceled:
-				log.Printf("%s: WaitForUpdates canceled", pc.Self)
+				tracef("%s: WaitForUpdates canceled", pc.Self)
 				body.Fault_ = Fault("", new(types.RequestCanceled)) // CancelWaitForUpdates was called
 				body.Res = nil
 			case context.DeadlineExceeded:
-				log.Printf("%s: WaitForUpdates MaxWaitSeconds exceeded", pc.Self)
+				tracef("%s: WaitForUpdates MaxWaitSeconds exceeded", pc.Self)
 			}
 
 			return body
@@ -706,7 +706,7 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 				continue
 			}
 
-			log.Printf("%s: applying %d updates to %d filters", pc.Self, len(updates), len(pc.Filter))
+			tracef("%s: applying %d updates to %d filters", pc.Self, len(updates), len(pc.Filter))
 
 			for _, f := range pc.Filter {
 				filter := ctx.Session.Get(f).(*PropertyFilter)
@@ -719,7 +719,7 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 							return body
 						}
 					case types.ObjectUpdateKindModify: // Update
-						log.Printf("%s has %d changes", update.Obj, len(update.ChangeSet))
+						tracef("%s has %d changes", update.Obj, len(update.ChangeSet))
 						if !apply() { // An update may apply to collector traversal specs
 							return body
 						}

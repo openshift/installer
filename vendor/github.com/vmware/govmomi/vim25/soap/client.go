@@ -224,15 +224,17 @@ func (c *Client) NewServiceClient(path string, namespace string) *Client {
 	return client
 }
 
-// SetRootCAs defines the set of root certificate authorities
-// that clients use when verifying server certificates.
-// By default TLS uses the host's root CA set.
+// SetRootCAs defines the set of PEM-encoded file locations of root certificate
+// authorities the client uses when verifying server certificates instead of the
+// TLS defaults which uses the host's root CA set. Multiple PEM file locations
+// can be specified using the OS-specific PathListSeparator.
 //
-// See: http.Client.Transport.TLSClientConfig.RootCAs
-func (c *Client) SetRootCAs(file string) error {
+// See: http.Client.Transport.TLSClientConfig.RootCAs and
+// https://pkg.go.dev/os#PathListSeparator
+func (c *Client) SetRootCAs(pemPaths string) error {
 	pool := x509.NewCertPool()
 
-	for _, name := range filepath.SplitList(file) {
+	for _, name := range filepath.SplitList(pemPaths) {
 		pem, err := ioutil.ReadFile(filepath.Clean(name))
 		if err != nil {
 			return err
@@ -528,8 +530,6 @@ func (c *Client) Do(ctx context.Context, req *http.Request, f func(*http.Respons
 		return err
 	}
 
-	defer res.Body.Close()
-
 	if d.enabled() {
 		d.debugResponse(res, ext)
 	}
@@ -537,6 +537,8 @@ func (c *Client) Do(ctx context.Context, req *http.Request, f func(*http.Respons
 	if c.insecureCookies {
 		c.setInsecureCookies(res)
 	}
+
+	defer res.Body.Close()
 
 	return f(res)
 }
@@ -560,7 +562,7 @@ type statusError struct {
 }
 
 // Temporary returns true for HTTP response codes that can be retried
-// See vim25.TemporaryNetworkError
+// See vim25.IsTemporaryNetworkError
 func (e *statusError) Temporary() bool {
 	switch e.res.StatusCode {
 	case http.StatusBadGateway:
@@ -828,7 +830,7 @@ func (c *Client) WriteFile(ctx context.Context, file string, src io.Reader, size
 
 	if s != nil {
 		pr := progress.NewReader(ctx, s, src, size)
-		src = pr
+		r = pr
 
 		// Mark progress reader as done when returning from this function.
 		defer func() {

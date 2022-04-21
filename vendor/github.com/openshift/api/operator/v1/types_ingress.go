@@ -391,8 +391,8 @@ type LoadBalancerStrategy struct {
 // +union
 type ProviderLoadBalancerParameters struct {
 	// type is the underlying infrastructure provider for the load balancer.
-	// Allowed values are "AWS", "Azure", "BareMetal", "GCP", "OpenStack",
-	// and "VSphere".
+	// Allowed values are "AWS", "Azure", "BareMetal", "GCP", "Nutanix",
+	// "OpenStack", and "VSphere".
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Required
@@ -419,10 +419,10 @@ type ProviderLoadBalancerParameters struct {
 }
 
 // LoadBalancerProviderType is the underlying infrastructure provider for the
-// load balancer. Allowed values are "AWS", "Azure", "BareMetal", "GCP",
+// load balancer. Allowed values are "AWS", "Azure", "BareMetal", "GCP", "Nutanix",
 // "OpenStack", and "VSphere".
 //
-// +kubebuilder:validation:Enum=AWS;Azure;BareMetal;GCP;OpenStack;VSphere;IBM
+// +kubebuilder:validation:Enum=AWS;Azure;BareMetal;GCP;Nutanix;OpenStack;VSphere;IBM
 type LoadBalancerProviderType string
 
 const (
@@ -434,6 +434,7 @@ const (
 	IBMLoadBalancerProvider          LoadBalancerProviderType = "IBM"
 	BareMetalLoadBalancerProvider    LoadBalancerProviderType = "BareMetal"
 	AlibabaCloudLoadBalancerProvider LoadBalancerProviderType = "AlibabaCloud"
+	NutanixLoadBalancerProvider      LoadBalancerProviderType = "Nutanix"
 )
 
 // AWSLoadBalancerParameters provides configuration settings that are
