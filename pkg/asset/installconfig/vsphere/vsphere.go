@@ -30,6 +30,7 @@ type vCenterClient struct {
 	Password   string
 	Client     *vim25.Client
 	RestClient *rest.Client
+	Logout     ClientLogout
 }
 
 // networkNamer declares an interface for the object.Common.Name() function.
@@ -47,6 +48,7 @@ func Platform() (*vsphere.Platform, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer vCenter.Logout()
 
 	finder := NewFinder(vCenter.Client)
 	ctx := context.TODO()
@@ -136,7 +138,7 @@ func getClients() (*vCenterClient, error) {
 
 	// There is a noticeable delay when creating the client, so let the user know what's going on.
 	logrus.Infof("Connecting to vCenter %s", vcenter)
-	vim25Client, restClient, cleanup, err := CreateVSphereClients(context.TODO(),
+	vim25Client, restClient, logoutFunction, err := CreateVSphereClients(context.TODO(),
 		vcenter,
 		username,
 		password)
@@ -146,7 +148,6 @@ func getClients() (*vCenterClient, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to connect to vCenter %s. Ensure provided information is correct and client certs have been added to system trust.", vcenter)
 	}
-	defer cleanup()
 
 	return &vCenterClient{
 		VCenter:    vcenter,
@@ -154,6 +155,7 @@ func getClients() (*vCenterClient, error) {
 		Password:   password,
 		Client:     vim25Client,
 		RestClient: restClient,
+		Logout:     logoutFunction,
 	}, nil
 }
 
