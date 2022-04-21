@@ -31,6 +31,8 @@ func (p printer) PrintResource(schema *apiextv1.JSONSchemaProps) {
 	}
 	io.WriteString(p.Writer, fmt.Sprintf("RESOURCE: <%s>\n", resource))
 
+	p.printLabels(2, schema)
+
 	desc := schema.Description
 	if len(desc) == 0 {
 		desc = "<empty>"
@@ -78,15 +80,7 @@ func (p printer) printField(name string, required bool, schema *apiextv1.JSONSch
 	}
 	write(fieldIndent, p.Writer, title)
 
-	if schema.Default != nil {
-		write(fieldDescIndent, p.Writer, fmt.Sprintf("Default: %s", defaultString(*schema.Default)))
-	}
-	if len(schema.Format) > 0 {
-		write(fieldDescIndent, p.Writer, fmt.Sprintf("Format: %s", schema.Format))
-	}
-	if len(schema.Enum) > 0 {
-		write(fieldDescIndent, p.Writer, fmt.Sprintf("Valid Values: %s", strings.Join(validValues(schema.Enum), ",")))
-	}
+	p.printLabels(fieldDescIndent, schema)
 
 	fdesc := schema.Description
 	if fdesc == "" {
@@ -97,6 +91,18 @@ func (p printer) printField(name string, required bool, schema *apiextv1.JSONSch
 		write(6, p.Writer, schema.Items.Schema.Description)
 	}
 	io.WriteString(p.Writer, "\n")
+}
+
+func (p printer) printLabels(indentLevel int, schema *apiextv1.JSONSchemaProps) {
+	if schema.Default != nil {
+		write(indentLevel, p.Writer, fmt.Sprintf("Default: %s", defaultString(*schema.Default)))
+	}
+	if len(schema.Format) > 0 {
+		write(indentLevel, p.Writer, fmt.Sprintf("Format: %s", schema.Format))
+	}
+	if len(schema.Enum) > 0 {
+		write(indentLevel, p.Writer, fmt.Sprintf("Valid Values: %s", strings.Join(validValues(schema.Enum), ",")))
+	}
 }
 
 func write(indentLevel int, w io.Writer, s string) {
