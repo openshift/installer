@@ -30,7 +30,31 @@ type MachinePool struct {
 	//
 	// +optional
 	UltraSSDCapability string `json:"ultraSSDCapability,omitempty"`
+
+	// VMNetworkingType specifies whether to enable accelerated networking.
+	// Accelerated networking enables single root I/O virtualization (SR-IOV) to a VM, greatly improving its
+	// networking performance.
+	// eg. values: "Accelerated", "Basic"
+	//
+	// +kubebuilder:validation:Enum="Accelerated"; "Basic"
+	// +optional
+	VMNetworkingType string `json:"vmNetworkingType,omitempty"`
 }
+
+// VMNetworkingCapability defines the states for accelerated networking feature
+type VMNetworkingCapability string
+
+const (
+	// AcceleratedNetworkingEnabled is string representation of the VMNetworkingType / AcceleratedNetworking Capability
+	// provided by the Azure API
+	AcceleratedNetworkingEnabled = "AcceleratedNetworkingEnabled"
+
+	// VMNetworkingTypeBasic enum attribute that is the default setting which means AcceleratedNetworking is disabled.
+	VMNetworkingTypeBasic VMNetworkingCapability = "Basic"
+
+	// VMnetworkingTypeAccelerated enum attribute that enables AcceleratedNetworking on a VM NIC.
+	VMnetworkingTypeAccelerated VMNetworkingCapability = "Accelerated"
+)
 
 // Set sets the values from `required` to `a`.
 func (a *MachinePool) Set(required *MachinePool) {
@@ -64,5 +88,9 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.UltraSSDCapability != "" {
 		a.UltraSSDCapability = required.UltraSSDCapability
+	}
+
+	if required.VMNetworkingType != "" {
+		a.VMNetworkingType = required.VMNetworkingType
 	}
 }

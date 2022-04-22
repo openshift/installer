@@ -37,6 +37,15 @@ func ValidateMachinePool(p *azure.MachinePool, fldPath *field.Path) field.ErrorL
 		}
 	}
 
+	if p.VMNetworkingType != "" {
+		acceleratedNetworkingOptions := sets.NewString(string(azure.VMnetworkingTypeAccelerated), string(azure.VMNetworkingTypeBasic))
+		if !acceleratedNetworkingOptions.Has(p.VMNetworkingType) {
+			allErrs = append(allErrs,
+				field.NotSupported(fldPath.Child("acceleratedNetworking"),
+					p.VMNetworkingType, acceleratedNetworkingOptions.List()))
+		}
+	}
+
 	return allErrs
 }
 

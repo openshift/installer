@@ -145,15 +145,16 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				DiskEncryptionSet:  diskEncryptionSet,
 			},
 		},
-		SecurityProfile:      securityProfile,
-		UltraSSDCapability:   ultraSSDCapability,
-		Zone:                 az,
-		Subnet:               subnet,
-		ManagedIdentity:      managedIdentity,
-		Vnet:                 virtualNetwork,
-		ResourceGroup:        rg,
-		NetworkResourceGroup: networkResourceGroup,
-		PublicLoadBalancer:   publicLB,
+		SecurityProfile:       securityProfile,
+		UltraSSDCapability:    ultraSSDCapability,
+		Zone:                  az,
+		Subnet:                subnet,
+		ManagedIdentity:       managedIdentity,
+		Vnet:                  virtualNetwork,
+		ResourceGroup:         rg,
+		NetworkResourceGroup:  networkResourceGroup,
+		PublicLoadBalancer:    publicLB,
+		AcceleratedNetworking: getVMNetworkingType(mpool.VMNetworkingType),
 	}
 
 	if platform.CloudName == azure.StackCloud {
@@ -181,4 +182,8 @@ func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, s
 	default:
 		return "", "", "", fmt.Errorf("unrecognized machine role %s", role)
 	}
+}
+
+func getVMNetworkingType(value string) bool {
+	return value == string(azure.VMnetworkingTypeAccelerated)
 }
