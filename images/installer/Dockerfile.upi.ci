@@ -50,7 +50,8 @@ RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraf
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /bin/
 ENV MATCHBOX_PROVIDER_VERSION=0.5.0
 RUN curl -L -O https://github.com/poseidon/terraform-provider-matchbox/releases/download/v${MATCHBOX_PROVIDER_VERSION}/terraform-provider-matchbox_${MATCHBOX_PROVIDER_VERSION}_linux_amd64.zip && \
-    unzip terraform-provider-matchbox_${MATCHBOX_PROVIDER_VERSION}_linux_amd64.zip -d /bin/
+    unzip terraform-provider-matchbox_${MATCHBOX_PROVIDER_VERSION}_linux_amd64.zip -d /bin/ && \
+    mv /bin/terraform-provider-matchbox_v${MATCHBOX_PROVIDER_VERSION} /bin/terraform-provider-matchbox
 ENV IGNITION_PROVIDER_VERSION=v2.1.0
 RUN curl -L -O https://github.com/community-terraform-providers/terraform-provider-ignition/releases/download/${IGNITION_PROVIDER_VERSION}/terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64.tar.gz && \
     tar xzf terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64.tar.gz && \
