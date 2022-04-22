@@ -106,22 +106,6 @@ func TestCloudProviderConfig(t *testing.T) {
 secret-name = openstack-credentials
 secret-namespace = kube-system
 region = my_region
-[LoadBalancer]
-use-octavia = True
-`,
-		}, {
-			name: "installation with kuryr",
-			installConfig: &types.InstallConfig{
-				Networking: &types.Networking{
-					NetworkType: "Kuryr",
-				},
-			},
-			expectedConfig: `[Global]
-secret-name = openstack-credentials
-secret-namespace = kube-system
-region = my_region
-[LoadBalancer]
-use-octavia = False
 `,
 		},
 	}
