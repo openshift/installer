@@ -52,17 +52,17 @@ func New() *ConfigBuilder {
 	clusterParams := manifests.CreateClusterParams()
 	clusterJSON, err := json.Marshal(clusterParams)
 	if err != nil {
-		logrus.Errorf("Error marshalling cluster params into json: %w", err)
+		logrus.Errorf("Error marshalling cluster params into json: %v", err)
 	}
 
 	infraEnvParams, err := manifests.CreateInfraEnvParams()
 	if err != nil {
-		logrus.Errorf("Error building infra env params: %w", err)
+		logrus.Errorf("Error building infra env params: %v", err)
 	}
 
 	infraEnvJSON, err := json.Marshal(infraEnvParams)
 	if err != nil {
-		logrus.Errorf("Error marshal infra env params into json: %w", err)
+		logrus.Errorf("Error marshal infra env params into json: %v", err)
 	}
 
 	aci := manifests.GetAgentClusterInstall()
