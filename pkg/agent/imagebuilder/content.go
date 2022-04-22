@@ -265,6 +265,7 @@ func (c ConfigBuilder) getManifests(manifestPath string) ([]igntypes.File, error
 		ignitionPath := path.Join("/etc/assisted/manifests", e.Name())
 		if e.IsDir() {
 			// ignore subdirectories
+			continue
 		} else {
 			contents, err := ioutil.ReadFile(path.Join(localPath))
 			if err != nil {
