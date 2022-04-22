@@ -59,7 +59,7 @@ func New() *ConfigBuilder {
 
 	staticNetworkConfig, err := manifests.ProcessNMStateConfig(infraEnv)
 	if err != nil {
-		logrus.Errorf("Error marshal infra env params into json: %w", err)
+		logrus.Errorf("Error processing NMStateConfigs: %w", err)
 		os.Exit(1)
 	}
 
