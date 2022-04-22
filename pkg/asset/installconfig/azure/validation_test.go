@@ -483,6 +483,8 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU, validOSImageVersion).Return(azsku.VirtualMachineImage{}, nil).AnyTimes()
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU).Return(false, nil).AnyTimes()
 
+	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]string{"1", "2", "3"}, nil).AnyTimes()
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			editedInstallConfig := validInstallConfig()

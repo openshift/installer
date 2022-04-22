@@ -54,6 +54,21 @@ func (mr *MockAPIMockRecorder) AreMarketplaceImageTermsAccepted(ctx, publisher, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AreMarketplaceImageTermsAccepted", reflect.TypeOf((*MockAPI)(nil).AreMarketplaceImageTermsAccepted), ctx, publisher, offer, sku)
 }
 
+// GetAvailabilityZones mocks base method.
+func (m *MockAPI) GetAvailabilityZones(ctx context.Context, region, instanceType string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAvailabilityZones", ctx, region, instanceType)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAvailabilityZones indicates an expected call of GetAvailabilityZones.
+func (mr *MockAPIMockRecorder) GetAvailabilityZones(ctx, region, instanceType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvailabilityZones", reflect.TypeOf((*MockAPI)(nil).GetAvailabilityZones), ctx, region, instanceType)
+}
+
 // GetComputeSubnet mocks base method.
 func (m *MockAPI) GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*network.Subnet, error) {
 	m.ctrl.T.Helper()

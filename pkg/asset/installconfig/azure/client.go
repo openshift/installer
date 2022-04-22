@@ -36,6 +36,7 @@ type API interface {
 	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azsku.VirtualMachineImage, error)
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
+	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
 }
 
 // Client makes calls to the Azure API.
@@ -346,4 +347,31 @@ func (c *Client) AreMarketplaceImageTermsAccepted(ctx context.Context, publisher
 	}
 
 	return terms.AgreementProperties.Accepted != nil && *terms.AgreementProperties.Accepted, nil
+}
+
+// GetAvailabilityZones retrieves a list of availability zones for the given region, and instance type.
+func (c *Client) GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error) {
+	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
+	client.Authorizer = c.ssn.Authorizer
+
+	var zones []string
+	// Only supported filter atm is `location`
+	filter := fmt.Sprintf("location eq '%s'", region)
+	for res, err := client.List(ctx, filter); res.NotDone(); err = res.NextWithContext(ctx) {
+		if err != nil {
+			return nil, err
+		}
+
+		for _, resSku := range res.Values() {
+			if strings.EqualFold(to.String(resSku.Name), instanceType) {
+				for _, locationInfo := range *resSku.LocationInfo {
+					if strings.EqualFold(to.String(locationInfo.Location), region) {
+						return to.StringSlice(locationInfo.Zones), nil
+					}
+				}
+			}
+		}
+	}
+
+	return zones, nil
 }
