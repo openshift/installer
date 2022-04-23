@@ -69,7 +69,7 @@ type SplitStage struct {
 }
 
 // DestroyFunc is a function for destroying the stage.
-type DestroyFunc func(s SplitStage, directory string, varFiles []string) error
+type DestroyFunc func(s SplitStage, directory string, terraformDir string, varFiles []string) error
 
 // ExtractFunc is a function for extracting host addresses.
 type ExtractFunc func(s SplitStage, directory string, ic *types.InstallConfig) (string, int, []string, error)
@@ -100,8 +100,8 @@ func (s SplitStage) DestroyWithBootstrap() bool {
 }
 
 // Destroy implements pkg/terraform/Stage.Destroy
-func (s SplitStage) Destroy(directory string, varFiles []string) error {
-	return s.destroy(s, directory, varFiles)
+func (s SplitStage) Destroy(directory string, terraformDir string, varFiles []string) error {
+	return s.destroy(s, directory, terraformDir, varFiles)
 }
 
 // ExtractHostAddresses implements pkg/terraform/Stage.ExtractHostAddresses
@@ -165,10 +165,10 @@ func normalExtractHostAddresses(s SplitStage, directory string, _ *types.Install
 	return bootstrap, 0, masters, nil
 }
 
-func normalDestroy(s SplitStage, directory string, varFiles []string) error {
+func normalDestroy(s SplitStage, directory string, terraformDir string, varFiles []string) error {
 	opts := make([]tfexec.DestroyOption, len(varFiles))
 	for i, varFile := range varFiles {
 		opts[i] = tfexec.VarFile(varFile)
 	}
-	return errors.Wrap(terraform.Destroy(directory, s.platform, s, opts...), "terraform destroy")
+	return errors.Wrap(terraform.Destroy(directory, s.platform, s, terraformDir, opts...), "terraform destroy")
 }
