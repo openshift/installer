@@ -399,7 +399,7 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 4 vCPUsAvailable, controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 16 GB Memory, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 2 vCPUsAvailable, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 8 GB Memory\]`,
 		},
 		{
-			, name:  "Valid OS Image",
+			name:  "Valid OS Image",
 			edits: editFunctions{validOSImageCompute},
 		},
 		{
