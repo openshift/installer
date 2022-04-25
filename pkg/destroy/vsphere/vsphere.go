@@ -21,7 +21,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	"github.com/openshift/installer/pkg/client/vsphere"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	installertypes "github.com/openshift/installer/pkg/types"
 )

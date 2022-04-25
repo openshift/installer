@@ -7,7 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/govmomi/vim25"
 
-	"github.com/openshift/installer/pkg/asset/installconfig/vsphere/mock"
+	vsphereclient "github.com/openshift/installer/pkg/client/vsphere"
+	"github.com/openshift/installer/pkg/client/vsphere/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -47,7 +48,7 @@ func TestValidate(t *testing.T) {
 	tests := []struct {
 		name             string
 		installConfig    *types.InstallConfig
-		validationMethod func(*vim25.Client, Finder, *types.InstallConfig) error
+		validationMethod func(*vim25.Client, vsphereclient.Finder, *types.InstallConfig) error
 		expectErr        string
 	}{{
 		name:             "valid IPI install config",

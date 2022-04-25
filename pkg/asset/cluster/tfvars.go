@@ -30,13 +30,13 @@ import (
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
-	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	azclient "github.com/openshift/installer/pkg/client/azure"
 	gcpclient "github.com/openshift/installer/pkg/client/gcp"
+	vsphereclient "github.com/openshift/installer/pkg/client/vsphere"
 	rhcospkg "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	alibabacloudtfvars "github.com/openshift/installer/pkg/tfvars/alibabacloud"
@@ -748,7 +748,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		// instead of the name since port group names aren't always unique in vSphere.
 		// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
 		controlPlaneConfig := controlPlaneConfigs[0]
-		vim25Client, _, cleanup, err := vsphereconfig.CreateVSphereClients(context.TODO(),
+		vim25Client, _, cleanup, err := vsphereclient.CreateVSphereClients(context.TODO(),
 			controlPlaneConfig.Workspace.Server,
 			installConfig.Config.VSphere.Username,
 			installConfig.Config.VSphere.Password)
@@ -757,8 +757,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		defer cleanup()
 
-		finder := vsphereconfig.NewFinder(vim25Client)
-		networkID, err := vsphereconfig.GetNetworkMoID(context.TODO(),
+		finder := vsphereclient.NewFinder(vim25Client)
+		networkID, err := vsphereclient.GetNetworkMoID(context.TODO(),
 			vim25Client,
 			finder,
 			controlPlaneConfig.Workspace.Datacenter,

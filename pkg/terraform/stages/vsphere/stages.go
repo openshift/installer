@@ -9,7 +9,7 @@ import (
 	"github.com/vmware/govmomi/vim25"
 	vmwaretypes "github.com/vmware/govmomi/vim25/types"
 
-	"github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	"github.com/openshift/installer/pkg/client/vsphere"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"

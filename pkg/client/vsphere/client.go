@@ -17,6 +17,8 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
+//go:generate mockgen -source=./client.go -destination=./mock/vsphereclient_generated.go -package=mock
+
 // Finder interface represents the client that is used to connect to VSphere to get specific
 // information from the resources in the VCenter. This interface just describes all the useful
 // functions used by the installer from the finder function in vmware govmomi package and is

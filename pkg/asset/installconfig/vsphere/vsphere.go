@@ -15,6 +15,7 @@ import (
 	"github.com/vmware/govmomi/vim25"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	vsphereclient "github.com/openshift/installer/pkg/client/vsphere"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/validate"
 )
@@ -30,7 +31,7 @@ type vCenterClient struct {
 	Password   string
 	Client     *vim25.Client
 	RestClient *rest.Client
-	Logout     ClientLogout
+	Logout     vsphereclient.ClientLogout
 }
 
 // Platform collects vSphere-specific configuration.
@@ -41,7 +42,7 @@ func Platform() (*vsphere.Platform, error) {
 	}
 	defer vCenter.Logout()
 
-	finder := NewFinder(vCenter.Client)
+	finder := vsphereclient.NewFinder(vCenter.Client)
 	ctx := context.TODO()
 
 	dc, dcPath, err := getDataCenter(ctx, finder, vCenter.Client)
@@ -129,7 +130,7 @@ func getClients() (*vCenterClient, error) {
 
 	// There is a noticeable delay when creating the client, so let the user know what's going on.
 	logrus.Infof("Connecting to vCenter %s", vcenter)
-	vim25Client, restClient, logoutFunction, err := CreateVSphereClients(context.TODO(),
+	vim25Client, restClient, logoutFunction, err := vsphereclient.CreateVSphereClients(context.TODO(),
 		vcenter,
 		username,
 		password)
@@ -153,7 +154,7 @@ func getClients() (*vCenterClient, error) {
 // getDataCenter searches the root for all datacenters and, if there is more than one, lets the user select
 // one to use for installation. Returns the name and path of the selected datacenter. The name is used
 // to generate the install config and the path is used to determine the options for cluster, datastore and network.
-func getDataCenter(ctx context.Context, finder Finder, client *vim25.Client) (string, string, error) {
+func getDataCenter(ctx context.Context, finder vsphereclient.Finder, client *vim25.Client) (string, string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
@@ -198,7 +199,7 @@ func getDataCenter(ctx context.Context, finder Finder, client *vim25.Client) (st
 	return selectedDataCenter, dataCenterPaths[selectedDataCenter], nil
 }
 
-func getCluster(ctx context.Context, path string, finder Finder, client *vim25.Client) (string, error) {
+func getCluster(ctx context.Context, path string, finder vsphereclient.Finder, client *vim25.Client) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
@@ -241,7 +242,7 @@ func getCluster(ctx context.Context, path string, finder Finder, client *vim25.C
 	return selectedcluster, nil
 }
 
-func getDataStore(ctx context.Context, path string, finder Finder, client *vim25.Client) (string, error) {
+func getDataStore(ctx context.Context, path string, finder vsphereclient.Finder, client *vim25.Client) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
@@ -282,12 +283,12 @@ func getDataStore(ctx context.Context, path string, finder Finder, client *vim25
 	return selectedDataStore, nil
 }
 
-func getNetwork(ctx context.Context, datacenter string, cluster string, finder Finder, client *vim25.Client) (string, error) {
+func getNetwork(ctx context.Context, datacenter string, cluster string, finder vsphereclient.Finder, client *vim25.Client) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
 	// Get a list of networks from the previously selected Datacenter and Cluster
-	networks, err := GetClusterNetworks(ctx, finder, datacenter, cluster)
+	networks, err := vsphereclient.GetClusterNetworks(ctx, finder, datacenter, cluster)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to list networks")
 	}
@@ -297,7 +298,7 @@ func getNetwork(ctx context.Context, datacenter string, cluster string, finder F
 		return "", errors.New("did not find any networks")
 	}
 	if len(networks) == 1 {
-		n, err := GetNetworkName(ctx, client, networks[0])
+		n, err := vsphereclient.GetNetworkName(ctx, client, networks[0])
 		if err != nil {
 			return "", errors.Wrap(err, "unable to get network name")
 		}
@@ -315,7 +316,7 @@ func getNetwork(ctx context.Context, datacenter string, cluster string, finder F
 	for _, network := range networks {
 		if validNetworkTypes.Has(network.Reference().Type) {
 			// TODO Below results in an API call. Can it be eliminated somehow?
-			n, err := GetNetworkName(ctx, client, network)
+			n, err := vsphereclient.GetNetworkName(ctx, client, network)
 			if err != nil {
 				return "", errors.Wrap(err, "unable to get network name")
 			}

@@ -9,6 +9,7 @@ import (
 	"github.com/vmware/govmomi/vim25"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	vsphereclient "github.com/openshift/installer/pkg/client/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/types/vsphere/validation"
@@ -32,7 +33,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	}
 
 	p := ic.Platform.VSphere
-	vim25Client, _, cleanup, err := CreateVSphereClients(context.TODO(),
+	vim25Client, _, cleanup, err := vsphereclient.CreateVSphereClients(context.TODO(),
 		p.VCenter,
 		p.Username,
 		p.Password)
@@ -42,11 +43,11 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	}
 	defer cleanup()
 
-	finder := NewFinder(vim25Client)
+	finder := vsphereclient.NewFinder(vim25Client)
 	return validateProvisioning(vim25Client, finder, ic)
 }
 
-func validateProvisioning(client *vim25.Client, finder Finder, ic *types.InstallConfig) error {
+func validateProvisioning(client *vim25.Client, finder vsphereclient.Finder, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validation.ValidateForProvisioning(ic.Platform.VSphere, field.NewPath("platform").Child("vsphere"))...)
 	allErrs = append(allErrs, folderExists(finder, ic, field.NewPath("platform").Child("vsphere").Child("folder"))...)
@@ -59,7 +60,7 @@ func validateProvisioning(client *vim25.Client, finder Finder, ic *types.Install
 }
 
 // folderExists returns an error if a folder is specified in the vSphere platform but a folder with that name is not found in the datacenter.
-func folderExists(finder Finder, ic *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+func folderExists(finder vsphereclient.Finder, ic *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	cfg := ic.VSphere
 
@@ -77,7 +78,7 @@ func folderExists(finder Finder, ic *types.InstallConfig, fldPath *field.Path) f
 	return nil
 }
 
-func validateNetwork(client *vim25.Client, finder Finder, p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
+func validateNetwork(client *vim25.Client, finder vsphereclient.Finder, p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	// It's not possible to validate a network if datacenter or cluster are empty strings
 	if p.Datacenter == "" || p.Cluster == "" {
 		return nil
@@ -94,7 +95,7 @@ func validateNetwork(client *vim25.Client, finder Finder, p *vsphere.Platform, f
 		return field.ErrorList{field.Invalid(fldPath, p.Datacenter, err.Error())}
 	}
 
-	_, err = GetNetworkMoID(ctx, client, finder, dataCenter.Name(), p.Cluster, p.Network)
+	_, err = vsphereclient.GetNetworkMoID(ctx, client, finder, dataCenter.Name(), p.Cluster, p.Network)
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, p.Network, err.Error())}
 	}
@@ -102,7 +103,7 @@ func validateNetwork(client *vim25.Client, finder Finder, p *vsphere.Platform, f
 }
 
 // resourcePoolExists returns an error if a resourcePool is specified in the vSphere platform but a resourcePool with that name is not found in the datacenter.
-func resourcePoolExists(finder Finder, ic *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+func resourcePoolExists(finder vsphereclient.Finder, ic *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	cfg := ic.VSphere
 
