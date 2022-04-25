@@ -18,8 +18,6 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	nutanixapi "github.com/openshift/machine-api-provider-nutanix/pkg/apis"
-	nutanixprovider "github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1"
 	powervsapi "github.com/openshift/machine-api-provider-powervs/pkg/apis"
 	powervsprovider "github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
@@ -630,7 +628,6 @@ func (w *Worker) Load(f asset.FileFetcher) (found bool, err error) {
 func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	scheme := runtime.NewScheme()
 	baremetalapi.AddToScheme(scheme)
-	nutanixapi.AddToScheme(scheme)
 	ibmcloudapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
@@ -642,20 +639,21 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 		&machinev1beta1.AzureMachineProviderSpec{},
 		&machinev1beta1.GCPMachineProviderSpec{},
 	)
+	machinev1.Install(scheme)
 	scheme.AddKnownTypes(machinev1.GroupVersion,
 		&machinev1.AlibabaCloudMachineProviderConfig{},
+		&machinev1.NutanixMachineProviderConfig{},
 	)
 	machinev1beta1.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		baremetalprovider.SchemeGroupVersion,
 		ibmcloudprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
-		nutanixprovider.SchemeGroupVersion,
+		machinev1.GroupVersion,
 		openstackprovider.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
 		powervsprovider.GroupVersion,
 		machinev1beta1.SchemeGroupVersion,
-		machinev1.GroupVersion,
 	)
 
 	machineSets := []machinev1beta1.MachineSet{}

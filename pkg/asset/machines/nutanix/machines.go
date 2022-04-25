@@ -4,12 +4,13 @@ package nutanix
 import (
 	"fmt"
 
+	machinev1 "github.com/openshift/api/machine/v1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/nutanix"
-	nutanixapis "github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -62,22 +63,30 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *nutanix.Platform, mpool *nutanix.MachinePool, osImage string, userDataSecret string) (*nutanixapis.NutanixMachineProviderConfig, error) {
-	return &nutanixapis.NutanixMachineProviderConfig{
+func provider(clusterID string, platform *nutanix.Platform, mpool *nutanix.MachinePool, osImage string, userDataSecret string) (*machinev1.NutanixMachineProviderConfig, error) {
+	return &machinev1.NutanixMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: nutanixapis.SchemeGroupVersion.String(),
+			APIVersion: machinev1.GroupVersion.String(),
 			Kind:       "NutanixMachineProviderConfig",
 		},
-		UserDataSecret:       &corev1.LocalObjectReference{Name: userDataSecret},
-		CredentialsSecret:    &corev1.LocalObjectReference{Name: "nutanix-credentials"},
-		ImageName:            osImage,
-		SubnetUUID:           platform.SubnetUUID,
-		NumVcpusPerSocket:    mpool.NumCoresPerSocket,
-		NumSockets:           mpool.NumCPUs,
-		MemorySizeMib:        mpool.MemoryMiB,
-		PowerState:           "ON",
-		ClusterReferenceUUID: platform.PrismElementUUID,
-		DiskSizeMib:          mpool.OSDisk.DiskSizeMiB,
+		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
+		CredentialsSecret: &corev1.LocalObjectReference{Name: "nutanix-credentials"},
+		Image: machinev1.NutanixResourceIdentifier{
+			Type: machinev1.NutanixIdentifierName,
+			Name: &osImage,
+		},
+		Subnets: []machinev1.NutanixResourceIdentifier{{
+			Type: machinev1.NutanixIdentifierUUID,
+			UUID: &platform.SubnetUUID,
+		}},
+		VCPUsPerSocket: int32(mpool.NumCoresPerSocket),
+		VCPUSockets:    int32(mpool.NumCPUs),
+		MemorySize:     resource.MustParse(fmt.Sprintf("%dMi", mpool.MemoryMiB)),
+		Cluster: machinev1.NutanixResourceIdentifier{
+			Type: machinev1.NutanixIdentifierUUID,
+			UUID: &platform.PrismElementUUID,
+		},
+		SystemDiskSize: resource.MustParse(fmt.Sprintf("%dMi", mpool.OSDisk.DiskSizeMiB)),
 	}, nil
 }
 

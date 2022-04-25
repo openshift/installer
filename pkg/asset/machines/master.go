@@ -19,8 +19,6 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	nutanixapi "github.com/openshift/machine-api-provider-nutanix/pkg/apis"
-	nutanixprovider "github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1"
 	powervsapi "github.com/openshift/machine-api-provider-powervs/pkg/apis"
 	powervsprovider "github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
@@ -606,9 +604,10 @@ func (m *Master) Machines() ([]machinev1beta1.Machine, error) {
 	)
 	scheme.AddKnownTypes(machinev1.GroupVersion,
 		&machinev1.AlibabaCloudMachineProviderConfig{},
+		&machinev1.NutanixMachineProviderConfig{},
 	)
 	machinev1beta1.AddToScheme(scheme)
-	nutanixapi.AddToScheme(scheme)
+	machinev1.Install(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		machinev1.GroupVersion,
 		baremetalprovider.SchemeGroupVersion,
@@ -618,7 +617,6 @@ func (m *Master) Machines() ([]machinev1beta1.Machine, error) {
 		machinev1beta1.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
 		powervsprovider.GroupVersion,
-		nutanixprovider.SchemeGroupVersion,
 	)
 
 	machines := []machinev1beta1.Machine{}

@@ -13,7 +13,6 @@ import (
 	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	nutanixprovider "github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1"
 	powervsprovider "github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -863,9 +862,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return errors.Wrapf(err, "error getting control plane machines")
 		}
-		controlPlaneConfigs := make([]*nutanixprovider.NutanixMachineProviderConfig, len(controlPlanes))
+		controlPlaneConfigs := make([]*machinev1.NutanixMachineProviderConfig, len(controlPlanes))
 		for i, c := range controlPlanes {
-			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*nutanixprovider.NutanixMachineProviderConfig)
+			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1.NutanixMachineProviderConfig)
 		}
 
 		data, err = nutanixtfvars.TFVars(
