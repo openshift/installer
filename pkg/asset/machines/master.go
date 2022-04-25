@@ -362,12 +362,12 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		pool.Platform.Azure = &mpool
 
 		client := icazure.NewClient(session)
-		hyperVGeneration, err := client.GetHyperVGenerationVersion(context.TODO(), mpool.InstanceType, mpool.OSDisk.DiskType, installConfig.Config.Platform.Azure.Region)
+		capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
 		if err != nil {
 			return err
 		}
 
-		machines, err = azure.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName, hyperVGeneration)
+		machines, err = azure.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName, capabilities)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}

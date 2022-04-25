@@ -44,14 +44,23 @@ var (
 		{Name: to.StringPtr("Standard_D4_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}}},
 		{Name: to.StringPtr("Standard_D2s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}}},
 		{Name: to.StringPtr("Standard_D8s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("UltraSSDAvailable"), Value: to.StringPtr("True")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_D_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("False")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}}},
 		{Name: to.StringPtr("Standard_Dc4_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V2")}}},
+	}
+	vmCapabilities = map[string]map[string]string{
+		"Standard_D8s_v3": {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "UltraSSDAvailable": "True"},
+		"Standard_D4s_v3": {"vCPUsAvailable": "4", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V1", "AcceleratedNetworkingEnabled": "True", "UltraSSDAvailable": "True"},
+		"Standard_A1_v2":  {"vCPUsAvailable": "1", "MemoryGB": "2", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False"},
+		"Standard_D2_v4":  {"vCPUsAvailable": "2", "MemoryGB": "8", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True"},
+		"Standard_D4_v4":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "False", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True"},
+		"Standard_D2s_v3": {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True"},
+		"Standard_Dc4_v4": {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2"},
+		"Standard_B4ms":   {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "UltraSSDAvailable": "True"},
 	}
 
 	validInstanceTypes = func(ic *types.InstallConfig) {
-		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D2_v4"
-		ic.ControlPlane.Platform.Azure.InstanceType = "Standard_D4_v4"
-		ic.Compute[0].Platform.Azure.InstanceType = "Standard_D2_v4"
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D4s_v3"
+		ic.ControlPlane.Platform.Azure.InstanceType = "Standard_D8s_v3"
+		ic.Compute[0].Platform.Azure.InstanceType = "Standard_D4s_v3"
 	}
 
 	invalidateDefaultInstanceTypes = func(ic *types.InstallConfig) {
@@ -79,7 +88,7 @@ var (
 	}
 
 	invalidVMNetworkingIstanceTypes = func(ic *types.InstallConfig) {
-		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_A1_v2"
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_B4ms"
 	}
 
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
@@ -90,20 +99,20 @@ var (
 	}
 	invalidResourceSkuRegion = "centralus"
 
-	invalidateVirtualNetwork                = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "invalid-virtual-network" }
-	invalidateComputeSubnet                 = func(ic *types.InstallConfig) { ic.Azure.ComputeSubnet = "invalid-compute-subnet" }
-	invalidateControlPlaneSubnet            = func(ic *types.InstallConfig) { ic.Azure.ControlPlaneSubnet = "invalid-controlplane-subnet" }
-	invalidateRegion                        = func(ic *types.InstallConfig) { ic.Azure.Region = "neverland" }
-	invalidateRegionCapabilities            = func(ic *types.InstallConfig) { ic.Azure.Region = "australiacentral2" }
-	invalidateRegionLetterCase              = func(ic *types.InstallConfig) { ic.Azure.Region = "Central US" }
-	removeVirtualNetwork                    = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "" }
-	removeSubnets                           = func(ic *types.InstallConfig) { ic.Azure.ComputeSubnet, ic.Azure.ControlPlaneSubnet = "", "" }
-	premiumDiskCompute                      = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.OSDisk.DiskType = "Premium_LRS" }
-	nonpremiumInstanceTypeDiskCompute       = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.InstanceType = "Standard_D_v4" }
-	premiumDiskControlPlane                 = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.OSDisk.DiskType = "Premium_LRS" }
-	nonpremiumInstanceTypeDiskControlPlane  = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.InstanceType = "Standard_D_v4" }
-	premiumDiskDefault                      = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.OSDisk.DiskType = "Premium_LRS" }
-	nonpremiumInstanceTypeDiskDefault       = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.InstanceType = "Standard_D_v4" }
+	invalidateVirtualNetwork               = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "invalid-virtual-network" }
+	invalidateComputeSubnet                = func(ic *types.InstallConfig) { ic.Azure.ComputeSubnet = "invalid-compute-subnet" }
+	invalidateControlPlaneSubnet           = func(ic *types.InstallConfig) { ic.Azure.ControlPlaneSubnet = "invalid-controlplane-subnet" }
+	invalidateRegion                       = func(ic *types.InstallConfig) { ic.Azure.Region = "neverland" }
+	invalidateRegionCapabilities           = func(ic *types.InstallConfig) { ic.Azure.Region = "australiacentral2" }
+	invalidateRegionLetterCase             = func(ic *types.InstallConfig) { ic.Azure.Region = "Central US" }
+	removeVirtualNetwork                   = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "" }
+	removeSubnets                          = func(ic *types.InstallConfig) { ic.Azure.ComputeSubnet, ic.Azure.ControlPlaneSubnet = "", "" }
+	premiumDiskCompute                     = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.OSDisk.DiskType = "Premium_LRS" }
+	nonpremiumInstanceTypeDiskCompute      = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.InstanceType = "Standard_D4_v4" }
+	premiumDiskControlPlane                = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.OSDisk.DiskType = "Premium_LRS" }
+	nonpremiumInstanceTypeDiskControlPlane = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.InstanceType = "Standard_D4_v4" }
+	// premiumDiskDefault                      = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.OSDisk.DiskType = "Premium_LRS" }
+	nonpremiumInstanceTypeDiskDefault       = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.InstanceType = "Standard_D4_v4" }
 	enabledSSDCapabilityControlPlane        = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.UltraSSDCapability = "Enabled" }
 	enabledSSDCapabilityCompute             = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.UltraSSDCapability = "Enabled" }
 	enabledSSDCapabilityDefault             = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.UltraSSDCapability = "Enabled" }
@@ -303,9 +312,8 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			errorMsg: "",
 		},
 		{
-			name:  "Invalid default machine type",
-			edits: editFunctions{invalidateDefaultInstanceTypes},
-			// errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 4 vCPUsAvailable, controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 16 GB Memory, controlPlane.platform.azure.vmNetworkingType: Invalid value: "Accelerated": vm networking type is not supported for instance type Standard_A1_v2, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 2 vCPUsAvailable, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 8 GB Memory\, compute\[0\].platform.azure.vmNetworkingType: Invalid value: "Accelerated": vm networking type is not supported for instance type Standard_A1_v2\]`,
+			name:     "Invalid default machine type",
+			edits:    editFunctions{invalidateDefaultInstanceTypes},
 			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 4 vCPUsAvailable, controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 16 GB Memory, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 2 vCPUsAvailable, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 8 GB Memory\]`,
 		},
 		{
@@ -341,27 +349,27 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		{
 			name:     "Non-premium instance disk type for compute",
 			edits:    editFunctions{premiumDiskCompute, nonpremiumInstanceTypeDiskCompute},
-			errorMsg: `compute\[0\].platform.azure.osDisk.diskType: Invalid value: "Premium_LRS": PremiumIO not supported for instance type Standard_D_v4$`,
+			errorMsg: `compute\[0\].platform.azure.osDisk.diskType: Invalid value: "Premium_LRS": PremiumIO not supported for instance type Standard_D4_v4`,
 		},
 		{
 			name:     "Non-premium instance disk type for control-plane",
 			edits:    editFunctions{premiumDiskControlPlane, nonpremiumInstanceTypeDiskControlPlane},
-			errorMsg: `controlPlane.platform.azure.osDisk.diskType: Invalid value: "Premium_LRS": PremiumIO not supported for instance type Standard_D_v4$`,
+			errorMsg: `controlPlane.platform.azure.osDisk.diskType: Invalid value: "Premium_LRS": PremiumIO not supported for instance type Standard_D4_v4$`,
 		},
 		{
 			name:     "Unsupported UltraSSD capability in Control Plane",
-			edits:    editFunctions{enabledSSDCapabilityControlPlane, validInstanceTypes},
-			errorMsg: `controlPlane.platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the centralus region$`,
+			edits:    editFunctions{enabledSSDCapabilityControlPlane, nonpremiumInstanceTypeDiskDefault},
+			errorMsg: `\[controlPlane.platform.azure.osDisk.diskType: Invalid value: "Premium_LRS": PremiumIO not supported for instance type Standard_D4_v4`,
 		},
 		{
 			name:     "Unsupported UltraSSD capability in Compute",
-			edits:    editFunctions{enabledSSDCapabilityCompute, validInstanceTypes},
-			errorMsg: `compute\[0\].platform.azure.type: Invalid value: "Standard_D2_v4": UltraSSD capability not supported for this instance type in the centralus region$`,
+			edits:    editFunctions{enabledSSDCapabilityCompute, nonpremiumInstanceTypeDiskDefault},
+			errorMsg: `compute\[0\].platform.azure.osDisk.diskType: Invalid value: "Premium_LRS": PremiumIO not supported for instance type Standard_D4_v4\]`,
 		},
 		{
 			name:     "Unsupported UltraSSD capability as default",
-			edits:    editFunctions{enabledSSDCapabilityDefault, validInstanceTypes},
-			errorMsg: `^\[controlPlane.platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the centralus region, compute\[0\].platform.azure.type: Invalid value: "Standard_D2_v4": UltraSSD capability not supported for this instance type in the centralus region\]$`,
+			edits:    editFunctions{enabledSSDCapabilityDefault, nonpremiumInstanceTypeDiskDefault},
+			errorMsg: `\[controlPlane.platform.azure.osDisk.diskType: Invalid value: "Premium_LRS": PremiumIO not supported for instance type Standard_D4_v4, compute\[0\].platform.azure.osDisk.diskType: Invalid value: "Premium_LRS": PremiumIO not supported for instance type Standard_D4_v4\]$`,
 		},
 		{
 			name:     "Supported UltraSSD capability in Control Plane",
@@ -391,12 +399,12 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		{
 			name:     "Unsupported VMNetworkingType in Control Plane",
 			edits:    editFunctions{invalidVMNetworkingIstanceTypes, vmNetworkingTypeAcceleratedControlPlane},
-			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 4 vCPUsAvailable, controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 16 GB Memory, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 2 vCPUsAvailable, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 8 GB Memory\]`,
+			errorMsg: `controlPlane.platform.azure.vmNetworkingType: Invalid value: "Accelerated": vm networking type is not supported for instance type Standard_B4ms`,
 		},
 		{
 			name:     "Unsupported VMNetworkingType in Compute",
 			edits:    editFunctions{invalidVMNetworkingIstanceTypes, vmNetworkingTypeAcceleratedCompute},
-			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 4 vCPUsAvailable, controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 16 GB Memory, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 2 vCPUsAvailable, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 8 GB Memory\]`,
+			errorMsg: `compute\[0\].platform.azure.vmNetworkingType: Invalid value: "Accelerated": vm networking type is not supported for instance type Standard_B4ms`,
 		},
 		{
 			name:  "Valid OS Image",
@@ -429,6 +437,15 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		azureClient.EXPECT().GetVirtualMachineSku(gomock.Any(), to.String(value.Name), gomock.Any()).Return(value, nil).AnyTimes()
 	}
 	azureClient.EXPECT().GetVirtualMachineSku(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+
+	for key, value := range vmCapabilities {
+		azureClient.EXPECT().GetVMCapabilities(gomock.Any(), key, validRegion).Return(value, nil).AnyTimes()
+	}
+	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), "Dne_D2_v4", validRegion).Return(nil, fmt.Errorf("not found in region centralus")).AnyTimes()
+	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), "neverland").Return(nil, nil).AnyTimes()
+	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), "australiacentral2").Return(vmCapabilities["Standard_D8s_v3"], nil).AnyTimes()
+	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), "centralus").Return(vmCapabilities["Standard_D8s_v3"], nil).AnyTimes()
+	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), "Central US").Return(nil, nil).AnyTimes()
 
 	// VirtualNetwork
 	azureClient.EXPECT().GetVirtualNetwork(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork).Return(virtualNetworkAPIResult, nil).AnyTimes()

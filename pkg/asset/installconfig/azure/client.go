@@ -35,6 +35,7 @@ type API interface {
 	GetHyperVGenerationVersion(ctx context.Context, instanceType string, diskType string, region string) (string, error)
 	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azsku.VirtualMachineImage, error)
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
+	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
 }
 
 // Client makes calls to the Azure API.
@@ -272,6 +273,24 @@ func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, group
 	}
 
 	return &diskEncryptionSet, nil
+}
+
+// GetVMCapabilities retrieves the capabilities of an instant type in a specific region. Returns these values
+// in a map with the capability name as the key and the corresponding value.
+func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error) {
+	typeMeta, err := c.GetVirtualMachineSku(ctx, instanceType, region)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to Azure client: %v", err)
+	}
+	if typeMeta == nil {
+		return nil, fmt.Errorf("not found in region %s", region)
+	}
+
+	capabilities := make(map[string]string)
+	for _, capability := range *typeMeta.Capabilities {
+		capabilities[to.String(capability.Name)] = to.String(capability.Value)
+	}
+	return capabilities, nil
 }
 
 // GetHyperVGenerationVersion gets the HyperVGeneration version for the given disk instance type. Defaults to V2 if either V1 or V2
