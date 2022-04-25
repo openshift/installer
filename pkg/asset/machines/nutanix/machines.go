@@ -91,7 +91,7 @@ func provider(clusterID string, platform *nutanix.Platform, mpool *nutanix.Machi
 		MemorySize:     resource.MustParse(fmt.Sprintf("%dMi", mpool.MemoryMiB)),
 		Cluster: machinev1.NutanixResourceIdentifier{
 			Type: machinev1.NutanixIdentifierUUID,
-			UUID: &platform.PrismElementUUID,
+			UUID: &platform.PrismElements[0].UUID,
 		},
 		SystemDiskSize: resource.MustParse(fmt.Sprintf("%dMi", mpool.OSDisk.DiskSizeMiB)),
 	}, nil

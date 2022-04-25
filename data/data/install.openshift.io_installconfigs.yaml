@@ -2264,21 +2264,76 @@ spec:
                   ingressVIP:
                     description: IngressVIP is the virtual IP address for ingress
                     type: string
-                  password:
-                    description: Password is the password for the user to use to connect
-                      to the Prism Central.
-                    type: string
-                  port:
-                    description: Port is the port to use to connect to the Prism Central.
-                    type: string
                   prismCentral:
-                    description: PrismCentral is the domain name or IP address of
-                      the Prism Central.
-                    type: string
-                  prismElementUUID:
-                    description: PrismElementUUID is the UUID of the Prism Element
-                      cluster to use in the Prism Central.
-                    type: string
+                    description: PrismCentral is the endpoint (address and port) and
+                      credentials to connect to the Prism Central.
+                    properties:
+                      endpoint:
+                        description: Endpoint holds the address and port of the Prism
+                          Central
+                        properties:
+                          address:
+                            description: address is the endpoint address (DNS name
+                              or IP address) of the Nutanix Prism Central or Element
+                              (cluster)
+                            type: string
+                          port:
+                            description: port is the port number to access the Nutanix
+                              Prism Central or Element (cluster)
+                            format: int32
+                            type: integer
+                        required:
+                        - address
+                        - port
+                        type: object
+                      password:
+                        description: Password is the password for the user to connect
+                          to the Prism Central
+                        type: string
+                      username:
+                        description: Username is the name of the user to connect to
+                          the Prism Central
+                        type: string
+                    required:
+                    - endpoint
+                    - password
+                    - username
+                    type: object
+                  prismElements:
+                    description: PrismElements holds a list of Prism Elements (clusters).
+                      A Prism Element encompasses all Nutanix resources (VMs, subnets,
+                      etc.) used to host the OpenShift cluster. Currently only a single
+                      Prism Element may be defined.
+                    items:
+                      description: PrismElement holds the uuid, endpoint of the Prism
+                        Element (cluster)
+                      properties:
+                        endpoint:
+                          description: Endpoint holds the address and port of the
+                            Prism Element
+                          properties:
+                            address:
+                              description: address is the endpoint address (DNS name
+                                or IP address) of the Nutanix Prism Central or Element
+                                (cluster)
+                              type: string
+                            port:
+                              description: port is the port number to access the Nutanix
+                                Prism Central or Element (cluster)
+                              format: int32
+                              type: integer
+                          required:
+                          - address
+                          - port
+                          type: object
+                        uuid:
+                          description: UUID is the UUID of the Prism Element (cluster)
+                          type: string
+                      required:
+                      - endpoint
+                      - uuid
+                      type: object
+                    type: array
                   subnetUUID:
                     description: SubnetUUIDs identifies the network subnets to be
                       used by the cluster. Currently we only support one subnet for
@@ -2286,17 +2341,10 @@ spec:
                     items:
                       type: string
                     type: array
-                  username:
-                    description: Username is the name of the user to use to connect
-                      to the Prism Central.
-                    type: string
                 required:
-                - password
-                - port
                 - prismCentral
-                - prismElementUUID
+                - prismElements
                 - subnetUUID
-                - username
                 type: object
               openstack:
                 description: OpenStack is the configuration used when installing on

@@ -165,12 +165,16 @@ func validOpenStackPlatform() *openstack.Platform {
 
 func validNutanixPlatform() *nutanix.Platform {
 	return &nutanix.Platform{
-		PrismCentral:     "test-pc",
-		PrismElementUUID: "test-pe",
-		Username:         "test-username",
-		Password:         "test-password",
-		SubnetUUIDs:      []string{"test-subnet"},
-		Port:             "8080",
+		PrismCentral: nutanix.PrismCentral{
+			Endpoint: nutanix.PrismEndpoint{Address: "test-pc", Port: 8080},
+			Username: "test-username-pc",
+			Password: "test-password-pc",
+		},
+		PrismElements: []nutanix.PrismElement{{
+			UUID:     "test-pe-uuid",
+			Endpoint: nutanix.PrismEndpoint{Address: "test-pe", Port: 8081},
+		}},
+		SubnetUUIDs: []string{"test-subnet"},
 	}
 }
 
@@ -1478,10 +1482,10 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{
 					Nutanix: validNutanixPlatform(),
 				}
-				c.Platform.Nutanix.PrismCentral = ""
+				c.Platform.Nutanix.PrismCentral.Endpoint.Address = ""
 				return c
 			}(),
-			expectedError: `^platform\.nutanix\.prismCentral: Required value: must specify the Prism Central$`,
+			expectedError: `^platform\.nutanix\.prismCentral\.endpoint\.address: Required value: must specify the Prism Central endpoint address$`,
 		},
 		{
 			name: "invalid credentials mode for nutanix",

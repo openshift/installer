@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
@@ -869,10 +870,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		data, err = nutanixtfvars.TFVars(
 			nutanixtfvars.TFVarsSources{
-				PrismCentralAddress:   installConfig.Config.Nutanix.PrismCentral,
-				Port:                  installConfig.Config.Nutanix.Port,
-				Username:              installConfig.Config.Nutanix.Username,
-				Password:              installConfig.Config.Nutanix.Password,
+				PrismCentralAddress:   installConfig.Config.Nutanix.PrismCentral.Endpoint.Address,
+				Port:                  strconv.Itoa(int(installConfig.Config.Nutanix.PrismCentral.Endpoint.Port)),
+				Username:              installConfig.Config.Nutanix.PrismCentral.Username,
+				Password:              installConfig.Config.Nutanix.PrismCentral.Password,
 				ImageURL:              string(*rhcosImage),
 				BootstrapIgnitionData: bootstrapIgn,
 				ClusterID:             clusterID.InfraID,

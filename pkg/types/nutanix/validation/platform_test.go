@@ -11,12 +11,16 @@ import (
 
 func validPlatform() *nutanix.Platform {
 	return &nutanix.Platform{
-		PrismCentral:     "test-pc",
-		PrismElementUUID: "12992bc3-e919-454b-980e-8b51e217c9bd",
-		Username:         "test-username",
-		Password:         "test-password",
-		SubnetUUIDs:      []string{"b06179c8-dea3-4f8e-818a-b2e88fbc2201"},
-		Port:             "8080",
+		PrismCentral: nutanix.PrismCentral{
+			Endpoint: nutanix.PrismEndpoint{Address: "test-pc", Port: 8080},
+			Username: "test-username-pc",
+			Password: "test-password-pc",
+		},
+		PrismElements: []nutanix.PrismElement{{
+			UUID:     "test-pe-uuid",
+			Endpoint: nutanix.PrismEndpoint{Address: "test-pe", Port: 8081},
+		}},
+		SubnetUUIDs: []string{"b06179c8-dea3-4f8e-818a-b2e88fbc2201"},
 	}
 }
 
@@ -31,40 +35,58 @@ func TestValidatePlatform(t *testing.T) {
 			platform: validPlatform(),
 		},
 		{
-			name: "missing Prism Central name",
+			name: "missing Prism Central address",
 			platform: func() *nutanix.Platform {
 				p := validPlatform()
-				p.PrismCentral = ""
+				p.PrismCentral.Endpoint.Address = ""
 				return p
 			}(),
-			expectedError: `^test-path\.prismCentral: Required value: must specify the Prism Central$`,
+			expectedError: `^test-path\.prismCentral\.endpoint\.address: Required value: must specify the Prism Central endpoint address$`,
 		},
 		{
-			name: "missing username",
+			name: "missing Prism Central username",
 			platform: func() *nutanix.Platform {
 				p := validPlatform()
-				p.Username = ""
+				p.PrismCentral.Username = ""
 				return p
 			}(),
-			expectedError: `^test-path\.username: Required value: must specify the username$`,
+			expectedError: `^test-path\.prismCentral\.username: Required value: must specify the Prism Central username$`,
 		},
 		{
-			name: "missing password",
+			name: "missing Prism Central password",
 			platform: func() *nutanix.Platform {
 				p := validPlatform()
-				p.Password = ""
+				p.PrismCentral.Password = ""
 				return p
 			}(),
-			expectedError: `^test-path\.password: Required value: must specify the password$`,
+			expectedError: `^test-path\.prismCentral\.password: Required value: must specify the Prism Central password$`,
 		},
 		{
-			name: "missing prism element",
+			name: "missing prism elements",
 			platform: func() *nutanix.Platform {
 				p := validPlatform()
-				p.PrismElementUUID = ""
+				p.PrismElements = []nutanix.PrismElement{}
 				return p
 			}(),
-			expectedError: `^test-path\.prismElement: Required value: must specify the Prism Element$`,
+			expectedError: `^test-path\.prismElements: Required value: must specify one Prism Element$`,
+		},
+		{
+			name: "missing prism element uuid",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				p.PrismElements[0].UUID = ""
+				return p
+			}(),
+			expectedError: `^test-path\.prismElements\.uuid: Required value: must specify the Prism Element UUID$`,
+		},
+		{
+			name: "missing prism element address",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				p.PrismElements[0].Endpoint.Address = ""
+				return p
+			}(),
+			expectedError: `^test-path\.prismElements\.endpoint\.address: Required value: must specify the Prism Element endpoint address$`,
 		},
 		{
 			name: "missing subnet",
@@ -138,19 +160,19 @@ func TestValidatePlatform(t *testing.T) {
 			name: "Capital letters in Prism Central",
 			platform: func() *nutanix.Platform {
 				p := validPlatform()
-				p.PrismCentral = "tEsT-PrismCentral"
+				p.PrismCentral.Endpoint.Address = "tEsT-PrismCentral"
 				return p
 			}(),
-			expectedError: `^test-path\.prismCentral: Invalid value: "tEsT-PrismCentral": must be the domain name or IP address of the Prism Central$`,
+			expectedError: `^test-path\.prismCentral\.endpoint\.address: Invalid value: "tEsT-PrismCentral": must be the domain name or IP address of the Prism Central$`,
 		},
 		{
 			name: "URL as Prism Central",
 			platform: func() *nutanix.Platform {
 				p := validPlatform()
-				p.PrismCentral = "https://test-pc"
+				p.PrismCentral.Endpoint.Address = "https://test-pc"
 				return p
 			}(),
-			expectedError: `^test-path\.prismCentral: Invalid value: "https://test-pc": must be the domain name or IP address of the Prism Central$`,
+			expectedError: `^test-path\.prismCentral\.endpoint\.address: Invalid value: "https://test-pc": must be the domain name or IP address of the Prism Central$`,
 		},
 	}
 	for _, tc := range cases {

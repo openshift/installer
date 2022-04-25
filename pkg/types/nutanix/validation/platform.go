@@ -11,29 +11,62 @@ import (
 // TODO(nutanix): Revisit for further expanding the validation logic
 func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if len(p.PrismCentral) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("prismCentral"), "must specify the Prism Central"))
+
+	if len(p.PrismCentral.Endpoint.Address) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("prismCentral").Child("endpoint").Child("address"),
+			"must specify the Prism Central endpoint address"))
+	} else {
+		if err := validate.Host(p.PrismCentral.Endpoint.Address); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("prismCentral").Child("endpoint").Child("address"),
+				p.PrismCentral.Endpoint.Address, "must be the domain name or IP address of the Prism Central"))
+		}
 	}
-	if len(p.PrismElementUUID) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("prismElement"), "must specify the Prism Element"))
+
+	if p.PrismCentral.Endpoint.Port < 1 || p.PrismCentral.Endpoint.Port > 65535 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("prismCentral").Child("endpoint").Child("port"),
+			p.PrismCentral.Endpoint.Port, "The Prism Central endpoint port is invalid, must be in the range of 1 to 65535"))
 	}
-	if len(p.Username) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("username"), "must specify the username"))
+
+	if len(p.PrismCentral.Username) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("prismCentral").Child("username"),
+			"must specify the Prism Central username"))
 	}
-	if len(p.Password) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("password"), "must specify the password"))
+
+	if len(p.PrismCentral.Password) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("prismCentral").Child("password"),
+			"must specify the Prism Central password"))
 	}
-	if len(p.Port) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("port"), "must specify the port"))
+
+	// Currently we only support one Prism Element for an OpenShift cluster
+	if len(p.PrismElements) != 1 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("prismElements"), "must specify one Prism Element"))
 	}
+
+	for _, pe := range p.PrismElements {
+		if len(pe.UUID) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("prismElements").Child("uuid"),
+				"must specify the Prism Element UUID"))
+		}
+
+		if len(pe.Endpoint.Address) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("prismElements").Child("endpoint").Child("address"),
+				"must specify the Prism Element endpoint address"))
+		} else {
+			if err := validate.Host(pe.Endpoint.Address); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("prismElements").Child("endpoint").Child("address"),
+					pe.Endpoint.Address, "must be the domain name or IP address of the Prism Element (cluster)"))
+			}
+		}
+
+		if pe.Endpoint.Port < 1 || pe.Endpoint.Port > 65535 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("prismElements").Child("endpoint").Child("port"),
+				"The Prism Element endpoint port is invalid, must be in the range of 1 to 65535"))
+		}
+	}
+
 	// Currently we only support one subnet for an OpenShift cluster
 	if len(p.SubnetUUIDs) != 1 || len(p.SubnetUUIDs[0]) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("subnet"), "must specify the subnet"))
-	}
-	if len(p.PrismCentral) != 0 {
-		if err := validate.Host(p.PrismCentral); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("prismCentral"), p.PrismCentral, "must be the domain name or IP address of the Prism Central"))
-		}
 	}
 
 	// If all VIPs are empty, skip IP validation.  All VIPs are required to be defined together.
