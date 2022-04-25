@@ -93,7 +93,7 @@ func (o *ClusterUninstaller) Run() error {
 		"deleteServerGroups":    deleteServerGroups,
 		"deleteTrunks":          deleteTrunks,
 		"deleteLoadBalancers":   deleteLoadBalancers,
-		"deletePorts":           deletePorts,
+		"deletePorts":           deletePortsByFilter,
 		"deleteSecurityGroups":  deleteSecurityGroups,
 		"clearRouterInterfaces": clearRouterInterfaces,
 		"deleteSubnets":         deleteSubnets,
@@ -312,7 +312,36 @@ func deleteServerGroups(opts *clientconfig.ClientOpts, filter Filter, logger log
 	return numberDeleted == numberToDelete, nil
 }
 
-func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+func deletePortsByNetwork(opts *clientconfig.ClientOpts, networkID string, logger logrus.FieldLogger) (bool, error) {
+
+	listOpts := ports.ListOpts{
+		NetworkID: networkID,
+	}
+
+	result, err := deletePorts(opts, listOpts, logger)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+	return result, err
+}
+
+func deletePortsByFilter(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+
+	tags := filterTags(filter)
+	listOpts := ports.ListOpts{
+		TagsAny: strings.Join(tags, ","),
+	}
+
+	result, err := deletePorts(opts, listOpts, logger)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+	return result, err
+}
+
+func deletePorts(opts *clientconfig.ClientOpts, listOpts ports.ListOpts, logger logrus.FieldLogger) (bool, error) {
 	logger.Debug("Deleting openstack ports")
 	defer logger.Debugf("Exiting deleting openstack ports")
 
@@ -320,10 +349,6 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 	if err != nil {
 		logger.Error(err)
 		return false, nil
-	}
-	tags := filterTags(filter)
-	listOpts := ports.ListOpts{
-		TagsAny: strings.Join(tags, ","),
 	}
 
 	allPages, err := ports.List(conn, listOpts).AllPages()
@@ -925,6 +950,13 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 	numberToDelete := len(allNetworks)
 	numberDeleted := 0
 	for _, network := range allNetworks {
+		// Before deleting network, try to remove all the ports it may contain
+		_, err := deletePortsByNetwork(opts, network.ID, logger)
+		if err != nil {
+			logger.Error(err)
+			return false, nil
+		}
+
 		logger.Debugf("Deleting network: %q", network.ID)
 		err = networks.Delete(conn, network.ID).ExtractErr()
 		if err != nil {
