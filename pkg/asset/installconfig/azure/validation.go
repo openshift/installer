@@ -101,6 +101,7 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 	}
 
 	ultraSSDAvailable := false
+	acceleratedNetworkingAvailable := false
 	for _, capability := range *typeMeta.Capabilities {
 
 		if strings.EqualFold(*capability.Name, "vCPUsAvailable") {
@@ -128,18 +129,19 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 			}
 		} else if strings.EqualFold(*capability.Name, "UltraSSDAvailable") {
 			ultraSSDAvailable = strings.EqualFold(*capability.Value, "True")
-		} else if strings.EqualFold(*capability.Name, string(aztypes.VMnetworkingTypeAccelerated)) {
-			if vmNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) && !strings.EqualFold(*capability.Value, "True") {
-				errMsg := fmt.Sprintf("vm networking type is not supported for instance type %s", instanceType)
-				allErrs = append(allErrs, field.Invalid(fieldPath.Child("vmNetworkingType"), vmNetworkingType, errMsg))
-			}
+		} else if strings.EqualFold(*capability.Name, aztypes.AcceleratedNetworkingEnabled) {
+			acceleratedNetworkingAvailable = strings.EqualFold(*capability.Value, "True")
 		}
 	}
 
-	// The UltraSSDAvailable capability might not be present at all, in which case it must assumed to be false
+	// Capabilities might not be present at all, in which case they must be assumed to be false.
 	if ultraSSDEnabled && !ultraSSDAvailable {
 		errMsg := fmt.Sprintf("UltraSSD capability not supported for this instance type in the %s region", region)
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+	}
+	if vmNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) && !acceleratedNetworkingAvailable {
+		errMsg := fmt.Sprintf("vm networking type is not supported for instance type %s", instanceType)
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("vmNetworkingType"), vmNetworkingType, errMsg))
 	}
 
 	return allErrs
