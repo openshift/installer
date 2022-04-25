@@ -9,11 +9,13 @@ import (
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
+
+	azclient "github.com/openshift/installer/pkg/client/azure"
 )
 
 //DNSConfig exposes functions to choose the DNS settings
 type DNSConfig struct {
-	session *Session
+	session *azclient.Session
 }
 
 //ZonesGetter fetches the DNS zones available for the installer
@@ -104,17 +106,17 @@ func (config DNSConfig) GetDNSRecordSet(rgName string, zoneName string, relative
 //NewDNSConfig returns a new DNSConfig struct that helps configuring the DNS
 //by querying your subscription and letting you choose
 //which domain you wish to use for the cluster
-func NewDNSConfig(ssn *Session) *DNSConfig {
+func NewDNSConfig(ssn *azclient.Session) *DNSConfig {
 	return &DNSConfig{session: ssn}
 }
 
-func newZonesClient(session *Session) ZonesGetter {
+func newZonesClient(session *azclient.Session) ZonesGetter {
 	azureClient := azdns.NewZonesClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
 	azureClient.Authorizer = session.Authorizer
 	return &ZonesClient{azureClient: azureClient}
 }
 
-func newRecordSetsClient(session *Session) *RecordSetsClient {
+func newRecordSetsClient(session *azclient.Session) *RecordSetsClient {
 	azureClient := azdns.NewRecordSetsClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
 	azureClient.Authorizer = session.Authorizer
 	return &RecordSetsClient{azureClient: azureClient}

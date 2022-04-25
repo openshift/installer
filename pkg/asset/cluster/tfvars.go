@@ -28,7 +28,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
-	aztypes "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
@@ -36,6 +35,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	azclient "github.com/openshift/installer/pkg/client/azure"
 	rhcospkg "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	alibabacloudtfvars "github.com/openshift/installer/pkg/tfvars/alibabacloud"
@@ -327,7 +327,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec)
 		}
-		client := aztypes.NewClient(session)
+		client := azclient.NewClient(session)
 		hyperVGeneration, err := client.GetHyperVGenerationVersion(context.TODO(), masterConfigs[0].VMSize,
 			masterConfigs[0].OSDisk.ManagedDisk.StorageAccountType, masterConfigs[0].Location)
 		if err != nil {

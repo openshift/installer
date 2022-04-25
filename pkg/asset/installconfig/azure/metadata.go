@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	azclient "github.com/openshift/installer/pkg/client/azure"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 )
 
@@ -12,8 +13,8 @@ import (
 // does not need to be user-supplied (e.g. because it can be retrieved
 // from external APIs).
 type Metadata struct {
-	session *Session
-	client  *Client
+	session *azclient.Session
+	client  *azclient.Client
 	dnsCfg  *DNSConfig
 
 	// CloudName indicates the Azure cloud environment (e.g. public, gov't).
@@ -29,7 +30,7 @@ type Metadata struct {
 	// as a service (Azure Red Hat OpenShift, for example): in this case
 	// we do not want to rely on the filesystem or user input as we
 	// serve multiple users with different credentials via a web server.
-	Credentials *Credentials `json:"credentials,omitempty"`
+	Credentials *azclient.Credentials `json:"credentials,omitempty"`
 
 	mutex sync.Mutex
 }
@@ -41,7 +42,7 @@ func NewMetadata(cloudName typesazure.CloudEnvironment, armEndpoint string) *Met
 
 // NewMetadataWithCredentials initializes a new Metadata object
 // with prepopulated Azure credentials.
-func NewMetadataWithCredentials(cloudName typesazure.CloudEnvironment, armEndpoint string, credentials *Credentials) *Metadata {
+func NewMetadataWithCredentials(cloudName typesazure.CloudEnvironment, armEndpoint string, credentials *azclient.Credentials) *Metadata {
 	return &Metadata{
 		CloudName:   cloudName,
 		ARMEndpoint: armEndpoint,
@@ -51,17 +52,17 @@ func NewMetadataWithCredentials(cloudName typesazure.CloudEnvironment, armEndpoi
 
 // Session holds an Azure session which can be used for Azure API calls
 // during asset generation.
-func (m *Metadata) Session() (*Session, error) {
+func (m *Metadata) Session() (*azclient.Session, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	return m.unlockedSession()
 }
 
-func (m *Metadata) unlockedSession() (*Session, error) {
+func (m *Metadata) unlockedSession() (*azclient.Session, error) {
 	if m.session == nil {
 		var err error
-		m.session, err = GetSessionWithCredentials(m.CloudName, m.ARMEndpoint, m.Credentials)
+		m.session, err = azclient.GetSessionWithCredentials(m.CloudName, m.ARMEndpoint, m.Credentials)
 		if err != nil {
 			return nil, errors.Wrap(err, "creating Azure session")
 		}
@@ -71,13 +72,13 @@ func (m *Metadata) unlockedSession() (*Session, error) {
 }
 
 // Client holds an Azure Client that implements calls to the Azure API.
-func (m *Metadata) Client() (*Client, error) {
+func (m *Metadata) Client() (*azclient.Client, error) {
 	if m.client == nil {
 		ssn, err := m.Session()
 		if err != nil {
 			return nil, err
 		}
-		m.client = NewClient(ssn)
+		m.client = azclient.NewClient(ssn)
 	}
 	return m.client, nil
 }

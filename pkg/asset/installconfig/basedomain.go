@@ -12,6 +12,7 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	azclient "github.com/openshift/installer/pkg/client/azure"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -55,7 +56,7 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 		}
 	case azure.Name:
 		// Create client using public cloud because install config has not been generated yet.
-		ssn, err := azureconfig.GetSession(azure.PublicCloud, "")
+		ssn, err := azclient.GetSession(azure.PublicCloud, "")
 		if err != nil {
 			return err
 		}

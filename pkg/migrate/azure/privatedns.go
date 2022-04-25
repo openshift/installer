@@ -14,7 +14,7 @@ import (
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	azdns "github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
 	azprivatedns "github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
-	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	azclient "github.com/openshift/installer/pkg/client/azure"
 	"github.com/openshift/installer/pkg/types/azure"
 )
 
@@ -29,7 +29,7 @@ type legacyDNSClient struct {
 	recordsetsClient azdns.RecordSetsClient
 }
 
-func newLegacyDNSClient(session *azconfig.Session, resourceGroup string) *legacyDNSClient {
+func newLegacyDNSClient(session *azclient.Session, resourceGroup string) *legacyDNSClient {
 	zonesClient := azdns.NewZonesClientWithBaseURI(dnsEndpoint(session), session.Credentials.SubscriptionID)
 	zonesClient.Authorizer = session.Authorizer
 
@@ -122,7 +122,7 @@ type privateDNSClient struct {
 	virtualNetworksClient     aznetwork.VirtualNetworksClient
 }
 
-func newPrivateDNSClient(session *azconfig.Session, resourceGroup string, virtualNetwork string, vnetResourceGroup string) *privateDNSClient {
+func newPrivateDNSClient(session *azclient.Session, resourceGroup string, virtualNetwork string, vnetResourceGroup string) *privateDNSClient {
 	zonesClient := azprivatedns.NewPrivateZonesClientWithBaseURI(dnsEndpoint(session), session.Credentials.SubscriptionID)
 	zonesClient.Authorizer = session.Authorizer
 
@@ -484,7 +484,7 @@ func (client *privateDNSClient) migrateLegacyZone(legacyDNSZone *legacyDNSZone, 
 
 // Migrate does a migration from a legacy zone to a private zone
 func Migrate(cloudName azure.CloudEnvironment, resourceGroup string, migrateZone string, virtualNetwork string, vnetResourceGroup string, link bool) error {
-	session, err := azconfig.GetSession(cloudName, "")
+	session, err := azclient.GetSession(cloudName, "")
 	if err != nil {
 		return err
 	}
@@ -508,7 +508,7 @@ func Migrate(cloudName azure.CloudEnvironment, resourceGroup string, migrateZone
 
 // Eligible shows legacy zones that are eligible for migrating to private zones
 func Eligible(cloudName azure.CloudEnvironment) error {
-	session, err := azconfig.GetSession(cloudName, "")
+	session, err := azclient.GetSession(cloudName, "")
 	if err != nil {
 		return err
 	}
@@ -527,6 +527,6 @@ func Eligible(cloudName azure.CloudEnvironment) error {
 	return nil
 }
 
-func dnsEndpoint(session *azconfig.Session) string {
+func dnsEndpoint(session *azclient.Session) string {
 	return session.Environment.ResourceManagerEndpoint
 }

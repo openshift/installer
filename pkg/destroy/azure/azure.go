@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	azuresession "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	azclient "github.com/openshift/installer/pkg/client/azure"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -81,7 +81,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	if cloudName == "" {
 		cloudName = azure.PublicCloud
 	}
-	session, err := azuresession.GetSession(cloudName, metadata.Azure.ARMEndpoint)
+	session, err := azclient.GetSession(cloudName, metadata.Azure.ARMEndpoint)
 	if err != nil {
 		return nil, err
 	}

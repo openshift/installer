@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute"
 	"github.com/Azure/go-autorest/autorest/to"
 
-	"github.com/openshift/installer/pkg/asset/installconfig/azure"
+	"github.com/openshift/installer/pkg/client/azure"
 )
 
 // AvailabilityZones retrieves a list of availability zones for the given cloud, region, and instance type.

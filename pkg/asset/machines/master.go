@@ -35,7 +35,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
@@ -50,6 +49,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/powervs"
 	"github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	azclient "github.com/openshift/installer/pkg/client/azure"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
@@ -361,7 +361,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 		pool.Platform.Azure = &mpool
 
-		client := icazure.NewClient(session)
+		client := azclient.NewClient(session)
 		hyperVGeneration, err := client.GetHyperVGenerationVersion(context.TODO(), mpool.InstanceType, mpool.OSDisk.DiskType, installConfig.Config.Platform.Azure.Region)
 		if err != nil {
 			return err
