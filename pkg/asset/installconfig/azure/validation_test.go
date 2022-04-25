@@ -176,6 +176,20 @@ var (
 		}
 	}
 
+	validOSImagePublisher            = "test-publisher"
+	validOSImageOffer                = "test-offer"
+	validOSImageSKU                  = "test-sku"
+	validOSImageVersion              = "test-version"
+	invalidOSImageSKU                = "bad-sku"
+	erroringLicenseTermsOSImageSKU   = "erroring-license-terms"
+	unacceptedLicenseTermsOSImageSKU = "unaccepted-license-terms"
+	validOSImage                     = azure.OSImage{
+		Publisher: validOSImagePublisher,
+		Offer:     validOSImageOffer,
+		SKU:       validOSImageSKU,
+		Version:   validOSImageVersion,
+	}
+
 	validDiskEncryptionSetDefaultMachinePlatform = func(ic *types.InstallConfig) {
 		ic.Azure.DefaultMachinePlatform.OSDisk.DiskEncryptionSet = validDiskEncryptionSetConfig()
 	}
@@ -193,6 +207,22 @@ var (
 	}
 	invalidDiskEncryptionSetCompute = func(ic *types.InstallConfig) {
 		ic.Compute[0].Platform.Azure.OSDisk.DiskEncryptionSet = invalidDiskEncryptionSetConfig()
+	}
+
+	validOSImageCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.OSImage = validOSImage
+	}
+	invalidOSImageCompute = func(ic *types.InstallConfig) {
+		validOSImageCompute(ic)
+		ic.Compute[0].Platform.Azure.OSImage.SKU = invalidOSImageSKU
+	}
+	erroringLicenseTermsOSImageCompute = func(ic *types.InstallConfig) {
+		validOSImageCompute(ic)
+		ic.Compute[0].Platform.Azure.OSImage.SKU = erroringLicenseTermsOSImageSKU
+	}
+	unacceptedLicenseTermsOSImageCompute = func(ic *types.InstallConfig) {
+		validOSImageCompute(ic)
+		ic.Compute[0].Platform.Azure.OSImage.SKU = unacceptedLicenseTermsOSImageSKU
 	}
 )
 
@@ -368,6 +398,25 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			edits:    editFunctions{invalidVMNetworkingIstanceTypes, vmNetworkingTypeAcceleratedCompute},
 			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 4 vCPUsAvailable, controlPlane.platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 16 GB Memory, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 2 vCPUsAvailable, compute\[0\].platform.azure.type: Invalid value: "Standard_A1_v2": instance type does not meet minimum resource requirements of 8 GB Memory\]`,
 		},
+		{
+			name:  "Valid OS Image",
+			edits: editFunctions{validOSImageCompute},
+		},
+		{
+			name:     "Invalid OS Image",
+			edits:    editFunctions{invalidOSImageCompute},
+			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: not found`,
+		},
+		{
+			name:     "OS Image causing error determining license terms",
+			edits:    editFunctions{erroringLicenseTermsOSImageCompute},
+			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: could not determine if the license terms for the marketplace image have been accepted: error`,
+		},
+		{
+			name:     "OS Image with unaccepted license terms",
+			edits:    editFunctions{unacceptedLicenseTermsOSImageCompute},
+			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: the license terms for the marketplace image have not been accepted`,
+		},
 	}
 
 	mockCtrl := gomock.NewController(t)
@@ -407,6 +456,15 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 	// Resource SKUs
 	azureClient.EXPECT().GetDiskSkus(gomock.Any(), validResourceSkuRegions).Return(nil, fmt.Errorf("invalid disk type")).AnyTimes()
 	azureClient.EXPECT().GetDiskSkus(gomock.Any(), invalidResourceSkuRegion).Return(nil, fmt.Errorf("invalid region")).AnyTimes()
+
+	// OS Images
+	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, validOSImageSKU, validOSImageVersion).Return(azsku.VirtualMachineImage{}, nil).AnyTimes()
+	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, validOSImageSKU).Return(true, nil).AnyTimes()
+	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, invalidOSImageSKU, validOSImageVersion).Return(azsku.VirtualMachineImage{}, fmt.Errorf("not found")).AnyTimes()
+	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, erroringLicenseTermsOSImageSKU, validOSImageVersion).Return(azsku.VirtualMachineImage{}, nil).AnyTimes()
+	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, erroringLicenseTermsOSImageSKU).Return(false, fmt.Errorf("error")).AnyTimes()
+	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU, validOSImageVersion).Return(azsku.VirtualMachineImage{}, nil).AnyTimes()
+	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU).Return(false, nil).AnyTimes()
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

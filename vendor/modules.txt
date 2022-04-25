@@ -15,11 +15,13 @@ github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions
 github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute
+github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering
 github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2017-03-30/compute
 github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute
 github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-12-01/compute
 github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2016-04-01/dns
 github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac
+github.com/Azure/azure-sdk-for-go/services/marketplaceordering/mgmt/2015-06-01/marketplaceordering
 github.com/Azure/azure-sdk-for-go/services/network/mgmt/2017-10-01/network
 github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network
 github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns

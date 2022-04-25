@@ -258,6 +258,27 @@ spec:
                           required:
                           - diskSizeGB
                           type: object
+                        osImage:
+                          description: OSImage defines the image to use for the OS.
+                          properties:
+                            offer:
+                              description: Offer is the offer of the image.
+                              type: string
+                            publisher:
+                              description: Publisher is the publisher of the image.
+                              type: string
+                            sku:
+                              description: SKU is the SKU of the image.
+                              type: string
+                            version:
+                              description: Version is the version of the image.
+                              type: string
+                          required:
+                          - offer
+                          - publisher
+                          - sku
+                          - version
+                          type: object
                         type:
                           description: InstanceType defines the azure instance type.
                             eg. Standard_DS_V2
@@ -858,6 +879,27 @@ spec:
                             type: string
                         required:
                         - diskSizeGB
+                        type: object
+                      osImage:
+                        description: OSImage defines the image to use for the OS.
+                        properties:
+                          offer:
+                            description: Offer is the offer of the image.
+                            type: string
+                          publisher:
+                            description: Publisher is the publisher of the image.
+                            type: string
+                          sku:
+                            description: SKU is the SKU of the image.
+                            type: string
+                          version:
+                            description: Version is the version of the image.
+                            type: string
+                        required:
+                        - offer
+                        - publisher
+                        - sku
+                        - version
                         type: object
                       type:
                         description: InstanceType defines the azure instance type.
@@ -1727,6 +1769,27 @@ spec:
                             type: string
                         required:
                         - diskSizeGB
+                        type: object
+                      osImage:
+                        description: OSImage defines the image to use for the OS.
+                        properties:
+                          offer:
+                            description: Offer is the offer of the image.
+                            type: string
+                          publisher:
+                            description: Publisher is the publisher of the image.
+                            type: string
+                          sku:
+                            description: SKU is the SKU of the image.
+                            type: string
+                          version:
+                            description: Version is the version of the image.
+                            type: string
+                        required:
+                        - offer
+                        - publisher
+                        - sku
+                        - version
                         type: object
                       type:
                         description: InstanceType defines the azure instance type.
