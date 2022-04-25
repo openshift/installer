@@ -21,6 +21,7 @@ import (
 	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	icpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
@@ -208,7 +209,7 @@ func (a *InstallConfig) platformValidation() error {
 		return icazure.Validate(client, a.Config)
 	}
 	if a.Config.Platform.GCP != nil {
-		client, err := icgcp.NewClient(context.TODO())
+		client, err := gcpclient.NewClient(context.TODO())
 		if err != nil {
 			return err
 		}

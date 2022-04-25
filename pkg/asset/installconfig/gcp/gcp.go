@@ -11,6 +11,7 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
 
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/gcp/validation"
 )
@@ -36,14 +37,14 @@ func Platform() (*gcp.Platform, error) {
 }
 
 func selectProject(ctx context.Context) (string, error) {
-	ssn, err := GetSession(ctx)
+	ssn, err := gcpclient.GetSession(ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get session")
 	}
 	defaultProject := ssn.Credentials.ProjectID
 
-	client := &Client{
-		ssn: ssn,
+	client := &gcpclient.Client{
+		SSN: ssn,
 	}
 
 	projects, err := client.GetProjects(ctx)

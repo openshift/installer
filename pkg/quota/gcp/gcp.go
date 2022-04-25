@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 	"github.com/openshift/installer/pkg/quota"
 )
 
@@ -22,7 +22,7 @@ import (
 // about the usage and limit for each resource quota.
 // roles/servicemanagement.quotaViewer role allows users to fetch the required details.
 func Load(ctx context.Context, project string, services ...string) ([]quota.Quota, error) {
-	ssn, err := gcpconfig.GetSession(ctx)
+	ssn, err := gcpclient.GetSession(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session")
 	}

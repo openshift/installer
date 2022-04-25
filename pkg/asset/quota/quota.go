@@ -11,12 +11,12 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	configgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackvalidation "github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/quota/aws"
 	"github.com/openshift/installer/pkg/asset/quota/gcp"
 	"github.com/openshift/installer/pkg/asset/quota/openstack"
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 	"github.com/openshift/installer/pkg/diagnostics"
 	"github.com/openshift/installer/pkg/quota"
 	quotaaws "github.com/openshift/installer/pkg/quota/aws"
@@ -113,7 +113,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
 		}
-		session, err := configgcp.GetSession(context.TODO())
+		session, err := gcpclient.GetSession(context.TODO())
 		if err != nil {
 			return errors.Wrap(err, "failed to load GCP session")
 		}

@@ -31,7 +31,7 @@ type API interface {
 
 // Client makes calls to the GCP API.
 type Client struct {
-	ssn *Session
+	SSN *Session
 }
 
 // NewClient initializes a client with a session.
@@ -45,7 +45,7 @@ func NewClient(ctx context.Context) (*Client, error) {
 	}
 
 	client := &Client{
-		ssn: ssn,
+		SSN: ssn,
 	}
 	return client, nil
 }
@@ -183,7 +183,7 @@ func (c *Client) GetSubnetworks(ctx context.Context, network, project, region st
 }
 
 func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error) {
-	svc, err := compute.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
+	svc, err := compute.NewService(ctx, option.WithCredentials(c.SSN.Credentials))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create compute service")
 	}
@@ -191,7 +191,7 @@ func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error
 }
 
 func (c *Client) getDNSService(ctx context.Context) (*dns.Service, error) {
-	svc, err := dns.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
+	svc, err := dns.NewService(ctx, option.WithCredentials(c.SSN.Credentials))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create dns service")
 	}
@@ -252,7 +252,7 @@ func (c *Client) GetZones(ctx context.Context, project, filter string) ([]*compu
 }
 
 func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourcemanager.Service, error) {
-	svc, err := cloudresourcemanager.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
+	svc, err := cloudresourcemanager.NewService(ctx, option.WithCredentials(c.SSN.Credentials))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create cloud resource service")
 	}
@@ -287,7 +287,7 @@ func (c *Client) GetEnabledServices(ctx context.Context, project string) ([]stri
 }
 
 func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.Service, error) {
-	svc, err := serviceusage.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
+	svc, err := serviceusage.NewService(ctx, option.WithCredentials(c.SSN.Credentials))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create service usage service")
 	}

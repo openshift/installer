@@ -36,6 +36,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	azclient "github.com/openshift/installer/pkg/client/azure"
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 	rhcospkg "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	alibabacloudtfvars "github.com/openshift/installer/pkg/tfvars/alibabacloud"
@@ -375,7 +376,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 	case gcp.Name:
 		var publicZoneName string
-		sess, err := gcpconfig.GetSession(ctx)
+		sess, err := gcpclient.GetSession(ctx)
 		if err != nil {
 			return err
 		}

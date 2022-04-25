@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 	"github.com/pkg/errors"
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
@@ -17,7 +17,7 @@ func AvailabilityZones(project, region string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	ssn, err := gcpconfig.GetSession(ctx)
+	ssn, err := gcpclient.GetSession(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session")
 	}

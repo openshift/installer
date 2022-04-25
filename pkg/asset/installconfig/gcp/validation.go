@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/validate"
 )
@@ -34,7 +35,7 @@ var computeReq = resourceRequirements{
 }
 
 // Validate executes platform-specific validation.
-func Validate(client API, ic *types.InstallConfig) error {
+func Validate(client gcpclient.API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 
 	if err := validate.GCPClusterName(ic.ObjectMeta.Name); err != nil {
@@ -49,7 +50,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, fieldPath *field.Path, project, zone, instanceType string, req resourceRequirements) field.ErrorList {
+func ValidateInstanceType(client gcpclient.API, fieldPath *field.Path, project, zone, instanceType string, req resourceRequirements) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	typeMeta, err := client.GetMachineType(context.TODO(), project, zone, instanceType)
@@ -73,7 +74,7 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, zone, inst
 }
 
 // validateInstanceTypes checks that the user-provided instance types are valid.
-func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
+func validateInstanceTypes(client gcpclient.API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	// Get list of zones in region
@@ -111,7 +112,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 
 // ValidatePreExitingPublicDNS ensure no pre-existing DNS record exists in the public
 // DNS zone for cluster's Kubernetes API.
-func ValidatePreExitingPublicDNS(client API, ic *types.InstallConfig) error {
+func ValidatePreExitingPublicDNS(client gcpclient.API, ic *types.InstallConfig) error {
 	// If this is an internal cluster, this check is not necessary
 	if ic.Publish == types.InternalPublishingStrategy {
 		return nil
@@ -143,7 +144,7 @@ func ValidatePreExitingPublicDNS(client API, ic *types.InstallConfig) error {
 	return nil
 }
 
-func validateProject(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+func validateProject(client gcpclient.API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if ic.GCP.ProjectID != "" {
@@ -160,7 +161,7 @@ func validateProject(client API, ic *types.InstallConfig, fieldPath *field.Path)
 }
 
 // validateNetworks checks that the user-provided VPC is in the project and the provided subnets are valid.
-func validateNetworks(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+func validateNetworks(client gcpclient.API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if ic.GCP.Network != "" {
@@ -181,7 +182,7 @@ func validateNetworks(client API, ic *types.InstallConfig, fieldPath *field.Path
 	return allErrs
 }
 
-func validateSubnet(client API, ic *types.InstallConfig, fieldPath *field.Path, subnets []*compute.Subnetwork, name string) field.ErrorList {
+func validateSubnet(client gcpclient.API, ic *types.InstallConfig, fieldPath *field.Path, subnets []*compute.Subnetwork, name string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	subnet, errMsg := findSubnet(subnets, name, ic.GCP.Network, ic.GCP.Region)
@@ -218,7 +219,7 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 }
 
 //ValidateEnabledServices gets all the enabled services for a project and validate if any of the required services are not enabled.
-func ValidateEnabledServices(ctx context.Context, client API, project string) error {
+func ValidateEnabledServices(ctx context.Context, client gcpclient.API, project string) error {
 	services := sets.NewString("compute.googleapis.com",
 		"cloudapis.googleapis.com",
 		"cloudresourcemanager.googleapis.com",

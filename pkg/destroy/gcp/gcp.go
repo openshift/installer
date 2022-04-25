@@ -21,7 +21,7 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/storage/v1"
 
-	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
@@ -79,7 +79,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
-	ssn, err := gcpconfig.GetSession(ctx)
+	ssn, err := gcpclient.GetSession(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session")
 	}

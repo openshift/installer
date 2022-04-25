@@ -7,7 +7,7 @@ import (
 	computev1 "google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
 
-	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 )
 
 // MachineTypeGetter returns the machine type info for a type in a zone using GCP API.
@@ -23,7 +23,7 @@ type Client struct {
 }
 
 // NewClient returns Client using the context and session.
-func NewClient(ctx context.Context, sess *gcpconfig.Session, projectID string) (*Client, error) {
+func NewClient(ctx context.Context, sess *gcpclient.Session, projectID string) (*Client, error) {
 	svc, err := computev1.NewService(ctx, option.WithCredentials(sess.Credentials))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create compute service")

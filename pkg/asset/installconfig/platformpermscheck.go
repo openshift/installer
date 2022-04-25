@@ -10,6 +10,7 @@ import (
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -80,7 +81,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
 	case gcp.Name:
-		client, err := gcpconfig.NewClient(context.TODO())
+		client, err := gcpclient.NewClient(context.TODO())
 		if err != nil {
 			return err
 		}

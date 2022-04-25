@@ -7,11 +7,11 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
-	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -62,7 +62,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case gcp.Name:
-		_, err = gcpconfig.GetSession(ctx)
+		_, err = gcpclient.GetSession(ctx)
 		if err != nil {
 			return errors.Wrap(err, "creating GCP session")
 		}

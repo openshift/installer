@@ -10,12 +10,14 @@ import (
 	"github.com/pkg/errors"
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
+
+	gcpclient "github.com/openshift/installer/pkg/client/gcp"
 )
 
 // GetPublicZone returns a DNS managed zone from the provided project which matches the baseDomain
 // If multiple zones match the basedomain, it uses the last public zone in the list as provided by the GCP API.
 func GetPublicZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
-	client, err := NewClient(context.TODO())
+	client, err := gcpclient.NewClient(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +33,7 @@ func GetPublicZone(ctx context.Context, project, baseDomain string) (*dns.Manage
 
 // GetBaseDomain returns a base domain chosen from among the project's public DNS zones.
 func GetBaseDomain(project string) (string, error) {
-	client, err := NewClient(context.TODO())
+	client, err := gcpclient.NewClient(context.TODO())
 	if err != nil {
 		return "", err
 	}
