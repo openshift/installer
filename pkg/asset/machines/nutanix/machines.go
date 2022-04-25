@@ -64,6 +64,16 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 }
 
 func provider(clusterID string, platform *nutanix.Platform, mpool *nutanix.MachinePool, osImage string, userDataSecret string) (*machinev1.NutanixMachineProviderConfig, error) {
+	// subnets
+	subnets := []machinev1.NutanixResourceIdentifier{}
+	for _, subnetUUID := range platform.SubnetUUIDs {
+		subnet := machinev1.NutanixResourceIdentifier{
+			Type: machinev1.NutanixIdentifierUUID,
+			UUID: &subnetUUID,
+		}
+		subnets = append(subnets, subnet)
+	}
+
 	return &machinev1.NutanixMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: machinev1.GroupVersion.String(),
@@ -75,10 +85,7 @@ func provider(clusterID string, platform *nutanix.Platform, mpool *nutanix.Machi
 			Type: machinev1.NutanixIdentifierName,
 			Name: &osImage,
 		},
-		Subnets: []machinev1.NutanixResourceIdentifier{{
-			Type: machinev1.NutanixIdentifierUUID,
-			UUID: &platform.SubnetUUID,
-		}},
+		Subnets:        subnets,
 		VCPUsPerSocket: int32(mpool.NumCoresPerSocket),
 		VCPUSockets:    int32(mpool.NumCPUs),
 		MemorySize:     resource.MustParse(fmt.Sprintf("%dMi", mpool.MemoryMiB)),

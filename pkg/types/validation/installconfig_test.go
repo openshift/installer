@@ -169,7 +169,7 @@ func validNutanixPlatform() *nutanix.Platform {
 		PrismElementUUID: "test-pe",
 		Username:         "test-username",
 		Password:         "test-password",
-		SubnetUUID:       "test-subnet",
+		SubnetUUIDs:      []string{"test-subnet"},
 		Port:             "8080",
 	}
 }

@@ -26,7 +26,8 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path) field.ErrorList 
 	if len(p.Port) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("port"), "must specify the port"))
 	}
-	if len(p.SubnetUUID) == 0 {
+	// Currently we only support one subnet for an OpenShift cluster
+	if len(p.SubnetUUIDs) != 1 || len(p.SubnetUUIDs[0]) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("subnet"), "must specify the subnet"))
 	}
 	if len(p.PrismCentral) != 0 {

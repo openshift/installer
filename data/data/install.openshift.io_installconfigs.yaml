@@ -2280,9 +2280,12 @@ spec:
                       cluster to use in the Prism Central.
                     type: string
                   subnetUUID:
-                    description: SubnetUUID specifies the UUID of the subnet to be
-                      used by the cluster.
-                    type: string
+                    description: SubnetUUIDs identifies the network subnets to be
+                      used by the cluster. Currently we only support one subnet for
+                      an OpenShift cluster.
+                    items:
+                      type: string
+                    type: array
                   username:
                     description: Username is the name of the user to use to connect
                       to the Prism Central.
@@ -2292,6 +2295,7 @@ spec:
                 - port
                 - prismCentral
                 - prismElementUUID
+                - subnetUUID
                 - username
                 type: object
               openstack:

@@ -40,8 +40,7 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
-	// SubnetUUID specifies the UUID of the subnet to be used by the cluster.
-	//
-	// +optional
-	SubnetUUID string `json:"subnetUUID,omitempty"`
+	// SubnetUUIDs identifies the network subnets to be used by the cluster.
+	// Currently we only support one subnet for an OpenShift cluster.
+	SubnetUUIDs []string `json:"subnetUUID"`
 }

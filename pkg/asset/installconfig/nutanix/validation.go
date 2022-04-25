@@ -50,9 +50,11 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	}
 
 	// validate whether a subnet with the UUID actually exists
-	_, err = nc.V3.GetSubnet(p.SubnetUUID)
-	if err != nil {
-		return field.InternalError(field.NewPath("platform", "nutanix", "subnetUUID"), errors.Wrapf(err, "subnet UUID %s does not correspond to a valid subnet in Prism", p.SubnetUUID))
+	for _, subnetUUID := range p.SubnetUUIDs {
+		_, err = nc.V3.GetSubnet(subnetUUID)
+		if err != nil {
+			return field.InternalError(field.NewPath("platform", "nutanix", "subnetUUIDs"), errors.Wrapf(err, "subnet UUID %s does not correspond to a valid subnet in Prism", subnetUUID))
+		}
 	}
 
 	return nil

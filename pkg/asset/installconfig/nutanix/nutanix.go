@@ -56,7 +56,7 @@ func Platform() (*nutanix.Platform, error) {
 		Username:         nutanixClient.Username,
 		Password:         nutanixClient.Password,
 		PrismElementUUID: peUUID,
-		SubnetUUID:       subnetUUID,
+		SubnetUUIDs:      []string{subnetUUID},
 		APIVIP:           apiVIP,
 		IngressVIP:       ingressVIP,
 	}
