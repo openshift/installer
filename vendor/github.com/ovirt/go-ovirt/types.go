@@ -20,6 +20,7 @@ import (
 	"time"
 )
 
+// AffinityGroup An affinity group represents a group of virtual machines with a defined relationship.
 type AffinityGroup struct {
 	Struct
 	cluster     *Cluster
@@ -38,10 +39,264 @@ type AffinityGroup struct {
 	vmsRule     *AffinityRule
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *AffinityGroup) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *AffinityGroup) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -49,6 +304,133 @@ func (p *AffinityGroup) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *AffinityGroup) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -149,10 +531,16 @@ func (p *AffinityGroup) MustHosts() *HostSlice {
 	return p.hosts
 }
 
+// SetHostsRule Generic rule definition for affinity group. Each supported resource type (virtual machine, host) is controlled
+// by a separate rule. This allows expressing of rules like: no affinity between defined virtual machines, but hard
+// affinity between defined virtual machines and virtual hosts.
 func (p *AffinityGroup) SetHostsRule(attr *AffinityRule) {
 	p.hostsRule = attr
 }
 
+// HostsRule Generic rule definition for affinity group. Each supported resource type (virtual machine, host) is controlled
+// by a separate rule. This allows expressing of rules like: no affinity between defined virtual machines, but hard
+// affinity between defined virtual machines and virtual hosts.
 func (p *AffinityGroup) HostsRule() (*AffinityRule, bool) {
 	if p.hostsRule != nil {
 		return p.hostsRule, true
@@ -160,6 +548,9 @@ func (p *AffinityGroup) HostsRule() (*AffinityRule, bool) {
 	return nil, false
 }
 
+// MustHostsRule Generic rule definition for affinity group. Each supported resource type (virtual machine, host) is controlled
+// by a separate rule. This allows expressing of rules like: no affinity between defined virtual machines, but hard
+// affinity between defined virtual machines and virtual hosts.
 func (p *AffinityGroup) MustHostsRule() *AffinityRule {
 	if p.hostsRule == nil {
 		panic("the hostsRule must not be nil, please use HostsRule() function instead")
@@ -279,10 +670,16 @@ func (p *AffinityGroup) MustVms() *VmSlice {
 	return p.vms
 }
 
+// SetVmsRule Generic rule definition for affinity group. Each supported resource type (virtual machine, host) is controlled
+// by a separate rule. This allows expressing of rules like: no affinity between defined virtual machines, but hard
+// affinity between defined virtual machines and virtual hosts.
 func (p *AffinityGroup) SetVmsRule(attr *AffinityRule) {
 	p.vmsRule = attr
 }
 
+// VmsRule Generic rule definition for affinity group. Each supported resource type (virtual machine, host) is controlled
+// by a separate rule. This allows expressing of rules like: no affinity between defined virtual machines, but hard
+// affinity between defined virtual machines and virtual hosts.
 func (p *AffinityGroup) VmsRule() (*AffinityRule, bool) {
 	if p.vmsRule != nil {
 		return p.vmsRule, true
@@ -290,6 +687,9 @@ func (p *AffinityGroup) VmsRule() (*AffinityRule, bool) {
 	return nil, false
 }
 
+// MustVmsRule Generic rule definition for affinity group. Each supported resource type (virtual machine, host) is controlled
+// by a separate rule. This allows expressing of rules like: no affinity between defined virtual machines, but hard
+// affinity between defined virtual machines and virtual hosts.
 func (p *AffinityGroup) MustVmsRule() *AffinityRule {
 	if p.vmsRule == nil {
 		panic("the vmsRule must not be nil, please use VmsRule() function instead")
@@ -297,6 +697,8 @@ func (p *AffinityGroup) MustVmsRule() *AffinityRule {
 	return p.vmsRule
 }
 
+// AffinityLabel The affinity label can influence virtual machine scheduling.
+// It is most frequently used to create a sub-cluster from the available hosts.
 type AffinityLabel struct {
 	Struct
 	comment                  *string
@@ -459,6 +861,9 @@ func (p *AffinityLabel) MustVms() *VmSlice {
 	return p.vms
 }
 
+// AffinityRule Generic rule definition for affinity group. Each supported resource type (virtual machine, host) is controlled
+// by a separate rule. This allows expressing of rules like: no affinity between defined virtual machines, but hard
+// affinity between defined virtual machines and virtual hosts.
 type AffinityRule struct {
 	Struct
 	enabled   *bool
@@ -523,6 +928,7 @@ func (p *AffinityRule) MustPositive() bool {
 	return *p.positive
 }
 
+// Agent Type representing a fence agent.
 type Agent struct {
 	Struct
 	address        *string
@@ -636,10 +1042,12 @@ func (p *Agent) MustEncryptOptions() bool {
 	return *p.encryptOptions
 }
 
+// SetHost Type representing a host.
 func (p *Agent) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *Agent) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -647,6 +1055,7 @@ func (p *Agent) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *Agent) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -805,6 +1214,10 @@ func (p *Agent) MustUsername() string {
 	return *p.username
 }
 
+// AgentConfiguration Deprecated Agent configuration settings.
+//
+// Ignored, because the deployment of OpenStack Neutron agent is dropped since {product-name} 4.4.0.
+// The deployment of OpenStack hosts can be done by Red Hat OpenStack Platform Director or TripleO.
 type AgentConfiguration struct {
 	Struct
 	address         *string
@@ -834,10 +1247,16 @@ func (p *AgentConfiguration) MustAddress() string {
 	return *p.address
 }
 
+// SetBrokerType Deprecated Message Broker type.
+//
+// Ignored, because the deployment of OpenStack Neutron agent is dropped since {product-name} 4.4.0.
 func (p *AgentConfiguration) SetBrokerType(attr MessageBrokerType) {
 	p.brokerType = &attr
 }
 
+// BrokerType Deprecated Message Broker type.
+//
+// Ignored, because the deployment of OpenStack Neutron agent is dropped since {product-name} 4.4.0.
 func (p *AgentConfiguration) BrokerType() (MessageBrokerType, bool) {
 	if p.brokerType != nil {
 		return *p.brokerType, true
@@ -846,6 +1265,9 @@ func (p *AgentConfiguration) BrokerType() (MessageBrokerType, bool) {
 	return zero, false
 }
 
+// MustBrokerType Deprecated Message Broker type.
+//
+// Ignored, because the deployment of OpenStack Neutron agent is dropped since {product-name} 4.4.0.
 func (p *AgentConfiguration) MustBrokerType() MessageBrokerType {
 	if p.brokerType == nil {
 		panic("the brokerType must not be nil, please use BrokerType() function instead")
@@ -929,6 +1351,58 @@ func (p *AgentConfiguration) MustUsername() string {
 	return *p.username
 }
 
+// Api This type contains the information returned by the root service of the API.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <api>
+//   <link rel="hosts" href="/ovirt-engine/api/hosts"/>
+//   <link rel="vms" href="/ovirt-engine/api/vms"/>
+//   ...
+//   <product_info>
+//     <name>oVirt Engine</name>
+//     <vendor>ovirt.org</vendor>
+//     <version>
+//       <build>0</build>
+//       <full_version>4.1.0_master</full_version>
+//       <major>4</major>
+//       <minor>1</minor>
+//       <revision>0</revision>
+//     </version>
+//   </product_info>
+//   <special_objects>
+//     <link rel="templates/blank" href="..."/>
+//     <link rel="tags/root" href="..."/>
+//   </special_objects>
+//   <summary>
+//     <vms>
+//       <total>10</total>
+//       <active>3</active>
+//     </vms>
+//     <hosts>
+//       <total>2</total>
+//       <active>2</active>
+//     </hosts>
+//     <users>
+//       <total>8</total>
+//       <active>2</active>
+//     </users>
+//     <storage_domains>
+//       <total>2</total>
+//       <active>2</active>
+//     </storage_domains>
+//   </summary>
+//   <time>2016-12-12T12:22:25.866+01:00</time>
+// </api>
+// ----
 type Api struct {
 	Struct
 	authenticatedUser *User
@@ -939,10 +1413,12 @@ type Api struct {
 	time              *time.Time
 }
 
+// SetAuthenticatedUser Represents a user in the system.
 func (p *Api) SetAuthenticatedUser(attr *User) {
 	p.authenticatedUser = attr
 }
 
+// AuthenticatedUser Represents a user in the system.
 func (p *Api) AuthenticatedUser() (*User, bool) {
 	if p.authenticatedUser != nil {
 		return p.authenticatedUser, true
@@ -950,6 +1426,7 @@ func (p *Api) AuthenticatedUser() (*User, bool) {
 	return nil, false
 }
 
+// MustAuthenticatedUser Represents a user in the system.
 func (p *Api) MustAuthenticatedUser() *User {
 	if p.authenticatedUser == nil {
 		panic("the authenticatedUser must not be nil, please use AuthenticatedUser() function instead")
@@ -957,10 +1434,12 @@ func (p *Api) MustAuthenticatedUser() *User {
 	return p.authenticatedUser
 }
 
+// SetEffectiveUser Represents a user in the system.
 func (p *Api) SetEffectiveUser(attr *User) {
 	p.effectiveUser = attr
 }
 
+// EffectiveUser Represents a user in the system.
 func (p *Api) EffectiveUser() (*User, bool) {
 	if p.effectiveUser != nil {
 		return p.effectiveUser, true
@@ -968,6 +1447,7 @@ func (p *Api) EffectiveUser() (*User, bool) {
 	return nil, false
 }
 
+// MustEffectiveUser Represents a user in the system.
 func (p *Api) MustEffectiveUser() *User {
 	if p.effectiveUser == nil {
 		panic("the effectiveUser must not be nil, please use EffectiveUser() function instead")
@@ -975,10 +1455,64 @@ func (p *Api) MustEffectiveUser() *User {
 	return p.effectiveUser
 }
 
+// SetProductInfo Product information.
+//
+// The entry point contains a `product_info` element to help an API user determine the legitimacy of the
+// {product-name} environment. This includes the name of the product, the `vendor` and the `version`.
+//
+// Verify a genuine {product-name} environment
+//
+// The follow elements identify a genuine {product-name} environment:
+//
+// [source]
+// ----
+// <api>
+// ...
+// <product_info>
+//   <name>oVirt Engine</name>
+//   <vendor>ovirt.org</vendor>
+//   <version>
+//     <build>0</build>
+//     <full_version>4.1.0_master</full_version>
+//     <major>4</major>
+//     <minor>1</minor>
+//     <revision>0</revision>
+//   </version>
+// </product_info>
+// ...
+// </api>
+// ----
 func (p *Api) SetProductInfo(attr *ProductInfo) {
 	p.productInfo = attr
 }
 
+// ProductInfo Product information.
+//
+// The entry point contains a `product_info` element to help an API user determine the legitimacy of the
+// {product-name} environment. This includes the name of the product, the `vendor` and the `version`.
+//
+// Verify a genuine {product-name} environment
+//
+// The follow elements identify a genuine {product-name} environment:
+//
+// [source]
+// ----
+// <api>
+// ...
+// <product_info>
+//   <name>oVirt Engine</name>
+//   <vendor>ovirt.org</vendor>
+//   <version>
+//     <build>0</build>
+//     <full_version>4.1.0_master</full_version>
+//     <major>4</major>
+//     <minor>1</minor>
+//     <revision>0</revision>
+//   </version>
+// </product_info>
+// ...
+// </api>
+// ----
 func (p *Api) ProductInfo() (*ProductInfo, bool) {
 	if p.productInfo != nil {
 		return p.productInfo, true
@@ -986,6 +1520,33 @@ func (p *Api) ProductInfo() (*ProductInfo, bool) {
 	return nil, false
 }
 
+// MustProductInfo Product information.
+//
+// The entry point contains a `product_info` element to help an API user determine the legitimacy of the
+// {product-name} environment. This includes the name of the product, the `vendor` and the `version`.
+//
+// Verify a genuine {product-name} environment
+//
+// The follow elements identify a genuine {product-name} environment:
+//
+// [source]
+// ----
+// <api>
+// ...
+// <product_info>
+//   <name>oVirt Engine</name>
+//   <vendor>ovirt.org</vendor>
+//   <version>
+//     <build>0</build>
+//     <full_version>4.1.0_master</full_version>
+//     <major>4</major>
+//     <minor>1</minor>
+//     <revision>0</revision>
+//   </version>
+// </product_info>
+// ...
+// </api>
+// ----
 func (p *Api) MustProductInfo() *ProductInfo {
 	if p.productInfo == nil {
 		panic("the productInfo must not be nil, please use ProductInfo() function instead")
@@ -993,10 +1554,12 @@ func (p *Api) MustProductInfo() *ProductInfo {
 	return p.productInfo
 }
 
+// SetSpecialObjects This type contains references to special objects, such as blank templates and the root of a hierarchy of tags.
 func (p *Api) SetSpecialObjects(attr *SpecialObjects) {
 	p.specialObjects = attr
 }
 
+// SpecialObjects This type contains references to special objects, such as blank templates and the root of a hierarchy of tags.
 func (p *Api) SpecialObjects() (*SpecialObjects, bool) {
 	if p.specialObjects != nil {
 		return p.specialObjects, true
@@ -1004,6 +1567,7 @@ func (p *Api) SpecialObjects() (*SpecialObjects, bool) {
 	return nil, false
 }
 
+// MustSpecialObjects This type contains references to special objects, such as blank templates and the root of a hierarchy of tags.
 func (p *Api) MustSpecialObjects() *SpecialObjects {
 	if p.specialObjects == nil {
 		panic("the specialObjects must not be nil, please use SpecialObjects() function instead")
@@ -1011,10 +1575,12 @@ func (p *Api) MustSpecialObjects() *SpecialObjects {
 	return p.specialObjects
 }
 
+// SetSummary A summary containing the total number of relevant objects, such as virtual machines, hosts, and storage domains.
 func (p *Api) SetSummary(attr *ApiSummary) {
 	p.summary = attr
 }
 
+// Summary A summary containing the total number of relevant objects, such as virtual machines, hosts, and storage domains.
 func (p *Api) Summary() (*ApiSummary, bool) {
 	if p.summary != nil {
 		return p.summary, true
@@ -1022,6 +1588,7 @@ func (p *Api) Summary() (*ApiSummary, bool) {
 	return nil, false
 }
 
+// MustSummary A summary containing the total number of relevant objects, such as virtual machines, hosts, and storage domains.
 func (p *Api) MustSummary() *ApiSummary {
 	if p.summary == nil {
 		panic("the summary must not be nil, please use Summary() function instead")
@@ -1048,6 +1615,7 @@ func (p *Api) MustTime() time.Time {
 	return *p.time
 }
 
+// ApiSummary A summary containing the total number of relevant objects, such as virtual machines, hosts, and storage domains.
 type ApiSummary struct {
 	Struct
 	hosts          *ApiSummaryItem
@@ -1056,10 +1624,14 @@ type ApiSummary struct {
 	vms            *ApiSummaryItem
 }
 
+// SetHosts This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) SetHosts(attr *ApiSummaryItem) {
 	p.hosts = attr
 }
 
+// Hosts This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) Hosts() (*ApiSummaryItem, bool) {
 	if p.hosts != nil {
 		return p.hosts, true
@@ -1067,6 +1639,8 @@ func (p *ApiSummary) Hosts() (*ApiSummaryItem, bool) {
 	return nil, false
 }
 
+// MustHosts This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) MustHosts() *ApiSummaryItem {
 	if p.hosts == nil {
 		panic("the hosts must not be nil, please use Hosts() function instead")
@@ -1074,10 +1648,14 @@ func (p *ApiSummary) MustHosts() *ApiSummaryItem {
 	return p.hosts
 }
 
+// SetStorageDomains This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) SetStorageDomains(attr *ApiSummaryItem) {
 	p.storageDomains = attr
 }
 
+// StorageDomains This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) StorageDomains() (*ApiSummaryItem, bool) {
 	if p.storageDomains != nil {
 		return p.storageDomains, true
@@ -1085,6 +1663,8 @@ func (p *ApiSummary) StorageDomains() (*ApiSummaryItem, bool) {
 	return nil, false
 }
 
+// MustStorageDomains This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) MustStorageDomains() *ApiSummaryItem {
 	if p.storageDomains == nil {
 		panic("the storageDomains must not be nil, please use StorageDomains() function instead")
@@ -1092,10 +1672,14 @@ func (p *ApiSummary) MustStorageDomains() *ApiSummaryItem {
 	return p.storageDomains
 }
 
+// SetUsers This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) SetUsers(attr *ApiSummaryItem) {
 	p.users = attr
 }
 
+// Users This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) Users() (*ApiSummaryItem, bool) {
 	if p.users != nil {
 		return p.users, true
@@ -1103,6 +1687,8 @@ func (p *ApiSummary) Users() (*ApiSummaryItem, bool) {
 	return nil, false
 }
 
+// MustUsers This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) MustUsers() *ApiSummaryItem {
 	if p.users == nil {
 		panic("the users must not be nil, please use Users() function instead")
@@ -1110,10 +1696,14 @@ func (p *ApiSummary) MustUsers() *ApiSummaryItem {
 	return p.users
 }
 
+// SetVms This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) SetVms(attr *ApiSummaryItem) {
 	p.vms = attr
 }
 
+// Vms This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) Vms() (*ApiSummaryItem, bool) {
 	if p.vms != nil {
 		return p.vms, true
@@ -1121,6 +1711,8 @@ func (p *ApiSummary) Vms() (*ApiSummaryItem, bool) {
 	return nil, false
 }
 
+// MustVms This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 func (p *ApiSummary) MustVms() *ApiSummaryItem {
 	if p.vms == nil {
 		panic("the vms must not be nil, please use Vms() function instead")
@@ -1128,6 +1720,8 @@ func (p *ApiSummary) MustVms() *ApiSummaryItem {
 	return p.vms
 }
 
+// ApiSummaryItem This type contains an item of the API summary. Each item contains the total and active number of some kind of
+// object.
 type ApiSummaryItem struct {
 	Struct
 	active *int64
@@ -1172,6 +1766,24 @@ func (p *ApiSummaryItem) MustTotal() int64 {
 	return *p.total
 }
 
+// Application Represents an application installed on a virtual machine. Applications are reported by the guest agent, if you
+// deploy one on the virtual machine operating system.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/vms/123/applications/456
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <application href="/ovirt-engine/api/vms/123/applications/456" id="456">
+//   <name>application-test-1.0.0-0.el7</name>
+//   <vm href="/ovirt-engine/api/vms/123" id="123"/>
+// </application>
+// ----
 type Application struct {
 	Struct
 	comment     *string
@@ -1257,10 +1869,12 @@ func (p *Application) MustName() string {
 	return *p.name
 }
 
+// SetVm Represents a virtual machine.
 func (p *Application) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Application) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -1268,6 +1882,7 @@ func (p *Application) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Application) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -1380,10 +1995,12 @@ func (p *AuthorizedKey) MustName() string {
 	return *p.name
 }
 
+// SetUser Represents a user in the system.
 func (p *AuthorizedKey) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *AuthorizedKey) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -1391,6 +2008,7 @@ func (p *AuthorizedKey) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *AuthorizedKey) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -1507,10 +2125,12 @@ func (p *Backup) MustFromCheckpointId() string {
 	return *p.fromCheckpointId
 }
 
+// SetHost Type representing a host.
 func (p *Backup) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *Backup) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -1518,6 +2138,7 @@ func (p *Backup) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *Backup) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -1601,10 +2222,12 @@ func (p *Backup) MustToCheckpointId() string {
 	return *p.toCheckpointId
 }
 
+// SetVm Represents a virtual machine.
 func (p *Backup) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Backup) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -1612,6 +2235,7 @@ func (p *Backup) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Backup) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -1747,10 +2371,14 @@ type Bios struct {
 	type_    *BiosType
 }
 
+// SetBootMenu Represents boot menu configuration
+// for virtual machines and templates.
 func (p *Bios) SetBootMenu(attr *BootMenu) {
 	p.bootMenu = attr
 }
 
+// BootMenu Represents boot menu configuration
+// for virtual machines and templates.
 func (p *Bios) BootMenu() (*BootMenu, bool) {
 	if p.bootMenu != nil {
 		return p.bootMenu, true
@@ -1758,6 +2386,8 @@ func (p *Bios) BootMenu() (*BootMenu, bool) {
 	return nil, false
 }
 
+// MustBootMenu Represents boot menu configuration
+// for virtual machines and templates.
 func (p *Bios) MustBootMenu() *BootMenu {
 	if p.bootMenu == nil {
 		panic("the bootMenu must not be nil, please use BootMenu() function instead")
@@ -1765,10 +2395,12 @@ func (p *Bios) MustBootMenu() *BootMenu {
 	return p.bootMenu
 }
 
+// SetType Type representing a chipset and a BIOS type combination.
 func (p *Bios) SetType(attr BiosType) {
 	p.type_ = &attr
 }
 
+// Type Type representing a chipset and a BIOS type combination.
 func (p *Bios) Type() (BiosType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -1777,6 +2409,7 @@ func (p *Bios) Type() (BiosType, bool) {
 	return zero, false
 }
 
+// MustType Type representing a chipset and a BIOS type combination.
 func (p *Bios) MustType() BiosType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -1807,6 +2440,7 @@ func (p *BlockStatistic) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+// Bonding Represents a network interfaces bond.
 type Bonding struct {
 	Struct
 	activeSlave  *HostNic
@@ -1815,10 +2449,148 @@ type Bonding struct {
 	slaves       *HostNicSlice
 }
 
+// SetActiveSlave Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *Bonding) SetActiveSlave(attr *HostNic) {
 	p.activeSlave = attr
 }
 
+// ActiveSlave Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *Bonding) ActiveSlave() (*HostNic, bool) {
 	if p.activeSlave != nil {
 		return p.activeSlave, true
@@ -1826,6 +2598,75 @@ func (p *Bonding) ActiveSlave() (*HostNic, bool) {
 	return nil, false
 }
 
+// MustActiveSlave Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *Bonding) MustActiveSlave() *HostNic {
 	if p.activeSlave == nil {
 		panic("the activeSlave must not be nil, please use ActiveSlave() function instead")
@@ -1833,10 +2674,12 @@ func (p *Bonding) MustActiveSlave() *HostNic {
 	return p.activeSlave
 }
 
+// SetAdPartnerMac Represents a MAC address of a virtual network interface.
 func (p *Bonding) SetAdPartnerMac(attr *Mac) {
 	p.adPartnerMac = attr
 }
 
+// AdPartnerMac Represents a MAC address of a virtual network interface.
 func (p *Bonding) AdPartnerMac() (*Mac, bool) {
 	if p.adPartnerMac != nil {
 		return p.adPartnerMac, true
@@ -1844,6 +2687,7 @@ func (p *Bonding) AdPartnerMac() (*Mac, bool) {
 	return nil, false
 }
 
+// MustAdPartnerMac Represents a MAC address of a virtual network interface.
 func (p *Bonding) MustAdPartnerMac() *Mac {
 	if p.adPartnerMac == nil {
 		panic("the adPartnerMac must not be nil, please use AdPartnerMac() function instead")
@@ -1887,6 +2731,7 @@ func (p *Bonding) MustSlaves() *HostNicSlice {
 	return p.slaves
 }
 
+// Bookmark Represents a bookmark in the system.
 type Bookmark struct {
 	Struct
 	comment     *string
@@ -1991,6 +2836,7 @@ func (p *Bookmark) MustValue() string {
 	return *p.value
 }
 
+// Boot Configuration of the boot sequence of a virtual machine.
 type Boot struct {
 	Struct
 	devices []BootDevice
@@ -2014,6 +2860,8 @@ func (p *Boot) MustDevices() []BootDevice {
 	return p.devices
 }
 
+// BootMenu Represents boot menu configuration
+// for virtual machines and templates.
 type BootMenu struct {
 	Struct
 	enabled *bool
@@ -2168,10 +3016,66 @@ func (p *Cdrom) MustId() string {
 	return *p.id
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Cdrom) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Cdrom) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -2179,6 +3083,34 @@ func (p *Cdrom) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Cdrom) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -2205,10 +3137,14 @@ func (p *Cdrom) MustName() string {
 	return *p.name
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Cdrom) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Cdrom) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -2216,6 +3152,8 @@ func (p *Cdrom) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Cdrom) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -2223,10 +3161,12 @@ func (p *Cdrom) MustTemplate() *Template {
 	return p.template
 }
 
+// SetVm Represents a virtual machine.
 func (p *Cdrom) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Cdrom) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -2234,6 +3174,7 @@ func (p *Cdrom) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Cdrom) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -2412,6 +3353,7 @@ type Checkpoint struct {
 	id           *string
 	name         *string
 	parentId     *string
+	state        *CheckpointState
 	vm           *Vm
 }
 
@@ -2547,10 +3489,31 @@ func (p *Checkpoint) MustParentId() string {
 	return *p.parentId
 }
 
+func (p *Checkpoint) SetState(attr CheckpointState) {
+	p.state = &attr
+}
+
+func (p *Checkpoint) State() (CheckpointState, bool) {
+	if p.state != nil {
+		return *p.state, true
+	}
+	var zero CheckpointState
+	return zero, false
+}
+
+func (p *Checkpoint) MustState() CheckpointState {
+	if p.state == nil {
+		panic("the state must not be nil, please use State() function instead")
+	}
+	return *p.state
+}
+
+// SetVm Represents a virtual machine.
 func (p *Checkpoint) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Checkpoint) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -2558,6 +3521,7 @@ func (p *Checkpoint) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Checkpoint) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -2565,6 +3529,11 @@ func (p *Checkpoint) MustVm() *Vm {
 	return p.vm
 }
 
+// CloudInit Deprecated type to specify _cloud-init_ configuration.
+//
+// This type has been deprecated and replaced by alternative attributes inside the
+// <<types/initialization, Initialization>> type. See the
+// <<types/initialization/attributes/cloud_init, cloud_init>> attribute documentation for details.
 type CloudInit struct {
 	Struct
 	authorizedKeys       *AuthorizedKeySlice
@@ -2612,10 +3581,12 @@ func (p *CloudInit) MustFiles() *FileSlice {
 	return p.files
 }
 
+// SetHost Type representing a host.
 func (p *CloudInit) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *CloudInit) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -2623,6 +3594,7 @@ func (p *CloudInit) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *CloudInit) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -2704,6 +3676,133 @@ func (p *CloudInit) MustUsers() *UserSlice {
 	return p.users
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 type Cluster struct {
 	Struct
 	affinityGroups                   *AffinityGroupSlice
@@ -2791,10 +3890,12 @@ func (p *Cluster) MustBallooningEnabled() bool {
 	return *p.ballooningEnabled
 }
 
+// SetBiosType Type representing a chipset and a BIOS type combination.
 func (p *Cluster) SetBiosType(attr BiosType) {
 	p.biosType = &attr
 }
 
+// BiosType Type representing a chipset and a BIOS type combination.
 func (p *Cluster) BiosType() (BiosType, bool) {
 	if p.biosType != nil {
 		return *p.biosType, true
@@ -2803,6 +3904,7 @@ func (p *Cluster) BiosType() (BiosType, bool) {
 	return zero, false
 }
 
+// MustBiosType Type representing a chipset and a BIOS type combination.
 func (p *Cluster) MustBiosType() BiosType {
 	if p.biosType == nil {
 		panic("the biosType must not be nil, please use BiosType() function instead")
@@ -2920,10 +4022,12 @@ func (p *Cluster) MustDescription() string {
 	return *p.description
 }
 
+// SetDisplay Represents a graphic console configuration.
 func (p *Cluster) SetDisplay(attr *Display) {
 	p.display = attr
 }
 
+// Display Represents a graphic console configuration.
 func (p *Cluster) Display() (*Display, bool) {
 	if p.display != nil {
 		return p.display, true
@@ -2931,6 +4035,7 @@ func (p *Cluster) Display() (*Display, bool) {
 	return nil, false
 }
 
+// MustDisplay Represents a graphic console configuration.
 func (p *Cluster) MustDisplay() *Display {
 	if p.display == nil {
 		panic("the display must not be nil, please use Display() function instead")
@@ -2992,10 +4097,12 @@ func (p *Cluster) MustExternalNetworkProviders() *ExternalProviderSlice {
 	return p.externalNetworkProviders
 }
 
+// SetFencingPolicy Type representing a cluster fencing policy.
 func (p *Cluster) SetFencingPolicy(attr *FencingPolicy) {
 	p.fencingPolicy = attr
 }
 
+// FencingPolicy Type representing a cluster fencing policy.
 func (p *Cluster) FencingPolicy() (*FencingPolicy, bool) {
 	if p.fencingPolicy != nil {
 		return p.fencingPolicy, true
@@ -3003,6 +4110,7 @@ func (p *Cluster) FencingPolicy() (*FencingPolicy, bool) {
 	return nil, false
 }
 
+// MustFencingPolicy Type representing a cluster fencing policy.
 func (p *Cluster) MustFencingPolicy() *FencingPolicy {
 	if p.fencingPolicy == nil {
 		panic("the fencingPolicy must not be nil, please use FencingPolicy() function instead")
@@ -3010,10 +4118,12 @@ func (p *Cluster) MustFencingPolicy() *FencingPolicy {
 	return p.fencingPolicy
 }
 
+// SetFipsMode Representation of the FIPS mode to the cluster.
 func (p *Cluster) SetFipsMode(attr FipsMode) {
 	p.fipsMode = &attr
 }
 
+// FipsMode Representation of the FIPS mode to the cluster.
 func (p *Cluster) FipsMode() (FipsMode, bool) {
 	if p.fipsMode != nil {
 		return *p.fipsMode, true
@@ -3022,6 +4132,7 @@ func (p *Cluster) FipsMode() (FipsMode, bool) {
 	return zero, false
 }
 
+// MustFipsMode Representation of the FIPS mode to the cluster.
 func (p *Cluster) MustFipsMode() FipsMode {
 	if p.fipsMode == nil {
 		panic("the fipsMode must not be nil, please use FipsMode() function instead")
@@ -3029,10 +4140,12 @@ func (p *Cluster) MustFipsMode() FipsMode {
 	return *p.fipsMode
 }
 
+// SetFirewallType Describes all firewall types supported by the system.
 func (p *Cluster) SetFirewallType(attr FirewallType) {
 	p.firewallType = &attr
 }
 
+// FirewallType Describes all firewall types supported by the system.
 func (p *Cluster) FirewallType() (FirewallType, bool) {
 	if p.firewallType != nil {
 		return *p.firewallType, true
@@ -3041,6 +4154,7 @@ func (p *Cluster) FirewallType() (FirewallType, bool) {
 	return zero, false
 }
 
+// MustFirewallType Describes all firewall types supported by the system.
 func (p *Cluster) MustFirewallType() FirewallType {
 	if p.firewallType == nil {
 		panic("the firewallType must not be nil, please use FirewallType() function instead")
@@ -3197,10 +4311,12 @@ func (p *Cluster) MustLogMaxMemoryUsedThreshold() int64 {
 	return *p.logMaxMemoryUsedThreshold
 }
 
+// SetLogMaxMemoryUsedThresholdType Describes all maximum memory threshold types supported by the system.
 func (p *Cluster) SetLogMaxMemoryUsedThresholdType(attr LogMaxMemoryUsedThresholdType) {
 	p.logMaxMemoryUsedThresholdType = &attr
 }
 
+// LogMaxMemoryUsedThresholdType Describes all maximum memory threshold types supported by the system.
 func (p *Cluster) LogMaxMemoryUsedThresholdType() (LogMaxMemoryUsedThresholdType, bool) {
 	if p.logMaxMemoryUsedThresholdType != nil {
 		return *p.logMaxMemoryUsedThresholdType, true
@@ -3209,6 +4325,7 @@ func (p *Cluster) LogMaxMemoryUsedThresholdType() (LogMaxMemoryUsedThresholdType
 	return zero, false
 }
 
+// MustLogMaxMemoryUsedThresholdType Describes all maximum memory threshold types supported by the system.
 func (p *Cluster) MustLogMaxMemoryUsedThresholdType() LogMaxMemoryUsedThresholdType {
 	if p.logMaxMemoryUsedThresholdType == nil {
 		panic("the logMaxMemoryUsedThresholdType must not be nil, please use LogMaxMemoryUsedThresholdType() function instead")
@@ -3216,10 +4333,48 @@ func (p *Cluster) MustLogMaxMemoryUsedThresholdType() LogMaxMemoryUsedThresholdT
 	return *p.logMaxMemoryUsedThresholdType
 }
 
+// SetMacPool Represents a MAC address pool.
+//
+// Example of an XML representation of a MAC address pool:
+//
+// [source,xml]
+// ----
+// <mac_pool href="/ovirt-engine/api/macpools/123" id="123">
+//   <name>Default</name>
+//   <description>Default MAC pool</description>
+//   <allow_duplicates>false</allow_duplicates>
+//   <default_pool>true</default_pool>
+//   <ranges>
+//     <range>
+//       <from>00:1A:4A:16:01:51</from>
+//       <to>00:1A:4A:16:01:E6</to>
+//     </range>
+//   </ranges>
+// </mac_pool>
+// ----
 func (p *Cluster) SetMacPool(attr *MacPool) {
 	p.macPool = attr
 }
 
+// MacPool Represents a MAC address pool.
+//
+// Example of an XML representation of a MAC address pool:
+//
+// [source,xml]
+// ----
+// <mac_pool href="/ovirt-engine/api/macpools/123" id="123">
+//   <name>Default</name>
+//   <description>Default MAC pool</description>
+//   <allow_duplicates>false</allow_duplicates>
+//   <default_pool>true</default_pool>
+//   <ranges>
+//     <range>
+//       <from>00:1A:4A:16:01:51</from>
+//       <to>00:1A:4A:16:01:E6</to>
+//     </range>
+//   </ranges>
+// </mac_pool>
+// ----
 func (p *Cluster) MacPool() (*MacPool, bool) {
 	if p.macPool != nil {
 		return p.macPool, true
@@ -3227,6 +4382,25 @@ func (p *Cluster) MacPool() (*MacPool, bool) {
 	return nil, false
 }
 
+// MustMacPool Represents a MAC address pool.
+//
+// Example of an XML representation of a MAC address pool:
+//
+// [source,xml]
+// ----
+// <mac_pool href="/ovirt-engine/api/macpools/123" id="123">
+//   <name>Default</name>
+//   <description>Default MAC pool</description>
+//   <allow_duplicates>false</allow_duplicates>
+//   <default_pool>true</default_pool>
+//   <ranges>
+//     <range>
+//       <from>00:1A:4A:16:01:51</from>
+//       <to>00:1A:4A:16:01:E6</to>
+//     </range>
+//   </ranges>
+// </mac_pool>
+// ----
 func (p *Cluster) MustMacPool() *MacPool {
 	if p.macPool == nil {
 		panic("the macPool must not be nil, please use MacPool() function instead")
@@ -3253,10 +4427,116 @@ func (p *Cluster) MustMaintenanceReasonRequired() bool {
 	return *p.maintenanceReasonRequired
 }
 
+// SetManagementNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *Cluster) SetManagementNetwork(attr *Network) {
 	p.managementNetwork = attr
 }
 
+// ManagementNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *Cluster) ManagementNetwork() (*Network, bool) {
 	if p.managementNetwork != nil {
 		return p.managementNetwork, true
@@ -3264,6 +4544,59 @@ func (p *Cluster) ManagementNetwork() (*Network, bool) {
 	return nil, false
 }
 
+// MustManagementNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *Cluster) MustManagementNetwork() *Network {
 	if p.managementNetwork == nil {
 		panic("the managementNetwork must not be nil, please use ManagementNetwork() function instead")
@@ -3271,10 +4604,12 @@ func (p *Cluster) MustManagementNetwork() *Network {
 	return p.managementNetwork
 }
 
+// SetMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Cluster) SetMemoryPolicy(attr *MemoryPolicy) {
 	p.memoryPolicy = attr
 }
 
+// MemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Cluster) MemoryPolicy() (*MemoryPolicy, bool) {
 	if p.memoryPolicy != nil {
 		return p.memoryPolicy, true
@@ -3282,6 +4617,7 @@ func (p *Cluster) MemoryPolicy() (*MemoryPolicy, bool) {
 	return nil, false
 }
 
+// MustMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Cluster) MustMemoryPolicy() *MemoryPolicy {
 	if p.memoryPolicy == nil {
 		panic("the memoryPolicy must not be nil, please use MemoryPolicy() function instead")
@@ -3289,10 +4625,12 @@ func (p *Cluster) MustMemoryPolicy() *MemoryPolicy {
 	return p.memoryPolicy
 }
 
+// SetMigration The type for migration options.
 func (p *Cluster) SetMigration(attr *MigrationOptions) {
 	p.migration = attr
 }
 
+// Migration The type for migration options.
 func (p *Cluster) Migration() (*MigrationOptions, bool) {
 	if p.migration != nil {
 		return p.migration, true
@@ -3300,6 +4638,7 @@ func (p *Cluster) Migration() (*MigrationOptions, bool) {
 	return nil, false
 }
 
+// MustMigration The type for migration options.
 func (p *Cluster) MustMigration() *MigrationOptions {
 	if p.migration == nil {
 		panic("the migration must not be nil, please use Migration() function instead")
@@ -3471,10 +4810,12 @@ func (p *Cluster) MustSupportedVersions() *VersionSlice {
 	return p.supportedVersions
 }
 
+// SetSwitchType Describes all switch types supported by the Manager.
 func (p *Cluster) SetSwitchType(attr SwitchType) {
 	p.switchType = &attr
 }
 
+// SwitchType Describes all switch types supported by the Manager.
 func (p *Cluster) SwitchType() (SwitchType, bool) {
 	if p.switchType != nil {
 		return *p.switchType, true
@@ -3483,6 +4824,7 @@ func (p *Cluster) SwitchType() (SwitchType, bool) {
 	return zero, false
 }
 
+// MustSwitchType Describes all switch types supported by the Manager.
 func (p *Cluster) MustSwitchType() SwitchType {
 	if p.switchType == nil {
 		panic("the switchType must not be nil, please use SwitchType() function instead")
@@ -3603,6 +4945,7 @@ func (p *Cluster) MustVncEncryption() bool {
 	return *p.vncEncryption
 }
 
+// ClusterFeature Type represents an additional feature that is available at a cluster level.
 type ClusterFeature struct {
 	Struct
 	clusterLevel *ClusterLevel
@@ -3612,10 +4955,12 @@ type ClusterFeature struct {
 	name         *string
 }
 
+// SetClusterLevel Describes the capabilities supported by a specific cluster level.
 func (p *ClusterFeature) SetClusterLevel(attr *ClusterLevel) {
 	p.clusterLevel = attr
 }
 
+// ClusterLevel Describes the capabilities supported by a specific cluster level.
 func (p *ClusterFeature) ClusterLevel() (*ClusterLevel, bool) {
 	if p.clusterLevel != nil {
 		return p.clusterLevel, true
@@ -3623,6 +4968,7 @@ func (p *ClusterFeature) ClusterLevel() (*ClusterLevel, bool) {
 	return nil, false
 }
 
+// MustClusterLevel Describes the capabilities supported by a specific cluster level.
 func (p *ClusterFeature) MustClusterLevel() *ClusterLevel {
 	if p.clusterLevel == nil {
 		panic("the clusterLevel must not be nil, please use ClusterLevel() function instead")
@@ -3706,6 +5052,7 @@ func (p *ClusterFeature) MustName() string {
 	return *p.name
 }
 
+// ClusterLevel Describes the capabilities supported by a specific cluster level.
 type ClusterLevel struct {
 	Struct
 	clusterFeatures *ClusterFeatureSlice
@@ -3872,10 +5219,12 @@ func (p *Configuration) MustData() string {
 	return *p.data
 }
 
+// SetType Configuration format types.
 func (p *Configuration) SetType(attr ConfigurationType) {
 	p.type_ = &attr
 }
 
+// Type Configuration format types.
 func (p *Configuration) Type() (ConfigurationType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -3884,6 +5233,7 @@ func (p *Configuration) Type() (ConfigurationType, bool) {
 	return zero, false
 }
 
+// MustType Configuration format types.
 func (p *Configuration) MustType() ConfigurationType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -3891,6 +5241,7 @@ func (p *Configuration) MustType() ConfigurationType {
 	return *p.type_
 }
 
+// Console Representation for serial console device.
 type Console struct {
 	Struct
 	enabled *bool
@@ -4151,10 +5502,264 @@ type CpuProfile struct {
 	qos         *Qos
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *CpuProfile) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *CpuProfile) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -4162,6 +5767,133 @@ func (p *CpuProfile) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *CpuProfile) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -4263,10 +5995,36 @@ func (p *CpuProfile) MustPermissions() *PermissionSlice {
 	return p.permissions
 }
 
+// SetQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *CpuProfile) SetQos(attr *Qos) {
 	p.qos = attr
 }
 
+// Qos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *CpuProfile) Qos() (*Qos, bool) {
 	if p.qos != nil {
 		return p.qos, true
@@ -4274,6 +6032,19 @@ func (p *CpuProfile) Qos() (*Qos, bool) {
 	return nil, false
 }
 
+// MustQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *CpuProfile) MustQos() *Qos {
 	if p.qos == nil {
 		panic("the qos must not be nil, please use Qos() function instead")
@@ -4368,6 +6139,7 @@ func (p *CpuTune) MustVcpuPins() *VcpuPinSlice {
 	return p.vcpuPins
 }
 
+// CpuType Describes a supported CPU type.
 type CpuType struct {
 	Struct
 	architecture *Architecture
@@ -4432,6 +6204,7 @@ func (p *CpuType) MustName() string {
 	return *p.name
 }
 
+// CustomProperty Custom property representation.
 type CustomProperty struct {
 	Struct
 	name   *string
@@ -4630,10 +6403,48 @@ func (p *DataCenter) MustLocal() bool {
 	return *p.local
 }
 
+// SetMacPool Represents a MAC address pool.
+//
+// Example of an XML representation of a MAC address pool:
+//
+// [source,xml]
+// ----
+// <mac_pool href="/ovirt-engine/api/macpools/123" id="123">
+//   <name>Default</name>
+//   <description>Default MAC pool</description>
+//   <allow_duplicates>false</allow_duplicates>
+//   <default_pool>true</default_pool>
+//   <ranges>
+//     <range>
+//       <from>00:1A:4A:16:01:51</from>
+//       <to>00:1A:4A:16:01:E6</to>
+//     </range>
+//   </ranges>
+// </mac_pool>
+// ----
 func (p *DataCenter) SetMacPool(attr *MacPool) {
 	p.macPool = attr
 }
 
+// MacPool Represents a MAC address pool.
+//
+// Example of an XML representation of a MAC address pool:
+//
+// [source,xml]
+// ----
+// <mac_pool href="/ovirt-engine/api/macpools/123" id="123">
+//   <name>Default</name>
+//   <description>Default MAC pool</description>
+//   <allow_duplicates>false</allow_duplicates>
+//   <default_pool>true</default_pool>
+//   <ranges>
+//     <range>
+//       <from>00:1A:4A:16:01:51</from>
+//       <to>00:1A:4A:16:01:E6</to>
+//     </range>
+//   </ranges>
+// </mac_pool>
+// ----
 func (p *DataCenter) MacPool() (*MacPool, bool) {
 	if p.macPool != nil {
 		return p.macPool, true
@@ -4641,6 +6452,25 @@ func (p *DataCenter) MacPool() (*MacPool, bool) {
 	return nil, false
 }
 
+// MustMacPool Represents a MAC address pool.
+//
+// Example of an XML representation of a MAC address pool:
+//
+// [source,xml]
+// ----
+// <mac_pool href="/ovirt-engine/api/macpools/123" id="123">
+//   <name>Default</name>
+//   <description>Default MAC pool</description>
+//   <allow_duplicates>false</allow_duplicates>
+//   <default_pool>true</default_pool>
+//   <ranges>
+//     <range>
+//       <from>00:1A:4A:16:01:51</from>
+//       <to>00:1A:4A:16:01:E6</to>
+//     </range>
+//   </ranges>
+// </mac_pool>
+// ----
 func (p *DataCenter) MustMacPool() *MacPool {
 	if p.macPool == nil {
 		panic("the macPool must not be nil, please use MacPool() function instead")
@@ -4795,10 +6625,12 @@ func (p *DataCenter) MustStorageDomains() *StorageDomainSlice {
 	return p.storageDomains
 }
 
+// SetStorageFormat Type which represents a format of <<types/storage_domain, storage domain>>.
 func (p *DataCenter) SetStorageFormat(attr StorageFormat) {
 	p.storageFormat = &attr
 }
 
+// StorageFormat Type which represents a format of <<types/storage_domain, storage domain>>.
 func (p *DataCenter) StorageFormat() (StorageFormat, bool) {
 	if p.storageFormat != nil {
 		return *p.storageFormat, true
@@ -4807,6 +6639,7 @@ func (p *DataCenter) StorageFormat() (StorageFormat, bool) {
 	return zero, false
 }
 
+// MustStorageFormat Type which represents a format of <<types/storage_domain, storage domain>>.
 func (p *DataCenter) MustStorageFormat() StorageFormat {
 	if p.storageFormat == nil {
 		panic("the storageFormat must not be nil, please use StorageFormat() function instead")
@@ -4850,6 +6683,7 @@ func (p *DataCenter) MustVersion() *Version {
 	return p.version
 }
 
+// Device A device wraps links to potential parents of a device.
 type Device struct {
 	Struct
 	comment      *string
@@ -4919,10 +6753,66 @@ func (p *Device) MustId() string {
 	return *p.id
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Device) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Device) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -4930,6 +6820,34 @@ func (p *Device) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Device) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -4956,10 +6874,14 @@ func (p *Device) MustName() string {
 	return *p.name
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Device) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Device) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -4967,6 +6889,8 @@ func (p *Device) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Device) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -4974,10 +6898,12 @@ func (p *Device) MustTemplate() *Template {
 	return p.template
 }
 
+// SetVm Represents a virtual machine.
 func (p *Device) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Device) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -4985,6 +6911,7 @@ func (p *Device) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Device) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -5010,6 +6937,7 @@ func (p *Device) MustVms() *VmSlice {
 	return p.vms
 }
 
+// Disk Represents a virtual disk device.
 type Disk struct {
 	Struct
 	active              *bool
@@ -5114,10 +7042,14 @@ func (p *Disk) MustAlias() string {
 	return *p.alias
 }
 
+// SetBackup Represents an enumeration of the backup mechanism
+// that is enabled on the disk.
 func (p *Disk) SetBackup(attr DiskBackup) {
 	p.backup = &attr
 }
 
+// Backup Represents an enumeration of the backup mechanism
+// that is enabled on the disk.
 func (p *Disk) Backup() (DiskBackup, bool) {
 	if p.backup != nil {
 		return *p.backup, true
@@ -5126,6 +7058,8 @@ func (p *Disk) Backup() (DiskBackup, bool) {
 	return zero, false
 }
 
+// MustBackup Represents an enumeration of the backup mechanism
+// that is enabled on the disk.
 func (p *Disk) MustBackup() DiskBackup {
 	if p.backup == nil {
 		panic("the backup must not be nil, please use Backup() function instead")
@@ -5133,10 +7067,12 @@ func (p *Disk) MustBackup() DiskBackup {
 	return *p.backup
 }
 
+// SetBackupMode Represents an enumeration of backup modes
 func (p *Disk) SetBackupMode(attr DiskBackupMode) {
 	p.backupMode = &attr
 }
 
+// BackupMode Represents an enumeration of backup modes
 func (p *Disk) BackupMode() (DiskBackupMode, bool) {
 	if p.backupMode != nil {
 		return *p.backupMode, true
@@ -5145,6 +7081,7 @@ func (p *Disk) BackupMode() (DiskBackupMode, bool) {
 	return zero, false
 }
 
+// MustBackupMode Represents an enumeration of backup modes
 func (p *Disk) MustBackupMode() DiskBackupMode {
 	if p.backupMode == nil {
 		panic("the backupMode must not be nil, please use BackupMode() function instead")
@@ -5190,10 +7127,12 @@ func (p *Disk) MustComment() string {
 	return *p.comment
 }
 
+// SetContentType The actual content residing on the disk.
 func (p *Disk) SetContentType(attr DiskContentType) {
 	p.contentType = &attr
 }
 
+// ContentType The actual content residing on the disk.
 func (p *Disk) ContentType() (DiskContentType, bool) {
 	if p.contentType != nil {
 		return *p.contentType, true
@@ -5202,6 +7141,7 @@ func (p *Disk) ContentType() (DiskContentType, bool) {
 	return zero, false
 }
 
+// MustContentType The actual content residing on the disk.
 func (p *Disk) MustContentType() DiskContentType {
 	if p.contentType == nil {
 		panic("the contentType must not be nil, please use ContentType() function instead")
@@ -5283,10 +7223,12 @@ func (p *Disk) MustExternalDisk() string {
 	return *p.externalDisk
 }
 
+// SetFormat The underlying storage format of disks.
 func (p *Disk) SetFormat(attr DiskFormat) {
 	p.format = &attr
 }
 
+// Format The underlying storage format of disks.
 func (p *Disk) Format() (DiskFormat, bool) {
 	if p.format != nil {
 		return *p.format, true
@@ -5295,6 +7237,7 @@ func (p *Disk) Format() (DiskFormat, bool) {
 	return zero, false
 }
 
+// MustFormat The underlying storage format of disks.
 func (p *Disk) MustFormat() DiskFormat {
 	if p.format == nil {
 		panic("the format must not be nil, please use Format() function instead")
@@ -5359,10 +7302,66 @@ func (p *Disk) MustInitialSize() int64 {
 	return *p.initialSize
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Disk) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Disk) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -5370,6 +7369,34 @@ func (p *Disk) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Disk) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -5377,10 +7404,12 @@ func (p *Disk) MustInstanceType() *InstanceType {
 	return p.instanceType
 }
 
+// SetInterface The underlying storage interface of disks communication with controller.
 func (p *Disk) SetInterface(attr DiskInterface) {
 	p.interface_ = &attr
 }
 
+// Interface The underlying storage interface of disks communication with controller.
 func (p *Disk) Interface() (DiskInterface, bool) {
 	if p.interface_ != nil {
 		return *p.interface_, true
@@ -5389,6 +7418,7 @@ func (p *Disk) Interface() (DiskInterface, bool) {
 	return zero, false
 }
 
+// MustInterface The underlying storage interface of disks communication with controller.
 func (p *Disk) MustInterface() DiskInterface {
 	if p.interface_ == nil {
 		panic("the interface_ must not be nil, please use Interface() function instead")
@@ -5526,10 +7556,24 @@ func (p *Disk) MustProvisionedSize() int64 {
 	return *p.provisionedSize
 }
 
+// SetQcowVersion The QCOW version specifies to the qemu which qemu version the volume supports.
+//
+// This field can be updated using the update API and will be reported only for QCOW volumes,
+// it is determined by the storage domain's version which the disk is created on.
+// Storage domains with version lower than V4 support QCOW2 version 2 volumes,
+// while V4 storage domains also support QCOW2 version 3.
+// For more information about features of the different QCOW versions, see http://wiki.qemu.org/Features/Qcow3[here].
 func (p *Disk) SetQcowVersion(attr QcowVersion) {
 	p.qcowVersion = &attr
 }
 
+// QcowVersion The QCOW version specifies to the qemu which qemu version the volume supports.
+//
+// This field can be updated using the update API and will be reported only for QCOW volumes,
+// it is determined by the storage domain's version which the disk is created on.
+// Storage domains with version lower than V4 support QCOW2 version 2 volumes,
+// while V4 storage domains also support QCOW2 version 3.
+// For more information about features of the different QCOW versions, see http://wiki.qemu.org/Features/Qcow3[here].
 func (p *Disk) QcowVersion() (QcowVersion, bool) {
 	if p.qcowVersion != nil {
 		return *p.qcowVersion, true
@@ -5538,6 +7582,13 @@ func (p *Disk) QcowVersion() (QcowVersion, bool) {
 	return zero, false
 }
 
+// MustQcowVersion The QCOW version specifies to the qemu which qemu version the volume supports.
+//
+// This field can be updated using the update API and will be reported only for QCOW volumes,
+// it is determined by the storage domain's version which the disk is created on.
+// Storage domains with version lower than V4 support QCOW2 version 2 volumes,
+// while V4 storage domains also support QCOW2 version 3.
+// For more information about features of the different QCOW versions, see http://wiki.qemu.org/Features/Qcow3[here].
 func (p *Disk) MustQcowVersion() QcowVersion {
 	if p.qcowVersion == nil {
 		panic("the qcowVersion must not be nil, please use QcowVersion() function instead")
@@ -5545,10 +7596,42 @@ func (p *Disk) MustQcowVersion() QcowVersion {
 	return *p.qcowVersion
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Disk) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Disk) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -5556,6 +7639,22 @@ func (p *Disk) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Disk) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -5582,10 +7681,12 @@ func (p *Disk) MustReadOnly() bool {
 	return *p.readOnly
 }
 
+// SetSgio When a direct LUN disk is using SCSI passthrough the privileged I/O policy is determined by this enum.
 func (p *Disk) SetSgio(attr ScsiGenericIO) {
 	p.sgio = &attr
 }
 
+// Sgio When a direct LUN disk is using SCSI passthrough the privileged I/O policy is determined by this enum.
 func (p *Disk) Sgio() (ScsiGenericIO, bool) {
 	if p.sgio != nil {
 		return *p.sgio, true
@@ -5594,6 +7695,7 @@ func (p *Disk) Sgio() (ScsiGenericIO, bool) {
 	return zero, false
 }
 
+// MustSgio When a direct LUN disk is using SCSI passthrough the privileged I/O policy is determined by this enum.
 func (p *Disk) MustSgio() ScsiGenericIO {
 	if p.sgio == nil {
 		panic("the sgio must not be nil, please use Sgio() function instead")
@@ -5620,10 +7722,44 @@ func (p *Disk) MustShareable() bool {
 	return *p.shareable
 }
 
+// SetSnapshot Represents a snapshot object.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <snapshot id="456" href="/ovirt-engine/api/vms/123/snapshots/456">
+//   <actions>
+//     <link rel="restore" href="/ovirt-engine/api/vms/123/snapshots/456/restore"/>
+//   </actions>
+//   <vm id="123" href="/ovirt-engine/api/vms/123"/>
+//   <description>Virtual Machine 1 - Snapshot A</description>
+//   <type>active</type>
+//   <date>2010-08-16T14:24:29</date>
+//   <persist_memorystate>false</persist_memorystate>
+// </snapshot>
+// ----
 func (p *Disk) SetSnapshot(attr *Snapshot) {
 	p.snapshot = attr
 }
 
+// Snapshot Represents a snapshot object.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <snapshot id="456" href="/ovirt-engine/api/vms/123/snapshots/456">
+//   <actions>
+//     <link rel="restore" href="/ovirt-engine/api/vms/123/snapshots/456/restore"/>
+//   </actions>
+//   <vm id="123" href="/ovirt-engine/api/vms/123"/>
+//   <description>Virtual Machine 1 - Snapshot A</description>
+//   <type>active</type>
+//   <date>2010-08-16T14:24:29</date>
+//   <persist_memorystate>false</persist_memorystate>
+// </snapshot>
+// ----
 func (p *Disk) Snapshot() (*Snapshot, bool) {
 	if p.snapshot != nil {
 		return p.snapshot, true
@@ -5631,6 +7767,23 @@ func (p *Disk) Snapshot() (*Snapshot, bool) {
 	return nil, false
 }
 
+// MustSnapshot Represents a snapshot object.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <snapshot id="456" href="/ovirt-engine/api/vms/123/snapshots/456">
+//   <actions>
+//     <link rel="restore" href="/ovirt-engine/api/vms/123/snapshots/456/restore"/>
+//   </actions>
+//   <vm id="123" href="/ovirt-engine/api/vms/123"/>
+//   <description>Virtual Machine 1 - Snapshot A</description>
+//   <type>active</type>
+//   <date>2010-08-16T14:24:29</date>
+//   <persist_memorystate>false</persist_memorystate>
+// </snapshot>
+// ----
 func (p *Disk) MustSnapshot() *Snapshot {
 	if p.snapshot == nil {
 		panic("the snapshot must not be nil, please use Snapshot() function instead")
@@ -5675,10 +7828,12 @@ func (p *Disk) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+// SetStatus Current status representation for disk.
 func (p *Disk) SetStatus(attr DiskStatus) {
 	p.status = &attr
 }
 
+// Status Current status representation for disk.
 func (p *Disk) Status() (DiskStatus, bool) {
 	if p.status != nil {
 		return *p.status, true
@@ -5687,6 +7842,7 @@ func (p *Disk) Status() (DiskStatus, bool) {
 	return zero, false
 }
 
+// MustStatus Current status representation for disk.
 func (p *Disk) MustStatus() DiskStatus {
 	if p.status == nil {
 		panic("the status must not be nil, please use Status() function instead")
@@ -5694,10 +7850,70 @@ func (p *Disk) MustStatus() DiskStatus {
 	return *p.status
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Disk) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Disk) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -5705,6 +7921,36 @@ func (p *Disk) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Disk) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -5749,10 +7995,14 @@ func (p *Disk) MustStorageType() DiskStorageType {
 	return *p.storageType
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Disk) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Disk) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -5760,6 +8010,8 @@ func (p *Disk) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Disk) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -5805,10 +8057,12 @@ func (p *Disk) MustUsesScsiReservation() bool {
 	return *p.usesScsiReservation
 }
 
+// SetVm Represents a virtual machine.
 func (p *Disk) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Disk) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -5816,6 +8070,7 @@ func (p *Disk) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Disk) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -5860,6 +8115,7 @@ func (p *Disk) MustWipeAfterDelete() bool {
 	return *p.wipeAfterDelete
 }
 
+// DiskAttachment Describes how a disk is attached to a virtual machine.
 type DiskAttachment struct {
 	Struct
 	active              *bool
@@ -5954,10 +8210,12 @@ func (p *DiskAttachment) MustDescription() string {
 	return *p.description
 }
 
+// SetDisk Represents a virtual disk device.
 func (p *DiskAttachment) SetDisk(attr *Disk) {
 	p.disk = attr
 }
 
+// Disk Represents a virtual disk device.
 func (p *DiskAttachment) Disk() (*Disk, bool) {
 	if p.disk != nil {
 		return p.disk, true
@@ -5965,6 +8223,7 @@ func (p *DiskAttachment) Disk() (*Disk, bool) {
 	return nil, false
 }
 
+// MustDisk Represents a virtual disk device.
 func (p *DiskAttachment) MustDisk() *Disk {
 	if p.disk == nil {
 		panic("the disk must not be nil, please use Disk() function instead")
@@ -5991,10 +8250,12 @@ func (p *DiskAttachment) MustId() string {
 	return *p.id
 }
 
+// SetInterface The underlying storage interface of disks communication with controller.
 func (p *DiskAttachment) SetInterface(attr DiskInterface) {
 	p.interface_ = &attr
 }
 
+// Interface The underlying storage interface of disks communication with controller.
 func (p *DiskAttachment) Interface() (DiskInterface, bool) {
 	if p.interface_ != nil {
 		return *p.interface_, true
@@ -6003,6 +8264,7 @@ func (p *DiskAttachment) Interface() (DiskInterface, bool) {
 	return zero, false
 }
 
+// MustInterface The underlying storage interface of disks communication with controller.
 func (p *DiskAttachment) MustInterface() DiskInterface {
 	if p.interface_ == nil {
 		panic("the interface_ must not be nil, please use Interface() function instead")
@@ -6086,10 +8348,14 @@ func (p *DiskAttachment) MustReadOnly() bool {
 	return *p.readOnly
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *DiskAttachment) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *DiskAttachment) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -6097,6 +8363,8 @@ func (p *DiskAttachment) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *DiskAttachment) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -6123,10 +8391,12 @@ func (p *DiskAttachment) MustUsesScsiReservation() bool {
 	return *p.usesScsiReservation
 }
 
+// SetVm Represents a virtual machine.
 func (p *DiskAttachment) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *DiskAttachment) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -6134,6 +8404,7 @@ func (p *DiskAttachment) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *DiskAttachment) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -6246,10 +8517,36 @@ func (p *DiskProfile) MustPermissions() *PermissionSlice {
 	return p.permissions
 }
 
+// SetQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *DiskProfile) SetQos(attr *Qos) {
 	p.qos = attr
 }
 
+// Qos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *DiskProfile) Qos() (*Qos, bool) {
 	if p.qos != nil {
 		return p.qos, true
@@ -6257,6 +8554,19 @@ func (p *DiskProfile) Qos() (*Qos, bool) {
 	return nil, false
 }
 
+// MustQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *DiskProfile) MustQos() *Qos {
 	if p.qos == nil {
 		panic("the qos must not be nil, please use Qos() function instead")
@@ -6264,10 +8574,70 @@ func (p *DiskProfile) MustQos() *Qos {
 	return p.qos
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *DiskProfile) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *DiskProfile) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -6275,6 +8645,36 @@ func (p *DiskProfile) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *DiskProfile) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -6388,10 +8788,14 @@ func (p *DiskSnapshot) MustAlias() string {
 	return *p.alias
 }
 
+// SetBackup Represents an enumeration of the backup mechanism
+// that is enabled on the disk.
 func (p *DiskSnapshot) SetBackup(attr DiskBackup) {
 	p.backup = &attr
 }
 
+// Backup Represents an enumeration of the backup mechanism
+// that is enabled on the disk.
 func (p *DiskSnapshot) Backup() (DiskBackup, bool) {
 	if p.backup != nil {
 		return *p.backup, true
@@ -6400,6 +8804,8 @@ func (p *DiskSnapshot) Backup() (DiskBackup, bool) {
 	return zero, false
 }
 
+// MustBackup Represents an enumeration of the backup mechanism
+// that is enabled on the disk.
 func (p *DiskSnapshot) MustBackup() DiskBackup {
 	if p.backup == nil {
 		panic("the backup must not be nil, please use Backup() function instead")
@@ -6407,10 +8813,12 @@ func (p *DiskSnapshot) MustBackup() DiskBackup {
 	return *p.backup
 }
 
+// SetBackupMode Represents an enumeration of backup modes
 func (p *DiskSnapshot) SetBackupMode(attr DiskBackupMode) {
 	p.backupMode = &attr
 }
 
+// BackupMode Represents an enumeration of backup modes
 func (p *DiskSnapshot) BackupMode() (DiskBackupMode, bool) {
 	if p.backupMode != nil {
 		return *p.backupMode, true
@@ -6419,6 +8827,7 @@ func (p *DiskSnapshot) BackupMode() (DiskBackupMode, bool) {
 	return zero, false
 }
 
+// MustBackupMode Represents an enumeration of backup modes
 func (p *DiskSnapshot) MustBackupMode() DiskBackupMode {
 	if p.backupMode == nil {
 		panic("the backupMode must not be nil, please use BackupMode() function instead")
@@ -6464,10 +8873,12 @@ func (p *DiskSnapshot) MustComment() string {
 	return *p.comment
 }
 
+// SetContentType The actual content residing on the disk.
 func (p *DiskSnapshot) SetContentType(attr DiskContentType) {
 	p.contentType = &attr
 }
 
+// ContentType The actual content residing on the disk.
 func (p *DiskSnapshot) ContentType() (DiskContentType, bool) {
 	if p.contentType != nil {
 		return *p.contentType, true
@@ -6476,6 +8887,7 @@ func (p *DiskSnapshot) ContentType() (DiskContentType, bool) {
 	return zero, false
 }
 
+// MustContentType The actual content residing on the disk.
 func (p *DiskSnapshot) MustContentType() DiskContentType {
 	if p.contentType == nil {
 		panic("the contentType must not be nil, please use ContentType() function instead")
@@ -6502,10 +8914,12 @@ func (p *DiskSnapshot) MustDescription() string {
 	return *p.description
 }
 
+// SetDisk Represents a virtual disk device.
 func (p *DiskSnapshot) SetDisk(attr *Disk) {
 	p.disk = attr
 }
 
+// Disk Represents a virtual disk device.
 func (p *DiskSnapshot) Disk() (*Disk, bool) {
 	if p.disk != nil {
 		return p.disk, true
@@ -6513,6 +8927,7 @@ func (p *DiskSnapshot) Disk() (*Disk, bool) {
 	return nil, false
 }
 
+// MustDisk Represents a virtual disk device.
 func (p *DiskSnapshot) MustDisk() *Disk {
 	if p.disk == nil {
 		panic("the disk must not be nil, please use Disk() function instead")
@@ -6575,10 +8990,12 @@ func (p *DiskSnapshot) MustExternalDisk() string {
 	return *p.externalDisk
 }
 
+// SetFormat The underlying storage format of disks.
 func (p *DiskSnapshot) SetFormat(attr DiskFormat) {
 	p.format = &attr
 }
 
+// Format The underlying storage format of disks.
 func (p *DiskSnapshot) Format() (DiskFormat, bool) {
 	if p.format != nil {
 		return *p.format, true
@@ -6587,6 +9004,7 @@ func (p *DiskSnapshot) Format() (DiskFormat, bool) {
 	return zero, false
 }
 
+// MustFormat The underlying storage format of disks.
 func (p *DiskSnapshot) MustFormat() DiskFormat {
 	if p.format == nil {
 		panic("the format must not be nil, please use Format() function instead")
@@ -6651,10 +9069,66 @@ func (p *DiskSnapshot) MustInitialSize() int64 {
 	return *p.initialSize
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *DiskSnapshot) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *DiskSnapshot) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -6662,6 +9136,34 @@ func (p *DiskSnapshot) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *DiskSnapshot) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -6669,10 +9171,12 @@ func (p *DiskSnapshot) MustInstanceType() *InstanceType {
 	return p.instanceType
 }
 
+// SetInterface The underlying storage interface of disks communication with controller.
 func (p *DiskSnapshot) SetInterface(attr DiskInterface) {
 	p.interface_ = &attr
 }
 
+// Interface The underlying storage interface of disks communication with controller.
 func (p *DiskSnapshot) Interface() (DiskInterface, bool) {
 	if p.interface_ != nil {
 		return *p.interface_, true
@@ -6681,6 +9185,7 @@ func (p *DiskSnapshot) Interface() (DiskInterface, bool) {
 	return zero, false
 }
 
+// MustInterface The underlying storage interface of disks communication with controller.
 func (p *DiskSnapshot) MustInterface() DiskInterface {
 	if p.interface_ == nil {
 		panic("the interface_ must not be nil, please use Interface() function instead")
@@ -6836,10 +9341,24 @@ func (p *DiskSnapshot) MustProvisionedSize() int64 {
 	return *p.provisionedSize
 }
 
+// SetQcowVersion The QCOW version specifies to the qemu which qemu version the volume supports.
+//
+// This field can be updated using the update API and will be reported only for QCOW volumes,
+// it is determined by the storage domain's version which the disk is created on.
+// Storage domains with version lower than V4 support QCOW2 version 2 volumes,
+// while V4 storage domains also support QCOW2 version 3.
+// For more information about features of the different QCOW versions, see http://wiki.qemu.org/Features/Qcow3[here].
 func (p *DiskSnapshot) SetQcowVersion(attr QcowVersion) {
 	p.qcowVersion = &attr
 }
 
+// QcowVersion The QCOW version specifies to the qemu which qemu version the volume supports.
+//
+// This field can be updated using the update API and will be reported only for QCOW volumes,
+// it is determined by the storage domain's version which the disk is created on.
+// Storage domains with version lower than V4 support QCOW2 version 2 volumes,
+// while V4 storage domains also support QCOW2 version 3.
+// For more information about features of the different QCOW versions, see http://wiki.qemu.org/Features/Qcow3[here].
 func (p *DiskSnapshot) QcowVersion() (QcowVersion, bool) {
 	if p.qcowVersion != nil {
 		return *p.qcowVersion, true
@@ -6848,6 +9367,13 @@ func (p *DiskSnapshot) QcowVersion() (QcowVersion, bool) {
 	return zero, false
 }
 
+// MustQcowVersion The QCOW version specifies to the qemu which qemu version the volume supports.
+//
+// This field can be updated using the update API and will be reported only for QCOW volumes,
+// it is determined by the storage domain's version which the disk is created on.
+// Storage domains with version lower than V4 support QCOW2 version 2 volumes,
+// while V4 storage domains also support QCOW2 version 3.
+// For more information about features of the different QCOW versions, see http://wiki.qemu.org/Features/Qcow3[here].
 func (p *DiskSnapshot) MustQcowVersion() QcowVersion {
 	if p.qcowVersion == nil {
 		panic("the qcowVersion must not be nil, please use QcowVersion() function instead")
@@ -6855,10 +9381,42 @@ func (p *DiskSnapshot) MustQcowVersion() QcowVersion {
 	return *p.qcowVersion
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *DiskSnapshot) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *DiskSnapshot) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -6866,6 +9424,22 @@ func (p *DiskSnapshot) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *DiskSnapshot) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -6892,10 +9466,12 @@ func (p *DiskSnapshot) MustReadOnly() bool {
 	return *p.readOnly
 }
 
+// SetSgio When a direct LUN disk is using SCSI passthrough the privileged I/O policy is determined by this enum.
 func (p *DiskSnapshot) SetSgio(attr ScsiGenericIO) {
 	p.sgio = &attr
 }
 
+// Sgio When a direct LUN disk is using SCSI passthrough the privileged I/O policy is determined by this enum.
 func (p *DiskSnapshot) Sgio() (ScsiGenericIO, bool) {
 	if p.sgio != nil {
 		return *p.sgio, true
@@ -6904,6 +9480,7 @@ func (p *DiskSnapshot) Sgio() (ScsiGenericIO, bool) {
 	return zero, false
 }
 
+// MustSgio When a direct LUN disk is using SCSI passthrough the privileged I/O policy is determined by this enum.
 func (p *DiskSnapshot) MustSgio() ScsiGenericIO {
 	if p.sgio == nil {
 		panic("the sgio must not be nil, please use Sgio() function instead")
@@ -6930,10 +9507,44 @@ func (p *DiskSnapshot) MustShareable() bool {
 	return *p.shareable
 }
 
+// SetSnapshot Represents a snapshot object.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <snapshot id="456" href="/ovirt-engine/api/vms/123/snapshots/456">
+//   <actions>
+//     <link rel="restore" href="/ovirt-engine/api/vms/123/snapshots/456/restore"/>
+//   </actions>
+//   <vm id="123" href="/ovirt-engine/api/vms/123"/>
+//   <description>Virtual Machine 1 - Snapshot A</description>
+//   <type>active</type>
+//   <date>2010-08-16T14:24:29</date>
+//   <persist_memorystate>false</persist_memorystate>
+// </snapshot>
+// ----
 func (p *DiskSnapshot) SetSnapshot(attr *Snapshot) {
 	p.snapshot = attr
 }
 
+// Snapshot Represents a snapshot object.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <snapshot id="456" href="/ovirt-engine/api/vms/123/snapshots/456">
+//   <actions>
+//     <link rel="restore" href="/ovirt-engine/api/vms/123/snapshots/456/restore"/>
+//   </actions>
+//   <vm id="123" href="/ovirt-engine/api/vms/123"/>
+//   <description>Virtual Machine 1 - Snapshot A</description>
+//   <type>active</type>
+//   <date>2010-08-16T14:24:29</date>
+//   <persist_memorystate>false</persist_memorystate>
+// </snapshot>
+// ----
 func (p *DiskSnapshot) Snapshot() (*Snapshot, bool) {
 	if p.snapshot != nil {
 		return p.snapshot, true
@@ -6941,6 +9552,23 @@ func (p *DiskSnapshot) Snapshot() (*Snapshot, bool) {
 	return nil, false
 }
 
+// MustSnapshot Represents a snapshot object.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <snapshot id="456" href="/ovirt-engine/api/vms/123/snapshots/456">
+//   <actions>
+//     <link rel="restore" href="/ovirt-engine/api/vms/123/snapshots/456/restore"/>
+//   </actions>
+//   <vm id="123" href="/ovirt-engine/api/vms/123"/>
+//   <description>Virtual Machine 1 - Snapshot A</description>
+//   <type>active</type>
+//   <date>2010-08-16T14:24:29</date>
+//   <persist_memorystate>false</persist_memorystate>
+// </snapshot>
+// ----
 func (p *DiskSnapshot) MustSnapshot() *Snapshot {
 	if p.snapshot == nil {
 		panic("the snapshot must not be nil, please use Snapshot() function instead")
@@ -6985,10 +9613,12 @@ func (p *DiskSnapshot) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+// SetStatus Current status representation for disk.
 func (p *DiskSnapshot) SetStatus(attr DiskStatus) {
 	p.status = &attr
 }
 
+// Status Current status representation for disk.
 func (p *DiskSnapshot) Status() (DiskStatus, bool) {
 	if p.status != nil {
 		return *p.status, true
@@ -6997,6 +9627,7 @@ func (p *DiskSnapshot) Status() (DiskStatus, bool) {
 	return zero, false
 }
 
+// MustStatus Current status representation for disk.
 func (p *DiskSnapshot) MustStatus() DiskStatus {
 	if p.status == nil {
 		panic("the status must not be nil, please use Status() function instead")
@@ -7004,10 +9635,70 @@ func (p *DiskSnapshot) MustStatus() DiskStatus {
 	return *p.status
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *DiskSnapshot) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *DiskSnapshot) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -7015,6 +9706,36 @@ func (p *DiskSnapshot) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *DiskSnapshot) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -7059,10 +9780,14 @@ func (p *DiskSnapshot) MustStorageType() DiskStorageType {
 	return *p.storageType
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *DiskSnapshot) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *DiskSnapshot) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -7070,6 +9795,8 @@ func (p *DiskSnapshot) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *DiskSnapshot) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -7115,10 +9842,12 @@ func (p *DiskSnapshot) MustUsesScsiReservation() bool {
 	return *p.usesScsiReservation
 }
 
+// SetVm Represents a virtual machine.
 func (p *DiskSnapshot) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *DiskSnapshot) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -7126,6 +9855,7 @@ func (p *DiskSnapshot) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *DiskSnapshot) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -7170,6 +9900,7 @@ func (p *DiskSnapshot) MustWipeAfterDelete() bool {
 	return *p.wipeAfterDelete
 }
 
+// Display Represents a graphic console configuration.
 type Display struct {
 	Struct
 	address             *string
@@ -7434,10 +10165,16 @@ func (p *Display) MustSmartcardEnabled() bool {
 	return *p.smartcardEnabled
 }
 
+// SetType Represents an enumeration of the protocol used
+// to connect to the graphic console of the virtual
+// machine.
 func (p *Display) SetType(attr DisplayType) {
 	p.type_ = &attr
 }
 
+// Type Represents an enumeration of the protocol used
+// to connect to the graphic console of the virtual
+// machine.
 func (p *Display) Type() (DisplayType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -7446,6 +10183,9 @@ func (p *Display) Type() (DisplayType, bool) {
 	return zero, false
 }
 
+// MustType Represents an enumeration of the protocol used
+// to connect to the graphic console of the virtual
+// machine.
 func (p *Display) MustType() DisplayType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -7453,6 +10193,7 @@ func (p *Display) MustType() DisplayType {
 	return *p.type_
 }
 
+// Dns Represents the DNS resolver configuration.
 type Dns struct {
 	Struct
 	searchDomains *HostSlice
@@ -7495,6 +10236,7 @@ func (p *Dns) MustServers() *HostSlice {
 	return p.servers
 }
 
+// DnsResolverConfiguration Represents the DNS resolver configuration.
 type DnsResolverConfiguration struct {
 	Struct
 	nameServers []string
@@ -7518,6 +10260,7 @@ func (p *DnsResolverConfiguration) MustNameServers() []string {
 	return p.nameServers
 }
 
+// Domain This type represents a directory service domain.
 type Domain struct {
 	Struct
 	comment     *string
@@ -7623,10 +10366,12 @@ func (p *Domain) MustName() string {
 	return *p.name
 }
 
+// SetUser Represents a user in the system.
 func (p *Domain) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *Domain) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -7634,6 +10379,7 @@ func (p *Domain) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *Domain) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -7706,6 +10452,7 @@ func (p *ErrorHandling) MustOnError() MigrateOnError {
 	return *p.onError
 }
 
+// Event Type representing an event.
 type Event struct {
 	Struct
 	cluster       *Cluster
@@ -7731,10 +10478,264 @@ type Event struct {
 	vm            *Vm
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Event) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Event) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -7742,6 +10743,133 @@ func (p *Event) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Event) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -7900,10 +11028,12 @@ func (p *Event) MustFloodRate() int64 {
 	return *p.floodRate
 }
 
+// SetHost Type representing a host.
 func (p *Event) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *Event) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -7911,6 +11041,7 @@ func (p *Event) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *Event) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -8013,10 +11144,12 @@ func (p *Event) MustOrigin() string {
 	return *p.origin
 }
 
+// SetSeverity Enum representing a severity of an event.
 func (p *Event) SetSeverity(attr LogSeverity) {
 	p.severity = &attr
 }
 
+// Severity Enum representing a severity of an event.
 func (p *Event) Severity() (LogSeverity, bool) {
 	if p.severity != nil {
 		return *p.severity, true
@@ -8025,6 +11158,7 @@ func (p *Event) Severity() (LogSeverity, bool) {
 	return zero, false
 }
 
+// MustSeverity Enum representing a severity of an event.
 func (p *Event) MustSeverity() LogSeverity {
 	if p.severity == nil {
 		panic("the severity must not be nil, please use Severity() function instead")
@@ -8032,10 +11166,70 @@ func (p *Event) MustSeverity() LogSeverity {
 	return *p.severity
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Event) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Event) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -8043,6 +11237,36 @@ func (p *Event) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Event) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -8050,10 +11274,14 @@ func (p *Event) MustStorageDomain() *StorageDomain {
 	return p.storageDomain
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Event) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Event) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -8061,6 +11289,8 @@ func (p *Event) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Event) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -8087,10 +11317,12 @@ func (p *Event) MustTime() time.Time {
 	return *p.time
 }
 
+// SetUser Represents a user in the system.
 func (p *Event) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *Event) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -8098,6 +11330,7 @@ func (p *Event) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *Event) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -8105,10 +11338,12 @@ func (p *Event) MustUser() *User {
 	return p.user
 }
 
+// SetVm Represents a virtual machine.
 func (p *Event) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Event) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -8116,6 +11351,7 @@ func (p *Event) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Event) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -8192,10 +11428,14 @@ func (p *EventSubscription) MustDescription() string {
 	return *p.description
 }
 
+// SetEvent Type representing a subset of events in the {product-name} server:
+// those which a user may subscribe to receive a notification about.
 func (p *EventSubscription) SetEvent(attr NotifiableEvent) {
 	p.event = &attr
 }
 
+// Event Type representing a subset of events in the {product-name} server:
+// those which a user may subscribe to receive a notification about.
 func (p *EventSubscription) Event() (NotifiableEvent, bool) {
 	if p.event != nil {
 		return *p.event, true
@@ -8204,6 +11444,8 @@ func (p *EventSubscription) Event() (NotifiableEvent, bool) {
 	return zero, false
 }
 
+// MustEvent Type representing a subset of events in the {product-name} server:
+// those which a user may subscribe to receive a notification about.
 func (p *EventSubscription) MustEvent() NotifiableEvent {
 	if p.event == nil {
 		panic("the event must not be nil, please use Event() function instead")
@@ -8249,10 +11491,16 @@ func (p *EventSubscription) MustName() string {
 	return *p.name
 }
 
+// SetNotificationMethod Type representing the notification method for an event
+// subscription. Currently only SMTP is supported by the API
+// In the future support for SNMP notifications may be added.
 func (p *EventSubscription) SetNotificationMethod(attr NotificationMethod) {
 	p.notificationMethod = &attr
 }
 
+// NotificationMethod Type representing the notification method for an event
+// subscription. Currently only SMTP is supported by the API
+// In the future support for SNMP notifications may be added.
 func (p *EventSubscription) NotificationMethod() (NotificationMethod, bool) {
 	if p.notificationMethod != nil {
 		return *p.notificationMethod, true
@@ -8261,6 +11509,9 @@ func (p *EventSubscription) NotificationMethod() (NotificationMethod, bool) {
 	return zero, false
 }
 
+// MustNotificationMethod Type representing the notification method for an event
+// subscription. Currently only SMTP is supported by the API
+// In the future support for SNMP notifications may be added.
 func (p *EventSubscription) MustNotificationMethod() NotificationMethod {
 	if p.notificationMethod == nil {
 		panic("the notificationMethod must not be nil, please use NotificationMethod() function instead")
@@ -8268,10 +11519,12 @@ func (p *EventSubscription) MustNotificationMethod() NotificationMethod {
 	return *p.notificationMethod
 }
 
+// SetUser Represents a user in the system.
 func (p *EventSubscription) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *EventSubscription) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -8279,6 +11532,7 @@ func (p *EventSubscription) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *EventSubscription) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -8336,10 +11590,22 @@ func (p *ExternalComputeResource) MustDescription() string {
 	return *p.description
 }
 
+// SetExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalComputeResource) SetExternalHostProvider(attr *ExternalHostProvider) {
 	p.externalHostProvider = attr
 }
 
+// ExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalComputeResource) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	if p.externalHostProvider != nil {
 		return p.externalHostProvider, true
@@ -8347,6 +11613,12 @@ func (p *ExternalComputeResource) ExternalHostProvider() (*ExternalHostProvider,
 	return nil, false
 }
 
+// MustExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalComputeResource) MustExternalHostProvider() *ExternalHostProvider {
 	if p.externalHostProvider == nil {
 		panic("the externalHostProvider must not be nil, please use ExternalHostProvider() function instead")
@@ -8500,10 +11772,22 @@ func (p *ExternalDiscoveredHost) MustDescription() string {
 	return *p.description
 }
 
+// SetExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalDiscoveredHost) SetExternalHostProvider(attr *ExternalHostProvider) {
 	p.externalHostProvider = attr
 }
 
+// ExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalDiscoveredHost) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	if p.externalHostProvider != nil {
 		return p.externalHostProvider, true
@@ -8511,6 +11795,12 @@ func (p *ExternalDiscoveredHost) ExternalHostProvider() (*ExternalHostProvider, 
 	return nil, false
 }
 
+// MustExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalDiscoveredHost) MustExternalHostProvider() *ExternalHostProvider {
 	if p.externalHostProvider == nil {
 		panic("the externalHostProvider must not be nil, please use ExternalHostProvider() function instead")
@@ -8632,6 +11922,12 @@ func (p *ExternalDiscoveredHost) MustSubnetName() string {
 	return *p.subnetName
 }
 
+// ExternalHost Represents a host provisioned by a host
+// provider (such as Foreman/Satellite).
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 type ExternalHost struct {
 	Struct
 	address              *string
@@ -8699,10 +11995,22 @@ func (p *ExternalHost) MustDescription() string {
 	return *p.description
 }
 
+// SetExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalHost) SetExternalHostProvider(attr *ExternalHostProvider) {
 	p.externalHostProvider = attr
 }
 
+// ExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalHost) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	if p.externalHostProvider != nil {
 		return p.externalHostProvider, true
@@ -8710,6 +12018,12 @@ func (p *ExternalHost) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	return nil, false
 }
 
+// MustExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalHost) MustExternalHostProvider() *ExternalHostProvider {
 	if p.externalHostProvider == nil {
 		panic("the externalHostProvider must not be nil, please use ExternalHostProvider() function instead")
@@ -8844,10 +12158,22 @@ func (p *ExternalHostGroup) MustDomainName() string {
 	return *p.domainName
 }
 
+// SetExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalHostGroup) SetExternalHostProvider(attr *ExternalHostProvider) {
 	p.externalHostProvider = attr
 }
 
+// ExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalHostGroup) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	if p.externalHostProvider != nil {
 		return p.externalHostProvider, true
@@ -8855,6 +12181,12 @@ func (p *ExternalHostGroup) ExternalHostProvider() (*ExternalHostProvider, bool)
 	return nil, false
 }
 
+// MustExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *ExternalHostGroup) MustExternalHostProvider() *ExternalHostProvider {
 	if p.externalHostProvider == nil {
 		panic("the externalHostProvider must not be nil, please use ExternalHostProvider() function instead")
@@ -8938,6 +12270,12 @@ func (p *ExternalHostGroup) MustSubnetName() string {
 	return *p.subnetName
 }
 
+// ExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 type ExternalHostProvider struct {
 	Struct
 	authenticationUrl      *string
@@ -9236,6 +12574,7 @@ func (p *ExternalHostProvider) MustUsername() string {
 	return *p.username
 }
 
+// ExternalNetworkProviderConfiguration Describes how an external network provider is provisioned on a host.
 type ExternalNetworkProviderConfiguration struct {
 	Struct
 	comment                 *string
@@ -9284,10 +12623,12 @@ func (p *ExternalNetworkProviderConfiguration) MustDescription() string {
 	return *p.description
 }
 
+// SetExternalNetworkProvider Represents an external provider.
 func (p *ExternalNetworkProviderConfiguration) SetExternalNetworkProvider(attr *ExternalProvider) {
 	p.externalNetworkProvider = attr
 }
 
+// ExternalNetworkProvider Represents an external provider.
 func (p *ExternalNetworkProviderConfiguration) ExternalNetworkProvider() (*ExternalProvider, bool) {
 	if p.externalNetworkProvider != nil {
 		return p.externalNetworkProvider, true
@@ -9295,6 +12636,7 @@ func (p *ExternalNetworkProviderConfiguration) ExternalNetworkProvider() (*Exter
 	return nil, false
 }
 
+// MustExternalNetworkProvider Represents an external provider.
 func (p *ExternalNetworkProviderConfiguration) MustExternalNetworkProvider() *ExternalProvider {
 	if p.externalNetworkProvider == nil {
 		panic("the externalNetworkProvider must not be nil, please use ExternalNetworkProvider() function instead")
@@ -9302,10 +12644,12 @@ func (p *ExternalNetworkProviderConfiguration) MustExternalNetworkProvider() *Ex
 	return p.externalNetworkProvider
 }
 
+// SetHost Type representing a host.
 func (p *ExternalNetworkProviderConfiguration) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *ExternalNetworkProviderConfiguration) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -9313,6 +12657,7 @@ func (p *ExternalNetworkProviderConfiguration) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *ExternalNetworkProviderConfiguration) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -9358,6 +12703,7 @@ func (p *ExternalNetworkProviderConfiguration) MustName() string {
 	return *p.name
 }
 
+// ExternalProvider Represents an external provider.
 type ExternalProvider struct {
 	Struct
 	authenticationUrl      *string
@@ -9561,6 +12907,675 @@ func (p *ExternalProvider) MustUsername() string {
 	return *p.username
 }
 
+// ExternalTemplateImport Describes the parameters for the template import operation from an external system.
+// Currently supports OVA only.
+type ExternalTemplateImport struct {
+	Struct
+	cluster       *Cluster
+	cpuProfile    *CpuProfile
+	host          *Host
+	quota         *Quota
+	storageDomain *StorageDomain
+	template      *Template
+	url           *string
+}
+
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
+func (p *ExternalTemplateImport) SetCluster(attr *Cluster) {
+	p.cluster = attr
+}
+
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
+func (p *ExternalTemplateImport) Cluster() (*Cluster, bool) {
+	if p.cluster != nil {
+		return p.cluster, true
+	}
+	return nil, false
+}
+
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
+func (p *ExternalTemplateImport) MustCluster() *Cluster {
+	if p.cluster == nil {
+		panic("the cluster must not be nil, please use Cluster() function instead")
+	}
+	return p.cluster
+}
+
+func (p *ExternalTemplateImport) SetCpuProfile(attr *CpuProfile) {
+	p.cpuProfile = attr
+}
+
+func (p *ExternalTemplateImport) CpuProfile() (*CpuProfile, bool) {
+	if p.cpuProfile != nil {
+		return p.cpuProfile, true
+	}
+	return nil, false
+}
+
+func (p *ExternalTemplateImport) MustCpuProfile() *CpuProfile {
+	if p.cpuProfile == nil {
+		panic("the cpuProfile must not be nil, please use CpuProfile() function instead")
+	}
+	return p.cpuProfile
+}
+
+// SetHost Type representing a host.
+func (p *ExternalTemplateImport) SetHost(attr *Host) {
+	p.host = attr
+}
+
+// Host Type representing a host.
+func (p *ExternalTemplateImport) Host() (*Host, bool) {
+	if p.host != nil {
+		return p.host, true
+	}
+	return nil, false
+}
+
+// MustHost Type representing a host.
+func (p *ExternalTemplateImport) MustHost() *Host {
+	if p.host == nil {
+		panic("the host must not be nil, please use Host() function instead")
+	}
+	return p.host
+}
+
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
+func (p *ExternalTemplateImport) SetQuota(attr *Quota) {
+	p.quota = attr
+}
+
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
+func (p *ExternalTemplateImport) Quota() (*Quota, bool) {
+	if p.quota != nil {
+		return p.quota, true
+	}
+	return nil, false
+}
+
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
+func (p *ExternalTemplateImport) MustQuota() *Quota {
+	if p.quota == nil {
+		panic("the quota must not be nil, please use Quota() function instead")
+	}
+	return p.quota
+}
+
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
+func (p *ExternalTemplateImport) SetStorageDomain(attr *StorageDomain) {
+	p.storageDomain = attr
+}
+
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
+func (p *ExternalTemplateImport) StorageDomain() (*StorageDomain, bool) {
+	if p.storageDomain != nil {
+		return p.storageDomain, true
+	}
+	return nil, false
+}
+
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
+func (p *ExternalTemplateImport) MustStorageDomain() *StorageDomain {
+	if p.storageDomain == nil {
+		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
+	}
+	return p.storageDomain
+}
+
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
+func (p *ExternalTemplateImport) SetTemplate(attr *Template) {
+	p.template = attr
+}
+
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
+func (p *ExternalTemplateImport) Template() (*Template, bool) {
+	if p.template != nil {
+		return p.template, true
+	}
+	return nil, false
+}
+
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
+func (p *ExternalTemplateImport) MustTemplate() *Template {
+	if p.template == nil {
+		panic("the template must not be nil, please use Template() function instead")
+	}
+	return p.template
+}
+
+func (p *ExternalTemplateImport) SetUrl(attr string) {
+	p.url = &attr
+}
+
+func (p *ExternalTemplateImport) Url() (string, bool) {
+	if p.url != nil {
+		return *p.url, true
+	}
+	var zero string
+	return zero, false
+}
+
+func (p *ExternalTemplateImport) MustUrl() string {
+	if p.url == nil {
+		panic("the url must not be nil, please use Url() function instead")
+	}
+	return *p.url
+}
+
+// ExternalVmImport Describes the parameters for the virtual machine import operation from an external system.
 type ExternalVmImport struct {
 	Struct
 	cluster       *Cluster
@@ -9578,10 +13593,264 @@ type ExternalVmImport struct {
 	vm            *Vm
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *ExternalVmImport) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *ExternalVmImport) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -9589,6 +13858,133 @@ func (p *ExternalVmImport) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *ExternalVmImport) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -9632,10 +14028,12 @@ func (p *ExternalVmImport) MustDriversIso() *File {
 	return p.driversIso
 }
 
+// SetHost Type representing a host.
 func (p *ExternalVmImport) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *ExternalVmImport) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -9643,6 +14041,7 @@ func (p *ExternalVmImport) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *ExternalVmImport) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -9688,10 +14087,12 @@ func (p *ExternalVmImport) MustPassword() string {
 	return *p.password
 }
 
+// SetProvider Describes the type of external hypervisor system.
 func (p *ExternalVmImport) SetProvider(attr ExternalVmProviderType) {
 	p.provider = &attr
 }
 
+// Provider Describes the type of external hypervisor system.
 func (p *ExternalVmImport) Provider() (ExternalVmProviderType, bool) {
 	if p.provider != nil {
 		return *p.provider, true
@@ -9700,6 +14101,7 @@ func (p *ExternalVmImport) Provider() (ExternalVmProviderType, bool) {
 	return zero, false
 }
 
+// MustProvider Describes the type of external hypervisor system.
 func (p *ExternalVmImport) MustProvider() ExternalVmProviderType {
 	if p.provider == nil {
 		panic("the provider must not be nil, please use Provider() function instead")
@@ -9707,10 +14109,42 @@ func (p *ExternalVmImport) MustProvider() ExternalVmProviderType {
 	return *p.provider
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *ExternalVmImport) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *ExternalVmImport) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -9718,6 +14152,22 @@ func (p *ExternalVmImport) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *ExternalVmImport) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -9744,10 +14194,70 @@ func (p *ExternalVmImport) MustSparse() bool {
 	return *p.sparse
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *ExternalVmImport) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *ExternalVmImport) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -9755,6 +14265,36 @@ func (p *ExternalVmImport) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *ExternalVmImport) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -9800,10 +14340,12 @@ func (p *ExternalVmImport) MustUsername() string {
 	return *p.username
 }
 
+// SetVm Represents a virtual machine.
 func (p *ExternalVmImport) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *ExternalVmImport) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -9811,6 +14353,7 @@ func (p *ExternalVmImport) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *ExternalVmImport) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -9818,6 +14361,7 @@ func (p *ExternalVmImport) MustVm() *Vm {
 	return p.vm
 }
 
+// FencingPolicy Type representing a cluster fencing policy.
 type FencingPolicy struct {
 	Struct
 	enabled                   *bool
@@ -9902,10 +14446,14 @@ func (p *FencingPolicy) MustSkipIfGlusterQuorumNotMet() bool {
 	return *p.skipIfGlusterQuorumNotMet
 }
 
+// SetSkipIfSdActive This type represents the storage related
+// configuration in the fencing policy.
 func (p *FencingPolicy) SetSkipIfSdActive(attr *SkipIfSdActive) {
 	p.skipIfSdActive = attr
 }
 
+// SkipIfSdActive This type represents the storage related
+// configuration in the fencing policy.
 func (p *FencingPolicy) SkipIfSdActive() (*SkipIfSdActive, bool) {
 	if p.skipIfSdActive != nil {
 		return p.skipIfSdActive, true
@@ -9913,6 +14461,8 @@ func (p *FencingPolicy) SkipIfSdActive() (*SkipIfSdActive, bool) {
 	return nil, false
 }
 
+// MustSkipIfSdActive This type represents the storage related
+// configuration in the fencing policy.
 func (p *FencingPolicy) MustSkipIfSdActive() *SkipIfSdActive {
 	if p.skipIfSdActive == nil {
 		panic("the skipIfSdActive must not be nil, please use SkipIfSdActive() function instead")
@@ -10026,10 +14576,70 @@ func (p *File) MustName() string {
 	return *p.name
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *File) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *File) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -10037,6 +14647,36 @@ func (p *File) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *File) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -10186,6 +14826,7 @@ func (p *Filter) MustSchedulingPolicyUnit() *SchedulingPolicyUnit {
 	return p.schedulingPolicyUnit
 }
 
+// Floppy The underlying representation of a floppy file.
 type Floppy struct {
 	Struct
 	comment      *string
@@ -10274,10 +14915,66 @@ func (p *Floppy) MustId() string {
 	return *p.id
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Floppy) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Floppy) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -10285,6 +14982,34 @@ func (p *Floppy) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Floppy) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -10311,10 +15036,14 @@ func (p *Floppy) MustName() string {
 	return *p.name
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Floppy) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Floppy) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -10322,6 +15051,8 @@ func (p *Floppy) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Floppy) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -10329,10 +15060,12 @@ func (p *Floppy) MustTemplate() *Template {
 	return p.template
 }
 
+// SetVm Represents a virtual machine.
 func (p *Floppy) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Floppy) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -10340,6 +15073,7 @@ func (p *Floppy) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Floppy) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -10582,10 +15316,66 @@ func (p *GlusterBrick) MustId() string {
 	return *p.id
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *GlusterBrick) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *GlusterBrick) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -10593,6 +15383,34 @@ func (p *GlusterBrick) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *GlusterBrick) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -10750,10 +15568,14 @@ func (p *GlusterBrick) MustStatus() GlusterBrickStatus {
 	return *p.status
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *GlusterBrick) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *GlusterBrick) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -10761,6 +15583,8 @@ func (p *GlusterBrick) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *GlusterBrick) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -10768,10 +15592,12 @@ func (p *GlusterBrick) MustTemplate() *Template {
 	return p.template
 }
 
+// SetVm Represents a virtual machine.
 func (p *GlusterBrick) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *GlusterBrick) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -10779,6 +15605,7 @@ func (p *GlusterBrick) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *GlusterBrick) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -10936,10 +15763,66 @@ func (p *GlusterBrickAdvancedDetails) MustId() string {
 	return *p.id
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *GlusterBrickAdvancedDetails) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *GlusterBrickAdvancedDetails) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -10947,6 +15830,34 @@ func (p *GlusterBrickAdvancedDetails) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *GlusterBrickAdvancedDetails) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -11048,10 +15959,14 @@ func (p *GlusterBrickAdvancedDetails) MustPort() int64 {
 	return *p.port
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *GlusterBrickAdvancedDetails) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *GlusterBrickAdvancedDetails) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -11059,6 +15974,8 @@ func (p *GlusterBrickAdvancedDetails) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *GlusterBrickAdvancedDetails) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -11066,10 +15983,12 @@ func (p *GlusterBrickAdvancedDetails) MustTemplate() *Template {
 	return p.template
 }
 
+// SetVm Represents a virtual machine.
 func (p *GlusterBrickAdvancedDetails) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *GlusterBrickAdvancedDetails) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -11077,6 +15996,7 @@ func (p *GlusterBrickAdvancedDetails) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *GlusterBrickAdvancedDetails) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -11246,10 +16166,264 @@ func (p *GlusterHook) MustChecksum() string {
 	return *p.checksum
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *GlusterHook) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *GlusterHook) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -11257,6 +16431,133 @@ func (p *GlusterHook) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *GlusterHook) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -11340,10 +16641,12 @@ func (p *GlusterHook) MustContent() string {
 	return *p.content
 }
 
+// SetContentType Represents content type of hook script.
 func (p *GlusterHook) SetContentType(attr HookContentType) {
 	p.contentType = &attr
 }
 
+// ContentType Represents content type of hook script.
 func (p *GlusterHook) ContentType() (HookContentType, bool) {
 	if p.contentType != nil {
 		return *p.contentType, true
@@ -11352,6 +16655,7 @@ func (p *GlusterHook) ContentType() (HookContentType, bool) {
 	return zero, false
 }
 
+// MustContentType Represents content type of hook script.
 func (p *GlusterHook) MustContentType() HookContentType {
 	if p.contentType == nil {
 		panic("the contentType must not be nil, please use ContentType() function instead")
@@ -11453,10 +16757,12 @@ func (p *GlusterHook) MustServerHooks() *GlusterServerHookSlice {
 	return p.serverHooks
 }
 
+// SetStage Type represents a stage of volume event at which hook executes.
 func (p *GlusterHook) SetStage(attr HookStage) {
 	p.stage = &attr
 }
 
+// Stage Type represents a stage of volume event at which hook executes.
 func (p *GlusterHook) Stage() (HookStage, bool) {
 	if p.stage != nil {
 		return *p.stage, true
@@ -11465,6 +16771,7 @@ func (p *GlusterHook) Stage() (HookStage, bool) {
 	return zero, false
 }
 
+// MustStage Type represents a stage of volume event at which hook executes.
 func (p *GlusterHook) MustStage() HookStage {
 	if p.stage == nil {
 		panic("the stage must not be nil, please use Stage() function instead")
@@ -11785,10 +17092,12 @@ func (p *GlusterServerHook) MustComment() string {
 	return *p.comment
 }
 
+// SetContentType Represents content type of hook script.
 func (p *GlusterServerHook) SetContentType(attr HookContentType) {
 	p.contentType = &attr
 }
 
+// ContentType Represents content type of hook script.
 func (p *GlusterServerHook) ContentType() (HookContentType, bool) {
 	if p.contentType != nil {
 		return *p.contentType, true
@@ -11797,6 +17106,7 @@ func (p *GlusterServerHook) ContentType() (HookContentType, bool) {
 	return zero, false
 }
 
+// MustContentType Represents content type of hook script.
 func (p *GlusterServerHook) MustContentType() HookContentType {
 	if p.contentType == nil {
 		panic("the contentType must not be nil, please use ContentType() function instead")
@@ -11823,10 +17133,12 @@ func (p *GlusterServerHook) MustDescription() string {
 	return *p.description
 }
 
+// SetHost Type representing a host.
 func (p *GlusterServerHook) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *GlusterServerHook) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -11834,6 +17146,7 @@ func (p *GlusterServerHook) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *GlusterServerHook) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -11935,10 +17248,264 @@ func (p *GlusterVolume) MustBricks() *GlusterBrickSlice {
 	return p.bricks
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *GlusterVolume) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *GlusterVolume) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -11946,6 +17513,133 @@ func (p *GlusterVolume) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *GlusterVolume) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -12178,10 +17872,12 @@ func (p *GlusterVolume) MustTransportTypes() []TransportType {
 	return p.transportTypes
 }
 
+// SetVolumeType Type representing the type of Gluster Volume.
 func (p *GlusterVolume) SetVolumeType(attr GlusterVolumeType) {
 	p.volumeType = &attr
 }
 
+// VolumeType Type representing the type of Gluster Volume.
 func (p *GlusterVolume) VolumeType() (GlusterVolumeType, bool) {
 	if p.volumeType != nil {
 		return *p.volumeType, true
@@ -12190,6 +17886,7 @@ func (p *GlusterVolume) VolumeType() (GlusterVolumeType, bool) {
 	return zero, false
 }
 
+// MustVolumeType Type representing the type of Gluster Volume.
 func (p *GlusterVolume) MustVolumeType() GlusterVolumeType {
 	if p.volumeType == nil {
 		panic("the volumeType must not be nil, please use VolumeType() function instead")
@@ -12410,10 +18107,66 @@ func (p *GraphicsConsole) MustId() string {
 	return *p.id
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *GraphicsConsole) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *GraphicsConsole) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -12421,6 +18174,34 @@ func (p *GraphicsConsole) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *GraphicsConsole) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -12466,10 +18247,12 @@ func (p *GraphicsConsole) MustPort() int64 {
 	return *p.port
 }
 
+// SetProtocol The graphics protocol used to connect to the graphic console.
 func (p *GraphicsConsole) SetProtocol(attr GraphicsType) {
 	p.protocol = &attr
 }
 
+// Protocol The graphics protocol used to connect to the graphic console.
 func (p *GraphicsConsole) Protocol() (GraphicsType, bool) {
 	if p.protocol != nil {
 		return *p.protocol, true
@@ -12478,6 +18261,7 @@ func (p *GraphicsConsole) Protocol() (GraphicsType, bool) {
 	return zero, false
 }
 
+// MustProtocol The graphics protocol used to connect to the graphic console.
 func (p *GraphicsConsole) MustProtocol() GraphicsType {
 	if p.protocol == nil {
 		panic("the protocol must not be nil, please use Protocol() function instead")
@@ -12485,10 +18269,14 @@ func (p *GraphicsConsole) MustProtocol() GraphicsType {
 	return *p.protocol
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *GraphicsConsole) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *GraphicsConsole) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -12496,6 +18284,8 @@ func (p *GraphicsConsole) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *GraphicsConsole) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -12522,10 +18312,12 @@ func (p *GraphicsConsole) MustTlsPort() int64 {
 	return *p.tlsPort
 }
 
+// SetVm Represents a virtual machine.
 func (p *GraphicsConsole) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *GraphicsConsole) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -12533,6 +18325,7 @@ func (p *GraphicsConsole) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *GraphicsConsole) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -12540,6 +18333,7 @@ func (p *GraphicsConsole) MustVm() *Vm {
 	return p.vm
 }
 
+// Group This type represents all groups in the directory service.
 type Group struct {
 	Struct
 	comment       *string
@@ -12592,10 +18386,12 @@ func (p *Group) MustDescription() string {
 	return *p.description
 }
 
+// SetDomain This type represents a directory service domain.
 func (p *Group) SetDomain(attr *Domain) {
 	p.domain = attr
 }
 
+// Domain This type represents a directory service domain.
 func (p *Group) Domain() (*Domain, bool) {
 	if p.domain != nil {
 		return p.domain, true
@@ -12603,6 +18399,7 @@ func (p *Group) Domain() (*Domain, bool) {
 	return nil, false
 }
 
+// MustDomain This type represents a directory service domain.
 func (p *Group) MustDomain() *Domain {
 	if p.domain == nil {
 		panic("the domain must not be nil, please use Domain() function instead")
@@ -12740,6 +18537,42 @@ func (p *Group) MustTags() *TagSlice {
 	return p.tags
 }
 
+// GuestOperatingSystem Represents an operating system installed on the virtual machine.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/vms/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <vm href="/ovirt-engine/api/vms/123" id="123">
+// ...
+//   <guest_operating_system>
+//     <architecture>x86_64</architecture>
+//     <codename>Maipo</codename>
+//     <distribution>Red Hat Enterprise Linux Server</distribution>
+//     <family>Linux</family>
+//     <kernel>
+//       <version>
+//         <build>0</build>
+//         <full_version>3.10.0-514.10.2.el7.x86_64</full_version>
+//         <major>3</major>
+//         <minor>10</minor>
+//         <revision>514</revision>
+//       </version>
+//     </kernel>
+//     <version>
+//       <full_version>7.3</full_version>
+//       <major>7</major>
+//       <minor>3</minor>
+//     </version>
+//   </guest_operating_system>
+// </vm>
+// ----
 type GuestOperatingSystem struct {
 	Struct
 	architecture *string
@@ -12862,6 +18695,34 @@ func (p *GuestOperatingSystem) MustVersion() *Version {
 	return p.version
 }
 
+// HardwareInformation Represents hardware information of host.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/hosts/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <host href="/ovirt-engine/api/hosts/123" id="123">
+//   ...
+//   <hardware_information>
+//     <family>Red Hat Enterprise Linux</family>
+//     <manufacturer>Red Hat</manufacturer>
+//     <product_name>RHEV Hypervisor</product_name>
+//     <serial_number>01234567-89AB-CDEF-0123-456789ABCDEF</serial_number>
+//     <supported_rng_sources>
+//       <supported_rng_source>random</supported_rng_source>
+//     </supported_rng_sources>
+//     <uuid>12345678-9ABC-DEF0-1234-56789ABCDEF0</uuid>
+//     <version>1.2-34.5.el7ev</version>
+//   </hardware_information>
+//   ...
+// </application>
+// ----
 type HardwareInformation struct {
 	Struct
 	family              *string
@@ -13005,6 +18866,7 @@ func (p *HardwareInformation) MustVersion() string {
 	return *p.version
 }
 
+// HighAvailability Type representing high availability of a virtual machine.
 type HighAvailability struct {
 	Struct
 	enabled  *bool
@@ -13049,6 +18911,7 @@ func (p *HighAvailability) MustPriority() int64 {
 	return *p.priority
 }
 
+// Hook Represents a hook.
 type Hook struct {
 	Struct
 	comment     *string
@@ -13117,10 +18980,12 @@ func (p *Hook) MustEventName() string {
 	return *p.eventName
 }
 
+// SetHost Type representing a host.
 func (p *Hook) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *Hook) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -13128,6 +18993,7 @@ func (p *Hook) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *Hook) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -13192,6 +19058,7 @@ func (p *Hook) MustName() string {
 	return *p.name
 }
 
+// Host Type representing a host.
 type Host struct {
 	Struct
 	address                               *string
@@ -13344,10 +19211,264 @@ func (p *Host) MustCertificate() *Certificate {
 	return p.certificate
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Host) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Host) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -13355,6 +19476,133 @@ func (p *Host) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Host) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -13454,10 +19702,12 @@ func (p *Host) MustDevices() *HostDeviceSlice {
 	return p.devices
 }
 
+// SetDisplay Represents a graphic console configuration.
 func (p *Host) SetDisplay(attr *Display) {
 	p.display = attr
 }
 
+// Display Represents a graphic console configuration.
 func (p *Host) Display() (*Display, bool) {
 	if p.display != nil {
 		return p.display, true
@@ -13465,6 +19715,7 @@ func (p *Host) Display() (*Display, bool) {
 	return nil, false
 }
 
+// MustDisplay Represents a graphic console configuration.
 func (p *Host) MustDisplay() *Display {
 	if p.display == nil {
 		panic("the display must not be nil, please use Display() function instead")
@@ -13472,10 +19723,22 @@ func (p *Host) MustDisplay() *Display {
 	return p.display
 }
 
+// SetExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *Host) SetExternalHostProvider(attr *ExternalHostProvider) {
 	p.externalHostProvider = attr
 }
 
+// ExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *Host) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	if p.externalHostProvider != nil {
 		return p.externalHostProvider, true
@@ -13483,6 +19746,12 @@ func (p *Host) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	return nil, false
 }
 
+// MustExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *Host) MustExternalHostProvider() *ExternalHostProvider {
 	if p.externalHostProvider == nil {
 		panic("the externalHostProvider must not be nil, please use ExternalHostProvider() function instead")
@@ -13508,10 +19777,18 @@ func (p *Host) MustExternalNetworkProviderConfigurations() *ExternalNetworkProvi
 	return p.externalNetworkProviderConfigurations
 }
 
+// SetExternalStatus Represents an external status.
+// This status is currently used for <<types/host, hosts>>
+// and <<types/storage_domain, storage domains>>, and allows an external
+// system to update status of objects it is aware of.
 func (p *Host) SetExternalStatus(attr ExternalStatus) {
 	p.externalStatus = &attr
 }
 
+// ExternalStatus Represents an external status.
+// This status is currently used for <<types/host, hosts>>
+// and <<types/storage_domain, storage domains>>, and allows an external
+// system to update status of objects it is aware of.
 func (p *Host) ExternalStatus() (ExternalStatus, bool) {
 	if p.externalStatus != nil {
 		return *p.externalStatus, true
@@ -13520,6 +19797,10 @@ func (p *Host) ExternalStatus() (ExternalStatus, bool) {
 	return zero, false
 }
 
+// MustExternalStatus Represents an external status.
+// This status is currently used for <<types/host, hosts>>
+// and <<types/storage_domain, storage domains>>, and allows an external
+// system to update status of objects it is aware of.
 func (p *Host) MustExternalStatus() ExternalStatus {
 	if p.externalStatus == nil {
 		panic("the externalStatus must not be nil, please use ExternalStatus() function instead")
@@ -13527,10 +19808,66 @@ func (p *Host) MustExternalStatus() ExternalStatus {
 	return *p.externalStatus
 }
 
+// SetHardwareInformation Represents hardware information of host.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/hosts/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <host href="/ovirt-engine/api/hosts/123" id="123">
+//   ...
+//   <hardware_information>
+//     <family>Red Hat Enterprise Linux</family>
+//     <manufacturer>Red Hat</manufacturer>
+//     <product_name>RHEV Hypervisor</product_name>
+//     <serial_number>01234567-89AB-CDEF-0123-456789ABCDEF</serial_number>
+//     <supported_rng_sources>
+//       <supported_rng_source>random</supported_rng_source>
+//     </supported_rng_sources>
+//     <uuid>12345678-9ABC-DEF0-1234-56789ABCDEF0</uuid>
+//     <version>1.2-34.5.el7ev</version>
+//   </hardware_information>
+//   ...
+// </application>
+// ----
 func (p *Host) SetHardwareInformation(attr *HardwareInformation) {
 	p.hardwareInformation = attr
 }
 
+// HardwareInformation Represents hardware information of host.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/hosts/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <host href="/ovirt-engine/api/hosts/123" id="123">
+//   ...
+//   <hardware_information>
+//     <family>Red Hat Enterprise Linux</family>
+//     <manufacturer>Red Hat</manufacturer>
+//     <product_name>RHEV Hypervisor</product_name>
+//     <serial_number>01234567-89AB-CDEF-0123-456789ABCDEF</serial_number>
+//     <supported_rng_sources>
+//       <supported_rng_source>random</supported_rng_source>
+//     </supported_rng_sources>
+//     <uuid>12345678-9ABC-DEF0-1234-56789ABCDEF0</uuid>
+//     <version>1.2-34.5.el7ev</version>
+//   </hardware_information>
+//   ...
+// </application>
+// ----
 func (p *Host) HardwareInformation() (*HardwareInformation, bool) {
 	if p.hardwareInformation != nil {
 		return p.hardwareInformation, true
@@ -13538,6 +19875,34 @@ func (p *Host) HardwareInformation() (*HardwareInformation, bool) {
 	return nil, false
 }
 
+// MustHardwareInformation Represents hardware information of host.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/hosts/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <host href="/ovirt-engine/api/hosts/123" id="123">
+//   ...
+//   <hardware_information>
+//     <family>Red Hat Enterprise Linux</family>
+//     <manufacturer>Red Hat</manufacturer>
+//     <product_name>RHEV Hypervisor</product_name>
+//     <serial_number>01234567-89AB-CDEF-0123-456789ABCDEF</serial_number>
+//     <supported_rng_sources>
+//       <supported_rng_source>random</supported_rng_source>
+//     </supported_rng_sources>
+//     <uuid>12345678-9ABC-DEF0-1234-56789ABCDEF0</uuid>
+//     <version>1.2-34.5.el7ev</version>
+//   </hardware_information>
+//   ...
+// </application>
+// ----
 func (p *Host) MustHardwareInformation() *HardwareInformation {
 	if p.hardwareInformation == nil {
 		panic("the hardwareInformation must not be nil, please use HardwareInformation() function instead")
@@ -13840,10 +20205,12 @@ func (p *Host) MustNumaSupported() bool {
 	return *p.numaSupported
 }
 
+// SetOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Host) SetOs(attr *OperatingSystem) {
 	p.os = attr
 }
 
+// Os Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Host) Os() (*OperatingSystem, bool) {
 	if p.os != nil {
 		return p.os, true
@@ -13851,6 +20218,7 @@ func (p *Host) Os() (*OperatingSystem, bool) {
 	return nil, false
 }
 
+// MustOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Host) MustOs() *OperatingSystem {
 	if p.os == nil {
 		panic("the os must not be nil, please use Os() function instead")
@@ -13932,10 +20300,20 @@ func (p *Host) MustPowerManagement() *PowerManagement {
 	return p.powerManagement
 }
 
+// SetProtocol The protocol used by the engine to communicate with
+// a host.
+//
+// WARNING: Since version 4.1 of the engine the protocol
+// is always set to `stomp` since `xml` was removed.
 func (p *Host) SetProtocol(attr HostProtocol) {
 	p.protocol = &attr
 }
 
+// Protocol The protocol used by the engine to communicate with
+// a host.
+//
+// WARNING: Since version 4.1 of the engine the protocol
+// is always set to `stomp` since `xml` was removed.
 func (p *Host) Protocol() (HostProtocol, bool) {
 	if p.protocol != nil {
 		return *p.protocol, true
@@ -13944,6 +20322,11 @@ func (p *Host) Protocol() (HostProtocol, bool) {
 	return zero, false
 }
 
+// MustProtocol The protocol used by the engine to communicate with
+// a host.
+//
+// WARNING: Since version 4.1 of the engine the protocol
+// is always set to `stomp` since `xml` was removed.
 func (p *Host) MustProtocol() HostProtocol {
 	if p.protocol == nil {
 		panic("the protocol must not be nil, please use Protocol() function instead")
@@ -13989,10 +20372,12 @@ func (p *Host) MustRootPassword() string {
 	return *p.rootPassword
 }
 
+// SetSeLinux Represents SELinux in the system.
 func (p *Host) SetSeLinux(attr *SeLinux) {
 	p.seLinux = attr
 }
 
+// SeLinux Represents SELinux in the system.
 func (p *Host) SeLinux() (*SeLinux, bool) {
 	if p.seLinux != nil {
 		return p.seLinux, true
@@ -14000,6 +20385,7 @@ func (p *Host) SeLinux() (*SeLinux, bool) {
 	return nil, false
 }
 
+// MustSeLinux Represents SELinux in the system.
 func (p *Host) MustSeLinux() *SeLinux {
 	if p.seLinux == nil {
 		panic("the seLinux must not be nil, please use SeLinux() function instead")
@@ -14061,10 +20447,12 @@ func (p *Host) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+// SetStatus Type representing a host status.
 func (p *Host) SetStatus(attr HostStatus) {
 	p.status = &attr
 }
 
+// Status Type representing a host status.
 func (p *Host) Status() (HostStatus, bool) {
 	if p.status != nil {
 		return *p.status, true
@@ -14073,6 +20461,7 @@ func (p *Host) Status() (HostStatus, bool) {
 	return zero, false
 }
 
+// MustStatus Type representing a host status.
 func (p *Host) MustStatus() HostStatus {
 	if p.status == nil {
 		panic("the status must not be nil, please use Status() function instead")
@@ -14135,10 +20524,12 @@ func (p *Host) MustStorages() *HostStorageSlice {
 	return p.storages
 }
 
+// SetSummary Type containing information related to virtual machines on a particular host.
 func (p *Host) SetSummary(attr *VmSummary) {
 	p.summary = attr
 }
 
+// Summary Type containing information related to virtual machines on a particular host.
 func (p *Host) Summary() (*VmSummary, bool) {
 	if p.summary != nil {
 		return p.summary, true
@@ -14146,6 +20537,7 @@ func (p *Host) Summary() (*VmSummary, bool) {
 	return nil, false
 }
 
+// MustSummary Type containing information related to virtual machines on a particular host.
 func (p *Host) MustSummary() *VmSummary {
 	if p.summary == nil {
 		panic("the summary must not be nil, please use Summary() function instead")
@@ -14171,10 +20563,12 @@ func (p *Host) MustTags() *TagSlice {
 	return p.tags
 }
 
+// SetTransparentHugePages Type representing a transparent huge pages (THP) support.
 func (p *Host) SetTransparentHugePages(attr *TransparentHugePages) {
 	p.transparentHugePages = attr
 }
 
+// TransparentHugePages Type representing a transparent huge pages (THP) support.
 func (p *Host) TransparentHugePages() (*TransparentHugePages, bool) {
 	if p.transparentHugePages != nil {
 		return p.transparentHugePages, true
@@ -14182,6 +20576,7 @@ func (p *Host) TransparentHugePages() (*TransparentHugePages, bool) {
 	return nil, false
 }
 
+// MustTransparentHugePages Type representing a transparent huge pages (THP) support.
 func (p *Host) MustTransparentHugePages() *TransparentHugePages {
 	if p.transparentHugePages == nil {
 		panic("the transparentHugePages must not be nil, please use TransparentHugePages() function instead")
@@ -14189,10 +20584,12 @@ func (p *Host) MustTransparentHugePages() *TransparentHugePages {
 	return p.transparentHugePages
 }
 
+// SetType This enumerated type is used to determine which type of operating system is used by the host.
 func (p *Host) SetType(attr HostType) {
 	p.type_ = &attr
 }
 
+// Type This enumerated type is used to determine which type of operating system is used by the host.
 func (p *Host) Type() (HostType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -14201,6 +20598,7 @@ func (p *Host) Type() (HostType, bool) {
 	return zero, false
 }
 
+// MustType This enumerated type is used to determine which type of operating system is used by the host.
 func (p *Host) MustType() HostType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -14263,10 +20661,18 @@ func (p *Host) MustVersion() *Version {
 	return p.version
 }
 
+// SetVgpuPlacement The vGPU placement strategy.
+//
+// It can either put vGPUs on the first available physical
+// cards, or spread them over multiple physical cards.
 func (p *Host) SetVgpuPlacement(attr VgpuPlacement) {
 	p.vgpuPlacement = &attr
 }
 
+// VgpuPlacement The vGPU placement strategy.
+//
+// It can either put vGPUs on the first available physical
+// cards, or spread them over multiple physical cards.
 func (p *Host) VgpuPlacement() (VgpuPlacement, bool) {
 	if p.vgpuPlacement != nil {
 		return *p.vgpuPlacement, true
@@ -14275,6 +20681,10 @@ func (p *Host) VgpuPlacement() (VgpuPlacement, bool) {
 	return zero, false
 }
 
+// MustVgpuPlacement The vGPU placement strategy.
+//
+// It can either put vGPUs on the first available physical
+// cards, or spread them over multiple physical cards.
 func (p *Host) MustVgpuPlacement() VgpuPlacement {
 	if p.vgpuPlacement == nil {
 		panic("the vgpuPlacement must not be nil, please use VgpuPlacement() function instead")
@@ -14378,10 +20788,12 @@ func (p *HostDevice) MustDriver() string {
 	return *p.driver
 }
 
+// SetHost Type representing a host.
 func (p *HostDevice) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *HostDevice) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -14389,6 +20801,7 @@ func (p *HostDevice) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *HostDevice) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -14581,10 +20994,12 @@ func (p *HostDevice) MustVirtualFunctions() int64 {
 	return *p.virtualFunctions
 }
 
+// SetVm Represents a virtual machine.
 func (p *HostDevice) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *HostDevice) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -14592,6 +21007,7 @@ func (p *HostDevice) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *HostDevice) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -14623,6 +21039,75 @@ func (p *HostDevicePassthrough) MustEnabled() bool {
 	return *p.enabled
 }
 
+// HostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 type HostNic struct {
 	Struct
 	adAggregatorId                *int64
@@ -14693,10 +21178,12 @@ func (p *HostNic) MustBaseInterface() string {
 	return *p.baseInterface
 }
 
+// SetBonding Represents a network interfaces bond.
 func (p *HostNic) SetBonding(attr *Bonding) {
 	p.bonding = attr
 }
 
+// Bonding Represents a network interfaces bond.
 func (p *HostNic) Bonding() (*Bonding, bool) {
 	if p.bonding != nil {
 		return p.bonding, true
@@ -14704,6 +21191,7 @@ func (p *HostNic) Bonding() (*Bonding, bool) {
 	return nil, false
 }
 
+// MustBonding Represents a network interfaces bond.
 func (p *HostNic) MustBonding() *Bonding {
 	if p.bonding == nil {
 		panic("the bonding must not be nil, please use Bonding() function instead")
@@ -14711,10 +21199,12 @@ func (p *HostNic) MustBonding() *Bonding {
 	return p.bonding
 }
 
+// SetBootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *HostNic) SetBootProtocol(attr BootProtocol) {
 	p.bootProtocol = &attr
 }
 
+// BootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *HostNic) BootProtocol() (BootProtocol, bool) {
 	if p.bootProtocol != nil {
 		return *p.bootProtocol, true
@@ -14723,6 +21213,7 @@ func (p *HostNic) BootProtocol() (BootProtocol, bool) {
 	return zero, false
 }
 
+// MustBootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *HostNic) MustBootProtocol() BootProtocol {
 	if p.bootProtocol == nil {
 		panic("the bootProtocol must not be nil, please use BootProtocol() function instead")
@@ -14825,10 +21316,12 @@ func (p *HostNic) MustDescription() string {
 	return *p.description
 }
 
+// SetHost Type representing a host.
 func (p *HostNic) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *HostNic) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -14836,6 +21329,7 @@ func (p *HostNic) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *HostNic) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -14862,10 +21356,12 @@ func (p *HostNic) MustId() string {
 	return *p.id
 }
 
+// SetIp Represents the IP configuration of a network interface.
 func (p *HostNic) SetIp(attr *Ip) {
 	p.ip = attr
 }
 
+// Ip Represents the IP configuration of a network interface.
 func (p *HostNic) Ip() (*Ip, bool) {
 	if p.ip != nil {
 		return p.ip, true
@@ -14873,6 +21369,7 @@ func (p *HostNic) Ip() (*Ip, bool) {
 	return nil, false
 }
 
+// MustIp Represents the IP configuration of a network interface.
 func (p *HostNic) MustIp() *Ip {
 	if p.ip == nil {
 		panic("the ip must not be nil, please use Ip() function instead")
@@ -14880,10 +21377,12 @@ func (p *HostNic) MustIp() *Ip {
 	return p.ip
 }
 
+// SetIpv6 Represents the IP configuration of a network interface.
 func (p *HostNic) SetIpv6(attr *Ip) {
 	p.ipv6 = attr
 }
 
+// Ipv6 Represents the IP configuration of a network interface.
 func (p *HostNic) Ipv6() (*Ip, bool) {
 	if p.ipv6 != nil {
 		return p.ipv6, true
@@ -14891,6 +21390,7 @@ func (p *HostNic) Ipv6() (*Ip, bool) {
 	return nil, false
 }
 
+// MustIpv6 Represents the IP configuration of a network interface.
 func (p *HostNic) MustIpv6() *Ip {
 	if p.ipv6 == nil {
 		panic("the ipv6 must not be nil, please use Ipv6() function instead")
@@ -14898,10 +21398,12 @@ func (p *HostNic) MustIpv6() *Ip {
 	return p.ipv6
 }
 
+// SetIpv6BootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *HostNic) SetIpv6BootProtocol(attr BootProtocol) {
 	p.ipv6BootProtocol = &attr
 }
 
+// Ipv6BootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *HostNic) Ipv6BootProtocol() (BootProtocol, bool) {
 	if p.ipv6BootProtocol != nil {
 		return *p.ipv6BootProtocol, true
@@ -14910,6 +21412,7 @@ func (p *HostNic) Ipv6BootProtocol() (BootProtocol, bool) {
 	return zero, false
 }
 
+// MustIpv6BootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *HostNic) MustIpv6BootProtocol() BootProtocol {
 	if p.ipv6BootProtocol == nil {
 		panic("the ipv6BootProtocol must not be nil, please use Ipv6BootProtocol() function instead")
@@ -14917,10 +21420,12 @@ func (p *HostNic) MustIpv6BootProtocol() BootProtocol {
 	return *p.ipv6BootProtocol
 }
 
+// SetMac Represents a MAC address of a virtual network interface.
 func (p *HostNic) SetMac(attr *Mac) {
 	p.mac = attr
 }
 
+// Mac Represents a MAC address of a virtual network interface.
 func (p *HostNic) Mac() (*Mac, bool) {
 	if p.mac != nil {
 		return p.mac, true
@@ -14928,6 +21433,7 @@ func (p *HostNic) Mac() (*Mac, bool) {
 	return nil, false
 }
 
+// MustMac Represents a MAC address of a virtual network interface.
 func (p *HostNic) MustMac() *Mac {
 	if p.mac == nil {
 		panic("the mac must not be nil, please use Mac() function instead")
@@ -14973,10 +21479,116 @@ func (p *HostNic) MustName() string {
 	return *p.name
 }
 
+// SetNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *HostNic) SetNetwork(attr *Network) {
 	p.network = attr
 }
 
+// Network The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *HostNic) Network() (*Network, bool) {
 	if p.network != nil {
 		return p.network, true
@@ -14984,6 +21596,59 @@ func (p *HostNic) Network() (*Network, bool) {
 	return nil, false
 }
 
+// MustNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *HostNic) MustNetwork() *Network {
 	if p.network == nil {
 		panic("the network must not be nil, please use Network() function instead")
@@ -15028,10 +21693,148 @@ func (p *HostNic) MustOverrideConfiguration() bool {
 	return *p.overrideConfiguration
 }
 
+// SetPhysicalFunction Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *HostNic) SetPhysicalFunction(attr *HostNic) {
 	p.physicalFunction = attr
 }
 
+// PhysicalFunction Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *HostNic) PhysicalFunction() (*HostNic, bool) {
 	if p.physicalFunction != nil {
 		return p.physicalFunction, true
@@ -15039,6 +21842,75 @@ func (p *HostNic) PhysicalFunction() (*HostNic, bool) {
 	return nil, false
 }
 
+// MustPhysicalFunction Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *HostNic) MustPhysicalFunction() *HostNic {
 	if p.physicalFunction == nil {
 		panic("the physicalFunction must not be nil, please use PhysicalFunction() function instead")
@@ -15064,10 +21936,36 @@ func (p *HostNic) MustProperties() *PropertySlice {
 	return p.properties
 }
 
+// SetQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *HostNic) SetQos(attr *Qos) {
 	p.qos = attr
 }
 
+// Qos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *HostNic) Qos() (*Qos, bool) {
 	if p.qos != nil {
 		return p.qos, true
@@ -15075,6 +21973,19 @@ func (p *HostNic) Qos() (*Qos, bool) {
 	return nil, false
 }
 
+// MustQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *HostNic) MustQos() *Qos {
 	if p.qos == nil {
 		panic("the qos must not be nil, please use Qos() function instead")
@@ -15119,10 +22030,12 @@ func (p *HostNic) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+// SetStatus Network interface card status.
 func (p *HostNic) SetStatus(attr NicStatus) {
 	p.status = &attr
 }
 
+// Status Network interface card status.
 func (p *HostNic) Status() (NicStatus, bool) {
 	if p.status != nil {
 		return *p.status, true
@@ -15131,6 +22044,7 @@ func (p *HostNic) Status() (NicStatus, bool) {
 	return zero, false
 }
 
+// MustStatus Network interface card status.
 func (p *HostNic) MustStatus() NicStatus {
 	if p.status == nil {
 		panic("the status must not be nil, please use Status() function instead")
@@ -15138,10 +22052,12 @@ func (p *HostNic) MustStatus() NicStatus {
 	return *p.status
 }
 
+// SetVirtualFunctionsConfiguration Describes the virtual functions configuration of an SR-IOV-enabled physical function NIC.
 func (p *HostNic) SetVirtualFunctionsConfiguration(attr *HostNicVirtualFunctionsConfiguration) {
 	p.virtualFunctionsConfiguration = attr
 }
 
+// VirtualFunctionsConfiguration Describes the virtual functions configuration of an SR-IOV-enabled physical function NIC.
 func (p *HostNic) VirtualFunctionsConfiguration() (*HostNicVirtualFunctionsConfiguration, bool) {
 	if p.virtualFunctionsConfiguration != nil {
 		return p.virtualFunctionsConfiguration, true
@@ -15149,6 +22065,7 @@ func (p *HostNic) VirtualFunctionsConfiguration() (*HostNicVirtualFunctionsConfi
 	return nil, false
 }
 
+// MustVirtualFunctionsConfiguration Describes the virtual functions configuration of an SR-IOV-enabled physical function NIC.
 func (p *HostNic) MustVirtualFunctionsConfiguration() *HostNicVirtualFunctionsConfiguration {
 	if p.virtualFunctionsConfiguration == nil {
 		panic("the virtualFunctionsConfiguration must not be nil, please use VirtualFunctionsConfiguration() function instead")
@@ -15156,10 +22073,12 @@ func (p *HostNic) MustVirtualFunctionsConfiguration() *HostNicVirtualFunctionsCo
 	return p.virtualFunctionsConfiguration
 }
 
+// SetVlan Type representing a Virtual LAN (VLAN) type.
 func (p *HostNic) SetVlan(attr *Vlan) {
 	p.vlan = attr
 }
 
+// Vlan Type representing a Virtual LAN (VLAN) type.
 func (p *HostNic) Vlan() (*Vlan, bool) {
 	if p.vlan != nil {
 		return p.vlan, true
@@ -15167,6 +22086,7 @@ func (p *HostNic) Vlan() (*Vlan, bool) {
 	return nil, false
 }
 
+// MustVlan Type representing a Virtual LAN (VLAN) type.
 func (p *HostNic) MustVlan() *Vlan {
 	if p.vlan == nil {
 		panic("the vlan must not be nil, please use Vlan() function instead")
@@ -15174,6 +22094,7 @@ func (p *HostNic) MustVlan() *Vlan {
 	return p.vlan
 }
 
+// HostNicVirtualFunctionsConfiguration Describes the virtual functions configuration of an SR-IOV-enabled physical function NIC.
 type HostNicVirtualFunctionsConfiguration struct {
 	Struct
 	allNetworksAllowed          *bool
@@ -15358,10 +22279,12 @@ func (p *HostStorage) MustDriverSensitiveOptions() *PropertySlice {
 	return p.driverSensitiveOptions
 }
 
+// SetHost Type representing a host.
 func (p *HostStorage) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *HostStorage) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -15369,6 +22292,7 @@ func (p *HostStorage) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *HostStorage) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -15622,10 +22546,12 @@ func (p *HostStorage) MustTarget() string {
 	return *p.target
 }
 
+// SetType Type representing a storage domain type.
 func (p *HostStorage) SetType(attr StorageType) {
 	p.type_ = &attr
 }
 
+// Type Type representing a storage domain type.
 func (p *HostStorage) Type() (StorageType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -15634,6 +22560,7 @@ func (p *HostStorage) Type() (StorageType, bool) {
 	return zero, false
 }
 
+// MustType Type representing a storage domain type.
 func (p *HostStorage) MustType() StorageType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -15801,6 +22728,7 @@ func (p *HostedEngine) MustScore() int64 {
 	return *p.score
 }
 
+// Icon Icon of virtual machine or template.
 type Icon struct {
 	Struct
 	comment     *string
@@ -15925,6 +22853,7 @@ func (p *Icon) MustName() string {
 	return *p.name
 }
 
+// Identified This interface is the base model for all types that represent objects with an identifier.
 type Identified struct {
 	Struct
 	comment     *string
@@ -16009,6 +22938,7 @@ func (p *Identified) MustName() string {
 	return *p.name
 }
 
+// Image Represents an image entity.
 type Image struct {
 	Struct
 	comment       *string
@@ -16115,10 +23045,70 @@ func (p *Image) MustSize() int64 {
 	return *p.size
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Image) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Image) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -16126,6 +23116,36 @@ func (p *Image) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Image) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -16133,10 +23153,12 @@ func (p *Image) MustStorageDomain() *StorageDomain {
 	return p.storageDomain
 }
 
+// SetType Represents the file type of an image.
 func (p *Image) SetType(attr ImageFileType) {
 	p.type_ = &attr
 }
 
+// Type Represents the file type of an image.
 func (p *Image) Type() (ImageFileType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -16145,6 +23167,7 @@ func (p *Image) Type() (ImageFileType, bool) {
 	return zero, false
 }
 
+// MustType Represents the file type of an image.
 func (p *Image) MustType() ImageFileType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -16152,6 +23175,7 @@ func (p *Image) MustType() ImageFileType {
 	return *p.type_
 }
 
+// ImageTransfer This type contains information regarding an image transfer being performed.
 type ImageTransfer struct {
 	Struct
 	active            *bool
@@ -16250,10 +23274,24 @@ func (p *ImageTransfer) MustDescription() string {
 	return *p.description
 }
 
+// SetDirection The <<types/image_transfer, image transfer>> direction for a transfer.
+//
+// When adding a new transfer, the user can choose whether the transfer will be to an image, choosing `upload`,
+// or to transfer from an image- choosing `download` as an ImageTransferDirection.
+//
+// Please refer to <<services/image_transfer, image transfer>> for further
+// documentation.
 func (p *ImageTransfer) SetDirection(attr ImageTransferDirection) {
 	p.direction = &attr
 }
 
+// Direction The <<types/image_transfer, image transfer>> direction for a transfer.
+//
+// When adding a new transfer, the user can choose whether the transfer will be to an image, choosing `upload`,
+// or to transfer from an image- choosing `download` as an ImageTransferDirection.
+//
+// Please refer to <<services/image_transfer, image transfer>> for further
+// documentation.
 func (p *ImageTransfer) Direction() (ImageTransferDirection, bool) {
 	if p.direction != nil {
 		return *p.direction, true
@@ -16262,6 +23300,13 @@ func (p *ImageTransfer) Direction() (ImageTransferDirection, bool) {
 	return zero, false
 }
 
+// MustDirection The <<types/image_transfer, image transfer>> direction for a transfer.
+//
+// When adding a new transfer, the user can choose whether the transfer will be to an image, choosing `upload`,
+// or to transfer from an image- choosing `download` as an ImageTransferDirection.
+//
+// Please refer to <<services/image_transfer, image transfer>> for further
+// documentation.
 func (p *ImageTransfer) MustDirection() ImageTransferDirection {
 	if p.direction == nil {
 		panic("the direction must not be nil, please use Direction() function instead")
@@ -16269,10 +23314,12 @@ func (p *ImageTransfer) MustDirection() ImageTransferDirection {
 	return *p.direction
 }
 
+// SetDisk Represents a virtual disk device.
 func (p *ImageTransfer) SetDisk(attr *Disk) {
 	p.disk = attr
 }
 
+// Disk Represents a virtual disk device.
 func (p *ImageTransfer) Disk() (*Disk, bool) {
 	if p.disk != nil {
 		return p.disk, true
@@ -16280,6 +23327,7 @@ func (p *ImageTransfer) Disk() (*Disk, bool) {
 	return nil, false
 }
 
+// MustDisk Represents a virtual disk device.
 func (p *ImageTransfer) MustDisk() *Disk {
 	if p.disk == nil {
 		panic("the disk must not be nil, please use Disk() function instead")
@@ -16287,10 +23335,12 @@ func (p *ImageTransfer) MustDisk() *Disk {
 	return p.disk
 }
 
+// SetFormat The underlying storage format of disks.
 func (p *ImageTransfer) SetFormat(attr DiskFormat) {
 	p.format = &attr
 }
 
+// Format The underlying storage format of disks.
 func (p *ImageTransfer) Format() (DiskFormat, bool) {
 	if p.format != nil {
 		return *p.format, true
@@ -16299,6 +23349,7 @@ func (p *ImageTransfer) Format() (DiskFormat, bool) {
 	return zero, false
 }
 
+// MustFormat The underlying storage format of disks.
 func (p *ImageTransfer) MustFormat() DiskFormat {
 	if p.format == nil {
 		panic("the format must not be nil, please use Format() function instead")
@@ -16306,10 +23357,12 @@ func (p *ImageTransfer) MustFormat() DiskFormat {
 	return *p.format
 }
 
+// SetHost Type representing a host.
 func (p *ImageTransfer) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *ImageTransfer) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -16317,6 +23370,7 @@ func (p *ImageTransfer) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *ImageTransfer) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -16343,10 +23397,12 @@ func (p *ImageTransfer) MustId() string {
 	return *p.id
 }
 
+// SetImage Represents an image entity.
 func (p *ImageTransfer) SetImage(attr *Image) {
 	p.image = attr
 }
 
+// Image Represents an image entity.
 func (p *ImageTransfer) Image() (*Image, bool) {
 	if p.image != nil {
 		return p.image, true
@@ -16354,6 +23410,7 @@ func (p *ImageTransfer) Image() (*Image, bool) {
 	return nil, false
 }
 
+// MustImage Represents an image entity.
 func (p *ImageTransfer) MustImage() *Image {
 	if p.image == nil {
 		panic("the image must not be nil, please use Image() function instead")
@@ -16399,10 +23456,20 @@ func (p *ImageTransfer) MustName() string {
 	return *p.name
 }
 
+// SetPhase A list of possible phases for an <<types/image_transfer, image transfer>> entity. Each of these values
+// defines a specific point in a transfer flow.
+//
+// Please refer to <<services/image_transfer, image transfer>> for more
+// information.
 func (p *ImageTransfer) SetPhase(attr ImageTransferPhase) {
 	p.phase = &attr
 }
 
+// Phase A list of possible phases for an <<types/image_transfer, image transfer>> entity. Each of these values
+// defines a specific point in a transfer flow.
+//
+// Please refer to <<services/image_transfer, image transfer>> for more
+// information.
 func (p *ImageTransfer) Phase() (ImageTransferPhase, bool) {
 	if p.phase != nil {
 		return *p.phase, true
@@ -16411,6 +23478,11 @@ func (p *ImageTransfer) Phase() (ImageTransferPhase, bool) {
 	return zero, false
 }
 
+// MustPhase A list of possible phases for an <<types/image_transfer, image transfer>> entity. Each of these values
+// defines a specific point in a transfer flow.
+//
+// Please refer to <<services/image_transfer, image transfer>> for more
+// information.
 func (p *ImageTransfer) MustPhase() ImageTransferPhase {
 	if p.phase == nil {
 		panic("the phase must not be nil, please use Phase() function instead")
@@ -16474,10 +23546,24 @@ func (p *ImageTransfer) MustSnapshot() *DiskSnapshot {
 	return p.snapshot
 }
 
+// SetTimeoutPolicy The <<types/image_transfer, image transfer>> timeout policy.
+//
+// Define how the system handles a transfer when the client is inactive
+// for inactivityTimeout seconds.
+//
+// Please refer to <<services/image_transfer, image transfer>> for further
+// documentation.
 func (p *ImageTransfer) SetTimeoutPolicy(attr ImageTransferTimeoutPolicy) {
 	p.timeoutPolicy = &attr
 }
 
+// TimeoutPolicy The <<types/image_transfer, image transfer>> timeout policy.
+//
+// Define how the system handles a transfer when the client is inactive
+// for inactivityTimeout seconds.
+//
+// Please refer to <<services/image_transfer, image transfer>> for further
+// documentation.
 func (p *ImageTransfer) TimeoutPolicy() (ImageTransferTimeoutPolicy, bool) {
 	if p.timeoutPolicy != nil {
 		return *p.timeoutPolicy, true
@@ -16486,6 +23572,13 @@ func (p *ImageTransfer) TimeoutPolicy() (ImageTransferTimeoutPolicy, bool) {
 	return zero, false
 }
 
+// MustTimeoutPolicy The <<types/image_transfer, image transfer>> timeout policy.
+//
+// Define how the system handles a transfer when the client is inactive
+// for inactivityTimeout seconds.
+//
+// Please refer to <<services/image_transfer, image transfer>> for further
+// documentation.
 func (p *ImageTransfer) MustTimeoutPolicy() ImageTransferTimeoutPolicy {
 	if p.timeoutPolicy == nil {
 		panic("the timeoutPolicy must not be nil, please use TimeoutPolicy() function instead")
@@ -16595,10 +23688,20 @@ func (p *Initialization) MustAuthorizedSshKeys() string {
 	return *p.authorizedSshKeys
 }
 
+// SetCloudInit Deprecated type to specify _cloud-init_ configuration.
+//
+// This type has been deprecated and replaced by alternative attributes inside the
+// <<types/initialization, Initialization>> type. See the
+// <<types/initialization/attributes/cloud_init, cloud_init>> attribute documentation for details.
 func (p *Initialization) SetCloudInit(attr *CloudInit) {
 	p.cloudInit = attr
 }
 
+// CloudInit Deprecated type to specify _cloud-init_ configuration.
+//
+// This type has been deprecated and replaced by alternative attributes inside the
+// <<types/initialization, Initialization>> type. See the
+// <<types/initialization/attributes/cloud_init, cloud_init>> attribute documentation for details.
 func (p *Initialization) CloudInit() (*CloudInit, bool) {
 	if p.cloudInit != nil {
 		return p.cloudInit, true
@@ -16606,6 +23709,11 @@ func (p *Initialization) CloudInit() (*CloudInit, bool) {
 	return nil, false
 }
 
+// MustCloudInit Deprecated type to specify _cloud-init_ configuration.
+//
+// This type has been deprecated and replaced by alternative attributes inside the
+// <<types/initialization, Initialization>> type. See the
+// <<types/initialization/attributes/cloud_init, cloud_init>> attribute documentation for details.
 func (p *Initialization) MustCloudInit() *CloudInit {
 	if p.cloudInit == nil {
 		panic("the cloudInit must not be nil, please use CloudInit() function instead")
@@ -16613,10 +23721,26 @@ func (p *Initialization) MustCloudInit() *CloudInit {
 	return p.cloudInit
 }
 
+// SetCloudInitNetworkProtocol Defines the values for the cloud-init protocol.
+// This protocol decides how the cloud-init network
+// parameters are formatted before being passed to
+// the virtual machine in order to be processed by cloud-init.
+//
+// Protocols supported are cloud-init version dependent.
+// For more information, see
+// http://cloudinit.readthedocs.io/en/latest/topics/network-config.html#network-configuration-sources[Network Configuration Sources]
 func (p *Initialization) SetCloudInitNetworkProtocol(attr CloudInitNetworkProtocol) {
 	p.cloudInitNetworkProtocol = &attr
 }
 
+// CloudInitNetworkProtocol Defines the values for the cloud-init protocol.
+// This protocol decides how the cloud-init network
+// parameters are formatted before being passed to
+// the virtual machine in order to be processed by cloud-init.
+//
+// Protocols supported are cloud-init version dependent.
+// For more information, see
+// http://cloudinit.readthedocs.io/en/latest/topics/network-config.html#network-configuration-sources[Network Configuration Sources]
 func (p *Initialization) CloudInitNetworkProtocol() (CloudInitNetworkProtocol, bool) {
 	if p.cloudInitNetworkProtocol != nil {
 		return *p.cloudInitNetworkProtocol, true
@@ -16625,6 +23749,14 @@ func (p *Initialization) CloudInitNetworkProtocol() (CloudInitNetworkProtocol, b
 	return zero, false
 }
 
+// MustCloudInitNetworkProtocol Defines the values for the cloud-init protocol.
+// This protocol decides how the cloud-init network
+// parameters are formatted before being passed to
+// the virtual machine in order to be processed by cloud-init.
+//
+// Protocols supported are cloud-init version dependent.
+// For more information, see
+// http://cloudinit.readthedocs.io/en/latest/topics/network-config.html#network-configuration-sources[Network Configuration Sources]
 func (p *Initialization) MustCloudInitNetworkProtocol() CloudInitNetworkProtocol {
 	if p.cloudInitNetworkProtocol == nil {
 		panic("the cloudInitNetworkProtocol must not be nil, please use CloudInitNetworkProtocol() function instead")
@@ -16972,6 +24104,34 @@ func (p *Initialization) MustWindowsLicenseKey() string {
 	return *p.windowsLicenseKey
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 type InstanceType struct {
 	Struct
 	bios                         *Bios
@@ -17023,6 +24183,7 @@ type InstanceType struct {
 	storageErrorResumeBehaviour  *VmStorageErrorResumeBehaviour
 	tags                         *TagSlice
 	timeZone                     *TimeZone
+	tpmEnabled                   *bool
 	tunnelMigration              *bool
 	type_                        *VmType
 	usb                          *Usb
@@ -17069,10 +24230,264 @@ func (p *InstanceType) MustCdroms() *CdromSlice {
 	return p.cdroms
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *InstanceType) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *InstanceType) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -17080,6 +24495,133 @@ func (p *InstanceType) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *InstanceType) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -17106,10 +24648,12 @@ func (p *InstanceType) MustComment() string {
 	return *p.comment
 }
 
+// SetConsole Representation for serial console device.
 func (p *InstanceType) SetConsole(attr *Console) {
 	p.console = attr
 }
 
+// Console Representation for serial console device.
 func (p *InstanceType) Console() (*Console, bool) {
 	if p.console != nil {
 		return p.console, true
@@ -17117,6 +24661,7 @@ func (p *InstanceType) Console() (*Console, bool) {
 	return nil, false
 }
 
+// MustConsole Representation for serial console device.
 func (p *InstanceType) MustConsole() *Console {
 	if p.console == nil {
 		panic("the console must not be nil, please use Console() function instead")
@@ -17328,10 +24873,12 @@ func (p *InstanceType) MustDiskAttachments() *DiskAttachmentSlice {
 	return p.diskAttachments
 }
 
+// SetDisplay Represents a graphic console configuration.
 func (p *InstanceType) SetDisplay(attr *Display) {
 	p.display = attr
 }
 
+// Display Represents a graphic console configuration.
 func (p *InstanceType) Display() (*Display, bool) {
 	if p.display != nil {
 		return p.display, true
@@ -17339,6 +24886,7 @@ func (p *InstanceType) Display() (*Display, bool) {
 	return nil, false
 }
 
+// MustDisplay Represents a graphic console configuration.
 func (p *InstanceType) MustDisplay() *Display {
 	if p.display == nil {
 		panic("the display must not be nil, please use Display() function instead")
@@ -17346,10 +24894,12 @@ func (p *InstanceType) MustDisplay() *Display {
 	return p.display
 }
 
+// SetDomain This type represents a directory service domain.
 func (p *InstanceType) SetDomain(attr *Domain) {
 	p.domain = attr
 }
 
+// Domain This type represents a directory service domain.
 func (p *InstanceType) Domain() (*Domain, bool) {
 	if p.domain != nil {
 		return p.domain, true
@@ -17357,6 +24907,7 @@ func (p *InstanceType) Domain() (*Domain, bool) {
 	return nil, false
 }
 
+// MustDomain This type represents a directory service domain.
 func (p *InstanceType) MustDomain() *Domain {
 	if p.domain == nil {
 		panic("the domain must not be nil, please use Domain() function instead")
@@ -17382,10 +24933,12 @@ func (p *InstanceType) MustGraphicsConsoles() *GraphicsConsoleSlice {
 	return p.graphicsConsoles
 }
 
+// SetHighAvailability Type representing high availability of a virtual machine.
 func (p *InstanceType) SetHighAvailability(attr *HighAvailability) {
 	p.highAvailability = attr
 }
 
+// HighAvailability Type representing high availability of a virtual machine.
 func (p *InstanceType) HighAvailability() (*HighAvailability, bool) {
 	if p.highAvailability != nil {
 		return p.highAvailability, true
@@ -17393,6 +24946,7 @@ func (p *InstanceType) HighAvailability() (*HighAvailability, bool) {
 	return nil, false
 }
 
+// MustHighAvailability Type representing high availability of a virtual machine.
 func (p *InstanceType) MustHighAvailability() *HighAvailability {
 	if p.highAvailability == nil {
 		panic("the highAvailability must not be nil, please use HighAvailability() function instead")
@@ -17455,10 +25009,12 @@ func (p *InstanceType) MustIo() *Io {
 	return p.io
 }
 
+// SetLargeIcon Icon of virtual machine or template.
 func (p *InstanceType) SetLargeIcon(attr *Icon) {
 	p.largeIcon = attr
 }
 
+// LargeIcon Icon of virtual machine or template.
 func (p *InstanceType) LargeIcon() (*Icon, bool) {
 	if p.largeIcon != nil {
 		return p.largeIcon, true
@@ -17466,6 +25022,7 @@ func (p *InstanceType) LargeIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustLargeIcon Icon of virtual machine or template.
 func (p *InstanceType) MustLargeIcon() *Icon {
 	if p.largeIcon == nil {
 		panic("the largeIcon must not be nil, please use LargeIcon() function instead")
@@ -17473,10 +25030,18 @@ func (p *InstanceType) MustLargeIcon() *Icon {
 	return p.largeIcon
 }
 
+// SetLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *InstanceType) SetLease(attr *StorageDomainLease) {
 	p.lease = attr
 }
 
+// Lease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *InstanceType) Lease() (*StorageDomainLease, bool) {
 	if p.lease != nil {
 		return p.lease, true
@@ -17484,6 +25049,10 @@ func (p *InstanceType) Lease() (*StorageDomainLease, bool) {
 	return nil, false
 }
 
+// MustLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *InstanceType) MustLease() *StorageDomainLease {
 	if p.lease == nil {
 		panic("the lease must not be nil, please use Lease() function instead")
@@ -17510,10 +25079,12 @@ func (p *InstanceType) MustMemory() int64 {
 	return *p.memory
 }
 
+// SetMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *InstanceType) SetMemoryPolicy(attr *MemoryPolicy) {
 	p.memoryPolicy = attr
 }
 
+// MemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *InstanceType) MemoryPolicy() (*MemoryPolicy, bool) {
 	if p.memoryPolicy != nil {
 		return p.memoryPolicy, true
@@ -17521,6 +25092,7 @@ func (p *InstanceType) MemoryPolicy() (*MemoryPolicy, bool) {
 	return nil, false
 }
 
+// MustMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *InstanceType) MustMemoryPolicy() *MemoryPolicy {
 	if p.memoryPolicy == nil {
 		panic("the memoryPolicy must not be nil, please use MemoryPolicy() function instead")
@@ -17528,10 +25100,12 @@ func (p *InstanceType) MustMemoryPolicy() *MemoryPolicy {
 	return p.memoryPolicy
 }
 
+// SetMigration The type for migration options.
 func (p *InstanceType) SetMigration(attr *MigrationOptions) {
 	p.migration = attr
 }
 
+// Migration The type for migration options.
 func (p *InstanceType) Migration() (*MigrationOptions, bool) {
 	if p.migration != nil {
 		return p.migration, true
@@ -17539,6 +25113,7 @@ func (p *InstanceType) Migration() (*MigrationOptions, bool) {
 	return nil, false
 }
 
+// MustMigration The type for migration options.
 func (p *InstanceType) MustMigration() *MigrationOptions {
 	if p.migration == nil {
 		panic("the migration must not be nil, please use Migration() function instead")
@@ -17640,10 +25215,12 @@ func (p *InstanceType) MustOrigin() string {
 	return *p.origin
 }
 
+// SetOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *InstanceType) SetOs(attr *OperatingSystem) {
 	p.os = attr
 }
 
+// Os Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *InstanceType) Os() (*OperatingSystem, bool) {
 	if p.os != nil {
 		return p.os, true
@@ -17651,6 +25228,7 @@ func (p *InstanceType) Os() (*OperatingSystem, bool) {
 	return nil, false
 }
 
+// MustOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *InstanceType) MustOs() *OperatingSystem {
 	if p.os == nil {
 		panic("the os must not be nil, please use Os() function instead")
@@ -17694,10 +25272,42 @@ func (p *InstanceType) MustPlacementPolicy() *VmPlacementPolicy {
 	return p.placementPolicy
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *InstanceType) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *InstanceType) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -17705,6 +25315,22 @@ func (p *InstanceType) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *InstanceType) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -17712,10 +25338,12 @@ func (p *InstanceType) MustQuota() *Quota {
 	return p.quota
 }
 
+// SetRngDevice Random number generator (RNG) device model.
 func (p *InstanceType) SetRngDevice(attr *RngDevice) {
 	p.rngDevice = attr
 }
 
+// RngDevice Random number generator (RNG) device model.
 func (p *InstanceType) RngDevice() (*RngDevice, bool) {
 	if p.rngDevice != nil {
 		return p.rngDevice, true
@@ -17723,6 +25351,7 @@ func (p *InstanceType) RngDevice() (*RngDevice, bool) {
 	return nil, false
 }
 
+// MustRngDevice Random number generator (RNG) device model.
 func (p *InstanceType) MustRngDevice() *RngDevice {
 	if p.rngDevice == nil {
 		panic("the rngDevice must not be nil, please use RngDevice() function instead")
@@ -17748,10 +25377,12 @@ func (p *InstanceType) MustSerialNumber() *SerialNumber {
 	return p.serialNumber
 }
 
+// SetSmallIcon Icon of virtual machine or template.
 func (p *InstanceType) SetSmallIcon(attr *Icon) {
 	p.smallIcon = attr
 }
 
+// SmallIcon Icon of virtual machine or template.
 func (p *InstanceType) SmallIcon() (*Icon, bool) {
 	if p.smallIcon != nil {
 		return p.smallIcon, true
@@ -17759,6 +25390,7 @@ func (p *InstanceType) SmallIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustSmallIcon Icon of virtual machine or template.
 func (p *InstanceType) MustSmallIcon() *Icon {
 	if p.smallIcon == nil {
 		panic("the smallIcon must not be nil, please use SmallIcon() function instead")
@@ -17841,10 +25473,12 @@ func (p *InstanceType) MustStateless() bool {
 	return *p.stateless
 }
 
+// SetStatus Type representing a status of a virtual machine template.
 func (p *InstanceType) SetStatus(attr TemplateStatus) {
 	p.status = &attr
 }
 
+// Status Type representing a status of a virtual machine template.
 func (p *InstanceType) Status() (TemplateStatus, bool) {
 	if p.status != nil {
 		return *p.status, true
@@ -17853,6 +25487,7 @@ func (p *InstanceType) Status() (TemplateStatus, bool) {
 	return zero, false
 }
 
+// MustStatus Type representing a status of a virtual machine template.
 func (p *InstanceType) MustStatus() TemplateStatus {
 	if p.status == nil {
 		panic("the status must not be nil, please use Status() function instead")
@@ -17860,10 +25495,70 @@ func (p *InstanceType) MustStatus() TemplateStatus {
 	return *p.status
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *InstanceType) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *InstanceType) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -17871,6 +25566,36 @@ func (p *InstanceType) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *InstanceType) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -17878,10 +25603,20 @@ func (p *InstanceType) MustStorageDomain() *StorageDomain {
 	return p.storageDomain
 }
 
+// SetStorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *InstanceType) SetStorageErrorResumeBehaviour(attr VmStorageErrorResumeBehaviour) {
 	p.storageErrorResumeBehaviour = &attr
 }
 
+// StorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *InstanceType) StorageErrorResumeBehaviour() (VmStorageErrorResumeBehaviour, bool) {
 	if p.storageErrorResumeBehaviour != nil {
 		return *p.storageErrorResumeBehaviour, true
@@ -17890,6 +25625,11 @@ func (p *InstanceType) StorageErrorResumeBehaviour() (VmStorageErrorResumeBehavi
 	return zero, false
 }
 
+// MustStorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *InstanceType) MustStorageErrorResumeBehaviour() VmStorageErrorResumeBehaviour {
 	if p.storageErrorResumeBehaviour == nil {
 		panic("the storageErrorResumeBehaviour must not be nil, please use StorageErrorResumeBehaviour() function instead")
@@ -17915,10 +25655,12 @@ func (p *InstanceType) MustTags() *TagSlice {
 	return p.tags
 }
 
+// SetTimeZone Time zone representation.
 func (p *InstanceType) SetTimeZone(attr *TimeZone) {
 	p.timeZone = attr
 }
 
+// TimeZone Time zone representation.
 func (p *InstanceType) TimeZone() (*TimeZone, bool) {
 	if p.timeZone != nil {
 		return p.timeZone, true
@@ -17926,11 +25668,31 @@ func (p *InstanceType) TimeZone() (*TimeZone, bool) {
 	return nil, false
 }
 
+// MustTimeZone Time zone representation.
 func (p *InstanceType) MustTimeZone() *TimeZone {
 	if p.timeZone == nil {
 		panic("the timeZone must not be nil, please use TimeZone() function instead")
 	}
 	return p.timeZone
+}
+
+func (p *InstanceType) SetTpmEnabled(attr bool) {
+	p.tpmEnabled = &attr
+}
+
+func (p *InstanceType) TpmEnabled() (bool, bool) {
+	if p.tpmEnabled != nil {
+		return *p.tpmEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *InstanceType) MustTpmEnabled() bool {
+	if p.tpmEnabled == nil {
+		panic("the tpmEnabled must not be nil, please use TpmEnabled() function instead")
+	}
+	return *p.tpmEnabled
 }
 
 func (p *InstanceType) SetTunnelMigration(attr bool) {
@@ -17952,10 +25714,12 @@ func (p *InstanceType) MustTunnelMigration() bool {
 	return *p.tunnelMigration
 }
 
+// SetType Type representing what the virtual machine is optimized for.
 func (p *InstanceType) SetType(attr VmType) {
 	p.type_ = &attr
 }
 
+// Type Type representing what the virtual machine is optimized for.
 func (p *InstanceType) Type() (VmType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -17964,6 +25728,7 @@ func (p *InstanceType) Type() (VmType, bool) {
 	return zero, false
 }
 
+// MustType Type representing what the virtual machine is optimized for.
 func (p *InstanceType) MustType() VmType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -17971,10 +25736,12 @@ func (p *InstanceType) MustType() VmType {
 	return *p.type_
 }
 
+// SetUsb Configuration of the USB device of a virtual machine.
 func (p *InstanceType) SetUsb(attr *Usb) {
 	p.usb = attr
 }
 
+// Usb Configuration of the USB device of a virtual machine.
 func (p *InstanceType) Usb() (*Usb, bool) {
 	if p.usb != nil {
 		return p.usb, true
@@ -17982,6 +25749,7 @@ func (p *InstanceType) Usb() (*Usb, bool) {
 	return nil, false
 }
 
+// MustUsb Configuration of the USB device of a virtual machine.
 func (p *InstanceType) MustUsb() *Usb {
 	if p.usb == nil {
 		panic("the usb must not be nil, please use Usb() function instead")
@@ -17989,10 +25757,12 @@ func (p *InstanceType) MustUsb() *Usb {
 	return p.usb
 }
 
+// SetVersion Type representing a version of a virtual machine template.
 func (p *InstanceType) SetVersion(attr *TemplateVersion) {
 	p.version = attr
 }
 
+// Version Type representing a version of a virtual machine template.
 func (p *InstanceType) Version() (*TemplateVersion, bool) {
 	if p.version != nil {
 		return p.version, true
@@ -18000,6 +25770,7 @@ func (p *InstanceType) Version() (*TemplateVersion, bool) {
 	return nil, false
 }
 
+// MustVersion Type representing a version of a virtual machine template.
 func (p *InstanceType) MustVersion() *TemplateVersion {
 	if p.version == nil {
 		panic("the version must not be nil, please use Version() function instead")
@@ -18007,10 +25778,14 @@ func (p *InstanceType) MustVersion() *TemplateVersion {
 	return p.version
 }
 
+// SetVirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *InstanceType) SetVirtioScsi(attr *VirtioScsi) {
 	p.virtioScsi = attr
 }
 
+// VirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *InstanceType) VirtioScsi() (*VirtioScsi, bool) {
 	if p.virtioScsi != nil {
 		return p.virtioScsi, true
@@ -18018,6 +25793,8 @@ func (p *InstanceType) VirtioScsi() (*VirtioScsi, bool) {
 	return nil, false
 }
 
+// MustVirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *InstanceType) MustVirtioScsi() *VirtioScsi {
 	if p.virtioScsi == nil {
 		panic("the virtioScsi must not be nil, please use VirtioScsi() function instead")
@@ -18044,10 +25821,12 @@ func (p *InstanceType) MustVirtioScsiMultiQueuesEnabled() bool {
 	return *p.virtioScsiMultiQueuesEnabled
 }
 
+// SetVm Represents a virtual machine.
 func (p *InstanceType) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *InstanceType) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -18055,6 +25834,7 @@ func (p *InstanceType) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *InstanceType) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -18104,6 +25884,7 @@ func (p *Io) MustThreads() int64 {
 	return *p.threads
 }
 
+// Ip Represents the IP configuration of a network interface.
 type Ip struct {
 	Struct
 	address *string
@@ -18169,10 +25950,12 @@ func (p *Ip) MustNetmask() string {
 	return *p.netmask
 }
 
+// SetVersion Defines the values for the IP protocol version.
 func (p *Ip) SetVersion(attr IpVersion) {
 	p.version = &attr
 }
 
+// Version Defines the values for the IP protocol version.
 func (p *Ip) Version() (IpVersion, bool) {
 	if p.version != nil {
 		return *p.version, true
@@ -18181,6 +25964,7 @@ func (p *Ip) Version() (IpVersion, bool) {
 	return zero, false
 }
 
+// MustVersion Defines the values for the IP protocol version.
 func (p *Ip) MustVersion() IpVersion {
 	if p.version == nil {
 		panic("the version must not be nil, please use Version() function instead")
@@ -18188,16 +25972,22 @@ func (p *Ip) MustVersion() IpVersion {
 	return *p.version
 }
 
+// IpAddressAssignment Represents an IP address assignment for a network device.
+//
+// For a static boot protocol assignment, subnet mask and IP address
+// (and optinally default gateway) must be provided in the IP configuration.
 type IpAddressAssignment struct {
 	Struct
 	assignmentMethod *BootProtocol
 	ip               *Ip
 }
 
+// SetAssignmentMethod Defines the options of the IP address assignment method to a NIC.
 func (p *IpAddressAssignment) SetAssignmentMethod(attr BootProtocol) {
 	p.assignmentMethod = &attr
 }
 
+// AssignmentMethod Defines the options of the IP address assignment method to a NIC.
 func (p *IpAddressAssignment) AssignmentMethod() (BootProtocol, bool) {
 	if p.assignmentMethod != nil {
 		return *p.assignmentMethod, true
@@ -18206,6 +25996,7 @@ func (p *IpAddressAssignment) AssignmentMethod() (BootProtocol, bool) {
 	return zero, false
 }
 
+// MustAssignmentMethod Defines the options of the IP address assignment method to a NIC.
 func (p *IpAddressAssignment) MustAssignmentMethod() BootProtocol {
 	if p.assignmentMethod == nil {
 		panic("the assignmentMethod must not be nil, please use AssignmentMethod() function instead")
@@ -18213,10 +26004,12 @@ func (p *IpAddressAssignment) MustAssignmentMethod() BootProtocol {
 	return *p.assignmentMethod
 }
 
+// SetIp Represents the IP configuration of a network interface.
 func (p *IpAddressAssignment) SetIp(attr *Ip) {
 	p.ip = attr
 }
 
+// Ip Represents the IP configuration of a network interface.
 func (p *IpAddressAssignment) Ip() (*Ip, bool) {
 	if p.ip != nil {
 		return p.ip, true
@@ -18224,6 +26017,7 @@ func (p *IpAddressAssignment) Ip() (*Ip, bool) {
 	return nil, false
 }
 
+// MustIp Represents the IP configuration of a network interface.
 func (p *IpAddressAssignment) MustIp() *Ip {
 	if p.ip == nil {
 		panic("the ip must not be nil, please use Ip() function instead")
@@ -18716,6 +26510,9 @@ func (p *IscsiDetails) MustVolumeGroupId() string {
 	return *p.volumeGroupId
 }
 
+// Job Represents a job, which monitors execution of a flow in the system.
+// A job can contain multiple steps in a hierarchic structure.
+// The steps can be processed in parallel, depends on the implementation of the flow.
 type Job struct {
 	Struct
 	autoCleared *bool
@@ -18884,10 +26681,12 @@ func (p *Job) MustName() string {
 	return *p.name
 }
 
+// SetOwner Represents a user in the system.
 func (p *Job) SetOwner(attr *User) {
 	p.owner = attr
 }
 
+// Owner Represents a user in the system.
 func (p *Job) Owner() (*User, bool) {
 	if p.owner != nil {
 		return p.owner, true
@@ -18895,6 +26694,7 @@ func (p *Job) Owner() (*User, bool) {
 	return nil, false
 }
 
+// MustOwner Represents a user in the system.
 func (p *Job) MustOwner() *User {
 	if p.owner == nil {
 		panic("the owner must not be nil, please use Owner() function instead")
@@ -18921,10 +26721,12 @@ func (p *Job) MustStartTime() time.Time {
 	return *p.startTime
 }
 
+// SetStatus Represents the status of the job.
 func (p *Job) SetStatus(attr JobStatus) {
 	p.status = &attr
 }
 
+// Status Represents the status of the job.
 func (p *Job) Status() (JobStatus, bool) {
 	if p.status != nil {
 		return *p.status, true
@@ -18933,6 +26735,7 @@ func (p *Job) Status() (JobStatus, bool) {
 	return zero, false
 }
 
+// MustStatus Represents the status of the job.
 func (p *Job) MustStatus() JobStatus {
 	if p.status == nil {
 		panic("the status must not be nil, please use Status() function instead")
@@ -18958,6 +26761,7 @@ func (p *Job) MustSteps() *StepSlice {
 	return p.steps
 }
 
+// KatelloErratum Type representing a Katello erratum.
 type KatelloErratum struct {
 	Struct
 	comment     *string
@@ -19013,10 +26817,12 @@ func (p *KatelloErratum) MustDescription() string {
 	return *p.description
 }
 
+// SetHost Type representing a host.
 func (p *KatelloErratum) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *KatelloErratum) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -19024,6 +26830,7 @@ func (p *KatelloErratum) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *KatelloErratum) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -19201,10 +27008,12 @@ func (p *KatelloErratum) MustType() string {
 	return *p.type_
 }
 
+// SetVm Represents a virtual machine.
 func (p *KatelloErratum) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *KatelloErratum) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -19212,6 +27021,7 @@ func (p *KatelloErratum) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *KatelloErratum) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -19286,6 +27096,39 @@ func (p *Ksm) MustMergeAcrossNodes() bool {
 	return *p.mergeAcrossNodes
 }
 
+// LinkLayerDiscoveryProtocolElement Represents an information element received by Link Layer Discovery Protocol (LLDP).
+// IEEE 802.1AB defines type, length, value (TLV) as a "short, variable length encoding of an information element".
+// This type represents such an information element.
+//
+// The attribute `name` is a human-readable string used to describe what the value is about, and may not be unique.
+// The name is redundant, because it could be created from `type` and the optional `oui` and `subtype`.
+// The purpose of `name` is to simplify the reading of the information element.
+// The `name` of a property is exactly the same string which is used in IEEE 802.1AB chapter 8.
+//
+// Organizationally-specific information elements have the `type` of `127` and the attributes
+// `oui` and `subtype`.
+//
+// For example, the XML representation of an information element may look like this:
+//
+// [source,xml]
+// ----
+// <link_layer_discovery_protocol_element>
+//   <name>Port VLAN Id</name>
+//   <oui>32962</oui>
+//   <properties>
+//     <property>
+//       <name>vlan id</name>
+//       <value>488</value>
+//     </property>
+//     <property>
+//       <name>vlan name</name>
+//       <value>v2-0488-03-0505</value>
+//     </property>
+//   </properties>
+//   <subtype>3</subtype>
+//   <type>127</type>
+// </link_layer_discovery_protocol_element>
+// ----
 type LinkLayerDiscoveryProtocolElement struct {
 	Struct
 	comment     *string
@@ -19833,10 +27676,14 @@ func (p *LogicalUnit) MustVolumeGroupId() string {
 	return *p.volumeGroupId
 }
 
+// MDevType Mediated device is a software device that allows to divide physical device's resources.
+//
+// See https://libvirt.org/drvnodedev.html#MDEV[Libvirt-MDEV] for further details.
 type MDevType struct {
 	Struct
 	availableInstances *int64
 	description        *string
+	humanReadableName  *string
 	name               *string
 }
 
@@ -19878,6 +27725,25 @@ func (p *MDevType) MustDescription() string {
 	return *p.description
 }
 
+func (p *MDevType) SetHumanReadableName(attr string) {
+	p.humanReadableName = &attr
+}
+
+func (p *MDevType) HumanReadableName() (string, bool) {
+	if p.humanReadableName != nil {
+		return *p.humanReadableName, true
+	}
+	var zero string
+	return zero, false
+}
+
+func (p *MDevType) MustHumanReadableName() string {
+	if p.humanReadableName == nil {
+		panic("the humanReadableName must not be nil, please use HumanReadableName() function instead")
+	}
+	return *p.humanReadableName
+}
+
 func (p *MDevType) SetName(attr string) {
 	p.name = &attr
 }
@@ -19897,6 +27763,7 @@ func (p *MDevType) MustName() string {
 	return *p.name
 }
 
+// Mac Represents a MAC address of a virtual network interface.
 type Mac struct {
 	Struct
 	address *string
@@ -19921,6 +27788,25 @@ func (p *Mac) MustAddress() string {
 	return *p.address
 }
 
+// MacPool Represents a MAC address pool.
+//
+// Example of an XML representation of a MAC address pool:
+//
+// [source,xml]
+// ----
+// <mac_pool href="/ovirt-engine/api/macpools/123" id="123">
+//   <name>Default</name>
+//   <description>Default MAC pool</description>
+//   <allow_duplicates>false</allow_duplicates>
+//   <default_pool>true</default_pool>
+//   <ranges>
+//     <range>
+//       <from>00:1A:4A:16:01:51</from>
+//       <to>00:1A:4A:16:01:E6</to>
+//     </range>
+//   </ranges>
+// </mac_pool>
+// ----
 type MacPool struct {
 	Struct
 	allowDuplicates *bool
@@ -20107,6 +27993,7 @@ func (p *MemoryOverCommit) MustPercent() int64 {
 	return *p.percent
 }
 
+// MemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 type MemoryPolicy struct {
 	Struct
 	ballooning           *bool
@@ -20191,10 +28078,12 @@ func (p *MemoryPolicy) MustOverCommit() *MemoryOverCommit {
 	return p.overCommit
 }
 
+// SetTransparentHugePages Type representing a transparent huge pages (THP) support.
 func (p *MemoryPolicy) SetTransparentHugePages(attr *TransparentHugePages) {
 	p.transparentHugePages = attr
 }
 
+// TransparentHugePages Type representing a transparent huge pages (THP) support.
 func (p *MemoryPolicy) TransparentHugePages() (*TransparentHugePages, bool) {
 	if p.transparentHugePages != nil {
 		return p.transparentHugePages, true
@@ -20202,6 +28091,7 @@ func (p *MemoryPolicy) TransparentHugePages() (*TransparentHugePages, bool) {
 	return nil, false
 }
 
+// MustTransparentHugePages Type representing a transparent huge pages (THP) support.
 func (p *MemoryPolicy) MustTransparentHugePages() *TransparentHugePages {
 	if p.transparentHugePages == nil {
 		panic("the transparentHugePages must not be nil, please use TransparentHugePages() function instead")
@@ -20233,16 +28123,19 @@ func (p *Method) MustId() SsoMethod {
 	return *p.id
 }
 
+// MigrationBandwidth Defines the bandwidth used by migration.
 type MigrationBandwidth struct {
 	Struct
 	assignmentMethod *MigrationBandwidthAssignmentMethod
 	customValue      *int64
 }
 
+// SetAssignmentMethod Defines how the migration bandwidth is assigned.
 func (p *MigrationBandwidth) SetAssignmentMethod(attr MigrationBandwidthAssignmentMethod) {
 	p.assignmentMethod = &attr
 }
 
+// AssignmentMethod Defines how the migration bandwidth is assigned.
 func (p *MigrationBandwidth) AssignmentMethod() (MigrationBandwidthAssignmentMethod, bool) {
 	if p.assignmentMethod != nil {
 		return *p.assignmentMethod, true
@@ -20251,6 +28144,7 @@ func (p *MigrationBandwidth) AssignmentMethod() (MigrationBandwidthAssignmentMet
 	return zero, false
 }
 
+// MustAssignmentMethod Defines how the migration bandwidth is assigned.
 func (p *MigrationBandwidth) MustAssignmentMethod() MigrationBandwidthAssignmentMethod {
 	if p.assignmentMethod == nil {
 		panic("the assignmentMethod must not be nil, please use AssignmentMethod() function instead")
@@ -20277,6 +28171,7 @@ func (p *MigrationBandwidth) MustCustomValue() int64 {
 	return *p.customValue
 }
 
+// MigrationOptions The type for migration options.
 type MigrationOptions struct {
 	Struct
 	autoConverge *InheritableBoolean
@@ -20286,10 +28181,14 @@ type MigrationOptions struct {
 	policy       *MigrationPolicy
 }
 
+// SetAutoConverge Enum representing the boolean value that can be either set, or inherited from a higher level.
+// The inheritance order is virtual machine -> cluster -> engine-config.
 func (p *MigrationOptions) SetAutoConverge(attr InheritableBoolean) {
 	p.autoConverge = &attr
 }
 
+// AutoConverge Enum representing the boolean value that can be either set, or inherited from a higher level.
+// The inheritance order is virtual machine -> cluster -> engine-config.
 func (p *MigrationOptions) AutoConverge() (InheritableBoolean, bool) {
 	if p.autoConverge != nil {
 		return *p.autoConverge, true
@@ -20298,6 +28197,8 @@ func (p *MigrationOptions) AutoConverge() (InheritableBoolean, bool) {
 	return zero, false
 }
 
+// MustAutoConverge Enum representing the boolean value that can be either set, or inherited from a higher level.
+// The inheritance order is virtual machine -> cluster -> engine-config.
 func (p *MigrationOptions) MustAutoConverge() InheritableBoolean {
 	if p.autoConverge == nil {
 		panic("the autoConverge must not be nil, please use AutoConverge() function instead")
@@ -20305,10 +28206,12 @@ func (p *MigrationOptions) MustAutoConverge() InheritableBoolean {
 	return *p.autoConverge
 }
 
+// SetBandwidth Defines the bandwidth used by migration.
 func (p *MigrationOptions) SetBandwidth(attr *MigrationBandwidth) {
 	p.bandwidth = attr
 }
 
+// Bandwidth Defines the bandwidth used by migration.
 func (p *MigrationOptions) Bandwidth() (*MigrationBandwidth, bool) {
 	if p.bandwidth != nil {
 		return p.bandwidth, true
@@ -20316,6 +28219,7 @@ func (p *MigrationOptions) Bandwidth() (*MigrationBandwidth, bool) {
 	return nil, false
 }
 
+// MustBandwidth Defines the bandwidth used by migration.
 func (p *MigrationOptions) MustBandwidth() *MigrationBandwidth {
 	if p.bandwidth == nil {
 		panic("the bandwidth must not be nil, please use Bandwidth() function instead")
@@ -20323,10 +28227,14 @@ func (p *MigrationOptions) MustBandwidth() *MigrationBandwidth {
 	return p.bandwidth
 }
 
+// SetCompressed Enum representing the boolean value that can be either set, or inherited from a higher level.
+// The inheritance order is virtual machine -> cluster -> engine-config.
 func (p *MigrationOptions) SetCompressed(attr InheritableBoolean) {
 	p.compressed = &attr
 }
 
+// Compressed Enum representing the boolean value that can be either set, or inherited from a higher level.
+// The inheritance order is virtual machine -> cluster -> engine-config.
 func (p *MigrationOptions) Compressed() (InheritableBoolean, bool) {
 	if p.compressed != nil {
 		return *p.compressed, true
@@ -20335,6 +28243,8 @@ func (p *MigrationOptions) Compressed() (InheritableBoolean, bool) {
 	return zero, false
 }
 
+// MustCompressed Enum representing the boolean value that can be either set, or inherited from a higher level.
+// The inheritance order is virtual machine -> cluster -> engine-config.
 func (p *MigrationOptions) MustCompressed() InheritableBoolean {
 	if p.compressed == nil {
 		panic("the compressed must not be nil, please use Compressed() function instead")
@@ -20342,10 +28252,14 @@ func (p *MigrationOptions) MustCompressed() InheritableBoolean {
 	return *p.compressed
 }
 
+// SetEncrypted Enum representing the boolean value that can be either set, or inherited from a higher level.
+// The inheritance order is virtual machine -> cluster -> engine-config.
 func (p *MigrationOptions) SetEncrypted(attr InheritableBoolean) {
 	p.encrypted = &attr
 }
 
+// Encrypted Enum representing the boolean value that can be either set, or inherited from a higher level.
+// The inheritance order is virtual machine -> cluster -> engine-config.
 func (p *MigrationOptions) Encrypted() (InheritableBoolean, bool) {
 	if p.encrypted != nil {
 		return *p.encrypted, true
@@ -20354,6 +28268,8 @@ func (p *MigrationOptions) Encrypted() (InheritableBoolean, bool) {
 	return zero, false
 }
 
+// MustEncrypted Enum representing the boolean value that can be either set, or inherited from a higher level.
+// The inheritance order is virtual machine -> cluster -> engine-config.
 func (p *MigrationOptions) MustEncrypted() InheritableBoolean {
 	if p.encrypted == nil {
 		panic("the encrypted must not be nil, please use Encrypted() function instead")
@@ -20361,10 +28277,14 @@ func (p *MigrationOptions) MustEncrypted() InheritableBoolean {
 	return *p.encrypted
 }
 
+// SetPolicy A policy describing how the migration is treated, such as convergence or
+// how many parallel migrations are allowed.
 func (p *MigrationOptions) SetPolicy(attr *MigrationPolicy) {
 	p.policy = attr
 }
 
+// Policy A policy describing how the migration is treated, such as convergence or
+// how many parallel migrations are allowed.
 func (p *MigrationOptions) Policy() (*MigrationPolicy, bool) {
 	if p.policy != nil {
 		return p.policy, true
@@ -20372,6 +28292,8 @@ func (p *MigrationOptions) Policy() (*MigrationPolicy, bool) {
 	return nil, false
 }
 
+// MustPolicy A policy describing how the migration is treated, such as convergence or
+// how many parallel migrations are allowed.
 func (p *MigrationOptions) MustPolicy() *MigrationPolicy {
 	if p.policy == nil {
 		panic("the policy must not be nil, please use Policy() function instead")
@@ -20379,6 +28301,8 @@ func (p *MigrationOptions) MustPolicy() *MigrationPolicy {
 	return p.policy
 }
 
+// MigrationPolicy A policy describing how the migration is treated, such as convergence or
+// how many parallel migrations are allowed.
 type MigrationPolicy struct {
 	Struct
 	comment     *string
@@ -20463,6 +28387,59 @@ func (p *MigrationPolicy) MustName() string {
 	return *p.name
 }
 
+// Network The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 type Network struct {
 	Struct
 	cluster                         *Cluster
@@ -20491,10 +28468,264 @@ type Network struct {
 	vnicProfiles                    *VnicProfileSlice
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Network) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Network) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -20502,6 +28733,133 @@ func (p *Network) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Network) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -20584,10 +28942,12 @@ func (p *Network) MustDisplay() bool {
 	return *p.display
 }
 
+// SetDnsResolverConfiguration Represents the DNS resolver configuration.
 func (p *Network) SetDnsResolverConfiguration(attr *DnsResolverConfiguration) {
 	p.dnsResolverConfiguration = attr
 }
 
+// DnsResolverConfiguration Represents the DNS resolver configuration.
 func (p *Network) DnsResolverConfiguration() (*DnsResolverConfiguration, bool) {
 	if p.dnsResolverConfiguration != nil {
 		return p.dnsResolverConfiguration, true
@@ -20595,6 +28955,7 @@ func (p *Network) DnsResolverConfiguration() (*DnsResolverConfiguration, bool) {
 	return nil, false
 }
 
+// MustDnsResolverConfiguration Represents the DNS resolver configuration.
 func (p *Network) MustDnsResolverConfiguration() *DnsResolverConfiguration {
 	if p.dnsResolverConfiguration == nil {
 		panic("the dnsResolverConfiguration must not be nil, please use DnsResolverConfiguration() function instead")
@@ -20620,10 +28981,116 @@ func (p *Network) MustExternalProvider() *OpenStackNetworkProvider {
 	return p.externalProvider
 }
 
+// SetExternalProviderPhysicalNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *Network) SetExternalProviderPhysicalNetwork(attr *Network) {
 	p.externalProviderPhysicalNetwork = attr
 }
 
+// ExternalProviderPhysicalNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *Network) ExternalProviderPhysicalNetwork() (*Network, bool) {
 	if p.externalProviderPhysicalNetwork != nil {
 		return p.externalProviderPhysicalNetwork, true
@@ -20631,6 +29098,59 @@ func (p *Network) ExternalProviderPhysicalNetwork() (*Network, bool) {
 	return nil, false
 }
 
+// MustExternalProviderPhysicalNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *Network) MustExternalProviderPhysicalNetwork() *Network {
 	if p.externalProviderPhysicalNetwork == nil {
 		panic("the externalProviderPhysicalNetwork must not be nil, please use ExternalProviderPhysicalNetwork() function instead")
@@ -20657,10 +29177,12 @@ func (p *Network) MustId() string {
 	return *p.id
 }
 
+// SetIp Represents the IP configuration of a network interface.
 func (p *Network) SetIp(attr *Ip) {
 	p.ip = attr
 }
 
+// Ip Represents the IP configuration of a network interface.
 func (p *Network) Ip() (*Ip, bool) {
 	if p.ip != nil {
 		return p.ip, true
@@ -20668,6 +29190,7 @@ func (p *Network) Ip() (*Ip, bool) {
 	return nil, false
 }
 
+// MustIp Represents the IP configuration of a network interface.
 func (p *Network) MustIp() *Ip {
 	if p.ip == nil {
 		panic("the ip must not be nil, please use Ip() function instead")
@@ -20787,10 +29310,36 @@ func (p *Network) MustProfileRequired() bool {
 	return *p.profileRequired
 }
 
+// SetQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *Network) SetQos(attr *Qos) {
 	p.qos = attr
 }
 
+// Qos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *Network) Qos() (*Qos, bool) {
 	if p.qos != nil {
 		return p.qos, true
@@ -20798,6 +29347,19 @@ func (p *Network) Qos() (*Qos, bool) {
 	return nil, false
 }
 
+// MustQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *Network) MustQos() *Qos {
 	if p.qos == nil {
 		panic("the qos must not be nil, please use Qos() function instead")
@@ -20899,10 +29461,12 @@ func (p *Network) MustVdsmName() string {
 	return *p.vdsmName
 }
 
+// SetVlan Type representing a Virtual LAN (VLAN) type.
 func (p *Network) SetVlan(attr *Vlan) {
 	p.vlan = attr
 }
 
+// Vlan Type representing a Virtual LAN (VLAN) type.
 func (p *Network) Vlan() (*Vlan, bool) {
 	if p.vlan != nil {
 		return p.vlan, true
@@ -20910,6 +29474,7 @@ func (p *Network) Vlan() (*Vlan, bool) {
 	return nil, false
 }
 
+// MustVlan Type representing a Virtual LAN (VLAN) type.
 func (p *Network) MustVlan() *Vlan {
 	if p.vlan == nil {
 		panic("the vlan must not be nil, please use Vlan() function instead")
@@ -20935,6 +29500,134 @@ func (p *Network) MustVnicProfiles() *VnicProfileSlice {
 	return p.vnicProfiles
 }
 
+// NetworkAttachment Describes how a host connects to a network.
+//
+// An XML representation of a network attachment on a host:
+//
+// [source,xml]
+// ----
+// <network_attachment href="/ovirt-engine/api/hosts/123/nics/456/networkattachments/789" id="789">
+//   <network href="/ovirt-engine/api/networks/234" id="234"/>
+//   <host_nic href="/ovirt-engine/api/hosts/123/nics/123" id="123"/>
+//   <in_sync>true</in_sync>
+//   <ip_address_assignments>
+//     <ip_address_assignment>
+//       <assignment_method>static</assignment_method>
+//       <ip>
+//         <address>192.168.122.39</address>
+//         <gateway>192.168.122.1</gateway>
+//         <netmask>255.255.255.0</netmask>
+//         <version>v4</version>
+//       </ip>
+//     </ip_address_assignment>
+//   </ip_address_assignments>
+//   <reported_configurations>
+//     <reported_configuration>
+//       <name>mtu</name>
+//       <expected_value>1500</expected_value>
+//       <actual_value>1500</actual_value>
+//       <in_sync>true</in_sync>
+//     </reported_configuration>
+//     <reported_configuration>
+//       <name>bridged</name>
+//       <expected_value>true</expected_value>
+//       <actual_value>true</actual_value>
+//       <in_sync>true</in_sync>
+//     </reported_configuration>
+//     ...
+//   </reported_configurations>
+// </network_attachment>
+// ----
+//
+// The network element, with either a `name` or an `id`, is required in order to attach a network
+// to a network interface card (NIC).
+//
+// For example, to attach a network to a host network interface card, send a request like this:
+//
+// [source]
+// ----
+// POST /ovirt-engine/api/hosts/123/nics/456/networkattachments
+// ----
+//
+// With a request body like this:
+//
+// [source,xml]
+// ----
+// <networkattachment>
+//   <network id="234"/>
+// </networkattachment>
+// ----
+//
+// To attach a network to a host, send a request like this:
+//
+// [source]
+// ----
+// POST /ovirt-engine/api/hosts/123/networkattachments
+// ----
+//
+// With a request body like this:
+//
+// [source,xml]
+// ----
+// <network_attachment>
+//   <network id="234"/>
+//   <host_nic id="456"/>
+// </network_attachment>
+// ----
+//
+// The `ip_address_assignments` and `properties` elements are updatable post-creation.
+//
+// For example, to update a network attachment, send a request like this:
+//
+// [source]
+// ----
+// PUT /ovirt-engine/api/hosts/123/nics/456/networkattachments/789
+// ----
+//
+// With a request body like this:
+//
+// [source,xml]
+// ----
+// <network_attachment>
+//   <ip_address_assignments>
+//     <ip_address_assignment>
+//       <assignment_method>static</assignment_method>
+//       <ip>
+//         <address>7.1.1.1</address>
+//         <gateway>7.1.1.2</gateway>
+//         <netmask>255.255.255.0</netmask>
+//         <version>v4</version>
+//       </ip>
+//     </ip_address_assignment>
+//   </ip_address_assignments>
+// </network_attachment>
+// ----
+//
+// To detach a network from the network interface card send a request like this:
+//
+// [source]
+// ----
+// DELETE /ovirt-engine/api/hosts/123/nics/456/networkattachments/789
+// ----
+//
+// IMPORTANT: Changes to network attachment configuration must be explicitly committed.
+//
+// An XML representation of a network attachment's `properties` sub-collection:
+//
+// [source, xml]
+// ----
+// <network_attachment>
+//   <properties>
+//     <property>
+//       <name>bridge_opts</name>
+//       <value>
+//         forward_delay=1500 group_fwd_mask=0x0 multicast_snooping=1
+//       </value>
+//     </property>
+//   </properties>
+//   ...
+// </network_attachment>
+// ----
 type NetworkAttachment struct {
 	Struct
 	comment                  *string
@@ -20990,10 +29683,12 @@ func (p *NetworkAttachment) MustDescription() string {
 	return *p.description
 }
 
+// SetDnsResolverConfiguration Represents the DNS resolver configuration.
 func (p *NetworkAttachment) SetDnsResolverConfiguration(attr *DnsResolverConfiguration) {
 	p.dnsResolverConfiguration = attr
 }
 
+// DnsResolverConfiguration Represents the DNS resolver configuration.
 func (p *NetworkAttachment) DnsResolverConfiguration() (*DnsResolverConfiguration, bool) {
 	if p.dnsResolverConfiguration != nil {
 		return p.dnsResolverConfiguration, true
@@ -21001,6 +29696,7 @@ func (p *NetworkAttachment) DnsResolverConfiguration() (*DnsResolverConfiguratio
 	return nil, false
 }
 
+// MustDnsResolverConfiguration Represents the DNS resolver configuration.
 func (p *NetworkAttachment) MustDnsResolverConfiguration() *DnsResolverConfiguration {
 	if p.dnsResolverConfiguration == nil {
 		panic("the dnsResolverConfiguration must not be nil, please use DnsResolverConfiguration() function instead")
@@ -21008,10 +29704,12 @@ func (p *NetworkAttachment) MustDnsResolverConfiguration() *DnsResolverConfigura
 	return p.dnsResolverConfiguration
 }
 
+// SetHost Type representing a host.
 func (p *NetworkAttachment) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *NetworkAttachment) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -21019,6 +29717,7 @@ func (p *NetworkAttachment) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *NetworkAttachment) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -21026,10 +29725,148 @@ func (p *NetworkAttachment) MustHost() *Host {
 	return p.host
 }
 
+// SetHostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *NetworkAttachment) SetHostNic(attr *HostNic) {
 	p.hostNic = attr
 }
 
+// HostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *NetworkAttachment) HostNic() (*HostNic, bool) {
 	if p.hostNic != nil {
 		return p.hostNic, true
@@ -21037,6 +29874,75 @@ func (p *NetworkAttachment) HostNic() (*HostNic, bool) {
 	return nil, false
 }
 
+// MustHostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *NetworkAttachment) MustHostNic() *HostNic {
 	if p.hostNic == nil {
 		panic("the hostNic must not be nil, please use HostNic() function instead")
@@ -21119,10 +30025,116 @@ func (p *NetworkAttachment) MustName() string {
 	return *p.name
 }
 
+// SetNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *NetworkAttachment) SetNetwork(attr *Network) {
 	p.network = attr
 }
 
+// Network The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *NetworkAttachment) Network() (*Network, bool) {
 	if p.network != nil {
 		return p.network, true
@@ -21130,6 +30142,59 @@ func (p *NetworkAttachment) Network() (*Network, bool) {
 	return nil, false
 }
 
+// MustNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *NetworkAttachment) MustNetwork() *Network {
 	if p.network == nil {
 		panic("the network must not be nil, please use Network() function instead")
@@ -21155,10 +30220,36 @@ func (p *NetworkAttachment) MustProperties() *PropertySlice {
 	return p.properties
 }
 
+// SetQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *NetworkAttachment) SetQos(attr *Qos) {
 	p.qos = attr
 }
 
+// Qos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *NetworkAttachment) Qos() (*Qos, bool) {
 	if p.qos != nil {
 		return p.qos, true
@@ -21166,6 +30257,19 @@ func (p *NetworkAttachment) Qos() (*Qos, bool) {
 	return nil, false
 }
 
+// MustQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *NetworkAttachment) MustQos() *Qos {
 	if p.qos == nil {
 		panic("the qos must not be nil, please use Qos() function instead")
@@ -21197,10 +30301,12 @@ type NetworkConfiguration struct {
 	nics *NicSlice
 }
 
+// SetDns Represents the DNS resolver configuration.
 func (p *NetworkConfiguration) SetDns(attr *Dns) {
 	p.dns = attr
 }
 
+// Dns Represents the DNS resolver configuration.
 func (p *NetworkConfiguration) Dns() (*Dns, bool) {
 	if p.dns != nil {
 		return p.dns, true
@@ -21208,6 +30314,7 @@ func (p *NetworkConfiguration) Dns() (*Dns, bool) {
 	return nil, false
 }
 
+// MustDns Represents the DNS resolver configuration.
 func (p *NetworkConfiguration) MustDns() *Dns {
 	if p.dns == nil {
 		panic("the dns must not be nil, please use Dns() function instead")
@@ -21233,6 +30340,33 @@ func (p *NetworkConfiguration) MustNics() *NicSlice {
 	return p.nics
 }
 
+// NetworkFilter Network filters filter packets sent to and from the virtual machine's NIC according to defined rules.
+//
+// There are several types of network filters supported based on libvirt.
+// For more details about the different network filters see https://libvirt.org/firewall.html[here].
+//
+// In addition to libvirt's network filters, there are two additional network filters:
+// The first is called `vdsm-no-mac-spoofing` and is composed of `no-mac-spoofing` and `no-arp-mac-spoofing`.
+// The second is called `ovirt-no-filter` and is used when no network filter is to be defined for the virtual machine's NIC.
+// The `ovirt-no-filter` network filter is only used for internal implementation, and
+// does not exist on the NICs.
+//
+// This is a example of the XML representation:
+//
+// [source,xml]
+// ----
+// <network_filter id="00000019-0019-0019-0019-00000000026c">
+//   <name>example-filter</name>
+//   <version>
+//     <major>4</major>
+//     <minor>0</minor>
+//     <build>-1</build>
+//     <revision>-1</revision>
+//   </version>
+// </network_filter>
+// ----
+//
+// If any part of the version is not present, it is represented by -1.
 type NetworkFilter struct {
 	Struct
 	comment     *string
@@ -21336,6 +30470,18 @@ func (p *NetworkFilter) MustVersion() *Version {
 	return p.version
 }
 
+// NetworkFilterParameter Parameter for the <<types/network_filter,network filter>>.
+//
+// See https://libvirt.org/formatnwfilter.html#nwfconceptsvars[Libvirt-Filters] for further details.
+// This is a example of the XML representation:
+//
+// [source,xml]
+// ----
+// <network_filter_parameter id="123">
+//   <name>IP</name>
+//   <value>10.0.1.2</value>
+// </network_filter_parameter>
+// ----
 type NetworkFilterParameter struct {
 	Struct
 	comment     *string
@@ -21422,10 +30568,46 @@ func (p *NetworkFilterParameter) MustName() string {
 	return *p.name
 }
 
+// SetNic Represents a virtual machine NIC.
+//
+// For example, the XML representation of a NIC will look like this:
+//
+// [source,xml]
+// ----
+// <nic href="/ovirt-engine/api/vms/123/nics/456" id="456">
+//   <name>nic1</name>
+//   <vm href="/ovirt-engine/api/vms/123" id="123"/>
+//   <interface>virtio</interface>
+//   <linked>true</linked>
+//   <mac>
+//     <address>02:00:00:00:00:00</address>
+//   </mac>
+//   <plugged>true</plugged>
+//   <vnic_profile href="/ovirt-engine/api/vnicprofiles/789" id="789"/>
+// </nic>
+// ----
 func (p *NetworkFilterParameter) SetNic(attr *Nic) {
 	p.nic = attr
 }
 
+// Nic Represents a virtual machine NIC.
+//
+// For example, the XML representation of a NIC will look like this:
+//
+// [source,xml]
+// ----
+// <nic href="/ovirt-engine/api/vms/123/nics/456" id="456">
+//   <name>nic1</name>
+//   <vm href="/ovirt-engine/api/vms/123" id="123"/>
+//   <interface>virtio</interface>
+//   <linked>true</linked>
+//   <mac>
+//     <address>02:00:00:00:00:00</address>
+//   </mac>
+//   <plugged>true</plugged>
+//   <vnic_profile href="/ovirt-engine/api/vnicprofiles/789" id="789"/>
+// </nic>
+// ----
 func (p *NetworkFilterParameter) Nic() (*Nic, bool) {
 	if p.nic != nil {
 		return p.nic, true
@@ -21433,6 +30615,24 @@ func (p *NetworkFilterParameter) Nic() (*Nic, bool) {
 	return nil, false
 }
 
+// MustNic Represents a virtual machine NIC.
+//
+// For example, the XML representation of a NIC will look like this:
+//
+// [source,xml]
+// ----
+// <nic href="/ovirt-engine/api/vms/123/nics/456" id="456">
+//   <name>nic1</name>
+//   <vm href="/ovirt-engine/api/vms/123" id="123"/>
+//   <interface>virtio</interface>
+//   <linked>true</linked>
+//   <mac>
+//     <address>02:00:00:00:00:00</address>
+//   </mac>
+//   <plugged>true</plugged>
+//   <vnic_profile href="/ovirt-engine/api/vnicprofiles/789" id="789"/>
+// </nic>
+// ----
 func (p *NetworkFilterParameter) MustNic() *Nic {
 	if p.nic == nil {
 		panic("the nic must not be nil, please use Nic() function instead")
@@ -21459,6 +30659,8 @@ func (p *NetworkFilterParameter) MustValue() string {
 	return *p.value
 }
 
+// NetworkLabel Represents a label which can be added to a host network interface and to a network.
+// The label binds the network to the host network interface by the label `id`.
 type NetworkLabel struct {
 	Struct
 	comment     *string
@@ -21507,10 +30709,148 @@ func (p *NetworkLabel) MustDescription() string {
 	return *p.description
 }
 
+// SetHostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *NetworkLabel) SetHostNic(attr *HostNic) {
 	p.hostNic = attr
 }
 
+// HostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *NetworkLabel) HostNic() (*HostNic, bool) {
 	if p.hostNic != nil {
 		return p.hostNic, true
@@ -21518,6 +30858,75 @@ func (p *NetworkLabel) HostNic() (*HostNic, bool) {
 	return nil, false
 }
 
+// MustHostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *NetworkLabel) MustHostNic() *HostNic {
 	if p.hostNic == nil {
 		panic("the hostNic must not be nil, please use HostNic() function instead")
@@ -21563,10 +30972,116 @@ func (p *NetworkLabel) MustName() string {
 	return *p.name
 }
 
+// SetNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *NetworkLabel) SetNetwork(attr *Network) {
 	p.network = attr
 }
 
+// Network The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *NetworkLabel) Network() (*Network, bool) {
 	if p.network != nil {
 		return p.network, true
@@ -21574,6 +31089,59 @@ func (p *NetworkLabel) Network() (*Network, bool) {
 	return nil, false
 }
 
+// MustNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *NetworkLabel) MustNetwork() *Network {
 	if p.network == nil {
 		panic("the network must not be nil, please use Network() function instead")
@@ -21624,6 +31192,24 @@ func (p *NfsProfileDetail) MustProfileDetails() *ProfileDetailSlice {
 	return p.profileDetails
 }
 
+// Nic Represents a virtual machine NIC.
+//
+// For example, the XML representation of a NIC will look like this:
+//
+// [source,xml]
+// ----
+// <nic href="/ovirt-engine/api/vms/123/nics/456" id="456">
+//   <name>nic1</name>
+//   <vm href="/ovirt-engine/api/vms/123" id="123"/>
+//   <interface>virtio</interface>
+//   <linked>true</linked>
+//   <mac>
+//     <address>02:00:00:00:00:00</address>
+//   </mac>
+//   <plugged>true</plugged>
+//   <vnic_profile href="/ovirt-engine/api/vnicprofiles/789" id="789"/>
+// </nic>
+// ----
 type Nic struct {
 	Struct
 	bootProtocol                   *BootProtocol
@@ -21643,6 +31229,7 @@ type Nic struct {
 	plugged                        *bool
 	reportedDevices                *ReportedDeviceSlice
 	statistics                     *StatisticSlice
+	synced                         *bool
 	template                       *Template
 	virtualFunctionAllowedLabels   *NetworkLabelSlice
 	virtualFunctionAllowedNetworks *NetworkSlice
@@ -21651,10 +31238,12 @@ type Nic struct {
 	vnicProfile                    *VnicProfile
 }
 
+// SetBootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *Nic) SetBootProtocol(attr BootProtocol) {
 	p.bootProtocol = &attr
 }
 
+// BootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *Nic) BootProtocol() (BootProtocol, bool) {
 	if p.bootProtocol != nil {
 		return *p.bootProtocol, true
@@ -21663,6 +31252,7 @@ func (p *Nic) BootProtocol() (BootProtocol, bool) {
 	return zero, false
 }
 
+// MustBootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *Nic) MustBootProtocol() BootProtocol {
 	if p.bootProtocol == nil {
 		panic("the bootProtocol must not be nil, please use BootProtocol() function instead")
@@ -21727,10 +31317,66 @@ func (p *Nic) MustId() string {
 	return *p.id
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Nic) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Nic) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -21738,6 +31384,34 @@ func (p *Nic) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Nic) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -21745,10 +31419,12 @@ func (p *Nic) MustInstanceType() *InstanceType {
 	return p.instanceType
 }
 
+// SetInterface Defines the options for an emulated virtual network interface device model.
 func (p *Nic) SetInterface(attr NicInterface) {
 	p.interface_ = &attr
 }
 
+// Interface Defines the options for an emulated virtual network interface device model.
 func (p *Nic) Interface() (NicInterface, bool) {
 	if p.interface_ != nil {
 		return *p.interface_, true
@@ -21757,6 +31433,7 @@ func (p *Nic) Interface() (NicInterface, bool) {
 	return zero, false
 }
 
+// MustInterface Defines the options for an emulated virtual network interface device model.
 func (p *Nic) MustInterface() NicInterface {
 	if p.interface_ == nil {
 		panic("the interface_ must not be nil, please use Interface() function instead")
@@ -21783,10 +31460,12 @@ func (p *Nic) MustLinked() bool {
 	return *p.linked
 }
 
+// SetMac Represents a MAC address of a virtual network interface.
 func (p *Nic) SetMac(attr *Mac) {
 	p.mac = attr
 }
 
+// Mac Represents a MAC address of a virtual network interface.
 func (p *Nic) Mac() (*Mac, bool) {
 	if p.mac != nil {
 		return p.mac, true
@@ -21794,6 +31473,7 @@ func (p *Nic) Mac() (*Mac, bool) {
 	return nil, false
 }
 
+// MustMac Represents a MAC address of a virtual network interface.
 func (p *Nic) MustMac() *Mac {
 	if p.mac == nil {
 		panic("the mac must not be nil, please use Mac() function instead")
@@ -21820,10 +31500,116 @@ func (p *Nic) MustName() string {
 	return *p.name
 }
 
+// SetNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *Nic) SetNetwork(attr *Network) {
 	p.network = attr
 }
 
+// Network The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *Nic) Network() (*Network, bool) {
 	if p.network != nil {
 		return p.network, true
@@ -21831,6 +31617,59 @@ func (p *Nic) Network() (*Network, bool) {
 	return nil, false
 }
 
+// MustNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *Nic) MustNetwork() *Network {
 	if p.network == nil {
 		panic("the network must not be nil, please use Network() function instead")
@@ -21966,10 +31805,33 @@ func (p *Nic) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+func (p *Nic) SetSynced(attr bool) {
+	p.synced = &attr
+}
+
+func (p *Nic) Synced() (bool, bool) {
+	if p.synced != nil {
+		return *p.synced, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *Nic) MustSynced() bool {
+	if p.synced == nil {
+		panic("the synced must not be nil, please use Synced() function instead")
+	}
+	return *p.synced
+}
+
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Nic) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Nic) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -21977,6 +31839,8 @@ func (p *Nic) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Nic) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -22020,10 +31884,12 @@ func (p *Nic) MustVirtualFunctionAllowedNetworks() *NetworkSlice {
 	return p.virtualFunctionAllowedNetworks
 }
 
+// SetVm Represents a virtual machine.
 func (p *Nic) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Nic) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -22031,6 +31897,7 @@ func (p *Nic) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Nic) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -22056,10 +31923,12 @@ func (p *Nic) MustVms() *VmSlice {
 	return p.vms
 }
 
+// SetVnicProfile A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *Nic) SetVnicProfile(attr *VnicProfile) {
 	p.vnicProfile = attr
 }
 
+// VnicProfile A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *Nic) VnicProfile() (*VnicProfile, bool) {
 	if p.vnicProfile != nil {
 		return p.vnicProfile, true
@@ -22067,6 +31936,7 @@ func (p *Nic) VnicProfile() (*VnicProfile, bool) {
 	return nil, false
 }
 
+// MustVnicProfile A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *Nic) MustVnicProfile() *VnicProfile {
 	if p.vnicProfile == nil {
 		panic("the vnicProfile must not be nil, please use VnicProfile() function instead")
@@ -22074,6 +31944,7 @@ func (p *Nic) MustVnicProfile() *VnicProfile {
 	return p.vnicProfile
 }
 
+// NicConfiguration The type describes the configuration of a virtual network interface.
 type NicConfiguration struct {
 	Struct
 	bootProtocol     *BootProtocol
@@ -22084,10 +31955,12 @@ type NicConfiguration struct {
 	onBoot           *bool
 }
 
+// SetBootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *NicConfiguration) SetBootProtocol(attr BootProtocol) {
 	p.bootProtocol = &attr
 }
 
+// BootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *NicConfiguration) BootProtocol() (BootProtocol, bool) {
 	if p.bootProtocol != nil {
 		return *p.bootProtocol, true
@@ -22096,6 +31969,7 @@ func (p *NicConfiguration) BootProtocol() (BootProtocol, bool) {
 	return zero, false
 }
 
+// MustBootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *NicConfiguration) MustBootProtocol() BootProtocol {
 	if p.bootProtocol == nil {
 		panic("the bootProtocol must not be nil, please use BootProtocol() function instead")
@@ -22103,10 +31977,12 @@ func (p *NicConfiguration) MustBootProtocol() BootProtocol {
 	return *p.bootProtocol
 }
 
+// SetIp Represents the IP configuration of a network interface.
 func (p *NicConfiguration) SetIp(attr *Ip) {
 	p.ip = attr
 }
 
+// Ip Represents the IP configuration of a network interface.
 func (p *NicConfiguration) Ip() (*Ip, bool) {
 	if p.ip != nil {
 		return p.ip, true
@@ -22114,6 +31990,7 @@ func (p *NicConfiguration) Ip() (*Ip, bool) {
 	return nil, false
 }
 
+// MustIp Represents the IP configuration of a network interface.
 func (p *NicConfiguration) MustIp() *Ip {
 	if p.ip == nil {
 		panic("the ip must not be nil, please use Ip() function instead")
@@ -22121,10 +31998,12 @@ func (p *NicConfiguration) MustIp() *Ip {
 	return p.ip
 }
 
+// SetIpv6 Represents the IP configuration of a network interface.
 func (p *NicConfiguration) SetIpv6(attr *Ip) {
 	p.ipv6 = attr
 }
 
+// Ipv6 Represents the IP configuration of a network interface.
 func (p *NicConfiguration) Ipv6() (*Ip, bool) {
 	if p.ipv6 != nil {
 		return p.ipv6, true
@@ -22132,6 +32011,7 @@ func (p *NicConfiguration) Ipv6() (*Ip, bool) {
 	return nil, false
 }
 
+// MustIpv6 Represents the IP configuration of a network interface.
 func (p *NicConfiguration) MustIpv6() *Ip {
 	if p.ipv6 == nil {
 		panic("the ipv6 must not be nil, please use Ipv6() function instead")
@@ -22139,10 +32019,12 @@ func (p *NicConfiguration) MustIpv6() *Ip {
 	return p.ipv6
 }
 
+// SetIpv6BootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *NicConfiguration) SetIpv6BootProtocol(attr BootProtocol) {
 	p.ipv6BootProtocol = &attr
 }
 
+// Ipv6BootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *NicConfiguration) Ipv6BootProtocol() (BootProtocol, bool) {
 	if p.ipv6BootProtocol != nil {
 		return *p.ipv6BootProtocol, true
@@ -22151,6 +32033,7 @@ func (p *NicConfiguration) Ipv6BootProtocol() (BootProtocol, bool) {
 	return zero, false
 }
 
+// MustIpv6BootProtocol Defines the options of the IP address assignment method to a NIC.
 func (p *NicConfiguration) MustIpv6BootProtocol() BootProtocol {
 	if p.ipv6BootProtocol == nil {
 		panic("the ipv6BootProtocol must not be nil, please use Ipv6BootProtocol() function instead")
@@ -22196,6 +32079,26 @@ func (p *NicConfiguration) MustOnBoot() bool {
 	return *p.onBoot
 }
 
+// NumaNode Represents a physical NUMA node.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <host_numa_node href="/ovirt-engine/api/hosts/0923f1ea/numanodes/007cf1ab" id="007cf1ab">
+//   <cpu>
+//     <cores>
+//       <core>
+//         <index>0</index>
+//       </core>
+//     </cores>
+//   </cpu>
+//   <index>0</index>
+//   <memory>65536</memory>
+//   <node_distance>40 20 40 10</node_distance>
+//   <host href="/ovirt-engine/api/hosts/0923f1ea" id="0923f1ea"/>
+// </host_numa_node>
+// ----
 type NumaNode struct {
 	Struct
 	comment      *string
@@ -22266,10 +32169,12 @@ func (p *NumaNode) MustDescription() string {
 	return *p.description
 }
 
+// SetHost Type representing a host.
 func (p *NumaNode) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *NumaNode) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -22277,6 +32182,7 @@ func (p *NumaNode) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *NumaNode) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -22397,6 +32303,7 @@ func (p *NumaNode) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+// NumaNodePin Represents the pinning of a virtual NUMA node to a physical NUMA node.
 type NumaNodePin struct {
 	Struct
 	hostNumaNode *NumaNode
@@ -22404,10 +32311,50 @@ type NumaNodePin struct {
 	pinned       *bool
 }
 
+// SetHostNumaNode Represents a physical NUMA node.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <host_numa_node href="/ovirt-engine/api/hosts/0923f1ea/numanodes/007cf1ab" id="007cf1ab">
+//   <cpu>
+//     <cores>
+//       <core>
+//         <index>0</index>
+//       </core>
+//     </cores>
+//   </cpu>
+//   <index>0</index>
+//   <memory>65536</memory>
+//   <node_distance>40 20 40 10</node_distance>
+//   <host href="/ovirt-engine/api/hosts/0923f1ea" id="0923f1ea"/>
+// </host_numa_node>
+// ----
 func (p *NumaNodePin) SetHostNumaNode(attr *NumaNode) {
 	p.hostNumaNode = attr
 }
 
+// HostNumaNode Represents a physical NUMA node.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <host_numa_node href="/ovirt-engine/api/hosts/0923f1ea/numanodes/007cf1ab" id="007cf1ab">
+//   <cpu>
+//     <cores>
+//       <core>
+//         <index>0</index>
+//       </core>
+//     </cores>
+//   </cpu>
+//   <index>0</index>
+//   <memory>65536</memory>
+//   <node_distance>40 20 40 10</node_distance>
+//   <host href="/ovirt-engine/api/hosts/0923f1ea" id="0923f1ea"/>
+// </host_numa_node>
+// ----
 func (p *NumaNodePin) HostNumaNode() (*NumaNode, bool) {
 	if p.hostNumaNode != nil {
 		return p.hostNumaNode, true
@@ -22415,6 +32362,26 @@ func (p *NumaNodePin) HostNumaNode() (*NumaNode, bool) {
 	return nil, false
 }
 
+// MustHostNumaNode Represents a physical NUMA node.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <host_numa_node href="/ovirt-engine/api/hosts/0923f1ea/numanodes/007cf1ab" id="007cf1ab">
+//   <cpu>
+//     <cores>
+//       <core>
+//         <index>0</index>
+//       </core>
+//     </cores>
+//   </cpu>
+//   <index>0</index>
+//   <memory>65536</memory>
+//   <node_distance>40 20 40 10</node_distance>
+//   <host href="/ovirt-engine/api/hosts/0923f1ea" id="0923f1ea"/>
+// </host_numa_node>
+// ----
 func (p *NumaNodePin) MustHostNumaNode() *NumaNode {
 	if p.hostNumaNode == nil {
 		panic("the hostNumaNode must not be nil, please use HostNumaNode() function instead")
@@ -22955,10 +32922,18 @@ type OpenStackNetworkProvider struct {
 	username               *string
 }
 
+// SetAgentConfiguration Deprecated Agent configuration settings.
+//
+// Ignored, because the deployment of OpenStack Neutron agent is dropped since {product-name} 4.4.0.
+// The deployment of OpenStack hosts can be done by Red Hat OpenStack Platform Director or TripleO.
 func (p *OpenStackNetworkProvider) SetAgentConfiguration(attr *AgentConfiguration) {
 	p.agentConfiguration = attr
 }
 
+// AgentConfiguration Deprecated Agent configuration settings.
+//
+// Ignored, because the deployment of OpenStack Neutron agent is dropped since {product-name} 4.4.0.
+// The deployment of OpenStack hosts can be done by Red Hat OpenStack Platform Director or TripleO.
 func (p *OpenStackNetworkProvider) AgentConfiguration() (*AgentConfiguration, bool) {
 	if p.agentConfiguration != nil {
 		return p.agentConfiguration, true
@@ -22966,6 +32941,10 @@ func (p *OpenStackNetworkProvider) AgentConfiguration() (*AgentConfiguration, bo
 	return nil, false
 }
 
+// MustAgentConfiguration Deprecated Agent configuration settings.
+//
+// Ignored, because the deployment of OpenStack Neutron agent is dropped since {product-name} 4.4.0.
+// The deployment of OpenStack hosts can be done by Red Hat OpenStack Platform Director or TripleO.
 func (p *OpenStackNetworkProvider) MustAgentConfiguration() *AgentConfiguration {
 	if p.agentConfiguration == nil {
 		panic("the agentConfiguration must not be nil, please use AgentConfiguration() function instead")
@@ -23161,10 +33140,22 @@ func (p *OpenStackNetworkProvider) MustPassword() string {
 	return *p.password
 }
 
+// SetPluginType Network plug-in type.
+//
+// Specifies the provider driver implementation on the host.
+//
+// Since version 4.2 of the {engine-name}, this type has been deprecated in favour of the `external_plugin_type`
+// attribute of the `OpenStackNetworkProvider` type.
 func (p *OpenStackNetworkProvider) SetPluginType(attr NetworkPluginType) {
 	p.pluginType = &attr
 }
 
+// PluginType Network plug-in type.
+//
+// Specifies the provider driver implementation on the host.
+//
+// Since version 4.2 of the {engine-name}, this type has been deprecated in favour of the `external_plugin_type`
+// attribute of the `OpenStackNetworkProvider` type.
 func (p *OpenStackNetworkProvider) PluginType() (NetworkPluginType, bool) {
 	if p.pluginType != nil {
 		return *p.pluginType, true
@@ -23173,6 +33164,12 @@ func (p *OpenStackNetworkProvider) PluginType() (NetworkPluginType, bool) {
 	return zero, false
 }
 
+// MustPluginType Network plug-in type.
+//
+// Specifies the provider driver implementation on the host.
+//
+// Since version 4.2 of the {engine-name}, this type has been deprecated in favour of the `external_plugin_type`
+// attribute of the `OpenStackNetworkProvider` type.
 func (p *OpenStackNetworkProvider) MustPluginType() NetworkPluginType {
 	if p.pluginType == nil {
 		panic("the pluginType must not be nil, please use PluginType() function instead")
@@ -23311,10 +33308,16 @@ func (p *OpenStackNetworkProvider) MustTenantName() string {
 	return *p.tenantName
 }
 
+// SetType The OpenStack network provider can either be implemented by OpenStack Neutron, in which case the Neutron
+// agent is automatically installed on the hosts, or it can be an external provider implementing the
+// OpenStack API, in which case the virtual interface driver is a custom solution installed manually.
 func (p *OpenStackNetworkProvider) SetType(attr OpenStackNetworkProviderType) {
 	p.type_ = &attr
 }
 
+// Type The OpenStack network provider can either be implemented by OpenStack Neutron, in which case the Neutron
+// agent is automatically installed on the hosts, or it can be an external provider implementing the
+// OpenStack API, in which case the virtual interface driver is a custom solution installed manually.
 func (p *OpenStackNetworkProvider) Type() (OpenStackNetworkProviderType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -23323,6 +33326,9 @@ func (p *OpenStackNetworkProvider) Type() (OpenStackNetworkProviderType, bool) {
 	return zero, false
 }
 
+// MustType The OpenStack network provider can either be implemented by OpenStack Neutron, in which case the Neutron
+// agent is automatically installed on the hosts, or it can be an external provider implementing the
+// OpenStack API, in which case the virtual interface driver is a custom solution installed manually.
 func (p *OpenStackNetworkProvider) MustType() OpenStackNetworkProviderType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -24415,6 +34421,7 @@ func (p *OpenstackVolumeAuthenticationKey) MustValue() string {
 	return *p.value
 }
 
+// OperatingSystem Information describing the operating system. This is used for both virtual machines and hosts.
 type OperatingSystem struct {
 	Struct
 	boot                  *Boot
@@ -24427,10 +34434,12 @@ type OperatingSystem struct {
 	version               *Version
 }
 
+// SetBoot Configuration of the boot sequence of a virtual machine.
 func (p *OperatingSystem) SetBoot(attr *Boot) {
 	p.boot = attr
 }
 
+// Boot Configuration of the boot sequence of a virtual machine.
 func (p *OperatingSystem) Boot() (*Boot, bool) {
 	if p.boot != nil {
 		return p.boot, true
@@ -24438,6 +34447,7 @@ func (p *OperatingSystem) Boot() (*Boot, bool) {
 	return nil, false
 }
 
+// MustBoot Configuration of the boot sequence of a virtual machine.
 func (p *OperatingSystem) MustBoot() *Boot {
 	if p.boot == nil {
 		panic("the boot must not be nil, please use Boot() function instead")
@@ -24577,6 +34587,7 @@ func (p *OperatingSystem) MustVersion() *Version {
 	return p.version
 }
 
+// OperatingSystemInfo Represents a guest operating system.
 type OperatingSystemInfo struct {
 	Struct
 	architecture *Architecture
@@ -24664,10 +34675,12 @@ func (p *OperatingSystemInfo) MustId() string {
 	return *p.id
 }
 
+// SetLargeIcon Icon of virtual machine or template.
 func (p *OperatingSystemInfo) SetLargeIcon(attr *Icon) {
 	p.largeIcon = attr
 }
 
+// LargeIcon Icon of virtual machine or template.
 func (p *OperatingSystemInfo) LargeIcon() (*Icon, bool) {
 	if p.largeIcon != nil {
 		return p.largeIcon, true
@@ -24675,6 +34688,7 @@ func (p *OperatingSystemInfo) LargeIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustLargeIcon Icon of virtual machine or template.
 func (p *OperatingSystemInfo) MustLargeIcon() *Icon {
 	if p.largeIcon == nil {
 		panic("the largeIcon must not be nil, please use LargeIcon() function instead")
@@ -24701,10 +34715,12 @@ func (p *OperatingSystemInfo) MustName() string {
 	return *p.name
 }
 
+// SetSmallIcon Icon of virtual machine or template.
 func (p *OperatingSystemInfo) SetSmallIcon(attr *Icon) {
 	p.smallIcon = attr
 }
 
+// SmallIcon Icon of virtual machine or template.
 func (p *OperatingSystemInfo) SmallIcon() (*Icon, bool) {
 	if p.smallIcon != nil {
 		return p.smallIcon, true
@@ -24712,6 +34728,7 @@ func (p *OperatingSystemInfo) SmallIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustSmallIcon Icon of virtual machine or template.
 func (p *OperatingSystemInfo) MustSmallIcon() *Icon {
 	if p.smallIcon == nil {
 		panic("the smallIcon must not be nil, please use SmallIcon() function instead")
@@ -24783,6 +34800,16 @@ func (p *Option) MustValue() string {
 	return *p.value
 }
 
+// Package Type representing a package.
+//
+// This is an example of the package element:
+//
+// [source,xml]
+// ----
+// <package>
+//   <name>libipa_hbac-1.9.2-82.11.el6_4.i686</name>
+// </package>
+// ----
 type Package struct {
 	Struct
 	name *string
@@ -24870,6 +34897,7 @@ func (p *Payload) MustVolumeId() string {
 	return *p.volumeId
 }
 
+// Permission Type represents a permission.
 type Permission struct {
 	Struct
 	cluster       *Cluster
@@ -24889,10 +34917,264 @@ type Permission struct {
 	vmPool        *VmPool
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Permission) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Permission) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -24900,6 +35182,133 @@ func (p *Permission) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Permission) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -24963,10 +35372,12 @@ func (p *Permission) MustDescription() string {
 	return *p.description
 }
 
+// SetDisk Represents a virtual disk device.
 func (p *Permission) SetDisk(attr *Disk) {
 	p.disk = attr
 }
 
+// Disk Represents a virtual disk device.
 func (p *Permission) Disk() (*Disk, bool) {
 	if p.disk != nil {
 		return p.disk, true
@@ -24974,6 +35385,7 @@ func (p *Permission) Disk() (*Disk, bool) {
 	return nil, false
 }
 
+// MustDisk Represents a virtual disk device.
 func (p *Permission) MustDisk() *Disk {
 	if p.disk == nil {
 		panic("the disk must not be nil, please use Disk() function instead")
@@ -24981,10 +35393,12 @@ func (p *Permission) MustDisk() *Disk {
 	return p.disk
 }
 
+// SetGroup This type represents all groups in the directory service.
 func (p *Permission) SetGroup(attr *Group) {
 	p.group = attr
 }
 
+// Group This type represents all groups in the directory service.
 func (p *Permission) Group() (*Group, bool) {
 	if p.group != nil {
 		return p.group, true
@@ -24992,6 +35406,7 @@ func (p *Permission) Group() (*Group, bool) {
 	return nil, false
 }
 
+// MustGroup This type represents all groups in the directory service.
 func (p *Permission) MustGroup() *Group {
 	if p.group == nil {
 		panic("the group must not be nil, please use Group() function instead")
@@ -24999,10 +35414,12 @@ func (p *Permission) MustGroup() *Group {
 	return p.group
 }
 
+// SetHost Type representing a host.
 func (p *Permission) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *Permission) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -25010,6 +35427,7 @@ func (p *Permission) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *Permission) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -25055,10 +35473,12 @@ func (p *Permission) MustName() string {
 	return *p.name
 }
 
+// SetRole Represents a system role.
 func (p *Permission) SetRole(attr *Role) {
 	p.role = attr
 }
 
+// Role Represents a system role.
 func (p *Permission) Role() (*Role, bool) {
 	if p.role != nil {
 		return p.role, true
@@ -25066,6 +35486,7 @@ func (p *Permission) Role() (*Role, bool) {
 	return nil, false
 }
 
+// MustRole Represents a system role.
 func (p *Permission) MustRole() *Role {
 	if p.role == nil {
 		panic("the role must not be nil, please use Role() function instead")
@@ -25073,10 +35494,70 @@ func (p *Permission) MustRole() *Role {
 	return p.role
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Permission) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Permission) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -25084,6 +35565,36 @@ func (p *Permission) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Permission) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -25091,10 +35602,14 @@ func (p *Permission) MustStorageDomain() *StorageDomain {
 	return p.storageDomain
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Permission) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Permission) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -25102,6 +35617,8 @@ func (p *Permission) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Permission) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -25109,10 +35626,12 @@ func (p *Permission) MustTemplate() *Template {
 	return p.template
 }
 
+// SetUser Represents a user in the system.
 func (p *Permission) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *Permission) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -25120,6 +35639,7 @@ func (p *Permission) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *Permission) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -25127,10 +35647,12 @@ func (p *Permission) MustUser() *User {
 	return p.user
 }
 
+// SetVm Represents a virtual machine.
 func (p *Permission) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Permission) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -25138,6 +35660,7 @@ func (p *Permission) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Permission) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -25145,10 +35668,12 @@ func (p *Permission) MustVm() *Vm {
 	return p.vm
 }
 
+// SetVmPool Type represeting a virtual machines pool.
 func (p *Permission) SetVmPool(attr *VmPool) {
 	p.vmPool = attr
 }
 
+// VmPool Type represeting a virtual machines pool.
 func (p *Permission) VmPool() (*VmPool, bool) {
 	if p.vmPool != nil {
 		return p.vmPool, true
@@ -25156,6 +35681,7 @@ func (p *Permission) VmPool() (*VmPool, bool) {
 	return nil, false
 }
 
+// MustVmPool Type represeting a virtual machines pool.
 func (p *Permission) MustVmPool() *VmPool {
 	if p.vmPool == nil {
 		panic("the vmPool must not be nil, please use VmPool() function instead")
@@ -25163,6 +35689,7 @@ func (p *Permission) MustVmPool() *VmPool {
 	return p.vmPool
 }
 
+// Permit Type represents a permit.
 type Permit struct {
 	Struct
 	administrative *bool
@@ -25268,10 +35795,12 @@ func (p *Permit) MustName() string {
 	return *p.name
 }
 
+// SetRole Represents a system role.
 func (p *Permit) SetRole(attr *Role) {
 	p.role = attr
 }
 
+// Role Represents a system role.
 func (p *Permit) Role() (*Role, bool) {
 	if p.role != nil {
 		return p.role, true
@@ -25279,6 +35808,7 @@ func (p *Permit) Role() (*Role, bool) {
 	return nil, false
 }
 
+// MustRole Represents a system role.
 func (p *Permit) MustRole() *Role {
 	if p.role == nil {
 		panic("the role must not be nil, please use Role() function instead")
@@ -25619,6 +36149,33 @@ func (p *Product) MustName() string {
 	return *p.name
 }
 
+// ProductInfo Product information.
+//
+// The entry point contains a `product_info` element to help an API user determine the legitimacy of the
+// {product-name} environment. This includes the name of the product, the `vendor` and the `version`.
+//
+// Verify a genuine {product-name} environment
+//
+// The follow elements identify a genuine {product-name} environment:
+//
+// [source]
+// ----
+// <api>
+// ...
+// <product_info>
+//   <name>oVirt Engine</name>
+//   <vendor>ovirt.org</vendor>
+//   <version>
+//     <build>0</build>
+//     <full_version>4.1.0_master</full_version>
+//     <major>4</major>
+//     <minor>1</minor>
+//     <revision>0</revision>
+//   </version>
+// </product_info>
+// ...
+// </api>
+// ----
 type ProductInfo struct {
 	Struct
 	instanceId *string
@@ -25871,6 +36428,19 @@ func (p *ProxyTicket) MustValue() string {
 	return *p.value
 }
 
+// Qos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 type Qos struct {
 	Struct
 	comment                   *string
@@ -26295,10 +36865,12 @@ func (p *Qos) MustOutboundPeak() int64 {
 	return *p.outboundPeak
 }
 
+// SetType This type represents the kind of resource the <<types/qos,Quality of service (QoS)>> can be assigned to.
 func (p *Qos) SetType(attr QosType) {
 	p.type_ = &attr
 }
 
+// Type This type represents the kind of resource the <<types/qos,Quality of service (QoS)>> can be assigned to.
 func (p *Qos) Type() (QosType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -26307,6 +36879,7 @@ func (p *Qos) Type() (QosType, bool) {
 	return zero, false
 }
 
+// MustType This type represents the kind of resource the <<types/qos,Quality of service (QoS)>> can be assigned to.
 func (p *Qos) MustType() QosType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -26314,6 +36887,22 @@ func (p *Qos) MustType() QosType {
 	return *p.type_
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 type Quota struct {
 	Struct
 	clusterHardLimitPct *int64
@@ -26625,10 +37214,264 @@ type QuotaClusterLimit struct {
 	vcpuUsage   *int64
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *QuotaClusterLimit) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *QuotaClusterLimit) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -26636,6 +37479,133 @@ func (p *QuotaClusterLimit) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *QuotaClusterLimit) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -26757,10 +37727,42 @@ func (p *QuotaClusterLimit) MustName() string {
 	return *p.name
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *QuotaClusterLimit) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *QuotaClusterLimit) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -26768,6 +37770,22 @@ func (p *QuotaClusterLimit) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *QuotaClusterLimit) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -26920,10 +37938,42 @@ func (p *QuotaStorageLimit) MustName() string {
 	return *p.name
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *QuotaStorageLimit) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *QuotaStorageLimit) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -26931,6 +37981,22 @@ func (p *QuotaStorageLimit) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *QuotaStorageLimit) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -26938,10 +38004,70 @@ func (p *QuotaStorageLimit) MustQuota() *Quota {
 	return p.quota
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *QuotaStorageLimit) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *QuotaStorageLimit) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -26949,6 +38075,36 @@ func (p *QuotaStorageLimit) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *QuotaStorageLimit) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -27019,6 +38175,7 @@ func (p *Range) MustTo() string {
 	return *p.to
 }
 
+// Rate Determines maximum speed of consumption of bytes from random number generator device.
 type Rate struct {
 	Struct
 	bytes  *int64
@@ -27063,16 +38220,40 @@ func (p *Rate) MustPeriod() int64 {
 	return *p.period
 }
 
+// RegistrationAffinityGroupMapping This type describes how to map affinity groups as part of the object registration. An object can be
+// a virtual machine, template, etc.
+//
+// An example of an XML representation using this mapping:
+//
+// [source,xml]
+// ----
+// <action>
+//   <registration_configuration>
+//     <affinity_group_mappings>
+//      <registration_affinity_group_mapping>
+//        <from>
+//          <name>affinity</name>
+//        </from>
+//        <to>
+//          <name>affinity2</name>
+//        </to>
+//      </registration_affinity_group_mapping>
+//     </affinity_group_mappings>
+//   </registration_configuration>
+// </action>
+// ----
 type RegistrationAffinityGroupMapping struct {
 	Struct
 	from *AffinityGroup
 	to   *AffinityGroup
 }
 
+// SetFrom An affinity group represents a group of virtual machines with a defined relationship.
 func (p *RegistrationAffinityGroupMapping) SetFrom(attr *AffinityGroup) {
 	p.from = attr
 }
 
+// From An affinity group represents a group of virtual machines with a defined relationship.
 func (p *RegistrationAffinityGroupMapping) From() (*AffinityGroup, bool) {
 	if p.from != nil {
 		return p.from, true
@@ -27080,6 +38261,7 @@ func (p *RegistrationAffinityGroupMapping) From() (*AffinityGroup, bool) {
 	return nil, false
 }
 
+// MustFrom An affinity group represents a group of virtual machines with a defined relationship.
 func (p *RegistrationAffinityGroupMapping) MustFrom() *AffinityGroup {
 	if p.from == nil {
 		panic("the from must not be nil, please use From() function instead")
@@ -27087,10 +38269,12 @@ func (p *RegistrationAffinityGroupMapping) MustFrom() *AffinityGroup {
 	return p.from
 }
 
+// SetTo An affinity group represents a group of virtual machines with a defined relationship.
 func (p *RegistrationAffinityGroupMapping) SetTo(attr *AffinityGroup) {
 	p.to = attr
 }
 
+// To An affinity group represents a group of virtual machines with a defined relationship.
 func (p *RegistrationAffinityGroupMapping) To() (*AffinityGroup, bool) {
 	if p.to != nil {
 		return p.to, true
@@ -27098,6 +38282,7 @@ func (p *RegistrationAffinityGroupMapping) To() (*AffinityGroup, bool) {
 	return nil, false
 }
 
+// MustTo An affinity group represents a group of virtual machines with a defined relationship.
 func (p *RegistrationAffinityGroupMapping) MustTo() *AffinityGroup {
 	if p.to == nil {
 		panic("the to must not be nil, please use To() function instead")
@@ -27105,16 +38290,42 @@ func (p *RegistrationAffinityGroupMapping) MustTo() *AffinityGroup {
 	return p.to
 }
 
+// RegistrationAffinityLabelMapping This type describes how to map affinity labels as part of the object registration. An object can be
+// a virtual machine, template, etc.
+//
+// An example of an XML representation using mapping:
+//
+// [source,xml]
+// ----
+// <action>
+//   <registration_configuration>
+//     <affinity_label_mappings>
+//      <registration_affinity_label_mapping>
+//        <from>
+//          <name>affinity_label</name>
+//        </from>
+//        <to>
+//          <name>affinity_label2</name>
+//        </to>
+//      </registration_affinity_label_mapping>
+//     </affinity_label_mappings>
+//   </registration_configuration>
+// </action>
+// ----
 type RegistrationAffinityLabelMapping struct {
 	Struct
 	from *AffinityLabel
 	to   *AffinityLabel
 }
 
+// SetFrom The affinity label can influence virtual machine scheduling.
+// It is most frequently used to create a sub-cluster from the available hosts.
 func (p *RegistrationAffinityLabelMapping) SetFrom(attr *AffinityLabel) {
 	p.from = attr
 }
 
+// From The affinity label can influence virtual machine scheduling.
+// It is most frequently used to create a sub-cluster from the available hosts.
 func (p *RegistrationAffinityLabelMapping) From() (*AffinityLabel, bool) {
 	if p.from != nil {
 		return p.from, true
@@ -27122,6 +38333,8 @@ func (p *RegistrationAffinityLabelMapping) From() (*AffinityLabel, bool) {
 	return nil, false
 }
 
+// MustFrom The affinity label can influence virtual machine scheduling.
+// It is most frequently used to create a sub-cluster from the available hosts.
 func (p *RegistrationAffinityLabelMapping) MustFrom() *AffinityLabel {
 	if p.from == nil {
 		panic("the from must not be nil, please use From() function instead")
@@ -27129,10 +38342,14 @@ func (p *RegistrationAffinityLabelMapping) MustFrom() *AffinityLabel {
 	return p.from
 }
 
+// SetTo The affinity label can influence virtual machine scheduling.
+// It is most frequently used to create a sub-cluster from the available hosts.
 func (p *RegistrationAffinityLabelMapping) SetTo(attr *AffinityLabel) {
 	p.to = attr
 }
 
+// To The affinity label can influence virtual machine scheduling.
+// It is most frequently used to create a sub-cluster from the available hosts.
 func (p *RegistrationAffinityLabelMapping) To() (*AffinityLabel, bool) {
 	if p.to != nil {
 		return p.to, true
@@ -27140,6 +38357,8 @@ func (p *RegistrationAffinityLabelMapping) To() (*AffinityLabel, bool) {
 	return nil, false
 }
 
+// MustTo The affinity label can influence virtual machine scheduling.
+// It is most frequently used to create a sub-cluster from the available hosts.
 func (p *RegistrationAffinityLabelMapping) MustTo() *AffinityLabel {
 	if p.to == nil {
 		panic("the to must not be nil, please use To() function instead")
@@ -27147,16 +38366,292 @@ func (p *RegistrationAffinityLabelMapping) MustTo() *AffinityLabel {
 	return p.to
 }
 
+// RegistrationClusterMapping This type describes how to map clusters as part of the object registration. An object can be
+// a virtual machine, template, etc.
+//
+// An example of an XML representation using this mapping:
+//
+// [source,xml]
+// ----
+// <action>
+//   <registration_configuration>
+//     <cluster_mappings>
+//       <registration_cluster_mapping>
+//         <from>
+//           <name>myoriginalcluster</name>
+//         </from>
+//         <to>
+//           <name>mynewcluster</name>
+//         </to>
+//       </registration_cluster_mapping>
+//     </cluster_mappings>
+//   </registration_configuration>
+// </action>
+// ----
 type RegistrationClusterMapping struct {
 	Struct
 	from *Cluster
 	to   *Cluster
 }
 
+// SetFrom Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *RegistrationClusterMapping) SetFrom(attr *Cluster) {
 	p.from = attr
 }
 
+// From Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *RegistrationClusterMapping) From() (*Cluster, bool) {
 	if p.from != nil {
 		return p.from, true
@@ -27164,6 +38659,133 @@ func (p *RegistrationClusterMapping) From() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustFrom Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *RegistrationClusterMapping) MustFrom() *Cluster {
 	if p.from == nil {
 		panic("the from must not be nil, please use From() function instead")
@@ -27171,10 +38793,264 @@ func (p *RegistrationClusterMapping) MustFrom() *Cluster {
 	return p.from
 }
 
+// SetTo Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *RegistrationClusterMapping) SetTo(attr *Cluster) {
 	p.to = attr
 }
 
+// To Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *RegistrationClusterMapping) To() (*Cluster, bool) {
 	if p.to != nil {
 		return p.to, true
@@ -27182,6 +39058,133 @@ func (p *RegistrationClusterMapping) To() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustTo Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *RegistrationClusterMapping) MustTo() *Cluster {
 	if p.to == nil {
 		panic("the to must not be nil, please use To() function instead")
@@ -27189,6 +39192,144 @@ func (p *RegistrationClusterMapping) MustTo() *Cluster {
 	return p.to
 }
 
+// RegistrationConfiguration This type describes how an object (virtual machine, template,
+// etc) is registered, and is used for the implementation of disaster recovery solutions.
+//
+// Each mapping contained in this type can be used to map
+// objects in the original system to corresponding objects
+// in the system where the virtual machine or template is being registered.
+// For example, there could be a primary setup with a virtual machine
+// configured on cluster A, and an active secondary setup with cluster B.
+// Cluster B is compatible with that virtual machine, and in case of a
+// disaster recovery scenario the storage domain can be
+// imported to the secondary setup, and the user can register the
+// virtual machine to cluster B.
+//
+// In that case, we can automate the recovery process by defining a cluster mapping.
+// After the entity is registered, its OVF will indicate it belongs to
+// cluster A, but the mapping will indicate that cluster A will
+// be replaced with cluster B.
+// {engine-name} should do the switch and register the virtual machine to cluster B
+// in the secondary site.
+//
+// Cluster mapping is just one example, there are different types of mappings:
+//
+// - Cluster mapping.
+// - LUN mapping.
+// - Role mapping.
+// - Domain mapping.
+// - Permissions mapping.
+// - Affinity Group mapping.
+// - Affinity Label mapping.
+// - Virtual NIC profile mapping.
+//
+// Each mapping will be used for its specific OVF's data once the register operation
+// takes place in the {engine-name}.
+//
+// An example of an XML representation using the mapping:
+//
+// [source,xml]
+// ----
+// <action>
+//   <registration_configuration>
+//     <cluster_mappings>
+//       <registration_cluster_mapping>
+//         <from>
+//           <name>myoriginalcluster</name>
+//         </from>
+//         <to>
+//           <name>mynewcluster</name>
+//         </to>
+//       </registration_cluster_mapping>
+//     </cluster_mappings>
+//     <role_mappings>
+//       <registration_role_mapping>
+//         <from>
+//           <name>SuperUser</name>
+//         </from>
+//         <to>
+//           <name>UserVmRunTimeManager</name>
+//         </to>
+//       </registration_role_mapping>
+//     </role_mappings>
+//     <domain_mappings>
+//       <registration_domain_mapping>
+//         <from>
+//           <name>redhat</name>
+//         </from>
+//         <to>
+//           <name>internal</name>
+//         </to>
+//       </registration_domain_mapping>
+//     </domain_mappings>
+//     <lun_mappings>
+//      <registration_lun_mapping>
+//        <from id="111">
+//        </from>
+//        <to id="222">
+//          <alias>weTestLun</alias>
+//          <lun_storage>
+//            <type>iscsi</type>
+//            <logical_units>
+//               <logical_unit id="36001405fb1ddb4b91e44078f1fffcfef">
+//                  <address>44.33.11.22</address>
+//                  <port>3260</port>
+//                  <portal>1</portal>
+//                  <target>iqn.2017-11.com.name.redhat:444</target>
+//               </logical_unit>
+//            </logical_units>
+//          </lun_storage>
+//        </to>
+//      </registration_lun_mapping>
+//     </lun_mappings>
+//     <affinity_group_mappings>
+//      <registration_affinity_group_mapping>
+//        <from>
+//          <name>affinity</name>
+//        </from>
+//        <to>
+//          <name>affinity2</name>
+//        </to>
+//      </registration_affinity_group_mapping>
+//     </affinity_group_mappings>
+//     <affinity_label_mappings>
+//      <registration_affinity_label_mapping>
+//        <from>
+//          <name>affinity_label</name>
+//        </from>
+//        <to>
+//          <name>affinity_label2</name>
+//        </to>
+//      </registration_affinity_label_mapping>
+//     </affinity_label_mappings>
+//     <vnic_profile_mappings>
+//       <registration_vnic_profile_mapping>
+//         <from>
+//           <name>gold</name>
+//           <network>
+//             <name>red</name>
+//           </network>
+//         </from>
+//         <to id="738dd914-8ec8-4a8b-8628-34672a5d449b"/>
+//       </registration_vnic_profile_mapping>
+//       <registration_vnic_profile_mapping>
+//         <from>
+//           <name>silver</name>
+//           <network>
+//             <name>blue</name>
+//           </network>
+//         </from>
+//         <to>
+//           <name>copper</name>
+//           <network>
+//             <name>orange</name>
+//           </network>
+//         </to>
+//       </registration_vnic_profile_mapping>
+//     </vnic_profile_mappings>
+//   </registration_configuration>
+// </action>
+// ----
 type RegistrationConfiguration struct {
 	Struct
 	affinityGroupMappings *RegistrationAffinityGroupMappingSlice
@@ -27326,16 +39467,42 @@ func (p *RegistrationConfiguration) MustVnicProfileMappings() *RegistrationVnicP
 	return p.vnicProfileMappings
 }
 
+// RegistrationDomainMapping This type describes how to map the users' domain as part of the object registration. An object can be
+// a virtual machine, template, etc.
+// NOTE: This is based on the assumption that user names will be the same, and that only
+// the domain name will be changed.
+//
+// An example of an XML representation using this mapping:
+//
+// [source,xml]
+// ----
+// <action>
+//   <registration_configuration>
+//     <domain_mappings>
+//       <registration_domain_mapping>
+//         <from>
+//           <name>redhat</name>
+//         </from>
+//         <to>
+//           <name>internal</name>
+//         </to>
+//       </registration_domain_mapping>
+//     </domain_mappings>
+//   </registration_configuration>
+// </action>
+// ----
 type RegistrationDomainMapping struct {
 	Struct
 	from *Domain
 	to   *Domain
 }
 
+// SetFrom This type represents a directory service domain.
 func (p *RegistrationDomainMapping) SetFrom(attr *Domain) {
 	p.from = attr
 }
 
+// From This type represents a directory service domain.
 func (p *RegistrationDomainMapping) From() (*Domain, bool) {
 	if p.from != nil {
 		return p.from, true
@@ -27343,6 +39510,7 @@ func (p *RegistrationDomainMapping) From() (*Domain, bool) {
 	return nil, false
 }
 
+// MustFrom This type represents a directory service domain.
 func (p *RegistrationDomainMapping) MustFrom() *Domain {
 	if p.from == nil {
 		panic("the from must not be nil, please use From() function instead")
@@ -27350,10 +39518,12 @@ func (p *RegistrationDomainMapping) MustFrom() *Domain {
 	return p.from
 }
 
+// SetTo This type represents a directory service domain.
 func (p *RegistrationDomainMapping) SetTo(attr *Domain) {
 	p.to = attr
 }
 
+// To This type represents a directory service domain.
 func (p *RegistrationDomainMapping) To() (*Domain, bool) {
 	if p.to != nil {
 		return p.to, true
@@ -27361,6 +39531,7 @@ func (p *RegistrationDomainMapping) To() (*Domain, bool) {
 	return nil, false
 }
 
+// MustTo This type represents a directory service domain.
 func (p *RegistrationDomainMapping) MustTo() *Domain {
 	if p.to == nil {
 		panic("the to must not be nil, please use To() function instead")
@@ -27368,16 +39539,55 @@ func (p *RegistrationDomainMapping) MustTo() *Domain {
 	return p.to
 }
 
+// RegistrationLunMapping This type describes how to map LUNs as part of the object registration. An object can be
+// a virtual machine, template, etc.
+//
+// An external LUN disk is an entity which does not reside on a storage domain.
+// It must be specified because it doesn't need to exist in the
+// environment where the object is registered.
+// An example of an XML representation using this mapping:
+//
+// [source,xml]
+// ----
+// <action>
+//   <registration_configuration>
+//     <lun_mappings>
+//       <registration_lun_mapping>
+//     <lun_mappings>
+//      <registration_lun_mapping>
+//        <from id="111">
+//        </from>
+//        <to id="222">
+//          <alias>weTestLun</alias>
+//          <lun_storage>
+//            <type>iscsi</type>
+//            <logical_units>
+//               <logical_unit id="36001405fb1ddb4b91e44078f1fffcfef">
+//                  <address>44.33.11.22</address>
+//                  <port>3260</port>
+//                  <portal>1</portal>
+//                  <target>iqn.2017-11.com.name.redhat:444</target>
+//               </logical_unit>
+//            </logical_units>
+//          </lun_storage>
+//        </to>
+//      </registration_lun_mapping>
+//     </lun_mappings>
+//   </registration_configuration>
+// </action>
+// ----
 type RegistrationLunMapping struct {
 	Struct
 	from *Disk
 	to   *Disk
 }
 
+// SetFrom Represents a virtual disk device.
 func (p *RegistrationLunMapping) SetFrom(attr *Disk) {
 	p.from = attr
 }
 
+// From Represents a virtual disk device.
 func (p *RegistrationLunMapping) From() (*Disk, bool) {
 	if p.from != nil {
 		return p.from, true
@@ -27385,6 +39595,7 @@ func (p *RegistrationLunMapping) From() (*Disk, bool) {
 	return nil, false
 }
 
+// MustFrom Represents a virtual disk device.
 func (p *RegistrationLunMapping) MustFrom() *Disk {
 	if p.from == nil {
 		panic("the from must not be nil, please use From() function instead")
@@ -27392,10 +39603,12 @@ func (p *RegistrationLunMapping) MustFrom() *Disk {
 	return p.from
 }
 
+// SetTo Represents a virtual disk device.
 func (p *RegistrationLunMapping) SetTo(attr *Disk) {
 	p.to = attr
 }
 
+// To Represents a virtual disk device.
 func (p *RegistrationLunMapping) To() (*Disk, bool) {
 	if p.to != nil {
 		return p.to, true
@@ -27403,6 +39616,7 @@ func (p *RegistrationLunMapping) To() (*Disk, bool) {
 	return nil, false
 }
 
+// MustTo Represents a virtual disk device.
 func (p *RegistrationLunMapping) MustTo() *Disk {
 	if p.to == nil {
 		panic("the to must not be nil, please use To() function instead")
@@ -27410,16 +39624,46 @@ func (p *RegistrationLunMapping) MustTo() *Disk {
 	return p.to
 }
 
+// RegistrationRoleMapping This type describes how to map roles as part of the object registration. An object can be
+// a virtual machine, template, etc.
+//
+// A role mapping is intended to map correlating roles between the primary site
+// and the secondary site.
+// For example, there may be permissions with role `UserVmRunTimeManager` for the virtual machine that
+// is being registered.
+// Therefore we can send a mapping that will register the virtual machine in the secondary setup
+// using the `SuperUser` role instead of `UserVmRunTimeManager`
+// An example of an XML representation using this mapping:
+//
+// [source,xml]
+// ----
+// <action>
+//   <registration_configuration>
+//     <role_mappings>
+//       <registration_eole_mapping>
+//         <from>
+//           <name>SuperUser</name>
+//         </from>
+//         <to>
+//           <name>UserVmRunTimeManager</name>
+//         </to>
+//       </registration_role_mapping>
+//     </role_mappings>
+//   </registration_configuration>
+// </action>
+// ----
 type RegistrationRoleMapping struct {
 	Struct
 	from *Role
 	to   *Role
 }
 
+// SetFrom Represents a system role.
 func (p *RegistrationRoleMapping) SetFrom(attr *Role) {
 	p.from = attr
 }
 
+// From Represents a system role.
 func (p *RegistrationRoleMapping) From() (*Role, bool) {
 	if p.from != nil {
 		return p.from, true
@@ -27427,6 +39671,7 @@ func (p *RegistrationRoleMapping) From() (*Role, bool) {
 	return nil, false
 }
 
+// MustFrom Represents a system role.
 func (p *RegistrationRoleMapping) MustFrom() *Role {
 	if p.from == nil {
 		panic("the from must not be nil, please use From() function instead")
@@ -27434,10 +39679,12 @@ func (p *RegistrationRoleMapping) MustFrom() *Role {
 	return p.from
 }
 
+// SetTo Represents a system role.
 func (p *RegistrationRoleMapping) SetTo(attr *Role) {
 	p.to = attr
 }
 
+// To Represents a system role.
 func (p *RegistrationRoleMapping) To() (*Role, bool) {
 	if p.to != nil {
 		return p.to, true
@@ -27445,6 +39692,7 @@ func (p *RegistrationRoleMapping) To() (*Role, bool) {
 	return nil, false
 }
 
+// MustTo Represents a system role.
 func (p *RegistrationRoleMapping) MustTo() *Role {
 	if p.to == nil {
 		panic("the to must not be nil, please use To() function instead")
@@ -27452,16 +39700,110 @@ func (p *RegistrationRoleMapping) MustTo() *Role {
 	return p.to
 }
 
+// RegistrationVnicProfileMapping Maps an external virtual NIC profile to one that exists in the {engine-name}.
+// The target may be specified as a profile ID or a pair of profile name and network name.
+//
+// If, for example, the desired virtual NIC profile mapping includes the following lines:
+//
+// [cols="25,35,40"]
+// |===
+// |Source network name|Source network profile name|Target virtual NIC profile ID\names
+//
+// |`red`
+// |`gold`
+// |`738dd914-8ec8-4a8b-8628-34672a5d449b`
+//
+// |`<empty>` (no network name)
+// |`<empty>` (no network profile name)
+// |`892a12ec-2028-4451-80aa-ff3bf55d6bac`
+//
+// |`blue`
+// |`silver`
+// |`orange\copper`
+//
+// |`yellow`
+// |`platinum`
+// |`<empty>` (no profile)
+//
+// |`green`
+// |`bronze`
+// |
+//
+// |===
+//
+// Then the following snippet should be added to <<types/registration_configuration, RegistrationConfiguration>>
+//
+// [source,xml]
+// ----
+// <vnic_profile_mappings>
+//   <registration_vnic_profile_mapping>
+//     <from>
+//       <name>gold</name>
+//       <network>
+//         <name>red</name>
+//       </network>
+//     </from>
+//     <to id="738dd914-8ec8-4a8b-8628-34672a5d449b"/>
+//   </registration_vnic_profile_mapping>
+//   <registration_vnic_profile_mapping>
+//     <from>
+//       <name></name>
+//       <network>
+//         <name></name>
+//       </network>
+//     </from>
+//     <to id="892a12ec-2028-4451-80aa-ff3bf55d6bac"/>
+//   </registration_vnic_profile_mapping>
+//   <registration_vnic_profile_mapping>
+//     <from>
+//       <name>silver</name>
+//       <network>
+//         <name>blue</name>
+//       </network>
+//     </from>
+//     <to>
+//       <name>copper</name>
+//       <network>
+//         <name>orange</name>
+//       </network>
+//     </to>
+//   </registration_vnic_profile_mapping>
+//   <registration_vnic_profile_mapping>
+//     <from>
+//       <name>platinum</name>
+//       <network>
+//         <name>yellow</name>
+//       </network>
+//     </from>
+//     <to>
+//       <name></name>
+//       <network>
+//         <name></name>
+//       </network>
+//     </to>
+//   </registration_vnic_profile_mapping>
+//   <registration_vnic_profile_mapping>
+//     <from>
+//       <name>bronze</name>
+//       <network>
+//         <name>green</name>
+//       </network>
+//     </from>
+//   </registration_vnic_profile_mapping>
+// </vnic_profile_mappings>
+// ----
 type RegistrationVnicProfileMapping struct {
 	Struct
 	from *VnicProfile
 	to   *VnicProfile
 }
 
+// SetFrom A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *RegistrationVnicProfileMapping) SetFrom(attr *VnicProfile) {
 	p.from = attr
 }
 
+// From A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *RegistrationVnicProfileMapping) From() (*VnicProfile, bool) {
 	if p.from != nil {
 		return p.from, true
@@ -27469,6 +39811,7 @@ func (p *RegistrationVnicProfileMapping) From() (*VnicProfile, bool) {
 	return nil, false
 }
 
+// MustFrom A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *RegistrationVnicProfileMapping) MustFrom() *VnicProfile {
 	if p.from == nil {
 		panic("the from must not be nil, please use From() function instead")
@@ -27476,10 +39819,12 @@ func (p *RegistrationVnicProfileMapping) MustFrom() *VnicProfile {
 	return p.from
 }
 
+// SetTo A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *RegistrationVnicProfileMapping) SetTo(attr *VnicProfile) {
 	p.to = attr
 }
 
+// To A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *RegistrationVnicProfileMapping) To() (*VnicProfile, bool) {
 	if p.to != nil {
 		return p.to, true
@@ -27487,6 +39832,7 @@ func (p *RegistrationVnicProfileMapping) To() (*VnicProfile, bool) {
 	return nil, false
 }
 
+// MustTo A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *RegistrationVnicProfileMapping) MustTo() *VnicProfile {
 	if p.to == nil {
 		panic("the to must not be nil, please use To() function instead")
@@ -27665,10 +40011,12 @@ func (p *ReportedDevice) MustIps() *IpSlice {
 	return p.ips
 }
 
+// SetMac Represents a MAC address of a virtual network interface.
 func (p *ReportedDevice) SetMac(attr *Mac) {
 	p.mac = attr
 }
 
+// Mac Represents a MAC address of a virtual network interface.
 func (p *ReportedDevice) Mac() (*Mac, bool) {
 	if p.mac != nil {
 		return p.mac, true
@@ -27676,6 +40024,7 @@ func (p *ReportedDevice) Mac() (*Mac, bool) {
 	return nil, false
 }
 
+// MustMac Represents a MAC address of a virtual network interface.
 func (p *ReportedDevice) MustMac() *Mac {
 	if p.mac == nil {
 		panic("the mac must not be nil, please use Mac() function instead")
@@ -27721,10 +40070,12 @@ func (p *ReportedDevice) MustType() ReportedDeviceType {
 	return *p.type_
 }
 
+// SetVm Represents a virtual machine.
 func (p *ReportedDevice) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *ReportedDevice) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -27732,6 +40083,7 @@ func (p *ReportedDevice) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *ReportedDevice) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -27739,16 +40091,19 @@ func (p *ReportedDevice) MustVm() *Vm {
 	return p.vm
 }
 
+// RngDevice Random number generator (RNG) device model.
 type RngDevice struct {
 	Struct
 	rate   *Rate
 	source *RngSource
 }
 
+// SetRate Determines maximum speed of consumption of bytes from random number generator device.
 func (p *RngDevice) SetRate(attr *Rate) {
 	p.rate = attr
 }
 
+// Rate Determines maximum speed of consumption of bytes from random number generator device.
 func (p *RngDevice) Rate() (*Rate, bool) {
 	if p.rate != nil {
 		return p.rate, true
@@ -27756,6 +40111,7 @@ func (p *RngDevice) Rate() (*Rate, bool) {
 	return nil, false
 }
 
+// MustRate Determines maximum speed of consumption of bytes from random number generator device.
 func (p *RngDevice) MustRate() *Rate {
 	if p.rate == nil {
 		panic("the rate must not be nil, please use Rate() function instead")
@@ -27763,10 +40119,12 @@ func (p *RngDevice) MustRate() *Rate {
 	return p.rate
 }
 
+// SetSource Representing the random generator backend types.
 func (p *RngDevice) SetSource(attr RngSource) {
 	p.source = &attr
 }
 
+// Source Representing the random generator backend types.
 func (p *RngDevice) Source() (RngSource, bool) {
 	if p.source != nil {
 		return *p.source, true
@@ -27775,6 +40133,7 @@ func (p *RngDevice) Source() (RngSource, bool) {
 	return zero, false
 }
 
+// MustSource Representing the random generator backend types.
 func (p *RngDevice) MustSource() RngSource {
 	if p.source == nil {
 		panic("the source must not be nil, please use Source() function instead")
@@ -27782,6 +40141,7 @@ func (p *RngDevice) MustSource() RngSource {
 	return *p.source
 }
 
+// Role Represents a system role.
 type Role struct {
 	Struct
 	administrative *bool
@@ -27926,10 +40286,12 @@ func (p *Role) MustPermits() *PermitSlice {
 	return p.permits
 }
 
+// SetUser Represents a user in the system.
 func (p *Role) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *Role) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -27937,6 +40299,7 @@ func (p *Role) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *Role) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -28288,10 +40651,12 @@ func (p *SchedulingPolicyUnit) MustProperties() *PropertySlice {
 	return p.properties
 }
 
+// SetType Holds the types of all internal policy unit types.
 func (p *SchedulingPolicyUnit) SetType(attr PolicyUnitType) {
 	p.type_ = &attr
 }
 
+// Type Holds the types of all internal policy unit types.
 func (p *SchedulingPolicyUnit) Type() (PolicyUnitType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -28300,6 +40665,7 @@ func (p *SchedulingPolicyUnit) Type() (PolicyUnitType, bool) {
 	return zero, false
 }
 
+// MustType Holds the types of all internal policy unit types.
 func (p *SchedulingPolicyUnit) MustType() PolicyUnitType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -28307,15 +40673,18 @@ func (p *SchedulingPolicyUnit) MustType() PolicyUnitType {
 	return *p.type_
 }
 
+// SeLinux Represents SELinux in the system.
 type SeLinux struct {
 	Struct
 	mode *SeLinuxMode
 }
 
+// SetMode Represents an SELinux enforcement mode.
 func (p *SeLinux) SetMode(attr SeLinuxMode) {
 	p.mode = &attr
 }
 
+// Mode Represents an SELinux enforcement mode.
 func (p *SeLinux) Mode() (SeLinuxMode, bool) {
 	if p.mode != nil {
 		return *p.mode, true
@@ -28324,6 +40693,7 @@ func (p *SeLinux) Mode() (SeLinuxMode, bool) {
 	return zero, false
 }
 
+// MustMode Represents an SELinux enforcement mode.
 func (p *SeLinux) MustMode() SeLinuxMode {
 	if p.mode == nil {
 		panic("the mode must not be nil, please use Mode() function instead")
@@ -28337,10 +40707,12 @@ type SerialNumber struct {
 	value  *string
 }
 
+// SetPolicy Type representing the policy of a Serial Number.
 func (p *SerialNumber) SetPolicy(attr SerialNumberPolicy) {
 	p.policy = &attr
 }
 
+// Policy Type representing the policy of a Serial Number.
 func (p *SerialNumber) Policy() (SerialNumberPolicy, bool) {
 	if p.policy != nil {
 		return *p.policy, true
@@ -28349,6 +40721,7 @@ func (p *SerialNumber) Policy() (SerialNumberPolicy, bool) {
 	return zero, false
 }
 
+// MustPolicy Type representing the policy of a Serial Number.
 func (p *SerialNumber) MustPolicy() SerialNumberPolicy {
 	if p.policy == nil {
 		panic("the policy must not be nil, please use Policy() function instead")
@@ -28375,6 +40748,7 @@ func (p *SerialNumber) MustValue() string {
 	return *p.value
 }
 
+// Session Describes a user session to a virtual machine.
 type Session struct {
 	Struct
 	comment     *string
@@ -28464,10 +40838,12 @@ func (p *Session) MustId() string {
 	return *p.id
 }
 
+// SetIp Represents the IP configuration of a network interface.
 func (p *Session) SetIp(attr *Ip) {
 	p.ip = attr
 }
 
+// Ip Represents the IP configuration of a network interface.
 func (p *Session) Ip() (*Ip, bool) {
 	if p.ip != nil {
 		return p.ip, true
@@ -28475,6 +40851,7 @@ func (p *Session) Ip() (*Ip, bool) {
 	return nil, false
 }
 
+// MustIp Represents the IP configuration of a network interface.
 func (p *Session) MustIp() *Ip {
 	if p.ip == nil {
 		panic("the ip must not be nil, please use Ip() function instead")
@@ -28520,10 +40897,12 @@ func (p *Session) MustProtocol() string {
 	return *p.protocol
 }
 
+// SetUser Represents a user in the system.
 func (p *Session) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *Session) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -28531,6 +40910,7 @@ func (p *Session) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *Session) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -28538,10 +40918,12 @@ func (p *Session) MustUser() *User {
 	return p.user
 }
 
+// SetVm Represents a virtual machine.
 func (p *Session) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Session) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -28549,6 +40931,7 @@ func (p *Session) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Session) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -28600,6 +40983,8 @@ func (p *SkipIfConnectivityBroken) MustThreshold() int64 {
 	return *p.threshold
 }
 
+// SkipIfSdActive This type represents the storage related
+// configuration in the fencing policy.
 type SkipIfSdActive struct {
 	Struct
 	enabled *bool
@@ -28624,6 +41009,23 @@ func (p *SkipIfSdActive) MustEnabled() bool {
 	return *p.enabled
 }
 
+// Snapshot Represents a snapshot object.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <snapshot id="456" href="/ovirt-engine/api/vms/123/snapshots/456">
+//   <actions>
+//     <link rel="restore" href="/ovirt-engine/api/vms/123/snapshots/456/restore"/>
+//   </actions>
+//   <vm id="123" href="/ovirt-engine/api/vms/123"/>
+//   <description>Virtual Machine 1 - Snapshot A</description>
+//   <type>active</type>
+//   <date>2010-08-16T14:24:29</date>
+//   <persist_memorystate>false</persist_memorystate>
+// </snapshot>
+// ----
 type Snapshot struct {
 	Struct
 	affinityLabels               *AffinityLabelSlice
@@ -28707,6 +41109,7 @@ type Snapshot struct {
 	tags                         *TagSlice
 	template                     *Template
 	timeZone                     *TimeZone
+	tpmEnabled                   *bool
 	tunnelMigration              *bool
 	type_                        *VmType
 	usb                          *Usb
@@ -28790,10 +41193,264 @@ func (p *Snapshot) MustCdroms() *CdromSlice {
 	return p.cdroms
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Snapshot) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Snapshot) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -28801,6 +41458,133 @@ func (p *Snapshot) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Snapshot) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -28827,10 +41611,12 @@ func (p *Snapshot) MustComment() string {
 	return *p.comment
 }
 
+// SetConsole Representation for serial console device.
 func (p *Snapshot) SetConsole(attr *Console) {
 	p.console = attr
 }
 
+// Console Representation for serial console device.
 func (p *Snapshot) Console() (*Console, bool) {
 	if p.console != nil {
 		return p.console, true
@@ -28838,6 +41624,7 @@ func (p *Snapshot) Console() (*Console, bool) {
 	return nil, false
 }
 
+// MustConsole Representation for serial console device.
 func (p *Snapshot) MustConsole() *Console {
 	if p.console == nil {
 		panic("the console must not be nil, please use Console() function instead")
@@ -29086,10 +41873,12 @@ func (p *Snapshot) MustDisks() *DiskSlice {
 	return p.disks
 }
 
+// SetDisplay Represents a graphic console configuration.
 func (p *Snapshot) SetDisplay(attr *Display) {
 	p.display = attr
 }
 
+// Display Represents a graphic console configuration.
 func (p *Snapshot) Display() (*Display, bool) {
 	if p.display != nil {
 		return p.display, true
@@ -29097,6 +41886,7 @@ func (p *Snapshot) Display() (*Display, bool) {
 	return nil, false
 }
 
+// MustDisplay Represents a graphic console configuration.
 func (p *Snapshot) MustDisplay() *Display {
 	if p.display == nil {
 		panic("the display must not be nil, please use Display() function instead")
@@ -29104,10 +41894,12 @@ func (p *Snapshot) MustDisplay() *Display {
 	return p.display
 }
 
+// SetDomain This type represents a directory service domain.
 func (p *Snapshot) SetDomain(attr *Domain) {
 	p.domain = attr
 }
 
+// Domain This type represents a directory service domain.
 func (p *Snapshot) Domain() (*Domain, bool) {
 	if p.domain != nil {
 		return p.domain, true
@@ -29115,6 +41907,7 @@ func (p *Snapshot) Domain() (*Domain, bool) {
 	return nil, false
 }
 
+// MustDomain This type represents a directory service domain.
 func (p *Snapshot) MustDomain() *Domain {
 	if p.domain == nil {
 		panic("the domain must not be nil, please use Domain() function instead")
@@ -29122,10 +41915,22 @@ func (p *Snapshot) MustDomain() *Domain {
 	return p.domain
 }
 
+// SetExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *Snapshot) SetExternalHostProvider(attr *ExternalHostProvider) {
 	p.externalHostProvider = attr
 }
 
+// ExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *Snapshot) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	if p.externalHostProvider != nil {
 		return p.externalHostProvider, true
@@ -29133,6 +41938,12 @@ func (p *Snapshot) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	return nil, false
 }
 
+// MustExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *Snapshot) MustExternalHostProvider() *ExternalHostProvider {
 	if p.externalHostProvider == nil {
 		panic("the externalHostProvider must not be nil, please use ExternalHostProvider() function instead")
@@ -29195,10 +42006,82 @@ func (p *Snapshot) MustGraphicsConsoles() *GraphicsConsoleSlice {
 	return p.graphicsConsoles
 }
 
+// SetGuestOperatingSystem Represents an operating system installed on the virtual machine.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/vms/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <vm href="/ovirt-engine/api/vms/123" id="123">
+// ...
+//   <guest_operating_system>
+//     <architecture>x86_64</architecture>
+//     <codename>Maipo</codename>
+//     <distribution>Red Hat Enterprise Linux Server</distribution>
+//     <family>Linux</family>
+//     <kernel>
+//       <version>
+//         <build>0</build>
+//         <full_version>3.10.0-514.10.2.el7.x86_64</full_version>
+//         <major>3</major>
+//         <minor>10</minor>
+//         <revision>514</revision>
+//       </version>
+//     </kernel>
+//     <version>
+//       <full_version>7.3</full_version>
+//       <major>7</major>
+//       <minor>3</minor>
+//     </version>
+//   </guest_operating_system>
+// </vm>
+// ----
 func (p *Snapshot) SetGuestOperatingSystem(attr *GuestOperatingSystem) {
 	p.guestOperatingSystem = attr
 }
 
+// GuestOperatingSystem Represents an operating system installed on the virtual machine.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/vms/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <vm href="/ovirt-engine/api/vms/123" id="123">
+// ...
+//   <guest_operating_system>
+//     <architecture>x86_64</architecture>
+//     <codename>Maipo</codename>
+//     <distribution>Red Hat Enterprise Linux Server</distribution>
+//     <family>Linux</family>
+//     <kernel>
+//       <version>
+//         <build>0</build>
+//         <full_version>3.10.0-514.10.2.el7.x86_64</full_version>
+//         <major>3</major>
+//         <minor>10</minor>
+//         <revision>514</revision>
+//       </version>
+//     </kernel>
+//     <version>
+//       <full_version>7.3</full_version>
+//       <major>7</major>
+//       <minor>3</minor>
+//     </version>
+//   </guest_operating_system>
+// </vm>
+// ----
 func (p *Snapshot) GuestOperatingSystem() (*GuestOperatingSystem, bool) {
 	if p.guestOperatingSystem != nil {
 		return p.guestOperatingSystem, true
@@ -29206,6 +42089,42 @@ func (p *Snapshot) GuestOperatingSystem() (*GuestOperatingSystem, bool) {
 	return nil, false
 }
 
+// MustGuestOperatingSystem Represents an operating system installed on the virtual machine.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/vms/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <vm href="/ovirt-engine/api/vms/123" id="123">
+// ...
+//   <guest_operating_system>
+//     <architecture>x86_64</architecture>
+//     <codename>Maipo</codename>
+//     <distribution>Red Hat Enterprise Linux Server</distribution>
+//     <family>Linux</family>
+//     <kernel>
+//       <version>
+//         <build>0</build>
+//         <full_version>3.10.0-514.10.2.el7.x86_64</full_version>
+//         <major>3</major>
+//         <minor>10</minor>
+//         <revision>514</revision>
+//       </version>
+//     </kernel>
+//     <version>
+//       <full_version>7.3</full_version>
+//       <major>7</major>
+//       <minor>3</minor>
+//     </version>
+//   </guest_operating_system>
+// </vm>
+// ----
 func (p *Snapshot) MustGuestOperatingSystem() *GuestOperatingSystem {
 	if p.guestOperatingSystem == nil {
 		panic("the guestOperatingSystem must not be nil, please use GuestOperatingSystem() function instead")
@@ -29213,10 +42132,12 @@ func (p *Snapshot) MustGuestOperatingSystem() *GuestOperatingSystem {
 	return p.guestOperatingSystem
 }
 
+// SetGuestTimeZone Time zone representation.
 func (p *Snapshot) SetGuestTimeZone(attr *TimeZone) {
 	p.guestTimeZone = attr
 }
 
+// GuestTimeZone Time zone representation.
 func (p *Snapshot) GuestTimeZone() (*TimeZone, bool) {
 	if p.guestTimeZone != nil {
 		return p.guestTimeZone, true
@@ -29224,6 +42145,7 @@ func (p *Snapshot) GuestTimeZone() (*TimeZone, bool) {
 	return nil, false
 }
 
+// MustGuestTimeZone Time zone representation.
 func (p *Snapshot) MustGuestTimeZone() *TimeZone {
 	if p.guestTimeZone == nil {
 		panic("the guestTimeZone must not be nil, please use GuestTimeZone() function instead")
@@ -29250,10 +42172,12 @@ func (p *Snapshot) MustHasIllegalImages() bool {
 	return *p.hasIllegalImages
 }
 
+// SetHighAvailability Type representing high availability of a virtual machine.
 func (p *Snapshot) SetHighAvailability(attr *HighAvailability) {
 	p.highAvailability = attr
 }
 
+// HighAvailability Type representing high availability of a virtual machine.
 func (p *Snapshot) HighAvailability() (*HighAvailability, bool) {
 	if p.highAvailability != nil {
 		return p.highAvailability, true
@@ -29261,6 +42185,7 @@ func (p *Snapshot) HighAvailability() (*HighAvailability, bool) {
 	return nil, false
 }
 
+// MustHighAvailability Type representing high availability of a virtual machine.
 func (p *Snapshot) MustHighAvailability() *HighAvailability {
 	if p.highAvailability == nil {
 		panic("the highAvailability must not be nil, please use HighAvailability() function instead")
@@ -29268,10 +42193,12 @@ func (p *Snapshot) MustHighAvailability() *HighAvailability {
 	return p.highAvailability
 }
 
+// SetHost Type representing a host.
 func (p *Snapshot) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *Snapshot) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -29279,6 +42206,7 @@ func (p *Snapshot) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *Snapshot) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -29341,10 +42269,66 @@ func (p *Snapshot) MustInitialization() *Initialization {
 	return p.initialization
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Snapshot) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Snapshot) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -29352,6 +42336,34 @@ func (p *Snapshot) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Snapshot) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -29395,10 +42407,12 @@ func (p *Snapshot) MustKatelloErrata() *KatelloErratumSlice {
 	return p.katelloErrata
 }
 
+// SetLargeIcon Icon of virtual machine or template.
 func (p *Snapshot) SetLargeIcon(attr *Icon) {
 	p.largeIcon = attr
 }
 
+// LargeIcon Icon of virtual machine or template.
 func (p *Snapshot) LargeIcon() (*Icon, bool) {
 	if p.largeIcon != nil {
 		return p.largeIcon, true
@@ -29406,6 +42420,7 @@ func (p *Snapshot) LargeIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustLargeIcon Icon of virtual machine or template.
 func (p *Snapshot) MustLargeIcon() *Icon {
 	if p.largeIcon == nil {
 		panic("the largeIcon must not be nil, please use LargeIcon() function instead")
@@ -29413,10 +42428,18 @@ func (p *Snapshot) MustLargeIcon() *Icon {
 	return p.largeIcon
 }
 
+// SetLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Snapshot) SetLease(attr *StorageDomainLease) {
 	p.lease = attr
 }
 
+// Lease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Snapshot) Lease() (*StorageDomainLease, bool) {
 	if p.lease != nil {
 		return p.lease, true
@@ -29424,6 +42447,10 @@ func (p *Snapshot) Lease() (*StorageDomainLease, bool) {
 	return nil, false
 }
 
+// MustLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Snapshot) MustLease() *StorageDomainLease {
 	if p.lease == nil {
 		panic("the lease must not be nil, please use Lease() function instead")
@@ -29450,10 +42477,12 @@ func (p *Snapshot) MustMemory() int64 {
 	return *p.memory
 }
 
+// SetMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Snapshot) SetMemoryPolicy(attr *MemoryPolicy) {
 	p.memoryPolicy = attr
 }
 
+// MemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Snapshot) MemoryPolicy() (*MemoryPolicy, bool) {
 	if p.memoryPolicy != nil {
 		return p.memoryPolicy, true
@@ -29461,6 +42490,7 @@ func (p *Snapshot) MemoryPolicy() (*MemoryPolicy, bool) {
 	return nil, false
 }
 
+// MustMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Snapshot) MustMemoryPolicy() *MemoryPolicy {
 	if p.memoryPolicy == nil {
 		panic("the memoryPolicy must not be nil, please use MemoryPolicy() function instead")
@@ -29468,10 +42498,12 @@ func (p *Snapshot) MustMemoryPolicy() *MemoryPolicy {
 	return p.memoryPolicy
 }
 
+// SetMigration The type for migration options.
 func (p *Snapshot) SetMigration(attr *MigrationOptions) {
 	p.migration = attr
 }
 
+// Migration The type for migration options.
 func (p *Snapshot) Migration() (*MigrationOptions, bool) {
 	if p.migration != nil {
 		return p.migration, true
@@ -29479,6 +42511,7 @@ func (p *Snapshot) Migration() (*MigrationOptions, bool) {
 	return nil, false
 }
 
+// MustMigration The type for migration options.
 func (p *Snapshot) MustMigration() *MigrationOptions {
 	if p.migration == nil {
 		panic("the migration must not be nil, please use Migration() function instead")
@@ -29636,10 +42669,14 @@ func (p *Snapshot) MustOrigin() string {
 	return *p.origin
 }
 
+// SetOriginalTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Snapshot) SetOriginalTemplate(attr *Template) {
 	p.originalTemplate = attr
 }
 
+// OriginalTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Snapshot) OriginalTemplate() (*Template, bool) {
 	if p.originalTemplate != nil {
 		return p.originalTemplate, true
@@ -29647,6 +42684,8 @@ func (p *Snapshot) OriginalTemplate() (*Template, bool) {
 	return nil, false
 }
 
+// MustOriginalTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Snapshot) MustOriginalTemplate() *Template {
 	if p.originalTemplate == nil {
 		panic("the originalTemplate must not be nil, please use OriginalTemplate() function instead")
@@ -29654,10 +42693,12 @@ func (p *Snapshot) MustOriginalTemplate() *Template {
 	return p.originalTemplate
 }
 
+// SetOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Snapshot) SetOs(attr *OperatingSystem) {
 	p.os = attr
 }
 
+// Os Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Snapshot) Os() (*OperatingSystem, bool) {
 	if p.os != nil {
 		return p.os, true
@@ -29665,6 +42706,7 @@ func (p *Snapshot) Os() (*OperatingSystem, bool) {
 	return nil, false
 }
 
+// MustOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Snapshot) MustOs() *OperatingSystem {
 	if p.os == nil {
 		panic("the os must not be nil, please use Os() function instead")
@@ -29745,10 +42787,42 @@ func (p *Snapshot) MustPlacementPolicy() *VmPlacementPolicy {
 	return p.placementPolicy
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Snapshot) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Snapshot) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -29756,6 +42830,22 @@ func (p *Snapshot) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Snapshot) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -29781,10 +42871,12 @@ func (p *Snapshot) MustReportedDevices() *ReportedDeviceSlice {
 	return p.reportedDevices
 }
 
+// SetRngDevice Random number generator (RNG) device model.
 func (p *Snapshot) SetRngDevice(attr *RngDevice) {
 	p.rngDevice = attr
 }
 
+// RngDevice Random number generator (RNG) device model.
 func (p *Snapshot) RngDevice() (*RngDevice, bool) {
 	if p.rngDevice != nil {
 		return p.rngDevice, true
@@ -29792,6 +42884,7 @@ func (p *Snapshot) RngDevice() (*RngDevice, bool) {
 	return nil, false
 }
 
+// MustRngDevice Random number generator (RNG) device model.
 func (p *Snapshot) MustRngDevice() *RngDevice {
 	if p.rngDevice == nil {
 		panic("the rngDevice must not be nil, please use RngDevice() function instead")
@@ -29854,10 +42947,12 @@ func (p *Snapshot) MustSessions() *SessionSlice {
 	return p.sessions
 }
 
+// SetSmallIcon Icon of virtual machine or template.
 func (p *Snapshot) SetSmallIcon(attr *Icon) {
 	p.smallIcon = attr
 }
 
+// SmallIcon Icon of virtual machine or template.
 func (p *Snapshot) SmallIcon() (*Icon, bool) {
 	if p.smallIcon != nil {
 		return p.smallIcon, true
@@ -29865,6 +42960,7 @@ func (p *Snapshot) SmallIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustSmallIcon Icon of virtual machine or template.
 func (p *Snapshot) MustSmallIcon() *Icon {
 	if p.smallIcon == nil {
 		panic("the smallIcon must not be nil, please use SmallIcon() function instead")
@@ -29872,10 +42968,12 @@ func (p *Snapshot) MustSmallIcon() *Icon {
 	return p.smallIcon
 }
 
+// SetSnapshotStatus Represents the current status of the snapshot.
 func (p *Snapshot) SetSnapshotStatus(attr SnapshotStatus) {
 	p.snapshotStatus = &attr
 }
 
+// SnapshotStatus Represents the current status of the snapshot.
 func (p *Snapshot) SnapshotStatus() (SnapshotStatus, bool) {
 	if p.snapshotStatus != nil {
 		return *p.snapshotStatus, true
@@ -29884,6 +42982,7 @@ func (p *Snapshot) SnapshotStatus() (SnapshotStatus, bool) {
 	return zero, false
 }
 
+// MustSnapshotStatus Represents the current status of the snapshot.
 func (p *Snapshot) MustSnapshotStatus() SnapshotStatus {
 	if p.snapshotStatus == nil {
 		panic("the snapshotStatus must not be nil, please use SnapshotStatus() function instead")
@@ -29891,10 +42990,12 @@ func (p *Snapshot) MustSnapshotStatus() SnapshotStatus {
 	return *p.snapshotStatus
 }
 
+// SetSnapshotType Represents the type of the snapshot.
 func (p *Snapshot) SetSnapshotType(attr SnapshotType) {
 	p.snapshotType = &attr
 }
 
+// SnapshotType Represents the type of the snapshot.
 func (p *Snapshot) SnapshotType() (SnapshotType, bool) {
 	if p.snapshotType != nil {
 		return *p.snapshotType, true
@@ -29903,6 +43004,7 @@ func (p *Snapshot) SnapshotType() (SnapshotType, bool) {
 	return zero, false
 }
 
+// MustSnapshotType Represents the type of the snapshot.
 func (p *Snapshot) MustSnapshotType() SnapshotType {
 	if p.snapshotType == nil {
 		panic("the snapshotType must not be nil, please use SnapshotType() function instead")
@@ -30040,10 +43142,12 @@ func (p *Snapshot) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+// SetStatus Type represeting a status of a virtual machine.
 func (p *Snapshot) SetStatus(attr VmStatus) {
 	p.status = &attr
 }
 
+// Status Type represeting a status of a virtual machine.
 func (p *Snapshot) Status() (VmStatus, bool) {
 	if p.status != nil {
 		return *p.status, true
@@ -30052,6 +43156,7 @@ func (p *Snapshot) Status() (VmStatus, bool) {
 	return zero, false
 }
 
+// MustStatus Type represeting a status of a virtual machine.
 func (p *Snapshot) MustStatus() VmStatus {
 	if p.status == nil {
 		panic("the status must not be nil, please use Status() function instead")
@@ -30116,10 +43221,70 @@ func (p *Snapshot) MustStopTime() time.Time {
 	return *p.stopTime
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Snapshot) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Snapshot) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -30127,6 +43292,36 @@ func (p *Snapshot) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Snapshot) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -30134,10 +43329,20 @@ func (p *Snapshot) MustStorageDomain() *StorageDomain {
 	return p.storageDomain
 }
 
+// SetStorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *Snapshot) SetStorageErrorResumeBehaviour(attr VmStorageErrorResumeBehaviour) {
 	p.storageErrorResumeBehaviour = &attr
 }
 
+// StorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *Snapshot) StorageErrorResumeBehaviour() (VmStorageErrorResumeBehaviour, bool) {
 	if p.storageErrorResumeBehaviour != nil {
 		return *p.storageErrorResumeBehaviour, true
@@ -30146,6 +43351,11 @@ func (p *Snapshot) StorageErrorResumeBehaviour() (VmStorageErrorResumeBehaviour,
 	return zero, false
 }
 
+// MustStorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *Snapshot) MustStorageErrorResumeBehaviour() VmStorageErrorResumeBehaviour {
 	if p.storageErrorResumeBehaviour == nil {
 		panic("the storageErrorResumeBehaviour must not be nil, please use StorageErrorResumeBehaviour() function instead")
@@ -30171,10 +43381,14 @@ func (p *Snapshot) MustTags() *TagSlice {
 	return p.tags
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Snapshot) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Snapshot) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -30182,6 +43396,8 @@ func (p *Snapshot) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Snapshot) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -30189,10 +43405,12 @@ func (p *Snapshot) MustTemplate() *Template {
 	return p.template
 }
 
+// SetTimeZone Time zone representation.
 func (p *Snapshot) SetTimeZone(attr *TimeZone) {
 	p.timeZone = attr
 }
 
+// TimeZone Time zone representation.
 func (p *Snapshot) TimeZone() (*TimeZone, bool) {
 	if p.timeZone != nil {
 		return p.timeZone, true
@@ -30200,11 +43418,31 @@ func (p *Snapshot) TimeZone() (*TimeZone, bool) {
 	return nil, false
 }
 
+// MustTimeZone Time zone representation.
 func (p *Snapshot) MustTimeZone() *TimeZone {
 	if p.timeZone == nil {
 		panic("the timeZone must not be nil, please use TimeZone() function instead")
 	}
 	return p.timeZone
+}
+
+func (p *Snapshot) SetTpmEnabled(attr bool) {
+	p.tpmEnabled = &attr
+}
+
+func (p *Snapshot) TpmEnabled() (bool, bool) {
+	if p.tpmEnabled != nil {
+		return *p.tpmEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *Snapshot) MustTpmEnabled() bool {
+	if p.tpmEnabled == nil {
+		panic("the tpmEnabled must not be nil, please use TpmEnabled() function instead")
+	}
+	return *p.tpmEnabled
 }
 
 func (p *Snapshot) SetTunnelMigration(attr bool) {
@@ -30226,10 +43464,12 @@ func (p *Snapshot) MustTunnelMigration() bool {
 	return *p.tunnelMigration
 }
 
+// SetType Type representing what the virtual machine is optimized for.
 func (p *Snapshot) SetType(attr VmType) {
 	p.type_ = &attr
 }
 
+// Type Type representing what the virtual machine is optimized for.
 func (p *Snapshot) Type() (VmType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -30238,6 +43478,7 @@ func (p *Snapshot) Type() (VmType, bool) {
 	return zero, false
 }
 
+// MustType Type representing what the virtual machine is optimized for.
 func (p *Snapshot) MustType() VmType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -30245,10 +43486,12 @@ func (p *Snapshot) MustType() VmType {
 	return *p.type_
 }
 
+// SetUsb Configuration of the USB device of a virtual machine.
 func (p *Snapshot) SetUsb(attr *Usb) {
 	p.usb = attr
 }
 
+// Usb Configuration of the USB device of a virtual machine.
 func (p *Snapshot) Usb() (*Usb, bool) {
 	if p.usb != nil {
 		return p.usb, true
@@ -30256,6 +43499,7 @@ func (p *Snapshot) Usb() (*Usb, bool) {
 	return nil, false
 }
 
+// MustUsb Configuration of the USB device of a virtual machine.
 func (p *Snapshot) MustUsb() *Usb {
 	if p.usb == nil {
 		panic("the usb must not be nil, please use Usb() function instead")
@@ -30282,10 +43526,14 @@ func (p *Snapshot) MustUseLatestTemplateVersion() bool {
 	return *p.useLatestTemplateVersion
 }
 
+// SetVirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *Snapshot) SetVirtioScsi(attr *VirtioScsi) {
 	p.virtioScsi = attr
 }
 
+// VirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *Snapshot) VirtioScsi() (*VirtioScsi, bool) {
 	if p.virtioScsi != nil {
 		return p.virtioScsi, true
@@ -30293,6 +43541,8 @@ func (p *Snapshot) VirtioScsi() (*VirtioScsi, bool) {
 	return nil, false
 }
 
+// MustVirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *Snapshot) MustVirtioScsi() *VirtioScsi {
 	if p.virtioScsi == nil {
 		panic("the virtioScsi must not be nil, please use VirtioScsi() function instead")
@@ -30319,10 +43569,12 @@ func (p *Snapshot) MustVirtioScsiMultiQueuesEnabled() bool {
 	return *p.virtioScsiMultiQueuesEnabled
 }
 
+// SetVm Represents a virtual machine.
 func (p *Snapshot) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Snapshot) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -30330,6 +43582,7 @@ func (p *Snapshot) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Snapshot) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -30337,10 +43590,12 @@ func (p *Snapshot) MustVm() *Vm {
 	return p.vm
 }
 
+// SetVmPool Type represeting a virtual machines pool.
 func (p *Snapshot) SetVmPool(attr *VmPool) {
 	p.vmPool = attr
 }
 
+// VmPool Type represeting a virtual machines pool.
 func (p *Snapshot) VmPool() (*VmPool, bool) {
 	if p.vmPool != nil {
 		return p.vmPool, true
@@ -30348,6 +43603,7 @@ func (p *Snapshot) VmPool() (*VmPool, bool) {
 	return nil, false
 }
 
+// MustVmPool Type represeting a virtual machines pool.
 func (p *Snapshot) MustVmPool() *VmPool {
 	if p.vmPool == nil {
 		panic("the vmPool must not be nil, please use VmPool() function instead")
@@ -30373,16 +43629,21 @@ func (p *Snapshot) MustWatchdogs() *WatchdogSlice {
 	return p.watchdogs
 }
 
+// SpecialObjects This type contains references to special objects, such as blank templates and the root of a hierarchy of tags.
 type SpecialObjects struct {
 	Struct
 	blankTemplate *Template
 	rootTag       *Tag
 }
 
+// SetBlankTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *SpecialObjects) SetBlankTemplate(attr *Template) {
 	p.blankTemplate = attr
 }
 
+// BlankTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *SpecialObjects) BlankTemplate() (*Template, bool) {
 	if p.blankTemplate != nil {
 		return p.blankTemplate, true
@@ -30390,6 +43651,8 @@ func (p *SpecialObjects) BlankTemplate() (*Template, bool) {
 	return nil, false
 }
 
+// MustBlankTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *SpecialObjects) MustBlankTemplate() *Template {
 	if p.blankTemplate == nil {
 		panic("the blankTemplate must not be nil, please use BlankTemplate() function instead")
@@ -30397,10 +43660,12 @@ func (p *SpecialObjects) MustBlankTemplate() *Template {
 	return p.blankTemplate
 }
 
+// SetRootTag Represents a tag in the system.
 func (p *SpecialObjects) SetRootTag(attr *Tag) {
 	p.rootTag = attr
 }
 
+// RootTag Represents a tag in the system.
 func (p *SpecialObjects) RootTag() (*Tag, bool) {
 	if p.rootTag != nil {
 		return p.rootTag, true
@@ -30408,6 +43673,7 @@ func (p *SpecialObjects) RootTag() (*Tag, bool) {
 	return nil, false
 }
 
+// MustRootTag Represents a tag in the system.
 func (p *SpecialObjects) MustRootTag() *Tag {
 	if p.rootTag == nil {
 		panic("the rootTag must not be nil, please use RootTag() function instead")
@@ -30624,10 +43890,12 @@ func (p *Ssh) MustPublicKey() string {
 	return *p.publicKey
 }
 
+// SetUser Represents a user in the system.
 func (p *Ssh) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *Ssh) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -30635,6 +43903,7 @@ func (p *Ssh) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *Ssh) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -30747,10 +44016,12 @@ func (p *SshPublicKey) MustName() string {
 	return *p.name
 }
 
+// SetUser Represents a user in the system.
 func (p *SshPublicKey) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *SshPublicKey) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -30758,6 +44029,7 @@ func (p *SshPublicKey) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *SshPublicKey) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -30788,6 +44060,43 @@ func (p *Sso) MustMethods() *MethodSlice {
 	return p.methods
 }
 
+// Statistic A generic type used for all kinds of statistics.
+//
+// Statistic contains the statistics values for various entities.
+// The following object contain statistics:
+//
+// * Disk
+// * Host
+// * HostNic
+// * NumaNode
+// * Nic
+// * Vm
+// * GlusterBrick
+// * Step
+// * GlusterVolume
+//
+// An example of a XML representation:
+//
+// [source,xml]
+// ----
+// <statistics>
+//   <statistic id="1234" href="/ovirt-engine/api/hosts/1234/nics/1234/statistics/1234">
+//     <name>data.current.rx</name>
+//     <description>Receive data rate</description>
+//     <values type="DECIMAL">
+//       <value>
+//         <datum>0</datum>
+//       </value>
+//     </values>
+//     <type>GAUGE</type>
+//     <unit>BYTES_PER_SECOND</unit>
+//     <host_nic id="1234" href="/ovirt-engine/api/hosts/1234/nics/1234"/>
+//   </statistic>
+//   ...
+// </statistics>
+// ----
+//
+// NOTE: This statistics sub-collection is read-only.
 type Statistic struct {
 	Struct
 	brick         *GlusterBrick
@@ -30865,10 +44174,12 @@ func (p *Statistic) MustDescription() string {
 	return *p.description
 }
 
+// SetDisk Represents a virtual disk device.
 func (p *Statistic) SetDisk(attr *Disk) {
 	p.disk = attr
 }
 
+// Disk Represents a virtual disk device.
 func (p *Statistic) Disk() (*Disk, bool) {
 	if p.disk != nil {
 		return p.disk, true
@@ -30876,6 +44187,7 @@ func (p *Statistic) Disk() (*Disk, bool) {
 	return nil, false
 }
 
+// MustDisk Represents a virtual disk device.
 func (p *Statistic) MustDisk() *Disk {
 	if p.disk == nil {
 		panic("the disk must not be nil, please use Disk() function instead")
@@ -30901,10 +44213,12 @@ func (p *Statistic) MustGlusterVolume() *GlusterVolume {
 	return p.glusterVolume
 }
 
+// SetHost Type representing a host.
 func (p *Statistic) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *Statistic) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -30912,6 +44226,7 @@ func (p *Statistic) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *Statistic) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -30919,10 +44234,148 @@ func (p *Statistic) MustHost() *Host {
 	return p.host
 }
 
+// SetHostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *Statistic) SetHostNic(attr *HostNic) {
 	p.hostNic = attr
 }
 
+// HostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *Statistic) HostNic() (*HostNic, bool) {
 	if p.hostNic != nil {
 		return p.hostNic, true
@@ -30930,6 +44383,75 @@ func (p *Statistic) HostNic() (*HostNic, bool) {
 	return nil, false
 }
 
+// MustHostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *Statistic) MustHostNic() *HostNic {
 	if p.hostNic == nil {
 		panic("the hostNic must not be nil, please use HostNic() function instead")
@@ -30937,10 +44459,50 @@ func (p *Statistic) MustHostNic() *HostNic {
 	return p.hostNic
 }
 
+// SetHostNumaNode Represents a physical NUMA node.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <host_numa_node href="/ovirt-engine/api/hosts/0923f1ea/numanodes/007cf1ab" id="007cf1ab">
+//   <cpu>
+//     <cores>
+//       <core>
+//         <index>0</index>
+//       </core>
+//     </cores>
+//   </cpu>
+//   <index>0</index>
+//   <memory>65536</memory>
+//   <node_distance>40 20 40 10</node_distance>
+//   <host href="/ovirt-engine/api/hosts/0923f1ea" id="0923f1ea"/>
+// </host_numa_node>
+// ----
 func (p *Statistic) SetHostNumaNode(attr *NumaNode) {
 	p.hostNumaNode = attr
 }
 
+// HostNumaNode Represents a physical NUMA node.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <host_numa_node href="/ovirt-engine/api/hosts/0923f1ea/numanodes/007cf1ab" id="007cf1ab">
+//   <cpu>
+//     <cores>
+//       <core>
+//         <index>0</index>
+//       </core>
+//     </cores>
+//   </cpu>
+//   <index>0</index>
+//   <memory>65536</memory>
+//   <node_distance>40 20 40 10</node_distance>
+//   <host href="/ovirt-engine/api/hosts/0923f1ea" id="0923f1ea"/>
+// </host_numa_node>
+// ----
 func (p *Statistic) HostNumaNode() (*NumaNode, bool) {
 	if p.hostNumaNode != nil {
 		return p.hostNumaNode, true
@@ -30948,6 +44510,26 @@ func (p *Statistic) HostNumaNode() (*NumaNode, bool) {
 	return nil, false
 }
 
+// MustHostNumaNode Represents a physical NUMA node.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <host_numa_node href="/ovirt-engine/api/hosts/0923f1ea/numanodes/007cf1ab" id="007cf1ab">
+//   <cpu>
+//     <cores>
+//       <core>
+//         <index>0</index>
+//       </core>
+//     </cores>
+//   </cpu>
+//   <index>0</index>
+//   <memory>65536</memory>
+//   <node_distance>40 20 40 10</node_distance>
+//   <host href="/ovirt-engine/api/hosts/0923f1ea" id="0923f1ea"/>
+// </host_numa_node>
+// ----
 func (p *Statistic) MustHostNumaNode() *NumaNode {
 	if p.hostNumaNode == nil {
 		panic("the hostNumaNode must not be nil, please use HostNumaNode() function instead")
@@ -31012,10 +44594,46 @@ func (p *Statistic) MustName() string {
 	return *p.name
 }
 
+// SetNic Represents a virtual machine NIC.
+//
+// For example, the XML representation of a NIC will look like this:
+//
+// [source,xml]
+// ----
+// <nic href="/ovirt-engine/api/vms/123/nics/456" id="456">
+//   <name>nic1</name>
+//   <vm href="/ovirt-engine/api/vms/123" id="123"/>
+//   <interface>virtio</interface>
+//   <linked>true</linked>
+//   <mac>
+//     <address>02:00:00:00:00:00</address>
+//   </mac>
+//   <plugged>true</plugged>
+//   <vnic_profile href="/ovirt-engine/api/vnicprofiles/789" id="789"/>
+// </nic>
+// ----
 func (p *Statistic) SetNic(attr *Nic) {
 	p.nic = attr
 }
 
+// Nic Represents a virtual machine NIC.
+//
+// For example, the XML representation of a NIC will look like this:
+//
+// [source,xml]
+// ----
+// <nic href="/ovirt-engine/api/vms/123/nics/456" id="456">
+//   <name>nic1</name>
+//   <vm href="/ovirt-engine/api/vms/123" id="123"/>
+//   <interface>virtio</interface>
+//   <linked>true</linked>
+//   <mac>
+//     <address>02:00:00:00:00:00</address>
+//   </mac>
+//   <plugged>true</plugged>
+//   <vnic_profile href="/ovirt-engine/api/vnicprofiles/789" id="789"/>
+// </nic>
+// ----
 func (p *Statistic) Nic() (*Nic, bool) {
 	if p.nic != nil {
 		return p.nic, true
@@ -31023,6 +44641,24 @@ func (p *Statistic) Nic() (*Nic, bool) {
 	return nil, false
 }
 
+// MustNic Represents a virtual machine NIC.
+//
+// For example, the XML representation of a NIC will look like this:
+//
+// [source,xml]
+// ----
+// <nic href="/ovirt-engine/api/vms/123/nics/456" id="456">
+//   <name>nic1</name>
+//   <vm href="/ovirt-engine/api/vms/123" id="123"/>
+//   <interface>virtio</interface>
+//   <linked>true</linked>
+//   <mac>
+//     <address>02:00:00:00:00:00</address>
+//   </mac>
+//   <plugged>true</plugged>
+//   <vnic_profile href="/ovirt-engine/api/vnicprofiles/789" id="789"/>
+// </nic>
+// ----
 func (p *Statistic) MustNic() *Nic {
 	if p.nic == nil {
 		panic("the nic must not be nil, please use Nic() function instead")
@@ -31030,10 +44666,16 @@ func (p *Statistic) MustNic() *Nic {
 	return p.nic
 }
 
+// SetStep Represents a step, which is part of `job` execution.
+// Step is used to describe and track a specific execution unit which is part of a wider sequence.
+// Some steps support reporting their progress.
 func (p *Statistic) SetStep(attr *Step) {
 	p.step = attr
 }
 
+// Step Represents a step, which is part of `job` execution.
+// Step is used to describe and track a specific execution unit which is part of a wider sequence.
+// Some steps support reporting their progress.
 func (p *Statistic) Step() (*Step, bool) {
 	if p.step != nil {
 		return p.step, true
@@ -31041,6 +44683,9 @@ func (p *Statistic) Step() (*Step, bool) {
 	return nil, false
 }
 
+// MustStep Represents a step, which is part of `job` execution.
+// Step is used to describe and track a specific execution unit which is part of a wider sequence.
+// Some steps support reporting their progress.
 func (p *Statistic) MustStep() *Step {
 	if p.step == nil {
 		panic("the step must not be nil, please use Step() function instead")
@@ -31104,10 +44749,12 @@ func (p *Statistic) MustValues() *ValueSlice {
 	return p.values
 }
 
+// SetVm Represents a virtual machine.
 func (p *Statistic) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Statistic) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -31115,6 +44762,7 @@ func (p *Statistic) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Statistic) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -31122,6 +44770,9 @@ func (p *Statistic) MustVm() *Vm {
 	return p.vm
 }
 
+// Step Represents a step, which is part of `job` execution.
+// Step is used to describe and track a specific execution unit which is part of a wider sequence.
+// Some steps support reporting their progress.
 type Step struct {
 	Struct
 	comment       *string
@@ -31199,10 +44850,12 @@ func (p *Step) MustEndTime() time.Time {
 	return *p.endTime
 }
 
+// SetExecutionHost Type representing a host.
 func (p *Step) SetExecutionHost(attr *Host) {
 	p.executionHost = attr
 }
 
+// ExecutionHost Type representing a host.
 func (p *Step) ExecutionHost() (*Host, bool) {
 	if p.executionHost != nil {
 		return p.executionHost, true
@@ -31210,6 +44863,7 @@ func (p *Step) ExecutionHost() (*Host, bool) {
 	return nil, false
 }
 
+// MustExecutionHost Type representing a host.
 func (p *Step) MustExecutionHost() *Host {
 	if p.executionHost == nil {
 		panic("the executionHost must not be nil, please use ExecutionHost() function instead")
@@ -31236,10 +44890,12 @@ func (p *Step) MustExternal() bool {
 	return *p.external
 }
 
+// SetExternalType Represents the type of the external system that is associated with the `step`.
 func (p *Step) SetExternalType(attr ExternalSystemType) {
 	p.externalType = &attr
 }
 
+// ExternalType Represents the type of the external system that is associated with the `step`.
 func (p *Step) ExternalType() (ExternalSystemType, bool) {
 	if p.externalType != nil {
 		return *p.externalType, true
@@ -31248,6 +44904,7 @@ func (p *Step) ExternalType() (ExternalSystemType, bool) {
 	return zero, false
 }
 
+// MustExternalType Represents the type of the external system that is associated with the `step`.
 func (p *Step) MustExternalType() ExternalSystemType {
 	if p.externalType == nil {
 		panic("the externalType must not be nil, please use ExternalType() function instead")
@@ -31274,10 +44931,16 @@ func (p *Step) MustId() string {
 	return *p.id
 }
 
+// SetJob Represents a job, which monitors execution of a flow in the system.
+// A job can contain multiple steps in a hierarchic structure.
+// The steps can be processed in parallel, depends on the implementation of the flow.
 func (p *Step) SetJob(attr *Job) {
 	p.job = attr
 }
 
+// Job Represents a job, which monitors execution of a flow in the system.
+// A job can contain multiple steps in a hierarchic structure.
+// The steps can be processed in parallel, depends on the implementation of the flow.
 func (p *Step) Job() (*Job, bool) {
 	if p.job != nil {
 		return p.job, true
@@ -31285,6 +44948,9 @@ func (p *Step) Job() (*Job, bool) {
 	return nil, false
 }
 
+// MustJob Represents a job, which monitors execution of a flow in the system.
+// A job can contain multiple steps in a hierarchic structure.
+// The steps can be processed in parallel, depends on the implementation of the flow.
 func (p *Step) MustJob() *Job {
 	if p.job == nil {
 		panic("the job must not be nil, please use Job() function instead")
@@ -31330,10 +44996,16 @@ func (p *Step) MustNumber() int64 {
 	return *p.number
 }
 
+// SetParentStep Represents a step, which is part of `job` execution.
+// Step is used to describe and track a specific execution unit which is part of a wider sequence.
+// Some steps support reporting their progress.
 func (p *Step) SetParentStep(attr *Step) {
 	p.parentStep = attr
 }
 
+// ParentStep Represents a step, which is part of `job` execution.
+// Step is used to describe and track a specific execution unit which is part of a wider sequence.
+// Some steps support reporting their progress.
 func (p *Step) ParentStep() (*Step, bool) {
 	if p.parentStep != nil {
 		return p.parentStep, true
@@ -31341,6 +45013,9 @@ func (p *Step) ParentStep() (*Step, bool) {
 	return nil, false
 }
 
+// MustParentStep Represents a step, which is part of `job` execution.
+// Step is used to describe and track a specific execution unit which is part of a wider sequence.
+// Some steps support reporting their progress.
 func (p *Step) MustParentStep() *Step {
 	if p.parentStep == nil {
 		panic("the parentStep must not be nil, please use ParentStep() function instead")
@@ -31404,10 +45079,12 @@ func (p *Step) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+// SetStatus Represents the status of the step.
 func (p *Step) SetStatus(attr StepStatus) {
 	p.status = &attr
 }
 
+// Status Represents the status of the step.
 func (p *Step) Status() (StepStatus, bool) {
 	if p.status != nil {
 		return *p.status, true
@@ -31416,6 +45093,7 @@ func (p *Step) Status() (StepStatus, bool) {
 	return zero, false
 }
 
+// MustStatus Represents the status of the step.
 func (p *Step) MustStatus() StepStatus {
 	if p.status == nil {
 		panic("the status must not be nil, please use Status() function instead")
@@ -31423,10 +45101,12 @@ func (p *Step) MustStatus() StepStatus {
 	return *p.status
 }
 
+// SetType Type representing a step type.
 func (p *Step) SetType(attr StepEnum) {
 	p.type_ = &attr
 }
 
+// Type Type representing a step type.
 func (p *Step) Type() (StepEnum, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -31435,6 +45115,7 @@ func (p *Step) Type() (StepEnum, bool) {
 	return zero, false
 }
 
+// MustType Type representing a step type.
 func (p *Step) MustType() StepEnum {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -31442,6 +45123,18 @@ func (p *Step) MustType() StepEnum {
 	return *p.type_
 }
 
+// StorageConnection Represents a storage server connection.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <storage_connection id="123">
+//   <address>mynfs.example.com</address>
+//   <type>nfs</type>
+//   <path>/exports/mydata</path>
+// </storage_connection>
+// ----
 type StorageConnection struct {
 	Struct
 	address       *string
@@ -31540,10 +45233,12 @@ func (p *StorageConnection) MustGlusterVolume() *GlusterVolume {
 	return p.glusterVolume
 }
 
+// SetHost Type representing a host.
 func (p *StorageConnection) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *StorageConnection) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -31551,6 +45246,7 @@ func (p *StorageConnection) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *StorageConnection) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -31767,10 +45463,12 @@ func (p *StorageConnection) MustTarget() string {
 	return *p.target
 }
 
+// SetType Type representing a storage domain type.
 func (p *StorageConnection) SetType(attr StorageType) {
 	p.type_ = &attr
 }
 
+// Type Type representing a storage domain type.
 func (p *StorageConnection) Type() (StorageType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -31779,6 +45477,7 @@ func (p *StorageConnection) Type() (StorageType, bool) {
 	return zero, false
 }
 
+// MustType Type representing a storage domain type.
 func (p *StorageConnection) MustType() StorageType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -31874,10 +45573,12 @@ func (p *StorageConnectionExtension) MustDescription() string {
 	return *p.description
 }
 
+// SetHost Type representing a host.
 func (p *StorageConnectionExtension) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *StorageConnectionExtension) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -31885,6 +45586,7 @@ func (p *StorageConnectionExtension) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *StorageConnectionExtension) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -31987,6 +45689,36 @@ func (p *StorageConnectionExtension) MustUsername() string {
 	return *p.username
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 type StorageDomain struct {
 	Struct
 	available                  *int64
@@ -32267,10 +45999,18 @@ func (p *StorageDomain) MustDisks() *DiskSlice {
 	return p.disks
 }
 
+// SetExternalStatus Represents an external status.
+// This status is currently used for <<types/host, hosts>>
+// and <<types/storage_domain, storage domains>>, and allows an external
+// system to update status of objects it is aware of.
 func (p *StorageDomain) SetExternalStatus(attr ExternalStatus) {
 	p.externalStatus = &attr
 }
 
+// ExternalStatus Represents an external status.
+// This status is currently used for <<types/host, hosts>>
+// and <<types/storage_domain, storage domains>>, and allows an external
+// system to update status of objects it is aware of.
 func (p *StorageDomain) ExternalStatus() (ExternalStatus, bool) {
 	if p.externalStatus != nil {
 		return *p.externalStatus, true
@@ -32279,6 +46019,10 @@ func (p *StorageDomain) ExternalStatus() (ExternalStatus, bool) {
 	return zero, false
 }
 
+// MustExternalStatus Represents an external status.
+// This status is currently used for <<types/host, hosts>>
+// and <<types/storage_domain, storage domains>>, and allows an external
+// system to update status of objects it is aware of.
 func (p *StorageDomain) MustExternalStatus() ExternalStatus {
 	if p.externalStatus == nil {
 		panic("the externalStatus must not be nil, please use ExternalStatus() function instead")
@@ -32304,10 +46048,12 @@ func (p *StorageDomain) MustFiles() *FileSlice {
 	return p.files
 }
 
+// SetHost Type representing a host.
 func (p *StorageDomain) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *StorageDomain) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -32315,6 +46061,7 @@ func (p *StorageDomain) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *StorageDomain) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -32489,10 +46236,12 @@ func (p *StorageDomain) MustStorageConnections() *StorageConnectionSlice {
 	return p.storageConnections
 }
 
+// SetStorageFormat Type which represents a format of <<types/storage_domain, storage domain>>.
 func (p *StorageDomain) SetStorageFormat(attr StorageFormat) {
 	p.storageFormat = &attr
 }
 
+// StorageFormat Type which represents a format of <<types/storage_domain, storage domain>>.
 func (p *StorageDomain) StorageFormat() (StorageFormat, bool) {
 	if p.storageFormat != nil {
 		return *p.storageFormat, true
@@ -32501,6 +46250,7 @@ func (p *StorageDomain) StorageFormat() (StorageFormat, bool) {
 	return zero, false
 }
 
+// MustStorageFormat Type which represents a format of <<types/storage_domain, storage domain>>.
 func (p *StorageDomain) MustStorageFormat() StorageFormat {
 	if p.storageFormat == nil {
 		panic("the storageFormat must not be nil, please use StorageFormat() function instead")
@@ -32564,10 +46314,12 @@ func (p *StorageDomain) MustTemplates() *TemplateSlice {
 	return p.templates
 }
 
+// SetType Indicates the kind of data managed by a <<types/storage_domain, storage domain>>.
 func (p *StorageDomain) SetType(attr StorageDomainType) {
 	p.type_ = &attr
 }
 
+// Type Indicates the kind of data managed by a <<types/storage_domain, storage domain>>.
 func (p *StorageDomain) Type() (StorageDomainType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -32576,6 +46328,7 @@ func (p *StorageDomain) Type() (StorageDomainType, bool) {
 	return zero, false
 }
 
+// MustType Indicates the kind of data managed by a <<types/storage_domain, storage domain>>.
 func (p *StorageDomain) MustType() StorageDomainType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -32658,15 +46411,79 @@ func (p *StorageDomain) MustWipeAfterDelete() bool {
 	return *p.wipeAfterDelete
 }
 
+// StorageDomainLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 type StorageDomainLease struct {
 	Struct
 	storageDomain *StorageDomain
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *StorageDomainLease) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *StorageDomainLease) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -32674,6 +46491,36 @@ func (p *StorageDomainLease) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *StorageDomainLease) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -32681,6 +46528,7 @@ func (p *StorageDomainLease) MustStorageDomain() *StorageDomain {
 	return p.storageDomain
 }
 
+// SystemOption Type representing a configuration option of the system.
 type SystemOption struct {
 	Struct
 	comment     *string
@@ -32784,6 +46632,7 @@ func (p *SystemOption) MustValues() *SystemOptionValueSlice {
 	return p.values
 }
 
+// SystemOptionValue Type representing a pair of value and version of a configuration option.
 type SystemOptionValue struct {
 	Struct
 	value   *string
@@ -32828,6 +46677,7 @@ func (p *SystemOptionValue) MustVersion() string {
 	return *p.version
 }
 
+// Tag Represents a tag in the system.
 type Tag struct {
 	Struct
 	comment     *string
@@ -32880,10 +46730,12 @@ func (p *Tag) MustDescription() string {
 	return *p.description
 }
 
+// SetGroup This type represents all groups in the directory service.
 func (p *Tag) SetGroup(attr *Group) {
 	p.group = attr
 }
 
+// Group This type represents all groups in the directory service.
 func (p *Tag) Group() (*Group, bool) {
 	if p.group != nil {
 		return p.group, true
@@ -32891,6 +46743,7 @@ func (p *Tag) Group() (*Group, bool) {
 	return nil, false
 }
 
+// MustGroup This type represents all groups in the directory service.
 func (p *Tag) MustGroup() *Group {
 	if p.group == nil {
 		panic("the group must not be nil, please use Group() function instead")
@@ -32898,10 +46751,12 @@ func (p *Tag) MustGroup() *Group {
 	return p.group
 }
 
+// SetHost Type representing a host.
 func (p *Tag) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *Tag) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -32909,6 +46764,7 @@ func (p *Tag) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *Tag) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -32954,10 +46810,12 @@ func (p *Tag) MustName() string {
 	return *p.name
 }
 
+// SetParent Represents a tag in the system.
 func (p *Tag) SetParent(attr *Tag) {
 	p.parent = attr
 }
 
+// Parent Represents a tag in the system.
 func (p *Tag) Parent() (*Tag, bool) {
 	if p.parent != nil {
 		return p.parent, true
@@ -32965,6 +46823,7 @@ func (p *Tag) Parent() (*Tag, bool) {
 	return nil, false
 }
 
+// MustParent Represents a tag in the system.
 func (p *Tag) MustParent() *Tag {
 	if p.parent == nil {
 		panic("the parent must not be nil, please use Parent() function instead")
@@ -32972,10 +46831,14 @@ func (p *Tag) MustParent() *Tag {
 	return p.parent
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Tag) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Tag) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -32983,6 +46846,8 @@ func (p *Tag) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Tag) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -32990,10 +46855,12 @@ func (p *Tag) MustTemplate() *Template {
 	return p.template
 }
 
+// SetUser Represents a user in the system.
 func (p *Tag) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *Tag) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -33001,6 +46868,7 @@ func (p *Tag) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *Tag) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -33008,10 +46876,12 @@ func (p *Tag) MustUser() *User {
 	return p.user
 }
 
+// SetVm Represents a virtual machine.
 func (p *Tag) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Tag) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -33019,6 +46889,7 @@ func (p *Tag) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Tag) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -33026,6 +46897,8 @@ func (p *Tag) MustVm() *Vm {
 	return p.vm
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 type Template struct {
 	Struct
 	bios                         *Bios
@@ -33077,6 +46950,7 @@ type Template struct {
 	storageErrorResumeBehaviour  *VmStorageErrorResumeBehaviour
 	tags                         *TagSlice
 	timeZone                     *TimeZone
+	tpmEnabled                   *bool
 	tunnelMigration              *bool
 	type_                        *VmType
 	usb                          *Usb
@@ -33123,10 +46997,264 @@ func (p *Template) MustCdroms() *CdromSlice {
 	return p.cdroms
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Template) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Template) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -33134,6 +47262,133 @@ func (p *Template) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Template) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -33160,10 +47415,12 @@ func (p *Template) MustComment() string {
 	return *p.comment
 }
 
+// SetConsole Representation for serial console device.
 func (p *Template) SetConsole(attr *Console) {
 	p.console = attr
 }
 
+// Console Representation for serial console device.
 func (p *Template) Console() (*Console, bool) {
 	if p.console != nil {
 		return p.console, true
@@ -33171,6 +47428,7 @@ func (p *Template) Console() (*Console, bool) {
 	return nil, false
 }
 
+// MustConsole Representation for serial console device.
 func (p *Template) MustConsole() *Console {
 	if p.console == nil {
 		panic("the console must not be nil, please use Console() function instead")
@@ -33382,10 +47640,12 @@ func (p *Template) MustDiskAttachments() *DiskAttachmentSlice {
 	return p.diskAttachments
 }
 
+// SetDisplay Represents a graphic console configuration.
 func (p *Template) SetDisplay(attr *Display) {
 	p.display = attr
 }
 
+// Display Represents a graphic console configuration.
 func (p *Template) Display() (*Display, bool) {
 	if p.display != nil {
 		return p.display, true
@@ -33393,6 +47653,7 @@ func (p *Template) Display() (*Display, bool) {
 	return nil, false
 }
 
+// MustDisplay Represents a graphic console configuration.
 func (p *Template) MustDisplay() *Display {
 	if p.display == nil {
 		panic("the display must not be nil, please use Display() function instead")
@@ -33400,10 +47661,12 @@ func (p *Template) MustDisplay() *Display {
 	return p.display
 }
 
+// SetDomain This type represents a directory service domain.
 func (p *Template) SetDomain(attr *Domain) {
 	p.domain = attr
 }
 
+// Domain This type represents a directory service domain.
 func (p *Template) Domain() (*Domain, bool) {
 	if p.domain != nil {
 		return p.domain, true
@@ -33411,6 +47674,7 @@ func (p *Template) Domain() (*Domain, bool) {
 	return nil, false
 }
 
+// MustDomain This type represents a directory service domain.
 func (p *Template) MustDomain() *Domain {
 	if p.domain == nil {
 		panic("the domain must not be nil, please use Domain() function instead")
@@ -33436,10 +47700,12 @@ func (p *Template) MustGraphicsConsoles() *GraphicsConsoleSlice {
 	return p.graphicsConsoles
 }
 
+// SetHighAvailability Type representing high availability of a virtual machine.
 func (p *Template) SetHighAvailability(attr *HighAvailability) {
 	p.highAvailability = attr
 }
 
+// HighAvailability Type representing high availability of a virtual machine.
 func (p *Template) HighAvailability() (*HighAvailability, bool) {
 	if p.highAvailability != nil {
 		return p.highAvailability, true
@@ -33447,6 +47713,7 @@ func (p *Template) HighAvailability() (*HighAvailability, bool) {
 	return nil, false
 }
 
+// MustHighAvailability Type representing high availability of a virtual machine.
 func (p *Template) MustHighAvailability() *HighAvailability {
 	if p.highAvailability == nil {
 		panic("the highAvailability must not be nil, please use HighAvailability() function instead")
@@ -33509,10 +47776,12 @@ func (p *Template) MustIo() *Io {
 	return p.io
 }
 
+// SetLargeIcon Icon of virtual machine or template.
 func (p *Template) SetLargeIcon(attr *Icon) {
 	p.largeIcon = attr
 }
 
+// LargeIcon Icon of virtual machine or template.
 func (p *Template) LargeIcon() (*Icon, bool) {
 	if p.largeIcon != nil {
 		return p.largeIcon, true
@@ -33520,6 +47789,7 @@ func (p *Template) LargeIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustLargeIcon Icon of virtual machine or template.
 func (p *Template) MustLargeIcon() *Icon {
 	if p.largeIcon == nil {
 		panic("the largeIcon must not be nil, please use LargeIcon() function instead")
@@ -33527,10 +47797,18 @@ func (p *Template) MustLargeIcon() *Icon {
 	return p.largeIcon
 }
 
+// SetLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Template) SetLease(attr *StorageDomainLease) {
 	p.lease = attr
 }
 
+// Lease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Template) Lease() (*StorageDomainLease, bool) {
 	if p.lease != nil {
 		return p.lease, true
@@ -33538,6 +47816,10 @@ func (p *Template) Lease() (*StorageDomainLease, bool) {
 	return nil, false
 }
 
+// MustLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Template) MustLease() *StorageDomainLease {
 	if p.lease == nil {
 		panic("the lease must not be nil, please use Lease() function instead")
@@ -33564,10 +47846,12 @@ func (p *Template) MustMemory() int64 {
 	return *p.memory
 }
 
+// SetMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Template) SetMemoryPolicy(attr *MemoryPolicy) {
 	p.memoryPolicy = attr
 }
 
+// MemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Template) MemoryPolicy() (*MemoryPolicy, bool) {
 	if p.memoryPolicy != nil {
 		return p.memoryPolicy, true
@@ -33575,6 +47859,7 @@ func (p *Template) MemoryPolicy() (*MemoryPolicy, bool) {
 	return nil, false
 }
 
+// MustMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Template) MustMemoryPolicy() *MemoryPolicy {
 	if p.memoryPolicy == nil {
 		panic("the memoryPolicy must not be nil, please use MemoryPolicy() function instead")
@@ -33582,10 +47867,12 @@ func (p *Template) MustMemoryPolicy() *MemoryPolicy {
 	return p.memoryPolicy
 }
 
+// SetMigration The type for migration options.
 func (p *Template) SetMigration(attr *MigrationOptions) {
 	p.migration = attr
 }
 
+// Migration The type for migration options.
 func (p *Template) Migration() (*MigrationOptions, bool) {
 	if p.migration != nil {
 		return p.migration, true
@@ -33593,6 +47880,7 @@ func (p *Template) Migration() (*MigrationOptions, bool) {
 	return nil, false
 }
 
+// MustMigration The type for migration options.
 func (p *Template) MustMigration() *MigrationOptions {
 	if p.migration == nil {
 		panic("the migration must not be nil, please use Migration() function instead")
@@ -33694,10 +47982,12 @@ func (p *Template) MustOrigin() string {
 	return *p.origin
 }
 
+// SetOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Template) SetOs(attr *OperatingSystem) {
 	p.os = attr
 }
 
+// Os Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Template) Os() (*OperatingSystem, bool) {
 	if p.os != nil {
 		return p.os, true
@@ -33705,6 +47995,7 @@ func (p *Template) Os() (*OperatingSystem, bool) {
 	return nil, false
 }
 
+// MustOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Template) MustOs() *OperatingSystem {
 	if p.os == nil {
 		panic("the os must not be nil, please use Os() function instead")
@@ -33748,10 +48039,42 @@ func (p *Template) MustPlacementPolicy() *VmPlacementPolicy {
 	return p.placementPolicy
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Template) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Template) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -33759,6 +48082,22 @@ func (p *Template) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Template) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -33766,10 +48105,12 @@ func (p *Template) MustQuota() *Quota {
 	return p.quota
 }
 
+// SetRngDevice Random number generator (RNG) device model.
 func (p *Template) SetRngDevice(attr *RngDevice) {
 	p.rngDevice = attr
 }
 
+// RngDevice Random number generator (RNG) device model.
 func (p *Template) RngDevice() (*RngDevice, bool) {
 	if p.rngDevice != nil {
 		return p.rngDevice, true
@@ -33777,6 +48118,7 @@ func (p *Template) RngDevice() (*RngDevice, bool) {
 	return nil, false
 }
 
+// MustRngDevice Random number generator (RNG) device model.
 func (p *Template) MustRngDevice() *RngDevice {
 	if p.rngDevice == nil {
 		panic("the rngDevice must not be nil, please use RngDevice() function instead")
@@ -33802,10 +48144,12 @@ func (p *Template) MustSerialNumber() *SerialNumber {
 	return p.serialNumber
 }
 
+// SetSmallIcon Icon of virtual machine or template.
 func (p *Template) SetSmallIcon(attr *Icon) {
 	p.smallIcon = attr
 }
 
+// SmallIcon Icon of virtual machine or template.
 func (p *Template) SmallIcon() (*Icon, bool) {
 	if p.smallIcon != nil {
 		return p.smallIcon, true
@@ -33813,6 +48157,7 @@ func (p *Template) SmallIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustSmallIcon Icon of virtual machine or template.
 func (p *Template) MustSmallIcon() *Icon {
 	if p.smallIcon == nil {
 		panic("the smallIcon must not be nil, please use SmallIcon() function instead")
@@ -33895,10 +48240,12 @@ func (p *Template) MustStateless() bool {
 	return *p.stateless
 }
 
+// SetStatus Type representing a status of a virtual machine template.
 func (p *Template) SetStatus(attr TemplateStatus) {
 	p.status = &attr
 }
 
+// Status Type representing a status of a virtual machine template.
 func (p *Template) Status() (TemplateStatus, bool) {
 	if p.status != nil {
 		return *p.status, true
@@ -33907,6 +48254,7 @@ func (p *Template) Status() (TemplateStatus, bool) {
 	return zero, false
 }
 
+// MustStatus Type representing a status of a virtual machine template.
 func (p *Template) MustStatus() TemplateStatus {
 	if p.status == nil {
 		panic("the status must not be nil, please use Status() function instead")
@@ -33914,10 +48262,70 @@ func (p *Template) MustStatus() TemplateStatus {
 	return *p.status
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Template) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Template) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -33925,6 +48333,36 @@ func (p *Template) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Template) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -33932,10 +48370,20 @@ func (p *Template) MustStorageDomain() *StorageDomain {
 	return p.storageDomain
 }
 
+// SetStorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *Template) SetStorageErrorResumeBehaviour(attr VmStorageErrorResumeBehaviour) {
 	p.storageErrorResumeBehaviour = &attr
 }
 
+// StorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *Template) StorageErrorResumeBehaviour() (VmStorageErrorResumeBehaviour, bool) {
 	if p.storageErrorResumeBehaviour != nil {
 		return *p.storageErrorResumeBehaviour, true
@@ -33944,6 +48392,11 @@ func (p *Template) StorageErrorResumeBehaviour() (VmStorageErrorResumeBehaviour,
 	return zero, false
 }
 
+// MustStorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *Template) MustStorageErrorResumeBehaviour() VmStorageErrorResumeBehaviour {
 	if p.storageErrorResumeBehaviour == nil {
 		panic("the storageErrorResumeBehaviour must not be nil, please use StorageErrorResumeBehaviour() function instead")
@@ -33969,10 +48422,12 @@ func (p *Template) MustTags() *TagSlice {
 	return p.tags
 }
 
+// SetTimeZone Time zone representation.
 func (p *Template) SetTimeZone(attr *TimeZone) {
 	p.timeZone = attr
 }
 
+// TimeZone Time zone representation.
 func (p *Template) TimeZone() (*TimeZone, bool) {
 	if p.timeZone != nil {
 		return p.timeZone, true
@@ -33980,11 +48435,31 @@ func (p *Template) TimeZone() (*TimeZone, bool) {
 	return nil, false
 }
 
+// MustTimeZone Time zone representation.
 func (p *Template) MustTimeZone() *TimeZone {
 	if p.timeZone == nil {
 		panic("the timeZone must not be nil, please use TimeZone() function instead")
 	}
 	return p.timeZone
+}
+
+func (p *Template) SetTpmEnabled(attr bool) {
+	p.tpmEnabled = &attr
+}
+
+func (p *Template) TpmEnabled() (bool, bool) {
+	if p.tpmEnabled != nil {
+		return *p.tpmEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *Template) MustTpmEnabled() bool {
+	if p.tpmEnabled == nil {
+		panic("the tpmEnabled must not be nil, please use TpmEnabled() function instead")
+	}
+	return *p.tpmEnabled
 }
 
 func (p *Template) SetTunnelMigration(attr bool) {
@@ -34006,10 +48481,12 @@ func (p *Template) MustTunnelMigration() bool {
 	return *p.tunnelMigration
 }
 
+// SetType Type representing what the virtual machine is optimized for.
 func (p *Template) SetType(attr VmType) {
 	p.type_ = &attr
 }
 
+// Type Type representing what the virtual machine is optimized for.
 func (p *Template) Type() (VmType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -34018,6 +48495,7 @@ func (p *Template) Type() (VmType, bool) {
 	return zero, false
 }
 
+// MustType Type representing what the virtual machine is optimized for.
 func (p *Template) MustType() VmType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -34025,10 +48503,12 @@ func (p *Template) MustType() VmType {
 	return *p.type_
 }
 
+// SetUsb Configuration of the USB device of a virtual machine.
 func (p *Template) SetUsb(attr *Usb) {
 	p.usb = attr
 }
 
+// Usb Configuration of the USB device of a virtual machine.
 func (p *Template) Usb() (*Usb, bool) {
 	if p.usb != nil {
 		return p.usb, true
@@ -34036,6 +48516,7 @@ func (p *Template) Usb() (*Usb, bool) {
 	return nil, false
 }
 
+// MustUsb Configuration of the USB device of a virtual machine.
 func (p *Template) MustUsb() *Usb {
 	if p.usb == nil {
 		panic("the usb must not be nil, please use Usb() function instead")
@@ -34043,10 +48524,12 @@ func (p *Template) MustUsb() *Usb {
 	return p.usb
 }
 
+// SetVersion Type representing a version of a virtual machine template.
 func (p *Template) SetVersion(attr *TemplateVersion) {
 	p.version = attr
 }
 
+// Version Type representing a version of a virtual machine template.
 func (p *Template) Version() (*TemplateVersion, bool) {
 	if p.version != nil {
 		return p.version, true
@@ -34054,6 +48537,7 @@ func (p *Template) Version() (*TemplateVersion, bool) {
 	return nil, false
 }
 
+// MustVersion Type representing a version of a virtual machine template.
 func (p *Template) MustVersion() *TemplateVersion {
 	if p.version == nil {
 		panic("the version must not be nil, please use Version() function instead")
@@ -34061,10 +48545,14 @@ func (p *Template) MustVersion() *TemplateVersion {
 	return p.version
 }
 
+// SetVirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *Template) SetVirtioScsi(attr *VirtioScsi) {
 	p.virtioScsi = attr
 }
 
+// VirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *Template) VirtioScsi() (*VirtioScsi, bool) {
 	if p.virtioScsi != nil {
 		return p.virtioScsi, true
@@ -34072,6 +48560,8 @@ func (p *Template) VirtioScsi() (*VirtioScsi, bool) {
 	return nil, false
 }
 
+// MustVirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *Template) MustVirtioScsi() *VirtioScsi {
 	if p.virtioScsi == nil {
 		panic("the virtioScsi must not be nil, please use VirtioScsi() function instead")
@@ -34098,10 +48588,12 @@ func (p *Template) MustVirtioScsiMultiQueuesEnabled() bool {
 	return *p.virtioScsiMultiQueuesEnabled
 }
 
+// SetVm Represents a virtual machine.
 func (p *Template) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Template) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -34109,6 +48601,7 @@ func (p *Template) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Template) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -34134,6 +48627,7 @@ func (p *Template) MustWatchdogs() *WatchdogSlice {
 	return p.watchdogs
 }
 
+// TemplateVersion Type representing a version of a virtual machine template.
 type TemplateVersion struct {
 	Struct
 	baseTemplate  *Template
@@ -34141,10 +48635,14 @@ type TemplateVersion struct {
 	versionNumber *int64
 }
 
+// SetBaseTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *TemplateVersion) SetBaseTemplate(attr *Template) {
 	p.baseTemplate = attr
 }
 
+// BaseTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *TemplateVersion) BaseTemplate() (*Template, bool) {
 	if p.baseTemplate != nil {
 		return p.baseTemplate, true
@@ -34152,6 +48650,8 @@ func (p *TemplateVersion) BaseTemplate() (*Template, bool) {
 	return nil, false
 }
 
+// MustBaseTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *TemplateVersion) MustBaseTemplate() *Template {
 	if p.baseTemplate == nil {
 		panic("the baseTemplate must not be nil, please use BaseTemplate() function instead")
@@ -34197,6 +48697,7 @@ func (p *TemplateVersion) MustVersionNumber() int64 {
 	return *p.versionNumber
 }
 
+// Ticket Type representing a ticket that allows virtual machine access.
 type Ticket struct {
 	Struct
 	expiry *int64
@@ -34241,6 +48742,7 @@ func (p *Ticket) MustValue() string {
 	return *p.value
 }
 
+// TimeZone Time zone representation.
 type TimeZone struct {
 	Struct
 	name      *string
@@ -34285,6 +48787,7 @@ func (p *TimeZone) MustUtcOffset() string {
 	return *p.utcOffset
 }
 
+// TransparentHugePages Type representing a transparent huge pages (THP) support.
 type TransparentHugePages struct {
 	Struct
 	enabled *bool
@@ -34357,10 +48860,12 @@ func (p *UnmanagedNetwork) MustDescription() string {
 	return *p.description
 }
 
+// SetHost Type representing a host.
 func (p *UnmanagedNetwork) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *UnmanagedNetwork) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -34368,6 +48873,7 @@ func (p *UnmanagedNetwork) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *UnmanagedNetwork) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -34375,10 +48881,148 @@ func (p *UnmanagedNetwork) MustHost() *Host {
 	return p.host
 }
 
+// SetHostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *UnmanagedNetwork) SetHostNic(attr *HostNic) {
 	p.hostNic = attr
 }
 
+// HostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *UnmanagedNetwork) HostNic() (*HostNic, bool) {
 	if p.hostNic != nil {
 		return p.hostNic, true
@@ -34386,6 +49030,75 @@ func (p *UnmanagedNetwork) HostNic() (*HostNic, bool) {
 	return nil, false
 }
 
+// MustHostNic Represents a host NIC.
+//
+// For example, the XML representation of a host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>eth0</name>
+//   <boot_protocol>static</boot_protocol>
+//   <bridged>true</bridged>
+//   <custom_configuration>true</custom_configuration>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <ipv6>
+//     <gateway>::</gateway>
+//     <version>v6</version>
+//   </ipv6>
+//   <ipv6_boot_protocol>none</ipv6_boot_protocol>
+//   <mac>
+//     <address>52:54:00:0c:79:1d</address>
+//   </mac>
+//   <mtu>1500</mtu>
+//   <status>up</status>
+// </host_nic>
+// ----
+//
+// A bonded interface is represented as a <<types/host_nic, HostNic>> object
+// containing the `bonding` and `slaves` attributes.
+//
+// For example, the XML representation of a bonded host NIC looks like this:
+//
+// [source,xml]
+// ----
+// <host_nic href="/ovirt-engine/api/hosts/123/nics/456" id="456">
+//   <name>bond0</name>
+//   <mac address="00:00:00:00:00:00"/>
+//   <ip>
+//     <address>192.168.122.39</address>
+//     <gateway>192.168.122.1</gateway>
+//     <netmask>255.255.255.0</netmask>
+//     <version>v4</version>
+//   </ip>
+//   <boot_protocol>dhcp</boot_protocol>
+//   <bonding>
+//     <options>
+//       <option>
+//         <name>mode</name>
+//         <value>4</value>
+//         <type>Dynamic link aggregation (802.3ad)</type>
+//       </option>
+//       <option>
+//         <name>miimon</name>
+//         <value>100</value>
+//       </option>
+//     </options>
+//     <slaves>
+//       <host_nic id="123"/>
+//       <host_nic id="456"/>
+//     </slaves>
+//   </bonding>
+//   <mtu>1500</mtu>
+//   <bridged>true</bridged>
+//   <custom_configuration>false</custom_configuration>
+// </host_nic>
+// ----
 func (p *UnmanagedNetwork) MustHostNic() *HostNic {
 	if p.hostNic == nil {
 		panic("the hostNic must not be nil, please use HostNic() function instead")
@@ -34431,6 +49144,7 @@ func (p *UnmanagedNetwork) MustName() string {
 	return *p.name
 }
 
+// Usb Configuration of the USB device of a virtual machine.
 type Usb struct {
 	Struct
 	enabled *bool
@@ -34456,10 +49170,12 @@ func (p *Usb) MustEnabled() bool {
 	return *p.enabled
 }
 
+// SetType Type of USB device redirection.
 func (p *Usb) SetType(attr UsbType) {
 	p.type_ = &attr
 }
 
+// Type Type of USB device redirection.
 func (p *Usb) Type() (UsbType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -34468,6 +49184,7 @@ func (p *Usb) Type() (UsbType, bool) {
 	return zero, false
 }
 
+// MustType Type of USB device redirection.
 func (p *Usb) MustType() UsbType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -34475,6 +49192,7 @@ func (p *Usb) MustType() UsbType {
 	return *p.type_
 }
 
+// User Represents a user in the system.
 type User struct {
 	Struct
 	comment       *string
@@ -34557,10 +49275,12 @@ func (p *User) MustDescription() string {
 	return *p.description
 }
 
+// SetDomain This type represents a directory service domain.
 func (p *User) SetDomain(attr *Domain) {
 	p.domain = attr
 }
 
+// Domain This type represents a directory service domain.
 func (p *User) Domain() (*Domain, bool) {
 	if p.domain != nil {
 		return p.domain, true
@@ -34568,6 +49288,7 @@ func (p *User) Domain() (*Domain, bool) {
 	return nil, false
 }
 
+// MustDomain This type represents a directory service domain.
 func (p *User) MustDomain() *Domain {
 	if p.domain == nil {
 		panic("the domain must not be nil, please use Domain() function instead")
@@ -34891,6 +49612,9 @@ func (p *User) MustUserOptions() *PropertySlice {
 	return p.userOptions
 }
 
+// UserOption User options allow you to save key/value properties
+// which are used to customize the settings per individual
+// user.
 type UserOption struct {
 	Struct
 	comment     *string
@@ -34996,10 +49720,12 @@ func (p *UserOption) MustName() string {
 	return *p.name
 }
 
+// SetUser Represents a user in the system.
 func (p *UserOption) SetUser(attr *User) {
 	p.user = attr
 }
 
+// User Represents a user in the system.
 func (p *UserOption) User() (*User, bool) {
 	if p.user != nil {
 		return p.user, true
@@ -35007,6 +49733,7 @@ func (p *UserOption) User() (*User, bool) {
 	return nil, false
 }
 
+// MustUser Represents a user in the system.
 func (p *UserOption) MustUser() *User {
 	if p.user == nil {
 		panic("the user must not be nil, please use User() function instead")
@@ -35370,6 +50097,8 @@ func (p *Version) MustRevision() int64 {
 	return *p.revision
 }
 
+// VirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 type VirtioScsi struct {
 	Struct
 	enabled *bool
@@ -35394,6 +50123,30 @@ func (p *VirtioScsi) MustEnabled() bool {
 	return *p.enabled
 }
 
+// VirtualNumaNode Represents the virtual NUMA node.
+//
+// An example XML representation:
+//
+// [source,xml]
+// ----
+// <vm_numa_node href="/ovirt-engine/api/vms/123/numanodes/456" id="456">
+//   <cpu>
+//     <cores>
+//       <core>
+//         <index>0</index>
+//       </core>
+//     </cores>
+//   </cpu>
+//   <index>0</index>
+//   <memory>1024</memory>
+//   <numa_node_pins>
+//     <numa_node_pin>
+//       <index>0</index>
+//     </numa_node_pin>
+//   </numa_node_pins>
+//   <vm href="/ovirt-engine/api/vms/123" id="123" />
+// </vm_numa_node>
+// ----
 type VirtualNumaNode struct {
 	Struct
 	comment      *string
@@ -35467,10 +50220,12 @@ func (p *VirtualNumaNode) MustDescription() string {
 	return *p.description
 }
 
+// SetHost Type representing a host.
 func (p *VirtualNumaNode) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *VirtualNumaNode) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -35478,6 +50233,7 @@ func (p *VirtualNumaNode) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *VirtualNumaNode) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -35635,10 +50391,12 @@ func (p *VirtualNumaNode) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+// SetVm Represents a virtual machine.
 func (p *VirtualNumaNode) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *VirtualNumaNode) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -35646,6 +50404,7 @@ func (p *VirtualNumaNode) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *VirtualNumaNode) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -35653,6 +50412,7 @@ func (p *VirtualNumaNode) MustVm() *Vm {
 	return p.vm
 }
 
+// Vlan Type representing a Virtual LAN (VLAN) type.
 type Vlan struct {
 	Struct
 	id *int64
@@ -35677,6 +50437,7 @@ func (p *Vlan) MustId() int64 {
 	return *p.id
 }
 
+// Vm Represents a virtual machine.
 type Vm struct {
 	Struct
 	affinityLabels               *AffinityLabelSlice
@@ -35755,6 +50516,7 @@ type Vm struct {
 	tags                         *TagSlice
 	template                     *Template
 	timeZone                     *TimeZone
+	tpmEnabled                   *bool
 	tunnelMigration              *bool
 	type_                        *VmType
 	usb                          *Usb
@@ -35837,10 +50599,264 @@ func (p *Vm) MustCdroms() *CdromSlice {
 	return p.cdroms
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Vm) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Vm) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -35848,6 +50864,133 @@ func (p *Vm) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Vm) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -35874,10 +51017,12 @@ func (p *Vm) MustComment() string {
 	return *p.comment
 }
 
+// SetConsole Representation for serial console device.
 func (p *Vm) SetConsole(attr *Console) {
 	p.console = attr
 }
 
+// Console Representation for serial console device.
 func (p *Vm) Console() (*Console, bool) {
 	if p.console != nil {
 		return p.console, true
@@ -35885,6 +51030,7 @@ func (p *Vm) Console() (*Console, bool) {
 	return nil, false
 }
 
+// MustConsole Representation for serial console device.
 func (p *Vm) MustConsole() *Console {
 	if p.console == nil {
 		panic("the console must not be nil, please use Console() function instead")
@@ -36096,10 +51242,12 @@ func (p *Vm) MustDiskAttachments() *DiskAttachmentSlice {
 	return p.diskAttachments
 }
 
+// SetDisplay Represents a graphic console configuration.
 func (p *Vm) SetDisplay(attr *Display) {
 	p.display = attr
 }
 
+// Display Represents a graphic console configuration.
 func (p *Vm) Display() (*Display, bool) {
 	if p.display != nil {
 		return p.display, true
@@ -36107,6 +51255,7 @@ func (p *Vm) Display() (*Display, bool) {
 	return nil, false
 }
 
+// MustDisplay Represents a graphic console configuration.
 func (p *Vm) MustDisplay() *Display {
 	if p.display == nil {
 		panic("the display must not be nil, please use Display() function instead")
@@ -36114,10 +51263,12 @@ func (p *Vm) MustDisplay() *Display {
 	return p.display
 }
 
+// SetDomain This type represents a directory service domain.
 func (p *Vm) SetDomain(attr *Domain) {
 	p.domain = attr
 }
 
+// Domain This type represents a directory service domain.
 func (p *Vm) Domain() (*Domain, bool) {
 	if p.domain != nil {
 		return p.domain, true
@@ -36125,6 +51276,7 @@ func (p *Vm) Domain() (*Domain, bool) {
 	return nil, false
 }
 
+// MustDomain This type represents a directory service domain.
 func (p *Vm) MustDomain() *Domain {
 	if p.domain == nil {
 		panic("the domain must not be nil, please use Domain() function instead")
@@ -36132,10 +51284,22 @@ func (p *Vm) MustDomain() *Domain {
 	return p.domain
 }
 
+// SetExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *Vm) SetExternalHostProvider(attr *ExternalHostProvider) {
 	p.externalHostProvider = attr
 }
 
+// ExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *Vm) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	if p.externalHostProvider != nil {
 		return p.externalHostProvider, true
@@ -36143,6 +51307,12 @@ func (p *Vm) ExternalHostProvider() (*ExternalHostProvider, bool) {
 	return nil, false
 }
 
+// MustExternalHostProvider Represents an external host provider,
+// such as Foreman or Satellite.
+//
+// See https://www.theforeman.org/ for more details on Foreman.
+// See https://access.redhat.com/products/red-hat-satellite
+// for more details on Red Hat Satellite.
 func (p *Vm) MustExternalHostProvider() *ExternalHostProvider {
 	if p.externalHostProvider == nil {
 		panic("the externalHostProvider must not be nil, please use ExternalHostProvider() function instead")
@@ -36205,10 +51375,82 @@ func (p *Vm) MustGraphicsConsoles() *GraphicsConsoleSlice {
 	return p.graphicsConsoles
 }
 
+// SetGuestOperatingSystem Represents an operating system installed on the virtual machine.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/vms/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <vm href="/ovirt-engine/api/vms/123" id="123">
+// ...
+//   <guest_operating_system>
+//     <architecture>x86_64</architecture>
+//     <codename>Maipo</codename>
+//     <distribution>Red Hat Enterprise Linux Server</distribution>
+//     <family>Linux</family>
+//     <kernel>
+//       <version>
+//         <build>0</build>
+//         <full_version>3.10.0-514.10.2.el7.x86_64</full_version>
+//         <major>3</major>
+//         <minor>10</minor>
+//         <revision>514</revision>
+//       </version>
+//     </kernel>
+//     <version>
+//       <full_version>7.3</full_version>
+//       <major>7</major>
+//       <minor>3</minor>
+//     </version>
+//   </guest_operating_system>
+// </vm>
+// ----
 func (p *Vm) SetGuestOperatingSystem(attr *GuestOperatingSystem) {
 	p.guestOperatingSystem = attr
 }
 
+// GuestOperatingSystem Represents an operating system installed on the virtual machine.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/vms/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <vm href="/ovirt-engine/api/vms/123" id="123">
+// ...
+//   <guest_operating_system>
+//     <architecture>x86_64</architecture>
+//     <codename>Maipo</codename>
+//     <distribution>Red Hat Enterprise Linux Server</distribution>
+//     <family>Linux</family>
+//     <kernel>
+//       <version>
+//         <build>0</build>
+//         <full_version>3.10.0-514.10.2.el7.x86_64</full_version>
+//         <major>3</major>
+//         <minor>10</minor>
+//         <revision>514</revision>
+//       </version>
+//     </kernel>
+//     <version>
+//       <full_version>7.3</full_version>
+//       <major>7</major>
+//       <minor>3</minor>
+//     </version>
+//   </guest_operating_system>
+// </vm>
+// ----
 func (p *Vm) GuestOperatingSystem() (*GuestOperatingSystem, bool) {
 	if p.guestOperatingSystem != nil {
 		return p.guestOperatingSystem, true
@@ -36216,6 +51458,42 @@ func (p *Vm) GuestOperatingSystem() (*GuestOperatingSystem, bool) {
 	return nil, false
 }
 
+// MustGuestOperatingSystem Represents an operating system installed on the virtual machine.
+//
+// To get that information send a request like this:
+//
+// ....
+// GET /ovirt-engine/api/vms/123
+// ....
+//
+// The result will be like this:
+//
+// [source,xml]
+// ----
+// <vm href="/ovirt-engine/api/vms/123" id="123">
+// ...
+//   <guest_operating_system>
+//     <architecture>x86_64</architecture>
+//     <codename>Maipo</codename>
+//     <distribution>Red Hat Enterprise Linux Server</distribution>
+//     <family>Linux</family>
+//     <kernel>
+//       <version>
+//         <build>0</build>
+//         <full_version>3.10.0-514.10.2.el7.x86_64</full_version>
+//         <major>3</major>
+//         <minor>10</minor>
+//         <revision>514</revision>
+//       </version>
+//     </kernel>
+//     <version>
+//       <full_version>7.3</full_version>
+//       <major>7</major>
+//       <minor>3</minor>
+//     </version>
+//   </guest_operating_system>
+// </vm>
+// ----
 func (p *Vm) MustGuestOperatingSystem() *GuestOperatingSystem {
 	if p.guestOperatingSystem == nil {
 		panic("the guestOperatingSystem must not be nil, please use GuestOperatingSystem() function instead")
@@ -36223,10 +51501,12 @@ func (p *Vm) MustGuestOperatingSystem() *GuestOperatingSystem {
 	return p.guestOperatingSystem
 }
 
+// SetGuestTimeZone Time zone representation.
 func (p *Vm) SetGuestTimeZone(attr *TimeZone) {
 	p.guestTimeZone = attr
 }
 
+// GuestTimeZone Time zone representation.
 func (p *Vm) GuestTimeZone() (*TimeZone, bool) {
 	if p.guestTimeZone != nil {
 		return p.guestTimeZone, true
@@ -36234,6 +51514,7 @@ func (p *Vm) GuestTimeZone() (*TimeZone, bool) {
 	return nil, false
 }
 
+// MustGuestTimeZone Time zone representation.
 func (p *Vm) MustGuestTimeZone() *TimeZone {
 	if p.guestTimeZone == nil {
 		panic("the guestTimeZone must not be nil, please use GuestTimeZone() function instead")
@@ -36260,10 +51541,12 @@ func (p *Vm) MustHasIllegalImages() bool {
 	return *p.hasIllegalImages
 }
 
+// SetHighAvailability Type representing high availability of a virtual machine.
 func (p *Vm) SetHighAvailability(attr *HighAvailability) {
 	p.highAvailability = attr
 }
 
+// HighAvailability Type representing high availability of a virtual machine.
 func (p *Vm) HighAvailability() (*HighAvailability, bool) {
 	if p.highAvailability != nil {
 		return p.highAvailability, true
@@ -36271,6 +51554,7 @@ func (p *Vm) HighAvailability() (*HighAvailability, bool) {
 	return nil, false
 }
 
+// MustHighAvailability Type representing high availability of a virtual machine.
 func (p *Vm) MustHighAvailability() *HighAvailability {
 	if p.highAvailability == nil {
 		panic("the highAvailability must not be nil, please use HighAvailability() function instead")
@@ -36278,10 +51562,12 @@ func (p *Vm) MustHighAvailability() *HighAvailability {
 	return p.highAvailability
 }
 
+// SetHost Type representing a host.
 func (p *Vm) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *Vm) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -36289,6 +51575,7 @@ func (p *Vm) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *Vm) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -36351,10 +51638,66 @@ func (p *Vm) MustInitialization() *Initialization {
 	return p.initialization
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Vm) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Vm) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -36362,6 +51705,34 @@ func (p *Vm) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Vm) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -36405,10 +51776,12 @@ func (p *Vm) MustKatelloErrata() *KatelloErratumSlice {
 	return p.katelloErrata
 }
 
+// SetLargeIcon Icon of virtual machine or template.
 func (p *Vm) SetLargeIcon(attr *Icon) {
 	p.largeIcon = attr
 }
 
+// LargeIcon Icon of virtual machine or template.
 func (p *Vm) LargeIcon() (*Icon, bool) {
 	if p.largeIcon != nil {
 		return p.largeIcon, true
@@ -36416,6 +51789,7 @@ func (p *Vm) LargeIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustLargeIcon Icon of virtual machine or template.
 func (p *Vm) MustLargeIcon() *Icon {
 	if p.largeIcon == nil {
 		panic("the largeIcon must not be nil, please use LargeIcon() function instead")
@@ -36423,10 +51797,18 @@ func (p *Vm) MustLargeIcon() *Icon {
 	return p.largeIcon
 }
 
+// SetLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Vm) SetLease(attr *StorageDomainLease) {
 	p.lease = attr
 }
 
+// Lease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Vm) Lease() (*StorageDomainLease, bool) {
 	if p.lease != nil {
 		return p.lease, true
@@ -36434,6 +51816,10 @@ func (p *Vm) Lease() (*StorageDomainLease, bool) {
 	return nil, false
 }
 
+// MustLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Vm) MustLease() *StorageDomainLease {
 	if p.lease == nil {
 		panic("the lease must not be nil, please use Lease() function instead")
@@ -36460,10 +51846,12 @@ func (p *Vm) MustMemory() int64 {
 	return *p.memory
 }
 
+// SetMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Vm) SetMemoryPolicy(attr *MemoryPolicy) {
 	p.memoryPolicy = attr
 }
 
+// MemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Vm) MemoryPolicy() (*MemoryPolicy, bool) {
 	if p.memoryPolicy != nil {
 		return p.memoryPolicy, true
@@ -36471,6 +51859,7 @@ func (p *Vm) MemoryPolicy() (*MemoryPolicy, bool) {
 	return nil, false
 }
 
+// MustMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *Vm) MustMemoryPolicy() *MemoryPolicy {
 	if p.memoryPolicy == nil {
 		panic("the memoryPolicy must not be nil, please use MemoryPolicy() function instead")
@@ -36478,10 +51867,12 @@ func (p *Vm) MustMemoryPolicy() *MemoryPolicy {
 	return p.memoryPolicy
 }
 
+// SetMigration The type for migration options.
 func (p *Vm) SetMigration(attr *MigrationOptions) {
 	p.migration = attr
 }
 
+// Migration The type for migration options.
 func (p *Vm) Migration() (*MigrationOptions, bool) {
 	if p.migration != nil {
 		return p.migration, true
@@ -36489,6 +51880,7 @@ func (p *Vm) Migration() (*MigrationOptions, bool) {
 	return nil, false
 }
 
+// MustMigration The type for migration options.
 func (p *Vm) MustMigration() *MigrationOptions {
 	if p.migration == nil {
 		panic("the migration must not be nil, please use Migration() function instead")
@@ -36646,10 +52038,14 @@ func (p *Vm) MustOrigin() string {
 	return *p.origin
 }
 
+// SetOriginalTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Vm) SetOriginalTemplate(attr *Template) {
 	p.originalTemplate = attr
 }
 
+// OriginalTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Vm) OriginalTemplate() (*Template, bool) {
 	if p.originalTemplate != nil {
 		return p.originalTemplate, true
@@ -36657,6 +52053,8 @@ func (p *Vm) OriginalTemplate() (*Template, bool) {
 	return nil, false
 }
 
+// MustOriginalTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Vm) MustOriginalTemplate() *Template {
 	if p.originalTemplate == nil {
 		panic("the originalTemplate must not be nil, please use OriginalTemplate() function instead")
@@ -36664,10 +52062,12 @@ func (p *Vm) MustOriginalTemplate() *Template {
 	return p.originalTemplate
 }
 
+// SetOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Vm) SetOs(attr *OperatingSystem) {
 	p.os = attr
 }
 
+// Os Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Vm) Os() (*OperatingSystem, bool) {
 	if p.os != nil {
 		return p.os, true
@@ -36675,6 +52075,7 @@ func (p *Vm) Os() (*OperatingSystem, bool) {
 	return nil, false
 }
 
+// MustOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *Vm) MustOs() *OperatingSystem {
 	if p.os == nil {
 		panic("the os must not be nil, please use Os() function instead")
@@ -36736,10 +52137,42 @@ func (p *Vm) MustPlacementPolicy() *VmPlacementPolicy {
 	return p.placementPolicy
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Vm) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Vm) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -36747,6 +52180,22 @@ func (p *Vm) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Vm) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -36772,10 +52221,12 @@ func (p *Vm) MustReportedDevices() *ReportedDeviceSlice {
 	return p.reportedDevices
 }
 
+// SetRngDevice Random number generator (RNG) device model.
 func (p *Vm) SetRngDevice(attr *RngDevice) {
 	p.rngDevice = attr
 }
 
+// RngDevice Random number generator (RNG) device model.
 func (p *Vm) RngDevice() (*RngDevice, bool) {
 	if p.rngDevice != nil {
 		return p.rngDevice, true
@@ -36783,6 +52234,7 @@ func (p *Vm) RngDevice() (*RngDevice, bool) {
 	return nil, false
 }
 
+// MustRngDevice Random number generator (RNG) device model.
 func (p *Vm) MustRngDevice() *RngDevice {
 	if p.rngDevice == nil {
 		panic("the rngDevice must not be nil, please use RngDevice() function instead")
@@ -36845,10 +52297,12 @@ func (p *Vm) MustSessions() *SessionSlice {
 	return p.sessions
 }
 
+// SetSmallIcon Icon of virtual machine or template.
 func (p *Vm) SetSmallIcon(attr *Icon) {
 	p.smallIcon = attr
 }
 
+// SmallIcon Icon of virtual machine or template.
 func (p *Vm) SmallIcon() (*Icon, bool) {
 	if p.smallIcon != nil {
 		return p.smallIcon, true
@@ -36856,6 +52310,7 @@ func (p *Vm) SmallIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustSmallIcon Icon of virtual machine or template.
 func (p *Vm) MustSmallIcon() *Icon {
 	if p.smallIcon == nil {
 		panic("the smallIcon must not be nil, please use SmallIcon() function instead")
@@ -36993,10 +52448,12 @@ func (p *Vm) MustStatistics() *StatisticSlice {
 	return p.statistics
 }
 
+// SetStatus Type represeting a status of a virtual machine.
 func (p *Vm) SetStatus(attr VmStatus) {
 	p.status = &attr
 }
 
+// Status Type represeting a status of a virtual machine.
 func (p *Vm) Status() (VmStatus, bool) {
 	if p.status != nil {
 		return *p.status, true
@@ -37005,6 +52462,7 @@ func (p *Vm) Status() (VmStatus, bool) {
 	return zero, false
 }
 
+// MustStatus Type represeting a status of a virtual machine.
 func (p *Vm) MustStatus() VmStatus {
 	if p.status == nil {
 		panic("the status must not be nil, please use Status() function instead")
@@ -37069,10 +52527,70 @@ func (p *Vm) MustStopTime() time.Time {
 	return *p.stopTime
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Vm) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Vm) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -37080,6 +52598,36 @@ func (p *Vm) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Vm) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -37087,10 +52635,20 @@ func (p *Vm) MustStorageDomain() *StorageDomain {
 	return p.storageDomain
 }
 
+// SetStorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *Vm) SetStorageErrorResumeBehaviour(attr VmStorageErrorResumeBehaviour) {
 	p.storageErrorResumeBehaviour = &attr
 }
 
+// StorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *Vm) StorageErrorResumeBehaviour() (VmStorageErrorResumeBehaviour, bool) {
 	if p.storageErrorResumeBehaviour != nil {
 		return *p.storageErrorResumeBehaviour, true
@@ -37099,6 +52657,11 @@ func (p *Vm) StorageErrorResumeBehaviour() (VmStorageErrorResumeBehaviour, bool)
 	return zero, false
 }
 
+// MustStorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *Vm) MustStorageErrorResumeBehaviour() VmStorageErrorResumeBehaviour {
 	if p.storageErrorResumeBehaviour == nil {
 		panic("the storageErrorResumeBehaviour must not be nil, please use StorageErrorResumeBehaviour() function instead")
@@ -37124,10 +52687,14 @@ func (p *Vm) MustTags() *TagSlice {
 	return p.tags
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Vm) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Vm) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -37135,6 +52702,8 @@ func (p *Vm) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Vm) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -37142,10 +52711,12 @@ func (p *Vm) MustTemplate() *Template {
 	return p.template
 }
 
+// SetTimeZone Time zone representation.
 func (p *Vm) SetTimeZone(attr *TimeZone) {
 	p.timeZone = attr
 }
 
+// TimeZone Time zone representation.
 func (p *Vm) TimeZone() (*TimeZone, bool) {
 	if p.timeZone != nil {
 		return p.timeZone, true
@@ -37153,11 +52724,31 @@ func (p *Vm) TimeZone() (*TimeZone, bool) {
 	return nil, false
 }
 
+// MustTimeZone Time zone representation.
 func (p *Vm) MustTimeZone() *TimeZone {
 	if p.timeZone == nil {
 		panic("the timeZone must not be nil, please use TimeZone() function instead")
 	}
 	return p.timeZone
+}
+
+func (p *Vm) SetTpmEnabled(attr bool) {
+	p.tpmEnabled = &attr
+}
+
+func (p *Vm) TpmEnabled() (bool, bool) {
+	if p.tpmEnabled != nil {
+		return *p.tpmEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *Vm) MustTpmEnabled() bool {
+	if p.tpmEnabled == nil {
+		panic("the tpmEnabled must not be nil, please use TpmEnabled() function instead")
+	}
+	return *p.tpmEnabled
 }
 
 func (p *Vm) SetTunnelMigration(attr bool) {
@@ -37179,10 +52770,12 @@ func (p *Vm) MustTunnelMigration() bool {
 	return *p.tunnelMigration
 }
 
+// SetType Type representing what the virtual machine is optimized for.
 func (p *Vm) SetType(attr VmType) {
 	p.type_ = &attr
 }
 
+// Type Type representing what the virtual machine is optimized for.
 func (p *Vm) Type() (VmType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -37191,6 +52784,7 @@ func (p *Vm) Type() (VmType, bool) {
 	return zero, false
 }
 
+// MustType Type representing what the virtual machine is optimized for.
 func (p *Vm) MustType() VmType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -37198,10 +52792,12 @@ func (p *Vm) MustType() VmType {
 	return *p.type_
 }
 
+// SetUsb Configuration of the USB device of a virtual machine.
 func (p *Vm) SetUsb(attr *Usb) {
 	p.usb = attr
 }
 
+// Usb Configuration of the USB device of a virtual machine.
 func (p *Vm) Usb() (*Usb, bool) {
 	if p.usb != nil {
 		return p.usb, true
@@ -37209,6 +52805,7 @@ func (p *Vm) Usb() (*Usb, bool) {
 	return nil, false
 }
 
+// MustUsb Configuration of the USB device of a virtual machine.
 func (p *Vm) MustUsb() *Usb {
 	if p.usb == nil {
 		panic("the usb must not be nil, please use Usb() function instead")
@@ -37235,10 +52832,14 @@ func (p *Vm) MustUseLatestTemplateVersion() bool {
 	return *p.useLatestTemplateVersion
 }
 
+// SetVirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *Vm) SetVirtioScsi(attr *VirtioScsi) {
 	p.virtioScsi = attr
 }
 
+// VirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *Vm) VirtioScsi() (*VirtioScsi, bool) {
 	if p.virtioScsi != nil {
 		return p.virtioScsi, true
@@ -37246,6 +52847,8 @@ func (p *Vm) VirtioScsi() (*VirtioScsi, bool) {
 	return nil, false
 }
 
+// MustVirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *Vm) MustVirtioScsi() *VirtioScsi {
 	if p.virtioScsi == nil {
 		panic("the virtioScsi must not be nil, please use VirtioScsi() function instead")
@@ -37272,10 +52875,12 @@ func (p *Vm) MustVirtioScsiMultiQueuesEnabled() bool {
 	return *p.virtioScsiMultiQueuesEnabled
 }
 
+// SetVmPool Type represeting a virtual machines pool.
 func (p *Vm) SetVmPool(attr *VmPool) {
 	p.vmPool = attr
 }
 
+// VmPool Type represeting a virtual machines pool.
 func (p *Vm) VmPool() (*VmPool, bool) {
 	if p.vmPool != nil {
 		return p.vmPool, true
@@ -37283,6 +52888,7 @@ func (p *Vm) VmPool() (*VmPool, bool) {
 	return nil, false
 }
 
+// MustVmPool Type represeting a virtual machines pool.
 func (p *Vm) MustVmPool() *VmPool {
 	if p.vmPool == nil {
 		panic("the vmPool must not be nil, please use VmPool() function instead")
@@ -37308,6 +52914,8 @@ func (p *Vm) MustWatchdogs() *WatchdogSlice {
 	return p.watchdogs
 }
 
+// VmBase Represents basic virtual machine configuration.
+// This is used by virtual machines, templates and instance types.
 type VmBase struct {
 	Struct
 	bios                         *Bios
@@ -37352,6 +52960,7 @@ type VmBase struct {
 	storageDomain                *StorageDomain
 	storageErrorResumeBehaviour  *VmStorageErrorResumeBehaviour
 	timeZone                     *TimeZone
+	tpmEnabled                   *bool
 	tunnelMigration              *bool
 	type_                        *VmType
 	usb                          *Usb
@@ -37377,10 +52986,264 @@ func (p *VmBase) MustBios() *Bios {
 	return p.bios
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *VmBase) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *VmBase) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -37388,6 +53251,133 @@ func (p *VmBase) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *VmBase) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -37414,10 +53404,12 @@ func (p *VmBase) MustComment() string {
 	return *p.comment
 }
 
+// SetConsole Representation for serial console device.
 func (p *VmBase) SetConsole(attr *Console) {
 	p.console = attr
 }
 
+// Console Representation for serial console device.
 func (p *VmBase) Console() (*Console, bool) {
 	if p.console != nil {
 		return p.console, true
@@ -37425,6 +53417,7 @@ func (p *VmBase) Console() (*Console, bool) {
 	return nil, false
 }
 
+// MustConsole Representation for serial console device.
 func (p *VmBase) MustConsole() *Console {
 	if p.console == nil {
 		panic("the console must not be nil, please use Console() function instead")
@@ -37618,10 +53611,12 @@ func (p *VmBase) MustDescription() string {
 	return *p.description
 }
 
+// SetDisplay Represents a graphic console configuration.
 func (p *VmBase) SetDisplay(attr *Display) {
 	p.display = attr
 }
 
+// Display Represents a graphic console configuration.
 func (p *VmBase) Display() (*Display, bool) {
 	if p.display != nil {
 		return p.display, true
@@ -37629,6 +53624,7 @@ func (p *VmBase) Display() (*Display, bool) {
 	return nil, false
 }
 
+// MustDisplay Represents a graphic console configuration.
 func (p *VmBase) MustDisplay() *Display {
 	if p.display == nil {
 		panic("the display must not be nil, please use Display() function instead")
@@ -37636,10 +53632,12 @@ func (p *VmBase) MustDisplay() *Display {
 	return p.display
 }
 
+// SetDomain This type represents a directory service domain.
 func (p *VmBase) SetDomain(attr *Domain) {
 	p.domain = attr
 }
 
+// Domain This type represents a directory service domain.
 func (p *VmBase) Domain() (*Domain, bool) {
 	if p.domain != nil {
 		return p.domain, true
@@ -37647,6 +53645,7 @@ func (p *VmBase) Domain() (*Domain, bool) {
 	return nil, false
 }
 
+// MustDomain This type represents a directory service domain.
 func (p *VmBase) MustDomain() *Domain {
 	if p.domain == nil {
 		panic("the domain must not be nil, please use Domain() function instead")
@@ -37654,10 +53653,12 @@ func (p *VmBase) MustDomain() *Domain {
 	return p.domain
 }
 
+// SetHighAvailability Type representing high availability of a virtual machine.
 func (p *VmBase) SetHighAvailability(attr *HighAvailability) {
 	p.highAvailability = attr
 }
 
+// HighAvailability Type representing high availability of a virtual machine.
 func (p *VmBase) HighAvailability() (*HighAvailability, bool) {
 	if p.highAvailability != nil {
 		return p.highAvailability, true
@@ -37665,6 +53666,7 @@ func (p *VmBase) HighAvailability() (*HighAvailability, bool) {
 	return nil, false
 }
 
+// MustHighAvailability Type representing high availability of a virtual machine.
 func (p *VmBase) MustHighAvailability() *HighAvailability {
 	if p.highAvailability == nil {
 		panic("the highAvailability must not be nil, please use HighAvailability() function instead")
@@ -37727,10 +53729,12 @@ func (p *VmBase) MustIo() *Io {
 	return p.io
 }
 
+// SetLargeIcon Icon of virtual machine or template.
 func (p *VmBase) SetLargeIcon(attr *Icon) {
 	p.largeIcon = attr
 }
 
+// LargeIcon Icon of virtual machine or template.
 func (p *VmBase) LargeIcon() (*Icon, bool) {
 	if p.largeIcon != nil {
 		return p.largeIcon, true
@@ -37738,6 +53742,7 @@ func (p *VmBase) LargeIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustLargeIcon Icon of virtual machine or template.
 func (p *VmBase) MustLargeIcon() *Icon {
 	if p.largeIcon == nil {
 		panic("the largeIcon must not be nil, please use LargeIcon() function instead")
@@ -37745,10 +53750,18 @@ func (p *VmBase) MustLargeIcon() *Icon {
 	return p.largeIcon
 }
 
+// SetLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *VmBase) SetLease(attr *StorageDomainLease) {
 	p.lease = attr
 }
 
+// Lease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *VmBase) Lease() (*StorageDomainLease, bool) {
 	if p.lease != nil {
 		return p.lease, true
@@ -37756,6 +53769,10 @@ func (p *VmBase) Lease() (*StorageDomainLease, bool) {
 	return nil, false
 }
 
+// MustLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *VmBase) MustLease() *StorageDomainLease {
 	if p.lease == nil {
 		panic("the lease must not be nil, please use Lease() function instead")
@@ -37782,10 +53799,12 @@ func (p *VmBase) MustMemory() int64 {
 	return *p.memory
 }
 
+// SetMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *VmBase) SetMemoryPolicy(attr *MemoryPolicy) {
 	p.memoryPolicy = attr
 }
 
+// MemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *VmBase) MemoryPolicy() (*MemoryPolicy, bool) {
 	if p.memoryPolicy != nil {
 		return p.memoryPolicy, true
@@ -37793,6 +53812,7 @@ func (p *VmBase) MemoryPolicy() (*MemoryPolicy, bool) {
 	return nil, false
 }
 
+// MustMemoryPolicy Logical grouping of memory-related properties of virtual machine-like entities.
 func (p *VmBase) MustMemoryPolicy() *MemoryPolicy {
 	if p.memoryPolicy == nil {
 		panic("the memoryPolicy must not be nil, please use MemoryPolicy() function instead")
@@ -37800,10 +53820,12 @@ func (p *VmBase) MustMemoryPolicy() *MemoryPolicy {
 	return p.memoryPolicy
 }
 
+// SetMigration The type for migration options.
 func (p *VmBase) SetMigration(attr *MigrationOptions) {
 	p.migration = attr
 }
 
+// Migration The type for migration options.
 func (p *VmBase) Migration() (*MigrationOptions, bool) {
 	if p.migration != nil {
 		return p.migration, true
@@ -37811,6 +53833,7 @@ func (p *VmBase) Migration() (*MigrationOptions, bool) {
 	return nil, false
 }
 
+// MustMigration The type for migration options.
 func (p *VmBase) MustMigration() *MigrationOptions {
 	if p.migration == nil {
 		panic("the migration must not be nil, please use Migration() function instead")
@@ -37894,10 +53917,12 @@ func (p *VmBase) MustOrigin() string {
 	return *p.origin
 }
 
+// SetOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *VmBase) SetOs(attr *OperatingSystem) {
 	p.os = attr
 }
 
+// Os Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *VmBase) Os() (*OperatingSystem, bool) {
 	if p.os != nil {
 		return p.os, true
@@ -37905,6 +53930,7 @@ func (p *VmBase) Os() (*OperatingSystem, bool) {
 	return nil, false
 }
 
+// MustOs Information describing the operating system. This is used for both virtual machines and hosts.
 func (p *VmBase) MustOs() *OperatingSystem {
 	if p.os == nil {
 		panic("the os must not be nil, please use Os() function instead")
@@ -37930,10 +53956,42 @@ func (p *VmBase) MustPlacementPolicy() *VmPlacementPolicy {
 	return p.placementPolicy
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *VmBase) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *VmBase) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -37941,6 +53999,22 @@ func (p *VmBase) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *VmBase) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -37948,10 +54022,12 @@ func (p *VmBase) MustQuota() *Quota {
 	return p.quota
 }
 
+// SetRngDevice Random number generator (RNG) device model.
 func (p *VmBase) SetRngDevice(attr *RngDevice) {
 	p.rngDevice = attr
 }
 
+// RngDevice Random number generator (RNG) device model.
 func (p *VmBase) RngDevice() (*RngDevice, bool) {
 	if p.rngDevice != nil {
 		return p.rngDevice, true
@@ -37959,6 +54035,7 @@ func (p *VmBase) RngDevice() (*RngDevice, bool) {
 	return nil, false
 }
 
+// MustRngDevice Random number generator (RNG) device model.
 func (p *VmBase) MustRngDevice() *RngDevice {
 	if p.rngDevice == nil {
 		panic("the rngDevice must not be nil, please use RngDevice() function instead")
@@ -37984,10 +54061,12 @@ func (p *VmBase) MustSerialNumber() *SerialNumber {
 	return p.serialNumber
 }
 
+// SetSmallIcon Icon of virtual machine or template.
 func (p *VmBase) SetSmallIcon(attr *Icon) {
 	p.smallIcon = attr
 }
 
+// SmallIcon Icon of virtual machine or template.
 func (p *VmBase) SmallIcon() (*Icon, bool) {
 	if p.smallIcon != nil {
 		return p.smallIcon, true
@@ -37995,6 +54074,7 @@ func (p *VmBase) SmallIcon() (*Icon, bool) {
 	return nil, false
 }
 
+// MustSmallIcon Icon of virtual machine or template.
 func (p *VmBase) MustSmallIcon() *Icon {
 	if p.smallIcon == nil {
 		panic("the smallIcon must not be nil, please use SmallIcon() function instead")
@@ -38077,10 +54157,70 @@ func (p *VmBase) MustStateless() bool {
 	return *p.stateless
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *VmBase) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *VmBase) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -38088,6 +54228,36 @@ func (p *VmBase) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *VmBase) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -38095,10 +54265,20 @@ func (p *VmBase) MustStorageDomain() *StorageDomain {
 	return p.storageDomain
 }
 
+// SetStorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *VmBase) SetStorageErrorResumeBehaviour(attr VmStorageErrorResumeBehaviour) {
 	p.storageErrorResumeBehaviour = &attr
 }
 
+// StorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *VmBase) StorageErrorResumeBehaviour() (VmStorageErrorResumeBehaviour, bool) {
 	if p.storageErrorResumeBehaviour != nil {
 		return *p.storageErrorResumeBehaviour, true
@@ -38107,6 +54287,11 @@ func (p *VmBase) StorageErrorResumeBehaviour() (VmStorageErrorResumeBehaviour, b
 	return zero, false
 }
 
+// MustStorageErrorResumeBehaviour If the storage, on which this virtual machine has some disks gets
+// unresponsive, the virtual machine gets paused.
+//
+// This are the possible options, what should happen with the virtual machine
+// in the moment the storage gets available again.
 func (p *VmBase) MustStorageErrorResumeBehaviour() VmStorageErrorResumeBehaviour {
 	if p.storageErrorResumeBehaviour == nil {
 		panic("the storageErrorResumeBehaviour must not be nil, please use StorageErrorResumeBehaviour() function instead")
@@ -38114,10 +54299,12 @@ func (p *VmBase) MustStorageErrorResumeBehaviour() VmStorageErrorResumeBehaviour
 	return *p.storageErrorResumeBehaviour
 }
 
+// SetTimeZone Time zone representation.
 func (p *VmBase) SetTimeZone(attr *TimeZone) {
 	p.timeZone = attr
 }
 
+// TimeZone Time zone representation.
 func (p *VmBase) TimeZone() (*TimeZone, bool) {
 	if p.timeZone != nil {
 		return p.timeZone, true
@@ -38125,11 +54312,31 @@ func (p *VmBase) TimeZone() (*TimeZone, bool) {
 	return nil, false
 }
 
+// MustTimeZone Time zone representation.
 func (p *VmBase) MustTimeZone() *TimeZone {
 	if p.timeZone == nil {
 		panic("the timeZone must not be nil, please use TimeZone() function instead")
 	}
 	return p.timeZone
+}
+
+func (p *VmBase) SetTpmEnabled(attr bool) {
+	p.tpmEnabled = &attr
+}
+
+func (p *VmBase) TpmEnabled() (bool, bool) {
+	if p.tpmEnabled != nil {
+		return *p.tpmEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *VmBase) MustTpmEnabled() bool {
+	if p.tpmEnabled == nil {
+		panic("the tpmEnabled must not be nil, please use TpmEnabled() function instead")
+	}
+	return *p.tpmEnabled
 }
 
 func (p *VmBase) SetTunnelMigration(attr bool) {
@@ -38151,10 +54358,12 @@ func (p *VmBase) MustTunnelMigration() bool {
 	return *p.tunnelMigration
 }
 
+// SetType Type representing what the virtual machine is optimized for.
 func (p *VmBase) SetType(attr VmType) {
 	p.type_ = &attr
 }
 
+// Type Type representing what the virtual machine is optimized for.
 func (p *VmBase) Type() (VmType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -38163,6 +54372,7 @@ func (p *VmBase) Type() (VmType, bool) {
 	return zero, false
 }
 
+// MustType Type representing what the virtual machine is optimized for.
 func (p *VmBase) MustType() VmType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -38170,10 +54380,12 @@ func (p *VmBase) MustType() VmType {
 	return *p.type_
 }
 
+// SetUsb Configuration of the USB device of a virtual machine.
 func (p *VmBase) SetUsb(attr *Usb) {
 	p.usb = attr
 }
 
+// Usb Configuration of the USB device of a virtual machine.
 func (p *VmBase) Usb() (*Usb, bool) {
 	if p.usb != nil {
 		return p.usb, true
@@ -38181,6 +54393,7 @@ func (p *VmBase) Usb() (*Usb, bool) {
 	return nil, false
 }
 
+// MustUsb Configuration of the USB device of a virtual machine.
 func (p *VmBase) MustUsb() *Usb {
 	if p.usb == nil {
 		panic("the usb must not be nil, please use Usb() function instead")
@@ -38188,10 +54401,14 @@ func (p *VmBase) MustUsb() *Usb {
 	return p.usb
 }
 
+// SetVirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *VmBase) SetVirtioScsi(attr *VirtioScsi) {
 	p.virtioScsi = attr
 }
 
+// VirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *VmBase) VirtioScsi() (*VirtioScsi, bool) {
 	if p.virtioScsi != nil {
 		return p.virtioScsi, true
@@ -38199,6 +54416,8 @@ func (p *VmBase) VirtioScsi() (*VirtioScsi, bool) {
 	return nil, false
 }
 
+// MustVirtioScsi Type representing the support of virtio-SCSI.
+// If it supported we use virtio driver for SCSI guest device.
 func (p *VmBase) MustVirtioScsi() *VirtioScsi {
 	if p.virtioScsi == nil {
 		panic("the virtioScsi must not be nil, please use VirtioScsi() function instead")
@@ -38268,6 +54487,7 @@ func (p *VmPlacementPolicy) MustHosts() *HostSlice {
 	return p.hosts
 }
 
+// VmPool Type represeting a virtual machines pool.
 type VmPool struct {
 	Struct
 	autoStorageSelect        *bool
@@ -38286,6 +54506,7 @@ type VmPool struct {
 	soundcardEnabled         *bool
 	stateful                 *bool
 	template                 *Template
+	tpmEnabled               *bool
 	type_                    *VmPoolType
 	useLatestTemplateVersion *bool
 	vm                       *Vm
@@ -38310,10 +54531,264 @@ func (p *VmPool) MustAutoStorageSelect() bool {
 	return *p.autoStorageSelect
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *VmPool) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *VmPool) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -38321,6 +54796,133 @@ func (p *VmPool) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *VmPool) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -38366,10 +54968,12 @@ func (p *VmPool) MustDescription() string {
 	return *p.description
 }
 
+// SetDisplay Represents a graphic console configuration.
 func (p *VmPool) SetDisplay(attr *Display) {
 	p.display = attr
 }
 
+// Display Represents a graphic console configuration.
 func (p *VmPool) Display() (*Display, bool) {
 	if p.display != nil {
 		return p.display, true
@@ -38377,6 +54981,7 @@ func (p *VmPool) Display() (*Display, bool) {
 	return nil, false
 }
 
+// MustDisplay Represents a graphic console configuration.
 func (p *VmPool) MustDisplay() *Display {
 	if p.display == nil {
 		panic("the display must not be nil, please use Display() function instead")
@@ -38403,10 +55008,66 @@ func (p *VmPool) MustId() string {
 	return *p.id
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *VmPool) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *VmPool) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -38414,6 +55075,34 @@ func (p *VmPool) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *VmPool) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -38496,10 +55185,12 @@ func (p *VmPool) MustPrestartedVms() int64 {
 	return *p.prestartedVms
 }
 
+// SetRngDevice Random number generator (RNG) device model.
 func (p *VmPool) SetRngDevice(attr *RngDevice) {
 	p.rngDevice = attr
 }
 
+// RngDevice Random number generator (RNG) device model.
 func (p *VmPool) RngDevice() (*RngDevice, bool) {
 	if p.rngDevice != nil {
 		return p.rngDevice, true
@@ -38507,6 +55198,7 @@ func (p *VmPool) RngDevice() (*RngDevice, bool) {
 	return nil, false
 }
 
+// MustRngDevice Random number generator (RNG) device model.
 func (p *VmPool) MustRngDevice() *RngDevice {
 	if p.rngDevice == nil {
 		panic("the rngDevice must not be nil, please use RngDevice() function instead")
@@ -38571,10 +55263,14 @@ func (p *VmPool) MustStateful() bool {
 	return *p.stateful
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *VmPool) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *VmPool) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -38582,6 +55278,8 @@ func (p *VmPool) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *VmPool) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -38589,10 +55287,31 @@ func (p *VmPool) MustTemplate() *Template {
 	return p.template
 }
 
+func (p *VmPool) SetTpmEnabled(attr bool) {
+	p.tpmEnabled = &attr
+}
+
+func (p *VmPool) TpmEnabled() (bool, bool) {
+	if p.tpmEnabled != nil {
+		return *p.tpmEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *VmPool) MustTpmEnabled() bool {
+	if p.tpmEnabled == nil {
+		panic("the tpmEnabled must not be nil, please use TpmEnabled() function instead")
+	}
+	return *p.tpmEnabled
+}
+
+// SetType Type represeting the deallocation policy of virtual machines in a virtual machines pool.
 func (p *VmPool) SetType(attr VmPoolType) {
 	p.type_ = &attr
 }
 
+// Type Type represeting the deallocation policy of virtual machines in a virtual machines pool.
 func (p *VmPool) Type() (VmPoolType, bool) {
 	if p.type_ != nil {
 		return *p.type_, true
@@ -38601,6 +55320,7 @@ func (p *VmPool) Type() (VmPoolType, bool) {
 	return zero, false
 }
 
+// MustType Type represeting the deallocation policy of virtual machines in a virtual machines pool.
 func (p *VmPool) MustType() VmPoolType {
 	if p.type_ == nil {
 		panic("the type_ must not be nil, please use Type() function instead")
@@ -38627,10 +55347,12 @@ func (p *VmPool) MustUseLatestTemplateVersion() bool {
 	return *p.useLatestTemplateVersion
 }
 
+// SetVm Represents a virtual machine.
 func (p *VmPool) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *VmPool) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -38638,6 +55360,7 @@ func (p *VmPool) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *VmPool) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -38645,6 +55368,7 @@ func (p *VmPool) MustVm() *Vm {
 	return p.vm
 }
 
+// VmSummary Type containing information related to virtual machines on a particular host.
 type VmSummary struct {
 	Struct
 	active    *int64
@@ -38714,10 +55438,12 @@ type VnicPassThrough struct {
 	mode *VnicPassThroughMode
 }
 
+// SetMode Describes whether the vNIC is to be implemented as a pass-through device or a virtual one.
 func (p *VnicPassThrough) SetMode(attr VnicPassThroughMode) {
 	p.mode = &attr
 }
 
+// Mode Describes whether the vNIC is to be implemented as a pass-through device or a virtual one.
 func (p *VnicPassThrough) Mode() (VnicPassThroughMode, bool) {
 	if p.mode != nil {
 		return *p.mode, true
@@ -38726,6 +55452,7 @@ func (p *VnicPassThrough) Mode() (VnicPassThroughMode, bool) {
 	return zero, false
 }
 
+// MustMode Describes whether the vNIC is to be implemented as a pass-through device or a virtual one.
 func (p *VnicPassThrough) MustMode() VnicPassThroughMode {
 	if p.mode == nil {
 		panic("the mode must not be nil, please use Mode() function instead")
@@ -38733,11 +55460,13 @@ func (p *VnicPassThrough) MustMode() VnicPassThroughMode {
 	return *p.mode
 }
 
+// VnicProfile A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 type VnicProfile struct {
 	Struct
 	comment          *string
 	customProperties *CustomPropertySlice
 	description      *string
+	failover         *VnicProfile
 	id               *string
 	migratable       *bool
 	name             *string
@@ -38805,6 +55534,27 @@ func (p *VnicProfile) MustDescription() string {
 	return *p.description
 }
 
+// SetFailover A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
+func (p *VnicProfile) SetFailover(attr *VnicProfile) {
+	p.failover = attr
+}
+
+// Failover A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
+func (p *VnicProfile) Failover() (*VnicProfile, bool) {
+	if p.failover != nil {
+		return p.failover, true
+	}
+	return nil, false
+}
+
+// MustFailover A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
+func (p *VnicProfile) MustFailover() *VnicProfile {
+	if p.failover == nil {
+		panic("the failover must not be nil, please use Failover() function instead")
+	}
+	return p.failover
+}
+
 func (p *VnicProfile) SetId(attr string) {
 	p.id = &attr
 }
@@ -38862,10 +55612,116 @@ func (p *VnicProfile) MustName() string {
 	return *p.name
 }
 
+// SetNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *VnicProfile) SetNetwork(attr *Network) {
 	p.network = attr
 }
 
+// Network The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *VnicProfile) Network() (*Network, bool) {
 	if p.network != nil {
 		return p.network, true
@@ -38873,6 +55729,59 @@ func (p *VnicProfile) Network() (*Network, bool) {
 	return nil, false
 }
 
+// MustNetwork The type for a logical network.
+//
+// An example of the JSON representation of a logical network:
+//
+// [source,json]
+// ----
+// {
+//   "network" : [ {
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "stp" : "false",
+//     "mtu" : "0",
+//     "usages" : {
+//       "usage" : [ "vm" ]
+//     },
+//     "name" : "ovirtmgmt",
+//     "description" : "Management Network",
+//     "href" : "/ovirt-engine/api/networks/456",
+//     "id" : "456",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/networks/456/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/vnicprofiles",
+//       "rel" : "vnicprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/networks/456/labels",
+//       "rel" : "labels"
+//     } ]
+//   } ]
+// }
+// ----
+//
+// An example of the XML representation of the same logical network:
+//
+// [source,xml]
+// ----
+// <network href="/ovirt-engine/api/networks/456" id="456">
+//   <name>ovirtmgmt</name>
+//   <description>Management Network</description>
+//   <link href="/ovirt-engine/api/networks/456/permissions" rel="permissions"/>
+//   <link href="/ovirt-engine/api/networks/456/vnicprofiles" rel="vnicprofiles"/>
+//   <link href="/ovirt-engine/api/networks/456/labels" rel="labels"/>
+//   <data_center href="/ovirt-engine/api/datacenters/123" id="123"/>
+//   <stp>false</stp>
+//   <mtu>0</mtu>
+//   <usages>
+//     <usage>vm</usage>
+//   </usages>
+// </network>
+// ----
 func (p *VnicProfile) MustNetwork() *Network {
 	if p.network == nil {
 		panic("the network must not be nil, please use Network() function instead")
@@ -38880,10 +55789,64 @@ func (p *VnicProfile) MustNetwork() *Network {
 	return p.network
 }
 
+// SetNetworkFilter Network filters filter packets sent to and from the virtual machine's NIC according to defined rules.
+//
+// There are several types of network filters supported based on libvirt.
+// For more details about the different network filters see https://libvirt.org/firewall.html[here].
+//
+// In addition to libvirt's network filters, there are two additional network filters:
+// The first is called `vdsm-no-mac-spoofing` and is composed of `no-mac-spoofing` and `no-arp-mac-spoofing`.
+// The second is called `ovirt-no-filter` and is used when no network filter is to be defined for the virtual machine's NIC.
+// The `ovirt-no-filter` network filter is only used for internal implementation, and
+// does not exist on the NICs.
+//
+// This is a example of the XML representation:
+//
+// [source,xml]
+// ----
+// <network_filter id="00000019-0019-0019-0019-00000000026c">
+//   <name>example-filter</name>
+//   <version>
+//     <major>4</major>
+//     <minor>0</minor>
+//     <build>-1</build>
+//     <revision>-1</revision>
+//   </version>
+// </network_filter>
+// ----
+//
+// If any part of the version is not present, it is represented by -1.
 func (p *VnicProfile) SetNetworkFilter(attr *NetworkFilter) {
 	p.networkFilter = attr
 }
 
+// NetworkFilter Network filters filter packets sent to and from the virtual machine's NIC according to defined rules.
+//
+// There are several types of network filters supported based on libvirt.
+// For more details about the different network filters see https://libvirt.org/firewall.html[here].
+//
+// In addition to libvirt's network filters, there are two additional network filters:
+// The first is called `vdsm-no-mac-spoofing` and is composed of `no-mac-spoofing` and `no-arp-mac-spoofing`.
+// The second is called `ovirt-no-filter` and is used when no network filter is to be defined for the virtual machine's NIC.
+// The `ovirt-no-filter` network filter is only used for internal implementation, and
+// does not exist on the NICs.
+//
+// This is a example of the XML representation:
+//
+// [source,xml]
+// ----
+// <network_filter id="00000019-0019-0019-0019-00000000026c">
+//   <name>example-filter</name>
+//   <version>
+//     <major>4</major>
+//     <minor>0</minor>
+//     <build>-1</build>
+//     <revision>-1</revision>
+//   </version>
+// </network_filter>
+// ----
+//
+// If any part of the version is not present, it is represented by -1.
 func (p *VnicProfile) NetworkFilter() (*NetworkFilter, bool) {
 	if p.networkFilter != nil {
 		return p.networkFilter, true
@@ -38891,6 +55854,33 @@ func (p *VnicProfile) NetworkFilter() (*NetworkFilter, bool) {
 	return nil, false
 }
 
+// MustNetworkFilter Network filters filter packets sent to and from the virtual machine's NIC according to defined rules.
+//
+// There are several types of network filters supported based on libvirt.
+// For more details about the different network filters see https://libvirt.org/firewall.html[here].
+//
+// In addition to libvirt's network filters, there are two additional network filters:
+// The first is called `vdsm-no-mac-spoofing` and is composed of `no-mac-spoofing` and `no-arp-mac-spoofing`.
+// The second is called `ovirt-no-filter` and is used when no network filter is to be defined for the virtual machine's NIC.
+// The `ovirt-no-filter` network filter is only used for internal implementation, and
+// does not exist on the NICs.
+//
+// This is a example of the XML representation:
+//
+// [source,xml]
+// ----
+// <network_filter id="00000019-0019-0019-0019-00000000026c">
+//   <name>example-filter</name>
+//   <version>
+//     <major>4</major>
+//     <minor>0</minor>
+//     <build>-1</build>
+//     <revision>-1</revision>
+//   </version>
+// </network_filter>
+// ----
+//
+// If any part of the version is not present, it is represented by -1.
 func (p *VnicProfile) MustNetworkFilter() *NetworkFilter {
 	if p.networkFilter == nil {
 		panic("the networkFilter must not be nil, please use NetworkFilter() function instead")
@@ -38953,10 +55943,36 @@ func (p *VnicProfile) MustPortMirroring() bool {
 	return *p.portMirroring
 }
 
+// SetQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *VnicProfile) SetQos(attr *Qos) {
 	p.qos = attr
 }
 
+// Qos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *VnicProfile) Qos() (*Qos, bool) {
 	if p.qos != nil {
 		return p.qos, true
@@ -38964,6 +55980,19 @@ func (p *VnicProfile) Qos() (*Qos, bool) {
 	return nil, false
 }
 
+// MustQos This type represents the attributes to define Quality of service (QoS).
+//
+// For storage the `type` is <<types/qos_type, storage>>, the attributes `max_throughput`, `max_read_throughput`,
+// `max_write_throughput`, `max_iops`, `max_read_iops` and `max_write_iops` are relevant.
+//
+// For resources with computing capabilities the `type` is <<types/qos_type, cpu>>, the attribute `cpu_limit` is
+// relevant.
+//
+// For virtual machines networks the `type` is <<types/qos_type, network>>, the attributes `inbound_average`,
+// `inbound_peak`, `inbound_burst`, `outbound_average`, `outbound_peak` and `outbound_burst` are relevant.
+//
+// For host networks the `type` is <<types/qos_type, hostnetwork>>, the attributes `outbound_average_linkshare`,
+// `outbound_average_upperlimit` and `outbound_average_realtime` are relevant.
 func (p *VnicProfile) MustQos() *Qos {
 	if p.qos == nil {
 		panic("the qos must not be nil, please use Qos() function instead")
@@ -38971,6 +56000,41 @@ func (p *VnicProfile) MustQos() *Qos {
 	return p.qos
 }
 
+// VnicProfileMapping Deprecated type that maps an external virtual NIC profile to one that exists in the {engine-name}.
+//
+// If, for example, the desired virtual NIC profile's mapping includes the following two lines:
+//
+// [cols="25,35,40"]
+// |===
+// |Source network name|Source network profile name|Target virtual NIC profile ID
+//
+// |`red`
+// |`gold`
+// |`738dd914-8ec8-4a8b-8628-34672a5d449b`
+//
+// |`blue`
+// |`silver`
+// |`892a12ec-2028-4451-80aa-ff3bf55d6bac`
+//
+// |===
+//
+// The following form is deprecated since 4.2.1 and will be removed in the future:
+//
+// [source,xml]
+// ----
+// <vnic_profile_mappings>
+//   <vnic_profile_mapping>
+//     <source_network_name>red</source_network_name>
+//     <source_network_profile_name>gold</source_network_profile_name>
+//     <target_vnic_profile id="738dd914-8ec8-4a8b-8628-34672a5d449b"/>
+//   </vnic_profile_mapping>
+//   <vnic_profile_mapping>
+//     <source_network_name>blue</source_network_name>
+//     <source_network_profile_name>silver</source_network_profile_name>
+//     <target_vnic_profile id="892a12ec-2028-4451-80aa-ff3bf55d6bac"/>
+//   </vnic_profile_mapping>
+// </vnic_profile_mappings>
+// ----
 type VnicProfileMapping struct {
 	Struct
 	sourceNetworkName        *string
@@ -39016,10 +56080,12 @@ func (p *VnicProfileMapping) MustSourceNetworkProfileName() string {
 	return *p.sourceNetworkProfileName
 }
 
+// SetTargetVnicProfile A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *VnicProfileMapping) SetTargetVnicProfile(attr *VnicProfile) {
 	p.targetVnicProfile = attr
 }
 
+// TargetVnicProfile A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *VnicProfileMapping) TargetVnicProfile() (*VnicProfile, bool) {
 	if p.targetVnicProfile != nil {
 		return p.targetVnicProfile, true
@@ -39027,6 +56093,7 @@ func (p *VnicProfileMapping) TargetVnicProfile() (*VnicProfile, bool) {
 	return nil, false
 }
 
+// MustTargetVnicProfile A vNIC profile is a collection of settings that can be applied to individual <<types/nic,NIC>>.
 func (p *VnicProfileMapping) MustTargetVnicProfile() *VnicProfile {
 	if p.targetVnicProfile == nil {
 		panic("the targetVnicProfile must not be nil, please use TargetVnicProfile() function instead")
@@ -39097,6 +56164,7 @@ func (p *VolumeGroup) MustName() string {
 	return *p.name
 }
 
+// Watchdog This type represents a watchdog configuration.
 type Watchdog struct {
 	Struct
 	action       *WatchdogAction
@@ -39111,10 +56179,12 @@ type Watchdog struct {
 	vms          *VmSlice
 }
 
+// SetAction This type describes available watchdog actions.
 func (p *Watchdog) SetAction(attr WatchdogAction) {
 	p.action = &attr
 }
 
+// Action This type describes available watchdog actions.
 func (p *Watchdog) Action() (WatchdogAction, bool) {
 	if p.action != nil {
 		return *p.action, true
@@ -39123,6 +56193,7 @@ func (p *Watchdog) Action() (WatchdogAction, bool) {
 	return zero, false
 }
 
+// MustAction This type describes available watchdog actions.
 func (p *Watchdog) MustAction() WatchdogAction {
 	if p.action == nil {
 		panic("the action must not be nil, please use Action() function instead")
@@ -39187,10 +56258,66 @@ func (p *Watchdog) MustId() string {
 	return *p.id
 }
 
+// SetInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Watchdog) SetInstanceType(attr *InstanceType) {
 	p.instanceType = attr
 }
 
+// InstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Watchdog) InstanceType() (*InstanceType, bool) {
 	if p.instanceType != nil {
 		return p.instanceType, true
@@ -39198,6 +56325,34 @@ func (p *Watchdog) InstanceType() (*InstanceType, bool) {
 	return nil, false
 }
 
+// MustInstanceType Describes the hardware configuration of virtual machines.
+//
+// For example `medium` instance type includes 1 virtual CPU and 4 GiB of memory. It is a top-level
+// entity (e.g. not bound to any data center or cluster). The attributes that are used for instance
+// types and are common to virtual machine and template types are:
+//
+// - `console`
+// - `cpu`
+// - `custom_cpu_model`
+// - `custom_emulated_machine`
+// - `display`
+// - `high_availability`
+// - `io`
+// - `memory`
+// - `memory_policy`
+// - `migration`
+// - `migration_downtime`
+// - `os`
+// - `rng_device`
+// - `soundcard_enabled`
+// - `usb`
+// - `virtio_scsi`
+//
+// When creating a virtual machine from both an instance type and a template, the virtual machine
+// will inherit the hardware configurations from the instance type
+//
+// NOTE: An instance type inherits it's attributes from the template entity although most template
+// attributes are not used in instance types.
 func (p *Watchdog) MustInstanceType() *InstanceType {
 	if p.instanceType == nil {
 		panic("the instanceType must not be nil, please use InstanceType() function instead")
@@ -39205,10 +56360,12 @@ func (p *Watchdog) MustInstanceType() *InstanceType {
 	return p.instanceType
 }
 
+// SetModel This type represents the watchdog model.
 func (p *Watchdog) SetModel(attr WatchdogModel) {
 	p.model = &attr
 }
 
+// Model This type represents the watchdog model.
 func (p *Watchdog) Model() (WatchdogModel, bool) {
 	if p.model != nil {
 		return *p.model, true
@@ -39217,6 +56374,7 @@ func (p *Watchdog) Model() (WatchdogModel, bool) {
 	return zero, false
 }
 
+// MustModel This type represents the watchdog model.
 func (p *Watchdog) MustModel() WatchdogModel {
 	if p.model == nil {
 		panic("the model must not be nil, please use Model() function instead")
@@ -39243,10 +56401,14 @@ func (p *Watchdog) MustName() string {
 	return *p.name
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Watchdog) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Watchdog) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -39254,6 +56416,8 @@ func (p *Watchdog) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Watchdog) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -39261,10 +56425,12 @@ func (p *Watchdog) MustTemplate() *Template {
 	return p.template
 }
 
+// SetVm Represents a virtual machine.
 func (p *Watchdog) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Watchdog) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -39272,6 +56438,7 @@ func (p *Watchdog) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Watchdog) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -39662,10 +56829,12 @@ func (p *Action) MustAsync() bool {
 	return *p.async
 }
 
+// SetAttachment Describes how a disk is attached to a virtual machine.
 func (p *Action) SetAttachment(attr *DiskAttachment) {
 	p.attachment = attr
 }
 
+// Attachment Describes how a disk is attached to a virtual machine.
 func (p *Action) Attachment() (*DiskAttachment, bool) {
 	if p.attachment != nil {
 		return p.attachment, true
@@ -39673,6 +56842,7 @@ func (p *Action) Attachment() (*DiskAttachment, bool) {
 	return nil, false
 }
 
+// MustAttachment Describes how a disk is attached to a virtual machine.
 func (p *Action) MustAttachment() *DiskAttachment {
 	if p.attachment == nil {
 		panic("the attachment must not be nil, please use Attachment() function instead")
@@ -39698,10 +56868,12 @@ func (p *Action) MustAuthorizedKey() *AuthorizedKey {
 	return p.authorizedKey
 }
 
+// SetAutoPinningPolicy Type representing what the CPU and NUMA pinning policy is.
 func (p *Action) SetAutoPinningPolicy(attr AutoPinningPolicy) {
 	p.autoPinningPolicy = &attr
 }
 
+// AutoPinningPolicy Type representing what the CPU and NUMA pinning policy is.
 func (p *Action) AutoPinningPolicy() (AutoPinningPolicy, bool) {
 	if p.autoPinningPolicy != nil {
 		return *p.autoPinningPolicy, true
@@ -39710,6 +56882,7 @@ func (p *Action) AutoPinningPolicy() (AutoPinningPolicy, bool) {
 	return zero, false
 }
 
+// MustAutoPinningPolicy Type representing what the CPU and NUMA pinning policy is.
 func (p *Action) MustAutoPinningPolicy() AutoPinningPolicy {
 	if p.autoPinningPolicy == nil {
 		panic("the autoPinningPolicy must not be nil, please use AutoPinningPolicy() function instead")
@@ -39810,10 +56983,264 @@ func (p *Action) MustClonePermissions() bool {
 	return *p.clonePermissions
 }
 
+// SetCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Action) SetCluster(attr *Cluster) {
 	p.cluster = attr
 }
 
+// Cluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Action) Cluster() (*Cluster, bool) {
 	if p.cluster != nil {
 		return p.cluster, true
@@ -39821,6 +57248,133 @@ func (p *Action) Cluster() (*Cluster, bool) {
 	return nil, false
 }
 
+// MustCluster Type representation of a cluster.
+//
+// A JSON representation of a cluster:
+//
+// [source]
+// ----
+// {
+//   "cluster" : [ {
+//     "ballooning_enabled" : "false",
+//     "cpu" : {
+//       "architecture" : "x86_64",
+//       "type" : "Intel SandyBridge Family"
+//     },
+//     "custom_scheduling_policy_properties" : {
+//       "property" : [ {
+//         "name" : "HighUtilization",
+//         "value" : "80"
+//       }, {
+//         "name" : "CpuOverCommitDurationMinutes",
+//         "value" : "2"
+//       } ]
+//     },
+//     "error_handling" : {
+//       "on_error" : "migrate"
+//     },
+//     "fencing_policy" : {
+//       "enabled" : "true",
+//       "skip_if_connectivity_broken" : {
+//         "enabled" : "false",
+//         "threshold" : "50"
+//       },
+//       "skip_if_gluster_bricks_up" : "false",
+//       "skip_if_gluster_quorum_not_met" : "false",
+//       "skip_if_sd_active" : {
+//         "enabled" : "false"
+//       }
+//     },
+//     "gluster_service" : "false",
+//     "firewall_type" : "iptables",
+//     "ha_reservation" : "false",
+//     "ksm" : {
+//       "enabled" : "true",
+//       "merge_across_nodes" : "true"
+//     },
+//     "memory_policy" : {
+//       "over_commit" : {
+//         "percent" : "100"
+//       },
+//       "transparent_hugepages" : {
+//         "enabled" : "true"
+//       }
+//     },
+//     "migration" : {
+//       "auto_converge" : "inherit",
+//       "bandwidth" : {
+//         "assignment_method" : "auto"
+//       },
+//       "compressed" : "inherit",
+//       "policy" : {
+//         "id" : "00000000-0000-0000-0000-000000000000"
+//       }
+//     },
+//     "required_rng_sources" : {
+//       "required_rng_source" : [ "random" ]
+//     },
+//     "switch_type" : "legacy",
+//     "threads_as_cores" : "false",
+//     "trusted_service" : "false",
+//     "tunnel_migration" : "false",
+//     "version" : {
+//       "major" : "4",
+//       "minor" : "1"
+//     },
+//     "virt_service" : "true",
+//     "data_center" : {
+//       "href" : "/ovirt-engine/api/datacenters/123",
+//       "id" : "123"
+//     },
+//     "mac_pool" : {
+//       "href" : "/ovirt-engine/api/macpools/456",
+//       "id" : "456"
+//     },
+//     "scheduling_policy" : {
+//       "href" : "/ovirt-engine/api/schedulingpolicies/789",
+//       "id" : "789"
+//     },
+//     "actions" : {
+//       "link" : [ {
+//         "href" : "/ovirt-engine/api/clusters/234/resetemulatedmachine",
+//         "rel" : "resetemulatedmachine"
+//       } ]
+//     },
+//     "name" : "Default",
+//     "description" : "The default server cluster",
+//     "href" : "/ovirt-engine/api/clusters/234",
+//     "id" : "234",
+//     "link" : [ {
+//       "href" : "/ovirt-engine/api/clusters/234/permissions",
+//       "rel" : "permissions"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/cpuprofiles",
+//       "rel" : "cpuprofiles"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networkfilters",
+//       "rel" : "networkfilters"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/networks",
+//       "rel" : "networks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/affinitygroups",
+//       "rel" : "affinitygroups"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glusterhooks",
+//       "rel" : "glusterhooks"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/glustervolumes",
+//       "rel" : "glustervolumes"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/enabledfeatures",
+//       "rel" : "enabledfeatures"
+//     }, {
+//       "href" : "/ovirt-engine/api/clusters/234/externalnetworkproviders",
+//       "rel" : "externalnetworkproviders"
+//     } ]
+//   } ]
+// }
+// ----
 func (p *Action) MustCluster() *Cluster {
 	if p.cluster == nil {
 		panic("the cluster must not be nil, please use Cluster() function instead")
@@ -39885,10 +57439,34 @@ func (p *Action) MustCommitOnSuccess() bool {
 	return *p.commitOnSuccess
 }
 
+// SetConnection Represents a storage server connection.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <storage_connection id="123">
+//   <address>mynfs.example.com</address>
+//   <type>nfs</type>
+//   <path>/exports/mydata</path>
+// </storage_connection>
+// ----
 func (p *Action) SetConnection(attr *StorageConnection) {
 	p.connection = attr
 }
 
+// Connection Represents a storage server connection.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <storage_connection id="123">
+//   <address>mynfs.example.com</address>
+//   <type>nfs</type>
+//   <path>/exports/mydata</path>
+// </storage_connection>
+// ----
 func (p *Action) Connection() (*StorageConnection, bool) {
 	if p.connection != nil {
 		return p.connection, true
@@ -39896,6 +57474,18 @@ func (p *Action) Connection() (*StorageConnection, bool) {
 	return nil, false
 }
 
+// MustConnection Represents a storage server connection.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <storage_connection id="123">
+//   <address>mynfs.example.com</address>
+//   <type>nfs</type>
+//   <path>/exports/mydata</path>
+// </storage_connection>
+// ----
 func (p *Action) MustConnection() *StorageConnection {
 	if p.connection == nil {
 		panic("the connection must not be nil, please use Connection() function instead")
@@ -40052,10 +57642,12 @@ func (p *Action) MustDiscoveredTargets() *IscsiDetailsSlice {
 	return p.discoveredTargets
 }
 
+// SetDisk Represents a virtual disk device.
 func (p *Action) SetDisk(attr *Disk) {
 	p.disk = attr
 }
 
+// Disk Represents a virtual disk device.
 func (p *Action) Disk() (*Disk, bool) {
 	if p.disk != nil {
 		return p.disk, true
@@ -40063,6 +57655,7 @@ func (p *Action) Disk() (*Disk, bool) {
 	return nil, false
 }
 
+// MustDisk Represents a virtual disk device.
 func (p *Action) MustDisk() *Disk {
 	if p.disk == nil {
 		panic("the disk must not be nil, please use Disk() function instead")
@@ -40256,10 +57849,12 @@ func (p *Action) MustGracePeriod() *GracePeriod {
 	return p.gracePeriod
 }
 
+// SetHost Type representing a host.
 func (p *Action) SetHost(attr *Host) {
 	p.host = attr
 }
 
+// Host Type representing a host.
 func (p *Action) Host() (*Host, bool) {
 	if p.host != nil {
 		return p.host, true
@@ -40267,6 +57862,7 @@ func (p *Action) Host() (*Host, bool) {
 	return nil, false
 }
 
+// MustHost Type representing a host.
 func (p *Action) MustHost() *Host {
 	if p.host == nil {
 		panic("the host must not be nil, please use Host() function instead")
@@ -40312,10 +57908,12 @@ func (p *Action) MustImage() string {
 	return *p.image
 }
 
+// SetImageTransfer This type contains information regarding an image transfer being performed.
 func (p *Action) SetImageTransfer(attr *ImageTransfer) {
 	p.imageTransfer = attr
 }
 
+// ImageTransfer This type contains information regarding an image transfer being performed.
 func (p *Action) ImageTransfer() (*ImageTransfer, bool) {
 	if p.imageTransfer != nil {
 		return p.imageTransfer, true
@@ -40323,6 +57921,7 @@ func (p *Action) ImageTransfer() (*ImageTransfer, bool) {
 	return nil, false
 }
 
+// MustImageTransfer This type contains information regarding an image transfer being performed.
 func (p *Action) MustImageTransfer() *ImageTransfer {
 	if p.imageTransfer == nil {
 		panic("the imageTransfer must not be nil, please use ImageTransfer() function instead")
@@ -40404,10 +58003,16 @@ func (p *Action) MustIscsiTargets() []string {
 	return p.iscsiTargets
 }
 
+// SetJob Represents a job, which monitors execution of a flow in the system.
+// A job can contain multiple steps in a hierarchic structure.
+// The steps can be processed in parallel, depends on the implementation of the flow.
 func (p *Action) SetJob(attr *Job) {
 	p.job = attr
 }
 
+// Job Represents a job, which monitors execution of a flow in the system.
+// A job can contain multiple steps in a hierarchic structure.
+// The steps can be processed in parallel, depends on the implementation of the flow.
 func (p *Action) Job() (*Job, bool) {
 	if p.job != nil {
 		return p.job, true
@@ -40415,6 +58020,9 @@ func (p *Action) Job() (*Job, bool) {
 	return nil, false
 }
 
+// MustJob Represents a job, which monitors execution of a flow in the system.
+// A job can contain multiple steps in a hierarchic structure.
+// The steps can be processed in parallel, depends on the implementation of the flow.
 func (p *Action) MustJob() *Job {
 	if p.job == nil {
 		panic("the job must not be nil, please use Job() function instead")
@@ -40422,10 +58030,18 @@ func (p *Action) MustJob() *Job {
 	return p.job
 }
 
+// SetLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Action) SetLease(attr *StorageDomainLease) {
 	p.lease = attr
 }
 
+// Lease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Action) Lease() (*StorageDomainLease, bool) {
 	if p.lease != nil {
 		return p.lease, true
@@ -40433,6 +58049,10 @@ func (p *Action) Lease() (*StorageDomainLease, bool) {
 	return nil, false
 }
 
+// MustLease Represents a lease residing on a storage domain.
+//
+// A lease is a http://www.ovirt.org/develop/developer-guide/vdsm/sanlock[Sanlock] resource residing on a special
+// volume on the storage domain, this Sanlock resource is used to provide storage base locking.
 func (p *Action) MustLease() *StorageDomainLease {
 	if p.lease == nil {
 		panic("the lease must not be nil, please use Lease() function instead")
@@ -40644,10 +58264,12 @@ func (p *Action) MustPause() bool {
 	return *p.pause
 }
 
+// SetPermission Type represents a permission.
 func (p *Action) SetPermission(attr *Permission) {
 	p.permission = attr
 }
 
+// Permission Type represents a permission.
 func (p *Action) Permission() (*Permission, bool) {
 	if p.permission != nil {
 		return p.permission, true
@@ -40655,6 +58277,7 @@ func (p *Action) Permission() (*Permission, bool) {
 	return nil, false
 }
 
+// MustPermission Type represents a permission.
 func (p *Action) MustPermission() *Permission {
 	if p.permission == nil {
 		panic("the permission must not be nil, please use Permission() function instead")
@@ -40698,10 +58321,42 @@ func (p *Action) MustProxyTicket() *ProxyTicket {
 	return p.proxyTicket
 }
 
+// SetQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Action) SetQuota(attr *Quota) {
 	p.quota = attr
 }
 
+// Quota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Action) Quota() (*Quota, bool) {
 	if p.quota != nil {
 		return p.quota, true
@@ -40709,6 +58364,22 @@ func (p *Action) Quota() (*Quota, bool) {
 	return nil, false
 }
 
+// MustQuota Represents a quota object.
+//
+// An example XML representation of a quota:
+//
+// [source,xml]
+// ----
+// <quota href="/ovirt-engine/api/datacenters/7044934e/quotas/dcad5ddc" id="dcad5ddc">
+//   <name>My Quota</name>
+//   <description>A quota for my oVirt environment</description>
+//   <cluster_hard_limit_pct>0</cluster_hard_limit_pct>
+//   <cluster_soft_limit_pct>0</cluster_soft_limit_pct>
+//   <data_center href="/ovirt-engine/api/datacenters/7044934e" id="7044934e"/>
+//   <storage_hard_limit_pct>0</storage_hard_limit_pct>
+//   <storage_soft_limit_pct>0</storage_soft_limit_pct>
+// </quota>
+// ----
 func (p *Action) MustQuota() *Quota {
 	if p.quota == nil {
 		panic("the quota must not be nil, please use Quota() function instead")
@@ -40773,10 +58444,286 @@ func (p *Action) MustReboot() bool {
 	return *p.reboot
 }
 
+// SetRegistrationConfiguration This type describes how an object (virtual machine, template,
+// etc) is registered, and is used for the implementation of disaster recovery solutions.
+//
+// Each mapping contained in this type can be used to map
+// objects in the original system to corresponding objects
+// in the system where the virtual machine or template is being registered.
+// For example, there could be a primary setup with a virtual machine
+// configured on cluster A, and an active secondary setup with cluster B.
+// Cluster B is compatible with that virtual machine, and in case of a
+// disaster recovery scenario the storage domain can be
+// imported to the secondary setup, and the user can register the
+// virtual machine to cluster B.
+//
+// In that case, we can automate the recovery process by defining a cluster mapping.
+// After the entity is registered, its OVF will indicate it belongs to
+// cluster A, but the mapping will indicate that cluster A will
+// be replaced with cluster B.
+// {engine-name} should do the switch and register the virtual machine to cluster B
+// in the secondary site.
+//
+// Cluster mapping is just one example, there are different types of mappings:
+//
+// - Cluster mapping.
+// - LUN mapping.
+// - Role mapping.
+// - Domain mapping.
+// - Permissions mapping.
+// - Affinity Group mapping.
+// - Affinity Label mapping.
+// - Virtual NIC profile mapping.
+//
+// Each mapping will be used for its specific OVF's data once the register operation
+// takes place in the {engine-name}.
+//
+// An example of an XML representation using the mapping:
+//
+// [source,xml]
+// ----
+// <action>
+//   <registration_configuration>
+//     <cluster_mappings>
+//       <registration_cluster_mapping>
+//         <from>
+//           <name>myoriginalcluster</name>
+//         </from>
+//         <to>
+//           <name>mynewcluster</name>
+//         </to>
+//       </registration_cluster_mapping>
+//     </cluster_mappings>
+//     <role_mappings>
+//       <registration_role_mapping>
+//         <from>
+//           <name>SuperUser</name>
+//         </from>
+//         <to>
+//           <name>UserVmRunTimeManager</name>
+//         </to>
+//       </registration_role_mapping>
+//     </role_mappings>
+//     <domain_mappings>
+//       <registration_domain_mapping>
+//         <from>
+//           <name>redhat</name>
+//         </from>
+//         <to>
+//           <name>internal</name>
+//         </to>
+//       </registration_domain_mapping>
+//     </domain_mappings>
+//     <lun_mappings>
+//      <registration_lun_mapping>
+//        <from id="111">
+//        </from>
+//        <to id="222">
+//          <alias>weTestLun</alias>
+//          <lun_storage>
+//            <type>iscsi</type>
+//            <logical_units>
+//               <logical_unit id="36001405fb1ddb4b91e44078f1fffcfef">
+//                  <address>44.33.11.22</address>
+//                  <port>3260</port>
+//                  <portal>1</portal>
+//                  <target>iqn.2017-11.com.name.redhat:444</target>
+//               </logical_unit>
+//            </logical_units>
+//          </lun_storage>
+//        </to>
+//      </registration_lun_mapping>
+//     </lun_mappings>
+//     <affinity_group_mappings>
+//      <registration_affinity_group_mapping>
+//        <from>
+//          <name>affinity</name>
+//        </from>
+//        <to>
+//          <name>affinity2</name>
+//        </to>
+//      </registration_affinity_group_mapping>
+//     </affinity_group_mappings>
+//     <affinity_label_mappings>
+//      <registration_affinity_label_mapping>
+//        <from>
+//          <name>affinity_label</name>
+//        </from>
+//        <to>
+//          <name>affinity_label2</name>
+//        </to>
+//      </registration_affinity_label_mapping>
+//     </affinity_label_mappings>
+//     <vnic_profile_mappings>
+//       <registration_vnic_profile_mapping>
+//         <from>
+//           <name>gold</name>
+//           <network>
+//             <name>red</name>
+//           </network>
+//         </from>
+//         <to id="738dd914-8ec8-4a8b-8628-34672a5d449b"/>
+//       </registration_vnic_profile_mapping>
+//       <registration_vnic_profile_mapping>
+//         <from>
+//           <name>silver</name>
+//           <network>
+//             <name>blue</name>
+//           </network>
+//         </from>
+//         <to>
+//           <name>copper</name>
+//           <network>
+//             <name>orange</name>
+//           </network>
+//         </to>
+//       </registration_vnic_profile_mapping>
+//     </vnic_profile_mappings>
+//   </registration_configuration>
+// </action>
+// ----
 func (p *Action) SetRegistrationConfiguration(attr *RegistrationConfiguration) {
 	p.registrationConfiguration = attr
 }
 
+// RegistrationConfiguration This type describes how an object (virtual machine, template,
+// etc) is registered, and is used for the implementation of disaster recovery solutions.
+//
+// Each mapping contained in this type can be used to map
+// objects in the original system to corresponding objects
+// in the system where the virtual machine or template is being registered.
+// For example, there could be a primary setup with a virtual machine
+// configured on cluster A, and an active secondary setup with cluster B.
+// Cluster B is compatible with that virtual machine, and in case of a
+// disaster recovery scenario the storage domain can be
+// imported to the secondary setup, and the user can register the
+// virtual machine to cluster B.
+//
+// In that case, we can automate the recovery process by defining a cluster mapping.
+// After the entity is registered, its OVF will indicate it belongs to
+// cluster A, but the mapping will indicate that cluster A will
+// be replaced with cluster B.
+// {engine-name} should do the switch and register the virtual machine to cluster B
+// in the secondary site.
+//
+// Cluster mapping is just one example, there are different types of mappings:
+//
+// - Cluster mapping.
+// - LUN mapping.
+// - Role mapping.
+// - Domain mapping.
+// - Permissions mapping.
+// - Affinity Group mapping.
+// - Affinity Label mapping.
+// - Virtual NIC profile mapping.
+//
+// Each mapping will be used for its specific OVF's data once the register operation
+// takes place in the {engine-name}.
+//
+// An example of an XML representation using the mapping:
+//
+// [source,xml]
+// ----
+// <action>
+//   <registration_configuration>
+//     <cluster_mappings>
+//       <registration_cluster_mapping>
+//         <from>
+//           <name>myoriginalcluster</name>
+//         </from>
+//         <to>
+//           <name>mynewcluster</name>
+//         </to>
+//       </registration_cluster_mapping>
+//     </cluster_mappings>
+//     <role_mappings>
+//       <registration_role_mapping>
+//         <from>
+//           <name>SuperUser</name>
+//         </from>
+//         <to>
+//           <name>UserVmRunTimeManager</name>
+//         </to>
+//       </registration_role_mapping>
+//     </role_mappings>
+//     <domain_mappings>
+//       <registration_domain_mapping>
+//         <from>
+//           <name>redhat</name>
+//         </from>
+//         <to>
+//           <name>internal</name>
+//         </to>
+//       </registration_domain_mapping>
+//     </domain_mappings>
+//     <lun_mappings>
+//      <registration_lun_mapping>
+//        <from id="111">
+//        </from>
+//        <to id="222">
+//          <alias>weTestLun</alias>
+//          <lun_storage>
+//            <type>iscsi</type>
+//            <logical_units>
+//               <logical_unit id="36001405fb1ddb4b91e44078f1fffcfef">
+//                  <address>44.33.11.22</address>
+//                  <port>3260</port>
+//                  <portal>1</portal>
+//                  <target>iqn.2017-11.com.name.redhat:444</target>
+//               </logical_unit>
+//            </logical_units>
+//          </lun_storage>
+//        </to>
+//      </registration_lun_mapping>
+//     </lun_mappings>
+//     <affinity_group_mappings>
+//      <registration_affinity_group_mapping>
+//        <from>
+//          <name>affinity</name>
+//        </from>
+//        <to>
+//          <name>affinity2</name>
+//        </to>
+//      </registration_affinity_group_mapping>
+//     </affinity_group_mappings>
+//     <affinity_label_mappings>
+//      <registration_affinity_label_mapping>
+//        <from>
+//          <name>affinity_label</name>
+//        </from>
+//        <to>
+//          <name>affinity_label2</name>
+//        </to>
+//      </registration_affinity_label_mapping>
+//     </affinity_label_mappings>
+//     <vnic_profile_mappings>
+//       <registration_vnic_profile_mapping>
+//         <from>
+//           <name>gold</name>
+//           <network>
+//             <name>red</name>
+//           </network>
+//         </from>
+//         <to id="738dd914-8ec8-4a8b-8628-34672a5d449b"/>
+//       </registration_vnic_profile_mapping>
+//       <registration_vnic_profile_mapping>
+//         <from>
+//           <name>silver</name>
+//           <network>
+//             <name>blue</name>
+//           </network>
+//         </from>
+//         <to>
+//           <name>copper</name>
+//           <network>
+//             <name>orange</name>
+//           </network>
+//         </to>
+//       </registration_vnic_profile_mapping>
+//     </vnic_profile_mappings>
+//   </registration_configuration>
+// </action>
+// ----
 func (p *Action) RegistrationConfiguration() (*RegistrationConfiguration, bool) {
 	if p.registrationConfiguration != nil {
 		return p.registrationConfiguration, true
@@ -40784,6 +58731,144 @@ func (p *Action) RegistrationConfiguration() (*RegistrationConfiguration, bool) 
 	return nil, false
 }
 
+// MustRegistrationConfiguration This type describes how an object (virtual machine, template,
+// etc) is registered, and is used for the implementation of disaster recovery solutions.
+//
+// Each mapping contained in this type can be used to map
+// objects in the original system to corresponding objects
+// in the system where the virtual machine or template is being registered.
+// For example, there could be a primary setup with a virtual machine
+// configured on cluster A, and an active secondary setup with cluster B.
+// Cluster B is compatible with that virtual machine, and in case of a
+// disaster recovery scenario the storage domain can be
+// imported to the secondary setup, and the user can register the
+// virtual machine to cluster B.
+//
+// In that case, we can automate the recovery process by defining a cluster mapping.
+// After the entity is registered, its OVF will indicate it belongs to
+// cluster A, but the mapping will indicate that cluster A will
+// be replaced with cluster B.
+// {engine-name} should do the switch and register the virtual machine to cluster B
+// in the secondary site.
+//
+// Cluster mapping is just one example, there are different types of mappings:
+//
+// - Cluster mapping.
+// - LUN mapping.
+// - Role mapping.
+// - Domain mapping.
+// - Permissions mapping.
+// - Affinity Group mapping.
+// - Affinity Label mapping.
+// - Virtual NIC profile mapping.
+//
+// Each mapping will be used for its specific OVF's data once the register operation
+// takes place in the {engine-name}.
+//
+// An example of an XML representation using the mapping:
+//
+// [source,xml]
+// ----
+// <action>
+//   <registration_configuration>
+//     <cluster_mappings>
+//       <registration_cluster_mapping>
+//         <from>
+//           <name>myoriginalcluster</name>
+//         </from>
+//         <to>
+//           <name>mynewcluster</name>
+//         </to>
+//       </registration_cluster_mapping>
+//     </cluster_mappings>
+//     <role_mappings>
+//       <registration_role_mapping>
+//         <from>
+//           <name>SuperUser</name>
+//         </from>
+//         <to>
+//           <name>UserVmRunTimeManager</name>
+//         </to>
+//       </registration_role_mapping>
+//     </role_mappings>
+//     <domain_mappings>
+//       <registration_domain_mapping>
+//         <from>
+//           <name>redhat</name>
+//         </from>
+//         <to>
+//           <name>internal</name>
+//         </to>
+//       </registration_domain_mapping>
+//     </domain_mappings>
+//     <lun_mappings>
+//      <registration_lun_mapping>
+//        <from id="111">
+//        </from>
+//        <to id="222">
+//          <alias>weTestLun</alias>
+//          <lun_storage>
+//            <type>iscsi</type>
+//            <logical_units>
+//               <logical_unit id="36001405fb1ddb4b91e44078f1fffcfef">
+//                  <address>44.33.11.22</address>
+//                  <port>3260</port>
+//                  <portal>1</portal>
+//                  <target>iqn.2017-11.com.name.redhat:444</target>
+//               </logical_unit>
+//            </logical_units>
+//          </lun_storage>
+//        </to>
+//      </registration_lun_mapping>
+//     </lun_mappings>
+//     <affinity_group_mappings>
+//      <registration_affinity_group_mapping>
+//        <from>
+//          <name>affinity</name>
+//        </from>
+//        <to>
+//          <name>affinity2</name>
+//        </to>
+//      </registration_affinity_group_mapping>
+//     </affinity_group_mappings>
+//     <affinity_label_mappings>
+//      <registration_affinity_label_mapping>
+//        <from>
+//          <name>affinity_label</name>
+//        </from>
+//        <to>
+//          <name>affinity_label2</name>
+//        </to>
+//      </registration_affinity_label_mapping>
+//     </affinity_label_mappings>
+//     <vnic_profile_mappings>
+//       <registration_vnic_profile_mapping>
+//         <from>
+//           <name>gold</name>
+//           <network>
+//             <name>red</name>
+//           </network>
+//         </from>
+//         <to id="738dd914-8ec8-4a8b-8628-34672a5d449b"/>
+//       </registration_vnic_profile_mapping>
+//       <registration_vnic_profile_mapping>
+//         <from>
+//           <name>silver</name>
+//           <network>
+//             <name>blue</name>
+//           </network>
+//         </from>
+//         <to>
+//           <name>copper</name>
+//           <network>
+//             <name>orange</name>
+//           </network>
+//         </to>
+//       </registration_vnic_profile_mapping>
+//     </vnic_profile_mappings>
+//   </registration_configuration>
+// </action>
+// ----
 func (p *Action) MustRegistrationConfiguration() *RegistrationConfiguration {
 	if p.registrationConfiguration == nil {
 		panic("the registrationConfiguration must not be nil, please use RegistrationConfiguration() function instead")
@@ -40940,10 +59025,44 @@ func (p *Action) MustSeal() bool {
 	return *p.seal
 }
 
+// SetSnapshot Represents a snapshot object.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <snapshot id="456" href="/ovirt-engine/api/vms/123/snapshots/456">
+//   <actions>
+//     <link rel="restore" href="/ovirt-engine/api/vms/123/snapshots/456/restore"/>
+//   </actions>
+//   <vm id="123" href="/ovirt-engine/api/vms/123"/>
+//   <description>Virtual Machine 1 - Snapshot A</description>
+//   <type>active</type>
+//   <date>2010-08-16T14:24:29</date>
+//   <persist_memorystate>false</persist_memorystate>
+// </snapshot>
+// ----
 func (p *Action) SetSnapshot(attr *Snapshot) {
 	p.snapshot = attr
 }
 
+// Snapshot Represents a snapshot object.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <snapshot id="456" href="/ovirt-engine/api/vms/123/snapshots/456">
+//   <actions>
+//     <link rel="restore" href="/ovirt-engine/api/vms/123/snapshots/456/restore"/>
+//   </actions>
+//   <vm id="123" href="/ovirt-engine/api/vms/123"/>
+//   <description>Virtual Machine 1 - Snapshot A</description>
+//   <type>active</type>
+//   <date>2010-08-16T14:24:29</date>
+//   <persist_memorystate>false</persist_memorystate>
+// </snapshot>
+// ----
 func (p *Action) Snapshot() (*Snapshot, bool) {
 	if p.snapshot != nil {
 		return p.snapshot, true
@@ -40951,6 +59070,23 @@ func (p *Action) Snapshot() (*Snapshot, bool) {
 	return nil, false
 }
 
+// MustSnapshot Represents a snapshot object.
+//
+// Example XML representation:
+//
+// [source,xml]
+// ----
+// <snapshot id="456" href="/ovirt-engine/api/vms/123/snapshots/456">
+//   <actions>
+//     <link rel="restore" href="/ovirt-engine/api/vms/123/snapshots/456/restore"/>
+//   </actions>
+//   <vm id="123" href="/ovirt-engine/api/vms/123"/>
+//   <description>Virtual Machine 1 - Snapshot A</description>
+//   <type>active</type>
+//   <date>2010-08-16T14:24:29</date>
+//   <persist_memorystate>false</persist_memorystate>
+// </snapshot>
+// ----
 func (p *Action) MustSnapshot() *Snapshot {
 	if p.snapshot == nil {
 		panic("the snapshot must not be nil, please use Snapshot() function instead")
@@ -40958,10 +59094,12 @@ func (p *Action) MustSnapshot() *Snapshot {
 	return p.snapshot
 }
 
+// SetSourceHost Type representing a host.
 func (p *Action) SetSourceHost(attr *Host) {
 	p.sourceHost = attr
 }
 
+// SourceHost Type representing a host.
 func (p *Action) SourceHost() (*Host, bool) {
 	if p.sourceHost != nil {
 		return p.sourceHost, true
@@ -40969,6 +59107,7 @@ func (p *Action) SourceHost() (*Host, bool) {
 	return nil, false
 }
 
+// MustSourceHost Type representing a host.
 func (p *Action) MustSourceHost() *Host {
 	if p.sourceHost == nil {
 		panic("the sourceHost must not be nil, please use SourceHost() function instead")
@@ -41032,10 +59171,70 @@ func (p *Action) MustStopGlusterService() bool {
 	return *p.stopGlusterService
 }
 
+// SetStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Action) SetStorageDomain(attr *StorageDomain) {
 	p.storageDomain = attr
 }
 
+// StorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Action) StorageDomain() (*StorageDomain, bool) {
 	if p.storageDomain != nil {
 		return p.storageDomain, true
@@ -41043,6 +59242,36 @@ func (p *Action) StorageDomain() (*StorageDomain, bool) {
 	return nil, false
 }
 
+// MustStorageDomain Storage domain.
+//
+// An XML representation of a NFS storage domain with identifier `123`:
+//
+// [source,xml]
+// ----
+// <storage_domain href="/ovirt-engine/api/storagedomains/123" id="123">
+//   <name>mydata</name>
+//   <description>My data</description>
+//   <available>38654705664</available>
+//   <committed>1073741824</committed>
+//   <critical_space_action_blocker>5</critical_space_action_blocker>
+//   <external_status>ok</external_status>
+//   <master>true</master>
+//   <storage>
+//     <address>mynfs.example.com</address>
+//     <nfs_version>v3</nfs_version>
+//     <path>/exports/mydata</path>
+//     <type>nfs</type>
+//   </storage>
+//   <storage_format>v3</storage_format>
+//   <type>data</type>
+//   <used>13958643712</used>
+//   <warning_low_space_indicator>10</warning_low_space_indicator>
+//   <wipe_after_delete>false</wipe_after_delete>
+//   <data_centers>
+//     <data_center href="/ovirt-engine/api/datacenters/456" id="456"/>
+//   </data_centers>
+// </storage_domain>
+// ----
 func (p *Action) MustStorageDomain() *StorageDomain {
 	if p.storageDomain == nil {
 		panic("the storageDomain must not be nil, please use StorageDomain() function instead")
@@ -41105,10 +59334,14 @@ func (p *Action) MustSynchronizedNetworkAttachments() *NetworkAttachmentSlice {
 	return p.synchronizedNetworkAttachments
 }
 
+// SetTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Action) SetTemplate(attr *Template) {
 	p.template = attr
 }
 
+// Template The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Action) Template() (*Template, bool) {
 	if p.template != nil {
 		return p.template, true
@@ -41116,6 +59349,8 @@ func (p *Action) Template() (*Template, bool) {
 	return nil, false
 }
 
+// MustTemplate The type that represents a virtual machine template.
+// Templates allow for a rapid instantiation of virtual machines with common configuration and disk states.
 func (p *Action) MustTemplate() *Template {
 	if p.template == nil {
 		panic("the template must not be nil, please use Template() function instead")
@@ -41123,10 +59358,12 @@ func (p *Action) MustTemplate() *Template {
 	return p.template
 }
 
+// SetTicket Type representing a ticket that allows virtual machine access.
 func (p *Action) SetTicket(attr *Ticket) {
 	p.ticket = attr
 }
 
+// Ticket Type representing a ticket that allows virtual machine access.
 func (p *Action) Ticket() (*Ticket, bool) {
 	if p.ticket != nil {
 		return p.ticket, true
@@ -41134,6 +59371,7 @@ func (p *Action) Ticket() (*Ticket, bool) {
 	return nil, false
 }
 
+// MustTicket Type representing a ticket that allows virtual machine access.
 func (p *Action) MustTicket() *Ticket {
 	if p.ticket == nil {
 		panic("the ticket must not be nil, please use Ticket() function instead")
@@ -41179,10 +59417,12 @@ func (p *Action) MustUndeployHostedEngine() bool {
 	return *p.undeployHostedEngine
 }
 
+// SetUpgradeAction The action type for cluster upgrade action.
 func (p *Action) SetUpgradeAction(attr ClusterUpgradeAction) {
 	p.upgradeAction = &attr
 }
 
+// UpgradeAction The action type for cluster upgrade action.
 func (p *Action) UpgradeAction() (ClusterUpgradeAction, bool) {
 	if p.upgradeAction != nil {
 		return *p.upgradeAction, true
@@ -41191,6 +59431,7 @@ func (p *Action) UpgradeAction() (ClusterUpgradeAction, bool) {
 	return zero, false
 }
 
+// MustUpgradeAction The action type for cluster upgrade action.
 func (p *Action) MustUpgradeAction() ClusterUpgradeAction {
 	if p.upgradeAction == nil {
 		panic("the upgradeAction must not be nil, please use UpgradeAction() function instead")
@@ -41274,10 +59515,12 @@ func (p *Action) MustUseSysprep() bool {
 	return *p.useSysprep
 }
 
+// SetVirtualFunctionsConfiguration Describes the virtual functions configuration of an SR-IOV-enabled physical function NIC.
 func (p *Action) SetVirtualFunctionsConfiguration(attr *HostNicVirtualFunctionsConfiguration) {
 	p.virtualFunctionsConfiguration = attr
 }
 
+// VirtualFunctionsConfiguration Describes the virtual functions configuration of an SR-IOV-enabled physical function NIC.
 func (p *Action) VirtualFunctionsConfiguration() (*HostNicVirtualFunctionsConfiguration, bool) {
 	if p.virtualFunctionsConfiguration != nil {
 		return p.virtualFunctionsConfiguration, true
@@ -41285,6 +59528,7 @@ func (p *Action) VirtualFunctionsConfiguration() (*HostNicVirtualFunctionsConfig
 	return nil, false
 }
 
+// MustVirtualFunctionsConfiguration Describes the virtual functions configuration of an SR-IOV-enabled physical function NIC.
 func (p *Action) MustVirtualFunctionsConfiguration() *HostNicVirtualFunctionsConfiguration {
 	if p.virtualFunctionsConfiguration == nil {
 		panic("the virtualFunctionsConfiguration must not be nil, please use VirtualFunctionsConfiguration() function instead")
@@ -41292,10 +59536,12 @@ func (p *Action) MustVirtualFunctionsConfiguration() *HostNicVirtualFunctionsCon
 	return p.virtualFunctionsConfiguration
 }
 
+// SetVm Represents a virtual machine.
 func (p *Action) SetVm(attr *Vm) {
 	p.vm = attr
 }
 
+// Vm Represents a virtual machine.
 func (p *Action) Vm() (*Vm, bool) {
 	if p.vm != nil {
 		return p.vm, true
@@ -41303,6 +59549,7 @@ func (p *Action) Vm() (*Vm, bool) {
 	return nil, false
 }
 
+// MustVm Represents a virtual machine.
 func (p *Action) MustVm() *Vm {
 	if p.vm == nil {
 		panic("the vm must not be nil, please use Vm() function instead")
@@ -42688,6 +60935,30 @@ func (op *ExternalProviderSlice) Slice() []*ExternalProvider {
 }
 
 func (op *ExternalProviderSlice) SetSlice(slice []*ExternalProvider) {
+	op.slice = slice
+}
+
+type ExternalTemplateImportSlice struct {
+	href  *string
+	slice []*ExternalTemplateImport
+}
+
+func (op *ExternalTemplateImportSlice) Href() (string, bool) {
+	if op.href == nil {
+		return "", false
+	}
+	return *op.href, true
+}
+
+func (op *ExternalTemplateImportSlice) SetHref(href string) {
+	op.href = &href
+}
+
+func (op *ExternalTemplateImportSlice) Slice() []*ExternalTemplateImport {
+	return op.slice
+}
+
+func (op *ExternalTemplateImportSlice) SetSlice(slice []*ExternalTemplateImport) {
 	op.slice = slice
 }
 
@@ -49217,6 +67488,15 @@ func (builder *CheckpointBuilder) ParentId(attr string) *CheckpointBuilder {
 	}
 
 	builder.checkpoint.SetParentId(attr)
+	return builder
+}
+
+func (builder *CheckpointBuilder) State(attr CheckpointState) *CheckpointBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.checkpoint.SetState(attr)
 	return builder
 }
 
@@ -56300,6 +74580,203 @@ func (builder *ExternalProviderBuilder) MustBuild() *ExternalProvider {
 		panic(fmt.Sprintf("Failed to build ExternalProvider instance, reason: %v", builder.err))
 	}
 	return builder.externalProvider
+}
+
+type ExternalTemplateImportBuilder struct {
+	externalTemplateImport *ExternalTemplateImport
+	err                    error
+}
+
+func NewExternalTemplateImportBuilder() *ExternalTemplateImportBuilder {
+	return &ExternalTemplateImportBuilder{externalTemplateImport: &ExternalTemplateImport{}, err: nil}
+}
+
+func (builder *ExternalTemplateImportBuilder) Cluster(attr *Cluster) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.externalTemplateImport.SetCluster(attr)
+	return builder
+}
+
+func (builder *ExternalTemplateImportBuilder) ClusterBuilder(attrBuilder *ClusterBuilder) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	if attrBuilder.err != nil {
+		builder.err = attrBuilder.err
+		return builder
+	}
+	attr, err := attrBuilder.Build()
+	if err != nil {
+		builder.err = err
+		return builder
+	}
+	return builder.Cluster(attr)
+}
+
+func (builder *ExternalTemplateImportBuilder) CpuProfile(attr *CpuProfile) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.externalTemplateImport.SetCpuProfile(attr)
+	return builder
+}
+
+func (builder *ExternalTemplateImportBuilder) CpuProfileBuilder(attrBuilder *CpuProfileBuilder) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	if attrBuilder.err != nil {
+		builder.err = attrBuilder.err
+		return builder
+	}
+	attr, err := attrBuilder.Build()
+	if err != nil {
+		builder.err = err
+		return builder
+	}
+	return builder.CpuProfile(attr)
+}
+
+func (builder *ExternalTemplateImportBuilder) Host(attr *Host) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.externalTemplateImport.SetHost(attr)
+	return builder
+}
+
+func (builder *ExternalTemplateImportBuilder) HostBuilder(attrBuilder *HostBuilder) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	if attrBuilder.err != nil {
+		builder.err = attrBuilder.err
+		return builder
+	}
+	attr, err := attrBuilder.Build()
+	if err != nil {
+		builder.err = err
+		return builder
+	}
+	return builder.Host(attr)
+}
+
+func (builder *ExternalTemplateImportBuilder) Quota(attr *Quota) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.externalTemplateImport.SetQuota(attr)
+	return builder
+}
+
+func (builder *ExternalTemplateImportBuilder) QuotaBuilder(attrBuilder *QuotaBuilder) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	if attrBuilder.err != nil {
+		builder.err = attrBuilder.err
+		return builder
+	}
+	attr, err := attrBuilder.Build()
+	if err != nil {
+		builder.err = err
+		return builder
+	}
+	return builder.Quota(attr)
+}
+
+func (builder *ExternalTemplateImportBuilder) StorageDomain(attr *StorageDomain) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.externalTemplateImport.SetStorageDomain(attr)
+	return builder
+}
+
+func (builder *ExternalTemplateImportBuilder) StorageDomainBuilder(attrBuilder *StorageDomainBuilder) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	if attrBuilder.err != nil {
+		builder.err = attrBuilder.err
+		return builder
+	}
+	attr, err := attrBuilder.Build()
+	if err != nil {
+		builder.err = err
+		return builder
+	}
+	return builder.StorageDomain(attr)
+}
+
+func (builder *ExternalTemplateImportBuilder) Template(attr *Template) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.externalTemplateImport.SetTemplate(attr)
+	return builder
+}
+
+func (builder *ExternalTemplateImportBuilder) TemplateBuilder(attrBuilder *TemplateBuilder) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	if attrBuilder.err != nil {
+		builder.err = attrBuilder.err
+		return builder
+	}
+	attr, err := attrBuilder.Build()
+	if err != nil {
+		builder.err = err
+		return builder
+	}
+	return builder.Template(attr)
+}
+
+func (builder *ExternalTemplateImportBuilder) Url(attr string) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.externalTemplateImport.SetUrl(attr)
+	return builder
+}
+
+func (builder *ExternalTemplateImportBuilder) Href(href string) *ExternalTemplateImportBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.externalTemplateImport.SetHref(href)
+	return builder
+}
+
+func (builder *ExternalTemplateImportBuilder) Build() (*ExternalTemplateImport, error) {
+	if builder.err != nil {
+		return nil, builder.err
+	}
+	return builder.externalTemplateImport, nil
+}
+
+func (builder *ExternalTemplateImportBuilder) MustBuild() *ExternalTemplateImport {
+	if builder.err != nil {
+		panic(fmt.Sprintf("Failed to build ExternalTemplateImport instance, reason: %v", builder.err))
+	}
+	return builder.externalTemplateImport
 }
 
 type ExternalVmImportBuilder struct {
@@ -64441,6 +82918,15 @@ func (builder *InstanceTypeBuilder) TimeZoneBuilder(attrBuilder *TimeZoneBuilder
 	return builder.TimeZone(attr)
 }
 
+func (builder *InstanceTypeBuilder) TpmEnabled(attr bool) *InstanceTypeBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.instanceType.SetTpmEnabled(attr)
+	return builder
+}
+
 func (builder *InstanceTypeBuilder) TunnelMigration(attr bool) *InstanceTypeBuilder {
 	if builder.err != nil {
 		return builder
@@ -66048,6 +84534,15 @@ func (builder *MDevTypeBuilder) Description(attr string) *MDevTypeBuilder {
 	}
 
 	builder.mDevType.SetDescription(attr)
+	return builder
+}
+
+func (builder *MDevTypeBuilder) HumanReadableName(attr string) *MDevTypeBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.mDevType.SetHumanReadableName(attr)
 	return builder
 }
 
@@ -68401,6 +86896,15 @@ func (builder *NicBuilder) StatisticsBuilderOfAny(anyBuilders ...StatisticBuilde
 		}
 		builder.StatisticsOfAny(attr)
 	}
+	return builder
+}
+
+func (builder *NicBuilder) Synced(attr bool) *NicBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.nic.SetSynced(attr)
 	return builder
 }
 
@@ -77336,6 +95840,15 @@ func (builder *SnapshotBuilder) TimeZoneBuilder(attrBuilder *TimeZoneBuilder) *S
 	return builder.TimeZone(attr)
 }
 
+func (builder *SnapshotBuilder) TpmEnabled(attr bool) *SnapshotBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.snapshot.SetTpmEnabled(attr)
+	return builder
+}
+
 func (builder *SnapshotBuilder) TunnelMigration(attr bool) *SnapshotBuilder {
 	if builder.err != nil {
 		return builder
@@ -81199,6 +99712,15 @@ func (builder *TemplateBuilder) TimeZoneBuilder(attrBuilder *TimeZoneBuilder) *T
 	return builder.TimeZone(attr)
 }
 
+func (builder *TemplateBuilder) TpmEnabled(attr bool) *TemplateBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.template.SetTpmEnabled(attr)
+	return builder
+}
+
 func (builder *TemplateBuilder) TunnelMigration(attr bool) *TemplateBuilder {
 	if builder.err != nil {
 		return builder
@@ -84769,6 +103291,15 @@ func (builder *VmBuilder) TimeZoneBuilder(attrBuilder *TimeZoneBuilder) *VmBuild
 	return builder.TimeZone(attr)
 }
 
+func (builder *VmBuilder) TpmEnabled(attr bool) *VmBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.vm.SetTpmEnabled(attr)
+	return builder
+}
+
 func (builder *VmBuilder) TunnelMigration(attr bool) *VmBuilder {
 	if builder.err != nil {
 		return builder
@@ -85774,6 +104305,15 @@ func (builder *VmBaseBuilder) TimeZoneBuilder(attrBuilder *TimeZoneBuilder) *VmB
 	return builder.TimeZone(attr)
 }
 
+func (builder *VmBaseBuilder) TpmEnabled(attr bool) *VmBaseBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.vmBase.SetTpmEnabled(attr)
+	return builder
+}
+
 func (builder *VmBaseBuilder) TunnelMigration(attr bool) *VmBaseBuilder {
 	if builder.err != nil {
 		return builder
@@ -86228,6 +104768,15 @@ func (builder *VmPoolBuilder) TemplateBuilder(attrBuilder *TemplateBuilder) *VmP
 	return builder.Template(attr)
 }
 
+func (builder *VmPoolBuilder) TpmEnabled(attr bool) *VmPoolBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.vmPool.SetTpmEnabled(attr)
+	return builder
+}
+
 func (builder *VmPoolBuilder) Type(attr VmPoolType) *VmPoolBuilder {
 	if builder.err != nil {
 		return builder
@@ -86461,6 +105010,32 @@ func (builder *VnicProfileBuilder) Description(attr string) *VnicProfileBuilder 
 
 	builder.vnicProfile.SetDescription(attr)
 	return builder
+}
+
+func (builder *VnicProfileBuilder) Failover(attr *VnicProfile) *VnicProfileBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.vnicProfile.SetFailover(attr)
+	return builder
+}
+
+func (builder *VnicProfileBuilder) FailoverBuilder(attrBuilder *VnicProfileBuilder) *VnicProfileBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	if attrBuilder.err != nil {
+		builder.err = attrBuilder.err
+		return builder
+	}
+	attr, err := attrBuilder.Build()
+	if err != nil {
+		builder.err = err
+		return builder
+	}
+	return builder.Failover(attr)
 }
 
 func (builder *VnicProfileBuilder) Id(attr string) *VnicProfileBuilder {
@@ -89147,10 +107722,12 @@ const (
 type BackupPhase string
 
 const (
+	BACKUPPHASE_FAILED       BackupPhase = "failed"
 	BACKUPPHASE_FINALIZING   BackupPhase = "finalizing"
 	BACKUPPHASE_INITIALIZING BackupPhase = "initializing"
 	BACKUPPHASE_READY        BackupPhase = "ready"
 	BACKUPPHASE_STARTING     BackupPhase = "starting"
+	BACKUPPHASE_SUCCEEDED    BackupPhase = "succeeded"
 )
 
 type BiosType string
@@ -89179,6 +107756,13 @@ const (
 	BOOTPROTOCOL_NONE               BootProtocol = "none"
 	BOOTPROTOCOL_POLY_DHCP_AUTOCONF BootProtocol = "poly_dhcp_autoconf"
 	BOOTPROTOCOL_STATIC             BootProtocol = "static"
+)
+
+type CheckpointState string
+
+const (
+	CHECKPOINTSTATE_CREATED CheckpointState = "created"
+	CHECKPOINTSTATE_INVALID CheckpointState = "invalid"
 )
 
 type CloudInitNetworkProtocol string
@@ -89247,6 +107831,7 @@ const (
 type DiskContentType string
 
 const (
+	DISKCONTENTTYPE_BACKUP_SCRATCH              DiskContentType = "backup_scratch"
 	DISKCONTENTTYPE_DATA                        DiskContentType = "data"
 	DISKCONTENTTYPE_HOSTED_ENGINE               DiskContentType = "hosted_engine"
 	DISKCONTENTTYPE_HOSTED_ENGINE_CONFIGURATION DiskContentType = "hosted_engine_configuration"

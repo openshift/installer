@@ -41,6 +41,10 @@ func (c ContextPath) String() string {
 	return strings.Join(strs, ".")
 }
 
+// Append returns a new ContextPath with the specified elements appended.
+// The underlying array is sometimes reused, so if the original path might
+// be used in future Append operations, the returned ContextPath should not
+// be stored into a long-lived data structure.  (Store a copy instead.)
 func (c ContextPath) Append(e ...interface{}) ContextPath {
 	return ContextPath{
 		Path: append(c.Path, e...),
@@ -48,6 +52,11 @@ func (c ContextPath) Append(e ...interface{}) ContextPath {
 	}
 }
 
+// Copy returns an identical ContextPath that shares no state with the
+// original.  When storing a ContextPath into a data structure, usually a
+// copy should be stored instead of the original (for example, Report does
+// this), since Append sometimes modifies the path's underlying array in
+// place.
 func (c ContextPath) Copy() ContextPath {
 	// make sure to preserve reflect.DeepEqual() equality
 	var path []interface{}
