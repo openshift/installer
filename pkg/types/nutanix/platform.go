@@ -35,7 +35,7 @@ type Platform struct {
 
 	// SubnetUUIDs identifies the network subnets to be used by the cluster.
 	// Currently we only support one subnet for an OpenShift cluster.
-	SubnetUUIDs []string `json:"subnetUUID"`
+	SubnetUUIDs []string `json:"subnetUUIDs"`
 }
 
 // PrismCentral holds the endpoint and credentials data used to connect to the Prism Central

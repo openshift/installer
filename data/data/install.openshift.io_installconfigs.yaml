@@ -2334,7 +2334,7 @@ spec:
                       - uuid
                       type: object
                     type: array
-                  subnetUUID:
+                  subnetUUIDs:
                     description: SubnetUUIDs identifies the network subnets to be
                       used by the cluster. Currently we only support one subnet for
                       an OpenShift cluster.
@@ -2344,7 +2344,7 @@ spec:
                 required:
                 - prismCentral
                 - prismElements
-                - subnetUUID
+                - subnetUUIDs
                 type: object
               openstack:
                 description: OpenStack is the configuration used when installing on
