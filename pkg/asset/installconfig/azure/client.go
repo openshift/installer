@@ -354,7 +354,6 @@ func (c *Client) GetAvailabilityZones(ctx context.Context, region string, instan
 	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
 
-	var zones []string
 	// Only supported filter atm is `location`
 	filter := fmt.Sprintf("location eq '%s'", region)
 	for res, err := client.List(ctx, filter); res.NotDone(); err = res.NextWithContext(ctx) {
@@ -365,13 +364,11 @@ func (c *Client) GetAvailabilityZones(ctx context.Context, region string, instan
 		for _, resSku := range res.Values() {
 			if strings.EqualFold(to.String(resSku.Name), instanceType) {
 				for _, locationInfo := range *resSku.LocationInfo {
-					if strings.EqualFold(to.String(locationInfo.Location), region) {
-						return to.StringSlice(locationInfo.Zones), nil
-					}
+					return to.StringSlice(locationInfo.Zones), nil
 				}
 			}
 		}
 	}
 
-	return zones, nil
+	return nil, fmt.Errorf("error retrieving availability zones for %s in %s", instanceType, region)
 }
