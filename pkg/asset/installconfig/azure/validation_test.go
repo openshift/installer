@@ -81,10 +81,6 @@ var (
 		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Dne_D2_v4"
 	}
 
-	ultraSSDAvailableInstanceTypes = func(ic *types.InstallConfig) {
-		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D8s_v3"
-	}
-
 	validVMNetworkingInstanceTypes = func(ic *types.InstallConfig) {
 		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D8s_v3"
 	}
@@ -357,36 +353,6 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			name:     "Non-premium instance disk type for control-plane",
 			edits:    editFunctions{premiumDiskControlPlane, nonpremiumInstanceTypeDiskControlPlane},
 			errorMsg: `controlPlane.platform.azure.osDisk.diskType: Invalid value: "Premium_LRS": PremiumIO not supported for instance type Standard_D_v4$`,
-		},
-		{
-			name:     "Unsupported UltraSSD capability in Control Plane",
-			edits:    editFunctions{enabledSSDCapabilityControlPlane, validInstanceTypes},
-			errorMsg: `controlPlane.platform.azure.type: Invalid value: "Standard_D4s_v3": UltraSSD capability not supported for this instance type in the centralus region`,
-		},
-		{
-			name:     "Unsupported UltraSSD capability in Compute",
-			edits:    editFunctions{enabledSSDCapabilityCompute, validInstanceTypes},
-			errorMsg: `compute\[0\].platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the centralus region`,
-		},
-		{
-			name:     "Unsupported UltraSSD capability as default",
-			edits:    editFunctions{enabledSSDCapabilityDefault, validInstanceTypes},
-			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_D4s_v3": UltraSSD capability not supported for this instance type in the centralus region, compute\[0\].platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the centralus region\]$`,
-		},
-		{
-			name:     "Supported UltraSSD capability in Control Plane",
-			edits:    editFunctions{ultraSSDAvailableInstanceTypes, enabledSSDCapabilityControlPlane},
-			errorMsg: "",
-		},
-		{
-			name:     "Supported UltraSSD capability in Compute",
-			edits:    editFunctions{ultraSSDAvailableInstanceTypes, enabledSSDCapabilityCompute},
-			errorMsg: "",
-		},
-		{
-			name:     "Supported UltraSSD capability as default",
-			edits:    editFunctions{ultraSSDAvailableInstanceTypes, enabledSSDCapabilityDefault},
-			errorMsg: "",
 		},
 		{
 			name:     "Supported AcceleratedNetworking as default",
@@ -675,6 +641,336 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 
 			errors := ValidateDiskEncryptionSet(azureClient, editedInstallConfig)
 			aggregatedErrors := errors.ToAggregate()
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestAzureUltraSSDCapability(t *testing.T) {
+	ultraSSDCapability := azenc.ResourceSkuCapabilities{
+		Name: to.StringPtr("UltraSSDAVailable"), Value: to.StringPtr("True"),
+	}
+	minReqCapabilities := []azenc.ResourceSkuCapabilities{
+		{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")},
+		{Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")},
+		{Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")},
+	}
+	capabilitiesWithUltraSSD := append(minReqCapabilities, ultraSSDCapability)
+
+	validRegionsList := []string{"centralus", "northcentralus", "francecentral", "azurestack"}
+
+	instanceTypes := []*azenc.ResourceSku{
+		// No UltraSSD instances
+		{
+			Name:         to.StringPtr("Standard_D2_v4"),
+			Capabilities: &minReqCapabilities,
+			Locations:    to.StringSlicePtr(validRegionsList),
+		},
+		{
+			Name:         to.StringPtr("Standard_D4_v4"),
+			Capabilities: &minReqCapabilities,
+			Locations:    to.StringSlicePtr(validRegionsList),
+		},
+		{
+			Name:         to.StringPtr("Standard_D4s_v3"),
+			Capabilities: &minReqCapabilities,
+			Locations:    to.StringSlicePtr(validRegionsList),
+		},
+		// UltraSSD available but no zones instances
+		{
+			Name:         to.StringPtr("Standard_D8s_v3"),
+			Capabilities: &capabilitiesWithUltraSSD,
+			LocationInfo: &[]azenc.ResourceSkuLocationInfo{
+				{
+					Location:    to.StringPtr("azurestack"),
+					ZoneDetails: nil, // simulate AzureStack response
+					Zones:       to.StringSlicePtr([]string{}),
+				},
+			},
+			Locations: to.StringSlicePtr([]string{"azurestack"}),
+		},
+		{
+			Name:         to.StringPtr("Standard_D8s_v3"),
+			Capabilities: &capabilitiesWithUltraSSD,
+			LocationInfo: &[]azenc.ResourceSkuLocationInfo{
+				{
+					Location:    to.StringPtr("northcentralus"),
+					ZoneDetails: &[]azenc.ResourceSkuZoneDetails{},
+					Zones:       to.StringSlicePtr([]string{}),
+				},
+			},
+			Locations: to.StringSlicePtr([]string{"northcentralus"}),
+		},
+		// UltraSSD available in zones instances
+		{
+			Name:         to.StringPtr("Standard_D8s_v3"),
+			Capabilities: &minReqCapabilities,
+			LocationInfo: &[]azenc.ResourceSkuLocationInfo{
+				{
+					Location: to.StringPtr("francecentral"),
+					ZoneDetails: &[]azenc.ResourceSkuZoneDetails{
+						{
+							Name: to.StringSlicePtr([]string{"2", "3"}),
+							Capabilities: &[]azenc.ResourceSkuCapabilities{
+								ultraSSDCapability,
+							},
+						},
+					},
+					Zones: to.StringSlicePtr([]string{"2", "3", "1"}),
+				},
+			},
+			Locations: to.StringSlicePtr([]string{"francecentral"}),
+		},
+		{
+			Name:         to.StringPtr("Standard_D8s_v3"),
+			Capabilities: &minReqCapabilities,
+			LocationInfo: &[]azenc.ResourceSkuLocationInfo{
+				{
+					Location: to.StringPtr("centralus"),
+					ZoneDetails: &[]azenc.ResourceSkuZoneDetails{
+						{
+							Name: to.StringSlicePtr([]string{"1", "2", "3"}),
+							Capabilities: &[]azenc.ResourceSkuCapabilities{
+								ultraSSDCapability,
+							},
+						},
+					},
+					Zones: to.StringSlicePtr([]string{"1", "2", "3"}),
+				},
+			},
+			Locations: to.StringSlicePtr([]string{"centralus"}),
+		},
+	}
+
+	ultraSSDSupportedInstanceTypes := func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D8s_v3"
+	}
+	ultraSSDUnsupportedInstanceTypes := validInstanceTypes
+
+	noZoneRegion := func(ic *types.InstallConfig) {
+		ic.Platform.Azure.Region = "azurestack"
+	}
+	singleZoneRegion := func(ic *types.InstallConfig) {
+		ic.Platform.Azure.Region = "northcentralus"
+	}
+	twoZonesRegion := func(ic *types.InstallConfig) {
+		ic.Platform.Azure.Region = "francecentral"
+	}
+
+	// User provided availability zones restrictions
+	setZones := func(where string, zones ...string) func(ic *types.InstallConfig) {
+		switch where {
+		case "controlplane", "master":
+			return func(ic *types.InstallConfig) {
+				ic.ControlPlane.Platform.Azure.Zones = zones
+			}
+		case "compute", "worker":
+			return func(ic *types.InstallConfig) {
+				ic.Compute[0].Platform.Azure.Zones = zones
+			}
+		default:
+			return func(ic *types.InstallConfig) {
+				ic.Platform.Azure.DefaultMachinePlatform.Zones = zones
+			}
+		}
+	}
+
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		// Tests that should fail
+		{
+			name:     "Unsupported UltraSSD in No Zone region when set in DefaultMachine",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDUnsupportedInstanceTypes, noZoneRegion},
+			errorMsg: `^\[controlPlane.platform.azure.type: Invalid value: "Standard_D4s_v3": UltraSSD capability not supported for this instance type in the azurestack region, compute\[0\].platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the azurestack region\]$`,
+		},
+		{
+			name:     "Unsupported UltraSSD in No Zone region when set in ControlPlane",
+			edits:    editFunctions{enabledSSDCapabilityControlPlane, ultraSSDUnsupportedInstanceTypes, noZoneRegion},
+			errorMsg: `controlPlane.platform.azure.type: Invalid value: "Standard_D4s_v3": UltraSSD capability not supported for this instance type in the azurestack region$`,
+		},
+		{
+			name:     "Unsupported UltraSSD in No Zone region when set in Compute",
+			edits:    editFunctions{enabledSSDCapabilityCompute, ultraSSDUnsupportedInstanceTypes, noZoneRegion},
+			errorMsg: `compute\[0\].platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the azurestack region$`,
+		},
+		{
+			name:     "Unsupported UltraSSD in No Zone region when set in ControlPlane and Compute",
+			edits:    editFunctions{enabledSSDCapabilityControlPlane, enabledSSDCapabilityCompute, ultraSSDUnsupportedInstanceTypes, noZoneRegion},
+			errorMsg: `^\[controlPlane.platform.azure.type: Invalid value: "Standard_D4s_v3": UltraSSD capability not supported for this instance type in the azurestack region, compute\[0\].platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the azurestack region\]$`,
+		},
+		{
+			name:     "Unsupported UltraSSD in No Zone region when set in ControlPlane and DefaultMachine",
+			edits:    editFunctions{enabledSSDCapabilityDefault, enabledSSDCapabilityControlPlane, ultraSSDUnsupportedInstanceTypes, noZoneRegion},
+			errorMsg: `^\[controlPlane.platform.azure.type: Invalid value: "Standard_D4s_v3": UltraSSD capability not supported for this instance type in the azurestack region, compute\[0\].platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the azurestack region\]$`,
+		},
+		{
+			name:     "Unsupported UltraSSD in Single Zone region when set in DefaultMachine",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDUnsupportedInstanceTypes, singleZoneRegion},
+			errorMsg: `^\[controlPlane.platform.azure.type: Invalid value: "Standard_D4s_v3": UltraSSD capability not supported for this instance type in the northcentralus region, compute\[0\].platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the northcentralus region\]$`,
+		},
+		{
+			name:     "Unsupported UltraSSD in Single Zone region when set in Control Plane",
+			edits:    editFunctions{enabledSSDCapabilityControlPlane, ultraSSDUnsupportedInstanceTypes, singleZoneRegion},
+			errorMsg: `controlPlane.platform.azure.type: Invalid value: "Standard_D4s_v3": UltraSSD capability not supported for this instance type in the northcentralus region$`,
+		},
+		{
+			name:     "Unsupported UltraSSD in Single Zone region when set in Compute",
+			edits:    editFunctions{enabledSSDCapabilityCompute, ultraSSDUnsupportedInstanceTypes, singleZoneRegion},
+			errorMsg: `compute\[0\].platform.azure.type: Invalid value: "Standard_D4_v4": UltraSSD capability not supported for this instance type in the northcentralus region$`,
+		},
+		{
+			name:     "Unsupported UltraSSD in Two Zone region when set in DefaultMachine and zones not specified",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDSupportedInstanceTypes, twoZonesRegion},
+			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability only supported in zones \[2 3\] for this instance type in the francecentral region, compute\[0\].platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability only supported in zones \[2 3\] for this instance type in the francecentral region\]$`,
+		},
+		{
+			name:     "Unsupported UltraSSD in Two Zone region when set in DefaultMachine and single wrong zone specified",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDSupportedInstanceTypes, twoZonesRegion, setZones("default", "1")},
+			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability only supported in zones \[2 3\] for this instance type in the francecentral region, compute\[0\].platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability only supported in zones \[2 3\] for this instance type in the francecentral region\]`,
+		},
+		{
+			name:     "Unsupported UltraSSD in Two Zone region when set in DefaultMachine and one wrong zone specified",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDSupportedInstanceTypes, twoZonesRegion, setZones("default", "1", "2")},
+			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability only supported in zones \[2 3\] for this instance type in the francecentral region, compute\[0\].platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability only supported in zones \[2 3\] for this instance type in the francecentral region\]`,
+		},
+		{
+			name:     "Unsupported UltraSSD in Two Zone region when set in DefaultMachine and one wrong zone specified for ControlPlane",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDSupportedInstanceTypes, twoZonesRegion, setZones("default", "2", "3"), setZones("master", "1", "2")},
+			errorMsg: `controlPlane.platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability only supported in zones \[2 3\] for this instance type in the francecentral region$`,
+		},
+		{
+			name:     "Unsupported UltraSSD in Two Zone region when set in DefaultMachine and one wrong zone specified for Compute",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDSupportedInstanceTypes, twoZonesRegion, setZones("default", "2", "3"), setZones("worker", "1", "2")},
+			errorMsg: `compute\[0\].platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability only supported in zones \[2 3\] for this instance type in the francecentral region$`,
+		},
+		{
+			name:     "Supported UltraSSD in No Zone region when set in DefaultMachine",
+			edits:    editFunctions{ultraSSDSupportedInstanceTypes, noZoneRegion, enabledSSDCapabilityDefault},
+			errorMsg: `^\[controlPlane.platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability is not compatible with Availability Sets which are used because region azurestack does not support Availability Zones, compute\[0\].platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability is not compatible with Availability Sets which are used because region azurestack does not support Availability Zones\]$`,
+		},
+		{
+			name:     "Supported UltraSSD in No Zone region when set in ControlPlane",
+			edits:    editFunctions{ultraSSDSupportedInstanceTypes, noZoneRegion, enabledSSDCapabilityControlPlane},
+			errorMsg: `controlPlane.platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability is not compatible with Availability Sets which are used because region azurestack does not support Availability Zones`,
+		},
+		{
+			name:     "Supported UltraSSD in No Zone region when set in Compute",
+			edits:    editFunctions{ultraSSDSupportedInstanceTypes, noZoneRegion, enabledSSDCapabilityCompute},
+			errorMsg: `compute\[0\].platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability is not compatible with Availability Sets which are used because region azurestack does not support Availability Zones`,
+		},
+		{
+			name:     "Supported UltraSSD in No Zone region when set in ControlPlane and Compute",
+			edits:    editFunctions{ultraSSDSupportedInstanceTypes, noZoneRegion, enabledSSDCapabilityControlPlane, enabledSSDCapabilityCompute},
+			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability is not compatible with Availability Sets which are used because region azurestack does not support Availability Zones, compute\[0\].platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability is not compatible with Availability Sets which are used because region azurestack does not support Availability Zones\]$`,
+		},
+		{
+			name:     "Supported UltraSSD Single Zone region when set in DefaultMachine",
+			edits:    editFunctions{ultraSSDSupportedInstanceTypes, enabledSSDCapabilityDefault, singleZoneRegion},
+			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability is not compatible with Availability Sets which are used because region northcentralus does not support Availability Zones, compute\[0\].platform.azure.type: Invalid value: "Standard_D8s_v3": UltraSSD capability is not compatible with Availability Sets which are used because region northcentralus does not support Availability Zones\]$`,
+		},
+		// Tests that should succeed
+		{
+			name:     "Unsupported UltraSSD in No Zone region when not set in config",
+			edits:    editFunctions{ultraSSDUnsupportedInstanceTypes, noZoneRegion},
+			errorMsg: "",
+		},
+		{
+			name:     "Unsupported UltraSSD in Single Zone region when not set in config",
+			edits:    editFunctions{ultraSSDUnsupportedInstanceTypes, singleZoneRegion},
+			errorMsg: "",
+		},
+		{
+			name:     "Unsupported UltraSSD in Multi Zone region when not set in config",
+			edits:    editFunctions{ultraSSDUnsupportedInstanceTypes},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported UltraSSD in Two Zone region when set in DefaultMachine and correct zones specified",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDSupportedInstanceTypes, twoZonesRegion, setZones("default", "2", "3")},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported UltraSSD in Two Zone region when set in ControlPlane and one wrong zone specified for DefaultMachine but correct zones for ControlPlane",
+			edits:    editFunctions{enabledSSDCapabilityControlPlane, ultraSSDSupportedInstanceTypes, twoZonesRegion, setZones("default", "1", "2"), setZones("master", "2", "3")},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported UltraSSD in Two Zone region when set in Compute and one wrong zone specified for DefaultMachine but correct zones for Compute",
+			edits:    editFunctions{enabledSSDCapabilityCompute, ultraSSDSupportedInstanceTypes, twoZonesRegion, setZones("default", "1", "2"), setZones("worker", "2", "3")},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported UltraSSD in Multi Zone region when set in DefaultMachine and no zones specified",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDSupportedInstanceTypes},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported UltraSSD in Multi Zone region when set in DefaultMachine and single zone specified",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDSupportedInstanceTypes, setZones("default", "1")},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported UltraSSD in Multi Zone region when set in DefaultMachine and two zones specified",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDSupportedInstanceTypes, setZones("default", "1", "2")},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported UltraSSD in Multi Zone region when set in DefaultMachine and all zones specified",
+			edits:    editFunctions{enabledSSDCapabilityDefault, ultraSSDSupportedInstanceTypes, setZones("default", "1", "2", "3")},
+			errorMsg: "",
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	azureClient := mock.NewMockAPI(mockCtrl)
+
+	for _, value := range instanceTypes {
+		for _, location := range *value.Locations {
+			azureClient.EXPECT().GetVirtualMachineSku(gomock.Any(), to.String(value.Name), location).Return(value, nil).AnyTimes()
+		}
+	}
+	locationsAPIResult = func() *[]azsubs.Location {
+		r := []azsubs.Location{}
+		for i := 0; i < len(validRegionsList); i++ {
+			r = append(r, azsubs.Location{
+				Name:        &validRegionsList[i],
+				DisplayName: &validRegionsList[i],
+			})
+		}
+		return &r
+	}()
+	azureClient.EXPECT().ListLocations(gomock.Any()).Return(locationsAPIResult, nil).AnyTimes()
+	resourcesProviderAPIResult = &azres.Provider{
+		Namespace: &validResourceGroupNamespace,
+		ResourceTypes: &[]azres.ProviderResourceType{
+			{
+				ResourceType: &validResourceGroupResourceType,
+				Locations:    &validRegionsList,
+			},
+		},
+	}
+	azureClient.EXPECT().GetResourcesProvider(gomock.Any(), validResourceGroupNamespace).Return(resourcesProviderAPIResult, nil).AnyTimes()
+	azureClient.EXPECT().GetVirtualNetwork(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork).Return(virtualNetworkAPIResult, nil).AnyTimes()
+	azureClient.EXPECT().GetComputeSubnet(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork, validComputeSubnet).Return(computeSubnetAPIResult, nil).AnyTimes()
+	azureClient.EXPECT().GetControlPlaneSubnet(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork, validControlPlaneSubnet).Return(controlPlaneSubnetAPIResult, nil).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			aggregatedErrors := Validate(azureClient, editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
