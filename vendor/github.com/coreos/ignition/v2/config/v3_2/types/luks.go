@@ -46,7 +46,7 @@ func (l Luks) Validate(c path.ContextPath) (r report.Report) {
 	}
 
 	if l.Clevis != nil {
-		if l.Clevis.Custom != nil && (len(l.Clevis.Tang) > 0 || (l.Clevis.Tpm2 != nil && *l.Clevis.Tpm2) || (l.Clevis.Threshold != nil && *l.Clevis.Threshold != 0)) {
+		if l.Clevis.Custom != nil && (len(l.Clevis.Tang) > 0 || util.IsTrue(l.Clevis.Tpm2) || (l.Clevis.Threshold != nil && *l.Clevis.Threshold != 0)) {
 			r.AddOnError(c.Append("clevis"), errors.ErrClevisCustomWithOthers)
 		}
 	}

@@ -18,6 +18,7 @@ import (
 	"path"
 
 	"github.com/coreos/ignition/v2/config/shared/errors"
+	"github.com/coreos/ignition/v2/config/util"
 
 	vpath "github.com/coreos/vcontext/path"
 	"github.com/coreos/vcontext/report"
@@ -41,7 +42,7 @@ func (n Node) Depth() int {
 }
 
 func validateIDorName(id *int, name *string) error {
-	if id != nil && (name != nil && *name != "") {
+	if id != nil && util.NotEmpty(name) {
 		return errors.ErrBothIDAndNameSet
 	}
 	return nil
