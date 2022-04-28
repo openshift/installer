@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 	"reflect"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -148,16 +147,14 @@ func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetw
 func (n NMConfig) GetNodeZeroIP() string {
 	configList, err := n.nmConfig()
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		panic(err)
 	}
 
 	var nmStateConfig NMStateConfig
 	// Use entry for first host
 	err = yaml.Unmarshal(configList[0].Spec.NetConfig.Raw, &nmStateConfig)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		panic(err)
 	}
 
 	var nodeZeroIP string
@@ -170,12 +167,10 @@ func (n NMConfig) GetNodeZeroIP() string {
 
 		}
 		if net.ParseIP(nodeZeroIP) == nil {
-			fmt.Errorf("Invalid YAML - NMStateconfig")
-			os.Exit(1)
+			panic("Invalid YAML - NMStateconfig")
 		}
 	} else {
-		fmt.Errorf("Invalid YAML - NMStateconfig: No valid interfaces set.")
-		os.Exit(1)
+		panic("Invalid YAML - NMStateconfig: No valid interfaces set.")
 	}
 
 	return nodeZeroIP
