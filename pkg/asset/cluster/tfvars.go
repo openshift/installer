@@ -866,13 +866,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1.NutanixMachineProviderConfig)
 		}
 
+		imgURI := string(*rhcosImage)
+		if installConfig.Config.Nutanix.ClusterOSImage != "" {
+			imgURI = installConfig.Config.Nutanix.ClusterOSImage
+		}
 		data, err = nutanixtfvars.TFVars(
 			nutanixtfvars.TFVarsSources{
 				PrismCentralAddress:   installConfig.Config.Nutanix.PrismCentral.Endpoint.Address,
 				Port:                  strconv.Itoa(int(installConfig.Config.Nutanix.PrismCentral.Endpoint.Port)),
 				Username:              installConfig.Config.Nutanix.PrismCentral.Username,
 				Password:              installConfig.Config.Nutanix.PrismCentral.Password,
-				ImageURL:              string(*rhcosImage),
+				ImageURI:              imgURI,
 				BootstrapIgnitionData: bootstrapIgn,
 				ClusterID:             clusterID.InfraID,
 				ControlPlaneConfigs:   controlPlaneConfigs,
