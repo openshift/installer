@@ -220,10 +220,10 @@ func (mr *MockAPIMockRecorder) GetVMCapabilities(ctx, instanceType, region inter
 }
 
 // GetVirtualMachineSku mocks base method.
-func (m *MockAPI) GetVirtualMachineSku(ctx context.Context, name, region string) (*compute.ResourceSku, error) {
+func (m *MockAPI) GetVirtualMachineSku(ctx context.Context, name, region string) (*compute0.ResourceSku, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVirtualMachineSku", ctx, name, region)
-	ret0, _ := ret[0].(*compute.ResourceSku)
+	ret0, _ := ret[0].(*compute0.ResourceSku)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
