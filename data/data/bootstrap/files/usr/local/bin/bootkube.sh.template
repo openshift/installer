@@ -5,6 +5,7 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 
 . /usr/local/bin/release-image.sh
 . /usr/local/bin/bootstrap-cluster-gather.sh
+. /usr/local/bin/bootstrap-verify-api-server-urls.sh
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
@@ -354,6 +355,19 @@ then
 
 	touch mco-bootstrap.done
     record_service_stage_success
+fi
+
+# Check if the API and API_INT Server URLs can be resolved and reached.
+echo "Check if API and API-Int URLs are resolvable during bootstrap"
+API_SERVER_URL="{{.APIServerURL}}"
+API_INT_SERVER_URL="{{.APIIntServerURL}}" 
+
+if [[ ! -z "${API_SERVER_URL}" ]] ; then
+    check_url "API_URL" "${API_SERVER_URL}"
+fi
+
+if [[ ! -z "${API_INT_SERVER_URL}" ]] ; then
+    check_url "API_INT_URL" "${API_INT_SERVER_URL}"
 fi
 
 if [ ! -f cco-bootstrap.done ]
