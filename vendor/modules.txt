@@ -558,7 +558,7 @@ github.com/opencontainers/go-digest
 ## explicit
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift/api v0.0.0-20220411210816-c3bb724c282a
+# github.com/openshift/api v0.0.0-20220412182430-7c9d6528f1cc
 ## explicit; go 1.16
 github.com/openshift/api/config/v1
 github.com/openshift/api/machine/v1
@@ -603,10 +603,6 @@ github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
 ## explicit; go 1.17
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/route/routeapihelpers
-# github.com/openshift/machine-api-provider-nutanix v0.0.0-20220217170301-9c5eed11237a
-## explicit; go 1.17
-github.com/openshift/machine-api-provider-nutanix/pkg/apis
-github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1
 # github.com/openshift/machine-api-provider-powervs v0.0.0-20220303154846-89bb5bec120e
 ## explicit; go 1.17
 github.com/openshift/machine-api-provider-powervs/pkg/apis

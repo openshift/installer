@@ -126,7 +126,8 @@ type IngressStatus struct {
 	//
 	// When omitted, the default value is Workers
 	//
-	// +kubebuilder:validation:Enum:="ControlPlane";"Workers";""
+	// +kubebuilder:validation:Enum:="ControlPlane";"Workers"
+	// +kubebuilder:default:="Workers"
 	// +optional
 	DefaultPlacement DefaultPlacement `json:"defaultPlacement"`
 }

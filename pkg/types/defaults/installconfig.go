@@ -81,6 +81,8 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	if c.CredentialsMode == "" {
 		if c.Platform.Azure != nil && c.Platform.Azure.CloudName == azure.StackCloud {
 			c.CredentialsMode = types.ManualCredentialsMode
+		} else if c.Platform.Nutanix != nil {
+			c.CredentialsMode = types.ManualCredentialsMode
 		}
 	}
 

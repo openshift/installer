@@ -3,11 +3,10 @@ package nutanix
 import (
 	"encoding/json"
 
-	nutanixapis "github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1"
-	"github.com/pkg/errors"
-
+	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
+	"github.com/pkg/errors"
 )
 
 type config struct {
@@ -36,7 +35,7 @@ type TFVarsSources struct {
 	ImageURL              string
 	BootstrapIgnitionData string
 	ClusterID             string
-	ControlPlaneConfigs   []*nutanixapis.NutanixMachineProviderConfig
+	ControlPlaneConfigs   []*machinev1.NutanixMachineProviderConfig
 }
 
 //TFVars generate Nutanix-specific Terraform variables
@@ -58,13 +57,13 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PrismCentralAddress:            sources.PrismCentralAddress,
 		Username:                       sources.Username,
 		Password:                       sources.Password,
-		MemoryMiB:                      controlPlaneConfig.MemorySizeMib,
-		DiskSizeMiB:                    controlPlaneConfig.DiskSizeMib,
-		NumCPUs:                        controlPlaneConfig.NumSockets,
-		NumCoresPerSocket:              controlPlaneConfig.NumVcpusPerSocket,
-		PrismElementUUID:               controlPlaneConfig.ClusterReferenceUUID,
-		SubnetUUID:                     controlPlaneConfig.SubnetUUID,
-		Image:                          controlPlaneConfig.ImageName,
+		MemoryMiB:                      controlPlaneConfig.MemorySize.Value() / (1024 * 1024),
+		DiskSizeMiB:                    controlPlaneConfig.SystemDiskSize.Value() / (1024 * 1024),
+		NumCPUs:                        int64(controlPlaneConfig.VCPUSockets),
+		NumCoresPerSocket:              int64(controlPlaneConfig.VCPUsPerSocket),
+		PrismElementUUID:               *controlPlaneConfig.Cluster.UUID,
+		SubnetUUID:                     *controlPlaneConfig.Subnets[0].UUID,
+		Image:                          *controlPlaneConfig.Image.Name,
 		ImageFilePath:                  cachedImage,
 		BootstrapIgnitionImage:         bootstrapIgnitionImageName,
 		BootstrapIgnitionImageFilePath: bootstrapIgnitionImagePath,
