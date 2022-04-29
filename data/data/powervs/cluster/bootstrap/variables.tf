@@ -67,3 +67,64 @@ variable "cos_storage_class" {
   type        = string
   description = "The storage class for the Cloud Object Store instance."
 }
+
+variable "vpc_region" {
+  type        = string
+  description = "The IBM Cloud region in which the VPC is created."
+}
+
+variable "vpc_zone" {
+  type        = string
+  description = "The IBM Cloud zone in which the VPC is created."
+}
+
+variable "vpc_id" {
+  type        = string
+  description = "The ID of the VPC created for the cluster load balancers."
+}
+
+variable "powervs_region" {
+  type        = string
+  description = "The Power VS region in which to create resources."
+}
+
+variable "powervs_zone" {
+  type        = string
+  description = "The Power VS zone in which to create resources."
+
+}
+
+variable "dhcp_id" {
+  type        = string
+  description = "The ID of the Power VS DHCP Service."
+}
+
+variable "dhcp_network_id" {
+  type        = string
+  description = "The ID of the Power VS DHCP network."
+}
+
+variable "lb_ext_id" {
+  type        = string
+  description = "The ID of the external load balancer in the IBM Cloud VPC"
+}
+
+variable "lb_int_id" {
+  type        = string
+  description = "The ID of the private load balancer in the IBM Cloud VPC"
+}
+
+variable "machine_cfg_pool_id" {
+  type        = string
+  description = "The ID of the load balancer pool for the machine-config server."
+}
+
+variable "api_pool_int_id" {
+  type        = string
+  description = "The ID of the private load balancer pool for the API server."
+}
+
+variable "api_pool_ext_id" {
+  type        = string
+  description = "The ID of the public load balancer pool for the API server."
+}

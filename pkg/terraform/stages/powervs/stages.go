@@ -10,7 +10,7 @@ import (
 var PlatformStages = []terraform.Stage{
 	stages.NewStage("powervs",
 		"cluster",
-		[]providers.Provider{providers.IBM, providers.Ignition}),
+		[]providers.Provider{providers.IBM, providers.Ignition, providers.Time}),
 	stages.NewStage("powervs",
 		"post-install",
 		[]providers.Provider{providers.IBM}),

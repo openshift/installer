@@ -123,24 +123,6 @@ variable "powervs_image_storage_type" {
 }
 
 ################################################################
-# Configure Network Topology
-################################################################
-variable "powervs_network_name" {
-  type        = string
-  description = "Name of the network within the Power VS instance."
-}
-
-variable "powervs_vpc_name" {
-  type        = string
-  description = "Name of the IBM Cloud Virtual Private Cloud (VPC) to setup the load balancer."
-}
-
-variable "powervs_vpc_subnet_name" {
-  type        = string
-  description = "Name of the VPC subnet connected via DirectLink to the Power VS private network."
-}
-
-################################################################
 # Configure DNS
 ################################################################
 ## TODO: Pass the CIS CRN from the installer program, refer the IBM Cloud code to see the implementation.
