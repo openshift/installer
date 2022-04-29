@@ -13,7 +13,7 @@ import (
 
 func getInfraEnv() aiv1beta1.InfraEnv {
 	var infraEnv aiv1beta1.InfraEnv
-	if err := GetFileData("infraenv.yaml", &infraEnv); err != nil {
+	if err := getFileData("infraenv.yaml", &infraEnv); err != nil {
 		logrus.Println(err.Error())
 		os.Exit(1)
 	}
@@ -21,7 +21,7 @@ func getInfraEnv() aiv1beta1.InfraEnv {
 	return infraEnv
 }
 
-// createInfraEnvParams body was copied from
+// CreateInfraEnvParams body was copied from
 // https://github.com/openshift/assisted-service/blob/5d4d836747862f43fa2ec882e5871648bd12c780/internal/controller/controllers/infraenv_controller.go#L339
 // TODO: Refactor infraenv_controller to have a CreateInfraEnvParams function that can be used in controller and here.
 func CreateInfraEnvParams() (*models.InfraEnvCreateParams, error) {
@@ -58,7 +58,7 @@ func CreateInfraEnvParams() (*models.InfraEnvCreateParams, error) {
 	createParams.ClusterID = &tempClusterID
 	createParams.OpenshiftVersion = releaseImageVersion
 
-	staticNetworkConfig, err := ProcessNMStateConfig(infraEnv)
+	staticNetworkConfig, err := processNMStateConfig(infraEnv)
 	if err != nil {
 		return nil, err
 	}

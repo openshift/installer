@@ -35,6 +35,4 @@ func BuildImage(baseImage string) error {
 
 	_, err = io.Copy(output, custom)
 	return err
-
-	return nil
 }

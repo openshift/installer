@@ -12,9 +12,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// GetPullSecret gets the pull secret from a YAML file
 func GetPullSecret() string {
 	var secret corev1.Secret
-	if err := GetFileData("pull-secret.yaml", &secret); err != nil {
+	if err := getFileData("pull-secret.yaml", &secret); err != nil {
 		logrus.Println(err.Error())
 		os.Exit(1)
 	}
@@ -25,7 +26,7 @@ func GetPullSecret() string {
 
 func getClusterDeployment() hivev1.ClusterDeployment {
 	var cd hivev1.ClusterDeployment
-	if err := GetFileData("cluster-deployment.yaml", &cd); err != nil {
+	if err := getFileData("cluster-deployment.yaml", &cd); err != nil {
 		logrus.Println(err.Error())
 		os.Exit(1)
 	}
@@ -33,9 +34,10 @@ func getClusterDeployment() hivev1.ClusterDeployment {
 	return cd
 }
 
+// GetAgentClusterInstall gets the ZTP AgentClusterInstall manifest
 func GetAgentClusterInstall() hiveext.AgentClusterInstall {
 	var aci hiveext.AgentClusterInstall
-	if err := GetFileData("agent-cluster-install.yaml", &aci); err != nil {
+	if err := getFileData("agent-cluster-install.yaml", &aci); err != nil {
 		logrus.Println(err.Error())
 		os.Exit(1)
 	}
@@ -43,7 +45,7 @@ func GetAgentClusterInstall() hiveext.AgentClusterInstall {
 	return aci
 }
 
-// createClusterParams and associated functions were copied from
+// CreateClusterParams and associated functions were copied from
 // https://github.com/openshift/assisted-service/blob/c5eacda676475f5a6de123678c1af353a2368bd3/internal/controller/controllers/clusterdeployments_controller.go#L1088
 // TODO: Refactor clusterdeployments_controller to have a CreateClusterParams function that can be used in controller and here.
 //       After the refactoring most of the code below goes away, especially the helper functions that are being carried over here.

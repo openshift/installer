@@ -22,7 +22,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const NMCONNECTIONS_DIR = "/etc/assisted/network"
+const nmConnectionsDir = "/etc/assisted/network"
 
 // ConfigBuilder builds an Ignition config
 type ConfigBuilder struct {
@@ -37,6 +37,7 @@ type ConfigBuilder struct {
 	staticNetworkConfig      []*models.HostStaticNetworkConfig
 }
 
+// New creates a new ConfigBuilder by reading the ZTP manifests
 func New() *ConfigBuilder {
 	pullSecret := manifests.GetPullSecret()
 
@@ -138,7 +139,7 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 		filesList, err := manifests.GetNMIgnitionFiles(c.staticNetworkConfig)
 		if err == nil {
 			for i := range filesList {
-				nmFilePath := path.Join(NMCONNECTIONS_DIR, filesList[i].FilePath)
+				nmFilePath := path.Join(nmConnectionsDir, filesList[i].FilePath)
 				nmStateIgnFile := ignitionFileEmbed(nmFilePath, 0600, true, []byte(filesList[i].FileContents))
 				files = append(files, nmStateIgnFile)
 			}

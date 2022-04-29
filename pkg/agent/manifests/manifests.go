@@ -12,8 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-// Read a Yaml file and unmarshal the contents
-func GetFileData(fileName string, output interface{}) error {
+// getFileData reads a YAML file and unmarshals the contents
+func getFileData(fileName string, output interface{}) error {
 
 	path := filepath.Join("./manifests", fileName)
 
@@ -27,13 +27,13 @@ func GetFileData(fileName string, output interface{}) error {
 	return err
 }
 
-type DecodeFormat interface {
-	NewDecodedYaml(decoder *yaml.YAMLToJSONDecoder) (interface{}, error)
+type decodeFormat interface {
+	newDecodedYaml(decoder *yaml.YAMLToJSONDecoder) (interface{}, error)
 }
 
 // Read a YAML file containing multiple YAML definitions of the same format
-// Each specific format must be of type DecodeFormat
-func GetFileMultipleYamls(filename string, decoder DecodeFormat) ([]interface{}, error) {
+// Each specific format must be of type decodeFormat
+func getFileMultipleYamls(filename string, decoder decodeFormat) ([]interface{}, error) {
 
 	// TODO - this location must be defined by user input via cobra flags
 	path := filepath.Join("./manifests", filename)
@@ -49,7 +49,7 @@ func GetFileMultipleYamls(filename string, decoder DecodeFormat) ([]interface{},
 
 	var outputList []interface{}
 	for {
-		decodedData, err := decoder.NewDecodedYaml(dec)
+		decodedData, err := decoder.newDecodedYaml(dec)
 		if errors.Is(err, io.EOF) {
 			break
 		}

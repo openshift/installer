@@ -14,15 +14,17 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
+// NMConfig represents a set of configs from which the Node0 IP can be obtained
 type NMConfig struct {
 	nmConfig func() ([]aiv1beta1.NMStateConfig, error)
 }
 
+// NewNMConfig creates a new NMConfig
 func NewNMConfig() NMConfig {
 	return NMConfig{nmConfig: getNMStateConfig}
 }
 
-type NMStateConfig struct {
+type nmStateConfig struct {
 	Interfaces []struct {
 		IPV4 struct {
 			Address []struct {
@@ -37,19 +39,19 @@ type NMStateConfig struct {
 	} `yaml:"interfaces,omitempty"`
 }
 
-type NMStateConfigYamlDecoder int
+type nmStateConfigYamlDecoder int
 
-func (d *NMStateConfigYamlDecoder) NewDecodedYaml(yamlDecoder *yaml.YAMLToJSONDecoder) (interface{}, error) {
+func (d *nmStateConfigYamlDecoder) newDecodedYaml(yamlDecoder *yaml.YAMLToJSONDecoder) (interface{}, error) {
 	decodedData := new(aiv1beta1.NMStateConfig)
 	err := yamlDecoder.Decode(&decodedData)
 
 	return decodedData, err
 }
 
-// Get a list of NMStateConfig objects from the manifest file
+// Get a list of nmStateConfig objects from the manifest file
 func getNMStateConfig() ([]aiv1beta1.NMStateConfig, error) {
-	var decoder NMStateConfigYamlDecoder
-	yamlList, err := GetFileMultipleYamls("nmstateconfig.yaml", &decoder)
+	var decoder nmStateConfigYamlDecoder
+	yamlList, err := getFileMultipleYamls("nmstateconfig.yaml", &decoder)
 
 	var nmStateConfigList []aiv1beta1.NMStateConfig
 	for i := range yamlList {
@@ -92,10 +94,10 @@ func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInter
 	return macInterfaceMap
 }
 
-// Get the NetworkManager configuration files
+// GetNMIgnitionFiles returns the list of NetworkManager configuration files
 func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) ([]staticnetworkconfig.StaticNetworkConfigData, error) {
 	log := logrus.New()
-	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{2})
+	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
 
 	// Validate the network config
 	if err := staticNetworkConfigGenerator.ValidateStaticConfigParams(context.Background(), staticNetworkConfig); err != nil {
@@ -118,7 +120,7 @@ func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) (
 	return filesList, err
 }
 
-func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetworkConfig, error) {
+func processNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetworkConfig, error) {
 
 	nmStateConfigList, err := getNMStateConfig()
 
@@ -143,14 +145,14 @@ func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetw
 	return staticNetworkConfig, nil
 }
 
-// Retrieve the first IP from the user provided NMStateConfig yaml file to set as node0 IP
+// GetNodeZeroIP retrieves the first IP from the user provided nmStateConfig yaml file to set as node0 IP
 func (n NMConfig) GetNodeZeroIP() string {
 	configList, err := n.nmConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	var nmStateConfig NMStateConfig
+	var nmStateConfig nmStateConfig
 	// Use entry for first host
 	err = yaml.Unmarshal(configList[0].Spec.NetConfig.Raw, &nmStateConfig)
 	if err != nil {

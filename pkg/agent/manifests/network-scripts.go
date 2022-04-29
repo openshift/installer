@@ -2,7 +2,7 @@ package manifests
 
 // This file is copied from https://github.com/openshift/assisted-service/blob/master/internal/constants/scripts.go
 // as its in the internal directory so can't be imported
-//
+
 // PreNetworkConfigScript script runs on hosts before network manager service starts in order to apply
 // user's provided network configuration on the host.
 // If the user provides static network configuration, the network config files will be stored in directory
