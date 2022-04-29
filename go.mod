@@ -26,6 +26,8 @@ require (
 	github.com/coreos/ignition/v2 v2.9.0
 	github.com/coreos/stream-metadata-go v0.1.8
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
+	github.com/go-openapi/strfmt v0.21.2
+	github.com/go-openapi/swag v0.21.1
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
@@ -41,12 +43,15 @@ require (
 	github.com/metal3-io/baremetal-operator/apis v0.0.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0
 	github.com/openshift/api v0.0.0-20220404140913-04e1813ebb11
+	github.com/openshift/assisted-image-service v0.0.0-20220307202600-054a1afa8d28
+	github.com/openshift/assisted-service v1.0.10-0.20220223093655-7ada9949bf1d
 	github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20210924143856-c2d3ece4da38
 	github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20211008100740-4d7907adbd6b
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
+	github.com/openshift/hive/apis v0.0.0-20210506000654-5c038fb05190
 	github.com/openshift/library-go v0.0.0-20211214183058-58531ccbde67
 	github.com/openshift/machine-api-provider-nutanix v0.0.0-20220217170301-9c5eed11237a
 	github.com/openshift/machine-api-provider-powervs v0.0.0-20220303154846-89bb5bec120e
@@ -62,6 +67,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/terraform-providers/terraform-provider-nutanix v1.1.0
+	github.com/thoas/go-funk v0.9.1
 	github.com/ulikunitz/xz v0.5.8
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.24.0
@@ -210,5 +216,8 @@ replace k8s.io/client-go => k8s.io/client-go v0.23.0
 
 // Needed so that the InstallConfig CRD can be created. Later versions of controller-gen balk at using IPNet as a field.
 replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
+
+// Override the OpenShift API version in hive
+replace github.com/openshift/api => github.com/openshift/api v0.0.0-20220404140913-04e1813ebb11
 
 replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.2.2-0.20211029075448-e21f85ac2cf7

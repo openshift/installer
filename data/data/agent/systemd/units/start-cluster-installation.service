@@ -1,0 +1,15 @@
+[Unit]
+Description=Service that starts cluster installation
+Wants=network-online.target create-cluster-and-infra-env.service
+After=network-online.target create-cluster-and-infra-env.service
+ConditionPathExists=/etc/assisted-service/node0
+
+[Service]
+ExecStart=/usr/local/bin/start-cluster-installation.sh
+
+KillMode=none
+Type=oneshot
+
+
+[Install]
+WantedBy=multi-user.target
