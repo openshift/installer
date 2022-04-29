@@ -775,7 +775,38 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = ""
 				return c
 			}(),
-			expectedError: `^proxy: Required value: must include httpProxy or httpsProxy$`,
+			expectedError: `^proxy: Required value: must include httpProxy or httpsProxy or noProxy with only wildcard$`,
+		},
+		{
+			name: "wildcard proxy settings",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = ""
+				c.Proxy.HTTPSProxy = ""
+				c.Proxy.NoProxy = "*"
+				return c
+			}(),
+			expectedError: "",
+		},
+		{
+			name: "wildcard proxy settings",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.NoProxy = "*"
+				return c
+			}(),
+			expectedError: "",
+		},
+		{
+			name: "wildcard proxy settings",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = ""
+				c.Proxy.HTTPSProxy = ""
+				c.Proxy.NoProxy = "validproxy.com"
+				return c
+			}(),
+			expectedError: `^proxy: Required value: must include httpProxy or httpsProxy or noProxy with only wildcard$`,
 		},
 		{
 			name: "invalid HTTPProxy",

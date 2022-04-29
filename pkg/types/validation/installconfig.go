@@ -529,8 +529,12 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 func validateProxy(p *types.Proxy, c *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if p.HTTPProxy == "" && p.HTTPSProxy == "" {
-		allErrs = append(allErrs, field.Required(fldPath, "must include httpProxy or httpsProxy"))
+	// Append to error, when there is no proxy configuration set.
+	// If noProxy is set to wildcard char "*", it suggests the configuration is for a transparent proxy
+	if p.HTTPProxy == "" &&
+		p.HTTPSProxy == "" &&
+		p.NoProxy != "*" {
+		allErrs = append(allErrs, field.Required(fldPath, "must include httpProxy or httpsProxy or noProxy with only wildcard"))
 	}
 	if p.HTTPProxy != "" {
 		allErrs = append(allErrs, validateURI(p.HTTPProxy, fldPath.Child("httpProxy"), []string{"http"})...)
@@ -544,7 +548,8 @@ func validateProxy(p *types.Proxy, c *types.InstallConfig, fldPath *field.Path) 
 			allErrs = append(allErrs, validateIPProxy(p.HTTPSProxy, c.Networking, fldPath.Child("httpsProxy"))...)
 		}
 	}
-	if p.NoProxy != "" && p.NoProxy != "*" {
+	if len(p.NoProxy) > 0 &&
+		p.NoProxy != "*" {
 		if strings.Contains(p.NoProxy, " ") {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("noProxy"), p.NoProxy, fmt.Sprintf("noProxy must not have spaces")))
 		}
