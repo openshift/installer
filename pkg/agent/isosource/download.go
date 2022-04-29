@@ -66,7 +66,7 @@ func EnsureIso() (string, error) {
 			return "", err
 		}
 		if !haveValidIso(outputFile) {
-			return "", fmt.Errorf("Downloaded ISO is not valid")
+			return "", fmt.Errorf("downloaded ISO is not valid")
 		}
 	}
 	return outputFile, nil

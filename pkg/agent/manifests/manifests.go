@@ -3,10 +3,11 @@ package manifests
 import (
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
@@ -18,9 +19,9 @@ func GetFileData(fileName string, output interface{}) error {
 
 	contents, err := os.ReadFile(path)
 	if err != nil {
-		err = fmt.Errorf("Error reading file %s: %w", path, err)
+		err = fmt.Errorf("error reading file %s: %w", path, err)
 	} else if err = yaml.Unmarshal(contents, output); err != nil {
-		err = fmt.Errorf("Error unmarshalling contents of %s: %w", path, err)
+		err = fmt.Errorf("error unmarshalling contents of %s: %w", path, err)
 	}
 
 	return err
@@ -39,7 +40,7 @@ func GetFileMultipleYamls(filename string, decoder DecodeFormat) ([]interface{},
 
 	contents, err := os.ReadFile(path)
 	if err != nil {
-		err = fmt.Errorf("Error reading file %s: %w", path, err)
+		err = fmt.Errorf("error reading file %s: %w", path, err)
 		return nil, err
 	}
 
@@ -53,7 +54,7 @@ func GetFileMultipleYamls(filename string, decoder DecodeFormat) ([]interface{},
 			break
 		}
 		if err != nil {
-			err = fmt.Errorf("Error reading multiple yamls in file %s: %w", path, err)
+			err = fmt.Errorf("error reading multiple yamls in file %s: %w", path, err)
 			return nil, err
 		}
 

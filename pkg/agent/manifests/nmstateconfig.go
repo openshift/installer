@@ -57,7 +57,7 @@ func getNMStateConfig() ([]aiv1beta1.NMStateConfig, error) {
 	}
 
 	if err != nil {
-		err = fmt.Errorf("Error reading nmstateconfig file %w", err)
+		err = fmt.Errorf("error reading nmstateconfig file %w", err)
 		return nil, err
 	}
 
@@ -99,19 +99,19 @@ func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) (
 
 	// Validate the network config
 	if err := staticNetworkConfigGenerator.ValidateStaticConfigParams(context.Background(), staticNetworkConfig); err != nil {
-		err = fmt.Errorf("StaticNetwork configuration is not valid: %w", err)
+		err = fmt.Errorf("staticNetwork configuration is not valid: %w", err)
 		return nil, err
 	}
 
 	networkConfigStr, err := staticNetworkConfigGenerator.FormatStaticNetworkConfigForDB(staticNetworkConfig)
 	if err != nil {
-		err = fmt.Errorf("Error marshalling StaticNetwork configuration: %w", err)
+		err = fmt.Errorf("error marshalling StaticNetwork configuration: %w", err)
 		return nil, err
 	}
 
 	filesList, err := staticNetworkConfigGenerator.GenerateStaticNetworkConfigData(context.Background(), networkConfigStr)
 	if err != nil {
-		err = fmt.Errorf("Failed to create StaticNetwork config data: %w", err)
+		err = fmt.Errorf("failed to create StaticNetwork config data: %w", err)
 		return nil, err
 	}
 
@@ -123,7 +123,7 @@ func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetw
 	nmStateConfigList, err := getNMStateConfig()
 
 	if err != nil {
-		err = fmt.Errorf("Error with nmstateconfig file: %w", err)
+		err = fmt.Errorf("error with nmstateconfig file: %w", err)
 		return nil, err
 	}
 
@@ -167,10 +167,10 @@ func (n NMConfig) GetNodeZeroIP() string {
 
 		}
 		if net.ParseIP(nodeZeroIP) == nil {
-			panic("Invalid YAML - NMStateconfig")
+			panic("invalid YAML - NMStateconfig")
 		}
 	} else {
-		panic("Invalid YAML - NMStateconfig: No valid interfaces set.")
+		panic("invalid YAML - NMStateconfig: No valid interfaces set")
 	}
 
 	return nodeZeroIP
