@@ -1,6 +1,7 @@
 package ironic
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -9,6 +10,8 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes"
 	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/ports"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	metal3v1alpha1 "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
+	"github.com/metal3-io/baremetal-operator/pkg/provisioner/ironic"
 )
 
 // Schema resource definition for an Ironic node.
@@ -174,6 +177,16 @@ func resourceNodeV1() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"raid_config": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"bios_settings": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -230,28 +243,37 @@ func resourceNodeV1Create(d *schema.ResourceData, meta interface{}) error {
 
 	// Make node manageable
 	if d.Get("manage").(bool) || d.Get("clean").(bool) || d.Get("inspect").(bool) {
-		if err := ChangeProvisionStateToTarget(client, d.Id(), "manage", nil, nil); err != nil {
+		if err := ChangeProvisionStateToTarget(client, d.Id(), "manage", nil, nil, nil); err != nil {
 			return fmt.Errorf("could not manage: %s", err)
 		}
 	}
 
 	// Clean node
 	if d.Get("clean").(bool) {
-		if err := ChangeProvisionStateToTarget(client, d.Id(), "clean", nil, nil); err != nil {
+		if err := setRAIDConfig(client, d); err != nil {
+			return fmt.Errorf("fail to set raid config: %s", err)
+		}
+
+		var cleanSteps []nodes.CleanStep
+		if cleanSteps, err = buildManualCleaningSteps(d.Get("raid_interface").(string), d.Get("raid_config").(string), d.Get("bios_settings").(string)); err != nil {
+			return fmt.Errorf("fail to build raid clean steps: %s", err)
+		}
+
+		if err := ChangeProvisionStateToTarget(client, d.Id(), "clean", nil, nil, cleanSteps); err != nil {
 			return fmt.Errorf("could not clean: %s", err)
 		}
 	}
 
 	// Inspect node
 	if d.Get("inspect").(bool) {
-		if err := ChangeProvisionStateToTarget(client, d.Id(), "inspect", nil, nil); err != nil {
+		if err := ChangeProvisionStateToTarget(client, d.Id(), "inspect", nil, nil, nil); err != nil {
 			return fmt.Errorf("could not inspect: %s", err)
 		}
 	}
 
 	// Make node available
 	if d.Get("available").(bool) {
-		if err := ChangeProvisionStateToTarget(client, d.Id(), "provide", nil, nil); err != nil {
+		if err := ChangeProvisionStateToTarget(client, d.Id(), "provide", nil, nil, nil); err != nil {
 			return fmt.Errorf("could not make node available: %s", err)
 		}
 	}
@@ -422,7 +444,7 @@ func resourceNodeV1Update(d *schema.ResourceData, meta interface{}) error {
 	if (d.HasChange("manage") && d.Get("manage").(bool)) ||
 		(d.HasChange("clean") && d.Get("clean").(bool)) ||
 		(d.HasChange("inspect") && d.Get("inspect").(bool)) {
-		if err := ChangeProvisionStateToTarget(client, d.Id(), "manage", nil, nil); err != nil {
+		if err := ChangeProvisionStateToTarget(client, d.Id(), "manage", nil, nil, nil); err != nil {
 			return fmt.Errorf("could not manage: %s", err)
 		}
 	}
@@ -436,21 +458,21 @@ func resourceNodeV1Update(d *schema.ResourceData, meta interface{}) error {
 
 	// Clean node
 	if d.HasChange("clean") && d.Get("clean").(bool) {
-		if err := ChangeProvisionStateToTarget(client, d.Id(), "clean", nil, nil); err != nil {
+		if err := ChangeProvisionStateToTarget(client, d.Id(), "clean", nil, nil, nil); err != nil {
 			return fmt.Errorf("could not clean: %s", err)
 		}
 	}
 
 	// Inspect node
 	if d.HasChange("inspect") && d.Get("inspect").(bool) {
-		if err := ChangeProvisionStateToTarget(client, d.Id(), "inspect", nil, nil); err != nil {
+		if err := ChangeProvisionStateToTarget(client, d.Id(), "inspect", nil, nil, nil); err != nil {
 			return fmt.Errorf("could not inspect: %s", err)
 		}
 	}
 
 	// Make node available
 	if d.HasChange("available") && d.Get("available").(bool) {
-		if err := ChangeProvisionStateToTarget(client, d.Id(), "provide", nil, nil); err != nil {
+		if err := ChangeProvisionStateToTarget(client, d.Id(), "provide", nil, nil, nil); err != nil {
 			return fmt.Errorf("could not make node available: %s", err)
 		}
 	}
@@ -481,7 +503,7 @@ func resourceNodeV1Delete(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if err := ChangeProvisionStateToTarget(client, d.Id(), "deleted", nil, nil); err != nil {
+	if err := ChangeProvisionStateToTarget(client, d.Id(), "deleted", nil, nil, nil); err != nil {
 		return err
 	}
 
@@ -584,4 +606,84 @@ func changePowerState(client *gophercloud.ServiceClient, d *schema.ResourceData,
 	}
 
 	return nil
+}
+
+// setRAIDConfig calls ironic's API to send request to change a Node's RAID config.
+func setRAIDConfig(client *gophercloud.ServiceClient, d *schema.ResourceData) (err error) {
+	var logicalDisks []nodes.LogicalDisk
+	var targetRAID *metal3v1alpha1.RAIDConfig
+
+	raidConfig := d.Get("raid_config").(string)
+	if raidConfig == "" {
+		return nil
+	}
+
+	err = json.Unmarshal([]byte(raidConfig), &targetRAID)
+	if err != nil {
+		return
+	}
+
+	err = ironic.CheckRAIDInterface(d.Get("raid_interface").(string), targetRAID)
+	if err != nil {
+		return
+	}
+
+	// Build target for RAID configuration steps
+	logicalDisks, err = ironic.BuildTargetRAIDCfg(targetRAID)
+	if len(logicalDisks) == 0 || err != nil {
+		return
+	}
+
+	// Set root volume
+	if len(d.Get("root_device").(map[string]interface{})) == 0 {
+		logicalDisks[0].IsRootVolume = new(bool)
+		*logicalDisks[0].IsRootVolume = true
+	} else {
+		log.Printf("rootDeviceHints is used, the first volume of raid will not be set to root")
+	}
+
+	// Set target for RAID configuration steps
+	return nodes.SetRAIDConfig(
+		client,
+		d.Id(),
+		nodes.RAIDConfigOpts{LogicalDisks: logicalDisks},
+	).ExtractErr()
+}
+
+// buildManualCleaningSteps builds the clean steps for RAID and BIOS configuration
+func buildManualCleaningSteps(raidInterface, raidConfig, biosSetings string) (cleanSteps []nodes.CleanStep, err error) {
+	var targetRAID *metal3v1alpha1.RAIDConfig
+	var settings []map[string]string
+
+	if raidConfig != "" {
+		if err = json.Unmarshal([]byte(raidConfig), &targetRAID); err != nil {
+			return nil, err
+		}
+
+		// Build raid clean steps
+		raidCleanSteps, err := ironic.BuildRAIDCleanSteps(raidInterface, targetRAID, nil)
+		if err != nil {
+			return nil, err
+		}
+		cleanSteps = append(cleanSteps, raidCleanSteps...)
+	}
+
+	if biosSetings != "" {
+		if err = json.Unmarshal([]byte(biosSetings), &settings); err != nil {
+			return nil, err
+		}
+
+		cleanSteps = append(
+			cleanSteps,
+			nodes.CleanStep{
+				Interface: "bios",
+				Step:      "apply_configuration",
+				Args: map[string]interface{}{
+					"settings": settings,
+				},
+			},
+		)
+	}
+
+	return
 }

@@ -38,6 +38,8 @@ resource "ironic_node_v1" "openshift-master-host" {
   raid_interface       = var.masters[count.index]["raid_interface"]
   vendor_interface     = var.masters[count.index]["vendor_interface"]
   deploy_interface     = var.masters[count.index]["deploy_interface"]
+  raid_config          = var.masters[count.index]["raid_config"]
+  bios_settings        = var.masters[count.index]["bios_settings"]
 }
 
 resource "ironic_deployment" "openshift-master-deployment" {

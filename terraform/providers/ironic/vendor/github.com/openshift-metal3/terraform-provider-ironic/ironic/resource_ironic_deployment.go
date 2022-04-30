@@ -175,7 +175,7 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Deploy the node - drive Ironic state machine until node is 'active'
-	return ChangeProvisionStateToTarget(client, nodeUUID, "active", &configDrive, deploySteps)
+	return ChangeProvisionStateToTarget(client, nodeUUID, "active", &configDrive, deploySteps, nil)
 }
 
 // fetchFullIgnition gets full igntion from the URL and cert passed to it and returns userdata as a string
@@ -301,5 +301,5 @@ func resourceDeploymentDelete(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	return ChangeProvisionStateToTarget(client, d.Id(), "deleted", nil, nil)
+	return ChangeProvisionStateToTarget(client, d.Id(), "deleted", nil, nil, nil)
 }
