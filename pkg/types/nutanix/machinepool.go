@@ -9,7 +9,10 @@ type MachinePool struct {
 	NumCPUs int64 `json:"cpus,omitempty"`
 
 	// NumCoresPerSocket is the number of cores per socket in a vm. The number
-	// of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
+	// of vCPUs on the vm will be NumCPUs times NumCoresPerSocket.
+	// For example: 4 CPUs and 4 Cores per socket will result in 16 VPUs.
+	// The AHV scheduler treats socket and core allocation exactly the same
+	// so there is no benefit to configuring cores over CPUs.
 	//
 	// +optional
 	NumCoresPerSocket int64 `json:"coresPerSocket,omitempty"`
