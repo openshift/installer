@@ -36,6 +36,7 @@ func (*InfraEnv) Name() string {
 func (*InfraEnv) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&AgentPullSecret{},
 	}
 }
 
@@ -43,7 +44,8 @@ func (*InfraEnv) Dependencies() []asset.Asset {
 func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	agentPullSecret := &AgentPullSecret{}
+	dependencies.Get(installConfig, agentPullSecret)
 
 	infraEnv := &aiv1beta1.InfraEnv{
 		ObjectMeta: v1.ObjectMeta{
@@ -57,7 +59,7 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 			},
 			SSHAuthorizedKey: installConfig.Config.SSHKey,
 			PullSecretRef: &corev1.LocalObjectReference{
-				Name: "pull-secret", // TODO get from agent secret
+				Name: agentPullSecret.ResourceName(),
 			},
 			// NMStateConfigLabelSelector: v1.LabelSelector{
 			// 	MatchLabels: map[string]string{

@@ -6,11 +6,10 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
 const (
-	manifestDir = "manifests"
+	manifestDir = "manifests-ztp"
 )
 
 var (
@@ -27,17 +26,20 @@ func (m *AgentManifests) Name() string {
 
 func (m *AgentManifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&installconfig.ClusterID{},
-		&installconfig.InstallConfig{},
+		&AgentPullSecret{},
 		&InfraEnv{},
 	}
 }
 
 func (m *AgentManifests) Generate(dependencies asset.Parents) error {
-	infraEnv := &InfraEnv{}
-	dependencies.Get(infraEnv)
+	for _, a := range []asset.WritableAsset{
+		&AgentPullSecret{},
+		&InfraEnv{},
+	} {
+		dependencies.Get(a)
+		m.FileList = append(m.FileList, a.Files()...)
+	}
 
-	m.FileList = append(m.FileList, infraEnv.Files()...)
 	asset.SortFiles(m.FileList)
 
 	return nil
@@ -50,11 +52,16 @@ func (m *AgentManifests) Files() []*asset.File {
 
 // Load returns the manifests asset from disk.
 func (m *AgentManifests) Load(f asset.FileFetcher) (bool, error) {
-	fileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yml"))
+	yamlFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yaml"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.yaml files")
 	}
+	ymlFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yml"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.yml files")
+	}
 
+	fileList := append(yamlFileList, ymlFileList...)
 	if len(fileList) == 0 {
 		return false, nil
 	}
