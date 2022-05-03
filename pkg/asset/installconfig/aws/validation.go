@@ -460,7 +460,7 @@ func getSubDomainDNSRecords(client *route53.Route53, hostedZone *route53.HostedZ
 				name := aws.StringValue(recordSet.Name)
 				// skip record sets that are not sub-domains of the cluster domain. Such record sets may exist for
 				// hosted zones that are used for other clusters or other purposes.
-				if !strings.HasSuffix(name, dottedClusterDomain) {
+				if !strings.HasSuffix(name, "."+dottedClusterDomain) {
 					continue
 				}
 				// skip record sets that are the cluster domain. Record sets for the cluster domain are fine. If the
