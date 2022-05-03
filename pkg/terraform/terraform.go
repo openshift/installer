@@ -3,6 +3,7 @@ package terraform
 import (
 	"context"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
@@ -14,7 +15,7 @@ import (
 
 // newTFExec creates a tfexec.Terraform for executing Terraform CLI commands.
 // The `datadir` is the location to which the terraform plan (tf files, etc) has been unpacked.
-// The `terraformDir` is the location to which the terraform and provider binaries have been unpacked.
+// The `terraformDir` is the location to which Terraform, provider binaries, & .terraform data dir have been unpacked.
 // The stdout and stderr will be sent to the logger at the debug and error levels,
 // respectively.
 func newTFExec(datadir string, terraformDir string) (*tfexec.Terraform, error) {
@@ -37,6 +38,13 @@ func newTFExec(datadir string, terraformDir string) (*tfexec.Terraform, error) {
 	// Note that it would have been nice to use tf.SetEnv. Unfortunately, that prevents the environment variables from
 	// the OS from being used.
 	os.Setenv("ARM_THREEPOINTZERO_BETA", "true")
+
+	// Set the Terraform data dir to be the same as the terraformDir so that
+	// files we unpack are contained and, more importantly, we can ensure the
+	// provider binaries unpacked in the Terraform data dir have the same permission
+	// levels as the Terraform binary.
+	dd := path.Join(terraformDir, ".terraform")
+	os.Setenv("TF_DATA_DIR", dd)
 
 	return tf, nil
 }
