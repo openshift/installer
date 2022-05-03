@@ -1,3 +1,8 @@
+variable "api_key" {
+  type        = string
+  description = "IBM Cloud API key associated with user's identity"
+}
+
 variable "memory" {
   type        = string
   description = "The amount of memory to assign to each node in GB."
@@ -28,11 +33,6 @@ variable "image_id" {
   description = "The ID of the Power VS boot image for the nodes."
 }
 
-variable "network_name" {
-  type        = string
-  description = "The name of the Power VS network."
-}
-
 variable "proc_type" {
   type        = string
   description = "The type of processor to be assigned (e.g. capped, dedicated, shared) to the nodes."
@@ -48,7 +48,7 @@ variable "cluster_id" {
   description = "The ID created by the installer to uniquely identify the created cluster."
 }
 
-variable "key_id" {
+variable "ssh_key_id" {
   type        = string
   description = "The SSH Key ID."
 }
