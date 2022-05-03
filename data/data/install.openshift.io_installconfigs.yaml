@@ -285,8 +285,10 @@ spec:
                           type: string
                         ultraSSDCapability:
                           description: ultraSSDCapability defines if the instance
-                            should use Ultra SSD disks. The valid values are Enabled,
-                            Disabled.
+                            should use Ultra SSD disks.
+                          enum:
+                          - Enabled
+                          - Disabled
                           type: string
                         vmNetworkingType:
                           description: 'VMNetworkingType specifies whether to enable
@@ -323,10 +325,9 @@ spec:
                               maximum: 65536
                               minimum: 16
                               type: integer
-                            DiskType:
-                              description: DiskType defines the type of disk. The
-                                valid values are pd-standard and pd-ssd For control
-                                plane nodes, the valid value is pd-ssd.
+                            diskType:
+                              description: DiskType defines the type of disk. For
+                                control plane nodes, the valid value is pd-ssd.
                               enum:
                               - pd-ssd
                               - pd-standard
@@ -907,7 +908,10 @@ spec:
                         type: string
                       ultraSSDCapability:
                         description: ultraSSDCapability defines if the instance should
-                          use Ultra SSD disks. The valid values are Enabled, Disabled.
+                          use Ultra SSD disks.
+                        enum:
+                        - Enabled
+                        - Disabled
                         type: string
                       vmNetworkingType:
                         description: 'VMNetworkingType specifies whether to enable
@@ -942,10 +946,9 @@ spec:
                             maximum: 65536
                             minimum: 16
                             type: integer
-                          DiskType:
-                            description: DiskType defines the type of disk. The valid
-                              values are pd-standard and pd-ssd For control plane
-                              nodes, the valid value is pd-ssd.
+                          diskType:
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid value is pd-ssd.
                             enum:
                             - pd-ssd
                             - pd-standard
@@ -1797,7 +1800,10 @@ spec:
                         type: string
                       ultraSSDCapability:
                         description: ultraSSDCapability defines if the instance should
-                          use Ultra SSD disks. The valid values are Enabled, Disabled.
+                          use Ultra SSD disks.
+                        enum:
+                        - Enabled
+                        - Disabled
                         type: string
                       vmNetworkingType:
                         description: 'VMNetworkingType specifies whether to enable
@@ -2082,10 +2088,9 @@ spec:
                             maximum: 65536
                             minimum: 16
                             type: integer
-                          DiskType:
-                            description: DiskType defines the type of disk. The valid
-                              values are pd-standard and pd-ssd For control plane
-                              nodes, the valid value is pd-ssd.
+                          diskType:
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid value is pd-ssd.
                             enum:
                             - pd-ssd
                             - pd-standard

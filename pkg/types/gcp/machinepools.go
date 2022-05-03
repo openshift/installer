@@ -22,11 +22,10 @@ type MachinePool struct {
 // OSDisk defines the disk for machines on GCP.
 type OSDisk struct {
 	// DiskType defines the type of disk.
-	// The valid values are pd-standard and pd-ssd
 	// For control plane nodes, the valid value is pd-ssd.
 	// +optional
 	// +kubebuilder:validation:Enum=pd-ssd;pd-standard
-	DiskType string `json:"DiskType"`
+	DiskType string `json:"diskType"`
 
 	// DiskSizeGB defines the size of disk in GB.
 	//

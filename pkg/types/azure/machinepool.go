@@ -26,9 +26,9 @@ type MachinePool struct {
 	OSDisk `json:"osDisk"`
 
 	// ultraSSDCapability defines if the instance should use Ultra SSD disks.
-	// The valid values are Enabled, Disabled.
 	//
 	// +optional
+	// +kubebuilder:validation:Enum=Enabled;Disabled
 	UltraSSDCapability string `json:"ultraSSDCapability,omitempty"`
 
 	// VMNetworkingType specifies whether to enable accelerated networking.
