@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // Volume volume
+//
 // swagger:model Volume
 type Volume struct {
 
@@ -53,7 +55,7 @@ type Volume struct {
 	Name *string `json:"name"`
 
 	// List of PCloud PVM Instance attached to the volume
-	PvmInstanceIds []string `json:"pvmInstanceIDs"`
+	PvmInstanceIDs []string `json:"pvmInstanceIDs"`
 
 	// shows the replication status of a volume
 	ReplicationStatus string `json:"replicationStatus,omitempty"`
@@ -162,6 +164,11 @@ func (m *Volume) validateVolumeID(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this volume based on context it is used
+func (m *Volume) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

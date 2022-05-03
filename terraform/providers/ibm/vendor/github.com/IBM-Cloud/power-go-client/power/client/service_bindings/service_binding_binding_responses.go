@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // ServiceBindingBindingReader is a Reader for the ServiceBindingBinding structure.
@@ -24,51 +23,44 @@ type ServiceBindingBindingReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ServiceBindingBindingReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewServiceBindingBindingOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 201:
 		result := NewServiceBindingBindingCreated()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 202:
 		result := NewServiceBindingBindingAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewServiceBindingBindingBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewServiceBindingBindingConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewServiceBindingBindingUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewServiceBindingBindingOK() *ServiceBindingBindingOK {
 	return &ServiceBindingBindingOK{}
 }
 
-/*ServiceBindingBindingOK handles this case with default header values.
+/* ServiceBindingBindingOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -87,6 +79,9 @@ type ServiceBindingBindingOK struct {
 
 func (o *ServiceBindingBindingOK) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingOK  %+v", 200, o.Payload)
+}
+func (o *ServiceBindingBindingOK) GetPayload() *models.ServiceBinding {
+	return o.Payload
 }
 
 func (o *ServiceBindingBindingOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -106,7 +101,7 @@ func NewServiceBindingBindingCreated() *ServiceBindingBindingCreated {
 	return &ServiceBindingBindingCreated{}
 }
 
-/*ServiceBindingBindingCreated handles this case with default header values.
+/* ServiceBindingBindingCreated describes a response with status code 201, with default header values.
 
 Created
 */
@@ -116,6 +111,9 @@ type ServiceBindingBindingCreated struct {
 
 func (o *ServiceBindingBindingCreated) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingCreated  %+v", 201, o.Payload)
+}
+func (o *ServiceBindingBindingCreated) GetPayload() *models.ServiceBinding {
+	return o.Payload
 }
 
 func (o *ServiceBindingBindingCreated) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -135,7 +133,7 @@ func NewServiceBindingBindingAccepted() *ServiceBindingBindingAccepted {
 	return &ServiceBindingBindingAccepted{}
 }
 
-/*ServiceBindingBindingAccepted handles this case with default header values.
+/* ServiceBindingBindingAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -145,6 +143,9 @@ type ServiceBindingBindingAccepted struct {
 
 func (o *ServiceBindingBindingAccepted) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingAccepted  %+v", 202, o.Payload)
+}
+func (o *ServiceBindingBindingAccepted) GetPayload() *models.AsyncOperation {
+	return o.Payload
 }
 
 func (o *ServiceBindingBindingAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -164,7 +165,7 @@ func NewServiceBindingBindingBadRequest() *ServiceBindingBindingBadRequest {
 	return &ServiceBindingBindingBadRequest{}
 }
 
-/*ServiceBindingBindingBadRequest handles this case with default header values.
+/* ServiceBindingBindingBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -174,6 +175,9 @@ type ServiceBindingBindingBadRequest struct {
 
 func (o *ServiceBindingBindingBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingBadRequest  %+v", 400, o.Payload)
+}
+func (o *ServiceBindingBindingBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBindingBindingBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -193,7 +197,7 @@ func NewServiceBindingBindingConflict() *ServiceBindingBindingConflict {
 	return &ServiceBindingBindingConflict{}
 }
 
-/*ServiceBindingBindingConflict handles this case with default header values.
+/* ServiceBindingBindingConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -203,6 +207,9 @@ type ServiceBindingBindingConflict struct {
 
 func (o *ServiceBindingBindingConflict) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingConflict  %+v", 409, o.Payload)
+}
+func (o *ServiceBindingBindingConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBindingBindingConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -222,7 +229,7 @@ func NewServiceBindingBindingUnprocessableEntity() *ServiceBindingBindingUnproce
 	return &ServiceBindingBindingUnprocessableEntity{}
 }
 
-/*ServiceBindingBindingUnprocessableEntity handles this case with default header values.
+/* ServiceBindingBindingUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -232,6 +239,9 @@ type ServiceBindingBindingUnprocessableEntity struct {
 
 func (o *ServiceBindingBindingUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *ServiceBindingBindingUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBindingBindingUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

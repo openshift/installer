@@ -6,17 +6,18 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // Network network
+//
 // swagger:model Network
 type Network struct {
 
@@ -134,7 +135,6 @@ func (m *Network) validateCidr(formats strfmt.Registry) error {
 }
 
 func (m *Network) validateCloudConnections(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.CloudConnections) { // not required
 		return nil
 	}
@@ -148,6 +148,8 @@ func (m *Network) validateCloudConnections(formats strfmt.Registry) error {
 			if err := m.CloudConnections[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("cloudConnections" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("cloudConnections" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -177,6 +179,8 @@ func (m *Network) validateIPAddressMetrics(formats strfmt.Registry) error {
 		if err := m.IPAddressMetrics.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("ipAddressMetrics")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("ipAddressMetrics")
 			}
 			return err
 		}
@@ -200,6 +204,8 @@ func (m *Network) validateIPAddressRanges(formats strfmt.Registry) error {
 			if err := m.IPAddressRanges[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -238,7 +244,6 @@ func (m *Network) validateNetworkID(formats strfmt.Registry) error {
 }
 
 func (m *Network) validatePublicIPAddressRanges(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.PublicIPAddressRanges) { // not required
 		return nil
 	}
@@ -252,6 +257,8 @@ func (m *Network) validatePublicIPAddressRanges(formats strfmt.Registry) error {
 			if err := m.PublicIPAddressRanges[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("publicIPAddressRanges" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("publicIPAddressRanges" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -279,13 +286,13 @@ const (
 	// NetworkTypeVlan captures enum value "vlan"
 	NetworkTypeVlan string = "vlan"
 
-	// NetworkTypePubVlan captures enum value "pub-vlan"
-	NetworkTypePubVlan string = "pub-vlan"
+	// NetworkTypePubDashVlan captures enum value "pub-vlan"
+	NetworkTypePubDashVlan string = "pub-vlan"
 )
 
 // prop value enum
 func (m *Network) validateTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, networkTypeTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, networkTypeTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -314,6 +321,108 @@ func (m *Network) validateVlanID(formats strfmt.Registry) error {
 	return nil
 }
 
+// ContextValidate validate this network based on the context it is used
+func (m *Network) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateCloudConnections(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateIPAddressMetrics(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateIPAddressRanges(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidatePublicIPAddressRanges(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Network) contextValidateCloudConnections(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.CloudConnections); i++ {
+
+		if m.CloudConnections[i] != nil {
+			if err := m.CloudConnections[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("cloudConnections" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("cloudConnections" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Network) contextValidateIPAddressMetrics(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.IPAddressMetrics != nil {
+		if err := m.IPAddressMetrics.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("ipAddressMetrics")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("ipAddressMetrics")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Network) contextValidateIPAddressRanges(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.IPAddressRanges); i++ {
+
+		if m.IPAddressRanges[i] != nil {
+			if err := m.IPAddressRanges[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Network) contextValidatePublicIPAddressRanges(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.PublicIPAddressRanges); i++ {
+
+		if m.PublicIPAddressRanges[i] != nil {
+			if err := m.PublicIPAddressRanges[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("publicIPAddressRanges" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("publicIPAddressRanges" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 // MarshalBinary interface implementation
 func (m *Network) MarshalBinary() ([]byte, error) {
 	if m == nil {
@@ -333,6 +442,7 @@ func (m *Network) UnmarshalBinary(b []byte) error {
 }
 
 // NetworkCloudConnectionsItems0 network cloud connections items0
+//
 // swagger:model NetworkCloudConnectionsItems0
 type NetworkCloudConnectionsItems0 struct {
 
@@ -345,6 +455,11 @@ type NetworkCloudConnectionsItems0 struct {
 
 // Validate validates this network cloud connections items0
 func (m *NetworkCloudConnectionsItems0) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this network cloud connections items0 based on context it is used
+func (m *NetworkCloudConnectionsItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 
@@ -367,6 +482,7 @@ func (m *NetworkCloudConnectionsItems0) UnmarshalBinary(b []byte) error {
 }
 
 // NetworkIPAddressMetrics IP Address Metrics
+//
 // swagger:model NetworkIPAddressMetrics
 type NetworkIPAddressMetrics struct {
 
@@ -446,6 +562,11 @@ func (m *NetworkIPAddressMetrics) validateUtilization(formats strfmt.Registry) e
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this network IP address metrics based on context it is used
+func (m *NetworkIPAddressMetrics) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

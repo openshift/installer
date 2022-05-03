@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudVpnconnectionsNetworksDeleteParams creates a new PcloudVpnconnectionsNetworksDeleteParams object
-// with the default values initialized.
+// NewPcloudVpnconnectionsNetworksDeleteParams creates a new PcloudVpnconnectionsNetworksDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudVpnconnectionsNetworksDeleteParams() *PcloudVpnconnectionsNetworksDeleteParams {
-	var ()
 	return &PcloudVpnconnectionsNetworksDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudVpnconnectionsNetworksDeleteParamsWithTimeout creates a new PcloudVpnconnectionsNetworksDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudVpnconnectionsNetworksDeleteParamsWithTimeout(timeout time.Duration) *PcloudVpnconnectionsNetworksDeleteParams {
-	var ()
 	return &PcloudVpnconnectionsNetworksDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudVpnconnectionsNetworksDeleteParamsWithContext creates a new PcloudVpnconnectionsNetworksDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudVpnconnectionsNetworksDeleteParamsWithContext(ctx context.Context) *PcloudVpnconnectionsNetworksDeleteParams {
-	var ()
 	return &PcloudVpnconnectionsNetworksDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudVpnconnectionsNetworksDeleteParamsWithHTTPClient creates a new PcloudVpnconnectionsNetworksDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudVpnconnectionsNetworksDeleteParamsWithHTTPClient(client *http.Client) *PcloudVpnconnectionsNetworksDeleteParams {
-	var ()
 	return &PcloudVpnconnectionsNetworksDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudVpnconnectionsNetworksDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud vpnconnections networks delete operation typically these are written to a http.Request
+/* PcloudVpnconnectionsNetworksDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud vpnconnections networks delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudVpnconnectionsNetworksDeleteParams struct {
 
-	/*Body
-	  network to detach
+	/* Body.
 
+	   network to detach
 	*/
 	Body *models.NetworkID
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*VpnConnectionID
-	  ID of a VPN connection
 
+	/* VpnConnectionID.
+
+	   ID of a VPN connection
 	*/
 	VpnConnectionID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud vpnconnections networks delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudVpnconnectionsNetworksDeleteParams) WithDefaults() *PcloudVpnconnectionsNetworksDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud vpnconnections networks delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudVpnconnectionsNetworksDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud vpnconnections networks delete params
@@ -157,7 +172,6 @@ func (o *PcloudVpnconnectionsNetworksDeleteParams) WriteToRequest(r runtime.Clie
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

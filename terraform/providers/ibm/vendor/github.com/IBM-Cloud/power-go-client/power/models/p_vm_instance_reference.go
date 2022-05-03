@@ -6,17 +6,18 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // PVMInstanceReference p VM instance reference
+//
 // swagger:model PVMInstanceReference
 type PVMInstanceReference struct {
 
@@ -234,7 +235,6 @@ func (m *PVMInstanceReference) Validate(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceReference) validateAddresses(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Addresses) { // not required
 		return nil
 	}
@@ -248,6 +248,8 @@ func (m *PVMInstanceReference) validateAddresses(formats strfmt.Registry) error 
 			if err := m.Addresses[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("addresses" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("addresses" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -259,7 +261,6 @@ func (m *PVMInstanceReference) validateAddresses(formats strfmt.Registry) error 
 }
 
 func (m *PVMInstanceReference) validateConsoleLanguage(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.ConsoleLanguage) { // not required
 		return nil
 	}
@@ -268,6 +269,8 @@ func (m *PVMInstanceReference) validateConsoleLanguage(formats strfmt.Registry) 
 		if err := m.ConsoleLanguage.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("consoleLanguage")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("consoleLanguage")
 			}
 			return err
 		}
@@ -277,7 +280,6 @@ func (m *PVMInstanceReference) validateConsoleLanguage(formats strfmt.Registry) 
 }
 
 func (m *PVMInstanceReference) validateCreationDate(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.CreationDate) { // not required
 		return nil
 	}
@@ -299,7 +301,6 @@ func (m *PVMInstanceReference) validateDiskSize(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceReference) validateFault(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Fault) { // not required
 		return nil
 	}
@@ -308,6 +309,8 @@ func (m *PVMInstanceReference) validateFault(formats strfmt.Registry) error {
 		if err := m.Fault.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("fault")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("fault")
 			}
 			return err
 		}
@@ -317,7 +320,6 @@ func (m *PVMInstanceReference) validateFault(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceReference) validateHealth(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Health) { // not required
 		return nil
 	}
@@ -326,6 +328,8 @@ func (m *PVMInstanceReference) validateHealth(formats strfmt.Registry) error {
 		if err := m.Health.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("health")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("health")
 			}
 			return err
 		}
@@ -362,7 +366,6 @@ func (m *PVMInstanceReference) validateMemory(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceReference) validateNetworks(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Networks) { // not required
 		return nil
 	}
@@ -376,6 +379,8 @@ func (m *PVMInstanceReference) validateNetworks(formats strfmt.Registry) error {
 			if err := m.Networks[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -421,7 +426,7 @@ const (
 
 // prop value enum
 func (m *PVMInstanceReference) validateProcTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, pVmInstanceReferenceTypeProcTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, pVmInstanceReferenceTypeProcTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -460,7 +465,6 @@ func (m *PVMInstanceReference) validatePvmInstanceID(formats strfmt.Registry) er
 }
 
 func (m *PVMInstanceReference) validateSapProfile(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.SapProfile) { // not required
 		return nil
 	}
@@ -469,6 +473,8 @@ func (m *PVMInstanceReference) validateSapProfile(formats strfmt.Registry) error
 		if err := m.SapProfile.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("sapProfile")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("sapProfile")
 			}
 			return err
 		}
@@ -487,7 +493,6 @@ func (m *PVMInstanceReference) validateServerName(formats strfmt.Registry) error
 }
 
 func (m *PVMInstanceReference) validateSoftwareLicenses(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.SoftwareLicenses) { // not required
 		return nil
 	}
@@ -496,6 +501,8 @@ func (m *PVMInstanceReference) validateSoftwareLicenses(formats strfmt.Registry)
 		if err := m.SoftwareLicenses.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("softwareLicenses")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("softwareLicenses")
 			}
 			return err
 		}
@@ -505,7 +512,6 @@ func (m *PVMInstanceReference) validateSoftwareLicenses(formats strfmt.Registry)
 }
 
 func (m *PVMInstanceReference) validateSrcs(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Srcs) { // not required
 		return nil
 	}
@@ -521,6 +527,8 @@ func (m *PVMInstanceReference) validateSrcs(formats strfmt.Registry) error {
 				if err := m.Srcs[i][ii].Validate(formats); err != nil {
 					if ve, ok := err.(*errors.Validation); ok {
 						return ve.ValidateName("srcs" + "." + strconv.Itoa(i) + "." + strconv.Itoa(ii))
+					} else if ce, ok := err.(*errors.CompositeError); ok {
+						return ce.ValidateName("srcs" + "." + strconv.Itoa(i) + "." + strconv.Itoa(ii))
 					}
 					return err
 				}
@@ -543,7 +551,6 @@ func (m *PVMInstanceReference) validateStatus(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceReference) validateUpdatedDate(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.UpdatedDate) { // not required
 		return nil
 	}
@@ -556,7 +563,6 @@ func (m *PVMInstanceReference) validateUpdatedDate(formats strfmt.Registry) erro
 }
 
 func (m *PVMInstanceReference) validateVirtualCores(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.VirtualCores) { // not required
 		return nil
 	}
@@ -565,6 +571,214 @@ func (m *PVMInstanceReference) validateVirtualCores(formats strfmt.Registry) err
 		if err := m.VirtualCores.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("virtualCores")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("virtualCores")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this p VM instance reference based on the context it is used
+func (m *PVMInstanceReference) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateAddresses(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateConsoleLanguage(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateFault(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateHealth(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateNetworks(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSapProfile(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSoftwareLicenses(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSrcs(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateVirtualCores(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *PVMInstanceReference) contextValidateAddresses(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Addresses); i++ {
+
+		if m.Addresses[i] != nil {
+			if err := m.Addresses[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("addresses" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("addresses" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReference) contextValidateConsoleLanguage(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.ConsoleLanguage != nil {
+		if err := m.ConsoleLanguage.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("consoleLanguage")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("consoleLanguage")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReference) contextValidateFault(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Fault != nil {
+		if err := m.Fault.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("fault")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("fault")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReference) contextValidateHealth(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Health != nil {
+		if err := m.Health.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("health")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("health")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReference) contextValidateNetworks(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Networks); i++ {
+
+		if m.Networks[i] != nil {
+			if err := m.Networks[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReference) contextValidateSapProfile(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.SapProfile != nil {
+		if err := m.SapProfile.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("sapProfile")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("sapProfile")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReference) contextValidateSoftwareLicenses(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.SoftwareLicenses != nil {
+		if err := m.SoftwareLicenses.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("softwareLicenses")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("softwareLicenses")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReference) contextValidateSrcs(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Srcs); i++ {
+
+		for ii := 0; ii < len(m.Srcs[i]); ii++ {
+
+			if m.Srcs[i][ii] != nil {
+				if err := m.Srcs[i][ii].ContextValidate(ctx, formats); err != nil {
+					if ve, ok := err.(*errors.Validation); ok {
+						return ve.ValidateName("srcs" + "." + strconv.Itoa(i) + "." + strconv.Itoa(ii))
+					} else if ce, ok := err.(*errors.CompositeError); ok {
+						return ce.ValidateName("srcs" + "." + strconv.Itoa(i) + "." + strconv.Itoa(ii))
+					}
+					return err
+				}
+			}
+
+		}
+
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReference) contextValidateVirtualCores(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.VirtualCores != nil {
+		if err := m.VirtualCores.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("virtualCores")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("virtualCores")
 			}
 			return err
 		}

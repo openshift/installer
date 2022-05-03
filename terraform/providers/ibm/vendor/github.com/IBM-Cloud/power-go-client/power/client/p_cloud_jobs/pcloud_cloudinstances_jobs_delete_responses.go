@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudCloudinstancesJobsDeleteReader is a Reader for the PcloudCloudinstancesJobsDelete structure.
@@ -24,51 +23,44 @@ type PcloudCloudinstancesJobsDeleteReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudCloudinstancesJobsDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudCloudinstancesJobsDeleteOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudCloudinstancesJobsDeleteBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudCloudinstancesJobsDeleteUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudCloudinstancesJobsDeleteNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudCloudinstancesJobsDeleteConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudCloudinstancesJobsDeleteInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudCloudinstancesJobsDeleteOK() *PcloudCloudinstancesJobsDeleteOK {
 	return &PcloudCloudinstancesJobsDeleteOK{}
 }
 
-/*PcloudCloudinstancesJobsDeleteOK handles this case with default header values.
+/* PcloudCloudinstancesJobsDeleteOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -87,6 +79,9 @@ type PcloudCloudinstancesJobsDeleteOK struct {
 
 func (o *PcloudCloudinstancesJobsDeleteOK) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsDeleteOK  %+v", 200, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsDeleteOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsDeleteOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,7 +99,7 @@ func NewPcloudCloudinstancesJobsDeleteBadRequest() *PcloudCloudinstancesJobsDele
 	return &PcloudCloudinstancesJobsDeleteBadRequest{}
 }
 
-/*PcloudCloudinstancesJobsDeleteBadRequest handles this case with default header values.
+/* PcloudCloudinstancesJobsDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -114,6 +109,9 @@ type PcloudCloudinstancesJobsDeleteBadRequest struct {
 
 func (o *PcloudCloudinstancesJobsDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsDeleteBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsDeleteBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -133,7 +131,7 @@ func NewPcloudCloudinstancesJobsDeleteUnauthorized() *PcloudCloudinstancesJobsDe
 	return &PcloudCloudinstancesJobsDeleteUnauthorized{}
 }
 
-/*PcloudCloudinstancesJobsDeleteUnauthorized handles this case with default header values.
+/* PcloudCloudinstancesJobsDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -143,6 +141,9 @@ type PcloudCloudinstancesJobsDeleteUnauthorized struct {
 
 func (o *PcloudCloudinstancesJobsDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsDeleteUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsDeleteUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -162,7 +163,7 @@ func NewPcloudCloudinstancesJobsDeleteNotFound() *PcloudCloudinstancesJobsDelete
 	return &PcloudCloudinstancesJobsDeleteNotFound{}
 }
 
-/*PcloudCloudinstancesJobsDeleteNotFound handles this case with default header values.
+/* PcloudCloudinstancesJobsDeleteNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -172,6 +173,9 @@ type PcloudCloudinstancesJobsDeleteNotFound struct {
 
 func (o *PcloudCloudinstancesJobsDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsDeleteNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -191,7 +195,7 @@ func NewPcloudCloudinstancesJobsDeleteConflict() *PcloudCloudinstancesJobsDelete
 	return &PcloudCloudinstancesJobsDeleteConflict{}
 }
 
-/*PcloudCloudinstancesJobsDeleteConflict handles this case with default header values.
+/* PcloudCloudinstancesJobsDeleteConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -201,6 +205,9 @@ type PcloudCloudinstancesJobsDeleteConflict struct {
 
 func (o *PcloudCloudinstancesJobsDeleteConflict) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsDeleteConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsDeleteConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsDeleteConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -220,7 +227,7 @@ func NewPcloudCloudinstancesJobsDeleteInternalServerError() *PcloudCloudinstance
 	return &PcloudCloudinstancesJobsDeleteInternalServerError{}
 }
 
-/*PcloudCloudinstancesJobsDeleteInternalServerError handles this case with default header values.
+/* PcloudCloudinstancesJobsDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -230,6 +237,9 @@ type PcloudCloudinstancesJobsDeleteInternalServerError struct {
 
 func (o *PcloudCloudinstancesJobsDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsDeleteInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsDeleteInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsDeleteInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

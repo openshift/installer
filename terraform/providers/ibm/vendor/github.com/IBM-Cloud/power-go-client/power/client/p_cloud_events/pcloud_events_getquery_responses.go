@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudEventsGetqueryReader is a Reader for the PcloudEventsGetquery structure.
@@ -24,37 +23,32 @@ type PcloudEventsGetqueryReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudEventsGetqueryReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudEventsGetqueryOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudEventsGetqueryBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudEventsGetqueryUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudEventsGetqueryInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -63,7 +57,7 @@ func NewPcloudEventsGetqueryOK() *PcloudEventsGetqueryOK {
 	return &PcloudEventsGetqueryOK{}
 }
 
-/*PcloudEventsGetqueryOK handles this case with default header values.
+/* PcloudEventsGetqueryOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,6 +67,9 @@ type PcloudEventsGetqueryOK struct {
 
 func (o *PcloudEventsGetqueryOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events][%d] pcloudEventsGetqueryOK  %+v", 200, o.Payload)
+}
+func (o *PcloudEventsGetqueryOK) GetPayload() *models.Events {
+	return o.Payload
 }
 
 func (o *PcloudEventsGetqueryOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -92,7 +89,7 @@ func NewPcloudEventsGetqueryBadRequest() *PcloudEventsGetqueryBadRequest {
 	return &PcloudEventsGetqueryBadRequest{}
 }
 
-/*PcloudEventsGetqueryBadRequest handles this case with default header values.
+/* PcloudEventsGetqueryBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -102,6 +99,9 @@ type PcloudEventsGetqueryBadRequest struct {
 
 func (o *PcloudEventsGetqueryBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events][%d] pcloudEventsGetqueryBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudEventsGetqueryBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudEventsGetqueryBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -121,7 +121,7 @@ func NewPcloudEventsGetqueryUnauthorized() *PcloudEventsGetqueryUnauthorized {
 	return &PcloudEventsGetqueryUnauthorized{}
 }
 
-/*PcloudEventsGetqueryUnauthorized handles this case with default header values.
+/* PcloudEventsGetqueryUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -131,6 +131,9 @@ type PcloudEventsGetqueryUnauthorized struct {
 
 func (o *PcloudEventsGetqueryUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events][%d] pcloudEventsGetqueryUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudEventsGetqueryUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudEventsGetqueryUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -150,7 +153,7 @@ func NewPcloudEventsGetqueryInternalServerError() *PcloudEventsGetqueryInternalS
 	return &PcloudEventsGetqueryInternalServerError{}
 }
 
-/*PcloudEventsGetqueryInternalServerError handles this case with default header values.
+/* PcloudEventsGetqueryInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -160,6 +163,9 @@ type PcloudEventsGetqueryInternalServerError struct {
 
 func (o *PcloudEventsGetqueryInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events][%d] pcloudEventsGetqueryInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudEventsGetqueryInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudEventsGetqueryInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

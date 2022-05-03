@@ -6,13 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
 // PeerGatewayAddress IP address of the Peer Gateway attached to this VPNConnection
+// Example: 192.168.1.1
+//
 // swagger:model PeerGatewayAddress
 type PeerGatewayAddress strfmt.IPv4
 
@@ -27,5 +30,10 @@ func (m PeerGatewayAddress) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+// ContextValidate validates this peer gateway address based on context it is used
+func (m PeerGatewayAddress) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }

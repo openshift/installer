@@ -27,7 +27,7 @@ func (f *IBMPISAPInstanceClient) Create(body *models.SAPCreate) (*models.PVMInst
 	params := p_cloud_s_a_p.NewPcloudSapPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
-	postok, postcreated, postAccepted, err := f.session.Power.PCloudSAP.PcloudSapPost(params, f.authInfo)
+	postok, postcreated, postAccepted, err := f.session.Power.PCloudsap.PcloudSapPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Create SAP Instance: %w", err)
 	}
@@ -48,7 +48,7 @@ func (f *IBMPISAPInstanceClient) GetSAPProfile(id string) (*models.SAPProfile, e
 	params := p_cloud_s_a_p.NewPcloudSapGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithSapProfileID(id)
-	resp, err := f.session.Power.PCloudSAP.PcloudSapGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudsap.PcloudSapGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sap profile %s : %w", id, err)
 	}
@@ -63,7 +63,7 @@ func (f *IBMPISAPInstanceClient) GetAllSAPProfiles(cloudInstanceID string) (*mod
 	params := p_cloud_s_a_p.NewPcloudSapGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
-	resp, err := f.session.Power.PCloudSAP.PcloudSapGetall(params, f.authInfo)
+	resp, err := f.session.Power.PCloudsap.PcloudSapGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all sap profiles for power instance %s: %w", cloudInstanceID, err)
 	}

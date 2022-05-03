@@ -46,6 +46,11 @@ func (loggerImpl *loggerImpl) Close() error {
 	return nil
 }
 
+var (
+	stdout = os.Stdout
+	stderr = os.Stderr
+)
+
 func newLoggerImpl(out io.Writer, prefix string, flag int) *loggerImpl {
 	l := log.New(out, prefix, flag)
 	c := out.(io.WriteCloser)
@@ -73,9 +78,9 @@ func NewLogger(bluemix_trace string) Printer {
 // NewStdLogger return a printer that writes to StdOut.
 func NewStdLogger() PrinterCloser {
 	if os.Getenv("IBMCLOUD_BLUEMIX_GO_TRACE") != "" {
-		return newLoggerImpl(os.Stdout, "", 0)
+		return newLoggerImpl(stdout, "", 0)
 	}
-	return newLoggerImpl(os.Stdin, "", 0)
+	return newLoggerImpl(stderr, "", 0)
 }
 
 // NewFileLogger return a printer that writes to the given file path.
@@ -83,7 +88,7 @@ func NewFileLogger(path string) PrinterCloser {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
 		logger := NewStdLogger()
-		logger.Printf("An error occurred when creating log file '%s':\n%v\n\n", path, err)
+		logger.Printf("[ERROR] An error occurred when creating log file '%s':\n%v\n\n", path, err)
 		return logger
 	}
 	return newLoggerImpl(file, "", 0)

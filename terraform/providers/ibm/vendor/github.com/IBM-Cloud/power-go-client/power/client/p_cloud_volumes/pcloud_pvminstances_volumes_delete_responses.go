@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudPvminstancesVolumesDeleteReader is a Reader for the PcloudPvminstancesVolumesDelete structure.
@@ -24,58 +23,50 @@ type PcloudPvminstancesVolumesDeleteReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudPvminstancesVolumesDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 202:
 		result := NewPcloudPvminstancesVolumesDeleteAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudPvminstancesVolumesDeleteBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudPvminstancesVolumesDeleteUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 403:
 		result := NewPcloudPvminstancesVolumesDeleteForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudPvminstancesVolumesDeleteNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudPvminstancesVolumesDeleteConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudPvminstancesVolumesDeleteInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -84,7 +75,7 @@ func NewPcloudPvminstancesVolumesDeleteAccepted() *PcloudPvminstancesVolumesDele
 	return &PcloudPvminstancesVolumesDeleteAccepted{}
 }
 
-/*PcloudPvminstancesVolumesDeleteAccepted handles this case with default header values.
+/* PcloudPvminstancesVolumesDeleteAccepted describes a response with status code 202, with default header values.
 
 OK
 */
@@ -94,6 +85,9 @@ type PcloudPvminstancesVolumesDeleteAccepted struct {
 
 func (o *PcloudPvminstancesVolumesDeleteAccepted) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesDeleteAccepted  %+v", 202, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesDeleteAccepted) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesDeleteAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -111,7 +105,7 @@ func NewPcloudPvminstancesVolumesDeleteBadRequest() *PcloudPvminstancesVolumesDe
 	return &PcloudPvminstancesVolumesDeleteBadRequest{}
 }
 
-/*PcloudPvminstancesVolumesDeleteBadRequest handles this case with default header values.
+/* PcloudPvminstancesVolumesDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -121,6 +115,9 @@ type PcloudPvminstancesVolumesDeleteBadRequest struct {
 
 func (o *PcloudPvminstancesVolumesDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesDeleteBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesDeleteBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -140,7 +137,7 @@ func NewPcloudPvminstancesVolumesDeleteUnauthorized() *PcloudPvminstancesVolumes
 	return &PcloudPvminstancesVolumesDeleteUnauthorized{}
 }
 
-/*PcloudPvminstancesVolumesDeleteUnauthorized handles this case with default header values.
+/* PcloudPvminstancesVolumesDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -150,6 +147,9 @@ type PcloudPvminstancesVolumesDeleteUnauthorized struct {
 
 func (o *PcloudPvminstancesVolumesDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesDeleteUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesDeleteUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -169,7 +169,7 @@ func NewPcloudPvminstancesVolumesDeleteForbidden() *PcloudPvminstancesVolumesDel
 	return &PcloudPvminstancesVolumesDeleteForbidden{}
 }
 
-/*PcloudPvminstancesVolumesDeleteForbidden handles this case with default header values.
+/* PcloudPvminstancesVolumesDeleteForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -179,6 +179,9 @@ type PcloudPvminstancesVolumesDeleteForbidden struct {
 
 func (o *PcloudPvminstancesVolumesDeleteForbidden) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesDeleteForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesDeleteForbidden) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesDeleteForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -198,7 +201,7 @@ func NewPcloudPvminstancesVolumesDeleteNotFound() *PcloudPvminstancesVolumesDele
 	return &PcloudPvminstancesVolumesDeleteNotFound{}
 }
 
-/*PcloudPvminstancesVolumesDeleteNotFound handles this case with default header values.
+/* PcloudPvminstancesVolumesDeleteNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -208,6 +211,9 @@ type PcloudPvminstancesVolumesDeleteNotFound struct {
 
 func (o *PcloudPvminstancesVolumesDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesDeleteNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -227,7 +233,7 @@ func NewPcloudPvminstancesVolumesDeleteConflict() *PcloudPvminstancesVolumesDele
 	return &PcloudPvminstancesVolumesDeleteConflict{}
 }
 
-/*PcloudPvminstancesVolumesDeleteConflict handles this case with default header values.
+/* PcloudPvminstancesVolumesDeleteConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -237,6 +243,9 @@ type PcloudPvminstancesVolumesDeleteConflict struct {
 
 func (o *PcloudPvminstancesVolumesDeleteConflict) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesDeleteConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesDeleteConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesDeleteConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -256,7 +265,7 @@ func NewPcloudPvminstancesVolumesDeleteInternalServerError() *PcloudPvminstances
 	return &PcloudPvminstancesVolumesDeleteInternalServerError{}
 }
 
-/*PcloudPvminstancesVolumesDeleteInternalServerError handles this case with default header values.
+/* PcloudPvminstancesVolumesDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -266,6 +275,9 @@ type PcloudPvminstancesVolumesDeleteInternalServerError struct {
 
 func (o *PcloudPvminstancesVolumesDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesDeleteInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesDeleteInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesDeleteInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -6,12 +6,14 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // NetworkPortCreate network port create
+//
 // swagger:model NetworkPortCreate
 type NetworkPortCreate struct {
 
@@ -24,6 +26,11 @@ type NetworkPortCreate struct {
 
 // Validate validates this network port create
 func (m *NetworkPortCreate) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this network port create based on context it is used
+func (m *NetworkPortCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

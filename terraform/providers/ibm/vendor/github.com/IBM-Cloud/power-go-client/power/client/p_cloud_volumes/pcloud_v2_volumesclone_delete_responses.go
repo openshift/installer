@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudV2VolumescloneDeleteReader is a Reader for the PcloudV2VolumescloneDelete structure.
@@ -24,44 +23,38 @@ type PcloudV2VolumescloneDeleteReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudV2VolumescloneDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudV2VolumescloneDeleteOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudV2VolumescloneDeleteBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudV2VolumescloneDeleteUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudV2VolumescloneDeleteNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudV2VolumescloneDeleteInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudV2VolumescloneDeleteOK() *PcloudV2VolumescloneDeleteOK {
 	return &PcloudV2VolumescloneDeleteOK{}
 }
 
-/*PcloudV2VolumescloneDeleteOK handles this case with default header values.
+/* PcloudV2VolumescloneDeleteOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudV2VolumescloneDeleteOK struct {
 
 func (o *PcloudV2VolumescloneDeleteOK) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteOK  %+v", 200, o.Payload)
+}
+func (o *PcloudV2VolumescloneDeleteOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumescloneDeleteOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -97,7 +93,7 @@ func NewPcloudV2VolumescloneDeleteBadRequest() *PcloudV2VolumescloneDeleteBadReq
 	return &PcloudV2VolumescloneDeleteBadRequest{}
 }
 
-/*PcloudV2VolumescloneDeleteBadRequest handles this case with default header values.
+/* PcloudV2VolumescloneDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -107,6 +103,9 @@ type PcloudV2VolumescloneDeleteBadRequest struct {
 
 func (o *PcloudV2VolumescloneDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudV2VolumescloneDeleteBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumescloneDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -126,7 +125,7 @@ func NewPcloudV2VolumescloneDeleteUnauthorized() *PcloudV2VolumescloneDeleteUnau
 	return &PcloudV2VolumescloneDeleteUnauthorized{}
 }
 
-/*PcloudV2VolumescloneDeleteUnauthorized handles this case with default header values.
+/* PcloudV2VolumescloneDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -136,6 +135,9 @@ type PcloudV2VolumescloneDeleteUnauthorized struct {
 
 func (o *PcloudV2VolumescloneDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudV2VolumescloneDeleteUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumescloneDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -155,7 +157,7 @@ func NewPcloudV2VolumescloneDeleteNotFound() *PcloudV2VolumescloneDeleteNotFound
 	return &PcloudV2VolumescloneDeleteNotFound{}
 }
 
-/*PcloudV2VolumescloneDeleteNotFound handles this case with default header values.
+/* PcloudV2VolumescloneDeleteNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -165,6 +167,9 @@ type PcloudV2VolumescloneDeleteNotFound struct {
 
 func (o *PcloudV2VolumescloneDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudV2VolumescloneDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumescloneDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -184,7 +189,7 @@ func NewPcloudV2VolumescloneDeleteInternalServerError() *PcloudV2VolumescloneDel
 	return &PcloudV2VolumescloneDeleteInternalServerError{}
 }
 
-/*PcloudV2VolumescloneDeleteInternalServerError handles this case with default header values.
+/* PcloudV2VolumescloneDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -194,6 +199,9 @@ type PcloudV2VolumescloneDeleteInternalServerError struct {
 
 func (o *PcloudV2VolumescloneDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudV2VolumescloneDeleteInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumescloneDeleteInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

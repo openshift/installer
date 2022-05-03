@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudV2PvminstancesCaptureGetReader is a Reader for the PcloudV2PvminstancesCaptureGet structure.
@@ -24,37 +23,32 @@ type PcloudV2PvminstancesCaptureGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudV2PvminstancesCaptureGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudV2PvminstancesCaptureGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewPcloudV2PvminstancesCaptureGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudV2PvminstancesCaptureGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudV2PvminstancesCaptureGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -63,7 +57,7 @@ func NewPcloudV2PvminstancesCaptureGetOK() *PcloudV2PvminstancesCaptureGetOK {
 	return &PcloudV2PvminstancesCaptureGetOK{}
 }
 
-/*PcloudV2PvminstancesCaptureGetOK handles this case with default header values.
+/* PcloudV2PvminstancesCaptureGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,6 +67,9 @@ type PcloudV2PvminstancesCaptureGetOK struct {
 
 func (o *PcloudV2PvminstancesCaptureGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetOK  %+v", 200, o.Payload)
+}
+func (o *PcloudV2PvminstancesCaptureGetOK) GetPayload() *models.Job {
+	return o.Payload
 }
 
 func (o *PcloudV2PvminstancesCaptureGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -92,7 +89,7 @@ func NewPcloudV2PvminstancesCaptureGetUnauthorized() *PcloudV2PvminstancesCaptur
 	return &PcloudV2PvminstancesCaptureGetUnauthorized{}
 }
 
-/*PcloudV2PvminstancesCaptureGetUnauthorized handles this case with default header values.
+/* PcloudV2PvminstancesCaptureGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -102,6 +99,9 @@ type PcloudV2PvminstancesCaptureGetUnauthorized struct {
 
 func (o *PcloudV2PvminstancesCaptureGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudV2PvminstancesCaptureGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2PvminstancesCaptureGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -121,7 +121,7 @@ func NewPcloudV2PvminstancesCaptureGetNotFound() *PcloudV2PvminstancesCaptureGet
 	return &PcloudV2PvminstancesCaptureGetNotFound{}
 }
 
-/*PcloudV2PvminstancesCaptureGetNotFound handles this case with default header values.
+/* PcloudV2PvminstancesCaptureGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -131,6 +131,9 @@ type PcloudV2PvminstancesCaptureGetNotFound struct {
 
 func (o *PcloudV2PvminstancesCaptureGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudV2PvminstancesCaptureGetNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2PvminstancesCaptureGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -150,7 +153,7 @@ func NewPcloudV2PvminstancesCaptureGetInternalServerError() *PcloudV2Pvminstance
 	return &PcloudV2PvminstancesCaptureGetInternalServerError{}
 }
 
-/*PcloudV2PvminstancesCaptureGetInternalServerError handles this case with default header values.
+/* PcloudV2PvminstancesCaptureGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -160,6 +163,9 @@ type PcloudV2PvminstancesCaptureGetInternalServerError struct {
 
 func (o *PcloudV2PvminstancesCaptureGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudV2PvminstancesCaptureGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2PvminstancesCaptureGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudIkepoliciesGetallReader is a Reader for the PcloudIkepoliciesGetall structure.
@@ -24,51 +23,44 @@ type PcloudIkepoliciesGetallReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudIkepoliciesGetallReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudIkepoliciesGetallOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudIkepoliciesGetallBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudIkepoliciesGetallUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 403:
 		result := NewPcloudIkepoliciesGetallForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudIkepoliciesGetallNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudIkepoliciesGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudIkepoliciesGetallOK() *PcloudIkepoliciesGetallOK {
 	return &PcloudIkepoliciesGetallOK{}
 }
 
-/*PcloudIkepoliciesGetallOK handles this case with default header values.
+/* PcloudIkepoliciesGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -87,6 +79,9 @@ type PcloudIkepoliciesGetallOK struct {
 
 func (o *PcloudIkepoliciesGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies][%d] pcloudIkepoliciesGetallOK  %+v", 200, o.Payload)
+}
+func (o *PcloudIkepoliciesGetallOK) GetPayload() *models.IKEPolicies {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesGetallOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -106,7 +101,7 @@ func NewPcloudIkepoliciesGetallBadRequest() *PcloudIkepoliciesGetallBadRequest {
 	return &PcloudIkepoliciesGetallBadRequest{}
 }
 
-/*PcloudIkepoliciesGetallBadRequest handles this case with default header values.
+/* PcloudIkepoliciesGetallBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -116,6 +111,9 @@ type PcloudIkepoliciesGetallBadRequest struct {
 
 func (o *PcloudIkepoliciesGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies][%d] pcloudIkepoliciesGetallBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudIkepoliciesGetallBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -135,7 +133,7 @@ func NewPcloudIkepoliciesGetallUnauthorized() *PcloudIkepoliciesGetallUnauthoriz
 	return &PcloudIkepoliciesGetallUnauthorized{}
 }
 
-/*PcloudIkepoliciesGetallUnauthorized handles this case with default header values.
+/* PcloudIkepoliciesGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -145,6 +143,9 @@ type PcloudIkepoliciesGetallUnauthorized struct {
 
 func (o *PcloudIkepoliciesGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies][%d] pcloudIkepoliciesGetallUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudIkepoliciesGetallUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -164,7 +165,7 @@ func NewPcloudIkepoliciesGetallForbidden() *PcloudIkepoliciesGetallForbidden {
 	return &PcloudIkepoliciesGetallForbidden{}
 }
 
-/*PcloudIkepoliciesGetallForbidden handles this case with default header values.
+/* PcloudIkepoliciesGetallForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -174,6 +175,9 @@ type PcloudIkepoliciesGetallForbidden struct {
 
 func (o *PcloudIkepoliciesGetallForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies][%d] pcloudIkepoliciesGetallForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudIkepoliciesGetallForbidden) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesGetallForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -193,7 +197,7 @@ func NewPcloudIkepoliciesGetallNotFound() *PcloudIkepoliciesGetallNotFound {
 	return &PcloudIkepoliciesGetallNotFound{}
 }
 
-/*PcloudIkepoliciesGetallNotFound handles this case with default header values.
+/* PcloudIkepoliciesGetallNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -203,6 +207,9 @@ type PcloudIkepoliciesGetallNotFound struct {
 
 func (o *PcloudIkepoliciesGetallNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies][%d] pcloudIkepoliciesGetallNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudIkepoliciesGetallNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -222,7 +229,7 @@ func NewPcloudIkepoliciesGetallInternalServerError() *PcloudIkepoliciesGetallInt
 	return &PcloudIkepoliciesGetallInternalServerError{}
 }
 
-/*PcloudIkepoliciesGetallInternalServerError handles this case with default header values.
+/* PcloudIkepoliciesGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -232,6 +239,9 @@ type PcloudIkepoliciesGetallInternalServerError struct {
 
 func (o *PcloudIkepoliciesGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies][%d] pcloudIkepoliciesGetallInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudIkepoliciesGetallInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesGetallInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

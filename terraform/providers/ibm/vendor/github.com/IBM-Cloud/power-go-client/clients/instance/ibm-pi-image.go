@@ -29,7 +29,7 @@ func (f *IBMPIImageClient) Get(id string) (*models.Image, error) {
 	params := p_cloud_images.NewPcloudCloudinstancesImagesGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithImageID(id)
-	resp, err := f.session.Power.PCloudImages.PcloudCloudinstancesImagesGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudImages.PcloudCloudinstancesImagesGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.GetImageOperationFailed, id, err)
 	}
@@ -44,7 +44,7 @@ func (f *IBMPIImageClient) GetAll() (*models.Images, error) {
 	params := p_cloud_images.NewPcloudCloudinstancesImagesGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
-	resp, err := f.session.Power.PCloudImages.PcloudCloudinstancesImagesGetall(params, f.authInfo)
+	resp, err := f.session.Power.PCloudImages.PcloudCloudinstancesImagesGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Get all PI Images of the PVM instance %s : %w", f.cloudInstanceID, err)
 	}
@@ -63,7 +63,7 @@ func (f *IBMPIImageClient) Create(body *models.CreateImage) (*models.Image, erro
 	params := p_cloud_images.NewPcloudCloudinstancesImagesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
-	respok, respcreated, err := f.session.Power.PCloudImages.PcloudCloudinstancesImagesPost(params, f.authInfo)
+	respok, respcreated, err := f.session.Power.PCloudImages.PcloudCloudinstancesImagesPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.CreateImageOperationFailed, f.cloudInstanceID, err)
 	}
@@ -81,7 +81,7 @@ func (f *IBMPIImageClient) CreateCosImage(body *models.CreateCosImageImportJob) 
 	params := p_cloud_images.NewPcloudV1CloudinstancesCosimagesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
-	resp, err := f.session.Power.PCloudImages.PcloudV1CloudinstancesCosimagesPost(params, f.authInfo)
+	resp, err := f.session.Power.PCloudImages.PcloudV1CloudinstancesCosimagesPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform Create COS Image Operation for cloud instance %s with error %w", f.cloudInstanceID, err)
 	}
@@ -96,7 +96,7 @@ func (f *IBMPIImageClient) ExportImage(id string, body *models.ExportImage) (*mo
 	params := p_cloud_images.NewPcloudV2ImagesExportPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithImageID(id).WithBody(body)
-	resp, err := f.session.Power.PCloudImages.PcloudV2ImagesExportPost(params, f.authInfo)
+	resp, err := f.session.Power.PCloudImages.PcloudV2ImagesExportPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Export COS Image for image id %s with error %w", id, err)
 	}
@@ -111,7 +111,7 @@ func (f *IBMPIImageClient) Delete(id string) error {
 	params := p_cloud_images.NewPcloudCloudinstancesImagesDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithImageID(id)
-	_, err := f.session.Power.PCloudImages.PcloudCloudinstancesImagesDelete(params, f.authInfo)
+	_, err := f.session.Power.PCloudImages.PcloudCloudinstancesImagesDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return fmt.Errorf("failed to Delete PI Image %s: %w", id, err)
 	}
@@ -123,7 +123,7 @@ func (f *IBMPIImageClient) GetStockImage(id string) (*models.Image, error) {
 	params := p_cloud_images.NewPcloudCloudinstancesStockimagesGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithImageID(id)
-	resp, err := f.session.Power.PCloudImages.PcloudCloudinstancesStockimagesGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudImages.PcloudCloudinstancesStockimagesGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Get PI Stock Image %s for cloud instance %s: %w", id, f.cloudInstanceID, err)
 	}
@@ -140,7 +140,7 @@ func (f *IBMPIImageClient) GetAllStockImages(includeSAP bool, includeVTl bool) (
 		WithCloudInstanceID(f.cloudInstanceID).
 		WithSap(&includeSAP).
 		WithVtl(&includeVTl)
-	resp, err := f.session.Power.PCloudImages.PcloudCloudinstancesStockimagesGetall(params, f.authInfo)
+	resp, err := f.session.Power.PCloudImages.PcloudCloudinstancesStockimagesGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Stock Images with (SAP=%t, VTL=%t) for cloud instance %s: %w", includeSAP, includeVTl, f.cloudInstanceID, err)
 	}

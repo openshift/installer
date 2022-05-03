@@ -6,13 +6,14 @@ package p_cloud_events
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new p cloud events API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,27 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	PcloudEventsGet(params *PcloudEventsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudEventsGetOK, error)
+
+	PcloudEventsGetquery(params *PcloudEventsGetqueryParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudEventsGetqueryOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-PcloudEventsGet gets a single event
+  PcloudEventsGet gets a single event
 */
-func (a *Client) PcloudEventsGet(params *PcloudEventsGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudEventsGetOK, error) {
+func (a *Client) PcloudEventsGet(params *PcloudEventsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudEventsGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudEventsGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.events.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}",
@@ -45,24 +57,34 @@ func (a *Client) PcloudEventsGet(params *PcloudEventsGetParams, authInfo runtime
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudEventsGetOK), nil
-
+	success, ok := result.(*PcloudEventsGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.events.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudEventsGetquery gets events from this cloud instance since a specific timestamp
+  PcloudEventsGetquery gets events from this cloud instance since a specific timestamp
 */
-func (a *Client) PcloudEventsGetquery(params *PcloudEventsGetqueryParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudEventsGetqueryOK, error) {
+func (a *Client) PcloudEventsGetquery(params *PcloudEventsGetqueryParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudEventsGetqueryOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudEventsGetqueryParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.events.getquery",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/events",
@@ -74,12 +96,23 @@ func (a *Client) PcloudEventsGetquery(params *PcloudEventsGetqueryParams, authIn
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudEventsGetqueryOK), nil
-
+	success, ok := result.(*PcloudEventsGetqueryOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.events.getquery: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client

@@ -6,18 +6,21 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // PeerSubnetUpdate CIDR of peer subnet to attach/detach
+//
 // swagger:model PeerSubnetUpdate
 type PeerSubnetUpdate struct {
 
 	// cidr
+	// Example: 128.170.1.0/32
 	// Required: true
 	Cidr *string `json:"cidr"`
 }
@@ -42,6 +45,11 @@ func (m *PeerSubnetUpdate) validateCidr(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this peer subnet update based on context it is used
+func (m *PeerSubnetUpdate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

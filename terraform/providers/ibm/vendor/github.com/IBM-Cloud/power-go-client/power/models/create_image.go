@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // CreateImage create image
+//
 // swagger:model CreateImage
 type CreateImage struct {
 
@@ -113,14 +114,13 @@ const (
 
 // prop value enum
 func (m *CreateImage) validateOsTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, createImageTypeOsTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, createImageTypeOsTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *CreateImage) validateOsType(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.OsType) { // not required
 		return nil
 	}
@@ -147,8 +147,8 @@ func init() {
 
 const (
 
-	// CreateImageSourceRootProject captures enum value "root-project"
-	CreateImageSourceRootProject string = "root-project"
+	// CreateImageSourceRootDashProject captures enum value "root-project"
+	CreateImageSourceRootDashProject string = "root-project"
 
 	// CreateImageSourceURL captures enum value "url"
 	CreateImageSourceURL string = "url"
@@ -156,7 +156,7 @@ const (
 
 // prop value enum
 func (m *CreateImage) validateSourceEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, createImageTypeSourcePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, createImageTypeSourcePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -177,7 +177,6 @@ func (m *CreateImage) validateSource(formats strfmt.Registry) error {
 }
 
 func (m *CreateImage) validateStorageAffinity(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.StorageAffinity) { // not required
 		return nil
 	}
@@ -186,6 +185,38 @@ func (m *CreateImage) validateStorageAffinity(formats strfmt.Registry) error {
 		if err := m.StorageAffinity.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("storageAffinity")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("storageAffinity")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this create image based on the context it is used
+func (m *CreateImage) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateStorageAffinity(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *CreateImage) contextValidateStorageAffinity(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.StorageAffinity != nil {
+		if err := m.StorageAffinity.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("storageAffinity")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("storageAffinity")
 			}
 			return err
 		}

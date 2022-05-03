@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudNetworksPortsPostParams creates a new PcloudNetworksPortsPostParams object
-// with the default values initialized.
+// NewPcloudNetworksPortsPostParams creates a new PcloudNetworksPortsPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudNetworksPortsPostParams() *PcloudNetworksPortsPostParams {
-	var ()
 	return &PcloudNetworksPortsPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudNetworksPortsPostParamsWithTimeout creates a new PcloudNetworksPortsPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudNetworksPortsPostParamsWithTimeout(timeout time.Duration) *PcloudNetworksPortsPostParams {
-	var ()
 	return &PcloudNetworksPortsPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudNetworksPortsPostParamsWithContext creates a new PcloudNetworksPortsPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudNetworksPortsPostParamsWithContext(ctx context.Context) *PcloudNetworksPortsPostParams {
-	var ()
 	return &PcloudNetworksPortsPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudNetworksPortsPostParamsWithHTTPClient creates a new PcloudNetworksPortsPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudNetworksPortsPostParamsWithHTTPClient(client *http.Client) *PcloudNetworksPortsPostParams {
-	var ()
 	return &PcloudNetworksPortsPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudNetworksPortsPostParams contains all the parameters to send to the API endpoint
-for the pcloud networks ports post operation typically these are written to a http.Request
+/* PcloudNetworksPortsPostParams contains all the parameters to send to the API endpoint
+   for the pcloud networks ports post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudNetworksPortsPostParams struct {
 
-	/*Body
-	  Create a Network Port
+	/* Body.
 
+	   Create a Network Port
 	*/
 	Body *models.NetworkPortCreate
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*NetworkID
-	  Network ID
 
+	/* NetworkID.
+
+	   Network ID
 	*/
 	NetworkID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud networks ports post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudNetworksPortsPostParams) WithDefaults() *PcloudNetworksPortsPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud networks ports post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudNetworksPortsPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud networks ports post params
@@ -157,7 +172,6 @@ func (o *PcloudNetworksPortsPostParams) WriteToRequest(r runtime.ClientRequest, 
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

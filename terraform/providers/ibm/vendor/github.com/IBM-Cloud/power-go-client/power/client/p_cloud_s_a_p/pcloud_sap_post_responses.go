@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudSapPostReader is a Reader for the PcloudSapPost structure.
@@ -24,65 +23,56 @@ type PcloudSapPostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudSapPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudSapPostOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 201:
 		result := NewPcloudSapPostCreated()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 202:
 		result := NewPcloudSapPostAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudSapPostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudSapPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudSapPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudSapPostUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudSapPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -91,7 +81,7 @@ func NewPcloudSapPostOK() *PcloudSapPostOK {
 	return &PcloudSapPostOK{}
 }
 
-/*PcloudSapPostOK handles this case with default header values.
+/* PcloudSapPostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -101,6 +91,9 @@ type PcloudSapPostOK struct {
 
 func (o *PcloudSapPostOK) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostOK  %+v", 200, o.Payload)
+}
+func (o *PcloudSapPostOK) GetPayload() models.PVMInstanceList {
+	return o.Payload
 }
 
 func (o *PcloudSapPostOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -118,7 +111,7 @@ func NewPcloudSapPostCreated() *PcloudSapPostCreated {
 	return &PcloudSapPostCreated{}
 }
 
-/*PcloudSapPostCreated handles this case with default header values.
+/* PcloudSapPostCreated describes a response with status code 201, with default header values.
 
 Created
 */
@@ -128,6 +121,9 @@ type PcloudSapPostCreated struct {
 
 func (o *PcloudSapPostCreated) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostCreated  %+v", 201, o.Payload)
+}
+func (o *PcloudSapPostCreated) GetPayload() models.PVMInstanceList {
+	return o.Payload
 }
 
 func (o *PcloudSapPostCreated) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -145,7 +141,7 @@ func NewPcloudSapPostAccepted() *PcloudSapPostAccepted {
 	return &PcloudSapPostAccepted{}
 }
 
-/*PcloudSapPostAccepted handles this case with default header values.
+/* PcloudSapPostAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -155,6 +151,9 @@ type PcloudSapPostAccepted struct {
 
 func (o *PcloudSapPostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostAccepted  %+v", 202, o.Payload)
+}
+func (o *PcloudSapPostAccepted) GetPayload() models.PVMInstanceList {
+	return o.Payload
 }
 
 func (o *PcloudSapPostAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -172,7 +171,7 @@ func NewPcloudSapPostBadRequest() *PcloudSapPostBadRequest {
 	return &PcloudSapPostBadRequest{}
 }
 
-/*PcloudSapPostBadRequest handles this case with default header values.
+/* PcloudSapPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -182,6 +181,9 @@ type PcloudSapPostBadRequest struct {
 
 func (o *PcloudSapPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudSapPostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -201,7 +203,7 @@ func NewPcloudSapPostUnauthorized() *PcloudSapPostUnauthorized {
 	return &PcloudSapPostUnauthorized{}
 }
 
-/*PcloudSapPostUnauthorized handles this case with default header values.
+/* PcloudSapPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -211,6 +213,9 @@ type PcloudSapPostUnauthorized struct {
 
 func (o *PcloudSapPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudSapPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -230,7 +235,7 @@ func NewPcloudSapPostConflict() *PcloudSapPostConflict {
 	return &PcloudSapPostConflict{}
 }
 
-/*PcloudSapPostConflict handles this case with default header values.
+/* PcloudSapPostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -240,6 +245,9 @@ type PcloudSapPostConflict struct {
 
 func (o *PcloudSapPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudSapPostConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapPostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -259,7 +267,7 @@ func NewPcloudSapPostUnprocessableEntity() *PcloudSapPostUnprocessableEntity {
 	return &PcloudSapPostUnprocessableEntity{}
 }
 
-/*PcloudSapPostUnprocessableEntity handles this case with default header values.
+/* PcloudSapPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -269,6 +277,9 @@ type PcloudSapPostUnprocessableEntity struct {
 
 func (o *PcloudSapPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudSapPostUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapPostUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -288,7 +299,7 @@ func NewPcloudSapPostInternalServerError() *PcloudSapPostInternalServerError {
 	return &PcloudSapPostInternalServerError{}
 }
 
-/*PcloudSapPostInternalServerError handles this case with default header values.
+/* PcloudSapPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -298,6 +309,9 @@ type PcloudSapPostInternalServerError struct {
 
 func (o *PcloudSapPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudSapPostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

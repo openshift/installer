@@ -6,13 +6,14 @@ package p_cloud_tenants_ssh_keys
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new p cloud tenants ssh keys API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,33 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	PcloudTenantsSshkeysDelete(params *PcloudTenantsSshkeysDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysDeleteOK, error)
+
+	PcloudTenantsSshkeysGet(params *PcloudTenantsSshkeysGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysGetOK, error)
+
+	PcloudTenantsSshkeysGetall(params *PcloudTenantsSshkeysGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysGetallOK, error)
+
+	PcloudTenantsSshkeysPost(params *PcloudTenantsSshkeysPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysPostOK, *PcloudTenantsSshkeysPostCreated, error)
+
+	PcloudTenantsSshkeysPut(params *PcloudTenantsSshkeysPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysPutOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-PcloudTenantsSshkeysDelete deletes a tenant s SSH key
+  PcloudTenantsSshkeysDelete deletes a tenant s SSH key
 */
-func (a *Client) PcloudTenantsSshkeysDelete(params *PcloudTenantsSshkeysDeleteParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudTenantsSshkeysDeleteOK, error) {
+func (a *Client) PcloudTenantsSshkeysDelete(params *PcloudTenantsSshkeysDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysDeleteOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudTenantsSshkeysDeleteParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.tenants.sshkeys.delete",
 		Method:             "DELETE",
 		PathPattern:        "/pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}",
@@ -45,24 +63,34 @@ func (a *Client) PcloudTenantsSshkeysDelete(params *PcloudTenantsSshkeysDeletePa
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudTenantsSshkeysDeleteOK), nil
-
+	success, ok := result.(*PcloudTenantsSshkeysDeleteOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.tenants.sshkeys.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudTenantsSshkeysGet gets a tenant s SSH key by name
+  PcloudTenantsSshkeysGet gets a tenant s SSH key by name
 */
-func (a *Client) PcloudTenantsSshkeysGet(params *PcloudTenantsSshkeysGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudTenantsSshkeysGetOK, error) {
+func (a *Client) PcloudTenantsSshkeysGet(params *PcloudTenantsSshkeysGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudTenantsSshkeysGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.tenants.sshkeys.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}",
@@ -74,24 +102,34 @@ func (a *Client) PcloudTenantsSshkeysGet(params *PcloudTenantsSshkeysGetParams, 
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudTenantsSshkeysGetOK), nil
-
+	success, ok := result.(*PcloudTenantsSshkeysGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.tenants.sshkeys.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudTenantsSshkeysGetall lists a tenant s SSH keys
+  PcloudTenantsSshkeysGetall lists a tenant s SSH keys
 */
-func (a *Client) PcloudTenantsSshkeysGetall(params *PcloudTenantsSshkeysGetallParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudTenantsSshkeysGetallOK, error) {
+func (a *Client) PcloudTenantsSshkeysGetall(params *PcloudTenantsSshkeysGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysGetallOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudTenantsSshkeysGetallParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.tenants.sshkeys.getall",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/tenants/{tenant_id}/sshkeys",
@@ -103,24 +141,34 @@ func (a *Client) PcloudTenantsSshkeysGetall(params *PcloudTenantsSshkeysGetallPa
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudTenantsSshkeysGetallOK), nil
-
+	success, ok := result.(*PcloudTenantsSshkeysGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.tenants.sshkeys.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudTenantsSshkeysPost adds a new SSH key to the tenant
+  PcloudTenantsSshkeysPost adds a new SSH key to the tenant
 */
-func (a *Client) PcloudTenantsSshkeysPost(params *PcloudTenantsSshkeysPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudTenantsSshkeysPostOK, *PcloudTenantsSshkeysPostCreated, error) {
+func (a *Client) PcloudTenantsSshkeysPost(params *PcloudTenantsSshkeysPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysPostOK, *PcloudTenantsSshkeysPostCreated, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudTenantsSshkeysPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.tenants.sshkeys.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v1/tenants/{tenant_id}/sshkeys",
@@ -132,7 +180,12 @@ func (a *Client) PcloudTenantsSshkeysPost(params *PcloudTenantsSshkeysPostParams
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -142,20 +195,20 @@ func (a *Client) PcloudTenantsSshkeysPost(params *PcloudTenantsSshkeysPostParams
 	case *PcloudTenantsSshkeysPostCreated:
 		return nil, value, nil
 	}
-	return nil, nil, nil
-
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for p_cloud_tenants_ssh_keys: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudTenantsSshkeysPut updates an SSH key
+  PcloudTenantsSshkeysPut updates an SSH key
 */
-func (a *Client) PcloudTenantsSshkeysPut(params *PcloudTenantsSshkeysPutParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudTenantsSshkeysPutOK, error) {
+func (a *Client) PcloudTenantsSshkeysPut(params *PcloudTenantsSshkeysPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysPutOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudTenantsSshkeysPutParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.tenants.sshkeys.put",
 		Method:             "PUT",
 		PathPattern:        "/pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}",
@@ -167,12 +220,23 @@ func (a *Client) PcloudTenantsSshkeysPut(params *PcloudTenantsSshkeysPutParams, 
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudTenantsSshkeysPutOK), nil
-
+	success, ok := result.(*PcloudTenantsSshkeysPutOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.tenants.sshkeys.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client

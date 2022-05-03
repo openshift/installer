@@ -6,22 +6,26 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // IKEPolicyRef IKE Policy reference object
+//
 // swagger:model IKEPolicyRef
 type IKEPolicyRef struct {
 
 	// unique identifier of IKE Policy
+	// Example: 6edc8988-ab18-4b5c-b123-0d73e8254463
 	// Required: true
 	ID *string `json:"id"`
 
 	// name of IKE Policy
+	// Example: IKE Policy 1
 	// Required: true
 	Name *string `json:"name"`
 }
@@ -59,6 +63,11 @@ func (m *IKEPolicyRef) validateName(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this i k e policy ref based on context it is used
+func (m *IKEPolicyRef) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

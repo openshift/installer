@@ -6,13 +6,14 @@ package p_cloud_placement_groups
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new p cloud placement groups API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,35 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	PcloudPlacementgroupsDelete(params *PcloudPlacementgroupsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsDeleteOK, error)
+
+	PcloudPlacementgroupsGet(params *PcloudPlacementgroupsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsGetOK, error)
+
+	PcloudPlacementgroupsGetall(params *PcloudPlacementgroupsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsGetallOK, error)
+
+	PcloudPlacementgroupsMembersDelete(params *PcloudPlacementgroupsMembersDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsMembersDeleteOK, error)
+
+	PcloudPlacementgroupsMembersPost(params *PcloudPlacementgroupsMembersPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsMembersPostOK, error)
+
+	PcloudPlacementgroupsPost(params *PcloudPlacementgroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsPostOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-PcloudPlacementgroupsDelete deletes server placement group
+  PcloudPlacementgroupsDelete deletes server placement group
 */
-func (a *Client) PcloudPlacementgroupsDelete(params *PcloudPlacementgroupsDeleteParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPlacementgroupsDeleteOK, error) {
+func (a *Client) PcloudPlacementgroupsDelete(params *PcloudPlacementgroupsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsDeleteOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPlacementgroupsDeleteParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.placementgroups.delete",
 		Method:             "DELETE",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}",
@@ -45,24 +65,34 @@ func (a *Client) PcloudPlacementgroupsDelete(params *PcloudPlacementgroupsDelete
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPlacementgroupsDeleteOK), nil
-
+	success, ok := result.(*PcloudPlacementgroupsDeleteOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.placementgroups.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPlacementgroupsGet gets server placement group detail
+  PcloudPlacementgroupsGet gets server placement group detail
 */
-func (a *Client) PcloudPlacementgroupsGet(params *PcloudPlacementgroupsGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPlacementgroupsGetOK, error) {
+func (a *Client) PcloudPlacementgroupsGet(params *PcloudPlacementgroupsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPlacementgroupsGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.placementgroups.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}",
@@ -74,24 +104,34 @@ func (a *Client) PcloudPlacementgroupsGet(params *PcloudPlacementgroupsGetParams
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPlacementgroupsGetOK), nil
-
+	success, ok := result.(*PcloudPlacementgroupsGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.placementgroups.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPlacementgroupsGetall gets all server placement groups
+  PcloudPlacementgroupsGetall gets all server placement groups
 */
-func (a *Client) PcloudPlacementgroupsGetall(params *PcloudPlacementgroupsGetallParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPlacementgroupsGetallOK, error) {
+func (a *Client) PcloudPlacementgroupsGetall(params *PcloudPlacementgroupsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsGetallOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPlacementgroupsGetallParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.placementgroups.getall",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups",
@@ -103,24 +143,34 @@ func (a *Client) PcloudPlacementgroupsGetall(params *PcloudPlacementgroupsGetall
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPlacementgroupsGetallOK), nil
-
+	success, ok := result.(*PcloudPlacementgroupsGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.placementgroups.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPlacementgroupsMembersDelete removes server from placement group
+  PcloudPlacementgroupsMembersDelete removes server from placement group
 */
-func (a *Client) PcloudPlacementgroupsMembersDelete(params *PcloudPlacementgroupsMembersDeleteParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPlacementgroupsMembersDeleteOK, error) {
+func (a *Client) PcloudPlacementgroupsMembersDelete(params *PcloudPlacementgroupsMembersDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsMembersDeleteOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPlacementgroupsMembersDeleteParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.placementgroups.members.delete",
 		Method:             "DELETE",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members",
@@ -132,24 +182,34 @@ func (a *Client) PcloudPlacementgroupsMembersDelete(params *PcloudPlacementgroup
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPlacementgroupsMembersDeleteOK), nil
-
+	success, ok := result.(*PcloudPlacementgroupsMembersDeleteOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.placementgroups.members.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPlacementgroupsMembersPost adds server to placement group
+  PcloudPlacementgroupsMembersPost adds server to placement group
 */
-func (a *Client) PcloudPlacementgroupsMembersPost(params *PcloudPlacementgroupsMembersPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPlacementgroupsMembersPostOK, error) {
+func (a *Client) PcloudPlacementgroupsMembersPost(params *PcloudPlacementgroupsMembersPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsMembersPostOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPlacementgroupsMembersPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.placementgroups.members.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members",
@@ -161,24 +221,34 @@ func (a *Client) PcloudPlacementgroupsMembersPost(params *PcloudPlacementgroupsM
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPlacementgroupsMembersPostOK), nil
-
+	success, ok := result.(*PcloudPlacementgroupsMembersPostOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.placementgroups.members.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPlacementgroupsPost creates a new server placement group
+  PcloudPlacementgroupsPost creates a new server placement group
 */
-func (a *Client) PcloudPlacementgroupsPost(params *PcloudPlacementgroupsPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPlacementgroupsPostOK, error) {
+func (a *Client) PcloudPlacementgroupsPost(params *PcloudPlacementgroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsPostOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPlacementgroupsPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.placementgroups.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups",
@@ -190,12 +260,23 @@ func (a *Client) PcloudPlacementgroupsPost(params *PcloudPlacementgroupsPostPara
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPlacementgroupsPostOK), nil
-
+	success, ok := result.(*PcloudPlacementgroupsPostOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.placementgroups.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client

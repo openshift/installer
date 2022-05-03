@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // SAPCreate s a p create
+//
 // swagger:model SAPCreate
 type SAPCreate struct {
 
@@ -37,6 +38,9 @@ type SAPCreate struct {
 	// pin policy
 	PinPolicy PinPolicy `json:"pinPolicy,omitempty"`
 
+	// The placement group for the server
+	PlacementGroup string `json:"placementGroup,omitempty"`
+
 	// SAP Profile ID for the amount of cores and memory
 	// Required: true
 	ProfileID *string `json:"profileID"`
@@ -53,11 +57,14 @@ type SAPCreate struct {
 	// Storage type for server deployment; will be ignored if storagePool or storageAffinity is provided; Only valid when you deploy one of the IBM supplied stock images. Storage type and pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage type and pool the image was created in
 	StorageType string `json:"storageType,omitempty"`
 
+	// System type used to host the instance. Only e880, e980, e1080 are supported
+	SysType string `json:"sysType,omitempty"`
+
 	// Cloud init user defined data
 	UserData string `json:"userData,omitempty"`
 
 	// List of Volume IDs to attach to the pvm-instance on creation
-	VolumeIds []string `json:"volumeIDs"`
+	VolumeIDs []string `json:"volumeIDs"`
 }
 
 // Validate validates this s a p create
@@ -108,7 +115,6 @@ func (m *SAPCreate) validateImageID(formats strfmt.Registry) error {
 }
 
 func (m *SAPCreate) validateInstances(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Instances) { // not required
 		return nil
 	}
@@ -117,6 +123,8 @@ func (m *SAPCreate) validateInstances(formats strfmt.Registry) error {
 		if err := m.Instances.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("instances")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("instances")
 			}
 			return err
 		}
@@ -149,6 +157,8 @@ func (m *SAPCreate) validateNetworks(formats strfmt.Registry) error {
 			if err := m.Networks[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -160,7 +170,6 @@ func (m *SAPCreate) validateNetworks(formats strfmt.Registry) error {
 }
 
 func (m *SAPCreate) validatePinPolicy(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.PinPolicy) { // not required
 		return nil
 	}
@@ -168,6 +177,8 @@ func (m *SAPCreate) validatePinPolicy(formats strfmt.Registry) error {
 	if err := m.PinPolicy.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("pinPolicy")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("pinPolicy")
 		}
 		return err
 	}
@@ -185,7 +196,6 @@ func (m *SAPCreate) validateProfileID(formats strfmt.Registry) error {
 }
 
 func (m *SAPCreate) validateStorageAffinity(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.StorageAffinity) { // not required
 		return nil
 	}
@@ -194,6 +204,100 @@ func (m *SAPCreate) validateStorageAffinity(formats strfmt.Registry) error {
 		if err := m.StorageAffinity.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("storageAffinity")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("storageAffinity")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this s a p create based on the context it is used
+func (m *SAPCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateInstances(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateNetworks(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidatePinPolicy(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateStorageAffinity(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *SAPCreate) contextValidateInstances(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Instances != nil {
+		if err := m.Instances.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("instances")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("instances")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *SAPCreate) contextValidateNetworks(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Networks); i++ {
+
+		if m.Networks[i] != nil {
+			if err := m.Networks[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *SAPCreate) contextValidatePinPolicy(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.PinPolicy.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("pinPolicy")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("pinPolicy")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *SAPCreate) contextValidateStorageAffinity(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.StorageAffinity != nil {
+		if err := m.StorageAffinity.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("storageAffinity")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("storageAffinity")
 			}
 			return err
 		}

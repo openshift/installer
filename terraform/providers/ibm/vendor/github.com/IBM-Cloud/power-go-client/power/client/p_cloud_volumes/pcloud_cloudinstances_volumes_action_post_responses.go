@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudCloudinstancesVolumesActionPostReader is a Reader for the PcloudCloudinstancesVolumesActionPost structure.
@@ -24,44 +23,38 @@ type PcloudCloudinstancesVolumesActionPostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudCloudinstancesVolumesActionPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 202:
 		result := NewPcloudCloudinstancesVolumesActionPostAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudCloudinstancesVolumesActionPostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudCloudinstancesVolumesActionPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudCloudinstancesVolumesActionPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudCloudinstancesVolumesActionPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudCloudinstancesVolumesActionPostAccepted() *PcloudCloudinstancesVol
 	return &PcloudCloudinstancesVolumesActionPostAccepted{}
 }
 
-/*PcloudCloudinstancesVolumesActionPostAccepted handles this case with default header values.
+/* PcloudCloudinstancesVolumesActionPostAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -80,6 +73,9 @@ type PcloudCloudinstancesVolumesActionPostAccepted struct {
 
 func (o *PcloudCloudinstancesVolumesActionPostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/action][%d] pcloudCloudinstancesVolumesActionPostAccepted  %+v", 202, o.Payload)
+}
+func (o *PcloudCloudinstancesVolumesActionPostAccepted) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesVolumesActionPostAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -97,7 +93,7 @@ func NewPcloudCloudinstancesVolumesActionPostBadRequest() *PcloudCloudinstancesV
 	return &PcloudCloudinstancesVolumesActionPostBadRequest{}
 }
 
-/*PcloudCloudinstancesVolumesActionPostBadRequest handles this case with default header values.
+/* PcloudCloudinstancesVolumesActionPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -107,6 +103,9 @@ type PcloudCloudinstancesVolumesActionPostBadRequest struct {
 
 func (o *PcloudCloudinstancesVolumesActionPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/action][%d] pcloudCloudinstancesVolumesActionPostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudCloudinstancesVolumesActionPostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesVolumesActionPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -126,7 +125,7 @@ func NewPcloudCloudinstancesVolumesActionPostUnauthorized() *PcloudCloudinstance
 	return &PcloudCloudinstancesVolumesActionPostUnauthorized{}
 }
 
-/*PcloudCloudinstancesVolumesActionPostUnauthorized handles this case with default header values.
+/* PcloudCloudinstancesVolumesActionPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -136,6 +135,9 @@ type PcloudCloudinstancesVolumesActionPostUnauthorized struct {
 
 func (o *PcloudCloudinstancesVolumesActionPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/action][%d] pcloudCloudinstancesVolumesActionPostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudCloudinstancesVolumesActionPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesVolumesActionPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -155,7 +157,7 @@ func NewPcloudCloudinstancesVolumesActionPostNotFound() *PcloudCloudinstancesVol
 	return &PcloudCloudinstancesVolumesActionPostNotFound{}
 }
 
-/*PcloudCloudinstancesVolumesActionPostNotFound handles this case with default header values.
+/* PcloudCloudinstancesVolumesActionPostNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -165,6 +167,9 @@ type PcloudCloudinstancesVolumesActionPostNotFound struct {
 
 func (o *PcloudCloudinstancesVolumesActionPostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/action][%d] pcloudCloudinstancesVolumesActionPostNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudCloudinstancesVolumesActionPostNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesVolumesActionPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -184,7 +189,7 @@ func NewPcloudCloudinstancesVolumesActionPostInternalServerError() *PcloudCloudi
 	return &PcloudCloudinstancesVolumesActionPostInternalServerError{}
 }
 
-/*PcloudCloudinstancesVolumesActionPostInternalServerError handles this case with default header values.
+/* PcloudCloudinstancesVolumesActionPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -194,6 +199,9 @@ type PcloudCloudinstancesVolumesActionPostInternalServerError struct {
 
 func (o *PcloudCloudinstancesVolumesActionPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/action][%d] pcloudCloudinstancesVolumesActionPostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudCloudinstancesVolumesActionPostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesVolumesActionPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // CreateDataVolume create data volume
+//
 // swagger:model CreateDataVolume
 type CreateDataVolume struct {
 
@@ -95,20 +96,19 @@ const (
 	// CreateDataVolumeAffinityPolicyAffinity captures enum value "affinity"
 	CreateDataVolumeAffinityPolicyAffinity string = "affinity"
 
-	// CreateDataVolumeAffinityPolicyAntiAffinity captures enum value "anti-affinity"
-	CreateDataVolumeAffinityPolicyAntiAffinity string = "anti-affinity"
+	// CreateDataVolumeAffinityPolicyAntiDashAffinity captures enum value "anti-affinity"
+	CreateDataVolumeAffinityPolicyAntiDashAffinity string = "anti-affinity"
 )
 
 // prop value enum
 func (m *CreateDataVolume) validateAffinityPolicyEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, createDataVolumeTypeAffinityPolicyPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, createDataVolumeTypeAffinityPolicyPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *CreateDataVolume) validateAffinityPolicy(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.AffinityPolicy) { // not required
 		return nil
 	}
@@ -136,6 +136,11 @@ func (m *CreateDataVolume) validateSize(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this create data volume based on context it is used
+func (m *CreateDataVolume) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

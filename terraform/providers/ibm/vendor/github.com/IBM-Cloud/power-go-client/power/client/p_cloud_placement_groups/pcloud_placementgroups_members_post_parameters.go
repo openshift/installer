@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudPlacementgroupsMembersPostParams creates a new PcloudPlacementgroupsMembersPostParams object
-// with the default values initialized.
+// NewPcloudPlacementgroupsMembersPostParams creates a new PcloudPlacementgroupsMembersPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPlacementgroupsMembersPostParams() *PcloudPlacementgroupsMembersPostParams {
-	var ()
 	return &PcloudPlacementgroupsMembersPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPlacementgroupsMembersPostParamsWithTimeout creates a new PcloudPlacementgroupsMembersPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPlacementgroupsMembersPostParamsWithTimeout(timeout time.Duration) *PcloudPlacementgroupsMembersPostParams {
-	var ()
 	return &PcloudPlacementgroupsMembersPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPlacementgroupsMembersPostParamsWithContext creates a new PcloudPlacementgroupsMembersPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPlacementgroupsMembersPostParamsWithContext(ctx context.Context) *PcloudPlacementgroupsMembersPostParams {
-	var ()
 	return &PcloudPlacementgroupsMembersPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPlacementgroupsMembersPostParamsWithHTTPClient creates a new PcloudPlacementgroupsMembersPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPlacementgroupsMembersPostParamsWithHTTPClient(client *http.Client) *PcloudPlacementgroupsMembersPostParams {
-	var ()
 	return &PcloudPlacementgroupsMembersPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPlacementgroupsMembersPostParams contains all the parameters to send to the API endpoint
-for the pcloud placementgroups members post operation typically these are written to a http.Request
+/* PcloudPlacementgroupsMembersPostParams contains all the parameters to send to the API endpoint
+   for the pcloud placementgroups members post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPlacementgroupsMembersPostParams struct {
 
-	/*Body
-	  Parameters for adding a server to a Server Placement Group
+	/* Body.
 
+	   Parameters for adding a server to a Server Placement Group
 	*/
 	Body *models.PlacementGroupServer
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PlacementGroupID
-	  Placement Group ID
 
+	/* PlacementGroupID.
+
+	   Placement Group ID
 	*/
 	PlacementGroupID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud placementgroups members post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPlacementgroupsMembersPostParams) WithDefaults() *PcloudPlacementgroupsMembersPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud placementgroups members post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPlacementgroupsMembersPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud placementgroups members post params
@@ -157,7 +172,6 @@ func (o *PcloudPlacementgroupsMembersPostParams) WriteToRequest(r runtime.Client
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

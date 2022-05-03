@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudTenantsSshkeysGetallReader is a Reader for the PcloudTenantsSshkeysGetall structure.
@@ -24,44 +23,38 @@ type PcloudTenantsSshkeysGetallReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudTenantsSshkeysGetallReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudTenantsSshkeysGetallOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudTenantsSshkeysGetallBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudTenantsSshkeysGetallUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudTenantsSshkeysGetallNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudTenantsSshkeysGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudTenantsSshkeysGetallOK() *PcloudTenantsSshkeysGetallOK {
 	return &PcloudTenantsSshkeysGetallOK{}
 }
 
-/*PcloudTenantsSshkeysGetallOK handles this case with default header values.
+/* PcloudTenantsSshkeysGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudTenantsSshkeysGetallOK struct {
 
 func (o *PcloudTenantsSshkeysGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysGetallOK  %+v", 200, o.Payload)
+}
+func (o *PcloudTenantsSshkeysGetallOK) GetPayload() *models.SSHKeys {
+	return o.Payload
 }
 
 func (o *PcloudTenantsSshkeysGetallOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -99,7 +95,7 @@ func NewPcloudTenantsSshkeysGetallBadRequest() *PcloudTenantsSshkeysGetallBadReq
 	return &PcloudTenantsSshkeysGetallBadRequest{}
 }
 
-/*PcloudTenantsSshkeysGetallBadRequest handles this case with default header values.
+/* PcloudTenantsSshkeysGetallBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,6 +105,9 @@ type PcloudTenantsSshkeysGetallBadRequest struct {
 
 func (o *PcloudTenantsSshkeysGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysGetallBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudTenantsSshkeysGetallBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTenantsSshkeysGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -128,7 +127,7 @@ func NewPcloudTenantsSshkeysGetallUnauthorized() *PcloudTenantsSshkeysGetallUnau
 	return &PcloudTenantsSshkeysGetallUnauthorized{}
 }
 
-/*PcloudTenantsSshkeysGetallUnauthorized handles this case with default header values.
+/* PcloudTenantsSshkeysGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -138,6 +137,9 @@ type PcloudTenantsSshkeysGetallUnauthorized struct {
 
 func (o *PcloudTenantsSshkeysGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysGetallUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudTenantsSshkeysGetallUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTenantsSshkeysGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -157,7 +159,7 @@ func NewPcloudTenantsSshkeysGetallNotFound() *PcloudTenantsSshkeysGetallNotFound
 	return &PcloudTenantsSshkeysGetallNotFound{}
 }
 
-/*PcloudTenantsSshkeysGetallNotFound handles this case with default header values.
+/* PcloudTenantsSshkeysGetallNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -167,6 +169,9 @@ type PcloudTenantsSshkeysGetallNotFound struct {
 
 func (o *PcloudTenantsSshkeysGetallNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysGetallNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudTenantsSshkeysGetallNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTenantsSshkeysGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -186,7 +191,7 @@ func NewPcloudTenantsSshkeysGetallInternalServerError() *PcloudTenantsSshkeysGet
 	return &PcloudTenantsSshkeysGetallInternalServerError{}
 }
 
-/*PcloudTenantsSshkeysGetallInternalServerError handles this case with default header values.
+/* PcloudTenantsSshkeysGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -196,6 +201,9 @@ type PcloudTenantsSshkeysGetallInternalServerError struct {
 
 func (o *PcloudTenantsSshkeysGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysGetallInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudTenantsSshkeysGetallInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTenantsSshkeysGetallInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

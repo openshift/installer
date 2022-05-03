@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // VolumesCloneAsyncRequest volumes clone async request
+//
 // swagger:model VolumesCloneAsyncRequest
 type VolumesCloneAsyncRequest struct {
 
@@ -30,7 +32,7 @@ type VolumesCloneAsyncRequest struct {
 
 	// List of volumes to be cloned
 	// Required: true
-	VolumeIds []string `json:"volumeIDs"`
+	VolumeIDs []string `json:"volumeIDs"`
 }
 
 // Validate validates this volumes clone async request
@@ -41,7 +43,7 @@ func (m *VolumesCloneAsyncRequest) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateVolumeIds(formats); err != nil {
+	if err := m.validateVolumeIDs(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -60,12 +62,17 @@ func (m *VolumesCloneAsyncRequest) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *VolumesCloneAsyncRequest) validateVolumeIds(formats strfmt.Registry) error {
+func (m *VolumesCloneAsyncRequest) validateVolumeIDs(formats strfmt.Registry) error {
 
-	if err := validate.Required("volumeIDs", "body", m.VolumeIds); err != nil {
+	if err := validate.Required("volumeIDs", "body", m.VolumeIDs); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this volumes clone async request based on context it is used
+func (m *VolumesCloneAsyncRequest) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

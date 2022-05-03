@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudVpnconnectionsNetworksPutParams creates a new PcloudVpnconnectionsNetworksPutParams object
-// with the default values initialized.
+// NewPcloudVpnconnectionsNetworksPutParams creates a new PcloudVpnconnectionsNetworksPutParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudVpnconnectionsNetworksPutParams() *PcloudVpnconnectionsNetworksPutParams {
-	var ()
 	return &PcloudVpnconnectionsNetworksPutParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudVpnconnectionsNetworksPutParamsWithTimeout creates a new PcloudVpnconnectionsNetworksPutParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudVpnconnectionsNetworksPutParamsWithTimeout(timeout time.Duration) *PcloudVpnconnectionsNetworksPutParams {
-	var ()
 	return &PcloudVpnconnectionsNetworksPutParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudVpnconnectionsNetworksPutParamsWithContext creates a new PcloudVpnconnectionsNetworksPutParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudVpnconnectionsNetworksPutParamsWithContext(ctx context.Context) *PcloudVpnconnectionsNetworksPutParams {
-	var ()
 	return &PcloudVpnconnectionsNetworksPutParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudVpnconnectionsNetworksPutParamsWithHTTPClient creates a new PcloudVpnconnectionsNetworksPutParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudVpnconnectionsNetworksPutParamsWithHTTPClient(client *http.Client) *PcloudVpnconnectionsNetworksPutParams {
-	var ()
 	return &PcloudVpnconnectionsNetworksPutParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudVpnconnectionsNetworksPutParams contains all the parameters to send to the API endpoint
-for the pcloud vpnconnections networks put operation typically these are written to a http.Request
+/* PcloudVpnconnectionsNetworksPutParams contains all the parameters to send to the API endpoint
+   for the pcloud vpnconnections networks put operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudVpnconnectionsNetworksPutParams struct {
 
-	/*Body
-	  network to attach
+	/* Body.
 
+	   network to attach
 	*/
 	Body *models.NetworkID
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*VpnConnectionID
-	  ID of a VPN connection
 
+	/* VpnConnectionID.
+
+	   ID of a VPN connection
 	*/
 	VpnConnectionID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud vpnconnections networks put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudVpnconnectionsNetworksPutParams) WithDefaults() *PcloudVpnconnectionsNetworksPutParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud vpnconnections networks put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudVpnconnectionsNetworksPutParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud vpnconnections networks put params
@@ -157,7 +172,6 @@ func (o *PcloudVpnconnectionsNetworksPutParams) WriteToRequest(r runtime.ClientR
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

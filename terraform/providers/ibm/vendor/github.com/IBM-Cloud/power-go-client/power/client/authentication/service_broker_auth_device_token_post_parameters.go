@@ -13,63 +13,76 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewServiceBrokerAuthDeviceTokenPostParams creates a new ServiceBrokerAuthDeviceTokenPostParams object
-// with the default values initialized.
+// NewServiceBrokerAuthDeviceTokenPostParams creates a new ServiceBrokerAuthDeviceTokenPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceBrokerAuthDeviceTokenPostParams() *ServiceBrokerAuthDeviceTokenPostParams {
-	var ()
 	return &ServiceBrokerAuthDeviceTokenPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceBrokerAuthDeviceTokenPostParamsWithTimeout creates a new ServiceBrokerAuthDeviceTokenPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceBrokerAuthDeviceTokenPostParamsWithTimeout(timeout time.Duration) *ServiceBrokerAuthDeviceTokenPostParams {
-	var ()
 	return &ServiceBrokerAuthDeviceTokenPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceBrokerAuthDeviceTokenPostParamsWithContext creates a new ServiceBrokerAuthDeviceTokenPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceBrokerAuthDeviceTokenPostParamsWithContext(ctx context.Context) *ServiceBrokerAuthDeviceTokenPostParams {
-	var ()
 	return &ServiceBrokerAuthDeviceTokenPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceBrokerAuthDeviceTokenPostParamsWithHTTPClient creates a new ServiceBrokerAuthDeviceTokenPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceBrokerAuthDeviceTokenPostParamsWithHTTPClient(client *http.Client) *ServiceBrokerAuthDeviceTokenPostParams {
-	var ()
 	return &ServiceBrokerAuthDeviceTokenPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceBrokerAuthDeviceTokenPostParams contains all the parameters to send to the API endpoint
-for the service broker auth device token post operation typically these are written to a http.Request
+/* ServiceBrokerAuthDeviceTokenPostParams contains all the parameters to send to the API endpoint
+   for the service broker auth device token post operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceBrokerAuthDeviceTokenPostParams struct {
 
-	/*Body
-	  Parameters for polling authorization device code
+	/* Body.
 
+	   Parameters for polling authorization device code
 	*/
 	Body ServiceBrokerAuthDeviceTokenPostBody
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service broker auth device token post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerAuthDeviceTokenPostParams) WithDefaults() *ServiceBrokerAuthDeviceTokenPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service broker auth device token post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerAuthDeviceTokenPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service broker auth device token post params
@@ -123,7 +136,6 @@ func (o *ServiceBrokerAuthDeviceTokenPostParams) WriteToRequest(r runtime.Client
 		return err
 	}
 	var res []error
-
 	if err := r.SetBodyParam(o.Body); err != nil {
 		return err
 	}

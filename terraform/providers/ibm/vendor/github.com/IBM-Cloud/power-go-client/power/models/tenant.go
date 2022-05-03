@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // Tenant tenant
+//
 // swagger:model Tenant
 type Tenant struct {
 
@@ -95,6 +96,8 @@ func (m *Tenant) validateCloudInstances(formats strfmt.Registry) error {
 			if err := m.CloudInstances[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("cloudInstances" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("cloudInstances" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -128,7 +131,6 @@ func (m *Tenant) validateEnabled(formats strfmt.Registry) error {
 }
 
 func (m *Tenant) validatePeeringNetworks(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.PeeringNetworks) { // not required
 		return nil
 	}
@@ -142,6 +144,8 @@ func (m *Tenant) validatePeeringNetworks(formats strfmt.Registry) error {
 			if err := m.PeeringNetworks[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("peeringNetworks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("peeringNetworks" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -153,7 +157,6 @@ func (m *Tenant) validatePeeringNetworks(formats strfmt.Registry) error {
 }
 
 func (m *Tenant) validateSSHKeys(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.SSHKeys) { // not required
 		return nil
 	}
@@ -167,6 +170,8 @@ func (m *Tenant) validateSSHKeys(formats strfmt.Registry) error {
 			if err := m.SSHKeys[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("sshKeys" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("sshKeys" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -181,6 +186,88 @@ func (m *Tenant) validateTenantID(formats strfmt.Registry) error {
 
 	if err := validate.Required("tenantID", "body", m.TenantID); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this tenant based on the context it is used
+func (m *Tenant) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateCloudInstances(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidatePeeringNetworks(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSSHKeys(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Tenant) contextValidateCloudInstances(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.CloudInstances); i++ {
+
+		if m.CloudInstances[i] != nil {
+			if err := m.CloudInstances[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("cloudInstances" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("cloudInstances" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Tenant) contextValidatePeeringNetworks(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.PeeringNetworks); i++ {
+
+		if m.PeeringNetworks[i] != nil {
+			if err := m.PeeringNetworks[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("peeringNetworks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("peeringNetworks" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Tenant) contextValidateSSHKeys(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.SSHKeys); i++ {
+
+		if m.SSHKeys[i] != nil {
+			if err := m.SSHKeys[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("sshKeys" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("sshKeys" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

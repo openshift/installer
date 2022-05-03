@@ -13,63 +13,76 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudStoragecapacityPoolsGetallParams creates a new PcloudStoragecapacityPoolsGetallParams object
-// with the default values initialized.
+// NewPcloudStoragecapacityPoolsGetallParams creates a new PcloudStoragecapacityPoolsGetallParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudStoragecapacityPoolsGetallParams() *PcloudStoragecapacityPoolsGetallParams {
-	var ()
 	return &PcloudStoragecapacityPoolsGetallParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudStoragecapacityPoolsGetallParamsWithTimeout creates a new PcloudStoragecapacityPoolsGetallParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudStoragecapacityPoolsGetallParamsWithTimeout(timeout time.Duration) *PcloudStoragecapacityPoolsGetallParams {
-	var ()
 	return &PcloudStoragecapacityPoolsGetallParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudStoragecapacityPoolsGetallParamsWithContext creates a new PcloudStoragecapacityPoolsGetallParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudStoragecapacityPoolsGetallParamsWithContext(ctx context.Context) *PcloudStoragecapacityPoolsGetallParams {
-	var ()
 	return &PcloudStoragecapacityPoolsGetallParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudStoragecapacityPoolsGetallParamsWithHTTPClient creates a new PcloudStoragecapacityPoolsGetallParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudStoragecapacityPoolsGetallParamsWithHTTPClient(client *http.Client) *PcloudStoragecapacityPoolsGetallParams {
-	var ()
 	return &PcloudStoragecapacityPoolsGetallParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudStoragecapacityPoolsGetallParams contains all the parameters to send to the API endpoint
-for the pcloud storagecapacity pools getall operation typically these are written to a http.Request
+/* PcloudStoragecapacityPoolsGetallParams contains all the parameters to send to the API endpoint
+   for the pcloud storagecapacity pools getall operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudStoragecapacityPoolsGetallParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud storagecapacity pools getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudStoragecapacityPoolsGetallParams) WithDefaults() *PcloudStoragecapacityPoolsGetallParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud storagecapacity pools getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudStoragecapacityPoolsGetallParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud storagecapacity pools getall params

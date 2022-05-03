@@ -6,28 +6,36 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
 // IPSECPolicyAuthentication authentication for IPSec policy
+// Example: hmac-sha-256-128
+//
 // swagger:model IPSECPolicyAuthentication
 type IPSECPolicyAuthentication string
 
+func NewIPSECPolicyAuthentication(value IPSECPolicyAuthentication) *IPSECPolicyAuthentication {
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated IPSECPolicyAuthentication.
+func (m IPSECPolicyAuthentication) Pointer() *IPSECPolicyAuthentication {
+	return &m
+}
+
 const (
 
-	// IPSECPolicyAuthenticationHmacMd596 captures enum value "hmac-md5-96"
-	IPSECPolicyAuthenticationHmacMd596 IPSECPolicyAuthentication = "hmac-md5-96"
+	// IPSECPolicyAuthenticationHmacDashShaDash256Dash128 captures enum value "hmac-sha-256-128"
+	IPSECPolicyAuthenticationHmacDashShaDash256Dash128 IPSECPolicyAuthentication = "hmac-sha-256-128"
 
-	// IPSECPolicyAuthenticationHmacSha256128 captures enum value "hmac-sha-256-128"
-	IPSECPolicyAuthenticationHmacSha256128 IPSECPolicyAuthentication = "hmac-sha-256-128"
-
-	// IPSECPolicyAuthenticationHmacSha196 captures enum value "hmac-sha1-96"
-	IPSECPolicyAuthenticationHmacSha196 IPSECPolicyAuthentication = "hmac-sha1-96"
+	// IPSECPolicyAuthenticationHmacDashSha1Dash96 captures enum value "hmac-sha1-96"
+	IPSECPolicyAuthenticationHmacDashSha1Dash96 IPSECPolicyAuthentication = "hmac-sha1-96"
 
 	// IPSECPolicyAuthenticationNone captures enum value "none"
 	IPSECPolicyAuthenticationNone IPSECPolicyAuthentication = "none"
@@ -38,7 +46,7 @@ var ipSECPolicyAuthenticationEnum []interface{}
 
 func init() {
 	var res []IPSECPolicyAuthentication
-	if err := json.Unmarshal([]byte(`["hmac-md5-96","hmac-sha-256-128","hmac-sha1-96","none"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["hmac-sha-256-128","hmac-sha1-96","none"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -47,7 +55,7 @@ func init() {
 }
 
 func (m IPSECPolicyAuthentication) validateIPSECPolicyAuthenticationEnum(path, location string, value IPSECPolicyAuthentication) error {
-	if err := validate.Enum(path, location, value, ipSECPolicyAuthenticationEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, ipSECPolicyAuthenticationEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -65,5 +73,10 @@ func (m IPSECPolicyAuthentication) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+// ContextValidate validates this IP s e c policy authentication based on context it is used
+func (m IPSECPolicyAuthentication) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }

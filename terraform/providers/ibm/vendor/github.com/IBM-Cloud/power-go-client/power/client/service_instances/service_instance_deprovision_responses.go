@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // ServiceInstanceDeprovisionReader is a Reader for the ServiceInstanceDeprovision structure.
@@ -24,44 +23,38 @@ type ServiceInstanceDeprovisionReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ServiceInstanceDeprovisionReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewServiceInstanceDeprovisionOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 202:
 		result := NewServiceInstanceDeprovisionAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewServiceInstanceDeprovisionBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 410:
 		result := NewServiceInstanceDeprovisionGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewServiceInstanceDeprovisionUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewServiceInstanceDeprovisionOK() *ServiceInstanceDeprovisionOK {
 	return &ServiceInstanceDeprovisionOK{}
 }
 
-/*ServiceInstanceDeprovisionOK handles this case with default header values.
+/* ServiceInstanceDeprovisionOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type ServiceInstanceDeprovisionOK struct {
 
 func (o *ServiceInstanceDeprovisionOK) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionOK  %+v", 200, o.Payload)
+}
+func (o *ServiceInstanceDeprovisionOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *ServiceInstanceDeprovisionOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -97,7 +93,7 @@ func NewServiceInstanceDeprovisionAccepted() *ServiceInstanceDeprovisionAccepted
 	return &ServiceInstanceDeprovisionAccepted{}
 }
 
-/*ServiceInstanceDeprovisionAccepted handles this case with default header values.
+/* ServiceInstanceDeprovisionAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -107,6 +103,9 @@ type ServiceInstanceDeprovisionAccepted struct {
 
 func (o *ServiceInstanceDeprovisionAccepted) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionAccepted  %+v", 202, o.Payload)
+}
+func (o *ServiceInstanceDeprovisionAccepted) GetPayload() *models.AsyncOperation {
+	return o.Payload
 }
 
 func (o *ServiceInstanceDeprovisionAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -126,7 +125,7 @@ func NewServiceInstanceDeprovisionBadRequest() *ServiceInstanceDeprovisionBadReq
 	return &ServiceInstanceDeprovisionBadRequest{}
 }
 
-/*ServiceInstanceDeprovisionBadRequest handles this case with default header values.
+/* ServiceInstanceDeprovisionBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -136,6 +135,9 @@ type ServiceInstanceDeprovisionBadRequest struct {
 
 func (o *ServiceInstanceDeprovisionBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionBadRequest  %+v", 400, o.Payload)
+}
+func (o *ServiceInstanceDeprovisionBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceInstanceDeprovisionBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -155,7 +157,7 @@ func NewServiceInstanceDeprovisionGone() *ServiceInstanceDeprovisionGone {
 	return &ServiceInstanceDeprovisionGone{}
 }
 
-/*ServiceInstanceDeprovisionGone handles this case with default header values.
+/* ServiceInstanceDeprovisionGone describes a response with status code 410, with default header values.
 
 Gone
 */
@@ -165,6 +167,9 @@ type ServiceInstanceDeprovisionGone struct {
 
 func (o *ServiceInstanceDeprovisionGone) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionGone  %+v", 410, o.Payload)
+}
+func (o *ServiceInstanceDeprovisionGone) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceInstanceDeprovisionGone) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -184,7 +189,7 @@ func NewServiceInstanceDeprovisionUnprocessableEntity() *ServiceInstanceDeprovis
 	return &ServiceInstanceDeprovisionUnprocessableEntity{}
 }
 
-/*ServiceInstanceDeprovisionUnprocessableEntity handles this case with default header values.
+/* ServiceInstanceDeprovisionUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -194,6 +199,9 @@ type ServiceInstanceDeprovisionUnprocessableEntity struct {
 
 func (o *ServiceInstanceDeprovisionUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *ServiceInstanceDeprovisionUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceInstanceDeprovisionUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

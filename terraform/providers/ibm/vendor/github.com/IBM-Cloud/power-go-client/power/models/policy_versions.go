@@ -6,14 +6,23 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
+
+	"github.com/go-openapi/strfmt"
 )
 
 // PolicyVersions policy versions
+// Example: [1,2]
+//
 // swagger:model PolicyVersions
 type PolicyVersions []float64
 
 // Validate validates this policy versions
 func (m PolicyVersions) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this policy versions based on context it is used
+func (m PolicyVersions) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }

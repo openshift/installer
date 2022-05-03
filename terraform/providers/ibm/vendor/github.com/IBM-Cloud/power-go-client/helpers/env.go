@@ -11,3 +11,8 @@ func EnvFallBack(envs []string, defaultValue string) string {
 	}
 	return defaultValue
 }
+
+// GetPowerEndPoint
+func GetPowerEndPoint() string {
+	return EnvFallBack([]string{"IBMCLOUD_POWER_API_ENDPOINT"}, "")
+}

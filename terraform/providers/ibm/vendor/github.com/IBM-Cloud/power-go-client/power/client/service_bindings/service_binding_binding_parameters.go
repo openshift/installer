@@ -13,91 +13,109 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewServiceBindingBindingParams creates a new ServiceBindingBindingParams object
-// with the default values initialized.
+// NewServiceBindingBindingParams creates a new ServiceBindingBindingParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceBindingBindingParams() *ServiceBindingBindingParams {
-	var ()
 	return &ServiceBindingBindingParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceBindingBindingParamsWithTimeout creates a new ServiceBindingBindingParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceBindingBindingParamsWithTimeout(timeout time.Duration) *ServiceBindingBindingParams {
-	var ()
 	return &ServiceBindingBindingParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceBindingBindingParamsWithContext creates a new ServiceBindingBindingParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceBindingBindingParamsWithContext(ctx context.Context) *ServiceBindingBindingParams {
-	var ()
 	return &ServiceBindingBindingParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceBindingBindingParamsWithHTTPClient creates a new ServiceBindingBindingParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceBindingBindingParamsWithHTTPClient(client *http.Client) *ServiceBindingBindingParams {
-	var ()
 	return &ServiceBindingBindingParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceBindingBindingParams contains all the parameters to send to the API endpoint
-for the service binding binding operation typically these are written to a http.Request
+/* ServiceBindingBindingParams contains all the parameters to send to the API endpoint
+   for the service binding binding operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceBindingBindingParams struct {
 
-	/*XBrokerAPIOriginatingIdentity
-	  identity of the user that initiated the request from the Platform
+	/* XBrokerAPIOriginatingIdentity.
 
+	   identity of the user that initiated the request from the Platform
 	*/
 	XBrokerAPIOriginatingIdentity *string
-	/*XBrokerAPIVersion
-	  version number of the Service Broker API that the Platform will use
 
+	/* XBrokerAPIVersion.
+
+	   version number of the Service Broker API that the Platform will use
 	*/
 	XBrokerAPIVersion string
-	/*AcceptsIncomplete
-	  asynchronous operations supported
 
+	/* AcceptsIncomplete.
+
+	   asynchronous operations supported
 	*/
 	AcceptsIncomplete *bool
-	/*BindingID
-	  binding id of binding to create
 
+	/* BindingID.
+
+	   binding id of binding to create
 	*/
 	BindingID string
-	/*Body
-	  parameters for the requested service binding
 
+	/* Body.
+
+	   parameters for the requested service binding
 	*/
 	Body *models.ServiceBindingRequest
-	/*InstanceID
-	  instance id of instance to provision
 
+	/* InstanceID.
+
+	   instance id of instance to provision
 	*/
 	InstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service binding binding params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBindingBindingParams) WithDefaults() *ServiceBindingBindingParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service binding binding params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBindingBindingParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service binding binding params
@@ -213,7 +231,6 @@ func (o *ServiceBindingBindingParams) WriteToRequest(r runtime.ClientRequest, re
 		if err := r.SetHeaderParam("X-Broker-API-Originating-Identity", *o.XBrokerAPIOriginatingIdentity); err != nil {
 			return err
 		}
-
 	}
 
 	// header param X-Broker-API-Version
@@ -225,23 +242,23 @@ func (o *ServiceBindingBindingParams) WriteToRequest(r runtime.ClientRequest, re
 
 		// query param accepts_incomplete
 		var qrAcceptsIncomplete bool
+
 		if o.AcceptsIncomplete != nil {
 			qrAcceptsIncomplete = *o.AcceptsIncomplete
 		}
 		qAcceptsIncomplete := swag.FormatBool(qrAcceptsIncomplete)
 		if qAcceptsIncomplete != "" {
+
 			if err := r.SetQueryParam("accepts_incomplete", qAcceptsIncomplete); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	// path param binding_id
 	if err := r.SetPathParam("binding_id", o.BindingID); err != nil {
 		return err
 	}
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

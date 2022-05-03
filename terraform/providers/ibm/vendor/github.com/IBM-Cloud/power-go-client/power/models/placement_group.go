@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // PlacementGroup placement group
+//
 // swagger:model PlacementGroup
 type PlacementGroup struct {
 
@@ -107,13 +108,13 @@ const (
 	// PlacementGroupPolicyAffinity captures enum value "affinity"
 	PlacementGroupPolicyAffinity string = "affinity"
 
-	// PlacementGroupPolicyAntiAffinity captures enum value "anti-affinity"
-	PlacementGroupPolicyAntiAffinity string = "anti-affinity"
+	// PlacementGroupPolicyAntiDashAffinity captures enum value "anti-affinity"
+	PlacementGroupPolicyAntiDashAffinity string = "anti-affinity"
 )
 
 // prop value enum
 func (m *PlacementGroup) validatePolicyEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, placementGroupTypePolicyPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, placementGroupTypePolicyPropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -130,6 +131,11 @@ func (m *PlacementGroup) validatePolicy(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this placement group based on context it is used
+func (m *PlacementGroup) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

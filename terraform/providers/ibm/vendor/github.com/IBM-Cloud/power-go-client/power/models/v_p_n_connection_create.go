@@ -6,46 +6,53 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // VPNConnectionCreate v p n connection create
+//
 // swagger:model VPNConnectionCreate
 type VPNConnectionCreate struct {
 
 	// unique identifier of IKEPolicy selected for this VPNConnection
+	// Example: c36723ec-8593-11eb-8dcd-0242ac133853
 	// Required: true
 	IkePolicy *string `json:"ikePolicy"`
 
 	// unique identifier of IPSecPolicy selected for this VPNConnection
+	// Example: c12345d-8593-11eb-8dcd-0242ac134573
 	// Required: true
 	IPSecPolicy *string `json:"ipSecPolicy"`
 
 	// Mode used by this VPNConnection, either policy-based, or route-based, this attribute is set at the creation and cannot be updated later.
+	// Example: policy
 	// Required: true
 	// Enum: [policy route]
 	Mode *string `json:"mode"`
 
 	// VPN Connection name
+	// Example: VPN-Connection-1
 	// Required: true
 	Name *string `json:"name"`
 
 	// an array of network IDs to attach to this VPNConnection
+	// Example: ["7f950c76-8582-11veb-8dcd-0242ac153","7f950c76-8582-11veb-8dcd-0242ac144","7f950c76-8582-11veb-8dcd-0242ac199"]
 	// Required: true
 	Networks []string `json:"networks"`
 
 	// peer gateway address
 	// Required: true
 	// Format: ipv4
-	PeerGatewayAddress PeerGatewayAddress `json:"peerGatewayAddress"`
+	PeerGatewayAddress *PeerGatewayAddress `json:"peerGatewayAddress"`
 
 	// an array of strings containing CIDR of peer subnets
+	// Example: ["128.170.1.0/20","128.169.1.0/24","128.168.1.0/27","128.170.1.0/32"]
 	// Required: true
 	PeerSubnets []string `json:"peerSubnets"`
 }
@@ -129,7 +136,7 @@ const (
 
 // prop value enum
 func (m *VPNConnectionCreate) validateModeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, vPNConnectionCreateTypeModePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, vPNConnectionCreateTypeModePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -169,11 +176,23 @@ func (m *VPNConnectionCreate) validateNetworks(formats strfmt.Registry) error {
 
 func (m *VPNConnectionCreate) validatePeerGatewayAddress(formats strfmt.Registry) error {
 
-	if err := m.PeerGatewayAddress.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("peerGatewayAddress")
-		}
+	if err := validate.Required("peerGatewayAddress", "body", m.PeerGatewayAddress); err != nil {
 		return err
+	}
+
+	if err := validate.Required("peerGatewayAddress", "body", m.PeerGatewayAddress); err != nil {
+		return err
+	}
+
+	if m.PeerGatewayAddress != nil {
+		if err := m.PeerGatewayAddress.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("peerGatewayAddress")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("peerGatewayAddress")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -183,6 +202,36 @@ func (m *VPNConnectionCreate) validatePeerSubnets(formats strfmt.Registry) error
 
 	if err := validate.Required("peerSubnets", "body", m.PeerSubnets); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this v p n connection create based on the context it is used
+func (m *VPNConnectionCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidatePeerGatewayAddress(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *VPNConnectionCreate) contextValidatePeerGatewayAddress(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.PeerGatewayAddress != nil {
+		if err := m.PeerGatewayAddress.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("peerGatewayAddress")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("peerGatewayAddress")
+			}
+			return err
+		}
 	}
 
 	return nil

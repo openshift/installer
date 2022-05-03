@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.40.0-910cf8c2-20211006-154754
+ * IBM OpenAPI SDK Code Generator Version: 3.41.1-790c0dfc-20211021-231519
  */
 
 // Package transitgatewayapisv1 : Operations and models for the TransitGatewayApisV1 service
@@ -229,6 +229,246 @@ func (transitGatewayApis *TransitGatewayApisV1) ListConnectionsWithContext(ctx c
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTransitConnectionCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListTransitGatewayRouteReports : List route reports
+// Retrieve all route reports for the specified Transit Gateway.  There will normally be at most one completed report
+// and one pending report.  Additionally, completed route reports are written to IBM Cloud Activity Tracker.
+func (transitGatewayApis *TransitGatewayApisV1) ListTransitGatewayRouteReports(listTransitGatewayRouteReportsOptions *ListTransitGatewayRouteReportsOptions) (result *RouteReportCollection, response *core.DetailedResponse, err error) {
+	return transitGatewayApis.ListTransitGatewayRouteReportsWithContext(context.Background(), listTransitGatewayRouteReportsOptions)
+}
+
+// ListTransitGatewayRouteReportsWithContext is an alternate form of the ListTransitGatewayRouteReports method which supports a Context parameter
+func (transitGatewayApis *TransitGatewayApisV1) ListTransitGatewayRouteReportsWithContext(ctx context.Context, listTransitGatewayRouteReportsOptions *ListTransitGatewayRouteReportsOptions) (result *RouteReportCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listTransitGatewayRouteReportsOptions, "listTransitGatewayRouteReportsOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listTransitGatewayRouteReportsOptions, "listTransitGatewayRouteReportsOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"transit_gateway_id": *listTransitGatewayRouteReportsOptions.TransitGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = transitGatewayApis.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(transitGatewayApis.Service.Options.URL, `/transit_gateways/{transit_gateway_id}/route_reports`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listTransitGatewayRouteReportsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("transit_gateway_apis", "V1", "ListTransitGatewayRouteReports")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*transitGatewayApis.Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = transitGatewayApis.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRouteReportCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateTransitGatewayRouteReport : Request a route report
+// Request route report generation.  While report generation is in progress, additional requests to generate a report
+// are ignored and return the current pending report.
+func (transitGatewayApis *TransitGatewayApisV1) CreateTransitGatewayRouteReport(createTransitGatewayRouteReportOptions *CreateTransitGatewayRouteReportOptions) (result *RouteReport, response *core.DetailedResponse, err error) {
+	return transitGatewayApis.CreateTransitGatewayRouteReportWithContext(context.Background(), createTransitGatewayRouteReportOptions)
+}
+
+// CreateTransitGatewayRouteReportWithContext is an alternate form of the CreateTransitGatewayRouteReport method which supports a Context parameter
+func (transitGatewayApis *TransitGatewayApisV1) CreateTransitGatewayRouteReportWithContext(ctx context.Context, createTransitGatewayRouteReportOptions *CreateTransitGatewayRouteReportOptions) (result *RouteReport, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createTransitGatewayRouteReportOptions, "createTransitGatewayRouteReportOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(createTransitGatewayRouteReportOptions, "createTransitGatewayRouteReportOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"transit_gateway_id": *createTransitGatewayRouteReportOptions.TransitGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = transitGatewayApis.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(transitGatewayApis.Service.Options.URL, `/transit_gateways/{transit_gateway_id}/route_reports`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range createTransitGatewayRouteReportOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("transit_gateway_apis", "V1", "CreateTransitGatewayRouteReport")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*transitGatewayApis.Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = transitGatewayApis.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRouteReport)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteTransitGatewayRouteReport : Delete route report
+// Delete a route report.
+func (transitGatewayApis *TransitGatewayApisV1) DeleteTransitGatewayRouteReport(deleteTransitGatewayRouteReportOptions *DeleteTransitGatewayRouteReportOptions) (response *core.DetailedResponse, err error) {
+	return transitGatewayApis.DeleteTransitGatewayRouteReportWithContext(context.Background(), deleteTransitGatewayRouteReportOptions)
+}
+
+// DeleteTransitGatewayRouteReportWithContext is an alternate form of the DeleteTransitGatewayRouteReport method which supports a Context parameter
+func (transitGatewayApis *TransitGatewayApisV1) DeleteTransitGatewayRouteReportWithContext(ctx context.Context, deleteTransitGatewayRouteReportOptions *DeleteTransitGatewayRouteReportOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteTransitGatewayRouteReportOptions, "deleteTransitGatewayRouteReportOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(deleteTransitGatewayRouteReportOptions, "deleteTransitGatewayRouteReportOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"transit_gateway_id": *deleteTransitGatewayRouteReportOptions.TransitGatewayID,
+		"id":                 *deleteTransitGatewayRouteReportOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = transitGatewayApis.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(transitGatewayApis.Service.Options.URL, `/transit_gateways/{transit_gateway_id}/route_reports/{id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range deleteTransitGatewayRouteReportOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("transit_gateway_apis", "V1", "DeleteTransitGatewayRouteReport")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*transitGatewayApis.Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = transitGatewayApis.Service.Request(request, nil)
+
+	return
+}
+
+// GetTransitGatewayRouteReport : Retrieve route report
+// Retrieve a route report.
+func (transitGatewayApis *TransitGatewayApisV1) GetTransitGatewayRouteReport(getTransitGatewayRouteReportOptions *GetTransitGatewayRouteReportOptions) (result *RouteReport, response *core.DetailedResponse, err error) {
+	return transitGatewayApis.GetTransitGatewayRouteReportWithContext(context.Background(), getTransitGatewayRouteReportOptions)
+}
+
+// GetTransitGatewayRouteReportWithContext is an alternate form of the GetTransitGatewayRouteReport method which supports a Context parameter
+func (transitGatewayApis *TransitGatewayApisV1) GetTransitGatewayRouteReportWithContext(ctx context.Context, getTransitGatewayRouteReportOptions *GetTransitGatewayRouteReportOptions) (result *RouteReport, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getTransitGatewayRouteReportOptions, "getTransitGatewayRouteReportOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getTransitGatewayRouteReportOptions, "getTransitGatewayRouteReportOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"transit_gateway_id": *getTransitGatewayRouteReportOptions.TransitGatewayID,
+		"id":                 *getTransitGatewayRouteReportOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = transitGatewayApis.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(transitGatewayApis.Service.Options.URL, `/transit_gateways/{transit_gateway_id}/route_reports/{id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getTransitGatewayRouteReportOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("transit_gateway_apis", "V1", "GetTransitGatewayRouteReport")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*transitGatewayApis.Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = transitGatewayApis.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRouteReport)
 		if err != nil {
 			return
 		}
@@ -747,7 +987,7 @@ func (transitGatewayApis *TransitGatewayApisV1) DeleteTransitGatewayConnectionWi
 
 	pathParamsMap := map[string]string{
 		"transit_gateway_id": *deleteTransitGatewayConnectionOptions.TransitGatewayID,
-		"id": *deleteTransitGatewayConnectionOptions.ID,
+		"id":                 *deleteTransitGatewayConnectionOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -798,7 +1038,7 @@ func (transitGatewayApis *TransitGatewayApisV1) GetTransitGatewayConnectionWithC
 
 	pathParamsMap := map[string]string{
 		"transit_gateway_id": *getTransitGatewayConnectionOptions.TransitGatewayID,
-		"id": *getTransitGatewayConnectionOptions.ID,
+		"id":                 *getTransitGatewayConnectionOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -861,7 +1101,7 @@ func (transitGatewayApis *TransitGatewayApisV1) UpdateTransitGatewayConnectionWi
 
 	pathParamsMap := map[string]string{
 		"transit_gateway_id": *updateTransitGatewayConnectionOptions.TransitGatewayID,
-		"id": *updateTransitGatewayConnectionOptions.ID,
+		"id":                 *updateTransitGatewayConnectionOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -934,7 +1174,7 @@ func (transitGatewayApis *TransitGatewayApisV1) CreateTransitGatewayConnectionAc
 
 	pathParamsMap := map[string]string{
 		"transit_gateway_id": *createTransitGatewayConnectionActionsOptions.TransitGatewayID,
-		"id": *createTransitGatewayConnectionActionsOptions.ID,
+		"id":                 *createTransitGatewayConnectionActionsOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -1111,15 +1351,15 @@ type CreateTransitGatewayConnectionActionsOptions struct {
 // The action that is to be performed against the connection request.
 const (
 	CreateTransitGatewayConnectionActionsOptions_Action_Approve = "approve"
-	CreateTransitGatewayConnectionActionsOptions_Action_Reject = "reject"
+	CreateTransitGatewayConnectionActionsOptions_Action_Reject  = "reject"
 )
 
 // NewCreateTransitGatewayConnectionActionsOptions : Instantiate CreateTransitGatewayConnectionActionsOptions
 func (*TransitGatewayApisV1) NewCreateTransitGatewayConnectionActionsOptions(transitGatewayID string, id string, action string) *CreateTransitGatewayConnectionActionsOptions {
 	return &CreateTransitGatewayConnectionActionsOptions{
 		TransitGatewayID: core.StringPtr(transitGatewayID),
-		ID: core.StringPtr(id),
-		Action: core.StringPtr(action),
+		ID:               core.StringPtr(id),
+		Action:           core.StringPtr(action),
 	}
 }
 
@@ -1210,17 +1450,17 @@ type CreateTransitGatewayConnectionOptions struct {
 // Defines what type of network is connected via this connection. For access to gre_tunnel connections contact IBM
 // support.
 const (
-	CreateTransitGatewayConnectionOptions_NetworkType_Classic = "classic"
+	CreateTransitGatewayConnectionOptions_NetworkType_Classic    = "classic"
 	CreateTransitGatewayConnectionOptions_NetworkType_Directlink = "directlink"
-	CreateTransitGatewayConnectionOptions_NetworkType_GreTunnel = "gre_tunnel"
-	CreateTransitGatewayConnectionOptions_NetworkType_Vpc = "vpc"
+	CreateTransitGatewayConnectionOptions_NetworkType_GreTunnel  = "gre_tunnel"
+	CreateTransitGatewayConnectionOptions_NetworkType_Vpc        = "vpc"
 )
 
 // NewCreateTransitGatewayConnectionOptions : Instantiate CreateTransitGatewayConnectionOptions
 func (*TransitGatewayApisV1) NewCreateTransitGatewayConnectionOptions(transitGatewayID string, networkType string) *CreateTransitGatewayConnectionOptions {
 	return &CreateTransitGatewayConnectionOptions{
 		TransitGatewayID: core.StringPtr(transitGatewayID),
-		NetworkType: core.StringPtr(networkType),
+		NetworkType:      core.StringPtr(networkType),
 	}
 }
 
@@ -1325,7 +1565,7 @@ type CreateTransitGatewayOptions struct {
 func (*TransitGatewayApisV1) NewCreateTransitGatewayOptions(location string, name string) *CreateTransitGatewayOptions {
 	return &CreateTransitGatewayOptions{
 		Location: core.StringPtr(location),
-		Name: core.StringPtr(name),
+		Name:     core.StringPtr(name),
 	}
 }
 
@@ -1359,6 +1599,34 @@ func (options *CreateTransitGatewayOptions) SetHeaders(param map[string]string) 
 	return options
 }
 
+// CreateTransitGatewayRouteReportOptions : The CreateTransitGatewayRouteReport options.
+type CreateTransitGatewayRouteReportOptions struct {
+	// The Transit Gateway identifier.
+	TransitGatewayID *string `json:"transit_gateway_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewCreateTransitGatewayRouteReportOptions : Instantiate CreateTransitGatewayRouteReportOptions
+func (*TransitGatewayApisV1) NewCreateTransitGatewayRouteReportOptions(transitGatewayID string) *CreateTransitGatewayRouteReportOptions {
+	return &CreateTransitGatewayRouteReportOptions{
+		TransitGatewayID: core.StringPtr(transitGatewayID),
+	}
+}
+
+// SetTransitGatewayID : Allow user to set TransitGatewayID
+func (_options *CreateTransitGatewayRouteReportOptions) SetTransitGatewayID(transitGatewayID string) *CreateTransitGatewayRouteReportOptions {
+	_options.TransitGatewayID = core.StringPtr(transitGatewayID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateTransitGatewayRouteReportOptions) SetHeaders(param map[string]string) *CreateTransitGatewayRouteReportOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteTransitGatewayConnectionOptions : The DeleteTransitGatewayConnection options.
 type DeleteTransitGatewayConnectionOptions struct {
 	// The Transit Gateway identifier.
@@ -1375,7 +1643,7 @@ type DeleteTransitGatewayConnectionOptions struct {
 func (*TransitGatewayApisV1) NewDeleteTransitGatewayConnectionOptions(transitGatewayID string, id string) *DeleteTransitGatewayConnectionOptions {
 	return &DeleteTransitGatewayConnectionOptions{
 		TransitGatewayID: core.StringPtr(transitGatewayID),
-		ID: core.StringPtr(id),
+		ID:               core.StringPtr(id),
 	}
 }
 
@@ -1425,6 +1693,44 @@ func (options *DeleteTransitGatewayOptions) SetHeaders(param map[string]string) 
 	return options
 }
 
+// DeleteTransitGatewayRouteReportOptions : The DeleteTransitGatewayRouteReport options.
+type DeleteTransitGatewayRouteReportOptions struct {
+	// The Transit Gateway identifier.
+	TransitGatewayID *string `json:"transit_gateway_id" validate:"required,ne="`
+
+	// Route report identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeleteTransitGatewayRouteReportOptions : Instantiate DeleteTransitGatewayRouteReportOptions
+func (*TransitGatewayApisV1) NewDeleteTransitGatewayRouteReportOptions(transitGatewayID string, id string) *DeleteTransitGatewayRouteReportOptions {
+	return &DeleteTransitGatewayRouteReportOptions{
+		TransitGatewayID: core.StringPtr(transitGatewayID),
+		ID:               core.StringPtr(id),
+	}
+}
+
+// SetTransitGatewayID : Allow user to set TransitGatewayID
+func (_options *DeleteTransitGatewayRouteReportOptions) SetTransitGatewayID(transitGatewayID string) *DeleteTransitGatewayRouteReportOptions {
+	_options.TransitGatewayID = core.StringPtr(transitGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *DeleteTransitGatewayRouteReportOptions) SetID(id string) *DeleteTransitGatewayRouteReportOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteTransitGatewayRouteReportOptions) SetHeaders(param map[string]string) *DeleteTransitGatewayRouteReportOptions {
+	options.Headers = param
+	return options
+}
+
 // GetGatewayLocationOptions : The GetGatewayLocation options.
 type GetGatewayLocationOptions struct {
 	// The Transit Gateway location Name.
@@ -1469,7 +1775,7 @@ type GetTransitGatewayConnectionOptions struct {
 func (*TransitGatewayApisV1) NewGetTransitGatewayConnectionOptions(transitGatewayID string, id string) *GetTransitGatewayConnectionOptions {
 	return &GetTransitGatewayConnectionOptions{
 		TransitGatewayID: core.StringPtr(transitGatewayID),
-		ID: core.StringPtr(id),
+		ID:               core.StringPtr(id),
 	}
 }
 
@@ -1515,6 +1821,44 @@ func (_options *GetTransitGatewayOptions) SetID(id string) *GetTransitGatewayOpt
 
 // SetHeaders : Allow user to set Headers
 func (options *GetTransitGatewayOptions) SetHeaders(param map[string]string) *GetTransitGatewayOptions {
+	options.Headers = param
+	return options
+}
+
+// GetTransitGatewayRouteReportOptions : The GetTransitGatewayRouteReport options.
+type GetTransitGatewayRouteReportOptions struct {
+	// The Transit Gateway identifier.
+	TransitGatewayID *string `json:"transit_gateway_id" validate:"required,ne="`
+
+	// Route report identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetTransitGatewayRouteReportOptions : Instantiate GetTransitGatewayRouteReportOptions
+func (*TransitGatewayApisV1) NewGetTransitGatewayRouteReportOptions(transitGatewayID string, id string) *GetTransitGatewayRouteReportOptions {
+	return &GetTransitGatewayRouteReportOptions{
+		TransitGatewayID: core.StringPtr(transitGatewayID),
+		ID:               core.StringPtr(id),
+	}
+}
+
+// SetTransitGatewayID : Allow user to set TransitGatewayID
+func (_options *GetTransitGatewayRouteReportOptions) SetTransitGatewayID(transitGatewayID string) *GetTransitGatewayRouteReportOptions {
+	_options.TransitGatewayID = core.StringPtr(transitGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetTransitGatewayRouteReportOptions) SetID(id string) *GetTransitGatewayRouteReportOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetTransitGatewayRouteReportOptions) SetHeaders(param map[string]string) *GetTransitGatewayRouteReportOptions {
 	options.Headers = param
 	return options
 }
@@ -1609,6 +1953,34 @@ func (options *ListTransitGatewayConnectionsOptions) SetHeaders(param map[string
 	return options
 }
 
+// ListTransitGatewayRouteReportsOptions : The ListTransitGatewayRouteReports options.
+type ListTransitGatewayRouteReportsOptions struct {
+	// The Transit Gateway identifier.
+	TransitGatewayID *string `json:"transit_gateway_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListTransitGatewayRouteReportsOptions : Instantiate ListTransitGatewayRouteReportsOptions
+func (*TransitGatewayApisV1) NewListTransitGatewayRouteReportsOptions(transitGatewayID string) *ListTransitGatewayRouteReportsOptions {
+	return &ListTransitGatewayRouteReportsOptions{
+		TransitGatewayID: core.StringPtr(transitGatewayID),
+	}
+}
+
+// SetTransitGatewayID : Allow user to set TransitGatewayID
+func (_options *ListTransitGatewayRouteReportsOptions) SetTransitGatewayID(transitGatewayID string) *ListTransitGatewayRouteReportsOptions {
+	_options.TransitGatewayID = core.StringPtr(transitGatewayID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListTransitGatewayRouteReportsOptions) SetHeaders(param map[string]string) *ListTransitGatewayRouteReportsOptions {
+	options.Headers = param
+	return options
+}
+
 // ListTransitGatewaysOptions : The ListTransitGateways options.
 type ListTransitGatewaysOptions struct {
 	// The maximum number of resources to return per page.
@@ -1689,6 +2061,225 @@ func UnmarshalResourceGroupReference(m map[string]json.RawMessage, result interf
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RouteReport : route report.
+type RouteReport struct {
+	// Array of connections with their routes.
+	Connections []RouteReportConnection `json:"connections" validate:"required"`
+
+	// Date and time route report was requested.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// Report identifier.
+	ID *string `json:"id" validate:"required"`
+
+	// Array of overlapping routes.
+	OverlappingRoutes []RouteReportOverlappingRouteGroup `json:"overlapping_routes" validate:"required"`
+
+	// Route report status. The list of enumerated values for this property may expand in the future. Code and processes
+	// using this field must tolerate unexpected values.
+	Status *string `json:"status" validate:"required"`
+
+	// Date and time route report was last modified.
+	UpdatedAt *strfmt.DateTime `json:"updated_at,omitempty"`
+}
+
+// Constants associated with the RouteReport.Status property.
+// Route report status. The list of enumerated values for this property may expand in the future. Code and processes
+// using this field must tolerate unexpected values.
+const (
+	RouteReport_Status_Complete = "complete"
+	RouteReport_Status_Pending  = "pending"
+)
+
+// UnmarshalRouteReport unmarshals an instance of RouteReport from the specified map of raw messages.
+func UnmarshalRouteReport(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteReport)
+	err = core.UnmarshalModel(m, "connections", &obj.Connections, UnmarshalRouteReportConnection)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "overlapping_routes", &obj.OverlappingRoutes, UnmarshalRouteReportOverlappingRouteGroup)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RouteReportCollection : route reports.
+type RouteReportCollection struct {
+	// Array of route reports.
+	RouteReports []RouteReport `json:"route_reports" validate:"required"`
+}
+
+// UnmarshalRouteReportCollection unmarshals an instance of RouteReportCollection from the specified map of raw messages.
+func UnmarshalRouteReportCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteReportCollection)
+	err = core.UnmarshalModel(m, "route_reports", &obj.RouteReports, UnmarshalRouteReport)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RouteReportConnection : route report connection.
+type RouteReportConnection struct {
+	// Array of connection's bgps.
+	Bgps []RouteReportConnectionBgp `json:"bgps,omitempty"`
+
+	// connection ID.
+	ID *string `json:"id,omitempty"`
+
+	// connection name.
+	Name *string `json:"name,omitempty"`
+
+	// Array of connection's routes.
+	Routes []RouteReportConnectionRoute `json:"routes,omitempty"`
+
+	// connection type.
+	Type *string `json:"type,omitempty"`
+}
+
+// UnmarshalRouteReportConnection unmarshals an instance of RouteReportConnection from the specified map of raw messages.
+func UnmarshalRouteReportConnection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteReportConnection)
+	err = core.UnmarshalModel(m, "bgps", &obj.Bgps, UnmarshalRouteReportConnectionBgp)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "routes", &obj.Routes, UnmarshalRouteReportConnectionRoute)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RouteReportConnectionBgp : connection bgp details.
+type RouteReportConnectionBgp struct {
+	// AS path.
+	AsPath *string `json:"as_path,omitempty"`
+
+	// Indicates whether current route is used or not.
+	IsUsed *bool `json:"is_used,omitempty"`
+
+	// local preference.
+	LocalPreference *string `json:"local_preference,omitempty"`
+
+	// prefix.
+	Prefix *string `json:"prefix,omitempty"`
+}
+
+// UnmarshalRouteReportConnectionBgp unmarshals an instance of RouteReportConnectionBgp from the specified map of raw messages.
+func UnmarshalRouteReportConnectionBgp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteReportConnectionBgp)
+	err = core.UnmarshalPrimitive(m, "as_path", &obj.AsPath)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "is_used", &obj.IsUsed)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "local_preference", &obj.LocalPreference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "prefix", &obj.Prefix)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RouteReportConnectionRoute : connection used route.
+type RouteReportConnectionRoute struct {
+	// prefix.
+	Prefix *string `json:"prefix,omitempty"`
+}
+
+// UnmarshalRouteReportConnectionRoute unmarshals an instance of RouteReportConnectionRoute from the specified map of raw messages.
+func UnmarshalRouteReportConnectionRoute(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteReportConnectionRoute)
+	err = core.UnmarshalPrimitive(m, "prefix", &obj.Prefix)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RouteReportOverlappingRoute : overlapping route details.
+type RouteReportOverlappingRoute struct {
+	// connection ID.
+	ConnectionID *string `json:"connection_id,omitempty"`
+
+	// overlapping prefix.
+	Prefix *string `json:"prefix,omitempty"`
+}
+
+// UnmarshalRouteReportOverlappingRoute unmarshals an instance of RouteReportOverlappingRoute from the specified map of raw messages.
+func UnmarshalRouteReportOverlappingRoute(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteReportOverlappingRoute)
+	err = core.UnmarshalPrimitive(m, "connection_id", &obj.ConnectionID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "prefix", &obj.Prefix)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RouteReportOverlappingRouteGroup : Collection of overlapping route.
+type RouteReportOverlappingRouteGroup struct {
+	// Array of overlapping connection/prefix pairs.
+	Routes []RouteReportOverlappingRoute `json:"routes,omitempty"`
+}
+
+// UnmarshalRouteReportOverlappingRouteGroup unmarshals an instance of RouteReportOverlappingRouteGroup from the specified map of raw messages.
+func UnmarshalRouteReportOverlappingRouteGroup(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteReportOverlappingRouteGroup)
+	err = core.UnmarshalModel(m, "routes", &obj.Routes, UnmarshalRouteReportOverlappingRoute)
 	if err != nil {
 		return
 	}
@@ -1897,10 +2488,10 @@ type TransitConnection struct {
 // Defines what type of network is connected via this connection. The list of enumerated values for this property may
 // expand in the future. Code and processes using this field must tolerate unexpected values.
 const (
-	TransitConnection_NetworkType_Classic = "classic"
+	TransitConnection_NetworkType_Classic    = "classic"
 	TransitConnection_NetworkType_Directlink = "directlink"
-	TransitConnection_NetworkType_GreTunnel = "gre_tunnel"
-	TransitConnection_NetworkType_Vpc = "vpc"
+	TransitConnection_NetworkType_GreTunnel  = "gre_tunnel"
+	TransitConnection_NetworkType_Vpc        = "vpc"
 )
 
 // Constants associated with the TransitConnection.RequestStatus property.
@@ -1910,8 +2501,8 @@ const (
 const (
 	TransitConnection_RequestStatus_Approved = "approved"
 	TransitConnection_RequestStatus_Detached = "detached"
-	TransitConnection_RequestStatus_Expired = "expired"
-	TransitConnection_RequestStatus_Pending = "pending"
+	TransitConnection_RequestStatus_Expired  = "expired"
+	TransitConnection_RequestStatus_Pending  = "pending"
 	TransitConnection_RequestStatus_Rejected = "rejected"
 )
 
@@ -1919,12 +2510,12 @@ const (
 // Connection state. The list of enumerated values for this property may expand in the future. Code and processes using
 // this field must tolerate unexpected values.
 const (
-	TransitConnection_Status_Attached = "attached"
-	TransitConnection_Status_Deleting = "deleting"
-	TransitConnection_Status_Detached = "detached"
+	TransitConnection_Status_Attached  = "attached"
+	TransitConnection_Status_Deleting  = "deleting"
+	TransitConnection_Status_Detached  = "detached"
 	TransitConnection_Status_Detaching = "detaching"
-	TransitConnection_Status_Failed = "failed"
-	TransitConnection_Status_Pending = "pending"
+	TransitConnection_Status_Failed    = "failed"
+	TransitConnection_Status_Pending   = "pending"
 )
 
 // UnmarshalTransitConnection unmarshals an instance of TransitConnection from the specified map of raw messages.
@@ -2134,9 +2725,9 @@ type TransitGateway struct {
 // processes using this field must tolerate unexpected values.
 const (
 	TransitGateway_Status_Available = "available"
-	TransitGateway_Status_Deleting = "deleting"
-	TransitGateway_Status_Failed = "failed"
-	TransitGateway_Status_Pending = "pending"
+	TransitGateway_Status_Deleting  = "deleting"
+	TransitGateway_Status_Failed    = "failed"
+	TransitGateway_Status_Pending   = "pending"
 )
 
 // UnmarshalTransitGateway unmarshals an instance of TransitGateway from the specified map of raw messages.
@@ -2357,10 +2948,10 @@ type TransitGatewayConnectionCust struct {
 // Defines what type of network is connected via this connection. The list of enumerated values for this property may
 // expand in the future. Code and processes using this field must tolerate unexpected values.
 const (
-	TransitGatewayConnectionCust_NetworkType_Classic = "classic"
+	TransitGatewayConnectionCust_NetworkType_Classic    = "classic"
 	TransitGatewayConnectionCust_NetworkType_Directlink = "directlink"
-	TransitGatewayConnectionCust_NetworkType_GreTunnel = "gre_tunnel"
-	TransitGatewayConnectionCust_NetworkType_Vpc = "vpc"
+	TransitGatewayConnectionCust_NetworkType_GreTunnel  = "gre_tunnel"
+	TransitGatewayConnectionCust_NetworkType_Vpc        = "vpc"
 )
 
 // Constants associated with the TransitGatewayConnectionCust.RequestStatus property.
@@ -2370,8 +2961,8 @@ const (
 const (
 	TransitGatewayConnectionCust_RequestStatus_Approved = "approved"
 	TransitGatewayConnectionCust_RequestStatus_Detached = "detached"
-	TransitGatewayConnectionCust_RequestStatus_Expired = "expired"
-	TransitGatewayConnectionCust_RequestStatus_Pending = "pending"
+	TransitGatewayConnectionCust_RequestStatus_Expired  = "expired"
+	TransitGatewayConnectionCust_RequestStatus_Pending  = "pending"
 	TransitGatewayConnectionCust_RequestStatus_Rejected = "rejected"
 )
 
@@ -2379,12 +2970,12 @@ const (
 // Connection's current configuration state. The list of enumerated values for this property may expand in the future.
 // Code and processes using this field must tolerate unexpected values.
 const (
-	TransitGatewayConnectionCust_Status_Attached = "attached"
-	TransitGatewayConnectionCust_Status_Deleting = "deleting"
-	TransitGatewayConnectionCust_Status_Detached = "detached"
+	TransitGatewayConnectionCust_Status_Attached  = "attached"
+	TransitGatewayConnectionCust_Status_Deleting  = "deleting"
+	TransitGatewayConnectionCust_Status_Detached  = "detached"
 	TransitGatewayConnectionCust_Status_Detaching = "detaching"
-	TransitGatewayConnectionCust_Status_Failed = "failed"
-	TransitGatewayConnectionCust_Status_Pending = "pending"
+	TransitGatewayConnectionCust_Status_Failed    = "failed"
+	TransitGatewayConnectionCust_Status_Pending   = "pending"
 )
 
 // UnmarshalTransitGatewayConnectionCust unmarshals an instance of TransitGatewayConnectionCust from the specified map of raw messages.
@@ -2535,7 +3126,7 @@ type UpdateTransitGatewayConnectionOptions struct {
 func (*TransitGatewayApisV1) NewUpdateTransitGatewayConnectionOptions(transitGatewayID string, id string) *UpdateTransitGatewayConnectionOptions {
 	return &UpdateTransitGatewayConnectionOptions{
 		TransitGatewayID: core.StringPtr(transitGatewayID),
-		ID: core.StringPtr(id),
+		ID:               core.StringPtr(id),
 	}
 }
 
@@ -2616,6 +3207,7 @@ type ZoneIdentity struct {
 	// Availability zone name.
 	Name *string `json:"name,omitempty"`
 }
+
 func (*ZoneIdentity) isaZoneIdentity() bool {
 	return true
 }

@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudTasksDeleteReader is a Reader for the PcloudTasksDelete structure.
@@ -24,51 +23,44 @@ type PcloudTasksDeleteReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudTasksDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudTasksDeleteOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudTasksDeleteBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudTasksDeleteUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudTasksDeleteNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 410:
 		result := NewPcloudTasksDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudTasksDeleteInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudTasksDeleteOK() *PcloudTasksDeleteOK {
 	return &PcloudTasksDeleteOK{}
 }
 
-/*PcloudTasksDeleteOK handles this case with default header values.
+/* PcloudTasksDeleteOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -87,6 +79,9 @@ type PcloudTasksDeleteOK struct {
 
 func (o *PcloudTasksDeleteOK) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteOK  %+v", 200, o.Payload)
+}
+func (o *PcloudTasksDeleteOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudTasksDeleteOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,7 +99,7 @@ func NewPcloudTasksDeleteBadRequest() *PcloudTasksDeleteBadRequest {
 	return &PcloudTasksDeleteBadRequest{}
 }
 
-/*PcloudTasksDeleteBadRequest handles this case with default header values.
+/* PcloudTasksDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -114,6 +109,9 @@ type PcloudTasksDeleteBadRequest struct {
 
 func (o *PcloudTasksDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudTasksDeleteBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTasksDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -133,7 +131,7 @@ func NewPcloudTasksDeleteUnauthorized() *PcloudTasksDeleteUnauthorized {
 	return &PcloudTasksDeleteUnauthorized{}
 }
 
-/*PcloudTasksDeleteUnauthorized handles this case with default header values.
+/* PcloudTasksDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -143,6 +141,9 @@ type PcloudTasksDeleteUnauthorized struct {
 
 func (o *PcloudTasksDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudTasksDeleteUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTasksDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -162,7 +163,7 @@ func NewPcloudTasksDeleteNotFound() *PcloudTasksDeleteNotFound {
 	return &PcloudTasksDeleteNotFound{}
 }
 
-/*PcloudTasksDeleteNotFound handles this case with default header values.
+/* PcloudTasksDeleteNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -172,6 +173,9 @@ type PcloudTasksDeleteNotFound struct {
 
 func (o *PcloudTasksDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudTasksDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTasksDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -191,7 +195,7 @@ func NewPcloudTasksDeleteGone() *PcloudTasksDeleteGone {
 	return &PcloudTasksDeleteGone{}
 }
 
-/*PcloudTasksDeleteGone handles this case with default header values.
+/* PcloudTasksDeleteGone describes a response with status code 410, with default header values.
 
 Gone
 */
@@ -201,6 +205,9 @@ type PcloudTasksDeleteGone struct {
 
 func (o *PcloudTasksDeleteGone) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteGone  %+v", 410, o.Payload)
+}
+func (o *PcloudTasksDeleteGone) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTasksDeleteGone) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -220,7 +227,7 @@ func NewPcloudTasksDeleteInternalServerError() *PcloudTasksDeleteInternalServerE
 	return &PcloudTasksDeleteInternalServerError{}
 }
 
-/*PcloudTasksDeleteInternalServerError handles this case with default header values.
+/* PcloudTasksDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -230,6 +237,9 @@ type PcloudTasksDeleteInternalServerError struct {
 
 func (o *PcloudTasksDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudTasksDeleteInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTasksDeleteInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

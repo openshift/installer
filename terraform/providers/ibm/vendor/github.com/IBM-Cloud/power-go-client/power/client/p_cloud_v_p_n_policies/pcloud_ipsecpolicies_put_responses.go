@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudIpsecpoliciesPutReader is a Reader for the PcloudIpsecpoliciesPut structure.
@@ -24,58 +23,50 @@ type PcloudIpsecpoliciesPutReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudIpsecpoliciesPutReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudIpsecpoliciesPutOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudIpsecpoliciesPutBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudIpsecpoliciesPutUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 403:
 		result := NewPcloudIpsecpoliciesPutForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudIpsecpoliciesPutConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudIpsecpoliciesPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudIpsecpoliciesPutInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -84,7 +75,7 @@ func NewPcloudIpsecpoliciesPutOK() *PcloudIpsecpoliciesPutOK {
 	return &PcloudIpsecpoliciesPutOK{}
 }
 
-/*PcloudIpsecpoliciesPutOK handles this case with default header values.
+/* PcloudIpsecpoliciesPutOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -94,6 +85,9 @@ type PcloudIpsecpoliciesPutOK struct {
 
 func (o *PcloudIpsecpoliciesPutOK) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesPutOK  %+v", 200, o.Payload)
+}
+func (o *PcloudIpsecpoliciesPutOK) GetPayload() *models.IPSecPolicy {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesPutOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -113,7 +107,7 @@ func NewPcloudIpsecpoliciesPutBadRequest() *PcloudIpsecpoliciesPutBadRequest {
 	return &PcloudIpsecpoliciesPutBadRequest{}
 }
 
-/*PcloudIpsecpoliciesPutBadRequest handles this case with default header values.
+/* PcloudIpsecpoliciesPutBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -123,6 +117,9 @@ type PcloudIpsecpoliciesPutBadRequest struct {
 
 func (o *PcloudIpsecpoliciesPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesPutBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudIpsecpoliciesPutBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesPutBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -142,7 +139,7 @@ func NewPcloudIpsecpoliciesPutUnauthorized() *PcloudIpsecpoliciesPutUnauthorized
 	return &PcloudIpsecpoliciesPutUnauthorized{}
 }
 
-/*PcloudIpsecpoliciesPutUnauthorized handles this case with default header values.
+/* PcloudIpsecpoliciesPutUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -152,6 +149,9 @@ type PcloudIpsecpoliciesPutUnauthorized struct {
 
 func (o *PcloudIpsecpoliciesPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesPutUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudIpsecpoliciesPutUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -171,7 +171,7 @@ func NewPcloudIpsecpoliciesPutForbidden() *PcloudIpsecpoliciesPutForbidden {
 	return &PcloudIpsecpoliciesPutForbidden{}
 }
 
-/*PcloudIpsecpoliciesPutForbidden handles this case with default header values.
+/* PcloudIpsecpoliciesPutForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -181,6 +181,9 @@ type PcloudIpsecpoliciesPutForbidden struct {
 
 func (o *PcloudIpsecpoliciesPutForbidden) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesPutForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudIpsecpoliciesPutForbidden) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -200,7 +203,7 @@ func NewPcloudIpsecpoliciesPutConflict() *PcloudIpsecpoliciesPutConflict {
 	return &PcloudIpsecpoliciesPutConflict{}
 }
 
-/*PcloudIpsecpoliciesPutConflict handles this case with default header values.
+/* PcloudIpsecpoliciesPutConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -210,6 +213,9 @@ type PcloudIpsecpoliciesPutConflict struct {
 
 func (o *PcloudIpsecpoliciesPutConflict) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesPutConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudIpsecpoliciesPutConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesPutConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -229,7 +235,7 @@ func NewPcloudIpsecpoliciesPutUnprocessableEntity() *PcloudIpsecpoliciesPutUnpro
 	return &PcloudIpsecpoliciesPutUnprocessableEntity{}
 }
 
-/*PcloudIpsecpoliciesPutUnprocessableEntity handles this case with default header values.
+/* PcloudIpsecpoliciesPutUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -239,6 +245,9 @@ type PcloudIpsecpoliciesPutUnprocessableEntity struct {
 
 func (o *PcloudIpsecpoliciesPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesPutUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudIpsecpoliciesPutUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesPutUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -258,7 +267,7 @@ func NewPcloudIpsecpoliciesPutInternalServerError() *PcloudIpsecpoliciesPutInter
 	return &PcloudIpsecpoliciesPutInternalServerError{}
 }
 
-/*PcloudIpsecpoliciesPutInternalServerError handles this case with default header values.
+/* PcloudIpsecpoliciesPutInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -268,6 +277,9 @@ type PcloudIpsecpoliciesPutInternalServerError struct {
 
 func (o *PcloudIpsecpoliciesPutInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesPutInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudIpsecpoliciesPutInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesPutInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

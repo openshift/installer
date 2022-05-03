@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudIpsecpoliciesDeleteReader is a Reader for the PcloudIpsecpoliciesDelete structure.
@@ -24,44 +23,44 @@ type PcloudIpsecpoliciesDeleteReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudIpsecpoliciesDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudIpsecpoliciesDeleteOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudIpsecpoliciesDeleteBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudIpsecpoliciesDeleteUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 403:
 		result := NewPcloudIpsecpoliciesDeleteForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
+	case 404:
+		result := NewPcloudIpsecpoliciesDeleteNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewPcloudIpsecpoliciesDeleteInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +69,7 @@ func NewPcloudIpsecpoliciesDeleteOK() *PcloudIpsecpoliciesDeleteOK {
 	return &PcloudIpsecpoliciesDeleteOK{}
 }
 
-/*PcloudIpsecpoliciesDeleteOK handles this case with default header values.
+/* PcloudIpsecpoliciesDeleteOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +79,9 @@ type PcloudIpsecpoliciesDeleteOK struct {
 
 func (o *PcloudIpsecpoliciesDeleteOK) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesDeleteOK  %+v", 200, o.Payload)
+}
+func (o *PcloudIpsecpoliciesDeleteOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesDeleteOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -97,7 +99,7 @@ func NewPcloudIpsecpoliciesDeleteBadRequest() *PcloudIpsecpoliciesDeleteBadReque
 	return &PcloudIpsecpoliciesDeleteBadRequest{}
 }
 
-/*PcloudIpsecpoliciesDeleteBadRequest handles this case with default header values.
+/* PcloudIpsecpoliciesDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -107,6 +109,9 @@ type PcloudIpsecpoliciesDeleteBadRequest struct {
 
 func (o *PcloudIpsecpoliciesDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesDeleteBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudIpsecpoliciesDeleteBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -126,7 +131,7 @@ func NewPcloudIpsecpoliciesDeleteUnauthorized() *PcloudIpsecpoliciesDeleteUnauth
 	return &PcloudIpsecpoliciesDeleteUnauthorized{}
 }
 
-/*PcloudIpsecpoliciesDeleteUnauthorized handles this case with default header values.
+/* PcloudIpsecpoliciesDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -136,6 +141,9 @@ type PcloudIpsecpoliciesDeleteUnauthorized struct {
 
 func (o *PcloudIpsecpoliciesDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesDeleteUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudIpsecpoliciesDeleteUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -155,7 +163,7 @@ func NewPcloudIpsecpoliciesDeleteForbidden() *PcloudIpsecpoliciesDeleteForbidden
 	return &PcloudIpsecpoliciesDeleteForbidden{}
 }
 
-/*PcloudIpsecpoliciesDeleteForbidden handles this case with default header values.
+/* PcloudIpsecpoliciesDeleteForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -166,8 +174,43 @@ type PcloudIpsecpoliciesDeleteForbidden struct {
 func (o *PcloudIpsecpoliciesDeleteForbidden) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesDeleteForbidden  %+v", 403, o.Payload)
 }
+func (o *PcloudIpsecpoliciesDeleteForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
 
 func (o *PcloudIpsecpoliciesDeleteForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudIpsecpoliciesDeleteNotFound creates a PcloudIpsecpoliciesDeleteNotFound with default headers values
+func NewPcloudIpsecpoliciesDeleteNotFound() *PcloudIpsecpoliciesDeleteNotFound {
+	return &PcloudIpsecpoliciesDeleteNotFound{}
+}
+
+/* PcloudIpsecpoliciesDeleteNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudIpsecpoliciesDeleteNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudIpsecpoliciesDeleteNotFound) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesDeleteNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudIpsecpoliciesDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudIpsecpoliciesDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -184,7 +227,7 @@ func NewPcloudIpsecpoliciesDeleteInternalServerError() *PcloudIpsecpoliciesDelet
 	return &PcloudIpsecpoliciesDeleteInternalServerError{}
 }
 
-/*PcloudIpsecpoliciesDeleteInternalServerError handles this case with default header values.
+/* PcloudIpsecpoliciesDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -194,6 +237,9 @@ type PcloudIpsecpoliciesDeleteInternalServerError struct {
 
 func (o *PcloudIpsecpoliciesDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesDeleteInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudIpsecpoliciesDeleteInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIpsecpoliciesDeleteInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

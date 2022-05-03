@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // LastOperationResource last operation resource
+//
 // swagger:model LastOperationResource
 type LastOperationResource struct {
 
@@ -68,7 +69,7 @@ const (
 
 // prop value enum
 func (m *LastOperationResource) validateStateEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, lastOperationResourceTypeStatePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, lastOperationResourceTypeStatePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -85,6 +86,11 @@ func (m *LastOperationResource) validateState(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this last operation resource based on context it is used
+func (m *LastOperationResource) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

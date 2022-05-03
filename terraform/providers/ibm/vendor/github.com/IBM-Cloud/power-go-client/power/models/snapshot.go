@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // Snapshot snapshot
+//
 // swagger:model Snapshot
 type Snapshot struct {
 
@@ -89,7 +91,6 @@ func (m *Snapshot) Validate(formats strfmt.Registry) error {
 }
 
 func (m *Snapshot) validateCreationDate(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.CreationDate) { // not required
 		return nil
 	}
@@ -102,7 +103,6 @@ func (m *Snapshot) validateCreationDate(formats strfmt.Registry) error {
 }
 
 func (m *Snapshot) validateLastUpdateDate(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.LastUpdateDate) { // not required
 		return nil
 	}
@@ -143,6 +143,15 @@ func (m *Snapshot) validateSnapshotID(formats strfmt.Registry) error {
 
 func (m *Snapshot) validateVolumeSnapshots(formats strfmt.Registry) error {
 
+	if err := validate.Required("volumeSnapshots", "body", m.VolumeSnapshots); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validates this snapshot based on context it is used
+func (m *Snapshot) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

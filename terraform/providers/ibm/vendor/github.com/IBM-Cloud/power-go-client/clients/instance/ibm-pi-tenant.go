@@ -27,7 +27,7 @@ func (f *IBMPITenantClient) Get(tenantid string) (*models.Tenant, error) {
 	params := p_cloud_tenants.NewPcloudTenantsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithTenantID(tenantid)
-	resp, err := f.session.Power.PCloudTenants.PcloudTenantsGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudTenants.PcloudTenantsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tenant %s with error %w", tenantid, err)
 	}
@@ -41,8 +41,8 @@ func (f *IBMPITenantClient) Get(tenantid string) (*models.Tenant, error) {
 func (f *IBMPITenantClient) GetSelfTenant() (*models.Tenant, error) {
 	params := p_cloud_tenants.NewPcloudTenantsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
-		WithTenantID(f.session.UserAccount)
-	resp, err := f.session.Power.PCloudTenants.PcloudTenantsGet(params, f.authInfo)
+		WithTenantID(f.session.Options.UserAccount)
+	resp, err := f.session.Power.PCloudTenants.PcloudTenantsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get self tenant with error %w", err)
 	}

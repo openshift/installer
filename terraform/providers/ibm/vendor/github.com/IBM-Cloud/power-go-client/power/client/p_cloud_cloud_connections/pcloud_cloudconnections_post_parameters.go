@@ -13,70 +13,84 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudCloudconnectionsPostParams creates a new PcloudCloudconnectionsPostParams object
-// with the default values initialized.
+// NewPcloudCloudconnectionsPostParams creates a new PcloudCloudconnectionsPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudconnectionsPostParams() *PcloudCloudconnectionsPostParams {
-	var ()
 	return &PcloudCloudconnectionsPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudconnectionsPostParamsWithTimeout creates a new PcloudCloudconnectionsPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudconnectionsPostParamsWithTimeout(timeout time.Duration) *PcloudCloudconnectionsPostParams {
-	var ()
 	return &PcloudCloudconnectionsPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudconnectionsPostParamsWithContext creates a new PcloudCloudconnectionsPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudconnectionsPostParamsWithContext(ctx context.Context) *PcloudCloudconnectionsPostParams {
-	var ()
 	return &PcloudCloudconnectionsPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudconnectionsPostParamsWithHTTPClient creates a new PcloudCloudconnectionsPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudconnectionsPostParamsWithHTTPClient(client *http.Client) *PcloudCloudconnectionsPostParams {
-	var ()
 	return &PcloudCloudconnectionsPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudconnectionsPostParams contains all the parameters to send to the API endpoint
-for the pcloud cloudconnections post operation typically these are written to a http.Request
+/* PcloudCloudconnectionsPostParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudconnections post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudconnectionsPostParams struct {
 
-	/*Body
-	  Parameters for the creation of a new cloud connection
+	/* Body.
 
+	   Parameters for the creation of a new cloud connection
 	*/
 	Body *models.CloudConnectionCreate
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudconnections post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudconnectionsPostParams) WithDefaults() *PcloudCloudconnectionsPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudconnections post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudconnectionsPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudconnections post params
@@ -141,7 +155,6 @@ func (o *PcloudCloudconnectionsPostParams) WriteToRequest(r runtime.ClientReques
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

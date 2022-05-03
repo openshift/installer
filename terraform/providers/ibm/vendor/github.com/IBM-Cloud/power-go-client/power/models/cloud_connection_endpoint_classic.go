@@ -6,13 +6,15 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // CloudConnectionEndpointClassic cloud connection endpoint classic
+//
 // swagger:model CloudConnectionEndpointClassic
 type CloudConnectionEndpointClassic struct {
 
@@ -38,7 +40,6 @@ func (m *CloudConnectionEndpointClassic) Validate(formats strfmt.Registry) error
 }
 
 func (m *CloudConnectionEndpointClassic) validateGre(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Gre) { // not required
 		return nil
 	}
@@ -47,6 +48,38 @@ func (m *CloudConnectionEndpointClassic) validateGre(formats strfmt.Registry) er
 		if err := m.Gre.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("gre")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("gre")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this cloud connection endpoint classic based on the context it is used
+func (m *CloudConnectionEndpointClassic) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateGre(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *CloudConnectionEndpointClassic) contextValidateGre(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Gre != nil {
+		if err := m.Gre.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("gre")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("gre")
 			}
 			return err
 		}

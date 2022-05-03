@@ -6,46 +6,52 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // IKEPolicy IKE Policy object
+//
 // swagger:model IKEPolicy
 type IKEPolicy struct {
 
 	// authentication
 	// Required: true
-	Authentication IKEPolicyAuthentication `json:"authentication"`
+	Authentication *IKEPolicyAuthentication `json:"authentication"`
 
 	// DH group of the IKE Policy
+	// Example: 2
 	// Required: true
 	// Enum: [1 2 5 14 19 20 24]
 	DhGroup *int64 `json:"dhGroup"`
 
 	// encryption of the IKE Policy
+	// Example: aes-256-cbc
 	// Required: true
-	// Enum: [3des-cbc aes-128-cbc aes-128-gcm aes-192-cbc aes-256-cbc aes-256-gcm des-cbc]
+	// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-128-gcm 3des-cbc]
 	Encryption *string `json:"encryption"`
 
 	// unique identifier of the IKE Policy object
+	// Example: 7edc8988-eb18-4b5c-a594-0d73d8254463
 	// Required: true
 	ID *string `json:"id"`
 
 	// key lifetime
 	// Required: true
-	KeyLifetime KeyLifetime `json:"keyLifetime"`
+	KeyLifetime *KeyLifetime `json:"keyLifetime"`
 
 	// name of the IKE Policy
+	// Example: ikePolicy1
 	// Required: true
 	Name *string `json:"name"`
 
 	// version of the IKE Policy
+	// Example: 2
 	// Required: true
 	// Enum: [1 2]
 	Version *int64 `json:"version"`
@@ -91,11 +97,23 @@ func (m *IKEPolicy) Validate(formats strfmt.Registry) error {
 
 func (m *IKEPolicy) validateAuthentication(formats strfmt.Registry) error {
 
-	if err := m.Authentication.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("authentication")
-		}
+	if err := validate.Required("authentication", "body", m.Authentication); err != nil {
 		return err
+	}
+
+	if err := validate.Required("authentication", "body", m.Authentication); err != nil {
+		return err
+	}
+
+	if m.Authentication != nil {
+		if err := m.Authentication.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("authentication")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("authentication")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -115,7 +133,7 @@ func init() {
 
 // prop value enum
 func (m *IKEPolicy) validateDhGroupEnum(path, location string, value int64) error {
-	if err := validate.Enum(path, location, value, iKEPolicyTypeDhGroupPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, iKEPolicyTypeDhGroupPropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -139,7 +157,7 @@ var iKEPolicyTypeEncryptionPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["3des-cbc","aes-128-cbc","aes-128-gcm","aes-192-cbc","aes-256-cbc","aes-256-gcm","des-cbc"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-128-gcm","3des-cbc"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -149,31 +167,28 @@ func init() {
 
 const (
 
-	// IKEPolicyEncryptionNr3desCbc captures enum value "3des-cbc"
-	IKEPolicyEncryptionNr3desCbc string = "3des-cbc"
+	// IKEPolicyEncryptionAesDash256DashCbc captures enum value "aes-256-cbc"
+	IKEPolicyEncryptionAesDash256DashCbc string = "aes-256-cbc"
 
-	// IKEPolicyEncryptionAes128Cbc captures enum value "aes-128-cbc"
-	IKEPolicyEncryptionAes128Cbc string = "aes-128-cbc"
+	// IKEPolicyEncryptionAesDash192DashCbc captures enum value "aes-192-cbc"
+	IKEPolicyEncryptionAesDash192DashCbc string = "aes-192-cbc"
 
-	// IKEPolicyEncryptionAes128Gcm captures enum value "aes-128-gcm"
-	IKEPolicyEncryptionAes128Gcm string = "aes-128-gcm"
+	// IKEPolicyEncryptionAesDash128DashCbc captures enum value "aes-128-cbc"
+	IKEPolicyEncryptionAesDash128DashCbc string = "aes-128-cbc"
 
-	// IKEPolicyEncryptionAes192Cbc captures enum value "aes-192-cbc"
-	IKEPolicyEncryptionAes192Cbc string = "aes-192-cbc"
+	// IKEPolicyEncryptionAesDash256DashGcm captures enum value "aes-256-gcm"
+	IKEPolicyEncryptionAesDash256DashGcm string = "aes-256-gcm"
 
-	// IKEPolicyEncryptionAes256Cbc captures enum value "aes-256-cbc"
-	IKEPolicyEncryptionAes256Cbc string = "aes-256-cbc"
+	// IKEPolicyEncryptionAesDash128DashGcm captures enum value "aes-128-gcm"
+	IKEPolicyEncryptionAesDash128DashGcm string = "aes-128-gcm"
 
-	// IKEPolicyEncryptionAes256Gcm captures enum value "aes-256-gcm"
-	IKEPolicyEncryptionAes256Gcm string = "aes-256-gcm"
-
-	// IKEPolicyEncryptionDesCbc captures enum value "des-cbc"
-	IKEPolicyEncryptionDesCbc string = "des-cbc"
+	// IKEPolicyEncryptionNr3desDashCbc captures enum value "3des-cbc"
+	IKEPolicyEncryptionNr3desDashCbc string = "3des-cbc"
 )
 
 // prop value enum
 func (m *IKEPolicy) validateEncryptionEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, iKEPolicyTypeEncryptionPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, iKEPolicyTypeEncryptionPropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -204,11 +219,23 @@ func (m *IKEPolicy) validateID(formats strfmt.Registry) error {
 
 func (m *IKEPolicy) validateKeyLifetime(formats strfmt.Registry) error {
 
-	if err := m.KeyLifetime.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("keyLifetime")
-		}
+	if err := validate.Required("keyLifetime", "body", m.KeyLifetime); err != nil {
 		return err
+	}
+
+	if err := validate.Required("keyLifetime", "body", m.KeyLifetime); err != nil {
+		return err
+	}
+
+	if m.KeyLifetime != nil {
+		if err := m.KeyLifetime.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("keyLifetime")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("keyLifetime")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -237,7 +264,7 @@ func init() {
 
 // prop value enum
 func (m *IKEPolicy) validateVersionEnum(path, location string, value int64) error {
-	if err := validate.Enum(path, location, value, iKEPolicyTypeVersionPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, iKEPolicyTypeVersionPropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -252,6 +279,56 @@ func (m *IKEPolicy) validateVersion(formats strfmt.Registry) error {
 	// value enum
 	if err := m.validateVersionEnum("version", "body", *m.Version); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this i k e policy based on the context it is used
+func (m *IKEPolicy) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateAuthentication(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateKeyLifetime(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *IKEPolicy) contextValidateAuthentication(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Authentication != nil {
+		if err := m.Authentication.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("authentication")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("authentication")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *IKEPolicy) contextValidateKeyLifetime(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.KeyLifetime != nil {
+		if err := m.KeyLifetime.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("keyLifetime")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("keyLifetime")
+			}
+			return err
+		}
 	}
 
 	return nil

@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // CloudConnectionVirtualPrivateClouds cloud connection virtual private clouds
+//
 // swagger:model CloudConnectionVirtualPrivateClouds
 type CloudConnectionVirtualPrivateClouds struct {
 
@@ -53,6 +54,42 @@ func (m *CloudConnectionVirtualPrivateClouds) validateVirtualPrivateClouds(forma
 			if err := m.VirtualPrivateClouds[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("virtualPrivateClouds" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("virtualPrivateClouds" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this cloud connection virtual private clouds based on the context it is used
+func (m *CloudConnectionVirtualPrivateClouds) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateVirtualPrivateClouds(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *CloudConnectionVirtualPrivateClouds) contextValidateVirtualPrivateClouds(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.VirtualPrivateClouds); i++ {
+
+		if m.VirtualPrivateClouds[i] != nil {
+			if err := m.VirtualPrivateClouds[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("virtualPrivateClouds" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("virtualPrivateClouds" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -82,6 +119,7 @@ func (m *CloudConnectionVirtualPrivateClouds) UnmarshalBinary(b []byte) error {
 }
 
 // CloudConnectionVirtualPrivateCloud cloud connection virtual private cloud
+//
 // swagger:model CloudConnectionVirtualPrivateCloud
 type CloudConnectionVirtualPrivateCloud struct {
 
@@ -161,6 +199,11 @@ func (m *CloudConnectionVirtualPrivateCloud) validateVpcID(formats strfmt.Regist
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this cloud connection virtual private cloud based on context it is used
+func (m *CloudConnectionVirtualPrivateCloud) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

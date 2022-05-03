@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudDhcpGetallReader is a Reader for the PcloudDhcpGetall structure.
@@ -24,30 +23,26 @@ type PcloudDhcpGetallReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudDhcpGetallReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudDhcpGetallOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 403:
 		result := NewPcloudDhcpGetallForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudDhcpGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -56,7 +51,7 @@ func NewPcloudDhcpGetallOK() *PcloudDhcpGetallOK {
 	return &PcloudDhcpGetallOK{}
 }
 
-/*PcloudDhcpGetallOK handles this case with default header values.
+/* PcloudDhcpGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -66,6 +61,9 @@ type PcloudDhcpGetallOK struct {
 
 func (o *PcloudDhcpGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp][%d] pcloudDhcpGetallOK  %+v", 200, o.Payload)
+}
+func (o *PcloudDhcpGetallOK) GetPayload() models.DHCPServers {
+	return o.Payload
 }
 
 func (o *PcloudDhcpGetallOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -83,7 +81,7 @@ func NewPcloudDhcpGetallForbidden() *PcloudDhcpGetallForbidden {
 	return &PcloudDhcpGetallForbidden{}
 }
 
-/*PcloudDhcpGetallForbidden handles this case with default header values.
+/* PcloudDhcpGetallForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -93,6 +91,9 @@ type PcloudDhcpGetallForbidden struct {
 
 func (o *PcloudDhcpGetallForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp][%d] pcloudDhcpGetallForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudDhcpGetallForbidden) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudDhcpGetallForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -112,7 +113,7 @@ func NewPcloudDhcpGetallInternalServerError() *PcloudDhcpGetallInternalServerErr
 	return &PcloudDhcpGetallInternalServerError{}
 }
 
-/*PcloudDhcpGetallInternalServerError handles this case with default header values.
+/* PcloudDhcpGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -122,6 +123,9 @@ type PcloudDhcpGetallInternalServerError struct {
 
 func (o *PcloudDhcpGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp][%d] pcloudDhcpGetallInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudDhcpGetallInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudDhcpGetallInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

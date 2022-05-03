@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // HostInfo host info
+//
 // swagger:model HostInfo
 type HostInfo struct {
 
@@ -80,6 +81,8 @@ func (m *HostInfo) validateCores(formats strfmt.Registry) error {
 		if err := m.Cores.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("cores")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("cores")
 			}
 			return err
 		}
@@ -116,6 +119,8 @@ func (m *HostInfo) validateMemory(formats strfmt.Registry) error {
 		if err := m.Memory.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("memory")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("memory")
 			}
 			return err
 		}
@@ -139,6 +144,82 @@ func (m *HostInfo) validatePvmInstances(formats strfmt.Registry) error {
 			if err := m.PvmInstances[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this host info based on the context it is used
+func (m *HostInfo) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateCores(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateMemory(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidatePvmInstances(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *HostInfo) contextValidateCores(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Cores != nil {
+		if err := m.Cores.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("cores")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("cores")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *HostInfo) contextValidateMemory(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Memory != nil {
+		if err := m.Memory.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("memory")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("memory")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *HostInfo) contextValidatePvmInstances(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.PvmInstances); i++ {
+
+		if m.PvmInstances[i] != nil {
+			if err := m.PvmInstances[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

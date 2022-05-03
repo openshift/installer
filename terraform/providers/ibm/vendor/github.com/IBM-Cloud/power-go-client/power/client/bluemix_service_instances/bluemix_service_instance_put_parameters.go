@@ -13,70 +13,84 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewBluemixServiceInstancePutParams creates a new BluemixServiceInstancePutParams object
-// with the default values initialized.
+// NewBluemixServiceInstancePutParams creates a new BluemixServiceInstancePutParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewBluemixServiceInstancePutParams() *BluemixServiceInstancePutParams {
-	var ()
 	return &BluemixServiceInstancePutParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewBluemixServiceInstancePutParamsWithTimeout creates a new BluemixServiceInstancePutParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewBluemixServiceInstancePutParamsWithTimeout(timeout time.Duration) *BluemixServiceInstancePutParams {
-	var ()
 	return &BluemixServiceInstancePutParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewBluemixServiceInstancePutParamsWithContext creates a new BluemixServiceInstancePutParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewBluemixServiceInstancePutParamsWithContext(ctx context.Context) *BluemixServiceInstancePutParams {
-	var ()
 	return &BluemixServiceInstancePutParams{
-
 		Context: ctx,
 	}
 }
 
 // NewBluemixServiceInstancePutParamsWithHTTPClient creates a new BluemixServiceInstancePutParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewBluemixServiceInstancePutParamsWithHTTPClient(client *http.Client) *BluemixServiceInstancePutParams {
-	var ()
 	return &BluemixServiceInstancePutParams{
 		HTTPClient: client,
 	}
 }
 
-/*BluemixServiceInstancePutParams contains all the parameters to send to the API endpoint
-for the bluemix service instance put operation typically these are written to a http.Request
+/* BluemixServiceInstancePutParams contains all the parameters to send to the API endpoint
+   for the bluemix service instance put operation.
+
+   Typically these are written to a http.Request.
 */
 type BluemixServiceInstancePutParams struct {
 
-	/*Body
-	  parameters for the requested state of a provisioned service
+	/* Body.
 
+	   parameters for the requested state of a provisioned service
 	*/
 	Body *models.ServiceInstanceRequest
-	/*InstanceID
-	  instance id of instance to provision
 
+	/* InstanceID.
+
+	   instance id of instance to provision
 	*/
 	InstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the bluemix service instance put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *BluemixServiceInstancePutParams) WithDefaults() *BluemixServiceInstancePutParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the bluemix service instance put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *BluemixServiceInstancePutParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the bluemix service instance put params
@@ -141,7 +155,6 @@ func (o *BluemixServiceInstancePutParams) WriteToRequest(r runtime.ClientRequest
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

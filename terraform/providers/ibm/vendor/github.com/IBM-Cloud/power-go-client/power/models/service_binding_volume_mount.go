@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ServiceBindingVolumeMount service binding volume mount
+//
 // swagger:model ServiceBindingVolumeMount
 type ServiceBindingVolumeMount struct {
 
@@ -91,6 +92,8 @@ func (m *ServiceBindingVolumeMount) validateDevice(formats strfmt.Registry) erro
 		if err := m.Device.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("device")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("device")
 			}
 			return err
 		}
@@ -119,7 +122,7 @@ const (
 
 // prop value enum
 func (m *ServiceBindingVolumeMount) validateDeviceTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, serviceBindingVolumeMountTypeDeviceTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, serviceBindingVolumeMountTypeDeviceTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -171,7 +174,7 @@ const (
 
 // prop value enum
 func (m *ServiceBindingVolumeMount) validateModeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, serviceBindingVolumeMountTypeModePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, serviceBindingVolumeMountTypeModePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -186,6 +189,36 @@ func (m *ServiceBindingVolumeMount) validateMode(formats strfmt.Registry) error 
 	// value enum
 	if err := m.validateModeEnum("mode", "body", *m.Mode); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this service binding volume mount based on the context it is used
+func (m *ServiceBindingVolumeMount) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateDevice(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ServiceBindingVolumeMount) contextValidateDevice(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Device != nil {
+		if err := m.Device.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("device")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("device")
+			}
+			return err
+		}
 	}
 
 	return nil

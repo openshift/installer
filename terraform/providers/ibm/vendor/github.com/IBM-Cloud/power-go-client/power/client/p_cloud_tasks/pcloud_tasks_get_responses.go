@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudTasksGetReader is a Reader for the PcloudTasksGet structure.
@@ -24,44 +23,38 @@ type PcloudTasksGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudTasksGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudTasksGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudTasksGetBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudTasksGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudTasksGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudTasksGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudTasksGetOK() *PcloudTasksGetOK {
 	return &PcloudTasksGetOK{}
 }
 
-/*PcloudTasksGetOK handles this case with default header values.
+/* PcloudTasksGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudTasksGetOK struct {
 
 func (o *PcloudTasksGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetOK  %+v", 200, o.Payload)
+}
+func (o *PcloudTasksGetOK) GetPayload() *models.Task {
+	return o.Payload
 }
 
 func (o *PcloudTasksGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -99,7 +95,7 @@ func NewPcloudTasksGetBadRequest() *PcloudTasksGetBadRequest {
 	return &PcloudTasksGetBadRequest{}
 }
 
-/*PcloudTasksGetBadRequest handles this case with default header values.
+/* PcloudTasksGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,6 +105,9 @@ type PcloudTasksGetBadRequest struct {
 
 func (o *PcloudTasksGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudTasksGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTasksGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -128,7 +127,7 @@ func NewPcloudTasksGetUnauthorized() *PcloudTasksGetUnauthorized {
 	return &PcloudTasksGetUnauthorized{}
 }
 
-/*PcloudTasksGetUnauthorized handles this case with default header values.
+/* PcloudTasksGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -138,6 +137,9 @@ type PcloudTasksGetUnauthorized struct {
 
 func (o *PcloudTasksGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudTasksGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTasksGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -157,7 +159,7 @@ func NewPcloudTasksGetNotFound() *PcloudTasksGetNotFound {
 	return &PcloudTasksGetNotFound{}
 }
 
-/*PcloudTasksGetNotFound handles this case with default header values.
+/* PcloudTasksGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -167,6 +169,9 @@ type PcloudTasksGetNotFound struct {
 
 func (o *PcloudTasksGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudTasksGetNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTasksGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -186,7 +191,7 @@ func NewPcloudTasksGetInternalServerError() *PcloudTasksGetInternalServerError {
 	return &PcloudTasksGetInternalServerError{}
 }
 
-/*PcloudTasksGetInternalServerError handles this case with default header values.
+/* PcloudTasksGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -196,6 +201,9 @@ type PcloudTasksGetInternalServerError struct {
 
 func (o *PcloudTasksGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudTasksGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudTasksGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

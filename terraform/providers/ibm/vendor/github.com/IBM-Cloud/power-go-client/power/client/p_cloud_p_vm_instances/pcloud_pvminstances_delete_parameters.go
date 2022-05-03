@@ -13,74 +13,89 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-
-	strfmt "github.com/go-openapi/strfmt"
 )
 
-// NewPcloudPvminstancesDeleteParams creates a new PcloudPvminstancesDeleteParams object
-// with the default values initialized.
+// NewPcloudPvminstancesDeleteParams creates a new PcloudPvminstancesDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPvminstancesDeleteParams() *PcloudPvminstancesDeleteParams {
-	var ()
 	return &PcloudPvminstancesDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPvminstancesDeleteParamsWithTimeout creates a new PcloudPvminstancesDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPvminstancesDeleteParamsWithTimeout(timeout time.Duration) *PcloudPvminstancesDeleteParams {
-	var ()
 	return &PcloudPvminstancesDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPvminstancesDeleteParamsWithContext creates a new PcloudPvminstancesDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPvminstancesDeleteParamsWithContext(ctx context.Context) *PcloudPvminstancesDeleteParams {
-	var ()
 	return &PcloudPvminstancesDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPvminstancesDeleteParamsWithHTTPClient creates a new PcloudPvminstancesDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPvminstancesDeleteParamsWithHTTPClient(client *http.Client) *PcloudPvminstancesDeleteParams {
-	var ()
 	return &PcloudPvminstancesDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPvminstancesDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud pvminstances delete operation typically these are written to a http.Request
+/* PcloudPvminstancesDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud pvminstances delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPvminstancesDeleteParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*DeleteDataVolumes
-	  Indicates if all data volumes attached to the PVMInstance should be deleted when deleting the PVMInstance. Shared data volumes will be deleted if there are no other PVMInstances attached.
 
+	/* DeleteDataVolumes.
+
+	   Indicates if all data volumes attached to the PVMInstance should be deleted when deleting the PVMInstance. Shared data volumes will be deleted if there are no other PVMInstances attached.
 	*/
 	DeleteDataVolumes *bool
-	/*PvmInstanceID
-	  PCloud PVM Instance ID
 
+	/* PvmInstanceID.
+
+	   PCloud PVM Instance ID
 	*/
 	PvmInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud pvminstances delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesDeleteParams) WithDefaults() *PcloudPvminstancesDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud pvminstances delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud pvminstances delete params
@@ -166,16 +181,17 @@ func (o *PcloudPvminstancesDeleteParams) WriteToRequest(r runtime.ClientRequest,
 
 		// query param delete_data_volumes
 		var qrDeleteDataVolumes bool
+
 		if o.DeleteDataVolumes != nil {
 			qrDeleteDataVolumes = *o.DeleteDataVolumes
 		}
 		qDeleteDataVolumes := swag.FormatBool(qrDeleteDataVolumes)
 		if qDeleteDataVolumes != "" {
+
 			if err := r.SetQueryParam("delete_data_volumes", qDeleteDataVolumes); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	// path param pvm_instance_id

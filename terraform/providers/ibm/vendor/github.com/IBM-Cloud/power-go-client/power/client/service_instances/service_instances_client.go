@@ -6,13 +6,14 @@ package service_instances
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new service instances API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,33 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	ServiceInstanceDeprovision(params *ServiceInstanceDeprovisionParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceDeprovisionOK, *ServiceInstanceDeprovisionAccepted, error)
+
+	ServiceInstanceGet(params *ServiceInstanceGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceGetOK, error)
+
+	ServiceInstanceLastOperationGet(params *ServiceInstanceLastOperationGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceLastOperationGetOK, error)
+
+	ServiceInstanceProvision(params *ServiceInstanceProvisionParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceProvisionOK, *ServiceInstanceProvisionCreated, *ServiceInstanceProvisionAccepted, error)
+
+	ServiceInstanceUpdate(params *ServiceInstanceUpdateParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceUpdateOK, *ServiceInstanceUpdateAccepted, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-ServiceInstanceDeprovision deprovisions a service instance
+  ServiceInstanceDeprovision deprovisions a service instance
 */
-func (a *Client) ServiceInstanceDeprovision(params *ServiceInstanceDeprovisionParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceInstanceDeprovisionOK, *ServiceInstanceDeprovisionAccepted, error) {
+func (a *Client) ServiceInstanceDeprovision(params *ServiceInstanceDeprovisionParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceDeprovisionOK, *ServiceInstanceDeprovisionAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceInstanceDeprovisionParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceInstance.deprovision",
 		Method:             "DELETE",
 		PathPattern:        "/v2/service_instances/{instance_id}",
@@ -45,7 +63,12 @@ func (a *Client) ServiceInstanceDeprovision(params *ServiceInstanceDeprovisionPa
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -55,20 +78,20 @@ func (a *Client) ServiceInstanceDeprovision(params *ServiceInstanceDeprovisionPa
 	case *ServiceInstanceDeprovisionAccepted:
 		return nil, value, nil
 	}
-	return nil, nil, nil
-
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for service_instances: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceInstanceGet gets a service instance
+  ServiceInstanceGet gets a service instance
 */
-func (a *Client) ServiceInstanceGet(params *ServiceInstanceGetParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceInstanceGetOK, error) {
+func (a *Client) ServiceInstanceGet(params *ServiceInstanceGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceInstanceGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceInstance.get",
 		Method:             "GET",
 		PathPattern:        "/v2/service_instances/{instance_id}",
@@ -80,24 +103,34 @@ func (a *Client) ServiceInstanceGet(params *ServiceInstanceGetParams, authInfo r
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceInstanceGetOK), nil
-
+	success, ok := result.(*ServiceInstanceGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceInstance.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceInstanceLastOperationGet lasts requested operation state for service instance
+  ServiceInstanceLastOperationGet lasts requested operation state for service instance
 */
-func (a *Client) ServiceInstanceLastOperationGet(params *ServiceInstanceLastOperationGetParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceInstanceLastOperationGetOK, error) {
+func (a *Client) ServiceInstanceLastOperationGet(params *ServiceInstanceLastOperationGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceLastOperationGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceInstanceLastOperationGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceInstance.lastOperation.get",
 		Method:             "GET",
 		PathPattern:        "/v2/service_instances/{instance_id}/last_operation",
@@ -109,24 +142,34 @@ func (a *Client) ServiceInstanceLastOperationGet(params *ServiceInstanceLastOper
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceInstanceLastOperationGetOK), nil
-
+	success, ok := result.(*ServiceInstanceLastOperationGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceInstance.lastOperation.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceInstanceProvision provisions a service instance
+  ServiceInstanceProvision provisions a service instance
 */
-func (a *Client) ServiceInstanceProvision(params *ServiceInstanceProvisionParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceInstanceProvisionOK, *ServiceInstanceProvisionCreated, *ServiceInstanceProvisionAccepted, error) {
+func (a *Client) ServiceInstanceProvision(params *ServiceInstanceProvisionParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceProvisionOK, *ServiceInstanceProvisionCreated, *ServiceInstanceProvisionAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceInstanceProvisionParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceInstance.provision",
 		Method:             "PUT",
 		PathPattern:        "/v2/service_instances/{instance_id}",
@@ -138,7 +181,12 @@ func (a *Client) ServiceInstanceProvision(params *ServiceInstanceProvisionParams
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -150,20 +198,20 @@ func (a *Client) ServiceInstanceProvision(params *ServiceInstanceProvisionParams
 	case *ServiceInstanceProvisionAccepted:
 		return nil, nil, value, nil
 	}
-	return nil, nil, nil, nil
-
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for service_instances: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceInstanceUpdate updates a service instance
+  ServiceInstanceUpdate updates a service instance
 */
-func (a *Client) ServiceInstanceUpdate(params *ServiceInstanceUpdateParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceInstanceUpdateOK, *ServiceInstanceUpdateAccepted, error) {
+func (a *Client) ServiceInstanceUpdate(params *ServiceInstanceUpdateParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceUpdateOK, *ServiceInstanceUpdateAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceInstanceUpdateParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceInstance.update",
 		Method:             "PATCH",
 		PathPattern:        "/v2/service_instances/{instance_id}",
@@ -175,7 +223,12 @@ func (a *Client) ServiceInstanceUpdate(params *ServiceInstanceUpdateParams, auth
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -185,8 +238,9 @@ func (a *Client) ServiceInstanceUpdate(params *ServiceInstanceUpdateParams, auth
 	case *ServiceInstanceUpdateAccepted:
 		return nil, value, nil
 	}
-	return nil, nil, nil
-
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for service_instances: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client

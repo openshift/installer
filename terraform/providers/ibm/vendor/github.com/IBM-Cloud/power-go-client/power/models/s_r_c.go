@@ -6,12 +6,14 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // SRC s r c
+//
 // swagger:model SRC
 type SRC struct {
 
@@ -24,6 +26,11 @@ type SRC struct {
 
 // Validate validates this s r c
 func (m *SRC) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this s r c based on context it is used
+func (m *SRC) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

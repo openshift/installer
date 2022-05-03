@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudSapGetallReader is a Reader for the PcloudSapGetall structure.
@@ -24,37 +23,32 @@ type PcloudSapGetallReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudSapGetallReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudSapGetallOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudSapGetallBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudSapGetallUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudSapGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -63,7 +57,7 @@ func NewPcloudSapGetallOK() *PcloudSapGetallOK {
 	return &PcloudSapGetallOK{}
 }
 
-/*PcloudSapGetallOK handles this case with default header values.
+/* PcloudSapGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,6 +67,9 @@ type PcloudSapGetallOK struct {
 
 func (o *PcloudSapGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallOK  %+v", 200, o.Payload)
+}
+func (o *PcloudSapGetallOK) GetPayload() *models.SAPProfiles {
+	return o.Payload
 }
 
 func (o *PcloudSapGetallOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -92,7 +89,7 @@ func NewPcloudSapGetallBadRequest() *PcloudSapGetallBadRequest {
 	return &PcloudSapGetallBadRequest{}
 }
 
-/*PcloudSapGetallBadRequest handles this case with default header values.
+/* PcloudSapGetallBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -102,6 +99,9 @@ type PcloudSapGetallBadRequest struct {
 
 func (o *PcloudSapGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudSapGetallBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -121,7 +121,7 @@ func NewPcloudSapGetallUnauthorized() *PcloudSapGetallUnauthorized {
 	return &PcloudSapGetallUnauthorized{}
 }
 
-/*PcloudSapGetallUnauthorized handles this case with default header values.
+/* PcloudSapGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -131,6 +131,9 @@ type PcloudSapGetallUnauthorized struct {
 
 func (o *PcloudSapGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudSapGetallUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -150,7 +153,7 @@ func NewPcloudSapGetallInternalServerError() *PcloudSapGetallInternalServerError
 	return &PcloudSapGetallInternalServerError{}
 }
 
-/*PcloudSapGetallInternalServerError handles this case with default header values.
+/* PcloudSapGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -160,6 +163,9 @@ type PcloudSapGetallInternalServerError struct {
 
 func (o *PcloudSapGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudSapGetallInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapGetallInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

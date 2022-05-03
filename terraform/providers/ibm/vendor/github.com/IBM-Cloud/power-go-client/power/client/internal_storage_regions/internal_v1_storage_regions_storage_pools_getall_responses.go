@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // InternalV1StorageRegionsStoragePoolsGetallReader is a Reader for the InternalV1StorageRegionsStoragePoolsGetall structure.
@@ -24,37 +23,32 @@ type InternalV1StorageRegionsStoragePoolsGetallReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *InternalV1StorageRegionsStoragePoolsGetallReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewInternalV1StorageRegionsStoragePoolsGetallOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewInternalV1StorageRegionsStoragePoolsGetallUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewInternalV1StorageRegionsStoragePoolsGetallNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewInternalV1StorageRegionsStoragePoolsGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -63,7 +57,7 @@ func NewInternalV1StorageRegionsStoragePoolsGetallOK() *InternalV1StorageRegions
 	return &InternalV1StorageRegionsStoragePoolsGetallOK{}
 }
 
-/*InternalV1StorageRegionsStoragePoolsGetallOK handles this case with default header values.
+/* InternalV1StorageRegionsStoragePoolsGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,6 +67,9 @@ type InternalV1StorageRegionsStoragePoolsGetallOK struct {
 
 func (o *InternalV1StorageRegionsStoragePoolsGetallOK) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallOK  %+v", 200, o.Payload)
+}
+func (o *InternalV1StorageRegionsStoragePoolsGetallOK) GetPayload() models.StoragePools {
+	return o.Payload
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetallOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -90,7 +87,7 @@ func NewInternalV1StorageRegionsStoragePoolsGetallUnauthorized() *InternalV1Stor
 	return &InternalV1StorageRegionsStoragePoolsGetallUnauthorized{}
 }
 
-/*InternalV1StorageRegionsStoragePoolsGetallUnauthorized handles this case with default header values.
+/* InternalV1StorageRegionsStoragePoolsGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -100,6 +97,9 @@ type InternalV1StorageRegionsStoragePoolsGetallUnauthorized struct {
 
 func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallUnauthorized  %+v", 401, o.Payload)
+}
+func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -119,7 +119,7 @@ func NewInternalV1StorageRegionsStoragePoolsGetallNotFound() *InternalV1StorageR
 	return &InternalV1StorageRegionsStoragePoolsGetallNotFound{}
 }
 
-/*InternalV1StorageRegionsStoragePoolsGetallNotFound handles this case with default header values.
+/* InternalV1StorageRegionsStoragePoolsGetallNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -129,6 +129,9 @@ type InternalV1StorageRegionsStoragePoolsGetallNotFound struct {
 
 func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallNotFound  %+v", 404, o.Payload)
+}
+func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -148,7 +151,7 @@ func NewInternalV1StorageRegionsStoragePoolsGetallInternalServerError() *Interna
 	return &InternalV1StorageRegionsStoragePoolsGetallInternalServerError{}
 }
 
-/*InternalV1StorageRegionsStoragePoolsGetallInternalServerError handles this case with default header values.
+/* InternalV1StorageRegionsStoragePoolsGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -158,6 +161,9 @@ type InternalV1StorageRegionsStoragePoolsGetallInternalServerError struct {
 
 func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallInternalServerError  %+v", 500, o.Payload)
+}
+func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

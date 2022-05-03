@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // DHCPServerLeases d h c p server leases
+//
 // swagger:model DHCPServerLeases
 type DHCPServerLeases struct {
 
@@ -59,6 +61,11 @@ func (m *DHCPServerLeases) validateInstanceMacAddress(formats strfmt.Registry) e
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this d h c p server leases based on context it is used
+func (m *DHCPServerLeases) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

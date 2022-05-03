@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // UpdateStoragePool update storage pool
+//
 // swagger:model UpdateStoragePool
 type UpdateStoragePool struct {
 
@@ -52,7 +53,6 @@ func (m *UpdateStoragePool) Validate(formats strfmt.Registry) error {
 }
 
 func (m *UpdateStoragePool) validateOverrideThresholds(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.OverrideThresholds) { // not required
 		return nil
 	}
@@ -61,6 +61,8 @@ func (m *UpdateStoragePool) validateOverrideThresholds(formats strfmt.Registry) 
 		if err := m.OverrideThresholds.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("overrideThresholds")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("overrideThresholds")
 			}
 			return err
 		}
@@ -92,14 +94,13 @@ const (
 
 // prop value enum
 func (m *UpdateStoragePool) validateStateEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, updateStoragePoolTypeStatePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, updateStoragePoolTypeStatePropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *UpdateStoragePool) validateState(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.State) { // not required
 		return nil
 	}
@@ -107,6 +108,36 @@ func (m *UpdateStoragePool) validateState(formats strfmt.Registry) error {
 	// value enum
 	if err := m.validateStateEnum("state", "body", *m.State); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this update storage pool based on the context it is used
+func (m *UpdateStoragePool) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateOverrideThresholds(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *UpdateStoragePool) contextValidateOverrideThresholds(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.OverrideThresholds != nil {
+		if err := m.OverrideThresholds.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("overrideThresholds")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("overrideThresholds")
+			}
+			return err
+		}
 	}
 
 	return nil

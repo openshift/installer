@@ -13,73 +13,88 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudPvminstancesVolumesPostParams creates a new PcloudPvminstancesVolumesPostParams object
-// with the default values initialized.
+// NewPcloudPvminstancesVolumesPostParams creates a new PcloudPvminstancesVolumesPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPvminstancesVolumesPostParams() *PcloudPvminstancesVolumesPostParams {
-	var ()
 	return &PcloudPvminstancesVolumesPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPvminstancesVolumesPostParamsWithTimeout creates a new PcloudPvminstancesVolumesPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPvminstancesVolumesPostParamsWithTimeout(timeout time.Duration) *PcloudPvminstancesVolumesPostParams {
-	var ()
 	return &PcloudPvminstancesVolumesPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPvminstancesVolumesPostParamsWithContext creates a new PcloudPvminstancesVolumesPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPvminstancesVolumesPostParamsWithContext(ctx context.Context) *PcloudPvminstancesVolumesPostParams {
-	var ()
 	return &PcloudPvminstancesVolumesPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPvminstancesVolumesPostParamsWithHTTPClient creates a new PcloudPvminstancesVolumesPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPvminstancesVolumesPostParamsWithHTTPClient(client *http.Client) *PcloudPvminstancesVolumesPostParams {
-	var ()
 	return &PcloudPvminstancesVolumesPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPvminstancesVolumesPostParams contains all the parameters to send to the API endpoint
-for the pcloud pvminstances volumes post operation typically these are written to a http.Request
+/* PcloudPvminstancesVolumesPostParams contains all the parameters to send to the API endpoint
+   for the pcloud pvminstances volumes post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPvminstancesVolumesPostParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PvmInstanceID
-	  PCloud PVM Instance ID
 
+	/* PvmInstanceID.
+
+	   PCloud PVM Instance ID
 	*/
 	PvmInstanceID string
-	/*VolumeID
-	  Volume ID
 
+	/* VolumeID.
+
+	   Volume ID
 	*/
 	VolumeID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud pvminstances volumes post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesVolumesPostParams) WithDefaults() *PcloudPvminstancesVolumesPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud pvminstances volumes post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesVolumesPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud pvminstances volumes post params

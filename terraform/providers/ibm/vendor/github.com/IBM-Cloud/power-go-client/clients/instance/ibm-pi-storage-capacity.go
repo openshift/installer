@@ -27,7 +27,7 @@ func (f *IBMPIStorageCapacityClient) GetAllStoragePoolsCapacity() (*models.Stora
 	params := p_cloud_storage_capacity.NewPcloudStoragecapacityPoolsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
-	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityPoolsGetall(params, f.authInfo)
+	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityPoolsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the capacity for all storage pools: %w", err)
 	}
@@ -42,7 +42,7 @@ func (f *IBMPIStorageCapacityClient) GetStoragePoolCapacity(storagePool string) 
 	params := p_cloud_storage_capacity.NewPcloudStoragecapacityPoolsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithStoragePoolName(storagePool)
-	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityPoolsGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityPoolsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the capacity for storage pool %s: %w", storagePool, err)
 	}
@@ -57,7 +57,7 @@ func (f *IBMPIStorageCapacityClient) GetStorageTypeCapacity(storageType string) 
 	params := p_cloud_storage_capacity.NewPcloudStoragecapacityTypesGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithStorageTypeName(storageType)
-	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityTypesGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityTypesGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the capacity for storage type %s: %w", storageType, err)
 	}
@@ -72,7 +72,7 @@ func (f *IBMPIStorageCapacityClient) GetAllStorageTypesCapacity() (*models.Stora
 	params := p_cloud_storage_capacity.NewPcloudStoragecapacityTypesGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
-	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityTypesGetall(params, f.authInfo)
+	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityTypesGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the capacity for all storage types %w", err)
 	}

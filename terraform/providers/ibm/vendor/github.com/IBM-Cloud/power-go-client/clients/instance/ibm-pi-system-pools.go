@@ -29,7 +29,7 @@ func (f *IBMPISystemPoolClient) Get(id string) (models.SystemPools, error) {
 	params := p_cloud_system_pools.NewPcloudSystempoolsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(id)
-	resp, err := f.session.Power.PCloudSystemPools.PcloudSystempoolsGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudSystemPools.PcloudSystempoolsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.GetSystemPoolsOperationFailed, id, err)
 	}

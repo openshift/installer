@@ -48,17 +48,17 @@ func (r *TraceLoggingTransport) dumpRequest(req *http.Request, start time.Time) 
 
 	dumpedRequest, err := httputil.DumpRequest(req, shouldDisplayBody)
 	if err != nil {
-		trace.Logger.Printf("An error occurred while dumping request:\n%v\n", err)
+		trace.Logger.Printf("[ERROR] An error occurred while dumping request: %v", err)
 		return
 	}
 
-	trace.Logger.Printf("\n%s [%s]\n%s\n",
+	trace.Logger.Printf("[DEBUG] %s [%s] %s",
 		"REQUEST:",
 		start.Format(time.RFC3339),
 		trace.Sanitize(string(dumpedRequest)))
 
 	if !shouldDisplayBody {
-		trace.Logger.Println("[MULTIPART/FORM-DATA CONTENT HIDDEN]")
+		trace.Logger.Println("[DEBUG] [MULTIPART/FORM-DATA CONTENT HIDDEN]")
 	}
 }
 
@@ -68,11 +68,11 @@ func (r *TraceLoggingTransport) dumpResponse(res *http.Response, start time.Time
 	shouldDisplayBody := !strings.Contains(res.Header.Get("Content-Type"), "application/zip")
 	dumpedResponse, err := httputil.DumpResponse(res, shouldDisplayBody)
 	if err != nil {
-		trace.Logger.Printf("An error occurred while dumping response:\n%v\n", err)
+		trace.Logger.Printf("[ERROR] An error occurred while dumping response: %v", err)
 		return
 	}
 
-	trace.Logger.Printf("\n%s [%s] %s %.0fms\n%s\n",
+	trace.Logger.Printf("[DEBUG] %s [%s] %s %.0fms %s",
 		"RESPONSE:",
 		end.Format(time.RFC3339),
 		"Elapsed:",
