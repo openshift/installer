@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/gather"
 	_ "github.com/openshift/installer/pkg/gather/azure"
+	_ "github.com/openshift/installer/pkg/gather/gcp"
 	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
