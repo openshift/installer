@@ -3205,6 +3205,13 @@ func XMLCheckpointReadOne(reader *XMLReader, start *xml.StartElement, expectedTa
 					return nil, err
 				}
 				builder.ParentId(v)
+			case "state":
+				vp, err := XMLCheckpointStateReadOne(reader, &t)
+				v := *vp
+				if err != nil {
+					return nil, err
+				}
+				builder.State(v)
 			case "vm":
 				v, err := XMLVmReadOne(reader, &t, "vm")
 				if err != nil {
@@ -9433,6 +9440,158 @@ func XMLExternalProviderReadMany(reader *XMLReader, start *xml.StartElement) (*E
 			switch t.Name.Local {
 			case "external_provider":
 				one, err := XMLExternalProviderReadOne(reader, &t, "external_provider")
+				if err != nil {
+					return nil, err
+				}
+				if one != nil {
+					result.slice = append(result.slice, one)
+				}
+			default:
+				reader.Skip()
+			}
+		case xml.EndElement:
+			depth--
+		}
+	}
+	return &result, nil
+}
+
+func XMLExternalTemplateImportReadOne(reader *XMLReader, start *xml.StartElement, expectedTag string) (*ExternalTemplateImport, error) {
+	builder := NewExternalTemplateImportBuilder()
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	if expectedTag == "" {
+		expectedTag = "external_template_import"
+	}
+	if start.Name.Local != expectedTag {
+		return nil, XMLTagNotMatchError{start.Name.Local, expectedTag}
+	}
+	var links []Link
+	depth := 1
+	for depth > 0 {
+		t, err := reader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		t = xml.CopyToken(t)
+		switch t := t.(type) {
+		case xml.StartElement:
+			switch t.Name.Local {
+			case "cluster":
+				v, err := XMLClusterReadOne(reader, &t, "cluster")
+				if err != nil {
+					return nil, err
+				}
+				builder.Cluster(v)
+			case "cpu_profile":
+				v, err := XMLCpuProfileReadOne(reader, &t, "cpu_profile")
+				if err != nil {
+					return nil, err
+				}
+				builder.CpuProfile(v)
+			case "host":
+				v, err := XMLHostReadOne(reader, &t, "host")
+				if err != nil {
+					return nil, err
+				}
+				builder.Host(v)
+			case "quota":
+				v, err := XMLQuotaReadOne(reader, &t, "quota")
+				if err != nil {
+					return nil, err
+				}
+				builder.Quota(v)
+			case "storage_domain":
+				v, err := XMLStorageDomainReadOne(reader, &t, "storage_domain")
+				if err != nil {
+					return nil, err
+				}
+				builder.StorageDomain(v)
+			case "template":
+				v, err := XMLTemplateReadOne(reader, &t, "template")
+				if err != nil {
+					return nil, err
+				}
+				builder.Template(v)
+			case "url":
+				v, err := reader.ReadString(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.Url(v)
+			case "link":
+				var rel, href string
+				for _, attr := range t.Attr {
+					name := attr.Name.Local
+					value := attr.Value
+					switch name {
+					case "href":
+						href = value
+					case "rel":
+						rel = value
+					}
+				}
+				if rel != "" && href != "" {
+					links = append(links, Link{&href, &rel})
+				}
+				// <link> just has attributes, so must skip manually
+				reader.Skip()
+			default:
+				reader.Skip()
+			}
+		case xml.EndElement:
+			depth--
+		}
+	}
+	one, err := builder.Build()
+	if err != nil {
+		return nil, err
+	}
+	for _, link := range links {
+		switch *link.rel {
+		} // end of switch
+	} // end of for-links
+	return one, nil
+}
+
+func XMLExternalTemplateImportReadMany(reader *XMLReader, start *xml.StartElement) (*ExternalTemplateImportSlice, error) {
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	var result ExternalTemplateImportSlice
+	depth := 1
+	for depth > 0 {
+		t, err := reader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		t = xml.CopyToken(t)
+		switch t := t.(type) {
+		case xml.StartElement:
+			switch t.Name.Local {
+			case "external_template_import":
+				one, err := XMLExternalTemplateImportReadOne(reader, &t, "external_template_import")
 				if err != nil {
 					return nil, err
 				}
@@ -15900,6 +16059,12 @@ func XMLInstanceTypeReadOne(reader *XMLReader, start *xml.StartElement, expected
 					return nil, err
 				}
 				builder.TimeZone(v)
+			case "tpm_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.TpmEnabled(v)
 			case "tunnel_migration":
 				v, err := reader.ReadBool(&t)
 				if err != nil {
@@ -17876,6 +18041,12 @@ func XMLMDevTypeReadOne(reader *XMLReader, start *xml.StartElement, expectedTag 
 					return nil, err
 				}
 				builder.Description(v)
+			case "human_readable_name":
+				v, err := reader.ReadString(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.HumanReadableName(v)
 			case "name":
 				v, err := reader.ReadString(&t)
 				if err != nil {
@@ -20290,6 +20461,12 @@ func XMLNicReadOne(reader *XMLReader, start *xml.StartElement, expectedTag strin
 					return nil, err
 				}
 				builder.Statistics(v)
+			case "synced":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.Synced(v)
 			case "template":
 				v, err := XMLTemplateReadOne(reader, &t, "template")
 				if err != nil {
@@ -28798,6 +28975,12 @@ func XMLSnapshotReadOne(reader *XMLReader, start *xml.StartElement, expectedTag 
 					return nil, err
 				}
 				builder.TimeZone(v)
+			case "tpm_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.TpmEnabled(v)
 			case "tunnel_migration":
 				v, err := reader.ReadBool(&t)
 				if err != nil {
@@ -31800,6 +31983,12 @@ func XMLTemplateReadOne(reader *XMLReader, start *xml.StartElement, expectedTag 
 					return nil, err
 				}
 				builder.TimeZone(v)
+			case "tpm_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.TpmEnabled(v)
 			case "tunnel_migration":
 				v, err := reader.ReadBool(&t)
 				if err != nil {
@@ -34598,6 +34787,12 @@ func XMLVmReadOne(reader *XMLReader, start *xml.StartElement, expectedTag string
 					return nil, err
 				}
 				builder.TimeZone(v)
+			case "tpm_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.TpmEnabled(v)
 			case "tunnel_migration":
 				v, err := reader.ReadBool(&t)
 				if err != nil {
@@ -35100,6 +35295,12 @@ func XMLVmBaseReadOne(reader *XMLReader, start *xml.StartElement, expectedTag st
 					return nil, err
 				}
 				builder.TimeZone(v)
+			case "tpm_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.TpmEnabled(v)
 			case "tunnel_migration":
 				v, err := reader.ReadBool(&t)
 				if err != nil {
@@ -35470,6 +35671,12 @@ func XMLVmPoolReadOne(reader *XMLReader, start *xml.StartElement, expectedTag st
 					return nil, err
 				}
 				builder.Template(v)
+			case "tpm_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.TpmEnabled(v)
 			case "type":
 				vp, err := XMLVmPoolTypeReadOne(reader, &t)
 				v := *vp
@@ -35878,6 +36085,12 @@ func XMLVnicProfileReadOne(reader *XMLReader, start *xml.StartElement, expectedT
 					return nil, err
 				}
 				builder.Description(v)
+			case "failover":
+				v, err := XMLVnicProfileReadOne(reader, &t, "failover")
+				if err != nil {
+					return nil, err
+				}
+				builder.Failover(v)
 			case "migratable":
 				v, err := reader.ReadBool(&t)
 				if err != nil {
@@ -38137,6 +38350,62 @@ func XMLBootProtocolReadMany(reader *XMLReader, start *xml.StartElement) ([]Boot
 				return nil, err
 			}
 			results = append(results, BootProtocol(one))
+		case xml.EndElement:
+			depth--
+		}
+	}
+	return results, nil
+}
+
+func XMLCheckpointStateReadOne(reader *XMLReader, start *xml.StartElement) (*CheckpointState, error) {
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	s, err := reader.ReadString(start)
+	if err != nil {
+		return nil, err
+	}
+	result := new(CheckpointState)
+	*result = CheckpointState(s)
+	return result, nil
+}
+
+func XMLCheckpointStateReadMany(reader *XMLReader, start *xml.StartElement) ([]CheckpointState, error) {
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	var results []CheckpointState
+	depth := 1
+	for depth > 0 {
+		t, err := reader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		t = xml.CopyToken(t)
+		switch t := t.(type) {
+		case xml.StartElement:
+			one, err := reader.ReadString(&t)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, CheckpointState(one))
 		case xml.EndElement:
 			depth--
 		}
