@@ -174,9 +174,9 @@ func defaultPowerVSMachinePoolPlatform() powervstypes.MachinePool {
 
 func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
 	return nutanixtypes.MachinePool{
-		NumCPUs:           2,
-		NumCoresPerSocket: 2,
-		MemoryMiB:         8192,
+		NumCPUs:           4,
+		NumCoresPerSocket: 1,
+		MemoryMiB:         16384,
 		OSDisk: nutanixtypes.OSDisk{
 			DiskSizeMiB: decimalRootVolumeSize * 1024,
 		},
