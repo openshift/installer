@@ -24,6 +24,7 @@ import (
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/gather"
+	_ "github.com/openshift/installer/pkg/gather/azure"
 	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
