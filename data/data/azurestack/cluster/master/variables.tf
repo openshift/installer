@@ -38,6 +38,11 @@ variable "subnet_id" {
   description = "The subnet to attach the masters to."
 }
 
+variable "os_volume_type" {
+  type        = string
+  description = "The type of the volume for the root block device."
+}
+
 variable "os_volume_size" {
   type        = string
   description = "The size of the volume in gigabytes for the root block device."

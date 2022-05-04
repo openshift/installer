@@ -137,7 +137,7 @@ resource "azurestack_virtual_machine" "bootstrap" {
     name              = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
     create_option     = "FromImage"
     disk_size_gb      = 100
-    managed_disk_type = "Standard_LRS"
+    managed_disk_type = var.azure_master_root_volume_type
   }
 
   boot_diagnostics {
