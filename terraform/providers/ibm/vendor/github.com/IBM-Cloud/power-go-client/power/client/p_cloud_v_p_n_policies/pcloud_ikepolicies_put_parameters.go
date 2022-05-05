@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudIkepoliciesPutParams creates a new PcloudIkepoliciesPutParams object
-// with the default values initialized.
+// NewPcloudIkepoliciesPutParams creates a new PcloudIkepoliciesPutParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudIkepoliciesPutParams() *PcloudIkepoliciesPutParams {
-	var ()
 	return &PcloudIkepoliciesPutParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudIkepoliciesPutParamsWithTimeout creates a new PcloudIkepoliciesPutParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudIkepoliciesPutParamsWithTimeout(timeout time.Duration) *PcloudIkepoliciesPutParams {
-	var ()
 	return &PcloudIkepoliciesPutParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudIkepoliciesPutParamsWithContext creates a new PcloudIkepoliciesPutParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudIkepoliciesPutParamsWithContext(ctx context.Context) *PcloudIkepoliciesPutParams {
-	var ()
 	return &PcloudIkepoliciesPutParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudIkepoliciesPutParamsWithHTTPClient creates a new PcloudIkepoliciesPutParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudIkepoliciesPutParamsWithHTTPClient(client *http.Client) *PcloudIkepoliciesPutParams {
-	var ()
 	return &PcloudIkepoliciesPutParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudIkepoliciesPutParams contains all the parameters to send to the API endpoint
-for the pcloud ikepolicies put operation typically these are written to a http.Request
+/* PcloudIkepoliciesPutParams contains all the parameters to send to the API endpoint
+   for the pcloud ikepolicies put operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudIkepoliciesPutParams struct {
 
-	/*Body
-	  Parameters for updating IKE Policy
+	/* Body.
 
+	   Parameters for updating IKE Policy
 	*/
 	Body *models.IKEPolicyUpdate
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*IkePolicyID
-	  ID of a IKE Policy
 
+	/* IkePolicyID.
+
+	   ID of a IKE Policy
 	*/
 	IkePolicyID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud ikepolicies put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudIkepoliciesPutParams) WithDefaults() *PcloudIkepoliciesPutParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud ikepolicies put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudIkepoliciesPutParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud ikepolicies put params
@@ -157,7 +172,6 @@ func (o *PcloudIkepoliciesPutParams) WriteToRequest(r runtime.ClientRequest, reg
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

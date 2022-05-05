@@ -6,13 +6,14 @@ package open_stacks
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new open stacks API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,33 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	ServiceBrokerOpenstacksGet(params *ServiceBrokerOpenstacksGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksGetOK, error)
+
+	ServiceBrokerOpenstacksHostsGet(params *ServiceBrokerOpenstacksHostsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksHostsGetOK, error)
+
+	ServiceBrokerOpenstacksOpenstackGet(params *ServiceBrokerOpenstacksOpenstackGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksOpenstackGetOK, error)
+
+	ServiceBrokerOpenstacksPost(params *ServiceBrokerOpenstacksPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksPostOK, *ServiceBrokerOpenstacksPostCreated, error)
+
+	ServiceBrokerOpenstacksServersGet(params *ServiceBrokerOpenstacksServersGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksServersGetOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-ServiceBrokerOpenstacksGet lists all open stack instances being managed
+  ServiceBrokerOpenstacksGet lists all open stack instances being managed
 */
-func (a *Client) ServiceBrokerOpenstacksGet(params *ServiceBrokerOpenstacksGetParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceBrokerOpenstacksGetOK, error) {
+func (a *Client) ServiceBrokerOpenstacksGet(params *ServiceBrokerOpenstacksGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerOpenstacksGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.openstacks.get",
 		Method:             "GET",
 		PathPattern:        "/broker/v1/openstacks",
@@ -45,24 +63,34 @@ func (a *Client) ServiceBrokerOpenstacksGet(params *ServiceBrokerOpenstacksGetPa
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerOpenstacksGetOK), nil
-
+	success, ok := result.(*ServiceBrokerOpenstacksGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.openstacks.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerOpenstacksHostsGet lists account information for all pvm instances on hostname
+  ServiceBrokerOpenstacksHostsGet lists account information for all pvm instances on hostname
 */
-func (a *Client) ServiceBrokerOpenstacksHostsGet(params *ServiceBrokerOpenstacksHostsGetParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceBrokerOpenstacksHostsGetOK, error) {
+func (a *Client) ServiceBrokerOpenstacksHostsGet(params *ServiceBrokerOpenstacksHostsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksHostsGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerOpenstacksHostsGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.openstacks.hosts.get",
 		Method:             "GET",
 		PathPattern:        "/broker/v1/openstacks/{openstack_id}/hosts/{hostname}",
@@ -74,24 +102,34 @@ func (a *Client) ServiceBrokerOpenstacksHostsGet(params *ServiceBrokerOpenstacks
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerOpenstacksHostsGetOK), nil
-
+	success, ok := result.(*ServiceBrokerOpenstacksHostsGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.openstacks.hosts.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerOpenstacksOpenstackGet lists account information for all pvm instances on hostname
+  ServiceBrokerOpenstacksOpenstackGet lists account information for all pvm instances on hostname
 */
-func (a *Client) ServiceBrokerOpenstacksOpenstackGet(params *ServiceBrokerOpenstacksOpenstackGetParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceBrokerOpenstacksOpenstackGetOK, error) {
+func (a *Client) ServiceBrokerOpenstacksOpenstackGet(params *ServiceBrokerOpenstacksOpenstackGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksOpenstackGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerOpenstacksOpenstackGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.openstacks.openstack.get",
 		Method:             "GET",
 		PathPattern:        "/broker/v1/openstacks/{openstack_id}",
@@ -103,24 +141,34 @@ func (a *Client) ServiceBrokerOpenstacksOpenstackGet(params *ServiceBrokerOpenst
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerOpenstacksOpenstackGetOK), nil
-
+	success, ok := result.(*ServiceBrokerOpenstacksOpenstackGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.openstacks.openstack.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerOpenstacksPost creates a new open stack instance to be managed
+  ServiceBrokerOpenstacksPost creates a new open stack instance to be managed
 */
-func (a *Client) ServiceBrokerOpenstacksPost(params *ServiceBrokerOpenstacksPostParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceBrokerOpenstacksPostOK, *ServiceBrokerOpenstacksPostCreated, error) {
+func (a *Client) ServiceBrokerOpenstacksPost(params *ServiceBrokerOpenstacksPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksPostOK, *ServiceBrokerOpenstacksPostCreated, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerOpenstacksPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.openstacks.post",
 		Method:             "POST",
 		PathPattern:        "/broker/v1/openstacks",
@@ -132,7 +180,12 @@ func (a *Client) ServiceBrokerOpenstacksPost(params *ServiceBrokerOpenstacksPost
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -142,20 +195,20 @@ func (a *Client) ServiceBrokerOpenstacksPost(params *ServiceBrokerOpenstacksPost
 	case *ServiceBrokerOpenstacksPostCreated:
 		return nil, value, nil
 	}
-	return nil, nil, nil
-
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for open_stacks: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerOpenstacksServersGet lists account information for a pvm instance
+  ServiceBrokerOpenstacksServersGet lists account information for a pvm instance
 */
-func (a *Client) ServiceBrokerOpenstacksServersGet(params *ServiceBrokerOpenstacksServersGetParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceBrokerOpenstacksServersGetOK, error) {
+func (a *Client) ServiceBrokerOpenstacksServersGet(params *ServiceBrokerOpenstacksServersGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksServersGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerOpenstacksServersGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.openstacks.servers.get",
 		Method:             "GET",
 		PathPattern:        "/broker/v1/openstacks/{openstack_id}/servers/{pvm_instance_id}",
@@ -167,12 +220,23 @@ func (a *Client) ServiceBrokerOpenstacksServersGet(params *ServiceBrokerOpenstac
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerOpenstacksServersGetOK), nil
-
+	success, ok := result.(*ServiceBrokerOpenstacksServersGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.openstacks.servers.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client

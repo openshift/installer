@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudCloudconnectionsPutParams creates a new PcloudCloudconnectionsPutParams object
-// with the default values initialized.
+// NewPcloudCloudconnectionsPutParams creates a new PcloudCloudconnectionsPutParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudconnectionsPutParams() *PcloudCloudconnectionsPutParams {
-	var ()
 	return &PcloudCloudconnectionsPutParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudconnectionsPutParamsWithTimeout creates a new PcloudCloudconnectionsPutParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudconnectionsPutParamsWithTimeout(timeout time.Duration) *PcloudCloudconnectionsPutParams {
-	var ()
 	return &PcloudCloudconnectionsPutParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudconnectionsPutParamsWithContext creates a new PcloudCloudconnectionsPutParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudconnectionsPutParamsWithContext(ctx context.Context) *PcloudCloudconnectionsPutParams {
-	var ()
 	return &PcloudCloudconnectionsPutParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudconnectionsPutParamsWithHTTPClient creates a new PcloudCloudconnectionsPutParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudconnectionsPutParamsWithHTTPClient(client *http.Client) *PcloudCloudconnectionsPutParams {
-	var ()
 	return &PcloudCloudconnectionsPutParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudconnectionsPutParams contains all the parameters to send to the API endpoint
-for the pcloud cloudconnections put operation typically these are written to a http.Request
+/* PcloudCloudconnectionsPutParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudconnections put operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudconnectionsPutParams struct {
 
-	/*Body
-	  Parameters to update a Cloud Connection
+	/* Body.
 
+	   Parameters to update a Cloud Connection
 	*/
 	Body *models.CloudConnectionUpdate
-	/*CloudConnectionID
-	  Cloud Connection ID
 
+	/* CloudConnectionID.
+
+	   Cloud Connection ID
 	*/
 	CloudConnectionID string
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudconnections put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudconnectionsPutParams) WithDefaults() *PcloudCloudconnectionsPutParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudconnections put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudconnectionsPutParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudconnections put params
@@ -157,7 +172,6 @@ func (o *PcloudCloudconnectionsPutParams) WriteToRequest(r runtime.ClientRequest
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

@@ -6,21 +6,29 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // PeerSubnets peer subnets
+//
 // swagger:model PeerSubnets
 type PeerSubnets struct {
 
 	// an array of strings containing CIDR of peer subnets
+	// Example: ["128.170.1.0/20","128.169.1.0/24","128.168.1.0/27","128.170.1.0/32"]
 	PeerSubnets []string `json:"peerSubnets"`
 }
 
 // Validate validates this peer subnets
 func (m *PeerSubnets) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this peer subnets based on context it is used
+func (m *PeerSubnets) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

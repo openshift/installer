@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudPvminstancesClonePostReader is a Reader for the PcloudPvminstancesClonePost structure.
@@ -24,51 +23,44 @@ type PcloudPvminstancesClonePostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudPvminstancesClonePostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 202:
 		result := NewPcloudPvminstancesClonePostAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudPvminstancesClonePostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudPvminstancesClonePostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudPvminstancesClonePostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudPvminstancesClonePostUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudPvminstancesClonePostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudPvminstancesClonePostAccepted() *PcloudPvminstancesClonePostAccept
 	return &PcloudPvminstancesClonePostAccepted{}
 }
 
-/*PcloudPvminstancesClonePostAccepted handles this case with default header values.
+/* PcloudPvminstancesClonePostAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -87,6 +79,9 @@ type PcloudPvminstancesClonePostAccepted struct {
 
 func (o *PcloudPvminstancesClonePostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostAccepted  %+v", 202, o.Payload)
+}
+func (o *PcloudPvminstancesClonePostAccepted) GetPayload() *models.PVMInstance {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesClonePostAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -106,7 +101,7 @@ func NewPcloudPvminstancesClonePostBadRequest() *PcloudPvminstancesClonePostBadR
 	return &PcloudPvminstancesClonePostBadRequest{}
 }
 
-/*PcloudPvminstancesClonePostBadRequest handles this case with default header values.
+/* PcloudPvminstancesClonePostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -116,6 +111,9 @@ type PcloudPvminstancesClonePostBadRequest struct {
 
 func (o *PcloudPvminstancesClonePostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudPvminstancesClonePostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesClonePostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -135,7 +133,7 @@ func NewPcloudPvminstancesClonePostUnauthorized() *PcloudPvminstancesClonePostUn
 	return &PcloudPvminstancesClonePostUnauthorized{}
 }
 
-/*PcloudPvminstancesClonePostUnauthorized handles this case with default header values.
+/* PcloudPvminstancesClonePostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -145,6 +143,9 @@ type PcloudPvminstancesClonePostUnauthorized struct {
 
 func (o *PcloudPvminstancesClonePostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudPvminstancesClonePostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesClonePostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -164,7 +165,7 @@ func NewPcloudPvminstancesClonePostConflict() *PcloudPvminstancesClonePostConfli
 	return &PcloudPvminstancesClonePostConflict{}
 }
 
-/*PcloudPvminstancesClonePostConflict handles this case with default header values.
+/* PcloudPvminstancesClonePostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -174,6 +175,9 @@ type PcloudPvminstancesClonePostConflict struct {
 
 func (o *PcloudPvminstancesClonePostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudPvminstancesClonePostConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesClonePostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -193,7 +197,7 @@ func NewPcloudPvminstancesClonePostUnprocessableEntity() *PcloudPvminstancesClon
 	return &PcloudPvminstancesClonePostUnprocessableEntity{}
 }
 
-/*PcloudPvminstancesClonePostUnprocessableEntity handles this case with default header values.
+/* PcloudPvminstancesClonePostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -203,6 +207,9 @@ type PcloudPvminstancesClonePostUnprocessableEntity struct {
 
 func (o *PcloudPvminstancesClonePostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudPvminstancesClonePostUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesClonePostUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -222,7 +229,7 @@ func NewPcloudPvminstancesClonePostInternalServerError() *PcloudPvminstancesClon
 	return &PcloudPvminstancesClonePostInternalServerError{}
 }
 
-/*PcloudPvminstancesClonePostInternalServerError handles this case with default header values.
+/* PcloudPvminstancesClonePostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -232,6 +239,9 @@ type PcloudPvminstancesClonePostInternalServerError struct {
 
 func (o *PcloudPvminstancesClonePostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudPvminstancesClonePostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesClonePostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

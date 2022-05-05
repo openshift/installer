@@ -6,16 +6,19 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // IKEPolicyUpdate IKE Policy object used for update
+//
+// Min Properties: 1
+//
 // swagger:model IKEPolicyUpdate
 type IKEPolicyUpdate struct {
 
@@ -23,17 +26,20 @@ type IKEPolicyUpdate struct {
 	Authentication IKEPolicyAuthentication `json:"authentication,omitempty"`
 
 	// DH group of the IKE Policy
+	// Example: 2
 	// Enum: [1 2 5 14 19 20 24]
 	DhGroup int64 `json:"dhGroup,omitempty"`
 
 	// encryption of the IKE Policy
-	// Enum: [3des-cbc aes-128-cbc aes-128-gcm aes-192-cbc aes-256-cbc aes-256-gcm des-cbc]
+	// Example: aes-256-cbc
+	// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-128-gcm 3des-cbc]
 	Encryption string `json:"encryption,omitempty"`
 
 	// key lifetime
 	KeyLifetime KeyLifetime `json:"keyLifetime,omitempty"`
 
 	// name of the IKE Policy
+	// Example: ikePolicy1
 	// Max Length: 47
 	// Min Length: 1
 	Name string `json:"name,omitempty"`
@@ -42,6 +48,7 @@ type IKEPolicyUpdate struct {
 	PresharedKey string `json:"presharedKey,omitempty"`
 
 	// version of the IKE Policy
+	// Example: 2
 	// Enum: [1 2]
 	Version int64 `json:"version,omitempty"`
 
@@ -58,17 +65,20 @@ func (m *IKEPolicyUpdate) UnmarshalJSON(data []byte) error {
 		Authentication IKEPolicyAuthentication `json:"authentication,omitempty"`
 
 		// DH group of the IKE Policy
+		// Example: 2
 		// Enum: [1 2 5 14 19 20 24]
 		DhGroup int64 `json:"dhGroup,omitempty"`
 
 		// encryption of the IKE Policy
-		// Enum: [3des-cbc aes-128-cbc aes-128-gcm aes-192-cbc aes-256-cbc aes-256-gcm des-cbc]
+		// Example: aes-256-cbc
+		// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-128-gcm 3des-cbc]
 		Encryption string `json:"encryption,omitempty"`
 
 		// key lifetime
 		KeyLifetime KeyLifetime `json:"keyLifetime,omitempty"`
 
 		// name of the IKE Policy
+		// Example: ikePolicy1
 		// Max Length: 47
 		// Min Length: 1
 		Name string `json:"name,omitempty"`
@@ -77,6 +87,7 @@ func (m *IKEPolicyUpdate) UnmarshalJSON(data []byte) error {
 		PresharedKey string `json:"presharedKey,omitempty"`
 
 		// version of the IKE Policy
+		// Example: 2
 		// Enum: [1 2]
 		Version int64 `json:"version,omitempty"`
 	}
@@ -86,19 +97,12 @@ func (m *IKEPolicyUpdate) UnmarshalJSON(data []byte) error {
 	var rcv IKEPolicyUpdate
 
 	rcv.Authentication = stage1.Authentication
-
 	rcv.DhGroup = stage1.DhGroup
-
 	rcv.Encryption = stage1.Encryption
-
 	rcv.KeyLifetime = stage1.KeyLifetime
-
 	rcv.Name = stage1.Name
-
 	rcv.PresharedKey = stage1.PresharedKey
-
 	rcv.Version = stage1.Version
-
 	*m = rcv
 
 	// stage 2, remove properties and add to map
@@ -108,19 +112,12 @@ func (m *IKEPolicyUpdate) UnmarshalJSON(data []byte) error {
 	}
 
 	delete(stage2, "authentication")
-
 	delete(stage2, "dhGroup")
-
 	delete(stage2, "encryption")
-
 	delete(stage2, "keyLifetime")
-
 	delete(stage2, "name")
-
 	delete(stage2, "presharedKey")
-
 	delete(stage2, "version")
-
 	// stage 3, add additional properties values
 	if len(stage2) > 0 {
 		result := make(map[string]interface{})
@@ -145,17 +142,20 @@ func (m IKEPolicyUpdate) MarshalJSON() ([]byte, error) {
 		Authentication IKEPolicyAuthentication `json:"authentication,omitempty"`
 
 		// DH group of the IKE Policy
+		// Example: 2
 		// Enum: [1 2 5 14 19 20 24]
 		DhGroup int64 `json:"dhGroup,omitempty"`
 
 		// encryption of the IKE Policy
-		// Enum: [3des-cbc aes-128-cbc aes-128-gcm aes-192-cbc aes-256-cbc aes-256-gcm des-cbc]
+		// Example: aes-256-cbc
+		// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-128-gcm 3des-cbc]
 		Encryption string `json:"encryption,omitempty"`
 
 		// key lifetime
 		KeyLifetime KeyLifetime `json:"keyLifetime,omitempty"`
 
 		// name of the IKE Policy
+		// Example: ikePolicy1
 		// Max Length: 47
 		// Min Length: 1
 		Name string `json:"name,omitempty"`
@@ -164,22 +164,17 @@ func (m IKEPolicyUpdate) MarshalJSON() ([]byte, error) {
 		PresharedKey string `json:"presharedKey,omitempty"`
 
 		// version of the IKE Policy
+		// Example: 2
 		// Enum: [1 2]
 		Version int64 `json:"version,omitempty"`
 	}
 
 	stage1.Authentication = m.Authentication
-
 	stage1.DhGroup = m.DhGroup
-
 	stage1.Encryption = m.Encryption
-
 	stage1.KeyLifetime = m.KeyLifetime
-
 	stage1.Name = m.Name
-
 	stage1.PresharedKey = m.PresharedKey
-
 	stage1.Version = m.Version
 
 	// make JSON object for known properties
@@ -188,7 +183,7 @@ func (m IKEPolicyUpdate) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	if len(m.IKEPolicyUpdateAdditionalProperties) == 0 {
+	if len(m.IKEPolicyUpdateAdditionalProperties) == 0 { // no additional properties
 		return props, nil
 	}
 
@@ -198,18 +193,39 @@ func (m IKEPolicyUpdate) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	if len(props) < 3 {
+	if len(props) < 3 { // "{}": only additional properties
 		return additional, nil
 	}
 
 	// concatenate the 2 objects
-	props[len(props)-1] = ','
-	return append(props, additional[1:]...), nil
+	return swag.ConcatJSON(props, additional), nil
 }
 
 // Validate validates this i k e policy update
 func (m *IKEPolicyUpdate) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	// short circuits minProperties > 0
+	if m == nil {
+		return errors.TooFewProperties("", "body", 1)
+	}
+
+	props := make(map[string]json.RawMessage, 7+10)
+	j, err := swag.WriteJSON(m)
+	if err != nil {
+		return err
+	}
+
+	if err = swag.ReadJSON(j, &props); err != nil {
+		return err
+	}
+
+	nprops := len(props)
+
+	// minProperties: 1
+	if nprops < 1 {
+		return errors.TooFewProperties("", "body", 1)
+	}
 
 	if err := m.validateAuthentication(formats); err != nil {
 		res = append(res, err)
@@ -242,7 +258,6 @@ func (m *IKEPolicyUpdate) Validate(formats strfmt.Registry) error {
 }
 
 func (m *IKEPolicyUpdate) validateAuthentication(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Authentication) { // not required
 		return nil
 	}
@@ -250,6 +265,8 @@ func (m *IKEPolicyUpdate) validateAuthentication(formats strfmt.Registry) error 
 	if err := m.Authentication.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("authentication")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("authentication")
 		}
 		return err
 	}
@@ -271,14 +288,13 @@ func init() {
 
 // prop value enum
 func (m *IKEPolicyUpdate) validateDhGroupEnum(path, location string, value int64) error {
-	if err := validate.Enum(path, location, value, iKEPolicyUpdateTypeDhGroupPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, iKEPolicyUpdateTypeDhGroupPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *IKEPolicyUpdate) validateDhGroup(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.DhGroup) { // not required
 		return nil
 	}
@@ -295,7 +311,7 @@ var iKEPolicyUpdateTypeEncryptionPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["3des-cbc","aes-128-cbc","aes-128-gcm","aes-192-cbc","aes-256-cbc","aes-256-gcm","des-cbc"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-128-gcm","3des-cbc"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -305,38 +321,34 @@ func init() {
 
 const (
 
-	// IKEPolicyUpdateEncryptionNr3desCbc captures enum value "3des-cbc"
-	IKEPolicyUpdateEncryptionNr3desCbc string = "3des-cbc"
+	// IKEPolicyUpdateEncryptionAesDash256DashCbc captures enum value "aes-256-cbc"
+	IKEPolicyUpdateEncryptionAesDash256DashCbc string = "aes-256-cbc"
 
-	// IKEPolicyUpdateEncryptionAes128Cbc captures enum value "aes-128-cbc"
-	IKEPolicyUpdateEncryptionAes128Cbc string = "aes-128-cbc"
+	// IKEPolicyUpdateEncryptionAesDash192DashCbc captures enum value "aes-192-cbc"
+	IKEPolicyUpdateEncryptionAesDash192DashCbc string = "aes-192-cbc"
 
-	// IKEPolicyUpdateEncryptionAes128Gcm captures enum value "aes-128-gcm"
-	IKEPolicyUpdateEncryptionAes128Gcm string = "aes-128-gcm"
+	// IKEPolicyUpdateEncryptionAesDash128DashCbc captures enum value "aes-128-cbc"
+	IKEPolicyUpdateEncryptionAesDash128DashCbc string = "aes-128-cbc"
 
-	// IKEPolicyUpdateEncryptionAes192Cbc captures enum value "aes-192-cbc"
-	IKEPolicyUpdateEncryptionAes192Cbc string = "aes-192-cbc"
+	// IKEPolicyUpdateEncryptionAesDash256DashGcm captures enum value "aes-256-gcm"
+	IKEPolicyUpdateEncryptionAesDash256DashGcm string = "aes-256-gcm"
 
-	// IKEPolicyUpdateEncryptionAes256Cbc captures enum value "aes-256-cbc"
-	IKEPolicyUpdateEncryptionAes256Cbc string = "aes-256-cbc"
+	// IKEPolicyUpdateEncryptionAesDash128DashGcm captures enum value "aes-128-gcm"
+	IKEPolicyUpdateEncryptionAesDash128DashGcm string = "aes-128-gcm"
 
-	// IKEPolicyUpdateEncryptionAes256Gcm captures enum value "aes-256-gcm"
-	IKEPolicyUpdateEncryptionAes256Gcm string = "aes-256-gcm"
-
-	// IKEPolicyUpdateEncryptionDesCbc captures enum value "des-cbc"
-	IKEPolicyUpdateEncryptionDesCbc string = "des-cbc"
+	// IKEPolicyUpdateEncryptionNr3desDashCbc captures enum value "3des-cbc"
+	IKEPolicyUpdateEncryptionNr3desDashCbc string = "3des-cbc"
 )
 
 // prop value enum
 func (m *IKEPolicyUpdate) validateEncryptionEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, iKEPolicyUpdateTypeEncryptionPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, iKEPolicyUpdateTypeEncryptionPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *IKEPolicyUpdate) validateEncryption(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Encryption) { // not required
 		return nil
 	}
@@ -350,7 +362,6 @@ func (m *IKEPolicyUpdate) validateEncryption(formats strfmt.Registry) error {
 }
 
 func (m *IKEPolicyUpdate) validateKeyLifetime(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.KeyLifetime) { // not required
 		return nil
 	}
@@ -358,6 +369,8 @@ func (m *IKEPolicyUpdate) validateKeyLifetime(formats strfmt.Registry) error {
 	if err := m.KeyLifetime.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("keyLifetime")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("keyLifetime")
 		}
 		return err
 	}
@@ -366,16 +379,15 @@ func (m *IKEPolicyUpdate) validateKeyLifetime(formats strfmt.Registry) error {
 }
 
 func (m *IKEPolicyUpdate) validateName(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Name) { // not required
 		return nil
 	}
 
-	if err := validate.MinLength("name", "body", string(m.Name), 1); err != nil {
+	if err := validate.MinLength("name", "body", m.Name, 1); err != nil {
 		return err
 	}
 
-	if err := validate.MaxLength("name", "body", string(m.Name), 47); err != nil {
+	if err := validate.MaxLength("name", "body", m.Name, 47); err != nil {
 		return err
 	}
 
@@ -396,20 +408,65 @@ func init() {
 
 // prop value enum
 func (m *IKEPolicyUpdate) validateVersionEnum(path, location string, value int64) error {
-	if err := validate.Enum(path, location, value, iKEPolicyUpdateTypeVersionPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, iKEPolicyUpdateTypeVersionPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *IKEPolicyUpdate) validateVersion(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Version) { // not required
 		return nil
 	}
 
 	// value enum
 	if err := m.validateVersionEnum("version", "body", m.Version); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this i k e policy update based on the context it is used
+func (m *IKEPolicyUpdate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateAuthentication(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateKeyLifetime(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *IKEPolicyUpdate) contextValidateAuthentication(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.Authentication.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("authentication")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("authentication")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *IKEPolicyUpdate) contextValidateKeyLifetime(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.KeyLifetime.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("keyLifetime")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("keyLifetime")
+		}
 		return err
 	}
 

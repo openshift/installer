@@ -6,12 +6,14 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // AsyncOperation async operation
+//
 // swagger:model AsyncOperation
 type AsyncOperation struct {
 
@@ -21,6 +23,11 @@ type AsyncOperation struct {
 
 // Validate validates this async operation
 func (m *AsyncOperation) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this async operation based on context it is used
+func (m *AsyncOperation) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

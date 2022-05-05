@@ -13,83 +13,100 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudEventsGetqueryParams creates a new PcloudEventsGetqueryParams object
-// with the default values initialized.
+// NewPcloudEventsGetqueryParams creates a new PcloudEventsGetqueryParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudEventsGetqueryParams() *PcloudEventsGetqueryParams {
-	var ()
 	return &PcloudEventsGetqueryParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudEventsGetqueryParamsWithTimeout creates a new PcloudEventsGetqueryParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudEventsGetqueryParamsWithTimeout(timeout time.Duration) *PcloudEventsGetqueryParams {
-	var ()
 	return &PcloudEventsGetqueryParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudEventsGetqueryParamsWithContext creates a new PcloudEventsGetqueryParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudEventsGetqueryParamsWithContext(ctx context.Context) *PcloudEventsGetqueryParams {
-	var ()
 	return &PcloudEventsGetqueryParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudEventsGetqueryParamsWithHTTPClient creates a new PcloudEventsGetqueryParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudEventsGetqueryParamsWithHTTPClient(client *http.Client) *PcloudEventsGetqueryParams {
-	var ()
 	return &PcloudEventsGetqueryParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudEventsGetqueryParams contains all the parameters to send to the API endpoint
-for the pcloud events getquery operation typically these are written to a http.Request
+/* PcloudEventsGetqueryParams contains all the parameters to send to the API endpoint
+   for the pcloud events getquery operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudEventsGetqueryParams struct {
 
-	/*AcceptLanguage
-	  The language requested for the return document
+	/* AcceptLanguage.
 
+	   The language requested for the return document
 	*/
 	AcceptLanguage *string
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*FromTime
-	  A from query time in either ISO 8601 or unix epoch format
 
+	/* FromTime.
+
+	   A from query time in either ISO 8601 or unix epoch format
 	*/
 	FromTime *string
-	/*Time
-	  (deprecated - use from_time) A time in either ISO 8601 or unix epoch format
 
+	/* Time.
+
+	   (deprecated - use from_time) A time in either ISO 8601 or unix epoch format
 	*/
 	Time *string
-	/*ToTime
-	  A to query time in either ISO 8601 or unix epoch format
 
+	/* ToTime.
+
+	   A to query time in either ISO 8601 or unix epoch format
 	*/
 	ToTime *string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud events getquery params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudEventsGetqueryParams) WithDefaults() *PcloudEventsGetqueryParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud events getquery params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudEventsGetqueryParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud events getquery params
@@ -194,7 +211,6 @@ func (o *PcloudEventsGetqueryParams) WriteToRequest(r runtime.ClientRequest, reg
 		if err := r.SetHeaderParam("Accept-Language", *o.AcceptLanguage); err != nil {
 			return err
 		}
-
 	}
 
 	// path param cloud_instance_id
@@ -206,48 +222,51 @@ func (o *PcloudEventsGetqueryParams) WriteToRequest(r runtime.ClientRequest, reg
 
 		// query param from_time
 		var qrFromTime string
+
 		if o.FromTime != nil {
 			qrFromTime = *o.FromTime
 		}
 		qFromTime := qrFromTime
 		if qFromTime != "" {
+
 			if err := r.SetQueryParam("from_time", qFromTime); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if o.Time != nil {
 
 		// query param time
 		var qrTime string
+
 		if o.Time != nil {
 			qrTime = *o.Time
 		}
 		qTime := qrTime
 		if qTime != "" {
+
 			if err := r.SetQueryParam("time", qTime); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if o.ToTime != nil {
 
 		// query param to_time
 		var qrToTime string
+
 		if o.ToTime != nil {
 			qrToTime = *o.ToTime
 		}
 		qToTime := qrToTime
 		if qToTime != "" {
+
 			if err := r.SetQueryParam("to_time", qToTime); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if len(res) > 0 {

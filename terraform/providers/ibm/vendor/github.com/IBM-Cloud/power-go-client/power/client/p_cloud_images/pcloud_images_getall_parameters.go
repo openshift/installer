@@ -13,69 +13,83 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-
-	strfmt "github.com/go-openapi/strfmt"
 )
 
-// NewPcloudImagesGetallParams creates a new PcloudImagesGetallParams object
-// with the default values initialized.
+// NewPcloudImagesGetallParams creates a new PcloudImagesGetallParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudImagesGetallParams() *PcloudImagesGetallParams {
-	var ()
 	return &PcloudImagesGetallParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudImagesGetallParamsWithTimeout creates a new PcloudImagesGetallParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudImagesGetallParamsWithTimeout(timeout time.Duration) *PcloudImagesGetallParams {
-	var ()
 	return &PcloudImagesGetallParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudImagesGetallParamsWithContext creates a new PcloudImagesGetallParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudImagesGetallParamsWithContext(ctx context.Context) *PcloudImagesGetallParams {
-	var ()
 	return &PcloudImagesGetallParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudImagesGetallParamsWithHTTPClient creates a new PcloudImagesGetallParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudImagesGetallParamsWithHTTPClient(client *http.Client) *PcloudImagesGetallParams {
-	var ()
 	return &PcloudImagesGetallParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudImagesGetallParams contains all the parameters to send to the API endpoint
-for the pcloud images getall operation typically these are written to a http.Request
+/* PcloudImagesGetallParams contains all the parameters to send to the API endpoint
+   for the pcloud images getall operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudImagesGetallParams struct {
 
-	/*Sap
-	  Include SAP images with get available stock images
+	/* Sap.
 
+	   Include SAP images with get available stock images
 	*/
 	Sap *bool
-	/*Vtl
-	  Include VTL images with get available stock images
 
+	/* Vtl.
+
+	   Include VTL images with get available stock images
 	*/
 	Vtl *bool
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud images getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudImagesGetallParams) WithDefaults() *PcloudImagesGetallParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud images getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudImagesGetallParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud images getall params
@@ -145,32 +159,34 @@ func (o *PcloudImagesGetallParams) WriteToRequest(r runtime.ClientRequest, reg s
 
 		// query param sap
 		var qrSap bool
+
 		if o.Sap != nil {
 			qrSap = *o.Sap
 		}
 		qSap := swag.FormatBool(qrSap)
 		if qSap != "" {
+
 			if err := r.SetQueryParam("sap", qSap); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if o.Vtl != nil {
 
 		// query param vtl
 		var qrVtl bool
+
 		if o.Vtl != nil {
 			qrVtl = *o.Vtl
 		}
 		qVtl := swag.FormatBool(qrVtl)
 		if qVtl != "" {
+
 			if err := r.SetQueryParam("vtl", qVtl); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if len(res) > 0 {

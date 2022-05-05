@@ -13,73 +13,88 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudPvminstancesNetworksGetParams creates a new PcloudPvminstancesNetworksGetParams object
-// with the default values initialized.
+// NewPcloudPvminstancesNetworksGetParams creates a new PcloudPvminstancesNetworksGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPvminstancesNetworksGetParams() *PcloudPvminstancesNetworksGetParams {
-	var ()
 	return &PcloudPvminstancesNetworksGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPvminstancesNetworksGetParamsWithTimeout creates a new PcloudPvminstancesNetworksGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPvminstancesNetworksGetParamsWithTimeout(timeout time.Duration) *PcloudPvminstancesNetworksGetParams {
-	var ()
 	return &PcloudPvminstancesNetworksGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPvminstancesNetworksGetParamsWithContext creates a new PcloudPvminstancesNetworksGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPvminstancesNetworksGetParamsWithContext(ctx context.Context) *PcloudPvminstancesNetworksGetParams {
-	var ()
 	return &PcloudPvminstancesNetworksGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPvminstancesNetworksGetParamsWithHTTPClient creates a new PcloudPvminstancesNetworksGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPvminstancesNetworksGetParamsWithHTTPClient(client *http.Client) *PcloudPvminstancesNetworksGetParams {
-	var ()
 	return &PcloudPvminstancesNetworksGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPvminstancesNetworksGetParams contains all the parameters to send to the API endpoint
-for the pcloud pvminstances networks get operation typically these are written to a http.Request
+/* PcloudPvminstancesNetworksGetParams contains all the parameters to send to the API endpoint
+   for the pcloud pvminstances networks get operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPvminstancesNetworksGetParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*NetworkID
-	  Network ID
 
+	/* NetworkID.
+
+	   Network ID
 	*/
 	NetworkID string
-	/*PvmInstanceID
-	  PCloud PVM Instance ID
 
+	/* PvmInstanceID.
+
+	   PCloud PVM Instance ID
 	*/
 	PvmInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud pvminstances networks get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesNetworksGetParams) WithDefaults() *PcloudPvminstancesNetworksGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud pvminstances networks get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesNetworksGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud pvminstances networks get params

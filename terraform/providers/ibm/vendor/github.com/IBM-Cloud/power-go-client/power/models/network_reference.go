@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // NetworkReference network reference
+//
 // swagger:model NetworkReference
 type NetworkReference struct {
 
@@ -135,13 +136,13 @@ const (
 	// NetworkReferenceTypeVlan captures enum value "vlan"
 	NetworkReferenceTypeVlan string = "vlan"
 
-	// NetworkReferenceTypePubVlan captures enum value "pub-vlan"
-	NetworkReferenceTypePubVlan string = "pub-vlan"
+	// NetworkReferenceTypePubDashVlan captures enum value "pub-vlan"
+	NetworkReferenceTypePubDashVlan string = "pub-vlan"
 )
 
 // prop value enum
 func (m *NetworkReference) validateTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, networkReferenceTypeTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, networkReferenceTypeTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -167,6 +168,11 @@ func (m *NetworkReference) validateVlanID(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this network reference based on context it is used
+func (m *NetworkReference) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

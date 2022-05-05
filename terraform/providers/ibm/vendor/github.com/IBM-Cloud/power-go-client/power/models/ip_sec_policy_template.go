@@ -6,32 +6,37 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // IPSecPolicyTemplate IP sec policy template
+//
 // swagger:model IPSecPolicyTemplate
 type IPSecPolicyTemplate struct {
 
 	// ipSecPolicy Authentication default value
+	// Example: sha256
 	// Required: true
 	Authentication *string `json:"authentication"`
 
 	// ipSecPolicy DHGroup default value
+	// Example: 2
 	// Required: true
 	DhGroup *int64 `json:"dhGroup"`
 
 	// ipSecPolicy Encryption default value
+	// Example: aes-256-cbc
 	// Required: true
 	Encryption *string `json:"encryption"`
 
 	// key lifetime
 	// Required: true
-	KeyLifetime KeyLifetime `json:"keyLifetime"`
+	KeyLifetime *KeyLifetime `json:"keyLifetime"`
 }
 
 // Validate validates this IP sec policy template
@@ -89,11 +94,53 @@ func (m *IPSecPolicyTemplate) validateEncryption(formats strfmt.Registry) error 
 
 func (m *IPSecPolicyTemplate) validateKeyLifetime(formats strfmt.Registry) error {
 
-	if err := m.KeyLifetime.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("keyLifetime")
-		}
+	if err := validate.Required("keyLifetime", "body", m.KeyLifetime); err != nil {
 		return err
+	}
+
+	if err := validate.Required("keyLifetime", "body", m.KeyLifetime); err != nil {
+		return err
+	}
+
+	if m.KeyLifetime != nil {
+		if err := m.KeyLifetime.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("keyLifetime")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("keyLifetime")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this IP sec policy template based on the context it is used
+func (m *IPSecPolicyTemplate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateKeyLifetime(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *IPSecPolicyTemplate) contextValidateKeyLifetime(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.KeyLifetime != nil {
+		if err := m.KeyLifetime.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("keyLifetime")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("keyLifetime")
+			}
+			return err
+		}
 	}
 
 	return nil

@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudStoragecapacityPoolsGetReader is a Reader for the PcloudStoragecapacityPoolsGet structure.
@@ -24,37 +23,32 @@ type PcloudStoragecapacityPoolsGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudStoragecapacityPoolsGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudStoragecapacityPoolsGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewPcloudStoragecapacityPoolsGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudStoragecapacityPoolsGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudStoragecapacityPoolsGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -63,7 +57,7 @@ func NewPcloudStoragecapacityPoolsGetOK() *PcloudStoragecapacityPoolsGetOK {
 	return &PcloudStoragecapacityPoolsGetOK{}
 }
 
-/*PcloudStoragecapacityPoolsGetOK handles this case with default header values.
+/* PcloudStoragecapacityPoolsGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,6 +67,9 @@ type PcloudStoragecapacityPoolsGetOK struct {
 
 func (o *PcloudStoragecapacityPoolsGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools/{storage_pool_name}][%d] pcloudStoragecapacityPoolsGetOK  %+v", 200, o.Payload)
+}
+func (o *PcloudStoragecapacityPoolsGetOK) GetPayload() *models.StoragePoolCapacity {
+	return o.Payload
 }
 
 func (o *PcloudStoragecapacityPoolsGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -92,7 +89,7 @@ func NewPcloudStoragecapacityPoolsGetUnauthorized() *PcloudStoragecapacityPoolsG
 	return &PcloudStoragecapacityPoolsGetUnauthorized{}
 }
 
-/*PcloudStoragecapacityPoolsGetUnauthorized handles this case with default header values.
+/* PcloudStoragecapacityPoolsGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -102,6 +99,9 @@ type PcloudStoragecapacityPoolsGetUnauthorized struct {
 
 func (o *PcloudStoragecapacityPoolsGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools/{storage_pool_name}][%d] pcloudStoragecapacityPoolsGetUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudStoragecapacityPoolsGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudStoragecapacityPoolsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -121,7 +121,7 @@ func NewPcloudStoragecapacityPoolsGetNotFound() *PcloudStoragecapacityPoolsGetNo
 	return &PcloudStoragecapacityPoolsGetNotFound{}
 }
 
-/*PcloudStoragecapacityPoolsGetNotFound handles this case with default header values.
+/* PcloudStoragecapacityPoolsGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -131,6 +131,9 @@ type PcloudStoragecapacityPoolsGetNotFound struct {
 
 func (o *PcloudStoragecapacityPoolsGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools/{storage_pool_name}][%d] pcloudStoragecapacityPoolsGetNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudStoragecapacityPoolsGetNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudStoragecapacityPoolsGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -150,7 +153,7 @@ func NewPcloudStoragecapacityPoolsGetInternalServerError() *PcloudStoragecapacit
 	return &PcloudStoragecapacityPoolsGetInternalServerError{}
 }
 
-/*PcloudStoragecapacityPoolsGetInternalServerError handles this case with default header values.
+/* PcloudStoragecapacityPoolsGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -160,6 +163,9 @@ type PcloudStoragecapacityPoolsGetInternalServerError struct {
 
 func (o *PcloudStoragecapacityPoolsGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools/{storage_pool_name}][%d] pcloudStoragecapacityPoolsGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudStoragecapacityPoolsGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudStoragecapacityPoolsGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

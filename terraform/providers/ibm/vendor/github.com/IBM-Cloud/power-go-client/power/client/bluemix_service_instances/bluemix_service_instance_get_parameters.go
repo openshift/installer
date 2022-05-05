@@ -13,63 +13,76 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewBluemixServiceInstanceGetParams creates a new BluemixServiceInstanceGetParams object
-// with the default values initialized.
+// NewBluemixServiceInstanceGetParams creates a new BluemixServiceInstanceGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewBluemixServiceInstanceGetParams() *BluemixServiceInstanceGetParams {
-	var ()
 	return &BluemixServiceInstanceGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewBluemixServiceInstanceGetParamsWithTimeout creates a new BluemixServiceInstanceGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewBluemixServiceInstanceGetParamsWithTimeout(timeout time.Duration) *BluemixServiceInstanceGetParams {
-	var ()
 	return &BluemixServiceInstanceGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewBluemixServiceInstanceGetParamsWithContext creates a new BluemixServiceInstanceGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewBluemixServiceInstanceGetParamsWithContext(ctx context.Context) *BluemixServiceInstanceGetParams {
-	var ()
 	return &BluemixServiceInstanceGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewBluemixServiceInstanceGetParamsWithHTTPClient creates a new BluemixServiceInstanceGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewBluemixServiceInstanceGetParamsWithHTTPClient(client *http.Client) *BluemixServiceInstanceGetParams {
-	var ()
 	return &BluemixServiceInstanceGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*BluemixServiceInstanceGetParams contains all the parameters to send to the API endpoint
-for the bluemix service instance get operation typically these are written to a http.Request
+/* BluemixServiceInstanceGetParams contains all the parameters to send to the API endpoint
+   for the bluemix service instance get operation.
+
+   Typically these are written to a http.Request.
 */
 type BluemixServiceInstanceGetParams struct {
 
-	/*InstanceID
-	  instance id of instance to provision
+	/* InstanceID.
 
+	   instance id of instance to provision
 	*/
 	InstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the bluemix service instance get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *BluemixServiceInstanceGetParams) WithDefaults() *BluemixServiceInstanceGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the bluemix service instance get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *BluemixServiceInstanceGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the bluemix service instance get params

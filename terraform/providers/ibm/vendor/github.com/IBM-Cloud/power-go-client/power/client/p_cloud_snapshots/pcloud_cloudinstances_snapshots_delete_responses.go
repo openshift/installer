@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudCloudinstancesSnapshotsDeleteReader is a Reader for the PcloudCloudinstancesSnapshotsDelete structure.
@@ -24,51 +23,44 @@ type PcloudCloudinstancesSnapshotsDeleteReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudCloudinstancesSnapshotsDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 202:
 		result := NewPcloudCloudinstancesSnapshotsDeleteAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudCloudinstancesSnapshotsDeleteBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudCloudinstancesSnapshotsDeleteUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudCloudinstancesSnapshotsDeleteNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 410:
 		result := NewPcloudCloudinstancesSnapshotsDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudCloudinstancesSnapshotsDeleteInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudCloudinstancesSnapshotsDeleteAccepted() *PcloudCloudinstancesSnaps
 	return &PcloudCloudinstancesSnapshotsDeleteAccepted{}
 }
 
-/*PcloudCloudinstancesSnapshotsDeleteAccepted handles this case with default header values.
+/* PcloudCloudinstancesSnapshotsDeleteAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -87,6 +79,9 @@ type PcloudCloudinstancesSnapshotsDeleteAccepted struct {
 
 func (o *PcloudCloudinstancesSnapshotsDeleteAccepted) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}][%d] pcloudCloudinstancesSnapshotsDeleteAccepted  %+v", 202, o.Payload)
+}
+func (o *PcloudCloudinstancesSnapshotsDeleteAccepted) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesSnapshotsDeleteAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,7 +99,7 @@ func NewPcloudCloudinstancesSnapshotsDeleteBadRequest() *PcloudCloudinstancesSna
 	return &PcloudCloudinstancesSnapshotsDeleteBadRequest{}
 }
 
-/*PcloudCloudinstancesSnapshotsDeleteBadRequest handles this case with default header values.
+/* PcloudCloudinstancesSnapshotsDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -114,6 +109,9 @@ type PcloudCloudinstancesSnapshotsDeleteBadRequest struct {
 
 func (o *PcloudCloudinstancesSnapshotsDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}][%d] pcloudCloudinstancesSnapshotsDeleteBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudCloudinstancesSnapshotsDeleteBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesSnapshotsDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -133,7 +131,7 @@ func NewPcloudCloudinstancesSnapshotsDeleteUnauthorized() *PcloudCloudinstancesS
 	return &PcloudCloudinstancesSnapshotsDeleteUnauthorized{}
 }
 
-/*PcloudCloudinstancesSnapshotsDeleteUnauthorized handles this case with default header values.
+/* PcloudCloudinstancesSnapshotsDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -143,6 +141,9 @@ type PcloudCloudinstancesSnapshotsDeleteUnauthorized struct {
 
 func (o *PcloudCloudinstancesSnapshotsDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}][%d] pcloudCloudinstancesSnapshotsDeleteUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudCloudinstancesSnapshotsDeleteUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesSnapshotsDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -162,7 +163,7 @@ func NewPcloudCloudinstancesSnapshotsDeleteNotFound() *PcloudCloudinstancesSnaps
 	return &PcloudCloudinstancesSnapshotsDeleteNotFound{}
 }
 
-/*PcloudCloudinstancesSnapshotsDeleteNotFound handles this case with default header values.
+/* PcloudCloudinstancesSnapshotsDeleteNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -172,6 +173,9 @@ type PcloudCloudinstancesSnapshotsDeleteNotFound struct {
 
 func (o *PcloudCloudinstancesSnapshotsDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}][%d] pcloudCloudinstancesSnapshotsDeleteNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudCloudinstancesSnapshotsDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesSnapshotsDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -191,7 +195,7 @@ func NewPcloudCloudinstancesSnapshotsDeleteGone() *PcloudCloudinstancesSnapshots
 	return &PcloudCloudinstancesSnapshotsDeleteGone{}
 }
 
-/*PcloudCloudinstancesSnapshotsDeleteGone handles this case with default header values.
+/* PcloudCloudinstancesSnapshotsDeleteGone describes a response with status code 410, with default header values.
 
 Gone
 */
@@ -201,6 +205,9 @@ type PcloudCloudinstancesSnapshotsDeleteGone struct {
 
 func (o *PcloudCloudinstancesSnapshotsDeleteGone) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}][%d] pcloudCloudinstancesSnapshotsDeleteGone  %+v", 410, o.Payload)
+}
+func (o *PcloudCloudinstancesSnapshotsDeleteGone) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesSnapshotsDeleteGone) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -220,7 +227,7 @@ func NewPcloudCloudinstancesSnapshotsDeleteInternalServerError() *PcloudCloudins
 	return &PcloudCloudinstancesSnapshotsDeleteInternalServerError{}
 }
 
-/*PcloudCloudinstancesSnapshotsDeleteInternalServerError handles this case with default header values.
+/* PcloudCloudinstancesSnapshotsDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -230,6 +237,9 @@ type PcloudCloudinstancesSnapshotsDeleteInternalServerError struct {
 
 func (o *PcloudCloudinstancesSnapshotsDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}][%d] pcloudCloudinstancesSnapshotsDeleteInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudCloudinstancesSnapshotsDeleteInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesSnapshotsDeleteInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

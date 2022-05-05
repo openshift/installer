@@ -6,13 +6,14 @@ package p_cloud_volumes
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new p cloud volumes API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,71 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	PcloudCloudinstancesVolumesActionPost(params *PcloudCloudinstancesVolumesActionPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesActionPostAccepted, error)
+
+	PcloudCloudinstancesVolumesDelete(params *PcloudCloudinstancesVolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesDeleteOK, error)
+
+	PcloudCloudinstancesVolumesGet(params *PcloudCloudinstancesVolumesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesGetOK, error)
+
+	PcloudCloudinstancesVolumesGetall(params *PcloudCloudinstancesVolumesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesGetallOK, error)
+
+	PcloudCloudinstancesVolumesPost(params *PcloudCloudinstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesPostAccepted, error)
+
+	PcloudCloudinstancesVolumesPut(params *PcloudCloudinstancesVolumesPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesPutOK, error)
+
+	PcloudPvminstancesVolumesDelete(params *PcloudPvminstancesVolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesDeleteAccepted, error)
+
+	PcloudPvminstancesVolumesGet(params *PcloudPvminstancesVolumesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesGetOK, error)
+
+	PcloudPvminstancesVolumesGetall(params *PcloudPvminstancesVolumesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesGetallOK, error)
+
+	PcloudPvminstancesVolumesPost(params *PcloudPvminstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesPostOK, error)
+
+	PcloudPvminstancesVolumesPut(params *PcloudPvminstancesVolumesPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesPutOK, error)
+
+	PcloudPvminstancesVolumesSetbootPut(params *PcloudPvminstancesVolumesSetbootPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesSetbootPutOK, error)
+
+	PcloudV2PvminstancesVolumesPost(params *PcloudV2PvminstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2PvminstancesVolumesPostAccepted, error)
+
+	PcloudV2VolumesClonePost(params *PcloudV2VolumesClonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesClonePostAccepted, error)
+
+	PcloudV2VolumesClonetasksGet(params *PcloudV2VolumesClonetasksGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesClonetasksGetOK, error)
+
+	PcloudV2VolumesPost(params *PcloudV2VolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesPostCreated, error)
+
+	PcloudV2VolumescloneCancelPost(params *PcloudV2VolumescloneCancelPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneCancelPostAccepted, error)
+
+	PcloudV2VolumescloneDelete(params *PcloudV2VolumescloneDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneDeleteOK, error)
+
+	PcloudV2VolumescloneExecutePost(params *PcloudV2VolumescloneExecutePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneExecutePostAccepted, error)
+
+	PcloudV2VolumescloneGet(params *PcloudV2VolumescloneGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneGetOK, error)
+
+	PcloudV2VolumescloneGetall(params *PcloudV2VolumescloneGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneGetallOK, error)
+
+	PcloudV2VolumesclonePost(params *PcloudV2VolumesclonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesclonePostAccepted, error)
+
+	PcloudV2VolumescloneStartPost(params *PcloudV2VolumescloneStartPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneStartPostOK, error)
+
+	PcloudVolumesClonePost(params *PcloudVolumesClonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumesClonePostOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-PcloudCloudinstancesVolumesActionPost performs an action on a volume
+  PcloudCloudinstancesVolumesActionPost performs an action on a volume
 */
-func (a *Client) PcloudCloudinstancesVolumesActionPost(params *PcloudCloudinstancesVolumesActionPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesVolumesActionPostAccepted, error) {
+func (a *Client) PcloudCloudinstancesVolumesActionPost(params *PcloudCloudinstancesVolumesActionPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesActionPostAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesVolumesActionPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.volumes.action.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/action",
@@ -45,24 +101,34 @@ func (a *Client) PcloudCloudinstancesVolumesActionPost(params *PcloudCloudinstan
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesVolumesActionPostAccepted), nil
-
+	success, ok := result.(*PcloudCloudinstancesVolumesActionPostAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.volumes.action.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudCloudinstancesVolumesDelete deletes a cloud instance volume
+  PcloudCloudinstancesVolumesDelete deletes a cloud instance volume
 */
-func (a *Client) PcloudCloudinstancesVolumesDelete(params *PcloudCloudinstancesVolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesVolumesDeleteOK, error) {
+func (a *Client) PcloudCloudinstancesVolumesDelete(params *PcloudCloudinstancesVolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesDeleteOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesVolumesDeleteParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.volumes.delete",
 		Method:             "DELETE",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}",
@@ -74,24 +140,34 @@ func (a *Client) PcloudCloudinstancesVolumesDelete(params *PcloudCloudinstancesV
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesVolumesDeleteOK), nil
-
+	success, ok := result.(*PcloudCloudinstancesVolumesDeleteOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.volumes.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudCloudinstancesVolumesGet detaileds info of a volume
+  PcloudCloudinstancesVolumesGet detaileds info of a volume
 */
-func (a *Client) PcloudCloudinstancesVolumesGet(params *PcloudCloudinstancesVolumesGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesVolumesGetOK, error) {
+func (a *Client) PcloudCloudinstancesVolumesGet(params *PcloudCloudinstancesVolumesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesVolumesGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.volumes.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}",
@@ -103,24 +179,34 @@ func (a *Client) PcloudCloudinstancesVolumesGet(params *PcloudCloudinstancesVolu
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesVolumesGetOK), nil
-
+	success, ok := result.(*PcloudCloudinstancesVolumesGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.volumes.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudCloudinstancesVolumesGetall lists all volumes for this cloud instance
+  PcloudCloudinstancesVolumesGetall lists all volumes for this cloud instance
 */
-func (a *Client) PcloudCloudinstancesVolumesGetall(params *PcloudCloudinstancesVolumesGetallParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesVolumesGetallOK, error) {
+func (a *Client) PcloudCloudinstancesVolumesGetall(params *PcloudCloudinstancesVolumesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesGetallOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesVolumesGetallParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.volumes.getall",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/volumes",
@@ -132,24 +218,34 @@ func (a *Client) PcloudCloudinstancesVolumesGetall(params *PcloudCloudinstancesV
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesVolumesGetallOK), nil
-
+	success, ok := result.(*PcloudCloudinstancesVolumesGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.volumes.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudCloudinstancesVolumesPost creates a new data volume
+  PcloudCloudinstancesVolumesPost creates a new data volume
 */
-func (a *Client) PcloudCloudinstancesVolumesPost(params *PcloudCloudinstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesVolumesPostAccepted, error) {
+func (a *Client) PcloudCloudinstancesVolumesPost(params *PcloudCloudinstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesPostAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesVolumesPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.volumes.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/volumes",
@@ -161,24 +257,34 @@ func (a *Client) PcloudCloudinstancesVolumesPost(params *PcloudCloudinstancesVol
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesVolumesPostAccepted), nil
-
+	success, ok := result.(*PcloudCloudinstancesVolumesPostAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.volumes.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudCloudinstancesVolumesPut updates a cloud instance volume
+  PcloudCloudinstancesVolumesPut updates a cloud instance volume
 */
-func (a *Client) PcloudCloudinstancesVolumesPut(params *PcloudCloudinstancesVolumesPutParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesVolumesPutOK, error) {
+func (a *Client) PcloudCloudinstancesVolumesPut(params *PcloudCloudinstancesVolumesPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesPutOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesVolumesPutParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.volumes.put",
 		Method:             "PUT",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}",
@@ -190,24 +296,34 @@ func (a *Client) PcloudCloudinstancesVolumesPut(params *PcloudCloudinstancesVolu
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesVolumesPutOK), nil
-
+	success, ok := result.(*PcloudCloudinstancesVolumesPutOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.volumes.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPvminstancesVolumesDelete detaches a volume from a p VM instance
+  PcloudPvminstancesVolumesDelete detaches a volume from a p VM instance
 */
-func (a *Client) PcloudPvminstancesVolumesDelete(params *PcloudPvminstancesVolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPvminstancesVolumesDeleteAccepted, error) {
+func (a *Client) PcloudPvminstancesVolumesDelete(params *PcloudPvminstancesVolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesDeleteAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPvminstancesVolumesDeleteParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.pvminstances.volumes.delete",
 		Method:             "DELETE",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}",
@@ -219,24 +335,34 @@ func (a *Client) PcloudPvminstancesVolumesDelete(params *PcloudPvminstancesVolum
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPvminstancesVolumesDeleteAccepted), nil
-
+	success, ok := result.(*PcloudPvminstancesVolumesDeleteAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.pvminstances.volumes.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPvminstancesVolumesGet detaileds info of a volume attached to a p VM instance
+  PcloudPvminstancesVolumesGet detaileds info of a volume attached to a p VM instance
 */
-func (a *Client) PcloudPvminstancesVolumesGet(params *PcloudPvminstancesVolumesGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPvminstancesVolumesGetOK, error) {
+func (a *Client) PcloudPvminstancesVolumesGet(params *PcloudPvminstancesVolumesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPvminstancesVolumesGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.pvminstances.volumes.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}",
@@ -248,24 +374,34 @@ func (a *Client) PcloudPvminstancesVolumesGet(params *PcloudPvminstancesVolumesG
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPvminstancesVolumesGetOK), nil
-
+	success, ok := result.(*PcloudPvminstancesVolumesGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.pvminstances.volumes.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPvminstancesVolumesGetall lists all volumes attached to a p VM instance
+  PcloudPvminstancesVolumesGetall lists all volumes attached to a p VM instance
 */
-func (a *Client) PcloudPvminstancesVolumesGetall(params *PcloudPvminstancesVolumesGetallParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPvminstancesVolumesGetallOK, error) {
+func (a *Client) PcloudPvminstancesVolumesGetall(params *PcloudPvminstancesVolumesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesGetallOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPvminstancesVolumesGetallParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.pvminstances.volumes.getall",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes",
@@ -277,24 +413,34 @@ func (a *Client) PcloudPvminstancesVolumesGetall(params *PcloudPvminstancesVolum
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPvminstancesVolumesGetallOK), nil
-
+	success, ok := result.(*PcloudPvminstancesVolumesGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.pvminstances.volumes.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPvminstancesVolumesPost attaches a volume to a p VM instance
+  PcloudPvminstancesVolumesPost attaches a volume to a p VM instance
 */
-func (a *Client) PcloudPvminstancesVolumesPost(params *PcloudPvminstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPvminstancesVolumesPostOK, error) {
+func (a *Client) PcloudPvminstancesVolumesPost(params *PcloudPvminstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesPostOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPvminstancesVolumesPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.pvminstances.volumes.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}",
@@ -306,24 +452,34 @@ func (a *Client) PcloudPvminstancesVolumesPost(params *PcloudPvminstancesVolumes
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPvminstancesVolumesPostOK), nil
-
+	success, ok := result.(*PcloudPvminstancesVolumesPostOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.pvminstances.volumes.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPvminstancesVolumesPut updates a volume attached to a p VM instance
+  PcloudPvminstancesVolumesPut updates a volume attached to a p VM instance
 */
-func (a *Client) PcloudPvminstancesVolumesPut(params *PcloudPvminstancesVolumesPutParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPvminstancesVolumesPutOK, error) {
+func (a *Client) PcloudPvminstancesVolumesPut(params *PcloudPvminstancesVolumesPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesPutOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPvminstancesVolumesPutParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.pvminstances.volumes.put",
 		Method:             "PUT",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}",
@@ -335,24 +491,34 @@ func (a *Client) PcloudPvminstancesVolumesPut(params *PcloudPvminstancesVolumesP
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPvminstancesVolumesPutOK), nil
-
+	success, ok := result.(*PcloudPvminstancesVolumesPutOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.pvminstances.volumes.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudPvminstancesVolumesSetbootPut sets the p VM instance volume as the boot volume
+  PcloudPvminstancesVolumesSetbootPut sets the p VM instance volume as the boot volume
 */
-func (a *Client) PcloudPvminstancesVolumesSetbootPut(params *PcloudPvminstancesVolumesSetbootPutParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudPvminstancesVolumesSetbootPutOK, error) {
+func (a *Client) PcloudPvminstancesVolumesSetbootPut(params *PcloudPvminstancesVolumesSetbootPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesSetbootPutOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPvminstancesVolumesSetbootPutParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.pvminstances.volumes.setboot.put",
 		Method:             "PUT",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot",
@@ -364,24 +530,34 @@ func (a *Client) PcloudPvminstancesVolumesSetbootPut(params *PcloudPvminstancesV
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudPvminstancesVolumesSetbootPutOK), nil
-
+	success, ok := result.(*PcloudPvminstancesVolumesSetbootPutOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.pvminstances.volumes.setboot.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2PvminstancesVolumesPost attaches all volumes to a p VM instance
+  PcloudV2PvminstancesVolumesPost attaches all volumes to a p VM instance
 */
-func (a *Client) PcloudV2PvminstancesVolumesPost(params *PcloudV2PvminstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2PvminstancesVolumesPostAccepted, error) {
+func (a *Client) PcloudV2PvminstancesVolumesPost(params *PcloudV2PvminstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2PvminstancesVolumesPostAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2PvminstancesVolumesPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.pvminstances.volumes.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes",
@@ -393,24 +569,34 @@ func (a *Client) PcloudV2PvminstancesVolumesPost(params *PcloudV2PvminstancesVol
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2PvminstancesVolumesPostAccepted), nil
-
+	success, ok := result.(*PcloudV2PvminstancesVolumesPostAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.pvminstances.volumes.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2VolumesClonePost creates a volume clone for specified volumes
+  PcloudV2VolumesClonePost creates a volume clone for specified volumes
 */
-func (a *Client) PcloudV2VolumesClonePost(params *PcloudV2VolumesClonePostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumesClonePostAccepted, error) {
+func (a *Client) PcloudV2VolumesClonePost(params *PcloudV2VolumesClonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesClonePostAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2VolumesClonePostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.volumes.clone.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone",
@@ -422,24 +608,34 @@ func (a *Client) PcloudV2VolumesClonePost(params *PcloudV2VolumesClonePostParams
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2VolumesClonePostAccepted), nil
-
+	success, ok := result.(*PcloudV2VolumesClonePostAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.volumes.clone.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2VolumesClonetasksGet gets the status of a volumes clone request for the specified clone task ID
+  PcloudV2VolumesClonetasksGet gets the status of a volumes clone request for the specified clone task ID
 */
-func (a *Client) PcloudV2VolumesClonetasksGet(params *PcloudV2VolumesClonetasksGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumesClonetasksGetOK, error) {
+func (a *Client) PcloudV2VolumesClonetasksGet(params *PcloudV2VolumesClonetasksGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesClonetasksGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2VolumesClonetasksGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.volumes.clonetasks.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}",
@@ -451,24 +647,34 @@ func (a *Client) PcloudV2VolumesClonetasksGet(params *PcloudV2VolumesClonetasksG
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2VolumesClonetasksGetOK), nil
-
+	success, ok := result.(*PcloudV2VolumesClonetasksGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.volumes.clonetasks.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2VolumesPost creates multiple data volumes from a single definition
+  PcloudV2VolumesPost creates multiple data volumes from a single definition
 */
-func (a *Client) PcloudV2VolumesPost(params *PcloudV2VolumesPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumesPostCreated, error) {
+func (a *Client) PcloudV2VolumesPost(params *PcloudV2VolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesPostCreated, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2VolumesPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.volumes.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes",
@@ -480,24 +686,34 @@ func (a *Client) PcloudV2VolumesPost(params *PcloudV2VolumesPostParams, authInfo
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2VolumesPostCreated), nil
-
+	success, ok := result.(*PcloudV2VolumesPostCreated)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.volumes.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2VolumescloneCancelPost cancels a volumes clone request initiates the cleanup action cleanup action performs the cleanup of the preparatory clones and snapshot volumes
+  PcloudV2VolumescloneCancelPost cancels a volumes clone request initiates the cleanup action cleanup action performs the cleanup of the preparatory clones and snapshot volumes
 */
-func (a *Client) PcloudV2VolumescloneCancelPost(params *PcloudV2VolumescloneCancelPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumescloneCancelPostAccepted, error) {
+func (a *Client) PcloudV2VolumescloneCancelPost(params *PcloudV2VolumescloneCancelPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneCancelPostAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2VolumescloneCancelPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.volumesclone.cancel.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/cancel",
@@ -509,24 +725,34 @@ func (a *Client) PcloudV2VolumescloneCancelPost(params *PcloudV2VolumescloneCanc
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2VolumescloneCancelPostAccepted), nil
-
+	success, ok := result.(*PcloudV2VolumescloneCancelPostAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.volumesclone.cancel.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2VolumescloneDelete deletes a volumes clone request
+  PcloudV2VolumescloneDelete deletes a volumes clone request
 */
-func (a *Client) PcloudV2VolumescloneDelete(params *PcloudV2VolumescloneDeleteParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumescloneDeleteOK, error) {
+func (a *Client) PcloudV2VolumescloneDelete(params *PcloudV2VolumescloneDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneDeleteOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2VolumescloneDeleteParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.volumesclone.delete",
 		Method:             "DELETE",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}",
@@ -538,24 +764,34 @@ func (a *Client) PcloudV2VolumescloneDelete(params *PcloudV2VolumescloneDeletePa
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2VolumescloneDeleteOK), nil
-
+	success, ok := result.(*PcloudV2VolumescloneDeleteOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.volumesclone.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2VolumescloneExecutePost initiates the execute action for a volumes clone request execute action creates the cloned volumes using the volume snapshots
+  PcloudV2VolumescloneExecutePost initiates the execute action for a volumes clone request execute action creates the cloned volumes using the volume snapshots
 */
-func (a *Client) PcloudV2VolumescloneExecutePost(params *PcloudV2VolumescloneExecutePostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumescloneExecutePostAccepted, error) {
+func (a *Client) PcloudV2VolumescloneExecutePost(params *PcloudV2VolumescloneExecutePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneExecutePostAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2VolumescloneExecutePostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.volumesclone.execute.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute",
@@ -567,24 +803,34 @@ func (a *Client) PcloudV2VolumescloneExecutePost(params *PcloudV2VolumescloneExe
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2VolumescloneExecutePostAccepted), nil
-
+	success, ok := result.(*PcloudV2VolumescloneExecutePostAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.volumesclone.execute.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2VolumescloneGet gets the details for a volumes clone request
+  PcloudV2VolumescloneGet gets the details for a volumes clone request
 */
-func (a *Client) PcloudV2VolumescloneGet(params *PcloudV2VolumescloneGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumescloneGetOK, error) {
+func (a *Client) PcloudV2VolumescloneGet(params *PcloudV2VolumescloneGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2VolumescloneGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.volumesclone.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}",
@@ -596,24 +842,34 @@ func (a *Client) PcloudV2VolumescloneGet(params *PcloudV2VolumescloneGetParams, 
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2VolumescloneGetOK), nil
-
+	success, ok := result.(*PcloudV2VolumescloneGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.volumesclone.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2VolumescloneGetall gets the list of volumes clone request for a cloud instance
+  PcloudV2VolumescloneGetall gets the list of volumes clone request for a cloud instance
 */
-func (a *Client) PcloudV2VolumescloneGetall(params *PcloudV2VolumescloneGetallParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumescloneGetallOK, error) {
+func (a *Client) PcloudV2VolumescloneGetall(params *PcloudV2VolumescloneGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneGetallOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2VolumescloneGetallParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.volumesclone.getall",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone",
@@ -625,24 +881,34 @@ func (a *Client) PcloudV2VolumescloneGetall(params *PcloudV2VolumescloneGetallPa
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2VolumescloneGetallOK), nil
-
+	success, ok := result.(*PcloudV2VolumescloneGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.volumesclone.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2VolumesclonePost creates a new volumes clone request and initiates the prepare action requires a minimum of two volumes requires a minimum of one volume to be in the in use state requires a unique volumes clone name prepare action does the preparatory work for creating the snapshot volumes
+  PcloudV2VolumesclonePost creates a new volumes clone request and initiates the prepare action requires a minimum of two volumes requires a minimum of one volume to be in the in use state requires a unique volumes clone name prepare action does the preparatory work for creating the snapshot volumes
 */
-func (a *Client) PcloudV2VolumesclonePost(params *PcloudV2VolumesclonePostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumesclonePostAccepted, error) {
+func (a *Client) PcloudV2VolumesclonePost(params *PcloudV2VolumesclonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesclonePostAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2VolumesclonePostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.volumesclone.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone",
@@ -654,24 +920,34 @@ func (a *Client) PcloudV2VolumesclonePost(params *PcloudV2VolumesclonePostParams
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2VolumesclonePostAccepted), nil
-
+	success, ok := result.(*PcloudV2VolumesclonePostAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.volumesclone.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudV2VolumescloneStartPost initiates the start action for a volumes clone request start action starts the consistency group to initiate the flash copy
+  PcloudV2VolumescloneStartPost initiates the start action for a volumes clone request start action starts the consistency group to initiate the flash copy
 */
-func (a *Client) PcloudV2VolumescloneStartPost(params *PcloudV2VolumescloneStartPostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudV2VolumescloneStartPostOK, error) {
+func (a *Client) PcloudV2VolumescloneStartPost(params *PcloudV2VolumescloneStartPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneStartPostOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudV2VolumescloneStartPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.v2.volumesclone.start.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/start",
@@ -683,24 +959,34 @@ func (a *Client) PcloudV2VolumescloneStartPost(params *PcloudV2VolumescloneStart
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudV2VolumescloneStartPostOK), nil
-
+	success, ok := result.(*PcloudV2VolumescloneStartPostOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.volumesclone.start.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudVolumesClonePost creates a volume clone for specified volumes
+  PcloudVolumesClonePost creates a volume clone for specified volumes
 */
-func (a *Client) PcloudVolumesClonePost(params *PcloudVolumesClonePostParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudVolumesClonePostOK, error) {
+func (a *Client) PcloudVolumesClonePost(params *PcloudVolumesClonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumesClonePostOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudVolumesClonePostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.volumes.clone.post",
 		Method:             "POST",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/clone",
@@ -712,12 +998,23 @@ func (a *Client) PcloudVolumesClonePost(params *PcloudVolumesClonePostParams, au
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudVolumesClonePostOK), nil
-
+	success, ok := result.(*PcloudVolumesClonePostOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.volumes.clone.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client

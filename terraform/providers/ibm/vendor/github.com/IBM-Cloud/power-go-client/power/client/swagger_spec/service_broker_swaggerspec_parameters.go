@@ -13,56 +13,69 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewServiceBrokerSwaggerspecParams creates a new ServiceBrokerSwaggerspecParams object
-// with the default values initialized.
+// NewServiceBrokerSwaggerspecParams creates a new ServiceBrokerSwaggerspecParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceBrokerSwaggerspecParams() *ServiceBrokerSwaggerspecParams {
-
 	return &ServiceBrokerSwaggerspecParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceBrokerSwaggerspecParamsWithTimeout creates a new ServiceBrokerSwaggerspecParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceBrokerSwaggerspecParamsWithTimeout(timeout time.Duration) *ServiceBrokerSwaggerspecParams {
-
 	return &ServiceBrokerSwaggerspecParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceBrokerSwaggerspecParamsWithContext creates a new ServiceBrokerSwaggerspecParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceBrokerSwaggerspecParamsWithContext(ctx context.Context) *ServiceBrokerSwaggerspecParams {
-
 	return &ServiceBrokerSwaggerspecParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceBrokerSwaggerspecParamsWithHTTPClient creates a new ServiceBrokerSwaggerspecParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceBrokerSwaggerspecParamsWithHTTPClient(client *http.Client) *ServiceBrokerSwaggerspecParams {
-
 	return &ServiceBrokerSwaggerspecParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceBrokerSwaggerspecParams contains all the parameters to send to the API endpoint
-for the service broker swaggerspec operation typically these are written to a http.Request
+/* ServiceBrokerSwaggerspecParams contains all the parameters to send to the API endpoint
+   for the service broker swaggerspec operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceBrokerSwaggerspecParams struct {
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service broker swaggerspec params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerSwaggerspecParams) WithDefaults() *ServiceBrokerSwaggerspecParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service broker swaggerspec params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerSwaggerspecParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service broker swaggerspec params

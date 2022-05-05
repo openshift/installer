@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudSystempoolsGetReader is a Reader for the PcloudSystempoolsGet structure.
@@ -24,30 +23,26 @@ type PcloudSystempoolsGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudSystempoolsGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudSystempoolsGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewPcloudSystempoolsGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudSystempoolsGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -56,7 +51,7 @@ func NewPcloudSystempoolsGetOK() *PcloudSystempoolsGetOK {
 	return &PcloudSystempoolsGetOK{}
 }
 
-/*PcloudSystempoolsGetOK handles this case with default header values.
+/* PcloudSystempoolsGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -66,6 +61,9 @@ type PcloudSystempoolsGetOK struct {
 
 func (o *PcloudSystempoolsGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetOK  %+v", 200, o.Payload)
+}
+func (o *PcloudSystempoolsGetOK) GetPayload() models.SystemPools {
+	return o.Payload
 }
 
 func (o *PcloudSystempoolsGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -83,7 +81,7 @@ func NewPcloudSystempoolsGetUnauthorized() *PcloudSystempoolsGetUnauthorized {
 	return &PcloudSystempoolsGetUnauthorized{}
 }
 
-/*PcloudSystempoolsGetUnauthorized handles this case with default header values.
+/* PcloudSystempoolsGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -93,6 +91,9 @@ type PcloudSystempoolsGetUnauthorized struct {
 
 func (o *PcloudSystempoolsGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudSystempoolsGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSystempoolsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -112,7 +113,7 @@ func NewPcloudSystempoolsGetInternalServerError() *PcloudSystempoolsGetInternalS
 	return &PcloudSystempoolsGetInternalServerError{}
 }
 
-/*PcloudSystempoolsGetInternalServerError handles this case with default header values.
+/* PcloudSystempoolsGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -122,6 +123,9 @@ type PcloudSystempoolsGetInternalServerError struct {
 
 func (o *PcloudSystempoolsGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudSystempoolsGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSystempoolsGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

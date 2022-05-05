@@ -13,73 +13,88 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudCloudconnectionsNetworksDeleteParams creates a new PcloudCloudconnectionsNetworksDeleteParams object
-// with the default values initialized.
+// NewPcloudCloudconnectionsNetworksDeleteParams creates a new PcloudCloudconnectionsNetworksDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudconnectionsNetworksDeleteParams() *PcloudCloudconnectionsNetworksDeleteParams {
-	var ()
 	return &PcloudCloudconnectionsNetworksDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudconnectionsNetworksDeleteParamsWithTimeout creates a new PcloudCloudconnectionsNetworksDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudconnectionsNetworksDeleteParamsWithTimeout(timeout time.Duration) *PcloudCloudconnectionsNetworksDeleteParams {
-	var ()
 	return &PcloudCloudconnectionsNetworksDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudconnectionsNetworksDeleteParamsWithContext creates a new PcloudCloudconnectionsNetworksDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudconnectionsNetworksDeleteParamsWithContext(ctx context.Context) *PcloudCloudconnectionsNetworksDeleteParams {
-	var ()
 	return &PcloudCloudconnectionsNetworksDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudconnectionsNetworksDeleteParamsWithHTTPClient creates a new PcloudCloudconnectionsNetworksDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudconnectionsNetworksDeleteParamsWithHTTPClient(client *http.Client) *PcloudCloudconnectionsNetworksDeleteParams {
-	var ()
 	return &PcloudCloudconnectionsNetworksDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudconnectionsNetworksDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud cloudconnections networks delete operation typically these are written to a http.Request
+/* PcloudCloudconnectionsNetworksDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudconnections networks delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudconnectionsNetworksDeleteParams struct {
 
-	/*CloudConnectionID
-	  Cloud Connection ID
+	/* CloudConnectionID.
 
+	   Cloud Connection ID
 	*/
 	CloudConnectionID string
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*NetworkID
-	  Network ID
 
+	/* NetworkID.
+
+	   Network ID
 	*/
 	NetworkID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudconnections networks delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudconnectionsNetworksDeleteParams) WithDefaults() *PcloudCloudconnectionsNetworksDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudconnections networks delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudconnectionsNetworksDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudconnections networks delete params

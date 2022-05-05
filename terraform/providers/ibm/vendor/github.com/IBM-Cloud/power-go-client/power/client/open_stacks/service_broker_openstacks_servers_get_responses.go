@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // ServiceBrokerOpenstacksServersGetReader is a Reader for the ServiceBrokerOpenstacksServersGet structure.
@@ -24,37 +23,32 @@ type ServiceBrokerOpenstacksServersGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ServiceBrokerOpenstacksServersGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewServiceBrokerOpenstacksServersGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewServiceBrokerOpenstacksServersGetBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewServiceBrokerOpenstacksServersGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewServiceBrokerOpenstacksServersGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -63,7 +57,7 @@ func NewServiceBrokerOpenstacksServersGetOK() *ServiceBrokerOpenstacksServersGet
 	return &ServiceBrokerOpenstacksServersGetOK{}
 }
 
-/*ServiceBrokerOpenstacksServersGetOK handles this case with default header values.
+/* ServiceBrokerOpenstacksServersGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,6 +67,9 @@ type ServiceBrokerOpenstacksServersGetOK struct {
 
 func (o *ServiceBrokerOpenstacksServersGetOK) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/servers/{pvm_instance_id}][%d] serviceBrokerOpenstacksServersGetOK  %+v", 200, o.Payload)
+}
+func (o *ServiceBrokerOpenstacksServersGetOK) GetPayload() *models.HostPVMInstance {
+	return o.Payload
 }
 
 func (o *ServiceBrokerOpenstacksServersGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -92,7 +89,7 @@ func NewServiceBrokerOpenstacksServersGetBadRequest() *ServiceBrokerOpenstacksSe
 	return &ServiceBrokerOpenstacksServersGetBadRequest{}
 }
 
-/*ServiceBrokerOpenstacksServersGetBadRequest handles this case with default header values.
+/* ServiceBrokerOpenstacksServersGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -102,6 +99,9 @@ type ServiceBrokerOpenstacksServersGetBadRequest struct {
 
 func (o *ServiceBrokerOpenstacksServersGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/servers/{pvm_instance_id}][%d] serviceBrokerOpenstacksServersGetBadRequest  %+v", 400, o.Payload)
+}
+func (o *ServiceBrokerOpenstacksServersGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBrokerOpenstacksServersGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -121,7 +121,7 @@ func NewServiceBrokerOpenstacksServersGetNotFound() *ServiceBrokerOpenstacksServ
 	return &ServiceBrokerOpenstacksServersGetNotFound{}
 }
 
-/*ServiceBrokerOpenstacksServersGetNotFound handles this case with default header values.
+/* ServiceBrokerOpenstacksServersGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -131,6 +131,9 @@ type ServiceBrokerOpenstacksServersGetNotFound struct {
 
 func (o *ServiceBrokerOpenstacksServersGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/servers/{pvm_instance_id}][%d] serviceBrokerOpenstacksServersGetNotFound  %+v", 404, o.Payload)
+}
+func (o *ServiceBrokerOpenstacksServersGetNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBrokerOpenstacksServersGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -150,7 +153,7 @@ func NewServiceBrokerOpenstacksServersGetInternalServerError() *ServiceBrokerOpe
 	return &ServiceBrokerOpenstacksServersGetInternalServerError{}
 }
 
-/*ServiceBrokerOpenstacksServersGetInternalServerError handles this case with default header values.
+/* ServiceBrokerOpenstacksServersGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -160,6 +163,9 @@ type ServiceBrokerOpenstacksServersGetInternalServerError struct {
 
 func (o *ServiceBrokerOpenstacksServersGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/servers/{pvm_instance_id}][%d] serviceBrokerOpenstacksServersGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *ServiceBrokerOpenstacksServersGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBrokerOpenstacksServersGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

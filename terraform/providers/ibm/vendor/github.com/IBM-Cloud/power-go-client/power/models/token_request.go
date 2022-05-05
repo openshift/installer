@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // TokenRequest token request
+//
 // swagger:model TokenRequest
 type TokenRequest struct {
 
@@ -79,7 +80,7 @@ const (
 
 // prop value enum
 func (m *TokenRequest) validateSourceEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, tokenRequestTypeSourcePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, tokenRequestTypeSourcePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -96,6 +97,11 @@ func (m *TokenRequest) validateSource(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this token request based on context it is used
+func (m *TokenRequest) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

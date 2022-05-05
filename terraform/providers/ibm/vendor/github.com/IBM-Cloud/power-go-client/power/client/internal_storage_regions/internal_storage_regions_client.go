@@ -6,13 +6,14 @@ package internal_storage_regions
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new internal storage regions API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,33 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	InternalV1StorageRegionsStoragePoolsGet(params *InternalV1StorageRegionsStoragePoolsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsStoragePoolsGetOK, error)
+
+	InternalV1StorageRegionsStoragePoolsGetall(params *InternalV1StorageRegionsStoragePoolsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsStoragePoolsGetallOK, error)
+
+	InternalV1StorageRegionsStoragePoolsPut(params *InternalV1StorageRegionsStoragePoolsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsStoragePoolsPutOK, error)
+
+	InternalV1StorageRegionsThresholdsGet(params *InternalV1StorageRegionsThresholdsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsThresholdsGetOK, error)
+
+	InternalV1StorageRegionsThresholdsPut(params *InternalV1StorageRegionsThresholdsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsThresholdsPutAccepted, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-InternalV1StorageRegionsStoragePoolsGet gets the settings for given pool name
+  InternalV1StorageRegionsStoragePoolsGet gets the settings for given pool name
 */
-func (a *Client) InternalV1StorageRegionsStoragePoolsGet(params *InternalV1StorageRegionsStoragePoolsGetParams, authInfo runtime.ClientAuthInfoWriter) (*InternalV1StorageRegionsStoragePoolsGetOK, error) {
+func (a *Client) InternalV1StorageRegionsStoragePoolsGet(params *InternalV1StorageRegionsStoragePoolsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsStoragePoolsGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewInternalV1StorageRegionsStoragePoolsGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "internal.v1.storage.regions.storage-pools.get",
 		Method:             "GET",
 		PathPattern:        "/internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}",
@@ -45,24 +63,34 @@ func (a *Client) InternalV1StorageRegionsStoragePoolsGet(params *InternalV1Stora
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*InternalV1StorageRegionsStoragePoolsGetOK), nil
-
+	success, ok := result.(*InternalV1StorageRegionsStoragePoolsGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for internal.v1.storage.regions.storage-pools.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-InternalV1StorageRegionsStoragePoolsGetall gets the current storage pools settings for a region zone
+  InternalV1StorageRegionsStoragePoolsGetall gets the current storage pools settings for a region zone
 */
-func (a *Client) InternalV1StorageRegionsStoragePoolsGetall(params *InternalV1StorageRegionsStoragePoolsGetallParams, authInfo runtime.ClientAuthInfoWriter) (*InternalV1StorageRegionsStoragePoolsGetallOK, error) {
+func (a *Client) InternalV1StorageRegionsStoragePoolsGetall(params *InternalV1StorageRegionsStoragePoolsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsStoragePoolsGetallOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewInternalV1StorageRegionsStoragePoolsGetallParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "internal.v1.storage.regions.storage-pools.getall",
 		Method:             "GET",
 		PathPattern:        "/internal/v1/storage/regions/{region_zone_id}/storage-pools",
@@ -74,24 +102,34 @@ func (a *Client) InternalV1StorageRegionsStoragePoolsGetall(params *InternalV1St
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*InternalV1StorageRegionsStoragePoolsGetallOK), nil
-
+	success, ok := result.(*InternalV1StorageRegionsStoragePoolsGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for internal.v1.storage.regions.storage-pools.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-InternalV1StorageRegionsStoragePoolsPut updates the settings for given pool name
+  InternalV1StorageRegionsStoragePoolsPut updates the settings for given pool name
 */
-func (a *Client) InternalV1StorageRegionsStoragePoolsPut(params *InternalV1StorageRegionsStoragePoolsPutParams, authInfo runtime.ClientAuthInfoWriter) (*InternalV1StorageRegionsStoragePoolsPutOK, error) {
+func (a *Client) InternalV1StorageRegionsStoragePoolsPut(params *InternalV1StorageRegionsStoragePoolsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsStoragePoolsPutOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewInternalV1StorageRegionsStoragePoolsPutParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "internal.v1.storage.regions.storage-pools.put",
 		Method:             "PUT",
 		PathPattern:        "/internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}",
@@ -103,24 +141,34 @@ func (a *Client) InternalV1StorageRegionsStoragePoolsPut(params *InternalV1Stora
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*InternalV1StorageRegionsStoragePoolsPutOK), nil
-
+	success, ok := result.(*InternalV1StorageRegionsStoragePoolsPutOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for internal.v1.storage.regions.storage-pools.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-InternalV1StorageRegionsThresholdsGet gets the current default threshold settings for a region zone
+  InternalV1StorageRegionsThresholdsGet gets the current default threshold settings for a region zone
 */
-func (a *Client) InternalV1StorageRegionsThresholdsGet(params *InternalV1StorageRegionsThresholdsGetParams, authInfo runtime.ClientAuthInfoWriter) (*InternalV1StorageRegionsThresholdsGetOK, error) {
+func (a *Client) InternalV1StorageRegionsThresholdsGet(params *InternalV1StorageRegionsThresholdsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsThresholdsGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewInternalV1StorageRegionsThresholdsGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "internal.v1.storage.regions.thresholds.get",
 		Method:             "GET",
 		PathPattern:        "/internal/v1/storage/regions/{region_zone_id}/thresholds",
@@ -132,24 +180,34 @@ func (a *Client) InternalV1StorageRegionsThresholdsGet(params *InternalV1Storage
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*InternalV1StorageRegionsThresholdsGetOK), nil
-
+	success, ok := result.(*InternalV1StorageRegionsThresholdsGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for internal.v1.storage.regions.thresholds.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-InternalV1StorageRegionsThresholdsPut updates a default threshold setting for a region zone
+  InternalV1StorageRegionsThresholdsPut updates a default threshold setting for a region zone
 */
-func (a *Client) InternalV1StorageRegionsThresholdsPut(params *InternalV1StorageRegionsThresholdsPutParams, authInfo runtime.ClientAuthInfoWriter) (*InternalV1StorageRegionsThresholdsPutAccepted, error) {
+func (a *Client) InternalV1StorageRegionsThresholdsPut(params *InternalV1StorageRegionsThresholdsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsThresholdsPutAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewInternalV1StorageRegionsThresholdsPutParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "internal.v1.storage.regions.thresholds.put",
 		Method:             "PUT",
 		PathPattern:        "/internal/v1/storage/regions/{region_zone_id}/thresholds",
@@ -161,12 +219,23 @@ func (a *Client) InternalV1StorageRegionsThresholdsPut(params *InternalV1Storage
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*InternalV1StorageRegionsThresholdsPutAccepted), nil
-
+	success, ok := result.(*InternalV1StorageRegionsThresholdsPutAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for internal.v1.storage.regions.thresholds.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client

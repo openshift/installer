@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudCloudinstancesVolumesDeleteParams creates a new PcloudCloudinstancesVolumesDeleteParams object
-// with the default values initialized.
+// NewPcloudCloudinstancesVolumesDeleteParams creates a new PcloudCloudinstancesVolumesDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudinstancesVolumesDeleteParams() *PcloudCloudinstancesVolumesDeleteParams {
-	var ()
 	return &PcloudCloudinstancesVolumesDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudinstancesVolumesDeleteParamsWithTimeout creates a new PcloudCloudinstancesVolumesDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudinstancesVolumesDeleteParamsWithTimeout(timeout time.Duration) *PcloudCloudinstancesVolumesDeleteParams {
-	var ()
 	return &PcloudCloudinstancesVolumesDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudinstancesVolumesDeleteParamsWithContext creates a new PcloudCloudinstancesVolumesDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudinstancesVolumesDeleteParamsWithContext(ctx context.Context) *PcloudCloudinstancesVolumesDeleteParams {
-	var ()
 	return &PcloudCloudinstancesVolumesDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudinstancesVolumesDeleteParamsWithHTTPClient creates a new PcloudCloudinstancesVolumesDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudinstancesVolumesDeleteParamsWithHTTPClient(client *http.Client) *PcloudCloudinstancesVolumesDeleteParams {
-	var ()
 	return &PcloudCloudinstancesVolumesDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudinstancesVolumesDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud cloudinstances volumes delete operation typically these are written to a http.Request
+/* PcloudCloudinstancesVolumesDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudinstances volumes delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesVolumesDeleteParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*VolumeID
-	  Volume ID
 
+	/* VolumeID.
+
+	   Volume ID
 	*/
 	VolumeID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudinstances volumes delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesVolumesDeleteParams) WithDefaults() *PcloudCloudinstancesVolumesDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudinstances volumes delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesVolumesDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudinstances volumes delete params

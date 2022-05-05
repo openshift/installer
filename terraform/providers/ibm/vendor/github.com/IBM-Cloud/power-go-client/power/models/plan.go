@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // Plan plan
+//
 // swagger:model Plan
 type Plan struct {
 
@@ -96,7 +98,6 @@ func (m *Plan) validateName(formats strfmt.Registry) error {
 }
 
 func (m *Plan) validateSchemas(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Schemas) { // not required
 		return nil
 	}
@@ -105,6 +106,38 @@ func (m *Plan) validateSchemas(formats strfmt.Registry) error {
 		if err := m.Schemas.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("schemas")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("schemas")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this plan based on the context it is used
+func (m *Plan) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateSchemas(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Plan) contextValidateSchemas(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Schemas != nil {
+		if err := m.Schemas.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("schemas")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("schemas")
 			}
 			return err
 		}

@@ -29,7 +29,7 @@ func (f *IBMPICloneVolumeClient) Create(body *models.VolumesCloneAsyncRequest) (
 	params := p_cloud_volumes.NewPcloudV2VolumesClonePostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
-	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumesClonePost(params, f.authInfo)
+	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumesClonePost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.CreateCloneOperationFailed, err)
 	}
@@ -44,7 +44,7 @@ func (f *IBMPICloneVolumeClient) Get(cloneTaskID string) (*models.CloneTaskStatu
 	params := p_cloud_volumes.NewPcloudV2VolumesClonetasksGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithCloneTaskID(cloneTaskID)
-	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumesClonetasksGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumesClonetasksGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the clone task %s status for the cloud instance %s with error %w", cloneTaskID, f.cloudInstanceID, err)
 	}
@@ -59,7 +59,7 @@ func (f *IBMPICloneVolumeClient) CreateV2Clone(body *models.VolumesCloneCreate) 
 	params := p_cloud_volumes.NewPcloudV2VolumesclonePostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
-	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumesclonePost(params, f.authInfo)
+	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumesclonePost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.PrepareCloneOperationFailed, *body.Name, err)
 	}
@@ -74,7 +74,7 @@ func (f *IBMPICloneVolumeClient) GetV2Clones(queryFilter string) (*models.Volume
 	params := p_cloud_volumes.NewPcloudV2VolumescloneGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithFilter(&queryFilter)
-	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumescloneGetall(params, f.authInfo)
+	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumescloneGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the volumes-clones for the cloud instance %s with error %w", f.cloudInstanceID, err)
 	}
@@ -89,7 +89,7 @@ func (f *IBMPICloneVolumeClient) DeleteClone(id string) error {
 	params := p_cloud_volumes.NewPcloudV2VolumescloneDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumesCloneID(id)
-	_, err := f.session.Power.PCloudVolumes.PcloudV2VolumescloneDelete(params, f.authInfo)
+	_, err := f.session.Power.PCloudVolumes.PcloudV2VolumescloneDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return fmt.Errorf(errors.DeleteCloneOperationFailed, err)
 	}
@@ -101,7 +101,7 @@ func (f *IBMPICloneVolumeClient) StartClone(volumesCloneID string) (*models.Volu
 	params := p_cloud_volumes.NewPcloudV2VolumescloneStartPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumesCloneID(volumesCloneID)
-	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumescloneStartPost(params, f.authInfo)
+	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumescloneStartPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.StartCloneOperationFailed, volumesCloneID, err)
 	}
@@ -116,7 +116,7 @@ func (f *IBMPICloneVolumeClient) PrepareClone(volumesCloneID string) (*models.Vo
 	params := p_cloud_volumes.NewPcloudV2VolumescloneExecutePostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumesCloneID(volumesCloneID)
-	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumescloneExecutePost(params, f.authInfo)
+	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumescloneExecutePost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.PrepareCloneOperationFailed, volumesCloneID, err)
 	}
@@ -131,7 +131,7 @@ func (f *IBMPICloneVolumeClient) GetV2CloneStatus(cloneName string) (*models.Vol
 	params := p_cloud_volumes.NewPcloudV2VolumescloneGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumesCloneID(cloneName)
-	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumescloneGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudVolumes.PcloudV2VolumescloneGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.GetCloneOperationFailed, cloneName, f.cloudInstanceID, err)
 	}

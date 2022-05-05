@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudVolumesClonePostReader is a Reader for the PcloudVolumesClonePost structure.
@@ -24,44 +23,38 @@ type PcloudVolumesClonePostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudVolumesClonePostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudVolumesClonePostOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudVolumesClonePostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudVolumesClonePostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudVolumesClonePostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudVolumesClonePostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudVolumesClonePostOK() *PcloudVolumesClonePostOK {
 	return &PcloudVolumesClonePostOK{}
 }
 
-/*PcloudVolumesClonePostOK handles this case with default header values.
+/* PcloudVolumesClonePostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudVolumesClonePostOK struct {
 
 func (o *PcloudVolumesClonePostOK) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/clone][%d] pcloudVolumesClonePostOK  %+v", 200, o.Payload)
+}
+func (o *PcloudVolumesClonePostOK) GetPayload() *models.VolumesCloneResponse {
+	return o.Payload
 }
 
 func (o *PcloudVolumesClonePostOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -99,7 +95,7 @@ func NewPcloudVolumesClonePostBadRequest() *PcloudVolumesClonePostBadRequest {
 	return &PcloudVolumesClonePostBadRequest{}
 }
 
-/*PcloudVolumesClonePostBadRequest handles this case with default header values.
+/* PcloudVolumesClonePostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,6 +105,9 @@ type PcloudVolumesClonePostBadRequest struct {
 
 func (o *PcloudVolumesClonePostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/clone][%d] pcloudVolumesClonePostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudVolumesClonePostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudVolumesClonePostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -128,7 +127,7 @@ func NewPcloudVolumesClonePostUnauthorized() *PcloudVolumesClonePostUnauthorized
 	return &PcloudVolumesClonePostUnauthorized{}
 }
 
-/*PcloudVolumesClonePostUnauthorized handles this case with default header values.
+/* PcloudVolumesClonePostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -138,6 +137,9 @@ type PcloudVolumesClonePostUnauthorized struct {
 
 func (o *PcloudVolumesClonePostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/clone][%d] pcloudVolumesClonePostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudVolumesClonePostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudVolumesClonePostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -157,7 +159,7 @@ func NewPcloudVolumesClonePostConflict() *PcloudVolumesClonePostConflict {
 	return &PcloudVolumesClonePostConflict{}
 }
 
-/*PcloudVolumesClonePostConflict handles this case with default header values.
+/* PcloudVolumesClonePostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -167,6 +169,9 @@ type PcloudVolumesClonePostConflict struct {
 
 func (o *PcloudVolumesClonePostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/clone][%d] pcloudVolumesClonePostConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudVolumesClonePostConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudVolumesClonePostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -186,7 +191,7 @@ func NewPcloudVolumesClonePostInternalServerError() *PcloudVolumesClonePostInter
 	return &PcloudVolumesClonePostInternalServerError{}
 }
 
-/*PcloudVolumesClonePostInternalServerError handles this case with default header values.
+/* PcloudVolumesClonePostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -196,6 +201,9 @@ type PcloudVolumesClonePostInternalServerError struct {
 
 func (o *PcloudVolumesClonePostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/clone][%d] pcloudVolumesClonePostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudVolumesClonePostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudVolumesClonePostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

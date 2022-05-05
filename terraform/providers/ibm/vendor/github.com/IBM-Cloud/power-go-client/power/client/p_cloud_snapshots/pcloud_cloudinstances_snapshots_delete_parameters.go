@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudCloudinstancesSnapshotsDeleteParams creates a new PcloudCloudinstancesSnapshotsDeleteParams object
-// with the default values initialized.
+// NewPcloudCloudinstancesSnapshotsDeleteParams creates a new PcloudCloudinstancesSnapshotsDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudinstancesSnapshotsDeleteParams() *PcloudCloudinstancesSnapshotsDeleteParams {
-	var ()
 	return &PcloudCloudinstancesSnapshotsDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudinstancesSnapshotsDeleteParamsWithTimeout creates a new PcloudCloudinstancesSnapshotsDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudinstancesSnapshotsDeleteParamsWithTimeout(timeout time.Duration) *PcloudCloudinstancesSnapshotsDeleteParams {
-	var ()
 	return &PcloudCloudinstancesSnapshotsDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudinstancesSnapshotsDeleteParamsWithContext creates a new PcloudCloudinstancesSnapshotsDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudinstancesSnapshotsDeleteParamsWithContext(ctx context.Context) *PcloudCloudinstancesSnapshotsDeleteParams {
-	var ()
 	return &PcloudCloudinstancesSnapshotsDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudinstancesSnapshotsDeleteParamsWithHTTPClient creates a new PcloudCloudinstancesSnapshotsDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudinstancesSnapshotsDeleteParamsWithHTTPClient(client *http.Client) *PcloudCloudinstancesSnapshotsDeleteParams {
-	var ()
 	return &PcloudCloudinstancesSnapshotsDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudinstancesSnapshotsDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud cloudinstances snapshots delete operation typically these are written to a http.Request
+/* PcloudCloudinstancesSnapshotsDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudinstances snapshots delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesSnapshotsDeleteParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*SnapshotID
-	  PVM Instance snapshot id
 
+	/* SnapshotID.
+
+	   PVM Instance snapshot id
 	*/
 	SnapshotID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudinstances snapshots delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesSnapshotsDeleteParams) WithDefaults() *PcloudCloudinstancesSnapshotsDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudinstances snapshots delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesSnapshotsDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudinstances snapshots delete params

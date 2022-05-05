@@ -13,78 +13,94 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudCloudinstancesJobsGetallParams creates a new PcloudCloudinstancesJobsGetallParams object
-// with the default values initialized.
+// NewPcloudCloudinstancesJobsGetallParams creates a new PcloudCloudinstancesJobsGetallParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudinstancesJobsGetallParams() *PcloudCloudinstancesJobsGetallParams {
-	var ()
 	return &PcloudCloudinstancesJobsGetallParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudinstancesJobsGetallParamsWithTimeout creates a new PcloudCloudinstancesJobsGetallParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudinstancesJobsGetallParamsWithTimeout(timeout time.Duration) *PcloudCloudinstancesJobsGetallParams {
-	var ()
 	return &PcloudCloudinstancesJobsGetallParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudinstancesJobsGetallParamsWithContext creates a new PcloudCloudinstancesJobsGetallParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudinstancesJobsGetallParamsWithContext(ctx context.Context) *PcloudCloudinstancesJobsGetallParams {
-	var ()
 	return &PcloudCloudinstancesJobsGetallParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudinstancesJobsGetallParamsWithHTTPClient creates a new PcloudCloudinstancesJobsGetallParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudinstancesJobsGetallParamsWithHTTPClient(client *http.Client) *PcloudCloudinstancesJobsGetallParams {
-	var ()
 	return &PcloudCloudinstancesJobsGetallParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudinstancesJobsGetallParams contains all the parameters to send to the API endpoint
-for the pcloud cloudinstances jobs getall operation typically these are written to a http.Request
+/* PcloudCloudinstancesJobsGetallParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudinstances jobs getall operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesJobsGetallParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*OperationAction
-	  Operation action to filter jobs (optional) vmCapture - includes operation action value (vmCapture) imageExport - includes operation action value (imageExport) imageImport - includes operation action value (imageImport) storage - includes operation action values (vmCapture,imageExport,imageImport)
 
+	/* OperationAction.
+
+	   Operation action to filter jobs (optional) vmCapture - includes operation action value (vmCapture) imageExport - includes operation action value (imageExport) imageImport - includes operation action value (imageImport) storage - includes operation action values (vmCapture,imageExport,imageImport)
 	*/
 	OperationAction *string
-	/*OperationID
-	  Operation ID to filter jobs (optional)
 
+	/* OperationID.
+
+	   Operation ID to filter jobs (optional)
 	*/
 	OperationID *string
-	/*OperationTarget
-	  Operation target to filter jobs (optional)
 
+	/* OperationTarget.
+
+	   Operation target to filter jobs (optional)
 	*/
 	OperationTarget *string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudinstances jobs getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesJobsGetallParams) WithDefaults() *PcloudCloudinstancesJobsGetallParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudinstances jobs getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesJobsGetallParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudinstances jobs getall params
@@ -181,48 +197,51 @@ func (o *PcloudCloudinstancesJobsGetallParams) WriteToRequest(r runtime.ClientRe
 
 		// query param operation.action
 		var qrOperationAction string
+
 		if o.OperationAction != nil {
 			qrOperationAction = *o.OperationAction
 		}
 		qOperationAction := qrOperationAction
 		if qOperationAction != "" {
+
 			if err := r.SetQueryParam("operation.action", qOperationAction); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if o.OperationID != nil {
 
 		// query param operation.id
 		var qrOperationID string
+
 		if o.OperationID != nil {
 			qrOperationID = *o.OperationID
 		}
 		qOperationID := qrOperationID
 		if qOperationID != "" {
+
 			if err := r.SetQueryParam("operation.id", qOperationID); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if o.OperationTarget != nil {
 
 		// query param operation.target
 		var qrOperationTarget string
+
 		if o.OperationTarget != nil {
 			qrOperationTarget = *o.OperationTarget
 		}
 		qOperationTarget := qrOperationTarget
 		if qOperationTarget != "" {
+
 			if err := r.SetQueryParam("operation.target", qOperationTarget); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if len(res) > 0 {

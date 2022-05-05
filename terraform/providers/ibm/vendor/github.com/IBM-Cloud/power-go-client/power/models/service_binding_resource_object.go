@@ -6,12 +6,14 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // ServiceBindingResourceObject service binding resource object
+//
 // swagger:model ServiceBindingResourceObject
 type ServiceBindingResourceObject struct {
 
@@ -24,6 +26,11 @@ type ServiceBindingResourceObject struct {
 
 // Validate validates this service binding resource object
 func (m *ServiceBindingResourceObject) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this service binding resource object based on context it is used
+func (m *ServiceBindingResourceObject) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

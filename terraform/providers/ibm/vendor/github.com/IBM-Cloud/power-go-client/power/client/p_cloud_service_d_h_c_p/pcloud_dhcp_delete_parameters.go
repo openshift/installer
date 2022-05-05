@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudDhcpDeleteParams creates a new PcloudDhcpDeleteParams object
-// with the default values initialized.
+// NewPcloudDhcpDeleteParams creates a new PcloudDhcpDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudDhcpDeleteParams() *PcloudDhcpDeleteParams {
-	var ()
 	return &PcloudDhcpDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudDhcpDeleteParamsWithTimeout creates a new PcloudDhcpDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudDhcpDeleteParamsWithTimeout(timeout time.Duration) *PcloudDhcpDeleteParams {
-	var ()
 	return &PcloudDhcpDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudDhcpDeleteParamsWithContext creates a new PcloudDhcpDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudDhcpDeleteParamsWithContext(ctx context.Context) *PcloudDhcpDeleteParams {
-	var ()
 	return &PcloudDhcpDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudDhcpDeleteParamsWithHTTPClient creates a new PcloudDhcpDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudDhcpDeleteParamsWithHTTPClient(client *http.Client) *PcloudDhcpDeleteParams {
-	var ()
 	return &PcloudDhcpDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudDhcpDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud dhcp delete operation typically these are written to a http.Request
+/* PcloudDhcpDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud dhcp delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudDhcpDeleteParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*DhcpID
-	  The ID of the DHCP Server
 
+	/* DhcpID.
+
+	   The ID of the DHCP Server
 	*/
 	DhcpID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud dhcp delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudDhcpDeleteParams) WithDefaults() *PcloudDhcpDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud dhcp delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudDhcpDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud dhcp delete params

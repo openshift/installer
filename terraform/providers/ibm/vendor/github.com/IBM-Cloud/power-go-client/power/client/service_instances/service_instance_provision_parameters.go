@@ -13,86 +13,103 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewServiceInstanceProvisionParams creates a new ServiceInstanceProvisionParams object
-// with the default values initialized.
+// NewServiceInstanceProvisionParams creates a new ServiceInstanceProvisionParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceInstanceProvisionParams() *ServiceInstanceProvisionParams {
-	var ()
 	return &ServiceInstanceProvisionParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceInstanceProvisionParamsWithTimeout creates a new ServiceInstanceProvisionParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceInstanceProvisionParamsWithTimeout(timeout time.Duration) *ServiceInstanceProvisionParams {
-	var ()
 	return &ServiceInstanceProvisionParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceInstanceProvisionParamsWithContext creates a new ServiceInstanceProvisionParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceInstanceProvisionParamsWithContext(ctx context.Context) *ServiceInstanceProvisionParams {
-	var ()
 	return &ServiceInstanceProvisionParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceInstanceProvisionParamsWithHTTPClient creates a new ServiceInstanceProvisionParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceInstanceProvisionParamsWithHTTPClient(client *http.Client) *ServiceInstanceProvisionParams {
-	var ()
 	return &ServiceInstanceProvisionParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceInstanceProvisionParams contains all the parameters to send to the API endpoint
-for the service instance provision operation typically these are written to a http.Request
+/* ServiceInstanceProvisionParams contains all the parameters to send to the API endpoint
+   for the service instance provision operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceInstanceProvisionParams struct {
 
-	/*XBrokerAPIOriginatingIdentity
-	  identity of the user that initiated the request from the Platform
+	/* XBrokerAPIOriginatingIdentity.
 
+	   identity of the user that initiated the request from the Platform
 	*/
 	XBrokerAPIOriginatingIdentity *string
-	/*XBrokerAPIVersion
-	  version number of the Service Broker API that the Platform will use
 
+	/* XBrokerAPIVersion.
+
+	   version number of the Service Broker API that the Platform will use
 	*/
 	XBrokerAPIVersion string
-	/*AcceptsIncomplete
-	  asynchronous operations supported
 
+	/* AcceptsIncomplete.
+
+	   asynchronous operations supported
 	*/
 	AcceptsIncomplete *bool
-	/*Body
-	  parameters for the requested service instance provision
 
+	/* Body.
+
+	   parameters for the requested service instance provision
 	*/
 	Body *models.ServiceInstanceProvisionRequest
-	/*InstanceID
-	  instance id of instance to provision
 
+	/* InstanceID.
+
+	   instance id of instance to provision
 	*/
 	InstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service instance provision params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceInstanceProvisionParams) WithDefaults() *ServiceInstanceProvisionParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service instance provision params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceInstanceProvisionParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service instance provision params
@@ -197,7 +214,6 @@ func (o *ServiceInstanceProvisionParams) WriteToRequest(r runtime.ClientRequest,
 		if err := r.SetHeaderParam("X-Broker-API-Originating-Identity", *o.XBrokerAPIOriginatingIdentity); err != nil {
 			return err
 		}
-
 	}
 
 	// header param X-Broker-API-Version
@@ -209,18 +225,18 @@ func (o *ServiceInstanceProvisionParams) WriteToRequest(r runtime.ClientRequest,
 
 		// query param accepts_incomplete
 		var qrAcceptsIncomplete bool
+
 		if o.AcceptsIncomplete != nil {
 			qrAcceptsIncomplete = *o.AcceptsIncomplete
 		}
 		qAcceptsIncomplete := swag.FormatBool(qrAcceptsIncomplete)
 		if qAcceptsIncomplete != "" {
+
 			if err := r.SetQueryParam("accepts_incomplete", qAcceptsIncomplete); err != nil {
 				return err
 			}
 		}
-
 	}
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

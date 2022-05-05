@@ -13,70 +13,84 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudSapPostParams creates a new PcloudSapPostParams object
-// with the default values initialized.
+// NewPcloudSapPostParams creates a new PcloudSapPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudSapPostParams() *PcloudSapPostParams {
-	var ()
 	return &PcloudSapPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudSapPostParamsWithTimeout creates a new PcloudSapPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudSapPostParamsWithTimeout(timeout time.Duration) *PcloudSapPostParams {
-	var ()
 	return &PcloudSapPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudSapPostParamsWithContext creates a new PcloudSapPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudSapPostParamsWithContext(ctx context.Context) *PcloudSapPostParams {
-	var ()
 	return &PcloudSapPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudSapPostParamsWithHTTPClient creates a new PcloudSapPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudSapPostParamsWithHTTPClient(client *http.Client) *PcloudSapPostParams {
-	var ()
 	return &PcloudSapPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudSapPostParams contains all the parameters to send to the API endpoint
-for the pcloud sap post operation typically these are written to a http.Request
+/* PcloudSapPostParams contains all the parameters to send to the API endpoint
+   for the pcloud sap post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudSapPostParams struct {
 
-	/*Body
-	  Parameters for the creation of a new SAP PVM Instance
+	/* Body.
 
+	   Parameters for the creation of a new SAP PVM Instance
 	*/
 	Body *models.SAPCreate
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud sap post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudSapPostParams) WithDefaults() *PcloudSapPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud sap post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudSapPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud sap post params
@@ -141,7 +155,6 @@ func (o *PcloudSapPostParams) WriteToRequest(r runtime.ClientRequest, reg strfmt
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

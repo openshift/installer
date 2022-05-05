@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudCloudconnectionsGetallReader is a Reader for the PcloudCloudconnectionsGetall structure.
@@ -24,44 +23,38 @@ type PcloudCloudconnectionsGetallReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudCloudconnectionsGetallReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudCloudconnectionsGetallOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudCloudconnectionsGetallBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudCloudconnectionsGetallUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 408:
 		result := NewPcloudCloudconnectionsGetallRequestTimeout()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudCloudconnectionsGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudCloudconnectionsGetallOK() *PcloudCloudconnectionsGetallOK {
 	return &PcloudCloudconnectionsGetallOK{}
 }
 
-/*PcloudCloudconnectionsGetallOK handles this case with default header values.
+/* PcloudCloudconnectionsGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudCloudconnectionsGetallOK struct {
 
 func (o *PcloudCloudconnectionsGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections][%d] pcloudCloudconnectionsGetallOK  %+v", 200, o.Payload)
+}
+func (o *PcloudCloudconnectionsGetallOK) GetPayload() *models.CloudConnections {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsGetallOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -99,7 +95,7 @@ func NewPcloudCloudconnectionsGetallBadRequest() *PcloudCloudconnectionsGetallBa
 	return &PcloudCloudconnectionsGetallBadRequest{}
 }
 
-/*PcloudCloudconnectionsGetallBadRequest handles this case with default header values.
+/* PcloudCloudconnectionsGetallBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,6 +105,9 @@ type PcloudCloudconnectionsGetallBadRequest struct {
 
 func (o *PcloudCloudconnectionsGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections][%d] pcloudCloudconnectionsGetallBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudCloudconnectionsGetallBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -128,7 +127,7 @@ func NewPcloudCloudconnectionsGetallUnauthorized() *PcloudCloudconnectionsGetall
 	return &PcloudCloudconnectionsGetallUnauthorized{}
 }
 
-/*PcloudCloudconnectionsGetallUnauthorized handles this case with default header values.
+/* PcloudCloudconnectionsGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -138,6 +137,9 @@ type PcloudCloudconnectionsGetallUnauthorized struct {
 
 func (o *PcloudCloudconnectionsGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections][%d] pcloudCloudconnectionsGetallUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudCloudconnectionsGetallUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -157,7 +159,7 @@ func NewPcloudCloudconnectionsGetallRequestTimeout() *PcloudCloudconnectionsGeta
 	return &PcloudCloudconnectionsGetallRequestTimeout{}
 }
 
-/*PcloudCloudconnectionsGetallRequestTimeout handles this case with default header values.
+/* PcloudCloudconnectionsGetallRequestTimeout describes a response with status code 408, with default header values.
 
 Request Timeout
 */
@@ -167,6 +169,9 @@ type PcloudCloudconnectionsGetallRequestTimeout struct {
 
 func (o *PcloudCloudconnectionsGetallRequestTimeout) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections][%d] pcloudCloudconnectionsGetallRequestTimeout  %+v", 408, o.Payload)
+}
+func (o *PcloudCloudconnectionsGetallRequestTimeout) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsGetallRequestTimeout) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -186,7 +191,7 @@ func NewPcloudCloudconnectionsGetallInternalServerError() *PcloudCloudconnection
 	return &PcloudCloudconnectionsGetallInternalServerError{}
 }
 
-/*PcloudCloudconnectionsGetallInternalServerError handles this case with default header values.
+/* PcloudCloudconnectionsGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -196,6 +201,9 @@ type PcloudCloudconnectionsGetallInternalServerError struct {
 
 func (o *PcloudCloudconnectionsGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections][%d] pcloudCloudconnectionsGetallInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudCloudconnectionsGetallInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsGetallInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ServiceInstanceRequest service instance request
+//
 // swagger:model ServiceInstanceRequest
 type ServiceInstanceRequest struct {
 
@@ -48,6 +50,11 @@ func (m *ServiceInstanceRequest) validateEnabled(formats strfmt.Registry) error 
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this service instance request based on context it is used
+func (m *ServiceInstanceRequest) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

@@ -13,56 +13,69 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewServiceBrokerOpenstacksGetParams creates a new ServiceBrokerOpenstacksGetParams object
-// with the default values initialized.
+// NewServiceBrokerOpenstacksGetParams creates a new ServiceBrokerOpenstacksGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceBrokerOpenstacksGetParams() *ServiceBrokerOpenstacksGetParams {
-
 	return &ServiceBrokerOpenstacksGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceBrokerOpenstacksGetParamsWithTimeout creates a new ServiceBrokerOpenstacksGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceBrokerOpenstacksGetParamsWithTimeout(timeout time.Duration) *ServiceBrokerOpenstacksGetParams {
-
 	return &ServiceBrokerOpenstacksGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceBrokerOpenstacksGetParamsWithContext creates a new ServiceBrokerOpenstacksGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceBrokerOpenstacksGetParamsWithContext(ctx context.Context) *ServiceBrokerOpenstacksGetParams {
-
 	return &ServiceBrokerOpenstacksGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceBrokerOpenstacksGetParamsWithHTTPClient creates a new ServiceBrokerOpenstacksGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceBrokerOpenstacksGetParamsWithHTTPClient(client *http.Client) *ServiceBrokerOpenstacksGetParams {
-
 	return &ServiceBrokerOpenstacksGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceBrokerOpenstacksGetParams contains all the parameters to send to the API endpoint
-for the service broker openstacks get operation typically these are written to a http.Request
+/* ServiceBrokerOpenstacksGetParams contains all the parameters to send to the API endpoint
+   for the service broker openstacks get operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceBrokerOpenstacksGetParams struct {
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service broker openstacks get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerOpenstacksGetParams) WithDefaults() *ServiceBrokerOpenstacksGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service broker openstacks get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerOpenstacksGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service broker openstacks get params

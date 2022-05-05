@@ -13,63 +13,76 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewCatalogGetParams creates a new CatalogGetParams object
-// with the default values initialized.
+// NewCatalogGetParams creates a new CatalogGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewCatalogGetParams() *CatalogGetParams {
-	var ()
 	return &CatalogGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewCatalogGetParamsWithTimeout creates a new CatalogGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewCatalogGetParamsWithTimeout(timeout time.Duration) *CatalogGetParams {
-	var ()
 	return &CatalogGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewCatalogGetParamsWithContext creates a new CatalogGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewCatalogGetParamsWithContext(ctx context.Context) *CatalogGetParams {
-	var ()
 	return &CatalogGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewCatalogGetParamsWithHTTPClient creates a new CatalogGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewCatalogGetParamsWithHTTPClient(client *http.Client) *CatalogGetParams {
-	var ()
 	return &CatalogGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*CatalogGetParams contains all the parameters to send to the API endpoint
-for the catalog get operation typically these are written to a http.Request
+/* CatalogGetParams contains all the parameters to send to the API endpoint
+   for the catalog get operation.
+
+   Typically these are written to a http.Request.
 */
 type CatalogGetParams struct {
 
-	/*XBrokerAPIVersion
-	  version number of the Service Broker API that the Platform will use
+	/* XBrokerAPIVersion.
 
+	   version number of the Service Broker API that the Platform will use
 	*/
 	XBrokerAPIVersion string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the catalog get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *CatalogGetParams) WithDefaults() *CatalogGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the catalog get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *CatalogGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the catalog get params

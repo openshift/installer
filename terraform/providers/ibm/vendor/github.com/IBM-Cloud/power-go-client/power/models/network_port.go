@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // NetworkPort network port
+//
 // swagger:model NetworkPort
 type NetworkPort struct {
 
@@ -118,7 +120,6 @@ func (m *NetworkPort) validatePortID(formats strfmt.Registry) error {
 }
 
 func (m *NetworkPort) validatePvmInstance(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.PvmInstance) { // not required
 		return nil
 	}
@@ -127,6 +128,8 @@ func (m *NetworkPort) validatePvmInstance(formats strfmt.Registry) error {
 		if err := m.PvmInstance.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("pvmInstance")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("pvmInstance")
 			}
 			return err
 		}
@@ -139,6 +142,36 @@ func (m *NetworkPort) validateStatus(formats strfmt.Registry) error {
 
 	if err := validate.Required("status", "body", m.Status); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this network port based on the context it is used
+func (m *NetworkPort) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidatePvmInstance(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *NetworkPort) contextValidatePvmInstance(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.PvmInstance != nil {
+		if err := m.PvmInstance.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("pvmInstance")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("pvmInstance")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -163,6 +196,7 @@ func (m *NetworkPort) UnmarshalBinary(b []byte) error {
 }
 
 // NetworkPortPvmInstance The attached pvm-instance to this port
+//
 // swagger:model NetworkPortPvmInstance
 type NetworkPortPvmInstance struct {
 
@@ -175,6 +209,11 @@ type NetworkPortPvmInstance struct {
 
 // Validate validates this network port pvm instance
 func (m *NetworkPortPvmInstance) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this network port pvm instance based on context it is used
+func (m *NetworkPortPvmInstance) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

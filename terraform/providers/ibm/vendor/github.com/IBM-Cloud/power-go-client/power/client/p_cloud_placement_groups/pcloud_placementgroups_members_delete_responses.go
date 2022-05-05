@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudPlacementgroupsMembersDeleteReader is a Reader for the PcloudPlacementgroupsMembersDelete structure.
@@ -24,44 +23,44 @@ type PcloudPlacementgroupsMembersDeleteReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudPlacementgroupsMembersDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudPlacementgroupsMembersDeleteOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudPlacementgroupsMembersDeleteBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
+	case 404:
+		result := NewPcloudPlacementgroupsMembersDeleteNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudPlacementgroupsMembersDeleteConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudPlacementgroupsMembersDeleteUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudPlacementgroupsMembersDeleteInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +69,7 @@ func NewPcloudPlacementgroupsMembersDeleteOK() *PcloudPlacementgroupsMembersDele
 	return &PcloudPlacementgroupsMembersDeleteOK{}
 }
 
-/*PcloudPlacementgroupsMembersDeleteOK handles this case with default header values.
+/* PcloudPlacementgroupsMembersDeleteOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +79,9 @@ type PcloudPlacementgroupsMembersDeleteOK struct {
 
 func (o *PcloudPlacementgroupsMembersDeleteOK) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members][%d] pcloudPlacementgroupsMembersDeleteOK  %+v", 200, o.Payload)
+}
+func (o *PcloudPlacementgroupsMembersDeleteOK) GetPayload() *models.PlacementGroup {
+	return o.Payload
 }
 
 func (o *PcloudPlacementgroupsMembersDeleteOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -99,7 +101,7 @@ func NewPcloudPlacementgroupsMembersDeleteBadRequest() *PcloudPlacementgroupsMem
 	return &PcloudPlacementgroupsMembersDeleteBadRequest{}
 }
 
-/*PcloudPlacementgroupsMembersDeleteBadRequest handles this case with default header values.
+/* PcloudPlacementgroupsMembersDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -110,8 +112,43 @@ type PcloudPlacementgroupsMembersDeleteBadRequest struct {
 func (o *PcloudPlacementgroupsMembersDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members][%d] pcloudPlacementgroupsMembersDeleteBadRequest  %+v", 400, o.Payload)
 }
+func (o *PcloudPlacementgroupsMembersDeleteBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
 
 func (o *PcloudPlacementgroupsMembersDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPlacementgroupsMembersDeleteNotFound creates a PcloudPlacementgroupsMembersDeleteNotFound with default headers values
+func NewPcloudPlacementgroupsMembersDeleteNotFound() *PcloudPlacementgroupsMembersDeleteNotFound {
+	return &PcloudPlacementgroupsMembersDeleteNotFound{}
+}
+
+/* PcloudPlacementgroupsMembersDeleteNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudPlacementgroupsMembersDeleteNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudPlacementgroupsMembersDeleteNotFound) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members][%d] pcloudPlacementgroupsMembersDeleteNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudPlacementgroupsMembersDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPlacementgroupsMembersDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -128,7 +165,7 @@ func NewPcloudPlacementgroupsMembersDeleteConflict() *PcloudPlacementgroupsMembe
 	return &PcloudPlacementgroupsMembersDeleteConflict{}
 }
 
-/*PcloudPlacementgroupsMembersDeleteConflict handles this case with default header values.
+/* PcloudPlacementgroupsMembersDeleteConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -138,6 +175,9 @@ type PcloudPlacementgroupsMembersDeleteConflict struct {
 
 func (o *PcloudPlacementgroupsMembersDeleteConflict) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members][%d] pcloudPlacementgroupsMembersDeleteConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudPlacementgroupsMembersDeleteConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPlacementgroupsMembersDeleteConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -157,7 +197,7 @@ func NewPcloudPlacementgroupsMembersDeleteUnprocessableEntity() *PcloudPlacement
 	return &PcloudPlacementgroupsMembersDeleteUnprocessableEntity{}
 }
 
-/*PcloudPlacementgroupsMembersDeleteUnprocessableEntity handles this case with default header values.
+/* PcloudPlacementgroupsMembersDeleteUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -167,6 +207,9 @@ type PcloudPlacementgroupsMembersDeleteUnprocessableEntity struct {
 
 func (o *PcloudPlacementgroupsMembersDeleteUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members][%d] pcloudPlacementgroupsMembersDeleteUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudPlacementgroupsMembersDeleteUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPlacementgroupsMembersDeleteUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -186,7 +229,7 @@ func NewPcloudPlacementgroupsMembersDeleteInternalServerError() *PcloudPlacement
 	return &PcloudPlacementgroupsMembersDeleteInternalServerError{}
 }
 
-/*PcloudPlacementgroupsMembersDeleteInternalServerError handles this case with default header values.
+/* PcloudPlacementgroupsMembersDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -196,6 +239,9 @@ type PcloudPlacementgroupsMembersDeleteInternalServerError struct {
 
 func (o *PcloudPlacementgroupsMembersDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members][%d] pcloudPlacementgroupsMembersDeleteInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudPlacementgroupsMembersDeleteInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPlacementgroupsMembersDeleteInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

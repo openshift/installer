@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // TokenExtra token extra
+//
 // swagger:model TokenExtra
 type TokenExtra struct {
 
@@ -93,6 +95,8 @@ func (m *TokenExtra) validateToken(formats strfmt.Registry) error {
 		if err := m.Token.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("token")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("token")
 			}
 			return err
 		}
@@ -105,6 +109,36 @@ func (m *TokenExtra) validateValid(formats strfmt.Registry) error {
 
 	if err := validate.Required("valid", "body", m.Valid); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this token extra based on the context it is used
+func (m *TokenExtra) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateToken(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *TokenExtra) contextValidateToken(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Token != nil {
+		if err := m.Token.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("token")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("token")
+			}
+			return err
+		}
 	}
 
 	return nil

@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudCloudinstancesImagesDeleteParams creates a new PcloudCloudinstancesImagesDeleteParams object
-// with the default values initialized.
+// NewPcloudCloudinstancesImagesDeleteParams creates a new PcloudCloudinstancesImagesDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudinstancesImagesDeleteParams() *PcloudCloudinstancesImagesDeleteParams {
-	var ()
 	return &PcloudCloudinstancesImagesDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudinstancesImagesDeleteParamsWithTimeout creates a new PcloudCloudinstancesImagesDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudinstancesImagesDeleteParamsWithTimeout(timeout time.Duration) *PcloudCloudinstancesImagesDeleteParams {
-	var ()
 	return &PcloudCloudinstancesImagesDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudinstancesImagesDeleteParamsWithContext creates a new PcloudCloudinstancesImagesDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudinstancesImagesDeleteParamsWithContext(ctx context.Context) *PcloudCloudinstancesImagesDeleteParams {
-	var ()
 	return &PcloudCloudinstancesImagesDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudinstancesImagesDeleteParamsWithHTTPClient creates a new PcloudCloudinstancesImagesDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudinstancesImagesDeleteParamsWithHTTPClient(client *http.Client) *PcloudCloudinstancesImagesDeleteParams {
-	var ()
 	return &PcloudCloudinstancesImagesDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudinstancesImagesDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud cloudinstances images delete operation typically these are written to a http.Request
+/* PcloudCloudinstancesImagesDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudinstances images delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesImagesDeleteParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*ImageID
-	  Image ID of a image
 
+	/* ImageID.
+
+	   Image ID of a image
 	*/
 	ImageID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudinstances images delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesImagesDeleteParams) WithDefaults() *PcloudCloudinstancesImagesDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudinstances images delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesImagesDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudinstances images delete params

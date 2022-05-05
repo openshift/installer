@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudV2ImagesExportPostParams creates a new PcloudV2ImagesExportPostParams object
-// with the default values initialized.
+// NewPcloudV2ImagesExportPostParams creates a new PcloudV2ImagesExportPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudV2ImagesExportPostParams() *PcloudV2ImagesExportPostParams {
-	var ()
 	return &PcloudV2ImagesExportPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudV2ImagesExportPostParamsWithTimeout creates a new PcloudV2ImagesExportPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudV2ImagesExportPostParamsWithTimeout(timeout time.Duration) *PcloudV2ImagesExportPostParams {
-	var ()
 	return &PcloudV2ImagesExportPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudV2ImagesExportPostParamsWithContext creates a new PcloudV2ImagesExportPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudV2ImagesExportPostParamsWithContext(ctx context.Context) *PcloudV2ImagesExportPostParams {
-	var ()
 	return &PcloudV2ImagesExportPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudV2ImagesExportPostParamsWithHTTPClient creates a new PcloudV2ImagesExportPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudV2ImagesExportPostParamsWithHTTPClient(client *http.Client) *PcloudV2ImagesExportPostParams {
-	var ()
 	return &PcloudV2ImagesExportPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudV2ImagesExportPostParams contains all the parameters to send to the API endpoint
-for the pcloud v2 images export post operation typically these are written to a http.Request
+/* PcloudV2ImagesExportPostParams contains all the parameters to send to the API endpoint
+   for the pcloud v2 images export post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudV2ImagesExportPostParams struct {
 
-	/*Body
-	  Parameters for the export
+	/* Body.
 
+	   Parameters for the export
 	*/
 	Body *models.ExportImage
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*ImageID
-	  Image ID of a image
 
+	/* ImageID.
+
+	   Image ID of a image
 	*/
 	ImageID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud v2 images export post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2ImagesExportPostParams) WithDefaults() *PcloudV2ImagesExportPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud v2 images export post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2ImagesExportPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud v2 images export post params
@@ -157,7 +172,6 @@ func (o *PcloudV2ImagesExportPostParams) WriteToRequest(r runtime.ClientRequest,
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

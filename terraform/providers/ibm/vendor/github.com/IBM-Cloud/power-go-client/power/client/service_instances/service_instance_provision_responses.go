@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // ServiceInstanceProvisionReader is a Reader for the ServiceInstanceProvision structure.
@@ -24,51 +23,44 @@ type ServiceInstanceProvisionReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ServiceInstanceProvisionReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewServiceInstanceProvisionOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 201:
 		result := NewServiceInstanceProvisionCreated()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 202:
 		result := NewServiceInstanceProvisionAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewServiceInstanceProvisionBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewServiceInstanceProvisionConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewServiceInstanceProvisionUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewServiceInstanceProvisionOK() *ServiceInstanceProvisionOK {
 	return &ServiceInstanceProvisionOK{}
 }
 
-/*ServiceInstanceProvisionOK handles this case with default header values.
+/* ServiceInstanceProvisionOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -87,6 +79,9 @@ type ServiceInstanceProvisionOK struct {
 
 func (o *ServiceInstanceProvisionOK) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionOK  %+v", 200, o.Payload)
+}
+func (o *ServiceInstanceProvisionOK) GetPayload() *models.ServiceInstanceProvision {
+	return o.Payload
 }
 
 func (o *ServiceInstanceProvisionOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -106,7 +101,7 @@ func NewServiceInstanceProvisionCreated() *ServiceInstanceProvisionCreated {
 	return &ServiceInstanceProvisionCreated{}
 }
 
-/*ServiceInstanceProvisionCreated handles this case with default header values.
+/* ServiceInstanceProvisionCreated describes a response with status code 201, with default header values.
 
 Created
 */
@@ -116,6 +111,9 @@ type ServiceInstanceProvisionCreated struct {
 
 func (o *ServiceInstanceProvisionCreated) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionCreated  %+v", 201, o.Payload)
+}
+func (o *ServiceInstanceProvisionCreated) GetPayload() *models.ServiceInstanceProvision {
+	return o.Payload
 }
 
 func (o *ServiceInstanceProvisionCreated) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -135,7 +133,7 @@ func NewServiceInstanceProvisionAccepted() *ServiceInstanceProvisionAccepted {
 	return &ServiceInstanceProvisionAccepted{}
 }
 
-/*ServiceInstanceProvisionAccepted handles this case with default header values.
+/* ServiceInstanceProvisionAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -145,6 +143,9 @@ type ServiceInstanceProvisionAccepted struct {
 
 func (o *ServiceInstanceProvisionAccepted) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionAccepted  %+v", 202, o.Payload)
+}
+func (o *ServiceInstanceProvisionAccepted) GetPayload() *models.ServiceInstanceAsyncOperation {
+	return o.Payload
 }
 
 func (o *ServiceInstanceProvisionAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -164,7 +165,7 @@ func NewServiceInstanceProvisionBadRequest() *ServiceInstanceProvisionBadRequest
 	return &ServiceInstanceProvisionBadRequest{}
 }
 
-/*ServiceInstanceProvisionBadRequest handles this case with default header values.
+/* ServiceInstanceProvisionBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -174,6 +175,9 @@ type ServiceInstanceProvisionBadRequest struct {
 
 func (o *ServiceInstanceProvisionBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionBadRequest  %+v", 400, o.Payload)
+}
+func (o *ServiceInstanceProvisionBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceInstanceProvisionBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -193,7 +197,7 @@ func NewServiceInstanceProvisionConflict() *ServiceInstanceProvisionConflict {
 	return &ServiceInstanceProvisionConflict{}
 }
 
-/*ServiceInstanceProvisionConflict handles this case with default header values.
+/* ServiceInstanceProvisionConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -203,6 +207,9 @@ type ServiceInstanceProvisionConflict struct {
 
 func (o *ServiceInstanceProvisionConflict) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionConflict  %+v", 409, o.Payload)
+}
+func (o *ServiceInstanceProvisionConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceInstanceProvisionConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -222,7 +229,7 @@ func NewServiceInstanceProvisionUnprocessableEntity() *ServiceInstanceProvisionU
 	return &ServiceInstanceProvisionUnprocessableEntity{}
 }
 
-/*ServiceInstanceProvisionUnprocessableEntity handles this case with default header values.
+/* ServiceInstanceProvisionUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -232,6 +239,9 @@ type ServiceInstanceProvisionUnprocessableEntity struct {
 
 func (o *ServiceInstanceProvisionUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *ServiceInstanceProvisionUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceInstanceProvisionUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

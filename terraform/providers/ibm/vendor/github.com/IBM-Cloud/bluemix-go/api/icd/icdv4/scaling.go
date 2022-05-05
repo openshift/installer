@@ -2,6 +2,7 @@ package icdv4
 
 import (
 	"fmt"
+
 	"github.com/IBM-Cloud/bluemix-go/client"
 	"github.com/IBM-Cloud/bluemix-go/utils"
 )
@@ -14,9 +15,9 @@ type Group struct {
 	Id      string  `json:"id"`
 	Count   int     `json:"count"`
 	Members Members `json:"members"`
-	Memory  Memory `json:"memory"`
-	Cpu     Cpu    `json:"cpu"`
-	Disk    Disk   `json:"disk"`
+	Memory  Memory  `json:"memory"`
+	Cpu     Cpu     `json:"cpu"`
+	Disk    Disk    `json:"disk"`
 }
 
 type Members struct {
@@ -26,6 +27,7 @@ type Members struct {
 	MaximumCount    int    `json:"maximum_count"`
 	StepSizeCount   int    `json:"step_size_count"`
 	IsAdjustable    bool   `json:"is_adjustable"`
+	IsOptional    	bool   `json:"is_optional"`
 	CanScaleDown    bool   `json:"can_scale_down"`
 }
 
@@ -36,6 +38,7 @@ type Memory struct {
 	MaximumMb    int    `json:"maximum_mb"`
 	StepSizeMb   int    `json:"step_size_mb"`
 	IsAdjustable bool   `json:"is_adjustable"`
+	IsOptional 	bool   `json:"is_optional"`
 	CanScaleDown bool   `json:"can_scale_down"`
 }
 
@@ -46,6 +49,7 @@ type Cpu struct {
 	MaximumCount    int    `json:"maximum_count"`
 	StepSizeCount   int    `json:"step_size_count"`
 	IsAdjustable    bool   `json:"is_adjustable"`
+	IsOptional    	bool   `json:"is_optional"`
 	CanScaleDown    bool   `json:"can_scale_down"`
 }
 
@@ -56,6 +60,7 @@ type Disk struct {
 	MaximumMb    int    `json:"maximum_mb"`
 	StepSizeMb   int    `json:"step_size_mb"`
 	IsAdjustable bool   `json:"is_adjustable"`
+	IsOptional 	bool   `json:"is_optional"`
 	CanScaleDown bool   `json:"can_scale_down"`
 }
 
@@ -77,7 +82,7 @@ type MemoryReq struct {
 	AllocationMb int `json:"allocation_mb,omitempty"`
 }
 type CpuReq struct {
-	AllocationCount int `json:"allocation_count,omitempty"`
+	AllocationCount int `json:"allocation_count"`
 }
 type DiskReq struct {
 	AllocationMb int `json:"allocation_mb,omitempty"`
@@ -128,5 +133,3 @@ func (r *groups) UpdateGroup(icdId string, groupId string, groupReq GroupReq) (T
 	}
 	return taskResult.Task, nil
 }
-
-

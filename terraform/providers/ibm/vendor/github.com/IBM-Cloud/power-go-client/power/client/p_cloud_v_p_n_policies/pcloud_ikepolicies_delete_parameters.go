@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudIkepoliciesDeleteParams creates a new PcloudIkepoliciesDeleteParams object
-// with the default values initialized.
+// NewPcloudIkepoliciesDeleteParams creates a new PcloudIkepoliciesDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudIkepoliciesDeleteParams() *PcloudIkepoliciesDeleteParams {
-	var ()
 	return &PcloudIkepoliciesDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudIkepoliciesDeleteParamsWithTimeout creates a new PcloudIkepoliciesDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudIkepoliciesDeleteParamsWithTimeout(timeout time.Duration) *PcloudIkepoliciesDeleteParams {
-	var ()
 	return &PcloudIkepoliciesDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudIkepoliciesDeleteParamsWithContext creates a new PcloudIkepoliciesDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudIkepoliciesDeleteParamsWithContext(ctx context.Context) *PcloudIkepoliciesDeleteParams {
-	var ()
 	return &PcloudIkepoliciesDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudIkepoliciesDeleteParamsWithHTTPClient creates a new PcloudIkepoliciesDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudIkepoliciesDeleteParamsWithHTTPClient(client *http.Client) *PcloudIkepoliciesDeleteParams {
-	var ()
 	return &PcloudIkepoliciesDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudIkepoliciesDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud ikepolicies delete operation typically these are written to a http.Request
+/* PcloudIkepoliciesDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud ikepolicies delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudIkepoliciesDeleteParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*IkePolicyID
-	  ID of a IKE Policy
 
+	/* IkePolicyID.
+
+	   ID of a IKE Policy
 	*/
 	IkePolicyID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud ikepolicies delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudIkepoliciesDeleteParams) WithDefaults() *PcloudIkepoliciesDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud ikepolicies delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudIkepoliciesDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud ikepolicies delete params

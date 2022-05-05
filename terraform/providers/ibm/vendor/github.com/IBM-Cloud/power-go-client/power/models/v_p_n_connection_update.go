@@ -6,25 +6,31 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // VPNConnectionUpdate VPN Connection object to send during the update
+//
+// Min Properties: 1
+//
 // swagger:model VPNConnectionUpdate
 type VPNConnectionUpdate struct {
 
 	// unique identifier of IKEPolicy selected for this VPNConnection
+	// Example: c36723ec-8593-11eb-8dcd-0242ac133853
 	IkePolicy string `json:"ikePolicy,omitempty"`
 
 	// unique identifier of IPSecPolicy selected for this VPNConnection
+	// Example: c12345d-8593-11eb-8dcd-0242ac134573
 	IPSecPolicy string `json:"ipSecPolicy,omitempty"`
 
 	// VPN Connection name
+	// Example: VPN-Connection-1
 	Name string `json:"name,omitempty"`
 
 	// peer gateway address
@@ -41,12 +47,15 @@ func (m *VPNConnectionUpdate) UnmarshalJSON(data []byte) error {
 	var stage1 struct {
 
 		// unique identifier of IKEPolicy selected for this VPNConnection
+		// Example: c36723ec-8593-11eb-8dcd-0242ac133853
 		IkePolicy string `json:"ikePolicy,omitempty"`
 
 		// unique identifier of IPSecPolicy selected for this VPNConnection
+		// Example: c12345d-8593-11eb-8dcd-0242ac134573
 		IPSecPolicy string `json:"ipSecPolicy,omitempty"`
 
 		// VPN Connection name
+		// Example: VPN-Connection-1
 		Name string `json:"name,omitempty"`
 
 		// peer gateway address
@@ -59,13 +68,9 @@ func (m *VPNConnectionUpdate) UnmarshalJSON(data []byte) error {
 	var rcv VPNConnectionUpdate
 
 	rcv.IkePolicy = stage1.IkePolicy
-
 	rcv.IPSecPolicy = stage1.IPSecPolicy
-
 	rcv.Name = stage1.Name
-
 	rcv.PeerGatewayAddress = stage1.PeerGatewayAddress
-
 	*m = rcv
 
 	// stage 2, remove properties and add to map
@@ -75,13 +80,9 @@ func (m *VPNConnectionUpdate) UnmarshalJSON(data []byte) error {
 	}
 
 	delete(stage2, "ikePolicy")
-
 	delete(stage2, "ipSecPolicy")
-
 	delete(stage2, "name")
-
 	delete(stage2, "peerGatewayAddress")
-
 	// stage 3, add additional properties values
 	if len(stage2) > 0 {
 		result := make(map[string]interface{})
@@ -103,12 +104,15 @@ func (m VPNConnectionUpdate) MarshalJSON() ([]byte, error) {
 	var stage1 struct {
 
 		// unique identifier of IKEPolicy selected for this VPNConnection
+		// Example: c36723ec-8593-11eb-8dcd-0242ac133853
 		IkePolicy string `json:"ikePolicy,omitempty"`
 
 		// unique identifier of IPSecPolicy selected for this VPNConnection
+		// Example: c12345d-8593-11eb-8dcd-0242ac134573
 		IPSecPolicy string `json:"ipSecPolicy,omitempty"`
 
 		// VPN Connection name
+		// Example: VPN-Connection-1
 		Name string `json:"name,omitempty"`
 
 		// peer gateway address
@@ -117,11 +121,8 @@ func (m VPNConnectionUpdate) MarshalJSON() ([]byte, error) {
 	}
 
 	stage1.IkePolicy = m.IkePolicy
-
 	stage1.IPSecPolicy = m.IPSecPolicy
-
 	stage1.Name = m.Name
-
 	stage1.PeerGatewayAddress = m.PeerGatewayAddress
 
 	// make JSON object for known properties
@@ -130,7 +131,7 @@ func (m VPNConnectionUpdate) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	if len(m.VPNConnectionUpdateAdditionalProperties) == 0 {
+	if len(m.VPNConnectionUpdateAdditionalProperties) == 0 { // no additional properties
 		return props, nil
 	}
 
@@ -140,18 +141,39 @@ func (m VPNConnectionUpdate) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	if len(props) < 3 {
+	if len(props) < 3 { // "{}": only additional properties
 		return additional, nil
 	}
 
 	// concatenate the 2 objects
-	props[len(props)-1] = ','
-	return append(props, additional[1:]...), nil
+	return swag.ConcatJSON(props, additional), nil
 }
 
 // Validate validates this v p n connection update
 func (m *VPNConnectionUpdate) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	// short circuits minProperties > 0
+	if m == nil {
+		return errors.TooFewProperties("", "body", 1)
+	}
+
+	props := make(map[string]json.RawMessage, 4+10)
+	j, err := swag.WriteJSON(m)
+	if err != nil {
+		return err
+	}
+
+	if err = swag.ReadJSON(j, &props); err != nil {
+		return err
+	}
+
+	nprops := len(props)
+
+	// minProperties: 1
+	if nprops < 1 {
+		return errors.TooFewProperties("", "body", 1)
+	}
 
 	if err := m.validatePeerGatewayAddress(formats); err != nil {
 		res = append(res, err)
@@ -164,7 +186,6 @@ func (m *VPNConnectionUpdate) Validate(formats strfmt.Registry) error {
 }
 
 func (m *VPNConnectionUpdate) validatePeerGatewayAddress(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.PeerGatewayAddress) { // not required
 		return nil
 	}
@@ -172,6 +193,36 @@ func (m *VPNConnectionUpdate) validatePeerGatewayAddress(formats strfmt.Registry
 	if err := m.PeerGatewayAddress.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("peerGatewayAddress")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("peerGatewayAddress")
+		}
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this v p n connection update based on the context it is used
+func (m *VPNConnectionUpdate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidatePeerGatewayAddress(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *VPNConnectionUpdate) contextValidatePeerGatewayAddress(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.PeerGatewayAddress.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("peerGatewayAddress")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("peerGatewayAddress")
 		}
 		return err
 	}

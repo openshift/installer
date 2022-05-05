@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudV2ImagesExportGetReader is a Reader for the PcloudV2ImagesExportGet structure.
@@ -24,37 +23,32 @@ type PcloudV2ImagesExportGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudV2ImagesExportGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudV2ImagesExportGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewPcloudV2ImagesExportGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudV2ImagesExportGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudV2ImagesExportGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -63,7 +57,7 @@ func NewPcloudV2ImagesExportGetOK() *PcloudV2ImagesExportGetOK {
 	return &PcloudV2ImagesExportGetOK{}
 }
 
-/*PcloudV2ImagesExportGetOK handles this case with default header values.
+/* PcloudV2ImagesExportGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,6 +67,9 @@ type PcloudV2ImagesExportGetOK struct {
 
 func (o *PcloudV2ImagesExportGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetOK  %+v", 200, o.Payload)
+}
+func (o *PcloudV2ImagesExportGetOK) GetPayload() *models.Job {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -92,7 +89,7 @@ func NewPcloudV2ImagesExportGetUnauthorized() *PcloudV2ImagesExportGetUnauthoriz
 	return &PcloudV2ImagesExportGetUnauthorized{}
 }
 
-/*PcloudV2ImagesExportGetUnauthorized handles this case with default header values.
+/* PcloudV2ImagesExportGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -102,6 +99,9 @@ type PcloudV2ImagesExportGetUnauthorized struct {
 
 func (o *PcloudV2ImagesExportGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudV2ImagesExportGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -121,7 +121,7 @@ func NewPcloudV2ImagesExportGetNotFound() *PcloudV2ImagesExportGetNotFound {
 	return &PcloudV2ImagesExportGetNotFound{}
 }
 
-/*PcloudV2ImagesExportGetNotFound handles this case with default header values.
+/* PcloudV2ImagesExportGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -131,6 +131,9 @@ type PcloudV2ImagesExportGetNotFound struct {
 
 func (o *PcloudV2ImagesExportGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudV2ImagesExportGetNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -150,7 +153,7 @@ func NewPcloudV2ImagesExportGetInternalServerError() *PcloudV2ImagesExportGetInt
 	return &PcloudV2ImagesExportGetInternalServerError{}
 }
 
-/*PcloudV2ImagesExportGetInternalServerError handles this case with default header values.
+/* PcloudV2ImagesExportGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -160,6 +163,9 @@ type PcloudV2ImagesExportGetInternalServerError struct {
 
 func (o *PcloudV2ImagesExportGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudV2ImagesExportGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

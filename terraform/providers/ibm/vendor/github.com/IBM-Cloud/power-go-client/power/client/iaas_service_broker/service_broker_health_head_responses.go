@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // ServiceBrokerHealthHeadReader is a Reader for the ServiceBrokerHealthHead structure.
@@ -24,23 +23,20 @@ type ServiceBrokerHealthHeadReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ServiceBrokerHealthHeadReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewServiceBrokerHealthHeadOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewServiceBrokerHealthHeadBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -49,7 +45,7 @@ func NewServiceBrokerHealthHeadOK() *ServiceBrokerHealthHeadOK {
 	return &ServiceBrokerHealthHeadOK{}
 }
 
-/*ServiceBrokerHealthHeadOK handles this case with default header values.
+/* ServiceBrokerHealthHeadOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -59,6 +55,9 @@ type ServiceBrokerHealthHeadOK struct {
 
 func (o *ServiceBrokerHealthHeadOK) Error() string {
 	return fmt.Sprintf("[HEAD /broker/v1/health][%d] serviceBrokerHealthHeadOK  %+v", 200, o.Payload)
+}
+func (o *ServiceBrokerHealthHeadOK) GetPayload() *models.Health {
+	return o.Payload
 }
 
 func (o *ServiceBrokerHealthHeadOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -78,7 +77,7 @@ func NewServiceBrokerHealthHeadBadRequest() *ServiceBrokerHealthHeadBadRequest {
 	return &ServiceBrokerHealthHeadBadRequest{}
 }
 
-/*ServiceBrokerHealthHeadBadRequest handles this case with default header values.
+/* ServiceBrokerHealthHeadBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -88,6 +87,9 @@ type ServiceBrokerHealthHeadBadRequest struct {
 
 func (o *ServiceBrokerHealthHeadBadRequest) Error() string {
 	return fmt.Sprintf("[HEAD /broker/v1/health][%d] serviceBrokerHealthHeadBadRequest  %+v", 400, o.Payload)
+}
+func (o *ServiceBrokerHealthHeadBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBrokerHealthHeadBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

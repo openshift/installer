@@ -6,12 +6,14 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // SchemaParameters schema parameters
+//
 // swagger:model SchemaParameters
 type SchemaParameters struct {
 
@@ -21,6 +23,11 @@ type SchemaParameters struct {
 
 // Validate validates this schema parameters
 func (m *SchemaParameters) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this schema parameters based on context it is used
+func (m *SchemaParameters) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

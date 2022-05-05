@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudCloudconnectionsDeleteReader is a Reader for the PcloudCloudconnectionsDelete structure.
@@ -24,51 +23,44 @@ type PcloudCloudconnectionsDeleteReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudCloudconnectionsDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudCloudconnectionsDeleteOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 202:
 		result := NewPcloudCloudconnectionsDeleteAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudCloudconnectionsDeleteBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudCloudconnectionsDeleteUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 410:
 		result := NewPcloudCloudconnectionsDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudCloudconnectionsDeleteInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudCloudconnectionsDeleteOK() *PcloudCloudconnectionsDeleteOK {
 	return &PcloudCloudconnectionsDeleteOK{}
 }
 
-/*PcloudCloudconnectionsDeleteOK handles this case with default header values.
+/* PcloudCloudconnectionsDeleteOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -87,6 +79,9 @@ type PcloudCloudconnectionsDeleteOK struct {
 
 func (o *PcloudCloudconnectionsDeleteOK) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsDeleteOK  %+v", 200, o.Payload)
+}
+func (o *PcloudCloudconnectionsDeleteOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsDeleteOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,7 +99,7 @@ func NewPcloudCloudconnectionsDeleteAccepted() *PcloudCloudconnectionsDeleteAcce
 	return &PcloudCloudconnectionsDeleteAccepted{}
 }
 
-/*PcloudCloudconnectionsDeleteAccepted handles this case with default header values.
+/* PcloudCloudconnectionsDeleteAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -114,6 +109,9 @@ type PcloudCloudconnectionsDeleteAccepted struct {
 
 func (o *PcloudCloudconnectionsDeleteAccepted) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsDeleteAccepted  %+v", 202, o.Payload)
+}
+func (o *PcloudCloudconnectionsDeleteAccepted) GetPayload() *models.JobReference {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsDeleteAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -133,7 +131,7 @@ func NewPcloudCloudconnectionsDeleteBadRequest() *PcloudCloudconnectionsDeleteBa
 	return &PcloudCloudconnectionsDeleteBadRequest{}
 }
 
-/*PcloudCloudconnectionsDeleteBadRequest handles this case with default header values.
+/* PcloudCloudconnectionsDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -143,6 +141,9 @@ type PcloudCloudconnectionsDeleteBadRequest struct {
 
 func (o *PcloudCloudconnectionsDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsDeleteBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudCloudconnectionsDeleteBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -162,7 +163,7 @@ func NewPcloudCloudconnectionsDeleteUnauthorized() *PcloudCloudconnectionsDelete
 	return &PcloudCloudconnectionsDeleteUnauthorized{}
 }
 
-/*PcloudCloudconnectionsDeleteUnauthorized handles this case with default header values.
+/* PcloudCloudconnectionsDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -172,6 +173,9 @@ type PcloudCloudconnectionsDeleteUnauthorized struct {
 
 func (o *PcloudCloudconnectionsDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsDeleteUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudCloudconnectionsDeleteUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -191,7 +195,7 @@ func NewPcloudCloudconnectionsDeleteGone() *PcloudCloudconnectionsDeleteGone {
 	return &PcloudCloudconnectionsDeleteGone{}
 }
 
-/*PcloudCloudconnectionsDeleteGone handles this case with default header values.
+/* PcloudCloudconnectionsDeleteGone describes a response with status code 410, with default header values.
 
 Gone
 */
@@ -201,6 +205,9 @@ type PcloudCloudconnectionsDeleteGone struct {
 
 func (o *PcloudCloudconnectionsDeleteGone) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsDeleteGone  %+v", 410, o.Payload)
+}
+func (o *PcloudCloudconnectionsDeleteGone) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsDeleteGone) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -220,7 +227,7 @@ func NewPcloudCloudconnectionsDeleteInternalServerError() *PcloudCloudconnection
 	return &PcloudCloudconnectionsDeleteInternalServerError{}
 }
 
-/*PcloudCloudconnectionsDeleteInternalServerError handles this case with default header values.
+/* PcloudCloudconnectionsDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -230,6 +237,9 @@ type PcloudCloudconnectionsDeleteInternalServerError struct {
 
 func (o *PcloudCloudconnectionsDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsDeleteInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudCloudconnectionsDeleteInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudconnectionsDeleteInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

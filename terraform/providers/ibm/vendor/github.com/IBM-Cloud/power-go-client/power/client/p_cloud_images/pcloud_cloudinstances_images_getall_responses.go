@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudCloudinstancesImagesGetallReader is a Reader for the PcloudCloudinstancesImagesGetall structure.
@@ -24,44 +23,38 @@ type PcloudCloudinstancesImagesGetallReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudCloudinstancesImagesGetallReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudCloudinstancesImagesGetallOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudCloudinstancesImagesGetallBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudCloudinstancesImagesGetallUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudCloudinstancesImagesGetallNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudCloudinstancesImagesGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudCloudinstancesImagesGetallOK() *PcloudCloudinstancesImagesGetallOK
 	return &PcloudCloudinstancesImagesGetallOK{}
 }
 
-/*PcloudCloudinstancesImagesGetallOK handles this case with default header values.
+/* PcloudCloudinstancesImagesGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudCloudinstancesImagesGetallOK struct {
 
 func (o *PcloudCloudinstancesImagesGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesGetallOK  %+v", 200, o.Payload)
+}
+func (o *PcloudCloudinstancesImagesGetallOK) GetPayload() *models.Images {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesImagesGetallOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -99,7 +95,7 @@ func NewPcloudCloudinstancesImagesGetallBadRequest() *PcloudCloudinstancesImages
 	return &PcloudCloudinstancesImagesGetallBadRequest{}
 }
 
-/*PcloudCloudinstancesImagesGetallBadRequest handles this case with default header values.
+/* PcloudCloudinstancesImagesGetallBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,6 +105,9 @@ type PcloudCloudinstancesImagesGetallBadRequest struct {
 
 func (o *PcloudCloudinstancesImagesGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesGetallBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudCloudinstancesImagesGetallBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesImagesGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -128,7 +127,7 @@ func NewPcloudCloudinstancesImagesGetallUnauthorized() *PcloudCloudinstancesImag
 	return &PcloudCloudinstancesImagesGetallUnauthorized{}
 }
 
-/*PcloudCloudinstancesImagesGetallUnauthorized handles this case with default header values.
+/* PcloudCloudinstancesImagesGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -138,6 +137,9 @@ type PcloudCloudinstancesImagesGetallUnauthorized struct {
 
 func (o *PcloudCloudinstancesImagesGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesGetallUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudCloudinstancesImagesGetallUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesImagesGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -157,7 +159,7 @@ func NewPcloudCloudinstancesImagesGetallNotFound() *PcloudCloudinstancesImagesGe
 	return &PcloudCloudinstancesImagesGetallNotFound{}
 }
 
-/*PcloudCloudinstancesImagesGetallNotFound handles this case with default header values.
+/* PcloudCloudinstancesImagesGetallNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -167,6 +169,9 @@ type PcloudCloudinstancesImagesGetallNotFound struct {
 
 func (o *PcloudCloudinstancesImagesGetallNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesGetallNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudCloudinstancesImagesGetallNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesImagesGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -186,7 +191,7 @@ func NewPcloudCloudinstancesImagesGetallInternalServerError() *PcloudCloudinstan
 	return &PcloudCloudinstancesImagesGetallInternalServerError{}
 }
 
-/*PcloudCloudinstancesImagesGetallInternalServerError handles this case with default header values.
+/* PcloudCloudinstancesImagesGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -196,6 +201,9 @@ type PcloudCloudinstancesImagesGetallInternalServerError struct {
 
 func (o *PcloudCloudinstancesImagesGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesGetallInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudCloudinstancesImagesGetallInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesImagesGetallInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -25,11 +25,11 @@ func NewIBMPIDhcpClient(ctx context.Context, sess *ibmpisession.IBMPISession, cl
 }
 
 // Create
-func (f *IBMPIDhcpClient) Create() (*models.DHCPServer, error) {
+func (f *IBMPIDhcpClient) Create(body *models.DHCPServerCreate) (*models.DHCPServer, error) {
 	params := p_cloud_service_d_h_c_p.NewPcloudDhcpPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
-		WithCloudInstanceID(f.cloudInstanceID)
-	postaccepted, err := f.session.Power.PCloudServiceDHCP.PcloudDhcpPost(params, f.authInfo)
+		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
+	postaccepted, err := f.session.Power.PCloudServicedhcp.PcloudDhcpPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.CreateDchpOperationFailed, f.cloudInstanceID, err)
 	}
@@ -44,7 +44,7 @@ func (f *IBMPIDhcpClient) Get(id string) (*models.DHCPServerDetail, error) {
 	params := p_cloud_service_d_h_c_p.NewPcloudDhcpGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithDhcpID(id)
-	resp, err := f.session.Power.PCloudServiceDHCP.PcloudDhcpGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudServicedhcp.PcloudDhcpGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.GetDhcpOperationFailed, id, err)
 	}
@@ -59,7 +59,7 @@ func (f *IBMPIDhcpClient) GetAll() (models.DHCPServers, error) {
 	params := p_cloud_service_d_h_c_p.NewPcloudDhcpGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
-	resp, err := f.session.Power.PCloudServiceDHCP.PcloudDhcpGetall(params, f.authInfo)
+	resp, err := f.session.Power.PCloudServicedhcp.PcloudDhcpGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Get all DHCP servers: %w", err)
 	}
@@ -74,7 +74,7 @@ func (f *IBMPIDhcpClient) Delete(id string) error {
 	params := p_cloud_service_d_h_c_p.NewPcloudDhcpDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithDhcpID(id)
-	_, err := f.session.Power.PCloudServiceDHCP.PcloudDhcpDelete(params, f.authInfo)
+	_, err := f.session.Power.PCloudServicedhcp.PcloudDhcpDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return fmt.Errorf(errors.DeleteDhcpOperationFailed, id, err)
 	}

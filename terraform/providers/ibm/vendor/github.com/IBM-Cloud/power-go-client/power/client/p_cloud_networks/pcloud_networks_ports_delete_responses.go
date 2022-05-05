@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudNetworksPortsDeleteReader is a Reader for the PcloudNetworksPortsDelete structure.
@@ -24,44 +23,38 @@ type PcloudNetworksPortsDeleteReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudNetworksPortsDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudNetworksPortsDeleteOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudNetworksPortsDeleteBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudNetworksPortsDeleteUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 410:
 		result := NewPcloudNetworksPortsDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudNetworksPortsDeleteInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudNetworksPortsDeleteOK() *PcloudNetworksPortsDeleteOK {
 	return &PcloudNetworksPortsDeleteOK{}
 }
 
-/*PcloudNetworksPortsDeleteOK handles this case with default header values.
+/* PcloudNetworksPortsDeleteOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudNetworksPortsDeleteOK struct {
 
 func (o *PcloudNetworksPortsDeleteOK) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsDeleteOK  %+v", 200, o.Payload)
+}
+func (o *PcloudNetworksPortsDeleteOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsDeleteOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -97,7 +93,7 @@ func NewPcloudNetworksPortsDeleteBadRequest() *PcloudNetworksPortsDeleteBadReque
 	return &PcloudNetworksPortsDeleteBadRequest{}
 }
 
-/*PcloudNetworksPortsDeleteBadRequest handles this case with default header values.
+/* PcloudNetworksPortsDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -107,6 +103,9 @@ type PcloudNetworksPortsDeleteBadRequest struct {
 
 func (o *PcloudNetworksPortsDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsDeleteBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudNetworksPortsDeleteBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -126,7 +125,7 @@ func NewPcloudNetworksPortsDeleteUnauthorized() *PcloudNetworksPortsDeleteUnauth
 	return &PcloudNetworksPortsDeleteUnauthorized{}
 }
 
-/*PcloudNetworksPortsDeleteUnauthorized handles this case with default header values.
+/* PcloudNetworksPortsDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -136,6 +135,9 @@ type PcloudNetworksPortsDeleteUnauthorized struct {
 
 func (o *PcloudNetworksPortsDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsDeleteUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudNetworksPortsDeleteUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -155,7 +157,7 @@ func NewPcloudNetworksPortsDeleteGone() *PcloudNetworksPortsDeleteGone {
 	return &PcloudNetworksPortsDeleteGone{}
 }
 
-/*PcloudNetworksPortsDeleteGone handles this case with default header values.
+/* PcloudNetworksPortsDeleteGone describes a response with status code 410, with default header values.
 
 Gone
 */
@@ -165,6 +167,9 @@ type PcloudNetworksPortsDeleteGone struct {
 
 func (o *PcloudNetworksPortsDeleteGone) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsDeleteGone  %+v", 410, o.Payload)
+}
+func (o *PcloudNetworksPortsDeleteGone) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsDeleteGone) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -184,7 +189,7 @@ func NewPcloudNetworksPortsDeleteInternalServerError() *PcloudNetworksPortsDelet
 	return &PcloudNetworksPortsDeleteInternalServerError{}
 }
 
-/*PcloudNetworksPortsDeleteInternalServerError handles this case with default header values.
+/* PcloudNetworksPortsDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -194,6 +199,9 @@ type PcloudNetworksPortsDeleteInternalServerError struct {
 
 func (o *PcloudNetworksPortsDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsDeleteInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudNetworksPortsDeleteInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsDeleteInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudPvminstancesActionPostReader is a Reader for the PcloudPvminstancesActionPost structure.
@@ -24,44 +23,38 @@ type PcloudPvminstancesActionPostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudPvminstancesActionPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudPvminstancesActionPostOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudPvminstancesActionPostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudPvminstancesActionPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudPvminstancesActionPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudPvminstancesActionPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudPvminstancesActionPostOK() *PcloudPvminstancesActionPostOK {
 	return &PcloudPvminstancesActionPostOK{}
 }
 
-/*PcloudPvminstancesActionPostOK handles this case with default header values.
+/* PcloudPvminstancesActionPostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudPvminstancesActionPostOK struct {
 
 func (o *PcloudPvminstancesActionPostOK) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/action][%d] pcloudPvminstancesActionPostOK  %+v", 200, o.Payload)
+}
+func (o *PcloudPvminstancesActionPostOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesActionPostOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -97,7 +93,7 @@ func NewPcloudPvminstancesActionPostBadRequest() *PcloudPvminstancesActionPostBa
 	return &PcloudPvminstancesActionPostBadRequest{}
 }
 
-/*PcloudPvminstancesActionPostBadRequest handles this case with default header values.
+/* PcloudPvminstancesActionPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -107,6 +103,9 @@ type PcloudPvminstancesActionPostBadRequest struct {
 
 func (o *PcloudPvminstancesActionPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/action][%d] pcloudPvminstancesActionPostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudPvminstancesActionPostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesActionPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -126,7 +125,7 @@ func NewPcloudPvminstancesActionPostUnauthorized() *PcloudPvminstancesActionPost
 	return &PcloudPvminstancesActionPostUnauthorized{}
 }
 
-/*PcloudPvminstancesActionPostUnauthorized handles this case with default header values.
+/* PcloudPvminstancesActionPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -136,6 +135,9 @@ type PcloudPvminstancesActionPostUnauthorized struct {
 
 func (o *PcloudPvminstancesActionPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/action][%d] pcloudPvminstancesActionPostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudPvminstancesActionPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesActionPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -155,7 +157,7 @@ func NewPcloudPvminstancesActionPostNotFound() *PcloudPvminstancesActionPostNotF
 	return &PcloudPvminstancesActionPostNotFound{}
 }
 
-/*PcloudPvminstancesActionPostNotFound handles this case with default header values.
+/* PcloudPvminstancesActionPostNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -165,6 +167,9 @@ type PcloudPvminstancesActionPostNotFound struct {
 
 func (o *PcloudPvminstancesActionPostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/action][%d] pcloudPvminstancesActionPostNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudPvminstancesActionPostNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesActionPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -184,7 +189,7 @@ func NewPcloudPvminstancesActionPostInternalServerError() *PcloudPvminstancesAct
 	return &PcloudPvminstancesActionPostInternalServerError{}
 }
 
-/*PcloudPvminstancesActionPostInternalServerError handles this case with default header values.
+/* PcloudPvminstancesActionPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -194,6 +199,9 @@ type PcloudPvminstancesActionPostInternalServerError struct {
 
 func (o *PcloudPvminstancesActionPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/action][%d] pcloudPvminstancesActionPostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudPvminstancesActionPostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesActionPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

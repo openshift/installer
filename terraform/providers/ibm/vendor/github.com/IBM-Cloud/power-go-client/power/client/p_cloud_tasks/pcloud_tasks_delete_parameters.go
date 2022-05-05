@@ -13,63 +13,76 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudTasksDeleteParams creates a new PcloudTasksDeleteParams object
-// with the default values initialized.
+// NewPcloudTasksDeleteParams creates a new PcloudTasksDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudTasksDeleteParams() *PcloudTasksDeleteParams {
-	var ()
 	return &PcloudTasksDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudTasksDeleteParamsWithTimeout creates a new PcloudTasksDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudTasksDeleteParamsWithTimeout(timeout time.Duration) *PcloudTasksDeleteParams {
-	var ()
 	return &PcloudTasksDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudTasksDeleteParamsWithContext creates a new PcloudTasksDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudTasksDeleteParamsWithContext(ctx context.Context) *PcloudTasksDeleteParams {
-	var ()
 	return &PcloudTasksDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudTasksDeleteParamsWithHTTPClient creates a new PcloudTasksDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudTasksDeleteParamsWithHTTPClient(client *http.Client) *PcloudTasksDeleteParams {
-	var ()
 	return &PcloudTasksDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudTasksDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud tasks delete operation typically these are written to a http.Request
+/* PcloudTasksDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud tasks delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudTasksDeleteParams struct {
 
-	/*TaskID
-	  PCloud Task ID
+	/* TaskID.
 
+	   PCloud Task ID
 	*/
 	TaskID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud tasks delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudTasksDeleteParams) WithDefaults() *PcloudTasksDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud tasks delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudTasksDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud tasks delete params

@@ -61,6 +61,12 @@ type Subnet struct {
 	Primary bool   `json:"primary"`
 }
 
+type ResizeWorkerPoolReq struct {
+	Cluster    string `json:"cluster"`
+	Size       int64  `json:"size"`
+	Workerpool string `json:"workerpool"`
+}
+
 //Workers ...
 type WorkerPool interface {
 	CreateWorkerPool(workerPoolReq WorkerPoolRequest, target ClusterTargetHeader) (WorkerPoolResponse, error)
@@ -69,6 +75,7 @@ type WorkerPool interface {
 	CreateWorkerPoolZone(workerPoolZone WorkerPoolZone, target ClusterTargetHeader) error
 	DeleteWorkerPool(clusterNameOrID string, workerPoolNameOrID string, target ClusterTargetHeader) error
 	UpdateWorkerPoolTaints(taintRequest WorkerPoolTaintRequest, target ClusterTargetHeader) error
+	ResizeWorkerPool(resizeWorkerPoolReq ResizeWorkerPoolReq, target ClusterTargetHeader) error
 }
 
 type workerpool struct {
@@ -120,5 +127,12 @@ func (w *workerpool) CreateWorkerPoolZone(workerPoolZone WorkerPoolZone, target 
 func (w *workerpool) UpdateWorkerPoolTaints(taintRequest WorkerPoolTaintRequest, target ClusterTargetHeader) error {
 	// Make the request, don't care about return value
 	_, err := w.client.Post("/v2/setWorkerPoolTaints", taintRequest, nil, target.ToMap())
+	return err
+}
+
+// ResizeWorkerPool calls the API to resize an existing worker pool.
+func (w *workerpool) ResizeWorkerPool(resizeWorkerPoolReq ResizeWorkerPoolReq, target ClusterTargetHeader) error {
+	// Make the request, don't care about return value
+	_, err := w.client.Post("/v2/resizeWorkerPool", resizeWorkerPoolReq, nil, target.ToMap())
 	return err
 }

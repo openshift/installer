@@ -6,12 +6,14 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // UpdateVolume update volume
+//
 // swagger:model UpdateVolume
 type UpdateVolume struct {
 
@@ -30,6 +32,11 @@ type UpdateVolume struct {
 
 // Validate validates this update volume
 func (m *UpdateVolume) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this update volume based on context it is used
+func (m *UpdateVolume) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

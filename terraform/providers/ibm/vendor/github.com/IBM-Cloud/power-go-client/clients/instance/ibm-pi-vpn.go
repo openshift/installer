@@ -29,7 +29,7 @@ func (f *IBMPIVpnConnectionClient) Get(id string) (*models.VPNConnection, error)
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id)
-	resp, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.GetVPNConnectionOperationFailed, id, err)
 	}
@@ -44,7 +44,7 @@ func (f *IBMPIVpnConnectionClient) Create(body *models.VPNConnectionCreate) (*mo
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
-	postaccepted, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsPost(params, f.authInfo)
+	postaccepted, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.CreateVPNConnectionOperationFailed, f.cloudInstanceID, err)
 	}
@@ -60,7 +60,7 @@ func (f *IBMPIVpnConnectionClient) Update(id string, body *models.VPNConnectionU
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id).
 		WithBody(body)
-	putok, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsPut(params, f.authInfo)
+	putok, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.UpdateVPNConnectionOperationFailed, id, err)
 	}
@@ -75,7 +75,7 @@ func (f *IBMPIVpnConnectionClient) GetAll() (*models.VPNConnections, error) {
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
-	resp, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsGetall(params, f.authInfo)
+	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Get all VPN Connections: %w", err)
 	}
@@ -90,7 +90,7 @@ func (f *IBMPIVpnConnectionClient) Delete(id string) (*models.JobReference, erro
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id)
-	delaccepted, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsDelete(params, f.authInfo)
+	delaccepted, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf(errors.DeleteVPNConnectionOperationFailed, id, err)
 	}
@@ -101,11 +101,11 @@ func (f *IBMPIVpnConnectionClient) Delete(id string) (*models.JobReference, erro
 }
 
 // Network get
-func (f *IBMPIVpnConnectionClient) GetNetwork(id string) (*models.NetworkIds, error) {
+func (f *IBMPIVpnConnectionClient) GetNetwork(id string) (*models.NetworkIDs, error) {
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsNetworksGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id)
-	resp, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsNetworksGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsNetworksGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Get Networks for VPN Connection %s: %w", id, err)
 	}
@@ -121,7 +121,7 @@ func (f *IBMPIVpnConnectionClient) AddNetwork(id, networkID string) (*models.Job
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id).
 		WithBody(&models.NetworkID{NetworkID: &networkID})
-	resp, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsNetworksPut(params, f.authInfo)
+	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsNetworksPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Add Network %s to VPN Connection %s: %w", networkID, id, err)
 	}
@@ -137,7 +137,7 @@ func (f *IBMPIVpnConnectionClient) DeleteNetwork(id, networkID string) (*models.
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id).
 		WithBody(&models.NetworkID{NetworkID: &networkID})
-	resp, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsNetworksDelete(params, f.authInfo)
+	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsNetworksDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Delete Network %s from VPN Connection %s: %w", networkID, id, err)
 	}
@@ -152,7 +152,7 @@ func (f *IBMPIVpnConnectionClient) GetSubnet(id string) (*models.PeerSubnets, er
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsPeersubnetsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id)
-	resp, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsPeersubnetsGet(params, f.authInfo)
+	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPeersubnetsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Get Subnets from VPN Connection %s: %w", id, err)
 	}
@@ -168,7 +168,7 @@ func (f *IBMPIVpnConnectionClient) AddSubnet(id, subnet string) (*models.PeerSub
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id).
 		WithBody(&models.PeerSubnetUpdate{Cidr: &subnet})
-	resp, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsPeersubnetsPut(params, f.authInfo)
+	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPeersubnetsPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Add Subnets to VPN Connection %s: %w", id, err)
 	}
@@ -184,7 +184,7 @@ func (f *IBMPIVpnConnectionClient) DeleteSubnet(id, subnet string) (*models.Peer
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id).
 		WithBody(&models.PeerSubnetUpdate{Cidr: &subnet})
-	resp, err := f.session.Power.PCloudVPNConnections.PcloudVpnconnectionsPeersubnetsDelete(params, f.authInfo)
+	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPeersubnetsDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Delete Subnet from VPN Connection %s: %w", id, err)
 	}

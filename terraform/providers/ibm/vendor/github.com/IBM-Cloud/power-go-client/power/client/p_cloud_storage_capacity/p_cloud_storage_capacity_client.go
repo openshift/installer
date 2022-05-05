@@ -6,13 +6,14 @@ package p_cloud_storage_capacity
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new p cloud storage capacity API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,31 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	PcloudStoragecapacityPoolsGet(params *PcloudStoragecapacityPoolsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityPoolsGetOK, error)
+
+	PcloudStoragecapacityPoolsGetall(params *PcloudStoragecapacityPoolsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityPoolsGetallOK, error)
+
+	PcloudStoragecapacityTypesGet(params *PcloudStoragecapacityTypesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityTypesGetOK, error)
+
+	PcloudStoragecapacityTypesGetall(params *PcloudStoragecapacityTypesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityTypesGetallOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-PcloudStoragecapacityPoolsGet storages capacity for a storage pool in a region
+  PcloudStoragecapacityPoolsGet storages capacity for a storage pool in a region
 */
-func (a *Client) PcloudStoragecapacityPoolsGet(params *PcloudStoragecapacityPoolsGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudStoragecapacityPoolsGetOK, error) {
+func (a *Client) PcloudStoragecapacityPoolsGet(params *PcloudStoragecapacityPoolsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityPoolsGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudStoragecapacityPoolsGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.storagecapacity.pools.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools/{storage_pool_name}",
@@ -45,24 +61,34 @@ func (a *Client) PcloudStoragecapacityPoolsGet(params *PcloudStoragecapacityPool
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudStoragecapacityPoolsGetOK), nil
-
+	success, ok := result.(*PcloudStoragecapacityPoolsGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.storagecapacity.pools.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudStoragecapacityPoolsGetall storages capacity for all available storage pools in a region
+  PcloudStoragecapacityPoolsGetall storages capacity for all available storage pools in a region
 */
-func (a *Client) PcloudStoragecapacityPoolsGetall(params *PcloudStoragecapacityPoolsGetallParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudStoragecapacityPoolsGetallOK, error) {
+func (a *Client) PcloudStoragecapacityPoolsGetall(params *PcloudStoragecapacityPoolsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityPoolsGetallOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudStoragecapacityPoolsGetallParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.storagecapacity.pools.getall",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools",
@@ -74,24 +100,34 @@ func (a *Client) PcloudStoragecapacityPoolsGetall(params *PcloudStoragecapacityP
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudStoragecapacityPoolsGetallOK), nil
-
+	success, ok := result.(*PcloudStoragecapacityPoolsGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.storagecapacity.pools.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudStoragecapacityTypesGet storages capacity for a storage type in a region
+  PcloudStoragecapacityTypesGet storages capacity for a storage type in a region
 */
-func (a *Client) PcloudStoragecapacityTypesGet(params *PcloudStoragecapacityTypesGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudStoragecapacityTypesGetOK, error) {
+func (a *Client) PcloudStoragecapacityTypesGet(params *PcloudStoragecapacityTypesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityTypesGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudStoragecapacityTypesGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.storagecapacity.types.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-types/{storage_type_name}",
@@ -103,24 +139,34 @@ func (a *Client) PcloudStoragecapacityTypesGet(params *PcloudStoragecapacityType
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudStoragecapacityTypesGetOK), nil
-
+	success, ok := result.(*PcloudStoragecapacityTypesGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.storagecapacity.types.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudStoragecapacityTypesGetall storages capacity for all available storage types in a region
+  PcloudStoragecapacityTypesGetall storages capacity for all available storage types in a region
 */
-func (a *Client) PcloudStoragecapacityTypesGetall(params *PcloudStoragecapacityTypesGetallParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudStoragecapacityTypesGetallOK, error) {
+func (a *Client) PcloudStoragecapacityTypesGetall(params *PcloudStoragecapacityTypesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityTypesGetallOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudStoragecapacityTypesGetallParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.storagecapacity.types.getall",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-types",
@@ -132,12 +178,23 @@ func (a *Client) PcloudStoragecapacityTypesGetall(params *PcloudStoragecapacityT
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudStoragecapacityTypesGetallOK), nil
-
+	success, ok := result.(*PcloudStoragecapacityTypesGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.storagecapacity.types.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client

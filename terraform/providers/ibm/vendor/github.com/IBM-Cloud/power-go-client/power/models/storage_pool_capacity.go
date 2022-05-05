@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // StoragePoolCapacity Storage pool capacity
+//
 // swagger:model StoragePoolCapacity
 type StoragePoolCapacity struct {
 
@@ -51,6 +53,11 @@ func (m *StoragePoolCapacity) validateMaxAllocationSize(formats strfmt.Registry)
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this storage pool capacity based on context it is used
+func (m *StoragePoolCapacity) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

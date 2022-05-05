@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudNetworksGetReader is a Reader for the PcloudNetworksGet structure.
@@ -24,44 +23,38 @@ type PcloudNetworksGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudNetworksGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudNetworksGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudNetworksGetBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudNetworksGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudNetworksGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudNetworksGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudNetworksGetOK() *PcloudNetworksGetOK {
 	return &PcloudNetworksGetOK{}
 }
 
-/*PcloudNetworksGetOK handles this case with default header values.
+/* PcloudNetworksGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudNetworksGetOK struct {
 
 func (o *PcloudNetworksGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksGetOK  %+v", 200, o.Payload)
+}
+func (o *PcloudNetworksGetOK) GetPayload() *models.Network {
+	return o.Payload
 }
 
 func (o *PcloudNetworksGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -99,7 +95,7 @@ func NewPcloudNetworksGetBadRequest() *PcloudNetworksGetBadRequest {
 	return &PcloudNetworksGetBadRequest{}
 }
 
-/*PcloudNetworksGetBadRequest handles this case with default header values.
+/* PcloudNetworksGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,6 +105,9 @@ type PcloudNetworksGetBadRequest struct {
 
 func (o *PcloudNetworksGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksGetBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudNetworksGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -128,7 +127,7 @@ func NewPcloudNetworksGetUnauthorized() *PcloudNetworksGetUnauthorized {
 	return &PcloudNetworksGetUnauthorized{}
 }
 
-/*PcloudNetworksGetUnauthorized handles this case with default header values.
+/* PcloudNetworksGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -138,6 +137,9 @@ type PcloudNetworksGetUnauthorized struct {
 
 func (o *PcloudNetworksGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksGetUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudNetworksGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -157,7 +159,7 @@ func NewPcloudNetworksGetNotFound() *PcloudNetworksGetNotFound {
 	return &PcloudNetworksGetNotFound{}
 }
 
-/*PcloudNetworksGetNotFound handles this case with default header values.
+/* PcloudNetworksGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -167,6 +169,9 @@ type PcloudNetworksGetNotFound struct {
 
 func (o *PcloudNetworksGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksGetNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudNetworksGetNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -186,7 +191,7 @@ func NewPcloudNetworksGetInternalServerError() *PcloudNetworksGetInternalServerE
 	return &PcloudNetworksGetInternalServerError{}
 }
 
-/*PcloudNetworksGetInternalServerError handles this case with default header values.
+/* PcloudNetworksGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -196,6 +201,9 @@ type PcloudNetworksGetInternalServerError struct {
 
 func (o *PcloudNetworksGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudNetworksGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

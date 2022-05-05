@@ -6,13 +6,14 @@ package p_cloud_snapshots
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new p cloud snapshots API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,31 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	PcloudCloudinstancesSnapshotsDelete(params *PcloudCloudinstancesSnapshotsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsDeleteAccepted, error)
+
+	PcloudCloudinstancesSnapshotsGet(params *PcloudCloudinstancesSnapshotsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsGetOK, error)
+
+	PcloudCloudinstancesSnapshotsGetall(params *PcloudCloudinstancesSnapshotsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsGetallOK, error)
+
+	PcloudCloudinstancesSnapshotsPut(params *PcloudCloudinstancesSnapshotsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsPutOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-PcloudCloudinstancesSnapshotsDelete deletes a p VM instance snapshot of a cloud instance
+  PcloudCloudinstancesSnapshotsDelete deletes a p VM instance snapshot of a cloud instance
 */
-func (a *Client) PcloudCloudinstancesSnapshotsDelete(params *PcloudCloudinstancesSnapshotsDeleteParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesSnapshotsDeleteAccepted, error) {
+func (a *Client) PcloudCloudinstancesSnapshotsDelete(params *PcloudCloudinstancesSnapshotsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsDeleteAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesSnapshotsDeleteParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.snapshots.delete",
 		Method:             "DELETE",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}",
@@ -45,24 +61,34 @@ func (a *Client) PcloudCloudinstancesSnapshotsDelete(params *PcloudCloudinstance
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesSnapshotsDeleteAccepted), nil
-
+	success, ok := result.(*PcloudCloudinstancesSnapshotsDeleteAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.snapshots.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudCloudinstancesSnapshotsGet gets the detail of a snapshot
+  PcloudCloudinstancesSnapshotsGet gets the detail of a snapshot
 */
-func (a *Client) PcloudCloudinstancesSnapshotsGet(params *PcloudCloudinstancesSnapshotsGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesSnapshotsGetOK, error) {
+func (a *Client) PcloudCloudinstancesSnapshotsGet(params *PcloudCloudinstancesSnapshotsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesSnapshotsGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.snapshots.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}",
@@ -74,24 +100,34 @@ func (a *Client) PcloudCloudinstancesSnapshotsGet(params *PcloudCloudinstancesSn
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesSnapshotsGetOK), nil
-
+	success, ok := result.(*PcloudCloudinstancesSnapshotsGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.snapshots.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudCloudinstancesSnapshotsGetall lists all p VM instance snapshots for this cloud instance
+  PcloudCloudinstancesSnapshotsGetall lists all p VM instance snapshots for this cloud instance
 */
-func (a *Client) PcloudCloudinstancesSnapshotsGetall(params *PcloudCloudinstancesSnapshotsGetallParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesSnapshotsGetallOK, error) {
+func (a *Client) PcloudCloudinstancesSnapshotsGetall(params *PcloudCloudinstancesSnapshotsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsGetallOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesSnapshotsGetallParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.snapshots.getall",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots",
@@ -103,24 +139,34 @@ func (a *Client) PcloudCloudinstancesSnapshotsGetall(params *PcloudCloudinstance
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesSnapshotsGetallOK), nil
-
+	success, ok := result.(*PcloudCloudinstancesSnapshotsGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.snapshots.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudCloudinstancesSnapshotsPut updates a p VM instance snapshot
+  PcloudCloudinstancesSnapshotsPut updates a p VM instance snapshot
 */
-func (a *Client) PcloudCloudinstancesSnapshotsPut(params *PcloudCloudinstancesSnapshotsPutParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesSnapshotsPutOK, error) {
+func (a *Client) PcloudCloudinstancesSnapshotsPut(params *PcloudCloudinstancesSnapshotsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsPutOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesSnapshotsPutParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.snapshots.put",
 		Method:             "PUT",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}",
@@ -132,12 +178,23 @@ func (a *Client) PcloudCloudinstancesSnapshotsPut(params *PcloudCloudinstancesSn
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesSnapshotsPutOK), nil
-
+	success, ok := result.(*PcloudCloudinstancesSnapshotsPutOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.snapshots.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client
