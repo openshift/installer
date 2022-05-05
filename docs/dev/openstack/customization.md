@@ -13,7 +13,7 @@ export OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE="https://example.com/my-rhcos.qcow2"
 
 **NOTE:** For this to work, the environment variable value must be a valid http(s) URL.
 
-If the user wants to upload the image from the local file system, he can set the environment variable value as `file:///path/to/file`. In this case the installer will take this file and automatically create an image in Glance.
+If the user wants to upload the image from the local file system, they can set the environment variable value as `file:///path/to/file`. In this case the installer will take this file and automatically create an image in Glance.
 
 Example:
 
