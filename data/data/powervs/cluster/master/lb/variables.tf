@@ -1,5 +1,5 @@
 variable "master_ips" {
-  type        = string
+  type        = list
   description = "The IP addresses of the master nodes."
 }
 
