@@ -708,6 +708,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*powervsprovider.PowerVSMachineProviderConfig)
 		}
 
+		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
 				MasterConfigs:        masterConfigs,
@@ -716,7 +717,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				APIKey:               client.APIKey,
 				SSHKey:               installConfig.Config.SSHKey,
 				PowerVSResourceGroup: installConfig.Config.PowerVS.PowerVSResourceGroup,
-				ImageBucketFileName:  string(*rhcosImage),
+				ImageBucketName:      osImage[0],
+				ImageBucketFileName:  osImage[1],
+				NetworkName:          installConfig.Config.PowerVS.PVSNetworkName,
 				CISInstanceCRN:       crn,
 			},
 		)
