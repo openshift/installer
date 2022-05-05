@@ -20,6 +20,9 @@ func ValidateMachinePool(p *ovirt.MachinePool, fldPath *field.Path) field.ErrorL
 		if p.CPU.Sockets <= 0 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("sockets"), p.CPU.Sockets, "CPU sockets must be positive"))
 		}
+		if p.CPU.Threads <= 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("threads"), p.CPU.Threads, "CPU threads must be positive"))
+		}
 	}
 
 	if p.MemoryMB < 0 {
@@ -56,7 +59,7 @@ func ValidateMachinePool(p *ovirt.MachinePool, fldPath *field.Path) field.ErrorL
 	if p.Hugepages > 0 {
 		if p.Hugepages != 2048 && p.Hugepages != 1048576 {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("hugepages"), p.Hugepages,
-				[]string{string(ovirt.Hugepages2MB), string(ovirt.Hugepages1GB)}))
+				[]string{ovirt.Hugepages2MB.String(), ovirt.Hugepages1GB.String()}))
 		}
 	}
 

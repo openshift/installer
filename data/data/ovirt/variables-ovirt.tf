@@ -22,6 +22,7 @@ variable "ovirt_password" {
 variable "ovirt_cafile" {
   type        = string
   description = "Path to a file containing the CA certificate for the oVirt engine API in PEM format"
+  default     = ""
 }
 
 variable "ovirt_ca_bundle" {
@@ -84,17 +85,27 @@ variable "ovirt_affinity_groups" {
 variable "ovirt_master_memory" {
   type        = string
   description = "master VM memory in MiB"
+  default     = 16348 * 1024 * 1024
 }
 
 variable "ovirt_master_cores" {
   type        = string
   description = "master VM number of cores"
+  default     = 1
 }
 
 variable "ovirt_master_sockets" {
   type        = string
   description = "master VM number of sockets"
+  default     = 1
 }
+
+variable "ovirt_master_threads" {
+  type        = string
+  description = "master VM number of threads"
+  default     = 1
+}
+
 
 variable "ovirt_master_os_disk_gb" {
   type        = string

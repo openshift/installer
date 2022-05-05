@@ -142,6 +142,7 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 		CPU: &ovirttypes.CPU{
 			Cores:   4,
 			Sockets: 1,
+			Threads: 1,
 		},
 		MemoryMB: 16348,
 		OSDisk: &ovirttypes.Disk{

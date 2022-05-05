@@ -1,5 +1,7 @@
 package ovirt
 
+import "fmt"
+
 // MachinePool stores the configuration for a machine pool installed
 // on ovirt.
 type MachinePool struct {
@@ -75,6 +77,9 @@ type CPU struct {
 	// Cores is the number of cores per socket.
 	// Total CPUs is (Sockets * Cores)
 	Cores int32 `json:"cores"`
+
+	// Threads is the number of CPU threads.
+	Threads int32 `json:"threads"`
 }
 
 // VMType defines the type of the VM, which will change the VM configuration,
@@ -120,6 +125,10 @@ const (
 // with the specific size.
 // +kubebuilder:validation:Enum=2048;1048576
 type Hugepages int32
+
+func (h Hugepages) String() string {
+	return fmt.Sprintf("%d", h)
+}
 
 const (
 	// Hugepages2MB for using 2MB hugepages.
