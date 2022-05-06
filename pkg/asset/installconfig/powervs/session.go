@@ -2,27 +2,51 @@ package powervs
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	gohttp "net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
-	"github.com/IBM/go-sdk-core/v4/core"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/pkg/errors"
 
 	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/IBM-Cloud/bluemix-go"
+	"github.com/IBM-Cloud/bluemix-go/api/account/accountv2"
+	"github.com/IBM-Cloud/bluemix-go/authentication"
+	"github.com/IBM-Cloud/bluemix-go/http"
+	"github.com/IBM-Cloud/bluemix-go/rest"
+	bxsession "github.com/IBM-Cloud/bluemix-go/session"
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
+	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/form3tech-oss/jwt-go"
+
+	"github.com/sirupsen/logrus"
 )
 
 var (
-	defSessionTimeout time.Duration = 9000000000000000000.0
-	defRegion                       = "us_south"
+	defSessionTimeout   time.Duration = 9000000000000000000.0
+	defRegion                         = "us_south"
+	defaultAuthFilePath               = filepath.Join(os.Getenv("HOME"), ".powervs", "config.json")
 )
 
-// Session is an object representing a session for the IBM Power VS API.
-type Session struct {
-	Session *ibmpisession.IBMPISession
-	APIKey  string
+//BxClient is struct which provides bluemix session details
+type BxClient struct {
+	*bxsession.Session
+	APIKey       string
+	PISession    *ibmpisession.IBMPISession
+	User         *User
+	AccountAPIV2 accountv2.Accounts
+}
+
+//User is struct with user details
+type User struct {
+	ID      string
+	Email   string
+	Account string
 }
 
 // PISessionVars is an object that holds the variables required to create an ibmpisession object.
@@ -33,62 +57,160 @@ type PISessionVars struct {
 	Zone   string `json:"zone,omitempty"`
 }
 
-// GetSession returns an ibmpisession object.
-func GetSession() (*Session, error) {
-	s, apiKey, err := getPISession()
+func authenticateAPIKey(sess *bxsession.Session) error {
+	config := sess.Config
+	tokenRefresher, err := authentication.NewIAMAuthRepository(config, &rest.Client{
+		DefaultHeader: gohttp.Header{
+			"User-Agent": []string{http.UserAgent()},
+		},
+	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to load credentials")
+		return err
 	}
-	return &Session{Session: s, APIKey: apiKey}, nil
+	return tokenRefresher.AuthenticateAPIKey(config.BluemixAPIKey)
 }
 
-var (
-	defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".powervs", "config.json")
-)
+func fetchUserDetails(sess *bxsession.Session) (*User, error) {
+	config := sess.Config
+	user := User{}
+	var bluemixToken string
 
-func getPISession() (*ibmpisession.IBMPISession, string, error) {
-
-	var err error
-	var pisv PISessionVars
-
-	// Grab variables from the installer written authFilePath.
-	err = getPISessionVarsFromAuthFile(&pisv)
-	if err != nil {
-		return nil, "", err
+	if strings.HasPrefix(config.IAMAccessToken, "Bearer") {
+		bluemixToken = config.IAMAccessToken[7:len(config.IAMAccessToken)]
+	} else {
+		bluemixToken = config.IAMAccessToken
 	}
 
-	// Grab variables from the users environment.
+	token, err := jwt.Parse(bluemixToken, func(token *jwt.Token) (interface{}, error) {
+		return "", nil
+	})
+	if err != nil && !strings.Contains(err.Error(), "key is of invalid type") {
+		return &user, err
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	if email, ok := claims["email"]; ok {
+		user.Email = email.(string)
+	}
+	user.ID = claims["id"].(string)
+	user.Account = claims["account"].(map[string]interface{})["bss"].(string)
+
+	return &user, nil
+}
+
+//NewBxClient func returns bluemix client
+func NewBxClient() (*BxClient, error) {
+	c := &BxClient{}
+
+	var pisv PISessionVars
+	// Grab variables from the installer written authFilePath
+	logrus.Debug("Gathering variables from AuthFile")
+	err := getPISessionVarsFromAuthFile(&pisv)
+	if err != nil {
+		return nil, err
+	}
+
+	// Grab variables from the users environment
+	logrus.Debug("Gathering variables from user environment")
 	err = getPISessionVarsFromEnv(&pisv)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	// Prompt the user for the remaining variables.
 	err = getPISessionVarsFromUser(&pisv)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	// Save variables to disk.
 	err = savePISessionVars(&pisv)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	piOpts := ibmpisession.IBMPIOptions{
-		Authenticator: &core.IamAuthenticator{
-			ApiKey: pisv.APIKey,
-		},
-		Region:      pisv.Region,
-		UserAccount: pisv.ID,
-		Zone:        pisv.Zone,
-	}
-	s, err := ibmpisession.NewIBMPISession(&piOpts)
+	c.APIKey = pisv.APIKey
+
+	bxSess, err := bxsession.New(&bluemix.Config{
+		BluemixAPIKey: pisv.APIKey,
+		Region:        powervs.Regions[pisv.Region].VPCRegion,
+	})
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	return s, pisv.APIKey, err
+	c.Session = bxSess
+
+	err = authenticateAPIKey(bxSess)
+	if err != nil {
+		return nil, err
+	}
+
+	c.User, err = fetchUserDetails(bxSess)
+	if err != nil {
+		return nil, err
+	}
+
+	accClient, err := accountv2.New(bxSess)
+	if err != nil {
+		return nil, err
+	}
+
+	c.AccountAPIV2 = accClient.Accounts()
+	return c, nil
+}
+
+//GetAccountType func return the type of account TRAIL/PAID
+func (c *BxClient) GetAccountType() (string, error) {
+	myAccount, err := c.AccountAPIV2.Get((*c.User).Account)
+	if err != nil {
+		return "", err
+	}
+
+	return myAccount.Type, nil
+}
+
+//ValidateAccountPermissions Checks permission for provisioning Power VS resources
+func (c *BxClient) ValidateAccountPermissions() error {
+	accType, err := c.GetAccountType()
+	if err != nil {
+		return err
+	}
+	if accType == "TRIAL" {
+		return fmt.Errorf("account type must be of Pay-As-You-Go/Subscription type for provision Power VS resources")
+	}
+	return nil
+}
+
+// NewPISession updates pisession details, return error on fail
+func (c *BxClient) NewPISession() error {
+	var pisv PISessionVars
+
+	// Grab variables from the installer written authFilePath
+	logrus.Debug("Gathering variables from AuthFile")
+	err := getPISessionVarsFromAuthFile(&pisv)
+	if err != nil {
+		return err
+	}
+
+	var authenticator core.Authenticator = &core.IamAuthenticator{
+		ApiKey: c.APIKey,
+	}
+
+	// Create the session
+	options := &ibmpisession.IBMPIOptions{
+		Authenticator: authenticator,
+		UserAccount:   c.User.Account,
+		Region:        pisv.Region,
+		Zone:          pisv.Zone,
+		Debug:         false,
+	}
+
+	c.PISession, err = ibmpisession.NewIBMPISession(options)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func getPISessionVarsFromAuthFile(pisv *PISessionVars) error {

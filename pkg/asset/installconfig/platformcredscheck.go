@@ -71,6 +71,15 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}
+	case powervs.Name:
+		bxCli, err := powervsconfig.NewBxClient()
+		if err != nil {
+			return err
+		}
+		err = bxCli.NewPISession()
+		if err != nil {
+			return errors.Wrap(err, "creating IBM Cloud session")
+		}
 	case openstack.Name:
 		_, err = openstackconfig.GetSession(ic.Config.Platform.OpenStack.Cloud)
 		if err != nil {
@@ -91,11 +100,6 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		err = con.Test()
 		if err != nil {
 			return errors.Wrap(err, "testing Engine connection")
-		}
-	case powervs.Name:
-		_, err = powervsconfig.GetSession()
-		if err != nil {
-			return errors.Wrap(err, "creating IBM Cloud session")
 		}
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
