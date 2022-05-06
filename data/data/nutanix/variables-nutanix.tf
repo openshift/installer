@@ -27,9 +27,9 @@ variable "nutanix_prism_element_uuid" {
   description = "This is the uuid of the Prism Element cluster."
 }
 
-variable "nutanix_image_filepath" {
+variable "nutanix_image_uri" {
   type        = string
-  description = "This is the filepath to the image file that will be imported into Prism Central."
+  description = "This is the uri to the image file that will be imported into Prism Central."
 }
 
 variable "nutanix_image" {
