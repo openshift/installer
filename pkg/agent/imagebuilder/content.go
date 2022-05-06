@@ -272,10 +272,7 @@ func (c ConfigBuilder) getManifests(manifestPath string) ([]igntypes.File, error
 	for _, e := range entries {
 		localPath := path.Join(manifestPath, e.Name())
 		ignitionPath := path.Join("/etc/assisted/manifests", e.Name())
-		if e.IsDir() {
-			// ignore subdirectories
-			continue
-		} else {
+		if !e.IsDir() {
 			contents, err := ioutil.ReadFile(path.Join(localPath))
 			if err != nil {
 				return files, fmt.Errorf("failed to read file %s: %w", localPath, err)
