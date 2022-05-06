@@ -37,8 +37,11 @@ type ConfigBuilder struct {
 	manifestPath        string
 }
 
-func New() *ConfigBuilder {
-	pullSecret := manifests.GetPullSecret()
+func New() (*ConfigBuilder, error) {
+	pullSecret, err := manifests.GetPullSecret()
+	if err != nil {
+		return nil, err
+	}
 
 	n := manifests.NewNMConfig()
 	nodeZeroIP := n.GetNodeZeroIP()
@@ -52,10 +55,16 @@ func New() *ConfigBuilder {
 		Path:   "/",
 	}
 
-	aci := manifests.GetAgentClusterInstall()
+	aci, err := manifests.GetAgentClusterInstall()
+	if err != nil {
+		return nil, err
+	}
 	clusterInstall := &aci
 
-	infraEnv := manifests.GetInfraEnv()
+	infraEnv, err := manifests.GetInfraEnv()
+	if err != nil {
+		return nil, err
+	}
 
 	staticNetworkConfig, err := manifests.ProcessNMStateConfig(infraEnv)
 	if err != nil {
@@ -74,7 +83,7 @@ func New() *ConfigBuilder {
 		workerAgents:        clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
 		staticNetworkConfig: staticNetworkConfig,
 		manifestPath:        manifestPath,
-	}
+	}, nil
 }
 
 func getEnv(key, fallback string) string {

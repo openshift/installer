@@ -11,7 +11,6 @@ import (
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
@@ -68,33 +67,30 @@ func GetFileMultipleYamls(filename string, decoder DecodeFormat) ([]interface{},
 	return outputList, nil
 }
 
-func GetPullSecret() string {
+func GetPullSecret() (string, error) {
 	var secret corev1.Secret
 	if err := GetFileData("pull-secret.yaml", &secret); err != nil {
-		logrus.Errorln("Error reading pull secret:", err.Error())
-		os.Exit(1)
+		return "", err
 	}
 
 	pullSecret := secret.StringData[".dockerconfigjson"]
-	return pullSecret
+	return pullSecret, nil
 }
 
-func GetAgentClusterInstall() hiveext.AgentClusterInstall {
+func GetAgentClusterInstall() (hiveext.AgentClusterInstall, error) {
 	var aci hiveext.AgentClusterInstall
 	if err := GetFileData("agent-cluster-install.yaml", &aci); err != nil {
-		logrus.Errorln("Error reading AgentClusterInstall:", err.Error())
-		os.Exit(1)
+		return aci, err
 	}
 
-	return aci
+	return aci, nil
 }
 
-func GetInfraEnv() aiv1beta1.InfraEnv {
+func GetInfraEnv() (aiv1beta1.InfraEnv, error) {
 	var infraEnv aiv1beta1.InfraEnv
 	if err := GetFileData("infraenv.yaml", &infraEnv); err != nil {
-		logrus.Errorln("Error reading InfraEnv:", err.Error())
-		os.Exit(1)
+		return infraEnv, err
 	}
 
-	return infraEnv
+	return infraEnv, nil
 }
