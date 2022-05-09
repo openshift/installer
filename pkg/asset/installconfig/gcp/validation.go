@@ -42,6 +42,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	}
 
 	allErrs = append(allErrs, validateProject(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validateRegion(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 
@@ -250,15 +251,27 @@ func ValidateEnabledServices(ctx context.Context, client API, project string) er
 }
 
 // ValidateProjectRegion determines whether the region is valid for the project
-func ValidateProjectRegion(ctx context.Context, client API, project string, region string) error {
-	validRegions, err := client.GetRegions(ctx, project)
-	if err != nil {
-		return err
+func validateRegion(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	regionFound := false
+
+	if ic.GCP.ProjectID != "" && ic.GCP.Region != "" {
+		computeRegions, err := client.GetRegions(context.TODO(), ic.GCP.ProjectID)
+		if err != nil {
+			return append(allErrs, field.InternalError(fieldPath.Child("project"), err))
+		} else if len(computeRegions) == 0 {
+			return append(allErrs, field.Invalid(fieldPath.Child("project"), ic.GCP.ProjectID, "no regions found"))
+		}
+
+		for _, region := range computeRegions {
+			if regionFound = region == ic.GCP.Region; regionFound {
+				break
+			}
+		}
 	}
 
-	if _, ok := validRegions[region]; !ok {
-		return fmt.Errorf("the following region is invalid: %s", region)
+	if !regionFound {
+		return append(allErrs, field.Invalid(fieldPath.Child("region"), ic.GCP.Region, "invalid region"))
 	}
-
 	return nil
 }

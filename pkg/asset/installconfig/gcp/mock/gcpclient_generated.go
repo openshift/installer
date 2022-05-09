@@ -142,10 +142,10 @@ func (mr *MockAPIMockRecorder) GetRecordSets(ctx, project, zone interface{}) *go
 }
 
 // GetRegions mocks base method.
-func (m *MockAPI) GetRegions(ctx context.Context, project string) (map[string]string, error) {
+func (m *MockAPI) GetRegions(ctx context.Context, project string) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRegions", ctx, project)
-	ret0, _ := ret[0].(map[string]string)
+	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

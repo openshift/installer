@@ -25,7 +25,7 @@ func TestValidatePlatform(t *testing.T) {
 		{
 			name: "invalid region",
 			platform: &gcp.Platform{
-				Region: "bad-region",
+				Region: "",
 			},
 			valid: false,
 		},
