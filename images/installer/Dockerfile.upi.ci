@@ -62,6 +62,7 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
     ./aws/install -b /bin && \
     rm -rf ./aws awscliv2.zip
 
+RUN echo test!
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
 ENV PATH /bin
