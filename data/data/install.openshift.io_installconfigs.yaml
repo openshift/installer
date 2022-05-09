@@ -635,22 +635,22 @@ spec:
                       description: PowerVS is the configuration used when installing
                         on IBM Power VS.
                       properties:
-                        memory:
-                          description: Memory defines the memory in GB for the instance.
-                          type: string
+                        memoryGiB:
+                          description: memoryGiB is the size of a virtual machine's
+                            memory, in GiB.
+                          format: int32
+                          type: integer
                         procType:
                           description: ProcType defines the processor sharing model
-                            for the instance. Must be one of {capped, dedicated, shared}.
-                          enum:
-                          - ""
-                          - capped
-                          - dedicated
-                          - shared
+                            for the instance. Must be one of {Capped, Dedicated, Shared}.
                           type: string
                         processors:
+                          anyOf:
+                          - type: integer
+                          - type: string
                           description: Processors defines the processing units for
                             the instance.
-                          type: string
+                          x-kubernetes-int-or-string: true
                         sysType:
                           description: SysType defines the system type for instance.
                           type: string
@@ -1258,22 +1258,22 @@ spec:
                     description: PowerVS is the configuration used when installing
                       on IBM Power VS.
                     properties:
-                      memory:
-                        description: Memory defines the memory in GB for the instance.
-                        type: string
+                      memoryGiB:
+                        description: memoryGiB is the size of a virtual machine's
+                          memory, in GiB.
+                        format: int32
+                        type: integer
                       procType:
                         description: ProcType defines the processor sharing model
-                          for the instance. Must be one of {capped, dedicated, shared}.
-                        enum:
-                        - ""
-                        - capped
-                        - dedicated
-                        - shared
+                          for the instance. Must be one of {Capped, Dedicated, Shared}.
                         type: string
                       processors:
+                        anyOf:
+                        - type: integer
+                        - type: string
                         description: Processors defines the processing units for the
                           instance.
-                        type: string
+                        x-kubernetes-int-or-string: true
                       sysType:
                         description: SysType defines the system type for instance.
                         type: string
@@ -2757,22 +2757,22 @@ spec:
                       used when installing on Power VS for machine pools which do
                       not define their own platform configuration.
                     properties:
-                      memory:
-                        description: Memory defines the memory in GB for the instance.
-                        type: string
+                      memoryGiB:
+                        description: memoryGiB is the size of a virtual machine's
+                          memory, in GiB.
+                        format: int32
+                        type: integer
                       procType:
                         description: ProcType defines the processor sharing model
-                          for the instance. Must be one of {capped, dedicated, shared}.
-                        enum:
-                        - ""
-                        - capped
-                        - dedicated
-                        - shared
+                          for the instance. Must be one of {Capped, Dedicated, Shared}.
                         type: string
                       processors:
+                        anyOf:
+                        - type: integer
+                        - type: string
                         description: Processors defines the processing units for the
                           instance.
-                        type: string
+                        x-kubernetes-int-or-string: true
                       sysType:
                         description: SysType defines the system type for instance.
                         type: string

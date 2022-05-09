@@ -1,17 +1,9 @@
 package powervs
 
-// ProcType defines valid types for a ppc64le processor in Power VS
-// +kubebuilder:validation:Enum="";capped;dedicated;shared
-type ProcType string
-
-// Capped type for capped processor consumption
-const Capped ProcType = "capped"
-
-// Dedicated type for dedicated processor(s)
-const Dedicated ProcType = "dedicated"
-
-// Shared type shared type for shared processor(s)
-const Shared ProcType = "shared"
+import (
+	machinev1 "github.com/openshift/api/machine/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+)
 
 // MachinePool stores the configuration for a machine pool installed on IBM Power VS.
 type MachinePool struct {
@@ -20,21 +12,21 @@ type MachinePool struct {
 	// +optional
 	VolumeIDs []string `json:"volumeIDs,omitempty"`
 
-	// Memory defines the memory in GB for the instance.
+	// memoryGiB is the size of a virtual machine's memory, in GiB.
 	//
 	// +optional
-	Memory string `json:"memory,omitempty"`
+	MemoryGiB int32 `json:"memoryGiB,omitempty"`
 
 	// Processors defines the processing units for the instance.
 	//
 	// +optional
-	Processors string `json:"processors,omitempty"`
+	Processors intstr.IntOrString `json:"processors,omitempty"`
 
 	// ProcType defines the processor sharing model for the instance.
-	// Must be one of {capped, dedicated, shared}.
+	// Must be one of {Capped, Dedicated, Shared}.
 	//
 	// +optional
-	ProcType ProcType `json:"procType,omitempty"`
+	ProcType machinev1.PowerVSProcessorType `json:"procType,omitempty"`
 
 	// SysType defines the system type for instance.
 	//
@@ -50,10 +42,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 	if len(required.VolumeIDs) != 0 {
 		a.VolumeIDs = required.VolumeIDs
 	}
-	if required.Memory != "" {
-		a.Memory = required.Memory
+	if required.MemoryGiB != 0 {
+		a.MemoryGiB = required.MemoryGiB
 	}
-	if required.Processors != "" {
+	if required.Processors.StrVal != "" || required.Processors.IntVal != 0 {
 		a.Processors = required.Processors
 	}
 	if required.ProcType != "" {
