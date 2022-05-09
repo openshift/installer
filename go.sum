@@ -1128,8 +1128,8 @@ github.com/openshift/api v0.0.0-20220114150019-2499da51153e/go.mod h1:F/eU6jgr6Q
 github.com/openshift/api v0.0.0-20220322000322-9c4998a4d646/go.mod h1:F/eU6jgr6Q2VhMu1mSpMmygxAELd7+BUxs3NHZ25jV4=
 github.com/openshift/api v0.0.0-20220325173635-8107b7a38e53/go.mod h1:F/eU6jgr6Q2VhMu1mSpMmygxAELd7+BUxs3NHZ25jV4=
 github.com/openshift/api v0.0.0-20220407071547-006ea8bc5d10/go.mod h1:F/eU6jgr6Q2VhMu1mSpMmygxAELd7+BUxs3NHZ25jV4=
-github.com/openshift/api v0.0.0-20220412182430-7c9d6528f1cc h1:gSWebj7wijXoZOKuhmi5NO6HdaB8HTBzjOweFgJLFT8=
-github.com/openshift/api v0.0.0-20220412182430-7c9d6528f1cc/go.mod h1:F/eU6jgr6Q2VhMu1mSpMmygxAELd7+BUxs3NHZ25jV4=
+github.com/openshift/api v0.0.0-20220504105152-6f735e7109c8 h1:/gMlLRp6nql6uWl0x3Hx81Cm3sE8xtdj7P2iCriBLXs=
+github.com/openshift/api v0.0.0-20220504105152-6f735e7109c8/go.mod h1:F/eU6jgr6Q2VhMu1mSpMmygxAELd7+BUxs3NHZ25jV4=
 github.com/openshift/baremetal-operator v0.0.0-20220128094204-28771f489634 h1:HMxwhxQKSamgM3RpvbUwUKrnD39fEAWrEYaueTHVRmY=
 github.com/openshift/baremetal-operator v0.0.0-20220128094204-28771f489634/go.mod h1:fKoRJ8B07os5e+LFLvhFSS2g8nTODZW/J5jKw4dsQ18=
 github.com/openshift/baremetal-operator/apis v0.0.0-20220128094204-28771f489634 h1:TfLz0GbuVWt0bKNK+71JeYHIAemjcnE1fAVgqMgw2Ac=
