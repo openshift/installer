@@ -62,9 +62,7 @@ func unpackAndInit(dir string, platform string, target string, terraformDir stri
 	}
 
 	// Explicitly specify the CLI config file to use so that we control the providers that are used.
-	tf.SetEnv(map[string]string{
-		"TF_CLI_CONFIG_FILE": filepath.Join(dir, "terraform.rc"),
-	})
+	os.Setenv("TF_CLI_CONFIG_FILE", filepath.Join(dir, "terraform.rc"))
 
 	return errors.Wrap(
 		tf.Init(context.Background(), tfexec.PluginDir(filepath.Join(terraformDir, "plugins"))),
