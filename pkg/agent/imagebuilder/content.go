@@ -69,7 +69,7 @@ func New() (*ConfigBuilder, error) {
 
 	staticNetworkConfig, err := manifests.ProcessNMStateConfig(infraEnv)
 	if err != nil {
-		logrus.Errorf("Error processing NMStateConfigs: %w", err)
+		logrus.Errorf("%s", fmt.Errorf("error processing NMStateConfigs: %w", err))
 		os.Exit(1)
 	}
 
