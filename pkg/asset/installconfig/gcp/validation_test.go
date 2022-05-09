@@ -1,7 +1,6 @@
 package gcp
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"testing"
@@ -25,6 +24,7 @@ var (
 	validProjectName   = "valid-project"
 	invalidProjectName = "invalid-project"
 	validRegion        = "us-east1"
+	invalidRegion      = "us-east4"
 	validZone          = "us-east1-b"
 	validComputeSubnet = "valid-compute-subnet"
 	validCPSubnet      = "valid-controlplane-subnet"
@@ -63,8 +63,8 @@ var (
 	invalidateNetwork       = func(ic *types.InstallConfig) { ic.GCP.Network = "invalid-vpc" }
 	invalidateComputeSubnet = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet = "invalid-compute-subnet" }
 	invalidateCPSubnet      = func(ic *types.InstallConfig) { ic.GCP.ControlPlaneSubnet = "invalid-cp-subnet" }
-	invalidateRegion        = func(ic *types.InstallConfig) { ic.GCP.Region = "us-east4" }
-	invalidateProject       = func(ic *types.InstallConfig) { ic.GCP.ProjectID = "invalid-project" }
+	invalidateRegion        = func(ic *types.InstallConfig) { ic.GCP.Region = invalidRegion }
+	invalidateProject       = func(ic *types.InstallConfig) { ic.GCP.ProjectID = invalidProjectName }
 	removeVPC               = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
 	removeSubnets           = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet, ic.GCP.ControlPlaneSubnet = "", "" }
 	invalidClusterName      = func(ic *types.InstallConfig) { ic.ObjectMeta.Name = "testgoogletest" }
@@ -229,6 +229,24 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: "platform.gcp.project: Invalid value: \"invalid-project\": invalid project ID",
 		},
+		{
+			name:           "Valid Region",
+			edits:          editFunctions{},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid region not found",
+			edits:          editFunctions{invalidateRegion, invalidateProject},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.project: Invalid value: \"invalid-project\": invalid project ID",
+		},
+		{
+			name:           "Region not validated",
+			edits:          editFunctions{invalidateRegion},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.region: Invalid value: \"us-east4\": invalid region",
+		},
 	}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -238,6 +256,11 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient.EXPECT().GetProjects(gomock.Any()).Return(map[string]string{"valid-project": "valid-project"}, nil).AnyTimes()
 	// Should get the list of zones.
 	gcpClient.EXPECT().GetZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*compute.Zone{{Name: validZone}}, nil).AnyTimes()
+
+	// When passed an invalid project, no regions will be returned
+	gcpClient.EXPECT().GetRegions(gomock.Any(), invalidProjectName).Return(nil, fmt.Errorf("failed to get regions for project")).AnyTimes()
+	// When passed a project that is valid but the region is not contained, an error should still occur
+	gcpClient.EXPECT().GetRegions(gomock.Any(), validProjectName).Return([]string{validRegion}, nil).AnyTimes()
 
 	// Should return the machine type as specified.
 	for key, value := range machineTypeAPIResult {
@@ -363,54 +386,4 @@ func TestGCPEnabledServicesList(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestGetProjectRegions(t *testing.T) {
-	cases := []struct {
-		name    string
-		project string
-		region  string
-		err     string
-	}{{
-		name:    "valid region in project",
-		project: validProjectName,
-		region:  validRegion,
-	}, {
-		name:    "invalid region in project",
-		project: validProjectName,
-		region:  "invalid-region",
-		err:     "the following region is invalid: invalid-region",
-	}, {
-		name:    "invalid project",
-		project: invalidProjectName,
-		region:  validRegion,
-		err:     fmt.Sprintf("project: %s cannot be found", invalidProjectName),
-	}}
-
-	validRegions := map[string]string{
-		"valid-region-1": "valid-region-longname-1",
-		validRegion:      validRegion,
-		"valid-region-2": "valid-region-longname-2",
-	}
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	gcpClient := mock.NewMockAPI(mockCtrl)
-
-	gcpClient.EXPECT().GetRegions(gomock.Any(), validProjectName).Return(validRegions, nil).AnyTimes()
-
-	gcpClient.EXPECT().GetRegions(gomock.Any(), invalidProjectName).Return(nil, fmt.Errorf("project: %s cannot be found", invalidProjectName)).AnyTimes()
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			errs := ValidateProjectRegion(context.TODO(), gcpClient, tc.project, tc.region)
-			if tc.err != "" {
-				assert.Regexp(t, tc.err, errs)
-			} else {
-				assert.Empty(t, errs)
-			}
-		})
-	}
-
 }

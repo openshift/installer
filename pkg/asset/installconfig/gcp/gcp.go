@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types/gcp"
+	gcpValidation "github.com/openshift/installer/pkg/types/gcp/validation"
 )
 
 // Platform collects GCP-specific configuration.
@@ -81,6 +82,18 @@ func selectProject(ctx context.Context) (string, error) {
 	return selectedProject, err
 }
 
+func getValidatedRegions(computeRegions []string) map[string]string {
+	validatedRegions := make(map[string]string)
+	for _, region := range computeRegions {
+		// Only add validated regions
+		if value, ok := gcpValidation.Regions[region]; ok {
+			validatedRegions[region] = value
+		}
+	}
+
+	return validatedRegions
+}
+
 func selectRegion(ctx context.Context, project string) (string, error) {
 	ssn, err := GetSession(ctx)
 	if err != nil {
@@ -91,13 +104,14 @@ func selectRegion(ctx context.Context, project string) (string, error) {
 		ssn: ssn,
 	}
 
-	selectRegionCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-
-	validRegions, err := client.GetRegions(selectRegionCtx, project)
-	if err != nil {
+	computeRegions, err := client.GetRegions(ctx, project)
+	if err != nil || len(computeRegions) == 0 {
 		return "", errors.Wrap(err, "failed to get regions")
 	}
+
+	validRegions := getValidatedRegions(computeRegions)
 
 	defaultRegion := "us-central1"
 	defaultRegionName := ""
@@ -108,7 +122,7 @@ func selectRegion(ctx context.Context, project string) (string, error) {
 		regionDesc := fmt.Sprintf("%s (%s)", key, value)
 		longRegions = append(longRegions, regionDesc)
 
-		if key == defaultRegion {
+		if defaultRegionName == "" && key == defaultRegion {
 			defaultRegionName = regionDesc
 		}
 	}
