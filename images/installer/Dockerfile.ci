@@ -16,6 +16,7 @@ RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
 ENV PATH /bin
 ENV HOME /output
+RUN echo test
 WORKDIR /output
 # We're not really an operator, we're just getting some data into the release image.
 LABEL io.openshift.release.operator=true
