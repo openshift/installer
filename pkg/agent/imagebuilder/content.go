@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -26,19 +27,21 @@ const NMCONNECTIONS_DIR = "/etc/assisted/network"
 
 // ConfigBuilder builds an Ignition config
 type ConfigBuilder struct {
-	pullSecret               string
-	serviceBaseURL           url.URL
-	pullSecretToken          string
-	createClusterParamsJSON  string
-	createInfraEnvParamsJSON string
-	apiVip                   string
-	controlPlaneAgents       int
-	workerAgents             int
-	staticNetworkConfig      []*models.HostStaticNetworkConfig
+	pullSecret          string
+	serviceBaseURL      url.URL
+	pullSecretToken     string
+	apiVip              string
+	controlPlaneAgents  int
+	workerAgents        int
+	staticNetworkConfig []*models.HostStaticNetworkConfig
+	manifestPath        string
 }
 
-func New() *ConfigBuilder {
-	pullSecret := manifests.GetPullSecret()
+func New() (*ConfigBuilder, error) {
+	pullSecret, err := manifests.GetPullSecret()
+	if err != nil {
+		return nil, err
+	}
 
 	n := manifests.NewNMConfig()
 	nodeZeroIP := n.GetNodeZeroIP()
@@ -52,36 +55,35 @@ func New() *ConfigBuilder {
 		Path:   "/",
 	}
 
-	clusterParams := manifests.CreateClusterParams()
-	clusterJSON, err := json.Marshal(clusterParams)
+	aci, err := manifests.GetAgentClusterInstall()
 	if err != nil {
-		logrus.Errorf("Error marshalling cluster params into json: %v", err)
+		return nil, err
 	}
-
-	infraEnvParams, err := manifests.CreateInfraEnvParams()
-	if err != nil {
-		logrus.Errorf("Error building infra env params: %v", err)
-	}
-
-	infraEnvJSON, err := json.Marshal(infraEnvParams)
-	if err != nil {
-		logrus.Errorf("Error marshal infra env params into json: %v", err)
-	}
-
-	aci := manifests.GetAgentClusterInstall()
 	clusterInstall := &aci
 
-	return &ConfigBuilder{
-		pullSecret:               pullSecret,
-		serviceBaseURL:           serviceBaseURL,
-		pullSecretToken:          pullSecretToken,
-		createClusterParamsJSON:  string(clusterJSON),
-		createInfraEnvParamsJSON: string(infraEnvJSON),
-		apiVip:                   clusterInstall.Spec.APIVIP,
-		controlPlaneAgents:       clusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
-		workerAgents:             clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
-		staticNetworkConfig:      infraEnvParams.StaticNetworkConfig,
+	infraEnv, err := manifests.GetInfraEnv()
+	if err != nil {
+		return nil, err
 	}
+
+	staticNetworkConfig, err := manifests.ProcessNMStateConfig(infraEnv)
+	if err != nil {
+		logrus.Errorf("Error processing NMStateConfigs: %w", err)
+		os.Exit(1)
+	}
+
+	manifestPath := getEnv("MANIFEST_PATH", "manifests/")
+
+	return &ConfigBuilder{
+		pullSecret:          pullSecret,
+		serviceBaseURL:      serviceBaseURL,
+		pullSecretToken:     pullSecretToken,
+		apiVip:              clusterInstall.Spec.APIVIP,
+		controlPlaneAgents:  clusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
+		workerAgents:        clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
+		staticNetworkConfig: staticNetworkConfig,
+		manifestPath:        manifestPath,
+	}, nil
 }
 
 func getEnv(key, fallback string) string {
@@ -153,6 +155,13 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 			os.Exit(1)
 		}
 	}
+
+	// add manifests to ignition
+	manifests, err := c.getManifests(c.manifestPath)
+	if err != nil {
+		return nil, err
+	}
+	files = append(files, manifests...)
 
 	config.Storage.Files = files
 
@@ -252,18 +261,40 @@ func (c ConfigBuilder) getUnits() ([]igntypes.Unit, error) {
 	return units, nil
 }
 
+// Reads manifests from manifestsPath and adds each file to /etc/assisted/manifests
+// in the ignition.
+func (c ConfigBuilder) getManifests(manifestPath string) ([]igntypes.File, error) {
+	files := make([]igntypes.File, 0)
+	entries, err := ioutil.ReadDir(manifestPath)
+	if err != nil {
+		return files, fmt.Errorf("failed to open file dir \"%s\": %w", manifestPath, err)
+	}
+	for _, e := range entries {
+		localPath := path.Join(manifestPath, e.Name())
+		ignitionPath := path.Join("/etc/assisted/manifests", e.Name())
+		if !e.IsDir() {
+			contents, err := ioutil.ReadFile(path.Join(localPath))
+			if err != nil {
+				return files, fmt.Errorf("failed to read file %s: %w", localPath, err)
+			}
+			mode := 0600
+			file := ignitionFileEmbed(ignitionPath, mode, true, contents)
+			files = append(files, file)
+		}
+	}
+	return files, nil
+}
+
 func (c ConfigBuilder) templateString(name string, text string) (string, error) {
 	params := map[string]interface{}{
-		"ServiceProtocol":          c.serviceBaseURL.Scheme,
-		"ServiceBaseURL":           c.serviceBaseURL.String(),
-		"PullSecretToken":          c.pullSecretToken,
-		"NodeZeroIP":               c.serviceBaseURL.Hostname(),
-		"AssistedServiceHost":      c.serviceBaseURL.Host,
-		"ClusterCreateParamsJSON":  c.createClusterParamsJSON,
-		"InfraEnvCreateParamsJSON": c.createInfraEnvParamsJSON,
-		"APIVIP":                   c.apiVip,
-		"ControlPlaneAgents":       c.controlPlaneAgents,
-		"WorkerAgents":             c.workerAgents,
+		"ServiceProtocol":     c.serviceBaseURL.Scheme,
+		"ServiceBaseURL":      c.serviceBaseURL.String(),
+		"PullSecretToken":     c.pullSecretToken,
+		"NodeZeroIP":          c.serviceBaseURL.Hostname(),
+		"AssistedServiceHost": c.serviceBaseURL.Host,
+		"APIVIP":              c.apiVip,
+		"ControlPlaneAgents":  c.controlPlaneAgents,
+		"WorkerAgents":        c.workerAgents,
 	}
 
 	tmpl, err := template.New(name).Parse(string(text))

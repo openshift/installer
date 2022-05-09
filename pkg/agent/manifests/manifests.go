@@ -3,11 +3,15 @@ package manifests
 import (
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -61,4 +65,32 @@ func GetFileMultipleYamls(filename string, decoder DecodeFormat) ([]interface{},
 	}
 
 	return outputList, nil
+}
+
+func GetPullSecret() (string, error) {
+	var secret corev1.Secret
+	if err := GetFileData("pull-secret.yaml", &secret); err != nil {
+		return "", err
+	}
+
+	pullSecret := secret.StringData[".dockerconfigjson"]
+	return pullSecret, nil
+}
+
+func GetAgentClusterInstall() (hiveext.AgentClusterInstall, error) {
+	var aci hiveext.AgentClusterInstall
+	if err := GetFileData("agent-cluster-install.yaml", &aci); err != nil {
+		return aci, err
+	}
+
+	return aci, nil
+}
+
+func GetInfraEnv() (aiv1beta1.InfraEnv, error) {
+	var infraEnv aiv1beta1.InfraEnv
+	if err := GetFileData("infraenv.yaml", &infraEnv); err != nil {
+		return infraEnv, err
+	}
+
+	return infraEnv, nil
 }
