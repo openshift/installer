@@ -27,12 +27,18 @@ aliases:
     - cfergeau
   openstack-approvers:
     - EmilienM
+    - MaysaMacedo
+    - dulek
+    - gryf
     - mandre
     - mdbooth
     - pierreprinetti
     - stephenfin
   openstack-reviewers:
     - EmilienM
+    - MaysaMacedo
+    - dulek
+    - gryf
     - mandre
     - mdbooth
     - pierreprinetti
