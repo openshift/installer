@@ -3,9 +3,10 @@
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
-- [Preparing your OpenShift Cluster to use SR-IOV Networks](#preparing-your-openshift-cluster-to-use-sr-iov-networks)
 - [Creating SR-IOV Networks for Worker Nodes](#creating-sr-iov-networks-for-worker-nodes)
 - [Creating SR-IOV Worker Nodes in IPI](#creating-sr-iov-worker-nodes-in-ipi)
+- [Install the SRIOV Network Operator and configure a network device](#install-the-sriov-network-operator-and-configure-a-network-device)
+- [Deploy a testpmd pod](#deploy-a-testpmd-pod)
 - [Creating SR-IOV Worker Nodes in UPI](#creating-sr-iov-worker-nodes-in-upi)
 
 ## Prerequisites
