@@ -120,7 +120,9 @@ func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) (
 	return filesList, err
 }
 
-func processNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetworkConfig, error) {
+// ProcessNMStateConfig processes the NMStateConfig resources from the manifest
+// file and returns the data.
+func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetworkConfig, error) {
 
 	nmStateConfigList, err := getNMStateConfig()
 

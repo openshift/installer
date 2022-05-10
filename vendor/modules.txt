@@ -738,9 +738,6 @@ github.com/stretchr/testify/assert
 github.com/terraform-providers/terraform-provider-nutanix/client
 github.com/terraform-providers/terraform-provider-nutanix/client/v3
 github.com/terraform-providers/terraform-provider-nutanix/utils
-# github.com/thoas/go-funk v0.9.1
-## explicit; go 1.13
-github.com/thoas/go-funk
 # github.com/ulikunitz/xz v0.5.10
 ## explicit; go 1.12
 github.com/ulikunitz/xz
