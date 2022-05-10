@@ -47,15 +47,15 @@ func ValidateMachinePool(p *powervs.MachinePool, fldPath *field.Path) field.Erro
 	case intstr.String:
 		processors, err = strconv.ParseFloat(p.Processors.StrVal, 64)
 		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("processors"), p.Processors, "processors must be a valid floating point number"))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("processors"), p.Processors.StrVal, "processors must be a valid floating point number"))
 		}
 	}
-	if err == nil {
+	if err == nil && processors != 0 {
 		if processors < 0.25 || processors > 32 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("processors"), p.Processors, "number of processors must be from .25 to 32 cores"))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("processors"), processors, "number of processors must be from .25 to 32 cores"))
 		}
 		if math.Mod(processors*1000, 2) != 0 || math.Mod(processors*100, 25) != 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("processors"), p.Processors, "processors must be in increments of .25"))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("processors"), processors, "processors must be in increments of .25"))
 		}
 	}
 
