@@ -37,6 +37,7 @@ func (m *AgentManifests) Dependencies() []asset.Asset {
 		&AgentPullSecret{},
 		&InfraEnv{},
 		&NMStateConfig{},
+		&AgentClusterInstall{},
 	}
 }
 
@@ -46,6 +47,7 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		&AgentPullSecret{},
 		&InfraEnv{},
 		&NMStateConfig{},
+		&AgentClusterInstall{},
 	} {
 		dependencies.Get(a)
 		m.FileList = append(m.FileList, a.Files()...)
