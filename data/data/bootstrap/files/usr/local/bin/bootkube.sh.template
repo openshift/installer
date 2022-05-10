@@ -396,6 +396,8 @@ then
     REQUIRED_PODS=""
 fi
 
+exit
+
 echo "Starting cluster-bootstrap..."
 run_cluster_bootstrap() {
 	record_service_stage_start "cb-bootstrap"
