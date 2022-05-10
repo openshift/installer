@@ -6,6 +6,7 @@ import (
 	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/pkg/errors"
 
+	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 )
 
@@ -21,7 +22,8 @@ type config struct {
 	PrismElementUUID               string `json:"nutanix_prism_element_uuid"`
 	SubnetUUID                     string `json:"nutanix_subnet_uuid"`
 	Image                          string `json:"nutanix_image"`
-	ImageURI                       string `json:"nutanix_image_uri"`
+	ImageFilePath                  string `json:"nutanix_image_filepath,omitempty"`
+	ImageURI                       string `json:"nutanix_image_uri,omitempty"`
 	BootstrapIgnitionImage         string `json:"nutanix_bootstrap_ignition_image"`
 	BootstrapIgnitionImageFilePath string `json:"nutanix_bootstrap_ignition_image_filepath"`
 }
@@ -36,6 +38,7 @@ type TFVarsSources struct {
 	BootstrapIgnitionData string
 	ClusterID             string
 	ControlPlaneConfigs   []*machinev1.NutanixMachineProviderConfig
+	UseImagePullOnPrism   bool
 }
 
 //TFVars generate Nutanix-specific Terraform variables
@@ -59,9 +62,17 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PrismElementUUID:               *controlPlaneConfig.Cluster.UUID,
 		SubnetUUID:                     *controlPlaneConfig.Subnets[0].UUID,
 		Image:                          *controlPlaneConfig.Image.Name,
-		ImageURI:                       sources.ImageURI,
 		BootstrapIgnitionImage:         bootstrapIgnitionImageName,
 		BootstrapIgnitionImageFilePath: bootstrapIgnitionImagePath,
+	}
+	if sources.UseImagePullOnPrism {
+		cfg.ImageURI = sources.ImageURI
+	} else {
+		cachedImage, err := cache.DownloadImageFile(sources.ImageURI)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to use cached nutanix image")
+		}
+		cfg.ImageFilePath = cachedImage
 	}
 	return json.MarshalIndent(cfg, "", "  ")
 }

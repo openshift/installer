@@ -30,6 +30,7 @@ resource "nutanix_category_value" "ocp_category_value_shared" {
 resource "nutanix_image" "rhcos" {
   name        = var.nutanix_image
   source_uri  = var.nutanix_image_uri
+  source_path = var.nutanix_image_filepath
   description = local.description
 
   categories {

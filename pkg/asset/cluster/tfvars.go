@@ -867,21 +867,23 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		imgURI := string(*rhcosImage)
+		var useImagePullOnPrism bool
 		if installConfig.Config.Nutanix.ClusterOSImage != "" {
 			imgURI = installConfig.Config.Nutanix.ClusterOSImage
+			useImagePullOnPrism = true
 		}
-		data, err = nutanixtfvars.TFVars(
-			nutanixtfvars.TFVarsSources{
-				PrismCentralAddress:   installConfig.Config.Nutanix.PrismCentral.Endpoint.Address,
-				Port:                  strconv.Itoa(int(installConfig.Config.Nutanix.PrismCentral.Endpoint.Port)),
-				Username:              installConfig.Config.Nutanix.PrismCentral.Username,
-				Password:              installConfig.Config.Nutanix.PrismCentral.Password,
-				ImageURI:              imgURI,
-				BootstrapIgnitionData: bootstrapIgn,
-				ClusterID:             clusterID.InfraID,
-				ControlPlaneConfigs:   controlPlaneConfigs,
-			},
-		)
+		nutanixTfVars := nutanixtfvars.TFVarsSources{
+			PrismCentralAddress:   installConfig.Config.Nutanix.PrismCentral.Endpoint.Address,
+			Port:                  strconv.Itoa(int(installConfig.Config.Nutanix.PrismCentral.Endpoint.Port)),
+			Username:              installConfig.Config.Nutanix.PrismCentral.Username,
+			Password:              installConfig.Config.Nutanix.PrismCentral.Password,
+			ImageURI:              imgURI,
+			BootstrapIgnitionData: bootstrapIgn,
+			ClusterID:             clusterID.InfraID,
+			ControlPlaneConfigs:   controlPlaneConfigs,
+			UseImagePullOnPrism:   useImagePullOnPrism,
+		}
+		data, err = nutanixtfvars.TFVars(nutanixTfVars)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
