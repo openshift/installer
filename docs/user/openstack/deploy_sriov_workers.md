@@ -6,7 +6,9 @@
 - [Creating SR-IOV Networks for Worker Nodes](#creating-sr-iov-networks-for-worker-nodes)
 - [Creating SR-IOV Worker Nodes in IPI](#creating-sr-iov-worker-nodes-in-ipi)
 - [Install the SRIOV Network Operator and configure a network device](#install-the-sriov-network-operator-and-configure-a-network-device)
+- [Attach the OVS HW offload network](#attach-the-ovs-hw-offload-network)
 - [Deploy a testpmd pod](#deploy-a-testpmd-pod)
+- [Deploy a testpmd pod with OVS Hardware Offload](#deploy-a-testpmd-pod-with-ovs-hardware-offload)
 - [Creating SR-IOV Worker Nodes in UPI](#creating-sr-iov-worker-nodes-in-upi)
 
 ## Prerequisites
@@ -130,6 +132,26 @@ spec:
           availabilityZone: <optional_openstack_availability_zone>
 ```
 
+If your port is leveraging OVS Hardware Offload, then its configuration must be the following, so
+the port in Neutron will be created with the right capabilites:
+
+```yaml
+(...)
+          ports:
+          - fixedIPs:
+            - subnetID: <radio_subnet_uuid>
+            nameSuffix: sriov
+            networkID: <radio_network_uuid>
+            portSecurity: false
+            profile:
+              capabilities: '[switchdev]'
+            tags:
+            - sriov
+            - radio
+            vnicType: direct
+(...)
+```
+
 After you finish editing your machineSet, upload it to your OpenShift cluster:
 
 ```sh
@@ -241,6 +263,33 @@ Note: If the network device plugged to the network is not from Intel and is from
 
 The SR-IOV network operator will automatically discover the devices connected on that network for each worker, and make them available for use by the CNF pods later.
 
+## Attach the OVS HW offload network
+
+This step can be skipped when not doing OVS Hardware offload.
+For OVS Hardware Offload, the network has to be attached via a host-device.
+
+Create a file named `network.yaml`:
+
+```yaml
+spec:
+  additionalNetworks:
+  - name: hwoffload1
+    namespace: cnf
+    rawCNIConfig: '{ "cniVersion": "0.3.1", "name": "hwoffload1", "type": "host-device","pciBusId": "0000:00:05.0", "ipam": {}}'
+    type: Raw
+```
+
+And then run:
+
+```sh
+oc patch network.operator cluster --patch "$(cat network.yaml)" --type=merge
+```
+
+It usually takes about 15 seconds to apply the configuration.
+
+Note: `0000:00:05.0` is the PCI Bus ID that corresponds to the device connected to OVS HW Offload, this can be discovered by running `oc describe SriovNetworkNodeState -n openshift-sriov-network-operator`.
+
+
 ## Deploy a testpmd pod
 
 This pod is an example of how we can create a container that uses the hugepages, the reserved CPUs and the SR-IOV port:
@@ -283,6 +332,47 @@ spec:
 ```
 
 More examples are documented [here][pods].
+
+## Deploy a testpmd pod with OVS Hardware Offload
+
+The same example as before, except this time we use the network for OVS Hardware Offload:
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpmd-sriov
+  namespace: mynamespace
+  annotations:
+    k8s.v1.cni.cncf.io/networks: hwoffload1
+spec:
+  containers:
+  - name: testpmd
+    command: ["sleep", "99999"]
+    image: registry.redhat.io/openshift4/dpdk-base-rhel8:v4.9
+    securityContext:
+      capabilities:
+        add: ["IPC_LOCK","SYS_ADMIN"]
+      privileged: true
+      runAsUser: 0
+    resources:
+      requests:
+        memory: 1000Mi
+        hugepages-1Gi: 1Gi
+        cpu: '2'
+      limits:
+        hugepages-1Gi: 1Gi
+        cpu: '2'
+        memory: 1000Mi
+    volumeMounts:
+      - mountPath: /dev/hugepages
+        name: hugepage
+        readOnly: False
+  volumes:
+  - name: hugepage
+    emptyDir:
+      medium: HugePages
+```
 
 ## Creating SR-IOV Worker Nodes in UPI
 
