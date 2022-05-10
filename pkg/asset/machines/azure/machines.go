@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,7 +21,7 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, hyperVGen string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, fmt.Errorf("non-Azure configuration: %q", configPlatform)
 	}
@@ -29,6 +30,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	platform := config.Platform.Azure
 	mpool := pool.Platform.Azure
+
 	if len(mpool.Zones) == 0 {
 		// if no azs are given we set to []string{""} for convenience over later operations.
 		// It means no-zoned for the machine API
@@ -46,7 +48,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		if len(azs) > 0 {
 			azIndex = int(idx) % len(azs)
 		}
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, hyperVGen)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -78,12 +80,25 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, hyperVGen string) (*machineapi.AzureMachineProviderSpec, error) {
+func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string) (*machineapi.AzureMachineProviderSpec, error) {
 	var az *string
 	if len(mpool.Zones) > 0 && azIdx != nil {
 		az = &mpool.Zones[*azIdx]
 	}
 
+	hyperVGen, err := getHyperVGenerationVersion(capabilities)
+	if err != nil {
+		return nil, err
+	}
+
+	if mpool.VMNetworkingType == "" {
+		acceleratedNetworking := getVMNetworkingCapability(capabilities)
+		if acceleratedNetworking {
+			mpool.VMNetworkingType = string(azure.VMnetworkingTypeAccelerated)
+		} else {
+			logrus.Infof("Instance type %s does not support Accelerated Networking. Using Basic Networking instead.", mpool.InstanceType)
+		}
+	}
 	rg := platform.ClusterResourceGroupName(clusterID)
 
 	var image machineapi.Image
@@ -193,6 +208,7 @@ func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, s
 	}
 }
 
+// getVMNetworkingType should set the correct capability for instance type
 func getVMNetworkingType(value string) bool {
 	return value == string(azure.VMnetworkingTypeAccelerated)
 }

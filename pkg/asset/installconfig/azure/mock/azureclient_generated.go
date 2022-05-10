@@ -189,6 +189,21 @@ func (mr *MockAPIMockRecorder) GetStorageEndpointSuffix(ctx interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStorageEndpointSuffix", reflect.TypeOf((*MockAPI)(nil).GetStorageEndpointSuffix), ctx)
 }
 
+// GetVMCapabilities mocks base method.
+func (m *MockAPI) GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVMCapabilities", ctx, instanceType, region)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVMCapabilities indicates an expected call of GetVMCapabilities.
+func (mr *MockAPIMockRecorder) GetVMCapabilities(ctx, instanceType, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVMCapabilities", reflect.TypeOf((*MockAPI)(nil).GetVMCapabilities), ctx, instanceType, region)
+}
+
 // GetVirtualMachineSku mocks base method.
 func (m *MockAPI) GetVirtualMachineSku(ctx context.Context, name, region string) (*compute.ResourceSku, error) {
 	m.ctrl.T.Helper()

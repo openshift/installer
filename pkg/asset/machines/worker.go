@@ -403,12 +403,13 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			pool.Platform.Azure = &mpool
 			client := icazure.NewClient(session)
-			hyperVGen, err := client.GetHyperVGenerationVersion(context.TODO(), mpool.InstanceType, mpool.OSDisk.DiskType, installConfig.Config.Platform.Azure.Region)
+
+			capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
 			if err != nil {
 				return err
 			}
 
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, hyperVGen)
+			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, capabilities)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
