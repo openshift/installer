@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
-	"github.com/openshift/installer/pkg/agent/isosource"
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -25,6 +25,7 @@ var _ asset.WritableAsset = (*AgentImage)(nil)
 func (a *AgentImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&Ignition{},
+		&BaseIso{},
 	}
 }
 
@@ -33,9 +34,11 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	ignition := &Ignition{}
 	dependencies.Get(ignition)
 
-	// TODO: Use BaseIso asset once it is available
-	baseImage, err := isosource.EnsureIso()
-	if err != nil {
+	baseImage := &BaseIso{}
+	dependencies.Get(baseImage)
+
+	dir, _ := path.Split(agentISOFilename)
+	if err := os.MkdirAll(dir, 0775); err != nil {
 		return err
 	}
 
@@ -45,7 +48,7 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	}
 
 	ignitionContent := &isoeditor.IgnitionContent{Config: ignitionByte}
-	custom, err := isoeditor.NewRHCOSStreamReader(baseImage, ignitionContent, nil)
+	custom, err := isoeditor.NewRHCOSStreamReader(baseImage.File.Filename, ignitionContent, nil)
 	if err != nil {
 		return err
 	}
