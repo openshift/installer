@@ -388,8 +388,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				mpool.OSDisk.DiskEncryptionSet.SubscriptionID = session.Credentials.SubscriptionID
 			}
 
+			client := icazure.NewClient(session)
 			if len(mpool.Zones) == 0 {
-				azs, err := azure.AvailabilityZones(session, ic.Platform.Azure.Region, mpool.InstanceType)
+				azs, err := client.GetAvailabilityZones(context.TODO(), ic.Platform.Azure.Region, mpool.InstanceType)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
@@ -402,7 +403,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			pool.Platform.Azure = &mpool
-			client := icazure.NewClient(session)
 
 			capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
 			if err != nil {
