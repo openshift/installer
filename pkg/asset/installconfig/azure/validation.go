@@ -88,8 +88,14 @@ func ValidateDiskEncryptionSet(client API, ic *types.InstallConfig) field.ErrorL
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType string, diskType string, req resourceRequirements, ultraSSDEnabled bool, vmNetworkingType string, capabilities map[string]string) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType string, diskType string, req resourceRequirements, ultraSSDEnabled bool, vmNetworkingType string) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	capabilities, err := client.GetVMCapabilities(context.TODO(), instanceType, region)
+	if err != nil {
+		return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
+	}
+
 	val, ok := capabilities["vCPUsAvailable"]
 	if ok {
 		cpus, err := strconv.ParseFloat(val, 0)
@@ -161,8 +167,6 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	defaultInstanceType := ""
 	defaultUltraSSDCapability := "Disabled"
 	defaultVMNetworkingType := ""
-	var capabilities map[string]string
-	var err error
 
 	if ic.Platform.Azure.DefaultMachinePlatform != nil {
 		if ic.Platform.Azure.DefaultMachinePlatform.OSDisk.DiskType != "" {
@@ -198,18 +202,11 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if ultraSSDCapability == "" {
 			ultraSSDCapability = defaultUltraSSDCapability
 		}
-		capabilities, err = client.GetVMCapabilities(context.TODO(), instanceType, ic.Azure.Region)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
-		}
 		if vmNetworkingType == "" {
 			vmNetworkingType = defaultVMNetworkingType
 		}
 		ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
-		// if capabilities fails to find a valid instance type, we should skip this validation
-		if capabilities != nil {
-			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath, ic.Azure.Region, instanceType, diskType, controlPlaneReq, ultraSSDEnabled, vmNetworkingType, capabilities)...)
-		}
+		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath, ic.Azure.Region, instanceType, diskType, controlPlaneReq, ultraSSDEnabled, vmNetworkingType)...)
 	}
 
 	for idx, compute := range ic.Compute {
@@ -235,16 +232,9 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			if vmNetworkingType == "" {
 				vmNetworkingType = defaultVMNetworkingType
 			}
-			capabilities, err = client.GetVMCapabilities(context.TODO(), instanceType, ic.Azure.Region)
-			if err != nil {
-				allErrs = append(allErrs, field.Invalid(fieldPath.Child("platform", "azure", "type"), instanceType, err.Error()))
-			}
 			ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
-			// skip validation if instance type was invalid
-			if capabilities != nil {
-				allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "azure"),
-					ic.Azure.Region, instanceType, diskType, computeReq, ultraSSDEnabled, vmNetworkingType, capabilities)...)
-			}
+			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "azure"),
+				ic.Azure.Region, instanceType, diskType, computeReq, ultraSSDEnabled, vmNetworkingType)...)
 		}
 	}
 

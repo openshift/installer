@@ -442,10 +442,7 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		azureClient.EXPECT().GetVMCapabilities(gomock.Any(), key, validRegion).Return(value, nil).AnyTimes()
 	}
 	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), "Dne_D2_v4", validRegion).Return(nil, fmt.Errorf("not found in region centralus")).AnyTimes()
-	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), "neverland").Return(nil, nil).AnyTimes()
-	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), "australiacentral2").Return(vmCapabilities["Standard_D8s_v3"], nil).AnyTimes()
-	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), "centralus").Return(vmCapabilities["Standard_D8s_v3"], nil).AnyTimes()
-	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), "Central US").Return(nil, nil).AnyTimes()
+	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), gomock.Any()).Return(vmCapabilities["Standard_D8s_v3"], nil).AnyTimes()
 
 	// VirtualNetwork
 	azureClient.EXPECT().GetVirtualNetwork(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork).Return(virtualNetworkAPIResult, nil).AnyTimes()
