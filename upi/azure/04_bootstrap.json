@@ -9,6 +9,13 @@
         "description" : "Base name to be used in resource names (usually the cluster's Infra ID)"
       }
     },
+    "vnetBaseName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata" : {
+        "description" : "The specific customer vnet's base name (optional)"
+      }
+    },
     "bootstrapIgnition" : {
       "type" : "string",
       "minLength" : 1,
@@ -33,9 +40,9 @@
   },
   "variables" : {
     "location" : "[resourceGroup().location]",
-    "virtualNetworkName" : "[concat(parameters('baseName'), '-vnet')]",
+    "virtualNetworkName" : "[concat(if(not(empty(parameters('vnetBaseName'))), parameters('vnetBaseName'), parameters('baseName')), '-vnet')]",
     "virtualNetworkID" : "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "masterSubnetName" : "[concat(parameters('baseName'), '-master-subnet')]",
+    "masterSubnetName" : "[concat(if(not(empty(parameters('vnetBaseName'))), parameters('vnetBaseName'), parameters('baseName')), '-master-subnet')]",
     "masterSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('masterSubnetName'))]",
     "masterLoadBalancerName" : "[concat(parameters('baseName'), '-public-lb')]",
     "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal-lb')]",
@@ -44,7 +51,7 @@
     "vmName" : "[concat(parameters('baseName'), '-bootstrap')]",
     "nicName" : "[concat(variables('vmName'), '-nic')]",
     "imageName" : "[concat(parameters('baseName'), '-image')]",
-    "clusterNsgName" : "[concat(parameters('baseName'), '-nsg')]",
+    "clusterNsgName" : "[concat(if(not(empty(parameters('vnetBaseName'))), parameters('vnetBaseName'), parameters('baseName')), '-nsg')]",
     "sshPublicIpAddressName" : "[concat(variables('vmName'), '-ssh-pip')]"
   },
   "resources" : [

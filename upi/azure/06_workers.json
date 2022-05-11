@@ -9,6 +9,13 @@
         "description" : "Base name to be used in resource names (usually the cluster's Infra ID)"
       }
     },
+    "vnetBaseName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata" : {
+        "description" : "The specific customer vnet's base name (optional)"
+      }
+    },
     "workerIgnition" : {
       "type" : "string",
       "metadata" : {
@@ -41,9 +48,9 @@
   },
   "variables" : {
     "location" : "[resourceGroup().location]",
-    "virtualNetworkName" : "[concat(parameters('baseName'), '-vnet')]",
+    "virtualNetworkName" : "[concat(if(not(empty(parameters('vnetBaseName'))), parameters('vnetBaseName'), parameters('baseName')), '-vnet')]",
     "virtualNetworkID" : "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "nodeSubnetName" : "[concat(parameters('baseName'), '-worker-subnet')]",
+    "nodeSubnetName" : "[concat(if(not(empty(parameters('vnetBaseName'))), parameters('vnetBaseName'), parameters('baseName')), '-worker-subnet')]",
     "nodeSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('nodeSubnetName'))]",
     "infraLoadBalancerName" : "[parameters('baseName')]",
     "sshKeyPath" : "/home/capi/.ssh/authorized_keys",

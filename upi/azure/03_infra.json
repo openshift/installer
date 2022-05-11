@@ -9,6 +9,13 @@
         "description" : "Base name to be used in resource names (usually the cluster's Infra ID)"
       }
     },
+    "vnetBaseName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata" : {
+        "description" : "The specific customer vnet's base name (optional)"
+      }
+    },
     "privateDNSZoneName" : {
       "type" : "string",
       "metadata" : {
@@ -18,9 +25,9 @@
   },
   "variables" : {
     "location" : "[resourceGroup().location]",
-    "virtualNetworkName" : "[concat(parameters('baseName'), '-vnet')]",
+    "virtualNetworkName" : "[concat(if(not(empty(parameters('vnetBaseName'))), parameters('vnetBaseName'), parameters('baseName')), '-vnet')]",
     "virtualNetworkID" : "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "masterSubnetName" : "[concat(parameters('baseName'), '-master-subnet')]",
+    "masterSubnetName" : "[concat(if(not(empty(parameters('vnetBaseName'))), parameters('vnetBaseName'), parameters('baseName')), '-master-subnet')]",
     "masterSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('masterSubnetName'))]",
     "masterPublicIpAddressName" : "[concat(parameters('baseName'), '-master-pip')]",
     "masterPublicIpAddressID" : "[resourceId('Microsoft.Network/publicIPAddresses', variables('masterPublicIpAddressName'))]",
