@@ -113,7 +113,7 @@ func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
 
 func defaultGCPMachinePoolPlatform() gcptypes.MachinePool {
 	return gcptypes.MachinePool{
-		InstanceType: "n1-standard-4",
+		InstanceType: "n2-standard-4",
 		OSDisk: gcptypes.OSDisk{
 			DiskSizeGB: powerOfTwoRootVolumeSize,
 			DiskType:   "pd-ssd",
@@ -154,9 +154,9 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 
 func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
 	return vspheretypes.MachinePool{
-		NumCPUs:           2,
-		NumCoresPerSocket: 2,
-		MemoryMiB:         8192,
+		NumCPUs:           4,
+		NumCoresPerSocket: 1,
+		MemoryMiB:         16384,
 		OSDisk: vspheretypes.OSDisk{
 			DiskSizeGB: decimalRootVolumeSize,
 		},
@@ -183,11 +183,11 @@ func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
 	}
 }
 
-func awsDefaultWorkerMachineTypes(region string, arch types.Architecture) []string {
+func awsDefaultMachineTypes(region string, arch types.Architecture) []string {
 	classes := awsdefaults.InstanceClasses(region, arch)
 	types := make([]string, len(classes))
 	for i, c := range classes {
-		types[i] = fmt.Sprintf("%s.large", c)
+		types[i] = fmt.Sprintf("%s.xlarge", c)
 	}
 	return types
 }
@@ -339,10 +339,10 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				}
 			}
 			if mpool.InstanceType == "" {
-				mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultWorkerMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
+				mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
 				if err != nil {
 					logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
-					mpool.InstanceType = awsDefaultWorkerMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
+					mpool.InstanceType = awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
 				}
 			}
 			// if the list of zones is the default we need to try to filter the list in case there are some zones where the instance might not be available

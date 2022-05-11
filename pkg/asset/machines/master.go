@@ -52,7 +52,6 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
-	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -139,15 +138,6 @@ func (m *Master) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		&machine.Master{},
 	}
-}
-
-func awsDefaultMasterMachineTypes(region string, arch types.Architecture) []string {
-	classes := awsdefaults.InstanceClasses(region, arch)
-	types := make([]string, len(classes))
-	for i, c := range classes {
-		types[i] = fmt.Sprintf("%s.xlarge", c)
-	}
-	return types
 }
 
 // Generate generates the Master asset.
@@ -238,10 +228,10 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 
 		if mpool.InstanceType == "" {
-			mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMasterMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
+			mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
 			if err != nil {
 				logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
-				mpool.InstanceType = awsDefaultMasterMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
+				mpool.InstanceType = awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
 			}
 		}
 
