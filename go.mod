@@ -209,3 +209,5 @@ replace k8s.io/client-go => k8s.io/client-go v0.23.0
 replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 
 replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.2.2-0.20211029075448-e21f85ac2cf7
+
+replace github.com/openshift/api => github.com/TrilokGeer/api v0.0.2
