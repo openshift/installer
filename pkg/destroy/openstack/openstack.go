@@ -407,6 +407,27 @@ func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger l
 	return len(allGroups) == 0, nil
 }
 
+func updateFips(allFIPs []floatingips.FloatingIP, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) error {
+	conn, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		return err
+	}
+
+	for _, fip := range allFIPs {
+		_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
+		if err != nil {
+			// Ignore the error if the resource cannot be found and return with an appropriate message if it's another type of error
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
+				logger.Errorf("Updating floating IP %q for Router failed: %v", fip.ID, err)
+				return err
+			}
+			logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", fip.ID)
+		}
+	}
+	return nil
+}
+
 func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
 	logger.Debug("Deleting openstack routers")
 	defer logger.Debugf("Exiting deleting openstack routers")
@@ -433,8 +454,6 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		return false, nil
 	}
 	for _, router := range allRouters {
-		// If a user provisioned floating ip was used, it needs to be dissociated
-		// Any floating Ip's associated with routers that are going to be deleted will be dissociated
 		fipOpts := floatingips.ListOpts{
 			RouterID: router.ID,
 		}
@@ -446,6 +465,13 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		}
 
 		allFIPs, err := floatingips.ExtractFloatingIPs(fipPages)
+		if err != nil {
+			logger.Error(err)
+			return false, nil
+		}
+		// If a user provisioned floating ip was used, it needs to be dissociated
+		// Any floating Ip's associated with routers that are going to be deleted will be dissociated
+		err = updateFips(allFIPs, opts, filter, logger)
 		if err != nil {
 			logger.Error(err)
 			return false, nil
@@ -474,7 +500,7 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			logger.Error(err)
 		}
 
-		_, err = removeRouterInterfaces(conn, filter, router.ID, logger)
+		_, err = removeRouterInterfaces(conn, filter, router, logger)
 		if err != nil {
 			return false, nil
 		}
@@ -547,16 +573,40 @@ func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, 
 	}
 
 	// Discover router by interface from the primary Network
-	routerID, err := getRouterByPort(conn, allPrimayNetworkPorts)
+	router, err := getRouterByPort(conn, allPrimayNetworkPorts)
 	if err != nil {
 		logger.Debug(err)
 		return false, nil
 	}
-	if routerID == "" {
+	if router.ID == "" {
 		return true, nil
 	}
 
-	removed, err := removeRouterInterfaces(conn, filter, routerID, logger)
+	fipOpts := floatingips.ListOpts{
+		RouterID: router.ID,
+		Tags:     strings.Join(tags, ","),
+	}
+
+	fipPages, err := floatingips.List(conn, fipOpts).AllPages()
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	allFIPs, err := floatingips.ExtractFloatingIPs(fipPages)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	// disassociate any fips created by Kuryr linked to the router
+	err = updateFips(allFIPs, opts, filter, logger)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	removed, err := removeRouterInterfaces(conn, filter, router, logger)
 	if err != nil {
 		logger.Debug(err)
 		return false, nil
@@ -564,10 +614,10 @@ func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, 
 	return removed, nil
 }
 
-func removeRouterInterfaces(client *gophercloud.ServiceClient, filter Filter, routerID string, logger logrus.FieldLogger) (bool, error) {
+func removeRouterInterfaces(client *gophercloud.ServiceClient, filter Filter, router routers.Router, logger logrus.FieldLogger) (bool, error) {
 	// Get router interface ports
 	portListOpts := ports.ListOpts{
-		DeviceID: routerID,
+		DeviceID: router.ID,
 	}
 	allPagesPort, err := ports.List(client, portListOpts).AllPages()
 	if err != nil {
@@ -596,13 +646,18 @@ func removeRouterInterfaces(client *gophercloud.ServiceClient, filter Filter, ro
 		return false, errors.Wrap(err, "failed to extract subnets list")
 	}
 
+	clusterTag := "openshiftClusterID=" + filter["openshiftClusterID"]
+	clusterRouter := isClusterRouter(clusterTag, router.Tags)
+
 	var customInterfaces []ports.Port
 	// map to keep track of whethere interface for subnet was already removed
 	removedSubnets := make(map[string]bool)
 	for _, port := range allPorts {
 		for _, IP := range port.FixedIPs {
-			// Skip removal if interface is not handled by the Cluster
-			if !isClusterSubnet(allSubnets, IP.SubnetID) {
+
+			// Skip removal if Router was not created by CNO or installer and
+			// interface is not handled by the Cluster
+			if !clusterRouter && !isClusterSubnet(allSubnets, IP.SubnetID) {
 				customInterfaces = append(customInterfaces, port)
 				continue
 			}
@@ -610,16 +665,16 @@ func removeRouterInterfaces(client *gophercloud.ServiceClient, filter Filter, ro
 				removeOpts := routers.RemoveInterfaceOpts{
 					SubnetID: IP.SubnetID,
 				}
-				logger.Debugf("Removing Subnet %q from Router %q", IP.SubnetID, routerID)
-				_, err := routers.RemoveInterface(client, routerID, removeOpts).Extract()
+				logger.Debugf("Removing Subnet %q from Router %q", IP.SubnetID, router.ID)
+				_, err := routers.RemoveInterface(client, router.ID, removeOpts).Extract()
 				if err != nil {
 					var gerr gophercloud.ErrDefault404
 					if !errors.As(err, &gerr) {
 						// This can fail when subnet is still in use
-						logger.Debugf("Removing Subnet %q from Router %q failed: %v", IP.SubnetID, routerID, err)
+						logger.Debugf("Removing Subnet %q from Router %q failed: %v", IP.SubnetID, router.ID, err)
 						return false, nil
 					}
-					logger.Debugf("Cannot find subnet %q. It's probably already been removed from router %q.", IP.SubnetID, routerID)
+					logger.Debugf("Cannot find subnet %q. It's probably already been removed from router %q.", IP.SubnetID, router.ID)
 				}
 				removedSubnets[IP.SubnetID] = true
 			}
@@ -629,25 +684,35 @@ func removeRouterInterfaces(client *gophercloud.ServiceClient, filter Filter, ro
 	return len(allPorts) == len(customInterfaces), nil
 }
 
-func getRouterByPort(client *gophercloud.ServiceClient, allPorts []ports.Port) (string, error) {
+func isClusterRouter(clusterTag string, tags []string) bool {
+	for _, tag := range tags {
+		if clusterTag == tag {
+			return true
+		}
+	}
+	return false
+}
+
+func getRouterByPort(client *gophercloud.ServiceClient, allPorts []ports.Port) (routers.Router, error) {
+	empty := routers.Router{}
 	for _, port := range allPorts {
 		if port.DeviceID != "" {
 			page, err := routers.List(client, routers.ListOpts{ID: port.DeviceID}).AllPages()
 			if err != nil {
-				return "", errors.Wrap(err, "failed to get router list")
+				return empty, errors.Wrap(err, "failed to get router list")
 			}
 
 			routerList, err := routers.ExtractRouters(page)
 			if err != nil {
-				return "", errors.Wrap(err, "failed to extract routers list")
+				return empty, errors.Wrap(err, "failed to extract routers list")
 			}
 
 			if len(routerList) == 1 {
-				return routerList[0].ID, nil
+				return routerList[0], nil
 			}
 		}
 	}
-	return "", nil
+	return empty, nil
 }
 
 func isClusterSubnet(subnets []subnets.Subnet, subnetID string) bool {
