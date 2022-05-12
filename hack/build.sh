@@ -56,7 +56,8 @@ release)
 	TAGS="${TAGS} release"
 	if test "${SKIP_GENERATION}" != y
 	then
-		go generate ./data
+		# this step has to be run natively, even when cross-compiling
+		GOOS='' GOARCH='' go generate ./data
 	fi
 	;;
 dev)
