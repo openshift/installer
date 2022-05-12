@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"fmt"
+	"github.com/openshift/installer/pkg/types/openstack"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -18,7 +19,6 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
-	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 var proxyCfgFilename = filepath.Join(manifestDir, "cluster-proxy-01-config.yaml")
@@ -64,6 +64,7 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 
 	if installConfig.Config.Proxy != nil {
 		p.Config.Spec = configv1.ProxySpec{
+			ConfigType: installConfig.Config.Proxy.ConfigType,
 			HTTPProxy:  installConfig.Config.Proxy.HTTPProxy,
 			HTTPSProxy: installConfig.Config.Proxy.HTTPSProxy,
 			NoProxy:    installConfig.Config.Proxy.NoProxy,

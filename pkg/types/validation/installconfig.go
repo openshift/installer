@@ -522,8 +522,10 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 func validateProxy(p *types.Proxy, c *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if p.HTTPProxy == "" && p.HTTPSProxy == "" {
-		allErrs = append(allErrs, field.Required(fldPath, "must include httpProxy or httpsProxy"))
+	if p.ConfigType == types.ExplicitProxy {
+		if p.HTTPProxy == "" && p.HTTPSProxy == "" {
+			allErrs = append(allErrs, field.Required(fldPath, "must include httpProxy or httpsProxy"))
+		}
 	}
 	if p.HTTPProxy != "" {
 		allErrs = append(allErrs, validateURI(p.HTTPProxy, fldPath.Child("httpProxy"), []string{"http"})...)

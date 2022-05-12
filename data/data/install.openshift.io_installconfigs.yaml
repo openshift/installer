@@ -2932,6 +2932,14 @@ spec:
             description: Proxy defines the proxy settings for the cluster. If unset,
               the cluster will not be configured to use a proxy.
             properties:
+              configType:
+                description: Config type is the proxy configuration type. The valid values
+                  are transparent or explicit
+                format: int32
+                type: integer
+                enum:
+                  - explicit
+                  - transparent
               httpProxy:
                 description: HTTPProxy is the URL of the proxy for HTTP requests.
                 type: string

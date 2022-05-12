@@ -348,9 +348,19 @@ type ClusterNetworkEntry struct {
 	DeprecatedHostSubnetLength int32 `json:"hostSubnetLength,omitempty"`
 }
 
+const (
+	ExplicitProxy    string = "explicit"
+	TransparentProxy        = "transparent"
+)
+
 // Proxy defines the proxy settings for the cluster.
 // At least one of HTTPProxy or HTTPSProxy is required.
 type Proxy struct {
+	// configType identifies the configuration is explicitly mentioned in this spec or
+	// transparent proxy configured so that other parameters are ignored.
+	// This enables add additionalCABundle. If the configType is nil, default explicit type is considered.
+	ConfigType string `json:"configType,omitempty"`
+
 	// HTTPProxy is the URL of the proxy for HTTP requests.
 	// +optional
 	HTTPProxy string `json:"httpProxy,omitempty"`
