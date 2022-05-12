@@ -2935,8 +2935,7 @@ spec:
               configType:
                 description: Config type is the proxy configuration type. The valid values
                   are transparent or explicit
-                format: int32
-                type: integer
+                type: string
                 enum:
                   - explicit
                   - transparent
