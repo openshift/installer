@@ -13,7 +13,7 @@ copy_terraform_to_mirror() {
   rm -rf "${PWD}"/pkg/terraform/providers/mirror/*/
 
   # Copy local terraform providers into data
-  find "${PWD}/terraform/bin/" -maxdepth 1 -name "terraform-provider-*.zip" -exec bash -c '
+  find "${PWD}/terraform/bin/${TARGET_OS_ARCH}/" -maxdepth 1 -name "terraform-provider-*.zip" -exec bash -c '
       providerName="$(basename "$1" | cut -d '-' -f 3 | cut -d '.' -f 1)"
       targetOSArch="$2"
       dstDir="${PWD}/pkg/terraform/providers/mirror/openshift/local/$providerName"
@@ -23,7 +23,7 @@ copy_terraform_to_mirror() {
     ' shell {} "${TARGET_OS_ARCH}" \;
 
   mkdir -p "${PWD}/pkg/terraform/providers/mirror/terraform/"
-  cp "${PWD}/terraform/bin/terraform" "${PWD}/pkg/terraform/providers/mirror/terraform/"
+  cp "${PWD}/terraform/bin/${TARGET_OS_ARCH}/terraform" "${PWD}/pkg/terraform/providers/mirror/terraform/"
 }
 
 minimum_go_version=1.17
