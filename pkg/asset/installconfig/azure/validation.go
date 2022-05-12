@@ -13,6 +13,7 @@ import (
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -124,14 +125,16 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, "capability not found: MemoryGB"))
 	}
 
-	val, ok = capabilities["PremiumIO"]
-	if diskType == "Premium_LRS" && ok {
-		if strings.EqualFold(val, "False") {
-			errMsg := fmt.Sprintf("PremiumIO not supported for instance type %s", instanceType)
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("osDisk", "diskType"), diskType, errMsg))
+	if diskType == "Premium_LRS" {
+		val, ok = capabilities["PremiumIO"]
+		if ok {
+			if strings.EqualFold(val, "False") {
+				errMsg := fmt.Sprintf("PremiumIO not supported for instance type %s", instanceType)
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("osDisk", "diskType"), diskType, errMsg))
+			}
+		} else {
+			logrus.Infof("unable to determine PremiumIO support for instance type %s", instanceType)
 		}
-	} else {
-		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, "capability not found: PremiumIO"))
 	}
 
 	if vmNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) {
