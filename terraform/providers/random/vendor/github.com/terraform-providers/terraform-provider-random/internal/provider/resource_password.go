@@ -11,10 +11,10 @@ func resourcePassword() *schema.Resource {
 			"data handling in the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n" +
 			"\n" +
 			"This resource *does* use a cryptographic random number generator.",
-		Create: createStringFunc(true),
-		Read:   readNil,
-		Delete: schema.RemoveFromState,
-		Schema: stringSchemaV1(true),
+		CreateContext: createStringFunc(true),
+		ReadContext:   readNil,
+		DeleteContext: RemoveResourceFromState,
+		Schema:        stringSchemaV1(true),
 		Importer: &schema.ResourceImporter{
 			StateContext: importStringFunc(true),
 		},

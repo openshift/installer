@@ -9,7 +9,7 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/hashicorp/errwrap"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -36,7 +36,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"special": {
-			Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`",
+			Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
@@ -44,7 +44,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"upper": {
-			Description: "Include uppercase alphabet characters in the result.",
+			Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
@@ -52,7 +52,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"lower": {
-			Description: "Include lowercase alphabet characters in the result.",
+			Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
@@ -60,7 +60,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"number": {
-			Description: "Include numeric characters in the result.",
+			Description: "Include numeric characters in the result. Default value is `true`.",
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
@@ -68,7 +68,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"min_numeric": {
-			Description: "Minimum number of numeric characters in the result.",
+			Description: "Minimum number of numeric characters in the result. Default value is `0`.",
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     0,
@@ -76,7 +76,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"min_upper": {
-			Description: "Minimum number of uppercase alphabet characters in the result.",
+			Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     0,
@@ -84,7 +84,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"min_lower": {
-			Description: "Minimum number of lowercase alphabet characters in the result.",
+			Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     0,
@@ -92,7 +92,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"min_special": {
-			Description: "Minimum number of special characters in the result.",
+			Description: "Minimum number of special characters in the result. Default value is `0`.",
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     0,
@@ -123,12 +123,15 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 	}
 }
 
-func createStringFunc(sensitive bool) func(d *schema.ResourceData, meta interface{}) error {
-	return func(d *schema.ResourceData, meta interface{}) error {
+func createStringFunc(sensitive bool) func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		const numChars = "0123456789"
 		const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 		const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		var specialChars = "!@#$%&*()-_=+[]{}<>:?"
+		var (
+			specialChars = "!@#$%&*()-_=+[]{}<>:?"
+			diags        diag.Diagnostics
+		)
 
 		length := d.Get("length").(int)
 		upper := d.Get("upper").(bool)
@@ -169,18 +172,18 @@ func createStringFunc(sensitive bool) func(d *schema.ResourceData, meta interfac
 		for k, v := range minMapping {
 			s, err := generateRandomBytes(&k, v)
 			if err != nil {
-				return errwrap.Wrapf("error generating random bytes: {{err}}", err)
+				return append(diags, diag.Errorf("error generating random bytes: %s", err)...)
 			}
 			result = append(result, s...)
 		}
 		s, err := generateRandomBytes(&chars, length-len(result))
 		if err != nil {
-			return errwrap.Wrapf("error generating random bytes: {{err}}", err)
+			return append(diags, diag.Errorf("error generating random bytes: %s", err)...)
 		}
 		result = append(result, s...)
 		order := make([]byte, len(result))
 		if _, err := rand.Read(order); err != nil {
-			return errwrap.Wrapf("error generating random bytes: {{err}}", err)
+			return append(diags, diag.Errorf("error generating random bytes: %s", err)...)
 		}
 		sort.Slice(result, func(i, j int) bool {
 			return order[i] < order[j]
@@ -209,7 +212,7 @@ func generateRandomBytes(charSet *string, length int) ([]byte, error) {
 	return bytes, nil
 }
 
-func readNil(d *schema.ResourceData, meta interface{}) error {
+func readNil(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return nil
 }
 
