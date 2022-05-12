@@ -62,8 +62,8 @@ var (
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if _, ok := Regions[p.Region]; !ok {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, validRegionValues))
+	if p.Region == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "must provide a region"))
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
