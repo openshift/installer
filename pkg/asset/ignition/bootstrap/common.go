@@ -356,7 +356,7 @@ func (a *Common) addStorageFiles(base string, uri string, templateData *bootstra
 	}
 
 	// Replace files that already exist in the slice with ones added later, otherwise append them
-	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ign)
+	a.Config.Storage.Files = ReplaceOrAppend(a.Config.Storage.Files, ign)
 
 	return nil
 }
@@ -491,7 +491,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 
 		// Replace files that already exist in the slice with ones added later, otherwise append them
 		for _, file := range ignition.FilesFromAsset(rootDir, "root", 0644, asset) {
-			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
+			a.Config.Storage.Files = ReplaceOrAppend(a.Config.Storage.Files, file)
 		}
 	}
 
@@ -540,16 +540,16 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 
 		// Replace files that already exist in the slice with ones added later, otherwise append them
 		for _, file := range ignition.FilesFromAsset(rootDir, "root", 0600, asset) {
-			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
+			a.Config.Storage.Files = ReplaceOrAppend(a.Config.Storage.Files, file)
 		}
 	}
 
 	rootCA := &tls.RootCA{}
 	dependencies.Get(rootCA)
-	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
+	a.Config.Storage.Files = ReplaceOrAppend(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
 }
 
-func replaceOrAppend(files []igntypes.File, file igntypes.File) []igntypes.File {
+func ReplaceOrAppend(files []igntypes.File, file igntypes.File) []igntypes.File {
 	for i, f := range files {
 		if f.Node.Path == file.Node.Path {
 			files[i] = file
