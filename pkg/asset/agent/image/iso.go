@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	agentISOFilename = "output/agent-installer.iso"
+	agentISOFilename = "output/agent.iso"
 )
 
 // ISO is an asset that generates the bootable image used to install clusters.
