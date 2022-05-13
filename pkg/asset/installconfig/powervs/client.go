@@ -58,13 +58,13 @@ type DNSZoneResponse struct {
 
 // NewClient initializes a client with a session.
 func NewClient() (*Client, error) {
-	ssn, err := GetSession()
+	bxCli, err := NewBxClient()
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
-		APIKey: ssn.APIKey,
+		APIKey: bxCli.APIKey,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
