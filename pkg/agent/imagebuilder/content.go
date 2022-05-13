@@ -108,6 +108,15 @@ func ignitionFileEmbed(path string, mode int, overwrite bool, data []byte) ignty
 
 // Ignition builds an ignition file and returns the bytes
 func (c ConfigBuilder) Ignition() ([]byte, error) {
+	config, err := c.IgnitionConfig()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(config)
+}
+
+// Ignition builds an ignition file and returns the bytes
+func (c ConfigBuilder) IgnitionConfig() (igntypes.Config, error) {
 	var err error
 
 	config := igntypes.Config{
@@ -126,7 +135,7 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 
 	files, err := c.getFiles()
 	if err != nil {
-		return nil, err
+		return config, err
 	}
 
 	// pull secret not included in data/data/agent/files because embed.FS
@@ -160,7 +169,7 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 	// add manifests to ignition
 	manifests, err := c.getManifests(c.manifestPath)
 	if err != nil {
-		return nil, err
+		return config, err
 	}
 	files = append(files, manifests...)
 
@@ -168,10 +177,10 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 
 	config.Systemd.Units, err = c.getUnits()
 	if err != nil {
-		return nil, err
+		return config, err
 	}
 
-	return json.Marshal(config)
+	return config, nil
 }
 
 func (c ConfigBuilder) getSSHPubKey() (keys []igntypes.SSHAuthorizedKey) {

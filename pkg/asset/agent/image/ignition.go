@@ -1,8 +1,6 @@
 package image
 
 import (
-	"encoding/json"
-
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/openshift/installer/pkg/agent/imagebuilder"
 	"github.com/openshift/installer/pkg/asset"
@@ -30,18 +28,11 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	ignitionBytes, err := configBuilder.Ignition()
+	ignition, err := configBuilder.IgnitionConfig()
 	if err != nil {
 		return err
 	}
 
-	ignition := &igntypes.Config{}
-
-	err = json.Unmarshal(ignitionBytes, ignition)
-	if err != nil {
-		return err
-	}
-
-	a.Config = ignition
+	a.Config = &ignition
 	return nil
 }
