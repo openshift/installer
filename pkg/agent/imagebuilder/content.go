@@ -106,7 +106,7 @@ func ignitionFileEmbed(path string, mode int, overwrite bool, data []byte) ignty
 	}
 }
 
-// Ignition builds an ignition file and returns the bytes
+// Ignition returns the ignition config in bytes
 func (c ConfigBuilder) Ignition() ([]byte, error) {
 	config, err := c.IgnitionConfig()
 	if err != nil {
@@ -115,7 +115,7 @@ func (c ConfigBuilder) Ignition() ([]byte, error) {
 	return json.Marshal(config)
 }
 
-// Ignition builds an ignition file and returns the bytes
+// IgnitionConfig returns the ignition config
 func (c ConfigBuilder) IgnitionConfig() (igntypes.Config, error) {
 	var err error
 
