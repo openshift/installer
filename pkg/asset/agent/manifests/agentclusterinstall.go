@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	agentClusterInstallFilename = filepath.Join(clusterManifestDir, "agent-cluster-install.yml")
+	agentClusterInstallFilename = filepath.Join(clusterManifestDir, "agent-cluster-install.yaml")
 )
 
 // AgentClusterInstall generates the agent-cluster-install.yaml file.
