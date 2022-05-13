@@ -36,7 +36,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	cvoIgnore := &CVOIgnore{}
 	dependencies.Get(cvoIgnore)
 	for _, file := range ignition.FilesFromAsset(rootDir, "root", 0644, cvoIgnore) {
-		a.Config.Storage.Files = ReplaceOrAppend(a.Config.Storage.Files, file)
+		a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
 	}
 
 	if err := a.generateFile(bootstrapIgnFilename); err != nil {
