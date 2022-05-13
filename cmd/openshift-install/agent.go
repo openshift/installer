@@ -1,15 +1,12 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/installer/cmd/openshift-install/agent"
-	agentcmd "github.com/openshift/installer/pkg/agent"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
-	timer "github.com/openshift/installer/pkg/metrics/timer"
 )
 
 func newAgentCmd() *cobra.Command {
@@ -45,20 +42,6 @@ var (
 			Use:   "image",
 			Short: "Generates a bootable image containing all the information needed to deploy a cluster",
 			Args:  cobra.ExactArgs(0),
-			PostRun: func(cmd *cobra.Command, args []string) {
-				cleanup := setupFileHook(rootOpts.dir)
-				defer cleanup()
-
-				timer.StartTimer("Agent Create Image Complete")
-
-				err := agentcmd.BuildImage()
-				if err != nil {
-					logrus.Fatal(err)
-				}
-
-				timer.StopTimer("Agent Create Image Complete")
-				timer.LogSummary()
-			},
 		},
 		assets: []asset.WritableAsset{
 			&image.ISO{},
