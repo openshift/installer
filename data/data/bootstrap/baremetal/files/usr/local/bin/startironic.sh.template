@@ -8,7 +8,7 @@ EXIT_CODE_NO_RESTART=42
 
 IRONIC_IMAGE=$(image_for ironic)
 IRONIC_AGENT_IMAGE=$(image_for ironic-agent)
-CUSTOMIZATION_IMAGE=$(image_for image-customization-controller)
+CUSTOMIZATION_IMAGE=$(image_for machine-image-customization-controller)
 MACHINE_OS_IMAGES_IMAGE=$(image_for machine-os-images)
 
 # This DHCP range is used by dnsmasq to serve DHCP to the cluster. If empty
