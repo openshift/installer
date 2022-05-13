@@ -55,7 +55,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 
 	assert.NotEmpty(t, asset.Files())
 	aciFile := asset.Files()[0]
-	assert.Equal(t, "cluster-manifests/agent-cluster-install.yml", aciFile.Filename)
+	assert.Equal(t, "cluster-manifests/agent-cluster-install.yaml", aciFile.Filename)
 
 	aci := &hiveext.AgentClusterInstall{}
 	err = yaml.Unmarshal(aciFile.Data, &aci)
