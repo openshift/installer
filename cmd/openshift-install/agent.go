@@ -7,7 +7,7 @@ import (
 	"github.com/openshift/installer/cmd/openshift-install/agent"
 	agentcmd "github.com/openshift/installer/pkg/agent"
 	"github.com/openshift/installer/pkg/asset"
-	aa "github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 )
@@ -61,7 +61,7 @@ var (
 			},
 		},
 		assets: []asset.WritableAsset{
-			&aa.ISO{},
+			&image.ISO{},
 		},
 	}
 

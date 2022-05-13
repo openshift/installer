@@ -1,4 +1,4 @@
-package agent
+package image
 
 import (
 	"encoding/json"
@@ -69,7 +69,7 @@ func (a *ISO) Name() string {
 }
 
 // Load returns the ISO from disk.
-func (i *ISO) Load(f asset.FileFetcher) (bool, error) {
+func (a *ISO) Load(f asset.FileFetcher) (bool, error) {
 
 	iso, err := f.FetchByName(agentISOFilename)
 	if err != nil {
@@ -79,7 +79,7 @@ func (i *ISO) Load(f asset.FileFetcher) (bool, error) {
 		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", agentISOFilename))
 	}
 
-	i.File = iso
+	a.File = iso
 	return true, nil
 }
 

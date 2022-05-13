@@ -1,4 +1,4 @@
-package agent
+package image
 
 import (
 	"path/filepath"
