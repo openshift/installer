@@ -111,6 +111,11 @@ variable "powervs_ssh_key" {
   default     = ""
 }
 
+variable "powervs_image_bucket_name" {
+  type        = string
+  description = "Name of the COS bucket containing the image to be imported."
+}
+
 variable "powervs_image_bucket_file_name" {
   type        = string
   description = "File name of the image in the COS bucket."

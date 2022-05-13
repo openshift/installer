@@ -21,6 +21,7 @@ type config struct {
 	VPCZone              string `json:"powervs_vpc_zone"`
 	PowerVSResourceGroup string `json:"powervs_resource_group"`
 	CISInstanceCRN       string `json:"powervs_cis_crn"`
+	ImageBucketName      string `json:"powervs_image_bucket_name"`
 	ImageBucketFileName  string `json:"powervs_image_bucket_file_name"`
 	NetworkName          string `json:"powervs_network_name"`
 	VPCName              string `json:"powervs_vpc_name"`
@@ -40,6 +41,7 @@ type TFVarsSources struct {
 	SSHKey               string
 	Region               string
 	Zone                 string
+	ImageBucketName      string
 	ImageBucketFileName  string
 	NetworkName          string
 	PowerVSResourceGroup string
@@ -70,6 +72,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VPCZone:              vpcZone,
 		PowerVSResourceGroup: sources.PowerVSResourceGroup,
 		CISInstanceCRN:       sources.CISInstanceCRN,
+		ImageBucketName:      sources.ImageBucketName,
 		ImageBucketFileName:  sources.ImageBucketFileName,
 		VPCName:              sources.VPCName,
 		VPCSubnetName:        sources.VPCSubnetName,

@@ -77,7 +77,7 @@ resource "ibm_pi_image" "boot_image" {
   provider                  = ibm.powervs
   pi_image_name             = "rhcos-${var.cluster_id}"
   pi_cloud_instance_id      = var.powervs_cloud_instance_id
-  pi_image_bucket_name      = "rhcos-powervs-images-${var.powervs_vpc_region}"
+  pi_image_bucket_name      = var.powervs_image_bucket_name
   pi_image_bucket_access    = "public"
   pi_image_bucket_region    = var.powervs_vpc_region
   pi_image_bucket_file_name = var.powervs_image_bucket_file_name
