@@ -19,7 +19,7 @@ do
         sleep 2
     fi
 done
-echo -e "\nInfra env id is $infra_env_id"`
+echo -e "\nInfra env id is $infra_env_id"
 
 required_master_nodes={{.ControlPlaneAgents}}
 required_worker_nodes={{.WorkerAgents}}
