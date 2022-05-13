@@ -122,6 +122,12 @@ variable "powervs_image_storage_type" {
   default     = "tier3"
 }
 
+variable "powervs_expose_bootstrap" {
+  type        = bool
+  description = "Setting this to false allows the bootstrap resources to be removed from the cluster load balancers."
+  default     = true
+}
+
 ################################################################
 # Configure DNS
 ################################################################

@@ -39,13 +39,11 @@ module "lb" {
   }
   source = "./lb"
 
-  instance_count              = var.instance_count
-  master_ips                  = module.vm.master_ips
-  lb_int_id                   = var.lb_int_id
-  lb_ext_id                   = var.lb_ext_id
-  api_pool_ext_id             = var.api_pool_ext_id
-  api_pool_int_id             = var.api_pool_int_id
-  machine_cfg_pool_id         = var.machine_cfg_pool_id
-  bootstrap_api_member_ext_id = var.bootstrap_api_member_ext_id
-  bootstrap_api_member_int_id = var.bootstrap_api_member_int_id
+  instance_count      = var.instance_count
+  master_ips          = module.vm.master_ips
+  lb_int_id           = var.lb_int_id
+  lb_ext_id           = var.lb_ext_id
+  api_pool_ext_id     = var.api_pool_ext_id
+  api_pool_int_id     = var.api_pool_int_id
+  machine_cfg_pool_id = var.machine_cfg_pool_id
 }

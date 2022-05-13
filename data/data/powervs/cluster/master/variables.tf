@@ -113,14 +113,3 @@ variable "api_pool_ext_id" {
   description = "The ID of the public load balancer pool for the API server."
 }
 
-# only used for dependency reasons
-variable "bootstrap_api_member_int_id" {
-  type        = string
-  description = "The ID of the bootstrap member in the API server pool for the private load balancer."
-}
-
-variable "bootstrap_api_member_ext_id" {
-  type        = string
-  description = "The ID of the bootstrap member in the API server pool for the public load balancer."
-}
-
