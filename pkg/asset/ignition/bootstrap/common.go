@@ -549,6 +549,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 	a.Config.Storage.Files = ReplaceOrAppend(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
 }
 
+// ReplaceOrAppend replaces the file in the ignition if one already exists. Otherwise appends the file.
 func ReplaceOrAppend(files []igntypes.File, file igntypes.File) []igntypes.File {
 	for i, f := range files {
 		if f.Node.Path == file.Node.Path {
