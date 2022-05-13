@@ -44,7 +44,7 @@ var (
 			Args:  cobra.ExactArgs(0),
 		},
 		assets: []asset.WritableAsset{
-			&image.ISO{},
+			&image.AgentImage{},
 		},
 	}
 
