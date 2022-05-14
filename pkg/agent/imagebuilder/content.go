@@ -2,7 +2,6 @@ package imagebuilder
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -106,17 +105,8 @@ func ignitionFileEmbed(path string, mode int, overwrite bool, data []byte) ignty
 	}
 }
 
-// Ignition returns the ignition config in bytes
-func (c ConfigBuilder) Ignition() ([]byte, error) {
-	config, err := c.IgnitionConfig()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(config)
-}
-
-// IgnitionConfig returns the ignition config
-func (c ConfigBuilder) IgnitionConfig() (igntypes.Config, error) {
+// Ignition returns the ignition config
+func (c ConfigBuilder) Ignition() (igntypes.Config, error) {
 	var err error
 
 	config := igntypes.Config{

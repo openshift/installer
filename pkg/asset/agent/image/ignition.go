@@ -28,7 +28,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	ignition, err := configBuilder.IgnitionConfig()
+	ignition, err := configBuilder.Ignition()
 	if err != nil {
 		return err
 	}
