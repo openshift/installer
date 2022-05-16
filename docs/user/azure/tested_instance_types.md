@@ -2,6 +2,8 @@
 * `standardDADSv5Family`
 * `standardDASv4Family`
 * `standardDASv5Family`
+* `standardDCSv3Family`
+* `standardDDCSv3Family`
 * `standardDDSv4Family`
 * `standardDDSv5Family`
 * `standardDSFamily`
@@ -25,3 +27,4 @@
 * `standardLSv2Family`
 * `standardMSFamily`
 * `standardNCSv3Family`
+* `standardNPSFamily`
