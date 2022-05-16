@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	outputImage = "output/fleeting.iso"
+	outputImage = "output/agent.iso"
 )
 
 // BuildImage builds an ISO with ignition content from a base image, and writes
