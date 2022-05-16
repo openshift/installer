@@ -124,14 +124,14 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, "capability not found: MemoryGB"))
 	}
 
-	val, ok = capabilities["PremiumIO"]
-	if diskType == "Premium_LRS" && ok {
-		if strings.EqualFold(val, "False") {
+	if diskType == "Premium_LRS" {
+		val, ok = capabilities["PremiumIO"]
+		if !ok {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, "capability not found: PremiumIO"))
+		} else if strings.EqualFold(val, "False") {
 			errMsg := fmt.Sprintf("PremiumIO not supported for instance type %s", instanceType)
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("osDisk", "diskType"), diskType, errMsg))
 		}
-	} else {
-		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, "capability not found: PremiumIO"))
 	}
 
 	if vmNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) {
