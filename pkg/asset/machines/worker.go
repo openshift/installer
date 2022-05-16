@@ -155,7 +155,7 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
 	return vspheretypes.MachinePool{
 		NumCPUs:           4,
-		NumCoresPerSocket: 1,
+		NumCoresPerSocket: 4,
 		MemoryMiB:         16384,
 		OSDisk: vspheretypes.OSDisk{
 			DiskSizeGB: decimalRootVolumeSize,
