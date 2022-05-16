@@ -360,11 +360,10 @@ func TestGCPEnabledServicesList(t *testing.T) {
 			" serviceusage.googleapis.com, cloudresourcemanager.googleapis.com",
 	}, {
 		name: "All pre-existing",
-		services: []string{"compute.googleapis.com", "cloudapis.googleapis.com",
+		services: []string{"compute.googleapis.com",
 			"cloudresourcemanager.googleapis.com", "dns.googleapis.com",
-			"iam.googleapis.com", "iamcredentials.googleapis.com",
-			"servicemanagement.googleapis.com", "serviceusage.googleapis.com",
-			"storage-api.googleapis.com", "storage-component.googleapis.com"},
+			"iam.googleapis.com", "iamcredentials.googleapis.com", "serviceusage.googleapis.com",
+			"deploymentmanager.googleapis.com"},
 	}, {
 		name:     "Some services present",
 		services: []string{"compute.googleapis.com"},
