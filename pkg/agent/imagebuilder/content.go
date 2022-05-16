@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	template "text/template"
 
@@ -38,14 +39,14 @@ type ConfigBuilder struct {
 }
 
 // New creates a new ConfigBuilder by reading the ZTP manifests
-func New() (*ConfigBuilder, error) {
-	pullSecret, err := manifests.GetPullSecret()
+func New(assetsDir string) (*ConfigBuilder, error) {
+	pullSecret, err := manifests.GetPullSecret(assetsDir)
 	if err != nil {
 		return nil, err
 	}
 
 	n := manifests.NewNMConfig()
-	nodeZeroIP := n.GetNodeZeroIP()
+	nodeZeroIP := n.GetNodeZeroIP(assetsDir)
 
 	// TODO: needs appropriate value if AUTH_TYPE != none
 	pullSecretToken := getEnv("PULL_SECRET_TOKEN", "")
@@ -56,24 +57,24 @@ func New() (*ConfigBuilder, error) {
 		Path:   "/",
 	}
 
-	aci, err := manifests.GetAgentClusterInstall()
+	aci, err := manifests.GetAgentClusterInstall(assetsDir)
 	if err != nil {
 		return nil, err
 	}
 	clusterInstall := &aci
 
-	infraEnv, err := manifests.GetInfraEnv()
+	infraEnv, err := manifests.GetInfraEnv(assetsDir)
 	if err != nil {
 		return nil, err
 	}
 
-	staticNetworkConfig, err := manifests.ProcessNMStateConfig(infraEnv)
+	staticNetworkConfig, err := manifests.ProcessNMStateConfig(assetsDir, infraEnv)
 	if err != nil {
 		logrus.Errorf("%s", fmt.Errorf("error processing NMStateConfigs: %w", err))
 		os.Exit(1)
 	}
 
-	manifestPath := getEnv("MANIFEST_PATH", "manifests/")
+	manifestPath := getEnv("MANIFEST_PATH", filepath.Join(assetsDir, "cluster-manifests"))
 
 	return &ConfigBuilder{
 		pullSecret:          pullSecret,

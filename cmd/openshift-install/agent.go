@@ -50,7 +50,7 @@ var (
 
 				timer.StartTimer("Agent Create Image Complete")
 
-				err := agentcmd.BuildImage()
+				err := agentcmd.BuildImage(rootOpts.dir)
 				if err != nil {
 					logrus.Fatal(err)
 				}

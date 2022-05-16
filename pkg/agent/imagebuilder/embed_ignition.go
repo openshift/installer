@@ -13,8 +13,8 @@ const (
 
 // BuildImage builds an ISO with ignition content from a base image, and writes
 // the result to disk.
-func BuildImage(baseImage string) error {
-	configBuilder, err := New()
+func BuildImage(assetsDir, baseImage string) error {
+	configBuilder, err := New(assetsDir)
 	if err != nil {
 		return err
 	}

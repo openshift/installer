@@ -77,11 +77,11 @@ interfaces:
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			n := NMConfig{
-				nmConfig: func() ([]aiv1beta1.NMStateConfig, error) {
+				nmConfig: func(assetsDir string) ([]aiv1beta1.NMStateConfig, error) {
 					return test.nmConfig, nil
 				},
 			}
-			nodeZeroIP := n.GetNodeZeroIP()
+			nodeZeroIP := n.GetNodeZeroIP("/tmp")
 			assert.Equal(t, nodeZeroIP, test.expectedIP)
 
 		})

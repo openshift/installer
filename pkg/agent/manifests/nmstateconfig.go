@@ -16,7 +16,7 @@ import (
 
 // NMConfig represents a set of configs from which the Node0 IP can be obtained
 type NMConfig struct {
-	nmConfig func() ([]aiv1beta1.NMStateConfig, error)
+	nmConfig func(assetsDir string) ([]aiv1beta1.NMStateConfig, error)
 }
 
 // NewNMConfig creates a new NMConfig
@@ -49,9 +49,9 @@ func (d *nmStateConfigYamlDecoder) newDecodedYaml(yamlDecoder *yaml.YAMLToJSONDe
 }
 
 // Get a list of nmStateConfig objects from the manifest file
-func getNMStateConfig() ([]aiv1beta1.NMStateConfig, error) {
+func getNMStateConfig(assetsDir string) ([]aiv1beta1.NMStateConfig, error) {
 	var decoder nmStateConfigYamlDecoder
-	yamlList, err := getFileMultipleYamls("nmstateconfig.yaml", &decoder)
+	yamlList, err := getFileMultipleYamls(assetsDir, "nmstateconfig.yaml", &decoder)
 
 	var nmStateConfigList []aiv1beta1.NMStateConfig
 	for i := range yamlList {
@@ -122,9 +122,9 @@ func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) (
 
 // ProcessNMStateConfig processes the NMStateConfig resources from the manifest
 // file and returns the data.
-func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetworkConfig, error) {
+func ProcessNMStateConfig(assetsDir string, infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetworkConfig, error) {
 
-	nmStateConfigList, err := getNMStateConfig()
+	nmStateConfigList, err := getNMStateConfig(assetsDir)
 
 	if err != nil {
 		err = fmt.Errorf("error with nmstateconfig file: %w", err)
@@ -148,8 +148,8 @@ func ProcessNMStateConfig(infraEnv aiv1beta1.InfraEnv) ([]*models.HostStaticNetw
 }
 
 // GetNodeZeroIP retrieves the first IP from the user provided nmStateConfig yaml file to set as node0 IP
-func (n NMConfig) GetNodeZeroIP() string {
-	configList, err := n.nmConfig()
+func (n NMConfig) GetNodeZeroIP(assetsDir string) string {
+	configList, err := n.nmConfig(assetsDir)
 	if err != nil {
 		panic(err)
 	}

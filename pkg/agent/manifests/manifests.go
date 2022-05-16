@@ -16,9 +16,9 @@ import (
 )
 
 // getFileData reads a YAML file and unmarshals the contents
-func getFileData(fileName string, output interface{}) error {
+func getFileData(assetsDir, fileName string, output interface{}) error {
 
-	path := filepath.Join("./manifests", fileName)
+	path := filepath.Join(assetsDir, "cluster-manifests", fileName)
 
 	contents, err := os.ReadFile(path)
 	if err != nil {
@@ -36,10 +36,10 @@ type decodeFormat interface {
 
 // Read a YAML file containing multiple YAML definitions of the same format
 // Each specific format must be of type decodeFormat
-func getFileMultipleYamls(filename string, decoder decodeFormat) ([]interface{}, error) {
+func getFileMultipleYamls(assetsDir, filename string, decoder decodeFormat) ([]interface{}, error) {
 
 	// TODO - this location must be defined by user input via cobra flags
-	path := filepath.Join("./manifests", filename)
+	path := filepath.Join(assetsDir, "cluster-manifests", filename)
 
 	contents, err := os.ReadFile(path)
 	if err != nil {
@@ -68,9 +68,9 @@ func getFileMultipleYamls(filename string, decoder decodeFormat) ([]interface{},
 }
 
 // GetPullSecret gets the pull secret from the manifest file
-func GetPullSecret() (string, error) {
+func GetPullSecret(assetsDir string) (string, error) {
 	var secret corev1.Secret
-	if err := getFileData("pull-secret.yaml", &secret); err != nil {
+	if err := getFileData(assetsDir, "pull-secret.yaml", &secret); err != nil {
 		return "", err
 	}
 
@@ -80,9 +80,9 @@ func GetPullSecret() (string, error) {
 
 // GetAgentClusterInstall gets the AgentClusterInstall resource from the
 // manifest file
-func GetAgentClusterInstall() (hiveext.AgentClusterInstall, error) {
+func GetAgentClusterInstall(assetsDir string) (hiveext.AgentClusterInstall, error) {
 	var aci hiveext.AgentClusterInstall
-	if err := getFileData("agent-cluster-install.yaml", &aci); err != nil {
+	if err := getFileData(assetsDir, "agent-cluster-install.yaml", &aci); err != nil {
 		return aci, err
 	}
 
@@ -90,9 +90,9 @@ func GetAgentClusterInstall() (hiveext.AgentClusterInstall, error) {
 }
 
 // GetInfraEnv gets the InfraEnv resource from the manifest file
-func GetInfraEnv() (aiv1beta1.InfraEnv, error) {
+func GetInfraEnv(assetsDir string) (aiv1beta1.InfraEnv, error) {
 	var infraEnv aiv1beta1.InfraEnv
-	if err := getFileData("infraenv.yaml", &infraEnv); err != nil {
+	if err := getFileData(assetsDir, "infraenv.yaml", &infraEnv); err != nil {
 		return infraEnv, err
 	}
 
