@@ -63,6 +63,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 - [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
 - [Deploying OpenShift bare-metal workers](deploy_baremetal_workers.md)
 - [Deploying OpenShift single root I/O virtualization (SRIOV) workers](deploy_sriov_workers.md)
+- [Deploying OpenShift with OVS-DPDK](ovs-dpdk.md)
 - [Provider Networks](provider_networks.md)
 
 ## OpenStack Requirements
