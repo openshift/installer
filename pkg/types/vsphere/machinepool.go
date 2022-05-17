@@ -23,6 +23,11 @@ type MachinePool struct {
 	//
 	// +optional
 	OSDisk `json:"osDisk"`
+
+	// Zones defines available zones
+	//
+	// +omitempty
+	Zones []string `json:"zones,omitempty"`
 }
 
 // OSDisk defines the disk for a virtual machine.
@@ -53,5 +58,9 @@ func (p *MachinePool) Set(required *MachinePool) {
 
 	if required.OSDisk.DiskSizeGB != 0 {
 		p.OSDisk.DiskSizeGB = required.OSDisk.DiskSizeGB
+	}
+
+	if len(required.Zones) > 0 {
+		p.Zones = required.Zones
 	}
 }

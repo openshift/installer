@@ -118,7 +118,9 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 		validate(baremetal.Name, p.BareMetal, func(f *field.Path) field.ErrorList { return baremetalvalidation.ValidateMachinePool(p.BareMetal, f) })
 	}
 	if p.VSphere != nil {
-		validate(vsphere.Name, p.VSphere, func(f *field.Path) field.ErrorList { return vspherevalidation.ValidateMachinePool(p.VSphere, f) })
+		validate(vsphere.Name, p.VSphere, func(f *field.Path) field.ErrorList {
+			return vspherevalidation.ValidateMachinePool(platform.VSphere, pool, f)
+		})
 	}
 	if p.Ovirt != nil {
 		validate(ovirt.Name, p.Ovirt, func(f *field.Path) field.ErrorList { return ovirtvalidation.ValidateMachinePool(p.Ovirt, f) })

@@ -42,7 +42,17 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 				Name:          "test-dz-east-1a",
 				Server:        "test-vcenter",
 				FailureDomain: "test-east-1a",
-				ControlPlane:  "Allowed",
+				ControlPlane:  vsphere.Allowed,
+				PlacementConstraint: vsphere.PlacementConstraint{
+					ResourcePool: "/test-datacenter/host/cluster/Resources/test-resourcepool",
+					Folder:       "/test-datacenter/vm/test-folder",
+				},
+			},
+			{
+				Name:          "test-dz-east-2a",
+				Server:        "test-vcenter",
+				FailureDomain: "test-east-1a",
+				ControlPlane:  vsphere.NotAllowed,
 				PlacementConstraint: vsphere.PlacementConstraint{
 					ResourcePool: "/test-datacenter/host/cluster/Resources/test-resourcepool",
 					Folder:       "/test-datacenter/vm/test-folder",

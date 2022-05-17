@@ -49,10 +49,6 @@ import (
 	"github.com/openshift/installer/pkg/validate"
 )
 
-const (
-	masterPoolName = "master"
-)
-
 // list of known plugins that require hostPrefix to be set
 var pluginsUsingHostPrefix = sets.NewString(string(operv1.NetworkTypeOpenShiftSDN), string(operv1.NetworkTypeOVNKubernetes))
 
@@ -424,8 +420,8 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 
 func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if pool.Name != masterPoolName {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{masterPoolName}))
+	if pool.Name != types.MachinePoolControlPlaneRoleName {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{types.MachinePoolControlPlaneRoleName}))
 	}
 	if pool.Replicas != nil && *pool.Replicas == 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
@@ -439,7 +435,7 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 	poolNames := map[string]bool{}
 	for i, p := range pools {
 		poolFldPath := fldPath.Index(i)
-		if p.Name != "worker" {
+		if p.Name != types.MachinePoolComputeRoleName {
 			allErrs = append(allErrs, field.NotSupported(poolFldPath.Child("name"), p.Name, []string{"worker"}))
 		}
 		if poolNames[p.Name] {
