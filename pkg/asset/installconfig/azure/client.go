@@ -14,7 +14,6 @@ import (
 	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 //go:generate mockgen -source=./client.go -destination=mock/azureclient_generated.go -package=mock
@@ -32,7 +31,7 @@ type API interface {
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
 	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
-	GetHyperVGenerationVersion(ctx context.Context, instanceType string, region string) (string, error)
+	GetHyperVGenerationVersion(ctx context.Context, instanceType string, region string, imageHyperVGen string) (string, error)
 	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error)
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
@@ -294,29 +293,15 @@ func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region str
 	return capabilities, nil
 }
 
-// GetHyperVGenerationVersion gets the HyperVGeneration version for the given instance type. Defaults to V2 if either V1 or V2
+// GetHyperVGenerationVersion gets the HyperVGeneration version for the given instance type and marketplace image version, if specified. Defaults to V2 if either V1 or V2
 // available.
-func (c *Client) GetHyperVGenerationVersion(ctx context.Context, instanceType string, region string) (version string, err error) {
-	typeMeta, err := c.GetVirtualMachineSku(ctx, instanceType, region)
+func (c *Client) GetHyperVGenerationVersion(ctx context.Context, instanceType string, region string, imageHyperVGen string) (version string, err error) {
+	capabilities, err := c.GetVMCapabilities(ctx, instanceType, region)
 	if err != nil {
-		return "", fmt.Errorf("error connecting to Azure client: %s", err.Error())
+		return "", err
 	}
 
-	for _, capability := range *typeMeta.Capabilities {
-		if strings.EqualFold(*capability.Name, "HyperVGenerations") {
-			generations := sets.NewString()
-			for _, g := range strings.Split(to.String(capability.Value), ",") {
-				g = strings.TrimSpace(g)
-				g = strings.ToUpper(g)
-				generations.Insert(g)
-			}
-			if generations.Has("V2") {
-				return "V2", nil
-			}
-			return "V1", nil
-		}
-	}
-	return "", fmt.Errorf("failed to fetch HyperVGeneration version for given instance type")
+	return GetHyperVGenerationVersion(capabilities, imageHyperVGen)
 }
 
 // GetMarketplaceImage get the specified marketplace VM image.

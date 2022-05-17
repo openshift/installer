@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 )
@@ -86,13 +87,13 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		az = &mpool.Zones[*azIdx]
 	}
 
-	hyperVGen, err := getHyperVGenerationVersion(capabilities)
+	hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")
 	if err != nil {
 		return nil, err
 	}
 
 	if mpool.VMNetworkingType == "" {
-		acceleratedNetworking := getVMNetworkingCapability(capabilities)
+		acceleratedNetworking := icazure.GetVMNetworkingCapability(capabilities)
 		if acceleratedNetworking {
 			mpool.VMNetworkingType = string(azure.VMnetworkingTypeAccelerated)
 		} else {

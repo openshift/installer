@@ -458,7 +458,7 @@ func validateMarketplaceImage(client API, installConfig *types.InstallConfig) fi
 			continue
 		}
 		osImageFieldPath := field.NewPath("compute").Index(i).Child("platform", "azure", "osImage")
-		_, err := client.GetMarketplaceImage(
+		vmImage, err := client.GetMarketplaceImage(
 			context.Background(),
 			installConfig.Platform.Azure.Region,
 			platform.OSImage.Publisher,
@@ -470,6 +470,31 @@ func validateMarketplaceImage(client API, installConfig *types.InstallConfig) fi
 			allErrs = append(allErrs, field.Invalid(osImageFieldPath, platform.OSImage, err.Error()))
 			continue
 		}
+		instanceType := platform.InstanceType
+		if instanceType == "" && installConfig.Platform.Azure.DefaultMachinePlatform != nil {
+			instanceType = installConfig.Platform.Azure.DefaultMachinePlatform.InstanceType
+		}
+		if instanceType == "" {
+			instanceType = defaults.ComputeInstanceType(installConfig.Azure.CloudName, installConfig.Azure.Region)
+		}
+		capabilities, err := client.GetVMCapabilities(context.Background(), instanceType, installConfig.Azure.Region)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("compute").Index(i).Child("platform", "azure", "type"), instanceType, err.Error()))
+			continue
+		}
+
+		generations, err := GetHyperVGenerationVersions(capabilities)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("compute").Index(i).Child("platform", "azure", "type"), instanceType, err.Error()))
+			continue
+		}
+		imageHyperVGen := string(vmImage.HyperVGeneration)
+		if !generations.Has(imageHyperVGen) {
+			errMsg := fmt.Sprintf("instance type %s supports HyperVGenerations %v but the specified image is for HyperVGeneration %s; to correct this issue either specify a compatible instance type or change the HyperVGeneration for the image by using a different SKU", instanceType, generations.UnsortedList(), imageHyperVGen)
+			allErrs = append(allErrs, field.Invalid(osImageFieldPath, platform.OSImage.SKU, errMsg))
+			continue
+		}
+
 		termsAccepted, err := client.AreMarketplaceImageTermsAccepted(context.Background(), platform.OSImage.Publisher, platform.OSImage.Offer, platform.OSImage.SKU)
 		if err == nil {
 			if !termsAccepted {

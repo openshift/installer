@@ -145,18 +145,18 @@ func (mr *MockAPIMockRecorder) GetGroup(ctx, groupName interface{}) *gomock.Call
 }
 
 // GetHyperVGenerationVersion mocks base method.
-func (m *MockAPI) GetHyperVGenerationVersion(ctx context.Context, instanceType, region string) (string, error) {
+func (m *MockAPI) GetHyperVGenerationVersion(ctx context.Context, instanceType, region, imageHyperVGen string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetHyperVGenerationVersion", ctx, instanceType, region)
+	ret := m.ctrl.Call(m, "GetHyperVGenerationVersion", ctx, instanceType, region, imageHyperVGen)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetHyperVGenerationVersion indicates an expected call of GetHyperVGenerationVersion.
-func (mr *MockAPIMockRecorder) GetHyperVGenerationVersion(ctx, instanceType, region interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetHyperVGenerationVersion(ctx, instanceType, region, imageHyperVGen interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHyperVGenerationVersion", reflect.TypeOf((*MockAPI)(nil).GetHyperVGenerationVersion), ctx, instanceType, region)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHyperVGenerationVersion", reflect.TypeOf((*MockAPI)(nil).GetHyperVGenerationVersion), ctx, instanceType, region, imageHyperVGen)
 }
 
 // GetMarketplaceImage mocks base method.
