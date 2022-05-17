@@ -205,8 +205,10 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if vmNetworkingType == "" {
 			vmNetworkingType = defaultVMNetworkingType
 		}
-		ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
-		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath, ic.Azure.Region, instanceType, diskType, controlPlaneReq, ultraSSDEnabled, vmNetworkingType)...)
+		if ic.Publish != types.InternalPublishingStrategy {
+			ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
+			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath, ic.Azure.Region, instanceType, diskType, controlPlaneReq, ultraSSDEnabled, vmNetworkingType)...)
+		}
 	}
 
 	for idx, compute := range ic.Compute {
@@ -232,9 +234,11 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			if vmNetworkingType == "" {
 				vmNetworkingType = defaultVMNetworkingType
 			}
-			ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
-			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "azure"),
-				ic.Azure.Region, instanceType, diskType, computeReq, ultraSSDEnabled, vmNetworkingType)...)
+			if ic.Publish != types.InternalPublishingStrategy {
+				ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
+				allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "azure"),
+					ic.Azure.Region, instanceType, diskType, computeReq, ultraSSDEnabled, vmNetworkingType)...)
+			}
 		}
 	}
 
