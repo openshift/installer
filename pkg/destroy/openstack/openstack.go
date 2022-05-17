@@ -112,6 +112,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		"deleteContainers":      deleteContainers,
 		"deleteVolumes":         deleteVolumes,
 		"deleteShares":          deleteShares,
+		"deleteVolumeSnapshots": deleteVolumeSnapshots,
 		"deleteFloatingIPs":     deleteFloatingIPs,
 		"deleteImages":          deleteImages,
 	}
@@ -1417,12 +1418,6 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	numberToDelete := len(volumeIDs)
 	numberDeleted := 0
 	for _, volumeID := range volumeIDs {
-		deleted, err := deleteSnapshots(conn, volumeID, logger)
-		if !deleted || err != nil {
-			// Move on to the next volume
-			continue
-		}
-
 		logger.Debugf("Deleting volume %q", volumeID)
 		err = volumes.Delete(conn, volumeID, deleteOpts).ExtractErr()
 		if err != nil {
@@ -1441,13 +1436,25 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	return numberDeleted == numberToDelete, nil
 }
 
-func deleteSnapshots(conn *gophercloud.ServiceClient, volumeID string, logger logrus.FieldLogger) (bool, error) {
-	logger.Debugf("Deleting OpenStack snapshots for volume %v", volumeID)
-	defer logger.Debugf("Exiting deleting OpenStack snapshots for volume %v", volumeID)
+func deleteVolumeSnapshots(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting OpenStack volume snapshots")
+	defer logger.Debugf("Exiting deleting OpenStack volume snapshots")
 
-	listOpts := snapshots.ListOpts{
-		VolumeID: volumeID,
+	var clusterID string
+	for k, v := range filter {
+		if strings.ToLower(k) == "openshiftclusterid" {
+			clusterID = v
+			break
+		}
 	}
+
+	conn, err := clientconfig.NewServiceClient("volume", opts)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	listOpts := snapshots.ListOpts{}
 
 	allPages, err := snapshots.List(conn, listOpts).AllPages()
 	if err != nil {
@@ -1464,17 +1471,20 @@ func deleteSnapshots(conn *gophercloud.ServiceClient, volumeID string, logger lo
 	numberToDelete := len(allSnapshots)
 	numberDeleted := 0
 	for _, snapshot := range allSnapshots {
-		logger.Debugf("Deleting volume snapshot %q", snapshot.ID)
-		err = snapshots.Delete(conn, snapshot.ID).ExtractErr()
-		if err != nil {
-			// Ignore the error if the volume snapshot cannot be found
-			var gerr gophercloud.ErrDefault404
-			if !errors.As(err, &gerr) {
-				// Just log the error and move on to the next volume snapshot
-				logger.Debugf("Deleting volume snapshot %q failed: %v", snapshot.ID, err)
-				continue
+		// Delete only those snapshots that contain cluster ID in the metadata
+		if val, ok := snapshot.Metadata[cinderCSIClusterIDKey]; ok && val == clusterID {
+			logger.Debugf("Deleting volume snapshot %q", snapshot.ID)
+			err = snapshots.Delete(conn, snapshot.ID).ExtractErr()
+			if err != nil {
+				// Ignore the error if the server cannot be found
+				var gerr gophercloud.ErrDefault404
+				if !errors.As(err, &gerr) {
+					// Just log the error and move on to the next volume snapshot
+					logger.Debugf("Deleting volume snapshot %q failed: %v", snapshot.ID, err)
+					continue
+				}
+				logger.Debugf("Cannot find volume snapshot %q. It's probably already been deleted.", snapshot.ID)
 			}
-			logger.Debugf("Cannot find volume snapshot %q. It's probably already been deleted.", snapshot.ID)
 		}
 		numberDeleted++
 	}
