@@ -1,8 +1,8 @@
 [Unit]
 Description=Service that starts cluster installation
-Wants=network-online.target create-cluster-and-infra-env.service assisted-service.service
+Wants=network-online.target create-cluster-and-infraenv.service
 PartOf=assisted-service-pod.service
-After=network-online.target create-cluster-and-infra-env.service assisted-service.service
+After=network-online.target create-cluster-and-infraenv.service
 ConditionPathExists=/etc/assisted-service/node0
 
 [Service]
