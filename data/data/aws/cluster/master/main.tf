@@ -161,7 +161,7 @@ resource "aws_instance" "master" {
   root_block_device {
     volume_type = var.root_volume_type
     volume_size = var.root_volume_size
-    iops        = var.root_volume_type == "io1" ? var.root_volume_iops : 0
+    iops        = var.root_volume_iops
     encrypted   = var.root_volume_encrypted
     kms_key_id  = var.root_volume_kms_key_id == "" ? data.aws_ebs_default_kms_key.current.key_arn : var.root_volume_kms_key_id
   }
