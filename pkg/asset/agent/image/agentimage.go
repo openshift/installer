@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	agentISOFilename = "output/fleeting.iso"
+	agentISOFilename = "output/agent.iso"
 )
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
