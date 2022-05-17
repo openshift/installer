@@ -39,7 +39,7 @@ done
 
 echo "All ${total_required_nodes} hosts are ready."
 
-if [[ "$total_required_nodes" > "1" ]]; then
+if [[ "${APIVIP}" != "" ]]; then
     api_vip=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].api_vip)
     if [ "${api_vip}" == null ]; then
         echo "Setting api vip"
