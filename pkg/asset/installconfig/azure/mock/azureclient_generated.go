@@ -160,10 +160,10 @@ func (mr *MockAPIMockRecorder) GetHyperVGenerationVersion(ctx, instanceType, reg
 }
 
 // GetMarketplaceImage mocks base method.
-func (m *MockAPI) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (compute.VirtualMachineImage, error) {
+func (m *MockAPI) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (compute0.VirtualMachineImage, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMarketplaceImage", ctx, region, publisher, offer, sku, version)
-	ret0, _ := ret[0].(compute.VirtualMachineImage)
+	ret0, _ := ret[0].(compute0.VirtualMachineImage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -33,7 +33,7 @@ type API interface {
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
 	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
 	GetHyperVGenerationVersion(ctx context.Context, instanceType string, region string) (string, error)
-	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azsku.VirtualMachineImage, error)
+	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error)
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
 	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
@@ -320,8 +320,8 @@ func (c *Client) GetHyperVGenerationVersion(ctx context.Context, instanceType st
 }
 
 // GetMarketplaceImage get the specified marketplace VM image.
-func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azsku.VirtualMachineImage, error) {
-	client := azsku.NewVirtualMachineImagesClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
+func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error) {
+	client := azenc.NewVirtualMachineImagesClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
