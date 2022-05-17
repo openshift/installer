@@ -700,6 +700,11 @@ spec:
                               format: int32
                               type: integer
                           type: object
+                        zones:
+                          description: Zones defines available zones
+                          items:
+                            type: string
+                          type: array
                       type: object
                   type: object
                 replicas:
@@ -1332,6 +1337,11 @@ spec:
                             format: int32
                             type: integer
                         type: object
+                      zones:
+                        description: Zones defines available zones
+                        items:
+                          type: string
+                        type: array
                     type: object
                 type: object
               replicas:
@@ -2937,6 +2947,11 @@ spec:
                             format: int32
                             type: integer
                         type: object
+                      zones:
+                        description: Zones defines available zones
+                        items:
+                          type: string
+                        type: array
                     type: object
                   deploymentZones:
                     description: vSphere location where openshift rhcos virtual machines

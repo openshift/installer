@@ -1,13 +1,14 @@
 package validation
 
 import (
+	"github.com/openshift/installer/pkg/validate"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(p *vsphere.MachinePool, fldPath *field.Path) field.ErrorList {
+func ValidateMachinePool(platform *vsphere.Platform, p *vsphere.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if p.DiskSizeGB < 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("diskSizeGB"), p.DiskSizeGB, "storage disk size must be positive"))
@@ -34,6 +35,29 @@ func ValidateMachinePool(p *vsphere.MachinePool, fldPath *field.Path) field.Erro
 		}
 	} else if p.NumCoresPerSocket > defaultNumCPUs {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), p.NumCoresPerSocket, "cores per socket must be less than number of CPUs which is by default 4"))
+	}
+
+	if len(p.Zones) > 0 {
+		if len(platform.DeploymentZones) == 0 {
+			return append(allErrs, field.Required(fldPath.Child("zones"), "deploymentZones must be defined if zones are defined"))
+		}
+		for _, zone := range p.Zones {
+			err := validate.ClusterName1035(zone)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), p.Zones, err.Error()))
+			}
+			zoneDefined := false
+			for _, deploymentZone := range platform.DeploymentZones {
+				if deploymentZone.Name == zone {
+					zoneDefined = true
+				}
+			}
+			if zoneDefined == false {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), zone, "zone not defined in deploymentZones"))
+			}
+		}
+	} else if len(platform.DeploymentZones) > 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("zones"), "zones must be defined if deploymentZones are defined"))
 	}
 	return allErrs
 }
