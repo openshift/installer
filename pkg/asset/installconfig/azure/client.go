@@ -32,7 +32,7 @@ type API interface {
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
 	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
-	GetHyperVGenerationVersion(ctx context.Context, instanceType string, diskType string, region string) (string, error)
+	GetHyperVGenerationVersion(ctx context.Context, instanceType string, region string) (string, error)
 	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azsku.VirtualMachineImage, error)
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
@@ -294,9 +294,9 @@ func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region str
 	return capabilities, nil
 }
 
-// GetHyperVGenerationVersion gets the HyperVGeneration version for the given disk instance type. Defaults to V2 if either V1 or V2
+// GetHyperVGenerationVersion gets the HyperVGeneration version for the given instance type. Defaults to V2 if either V1 or V2
 // available.
-func (c *Client) GetHyperVGenerationVersion(ctx context.Context, instanceType string, diskType string, region string) (version string, err error) {
+func (c *Client) GetHyperVGenerationVersion(ctx context.Context, instanceType string, region string) (version string, err error) {
 	typeMeta, err := c.GetVirtualMachineSku(ctx, instanceType, region)
 	if err != nil {
 		return "", fmt.Errorf("error onnecting to Azure client: %s", err.Error())
