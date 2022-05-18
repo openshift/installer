@@ -299,7 +299,7 @@ func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region str
 func (c *Client) GetHyperVGenerationVersion(ctx context.Context, instanceType string, region string) (version string, err error) {
 	typeMeta, err := c.GetVirtualMachineSku(ctx, instanceType, region)
 	if err != nil {
-		return "", fmt.Errorf("error onnecting to Azure client: %s", err.Error())
+		return "", fmt.Errorf("error connecting to Azure client: %s", err.Error())
 	}
 
 	for _, capability := range *typeMeta.Capabilities {
