@@ -7,10 +7,7 @@ import (
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -35,46 +32,46 @@ func (*AgentClusterInstall) Name() string {
 // the asset.
 func (*AgentClusterInstall) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&installconfig.InstallConfig{},
+		// &installconfig.InstallConfig{},
 	}
 }
 
 // Generate generates the AgentClusterInstall manifest.
 func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
-	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	// installConfig := &installconfig.InstallConfig{}
+	// dependencies.Get(installConfig)
 
-	agentClusterInstall := &hiveext.AgentClusterInstall{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "agent-cluster-install",
-			Namespace: installConfig.Config.Namespace,
-		},
-		Spec: hiveext.AgentClusterInstallSpec{
-			ClusterDeploymentRef: corev1.LocalObjectReference{
-				Name: installConfig.Config.ObjectMeta.Name,
-			},
-			SSHPublicKey: installConfig.Config.SSHKey,
-			ProvisionRequirements: hiveext.ProvisionRequirements{
-				ControlPlaneAgents: int(*installConfig.Config.ControlPlane.Replicas),
-			},
-		},
-	}
+	// agentClusterInstall := &hiveext.AgentClusterInstall{
+	// 	ObjectMeta: v1.ObjectMeta{
+	// 		Name:      "agent-cluster-install",
+	// 		Namespace: installConfig.Config.Namespace,
+	// 	},
+	// 	Spec: hiveext.AgentClusterInstallSpec{
+	// 		ClusterDeploymentRef: corev1.LocalObjectReference{
+	// 			Name: installConfig.Config.ObjectMeta.Name,
+	// 		},
+	// 		SSHPublicKey: installConfig.Config.SSHKey,
+	// 		ProvisionRequirements: hiveext.ProvisionRequirements{
+	// 			ControlPlaneAgents: int(*installConfig.Config.ControlPlane.Replicas),
+	// 		},
+	// 	},
+	// }
 
-	var numberOfWorkers int = 0
-	for _, compute := range installConfig.Config.Compute {
-		numberOfWorkers = numberOfWorkers + int(*compute.Replicas)
-	}
-	agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents = numberOfWorkers
+	// var numberOfWorkers int = 0
+	// for _, compute := range installConfig.Config.Compute {
+	// 	numberOfWorkers = numberOfWorkers + int(*compute.Replicas)
+	// }
+	// agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents = numberOfWorkers
 
-	agentClusterInstallData, err := yaml.Marshal(agentClusterInstall)
-	if err != nil {
-		return errors.Wrap(err, "failed to marshal agent installer AgentClusterInstall")
-	}
+	// agentClusterInstallData, err := yaml.Marshal(agentClusterInstall)
+	// if err != nil {
+	// 	return errors.Wrap(err, "failed to marshal agent installer AgentClusterInstall")
+	// }
 
-	a.File = &asset.File{
-		Filename: agentClusterInstallFilename,
-		Data:     agentClusterInstallData,
-	}
+	// a.File = &asset.File{
+	// 	Filename: agentClusterInstallFilename,
+	// 	Data:     agentClusterInstallData,
+	// }
 
 	return nil
 }

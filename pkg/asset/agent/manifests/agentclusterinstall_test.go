@@ -8,67 +8,63 @@ import (
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/mock"
-	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/utils/pointer"
 )
 
-func TestAgentClusterInstall_Generate(t *testing.T) {
+// func TestAgentClusterInstall_Generate(t *testing.T) {
 
-	installConfig := &installconfig.InstallConfig{
-		Config: &types.InstallConfig{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "cluster0-name",
-				Namespace: "cluster0-namespace",
-			},
-			SSHKey: "ssh-key",
-			ControlPlane: &types.MachinePool{
-				Name:     "master",
-				Replicas: pointer.Int64Ptr(3),
-				Platform: types.MachinePoolPlatform{},
-			},
-			Compute: []types.MachinePool{
-				{
-					Name:     "worker-machine-pool-1",
-					Replicas: pointer.Int64Ptr(2),
-				},
-				{
-					Name:     "worker-machine-pool-2",
-					Replicas: pointer.Int64Ptr(3),
-				},
-			},
-		},
-	}
+// 	installConfig := &installconfig.InstallConfig{
+// 		Config: &types.InstallConfig{
+// 			ObjectMeta: v1.ObjectMeta{
+// 				Name:      "cluster0-name",
+// 				Namespace: "cluster0-namespace",
+// 			},
+// 			SSHKey: "ssh-key",
+// 			ControlPlane: &types.MachinePool{
+// 				Name:     "master",
+// 				Replicas: pointer.Int64Ptr(3),
+// 				Platform: types.MachinePoolPlatform{},
+// 			},
+// 			Compute: []types.MachinePool{
+// 				{
+// 					Name:     "worker-machine-pool-1",
+// 					Replicas: pointer.Int64Ptr(2),
+// 				},
+// 				{
+// 					Name:     "worker-machine-pool-2",
+// 					Replicas: pointer.Int64Ptr(3),
+// 				},
+// 			},
+// 		},
+// 	}
 
-	parents := asset.Parents{}
-	parents.Add(installConfig)
+// 	parents := asset.Parents{}
+// 	parents.Add(installConfig)
 
-	asset := &AgentClusterInstall{}
-	err := asset.Generate(parents)
-	assert.NoError(t, err)
+// 	asset := &AgentClusterInstall{}
+// 	err := asset.Generate(parents)
+// 	assert.NoError(t, err)
 
-	assert.NotEmpty(t, asset.Files())
-	aciFile := asset.Files()[0]
-	assert.Equal(t, "cluster-manifests/agent-cluster-install.yaml", aciFile.Filename)
+// 	assert.NotEmpty(t, asset.Files())
+// 	aciFile := asset.Files()[0]
+// 	assert.Equal(t, "cluster-manifests/agent-cluster-install.yaml", aciFile.Filename)
 
-	aci := &hiveext.AgentClusterInstall{}
-	err = yaml.Unmarshal(aciFile.Data, &aci)
-	assert.NoError(t, err)
+// 	aci := &hiveext.AgentClusterInstall{}
+// 	err = yaml.Unmarshal(aciFile.Data, &aci)
+// 	assert.NoError(t, err)
 
-	assert.Equal(t, "agent-cluster-install", aci.Name)
-	assert.Equal(t, "cluster0-namespace", aci.Namespace)
-	assert.Equal(t, "cluster0-name", aci.Spec.ClusterDeploymentRef.Name)
-	assert.Equal(t, 3, aci.Spec.ProvisionRequirements.ControlPlaneAgents)
+// 	assert.Equal(t, "agent-cluster-install", aci.Name)
+// 	assert.Equal(t, "cluster0-namespace", aci.Namespace)
+// 	assert.Equal(t, "cluster0-name", aci.Spec.ClusterDeploymentRef.Name)
+// 	assert.Equal(t, 3, aci.Spec.ProvisionRequirements.ControlPlaneAgents)
 
-	assert.Equal(t, 5, aci.Spec.ProvisionRequirements.WorkerAgents)
-	assert.Equal(t, "ssh-key", aci.Spec.SSHPublicKey)
-}
+// 	assert.Equal(t, 5, aci.Spec.ProvisionRequirements.WorkerAgents)
+// 	assert.Equal(t, "ssh-key", aci.Spec.SSHPublicKey)
+// }
 
 func TestAgentClusterInstall_LoadedFromDisk(t *testing.T) {
 
