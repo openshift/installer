@@ -37,6 +37,20 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
+// GetAPIKey mocks base method.
+func (m *MockAPI) GetAPIKey() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAPIKey")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetAPIKey indicates an expected call of GetAPIKey.
+func (mr *MockAPIMockRecorder) GetAPIKey() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKey", reflect.TypeOf((*MockAPI)(nil).GetAPIKey))
+}
+
 // GetAuthenticatorAPIKeyDetails mocks base method.
 func (m *MockAPI) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
 	m.ctrl.T.Helper()

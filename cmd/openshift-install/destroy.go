@@ -21,6 +21,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/nutanix"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
+	_ "github.com/openshift/installer/pkg/destroy/powervs"
 	quotaasset "github.com/openshift/installer/pkg/destroy/quota"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 	"github.com/openshift/installer/pkg/metrics/timer"
