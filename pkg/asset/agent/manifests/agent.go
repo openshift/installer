@@ -31,6 +31,7 @@ func (m *AgentManifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&AgentPullSecret{},
 		&InfraEnv{},
+		&NMStateConfig{},
 	}
 }
 
