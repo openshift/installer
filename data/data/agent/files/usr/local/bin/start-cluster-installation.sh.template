@@ -48,10 +48,12 @@ done
 
 echo "All ${total_required_nodes} hosts are ready."
 
-api_vip=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].api_vip)
-if [ "${api_vip}" == null ]; then
-    echo "Setting api vip"
-    curl -s -S -X PATCH "${BASE_URL}/clusters/${cluster_id}" -H "Content-Type: application/json" -d '{"api_vip": "{{.APIVIP}}"}'
+if [[ "${APIVIP}" != "" ]]; then
+    api_vip=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].api_vip)
+    if [ "${api_vip}" == null ]; then
+        echo "Setting api vip"
+        curl -s -S -X PATCH "${BASE_URL}/clusters/${cluster_id}" -H "Content-Type: application/json" -d '{"api_vip": "{{.APIVIP}}"}'
+    fi
 fi
 
 while [[ "${cluster_status}" != "ready" ]]
