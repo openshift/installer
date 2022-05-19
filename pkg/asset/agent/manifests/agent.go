@@ -1,7 +1,10 @@
 package manifests
 
 import (
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -17,6 +20,10 @@ var (
 // AgentManifests generates all the required manifests by the agent installer.
 type AgentManifests struct {
 	FileList []*asset.File
+
+	PullSecret          *corev1.Secret
+	InfraEnv            *aiv1beta1.InfraEnv
+	StaticNetworkConfig []*models.HostStaticNetworkConfig
 }
 
 // Name returns a human friendly name.
@@ -42,6 +49,15 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 	} {
 		dependencies.Get(a)
 		m.FileList = append(m.FileList, a.Files()...)
+
+		switch v := a.(type) {
+		case *AgentPullSecret:
+			m.PullSecret = v.Config
+		case *InfraEnv:
+			m.InfraEnv = v.Config
+		case *NMStateConfig:
+			m.StaticNetworkConfig = append(m.StaticNetworkConfig, v.StaticNetworkConfig...)
+		}
 	}
 
 	asset.SortFiles(m.FileList)
