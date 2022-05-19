@@ -78,6 +78,23 @@ func CreateBootstrapISO(infraID, userData string) (string, error) {
 	}
 
 	fullISOFile := BootISOImagePath(cacheDir, infraID)
+	fullISOFileDir, err := filepath.Abs(filepath.Dir(fullISOFile))
+	if err != nil {
+		return "", errors.Wrap(err, "unable to extract parent directory from bootstrap iso filepath")
+	}
+
+	_, err = os.Stat(fullISOFileDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(fullISOFileDir, 0755)
+			if err != nil {
+				return "", errors.Wrap(err, fmt.Sprintf("failed to create %s", fullISOFileDir))
+			}
+		} else {
+			return "", errors.Wrap(err, fmt.Sprintf("cannot access %s", fullISOFileDir))
+		}
+	}
+
 	outputFile, err := os.OpenFile(fullISOFile, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("failed to create file: %s", err))
