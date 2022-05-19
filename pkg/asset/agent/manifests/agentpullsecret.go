@@ -1,17 +1,14 @@
 package manifests
 
 import (
-	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/pkg/errors"
 )
 
@@ -37,40 +34,40 @@ func (*AgentPullSecret) Name() string {
 // the asset.
 func (*AgentPullSecret) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&installconfig.InstallConfig{},
+		// &installconfig.InstallConfig{},
 	}
 }
 
 // Generate generates the AgentPullSecret manifest.
 func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 
-	installConfigAsset := &installconfig.InstallConfig{}
-	dependencies.Get(installConfigAsset)
+	// installConfigAsset := &installconfig.InstallConfig{}
+	// dependencies.Get(installConfigAsset)
 
-	secret := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      a.ResourceName(),
-			Namespace: installConfigAsset.Config.Namespace,
-		},
-		StringData: map[string]string{
-			".dockerconfigjson": base64.StdEncoding.EncodeToString([]byte(installConfigAsset.Config.PullSecret)),
-		},
-	}
-	a.Config = secret
+	// secret := &corev1.Secret{
+	// 	TypeMeta: metav1.TypeMeta{
+	// 		APIVersion: "v1",
+	// 		Kind:       "Secret",
+	// 	},
+	// 	ObjectMeta: metav1.ObjectMeta{
+	// 		Name:      a.ResourceName(),
+	// 		Namespace: installConfigAsset.Config.Namespace,
+	// 	},
+	// 	StringData: map[string]string{
+	// 		".dockerconfigjson": base64.StdEncoding.EncodeToString([]byte(installConfigAsset.Config.PullSecret)),
+	// 	},
+	// }
+	// a.Config = secret
 
-	secretData, err := yaml.Marshal(secret)
-	if err != nil {
-		return errors.Wrap(err, "failed to marshal agent secret")
-	}
+	// secretData, err := yaml.Marshal(secret)
+	// if err != nil {
+	// 	return errors.Wrap(err, "failed to marshal agent secret")
+	// }
 
-	a.File = &asset.File{
-		Filename: agentPullSecretFilename,
-		Data:     secretData,
-	}
+	// a.File = &asset.File{
+	// 	Filename: agentPullSecretFilename,
+	// 	Data:     secretData,
+	// }
 
 	return nil
 }
