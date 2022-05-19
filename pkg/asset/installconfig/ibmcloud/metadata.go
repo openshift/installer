@@ -13,6 +13,7 @@ import (
 // from external APIs).
 type Metadata struct {
 	BaseDomain string
+	Region     string
 
 	accountID      string
 	cisInstanceCRN string
@@ -22,8 +23,11 @@ type Metadata struct {
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(baseDomain string) *Metadata {
-	return &Metadata{BaseDomain: baseDomain}
+func NewMetadata(baseDomain string, region string) *Metadata {
+	return &Metadata{
+		BaseDomain: baseDomain,
+		Region:     region,
+	}
 }
 
 // AccountID returns the IBM Cloud account ID associated with the authentication
@@ -85,6 +89,7 @@ func (m *Metadata) SetCISInstanceCRN(crn string) {
 func (m *Metadata) Client() (*Client, error) {
 	if m.client == nil {
 		client, err := NewClient()
+		client.SetVPCServiceURLForRegion(context.TODO(), m.Region)
 		if err != nil {
 			return nil, err
 		}
