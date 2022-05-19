@@ -19,39 +19,42 @@ do
         sleep 2
     fi
 done
-echo -e "\nInfra env id is $infra_env_id"
+echo -e "\nInfra env id is $infra_env_id" 1>&2
 
 required_master_nodes={{.ControlPlaneAgents}}
 required_worker_nodes={{.WorkerAgents}}
 total_required_nodes=$(( ${required_master_nodes}+${required_worker_nodes} ))
-echo "Number of required master nodes: ${required_master_nodes}"
-echo "Number of required worker nodes: ${required_worker_nodes}"
-echo "Total number of required nodes: ${total_required_nodes}"
+echo "Number of required master nodes: ${required_master_nodes}" 1>&2
+echo "Number of required worker nodes: ${required_worker_nodes}" 1>&2
+echo "Total number of required nodes: ${total_required_nodes}" 1>&2
 
-known_hosts=0
 
-while [[ "${total_required_nodes}" != "${known_hosts}" ]]
-do
+num_known_hosts() {
+    local known_hosts=0
     host_status=$(curl -s -S "${BASE_URL}/infra-envs/${infra_env_id}/hosts" | jq -r .[].status)
     if [[ -n ${host_status} ]]; then
         for status in ${host_status}; do
             if [[ "${status}" == "known" ]]; then
                 ((known_hosts+=1))
-                echo "Hosts known and ready for cluster installation (${known_hosts}/${total_required_nodes})"
-            else
-                echo "Waiting for hosts to become ready for cluster installation..."
-                sleep 30
+                echo "Hosts known and ready for cluster installation (${known_hosts}/${total_required_nodes})" 1>&2
             fi
         done
     fi
+    echo "${known_hosts}"
+}
+
+while [[ "${total_required_nodes}" != $(num_known_hosts) ]]
+do
+    echo "Waiting for hosts to become ready for cluster installation..." 1>&2
+    sleep 10
 done
 
-echo "All ${total_required_nodes} hosts are ready."
+echo "All ${total_required_nodes} hosts are ready." 1>&2
 
 if [[ "${APIVIP}" != "" ]]; then
     api_vip=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].api_vip)
     if [ "${api_vip}" == null ]; then
-        echo "Setting api vip"
+        echo "Setting api vip" 1>&2
         curl -s -S -X PATCH "${BASE_URL}/clusters/${cluster_id}" -H "Content-Type: application/json" -d '{"api_vip": "{{.APIVIP}}"}'
     fi
 fi
@@ -59,13 +62,13 @@ fi
 while [[ "${cluster_status}" != "ready" ]]
 do
     cluster_status=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].status)
-    echo "Cluster status: ${cluster_status}"
+    echo "Cluster status: ${cluster_status}" 1>&2
     sleep 5
     if [[ "${cluster_status}" == "ready" ]]; then
-        echo "Starting cluster installation..."
+        echo "Starting cluster installation..." 1>&2
         curl -s -S -X POST "${BASE_URL}/clusters/${cluster_id}/actions/install" \
             -H 'accept: application/json' \
             -d ''
-        echo "Cluster installation started"
+        echo "Cluster installation started" 1>&2
     fi
 done
