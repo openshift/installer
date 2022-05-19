@@ -40,6 +40,7 @@ func (m *AgentManifests) Dependencies() []asset.Asset {
 		&InfraEnv{},
 		&NMStateConfig{},
 		&AgentClusterInstall{},
+		&ClusterDeployment{},
 	}
 }
 
@@ -50,6 +51,7 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		&InfraEnv{},
 		&NMStateConfig{},
 		&AgentClusterInstall{},
+		&ClusterDeployment{},
 	} {
 		dependencies.Get(a)
 		m.FileList = append(m.FileList, a.Files()...)
