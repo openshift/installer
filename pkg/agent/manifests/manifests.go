@@ -11,6 +11,7 @@ import (
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
@@ -87,6 +88,16 @@ func GetAgentClusterInstall() (hiveext.AgentClusterInstall, error) {
 	}
 
 	return aci, nil
+}
+
+// GetClusterImageSet gets the ClusterImageSet resource from the manifest file
+func GetClusterImageSet() (hivev1.ClusterImageSet, error) {
+	var cis hivev1.ClusterImageSet
+	if err := getFileData("cluster-image-set.yaml", &cis); err != nil {
+		return cis, err
+	}
+
+	return cis, nil
 }
 
 // GetInfraEnv gets the InfraEnv resource from the manifest file

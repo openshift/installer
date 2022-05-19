@@ -282,7 +282,22 @@ func (c ConfigBuilder) getManifests(manifestPath string) ([]igntypes.File, error
 	return files, nil
 }
 
+func (c ConfigBuilder) releaseImageList() (string, error) {
+	imageSet, err := manifests.GetClusterImageSet()
+	if err != nil {
+		return "", err
+	}
+
+	// TODO: don't hard-code target arch
+	return releaseImageList(imageSet.Spec.ReleaseImage, "x86_64")
+}
+
 func (c ConfigBuilder) templateString(name string, text string) (string, error) {
+	releaseImageList, err := c.releaseImageList()
+	if err != nil {
+		return "", err
+	}
+
 	params := map[string]interface{}{
 		"ServiceProtocol":     c.serviceBaseURL.Scheme,
 		"ServiceBaseURL":      c.serviceBaseURL.String(),
@@ -292,6 +307,7 @@ func (c ConfigBuilder) templateString(name string, text string) (string, error) 
 		"APIVIP":              c.apiVip,
 		"ControlPlaneAgents":  c.controlPlaneAgents,
 		"WorkerAgents":        c.workerAgents,
+		"ReleaseImages":       releaseImageList,
 	}
 
 	tmpl, err := template.New(name).Parse(string(text))
