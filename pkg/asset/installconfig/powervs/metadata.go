@@ -15,6 +15,15 @@ import (
 	"sync"
 )
 
+//go:generate mockgen -source=./metadata.go -destination=./mock/powervsmetadata_generated.go -package=mock
+
+// MetadataAPI represents functions that eventually call out to the API
+type MetadataAPI interface {
+	AccountID(ctx context.Context) (string, error)
+	APIKey(ctx context.Context) (string, error)
+	CISInstanceCRN(ctx context.Context) (string, error)
+}
+
 // Metadata holds additional metadata for InstallConfig resources that
 // do not need to be user-supplied (e.g. because it can be retrieved
 // from external APIs).
@@ -83,8 +92,8 @@ func (m *Metadata) APIKey(ctx context.Context) (string, error) {
 	return m.apiKey, nil
 }
 
-// GetCISInstanceCRN gets the CRN name for the specified base domain.
-func GetCISInstanceCRN(APIKey string, BaseDomain string) (string, error) {
+// getCISInstanceCRN gets the CRN name for the specified base domain.
+func getCISInstanceCRN(APIKey string, BaseDomain string) (string, error) {
 	var CISInstanceCRN string = ""
 	var bxSession *bxsession.Session
 	var err error
@@ -197,7 +206,7 @@ func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 		var cisInstanceCRN string = ""
 		var err error
 
-		cisInstanceCRN, err = GetCISInstanceCRN(m.apiKey, m.BaseDomain)
+		cisInstanceCRN, err = getCISInstanceCRN(m.apiKey, m.BaseDomain)
 		if err != nil {
 			return "", err
 		}
