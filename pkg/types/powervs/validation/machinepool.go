@@ -51,8 +51,8 @@ func ValidateMachinePool(p *powervs.MachinePool, fldPath *field.Path) field.Erro
 		}
 	}
 	if err == nil && processors != 0 {
-		if processors < 0.25 || processors > 32 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("processors"), processors, "number of processors must be from .25 to 32 cores"))
+		if processors < 0.5 || processors > 32 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("processors"), processors, "number of processors must be from .5 to 32 cores"))
 		}
 		if math.Mod(processors*1000, 2) != 0 || math.Mod(processors*100, 25) != 0 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("processors"), processors, "processors must be in increments of .25"))

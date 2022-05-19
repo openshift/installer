@@ -76,7 +76,14 @@ func TestValidateMachinePool(t *testing.T) {
 			pool: &powervs.MachinePool{
 				Processors: intstr.FromInt(33),
 			},
-			expected: `^test-path\.processors: Invalid value: 33: number of processors must be from \.25 to 32 cores$`,
+			expected: `^test-path\.processors: Invalid value: 33: number of processors must be from \.5 to 32 cores$`,
+		},
+		{
+			name: "invalid processors under",
+			pool: &powervs.MachinePool{
+				Processors: intstr.FromString("0.25"),
+			},
+			expected: `^test-path\.processors: Invalid value: 0.25: number of processors must be from \.5 to 32 cores$`,
 		},
 		{
 			name: "invalid processors string",
