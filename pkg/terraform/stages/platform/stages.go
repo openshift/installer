@@ -59,6 +59,9 @@ func StagesForPlatform(platform string) []terraform.Stage {
 		return ovirt.PlatformStages
 	case vspheretypes.Name:
 		return vsphere.PlatformStages
+	case vspheretypes.ZoningTerraformName:
+		return vsphere.ZoningPlatformStages
+
 	default:
 		panic(fmt.Sprintf("unsupported platform %q", platform))
 	}
