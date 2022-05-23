@@ -1,23 +1,25 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func resourceNutanixCategoryKey() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixCategoryKeyCreateOrUpdate,
-		Read:   resourceNutanixCategoryKeyRead,
-		Update: resourceNutanixCategoryKeyCreateOrUpdate,
-		Delete: resourceNutanixCategoryKeyDelete,
+		CreateContext: resourceNutanixCategoryKeyCreateOrUpdate,
+		ReadContext:   resourceNutanixCategoryKeyRead,
+		UpdateContext: resourceNutanixCategoryKeyCreateOrUpdate,
+		DeleteContext: resourceNutanixCategoryKeyDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"system_defined": {
@@ -41,7 +43,7 @@ func resourceNutanixCategoryKey() *schema.Resource {
 	}
 }
 
-func resourceNutanixCategoryKeyCreateOrUpdate(resourceData *schema.ResourceData, meta interface{}) error {
+func resourceNutanixCategoryKeyCreateOrUpdate(ctx context.Context, resourceData *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Creating CategoryKey: %s", resourceData.Get("name").(string))
 
 	conn := meta.(*Client).API
@@ -57,7 +59,7 @@ func resourceNutanixCategoryKeyCreateOrUpdate(resourceData *schema.ResourceData,
 
 	// validate required fields
 	if !nameOK {
-		return fmt.Errorf("please provide the required attribute name")
+		return diag.Errorf("please provide the required attribute name")
 	}
 
 	request.Name = utils.StringPtr(name.(string))
@@ -66,7 +68,7 @@ func resourceNutanixCategoryKeyCreateOrUpdate(resourceData *schema.ResourceData,
 	resp, err := conn.V3.CreateOrUpdateCategoryKey(request)
 
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	n := *resp.Name
@@ -74,10 +76,10 @@ func resourceNutanixCategoryKeyCreateOrUpdate(resourceData *schema.ResourceData,
 	// set terraform state
 	resourceData.SetId(n)
 
-	return resourceNutanixCategoryKeyRead(resourceData, meta)
+	return resourceNutanixCategoryKeyRead(ctx, resourceData, meta)
 }
 
-func resourceNutanixCategoryKeyRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixCategoryKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Reading CategoryKey: %s", d.Get("name").(string))
 
 	// Get client connection
@@ -91,23 +93,23 @@ func resourceNutanixCategoryKeyRead(d *schema.ResourceData, meta interface{}) er
 			d.SetId("")
 			return nil
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.Set("api_version", utils.StringValue(resp.APIVersion))
 	d.Set("name", utils.StringValue(resp.Name))
 	d.Set("description", utils.StringValue(resp.Description))
 
-	return d.Set("system_defined", utils.BoolValue(resp.SystemDefined))
+	return diag.FromErr(d.Set("system_defined", utils.BoolValue(resp.SystemDefined)))
 }
 
-func resourceNutanixCategoryKeyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixCategoryKeyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	log.Printf("[Debug] Destroying the category with the ID %s", d.Id())
 
 	if err := conn.V3.DeleteCategoryKey(d.Id()); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

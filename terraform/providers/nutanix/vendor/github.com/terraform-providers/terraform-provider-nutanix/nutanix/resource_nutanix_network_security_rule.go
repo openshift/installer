@@ -1,6 +1,7 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"reflect"
@@ -10,26 +11,30 @@ import (
 
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 )
 
 var (
-	netTimeout    = 10 * time.Minute
 	netDelay      = 10 * time.Second
 	netMinTimeout = 3 * time.Second
 )
 
 func resourceNutanixNetworkSecurityRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixNetworkSecurityRuleCreate,
-		Read:   resourceNutanixNetworkSecurityRuleRead,
-		Update: resourceNutanixNetworkSecurityRuleUpdate,
-		Delete: resourceNutanixNetworkSecurityRuleDelete,
+		CreateContext: resourceNutanixNetworkSecurityRuleCreate,
+		ReadContext:   resourceNutanixNetworkSecurityRuleRead,
+		UpdateContext: resourceNutanixNetworkSecurityRuleUpdate,
+		DeleteContext: resourceNutanixNetworkSecurityRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Update: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Delete: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
 		},
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
@@ -47,33 +52,8 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
@@ -81,42 +61,16 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"name": {
@@ -164,8 +118,10 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
-						"tcp_port_range_list": portRangeSchema(),
-						"udp_port_range_list": portRangeSchema(),
+						"tcp_port_range_list":          portRangeSchema(),
+						"udp_port_range_list":          portRangeSchema(),
+						"service_group_list":           referenceListSchema(),
+						"address_group_inclusion_list": referenceListSchema(),
 						"filter_kind_list": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -211,22 +167,8 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 							Type:     schema.TypeMap,
 							Optional: true,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Optional: true,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"icmp_type_code_list": {
@@ -310,8 +252,10 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
-						"tcp_port_range_list": portRangeSchema(),
-						"udp_port_range_list": portRangeSchema(),
+						"tcp_port_range_list":          portRangeSchema(),
+						"udp_port_range_list":          portRangeSchema(),
+						"service_group_list":           referenceListSchema(),
+						"address_group_inclusion_list": referenceListSchema(),
 						"filter_kind_list": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -357,22 +301,8 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 							Type:     schema.TypeMap,
 							Optional: true,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Optional: true,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"icmp_type_code_list": {
@@ -488,8 +418,10 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
-						"tcp_port_range_list": portRangeSchema(),
-						"udp_port_range_list": portRangeSchema(),
+						"tcp_port_range_list":          portRangeSchema(),
+						"udp_port_range_list":          portRangeSchema(),
+						"service_group_list":           referenceListSchema(),
+						"address_group_inclusion_list": referenceListSchema(),
 						"filter_kind_list": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -535,22 +467,8 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 							Type:     schema.TypeMap,
 							Optional: true,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Optional: true,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"icmp_type_code_list": {
@@ -634,8 +552,10 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
-						"tcp_port_range_list": portRangeSchema(),
-						"udp_port_range_list": portRangeSchema(),
+						"tcp_port_range_list":          portRangeSchema(),
+						"udp_port_range_list":          portRangeSchema(),
+						"service_group_list":           referenceListSchema(),
+						"address_group_inclusion_list": referenceListSchema(),
 						"filter_kind_list": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -681,22 +601,8 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 							Type:     schema.TypeMap,
 							Optional: true,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Optional: true,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"icmp_type_code_list": {
@@ -725,7 +631,7 @@ func resourceNutanixNetworkSecurityRule() *schema.Resource {
 	}
 }
 
-func resourceNutanixNetworkSecurityRuleCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixNetworkSecurityRuleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).API
 
@@ -740,14 +646,14 @@ func resourceNutanixNetworkSecurityRuleCreate(d *schema.ResourceData, meta inter
 	desc, descok := d.GetOk("description")
 
 	if !nok {
-		return fmt.Errorf("please provide the required attribute name")
+		return diag.Errorf("please provide the required attribute name")
 	}
 
 	// Read arguments and set request values
 
 	// only set kind
 	if errMetad := getMetadataAttributes(d, metadata, "network_security_rule"); errMetad != nil {
-		return errMetad
+		return diag.FromErr(errMetad)
 	}
 
 	if descok {
@@ -756,7 +662,7 @@ func resourceNutanixNetworkSecurityRuleCreate(d *schema.ResourceData, meta inter
 
 	// get resources
 	if err := getNetworkSecurityRuleResources(d, networkSecurityRule); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if descok {
@@ -777,7 +683,7 @@ func resourceNutanixNetworkSecurityRuleCreate(d *schema.ResourceData, meta inter
 	resp, err := conn.V3.CreateNetworkSecurityRule(request)
 
 	if err != nil {
-		return fmt.Errorf("error creating Nutanix Network Security Rule %s: %+v", utils.StringValue(spec.Name), err)
+		return diag.Errorf("error creating Nutanix Network Security Rule %s: %+v", utils.StringValue(spec.Name), err)
 	}
 
 	d.SetId(*resp.Metadata.UUID)
@@ -789,19 +695,19 @@ func resourceNutanixNetworkSecurityRuleCreate(d *schema.ResourceData, meta inter
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    netTimeout,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      netDelay,
 		MinTimeout: netMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf("error waiting for network_security_rule (%s) to create: %s", d.Id(), err)
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf("error waiting for network_security_rule (%s) to create: %s", d.Id(), err)
 	}
 
-	return resourceNutanixNetworkSecurityRuleRead(d, meta)
+	return resourceNutanixNetworkSecurityRuleRead(ctx, d, meta)
 }
 
-func resourceNutanixNetworkSecurityRuleRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixNetworkSecurityRuleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Reading Network Security Rule: %s", d.Get("name").(string))
 
 	// Get client connection
@@ -814,31 +720,31 @@ func resourceNutanixNetworkSecurityRuleRead(d *schema.ResourceData, meta interfa
 			d.SetId("")
 			return nil
 		}
-		return errNet
+		return diag.FromErr(errNet)
 	}
 
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("project_reference", flattenReferenceValues(resp.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValues(resp.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if resp.Status == nil {
-		return fmt.Errorf("error reading Status from network security rule %s", d.Id())
+		return diag.Errorf("error reading Status from network security rule %s", d.Id())
 	}
 
 	if resp.Status.Resources == nil {
-		return fmt.Errorf("error reading Status.Resources from network security rule %s", d.Id())
+		return diag.Errorf("error reading Status.Resources from network security rule %s", d.Id())
 	}
 
 	d.Set("api_version", utils.StringValue(resp.APIVersion))
@@ -856,30 +762,30 @@ func resourceNutanixNetworkSecurityRuleRead(d *schema.ResourceData, meta interfa
 	}
 
 	if err := flattenNetworkRule("app_rule", rules.AppRule, d); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := flattenNetworkRule("ad_rule", rules.AdRule, d); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if rules.IsolationRule != nil {
 		if err := d.Set("isolation_rule_action", utils.StringValue(rules.IsolationRule.Action)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if rules.IsolationRule.FirstEntityFilter != nil {
 			firstFilter := rules.IsolationRule.FirstEntityFilter
 			if err := d.Set("isolation_rule_first_entity_filter_kind_list", utils.StringValueSlice(firstFilter.KindList)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 
 			if err := d.Set("isolation_rule_first_entity_filter_type", utils.StringValue(firstFilter.Type)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 
 			if err := d.Set("isolation_rule_first_entity_filter_params", expandFilterParams(firstFilter.Params)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 		}
 
@@ -887,27 +793,27 @@ func resourceNutanixNetworkSecurityRuleRead(d *schema.ResourceData, meta interfa
 			secondFilter := rules.IsolationRule.SecondEntityFilter
 
 			if err := d.Set("isolation_rule_second_entity_filter_kind_list", utils.StringValueSlice(secondFilter.KindList)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 			if err := d.Set("isolation_rule_second_entity_filter_type", utils.StringValue(secondFilter.Type)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 			if err := d.Set("isolation_rule_second_entity_filter_params", expandFilterParams(secondFilter.Params)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 		}
 	} else {
 		if err := d.Set("isolation_rule_first_entity_filter_kind_list", make([]string, 0)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("isolation_rule_first_entity_filter_params", make([]string, 0)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("isolation_rule_second_entity_filter_kind_list", make([]string, 0)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("isolation_rule_second_entity_filter_params", make([]string, 0)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
@@ -963,7 +869,7 @@ func flattenNetworkRule(prefix string, rule *v3.NetworkSecurityRuleResourcesRule
 	return nil
 }
 
-func resourceNutanixNetworkSecurityRuleUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixNetworkSecurityRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).API
 
@@ -979,7 +885,7 @@ func resourceNutanixNetworkSecurityRuleUpdate(d *schema.ResourceData, meta inter
 		if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
 			d.SetId("")
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	if response.Metadata != nil {
@@ -1042,7 +948,7 @@ func resourceNutanixNetworkSecurityRuleUpdate(d *schema.ResourceData, meta inter
 		d.HasChange("isolation_rule_second_entity_filter_type") ||
 		d.HasChange("isolation_rule_second_entity_filter_params") {
 		if err := getNetworkSecurityRuleResources(d, networkSecurityRule); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		spec.Resources = networkSecurityRule
 	}
@@ -1053,7 +959,7 @@ func resourceNutanixNetworkSecurityRuleUpdate(d *schema.ResourceData, meta inter
 	resp, errUpdate := conn.V3.UpdateNetworkSecurityRule(d.Id(), request)
 
 	if errUpdate != nil {
-		return errUpdate
+		return diag.FromErr(errUpdate)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -1063,20 +969,20 @@ func resourceNutanixNetworkSecurityRuleUpdate(d *schema.ResourceData, meta inter
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    netTimeout,
+		Timeout:    d.Timeout(schema.TimeoutUpdate),
 		Delay:      netDelay,
 		MinTimeout: netMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf(
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf(
 			"error waiting for network_security_rule (%s) to update: %s", d.Id(), err)
 	}
 
-	return resourceNutanixNetworkSecurityRuleRead(d, meta)
+	return resourceNutanixNetworkSecurityRuleRead(ctx, d, meta)
 }
 
-func resourceNutanixNetworkSecurityRuleDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixNetworkSecurityRuleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Deleting Network Security Rule: %s", d.Get("name").(string))
 
 	conn := meta.(*Client).API
@@ -1084,7 +990,7 @@ func resourceNutanixNetworkSecurityRuleDelete(d *schema.ResourceData, meta inter
 
 	resp, err := conn.V3.DeleteNetworkSecurityRule(UUID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -1094,13 +1000,13 @@ func resourceNutanixNetworkSecurityRuleDelete(d *schema.ResourceData, meta inter
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    netTimeout,
+		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      netDelay,
 		MinTimeout: netMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf(
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf(
 			"error waiting for network_security_rule (%s) to delete: %s", d.Id(), err)
 	}
 
@@ -1231,6 +1137,7 @@ func expandNetworkRule(prefix string, d *schema.ResourceData) *v3.NetworkSecurit
 		for k, v := range oal {
 			nr := v.(map[string]interface{})
 			nrItem := &v3.NetworkRule{}
+			setIPSubnet := false
 			iPSubnet := &v3.IPSubnet{}
 			filter := &v3.CategoryFilter{}
 
@@ -1240,12 +1147,18 @@ func expandNetworkRule(prefix string, d *schema.ResourceData) *v3.NetworkSecurit
 
 			if ip, ipok := nr["ip_subnet"]; ipok && ip.(string) != "" {
 				iPSubnet.IP = utils.StringPtr(ip.(string))
+				setIPSubnet = true
 			}
 
 			if ippl, ipok := nr["ip_subnet_prefix_length"]; ipok && ippl.(string) != "" {
 				if i, err := strconv.Atoi(ippl.(string)); err == nil {
 					iPSubnet.PrefixLength = utils.Int64Ptr(int64(i))
+					setIPSubnet = true
 				}
+			}
+
+			if setIPSubnet {
+				nrItem.IPSubnet = iPSubnet
 			}
 
 			if t, tcpok := nr["tcp_port_range_list"]; tcpok {
@@ -1254,6 +1167,14 @@ func expandNetworkRule(prefix string, d *schema.ResourceData) *v3.NetworkSecurit
 
 			if u, udpok := nr["udp_port_range_list"]; udpok {
 				nrItem.UDPPortRangeList = expandPortRangeList(u)
+			}
+
+			if a, agok := nr["address_group_inclusion_list"]; agok {
+				nrItem.AddressGroupInclusionList = expandReferencesList(a)
+			}
+
+			if s, sgok := nr["service_group_list"]; sgok {
+				nrItem.ServiceGroupList = expandReferencesList(s)
 			}
 
 			if f, fok := nr["filter_kind_list"]; fok && len(f.([]interface{})) > 0 {
@@ -1305,7 +1226,6 @@ func expandNetworkRule(prefix string, d *schema.ResourceData) *v3.NetworkSecurit
 				nrItem.IcmpTypeCodeList = expandIcmpTypeCodeList(icmp)
 			}
 
-			nrItem.IPSubnet = iPSubnet
 			if !reflect.DeepEqual(*filter, v3.CategoryFilter{}) {
 				nrItem.Filter = filter
 			}
@@ -1362,6 +1282,7 @@ func expandNetworkRule(prefix string, d *schema.ResourceData) *v3.NetworkSecurit
 			nr := v.(map[string]interface{})
 			nrItem := &v3.NetworkRule{}
 			iPSubnet := &v3.IPSubnet{}
+			setIPSubnet := false
 			filter := &v3.CategoryFilter{}
 
 			if proto, pok := nr["protocol"]; pok && proto.(string) != "" {
@@ -1370,11 +1291,13 @@ func expandNetworkRule(prefix string, d *schema.ResourceData) *v3.NetworkSecurit
 
 			if ip, ipok := nr["ip_subnet"]; ipok && ip.(string) != "" {
 				iPSubnet.IP = utils.StringPtr(ip.(string))
+				setIPSubnet = true
 			}
 
 			if ippl, ipok := nr["ip_subnet_prefix_length"]; ipok && ippl.(string) != "" {
 				if i, err := strconv.Atoi(ippl.(string)); err == nil {
 					iPSubnet.PrefixLength = utils.Int64Ptr(int64(i))
+					setIPSubnet = true
 				}
 			}
 
@@ -1384,6 +1307,14 @@ func expandNetworkRule(prefix string, d *schema.ResourceData) *v3.NetworkSecurit
 
 			if u, udpok := nr["udp_port_range_list"]; udpok {
 				nrItem.UDPPortRangeList = expandPortRangeList(u)
+			}
+
+			if a, agok := nr["address_group_inclusion_list"]; agok {
+				nrItem.AddressGroupInclusionList = expandReferencesList(a)
+			}
+
+			if s, sgok := nr["service_group_list"]; sgok {
+				nrItem.ServiceGroupList = expandReferencesList(s)
 			}
 
 			if f, fok := nr["filter_kind_list"]; fok && len(f.([]interface{})) > 0 {
@@ -1435,7 +1366,9 @@ func expandNetworkRule(prefix string, d *schema.ResourceData) *v3.NetworkSecurit
 				nrItem.IcmpTypeCodeList = expandIcmpTypeCodeList(icmp)
 			}
 
-			nrItem.IPSubnet = iPSubnet
+			if setIPSubnet {
+				nrItem.IPSubnet = iPSubnet
+			}
 			if !reflect.DeepEqual(*filter, v3.CategoryFilter{}) {
 				nrItem.Filter = filter
 			}
@@ -1453,6 +1386,18 @@ func expandNetworkRule(prefix string, d *schema.ResourceData) *v3.NetworkSecurit
 	}
 
 	return appRule
+}
+
+func expandReferencesList(rl interface{}) []*v3.Reference {
+	refList := rl.([]interface{})
+	refs := make([]*v3.Reference, len(refList))
+
+	for i, r := range refList {
+		reff := r.(map[string]interface{})
+		refs[i] = expandReference(reff)
+	}
+
+	return refs
 }
 
 func expandFilterParams(fp map[string][]string) []map[string]interface{} {
@@ -1513,7 +1458,7 @@ func expandIcmpTypeCodeList(icmp interface{}) []*v3.NetworkRuleIcmpTypeCodeList 
 
 func filterParamsHash(v interface{}) int {
 	params := v.(map[string]interface{})
-	return hashcode.String(params["name"].(string))
+	return utils.HashcodeString(params["name"].(string))
 }
 
 func flattenNetworkRuleList(networkRules []*v3.NetworkRule) []map[string]interface{} {
@@ -1551,6 +1496,14 @@ func flattenNetworkRuleList(networkRules []*v3.NetworkRule) []map[string]interfa
 			ruleItem["udp_port_range_list"] = udpprList
 		}
 
+		if v.AddressGroupInclusionList != nil {
+			ruleItem["address_group_inclusion_list"] = flattenArrayReferenceValues(v.AddressGroupInclusionList)
+		}
+
+		if v.ServiceGroupList != nil {
+			ruleItem["service_group_list"] = flattenArrayReferenceValues(v.ServiceGroupList)
+		}
+
 		if v.Filter != nil {
 			ruleItem["filter_kind_list"] = utils.StringValueSlice(v.Filter.KindList)
 			ruleItem["filter_type"] = utils.StringValue(v.Filter.Type)
@@ -1585,6 +1538,32 @@ func flattenNetworkRuleList(networkRules []*v3.NetworkRule) []map[string]interfa
 	return ruleList
 }
 
+func referenceListSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"kind": {
+					Type:     schema.TypeString,
+					Computed: true,
+					Optional: true,
+				},
+				"uuid": {
+					Type:     schema.TypeString,
+					Computed: true,
+					Optional: true,
+				},
+				"name": {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+	}
+}
+
 func portRangeSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
@@ -1607,13 +1586,18 @@ func portRangeSchema() *schema.Schema {
 	}
 }
 
-func resourceSecurityRuleInstanceStateUpgradeV0(is map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func resourceSecurityRuleInstanceStateUpgradeV0(ctx context.Context, is map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	log.Printf("[DEBUG] Entering resourceSecurityRuleInstanceStateUpgradeV0")
 	return resourceNutanixCategoriesMigrateState(is, meta)
 }
 
 func resourceNutanixSecurityRuleInstanceResourceV0() *schema.Resource {
 	return &schema.Resource{
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Update: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Delete: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"api_version": {
 				Type:     schema.TypeString,
@@ -1622,33 +1606,8 @@ func resourceNutanixSecurityRuleInstanceResourceV0() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": {
@@ -1660,42 +1619,16 @@ func resourceNutanixSecurityRuleInstanceResourceV0() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"name": {
@@ -1733,8 +1666,10 @@ func resourceNutanixSecurityRuleInstanceResourceV0() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
-						"tcp_port_range_list": portRangeSchema(),
-						"udp_port_range_list": portRangeSchema(),
+						"tcp_port_range_list":          portRangeSchema(),
+						"udp_port_range_list":          portRangeSchema(),
+						"service_group_list":           referenceListSchema(),
+						"address_group_inclusion_list": referenceListSchema(),
 						"filter_kind_list": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -1780,22 +1715,8 @@ func resourceNutanixSecurityRuleInstanceResourceV0() *schema.Resource {
 							Type:     schema.TypeMap,
 							Optional: true,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Optional: true,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"icmp_type_code_list": {
@@ -1879,8 +1800,10 @@ func resourceNutanixSecurityRuleInstanceResourceV0() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
-						"tcp_port_range_list": portRangeSchema(),
-						"udp_port_range_list": portRangeSchema(),
+						"tcp_port_range_list":          portRangeSchema(),
+						"udp_port_range_list":          portRangeSchema(),
+						"service_group_list":           referenceListSchema(),
+						"address_group_inclusion_list": referenceListSchema(),
 						"filter_kind_list": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -1926,22 +1849,8 @@ func resourceNutanixSecurityRuleInstanceResourceV0() *schema.Resource {
 							Type:     schema.TypeMap,
 							Optional: true,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Optional: true,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"icmp_type_code_list": {

@@ -9,11 +9,10 @@ build: fmtcheck
 	go install
 
 test: fmtcheck
-	go test $(TEST) -timeout=30s -parallel=4
+	go test --tags=unit $(TEST) -timeout=30s -parallel=4
 
 testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 200m -coverprofile c.out
-	go tool cover -html=c.out
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 500m -coverprofile c.out -covermode=count
 
 fmt:
 	@echo "==> Fixing source code with gofmt..."

@@ -1,18 +1,20 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixUserGroup() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixUserGroupRead,
+		ReadContext: dataSourceNutanixUserGroupRead,
 		Schema: map[string]*schema.Schema{
 			"user_group_id": {
 				Type:          schema.TypeString,
@@ -36,34 +38,8 @@ func dataSourceNutanixUserGroup() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
@@ -71,41 +47,15 @@ func dataSourceNutanixUserGroup() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"user_group_type": {
@@ -118,7 +68,6 @@ func dataSourceNutanixUserGroup() *schema.Resource {
 			},
 			"directory_service_user_group": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -128,7 +77,6 @@ func dataSourceNutanixUserGroup() *schema.Resource {
 						},
 						"directory_service_reference": {
 							Type:     schema.TypeList,
-							MaxItems: 1,
 							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -202,7 +150,7 @@ func dataSourceNutanixUserGroup() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixUserGroupRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixUserGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Reading Group: %s", d.Id())
 
 	// Get client connection
@@ -213,7 +161,7 @@ func dataSourceNutanixUserGroupRead(d *schema.ResourceData, meta interface{}) er
 	dname, dnok := d.GetOk("user_group_distinguished_name")
 
 	if !iok && !nok && !dnok {
-		return fmt.Errorf("please provide one of user_group_id, user_group_distinguished_name or user_group_name attributes")
+		return diag.Errorf("please provide one of user_group_id, user_group_distinguished_name or user_group_name attributes")
 	}
 
 	var reqErr error
@@ -235,48 +183,47 @@ func dataSourceNutanixUserGroupRead(d *schema.ResourceData, meta interface{}) er
 		if strings.Contains(fmt.Sprint(reqErr), "ENTITY_NOT_FOUND") {
 			d.SetId("")
 		}
-		return fmt.Errorf("error reading group with error %s", reqErr)
+		return diag.Errorf("error reading group with error %s", reqErr)
 	}
 
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return fmt.Errorf("error setting metadata for group UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting metadata for group UUID(%s), %s", d.Id(), err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return fmt.Errorf("error setting categories for group UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting categories for group UUID(%s), %s", d.Id(), err)
 	}
 
 	if err := d.Set("owner_reference", flattenReferenceValues(resp.Metadata.OwnerReference)); err != nil {
-		return fmt.Errorf("error setting owner_reference for group UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting owner_reference for group UUID(%s), %s", d.Id(), err)
 	}
 	d.Set("api_version", utils.StringValue(resp.APIVersion))
-	d.Set("name", utils.StringValue(resp.Status.Resources.DisplayName))
 
 	if err := d.Set("state", resp.Status.State); err != nil {
-		return fmt.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
 	}
 
 	if err := d.Set("directory_service_user_group", flattenDirectoryServiceUserGroup(resp.Status.Resources.DirectoryServiceUserGroup)); err != nil {
-		return fmt.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
 	}
 
 	if err := d.Set("user_group_type", resp.Status.Resources.UserGroupType); err != nil {
-		return fmt.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
 	}
 
 	if err := d.Set("display_name", resp.Status.Resources.DisplayName); err != nil {
-		return fmt.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
 	}
 
 	if err := d.Set("project_reference_list", flattenArrayReferenceValues(resp.Status.Resources.ProjectsReferenceList)); err != nil {
-		return fmt.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
 	}
 
 	refe := flattenArrayReferenceValues(resp.Status.Resources.AccessControlPolicyReferenceList)
 
 	if err := d.Set("access_control_policy_reference_list", refe); err != nil {
-		return fmt.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting state for group UUID(%s), %s", d.Id(), err)
 	}
 
 	d.SetId(*resp.Metadata.UUID)

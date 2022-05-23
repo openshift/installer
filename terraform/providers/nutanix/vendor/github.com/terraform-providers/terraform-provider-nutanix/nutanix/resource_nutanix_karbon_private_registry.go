@@ -1,24 +1,26 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	karbon "github.com/terraform-providers/terraform-provider-nutanix/client/karbon"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceNutanixKarbonPrivateRegistry() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixKarbonPrivateRegistryCreate,
-		Read:   resourceNutanixKarbonPrivateRegistryRead,
-		Update: resourceNutanixKarbonPrivateRegistryUpdate,
-		Delete: resourceNutanixKarbonPrivateRegistryDelete,
-		Exists: resourceNutanixKarbonPrivateRegistryExists,
+		CreateContext: resourceNutanixKarbonPrivateRegistryCreate,
+		ReadContext:   resourceNutanixKarbonPrivateRegistryRead,
+		UpdateContext: resourceNutanixKarbonPrivateRegistryUpdate,
+		DeleteContext: resourceNutanixKarbonPrivateRegistryDelete,
+		Exists:        resourceNutanixKarbonPrivateRegistryExists,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		SchemaVersion: 1,
 		Schema:        KarbonPrivateRegistryResourceMap(),
@@ -65,7 +67,7 @@ func KarbonPrivateRegistryResourceMap() map[string]*schema.Schema {
 	}
 }
 
-func resourceNutanixKarbonPrivateRegistryCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixKarbonPrivateRegistryCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Print("[Debug] Entering resourceNutanixKarbonPrivateRegistryCreate")
 	// Get client connection
 	client := meta.(*Client)
@@ -77,13 +79,13 @@ func resourceNutanixKarbonPrivateRegistryCreate(d *schema.ResourceData, meta int
 		n := name.(string)
 		karbonPrivateRegistry.Name = &n
 	} else {
-		return fmt.Errorf("error occurred during private registry creation: name must be set")
+		return diag.Errorf("error occurred during private registry creation: name must be set")
 	}
 	if url, ok := d.GetOk("url"); ok {
 		u := url.(string)
 		karbonPrivateRegistry.URL = &u
 	} else {
-		return fmt.Errorf("error occurred during private registry creation: url must be set")
+		return diag.Errorf("error occurred during private registry creation: url must be set")
 	}
 	if port, ok := d.GetOk("port"); ok {
 		p := int64(port.(int))
@@ -104,15 +106,15 @@ func resourceNutanixKarbonPrivateRegistryCreate(d *schema.ResourceData, meta int
 	}
 	createPrivateRegistryResponse, err := conn.PrivateRegistry.CreateKarbonPrivateRegistry(karbonPrivateRegistry)
 	if err != nil {
-		return fmt.Errorf("error occurred during private registry creation: %s", err)
+		return diag.Errorf("error occurred during private registry creation: %s", err)
 	}
 
 	// Set terraform state id
 	d.SetId(*createPrivateRegistryResponse.UUID)
-	return resourceNutanixKarbonPrivateRegistryRead(d, meta)
+	return resourceNutanixKarbonPrivateRegistryRead(ctx, d, meta)
 }
 
-func resourceNutanixKarbonPrivateRegistryRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixKarbonPrivateRegistryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Print("[Debug] Entering resourceNutanixKarbonPrivateRegistryRead")
 	// Get client connection
 	conn := meta.(*Client).KarbonAPI
@@ -121,7 +123,7 @@ func resourceNutanixKarbonPrivateRegistryRead(d *schema.ResourceData, meta inter
 	var name interface{}
 	var ok bool
 	if name, ok = d.GetOk("name"); !ok {
-		return fmt.Errorf("cannot read private registry without name")
+		return diag.Errorf("cannot read private registry without name")
 	}
 	resp, err := conn.PrivateRegistry.GetKarbonPrivateRegistry(name.(string))
 	if err != nil {
@@ -129,21 +131,21 @@ func resourceNutanixKarbonPrivateRegistryRead(d *schema.ResourceData, meta inter
 		return nil
 	}
 	if err := d.Set("name", *resp.Name); err != nil {
-		return fmt.Errorf("error setting name for Karbon private registry %s: %s", d.Id(), err)
+		return diag.Errorf("error setting name for Karbon private registry %s: %s", d.Id(), err)
 	}
 	if err := d.Set("endpoint", *resp.Endpoint); err != nil {
-		return fmt.Errorf("error setting endpoint for Karbon private registry %s: %s", d.Id(), err)
+		return diag.Errorf("error setting endpoint for Karbon private registry %s: %s", d.Id(), err)
 	}
 	d.SetId(*resp.UUID)
 	return nil
 }
 
-func resourceNutanixKarbonPrivateRegistryUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixKarbonPrivateRegistryUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Print("[Debug] Entering resourceNutanixKarbonPrivateRegistryUpdate")
-	return resourceNutanixKarbonPrivateRegistryRead(d, meta)
+	return resourceNutanixKarbonPrivateRegistryRead(ctx, d, meta)
 }
 
-func resourceNutanixKarbonPrivateRegistryDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixKarbonPrivateRegistryDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Print("[Debug] Entering resourceNutanixKarbonPrivateRegistryDelete")
 	client := meta.(*Client)
 	conn := client.KarbonAPI
@@ -152,7 +154,7 @@ func resourceNutanixKarbonPrivateRegistryDelete(d *schema.ResourceData, meta int
 
 	_, err := conn.PrivateRegistry.DeleteKarbonPrivateRegistry(karbonPrivateRegistryName)
 	if err != nil {
-		return fmt.Errorf("error while deleting Karbon Private Registry UUID(%s): %s", d.Id(), err)
+		return diag.Errorf("error while deleting Karbon Private Registry UUID(%s): %s", d.Id(), err)
 	}
 	d.SetId("")
 	return nil

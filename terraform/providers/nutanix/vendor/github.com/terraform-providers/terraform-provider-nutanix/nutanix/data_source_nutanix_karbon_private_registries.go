@@ -1,16 +1,17 @@
 package nutanix
 
 import (
-	"fmt"
+	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixKarbonPrivateRegistries() *schema.Resource {
 	return &schema.Resource{
-		Read:          dataSourceNutanixKarbonPrivateRegistriesRead,
+		ReadContext:   dataSourceNutanixKarbonPrivateRegistriesRead,
 		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
 			"private_registries": {
@@ -24,7 +25,7 @@ func dataSourceNutanixKarbonPrivateRegistries() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixKarbonPrivateRegistriesRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixKarbonPrivateRegistriesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).KarbonAPI
 	setTimeout(meta)
@@ -40,7 +41,7 @@ func dataSourceNutanixKarbonPrivateRegistriesRead(d *schema.ResourceData, meta i
 	for k, v := range *resp {
 		privateRegistry := make(map[string]interface{})
 		if err != nil {
-			return fmt.Errorf("error searching for private registry via legacy API: %s", err)
+			return diag.Errorf("error searching for private registry via legacy API: %s", err)
 		}
 
 		privateRegistry["name"] = utils.StringValue(v.Name)
@@ -51,7 +52,7 @@ func dataSourceNutanixKarbonPrivateRegistriesRead(d *schema.ResourceData, meta i
 	}
 
 	if err := d.Set("private_registries", privateRegistries); err != nil {
-		return fmt.Errorf("failed to set private_registries output: %s", err)
+		return diag.Errorf("failed to set private_registries output: %s", err)
 	}
 
 	d.SetId(resource.UniqueId())

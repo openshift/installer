@@ -1,12 +1,15 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/spf13/cast"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
@@ -14,12 +17,17 @@ import (
 
 func resourceNutanixProject() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixProjectCreate,
-		Read:   resourceNutanixProjectRead,
-		Update: resourceNutanixProjectUpdate,
-		Delete: resourceNutanixProjectDelete,
+		CreateContext: resourceNutanixProjectCreate,
+		ReadContext:   resourceNutanixProjectRead,
+		UpdateContext: resourceNutanixProjectUpdate,
+		DeleteContext: resourceNutanixProjectDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Update: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Delete: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -230,77 +238,24 @@ func resourceNutanixProject() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"owner_reference": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
@@ -313,7 +268,7 @@ func resourceNutanixProject() *schema.Resource {
 	}
 }
 
-func resourceNutanixProjectCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixProjectCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	req := &v3.Project{
@@ -324,7 +279,7 @@ func resourceNutanixProjectCreate(d *schema.ResourceData, meta interface{}) erro
 
 	resp, err := conn.V3.CreateProject(req)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	uuid := *resp.Metadata.UUID
@@ -335,20 +290,20 @@ func resourceNutanixProjectCreate(d *schema.ResourceData, meta interface{}) erro
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    vmTimeout,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      vmDelay,
 		MinTimeout: vmMinTimeout,
 	}
 
-	if _, errWaitTask := stateConf.WaitForState(); errWaitTask != nil {
-		return fmt.Errorf("error waiting for project(%s) to create: %s", uuid, errWaitTask)
+	if _, errWaitTask := stateConf.WaitForStateContext(ctx); errWaitTask != nil {
+		return diag.Errorf("error waiting for project(%s) to create: %s", uuid, errWaitTask)
 	}
 
 	d.SetId(uuid)
-	return resourceNutanixProjectRead(d, meta)
+	return resourceNutanixProjectRead(ctx, d, meta)
 }
 
-func resourceNutanixProjectRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixProjectRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	project, err := conn.V3.GetProject(d.Id())
@@ -357,73 +312,73 @@ func resourceNutanixProjectRead(d *schema.ResourceData, meta interface{}) error 
 			d.SetId("")
 			return nil
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	m, c := setRSEntityMetadata(project.Metadata)
 
 	if err := d.Set("name", project.Status.Name); err != nil {
-		return fmt.Errorf("error setting `name` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `name` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("description", project.Status.Descripion); err != nil {
-		return fmt.Errorf("error setting `description` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `description` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("state", project.Status.State); err != nil {
-		return fmt.Errorf("error setting `state` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `state` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("is_default", project.Status.Resources.IsDefault); err != nil {
-		return fmt.Errorf("error setting `is_default` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `is_default` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("resource_domain", flattenResourceDomain(project.Spec.Resources.ResourceDomain)); err != nil {
-		return fmt.Errorf("error setting `resource_domain` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `resource_domain` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("account_reference_list", flattenReferenceList(project.Spec.Resources.AccountReferenceList)); err != nil {
-		return fmt.Errorf("error setting `account_reference_list` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `account_reference_list` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("environment_reference_list", flattenReferenceList(project.Spec.Resources.EnvironmentReferenceList)); err != nil {
-		return fmt.Errorf("error setting `environment_reference_list` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `environment_reference_list` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("default_subnet_reference", []interface{}{flattenReference(project.Spec.Resources.DefaultSubnetReference)}); err != nil {
-		return fmt.Errorf("error setting `default_subnet_reference` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `default_subnet_reference` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("user_reference_list", flattenReferenceList(project.Spec.Resources.UserReferenceList)); err != nil {
-		return fmt.Errorf("error setting `user_reference_list` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `user_reference_list` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("external_user_group_reference_list",
 		flattenReferenceList(project.Spec.Resources.ExternalUserGroupReferenceList)); err != nil {
-		return fmt.Errorf("error setting `external_user_group_reference_list` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `external_user_group_reference_list` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("subnet_reference_list", flattenReferenceList(project.Spec.Resources.SubnetReferenceList)); err != nil {
-		return fmt.Errorf("error setting `subnet_reference_list` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `subnet_reference_list` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("external_network_list", flattenReferenceList(project.Spec.Resources.ExternalNetworkList)); err != nil {
-		return fmt.Errorf("error setting `external_network_list` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `external_network_list` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("metadata", m); err != nil {
-		return fmt.Errorf("error setting `metadata` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `metadata` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValues(project.Metadata.ProjectReference)); err != nil {
-		return fmt.Errorf("error setting `project_reference` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `project_reference` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValues(project.Metadata.OwnerReference)); err != nil {
-		return fmt.Errorf("error setting `owner_reference` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `owner_reference` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return fmt.Errorf("error setting `categories` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `categories` for Project(%s): %s", d.Id(), err)
 	}
 	if err := d.Set("api_version", project.APIVersion); err != nil {
-		return fmt.Errorf("error setting `api_version` for Project(%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `api_version` for Project(%s): %s", d.Id(), err)
 	}
 
 	return nil
 }
 
-func resourceNutanixProjectUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixProjectUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	project, err := conn.V3.GetProject(d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	project.Status = nil
 
@@ -460,7 +415,7 @@ func resourceNutanixProjectUpdate(d *schema.ResourceData, meta interface{}) erro
 	if d.HasChange("metadata") || d.HasChange("project_reference") ||
 		d.HasChange("owner_reference") || d.HasChange("categories") {
 		if err = getMetadataAttributes(d, project.Metadata, "project"); err != nil {
-			return fmt.Errorf("error expanding metadata: %+v", err)
+			return diag.Errorf("error expanding metadata: %+v", err)
 		}
 	}
 	if d.HasChange("api_version") {
@@ -472,7 +427,7 @@ func resourceNutanixProjectUpdate(d *schema.ResourceData, meta interface{}) erro
 		if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
 			d.SetId("")
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	uuid := *resp.Metadata.UUID
@@ -483,23 +438,23 @@ func resourceNutanixProjectUpdate(d *schema.ResourceData, meta interface{}) erro
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    vmTimeout,
+		Timeout:    d.Timeout(schema.TimeoutUpdate),
 		Delay:      vmDelay,
 		MinTimeout: vmMinTimeout,
 	}
 
-	if _, errWaitTask := stateConf.WaitForState(); errWaitTask != nil {
-		return fmt.Errorf("error waiting for project(%s) to update: %s", uuid, errWaitTask)
+	if _, errWaitTask := stateConf.WaitForStateContext(ctx); errWaitTask != nil {
+		return diag.Errorf("error waiting for project(%s) to update: %s", uuid, errWaitTask)
 	}
 
-	return resourceNutanixProjectRead(d, meta)
+	return resourceNutanixProjectRead(ctx, d, meta)
 }
 
-func resourceNutanixProjectDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixProjectDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 	resp, err := conn.V3.DeleteProject(d.Id())
 	if err != nil {
-		return fmt.Errorf("error deleting project id %s): %s", d.Id(), err)
+		return diag.Errorf("error deleting project id %s): %s", d.Id(), err)
 	}
 
 	// Wait for the Project to be available
@@ -507,13 +462,13 @@ func resourceNutanixProjectDelete(d *schema.ResourceData, meta interface{}) erro
 		Pending:    []string{"QUEUED", "RUNNING", "DELETED_PENDING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, cast.ToString(resp.Status.ExecutionContext.TaskUUID)),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf("error waiting for project (%s) to update: %s", d.Id(), err)
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf("error waiting for project (%s) to update: %s", d.Id(), err)
 	}
 
 	d.SetId("")

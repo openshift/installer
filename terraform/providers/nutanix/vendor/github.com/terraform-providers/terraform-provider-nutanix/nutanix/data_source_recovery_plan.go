@@ -1,19 +1,21 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceNutanixRecoveryPlan() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixRecoveryPlanRead,
+		ReadContext: dataSourceNutanixRecoveryPlanRead,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
@@ -38,43 +40,13 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
 			"owner_reference": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -95,7 +67,6 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 			},
 			"project_reference": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -134,15 +105,11 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 						"stage_work": {
 							Type:     schema.TypeList,
 							Computed: true,
-							MinItems: 1,
-							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"recover_entities": {
 										Type:     schema.TypeList,
 										Computed: true,
-										MinItems: 1,
-										MaxItems: 1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"entity_info_list": {
@@ -194,8 +161,6 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 			"parameters": {
 				Type:     schema.TypeList,
 				Computed: true,
-				MinItems: 1,
-				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"floating_ip_assignment_list": {
@@ -214,7 +179,6 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 											Schema: map[string]*schema.Schema{
 												"test_floating_ip_config": {
 													Type:     schema.TypeList,
-													MinItems: 1,
 													Computed: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
@@ -231,7 +195,6 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 												},
 												"recovery_floating_ip_config": {
 													Type:     schema.TypeList,
-													MinItems: 1,
 													Computed: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
@@ -248,7 +211,6 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 												},
 												"vm_reference": {
 													Type:     schema.TypeList,
-													MinItems: 1,
 													Computed: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
@@ -269,7 +231,6 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 												},
 												"vm_nic_information": {
 													Type:     schema.TypeList,
-													MinItems: 1,
 													Computed: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
@@ -307,13 +268,10 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 												"recovery_network": {
 													Type:     schema.TypeList,
 													Computed: true,
-													MinItems: 1,
-													MaxItems: 1,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"virtual_network_reference": {
 																Type:     schema.TypeList,
-																MaxItems: 1,
 																Computed: true,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
@@ -334,7 +292,6 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 															},
 															"vpc_reference": {
 																Type:     schema.TypeList,
-																MaxItems: 1,
 																Computed: true,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
@@ -387,13 +344,10 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 												"test_network": {
 													Type:     schema.TypeList,
 													Computed: true,
-													MinItems: 1,
-													MaxItems: 1,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"virtual_network_reference": {
 																Type:     schema.TypeList,
-																MaxItems: 1,
 																Computed: true,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
@@ -414,7 +368,6 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 															},
 															"vpc_reference": {
 																Type:     schema.TypeList,
-																MaxItems: 1,
 																Computed: true,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
@@ -587,13 +540,13 @@ func dataSourceNutanixRecoveryPlan() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixRecoveryPlanRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixRecoveryPlanRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 	recoveryPlanID, iOk := d.GetOk("recovery_plan_id")
 	recoveryPlanName, nOk := d.GetOk("recovery_plan_name")
 
 	if !iOk && !nOk {
-		return fmt.Errorf("please provide `recovery_plan_id` or `recovery_plan_name`")
+		return diag.Errorf("please provide `recovery_plan_id` or `recovery_plan_name`")
 	}
 
 	var err error
@@ -615,31 +568,31 @@ func dataSourceNutanixRecoveryPlanRead(d *schema.ResourceData, meta interface{})
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValuesList(resp.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValuesList(resp.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("name", resp.Spec.Name); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("description", resp.Spec.Description); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("stage_list", flattenStageList(resp.Spec.Resources.StageList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("parameters", flattenParameters(resp.Spec.Resources.Parameters)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("state", resp.Status.State); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(*resp.Metadata.UUID)

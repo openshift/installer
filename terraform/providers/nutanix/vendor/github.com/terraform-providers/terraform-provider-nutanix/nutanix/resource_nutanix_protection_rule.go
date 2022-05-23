@@ -1,14 +1,17 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/spf13/cast"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
@@ -16,14 +19,19 @@ import (
 
 func resourceNutanixProtectionRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixProtectionRuleCreate,
-		Read:   resourceNutanixProtectionRuleRead,
-		Update: resourceNutanixProtectionRuleUpdate,
-		Delete: resourceNutanixProtectionRuleDelete,
+		CreateContext: resourceNutanixProtectionRuleCreate,
+		ReadContext:   resourceNutanixProtectionRuleRead,
+		UpdateContext: resourceNutanixProtectionRuleUpdate,
+		DeleteContext: resourceNutanixProtectionRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		SchemaVersion: 1,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Update: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Delete: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"api_version": {
 				Type:     schema.TypeString,
@@ -37,44 +45,8 @@ func resourceNutanixProtectionRule() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
@@ -296,7 +268,7 @@ func resourceNutanixProtectionRule() *schema.Resource {
 	}
 }
 
-func resourceNutanixProtectionRuleCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixProtectionRuleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	request := &v3.ProtectionRuleInput{}
@@ -310,11 +282,11 @@ func resourceNutanixProtectionRuleCreate(d *schema.ResourceData, meta interface{
 	desc, descok := d.GetOk("description")
 
 	if !nok && !azclok && !oazlok {
-		return fmt.Errorf("please provide the required attributes `name`, `availability_zone`, `ordered_availability_zone`")
+		return diag.Errorf("please provide the required attributes `name`, `availability_zone`, `ordered_availability_zone`")
 	}
 
 	if err := getMetadataAttributes(d, metadata, "protection_rule"); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	getProtectionRulesResources(d, protectionRule)
@@ -325,11 +297,11 @@ func resourceNutanixProtectionRuleCreate(d *schema.ResourceData, meta interface{
 
 	protectionUUID, err := resourceNutanixProtectionRulesExists(conn, d.Get("name").(string))
 	if err != nil {
-		return fmt.Errorf("error checking if protection_rule already exists %+v", err)
+		return diag.Errorf("error checking if protection_rule already exists %+v", err)
 	}
 
 	if protectionUUID != nil {
-		return fmt.Errorf("protection_rule already with name %s exists , UUID %s", d.Get("name").(string), *protectionUUID)
+		return diag.Errorf("protection_rule already with name %s exists , UUID %s", d.Get("name").(string), *protectionUUID)
 	}
 
 	spec.Name = n.(string)
@@ -339,7 +311,7 @@ func resourceNutanixProtectionRuleCreate(d *schema.ResourceData, meta interface{
 
 	resp, err := conn.V3.CreateProtectionRule(request)
 	if err != nil {
-		return fmt.Errorf("error creating Nutanix ProtectionRules %s: %+v", spec.Name, err)
+		return diag.Errorf("error creating Nutanix ProtectionRules %s: %+v", spec.Name, err)
 	}
 
 	d.SetId(*resp.Metadata.UUID)
@@ -351,24 +323,24 @@ func resourceNutanixProtectionRuleCreate(d *schema.ResourceData, meta interface{
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		id := d.Id()
 		d.SetId("")
-		return fmt.Errorf("error waiting for protection_rule id (%s) to create: %+v", id, err)
+		return diag.Errorf("error waiting for protection_rule id (%s) to create: %+v", id, err)
 	}
 
 	// Setting Description because in Get request is not present.
 	d.Set("description", resp.Spec.Description)
 
-	return resourceNutanixProtectionRuleRead(d, meta)
+	return resourceNutanixProtectionRuleRead(ctx, d, meta)
 }
 
-func resourceNutanixProtectionRuleRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixProtectionRuleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 	id := d.Id()
 	resp, err := conn.V3.GetProtectionRule(id)
@@ -382,39 +354,39 @@ func resourceNutanixProtectionRuleRead(d *schema.ResourceData, meta interface{})
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValuesList(resp.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValuesList(resp.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("name", resp.Spec.Name); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("description", resp.Spec.Description); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("start_time", resp.Spec.Resources.StartTime); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("category_filter", flattenCategoriesFilter(resp.Spec.Resources.CategoryFilter)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("availability_zone_connectivity_list",
 		flattenAvailabilityZoneConnectivityList(resp.Spec.Resources.AvailabilityZoneConnectivityList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("ordered_availability_zone_list",
 		flattenOrderAvailibilityList(resp.Spec.Resources.OrderedAvailabilityZoneList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("state", resp.Status.State); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(*resp.Metadata.UUID)
@@ -422,7 +394,7 @@ func resourceNutanixProtectionRuleRead(d *schema.ResourceData, meta interface{})
 	return nil
 }
 
-func resourceNutanixProtectionRuleUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixProtectionRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	request := &v3.ProtectionRuleInput{}
@@ -436,7 +408,7 @@ func resourceNutanixProtectionRuleUpdate(d *schema.ResourceData, meta interface{
 		if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
 			d.SetId("")
 		}
-		return fmt.Errorf("error retrieving for protection rule id (%s) :%+v", id, err)
+		return diag.Errorf("error retrieving for protection rule id (%s) :%+v", id, err)
 	}
 
 	if response.Metadata != nil {
@@ -485,7 +457,7 @@ func resourceNutanixProtectionRuleUpdate(d *schema.ResourceData, meta interface{
 
 	resp, errUpdate := conn.V3.UpdateProtectionRule(d.Id(), request)
 	if errUpdate != nil {
-		return fmt.Errorf("error updating protection_rule id %s): %s", d.Id(), errUpdate)
+		return diag.Errorf("error updating protection_rule id %s): %s", d.Id(), errUpdate)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -495,26 +467,26 @@ func resourceNutanixProtectionRuleUpdate(d *schema.ResourceData, meta interface{
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutUpdate),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf(
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf(
 			"error waiting for protection rule (%s) to update: %s", d.Id(), err)
 	}
 
-	return resourceNutanixProtectionRuleRead(d, meta)
+	return resourceNutanixProtectionRuleRead(ctx, d, meta)
 }
 
-func resourceNutanixProtectionRuleDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixProtectionRuleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	resp, err := conn.V3.DeleteProtectionRule(d.Id())
 
 	if err != nil {
-		return fmt.Errorf("error deleting protection_rule id %s): %s", d.Id(), err)
+		return diag.Errorf("error deleting protection_rule id %s): %s", d.Id(), err)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -524,13 +496,13 @@ func resourceNutanixProtectionRuleDelete(d *schema.ResourceData, meta interface{
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf(
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf(
 			"error waiting for protection_rule (%s) to delete: %s", d.Id(), err)
 	}
 

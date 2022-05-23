@@ -1,22 +1,24 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-nutanix/client/karbon"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixKarbonPrivateRegistry() *schema.Resource {
 	return &schema.Resource{
-		Read:          dataSourceNutanixKarbonPrivateRegistryRead,
+		ReadContext:   dataSourceNutanixKarbonPrivateRegistryRead,
 		SchemaVersion: 1,
 		Schema:        KarbonPrivateRegistryDataSourceMap(),
 	}
 }
 
-func dataSourceNutanixKarbonPrivateRegistryRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixKarbonPrivateRegistryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).KarbonAPI
 	setTimeout(meta)
@@ -24,7 +26,7 @@ func dataSourceNutanixKarbonPrivateRegistryRead(d *schema.ResourceData, meta int
 	karbonPrivateRegistryID, iok := d.GetOk("private_registry_id")
 	karbonPrivateRegistryName, nok := d.GetOk("private_registry_name")
 	if !iok && !nok {
-		return fmt.Errorf("please provide one of private_registry_id or private_registry_name attributes")
+		return diag.Errorf("please provide one of private_registry_id or private_registry_name attributes")
 	}
 	var err error
 	var resp *karbon.PrivateRegistryResponse
@@ -37,17 +39,17 @@ func dataSourceNutanixKarbonPrivateRegistryRead(d *schema.ResourceData, meta int
 
 	if err != nil {
 		d.SetId("")
-		return err
+		return diag.FromErr(err)
 	}
 	uuid := utils.StringValue(resp.UUID)
 	if err := d.Set("name", utils.StringValue(resp.Name)); err != nil {
-		return fmt.Errorf("error occurred while setting name: %s", err)
+		return diag.Errorf("error occurred while setting name: %s", err)
 	}
 	if err := d.Set("endpoint", utils.StringValue(resp.Endpoint)); err != nil {
-		return fmt.Errorf("error occurred while setting endpoint: %s", err)
+		return diag.Errorf("error occurred while setting endpoint: %s", err)
 	}
 	if err := d.Set("uuid", uuid); err != nil {
-		return fmt.Errorf("error occurred while setting endpoint: %s", err)
+		return diag.Errorf("error occurred while setting endpoint: %s", err)
 	}
 	d.SetId(uuid)
 

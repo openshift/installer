@@ -1,15 +1,18 @@
 package nutanix
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixSubnets() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixSubnetsRead,
+		ReadContext: dataSourceNutanixSubnetsRead,
 		Schema: map[string]*schema.Schema{
 			"api_version": {
 				Type:     schema.TypeString,
@@ -35,78 +38,23 @@ func dataSourceNutanixSubnets() *schema.Resource {
 						"metadata": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"last_update_time": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"creation_time": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"spec_version": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"spec_hash": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"categories": categoriesSchema(),
 						"owner_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"project_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"name": {
@@ -124,41 +72,15 @@ func dataSourceNutanixSubnets() *schema.Resource {
 						"availability_zone_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"cluster_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"message_list": {
@@ -212,21 +134,8 @@ func dataSourceNutanixSubnets() *schema.Resource {
 						"dhcp_server_address": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"ip": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"fqdn": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"ipv6": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"dhcp_server_address_port": {
@@ -241,21 +150,8 @@ func dataSourceNutanixSubnets() *schema.Resource {
 						"dhcp_options": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"boot_file_name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"domain_name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"tftp_server_name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"dhcp_domain_name_server_list": {
@@ -275,21 +171,8 @@ func dataSourceNutanixSubnets() *schema.Resource {
 						"network_function_chain_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 					},
@@ -338,7 +221,7 @@ func dataSourceNutanixSubnets() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixSubnetsRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixSubnetsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).API
 	req := &v3.DSMetadata{}
@@ -348,13 +231,13 @@ func dataSourceNutanixSubnetsRead(d *schema.ResourceData, meta interface{}) erro
 		req = buildDataSourceListMetadata(metadata.(*schema.Set))
 	}
 
-	resp, err := conn.V3.ListAllSubnet(utils.StringValue(req.Filter))
+	resp, err := conn.V3.ListAllSubnet(utils.StringValue(req.Filter), nil)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("api_version", resp.APIVersion); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	entities := make([]map[string]interface{}, len(resp.Entities))
@@ -440,7 +323,7 @@ func dataSourceNutanixSubnetsRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("entities", entities); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(resource.UniqueId())

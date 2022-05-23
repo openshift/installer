@@ -1,6 +1,7 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"reflect"
@@ -10,8 +11,9 @@ import (
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const (
@@ -26,12 +28,17 @@ var (
 
 func resourceNutanixUser() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixUserCreate,
-		Read:   resourceNutanixUserRead,
-		Update: resourceNutanixUserUpdate,
-		Delete: resourceNutanixUserDelete,
+		CreateContext: resourceNutanixUserCreate,
+		ReadContext:   resourceNutanixUserRead,
+		UpdateContext: resourceNutanixUserUpdate,
+		DeleteContext: resourceNutanixUserDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Update: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Delete: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"api_version": {
@@ -41,34 +48,8 @@ func resourceNutanixUser() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
@@ -76,41 +57,15 @@ func resourceNutanixUser() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"directory_service_user": {
@@ -255,22 +210,17 @@ func resourceNutanixUser() *schema.Resource {
 	}
 }
 
-func resourceNutanixUserCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixUserCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Creating User: %s", d.Get("name").(string))
 	client := meta.(*Client)
 	conn := client.API
-	timeout := client.WaitTimeout
-
-	if client.WaitTimeout == 0 {
-		timeout = 10
-	}
 
 	request := &v3.UserIntentInput{}
 
 	metadata := &v3.Metadata{}
 
 	if err := getMetadataAttributes(d, metadata, "user"); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	spec := &v3.UserSpec{
@@ -286,7 +236,7 @@ func resourceNutanixUserCreate(d *schema.ResourceData, meta interface{}) error {
 	// Make request to the API
 	resp, err := conn.V3.CreateUser(request)
 	if err != nil {
-		return fmt.Errorf("error creating Nutanix User: %+v", err)
+		return diag.Errorf("error creating Nutanix User: %+v", err)
 	}
 
 	UUID := *resp.Metadata.UUID
@@ -300,23 +250,23 @@ func resourceNutanixUserCreate(d *schema.ResourceData, meta interface{}) error {
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    time.Duration(timeout) * time.Minute,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      userDelay,
 		MinTimeout: userMinTimeout,
 	}
 
-	if _, errw := stateConf.WaitForState(); errw != nil {
+	if _, errw := stateConf.WaitForStateContext(ctx); errw != nil {
 		// delErr := resourceNutanixUserDelete(d, meta)
 		// if delErr != nil {
-		// 	return fmt.Errorf("error waiting for image (%s) to delete in creation: %s", d.Id(), delErr)
+		// 	return diag.Errorf("error waiting for image (%s) to delete in creation: %s", d.Id(), delErr)
 		// }
 		d.SetId("")
-		return fmt.Errorf("error waiting for user (%s) to create: %s", UUID, errw)
+		return diag.Errorf("error waiting for user (%s) to create: %s", UUID, errw)
 	}
-	return resourceNutanixUserRead(d, meta)
+	return resourceNutanixUserRead(ctx, d, meta)
 }
 
-func resourceNutanixUserRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixUserRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Reading User: %s", d.Id())
 
 	// Get client connection
@@ -330,51 +280,51 @@ func resourceNutanixUserRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("error reading user UUID (%s) with error %s", uuid, err)
+		return diag.Errorf("error reading user UUID (%s) with error %s", uuid, err)
 	}
 
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err = d.Set("metadata", m); err != nil {
-		return fmt.Errorf("error setting metadata for user UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting metadata for user UUID(%s), %s", d.Id(), err)
 	}
 	if err = d.Set("categories", c); err != nil {
-		return fmt.Errorf("error setting categories for user UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting categories for user UUID(%s), %s", d.Id(), err)
 	}
 
 	if err = d.Set("owner_reference", flattenReferenceValues(resp.Metadata.OwnerReference)); err != nil {
-		return fmt.Errorf("error setting owner_reference for user UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting owner_reference for user UUID(%s), %s", d.Id(), err)
 	}
 	d.Set("api_version", utils.StringValue(resp.APIVersion))
 	d.Set("name", utils.StringValue(resp.Status.Name))
 
 	if err = d.Set("state", resp.Status.State); err != nil {
-		return fmt.Errorf("error setting state for user UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting state for user UUID(%s), %s", d.Id(), err)
 	}
 
 	if err = d.Set("directory_service_user", flattenDirectoryServiceUser(resp.Status.Resources.DirectoryServiceUser)); err != nil {
-		return fmt.Errorf("error setting directory_service_user for user UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting directory_service_user for user UUID(%s), %s", d.Id(), err)
 	}
 
 	//TODO: change to status when API is fixed
 	if err = d.Set("identity_provider_user", flattenIdentityProviderUser(resp.Spec.Resources.IdentityProviderUser)); err != nil {
-		return fmt.Errorf("error setting identity_provider_user for user UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting identity_provider_user for user UUID(%s), %s", d.Id(), err)
 	}
 
 	if err = d.Set("user_type", resp.Status.Resources.UserType); err != nil {
-		return fmt.Errorf("error setting user_type for user UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting user_type for user UUID(%s), %s", d.Id(), err)
 	}
 
 	if err = d.Set("display_name", resp.Status.Resources.DisplayName); err != nil {
-		return fmt.Errorf("error setting display_name for user UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting display_name for user UUID(%s), %s", d.Id(), err)
 	}
 
 	if err := d.Set("project_reference_list", flattenArrayReferenceValues(resp.Status.Resources.ProjectsReferenceList)); err != nil {
-		return fmt.Errorf("error setting project_reference_list for user UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting project_reference_list for user UUID(%s), %s", d.Id(), err)
 	}
 
 	if err := d.Set("access_control_policy_reference_list", flattenArrayReferenceValues(resp.Status.Resources.AccessControlPolicyReferenceList)); err != nil {
-		return fmt.Errorf("error setting access_control_policy_reference_list for user UUID(%s), %s", d.Id(), err)
+		return diag.Errorf("error setting access_control_policy_reference_list for user UUID(%s), %s", d.Id(), err)
 	}
 
 	//TODO:
@@ -383,14 +333,9 @@ func resourceNutanixUserRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceNutanixUserUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixUserUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*Client)
 	conn := client.API
-	timeout := client.WaitTimeout
-
-	if client.WaitTimeout == 0 {
-		timeout = 10
-	}
 
 	// get state
 	request := &v3.UserIntentInput{}
@@ -404,7 +349,7 @@ func resourceNutanixUserUpdate(d *schema.ResourceData, meta interface{}) error {
 		if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
 			d.SetId("")
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	if response.Metadata != nil {
@@ -447,7 +392,7 @@ func resourceNutanixUserUpdate(d *schema.ResourceData, meta interface{}) error {
 	resp, errUpdate := conn.V3.UpdateUser(d.Id(), request)
 
 	if errUpdate != nil {
-		return fmt.Errorf("error updating user(%s) %s", d.Id(), errUpdate)
+		return diag.Errorf("error updating user(%s) %s", d.Id(), errUpdate)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -457,34 +402,29 @@ func resourceNutanixUserUpdate(d *schema.ResourceData, meta interface{}) error {
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    time.Duration(timeout) * time.Minute,
+		Timeout:    d.Timeout(schema.TimeoutUpdate),
 		Delay:      userDelay,
 		MinTimeout: userMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		// delErr := resourceNutanixUserDelete(d, meta)
 		// if delErr != nil {
-		// 	return fmt.Errorf("error waiting for image (%s) to delete in update: %s", d.Id(), delErr)
+		// 	return diag.Errorf("error waiting for image (%s) to delete in update: %s", d.Id(), delErr)
 		// }
 		uuid := d.Id()
 		d.SetId("")
-		return fmt.Errorf("error waiting for user (%s) to update: %s", uuid, err)
+		return diag.Errorf("error waiting for user (%s) to update: %s", uuid, err)
 	}
 
-	return resourceNutanixUserRead(d, meta)
+	return resourceNutanixUserRead(ctx, d, meta)
 }
 
-func resourceNutanixUserDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixUserDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Deleting User: %s", d.Get("display_name").(string))
 
 	client := meta.(*Client)
 	conn := client.API
-	timeout := client.WaitTimeout
-
-	if client.WaitTimeout == 0 {
-		timeout = 10
-	}
 
 	UUID := d.Id()
 
@@ -493,7 +433,7 @@ func resourceNutanixUserDelete(d *schema.ResourceData, meta interface{}) error {
 		if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
 			d.SetId("")
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -503,14 +443,14 @@ func resourceNutanixUserDelete(d *schema.ResourceData, meta interface{}) error {
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    time.Duration(timeout) * time.Minute,
+		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      userDelay,
 		MinTimeout: userMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		d.SetId("")
-		return fmt.Errorf("error waiting for user (%s) to delete: %s", d.Id(), err)
+		return diag.Errorf("error waiting for user (%s) to delete: %s", d.Id(), err)
 	}
 
 	log.Printf("[DEBUG] USER DELETED")
