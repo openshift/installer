@@ -735,41 +735,69 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 
 	case vsphere.Name:
+		networkZoneMap := make(map[string]string)
+		var networkID string
 		controlPlanes, err := mastersAsset.Machines()
 		if err != nil {
 			return err
 		}
+
 		controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlanes))
+
+		vim25Client, _, cleanup, err := vsphereconfig.CreateVSphereClients(context.TODO(),
+			installConfig.Config.VSphere.VCenter,
+			installConfig.Config.VSphere.Username,
+			installConfig.Config.VSphere.Password)
+		if err != nil {
+			return errors.Wrapf(err, "unable to connect to vCenter %s. Ensure provided information is correct and client certs have been added to system trust.", installConfig.Config.VSphere.VCenter)
+		}
+		defer cleanup()
+		finder := vsphereconfig.NewFinder(vim25Client)
+
+		/* Each deployment zone requires a template to be imported.
+		 * The control plane machinepool might not have that zone assigned.
+		 * The zone could be unused or just defined for compute machines
+		 */
+		for _, deploymentZone := range installConfig.Config.VSphere.DeploymentZones {
+			var failureDomain vsphere.FailureDomainSpec
+
+			for _, fd := range installConfig.Config.VSphere.FailureDomains {
+				if fd.Name == deploymentZone.FailureDomain {
+					failureDomain = fd
+				}
+			}
+
+			// Must use the Managed Object ID for a port group (e.g. dvportgroup-5258)
+			// instead of the name since port group names aren't always unique in vSphere.
+			// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
+			networkZoneMap[deploymentZone.Name], err = vsphereconfig.GetNetworkMoID(context.TODO(),
+				vim25Client,
+				finder,
+				failureDomain.Topology.Datacenter,
+				failureDomain.Topology.ComputeCluster,
+				failureDomain.Topology.Networks[0])
+
+			if err != nil {
+				return errors.Wrap(err, "failed to get vSphere network ID")
+			}
+		}
+
 		for i, c := range controlPlanes {
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
+			networkID, err = vsphereconfig.GetNetworkMoID(context.TODO(),
+				vim25Client,
+				finder,
+				controlPlaneConfigs[i].Workspace.Datacenter,
+				installConfig.Config.VSphere.Cluster,
+				controlPlaneConfigs[i].Network.Devices[0].NetworkName)
+			if err != nil {
+				return errors.Wrap(err, "failed to get vSphere network ID")
+			}
+
 		}
 
 		// Set this flag to use an existing folder specified in the install-config. Otherwise, create one.
 		preexistingFolder := installConfig.Config.Platform.VSphere.Folder != ""
-
-		// Must use the Managed Object ID for a port group (e.g. dvportgroup-5258)
-		// instead of the name since port group names aren't always unique in vSphere.
-		// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
-		controlPlaneConfig := controlPlaneConfigs[0]
-		vim25Client, _, cleanup, err := vsphereconfig.CreateVSphereClients(context.TODO(),
-			controlPlaneConfig.Workspace.Server,
-			installConfig.Config.VSphere.Username,
-			installConfig.Config.VSphere.Password)
-		if err != nil {
-			return errors.Wrapf(err, "unable to connect to vCenter %s. Ensure provided information is correct and client certs have been added to system trust.", controlPlaneConfig.Workspace.Server)
-		}
-		defer cleanup()
-
-		finder := vsphereconfig.NewFinder(vim25Client)
-		networkID, err := vsphereconfig.GetNetworkMoID(context.TODO(),
-			vim25Client,
-			finder,
-			controlPlaneConfig.Workspace.Datacenter,
-			installConfig.Config.VSphere.Cluster,
-			controlPlaneConfig.Network.Devices[0].NetworkName)
-		if err != nil {
-			return errors.Wrap(err, "failed to get vSphere network ID")
-		}
 
 		data, err = vspheretfvars.TFVars(
 			vspheretfvars.TFVarsSources{
@@ -781,6 +809,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PreexistingFolder:   preexistingFolder,
 				DiskType:            installConfig.Config.Platform.VSphere.DiskType,
 				NetworkID:           networkID,
+
+				NetworkZone:          networkZoneMap,
+				InfraID:              clusterID.InfraID,
+				InstallConfig:        installConfig,
+				ControlPlaneMachines: controlPlanes,
 			},
 		)
 		if err != nil {
@@ -790,6 +823,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
+
 	case alibabacloud.Name:
 		client, err := installConfig.AlibabaCloud.Client()
 		if err != nil {
