@@ -19,6 +19,8 @@ import (
 
 func TestInfraEnv_Generate(t *testing.T) {
 
+	t.Skip("Skipping asset generation test")
+
 	installConfig := &installconfig.InstallConfig{
 		Config: &types.InstallConfig{
 			ObjectMeta: v1.ObjectMeta{

@@ -13,13 +13,13 @@ import (
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"github.com/openshift/assisted-service/models"
+	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
 
 	data "github.com/openshift/installer/data/data/agent"
 	"github.com/openshift/installer/pkg/agent/manifests"
-
-	"github.com/openshift/assisted-service/models"
-	"github.com/sirupsen/logrus"
+	agentAssets "github.com/openshift/installer/pkg/asset/agent/manifests"
 )
 
 const nmConnectionsDir = "/etc/assisted/network"
@@ -37,11 +37,8 @@ type ConfigBuilder struct {
 }
 
 // New creates a new ConfigBuilder by reading the ZTP manifests
-func New() (*ConfigBuilder, error) {
-	pullSecret, err := manifests.GetPullSecret()
-	if err != nil {
-		return nil, err
-	}
+func New(agentManifests agentAssets.AgentManifests) (*ConfigBuilder, error) {
+	pullSecret := agentManifests.PullSecret.StringData[".dockerconfigjson"]
 
 	n := manifests.NewNMConfig()
 	nodeZeroIP := n.GetNodeZeroIP()

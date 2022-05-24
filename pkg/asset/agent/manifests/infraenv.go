@@ -7,16 +7,13 @@ import (
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
 var (
-	infraEnvFilename = filepath.Join(clusterManifestDir, "infraenv.yml")
+	infraEnvFilename = filepath.Join(clusterManifestDir, "infraenv.yaml")
 )
 
 // InfraEnv generates the infraenv.yaml file.
@@ -36,50 +33,50 @@ func (*InfraEnv) Name() string {
 // the asset.
 func (*InfraEnv) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&installconfig.InstallConfig{},
-		&AgentPullSecret{},
+		// &installconfig.InstallConfig{},
+		// &AgentPullSecret{},
 	}
 }
 
 // Generate generates the InfraEnv manifest.
 func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
-	installConfig := &installconfig.InstallConfig{}
-	agentPullSecret := &AgentPullSecret{}
-	dependencies.Get(installConfig, agentPullSecret)
+	// installConfig := &installconfig.InstallConfig{}
+	// agentPullSecret := &AgentPullSecret{}
+	// dependencies.Get(installConfig, agentPullSecret)
 
-	infraEnv := &aiv1beta1.InfraEnv{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "infraEnv",
-			Namespace: installConfig.Config.Namespace,
-		},
-		Spec: aiv1beta1.InfraEnvSpec{
-			ClusterRef: &aiv1beta1.ClusterReference{
-				Name:      installConfig.Config.ObjectMeta.Name,
-				Namespace: installConfig.Config.ObjectMeta.Namespace,
-			},
-			SSHAuthorizedKey: installConfig.Config.SSHKey,
-			PullSecretRef: &corev1.LocalObjectReference{
-				Name: agentPullSecret.ResourceName(),
-			},
-			// NMStateConfigLabelSelector: v1.LabelSelector{
-			// 	MatchLabels: map[string]string{
-			// 		// fetch from NMStateConfig
-			// 	},
-			// },
-		},
-	}
-	i.Config = infraEnv
+	// infraEnv := &aiv1beta1.InfraEnv{
+	// 	ObjectMeta: v1.ObjectMeta{
+	// 		Name:      "infraEnv",
+	// 		Namespace: installConfig.Config.Namespace,
+	// 	},
+	// 	Spec: aiv1beta1.InfraEnvSpec{
+	// 		ClusterRef: &aiv1beta1.ClusterReference{
+	// 			Name:      installConfig.Config.ObjectMeta.Name,
+	// 			Namespace: installConfig.Config.ObjectMeta.Namespace,
+	// 		},
+	// 		SSHAuthorizedKey: installConfig.Config.SSHKey,
+	// 		PullSecretRef: &corev1.LocalObjectReference{
+	// 			Name: agentPullSecret.ResourceName(),
+	// 		},
+	// 		// NMStateConfigLabelSelector: v1.LabelSelector{
+	// 		// 	MatchLabels: map[string]string{
+	// 		// 		// fetch from NMStateConfig
+	// 		// 	},
+	// 		// },
+	// 	},
+	// }
+	// i.Config = infraEnv
 
-	infraEnvData, err := yaml.Marshal(infraEnv)
-	if err != nil {
-		return errors.Wrap(err, "failed to marshal agent installer infraEnv")
-	}
+	// infraEnvData, err := yaml.Marshal(infraEnv)
+	// if err != nil {
+	// 	return errors.Wrap(err, "failed to marshal agent installer infraEnv")
+	// }
 
-	i.File = &asset.File{
-		Filename: infraEnvFilename,
-		Data:     infraEnvData,
-	}
+	// i.File = &asset.File{
+	// 	Filename: infraEnvFilename,
+	// 	Data:     infraEnvData,
+	// }
 
 	return nil
 }

@@ -18,6 +18,8 @@ import (
 
 func TestAgentPullSecret_Generate(t *testing.T) {
 
+	t.Skip("Skipping asset generation test")
+
 	installconfigAsset := &installconfig.InstallConfig{
 		Config: &types.InstallConfig{
 			ObjectMeta: v1.ObjectMeta{
