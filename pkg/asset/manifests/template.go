@@ -60,7 +60,7 @@ type cloudCredsSecretData struct {
 	GCP       *GCPCredsSecretData
 	IBMCloud  *IBMCloudCredsSecretData
 	OpenStack *OpenStackCredsSecretData
-	VSphere   *VSphereCredsSecretData
+	VSphere   *[]*VSphereCredsSecretData
 	Ovirt     *OvirtCredsSecretData
 }
 
