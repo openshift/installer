@@ -4,6 +4,7 @@ import (
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
+	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -26,6 +27,7 @@ type AgentManifests struct {
 	InfraEnv            *aiv1beta1.InfraEnv
 	StaticNetworkConfig []*models.HostStaticNetworkConfig
 	AgentClusterInstall *hiveext.AgentClusterInstall
+	ClusterDeployment   *hivev1.ClusterDeployment
 }
 
 // Name returns a human friendly name.
@@ -65,6 +67,8 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 			m.StaticNetworkConfig = append(m.StaticNetworkConfig, v.StaticNetworkConfig...)
 		case *AgentClusterInstall:
 			m.AgentClusterInstall = v.Config
+		case *ClusterDeployment:
+			m.ClusterDeployment = v.Config
 		}
 	}
 
