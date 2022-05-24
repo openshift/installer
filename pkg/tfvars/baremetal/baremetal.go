@@ -27,23 +27,43 @@ type config struct {
 	IronicPassword string `json:"ironic_password"`
 
 	// Data required for control plane deployment - several maps per host, because of terraform's limitations
-	Hosts         []map[string]interface{} `json:"hosts"`
+	Masters       []map[string]interface{} `json:"masters"`
 	RootDevices   []map[string]interface{} `json:"root_devices"`
 	Properties    []map[string]interface{} `json:"properties"`
 	DriverInfos   []map[string]interface{} `json:"driver_infos"`
 	InstanceInfos []map[string]interface{} `json:"instance_infos"`
 }
 
+type imageDownloadFunc func(baseURL string) (string, error)
+
+var (
+	imageDownloader imageDownloadFunc
+)
+
+func init() {
+	imageDownloader = cache.DownloadImageFile
+}
+
 // TFVars generates bare metal specific Terraform variables.
-func TFVars(libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, externalMAC, provisioningBridge, provisioningMAC string, platformHosts []*baremetal.Host, image, ironicUsername, ironicPassword, ignition string) ([]byte, error) {
-	bootstrapOSImage, err := cache.DownloadImageFile(bootstrapOSImage)
+func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, externalMAC, provisioningBridge, provisioningMAC string, platformHosts []*baremetal.Host, image, ironicUsername, ironicPassword, ignition string) ([]byte, error) {
+	bootstrapOSImage, err := imageDownloader(bootstrapOSImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached bootstrap libvirt image")
 	}
 
-	var hosts, rootDevices, properties, driverInfos, instanceInfos []map[string]interface{}
+	var masters, rootDevices, properties, driverInfos, instanceInfos []map[string]interface{}
 
+	// Select the first N hosts as masters, excluding the workers
 	for _, host := range platformHosts {
+		if len(masters) >= int(numControlPlaneReplicas) {
+			break
+		}
+
+		if host.IsWorker() {
+			//Skipping workers
+			continue
+		}
+
 		// Get hardware profile
 		if host.HardwareProfile == "default" {
 			host.HardwareProfile = hardware.DefaultProfileName
@@ -145,7 +165,7 @@ func TFVars(libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, 
 			instanceInfo["capabilities"] = "secure_boot:true"
 		}
 
-		hosts = append(hosts, hostMap)
+		masters = append(masters, hostMap)
 		properties = append(properties, propertiesMap)
 		driverInfos = append(driverInfos, driverInfo)
 		rootDevices = append(rootDevices, rootDevice)
@@ -176,7 +196,7 @@ func TFVars(libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, 
 		BootstrapOSImage: bootstrapOSImage,
 		IronicUsername:   ironicUsername,
 		IronicPassword:   ironicPassword,
-		Hosts:            hosts,
+		Masters:          masters,
 		Bridges:          bridges,
 		Properties:       properties,
 		DriverInfos:      driverInfos,

@@ -2,8 +2,10 @@ package defaults
 
 import (
 	"fmt"
-	"github.com/openshift/installer/pkg/ipnet"
 	"net"
+	"sort"
+
+	"github.com/openshift/installer/pkg/ipnet"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/openshift/installer/pkg/types"
@@ -115,5 +117,11 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 		} else {
 			p.IngressVIP = vip[0]
 		}
+	}
+
+	if p.Hosts != nil {
+		sort.SliceStable(p.Hosts, func(i, j int) bool {
+			return p.Hosts[i].CompareByRole(p.Hosts[j])
+		})
 	}
 }
