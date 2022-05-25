@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
@@ -24,6 +25,7 @@ type AgentManifests struct {
 	PullSecret          *corev1.Secret
 	InfraEnv            *aiv1beta1.InfraEnv
 	StaticNetworkConfig []*models.HostStaticNetworkConfig
+	AgentClusterInstall *hiveext.AgentClusterInstall
 }
 
 // Name returns a human friendly name.
@@ -37,6 +39,7 @@ func (m *AgentManifests) Dependencies() []asset.Asset {
 		&AgentPullSecret{},
 		&InfraEnv{},
 		&NMStateConfig{},
+		&AgentClusterInstall{},
 	}
 }
 
@@ -46,6 +49,7 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		&AgentPullSecret{},
 		&InfraEnv{},
 		&NMStateConfig{},
+		&AgentClusterInstall{},
 	} {
 		dependencies.Get(a)
 		m.FileList = append(m.FileList, a.Files()...)
@@ -57,6 +61,8 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 			m.InfraEnv = v.Config
 		case *NMStateConfig:
 			m.StaticNetworkConfig = append(m.StaticNetworkConfig, v.StaticNetworkConfig...)
+		case *AgentClusterInstall:
+			m.AgentClusterInstall = v.Config
 		}
 	}
 
