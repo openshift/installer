@@ -1,15 +1,18 @@
 package nutanix
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixProjects() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixProjectsRead,
+		ReadContext: dataSourceNutanixProjectsRead,
 		Schema: map[string]*schema.Schema{
 			"api_version": {
 				Type:     schema.TypeString,
@@ -111,21 +114,8 @@ func dataSourceNutanixProjects() *schema.Resource {
 						"default_subnet_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"user_reference_list": {
@@ -210,73 +200,22 @@ func dataSourceNutanixProjects() *schema.Resource {
 						"metadata": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"last_update_time": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"creation_time": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"spec_version": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"spec_hash": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"project_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"owner_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"categories": categoriesSchema(),
@@ -291,7 +230,7 @@ func dataSourceNutanixProjects() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixProjectsRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixProjectsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).API
 	req := &v3.DSMetadata{}
@@ -303,14 +242,14 @@ func dataSourceNutanixProjectsRead(d *schema.ResourceData, meta interface{}) err
 
 	resp, err := conn.V3.ListAllProject(utils.StringValue(req.Filter))
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("api_version", resp.APIVersion); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("entities", flattenProjectEntities(resp.Entities)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(resource.UniqueId())
@@ -335,7 +274,7 @@ func flattenProjectEntities(projects []*v3.Project) []map[string]interface{} {
 			"user_reference_list":                flattenReferenceList(project.Spec.Resources.UserReferenceList),
 			"external_user_group_reference_list": flattenReferenceList(project.Spec.Resources.ExternalUserGroupReferenceList),
 			"subnet_reference_list":              flattenReferenceList(project.Spec.Resources.SubnetReferenceList),
-			"external_network_list":              flattenReferenceList(project.Spec.Resources.ExternalNetworkList),
+			"external_network_list":              flattenExternalNetworkListReferenceList(project.Spec.Resources.ExternalNetworkList),
 			"metadata":                           metadata,
 			"categories":                         categories,
 			"project_reference":                  flattenReferenceValues(project.Metadata.ProjectReference),

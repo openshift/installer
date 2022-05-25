@@ -1,17 +1,19 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixCategoryKey() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixCategoryKeyRead,
+		ReadContext: dataSourceNutanixCategoryKeyRead,
 
 		Schema: map[string]*schema.Schema{
 			"system_defined": {
@@ -39,7 +41,7 @@ func dataSourceNutanixCategoryKey() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixCategoryKeyRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixCategoryKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Reading CategoryKey: %s", d.Get("name").(string))
 
 	// Get client connection
@@ -53,7 +55,7 @@ func dataSourceNutanixCategoryKeyRead(d *schema.ResourceData, meta interface{}) 
 			d.SetId("")
 		}
 
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.Set("api_version", utils.StringValue(resp.APIVersion))
@@ -66,7 +68,7 @@ func dataSourceNutanixCategoryKeyRead(d *schema.ResourceData, meta interface{}) 
 	list, err := conn.V3.ListAllCategoryValues(d.Get("name").(string), "")
 
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	values := make([]string, len(list.Entities))
@@ -75,5 +77,5 @@ func dataSourceNutanixCategoryKeyRead(d *schema.ResourceData, meta interface{}) 
 		values[k] = utils.StringValue(v.Value)
 	}
 
-	return d.Set("values", values)
+	return diag.FromErr(d.Set("values", values))
 }

@@ -1,12 +1,15 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/spf13/cast"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
@@ -14,14 +17,19 @@ import (
 
 func resourceNutanixRecoveryPlan() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixRecoveryPlanCreate,
-		Read:   resourceNutanixRecoveryPlanRead,
-		Update: resourceNutanixRecoveryPlanUpdate,
-		Delete: resourceNutanixRecoveryPlanDelete,
+		CreateContext: resourceNutanixRecoveryPlanCreate,
+		ReadContext:   resourceNutanixRecoveryPlanRead,
+		UpdateContext: resourceNutanixRecoveryPlanUpdate,
+		DeleteContext: resourceNutanixRecoveryPlanDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		SchemaVersion: 1,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Update: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Delete: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"api_version": {
 				Type:     schema.TypeString,
@@ -35,44 +43,8 @@ func resourceNutanixRecoveryPlan() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
@@ -646,7 +618,7 @@ func resourceNutanixRecoveryPlan() *schema.Resource {
 	}
 }
 
-func resourceNutanixRecoveryPlanCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixRecoveryPlanCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	request := &v3.RecoveryPlanInput{}
@@ -658,11 +630,11 @@ func resourceNutanixRecoveryPlanCreate(d *schema.ResourceData, meta interface{})
 	desc, descok := d.GetOk("description")
 
 	if !nok {
-		return fmt.Errorf("please provide the required attributes `name`")
+		return diag.Errorf("please provide the required attributes `name`")
 	}
 
 	if err := getMetadataAttributes(d, metadata, "recovery_plan"); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	getRecoveryPlanResources(d, recoveryPlan)
@@ -673,11 +645,11 @@ func resourceNutanixRecoveryPlanCreate(d *schema.ResourceData, meta interface{})
 
 	recoveryUUID, err := resourceNutanixRecoveryPlanExists(conn, d.Get("name").(string))
 	if err != nil {
-		return fmt.Errorf("error checking if recovery_plan already exists %+v", err)
+		return diag.Errorf("error checking if recovery_plan already exists %+v", err)
 	}
 
 	if recoveryUUID != nil {
-		return fmt.Errorf("recovery_plan already with name %s exists , UUID %s", d.Get("name").(string), *recoveryUUID)
+		return diag.Errorf("recovery_plan already with name %s exists , UUID %s", d.Get("name").(string), *recoveryUUID)
 	}
 
 	spec.Name = n.(string)
@@ -687,7 +659,7 @@ func resourceNutanixRecoveryPlanCreate(d *schema.ResourceData, meta interface{})
 
 	resp, err := conn.V3.CreateRecoveryPlan(request)
 	if err != nil {
-		return fmt.Errorf("error creating Nutanix RecoveryPlan %s: %+v", spec.Name, err)
+		return diag.Errorf("error creating Nutanix RecoveryPlan %s: %+v", spec.Name, err)
 	}
 
 	d.SetId(*resp.Metadata.UUID)
@@ -699,24 +671,24 @@ func resourceNutanixRecoveryPlanCreate(d *schema.ResourceData, meta interface{})
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		id := d.Id()
 		d.SetId("")
-		return fmt.Errorf("error waiting for recovery_plan id (%s) to create: %+v", id, err)
+		return diag.Errorf("error waiting for recovery_plan id (%s) to create: %+v", id, err)
 	}
 
 	// Setting Description because in Get request is not present.
 	d.Set("description", resp.Spec.Description)
 
-	return resourceNutanixRecoveryPlanRead(d, meta)
+	return resourceNutanixRecoveryPlanRead(ctx, d, meta)
 }
 
-func resourceNutanixRecoveryPlanRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixRecoveryPlanRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 	id := d.Id()
 	resp, err := conn.V3.GetRecoveryPlan(id)
@@ -730,31 +702,31 @@ func resourceNutanixRecoveryPlanRead(d *schema.ResourceData, meta interface{}) e
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValuesList(resp.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValuesList(resp.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("name", resp.Spec.Name); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("description", resp.Spec.Description); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("stage_list", flattenStageList(resp.Spec.Resources.StageList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("parameters", flattenParameters(resp.Spec.Resources.Parameters)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("state", resp.Status.State); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(*resp.Metadata.UUID)
@@ -762,7 +734,7 @@ func resourceNutanixRecoveryPlanRead(d *schema.ResourceData, meta interface{}) e
 	return nil
 }
 
-func resourceNutanixRecoveryPlanUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixRecoveryPlanUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	request := &v3.RecoveryPlanInput{}
@@ -777,7 +749,7 @@ func resourceNutanixRecoveryPlanUpdate(d *schema.ResourceData, meta interface{})
 		if strings.Contains(fmt.Sprint(err), "RECOVERY_PLAN_NOT_FOUND") {
 			d.SetId("")
 		}
-		return fmt.Errorf("error retrieving for protection rule id (%s) :%+v", id, err)
+		return diag.Errorf("error retrieving for protection rule id (%s) :%+v", id, err)
 	}
 
 	if response.Metadata != nil {
@@ -821,7 +793,7 @@ func resourceNutanixRecoveryPlanUpdate(d *schema.ResourceData, meta interface{})
 
 	resp, errUpdate := conn.V3.UpdateRecoveryPlan(d.Id(), request)
 	if errUpdate != nil {
-		return fmt.Errorf("error recovery_plan subnet id %s): %s", d.Id(), errUpdate)
+		return diag.Errorf("error recovery_plan subnet id %s): %s", d.Id(), errUpdate)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -831,26 +803,26 @@ func resourceNutanixRecoveryPlanUpdate(d *schema.ResourceData, meta interface{})
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutUpdate),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf(
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf(
 			"error waiting for protection rule (%s) to update: %s", d.Id(), err)
 	}
 
-	return resourceNutanixRecoveryPlanRead(d, meta)
+	return resourceNutanixRecoveryPlanRead(ctx, d, meta)
 }
 
-func resourceNutanixRecoveryPlanDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixRecoveryPlanDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	resp, err := conn.V3.DeleteRecoveryPlan(d.Id())
 
 	if err != nil {
-		return fmt.Errorf("error deleting protection_rule id %s): %s", d.Id(), err)
+		return diag.Errorf("error deleting protection_rule id %s): %s", d.Id(), err)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -860,13 +832,13 @@ func resourceNutanixRecoveryPlanDelete(d *schema.ResourceData, meta interface{})
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf(
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf(
 			"error waiting for recovery_plan (%s) to delete: %s", d.Id(), err)
 	}
 
@@ -977,8 +949,8 @@ func expandParameters(d *schema.ResourceData) *v3.Parameters {
 			if v1, ok1 := v1["network_mapping_list"]; ok1 {
 				list := v1.([]interface{})
 				networkMappingList := make([]*v3.NetworkMappingList, 0)
-				networkMapping := &v3.NetworkMappingList{}
 				for _, network := range list {
+					networkMapping := &v3.NetworkMappingList{}
 					v2 := network.(map[string]interface{})
 					if v2, ok1 := v2["availability_zone_network_mapping_list"].([]interface{}); ok1 {
 						networkMapping.AvailabilityZoneNetworkMappingList = expandZoneNetworkMappingList(v2)

@@ -1,33 +1,34 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 var (
-	subnetTimeout    = 10 * time.Minute
 	subnetDelay      = 10 * time.Second
 	subnetMinTimeout = 3 * time.Second
 )
 
 func resourceNutanixSubnet() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixSubnetCreate,
-		Read:   resourceNutanixSubnetRead,
-		Update: resourceNutanixSubnetUpdate,
-		Delete: resourceNutanixSubnetDelete,
+		CreateContext: resourceNutanixSubnetCreate,
+		ReadContext:   resourceNutanixSubnetRead,
+		UpdateContext: resourceNutanixSubnetUpdate,
+		DeleteContext: resourceNutanixSubnetDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
@@ -36,6 +37,11 @@ func resourceNutanixSubnet() *schema.Resource {
 				Upgrade: resourceSubnetInstanceStateUpgradeV0,
 				Version: 0,
 			},
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Update: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Delete: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"api_version": {
@@ -50,44 +56,8 @@ func resourceNutanixSubnet() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
@@ -95,42 +65,16 @@ func resourceNutanixSubnet() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"name": {
@@ -145,22 +89,8 @@ func resourceNutanixSubnet() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"cluster_uuid": {
@@ -199,24 +129,8 @@ func resourceNutanixSubnet() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"fqdn": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"ipv6": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"dhcp_server_address_port": {
@@ -241,24 +155,8 @@ func resourceNutanixSubnet() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"boot_file_name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"domain_name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"tftp_server_name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"dhcp_domain_name_server_list": {
@@ -283,29 +181,15 @@ func resourceNutanixSubnet() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 		},
 	}
 }
 
-func resourceNutanixSubnetCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixSubnetCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	request := &v3.SubnetIntentInput{}
@@ -319,14 +203,14 @@ func resourceNutanixSubnetCreate(d *schema.ResourceData, meta interface{}) error
 	_, stok := d.GetOk("subnet_type")
 
 	if !stok && !nok {
-		return fmt.Errorf("please provide the required attributes name, subnet_type")
+		return diag.Errorf("please provide the required attributes name, subnet_type")
 	}
 
 	if !nok {
-		return fmt.Errorf("please provide the required name attribute")
+		return diag.Errorf("please provide the required name attribute")
 	}
 	if err := getMetadataAttributes(d, metadata, "subnet"); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if azrok {
@@ -348,7 +232,7 @@ func resourceNutanixSubnetCreate(d *schema.ResourceData, meta interface{}) error
 
 	resp, err := conn.V3.CreateSubnet(request)
 	if err != nil {
-		return fmt.Errorf("error creating Nutanix Subnet %s: %+v", utils.StringValue(spec.Name), err)
+		return diag.Errorf("error creating Nutanix Subnet %s: %+v", utils.StringValue(spec.Name), err)
 	}
 
 	d.SetId(*resp.Metadata.UUID)
@@ -360,24 +244,24 @@ func resourceNutanixSubnetCreate(d *schema.ResourceData, meta interface{}) error
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		id := d.Id()
 		d.SetId("")
-		return fmt.Errorf("error waiting for subnet id (%s) to create: %+v", id, err)
+		return diag.Errorf("error waiting for subnet id (%s) to create: %+v", id, err)
 	}
 
 	// Setting Description because in Get request is not present.
 	d.Set("description", utils.StringValue(resp.Spec.Description))
 
-	return resourceNutanixSubnetRead(d, meta)
+	return resourceNutanixSubnetRead(ctx, d, meta)
 }
 
-func resourceNutanixSubnetRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixSubnetRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 	id := d.Id()
 	resp, err := conn.V3.GetSubnet(id)
@@ -386,33 +270,33 @@ func resourceNutanixSubnetRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		errDel := resourceNutanixSubnetDelete(d, meta)
+		errDel := resourceNutanixSubnetDelete(ctx, d, meta)
 		if errDel != nil {
-			return fmt.Errorf("error deleting subnet (%s) after read error: %+v", id, errDel)
+			return diag.Errorf("error deleting subnet (%s) after read error: %+v", id, errDel)
 		}
 		d.SetId("")
-		return fmt.Errorf("error reading subnet id (%s): %+v", id, err)
+		return diag.Errorf("error reading subnet id (%s): %+v", id, err)
 	}
 
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValues(resp.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValues(resp.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("availability_zone_reference", flattenReferenceValues(resp.Status.AvailabilityZoneReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := flattenClusterReference(resp.Status.ClusterReference, d); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	dgIP := ""
@@ -466,19 +350,19 @@ func resourceNutanixSubnetRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if err := d.Set("dhcp_server_address", dhcpSA); err != nil {
-		return fmt.Errorf("error setting attribute for subnet id (%s) dhcp_server_address: %s", d.Id(), err)
+		return diag.Errorf("error setting attribute for subnet id (%s) dhcp_server_address: %s", d.Id(), err)
 	}
 	if err := d.Set("ip_config_pool_list_ranges", ipcpl); err != nil {
-		return fmt.Errorf("error setting attribute for subnet id (%s) ip_config_pool_list_ranges: %s", d.Id(), err)
+		return diag.Errorf("error setting attribute for subnet id (%s) ip_config_pool_list_ranges: %s", d.Id(), err)
 	}
 	if err := d.Set("dhcp_options", dOptions); err != nil {
-		return fmt.Errorf("error setting attribute for subnet id (%s) dhcp_options: %s", d.Id(), err)
+		return diag.Errorf("error setting attribute for subnet id (%s) dhcp_options: %s", d.Id(), err)
 	}
 	if err := d.Set("dhcp_domain_name_server_list", dnsList); err != nil {
-		return fmt.Errorf("error setting attribute for subnet id (%s) dhcp_domain_name_server_list: %s", d.Id(), err)
+		return diag.Errorf("error setting attribute for subnet id (%s) dhcp_domain_name_server_list: %s", d.Id(), err)
 	}
 	if err := d.Set("dhcp_domain_search_list", dsList); err != nil {
-		return fmt.Errorf("error setting attribute for subnet id (%s) dhcp_domain_search_list: %s", d.Id(), err)
+		return diag.Errorf("error setting attribute for subnet id (%s) dhcp_domain_search_list: %s", d.Id(), err)
 	}
 
 	d.Set("api_version", utils.StringValue(resp.APIVersion))
@@ -512,7 +396,7 @@ func resourceNutanixSubnetRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceNutanixSubnetUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixSubnetUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 	request := &v3.SubnetIntentInput{}
 	metadata := &v3.Metadata{}
@@ -528,7 +412,7 @@ func resourceNutanixSubnetUpdate(d *schema.ResourceData, meta interface{}) error
 		if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
 			d.SetId("")
 		}
-		return fmt.Errorf("error retrieving for subnet id (%s) :%+v", id, err)
+		return diag.Errorf("error retrieving for subnet id (%s) :%+v", id, err)
 	}
 
 	if response.Metadata != nil {
@@ -641,7 +525,7 @@ func resourceNutanixSubnetUpdate(d *schema.ResourceData, meta interface{}) error
 
 	resp, errUpdate := conn.V3.UpdateSubnet(d.Id(), request)
 	if errUpdate != nil {
-		return fmt.Errorf("error updating subnet id %s): %s", d.Id(), errUpdate)
+		return diag.Errorf("error updating subnet id %s): %s", d.Id(), errUpdate)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -651,28 +535,28 @@ func resourceNutanixSubnetUpdate(d *schema.ResourceData, meta interface{}) error
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutUpdate),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf(
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf(
 			"error waiting for subnet (%s) to update: %s", d.Id(), err)
 	}
 	// Setting Description because in Get request is not present.
 	d.Set("description", utils.StringValue(resp.Spec.Description))
 
-	return resourceNutanixSubnetRead(d, meta)
+	return resourceNutanixSubnetRead(ctx, d, meta)
 }
 
-func resourceNutanixSubnetDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixSubnetDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	resp, err := conn.V3.DeleteSubnet(d.Id())
 
 	if err != nil {
-		return fmt.Errorf("error deleting subnet id %s): %s", d.Id(), err)
+		return diag.Errorf("error deleting subnet id %s): %s", d.Id(), err)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -682,13 +566,13 @@ func resourceNutanixSubnetDelete(d *schema.ResourceData, meta interface{}) error
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf(
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf(
 			"error waiting for subnet (%s) to delete: %s", d.Id(), err)
 	}
 
@@ -700,7 +584,7 @@ func resourceNutanixSubnetExists(conn *v3.Client, name string) (*string, error) 
 	var subnetUUID *string
 
 	filter := fmt.Sprintf("name==%s", name)
-	subnetList, err := conn.V3.ListAllSubnet(filter)
+	subnetList, err := conn.V3.ListAllSubnet(filter, nil)
 
 	if err != nil {
 		return nil, err
@@ -801,7 +685,7 @@ func getSubnetResources(d *schema.ResourceData, subnet *v3.SubnetResources) {
 	subnet.IPConfig = ip
 }
 
-func resourceSubnetInstanceStateUpgradeV0(is map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func resourceSubnetInstanceStateUpgradeV0(ctx context.Context, is map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	log.Printf("[DEBUG] Entering resourceSubnetInstanceStateUpgradeV0")
 	return resourceNutanixCategoriesMigrateState(is, meta)
 }
@@ -821,44 +705,8 @@ func resourceNutanixSubnetInstanceResourceV0() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": {
@@ -870,42 +718,16 @@ func resourceNutanixSubnetInstanceResourceV0() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"name": {
@@ -920,22 +742,8 @@ func resourceNutanixSubnetInstanceResourceV0() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"cluster_uuid": {
@@ -974,24 +782,8 @@ func resourceNutanixSubnetInstanceResourceV0() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"fqdn": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"ipv6": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"dhcp_server_address_port": {
@@ -1016,24 +808,8 @@ func resourceNutanixSubnetInstanceResourceV0() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"boot_file_name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"domain_name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"tftp_server_name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"dhcp_domain_name_server_list": {
@@ -1058,22 +834,8 @@ func resourceNutanixSubnetInstanceResourceV0() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 		},

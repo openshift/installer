@@ -1,17 +1,20 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/terraform-providers/terraform-provider-nutanix/client"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixSubnet() *schema.Resource {
 	return &schema.Resource{
-		Read:          dataSourceNutanixSubnetRead,
+		ReadContext:   dataSourceNutanixSubnetRead,
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
 			{
@@ -31,6 +34,7 @@ func dataSourceNutanixSubnet() *schema.Resource {
 				Optional:      true,
 				ConflictsWith: []string{"subnet_id"},
 			},
+			"additional_filter": DataSourceFiltersSchema(),
 			"api_version": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -38,78 +42,23 @@ func dataSourceNutanixSubnet() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
 			"owner_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"name": {
@@ -127,21 +76,8 @@ func dataSourceNutanixSubnet() *schema.Resource {
 			"availability_zone_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"message_list": {
@@ -195,21 +131,8 @@ func dataSourceNutanixSubnet() *schema.Resource {
 			"dhcp_server_address": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"fqdn": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ipv6": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"dhcp_server_address_port": {
@@ -224,21 +147,8 @@ func dataSourceNutanixSubnet() *schema.Resource {
 			"dhcp_options": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"boot_file_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"domain_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"tftp_server_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"dhcp_domain_name_server_list": {
@@ -258,21 +168,8 @@ func dataSourceNutanixSubnet() *schema.Resource {
 			"network_function_chain_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 		},
@@ -283,9 +180,9 @@ func findSubnetByUUID(conn *v3.Client, uuid string) (*v3.SubnetIntentResponse, e
 	return conn.V3.GetSubnet(uuid)
 }
 
-func findSubnetByName(conn *v3.Client, name string) (*v3.SubnetIntentResponse, error) {
+func findSubnetByName(conn *v3.Client, name string, clientSideFilters []*client.AdditionalFilter) (*v3.SubnetIntentResponse, error) {
 	filter := fmt.Sprintf("name==%s", name)
-	resp, err := conn.V3.ListAllSubnet(filter)
+	resp, err := conn.V3.ListAllSubnet(filter, clientSideFilters)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +197,7 @@ func findSubnetByName(conn *v3.Client, name string) (*v3.SubnetIntentResponse, e
 	}
 
 	if len(found) > 1 {
-		return nil, fmt.Errorf("your query returned more than one result. Please use subnet_id argument instead")
+		return nil, fmt.Errorf("your query returned more than one result. Please use subnet_id argument or use additional filters instead")
 	}
 
 	if len(found) == 0 {
@@ -310,15 +207,33 @@ func findSubnetByName(conn *v3.Client, name string) (*v3.SubnetIntentResponse, e
 	return found[0], nil
 }
 
-func dataSourceNutanixSubnetRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixSubnetRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).API
 
 	subnetID, iok := d.GetOk("subnet_id")
 	subnetName, nok := d.GetOk("subnet_name")
+	var clientSideFilters []*client.AdditionalFilter
+	if v, ok := d.GetOk("additional_filter"); ok {
+		clientSideFilters = BuildFiltersDataSource(v.(*schema.Set))
+	}
+
+	mappings := map[string]string{
+		"cluster_name":             "cluster_reference.name",
+		"cluster_uuid":             "cluster_reference.uuid",
+		"default_gateway_ip":       "ip_config.default_gateway_ip",
+		"prefix_length":            "ip_config.prefix_length",
+		"subnet_ip":                "ip_config.subnet_ip",
+		"dhcp_server_address":      "ip_config.dhcp_server_address.ip",
+		"dhcp_server_address_port": "ip_config.dhcp_server_address.port",
+		"dhcp_options":             "ip_config.dhcp_options",
+		"dhcp_domain_search_list":  "ip_config.dhcp_options.domain_search_list",
+	}
+
+	clientSideFilters = ReplaceFilterPrefixes(clientSideFilters, mappings)
 
 	if !iok && !nok {
-		return fmt.Errorf("please provide one of subnet_id or subnet_name attributes")
+		return diag.Errorf("please provide one of subnet_id or subnet_name attributes")
 	}
 
 	var reqErr error
@@ -327,32 +242,32 @@ func dataSourceNutanixSubnetRead(d *schema.ResourceData, meta interface{}) error
 	if iok {
 		resp, reqErr = findSubnetByUUID(conn, subnetID.(string))
 	} else {
-		resp, reqErr = findSubnetByName(conn, subnetName.(string))
+		resp, reqErr = findSubnetByName(conn, subnetName.(string), clientSideFilters)
 	}
 
 	if reqErr != nil {
-		return reqErr
+		return diag.FromErr(reqErr)
 	}
 
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValues(resp.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValues(resp.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("availability_zone_reference", flattenReferenceValues(resp.Status.AvailabilityZoneReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := flattenClusterReference(resp.Status.ClusterReference, d); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	dgIP := ""
@@ -400,22 +315,21 @@ func dataSourceNutanixSubnetRead(d *schema.ResourceData, meta interface{}) error
 	}
 
 	if err := d.Set("dhcp_server_address", dhcpSA); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("ip_config_pool_list_ranges", ipcpl); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("dhcp_options", dOptions); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("dhcp_domain_name_server_list", dnsList); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("dhcp_domain_search_list", dsList); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	d.Set("cluster_reference_name", utils.StringValue(resp.Status.ClusterReference.Name))
 	d.Set("api_version", utils.StringValue(resp.APIVersion))
 	d.Set("name", utils.StringValue(resp.Status.Name))
 	d.Set("description", utils.StringValue(resp.Status.Description))
@@ -434,7 +348,7 @@ func dataSourceNutanixSubnetRead(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceDatasourceSubnetStateUpgradeV0(is map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func resourceDatasourceSubnetStateUpgradeV0(ctx context.Context, is map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	log.Printf("[DEBUG] Entering resourceDatasourceSubnetStateUpgradeV0")
 	return resourceNutanixCategoriesMigrateState(is, meta)
 }
@@ -459,37 +373,8 @@ func resourceNutanixDatasourceSubnetResourceV0() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": {
@@ -500,41 +385,15 @@ func resourceNutanixDatasourceSubnetResourceV0() *schema.Resource {
 			"owner_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"name": {
@@ -552,21 +411,8 @@ func resourceNutanixDatasourceSubnetResourceV0() *schema.Resource {
 			"availability_zone_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"message_list": {
@@ -620,21 +466,8 @@ func resourceNutanixDatasourceSubnetResourceV0() *schema.Resource {
 			"dhcp_server_address": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"fqdn": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ipv6": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"dhcp_server_address_port": {
@@ -649,21 +482,8 @@ func resourceNutanixDatasourceSubnetResourceV0() *schema.Resource {
 			"dhcp_options": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"boot_file_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"domain_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"tftp_server_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"dhcp_domain_name_server_list": {
@@ -683,21 +503,8 @@ func resourceNutanixDatasourceSubnetResourceV0() *schema.Resource {
 			"network_function_chain_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 		},

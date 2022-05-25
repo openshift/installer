@@ -11,6 +11,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	nutanixclient "github.com/terraform-providers/terraform-provider-nutanix/client"
 	nutanixclientv3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 
 	"github.com/openshift/installer/pkg/types/nutanix"
@@ -211,7 +212,8 @@ func getSubnet(ctx context.Context, client *nutanixclientv3.Client, peUUID strin
 	defer cancel()
 
 	emptyFilter := ""
-	subnetsAll, err := client.V3.ListAllSubnet(emptyFilter)
+	emptyClientFilters := make([]*nutanixclient.AdditionalFilter, 0)
+	subnetsAll, err := client.V3.ListAllSubnet(emptyFilter, emptyClientFilters)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to list subnets")
 	}
@@ -231,10 +233,11 @@ func getSubnet(ctx context.Context, client *nutanixclientv3.Client, peUUID strin
 
 	subnetUUIDs := make(map[string]string)
 	var subnetChoices []string
-	for _, s := range subnets {
-		if *s.Spec.ClusterReference.UUID == peUUID {
-			n := *s.Spec.Name
-			subnetUUIDs[n] = *s.Metadata.UUID
+	for _, subnet := range subnets {
+		// some subnet types (e.g. VPC overlays) do not come with a cluster reference; we don't need to check them
+		if subnet.Spec.ClusterReference == nil || (subnet.Spec.ClusterReference.UUID != nil && *subnet.Spec.ClusterReference.UUID == peUUID) {
+			n := *subnet.Spec.Name
+			subnetUUIDs[n] = *subnet.Metadata.UUID
 			subnetChoices = append(subnetChoices, n)
 		}
 	}

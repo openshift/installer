@@ -1,15 +1,18 @@
 package nutanix
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixAccessControlPolicies() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixAccessControlPoliciesRead,
+		ReadContext: dataSourceNutanixAccessControlPoliciesRead,
 		Schema: map[string]*schema.Schema{
 			"api_version": {
 				Type:     schema.TypeString,
@@ -31,78 +34,23 @@ func dataSourceNutanixAccessControlPolicies() *schema.Resource {
 						"metadata": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"last_update_time": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"creation_time": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"spec_version": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"spec_hash": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"categories": categoriesSchema(),
 						"owner_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"project_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"name": {
@@ -160,7 +108,6 @@ func dataSourceNutanixAccessControlPolicies() *schema.Resource {
 						"role_reference": {
 							Type:     schema.TypeList,
 							Computed: true,
-							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"kind": {
@@ -199,7 +146,6 @@ func dataSourceNutanixAccessControlPolicies() *schema.Resource {
 												"right_hand_side": {
 													Type:     schema.TypeList,
 													Computed: true,
-													MaxItems: 1,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"collection": {
@@ -208,7 +154,6 @@ func dataSourceNutanixAccessControlPolicies() *schema.Resource {
 															},
 															"categories": {
 																Type:     schema.TypeList,
-																MaxItems: 1,
 																Computed: true,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
@@ -251,7 +196,6 @@ func dataSourceNutanixAccessControlPolicies() *schema.Resource {
 												"right_hand_side": {
 													Type:     schema.TypeList,
 													Computed: true,
-													MaxItems: 1,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"collection": {
@@ -260,7 +204,6 @@ func dataSourceNutanixAccessControlPolicies() *schema.Resource {
 															},
 															"categories": {
 																Type:     schema.TypeList,
-																MaxItems: 1,
 																Computed: true,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
@@ -336,7 +279,7 @@ func dataSourceNutanixAccessControlPolicies() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixAccessControlPoliciesRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixAccessControlPoliciesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).API
 	req := &v3.DSMetadata{}
@@ -348,11 +291,11 @@ func dataSourceNutanixAccessControlPoliciesRead(d *schema.ResourceData, meta int
 
 	resp, err := conn.V3.ListAllAccessControlPolicy(utils.StringValue(req.Filter))
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("api_version", resp.APIVersion); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	entities := make([]map[string]interface{}, len(resp.Entities))
@@ -385,7 +328,7 @@ func dataSourceNutanixAccessControlPoliciesRead(d *schema.ResourceData, meta int
 	}
 
 	if err := d.Set("entities", entities); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(resource.UniqueId())
