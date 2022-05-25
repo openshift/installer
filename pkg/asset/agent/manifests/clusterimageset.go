@@ -15,7 +15,7 @@ var (
 	clusterImageSetFilename = filepath.Join(clusterManifestDir, "cluster-image-set.yaml")
 )
 
-// ClusterImageSet generates the agent-cluster-install.yaml file.
+// ClusterImageSet generates the cluster-image-set.yaml file.
 type ClusterImageSet struct {
 	File   *asset.File
 	Config *hivev1.ClusterImageSet
@@ -47,7 +47,7 @@ func (a *ClusterImageSet) Files() []*asset.File {
 	return []*asset.File{}
 }
 
-// Load returns agentclusterinstall asset from the disk.
+// Load returns ClusterImageSet asset from the disk.
 func (a *ClusterImageSet) Load(f asset.FileFetcher) (bool, error) {
 
 	clusterImageSetFile, err := f.FetchByName(clusterImageSetFilename)
