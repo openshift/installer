@@ -61,7 +61,7 @@ func TestInfraEnv_LoadedFromDisk(t *testing.T) {
 		data           string
 		fetchError     error
 		expectedFound  bool
-		expectedError  bool
+		expectedError  string
 		expectedConfig *aiv1beta1.InfraEnv
 	}{
 		{
@@ -74,7 +74,9 @@ spec:
   clusterRef:
     name: ocp-edge-cluster-0
     namespace: cluster0
-  nmStateConfigLabelSelector: {}
+  nmStateConfigLabelSelector: 
+    matchLabels:
+      cluster0-nmstate-label-name: cluster0-nmstate-label-value
   pullSecretRef:
     name: pull-secret
   sshAuthorizedKey: |
@@ -90,7 +92,11 @@ spec:
 						Name:      "ocp-edge-cluster-0",
 						Namespace: "cluster0",
 					},
-					NMStateConfigLabelSelector: v1.LabelSelector{},
+					NMStateConfigLabelSelector: v1.LabelSelector{
+						MatchLabels: map[string]string{
+							"cluster0-nmstate-label-name": "cluster0-nmstate-label-value",
+						},
+					},
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: "pull-secret",
 					},
@@ -101,14 +107,7 @@ spec:
 		{
 			name:          "not-yaml",
 			data:          `This is not a yaml file`,
-			expectedError: true,
-		},
-		{
-			name:           "empty",
-			data:           "",
-			expectedFound:  true,
-			expectedConfig: &aiv1beta1.InfraEnv{},
-			expectedError:  false,
+			expectedError: "failed to unmarshal manifests/infraenv.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1beta1.InfraEnv",
 		},
 		{
 			name:       "file-not-found",
@@ -117,17 +116,34 @@ spec:
 		{
 			name:          "error-fetching-file",
 			fetchError:    errors.New("fetch failed"),
-			expectedError: true,
+			expectedError: "failed to load manifests/infraenv.yaml file: fetch failed",
 		},
 		{
 			name: "unknown-field",
+			data: `
+		metadata:
+		  name: infraEnv
+		  namespace: cluster0
+		spec:
+		  wrongField: wrongValue`,
+			expectedError: "failed to unmarshal manifests/infraenv.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
+		},
+		{
+			name: "empty-NMStateLabelSelector",
 			data: `
 metadata:
   name: infraEnv
   namespace: cluster0
 spec:
-  wrongField: wrongValue`,
-			expectedError: true,
+  clusterRef:
+    name: ocp-edge-cluster-0
+    namespace: cluster0
+  nmStateConfigLabelSelector: 
+  pullSecretRef:
+    name: pull-secret
+  sshAuthorizedKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedError: "invalid InfraEnv configuration: Spec.NMStateConfigLabelSelector.MatchLabels: Required value: at least one label must be set",
 		},
 	}
 	for _, tc := range cases {
@@ -147,12 +163,12 @@ spec:
 
 			asset := &InfraEnv{}
 			found, err := asset.Load(fileFetcher)
-			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
-			if tc.expectedError {
-				assert.Error(t, err, "expected error from Load")
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
 			} else {
-				assert.NoError(t, err, "unexpected error from Load")
+				assert.NoError(t, err)
 			}
+			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
 			if tc.expectedFound {
 				assert.Equal(t, tc.expectedConfig, asset.Config, "unexpected Config in InfraEnv")
 			}

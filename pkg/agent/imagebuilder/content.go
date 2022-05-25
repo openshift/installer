@@ -38,7 +38,7 @@ type ConfigBuilder struct {
 
 // New creates a new ConfigBuilder by reading the ZTP manifests
 func New(agentManifests agentAssets.AgentManifests) (*ConfigBuilder, error) {
-	pullSecret := agentManifests.PullSecret.StringData[".dockerconfigjson"]
+	pullSecret := agentManifests.GetPullSecretData()
 
 	n := manifests.NewNMConfig()
 	nodeZeroIP := n.GetNodeZeroIP()
