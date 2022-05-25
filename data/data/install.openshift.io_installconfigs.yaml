@@ -643,6 +643,11 @@ spec:
                         procType:
                           description: ProcType defines the processor sharing model
                             for the instance. Must be one of {Capped, Dedicated, Shared}.
+                          enum:
+                          - Dedicated
+                          - Shared
+                          - Capped
+                          - ""
                           type: string
                         processors:
                           anyOf:
@@ -1266,6 +1271,11 @@ spec:
                       procType:
                         description: ProcType defines the processor sharing model
                           for the instance. Must be one of {Capped, Dedicated, Shared}.
+                        enum:
+                        - Dedicated
+                        - Shared
+                        - Capped
+                        - ""
                         type: string
                       processors:
                         anyOf:
@@ -2765,6 +2775,11 @@ spec:
                       procType:
                         description: ProcType defines the processor sharing model
                           for the instance. Must be one of {Capped, Dedicated, Shared}.
+                        enum:
+                        - Dedicated
+                        - Shared
+                        - Capped
+                        - ""
                         type: string
                       processors:
                         anyOf:

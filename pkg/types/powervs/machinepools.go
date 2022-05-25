@@ -25,6 +25,7 @@ type MachinePool struct {
 	// ProcType defines the processor sharing model for the instance.
 	// Must be one of {Capped, Dedicated, Shared}.
 	//
+	// +kubebuilder:validation:Enum:="Dedicated";"Shared";"Capped";""
 	// +optional
 	ProcType machinev1.PowerVSProcessorType `json:"procType,omitempty"`
 
