@@ -1,12 +1,16 @@
 package vsphere
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware/govmomi/vim25"
+	"github.com/vmware/govmomi/object"
+	types2 "github.com/vmware/govmomi/vim25/types"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/vsphere/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -42,17 +46,75 @@ func validIPIInstallConfig(dcName string, fName string) *types.InstallConfig {
 	}
 }
 
+func validMultiVCenterPlatform() *vsphere.Platform {
+	return &vsphere.Platform{
+		VCenters: []vsphere.VCenter{
+			{
+				Server:   "test-vcenter",
+				Port:     443,
+				Username: "test_username",
+				Password: "test_password",
+				Datacenters: []string{
+					"DC0",
+				},
+			},
+		},
+		DeploymentZones: []vsphere.DeploymentZone{
+			{
+				Name:          "test-dz-east-1a",
+				Server:        "test-vcenter",
+				FailureDomain: "test-east-1a",
+				ControlPlane:  "Allowed",
+				PlacementConstraint: vsphere.PlacementConstraint{
+					ResourcePool: "/DC0/host/DC0_C0/Resources/test-resourcepool",
+					Folder:       "/DC0/vm",
+				},
+			},
+		},
+		FailureDomains: []vsphere.FailureDomain{
+			{
+				Name: "test-east-1a",
+				Region: vsphere.FailureDomainCoordinate{
+					Name:        "test-region-east",
+					Type:        "Datacenter",
+					TagCategory: "openshift-region",
+				},
+				Zone: vsphere.FailureDomainCoordinate{
+					Name:        "test-zone-1a",
+					Type:        "ComputeCluster",
+					TagCategory: "openshift-zone",
+				},
+				Topology: vsphere.Topology{
+					Datacenter:     "DC0",
+					ComputeCluster: "/DC0/host/DC0_C0",
+					Hosts:          nil,
+					Networks: []string{
+						"DC0_DVPG0",
+					},
+					Datastore: "LocalDS_0",
+				}},
+		},
+	}
+}
+
 func TestValidate(t *testing.T) {
 	server := mock.StartSimulator()
 	defer server.Close()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	dcName := "DC0"
-	fName := "F0"
+	fName := "/F0"
 	dcName1 := "DC1"
 	tests := []struct {
-		name             string
-		installConfig    *types.InstallConfig
-		validationMethod func(*vim25.Client, Finder, *types.InstallConfig) error
-		expectErr        string
+		name                      string
+		installConfig             *types.InstallConfig
+		validationMethod          func(*validationContext, *types.InstallConfig) error
+		multiZoneValidationMethod func(*validationContext, *vsphere.FailureDomain, *vsphere.DeploymentZone) field.ErrorList
+		deploymentZone            *vsphere.DeploymentZone
+		failureDomain             *vsphere.FailureDomain
+		expectErr                 string
 	}{{
 		name:             "valid IPI install config",
 		installConfig:    validIPIInstallConfig(dcName, ""),
@@ -78,7 +140,7 @@ func TestValidate(t *testing.T) {
 			return c
 		}(),
 		validationMethod: validateProvisioning,
-		expectErr:        `^platform.vsphere.network: Invalid value: "invalid_dc": datacenter './invalid_dc' not found`,
+		expectErr:        `^platform.vsphere.datacenter: Invalid value: "invalid_dc": datacenter 'invalid_dc' not found`,
 	}, {
 		name: "invalid IPI - invalid network",
 		installConfig: func() *types.InstallConfig {
@@ -106,23 +168,111 @@ func TestValidate(t *testing.T) {
 		}(),
 		validationMethod: validateProvisioning,
 		expectErr:        `^platform\.vsphere\.cluster: Required value: must specify the cluster$`,
+	}, {
+		name:                      "multi-zone validation",
+		deploymentZone:            &validMultiVCenterPlatform().DeploymentZones[0],
+		failureDomain:             &validMultiVCenterPlatform().FailureDomains[0],
+		multiZoneValidationMethod: validateMultiZoneProvisioning,
+	}, {
+		name:           "multi-zone validation - invalid datacenter",
+		deploymentZone: &validMultiVCenterPlatform().DeploymentZones[0],
+		failureDomain: func() *vsphere.FailureDomain {
+			failureDomain := &validMultiVCenterPlatform().FailureDomains[0]
+			failureDomain.Topology.Datacenter = "invalid-dc"
+			return failureDomain
+		}(),
+		multiZoneValidationMethod: validateMultiZoneProvisioning,
+		expectErr:                 `^platform.vsphere.failureDomains.topology.datacenter: Invalid value: "invalid-dc": datacenter 'invalid-dc' not found$`,
+	}, {
+		name:           "multi-zone validation - invalid cluster",
+		deploymentZone: &validMultiVCenterPlatform().DeploymentZones[0],
+		failureDomain: func() *vsphere.FailureDomain {
+			failureDomain := &validMultiVCenterPlatform().FailureDomains[0]
+			failureDomain.Topology.ComputeCluster = "/DC0/host/invalid-cluster"
+			return failureDomain
+		}(),
+		multiZoneValidationMethod: validateMultiZoneProvisioning,
+		expectErr:                 `^platform.vsphere.failureDomains.topology.computeCluster: Invalid value: "/DC0/host/invalid-cluster": cluster '/DC0/host/invalid-cluster' not found$`,
+	}, {
+		name: "multi-zone validation - invalid resource pool",
+		deploymentZone: func() *vsphere.DeploymentZone {
+			deploymentZones := &validMultiVCenterPlatform().DeploymentZones[0]
+			deploymentZones.PlacementConstraint.ResourcePool = "/DC0/host/DC0_C0/Resources/invalid-resourcepool"
+			return deploymentZones
+		}(),
+		failureDomain:             &validMultiVCenterPlatform().FailureDomains[0],
+		multiZoneValidationMethod: validateMultiZoneProvisioning,
+		expectErr:                 `^platform.vsphere.deploymentZones.placementConstraint.resourcePool: Invalid value: "/DC0/host/DC0_C0/Resources/invalid-resourcepool": resource pool '/DC0/host/DC0_C0/Resources/invalid-resourcepool' not found$`,
+	}, {
+		name:           "multi-zone validation - invalid network",
+		deploymentZone: &validMultiVCenterPlatform().DeploymentZones[0],
+		failureDomain: func() *vsphere.FailureDomain {
+			failureDomain := &validMultiVCenterPlatform().FailureDomains[0]
+			failureDomain.Topology.Networks = []string{
+				"invalid-network",
+			}
+			return failureDomain
+		}(),
+		multiZoneValidationMethod: validateMultiZoneProvisioning,
+		expectErr:                 `^platform.vsphere.failureDomains.topology: Invalid value: "invalid-network": unable to find network provided$`,
+	}, {
+		name: "multi-zone validation - invalid folder",
+		deploymentZone: func() *vsphere.DeploymentZone {
+			deploymentZones := &validMultiVCenterPlatform().DeploymentZones[0]
+			deploymentZones.PlacementConstraint.Folder = "/DC0/vm/invalid-folder"
+			return deploymentZones
+		}(),
+		failureDomain:             &validMultiVCenterPlatform().FailureDomains[0],
+		multiZoneValidationMethod: validateMultiZoneProvisioning,
+		expectErr:                 `^platform.vsphere.deploymentZones.placementConstraint.folder: Invalid value: "/DC0/vm/invalid-folder": folder '/DC0/vm/invalid-folder' not found$`,
 	}}
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+
 	finder, err := mock.GetFinder(server)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+
 	client, _, err := mock.GetClient(server)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
+	ctx := context.TODO()
+	rootFolder := object.NewRootFolder(client)
+	_, err = rootFolder.CreateFolder(ctx, "/DC0/vm/my-folder")
+	if err != nil {
+		t.Error(err)
+	}
+
+	resourcePools, err := finder.ResourcePoolList(ctx, "/DC0/host/DC0_C0")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, err = resourcePools[0].Create(ctx, "test-resourcepool", types2.DefaultResourceConfigSpec())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	validationCtx := &validationContext{
+		User:   "test_username",
+		Finder: finder,
+		Client: client,
+	}
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.validationMethod(client, finder, test.installConfig)
+			var err error
+			if test.validationMethod != nil {
+				err = test.validationMethod(validationCtx, test.installConfig)
+			} else if test.multiZoneValidationMethod != nil {
+				err = test.multiZoneValidationMethod(validationCtx, test.failureDomain, test.deploymentZone).ToAggregate()
+			} else {
+				err = errors.New("no test method defined")
+			}
 			if test.expectErr == "" {
 				assert.NoError(t, err)
 			} else {

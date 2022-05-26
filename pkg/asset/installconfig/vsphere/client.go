@@ -121,23 +121,32 @@ func GetNetworkName(ctx context.Context, client *vim25.Client, ref types.Managed
 	return name, nil
 }
 
-// GetNetworkMoID returns the unique Managed Object ID for given network name inside of the given Datacenter
+// GetNetworkMo returns the unique Managed Object for given network name inside of the given Datacenter
 // and Cluster.
-func GetNetworkMoID(ctx context.Context, client *vim25.Client, finder Finder, datacenter, cluster, network string) (string, error) {
+func GetNetworkMo(ctx context.Context, client *vim25.Client, finder Finder, datacenter, cluster, network string) (*types.ManagedObjectReference, error) {
 	networks, err := GetClusterNetworks(ctx, finder, datacenter, cluster)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
 	for _, net := range networks {
 		name, err := GetNetworkName(ctx, client, net)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		if name == network {
-			return net.Value, nil
+			return &net, nil
 		}
 	}
 
-	return "", errors.Errorf("unable to find network provided")
+	return nil, errors.Errorf("unable to find network provided")
+}
+
+// GetNetworkMoID returns the unique Managed Object ID for given network name inside of the given Datacenter
+// and Cluster.
+func GetNetworkMoID(ctx context.Context, client *vim25.Client, finder Finder, datacenter, cluster, network string) (string, error) {
+	mo, err := GetNetworkMo(ctx, client, finder, datacenter, cluster, network)
+	if err != nil {
+		return "", err
+	}
+	return mo.Value, nil
 }
