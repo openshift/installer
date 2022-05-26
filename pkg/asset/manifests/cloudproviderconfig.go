@@ -270,7 +270,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			}
 			cm.Data["vsphere.conf"] = vsphereConfig
 			cm.Name = "vsphere-cloud-config"
-			cm.Namespace = "kube-system"
+			cm.Namespace = "openshift-config"
 		} else {
 			folderPath := installConfig.Config.Platform.VSphere.Folder
 			if len(folderPath) == 0 {
