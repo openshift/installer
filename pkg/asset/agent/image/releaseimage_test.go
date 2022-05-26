@@ -1,4 +1,4 @@
-package imagebuilder
+package image
 
 import (
 	"testing"
@@ -18,6 +18,12 @@ func TestReleaseImageList(t *testing.T) {
 			pullSpec: "quay.io/openshift-release-dev/ocp-release:4.10.0-rc.1-x86_64",
 			arch:     "x86_64",
 			result:   "[{\"openshift_version\":\"4.10\",\"cpu_architecture\":\"x86_64\",\"url\":\"quay.io/openshift-release-dev/ocp-release:4.10.0-rc.1-x86_64\",\"version\":\"4.10.0-rc.1\"}]",
+		},
+		{
+			name:     "4.10rc",
+			pullSpec: "quay.io:433/openshift-release-dev/ocp-release:4.10.0-rc.1-x86_64",
+			arch:     "x86_64",
+			result:   "[{\"openshift_version\":\"4.10\",\"cpu_architecture\":\"x86_64\",\"url\":\"quay.io:433/openshift-release-dev/ocp-release:4.10.0-rc.1-x86_64\",\"version\":\"4.10.0-rc.1\"}]",
 		},
 		{
 			name:     "arm",

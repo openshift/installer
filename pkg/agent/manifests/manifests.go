@@ -9,26 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
-	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
-	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
-
-// getFileData reads a YAML file and unmarshals the contents
-func getFileData(fileName string, output interface{}) error {
-
-	path := filepath.Join("./manifests", fileName)
-
-	contents, err := os.ReadFile(path)
-	if err != nil {
-		err = fmt.Errorf("error reading file %s: %w", path, err)
-	} else if err = yaml.Unmarshal(contents, output); err != nil {
-		err = fmt.Errorf("error unmarshalling contents of %s: %w", path, err)
-	}
-
-	return err
-}
 
 type decodeFormat interface {
 	newDecodedYaml(decoder *yaml.YAMLToJSONDecoder) (interface{}, error)
@@ -65,35 +47,4 @@ func getFileMultipleYamls(filename string, decoder decodeFormat) ([]interface{},
 	}
 
 	return outputList, nil
-}
-
-// GetAgentClusterInstall gets the AgentClusterInstall resource from the
-// manifest file
-func GetAgentClusterInstall() (hiveext.AgentClusterInstall, error) {
-	var aci hiveext.AgentClusterInstall
-	if err := getFileData("agent-cluster-install.yaml", &aci); err != nil {
-		return aci, err
-	}
-
-	return aci, nil
-}
-
-// GetClusterImageSet gets the ClusterImageSet resource from the manifest file
-func GetClusterImageSet() (hivev1.ClusterImageSet, error) {
-	var cis hivev1.ClusterImageSet
-	if err := getFileData("cluster-image-set.yaml", &cis); err != nil {
-		return cis, err
-	}
-
-	return cis, nil
-}
-
-// GetInfraEnv gets the InfraEnv resource from the manifest file
-func GetInfraEnv() (aiv1beta1.InfraEnv, error) {
-	var infraEnv aiv1beta1.InfraEnv
-	if err := getFileData("infraenv.yaml", &infraEnv); err != nil {
-		return infraEnv, err
-	}
-
-	return infraEnv, nil
 }
