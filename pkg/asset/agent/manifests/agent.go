@@ -28,6 +28,7 @@ type AgentManifests struct {
 	StaticNetworkConfig []*models.HostStaticNetworkConfig
 	AgentClusterInstall *hiveext.AgentClusterInstall
 	ClusterDeployment   *hivev1.ClusterDeployment
+	ClusterImageSet     *hivev1.ClusterImageSet
 }
 
 // Name returns a human friendly name.
@@ -43,6 +44,7 @@ func (m *AgentManifests) Dependencies() []asset.Asset {
 		&NMStateConfig{},
 		&AgentClusterInstall{},
 		&ClusterDeployment{},
+		&ClusterImageSet{},
 	}
 }
 
@@ -54,6 +56,7 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		&NMStateConfig{},
 		&AgentClusterInstall{},
 		&ClusterDeployment{},
+		&ClusterImageSet{},
 	} {
 		dependencies.Get(a)
 		m.FileList = append(m.FileList, a.Files()...)
@@ -69,6 +72,8 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 			m.AgentClusterInstall = v.Config
 		case *ClusterDeployment:
 			m.ClusterDeployment = v.Config
+		case *ClusterImageSet:
+			m.ClusterImageSet = v.Config
 		}
 	}
 
