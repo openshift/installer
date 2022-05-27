@@ -214,7 +214,7 @@ spec:
 		{
 			name:          "not-yaml",
 			data:          `This is not a yaml file`,
-			expectedError: "could not decode YAML for manifests/nmstateconfig.yaml: Error reading multiple YAMLs: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1beta1.NMStateConfig",
+			expectedError: "could not decode YAML for cluster-manifests/nmstateconfig.yaml: Error reading multiple YAMLs: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1beta1.NMStateConfig",
 		},
 		{
 			name:          "empty",
@@ -228,7 +228,7 @@ spec:
 		{
 			name:          "error-fetching-file",
 			fetchError:    errors.New("fetch failed"),
-			expectedError: "failed to load file manifests/nmstateconfig.yaml: fetch failed",
+			expectedError: "failed to load file cluster-manifests/nmstateconfig.yaml: fetch failed",
 		},
 	}
 	for _, tc := range cases {
