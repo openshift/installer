@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"path"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
 )
 
 const (
-	agentISOFilename = "output/agent.iso"
+	// TODO: Make this relative to the directory passed as --dir rather than
+	// the current working directory
+	agentISOFilename = "agent.iso"
 )
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
@@ -37,11 +38,6 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	baseImage := &BaseIso{}
 	dependencies.Get(baseImage)
 
-	dir, _ := path.Split(agentISOFilename)
-	if err := os.MkdirAll(dir, 0775); err != nil {
-		return err
-	}
-
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
 		return err
@@ -53,6 +49,9 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		return err
 	}
 	defer custom.Close()
+
+	// Remove symlink if it exists
+	os.Remove(agentISOFilename)
 
 	output, err := os.Create(agentISOFilename)
 	if err != nil {
