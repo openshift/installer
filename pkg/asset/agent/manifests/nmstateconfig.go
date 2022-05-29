@@ -108,6 +108,7 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	log := logrus.New()
+	log.Level = logrus.WarnLevel
 	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
 
 	// Validate the network config using nmstatectl
