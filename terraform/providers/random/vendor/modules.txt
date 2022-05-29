@@ -1,29 +1,25 @@
 # github.com/agext/levenshtein v1.2.2
 ## explicit
 github.com/agext/levenshtein
-# github.com/apparentlymart/go-textseg v1.0.0
-## explicit
-github.com/apparentlymart/go-textseg/textseg
-# github.com/apparentlymart/go-textseg/v12 v12.0.0
-## explicit; go 1.14
-github.com/apparentlymart/go-textseg/v12/textseg
-# github.com/dustinkirkland/golang-petname v0.0.0-20170105215008-242afa0b4f8a
+# github.com/apparentlymart/go-textseg/v13 v13.0.0
+## explicit; go 1.16
+github.com/apparentlymart/go-textseg/v13/textseg
+# github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 ## explicit
 github.com/dustinkirkland/golang-petname
 # github.com/fatih/color v1.7.0
 ## explicit
 github.com/fatih/color
-# github.com/golang/protobuf v1.4.2
+# github.com/golang/protobuf v1.5.2
 ## explicit; go 1.9
 github.com/golang/protobuf/proto
-github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/empty
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/google/go-cmp v0.5.2
-## explicit; go 1.8
+# github.com/google/go-cmp v0.5.7
+## explicit; go 1.11
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -40,85 +36,117 @@ github.com/hashicorp/go-cty/cty/gocty
 github.com/hashicorp/go-cty/cty/json
 github.com/hashicorp/go-cty/cty/msgpack
 github.com/hashicorp/go-cty/cty/set
-# github.com/hashicorp/go-hclog v0.15.0
+# github.com/hashicorp/go-hclog v1.2.0
 ## explicit; go 1.13
 github.com/hashicorp/go-hclog
-# github.com/hashicorp/go-multierror v1.0.0
-## explicit
+# github.com/hashicorp/go-multierror v1.1.1
+## explicit; go 1.13
 github.com/hashicorp/go-multierror
-# github.com/hashicorp/go-plugin v1.4.0
+# github.com/hashicorp/go-plugin v1.4.3
 ## explicit; go 1.13
 github.com/hashicorp/go-plugin
 github.com/hashicorp/go-plugin/internal/plugin
-# github.com/hashicorp/go-uuid v1.0.2
+# github.com/hashicorp/go-uuid v1.0.3
 ## explicit
 github.com/hashicorp/go-uuid
-# github.com/hashicorp/go-version v1.2.1
+# github.com/hashicorp/go-version v1.4.0
 ## explicit
 github.com/hashicorp/go-version
-# github.com/hashicorp/hcl/v2 v2.3.0
-## explicit
+# github.com/hashicorp/hcl/v2 v2.11.1
+## explicit; go 1.12
 github.com/hashicorp/hcl/v2
 github.com/hashicorp/hcl/v2/ext/customdecode
 github.com/hashicorp/hcl/v2/hclsyntax
-# github.com/hashicorp/terraform-plugin-go v0.2.1
-## explicit; go 1.14
+# github.com/hashicorp/logutils v1.0.0
+## explicit
+github.com/hashicorp/logutils
+# github.com/hashicorp/terraform-plugin-go v0.9.0
+## explicit; go 1.17
+github.com/hashicorp/terraform-plugin-go/internal/logging
 github.com/hashicorp/terraform-plugin-go/tfprotov5
 github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/fromproto
 github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/tfplugin5
 github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/toproto
-github.com/hashicorp/terraform-plugin-go/tfprotov5/server
-github.com/hashicorp/terraform-plugin-go/tfprotov5/tftypes
-# github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.3
-## explicit; go 1.14
+github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server
+github.com/hashicorp/terraform-plugin-go/tfprotov6
+github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/fromproto
+github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/tfplugin6
+github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/toproto
+github.com/hashicorp/terraform-plugin-go/tfprotov6/tf6server
+github.com/hashicorp/terraform-plugin-go/tftypes
+# github.com/hashicorp/terraform-plugin-log v0.3.0
+## explicit; go 1.16
+github.com/hashicorp/terraform-plugin-log/internal/hclogutils
+github.com/hashicorp/terraform-plugin-log/internal/logging
+github.com/hashicorp/terraform-plugin-log/tflog
+github.com/hashicorp/terraform-plugin-log/tfsdklog
+# github.com/hashicorp/terraform-plugin-sdk/v2 v2.14.0
+## explicit; go 1.17
 github.com/hashicorp/terraform-plugin-sdk/v2/diag
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging
 github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema
 github.com/hashicorp/terraform-plugin-sdk/v2/internal/addrs
 github.com/hashicorp/terraform-plugin-sdk/v2/internal/configs/configschema
 github.com/hashicorp/terraform-plugin-sdk/v2/internal/configs/hcl2shim
 github.com/hashicorp/terraform-plugin-sdk/v2/internal/helper/hashcode
+github.com/hashicorp/terraform-plugin-sdk/v2/internal/logging
 github.com/hashicorp/terraform-plugin-sdk/v2/internal/plans/objchange
 github.com/hashicorp/terraform-plugin-sdk/v2/internal/plugin/convert
 github.com/hashicorp/terraform-plugin-sdk/v2/internal/tfdiags
 github.com/hashicorp/terraform-plugin-sdk/v2/meta
 github.com/hashicorp/terraform-plugin-sdk/v2/plugin
 github.com/hashicorp/terraform-plugin-sdk/v2/terraform
+# github.com/hashicorp/terraform-registry-address v0.0.0-20210412075316-9b2996cce896
+## explicit; go 1.14
+github.com/hashicorp/terraform-registry-address
+# github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734
+## explicit; go 1.12
+github.com/hashicorp/terraform-svchost
 # github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
 ## explicit
 github.com/hashicorp/yamux
-# github.com/mattn/go-colorable v0.1.8
+# github.com/mattn/go-colorable v0.1.12
 ## explicit; go 1.13
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.12
+# github.com/mattn/go-isatty v0.0.14
 ## explicit; go 1.12
 github.com/mattn/go-isatty
-# github.com/mitchellh/copystructure v1.0.0
-## explicit
+# github.com/mitchellh/copystructure v1.2.0
+## explicit; go 1.15
 github.com/mitchellh/copystructure
-# github.com/mitchellh/go-testing-interface v1.0.4
-## explicit
+# github.com/mitchellh/go-testing-interface v1.14.1
+## explicit; go 1.14
 github.com/mitchellh/go-testing-interface
 # github.com/mitchellh/go-wordwrap v1.0.0
 ## explicit
 github.com/mitchellh/go-wordwrap
-# github.com/mitchellh/mapstructure v1.1.2
-## explicit
+# github.com/mitchellh/mapstructure v1.4.3
+## explicit; go 1.14
 github.com/mitchellh/mapstructure
-# github.com/mitchellh/reflectwalk v1.0.1
+# github.com/mitchellh/reflectwalk v1.0.2
 ## explicit
 github.com/mitchellh/reflectwalk
 # github.com/oklog/run v1.0.0
 ## explicit
 github.com/oklog/run
-# github.com/terraform-providers/terraform-provider-random v1.3.2-0.20210219170544-db6fc413506f
-## explicit; go 1.15
+# github.com/terraform-providers/terraform-provider-random v1.3.2-0.20220414190755-547bff479f02
+## explicit; go 1.17
 github.com/terraform-providers/terraform-provider-random
 github.com/terraform-providers/terraform-provider-random/internal/provider
 # github.com/vmihailenco/msgpack v4.0.4+incompatible
 ## explicit
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
-# github.com/zclconf/go-cty v1.7.1
+# github.com/vmihailenco/msgpack/v4 v4.3.12
+## explicit; go 1.11
+github.com/vmihailenco/msgpack/v4
+github.com/vmihailenco/msgpack/v4/codes
+# github.com/vmihailenco/tagparser v0.1.1
+## explicit; go 1.13
+github.com/vmihailenco/tagparser
+github.com/vmihailenco/tagparser/internal
+github.com/vmihailenco/tagparser/internal/parser
+# github.com/zclconf/go-cty v1.10.0
 ## explicit; go 1.12
 github.com/zclconf/go-cty/cty
 github.com/zclconf/go-cty/cty/convert
@@ -127,7 +155,7 @@ github.com/zclconf/go-cty/cty/function/stdlib
 github.com/zclconf/go-cty/cty/gocty
 github.com/zclconf/go-cty/cty/json
 github.com/zclconf/go-cty/cty/set
-# golang.org/x/net v0.0.0-20200707034311-ab3426394381
+# golang.org/x/net v0.0.0-20210326060303-6b1517762897
 ## explicit; go 1.11
 golang.org/x/net/context
 golang.org/x/net/http/httpguts
@@ -136,11 +164,11 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/sys v0.0.0-20200523222454-059865788121
-## explicit; go 1.12
+# golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6
+## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.3
+# golang.org/x/text v0.3.5
 ## explicit; go 1.11
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
@@ -162,8 +190,8 @@ google.golang.org/appengine/internal/remote_api
 # google.golang.org/genproto v0.0.0-20200711021454-869866162049
 ## explicit; go 1.11
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.32.0
-## explicit; go 1.11
+# google.golang.org/grpc v1.45.0
+## explicit; go 1.14
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
@@ -175,6 +203,7 @@ google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
+google.golang.org/grpc/credentials/insecure
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
@@ -192,12 +221,16 @@ google.golang.org/grpc/internal/grpclog
 google.golang.org/grpc/internal/grpcrand
 google.golang.org/grpc/internal/grpcsync
 google.golang.org/grpc/internal/grpcutil
+google.golang.org/grpc/internal/metadata
+google.golang.org/grpc/internal/resolver
 google.golang.org/grpc/internal/resolver/dns
 google.golang.org/grpc/internal/resolver/passthrough
+google.golang.org/grpc/internal/resolver/unix
 google.golang.org/grpc/internal/serviceconfig
 google.golang.org/grpc/internal/status
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
+google.golang.org/grpc/internal/transport/networktype
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
 google.golang.org/grpc/peer
@@ -208,8 +241,8 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.25.0
-## explicit; go 1.9
+# google.golang.org/protobuf v1.28.0
+## explicit; go 1.11
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
@@ -220,18 +253,18 @@ google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
 google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldsort
 google.golang.org/protobuf/internal/filedesc
 google.golang.org/protobuf/internal/filetype
 google.golang.org/protobuf/internal/flags
 google.golang.org/protobuf/internal/genid
 google.golang.org/protobuf/internal/impl
-google.golang.org/protobuf/internal/mapsort
+google.golang.org/protobuf/internal/order
 google.golang.org/protobuf/internal/pragma
 google.golang.org/protobuf/internal/set
 google.golang.org/protobuf/internal/strs
 google.golang.org/protobuf/internal/version
 google.golang.org/protobuf/proto
+google.golang.org/protobuf/reflect/protodesc
 google.golang.org/protobuf/reflect/protoreflect
 google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
