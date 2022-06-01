@@ -35,9 +35,18 @@ func releaseImageFromPullSpec(pullSpec, arch string) (releaseImage, error) {
 }
 
 func releaseImageList(pullSpec, arch string) (string, error) {
-	relImage, err := releaseImageFromPullSpec(pullSpec, arch)
-	if err != nil {
-		return "", err
+	// TODO: re-enable this code instead of hard-coding
+	/*
+		relImage, err := releaseImageFromPullSpec(pullSpec, arch)
+		if err != nil {
+			return "", err
+		}
+	*/
+	relImage := releaseImage{
+		ReleaseVersion: "4.10",
+		Arch:           arch,
+		PullSpec:       "quay.io/openshift-release-dev/ocp-release:4.10.0-rc.1-x86_64",
+		Tag:            "4.10.0-rc.1",
 	}
 
 	imageList := []interface{}{relImage}
