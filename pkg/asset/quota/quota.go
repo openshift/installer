@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -194,7 +195,7 @@ func summarizeFailingReport(reports []quota.ConstraintReport) error {
 // summarizeReport summarizes a report when there are availble.
 func summarizeReport(reports []quota.ConstraintReport) {
 	var low []string
-	var regionMessage string
+	var regionMessage, countMessage string
 	for _, report := range reports {
 		switch report.Result {
 		case quota.AvailableButLow:
@@ -203,7 +204,8 @@ func summarizeReport(reports []quota.ConstraintReport) {
 			} else {
 				regionMessage = ""
 			}
-			low = append(low, fmt.Sprintf("%s%s", report.For.Name, regionMessage))
+			countMessage = " resource required: " + strconv.FormatInt(report.For.Count, 10)
+			low = append(low, fmt.Sprintf("%s%s%s", report.For.Name, regionMessage, countMessage))
 		default:
 			continue
 		}
