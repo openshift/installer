@@ -159,6 +159,21 @@ func (mr *MockAPIMockRecorder) GetHyperVGenerationVersion(ctx, instanceType, dis
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHyperVGenerationVersion", reflect.TypeOf((*MockAPI)(nil).GetHyperVGenerationVersion), ctx, instanceType, diskType, region)
 }
 
+// GetLocationInfo mocks base method.
+func (m *MockAPI) GetLocationInfo(ctx context.Context, region, instanceType string) (*compute0.ResourceSkuLocationInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLocationInfo", ctx, region, instanceType)
+	ret0, _ := ret[0].(*compute0.ResourceSkuLocationInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLocationInfo indicates an expected call of GetLocationInfo.
+func (mr *MockAPIMockRecorder) GetLocationInfo(ctx, region, instanceType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLocationInfo", reflect.TypeOf((*MockAPI)(nil).GetLocationInfo), ctx, region, instanceType)
+}
+
 // GetMarketplaceImage mocks base method.
 func (m *MockAPI) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (compute.VirtualMachineImage, error) {
 	m.ctrl.T.Helper()

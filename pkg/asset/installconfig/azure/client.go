@@ -37,6 +37,7 @@ type API interface {
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
 	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
+	GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error)
 }
 
 // Client makes calls to the Azure API.
@@ -351,6 +352,19 @@ func (c *Client) AreMarketplaceImageTermsAccepted(ctx context.Context, publisher
 
 // GetAvailabilityZones retrieves a list of availability zones for the given region, and instance type.
 func (c *Client) GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error) {
+	locationInfo, err := c.GetLocationInfo(ctx, region, instanceType)
+	if err != nil {
+		return nil, err
+	}
+	if locationInfo != nil {
+		return to.StringSlice(locationInfo.Zones), nil
+	}
+
+	return nil, fmt.Errorf("error retrieving availability zones for %s in %s", instanceType, region)
+}
+
+// GetLocationInfo retrieves the location info associated with the instance type in region
+func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error) {
 	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
 
@@ -362,13 +376,16 @@ func (c *Client) GetAvailabilityZones(ctx context.Context, region string, instan
 		}
 
 		for _, resSku := range res.Values() {
+			if !strings.EqualFold(to.String(resSku.ResourceType), "virtualMachines") {
+				continue
+			}
 			if strings.EqualFold(to.String(resSku.Name), instanceType) {
 				for _, locationInfo := range *resSku.LocationInfo {
-					return to.StringSlice(locationInfo.Zones), nil
+					return &locationInfo, nil
 				}
 			}
 		}
 	}
 
-	return nil, fmt.Errorf("error retrieving availability zones for %s in %s", instanceType, region)
+	return nil, fmt.Errorf("location information not found for %s in %s", instanceType, region)
 }
