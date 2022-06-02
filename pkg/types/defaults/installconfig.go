@@ -25,7 +25,6 @@ var (
 	defaultClusterNetwork = ipnet.MustParseCIDR("10.128.0.0/14")
 	defaultHostPrefix     = 23
 	defaultNetworkType    = string(operv1.NetworkTypeOpenShiftSDN)
-	defaultOKDNetworkType = string(operv1.NetworkTypeOVNKubernetes)
 )
 
 // SetInstallConfigDefaults sets the defaults for the install config.
@@ -44,8 +43,8 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		}
 	}
 	if c.Networking.NetworkType == "" {
-		if c.IsOKD() {
-			c.Networking.NetworkType = defaultOKDNetworkType
+		if c.IsOKD() || c.IsSingleNodeOpenShift() {
+			c.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
 		} else {
 			c.Networking.NetworkType = defaultNetworkType
 		}

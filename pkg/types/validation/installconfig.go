@@ -106,7 +106,7 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		}
 	}
 	if c.Networking != nil {
-		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
+		allErrs = append(allErrs, validateNetworking(c.Networking, c.IsSingleNodeOpenShift(), field.NewPath("networking"))...)
 		allErrs = append(allErrs, validateNetworkingIPVersion(c.Networking, &c.Platform)...)
 		allErrs = append(allErrs, validateNetworkingForPlatform(c.Networking, &c.Platform, field.NewPath("networking"))...)
 	} else {
@@ -295,10 +295,14 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 	return allErrs
 }
 
-func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorList {
+func validateNetworking(n *types.Networking, singleNodeOpenShift bool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if n.NetworkType == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("networkType"), "network provider type required"))
+	}
+
+	if singleNodeOpenShift && n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType OpenShiftSDN is currently not supported on Single Node OpenShift"))
 	}
 
 	if len(n.MachineNetwork) > 0 {

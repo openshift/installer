@@ -44,7 +44,7 @@ The following `install-config.yaml` properties are available:
             The default is 10.0.0.0/16 for all platforms other than libvirt.
             For libvirt, the default is 192.168.126.0/24.
     * `networkType` (optional string): The type of network to install.
-        The default is [OpenShiftSDN][openshift-sdn].
+        The default is [OVNKubernetes][ovn-kubernetes] for Single Node OpenShift and [OpenShiftSDN][openshift-sdn] for all other platforms.
     * `serviceNetwork` (optional array of [IP networks](#ip-networks)): The IP address pools for services.
         The default is 172.30.0.0/16.
 * `platform` (required object): The configuration for the specific platform upon which to perform the installation.
@@ -600,6 +600,7 @@ An example `worker.ign` is shown below. It has been modified to increase the HTT
 [machine-config-pool]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfigController.md#machinepool
 [machine-config]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfiguration.md
 [master-machine-config-pool]: https://github.com/openshift/machine-config-operator/blob/master/manifests/master.machineconfigpool.yaml
+[ovn-kubernetes]: https://github.com/openshift/ovn-kubernetes
 [openshift-sdn]: https://github.com/openshift/sdn
 [proxy]: https://github.com/openshift/api/blob/f2a771e1a90ceb4e65f1ca2c8b11fc1ac6a66da8/config/v1/types_proxy.go#L11
 [proxy-trusted-ca]: https://github.com/openshift/api/blob/f2a771e1a90ceb4e65f1ca2c8b11fc1ac6a66da8/config/v1/types_proxy.go#L44-L69
