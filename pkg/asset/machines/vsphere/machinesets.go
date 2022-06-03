@@ -86,6 +86,15 @@ func getFailureDomain(domainName string, platformSpec *vsphere.Platform) (*vsphe
 	return nil, errors.Errorf("%s is not a defined failure domain", domainName)
 }
 
+func getDeploymentZone(deploymentZoneName string, platformSpec *vsphere.Platform) (*vsphere.DeploymentZoneSpec, error) {
+	for _, deploymentZone := range platformSpec.DeploymentZones {
+		if deploymentZone.Name == deploymentZoneName {
+			return &deploymentZone, nil
+		}
+	}
+	return nil, errors.Errorf("%s is not a defined deployment zone", deploymentZoneName)
+}
+
 // getDefinedZones retrieves zones and associated platform specs that are appropriate to the machine role
 func getDefinedZones(platformSpec *vsphere.Platform, controlPlane bool) (map[string]*vsphere.Platform, error) {
 	zones := make(map[string]*vsphere.Platform)
