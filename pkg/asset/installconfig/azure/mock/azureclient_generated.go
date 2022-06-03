@@ -145,18 +145,18 @@ func (mr *MockAPIMockRecorder) GetGroup(ctx, groupName interface{}) *gomock.Call
 }
 
 // GetHyperVGenerationVersion mocks base method.
-func (m *MockAPI) GetHyperVGenerationVersion(ctx context.Context, instanceType, diskType, region string) (string, error) {
+func (m *MockAPI) GetHyperVGenerationVersion(ctx context.Context, instanceType, region, imageHyperVGen string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetHyperVGenerationVersion", ctx, instanceType, diskType, region)
+	ret := m.ctrl.Call(m, "GetHyperVGenerationVersion", ctx, instanceType, region, imageHyperVGen)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetHyperVGenerationVersion indicates an expected call of GetHyperVGenerationVersion.
-func (mr *MockAPIMockRecorder) GetHyperVGenerationVersion(ctx, instanceType, diskType, region interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetHyperVGenerationVersion(ctx, instanceType, region, imageHyperVGen interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHyperVGenerationVersion", reflect.TypeOf((*MockAPI)(nil).GetHyperVGenerationVersion), ctx, instanceType, diskType, region)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHyperVGenerationVersion", reflect.TypeOf((*MockAPI)(nil).GetHyperVGenerationVersion), ctx, instanceType, region, imageHyperVGen)
 }
 
 // GetLocationInfo mocks base method.
@@ -175,10 +175,10 @@ func (mr *MockAPIMockRecorder) GetLocationInfo(ctx, region, instanceType interfa
 }
 
 // GetMarketplaceImage mocks base method.
-func (m *MockAPI) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (compute.VirtualMachineImage, error) {
+func (m *MockAPI) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (compute0.VirtualMachineImage, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMarketplaceImage", ctx, region, publisher, offer, sku, version)
-	ret0, _ := ret[0].(compute.VirtualMachineImage)
+	ret0, _ := ret[0].(compute0.VirtualMachineImage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
