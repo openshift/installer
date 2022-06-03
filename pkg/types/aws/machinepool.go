@@ -78,8 +78,8 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 // EC2RootVolume defines the storage for an ec2 instance.
 type EC2RootVolume struct {
-	// IOPS defines the amount of provisioned IOPS. This is only valid
-	// for type io1.
+	// IOPS defines the amount of provisioned IOPS. (KiB/s). IOPS may only be set for
+	// io1, io2, & gp3 volume types.
 	//
 	// +kubebuilder:validation:Minimum=0
 	// +optional

@@ -77,6 +77,8 @@ func TestValidateMachinePool(t *testing.T) {
 				p.Platform = types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{
 						EC2RootVolume: aws.EC2RootVolume{
+							Type: "io1",
+							Size: 128,
 							IOPS: -10,
 						},
 					},

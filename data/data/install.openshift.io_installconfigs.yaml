@@ -178,7 +178,8 @@ spec:
                           properties:
                             iops:
                               description: IOPS defines the amount of provisioned
-                                IOPS. This is only valid for type io1.
+                                IOPS. (KiB/s). IOPS may only be set for io1, io2,
+                                & gp3 volume types.
                               minimum: 0
                               type: integer
                             kmsKeyARN:
@@ -805,7 +806,8 @@ spec:
                         properties:
                           iops:
                             description: IOPS defines the amount of provisioned IOPS.
-                              This is only valid for type io1.
+                              (KiB/s). IOPS may only be set for io1, io2, & gp3 volume
+                              types.
                             minimum: 0
                             type: integer
                           kmsKeyARN:
@@ -1606,7 +1608,8 @@ spec:
                         properties:
                           iops:
                             description: IOPS defines the amount of provisioned IOPS.
-                              This is only valid for type io1.
+                              (KiB/s). IOPS may only be set for io1, io2, & gp3 volume
+                              types.
                             minimum: 0
                             type: integer
                           kmsKeyARN:
