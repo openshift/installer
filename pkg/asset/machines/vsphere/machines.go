@@ -63,6 +63,15 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			if _, exists := definedZones[desiredZone]; !exists {
 				return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
 			}
+			deploymentZone, err := getDeploymentZone(desiredZone, config.Platform.VSphere)
+			if err != nil {
+				return nil, errors.Errorf("deployment zone [%s] specified by machinepool is not defined", desiredZone)
+			}
+			failureDomain, err = getFailureDomain(deploymentZone.FailureDomain, config.Platform.VSphere)
+			if err != nil {
+				return nil, errors.Errorf("failure domain [%s] specified by deployment zone is not defined", deploymentZone.FailureDomain)
+			}
+
 			platform = definedZones[desiredZone]
 		}
 
@@ -71,6 +80,15 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
 
+		machineLabels := map[string]string{
+			"machine.openshift.io/cluster-api-cluster":      clusterID,
+			"machine.openshift.io/cluster-api-machine-role": role,
+			"machine.openshift.io/cluster-api-machine-type": role,
+		}
+		if failureDomain != nil {
+			machineLabels["machine.openshift.io/zone"] = failureDomain.Zone.Name
+			machineLabels["machine.openshift.io/region"] = failureDomain.Region.Name
+		}
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -79,11 +97,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "openshift-machine-api",
 				Name:      fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
-				Labels: map[string]string{
-					"machine.openshift.io/cluster-api-cluster":      clusterID,
-					"machine.openshift.io/cluster-api-machine-role": role,
-					"machine.openshift.io/cluster-api-machine-type": role,
-				},
+				Labels:    machineLabels,
 			},
 			Spec: machineapi.MachineSpec{
 				ProviderSpec: machineapi.ProviderSpec{
