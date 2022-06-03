@@ -1,0 +1,12 @@
+[package]
+name = "nmstate-static-clib"
+description = "Static NMState C bindings"
+version = "2.1.1"
+license = "Apache-2.0"
+
+[dependencies]
+nmstate-clib = {git = "https://github.com/nmstate/nmstate", rev="5accbd1" }
+
+[lib]
+name = "nmstate"
+path = "lib.rs"

@@ -1,0 +1,29 @@
+[package]
+name = "nmstate"
+version = "2.1.1"
+authors = ["Gris Ge <fge@redhat.com>"]
+description = "Library for networking management in a declarative manner"
+license = "Apache 2.0"
+homepage = "https://nmstate.io"
+documentation = "https://nmstate.io"
+repository = "https://github.com/nmstate/nmstate"
+keywords = ["network", "linux"]
+categories = ["network-programming", "os::linux-apis"]
+edition = "2018"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+libc = "0.2.106"
+log = "0.4.14"
+nispor = "1.2.5"
+nix = "0.24.1"
+serde = { version = "1.0.132", features = ["derive"] }
+serde_json = "1.0.68"
+uuid = { version = "0.8.2", features = ["v4", "v5"] }
+zbus = "1.9.2"
+zvariant = "2.10.0"
+
+[dev-dependencies]
+serde_yaml = "0.8"

@@ -40,11 +40,16 @@ make -C terraform all
 # Copy terraform parts to embedded mirror.
 copy_terraform_to_mirror
 
+# Build the nmstate static library and include
+make -C nmstate -C rust all
+
 MODE="${MODE:-release}"
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
 DEFAULT_ARCH="${DEFAULT_ARCH:-amd64}"
 GOFLAGS="${GOFLAGS:--mod=vendor}"
+CGO_CFLAGS="${CGOFLAGS:--Irust/include}"
+CGO_LDFLAGS="${CGO_LDFLAGS:--Lnmstate/rust/lib}"
 LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/version.Raw=${GIT_TAG} -X github.com/openshift/installer/pkg/version.Commit=${GIT_COMMIT} -X github.com/openshift/installer/pkg/version.defaultArch=${DEFAULT_ARCH}"
 TAGS="${TAGS:-}"
 OUTPUT="${OUTPUT:-bin/openshift-install}"
@@ -69,6 +74,8 @@ esac
 if (echo "${TAGS}" | grep -q 'libvirt')
 then
 	export CGO_ENABLED=1
+	export CGO_CFLAGS
+	export CGO_LDFLAGS
 fi
 
 # shellcheck disable=SC2086

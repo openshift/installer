@@ -1,1 +1,4 @@
 /bin/
+nmstate/rust/include
+nmstate/rust/lib
+nmstate/rust/build/target

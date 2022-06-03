@@ -1,0 +1,41 @@
+warning: use of deprecated function `nb_connect::unix`: This crate is now deprecated in favor of [socket2](https://crates.io/crates/socket2).
+ --> $WORKSPACE/zbus/src/address.rs
+  |
+  | use nb_connect::unix;
+  |     ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated function `nb_connect::unix`: This crate is now deprecated in favor of [socket2](https://crates.io/crates/socket2).
+  --> $WORKSPACE/zbus/src/address.rs
+   |
+   |                 let stream = unix(p)?;
+   |                              ^^^^
+
+warning: 2 warnings emitted
+
+error[E0277]: the trait bound `Foo: Type` is not satisfied
+  --> tests/ui/proxy/no_zvariant_type_impl.rs:8:1
+   |
+8  | / #[dbus_proxy(
+9  | |     interface = "org.freedesktop.zbus.Test",
+10 | |     default_service = "org.freedesktop.zbus",
+11 | |     default_path = "/org/freedesktop/zbus/test"
+12 | | )]
+   | |__^ the trait `Type` is not implemented for `Foo`
+   |
+   = note: this error originates in an attribute macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `Foo: From<OwnedValue>` is not satisfied
+  --> tests/ui/proxy/no_zvariant_type_impl.rs:8:1
+   |
+8  | / #[dbus_proxy(
+9  | |     interface = "org.freedesktop.zbus.Test",
+10 | |     default_service = "org.freedesktop.zbus",
+11 | |     default_path = "/org/freedesktop/zbus/test"
+12 | | )]
+   | |__^ the trait `From<OwnedValue>` is not implemented for `Foo`
+   |
+   = note: required because of the requirements on the impl of `Into<Foo>` for `OwnedValue`
+   = note: required because of the requirements on the impl of `TryFrom<OwnedValue>` for `Foo`
+   = note: this error originates in an attribute macro (in Nightly builds, run with -Z macro-backtrace for more info)
