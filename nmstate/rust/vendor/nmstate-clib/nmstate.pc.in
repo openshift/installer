@@ -1,0 +1,11 @@
+prefix=@PREFIX@
+exec_prefix=${prefix}
+libdir=@LIBDIR@
+includedir=@INCLUDE_DIR@/
+
+Name: nmstate
+Version: @VERSION@
+Description: Nmstate C binding library
+Requires:
+Libs: -L${libdir} -lnmstate
+Cflags: -I${includedir}
