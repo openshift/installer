@@ -219,17 +219,19 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 }
 
 //ValidateEnabledServices gets all the enabled services for a project and validate if any of the required services are not enabled.
+//also warns the user if optional services are not enabled.
 func ValidateEnabledServices(ctx context.Context, client API, project string) error {
-	services := sets.NewString("compute.googleapis.com",
-		"cloudapis.googleapis.com",
+	requiredServices := sets.NewString("compute.googleapis.com",
 		"cloudresourcemanager.googleapis.com",
 		"dns.googleapis.com",
 		"iam.googleapis.com",
-		"iamcredentials.googleapis.com",
+		"iamcredentials.googleapis.com")
+	optionalServices := sets.NewString("cloudapis.googleapis.com",
 		"servicemanagement.googleapis.com",
-		"serviceusage.googleapis.com",
+		"deploymentmanager.googleapis.com",
 		"storage-api.googleapis.com",
-		"storage-component.googleapis.com")
+		"storage-component.googleapis.com",
+		"serviceusage.googleapis.com")
 	projectServices, err := client.GetEnabledServices(ctx, project)
 
 	if err != nil {
@@ -243,8 +245,13 @@ func ValidateEnabledServices(ctx context.Context, client API, project string) er
 		return err
 	}
 
-	if remaining := services.Difference(sets.NewString(projectServices...)); remaining.Len() > 0 {
+	if remaining := requiredServices.Difference(sets.NewString(projectServices...)); remaining.Len() > 0 {
 		return fmt.Errorf("the following required services are not enabled in this project: %s",
+			strings.Join(remaining.List(), ","))
+	}
+
+	if remaining := optionalServices.Difference(sets.NewString(projectServices...)); remaining.Len() > 0 {
+		logrus.Warnf("the following optional services are not enabled in this project: %s",
 			strings.Join(remaining.List(), ","))
 	}
 	return nil
