@@ -27,7 +27,7 @@ func TestNMStateConfig_LoadedFromDisk(t *testing.T) {
 		data               string
 		fetchError         error
 		expectedFound      bool
-		expectedError      bool
+		expectedError      string
 		requiresNmstatectl bool
 		expectedConfig     []*models.HostStaticNetworkConfig
 	}{
@@ -157,7 +157,7 @@ spec:
     - name: "eth0"
       macAddress: "52:54:01:bb:bb:b1"`,
 			requiresNmstatectl: true,
-			expectedError:      true,
+			expectedError:      "staticNetwork configuration is not valid.*",
 		},
 
 		{
@@ -184,7 +184,7 @@ spec:
     - name: "eth0"
       macAddress: "52:54:01:aa:aa:a1"`,
 			requiresNmstatectl: true,
-			expectedError:      true,
+			expectedError:      "staticNetwork configuration is not valid.*",
 		},
 
 		{
@@ -208,13 +208,13 @@ spec:
   interfaces:
     - name: "eth0"
       macAddress: "52:54:01:aa:aa:a1"`,
-			expectedError: true,
+			expectedError: "invalid NMStateConfig configuration: ObjectMeta.Labels: Required value: mynmstateconfig does not have any label set",
 		},
 
 		{
 			name:          "not-yaml",
 			data:          `This is not a yaml file`,
-			expectedError: true,
+			expectedError: "could not decode YAML for manifests/nmstateconfig.yaml: Error reading multiple YAMLs: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1beta1.NMStateConfig",
 		},
 		{
 			name:          "empty",
@@ -228,7 +228,7 @@ spec:
 		{
 			name:          "error-fetching-file",
 			fetchError:    errors.New("fetch failed"),
-			expectedError: true,
+			expectedError: "failed to load file manifests/nmstateconfig.yaml: fetch failed",
 		},
 	}
 	for _, tc := range cases {
@@ -257,13 +257,29 @@ spec:
 			asset := &NMStateConfig{}
 			found, err := asset.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
-			if tc.expectedError {
-				assert.Error(t, err, "expected error from Load")
+			if tc.expectedError != "" {
+				assert.Regexp(t, tc.expectedError, err.Error())
 			} else {
-				assert.NoError(t, err, "unexpected error from Load")
+				assert.NoError(t, err)
 			}
 			if tc.expectedFound {
 				assert.Equal(t, tc.expectedConfig, asset.StaticNetworkConfig, "unexpected Config in NMStateConfig")
+				assert.Equal(t, len(tc.expectedConfig), len(asset.NMStateConfig))
+				for i := 0; i < len(tc.expectedConfig); i++ {
+
+					staticNetworkConfig := asset.StaticNetworkConfig[i]
+					nmStateConfig := asset.NMStateConfig[i]
+
+					for n := 0; n < len(staticNetworkConfig.MacInterfaceMap); n++ {
+						macInterfaceMap := staticNetworkConfig.MacInterfaceMap[n]
+						iface := nmStateConfig.Spec.Interfaces[n]
+
+						assert.Equal(t, macInterfaceMap.LogicalNicName, iface.Name)
+						assert.Equal(t, macInterfaceMap.MacAddress, iface.MacAddress)
+					}
+					assert.YAMLEq(t, staticNetworkConfig.NetworkYaml, string(nmStateConfig.Spec.NetConfig.Raw))
+				}
+
 			}
 		})
 	}

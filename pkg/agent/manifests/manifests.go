@@ -12,7 +12,6 @@ import (
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -66,17 +65,6 @@ func getFileMultipleYamls(filename string, decoder decodeFormat) ([]interface{},
 	}
 
 	return outputList, nil
-}
-
-// GetPullSecret gets the pull secret from the manifest file
-func GetPullSecret() (string, error) {
-	var secret corev1.Secret
-	if err := getFileData("pull-secret.yaml", &secret); err != nil {
-		return "", err
-	}
-
-	pullSecret := secret.StringData[".dockerconfigjson"]
-	return pullSecret, nil
 }
 
 // GetAgentClusterInstall gets the AgentClusterInstall resource from the

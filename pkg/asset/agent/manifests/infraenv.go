@@ -7,6 +7,7 @@ import (
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -106,5 +107,40 @@ func (i *InfraEnv) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	i.File, i.Config = file, config
+	if err = i.finish(); err != nil {
+		return false, err
+	}
+
 	return true, nil
+}
+
+func (i *InfraEnv) finish() error {
+	if err := i.validateInfraEnv().ToAggregate(); err != nil {
+		return errors.Wrapf(err, "invalid InfraEnv configuration")
+	}
+
+	return nil
+}
+
+func (i *InfraEnv) validateInfraEnv() field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if err := i.validateNMStateLabelSelector(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	return allErrs
+}
+
+func (i *InfraEnv) validateNMStateLabelSelector() field.ErrorList {
+
+	var allErrs field.ErrorList
+
+	fieldPath := field.NewPath("Spec", "NMStateConfigLabelSelector", "MatchLabels")
+
+	if len(i.Config.Spec.NMStateConfigLabelSelector.MatchLabels) == 0 {
+		allErrs = append(allErrs, field.Required(fieldPath, "at least one label must be set"))
+	}
+
+	return allErrs
 }

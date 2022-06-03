@@ -14,7 +14,6 @@ import (
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/openshift/assisted-service/models"
-	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
 
 	data "github.com/openshift/installer/data/data/agent"
@@ -38,7 +37,7 @@ type ConfigBuilder struct {
 
 // New creates a new ConfigBuilder by reading the ZTP manifests
 func New(agentManifests agentAssets.AgentManifests) (*ConfigBuilder, error) {
-	pullSecret := agentManifests.PullSecret.StringData[".dockerconfigjson"]
+	pullSecret := agentManifests.GetPullSecretData()
 
 	n := manifests.NewNMConfig()
 	nodeZeroIP := n.GetNodeZeroIP()
@@ -58,17 +57,6 @@ func New(agentManifests agentAssets.AgentManifests) (*ConfigBuilder, error) {
 	}
 	clusterInstall := &aci
 
-	infraEnv, err := manifests.GetInfraEnv()
-	if err != nil {
-		return nil, err
-	}
-
-	staticNetworkConfig, err := manifests.ProcessNMStateConfig(infraEnv)
-	if err != nil {
-		logrus.Errorf("%s", fmt.Errorf("error processing NMStateConfigs: %w", err))
-		os.Exit(1)
-	}
-
 	manifestPath := getEnv("MANIFEST_PATH", "manifests/")
 
 	return &ConfigBuilder{
@@ -78,7 +66,7 @@ func New(agentManifests agentAssets.AgentManifests) (*ConfigBuilder, error) {
 		apiVip:              clusterInstall.Spec.APIVIP,
 		controlPlaneAgents:  clusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
 		workerAgents:        clusterInstall.Spec.ProvisionRequirements.WorkerAgents,
-		staticNetworkConfig: staticNetworkConfig,
+		staticNetworkConfig: agentManifests.StaticNetworkConfig,
 		manifestPath:        manifestPath,
 	}, nil
 }

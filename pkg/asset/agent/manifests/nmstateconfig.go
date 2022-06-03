@@ -3,6 +3,7 @@ package manifests
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -25,6 +27,7 @@ var (
 type NMStateConfig struct {
 	File                *asset.File
 	StaticNetworkConfig []*models.HostStaticNetworkConfig
+	NMStateConfig       []*aiv1beta1.NMStateConfig
 }
 
 var _ asset.WritableAsset = (*NMStateConfig)(nil)
@@ -77,16 +80,15 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	var staticNetworkConfig []*models.HostStaticNetworkConfig
-	for i := range yamlList {
-		nmStateConfig := *yamlList[i].(*aiv1beta1.NMStateConfig)
-		if len(nmStateConfig.ObjectMeta.Labels) == 0 {
-			return false, errors.Errorf("NMStateConfig does not have any labels set")
-		}
+	var nmStateConfigList []*aiv1beta1.NMStateConfig
 
+	for i := range yamlList {
+		nmStateConfig := yamlList[i].(*aiv1beta1.NMStateConfig)
 		staticNetworkConfig = append(staticNetworkConfig, &models.HostStaticNetworkConfig{
-			MacInterfaceMap: buildMacInterfaceMap(nmStateConfig),
+			MacInterfaceMap: buildMacInterfaceMap(*nmStateConfig),
 			NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
 		})
+		nmStateConfigList = append(nmStateConfigList, nmStateConfig)
 	}
 
 	log := logrus.New()
@@ -94,11 +96,47 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 
 	// Validate the network config using nmstatectl
 	if err = staticNetworkConfigGenerator.ValidateStaticConfigParams(context.Background(), staticNetworkConfig); err != nil {
-		return false, errors.Wrapf(err, "StaticNetwork configuration is not valid")
+		return false, errors.Wrapf(err, "staticNetwork configuration is not valid")
 	}
 
-	n.File, n.StaticNetworkConfig = file, staticNetworkConfig
+	n.File, n.StaticNetworkConfig, n.NMStateConfig = file, staticNetworkConfig, nmStateConfigList
+	if err = n.finish(); err != nil {
+		return false, err
+	}
 	return true, nil
+}
+
+func (n *NMStateConfig) finish() error {
+	if err := n.validateNMStateConfig().ToAggregate(); err != nil {
+		return errors.Wrapf(err, "invalid NMStateConfig configuration")
+	}
+
+	return nil
+}
+
+func (n *NMStateConfig) validateNMStateConfig() field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if err := n.validateNMStateLabels(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	return allErrs
+}
+
+func (n *NMStateConfig) validateNMStateLabels() field.ErrorList {
+
+	var allErrs field.ErrorList
+
+	fieldPath := field.NewPath("ObjectMeta", "Labels")
+
+	for _, nmStateConfig := range n.NMStateConfig {
+		if len(nmStateConfig.ObjectMeta.Labels) == 0 {
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("%s does not have any label set", nmStateConfig.Name)))
+		}
+	}
+
+	return allErrs
 }
 
 type nmStateConfigYamlDecoder int

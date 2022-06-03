@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -96,10 +97,57 @@ func (a *AgentPullSecret) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	a.File, a.Config = file, config
+	if err = a.finish(); err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
 // ResourceName return the name of the pull secret resource.
 func (a *AgentPullSecret) ResourceName() string {
 	return agentPullSecretName
+}
+
+func (a *AgentPullSecret) finish() error {
+	if err := a.validatePullSecret().ToAggregate(); err != nil {
+		return errors.Wrapf(err, "invalid PullSecret configuration")
+	}
+
+	return nil
+}
+
+func (a *AgentPullSecret) validatePullSecret() field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if err := a.validateSecretIsNotEmpty(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	return allErrs
+}
+
+func (a *AgentPullSecret) validateSecretIsNotEmpty() field.ErrorList {
+
+	var allErrs field.ErrorList
+
+	fieldPath := field.NewPath("StringData")
+
+	if len(a.Config.StringData) == 0 {
+		allErrs = append(allErrs, field.Required(fieldPath, "the pull secret is empty"))
+		return allErrs
+	}
+
+	pullSecret, ok := a.Config.StringData[".dockerconfigjson"]
+	if !ok {
+		allErrs = append(allErrs, field.Required(fieldPath, "the pull secret key '.dockerconfigjson' is not defined"))
+		return allErrs
+	}
+
+	if pullSecret == "" {
+		allErrs = append(allErrs, field.Required(fieldPath, "the pull secret does not contain any data"))
+		return allErrs
+	}
+
+	return allErrs
 }
