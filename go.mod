@@ -40,6 +40,7 @@ require (
 	github.com/metal3-io/baremetal-operator v0.0.0-20220128094204-28771f489634
 	github.com/metal3-io/baremetal-operator/apis v0.0.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0
+	github.com/nmstate/nmstate/rust/src/go/nmstate v0.0.0-20220602104433-5accbd1f1a77
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/assisted-image-service v0.0.0-20220307202600-054a1afa8d28
 	github.com/openshift/assisted-service v1.0.10-0.20220223093655-7ada9949bf1d

@@ -6,6 +6,7 @@ import (
 	"net"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	"github.com/nmstate/nmstate/rust/src/go/nmstate"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
 	"github.com/sirupsen/logrus"
@@ -67,6 +68,14 @@ func getNMStateConfig() ([]aiv1beta1.NMStateConfig, error) {
 // GetNMIgnitionFiles returns the list of NetworkManager configuration files
 func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) ([]staticnetworkconfig.StaticNetworkConfigData, error) {
 	log := logrus.New()
+
+	// TODO: Sample nmstate call to be replaced with the config generation
+	nm := nmstate.New()
+	state, err := nm.RetrieveNetState()
+	if err != nil {
+		err = fmt.Errorf("Failed to use NMState to get system state")
+	}
+	logrus.Println(state)
 	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
 
 	// Validate the network config

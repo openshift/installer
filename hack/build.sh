@@ -40,15 +40,21 @@ make -C terraform all
 # Copy terraform parts to embedded mirror.
 copy_terraform_to_mirror
 
+# Build the nmstate static library and include
+make -C nmstate -C rust all
+
 MODE="${MODE:-release}"
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
 DEFAULT_ARCH="${DEFAULT_ARCH:-amd64}"
 GOFLAGS="${GOFLAGS:--mod=vendor}"
+REPO_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+CGO_CFLAGS="${CGOFLAGS:--I${REPO_ROOT_DIR}/nmstate/rust/include}"
+CGO_LDFLAGS="${CGO_LDFLAGS:--L${REPO_ROOT_DIR}/nmstate/rust/lib} -ldl -lrt"
 LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/version.Raw=${GIT_TAG} -X github.com/openshift/installer/pkg/version.Commit=${GIT_COMMIT} -X github.com/openshift/installer/pkg/version.defaultArch=${DEFAULT_ARCH}"
 TAGS="${TAGS:-}"
 OUTPUT="${OUTPUT:-bin/openshift-install}"
-export CGO_ENABLED=0
+export CGO_ENABLED=${CGO_ENABLED:-0}
 
 case "${MODE}" in
 release)
@@ -71,5 +77,13 @@ then
 	export CGO_ENABLED=1
 fi
 
+if [[ "$CGO_ENABLED" == "1" ]]; then
+	export CGO_CFLAGS
+	export CGO_LDFLAGS
+fi
+
+
 # shellcheck disable=SC2086
+echo $CGO_CFLAGS
+echo $CGO_LDFLAGS
 go build ${GOFLAGS} -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
