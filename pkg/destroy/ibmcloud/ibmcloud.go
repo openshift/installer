@@ -51,6 +51,7 @@ type ClusterUninstaller struct {
 	iamPolicyManagementSvc *iampolicymanagementv1.IamPolicyManagementV1
 	zonesSvc               *zonesv1.ZonesV1
 	dnsRecordsSvc          *dnsrecordsv1.DnsRecordsV1
+	maxRetryAttempt        int
 
 	resourceGroupID string
 	cosInstanceID   string
@@ -74,7 +75,31 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		UserProvidedSubnets: metadata.ClusterPlatformMetadata.IBMCloud.Subnets,
 		UserProvidedVPC:     metadata.ClusterPlatformMetadata.IBMCloud.VPC,
 		pendingItemTracker:  newPendingItemTracker(),
+		maxRetryAttempt:     30,
 	}, nil
+}
+
+// Retry ...
+func (o *ClusterUninstaller) Retry(funcToRetry func() (error, bool)) error {
+	var err error
+	var stopRetry bool
+	retryGap := 10
+	for i := 0; i < o.maxRetryAttempt; i++ {
+		if i > 0 {
+			time.Sleep(time.Duration(retryGap) * time.Second)
+		}
+		// Call function which required retry, retry is decided by function itself
+		err, stopRetry = funcToRetry()
+		if stopRetry {
+			break
+		}
+
+		if (i + 1) < o.maxRetryAttempt {
+			o.Logger.Infof("UNEXPECTED RESULT, Re-attempting execution .., attempt=%d, retry-gap=%d, max-retry-Attempts=%d, stopRetry=%t, error=%v", i+1,
+				retryGap, o.maxRetryAttempt, stopRetry, err)
+		}
+	}
+	return err
 }
 
 // Run is the entrypoint to start the uninstall process
@@ -100,6 +125,7 @@ func (o *ClusterUninstaller) destroyCluster() error {
 		{name: "Stop instances", execute: o.stopInstances},
 	}, {
 		{name: "Instances", execute: o.destroyInstances},
+		{name: "Disks", execute: o.destroyDisks},
 	}, {
 		{name: "Load Balancers", execute: o.destroyLoadBalancers},
 	}, {
@@ -402,4 +428,8 @@ func (t pendingItemTracker) deletePendingItems(itemType string, items []cloudRes
 
 func isErrorStatus(code int64) bool {
 	return code != 0 && (code < 200 || code >= 300)
+}
+
+func (o *ClusterUninstaller) clusterLabelFilter() string {
+	return fmt.Sprintf("kubernetes-io-cluster-%s:owned", o.InfraID)
 }
