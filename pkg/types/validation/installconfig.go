@@ -92,6 +92,9 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		// FIX-ME: As soon bz#1915122 get resolved remove the limitation of 14 chars for the clustername
 		nameErr = validate.ClusterNameMaxLength(c.ObjectMeta.Name, 14)
 	}
+	if c.Platform.VSphere != nil || c.Platform.BareMetal != nil {
+		nameErr = validate.OnPremClusterName(c.ObjectMeta.Name)
+	}
 	if nameErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, nameErr.Error()))
 	}
