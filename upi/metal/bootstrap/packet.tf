@@ -1,4 +1,4 @@
-resource "packet_device" "bootstrap" {
+resource "metal_device" "bootstrap" {
   hostname                = "${var.cluster_id}-bootstrap"
   plan                    = var.packet_plan
   facilities              = [var.packet_facility]
