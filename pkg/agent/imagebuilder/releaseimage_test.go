@@ -7,8 +7,6 @@ import (
 )
 
 func TestReleaseImageList(t *testing.T) {
-	t.Skip("Release is hard-coded")
-
 	cases := []struct {
 		name     string
 		pullSpec string
@@ -45,8 +43,6 @@ func TestReleaseImageList(t *testing.T) {
 }
 
 func TestReleaseImageListErrors(t *testing.T) {
-	t.Skip("Release is hard-coded")
-
 	cases := []string{
 		"",
 		"quay.io/openshift-release-dev/ocp-release-4.10",
