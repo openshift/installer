@@ -262,17 +262,6 @@ func (c ConfigBuilder) getManifests(manifestPath string) ([]igntypes.File, error
 			if err != nil {
 				return files, fmt.Errorf("failed to read file %s: %w", localPath, err)
 			}
-			// TODO: remove hard-coded ClusterImageSet manifest
-			if e.Name() == "cluster-image-set.yaml" {
-				contents = []byte(`
-apiVersion: hive.openshift.io/v1
-kind: ClusterImageSet
-metadata:
-  name: openshift-4.11
-spec:
-  releaseImage: quay.io/openshift-release-dev/ocp-release:4.10.0-rc.1-x86_64
-`)
-			}
 			mode := 0600
 			file := ignitionFileEmbed(ignitionPath, mode, true, contents)
 			files = append(files, file)

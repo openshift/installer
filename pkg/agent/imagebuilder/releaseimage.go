@@ -3,7 +3,10 @@ package imagebuilder
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
+
+	"github.com/openshift/installer/pkg/version"
 )
 
 type releaseImage struct {
@@ -13,7 +16,28 @@ type releaseImage struct {
 	Tag            string `json:"version"`
 }
 
+func isDigest(pullspec string) bool {
+	return regexp.MustCompile(`.*sha256:[a-fA-F0-9]{64}$`).MatchString(pullspec)
+}
+
 func releaseImageFromPullSpec(pullSpec, arch string) (releaseImage, error) {
+
+	// When the pullspec it's a digest let's use the current version
+	// stored in the installer
+	if isDigest(pullSpec) {
+		versionString, err := version.Version()
+		if err != nil {
+			return releaseImage{}, err
+		}
+
+		return releaseImage{
+			ReleaseVersion: versionString,
+			Arch:           arch,
+			PullSpec:       pullSpec,
+			Tag:            versionString,
+		}, nil
+	}
+
 	components := strings.SplitN(pullSpec, ":", 2)
 	if len(components) < 2 {
 		return releaseImage{}, fmt.Errorf("invalid release image \"%s\"", pullSpec)
@@ -35,18 +59,10 @@ func releaseImageFromPullSpec(pullSpec, arch string) (releaseImage, error) {
 }
 
 func releaseImageList(pullSpec, arch string) (string, error) {
-	// TODO: re-enable this code instead of hard-coding
-	/*
-		relImage, err := releaseImageFromPullSpec(pullSpec, arch)
-		if err != nil {
-			return "", err
-		}
-	*/
-	relImage := releaseImage{
-		ReleaseVersion: "4.10",
-		Arch:           arch,
-		PullSpec:       "quay.io/openshift-release-dev/ocp-release:4.10.0-rc.1-x86_64",
-		Tag:            "4.10.0-rc.1",
+
+	relImage, err := releaseImageFromPullSpec(pullSpec, arch)
+	if err != nil {
+		return "", err
 	}
 
 	imageList := []interface{}{relImage}
