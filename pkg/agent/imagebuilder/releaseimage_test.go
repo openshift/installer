@@ -31,13 +31,21 @@ func TestReleaseImageList(t *testing.T) {
 			arch:     "x86_64",
 			result:   "[{\"openshift_version\":\"4.11\",\"cpu_architecture\":\"x86_64\",\"url\":\"registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609\",\"version\":\"4.11.0-0.ci-2022-05-16-202609\"}]",
 		},
+		{
+			name:     "CI-ephemeral",
+			pullSpec: "registry.build04.ci.openshift.org/ci-op-m7rfgytz/release@sha256:ebb203f24ee060d61bdb466696a9c20b3841f9929badf9b81fc99cbedc2a679e",
+			arch:     "x86_64",
+			result:   "[{\"openshift_version\":\"was not built correctly\",\"cpu_architecture\":\"x86_64\",\"url\":\"registry.build04.ci.openshift.org/ci-op-m7rfgytz/release@sha256:ebb203f24ee060d61bdb466696a9c20b3841f9929badf9b81fc99cbedc2a679e\",\"version\":\"was not built correctly\"}]",
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			output, err := releaseImageList(tc.pullSpec, tc.arch)
 			assert.NoError(t, err)
-			assert.Equal(t, tc.result, output)
+			if err == nil {
+				assert.Equal(t, tc.result, output)
+			}
 		})
 	}
 }
