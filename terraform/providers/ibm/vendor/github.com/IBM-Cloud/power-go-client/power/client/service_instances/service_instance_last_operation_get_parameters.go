@@ -13,83 +13,100 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewServiceInstanceLastOperationGetParams creates a new ServiceInstanceLastOperationGetParams object
-// with the default values initialized.
+// NewServiceInstanceLastOperationGetParams creates a new ServiceInstanceLastOperationGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceInstanceLastOperationGetParams() *ServiceInstanceLastOperationGetParams {
-	var ()
 	return &ServiceInstanceLastOperationGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceInstanceLastOperationGetParamsWithTimeout creates a new ServiceInstanceLastOperationGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceInstanceLastOperationGetParamsWithTimeout(timeout time.Duration) *ServiceInstanceLastOperationGetParams {
-	var ()
 	return &ServiceInstanceLastOperationGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceInstanceLastOperationGetParamsWithContext creates a new ServiceInstanceLastOperationGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceInstanceLastOperationGetParamsWithContext(ctx context.Context) *ServiceInstanceLastOperationGetParams {
-	var ()
 	return &ServiceInstanceLastOperationGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceInstanceLastOperationGetParamsWithHTTPClient creates a new ServiceInstanceLastOperationGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceInstanceLastOperationGetParamsWithHTTPClient(client *http.Client) *ServiceInstanceLastOperationGetParams {
-	var ()
 	return &ServiceInstanceLastOperationGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceInstanceLastOperationGetParams contains all the parameters to send to the API endpoint
-for the service instance last operation get operation typically these are written to a http.Request
+/* ServiceInstanceLastOperationGetParams contains all the parameters to send to the API endpoint
+   for the service instance last operation get operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceInstanceLastOperationGetParams struct {
 
-	/*XBrokerAPIVersion
-	  version number of the Service Broker API that the Platform will use
+	/* XBrokerAPIVersion.
 
+	   version number of the Service Broker API that the Platform will use
 	*/
 	XBrokerAPIVersion string
-	/*InstanceID
-	  instance id of instance to provision
 
+	/* InstanceID.
+
+	   instance id of instance to provision
 	*/
 	InstanceID string
-	/*Operation
-	  a provided identifier for the operation
 
+	/* Operation.
+
+	   a provided identifier for the operation
 	*/
 	Operation *string
-	/*PlanID
-	  id of the plan associated with the instance
 
+	/* PlanID.
+
+	   id of the plan associated with the instance
 	*/
 	PlanID *string
-	/*ServiceID
-	  id of the service associated with the instance
 
+	/* ServiceID.
+
+	   id of the service associated with the instance
 	*/
 	ServiceID *string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service instance last operation get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceInstanceLastOperationGetParams) WithDefaults() *ServiceInstanceLastOperationGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service instance last operation get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceInstanceLastOperationGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service instance last operation get params
@@ -202,48 +219,51 @@ func (o *ServiceInstanceLastOperationGetParams) WriteToRequest(r runtime.ClientR
 
 		// query param operation
 		var qrOperation string
+
 		if o.Operation != nil {
 			qrOperation = *o.Operation
 		}
 		qOperation := qrOperation
 		if qOperation != "" {
+
 			if err := r.SetQueryParam("operation", qOperation); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if o.PlanID != nil {
 
 		// query param plan_id
 		var qrPlanID string
+
 		if o.PlanID != nil {
 			qrPlanID = *o.PlanID
 		}
 		qPlanID := qrPlanID
 		if qPlanID != "" {
+
 			if err := r.SetQueryParam("plan_id", qPlanID); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if o.ServiceID != nil {
 
 		// query param service_id
 		var qrServiceID string
+
 		if o.ServiceID != nil {
 			qrServiceID = *o.ServiceID
 		}
 		qServiceID := qrServiceID
 		if qServiceID != "" {
+
 			if err := r.SetQueryParam("service_id", qServiceID); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if len(res) > 0 {

@@ -24,9 +24,11 @@ var (
 		"asia-northeast2":         "Osaka, Japan",
 		"asia-northeast3":         "Seoul, South Korea",
 		"asia-south1":             "Mumbai, India",
+		"asia-south2":             "Delhi, India",
 		"asia-southeast1":         "Jurong West, Singapore",
 		"asia-southeast2":         "Jakarta, Indonesia",
 		"australia-southeast1":    "Sydney, Australia",
+		"australia-southeast2":    "Melbourne, Australia",
 		"europe-central2":         "Warsaw, Poland",
 		"europe-north1":           "Hamina, Finland",
 		"europe-west1":            "St. Ghislain, Belgium",
@@ -60,8 +62,8 @@ var (
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if _, ok := Regions[p.Region]; !ok {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, validRegionValues))
+	if p.Region == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "must provide a region"))
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)

@@ -50,6 +50,12 @@ variable "root_volume_type" {
   description = "The type of volume for the root block device."
 }
 
+variable "instance_metadata_authentication" {
+  type        = string
+  default     = "optional"
+  description = "The session tokens requirement, also referred to as Instance Metadata Service Version 2 (IMDSv2). Values are optional or required. Defaults to optional."
+}
+
 variable "root_volume_encrypted" {
   type        = bool
   description = "Whether the root block device should be encrypted."

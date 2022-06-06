@@ -185,6 +185,9 @@ type CreateOpts struct {
 	// Requires microversion 1.47 or later.
 	AutomatedClean *bool `json:"automated_clean,omitempty"`
 
+	// The BIOS interface for a Node, e.g. “redfish”.
+	BIOSInterface string `json:"bios_interface,omitempty"`
+
 	// The boot interface for a Node, e.g. “pxe”.
 	BootInterface string `json:"boot_interface,omitempty"`
 
@@ -247,6 +250,9 @@ type CreateOpts struct {
 
 	// A string or UUID of the tenant who owns the baremetal node.
 	Owner string `json:"owner,omitempty"`
+
+	// Static network configuration to use during deployment and cleaning.
+	NetworkData map[string]interface{} `json:"network_data,omitempty"`
 }
 
 // ToNodeCreateMap assembles a request body based on the contents of a CreateOpts.
@@ -632,4 +638,200 @@ func SetRAIDConfig(client *gophercloud.ServiceClient, id string, raidConfigOptsB
 	})
 	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
+}
+
+// ListBIOSSettingsOptsBuilder allows extensions to add additional parameters to the
+// ListBIOSSettings request.
+type ListBIOSSettingsOptsBuilder interface {
+	ToListBIOSSettingsOptsQuery() (string, error)
+}
+
+// ListBIOSSettingsOpts defines query options that can be passed to ListBIOSettings
+type ListBIOSSettingsOpts struct {
+	// Provide additional information for the BIOS Settings
+	Detail bool `q:"detail"`
+
+	// One or more fields to be returned in the response.
+	Fields []string `q:"fields"`
+}
+
+// ToListBIOSSettingsOptsQuery formats a ListBIOSSettingsOpts into a query string
+func (opts ListBIOSSettingsOpts) ToListBIOSSettingsOptsQuery() (string, error) {
+	if opts.Detail == true && len(opts.Fields) > 0 {
+		return "", fmt.Errorf("cannot have both fields and detail options for BIOS settings")
+	}
+
+	q, err := gophercloud.BuildQueryString(opts)
+	return q.String(), err
+}
+
+// Get the current BIOS Settings for the given Node.
+// To use the opts requires microversion 1.74.
+func ListBIOSSettings(client *gophercloud.ServiceClient, id string, opts ListBIOSSettingsOptsBuilder) (r ListBIOSSettingsResult) {
+	url := biosListSettingsURL(client, id)
+	if opts != nil {
+
+		query, err := opts.ToListBIOSSettingsOptsQuery()
+		if err != nil {
+			r.Err = err
+			return
+		}
+		url += query
+	}
+
+	resp, err := client.Get(url, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// Get one BIOS Setting for the given Node.
+func GetBIOSSetting(client *gophercloud.ServiceClient, id string, setting string) (r GetBIOSSettingResult) {
+	resp, err := client.Get(biosGetSettingURL(client, id, setting), &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// CallVendorPassthruOpts defines query options that can be passed to any VendorPassthruCall
+type CallVendorPassthruOpts struct {
+	Method string `q:"method"`
+}
+
+// ToGetSubscriptionMap assembles a query based on the contents of a CallVendorPassthruOpts
+func ToGetAllSubscriptionMap(opts CallVendorPassthruOpts) (string, error) {
+	q, err := gophercloud.BuildQueryString(opts)
+	return q.String(), err
+}
+
+// Get all vendor_passthru methods available for the given Node.
+func GetVendorPassthruMethods(client *gophercloud.ServiceClient, id string) (r VendorPassthruMethodsResult) {
+	resp, err := client.Get(vendorPassthruMethodsURL(client, id), &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// Get all subscriptions available for the given Node.
+func GetAllSubscriptions(client *gophercloud.ServiceClient, id string, method CallVendorPassthruOpts) (r GetAllSubscriptionsVendorPassthruResult) {
+	query, err := ToGetAllSubscriptionMap(method)
+	if err != nil {
+		r.Err = err
+		return
+	}
+	url := vendorPassthruCallURL(client, id) + query
+	resp, err := client.Get(url, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// The desired subscription id on the baremetal node.
+type GetSubscriptionOpts struct {
+	Id string `json:"id"`
+}
+
+// ToGetSubscriptionMap assembles a query based on the contents of CallVendorPassthruOpts and a request body based on the contents of a GetSubscriptionOpts
+func ToGetSubscriptionMap(method CallVendorPassthruOpts, opts GetSubscriptionOpts) (string, map[string]interface{}, error) {
+	q, err := gophercloud.BuildQueryString(method)
+	if err != nil {
+		return q.String(), nil, err
+	}
+	body, err := gophercloud.BuildRequestBody(opts, "")
+	if err != nil {
+		return q.String(), nil, err
+	}
+
+	return q.String(), body, nil
+}
+
+// Get a subscription on the given Node.
+func GetSubscription(client *gophercloud.ServiceClient, id string, method CallVendorPassthruOpts, subscriptionOpts GetSubscriptionOpts) (r SubscriptionVendorPassthruResult) {
+	query, reqBody, err := ToGetSubscriptionMap(method, subscriptionOpts)
+	if err != nil {
+		r.Err = err
+		return
+	}
+	url := vendorPassthruCallURL(client, id) + query
+	resp, err := client.Get(url, &r.Body, &gophercloud.RequestOpts{
+		JSONBody: reqBody,
+		OkCodes:  []int{200},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// The desired subscription to be deleted from the baremetal node.
+type DeleteSubscriptionOpts struct {
+	Id string `json:"id"`
+}
+
+// ToDeleteSubscriptionMap assembles a query based on the contents of CallVendorPassthruOpts and a request body based on the contents of a DeleteSubscriptionOpts
+func ToDeleteSubscriptionMap(method CallVendorPassthruOpts, opts DeleteSubscriptionOpts) (string, map[string]interface{}, error) {
+	q, err := gophercloud.BuildQueryString(method)
+	if err != nil {
+		return q.String(), nil, err
+	}
+	body, err := gophercloud.BuildRequestBody(opts, "")
+	if err != nil {
+		return q.String(), nil, err
+	}
+	return q.String(), body, nil
+}
+
+// Delete a subscription on the given node.
+func DeleteSubscription(client *gophercloud.ServiceClient, id string, method CallVendorPassthruOpts, subscriptionOpts DeleteSubscriptionOpts) (r DeleteSubscriptionVendorPassthruResult) {
+	query, reqBody, err := ToDeleteSubscriptionMap(method, subscriptionOpts)
+	if err != nil {
+		r.Err = err
+		return
+	}
+	url := vendorPassthruCallURL(client, id) + query
+	resp, err := client.Delete(url, &gophercloud.RequestOpts{
+		JSONBody: reqBody,
+		OkCodes:  []int{200, 202, 204},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return r
+}
+
+// The desired subscription to be created from the baremetal node.
+type CreateSubscriptionOpts struct {
+	Destination string              `json:"Destination"`
+	EventTypes  []string            `json:"EventTypes,omitempty"`
+	HttpHeaders []map[string]string `json:"HttpHeaders,omitempty"`
+	Context     string              `json:"Context,omitempty"`
+	Protocol    string              `json:"Protocol,omitempty"`
+}
+
+// ToCreateSubscriptionMap assembles a query based on the contents of CallVendorPassthruOpts and a request body based on the contents of a CreateSubscriptionOpts
+func ToCreateSubscriptionMap(method CallVendorPassthruOpts, opts CreateSubscriptionOpts) (string, map[string]interface{}, error) {
+	q, err := gophercloud.BuildQueryString(method)
+	if err != nil {
+		return q.String(), nil, err
+	}
+	body, err := gophercloud.BuildRequestBody(opts, "")
+	if err != nil {
+		return q.String(), nil, err
+	}
+	return q.String(), body, nil
+}
+
+// Creates a subscription on the given node.
+func CreateSubscription(client *gophercloud.ServiceClient, id string, method CallVendorPassthruOpts, subscriptionOpts CreateSubscriptionOpts) (r SubscriptionVendorPassthruResult) {
+	query, reqBody, err := ToCreateSubscriptionMap(method, subscriptionOpts)
+	if err != nil {
+		r.Err = err
+		return
+	}
+	url := vendorPassthruCallURL(client, id) + query
+	resp, err := client.Post(url, reqBody, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return r
 }

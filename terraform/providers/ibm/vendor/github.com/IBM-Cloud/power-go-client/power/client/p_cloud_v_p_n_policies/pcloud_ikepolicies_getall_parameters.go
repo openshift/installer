@@ -13,63 +13,76 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudIkepoliciesGetallParams creates a new PcloudIkepoliciesGetallParams object
-// with the default values initialized.
+// NewPcloudIkepoliciesGetallParams creates a new PcloudIkepoliciesGetallParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudIkepoliciesGetallParams() *PcloudIkepoliciesGetallParams {
-	var ()
 	return &PcloudIkepoliciesGetallParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudIkepoliciesGetallParamsWithTimeout creates a new PcloudIkepoliciesGetallParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudIkepoliciesGetallParamsWithTimeout(timeout time.Duration) *PcloudIkepoliciesGetallParams {
-	var ()
 	return &PcloudIkepoliciesGetallParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudIkepoliciesGetallParamsWithContext creates a new PcloudIkepoliciesGetallParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudIkepoliciesGetallParamsWithContext(ctx context.Context) *PcloudIkepoliciesGetallParams {
-	var ()
 	return &PcloudIkepoliciesGetallParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudIkepoliciesGetallParamsWithHTTPClient creates a new PcloudIkepoliciesGetallParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudIkepoliciesGetallParamsWithHTTPClient(client *http.Client) *PcloudIkepoliciesGetallParams {
-	var ()
 	return &PcloudIkepoliciesGetallParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudIkepoliciesGetallParams contains all the parameters to send to the API endpoint
-for the pcloud ikepolicies getall operation typically these are written to a http.Request
+/* PcloudIkepoliciesGetallParams contains all the parameters to send to the API endpoint
+   for the pcloud ikepolicies getall operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudIkepoliciesGetallParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud ikepolicies getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudIkepoliciesGetallParams) WithDefaults() *PcloudIkepoliciesGetallParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud ikepolicies getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudIkepoliciesGetallParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud ikepolicies getall params

@@ -13,70 +13,84 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudIkepoliciesPostParams creates a new PcloudIkepoliciesPostParams object
-// with the default values initialized.
+// NewPcloudIkepoliciesPostParams creates a new PcloudIkepoliciesPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudIkepoliciesPostParams() *PcloudIkepoliciesPostParams {
-	var ()
 	return &PcloudIkepoliciesPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudIkepoliciesPostParamsWithTimeout creates a new PcloudIkepoliciesPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudIkepoliciesPostParamsWithTimeout(timeout time.Duration) *PcloudIkepoliciesPostParams {
-	var ()
 	return &PcloudIkepoliciesPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudIkepoliciesPostParamsWithContext creates a new PcloudIkepoliciesPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudIkepoliciesPostParamsWithContext(ctx context.Context) *PcloudIkepoliciesPostParams {
-	var ()
 	return &PcloudIkepoliciesPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudIkepoliciesPostParamsWithHTTPClient creates a new PcloudIkepoliciesPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudIkepoliciesPostParamsWithHTTPClient(client *http.Client) *PcloudIkepoliciesPostParams {
-	var ()
 	return &PcloudIkepoliciesPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudIkepoliciesPostParams contains all the parameters to send to the API endpoint
-for the pcloud ikepolicies post operation typically these are written to a http.Request
+/* PcloudIkepoliciesPostParams contains all the parameters to send to the API endpoint
+   for the pcloud ikepolicies post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudIkepoliciesPostParams struct {
 
-	/*Body
-	  Parameters for the creation of a new IKE Policy
+	/* Body.
 
+	   Parameters for the creation of a new IKE Policy
 	*/
 	Body *models.IKEPolicyCreate
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud ikepolicies post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudIkepoliciesPostParams) WithDefaults() *PcloudIkepoliciesPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud ikepolicies post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudIkepoliciesPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud ikepolicies post params
@@ -141,7 +155,6 @@ func (o *PcloudIkepoliciesPostParams) WriteToRequest(r runtime.ClientRequest, re
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

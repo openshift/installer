@@ -13,70 +13,84 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudTenantsPutParams creates a new PcloudTenantsPutParams object
-// with the default values initialized.
+// NewPcloudTenantsPutParams creates a new PcloudTenantsPutParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudTenantsPutParams() *PcloudTenantsPutParams {
-	var ()
 	return &PcloudTenantsPutParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudTenantsPutParamsWithTimeout creates a new PcloudTenantsPutParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudTenantsPutParamsWithTimeout(timeout time.Duration) *PcloudTenantsPutParams {
-	var ()
 	return &PcloudTenantsPutParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudTenantsPutParamsWithContext creates a new PcloudTenantsPutParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudTenantsPutParamsWithContext(ctx context.Context) *PcloudTenantsPutParams {
-	var ()
 	return &PcloudTenantsPutParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudTenantsPutParamsWithHTTPClient creates a new PcloudTenantsPutParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudTenantsPutParamsWithHTTPClient(client *http.Client) *PcloudTenantsPutParams {
-	var ()
 	return &PcloudTenantsPutParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudTenantsPutParams contains all the parameters to send to the API endpoint
-for the pcloud tenants put operation typically these are written to a http.Request
+/* PcloudTenantsPutParams contains all the parameters to send to the API endpoint
+   for the pcloud tenants put operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudTenantsPutParams struct {
 
-	/*Body
-	  Parameters for updating a Tenant
+	/* Body.
 
+	   Parameters for updating a Tenant
 	*/
 	Body *models.TenantUpdate
-	/*TenantID
-	  Tenant ID of a pcloud tenant
 
+	/* TenantID.
+
+	   Tenant ID of a pcloud tenant
 	*/
 	TenantID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud tenants put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudTenantsPutParams) WithDefaults() *PcloudTenantsPutParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud tenants put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudTenantsPutParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud tenants put params
@@ -141,7 +155,6 @@ func (o *PcloudTenantsPutParams) WriteToRequest(r runtime.ClientRequest, reg str
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

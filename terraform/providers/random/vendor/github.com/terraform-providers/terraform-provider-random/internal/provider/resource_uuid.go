@@ -1,8 +1,11 @@
 package provider
 
 import (
+	"context"
+
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -13,11 +16,11 @@ func resourceUuid() *schema.Resource {
 			"\n" +
 			"This resource uses [hashicorp/go-uuid](https://github.com/hashicorp/go-uuid) to generate a " +
 			"UUID-formatted string for use with services needed a unique string identifier.",
-		Create: CreateUuid,
-		Read:   schema.Noop,
-		Delete: schema.RemoveFromState,
+		CreateContext: CreateUuid,
+		ReadContext:   schema.NoopContext,
+		DeleteContext: RemoveResourceFromState,
 		Importer: &schema.ResourceImporter{
-			State: ImportUuid,
+			StateContext: ImportUuid,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -44,17 +47,18 @@ func resourceUuid() *schema.Resource {
 	}
 }
 
-func CreateUuid(d *schema.ResourceData, meta interface{}) error {
+func CreateUuid(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	result, err := uuid.GenerateUUID()
 	if err != nil {
-		return errwrap.Wrapf("error generating uuid: {{err}}", err)
+		return append(diags, diag.Errorf("error generating uuid: %s", err)...)
 	}
 	d.Set("result", result)
 	d.SetId(result)
 	return nil
 }
 
-func ImportUuid(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func ImportUuid(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	id := d.Id()
 	bytes, err := uuid.ParseUUID(id)
 	if err != nil {

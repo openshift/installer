@@ -20,6 +20,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/vmware/govmomi/units"
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
@@ -81,13 +82,22 @@ func (dss *HostDatastoreSystem) add(ctx *Context, ds *Datastore) *soap.Fault {
 	dss.Datastore = append(dss.Datastore, ds.Self)
 	dss.Host.Datastore = dss.Datastore
 	parent := hostParent(dss.Host)
-	Map.AddReference(parent, &parent.Datastore, ds.Self)
+	Map.AddReference(ctx, parent, &parent.Datastore, ds.Self)
 
-	browser := &HostDatastoreBrowser{}
-	browser.Datastore = dss.Datastore
-	ds.Browser = Map.Put(browser).Reference()
+	if Map.Get(ds.Self) == nil {
+		browser := &HostDatastoreBrowser{}
+		browser.Datastore = dss.Datastore
+		ds.Browser = Map.Put(browser).Reference()
 
-	folderPutChild(ctx, folder, ds)
+		ds.Summary.Capacity = int64(units.TB * 10)
+		ds.Summary.FreeSpace = ds.Summary.Capacity
+
+		info.FreeSpace = ds.Summary.FreeSpace
+		info.MaxMemoryFileSize = ds.Summary.Capacity
+		info.MaxFileSize = ds.Summary.Capacity
+
+		folderPutChild(ctx, folder, ds)
+	}
 
 	return nil
 }

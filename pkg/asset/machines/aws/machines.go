@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/pointer"
-	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -41,6 +40,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 			subnet,
 			mpool.InstanceType,
 			&mpool.EC2RootVolume,
+			mpool.EC2Metadata,
 			mpool.AMIID,
 			zone,
 			role,
@@ -78,36 +78,35 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 	return machines, nil
 }
 
-func provider(clusterID string, region string, subnet string, instanceType string, root *aws.EC2RootVolume, osImage string, zone, role, userDataSecret string, userTags map[string]string) (*awsprovider.AWSMachineProviderConfig, error) {
+func provider(clusterID string, region string, subnet string, instanceType string, root *aws.EC2RootVolume, imds aws.EC2Metadata, osImage string, zone, role, userDataSecret string, userTags map[string]string) (*machineapi.AWSMachineProviderConfig, error) {
 	tags, err := tagsFromUserTags(clusterID, userTags)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create awsprovider.TagSpecifications from UserTags")
+		return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
 	}
-
-	config := &awsprovider.AWSMachineProviderConfig{
+	config := &machineapi.AWSMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "awsproviderconfig.openshift.io/v1beta1",
+			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "AWSMachineProviderConfig",
 		},
 		InstanceType: instanceType,
-		BlockDevices: []awsprovider.BlockDeviceMappingSpec{
+		BlockDevices: []machineapi.BlockDeviceMappingSpec{
 			{
-				EBS: &awsprovider.EBSBlockDeviceSpec{
+				EBS: &machineapi.EBSBlockDeviceSpec{
 					VolumeType: pointer.StringPtr(root.Type),
 					VolumeSize: pointer.Int64Ptr(int64(root.Size)),
 					Iops:       pointer.Int64Ptr(int64(root.IOPS)),
 					Encrypted:  pointer.BoolPtr(true),
-					KMSKey:     awsprovider.AWSResourceReference{ARN: pointer.StringPtr(root.KMSKeyARN)},
+					KMSKey:     machineapi.AWSResourceReference{ARN: pointer.StringPtr(root.KMSKeyARN)},
 				},
 			},
 		},
 		Tags:               tags,
-		IAMInstanceProfile: &awsprovider.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterID, role))},
+		IAMInstanceProfile: &machineapi.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterID, role))},
 		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret:  &corev1.LocalObjectReference{Name: "aws-cloud-credentials"},
-		Placement:          awsprovider.Placement{Region: region, AvailabilityZone: zone},
-		SecurityGroups: []awsprovider.AWSResourceReference{{
-			Filters: []awsprovider.Filter{{
+		Placement:          machineapi.Placement{Region: region, AvailabilityZone: zone},
+		SecurityGroups: []machineapi.AWSResourceReference{{
+			Filters: []machineapi.Filter{{
 				Name:   "tag:Name",
 				Values: []string{fmt.Sprintf("%s-%s-sg", clusterID, role)},
 			}},
@@ -115,7 +114,7 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 	}
 
 	if subnet == "" {
-		config.Subnet.Filters = []awsprovider.Filter{{
+		config.Subnet.Filters = []machineapi.Filter{{
 			Name:   "tag:Name",
 			Values: []string{fmt.Sprintf("%s-private-%s", clusterID, zone)},
 		}}
@@ -124,7 +123,7 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 	}
 
 	if osImage == "" {
-		config.AMI.Filters = []awsprovider.Filter{{
+		config.AMI.Filters = []machineapi.Filter{{
 			Name:   "tag:Name",
 			Values: []string{fmt.Sprintf("%s-ami-%s", clusterID, region)},
 		}}
@@ -132,11 +131,15 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 		config.AMI.ID = pointer.StringPtr(osImage)
 	}
 
+	if imds.Authentication != "" {
+		config.MetadataServiceOptions.Authentication = machineapi.MetadataServiceAuthentication(imds.Authentication)
+	}
+
 	return config, nil
 }
 
-func tagsFromUserTags(clusterID string, usertags map[string]string) ([]awsprovider.TagSpecification, error) {
-	tags := []awsprovider.TagSpecification{
+func tagsFromUserTags(clusterID string, usertags map[string]string) ([]machineapi.TagSpecification, error) {
+	tags := []machineapi.TagSpecification{
 		{Name: fmt.Sprintf("kubernetes.io/cluster/%s", clusterID), Value: "owned"},
 	}
 	forbiddenTags := sets.NewString()
@@ -147,27 +150,27 @@ func tagsFromUserTags(clusterID string, usertags map[string]string) ([]awsprovid
 		if forbiddenTags.Has(k) {
 			return nil, fmt.Errorf("user tags may not clobber %s", k)
 		}
-		tags = append(tags, awsprovider.TagSpecification{Name: k, Value: v})
+		tags = append(tags, machineapi.TagSpecification{Name: k, Value: v})
 	}
 	return tags, nil
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
 func ConfigMasters(machines []machineapi.Machine, clusterID string, publish types.PublishingStrategy) {
-	lbrefs := []awsprovider.LoadBalancerReference{{
+	lbrefs := []machineapi.LoadBalancerReference{{
 		Name: fmt.Sprintf("%s-int", clusterID),
-		Type: awsprovider.NetworkLoadBalancerType,
+		Type: machineapi.NetworkLoadBalancerType,
 	}}
 
 	if publish == types.ExternalPublishingStrategy {
-		lbrefs = append(lbrefs, awsprovider.LoadBalancerReference{
+		lbrefs = append(lbrefs, machineapi.LoadBalancerReference{
 			Name: fmt.Sprintf("%s-ext", clusterID),
-			Type: awsprovider.NetworkLoadBalancerType,
+			Type: machineapi.NetworkLoadBalancerType,
 		})
 	}
 
 	for _, machine := range machines {
-		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
+		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*machineapi.AWSMachineProviderConfig)
 		providerSpec.LoadBalancers = lbrefs
 	}
 }

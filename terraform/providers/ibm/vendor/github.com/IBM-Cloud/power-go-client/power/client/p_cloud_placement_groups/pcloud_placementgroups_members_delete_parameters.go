@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudPlacementgroupsMembersDeleteParams creates a new PcloudPlacementgroupsMembersDeleteParams object
-// with the default values initialized.
+// NewPcloudPlacementgroupsMembersDeleteParams creates a new PcloudPlacementgroupsMembersDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPlacementgroupsMembersDeleteParams() *PcloudPlacementgroupsMembersDeleteParams {
-	var ()
 	return &PcloudPlacementgroupsMembersDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPlacementgroupsMembersDeleteParamsWithTimeout creates a new PcloudPlacementgroupsMembersDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPlacementgroupsMembersDeleteParamsWithTimeout(timeout time.Duration) *PcloudPlacementgroupsMembersDeleteParams {
-	var ()
 	return &PcloudPlacementgroupsMembersDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPlacementgroupsMembersDeleteParamsWithContext creates a new PcloudPlacementgroupsMembersDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPlacementgroupsMembersDeleteParamsWithContext(ctx context.Context) *PcloudPlacementgroupsMembersDeleteParams {
-	var ()
 	return &PcloudPlacementgroupsMembersDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPlacementgroupsMembersDeleteParamsWithHTTPClient creates a new PcloudPlacementgroupsMembersDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPlacementgroupsMembersDeleteParamsWithHTTPClient(client *http.Client) *PcloudPlacementgroupsMembersDeleteParams {
-	var ()
 	return &PcloudPlacementgroupsMembersDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPlacementgroupsMembersDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud placementgroups members delete operation typically these are written to a http.Request
+/* PcloudPlacementgroupsMembersDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud placementgroups members delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPlacementgroupsMembersDeleteParams struct {
 
-	/*Body
-	  Parameters for removing a Server in a Placement Group
+	/* Body.
 
+	   Parameters for removing a Server in a Placement Group
 	*/
 	Body *models.PlacementGroupServer
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PlacementGroupID
-	  Placement Group ID
 
+	/* PlacementGroupID.
+
+	   Placement Group ID
 	*/
 	PlacementGroupID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud placementgroups members delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPlacementgroupsMembersDeleteParams) WithDefaults() *PcloudPlacementgroupsMembersDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud placementgroups members delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPlacementgroupsMembersDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud placementgroups members delete params
@@ -157,7 +172,6 @@ func (o *PcloudPlacementgroupsMembersDeleteParams) WriteToRequest(r runtime.Clie
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

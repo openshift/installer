@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudPvminstancesConsolePutParams creates a new PcloudPvminstancesConsolePutParams object
-// with the default values initialized.
+// NewPcloudPvminstancesConsolePutParams creates a new PcloudPvminstancesConsolePutParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPvminstancesConsolePutParams() *PcloudPvminstancesConsolePutParams {
-	var ()
 	return &PcloudPvminstancesConsolePutParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPvminstancesConsolePutParamsWithTimeout creates a new PcloudPvminstancesConsolePutParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPvminstancesConsolePutParamsWithTimeout(timeout time.Duration) *PcloudPvminstancesConsolePutParams {
-	var ()
 	return &PcloudPvminstancesConsolePutParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPvminstancesConsolePutParamsWithContext creates a new PcloudPvminstancesConsolePutParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPvminstancesConsolePutParamsWithContext(ctx context.Context) *PcloudPvminstancesConsolePutParams {
-	var ()
 	return &PcloudPvminstancesConsolePutParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPvminstancesConsolePutParamsWithHTTPClient creates a new PcloudPvminstancesConsolePutParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPvminstancesConsolePutParamsWithHTTPClient(client *http.Client) *PcloudPvminstancesConsolePutParams {
-	var ()
 	return &PcloudPvminstancesConsolePutParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPvminstancesConsolePutParams contains all the parameters to send to the API endpoint
-for the pcloud pvminstances console put operation typically these are written to a http.Request
+/* PcloudPvminstancesConsolePutParams contains all the parameters to send to the API endpoint
+   for the pcloud pvminstances console put operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPvminstancesConsolePutParams struct {
 
-	/*Body
-	  Parameters to update a PVMInstance console required codepage
+	/* Body.
 
+	   Parameters to update a PVMInstance console required codepage
 	*/
 	Body *models.ConsoleLanguage
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PvmInstanceID
-	  PCloud PVM Instance ID
 
+	/* PvmInstanceID.
+
+	   PCloud PVM Instance ID
 	*/
 	PvmInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud pvminstances console put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesConsolePutParams) WithDefaults() *PcloudPvminstancesConsolePutParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud pvminstances console put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesConsolePutParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud pvminstances console put params
@@ -157,7 +172,6 @@ func (o *PcloudPvminstancesConsolePutParams) WriteToRequest(r runtime.ClientRequ
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

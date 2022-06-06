@@ -6,13 +6,15 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // ServiceInstanceSchemaObject service instance schema object
+//
 // swagger:model ServiceInstanceSchemaObject
 type ServiceInstanceSchemaObject struct {
 
@@ -42,7 +44,6 @@ func (m *ServiceInstanceSchemaObject) Validate(formats strfmt.Registry) error {
 }
 
 func (m *ServiceInstanceSchemaObject) validateCreate(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Create) { // not required
 		return nil
 	}
@@ -51,6 +52,8 @@ func (m *ServiceInstanceSchemaObject) validateCreate(formats strfmt.Registry) er
 		if err := m.Create.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("create")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("create")
 			}
 			return err
 		}
@@ -60,7 +63,6 @@ func (m *ServiceInstanceSchemaObject) validateCreate(formats strfmt.Registry) er
 }
 
 func (m *ServiceInstanceSchemaObject) validateUpdate(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Update) { // not required
 		return nil
 	}
@@ -69,6 +71,58 @@ func (m *ServiceInstanceSchemaObject) validateUpdate(formats strfmt.Registry) er
 		if err := m.Update.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("update")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("update")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this service instance schema object based on the context it is used
+func (m *ServiceInstanceSchemaObject) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateCreate(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateUpdate(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ServiceInstanceSchemaObject) contextValidateCreate(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Create != nil {
+		if err := m.Create.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("create")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("create")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *ServiceInstanceSchemaObject) contextValidateUpdate(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Update != nil {
+		if err := m.Update.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("update")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("update")
 			}
 			return err
 		}

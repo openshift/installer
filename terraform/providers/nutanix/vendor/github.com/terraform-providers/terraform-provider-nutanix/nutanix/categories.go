@@ -1,8 +1,8 @@
 package nutanix
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func categoriesSchema() *schema.Schema {
@@ -12,7 +12,7 @@ func categoriesSchema() *schema.Schema {
 		Computed: true,
 		Set: func(v interface{}) int {
 			category := v.(map[string]interface{})
-			return hashcode.String(category["name"].(string) + category["value"].(string))
+			return utils.HashcodeString(category["name"].(string) + category["value"].(string))
 		},
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -62,7 +62,7 @@ func categoriesSchemaOptional() *schema.Schema {
 		Optional: true,
 		Set: func(v interface{}) int {
 			category := v.(map[string]interface{})
-			return hashcode.String(category["name"].(string) + category["value"].(string))
+			return utils.HashcodeString(category["name"].(string) + category["value"].(string))
 		},
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{

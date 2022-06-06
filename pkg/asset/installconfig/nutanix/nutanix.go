@@ -5,11 +5,13 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	nutanixclient "github.com/terraform-providers/terraform-provider-nutanix/client"
 	nutanixclientv3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 
 	"github.com/openshift/installer/pkg/types/nutanix"
@@ -33,14 +35,29 @@ func Platform() (*nutanix.Platform, error) {
 		return nil, err
 	}
 
-	ctx := context.TODO()
-	v3Client := nutanixClient.V3Client
-	peUUID, err := getPrismElement(ctx, v3Client)
+	portNum, err := strconv.Atoi(nutanixClient.Port)
 	if err != nil {
 		return nil, err
 	}
 
-	subnetUUID, err := getSubnet(ctx, v3Client, peUUID)
+	pc := nutanixtypes.PrismCentral{
+		Endpoint: nutanix.PrismEndpoint{
+			Address: nutanixClient.PrismCentral,
+			Port:    int32(portNum),
+		},
+		Username: nutanixClient.Username,
+		Password: nutanixClient.Password,
+	}
+
+	ctx := context.TODO()
+	v3Client := nutanixClient.V3Client
+	pe, err := getPrismElement(ctx, v3Client)
+	if err != nil {
+		return nil, err
+	}
+	pe.Endpoint.Port = int32(portNum)
+
+	subnetUUID, err := getSubnet(ctx, v3Client, pe.UUID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,14 +68,11 @@ func Platform() (*nutanix.Platform, error) {
 	}
 
 	platform := &nutanix.Platform{
-		PrismCentral:     nutanixClient.PrismCentral,
-		Port:             nutanixClient.Port,
-		Username:         nutanixClient.Username,
-		Password:         nutanixClient.Password,
-		PrismElementUUID: peUUID,
-		SubnetUUID:       subnetUUID,
-		APIVIP:           apiVIP,
-		IngressVIP:       ingressVIP,
+		PrismCentral:  pc,
+		PrismElements: []nutanixtypes.PrismElement{*pe},
+		SubnetUUIDs:   []string{subnetUUID},
+		APIVIP:        apiVIP,
+		IngressVIP:    ingressVIP,
 	}
 	return platform, nil
 
@@ -68,7 +82,7 @@ func Platform() (*nutanix.Platform, error) {
 // Validation on the three fields is performed by creating a client.
 // If creating the client fails, an error is returned.
 func getClients() (*PrismCentralClient, error) {
-	var prismCentral, username, password, port string
+	var prismCentral, port, username, password string
 	if err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
@@ -100,7 +114,7 @@ func getClients() (*PrismCentralClient, error) {
 		{
 			Prompt: &survey.Input{
 				Message: "Username",
-				Help:    "The username to login to Prism Central.",
+				Help:    "The username to login to the Prism Central.",
 			},
 			Validate: survey.Required,
 		},
@@ -128,6 +142,7 @@ func getClients() (*PrismCentralClient, error) {
 		username,
 		password,
 	)
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to connect to Prism Central %s. Ensure provided information is correct", prismCentral)
 	}
@@ -141,31 +156,34 @@ func getClients() (*PrismCentralClient, error) {
 	}, nil
 }
 
-func getPrismElement(ctx context.Context, client *nutanixclientv3.Client) (string, error) {
+func getPrismElement(ctx context.Context, client *nutanixclientv3.Client) (*nutanixtypes.PrismElement, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
+	pe := &nutanixtypes.PrismElement{}
 	emptyFilter := ""
-	allPrismElements, err := client.V3.ListAllCluster(emptyFilter)
+	pesAll, err := client.V3.ListAllCluster(emptyFilter)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to list prism element clusters")
+		return nil, errors.Wrap(err, "unable to list prism element clusters")
 	}
+	pes := pesAll.Entities
 
-	pes := allPrismElements.Entities
 	if len(pes) == 0 {
-		return "", errors.New("did not find any prism element clusters")
-	} else if len(pes) == 1 {
-		peName := *pes[0].Spec.Name
-		peUUID := *pes[0].Metadata.UUID
-		logrus.Infof("Defaulting to only available prism element: %s", peName)
-		return peUUID, nil
+		return nil, errors.New("did not find any prism element clusters")
 	}
 
-	peUUIDs := make(map[string]string)
+	if len(pes) == 1 {
+		pe.UUID = *pes[0].Metadata.UUID
+		pe.Endpoint.Address = *pes[0].Spec.Resources.Network.ExternalIP
+		logrus.Infof("Defaulting to only available prism element (cluster): %s", *pes[0].Spec.Name)
+		return pe, nil
+	}
+
+	pesMap := make(map[string]*nutanixclientv3.ClusterIntentResponse)
 	var peChoices []string
 	for _, p := range pes {
 		n := *p.Spec.Name
-		peUUIDs[n] = *p.Metadata.UUID
+		pesMap[n] = p
 		peChoices = append(peChoices, n)
 	}
 
@@ -180,23 +198,28 @@ func getPrismElement(ctx context.Context, client *nutanixclientv3.Client) (strin
 			Validate: survey.Required,
 		},
 	}, &selectedPe); err != nil {
-		return "", errors.Wrap(err, "failed UserInput")
+		return nil, errors.Wrap(err, "failed UserInput")
 	}
 
-	return peUUIDs[selectedPe], nil
+	pe.UUID = *pesMap[selectedPe].Metadata.UUID
+	pe.Endpoint.Address = *pesMap[selectedPe].Spec.Resources.Network.ExternalIP
+	return pe, nil
 
 }
 
 func getSubnet(ctx context.Context, client *nutanixclientv3.Client, peUUID string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
+
 	emptyFilter := ""
-	subnetsAll, err := client.V3.ListAllSubnet(emptyFilter)
+	emptyClientFilters := make([]*nutanixclient.AdditionalFilter, 0)
+	subnetsAll, err := client.V3.ListAllSubnet(emptyFilter, emptyClientFilters)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to list subnets")
 	}
 
 	subnets := subnetsAll.Entities
+
 	// API returns an error when no results, but let's leave this in to be defensive.
 	if len(subnets) == 0 {
 		return "", errors.New("did not find any subnets")
@@ -210,10 +233,11 @@ func getSubnet(ctx context.Context, client *nutanixclientv3.Client, peUUID strin
 
 	subnetUUIDs := make(map[string]string)
 	var subnetChoices []string
-	for _, s := range subnets {
-		if *s.Spec.ClusterReference.UUID == peUUID {
-			n := *s.Spec.Name
-			subnetUUIDs[n] = *s.Metadata.UUID
+	for _, subnet := range subnets {
+		// some subnet types (e.g. VPC overlays) do not come with a cluster reference; we don't need to check them
+		if subnet.Spec.ClusterReference == nil || (subnet.Spec.ClusterReference.UUID != nil && *subnet.Spec.ClusterReference.UUID == peUUID) {
+			n := *subnet.Spec.Name
+			subnetUUIDs[n] = *subnet.Metadata.UUID
 			subnetChoices = append(subnetChoices, n)
 		}
 	}

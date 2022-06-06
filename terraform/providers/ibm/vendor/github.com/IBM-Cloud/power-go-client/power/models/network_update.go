@@ -6,15 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // NetworkUpdate network update
+//
 // swagger:model NetworkUpdate
 type NetworkUpdate struct {
 
@@ -46,7 +47,6 @@ func (m *NetworkUpdate) Validate(formats strfmt.Registry) error {
 }
 
 func (m *NetworkUpdate) validateIPAddressRanges(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.IPAddressRanges) { // not required
 		return nil
 	}
@@ -60,6 +60,42 @@ func (m *NetworkUpdate) validateIPAddressRanges(formats strfmt.Registry) error {
 			if err := m.IPAddressRanges[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this network update based on the context it is used
+func (m *NetworkUpdate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateIPAddressRanges(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *NetworkUpdate) contextValidateIPAddressRanges(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.IPAddressRanges); i++ {
+
+		if m.IPAddressRanges[i] != nil {
+			if err := m.IPAddressRanges[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

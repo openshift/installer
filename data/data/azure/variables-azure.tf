@@ -170,3 +170,8 @@ variable "azure_hypervgeneration_version" {
 This determines the HyperVGeneration disk type to use for the control plane VMs.
 EOF
 }
+
+variable "azure_control_plane_vm_networking_type" {
+  type        = bool
+  description = "Whether to enable accelerated networking on control plane nodes."
+}

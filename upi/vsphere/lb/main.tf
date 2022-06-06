@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    ignition = {
+      source  = "community-terraform-providers/ignition"
+      version = "2.1.2"
+    }
+  }
+}
+
 data "ignition_systemd_unit" "haproxy" {
   name    = "haproxy.service"
   content = file("${path.module}/haproxy.service")

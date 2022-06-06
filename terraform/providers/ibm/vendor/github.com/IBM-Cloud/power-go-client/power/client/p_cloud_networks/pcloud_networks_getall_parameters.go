@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudNetworksGetallParams creates a new PcloudNetworksGetallParams object
-// with the default values initialized.
+// NewPcloudNetworksGetallParams creates a new PcloudNetworksGetallParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudNetworksGetallParams() *PcloudNetworksGetallParams {
-	var ()
 	return &PcloudNetworksGetallParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudNetworksGetallParamsWithTimeout creates a new PcloudNetworksGetallParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudNetworksGetallParamsWithTimeout(timeout time.Duration) *PcloudNetworksGetallParams {
-	var ()
 	return &PcloudNetworksGetallParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudNetworksGetallParamsWithContext creates a new PcloudNetworksGetallParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudNetworksGetallParamsWithContext(ctx context.Context) *PcloudNetworksGetallParams {
-	var ()
 	return &PcloudNetworksGetallParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudNetworksGetallParamsWithHTTPClient creates a new PcloudNetworksGetallParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudNetworksGetallParamsWithHTTPClient(client *http.Client) *PcloudNetworksGetallParams {
-	var ()
 	return &PcloudNetworksGetallParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudNetworksGetallParams contains all the parameters to send to the API endpoint
-for the pcloud networks getall operation typically these are written to a http.Request
+/* PcloudNetworksGetallParams contains all the parameters to send to the API endpoint
+   for the pcloud networks getall operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudNetworksGetallParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*Filter
-	  A filter expression that filters resources listed in the response
 
+	/* Filter.
+
+	   A filter expression that filters resources listed in the response
 	*/
 	Filter *string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud networks getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudNetworksGetallParams) WithDefaults() *PcloudNetworksGetallParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud networks getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudNetworksGetallParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud networks getall params
@@ -149,16 +163,17 @@ func (o *PcloudNetworksGetallParams) WriteToRequest(r runtime.ClientRequest, reg
 
 		// query param filter
 		var qrFilter string
+
 		if o.Filter != nil {
 			qrFilter = *o.Filter
 		}
 		qFilter := qrFilter
 		if qFilter != "" {
+
 			if err := r.SetQueryParam("filter", qFilter); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if len(res) > 0 {

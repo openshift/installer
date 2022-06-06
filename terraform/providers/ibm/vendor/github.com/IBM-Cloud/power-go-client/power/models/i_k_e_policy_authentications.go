@@ -6,14 +6,23 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
+
+	"github.com/go-openapi/strfmt"
 )
 
 // IKEPolicyAuthentications i k e policy authentications
+// Example: ["sha-256","sha-384","sha1","none"]
+//
 // swagger:model IKEPolicyAuthentications
 type IKEPolicyAuthentications []string
 
 // Validate validates this i k e policy authentications
 func (m IKEPolicyAuthentications) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this i k e policy authentications based on context it is used
+func (m IKEPolicyAuthentications) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }

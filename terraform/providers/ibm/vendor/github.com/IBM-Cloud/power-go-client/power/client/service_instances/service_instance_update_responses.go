@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // ServiceInstanceUpdateReader is a Reader for the ServiceInstanceUpdate structure.
@@ -24,37 +23,32 @@ type ServiceInstanceUpdateReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ServiceInstanceUpdateReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewServiceInstanceUpdateOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 202:
 		result := NewServiceInstanceUpdateAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewServiceInstanceUpdateBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewServiceInstanceUpdateUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -63,7 +57,7 @@ func NewServiceInstanceUpdateOK() *ServiceInstanceUpdateOK {
 	return &ServiceInstanceUpdateOK{}
 }
 
-/*ServiceInstanceUpdateOK handles this case with default header values.
+/* ServiceInstanceUpdateOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,6 +67,9 @@ type ServiceInstanceUpdateOK struct {
 
 func (o *ServiceInstanceUpdateOK) Error() string {
 	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateOK  %+v", 200, o.Payload)
+}
+func (o *ServiceInstanceUpdateOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *ServiceInstanceUpdateOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -90,7 +87,7 @@ func NewServiceInstanceUpdateAccepted() *ServiceInstanceUpdateAccepted {
 	return &ServiceInstanceUpdateAccepted{}
 }
 
-/*ServiceInstanceUpdateAccepted handles this case with default header values.
+/* ServiceInstanceUpdateAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -100,6 +97,9 @@ type ServiceInstanceUpdateAccepted struct {
 
 func (o *ServiceInstanceUpdateAccepted) Error() string {
 	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateAccepted  %+v", 202, o.Payload)
+}
+func (o *ServiceInstanceUpdateAccepted) GetPayload() *models.ServiceInstanceAsyncOperation {
+	return o.Payload
 }
 
 func (o *ServiceInstanceUpdateAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -119,7 +119,7 @@ func NewServiceInstanceUpdateBadRequest() *ServiceInstanceUpdateBadRequest {
 	return &ServiceInstanceUpdateBadRequest{}
 }
 
-/*ServiceInstanceUpdateBadRequest handles this case with default header values.
+/* ServiceInstanceUpdateBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -129,6 +129,9 @@ type ServiceInstanceUpdateBadRequest struct {
 
 func (o *ServiceInstanceUpdateBadRequest) Error() string {
 	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateBadRequest  %+v", 400, o.Payload)
+}
+func (o *ServiceInstanceUpdateBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceInstanceUpdateBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -148,7 +151,7 @@ func NewServiceInstanceUpdateUnprocessableEntity() *ServiceInstanceUpdateUnproce
 	return &ServiceInstanceUpdateUnprocessableEntity{}
 }
 
-/*ServiceInstanceUpdateUnprocessableEntity handles this case with default header values.
+/* ServiceInstanceUpdateUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable entity
 */
@@ -158,6 +161,9 @@ type ServiceInstanceUpdateUnprocessableEntity struct {
 
 func (o *ServiceInstanceUpdateUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *ServiceInstanceUpdateUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceInstanceUpdateUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

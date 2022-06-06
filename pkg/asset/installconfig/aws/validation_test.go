@@ -2,20 +2,45 @@ package aws
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/pointer"
 
+	"github.com/openshift/installer/pkg/asset/installconfig/aws/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
 var (
-	validCIDR = "10.0.0.0/16"
+	validCIDR             = "10.0.0.0/16"
+	validRegion           = "us-east-1"
+	validCallerRef        = "valid-caller-reference"
+	validDSId             = "valid-delegation-set-id"
+	validNameServers      = []string{"valid-name-server"}
+	validHostedZoneName   = "valid-private-subnet-a"
+	invalidHostedZoneName = "invalid-hosted-zone"
+	validDomainName       = "valid-base-domain"
+	invalidBaseDomain     = "invalid-base-domain"
+	metaName              = "ClusterMetaName"
+
+	publishInternal      = func(ic *types.InstallConfig) { ic.Publish = types.InternalPublishingStrategy }
+	clearHostedZone      = func(ic *types.InstallConfig) { ic.AWS.HostedZone = "" }
+	invalidateHostedZone = func(ic *types.InstallConfig) { ic.AWS.HostedZone = invalidHostedZoneName }
+	invalidateBaseDomain = func(ic *types.InstallConfig) { ic.BaseDomain = invalidBaseDomain }
+	clearBaseDomain      = func(ic *types.InstallConfig) { ic.BaseDomain = "" }
+	invalidateRegion     = func(ic *types.InstallConfig) { ic.AWS.Region = "us-east4" }
 )
+
+type editFunctions []func(ic *types.InstallConfig)
 
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
@@ -24,7 +49,8 @@ func validInstallConfig() *types.InstallConfig {
 				{CIDR: *ipnet.MustParseCIDR(validCIDR)},
 			},
 		},
-		Publish: types.ExternalPublishingStrategy,
+		BaseDomain: validDomainName,
+		Publish:    types.ExternalPublishingStrategy,
 		Platform: types.Platform{
 			AWS: &aws.Platform{
 				Region: "us-east-1",
@@ -36,6 +62,7 @@ func validInstallConfig() *types.InstallConfig {
 					"valid-public-subnet-b",
 					"valid-public-subnet-c",
 				},
+				HostedZone: validHostedZoneName,
 			},
 		},
 		ControlPlane: &types.MachinePool{
@@ -56,6 +83,9 @@ func validInstallConfig() *types.InstallConfig {
 				},
 			},
 		}},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: metaName,
+		},
 	}
 }
 
@@ -122,6 +152,16 @@ func validServiceEndpoints() []aws.ServiceEndpoint {
 	}}
 }
 
+func invalidServiceEndpoint() []aws.ServiceEndpoint {
+	return []aws.ServiceEndpoint{{
+		Name: "testing",
+		URL:  "testing",
+	}, {
+		Name: "test",
+		URL:  "http://testing.non",
+	}}
+}
+
 func validInstanceTypes() map[string]InstanceType {
 	return map[string]InstanceType{
 		"t2.small": {
@@ -138,6 +178,32 @@ func validInstanceTypes() map[string]InstanceType {
 		},
 	}
 }
+
+func createBaseDomainHostedZone() route53.HostedZone {
+	return route53.HostedZone{
+		CallerReference: &validCallerRef,
+		Id:              &validDSId,
+		Name:            &validDomainName,
+	}
+}
+
+func createValidHostedZone() route53.GetHostedZoneOutput {
+	ptrValidNameServers := []*string{}
+	for i := range validNameServers {
+		ptrValidNameServers = append(ptrValidNameServers, &validNameServers[i])
+	}
+
+	validDelegationSet := route53.DelegationSet{CallerReference: &validCallerRef, Id: &validDSId, NameServers: ptrValidNameServers}
+	validHostedZone := route53.HostedZone{CallerReference: &validCallerRef, Id: &validDSId, Name: &validHostedZoneName}
+	validVPCs := []*route53.VPC{{VPCId: &validHostedZoneName, VPCRegion: &validRegion}}
+
+	return route53.GetHostedZoneOutput{
+		DelegationSet: &validDelegationSet,
+		HostedZone:    &validHostedZone,
+		VPCs:          validVPCs,
+	}
+}
+
 func TestValidate(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -146,6 +212,7 @@ func TestValidate(t *testing.T) {
 		privateSubnets map[string]Subnet
 		publicSubnets  map[string]Subnet
 		instanceTypes  map[string]InstanceType
+		proxy          string
 		expectErr      string
 	}{{
 		name: "valid no byo",
@@ -499,43 +566,6 @@ func TestValidate(t *testing.T) {
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
 	}, {
-		name: "AMI not provided for control plane",
-		installConfig: func() *types.InstallConfig {
-			c := validInstallConfig()
-			c.Platform.AWS.Region = "us-gov-east-1"
-			c.Compute[0].Platform.AWS.AMIID = "custom-ami"
-			return c
-		}(),
-		availZones:     validAvailZones(),
-		privateSubnets: validPrivateSubnets(),
-		publicSubnets:  validPublicSubnets(),
-		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
-	}, {
-		name: "AMI not provided for compute",
-		installConfig: func() *types.InstallConfig {
-			c := validInstallConfig()
-			c.Platform.AWS.Region = "us-gov-east-1"
-			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
-			return c
-		}(),
-		availZones:     validAvailZones(),
-		privateSubnets: validPrivateSubnets(),
-		publicSubnets:  validPublicSubnets(),
-		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
-	}, {
-		name: "machine platform not provided for compute",
-		installConfig: func() *types.InstallConfig {
-			c := validInstallConfig()
-			c.Platform.AWS.Region = "us-gov-east-1"
-			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
-			c.Compute[0].Platform.AWS = nil
-			return c
-		}(),
-		availZones:     validAvailZones(),
-		privateSubnets: validPrivateSubnets(),
-		publicSubnets:  validPublicSubnets(),
-		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
-	}, {
 		name: "AMI omitted for compute with no replicas",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
@@ -548,17 +578,6 @@ func TestValidate(t *testing.T) {
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
 	}, {
-		name: "AMI not provided for US gov region",
-		installConfig: func() *types.InstallConfig {
-			c := validInstallConfig()
-			c.Platform.AWS.Region = "us-gov-east-1"
-			return c
-		}(),
-		availZones:     validAvailZones(),
-		privateSubnets: validPrivateSubnets(),
-		publicSubnets:  validPublicSubnets(),
-		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
-	}, {
 		name: "AMI not provided for unknown region",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
@@ -570,6 +589,46 @@ func TestValidate(t *testing.T) {
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
 		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
+		name: "invalid endpoint URL",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-east-1"
+			c.Platform.AWS.ServiceEndpoints = invalidServiceEndpoint()
+			c.Platform.AWS.AMIID = "custom-ami"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		expectErr:      `^\Q[platform.aws.serviceEndpoints[0].url: Invalid value: "testing": Head "testing": unsupported protocol scheme "", platform.aws.serviceEndpoints[1].url: Invalid value: "http://testing.non": Head "http://testing.non": dial tcp: lookup testing.non\E.*: no such host\]$`,
+	}, {
+		name: "invalid proxy URL but valid URL",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-east-1"
+			c.Platform.AWS.AMIID = "custom-ami"
+			c.Platform.AWS.ServiceEndpoints = []aws.ServiceEndpoint{{Name: "test", URL: "http://testing.com"}}
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		proxy:          "proxy",
+	}, {
+		name: "invalid proxy URL and invalid URL",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-east-1"
+			c.Platform.AWS.AMIID = "custom-ami"
+			c.Platform.AWS.ServiceEndpoints = []aws.ServiceEndpoint{{Name: "test", URL: "http://test"}}
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		proxy:          "http://proxy.com",
+		expectErr:      `^\Qplatform.aws.serviceEndpoints[0].url: Invalid value: "http://test": Head "http://test": dial tcp: lookup test\E.*: no such host$`,
 	}}
 
 	for _, test := range tests {
@@ -579,6 +638,11 @@ func TestValidate(t *testing.T) {
 				privateSubnets:    test.privateSubnets,
 				publicSubnets:     test.publicSubnets,
 				instanceTypes:     test.instanceTypes,
+			}
+			if test.proxy != "" {
+				os.Setenv("HTTP_PROXY", test.proxy)
+			} else {
+				os.Unsetenv("HTTP_PROXY")
 			}
 			err := Validate(context.TODO(), meta, test.installConfig)
 			if test.expectErr == "" {
@@ -634,6 +698,197 @@ func TestIsHostedZoneDomainParentOfClusterDomain(t *testing.T) {
 			zone := &route53.HostedZone{Name: &tc.hostedZoneDomain}
 			actual := isHostedZoneDomainParentOfClusterDomain(zone, tc.clusterDomain)
 			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+func TestValidateForProvisioning(t *testing.T) {
+	cases := []struct {
+		name        string
+		edits       editFunctions
+		expectedErr string
+	}{{
+		// This really should test for nil, as nothing happened, but no errors were provided
+		name:  "internal publish strategy no hosted zone",
+		edits: editFunctions{publishInternal, clearHostedZone},
+	}, {
+		name:        "external publish strategy no hosted zone invalid (empty) base domain",
+		edits:       editFunctions{clearHostedZone, clearBaseDomain},
+		expectedErr: "baseDomain: Invalid value: \"\": cannot find base domain",
+	}, {
+		name:        "external publish strategy no hosted zone invalid base domain",
+		edits:       editFunctions{clearHostedZone, invalidateBaseDomain},
+		expectedErr: "baseDomain: Invalid value: \"invalid-base-domain\": cannot find base domain",
+	}, {
+		name:  "external publish strategy no hosted zone valid base domain",
+		edits: editFunctions{clearHostedZone},
+	}, {
+		name:  "internal publish strategy valid hosted zone",
+		edits: editFunctions{publishInternal},
+	}, {
+		name:        "internal publish strategy invalid hosted zone",
+		edits:       editFunctions{publishInternal, invalidateHostedZone},
+		expectedErr: "aws.hostedZone: Invalid value: \"invalid-hosted-zone\": cannot find hosted zone",
+	}, {
+		name: "external publish strategy valid hosted zone",
+	}, {
+		name:        "external publish strategy invalid hosted zone",
+		edits:       editFunctions{invalidateHostedZone},
+		expectedErr: "aws.hostedZone: Invalid value: \"invalid-hosted-zone\": cannot find hosted zone",
+	}}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	route53Client := mock.NewMockAPI(mockCtrl)
+
+	validHostedZoneOutput := createValidHostedZone()
+	validDomainOutput := createBaseDomainHostedZone()
+
+	route53Client.EXPECT().GetBaseDomain(validDomainName).Return(&validDomainOutput, nil).AnyTimes()
+	route53Client.EXPECT().GetBaseDomain("").Return(nil, fmt.Errorf("invalid value: \"\": cannot find base domain")).AnyTimes()
+	route53Client.EXPECT().GetBaseDomain(invalidBaseDomain).Return(nil, fmt.Errorf("invalid value: \"%s\": cannot find base domain", invalidBaseDomain)).AnyTimes()
+
+	route53Client.EXPECT().ValidateZoneRecords(&validDomainOutput, gomock.Any(), gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
+	route53Client.EXPECT().ValidateZoneRecords(gomock.Any(), validHostedZoneName, gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
+
+	// An invalid hosted zone should provide an error
+	route53Client.EXPECT().GetHostedZone(validHostedZoneName).Return(&validHostedZoneOutput, nil).AnyTimes()
+	route53Client.EXPECT().GetHostedZone(gomock.Not(validHostedZoneName)).Return(nil, fmt.Errorf("invalid value: \"invalid-hosted-zone\": cannot find hosted zone")).AnyTimes()
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range test.edits {
+				edit(editedInstallConfig)
+			}
+
+			meta := &Metadata{
+				availabilityZones: validAvailZones(),
+				privateSubnets:    validPrivateSubnets(),
+				publicSubnets:     validPublicSubnets(),
+				instanceTypes:     validInstanceTypes(),
+				Region:            editedInstallConfig.AWS.Region,
+				vpc:               "valid-private-subnet-a",
+			}
+
+			err := ValidateForProvisioning(route53Client, editedInstallConfig, meta)
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				if assert.Error(t, err) {
+					assert.Regexp(t, test.expectedErr, err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestGetSubDomainDNSRecords(t *testing.T) {
+	cases := []struct {
+		name               string
+		baseDomain         string
+		problematicRecords []string
+		expectedErr        string
+	}{{
+		name:        "empty cluster domain",
+		expectedErr: fmt.Sprintf("hosted zone domain %s is not a parent of the cluster domain %s", validDomainName, ""),
+	}, {
+		name:        "period cluster domain",
+		baseDomain:  ".",
+		expectedErr: fmt.Sprintf("hosted zone domain %s is not a parent of the cluster domain %s", validDomainName, "."),
+	}, {
+		name:       "valid dns record no problems",
+		baseDomain: validDomainName + ".",
+	}, {
+		name:               "valid dns record with problems",
+		baseDomain:         validDomainName,
+		problematicRecords: []string{"test1.ClusterMetaName.valid-base-domain."},
+	}, {
+		name:               "valid dns record with skipped problems",
+		baseDomain:         validDomainName,
+		problematicRecords: []string{"test1.ClusterMetaName.valid-base-domain.", "ClusterMetaName.xxxxx-xxxx-xxxxxx."},
+	},
+	}
+
+	validDomainOutput := createBaseDomainHostedZone()
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	route53Client := mock.NewMockAPI(mockCtrl)
+
+	for _, test := range cases {
+
+		t.Run(test.name, func(t *testing.T) {
+
+			ic := validInstallConfig()
+			ic.BaseDomain = test.baseDomain
+
+			if test.expectedErr != "" {
+				if test.problematicRecords == nil {
+					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic).Return(nil, errors.Errorf(test.expectedErr)).AnyTimes()
+				} else {
+					// mimic the results of what should happen in the internal function passed to
+					// ListResourceRecordSetsPages by GetSubDomainDNSRecords. Skip certain problematicRecords
+					returnedProblems := make([]string, 0, len(test.problematicRecords))
+					expectedName := ic.ClusterDomain() + "."
+					for _, pr := range test.problematicRecords {
+						if len(pr) != len(expectedName) {
+							returnedProblems = append(returnedProblems, pr)
+						}
+					}
+					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic).Return(returnedProblems, errors.Errorf(test.expectedErr)).AnyTimes()
+				}
+			} else {
+				route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic).Return(nil, nil).AnyTimes()
+			}
+
+			_, err := route53Client.GetSubDomainDNSRecords(&validDomainOutput, ic)
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				if assert.Error(t, err) {
+					assert.Regexp(t, test.expectedErr, err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestSkipRecords(t *testing.T) {
+	cases := []struct {
+		name           string
+		recordName     string
+		expectedResult bool
+	}{{
+		name:           "record not part of cluster",
+		recordName:     fmt.Sprintf("%s.test.domain.", metaName),
+		expectedResult: true,
+	}, {
+		name:           "record and cluster domain are same",
+		recordName:     fmt.Sprintf("%s.%s.", metaName, validDomainName),
+		expectedResult: true,
+	}, {
+		name: "record not part of cluster bad suffix",
+		// The parent below does not have a dot following it on purpose - do not Remove
+		recordName:     fmt.Sprintf("parent%s.%s.", metaName, validDomainName),
+		expectedResult: true,
+	}, {
+		name: "record part of cluster bad suffix",
+		// The parent below does not have a dot following it on purpose - do not Remove
+		recordName:     fmt.Sprintf("parent.%s.%s.", metaName, validDomainName),
+		expectedResult: false,
+	},
+	}
+
+	// create the dottedClusterDomain in the same manner that it will be used in GetSubDomainDNSRecords
+	ic := validInstallConfig()
+	ic.BaseDomain = validDomainName
+	dottedClusterDomain := ic.ClusterDomain() + "."
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expectedResult, skipRecord(test.recordName, dottedClusterDomain))
 		})
 	}
 }

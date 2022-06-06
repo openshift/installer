@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // DeadPeerDetection Dead Peer Detection of the VPN Connection
+//
 // swagger:model DeadPeerDetection
 type DeadPeerDetection struct {
 
@@ -25,12 +26,14 @@ type DeadPeerDetection struct {
 	Action *string `json:"action"`
 
 	// How often to test that the Peer Gateway is responsive
+	// Example: 10
 	// Required: true
 	// Maximum: 60
 	// Minimum: 2
 	Interval *int64 `json:"interval"`
 
 	// The number of attempts to connect before tearing down the connection
+	// Example: 5
 	// Required: true
 	// Maximum: 5
 	// Minimum: 1
@@ -79,7 +82,7 @@ const (
 
 // prop value enum
 func (m *DeadPeerDetection) validateActionEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, deadPeerDetectionTypeActionPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, deadPeerDetectionTypeActionPropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -105,11 +108,11 @@ func (m *DeadPeerDetection) validateInterval(formats strfmt.Registry) error {
 		return err
 	}
 
-	if err := validate.MinimumInt("interval", "body", int64(*m.Interval), 2, false); err != nil {
+	if err := validate.MinimumInt("interval", "body", *m.Interval, 2, false); err != nil {
 		return err
 	}
 
-	if err := validate.MaximumInt("interval", "body", int64(*m.Interval), 60, false); err != nil {
+	if err := validate.MaximumInt("interval", "body", *m.Interval, 60, false); err != nil {
 		return err
 	}
 
@@ -122,14 +125,19 @@ func (m *DeadPeerDetection) validateThreshold(formats strfmt.Registry) error {
 		return err
 	}
 
-	if err := validate.MinimumInt("threshold", "body", int64(*m.Threshold), 1, false); err != nil {
+	if err := validate.MinimumInt("threshold", "body", *m.Threshold, 1, false); err != nil {
 		return err
 	}
 
-	if err := validate.MaximumInt("threshold", "body", int64(*m.Threshold), 5, false); err != nil {
+	if err := validate.MaximumInt("threshold", "body", *m.Threshold, 5, false); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this dead peer detection based on context it is used
+func (m *DeadPeerDetection) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

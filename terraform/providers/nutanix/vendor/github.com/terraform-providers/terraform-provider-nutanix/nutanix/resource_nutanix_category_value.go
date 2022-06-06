@@ -1,21 +1,23 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func resourceNutanixCategoryValue() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixCategoryValueCreateOrUpdate,
-		Read:   resourceNutanixCategoryValueRead,
-		Update: resourceNutanixCategoryValueCreateOrUpdate,
-		Delete: resourceNutanixCategoryValueDelete,
+		CreateContext: resourceNutanixCategoryValueCreateOrUpdate,
+		ReadContext:   resourceNutanixCategoryValueRead,
+		UpdateContext: resourceNutanixCategoryValueCreateOrUpdate,
+		DeleteContext: resourceNutanixCategoryValueDelete,
 		Schema: map[string]*schema.Schema{
 			"value": {
 				Type:     schema.TypeString,
@@ -43,7 +45,7 @@ func resourceNutanixCategoryValue() *schema.Resource {
 	}
 }
 
-func resourceNutanixCategoryValueCreateOrUpdate(resourceData *schema.ResourceData, meta interface{}) error {
+func resourceNutanixCategoryValueCreateOrUpdate(ctx context.Context, resourceData *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Creating CategoryValue: %s", resourceData.Get("value").(string))
 
 	conn := meta.(*Client).API
@@ -61,7 +63,7 @@ func resourceNutanixCategoryValueCreateOrUpdate(resourceData *schema.ResourceDat
 
 	// validate required fields
 	if !nameOK || !valueOK {
-		return fmt.Errorf("please provide the required attributes name and value")
+		return diag.Errorf("please provide the required attributes name and value")
 	}
 
 	request.Value = utils.StringPtr(value.(string))
@@ -70,7 +72,7 @@ func resourceNutanixCategoryValueCreateOrUpdate(resourceData *schema.ResourceDat
 	resp, err := conn.V3.CreateOrUpdateCategoryValue(name.(string), request)
 
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	v := *resp.Value
@@ -78,16 +80,16 @@ func resourceNutanixCategoryValueCreateOrUpdate(resourceData *schema.ResourceDat
 	// set terraform state
 	resourceData.SetId(v)
 
-	return resourceNutanixCategoryValueRead(resourceData, meta)
+	return resourceNutanixCategoryValueRead(ctx, resourceData, meta)
 }
 
-func resourceNutanixCategoryValueRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixCategoryValueRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[DEBUG] Reading CategoryValue: %s", d.Id())
 
 	name, nameOK := d.GetOk("name")
 
 	if !nameOK {
-		return fmt.Errorf("please provide the required attributes name")
+		return diag.Errorf("please provide the required attributes name")
 	}
 
 	// Get client connection
@@ -101,29 +103,29 @@ func resourceNutanixCategoryValueRead(d *schema.ResourceData, meta interface{}) 
 			d.SetId("")
 			return nil
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.Set("api_version", utils.StringValue(resp.APIVersion))
 	d.Set("name", utils.StringValue(resp.Name))
 	d.Set("description", utils.StringValue(resp.Description))
 
-	return d.Set("system_defined", utils.BoolValue(resp.SystemDefined))
+	return diag.FromErr(d.Set("system_defined", utils.BoolValue(resp.SystemDefined)))
 }
 
-func resourceNutanixCategoryValueDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixCategoryValueDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	name, nameOK := d.GetOk("name")
 
 	if !nameOK {
-		return fmt.Errorf("please provide the required attributes name")
+		return diag.Errorf("please provide the required attributes name")
 	}
 
 	log.Printf("[Debug] Destroying the category with the ID %s", d.Id())
 
 	if err := conn.V3.DeleteCategoryValue(name.(string), d.Id()); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

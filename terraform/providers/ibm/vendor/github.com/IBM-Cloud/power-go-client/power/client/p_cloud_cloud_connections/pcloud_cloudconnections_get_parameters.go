@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudCloudconnectionsGetParams creates a new PcloudCloudconnectionsGetParams object
-// with the default values initialized.
+// NewPcloudCloudconnectionsGetParams creates a new PcloudCloudconnectionsGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudconnectionsGetParams() *PcloudCloudconnectionsGetParams {
-	var ()
 	return &PcloudCloudconnectionsGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudconnectionsGetParamsWithTimeout creates a new PcloudCloudconnectionsGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudconnectionsGetParamsWithTimeout(timeout time.Duration) *PcloudCloudconnectionsGetParams {
-	var ()
 	return &PcloudCloudconnectionsGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudconnectionsGetParamsWithContext creates a new PcloudCloudconnectionsGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudconnectionsGetParamsWithContext(ctx context.Context) *PcloudCloudconnectionsGetParams {
-	var ()
 	return &PcloudCloudconnectionsGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudconnectionsGetParamsWithHTTPClient creates a new PcloudCloudconnectionsGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudconnectionsGetParamsWithHTTPClient(client *http.Client) *PcloudCloudconnectionsGetParams {
-	var ()
 	return &PcloudCloudconnectionsGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudconnectionsGetParams contains all the parameters to send to the API endpoint
-for the pcloud cloudconnections get operation typically these are written to a http.Request
+/* PcloudCloudconnectionsGetParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudconnections get operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudconnectionsGetParams struct {
 
-	/*CloudConnectionID
-	  Cloud Connection ID
+	/* CloudConnectionID.
 
+	   Cloud Connection ID
 	*/
 	CloudConnectionID string
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudconnections get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudconnectionsGetParams) WithDefaults() *PcloudCloudconnectionsGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudconnections get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudconnectionsGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudconnections get params

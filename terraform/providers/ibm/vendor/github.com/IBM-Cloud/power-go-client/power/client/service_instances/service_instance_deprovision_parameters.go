@@ -13,89 +13,107 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-
-	strfmt "github.com/go-openapi/strfmt"
 )
 
-// NewServiceInstanceDeprovisionParams creates a new ServiceInstanceDeprovisionParams object
-// with the default values initialized.
+// NewServiceInstanceDeprovisionParams creates a new ServiceInstanceDeprovisionParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceInstanceDeprovisionParams() *ServiceInstanceDeprovisionParams {
-	var ()
 	return &ServiceInstanceDeprovisionParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceInstanceDeprovisionParamsWithTimeout creates a new ServiceInstanceDeprovisionParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceInstanceDeprovisionParamsWithTimeout(timeout time.Duration) *ServiceInstanceDeprovisionParams {
-	var ()
 	return &ServiceInstanceDeprovisionParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceInstanceDeprovisionParamsWithContext creates a new ServiceInstanceDeprovisionParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceInstanceDeprovisionParamsWithContext(ctx context.Context) *ServiceInstanceDeprovisionParams {
-	var ()
 	return &ServiceInstanceDeprovisionParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceInstanceDeprovisionParamsWithHTTPClient creates a new ServiceInstanceDeprovisionParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceInstanceDeprovisionParamsWithHTTPClient(client *http.Client) *ServiceInstanceDeprovisionParams {
-	var ()
 	return &ServiceInstanceDeprovisionParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceInstanceDeprovisionParams contains all the parameters to send to the API endpoint
-for the service instance deprovision operation typically these are written to a http.Request
+/* ServiceInstanceDeprovisionParams contains all the parameters to send to the API endpoint
+   for the service instance deprovision operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceInstanceDeprovisionParams struct {
 
-	/*XBrokerAPIOriginatingIdentity
-	  identity of the user that initiated the request from the Platform
+	/* XBrokerAPIOriginatingIdentity.
 
+	   identity of the user that initiated the request from the Platform
 	*/
 	XBrokerAPIOriginatingIdentity *string
-	/*XBrokerAPIVersion
-	  version number of the Service Broker API that the Platform will use
 
+	/* XBrokerAPIVersion.
+
+	   version number of the Service Broker API that the Platform will use
 	*/
 	XBrokerAPIVersion string
-	/*AcceptsIncomplete
-	  asynchronous operations supported
 
+	/* AcceptsIncomplete.
+
+	   asynchronous operations supported
 	*/
 	AcceptsIncomplete *bool
-	/*InstanceID
-	  instance id of instance to provision
 
+	/* InstanceID.
+
+	   instance id of instance to provision
 	*/
 	InstanceID string
-	/*PlanID
-	  id of the plan associated with the instance being deleted
 
+	/* PlanID.
+
+	   id of the plan associated with the instance being deleted
 	*/
 	PlanID string
-	/*ServiceID
-	  id of the service associated with the instance being deleted
 
+	/* ServiceID.
+
+	   id of the service associated with the instance being deleted
 	*/
 	ServiceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service instance deprovision params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceInstanceDeprovisionParams) WithDefaults() *ServiceInstanceDeprovisionParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service instance deprovision params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceInstanceDeprovisionParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service instance deprovision params
@@ -211,7 +229,6 @@ func (o *ServiceInstanceDeprovisionParams) WriteToRequest(r runtime.ClientReques
 		if err := r.SetHeaderParam("X-Broker-API-Originating-Identity", *o.XBrokerAPIOriginatingIdentity); err != nil {
 			return err
 		}
-
 	}
 
 	// header param X-Broker-API-Version
@@ -223,16 +240,17 @@ func (o *ServiceInstanceDeprovisionParams) WriteToRequest(r runtime.ClientReques
 
 		// query param accepts_incomplete
 		var qrAcceptsIncomplete bool
+
 		if o.AcceptsIncomplete != nil {
 			qrAcceptsIncomplete = *o.AcceptsIncomplete
 		}
 		qAcceptsIncomplete := swag.FormatBool(qrAcceptsIncomplete)
 		if qAcceptsIncomplete != "" {
+
 			if err := r.SetQueryParam("accepts_incomplete", qAcceptsIncomplete); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	// path param instance_id
@@ -244,6 +262,7 @@ func (o *ServiceInstanceDeprovisionParams) WriteToRequest(r runtime.ClientReques
 	qrPlanID := o.PlanID
 	qPlanID := qrPlanID
 	if qPlanID != "" {
+
 		if err := r.SetQueryParam("plan_id", qPlanID); err != nil {
 			return err
 		}
@@ -253,6 +272,7 @@ func (o *ServiceInstanceDeprovisionParams) WriteToRequest(r runtime.ClientReques
 	qrServiceID := o.ServiceID
 	qServiceID := qrServiceID
 	if qServiceID != "" {
+
 		if err := r.SetQueryParam("service_id", qServiceID); err != nil {
 			return err
 		}

@@ -6,18 +6,21 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // NetworkID unique identifier of a network
+//
 // swagger:model NetworkID
 type NetworkID struct {
 
 	// network ID
+	// Example: 7f950c76-8582-11qeb-8dcd-0242ac172
 	// Required: true
 	NetworkID *string `json:"networkID"`
 }
@@ -42,6 +45,11 @@ func (m *NetworkID) validateNetworkID(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this network ID based on context it is used
+func (m *NetworkID) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

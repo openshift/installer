@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudV1CloudinstancesCosimagesPostReader is a Reader for the PcloudV1CloudinstancesCosimagesPost structure.
@@ -24,58 +23,50 @@ type PcloudV1CloudinstancesCosimagesPostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudV1CloudinstancesCosimagesPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 202:
 		result := NewPcloudV1CloudinstancesCosimagesPostAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudV1CloudinstancesCosimagesPostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudV1CloudinstancesCosimagesPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 403:
 		result := NewPcloudV1CloudinstancesCosimagesPostForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudV1CloudinstancesCosimagesPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudV1CloudinstancesCosimagesPostUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudV1CloudinstancesCosimagesPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -84,7 +75,7 @@ func NewPcloudV1CloudinstancesCosimagesPostAccepted() *PcloudV1CloudinstancesCos
 	return &PcloudV1CloudinstancesCosimagesPostAccepted{}
 }
 
-/*PcloudV1CloudinstancesCosimagesPostAccepted handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesPostAccepted describes a response with status code 202, with default header values.
 
 Accepted, cos-image import successfully added to the jobs queue
 */
@@ -94,6 +85,9 @@ type PcloudV1CloudinstancesCosimagesPostAccepted struct {
 
 func (o *PcloudV1CloudinstancesCosimagesPostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostAccepted  %+v", 202, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesPostAccepted) GetPayload() *models.JobReference {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -113,7 +107,7 @@ func NewPcloudV1CloudinstancesCosimagesPostBadRequest() *PcloudV1CloudinstancesC
 	return &PcloudV1CloudinstancesCosimagesPostBadRequest{}
 }
 
-/*PcloudV1CloudinstancesCosimagesPostBadRequest handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -123,6 +117,9 @@ type PcloudV1CloudinstancesCosimagesPostBadRequest struct {
 
 func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -142,7 +139,7 @@ func NewPcloudV1CloudinstancesCosimagesPostUnauthorized() *PcloudV1Cloudinstance
 	return &PcloudV1CloudinstancesCosimagesPostUnauthorized{}
 }
 
-/*PcloudV1CloudinstancesCosimagesPostUnauthorized handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -152,6 +149,9 @@ type PcloudV1CloudinstancesCosimagesPostUnauthorized struct {
 
 func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -171,7 +171,7 @@ func NewPcloudV1CloudinstancesCosimagesPostForbidden() *PcloudV1CloudinstancesCo
 	return &PcloudV1CloudinstancesCosimagesPostForbidden{}
 }
 
-/*PcloudV1CloudinstancesCosimagesPostForbidden handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesPostForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -181,6 +181,9 @@ type PcloudV1CloudinstancesCosimagesPostForbidden struct {
 
 func (o *PcloudV1CloudinstancesCosimagesPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesPostForbidden) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -200,7 +203,7 @@ func NewPcloudV1CloudinstancesCosimagesPostConflict() *PcloudV1CloudinstancesCos
 	return &PcloudV1CloudinstancesCosimagesPostConflict{}
 }
 
-/*PcloudV1CloudinstancesCosimagesPostConflict handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesPostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -210,6 +213,9 @@ type PcloudV1CloudinstancesCosimagesPostConflict struct {
 
 func (o *PcloudV1CloudinstancesCosimagesPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesPostConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -229,7 +235,7 @@ func NewPcloudV1CloudinstancesCosimagesPostUnprocessableEntity() *PcloudV1Cloudi
 	return &PcloudV1CloudinstancesCosimagesPostUnprocessableEntity{}
 }
 
-/*PcloudV1CloudinstancesCosimagesPostUnprocessableEntity handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -239,6 +245,9 @@ type PcloudV1CloudinstancesCosimagesPostUnprocessableEntity struct {
 
 func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -258,7 +267,7 @@ func NewPcloudV1CloudinstancesCosimagesPostInternalServerError() *PcloudV1Cloudi
 	return &PcloudV1CloudinstancesCosimagesPostInternalServerError{}
 }
 
-/*PcloudV1CloudinstancesCosimagesPostInternalServerError handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -268,6 +277,9 @@ type PcloudV1CloudinstancesCosimagesPostInternalServerError struct {
 
 func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

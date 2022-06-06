@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudVpnconnectionsGetReader is a Reader for the PcloudVpnconnectionsGet structure.
@@ -24,58 +23,50 @@ type PcloudVpnconnectionsGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudVpnconnectionsGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudVpnconnectionsGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudVpnconnectionsGetBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudVpnconnectionsGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 403:
 		result := NewPcloudVpnconnectionsGetForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudVpnconnectionsGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudVpnconnectionsGetUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudVpnconnectionsGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -84,7 +75,7 @@ func NewPcloudVpnconnectionsGetOK() *PcloudVpnconnectionsGetOK {
 	return &PcloudVpnconnectionsGetOK{}
 }
 
-/*PcloudVpnconnectionsGetOK handles this case with default header values.
+/* PcloudVpnconnectionsGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -94,6 +85,9 @@ type PcloudVpnconnectionsGetOK struct {
 
 func (o *PcloudVpnconnectionsGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsGetOK  %+v", 200, o.Payload)
+}
+func (o *PcloudVpnconnectionsGetOK) GetPayload() *models.VPNConnection {
+	return o.Payload
 }
 
 func (o *PcloudVpnconnectionsGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -113,7 +107,7 @@ func NewPcloudVpnconnectionsGetBadRequest() *PcloudVpnconnectionsGetBadRequest {
 	return &PcloudVpnconnectionsGetBadRequest{}
 }
 
-/*PcloudVpnconnectionsGetBadRequest handles this case with default header values.
+/* PcloudVpnconnectionsGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -123,6 +117,9 @@ type PcloudVpnconnectionsGetBadRequest struct {
 
 func (o *PcloudVpnconnectionsGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsGetBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudVpnconnectionsGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudVpnconnectionsGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -142,7 +139,7 @@ func NewPcloudVpnconnectionsGetUnauthorized() *PcloudVpnconnectionsGetUnauthoriz
 	return &PcloudVpnconnectionsGetUnauthorized{}
 }
 
-/*PcloudVpnconnectionsGetUnauthorized handles this case with default header values.
+/* PcloudVpnconnectionsGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -152,6 +149,9 @@ type PcloudVpnconnectionsGetUnauthorized struct {
 
 func (o *PcloudVpnconnectionsGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsGetUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudVpnconnectionsGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudVpnconnectionsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -171,7 +171,7 @@ func NewPcloudVpnconnectionsGetForbidden() *PcloudVpnconnectionsGetForbidden {
 	return &PcloudVpnconnectionsGetForbidden{}
 }
 
-/*PcloudVpnconnectionsGetForbidden handles this case with default header values.
+/* PcloudVpnconnectionsGetForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -181,6 +181,9 @@ type PcloudVpnconnectionsGetForbidden struct {
 
 func (o *PcloudVpnconnectionsGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsGetForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudVpnconnectionsGetForbidden) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudVpnconnectionsGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -200,7 +203,7 @@ func NewPcloudVpnconnectionsGetNotFound() *PcloudVpnconnectionsGetNotFound {
 	return &PcloudVpnconnectionsGetNotFound{}
 }
 
-/*PcloudVpnconnectionsGetNotFound handles this case with default header values.
+/* PcloudVpnconnectionsGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -210,6 +213,9 @@ type PcloudVpnconnectionsGetNotFound struct {
 
 func (o *PcloudVpnconnectionsGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsGetNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudVpnconnectionsGetNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudVpnconnectionsGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -229,7 +235,7 @@ func NewPcloudVpnconnectionsGetUnprocessableEntity() *PcloudVpnconnectionsGetUnp
 	return &PcloudVpnconnectionsGetUnprocessableEntity{}
 }
 
-/*PcloudVpnconnectionsGetUnprocessableEntity handles this case with default header values.
+/* PcloudVpnconnectionsGetUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -239,6 +245,9 @@ type PcloudVpnconnectionsGetUnprocessableEntity struct {
 
 func (o *PcloudVpnconnectionsGetUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsGetUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudVpnconnectionsGetUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudVpnconnectionsGetUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -258,7 +267,7 @@ func NewPcloudVpnconnectionsGetInternalServerError() *PcloudVpnconnectionsGetInt
 	return &PcloudVpnconnectionsGetInternalServerError{}
 }
 
-/*PcloudVpnconnectionsGetInternalServerError handles this case with default header values.
+/* PcloudVpnconnectionsGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -268,6 +277,9 @@ type PcloudVpnconnectionsGetInternalServerError struct {
 
 func (o *PcloudVpnconnectionsGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudVpnconnectionsGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudVpnconnectionsGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

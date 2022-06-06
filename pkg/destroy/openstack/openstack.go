@@ -103,7 +103,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		"deleteServerGroups":    deleteServerGroups,
 		"deleteTrunks":          deleteTrunks,
 		"deleteLoadBalancers":   deleteLoadBalancers,
-		"deletePorts":           deletePorts,
+		"deletePorts":           deletePortsByFilter,
 		"deleteSecurityGroups":  deleteSecurityGroups,
 		"clearRouterInterfaces": clearRouterInterfaces,
 		"deleteSubnets":         deleteSubnets,
@@ -112,6 +112,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		"deleteContainers":      deleteContainers,
 		"deleteVolumes":         deleteVolumes,
 		"deleteShares":          deleteShares,
+		"deleteVolumeSnapshots": deleteVolumeSnapshots,
 		"deleteFloatingIPs":     deleteFloatingIPs,
 		"deleteImages":          deleteImages,
 	}
@@ -320,7 +321,36 @@ func deleteServerGroups(opts *clientconfig.ClientOpts, filter Filter, logger log
 	return numberDeleted == numberToDelete, nil
 }
 
-func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+func deletePortsByNetwork(opts *clientconfig.ClientOpts, networkID string, logger logrus.FieldLogger) (bool, error) {
+
+	listOpts := ports.ListOpts{
+		NetworkID: networkID,
+	}
+
+	result, err := deletePorts(opts, listOpts, logger)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+	return result, err
+}
+
+func deletePortsByFilter(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+
+	tags := filterTags(filter)
+	listOpts := ports.ListOpts{
+		TagsAny: strings.Join(tags, ","),
+	}
+
+	result, err := deletePorts(opts, listOpts, logger)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+	return result, err
+}
+
+func deletePorts(opts *clientconfig.ClientOpts, listOpts ports.ListOpts, logger logrus.FieldLogger) (bool, error) {
 	logger.Debug("Deleting openstack ports")
 	defer logger.Debugf("Exiting deleting openstack ports")
 
@@ -328,10 +358,6 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 	if err != nil {
 		logger.Error(err)
 		return false, nil
-	}
-	tags := filterTags(filter)
-	listOpts := ports.ListOpts{
-		TagsAny: strings.Join(tags, ","),
 	}
 
 	allPages, err := ports.List(conn, listOpts).AllPages()
@@ -964,6 +990,13 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 	numberToDelete := len(allNetworks)
 	numberDeleted := 0
 	for _, network := range allNetworks {
+		// Before deleting network, try to remove all the ports it may contain
+		_, err := deletePortsByNetwork(opts, network.ID, logger)
+		if err != nil {
+			logger.Error(err)
+			return false, nil
+		}
+
 		logger.Debugf("Deleting network: %q", network.ID)
 		err = networks.Delete(conn, network.ID).ExtractErr()
 		if err != nil {
@@ -1385,12 +1418,6 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	numberToDelete := len(volumeIDs)
 	numberDeleted := 0
 	for _, volumeID := range volumeIDs {
-		deleted, err := deleteSnapshots(conn, volumeID, logger)
-		if !deleted || err != nil {
-			// Move on to the next volume
-			continue
-		}
-
 		logger.Debugf("Deleting volume %q", volumeID)
 		err = volumes.Delete(conn, volumeID, deleteOpts).ExtractErr()
 		if err != nil {
@@ -1409,13 +1436,25 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	return numberDeleted == numberToDelete, nil
 }
 
-func deleteSnapshots(conn *gophercloud.ServiceClient, volumeID string, logger logrus.FieldLogger) (bool, error) {
-	logger.Debugf("Deleting OpenStack snapshots for volume %v", volumeID)
-	defer logger.Debugf("Exiting deleting OpenStack snapshots for volume %v", volumeID)
+func deleteVolumeSnapshots(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting OpenStack volume snapshots")
+	defer logger.Debugf("Exiting deleting OpenStack volume snapshots")
 
-	listOpts := snapshots.ListOpts{
-		VolumeID: volumeID,
+	var clusterID string
+	for k, v := range filter {
+		if strings.ToLower(k) == "openshiftclusterid" {
+			clusterID = v
+			break
+		}
 	}
+
+	conn, err := clientconfig.NewServiceClient("volume", opts)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	listOpts := snapshots.ListOpts{}
 
 	allPages, err := snapshots.List(conn, listOpts).AllPages()
 	if err != nil {
@@ -1432,17 +1471,20 @@ func deleteSnapshots(conn *gophercloud.ServiceClient, volumeID string, logger lo
 	numberToDelete := len(allSnapshots)
 	numberDeleted := 0
 	for _, snapshot := range allSnapshots {
-		logger.Debugf("Deleting volume snapshot %q", snapshot.ID)
-		err = snapshots.Delete(conn, snapshot.ID).ExtractErr()
-		if err != nil {
-			// Ignore the error if the volume snapshot cannot be found
-			var gerr gophercloud.ErrDefault404
-			if !errors.As(err, &gerr) {
-				// Just log the error and move on to the next volume snapshot
-				logger.Debugf("Deleting volume snapshot %q failed: %v", snapshot.ID, err)
-				continue
+		// Delete only those snapshots that contain cluster ID in the metadata
+		if val, ok := snapshot.Metadata[cinderCSIClusterIDKey]; ok && val == clusterID {
+			logger.Debugf("Deleting volume snapshot %q", snapshot.ID)
+			err = snapshots.Delete(conn, snapshot.ID).ExtractErr()
+			if err != nil {
+				// Ignore the error if the server cannot be found
+				var gerr gophercloud.ErrDefault404
+				if !errors.As(err, &gerr) {
+					// Just log the error and move on to the next volume snapshot
+					logger.Debugf("Deleting volume snapshot %q failed: %v", snapshot.ID, err)
+					continue
+				}
+				logger.Debugf("Cannot find volume snapshot %q. It's probably already been deleted.", snapshot.ID)
 			}
-			logger.Debugf("Cannot find volume snapshot %q. It's probably already been deleted.", snapshot.ID)
 		}
 		numberDeleted++
 	}

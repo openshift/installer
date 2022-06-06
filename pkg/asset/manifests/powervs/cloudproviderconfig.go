@@ -82,4 +82,7 @@ g2ResourceGroupName = {{.Provider.G2ResourceGroupName}}
 g2VpcName = {{.Provider.G2VPCName}}
 g2workerServiceAccountID = {{.Provider.G2WorkerServiceAccountID}}
 g2VpcSubnetNames = {{.Provider.G2VPCSubnetNames}}
+powerVSCloudInstanceID = {{.Provider.PowerVSCloudInstanceID}}
+powerVSRegion = {{.Provider.PowerVSRegion}}
+powerVSZone = {{.Provider.PowerVSZone}}
 `

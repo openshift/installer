@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudV2VolumesClonetasksGetReader is a Reader for the PcloudV2VolumesClonetasksGet structure.
@@ -24,51 +23,44 @@ type PcloudV2VolumesClonetasksGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudV2VolumesClonetasksGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudV2VolumesClonetasksGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudV2VolumesClonetasksGetBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudV2VolumesClonetasksGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudV2VolumesClonetasksGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudV2VolumesClonetasksGetConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudV2VolumesClonetasksGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudV2VolumesClonetasksGetOK() *PcloudV2VolumesClonetasksGetOK {
 	return &PcloudV2VolumesClonetasksGetOK{}
 }
 
-/*PcloudV2VolumesClonetasksGetOK handles this case with default header values.
+/* PcloudV2VolumesClonetasksGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -87,6 +79,9 @@ type PcloudV2VolumesClonetasksGetOK struct {
 
 func (o *PcloudV2VolumesClonetasksGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}][%d] pcloudV2VolumesClonetasksGetOK  %+v", 200, o.Payload)
+}
+func (o *PcloudV2VolumesClonetasksGetOK) GetPayload() *models.CloneTaskStatus {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesClonetasksGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -106,7 +101,7 @@ func NewPcloudV2VolumesClonetasksGetBadRequest() *PcloudV2VolumesClonetasksGetBa
 	return &PcloudV2VolumesClonetasksGetBadRequest{}
 }
 
-/*PcloudV2VolumesClonetasksGetBadRequest handles this case with default header values.
+/* PcloudV2VolumesClonetasksGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -116,6 +111,9 @@ type PcloudV2VolumesClonetasksGetBadRequest struct {
 
 func (o *PcloudV2VolumesClonetasksGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}][%d] pcloudV2VolumesClonetasksGetBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudV2VolumesClonetasksGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesClonetasksGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -135,7 +133,7 @@ func NewPcloudV2VolumesClonetasksGetUnauthorized() *PcloudV2VolumesClonetasksGet
 	return &PcloudV2VolumesClonetasksGetUnauthorized{}
 }
 
-/*PcloudV2VolumesClonetasksGetUnauthorized handles this case with default header values.
+/* PcloudV2VolumesClonetasksGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -145,6 +143,9 @@ type PcloudV2VolumesClonetasksGetUnauthorized struct {
 
 func (o *PcloudV2VolumesClonetasksGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}][%d] pcloudV2VolumesClonetasksGetUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudV2VolumesClonetasksGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesClonetasksGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -164,7 +165,7 @@ func NewPcloudV2VolumesClonetasksGetNotFound() *PcloudV2VolumesClonetasksGetNotF
 	return &PcloudV2VolumesClonetasksGetNotFound{}
 }
 
-/*PcloudV2VolumesClonetasksGetNotFound handles this case with default header values.
+/* PcloudV2VolumesClonetasksGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -174,6 +175,9 @@ type PcloudV2VolumesClonetasksGetNotFound struct {
 
 func (o *PcloudV2VolumesClonetasksGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}][%d] pcloudV2VolumesClonetasksGetNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudV2VolumesClonetasksGetNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesClonetasksGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -193,7 +197,7 @@ func NewPcloudV2VolumesClonetasksGetConflict() *PcloudV2VolumesClonetasksGetConf
 	return &PcloudV2VolumesClonetasksGetConflict{}
 }
 
-/*PcloudV2VolumesClonetasksGetConflict handles this case with default header values.
+/* PcloudV2VolumesClonetasksGetConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -203,6 +207,9 @@ type PcloudV2VolumesClonetasksGetConflict struct {
 
 func (o *PcloudV2VolumesClonetasksGetConflict) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}][%d] pcloudV2VolumesClonetasksGetConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudV2VolumesClonetasksGetConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesClonetasksGetConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -222,7 +229,7 @@ func NewPcloudV2VolumesClonetasksGetInternalServerError() *PcloudV2VolumesClonet
 	return &PcloudV2VolumesClonetasksGetInternalServerError{}
 }
 
-/*PcloudV2VolumesClonetasksGetInternalServerError handles this case with default header values.
+/* PcloudV2VolumesClonetasksGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -232,6 +239,9 @@ type PcloudV2VolumesClonetasksGetInternalServerError struct {
 
 func (o *PcloudV2VolumesClonetasksGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}][%d] pcloudV2VolumesClonetasksGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudV2VolumesClonetasksGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesClonetasksGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

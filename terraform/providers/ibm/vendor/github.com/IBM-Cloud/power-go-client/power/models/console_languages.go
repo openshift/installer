@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ConsoleLanguages console languages
+//
 // swagger:model ConsoleLanguages
 type ConsoleLanguages struct {
 
@@ -53,6 +54,42 @@ func (m *ConsoleLanguages) validateConsoleLanguages(formats strfmt.Registry) err
 			if err := m.ConsoleLanguages[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("consoleLanguages" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("consoleLanguages" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this console languages based on the context it is used
+func (m *ConsoleLanguages) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateConsoleLanguages(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ConsoleLanguages) contextValidateConsoleLanguages(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.ConsoleLanguages); i++ {
+
+		if m.ConsoleLanguages[i] != nil {
+			if err := m.ConsoleLanguages[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("consoleLanguages" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("consoleLanguages" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

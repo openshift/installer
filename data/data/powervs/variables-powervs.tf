@@ -111,6 +111,11 @@ variable "powervs_ssh_key" {
   default     = ""
 }
 
+variable "powervs_image_bucket_name" {
+  type        = string
+  description = "Name of the COS bucket containing the image to be imported."
+}
+
 variable "powervs_image_bucket_file_name" {
   type        = string
   description = "File name of the image in the COS bucket."
@@ -122,22 +127,10 @@ variable "powervs_image_storage_type" {
   default     = "tier3"
 }
 
-################################################################
-# Configure Network Topology
-################################################################
-variable "powervs_network_name" {
-  type        = string
-  description = "Name of the network within the Power VS instance."
-}
-
-variable "powervs_vpc_name" {
-  type        = string
-  description = "Name of the IBM Cloud Virtual Private Cloud (VPC) to setup the load balancer."
-}
-
-variable "powervs_vpc_subnet_name" {
-  type        = string
-  description = "Name of the VPC subnet connected via DirectLink to the Power VS private network."
+variable "powervs_expose_bootstrap" {
+  type        = bool
+  description = "Setting this to false allows the bootstrap resources to be removed from the cluster load balancers."
+  default     = true
 }
 
 ################################################################

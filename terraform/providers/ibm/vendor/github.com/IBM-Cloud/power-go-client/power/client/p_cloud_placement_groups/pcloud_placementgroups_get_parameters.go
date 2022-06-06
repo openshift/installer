@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudPlacementgroupsGetParams creates a new PcloudPlacementgroupsGetParams object
-// with the default values initialized.
+// NewPcloudPlacementgroupsGetParams creates a new PcloudPlacementgroupsGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPlacementgroupsGetParams() *PcloudPlacementgroupsGetParams {
-	var ()
 	return &PcloudPlacementgroupsGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPlacementgroupsGetParamsWithTimeout creates a new PcloudPlacementgroupsGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPlacementgroupsGetParamsWithTimeout(timeout time.Duration) *PcloudPlacementgroupsGetParams {
-	var ()
 	return &PcloudPlacementgroupsGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPlacementgroupsGetParamsWithContext creates a new PcloudPlacementgroupsGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPlacementgroupsGetParamsWithContext(ctx context.Context) *PcloudPlacementgroupsGetParams {
-	var ()
 	return &PcloudPlacementgroupsGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPlacementgroupsGetParamsWithHTTPClient creates a new PcloudPlacementgroupsGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPlacementgroupsGetParamsWithHTTPClient(client *http.Client) *PcloudPlacementgroupsGetParams {
-	var ()
 	return &PcloudPlacementgroupsGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPlacementgroupsGetParams contains all the parameters to send to the API endpoint
-for the pcloud placementgroups get operation typically these are written to a http.Request
+/* PcloudPlacementgroupsGetParams contains all the parameters to send to the API endpoint
+   for the pcloud placementgroups get operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPlacementgroupsGetParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PlacementGroupID
-	  Placement Group ID
 
+	/* PlacementGroupID.
+
+	   Placement Group ID
 	*/
 	PlacementGroupID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud placementgroups get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPlacementgroupsGetParams) WithDefaults() *PcloudPlacementgroupsGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud placementgroups get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPlacementgroupsGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud placementgroups get params

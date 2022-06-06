@@ -5,19 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	"github.com/ghodss/yaml"
-	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1"
+	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	nutanixprovider "github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1"
 	powervsprovider "github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -241,17 +240,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		masterConfigs := make([]*awsprovider.AWSMachineProviderConfig, len(masters))
+		masterConfigs := make([]*machinev1beta1.AWSMachineProviderConfig, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig)
 		}
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
 			return err
 		}
-		workerConfigs := make([]*awsprovider.AWSMachineProviderConfig, len(workers))
+		workerConfigs := make([]*machinev1beta1.AWSMachineProviderConfig, len(workers))
 		for i, m := range workers {
-			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
+			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig)
 		}
 		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
 		osImageID := osImage[0]
@@ -329,8 +328,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec)
 		}
 		client := aztypes.NewClient(session)
-		hyperVGeneration, err := client.GetHyperVGenerationVersion(context.TODO(), masterConfigs[0].VMSize,
-			masterConfigs[0].OSDisk.ManagedDisk.StorageAccountType, masterConfigs[0].Location)
+		hyperVGeneration, err := client.GetHyperVGenerationVersion(context.TODO(), masterConfigs[0].VMSize, masterConfigs[0].Location, "")
 		if err != nil {
 			return err
 		}
@@ -617,6 +615,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.BareMetal.ProvisioningBridge,
 			installConfig.Config.Platform.BareMetal.ProvisioningMACAddress,
 			installConfig.Config.Platform.BareMetal.Hosts,
+			mastersAsset.HostFiles,
 			string(*rhcosImage),
 			ironicCreds.Username,
 			ironicCreds.Password,
@@ -687,7 +686,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case powervs.Name:
-		client, err := installConfig.PowerVS.Client()
+		APIKey, err := installConfig.PowerVS.APIKey(ctx)
 		if err != nil {
 			return err
 		}
@@ -708,19 +707,19 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*powervsprovider.PowerVSMachineProviderConfig)
 		}
 
+		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
 				MasterConfigs:        masterConfigs,
 				Region:               installConfig.Config.Platform.PowerVS.Region,
 				Zone:                 installConfig.Config.Platform.PowerVS.Zone,
-				APIKey:               client.APIKey,
+				APIKey:               APIKey,
 				SSHKey:               installConfig.Config.SSHKey,
 				PowerVSResourceGroup: installConfig.Config.PowerVS.PowerVSResourceGroup,
-				ImageBucketFileName:  string(*rhcosImage),
+				ImageBucketName:      osImage[0],
+				ImageBucketFileName:  osImage[1],
 				NetworkName:          installConfig.Config.PowerVS.PVSNetworkName,
 				CISInstanceCRN:       crn,
-				VPCSubnetName:        installConfig.Config.PowerVS.Subnets[0],
-				VPCName:              installConfig.Config.PowerVS.VPC,
 			},
 		)
 		if err != nil {
@@ -864,18 +863,22 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return errors.Wrapf(err, "error getting control plane machines")
 		}
-		controlPlaneConfigs := make([]*nutanixprovider.NutanixMachineProviderConfig, len(controlPlanes))
+		controlPlaneConfigs := make([]*machinev1.NutanixMachineProviderConfig, len(controlPlanes))
 		for i, c := range controlPlanes {
-			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*nutanixprovider.NutanixMachineProviderConfig)
+			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1.NutanixMachineProviderConfig)
 		}
 
+		imgURI := string(*rhcosImage)
+		if installConfig.Config.Nutanix.ClusterOSImage != "" {
+			imgURI = installConfig.Config.Nutanix.ClusterOSImage
+		}
 		data, err = nutanixtfvars.TFVars(
 			nutanixtfvars.TFVarsSources{
-				PrismCentralAddress:   installConfig.Config.Nutanix.PrismCentral,
-				Port:                  installConfig.Config.Nutanix.Port,
-				Username:              installConfig.Config.Nutanix.Username,
-				Password:              installConfig.Config.Nutanix.Password,
-				ImageURL:              string(*rhcosImage),
+				PrismCentralAddress:   installConfig.Config.Nutanix.PrismCentral.Endpoint.Address,
+				Port:                  strconv.Itoa(int(installConfig.Config.Nutanix.PrismCentral.Endpoint.Port)),
+				Username:              installConfig.Config.Nutanix.PrismCentral.Username,
+				Password:              installConfig.Config.Nutanix.PrismCentral.Password,
+				ImageURI:              imgURI,
 				BootstrapIgnitionData: bootstrapIgn,
 				ClusterID:             clusterID.InfraID,
 				ControlPlaneConfigs:   controlPlaneConfigs,

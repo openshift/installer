@@ -13,13 +13,11 @@ import (
 	baremetalapi "github.com/openshift/cluster-api-provider-baremetal/pkg/apis"
 	baremetalprovider "github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
 	ibmcloudapi "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis"
-	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1"
+	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 	libvirtapi "github.com/openshift/cluster-api-provider-libvirt/pkg/apis"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	nutanixapi "github.com/openshift/machine-api-provider-nutanix/pkg/apis"
-	nutanixprovider "github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1"
 	powervsapi "github.com/openshift/machine-api-provider-powervs/pkg/apis"
 	powervsprovider "github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
@@ -27,8 +25,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
-	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
@@ -158,9 +154,9 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 
 func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
 	return vspheretypes.MachinePool{
-		NumCPUs:           2,
-		NumCoresPerSocket: 2,
-		MemoryMiB:         8192,
+		NumCPUs:           4,
+		NumCoresPerSocket: 4,
+		MemoryMiB:         16384,
 		OSDisk: vspheretypes.OSDisk{
 			DiskSizeGB: decimalRootVolumeSize,
 		},
@@ -178,20 +174,20 @@ func defaultPowerVSMachinePoolPlatform() powervstypes.MachinePool {
 
 func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
 	return nutanixtypes.MachinePool{
-		NumCPUs:           2,
-		NumCoresPerSocket: 2,
-		MemoryMiB:         8192,
+		NumCPUs:           4,
+		NumCoresPerSocket: 1,
+		MemoryMiB:         16384,
 		OSDisk: nutanixtypes.OSDisk{
 			DiskSizeMiB: decimalRootVolumeSize * 1024,
 		},
 	}
 }
 
-func awsDefaultWorkerMachineTypes(region string, arch types.Architecture) []string {
+func awsDefaultMachineTypes(region string, arch types.Architecture) []string {
 	classes := awsdefaults.InstanceClasses(region, arch)
 	types := make([]string, len(classes))
 	for i, c := range classes {
-		types[i] = fmt.Sprintf("%s.large", c)
+		types[i] = fmt.Sprintf("%s.xlarge", c)
 	}
 	return types
 }
@@ -343,10 +339,10 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				}
 			}
 			if mpool.InstanceType == "" {
-				mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultWorkerMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
+				mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
 				if err != nil {
 					logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
-					mpool.InstanceType = awsDefaultWorkerMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
+					mpool.InstanceType = awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
 				}
 			}
 			// if the list of zones is the default we need to try to filter the list in case there are some zones where the instance might not be available
@@ -392,8 +388,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				mpool.OSDisk.DiskEncryptionSet.SubscriptionID = session.Credentials.SubscriptionID
 			}
 
+			client := icazure.NewClient(session)
 			if len(mpool.Zones) == 0 {
-				azs, err := azure.AvailabilityZones(session, ic.Platform.Azure.Region, mpool.InstanceType)
+				azs, err := client.GetAvailabilityZones(context.TODO(), ic.Platform.Azure.Region, mpool.InstanceType)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
@@ -406,13 +403,13 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			pool.Platform.Azure = &mpool
-			client := icazure.NewClient(session)
-			hyperVGen, err := client.GetHyperVGenerationVersion(context.TODO(), mpool.InstanceType, mpool.OSDisk.DiskType, installConfig.Config.Platform.Azure.Region)
+
+			capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
 			if err != nil {
 				return err
 			}
 
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, hyperVGen)
+			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, capabilities)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -631,34 +628,33 @@ func (w *Worker) Load(f asset.FileFetcher) (found bool, err error) {
 // MachineSets returns MachineSet manifest structures.
 func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	scheme := runtime.NewScheme()
-	awsapi.AddToScheme(scheme)
 	baremetalapi.AddToScheme(scheme)
-	nutanixapi.AddToScheme(scheme)
 	ibmcloudapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
 	powervsapi.AddToScheme(scheme)
 	scheme.AddKnownTypes(machinev1beta1.SchemeGroupVersion,
+		&machinev1beta1.AWSMachineProviderConfig{},
 		&machinev1beta1.VSphereMachineProviderSpec{},
 		&machinev1beta1.AzureMachineProviderSpec{},
 		&machinev1beta1.GCPMachineProviderSpec{},
 	)
+	machinev1.Install(scheme)
 	scheme.AddKnownTypes(machinev1.GroupVersion,
 		&machinev1.AlibabaCloudMachineProviderConfig{},
+		&machinev1.NutanixMachineProviderConfig{},
 	)
 	machinev1beta1.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
-		awsprovider.SchemeGroupVersion,
 		baremetalprovider.SchemeGroupVersion,
 		ibmcloudprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
-		nutanixprovider.SchemeGroupVersion,
+		machinev1.GroupVersion,
 		openstackprovider.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
 		powervsprovider.GroupVersion,
 		machinev1beta1.SchemeGroupVersion,
-		machinev1.GroupVersion,
 	)
 
 	machineSets := []machinev1beta1.MachineSet{}

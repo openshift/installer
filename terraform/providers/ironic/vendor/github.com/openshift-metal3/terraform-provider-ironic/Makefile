@@ -8,7 +8,7 @@ ifeq ("$(IRONIC_ENDPOINT)", "")
 	export IRONIC_ENDPOINT
 endif
 
-default: fmt lint build
+default: build
 
 build:
 	go build -ldflags "${LDFLAGS}" -tags "${TAGS}"
@@ -18,7 +18,7 @@ install: default
 	mv terraform-provider-ironic ${TERRAFORM_PLUGINS}
 
 fmt:
-	go fmt ./ironic .
+	gofmt -s -d -e ./ironic
 
 tools:
 	go get golang.org/x/lint/golint

@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudIkepoliciesPutReader is a Reader for the PcloudIkepoliciesPut structure.
@@ -24,51 +23,44 @@ type PcloudIkepoliciesPutReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudIkepoliciesPutReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudIkepoliciesPutOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudIkepoliciesPutBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudIkepoliciesPutUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 403:
 		result := NewPcloudIkepoliciesPutForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudIkepoliciesPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudIkepoliciesPutInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudIkepoliciesPutOK() *PcloudIkepoliciesPutOK {
 	return &PcloudIkepoliciesPutOK{}
 }
 
-/*PcloudIkepoliciesPutOK handles this case with default header values.
+/* PcloudIkepoliciesPutOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -87,6 +79,9 @@ type PcloudIkepoliciesPutOK struct {
 
 func (o *PcloudIkepoliciesPutOK) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies/{ike_policy_id}][%d] pcloudIkepoliciesPutOK  %+v", 200, o.Payload)
+}
+func (o *PcloudIkepoliciesPutOK) GetPayload() *models.IKEPolicy {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesPutOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -106,7 +101,7 @@ func NewPcloudIkepoliciesPutBadRequest() *PcloudIkepoliciesPutBadRequest {
 	return &PcloudIkepoliciesPutBadRequest{}
 }
 
-/*PcloudIkepoliciesPutBadRequest handles this case with default header values.
+/* PcloudIkepoliciesPutBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -116,6 +111,9 @@ type PcloudIkepoliciesPutBadRequest struct {
 
 func (o *PcloudIkepoliciesPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies/{ike_policy_id}][%d] pcloudIkepoliciesPutBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudIkepoliciesPutBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesPutBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -135,7 +133,7 @@ func NewPcloudIkepoliciesPutUnauthorized() *PcloudIkepoliciesPutUnauthorized {
 	return &PcloudIkepoliciesPutUnauthorized{}
 }
 
-/*PcloudIkepoliciesPutUnauthorized handles this case with default header values.
+/* PcloudIkepoliciesPutUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -145,6 +143,9 @@ type PcloudIkepoliciesPutUnauthorized struct {
 
 func (o *PcloudIkepoliciesPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies/{ike_policy_id}][%d] pcloudIkepoliciesPutUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudIkepoliciesPutUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -164,7 +165,7 @@ func NewPcloudIkepoliciesPutForbidden() *PcloudIkepoliciesPutForbidden {
 	return &PcloudIkepoliciesPutForbidden{}
 }
 
-/*PcloudIkepoliciesPutForbidden handles this case with default header values.
+/* PcloudIkepoliciesPutForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -174,6 +175,9 @@ type PcloudIkepoliciesPutForbidden struct {
 
 func (o *PcloudIkepoliciesPutForbidden) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies/{ike_policy_id}][%d] pcloudIkepoliciesPutForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudIkepoliciesPutForbidden) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -193,7 +197,7 @@ func NewPcloudIkepoliciesPutUnprocessableEntity() *PcloudIkepoliciesPutUnprocess
 	return &PcloudIkepoliciesPutUnprocessableEntity{}
 }
 
-/*PcloudIkepoliciesPutUnprocessableEntity handles this case with default header values.
+/* PcloudIkepoliciesPutUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -203,6 +207,9 @@ type PcloudIkepoliciesPutUnprocessableEntity struct {
 
 func (o *PcloudIkepoliciesPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies/{ike_policy_id}][%d] pcloudIkepoliciesPutUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudIkepoliciesPutUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesPutUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -222,7 +229,7 @@ func NewPcloudIkepoliciesPutInternalServerError() *PcloudIkepoliciesPutInternalS
 	return &PcloudIkepoliciesPutInternalServerError{}
 }
 
-/*PcloudIkepoliciesPutInternalServerError handles this case with default header values.
+/* PcloudIkepoliciesPutInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -232,6 +239,9 @@ type PcloudIkepoliciesPutInternalServerError struct {
 
 func (o *PcloudIkepoliciesPutInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ike-policies/{ike_policy_id}][%d] pcloudIkepoliciesPutInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudIkepoliciesPutInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudIkepoliciesPutInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

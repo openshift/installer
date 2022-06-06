@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudCloudinstancesPutReader is a Reader for the PcloudCloudinstancesPut structure.
@@ -24,44 +23,38 @@ type PcloudCloudinstancesPutReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudCloudinstancesPutReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudCloudinstancesPutOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudCloudinstancesPutBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudCloudinstancesPutUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudCloudinstancesPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudCloudinstancesPutInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudCloudinstancesPutOK() *PcloudCloudinstancesPutOK {
 	return &PcloudCloudinstancesPutOK{}
 }
 
-/*PcloudCloudinstancesPutOK handles this case with default header values.
+/* PcloudCloudinstancesPutOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudCloudinstancesPutOK struct {
 
 func (o *PcloudCloudinstancesPutOK) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesPutOK  %+v", 200, o.Payload)
+}
+func (o *PcloudCloudinstancesPutOK) GetPayload() *models.CloudInstance {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesPutOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -99,7 +95,7 @@ func NewPcloudCloudinstancesPutBadRequest() *PcloudCloudinstancesPutBadRequest {
 	return &PcloudCloudinstancesPutBadRequest{}
 }
 
-/*PcloudCloudinstancesPutBadRequest handles this case with default header values.
+/* PcloudCloudinstancesPutBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,6 +105,9 @@ type PcloudCloudinstancesPutBadRequest struct {
 
 func (o *PcloudCloudinstancesPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesPutBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudCloudinstancesPutBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesPutBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -128,7 +127,7 @@ func NewPcloudCloudinstancesPutUnauthorized() *PcloudCloudinstancesPutUnauthoriz
 	return &PcloudCloudinstancesPutUnauthorized{}
 }
 
-/*PcloudCloudinstancesPutUnauthorized handles this case with default header values.
+/* PcloudCloudinstancesPutUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -138,6 +137,9 @@ type PcloudCloudinstancesPutUnauthorized struct {
 
 func (o *PcloudCloudinstancesPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesPutUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudCloudinstancesPutUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -157,7 +159,7 @@ func NewPcloudCloudinstancesPutUnprocessableEntity() *PcloudCloudinstancesPutUnp
 	return &PcloudCloudinstancesPutUnprocessableEntity{}
 }
 
-/*PcloudCloudinstancesPutUnprocessableEntity handles this case with default header values.
+/* PcloudCloudinstancesPutUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -167,6 +169,9 @@ type PcloudCloudinstancesPutUnprocessableEntity struct {
 
 func (o *PcloudCloudinstancesPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesPutUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudCloudinstancesPutUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesPutUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -186,7 +191,7 @@ func NewPcloudCloudinstancesPutInternalServerError() *PcloudCloudinstancesPutInt
 	return &PcloudCloudinstancesPutInternalServerError{}
 }
 
-/*PcloudCloudinstancesPutInternalServerError handles this case with default header values.
+/* PcloudCloudinstancesPutInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -196,6 +201,9 @@ type PcloudCloudinstancesPutInternalServerError struct {
 
 func (o *PcloudCloudinstancesPutInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesPutInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudCloudinstancesPutInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesPutInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

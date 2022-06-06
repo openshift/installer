@@ -1,0 +1,40 @@
+GOFMT_FILES?=$$(find . -name '*.go')
+PKG_NAME=internal/tftime
+TEST?=./...
+WEBSITE_REPO=github.com/hashicorp/terraform-website
+
+default: build
+
+build: fmtcheck
+	go install
+
+fmt:
+	@echo "==> Fixing source code with gofmt..."
+	gofmt -s -w ./$(PKG_NAME)
+
+# Currently required by tf-deploy compile
+fmtcheck:
+	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
+
+test: fmtcheck
+	go test $(TEST) $(TESTARGS) -timeout=120s -parallel=4
+
+testacc: fmtcheck
+	TF_ACC=1 go test $(TEST) -v -count $(TEST_COUNT) -parallel 20 $(TESTARGS) -timeout 120m
+
+test-compile:
+	@if [ "$(TEST)" = "./..." ]; then \
+		echo "ERROR: Set TEST to a specific package. For example,"; \
+		echo "  make test-compile TEST=./$(PKG_NAME)"; \
+		exit 1; \
+	fi
+	go test -c $(TEST) $(TESTARGS)
+
+website:
+ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
+	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
+	git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
+endif
+	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=time
+
+.PHONY: build fmt fmtcheck test testacc test-compile website

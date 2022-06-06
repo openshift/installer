@@ -1,22 +1,23 @@
 package nutanix
 
 import (
-	"fmt"
+	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-nutanix/client/karbon"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixKarbonCluster() *schema.Resource {
 	return &schema.Resource{
-		Read:          dataSourceNutanixKarbonClusterRead,
+		ReadContext:   dataSourceNutanixKarbonClusterRead,
 		SchemaVersion: 1,
 		Schema:        KarbonClusterDataSourceMap(),
 	}
 }
 
-func dataSourceNutanixKarbonClusterRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixKarbonClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).KarbonAPI
 	setTimeout(meta)
@@ -24,7 +25,7 @@ func dataSourceNutanixKarbonClusterRead(d *schema.ResourceData, meta interface{}
 	karbonClusterID, iok := d.GetOk("karbon_cluster_id")
 	karbonClusterNameInput, nok := d.GetOk("karbon_cluster_name")
 	if !iok && !nok {
-		return fmt.Errorf("please provide one of karbon_cluster_id or karbon_cluster_name attributes")
+		return diag.Errorf("please provide one of karbon_cluster_id or karbon_cluster_name attributes")
 	}
 	var err error
 	var resp *karbon.ClusterIntentResponse
@@ -37,48 +38,48 @@ func dataSourceNutanixKarbonClusterRead(d *schema.ResourceData, meta interface{}
 
 	if err != nil {
 		d.SetId("")
-		return err
+		return diag.FromErr(err)
 	}
 
 	karbonClusterName := *resp.Name
 	flattenedEtcdNodepool, err := flattenNodePools(d, conn, "etcd_node_pool", karbonClusterName, resp.ETCDConfig.NodePools)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	flattenedWorkerNodepool, err := flattenNodePools(d, conn, "worker_node_pool", karbonClusterName, resp.WorkerConfig.NodePools)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	flattenedMasterNodepool, err := flattenNodePools(d, conn, "master_node_pool", karbonClusterName, resp.MasterConfig.NodePools)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err = d.Set("name", utils.StringValue(resp.Name)); err != nil {
-		return fmt.Errorf("error setting name for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting name for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("status", utils.StringValue(resp.Status)); err != nil {
-		return fmt.Errorf("error setting status for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting status for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("version", utils.StringValue(resp.Version)); err != nil {
-		return fmt.Errorf("error setting version for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting version for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("kubeapi_server_ipv4_address", utils.StringValue(resp.KubeAPIServerIPv4Address)); err != nil {
-		return fmt.Errorf("error setting kubeapi_server_ipv4_address for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting kubeapi_server_ipv4_address for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("deployment_type", resp.MasterConfig.DeploymentType); err != nil {
-		return fmt.Errorf("error setting deployment_type for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting deployment_type for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("worker_node_pool", flattenedWorkerNodepool); err != nil {
-		return fmt.Errorf("error setting worker_node_pool for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting worker_node_pool for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("etcd_node_pool", flattenedEtcdNodepool); err != nil {
-		return fmt.Errorf("error setting etcd_node_pool for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting etcd_node_pool for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("master_node_pool", flattenedMasterNodepool); err != nil {
-		return fmt.Errorf("error setting master_node_pool for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting master_node_pool for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("uuid", utils.StringValue(resp.UUID)); err != nil {
-		return fmt.Errorf("error setting uuid for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting uuid for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	d.SetId(*resp.UUID)
 
@@ -135,7 +136,6 @@ func KarbonClusterElementDataSourceMap() map[string]*schema.Schema {
 func nodePoolDatasourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
-		MaxItems: 1,
 		Computed: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{

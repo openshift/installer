@@ -6,16 +6,19 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // IPSecPolicyUpdate IPSEc Policy object used for update
+//
+// Min Properties: 1
+//
 // swagger:model IPSecPolicyUpdate
 type IPSecPolicyUpdate struct {
 
@@ -23,22 +26,26 @@ type IPSecPolicyUpdate struct {
 	Authentication IPSECPolicyAuthentication `json:"authentication,omitempty"`
 
 	// Diffie-Hellman group
+	// Example: 2
 	// Enum: [1 2 5 14 19 20 24]
 	DhGroup int64 `json:"dhGroup,omitempty"`
 
 	// connection encryption policy
-	// Enum: [3des-cbc aes-128-cbc aes-128-gcm aes-192-cbc aes-192-gcm aes-256-cbc aes-256-gcm des-cbc]
+	// Example: aes-256-cbc
+	// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-192-gcm aes-128-gcm 3des-cbc]
 	Encryption string `json:"encryption,omitempty"`
 
 	// key lifetime
 	KeyLifetime KeyLifetime `json:"keyLifetime,omitempty"`
 
 	// IPSec Policy name
+	// Example: ipSecPolicy2
 	// Max Length: 47
 	// Min Length: 1
 	Name string `json:"name,omitempty"`
 
 	// Perfect Forward Secrecy
+	// Example: true
 	Pfs *bool `json:"pfs,omitempty"`
 
 	// IP sec policy update additional properties
@@ -54,22 +61,26 @@ func (m *IPSecPolicyUpdate) UnmarshalJSON(data []byte) error {
 		Authentication IPSECPolicyAuthentication `json:"authentication,omitempty"`
 
 		// Diffie-Hellman group
+		// Example: 2
 		// Enum: [1 2 5 14 19 20 24]
 		DhGroup int64 `json:"dhGroup,omitempty"`
 
 		// connection encryption policy
-		// Enum: [3des-cbc aes-128-cbc aes-128-gcm aes-192-cbc aes-192-gcm aes-256-cbc aes-256-gcm des-cbc]
+		// Example: aes-256-cbc
+		// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-192-gcm aes-128-gcm 3des-cbc]
 		Encryption string `json:"encryption,omitempty"`
 
 		// key lifetime
 		KeyLifetime KeyLifetime `json:"keyLifetime,omitempty"`
 
 		// IPSec Policy name
+		// Example: ipSecPolicy2
 		// Max Length: 47
 		// Min Length: 1
 		Name string `json:"name,omitempty"`
 
 		// Perfect Forward Secrecy
+		// Example: true
 		Pfs *bool `json:"pfs,omitempty"`
 	}
 	if err := json.Unmarshal(data, &stage1); err != nil {
@@ -78,17 +89,11 @@ func (m *IPSecPolicyUpdate) UnmarshalJSON(data []byte) error {
 	var rcv IPSecPolicyUpdate
 
 	rcv.Authentication = stage1.Authentication
-
 	rcv.DhGroup = stage1.DhGroup
-
 	rcv.Encryption = stage1.Encryption
-
 	rcv.KeyLifetime = stage1.KeyLifetime
-
 	rcv.Name = stage1.Name
-
 	rcv.Pfs = stage1.Pfs
-
 	*m = rcv
 
 	// stage 2, remove properties and add to map
@@ -98,17 +103,11 @@ func (m *IPSecPolicyUpdate) UnmarshalJSON(data []byte) error {
 	}
 
 	delete(stage2, "authentication")
-
 	delete(stage2, "dhGroup")
-
 	delete(stage2, "encryption")
-
 	delete(stage2, "keyLifetime")
-
 	delete(stage2, "name")
-
 	delete(stage2, "pfs")
-
 	// stage 3, add additional properties values
 	if len(stage2) > 0 {
 		result := make(map[string]interface{})
@@ -133,35 +132,34 @@ func (m IPSecPolicyUpdate) MarshalJSON() ([]byte, error) {
 		Authentication IPSECPolicyAuthentication `json:"authentication,omitempty"`
 
 		// Diffie-Hellman group
+		// Example: 2
 		// Enum: [1 2 5 14 19 20 24]
 		DhGroup int64 `json:"dhGroup,omitempty"`
 
 		// connection encryption policy
-		// Enum: [3des-cbc aes-128-cbc aes-128-gcm aes-192-cbc aes-192-gcm aes-256-cbc aes-256-gcm des-cbc]
+		// Example: aes-256-cbc
+		// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-192-gcm aes-128-gcm 3des-cbc]
 		Encryption string `json:"encryption,omitempty"`
 
 		// key lifetime
 		KeyLifetime KeyLifetime `json:"keyLifetime,omitempty"`
 
 		// IPSec Policy name
+		// Example: ipSecPolicy2
 		// Max Length: 47
 		// Min Length: 1
 		Name string `json:"name,omitempty"`
 
 		// Perfect Forward Secrecy
+		// Example: true
 		Pfs *bool `json:"pfs,omitempty"`
 	}
 
 	stage1.Authentication = m.Authentication
-
 	stage1.DhGroup = m.DhGroup
-
 	stage1.Encryption = m.Encryption
-
 	stage1.KeyLifetime = m.KeyLifetime
-
 	stage1.Name = m.Name
-
 	stage1.Pfs = m.Pfs
 
 	// make JSON object for known properties
@@ -170,7 +168,7 @@ func (m IPSecPolicyUpdate) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	if len(m.IPSecPolicyUpdateAdditionalProperties) == 0 {
+	if len(m.IPSecPolicyUpdateAdditionalProperties) == 0 { // no additional properties
 		return props, nil
 	}
 
@@ -180,18 +178,39 @@ func (m IPSecPolicyUpdate) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	if len(props) < 3 {
+	if len(props) < 3 { // "{}": only additional properties
 		return additional, nil
 	}
 
 	// concatenate the 2 objects
-	props[len(props)-1] = ','
-	return append(props, additional[1:]...), nil
+	return swag.ConcatJSON(props, additional), nil
 }
 
 // Validate validates this IP sec policy update
 func (m *IPSecPolicyUpdate) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	// short circuits minProperties > 0
+	if m == nil {
+		return errors.TooFewProperties("", "body", 1)
+	}
+
+	props := make(map[string]json.RawMessage, 6+10)
+	j, err := swag.WriteJSON(m)
+	if err != nil {
+		return err
+	}
+
+	if err = swag.ReadJSON(j, &props); err != nil {
+		return err
+	}
+
+	nprops := len(props)
+
+	// minProperties: 1
+	if nprops < 1 {
+		return errors.TooFewProperties("", "body", 1)
+	}
 
 	if err := m.validateAuthentication(formats); err != nil {
 		res = append(res, err)
@@ -220,7 +239,6 @@ func (m *IPSecPolicyUpdate) Validate(formats strfmt.Registry) error {
 }
 
 func (m *IPSecPolicyUpdate) validateAuthentication(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Authentication) { // not required
 		return nil
 	}
@@ -228,6 +246,8 @@ func (m *IPSecPolicyUpdate) validateAuthentication(formats strfmt.Registry) erro
 	if err := m.Authentication.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("authentication")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("authentication")
 		}
 		return err
 	}
@@ -249,14 +269,13 @@ func init() {
 
 // prop value enum
 func (m *IPSecPolicyUpdate) validateDhGroupEnum(path, location string, value int64) error {
-	if err := validate.Enum(path, location, value, ipSecPolicyUpdateTypeDhGroupPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, ipSecPolicyUpdateTypeDhGroupPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *IPSecPolicyUpdate) validateDhGroup(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.DhGroup) { // not required
 		return nil
 	}
@@ -273,7 +292,7 @@ var ipSecPolicyUpdateTypeEncryptionPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["3des-cbc","aes-128-cbc","aes-128-gcm","aes-192-cbc","aes-192-gcm","aes-256-cbc","aes-256-gcm","des-cbc"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-192-gcm","aes-128-gcm","3des-cbc"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -283,41 +302,37 @@ func init() {
 
 const (
 
-	// IPSecPolicyUpdateEncryptionNr3desCbc captures enum value "3des-cbc"
-	IPSecPolicyUpdateEncryptionNr3desCbc string = "3des-cbc"
+	// IPSecPolicyUpdateEncryptionAesDash256DashCbc captures enum value "aes-256-cbc"
+	IPSecPolicyUpdateEncryptionAesDash256DashCbc string = "aes-256-cbc"
 
-	// IPSecPolicyUpdateEncryptionAes128Cbc captures enum value "aes-128-cbc"
-	IPSecPolicyUpdateEncryptionAes128Cbc string = "aes-128-cbc"
+	// IPSecPolicyUpdateEncryptionAesDash192DashCbc captures enum value "aes-192-cbc"
+	IPSecPolicyUpdateEncryptionAesDash192DashCbc string = "aes-192-cbc"
 
-	// IPSecPolicyUpdateEncryptionAes128Gcm captures enum value "aes-128-gcm"
-	IPSecPolicyUpdateEncryptionAes128Gcm string = "aes-128-gcm"
+	// IPSecPolicyUpdateEncryptionAesDash128DashCbc captures enum value "aes-128-cbc"
+	IPSecPolicyUpdateEncryptionAesDash128DashCbc string = "aes-128-cbc"
 
-	// IPSecPolicyUpdateEncryptionAes192Cbc captures enum value "aes-192-cbc"
-	IPSecPolicyUpdateEncryptionAes192Cbc string = "aes-192-cbc"
+	// IPSecPolicyUpdateEncryptionAesDash256DashGcm captures enum value "aes-256-gcm"
+	IPSecPolicyUpdateEncryptionAesDash256DashGcm string = "aes-256-gcm"
 
-	// IPSecPolicyUpdateEncryptionAes192Gcm captures enum value "aes-192-gcm"
-	IPSecPolicyUpdateEncryptionAes192Gcm string = "aes-192-gcm"
+	// IPSecPolicyUpdateEncryptionAesDash192DashGcm captures enum value "aes-192-gcm"
+	IPSecPolicyUpdateEncryptionAesDash192DashGcm string = "aes-192-gcm"
 
-	// IPSecPolicyUpdateEncryptionAes256Cbc captures enum value "aes-256-cbc"
-	IPSecPolicyUpdateEncryptionAes256Cbc string = "aes-256-cbc"
+	// IPSecPolicyUpdateEncryptionAesDash128DashGcm captures enum value "aes-128-gcm"
+	IPSecPolicyUpdateEncryptionAesDash128DashGcm string = "aes-128-gcm"
 
-	// IPSecPolicyUpdateEncryptionAes256Gcm captures enum value "aes-256-gcm"
-	IPSecPolicyUpdateEncryptionAes256Gcm string = "aes-256-gcm"
-
-	// IPSecPolicyUpdateEncryptionDesCbc captures enum value "des-cbc"
-	IPSecPolicyUpdateEncryptionDesCbc string = "des-cbc"
+	// IPSecPolicyUpdateEncryptionNr3desDashCbc captures enum value "3des-cbc"
+	IPSecPolicyUpdateEncryptionNr3desDashCbc string = "3des-cbc"
 )
 
 // prop value enum
 func (m *IPSecPolicyUpdate) validateEncryptionEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, ipSecPolicyUpdateTypeEncryptionPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, ipSecPolicyUpdateTypeEncryptionPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *IPSecPolicyUpdate) validateEncryption(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Encryption) { // not required
 		return nil
 	}
@@ -331,7 +346,6 @@ func (m *IPSecPolicyUpdate) validateEncryption(formats strfmt.Registry) error {
 }
 
 func (m *IPSecPolicyUpdate) validateKeyLifetime(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.KeyLifetime) { // not required
 		return nil
 	}
@@ -339,6 +353,8 @@ func (m *IPSecPolicyUpdate) validateKeyLifetime(formats strfmt.Registry) error {
 	if err := m.KeyLifetime.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("keyLifetime")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("keyLifetime")
 		}
 		return err
 	}
@@ -347,16 +363,61 @@ func (m *IPSecPolicyUpdate) validateKeyLifetime(formats strfmt.Registry) error {
 }
 
 func (m *IPSecPolicyUpdate) validateName(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Name) { // not required
 		return nil
 	}
 
-	if err := validate.MinLength("name", "body", string(m.Name), 1); err != nil {
+	if err := validate.MinLength("name", "body", m.Name, 1); err != nil {
 		return err
 	}
 
-	if err := validate.MaxLength("name", "body", string(m.Name), 47); err != nil {
+	if err := validate.MaxLength("name", "body", m.Name, 47); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this IP sec policy update based on the context it is used
+func (m *IPSecPolicyUpdate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateAuthentication(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateKeyLifetime(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *IPSecPolicyUpdate) contextValidateAuthentication(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.Authentication.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("authentication")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("authentication")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *IPSecPolicyUpdate) contextValidateKeyLifetime(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.KeyLifetime.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("keyLifetime")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("keyLifetime")
+		}
 		return err
 	}
 

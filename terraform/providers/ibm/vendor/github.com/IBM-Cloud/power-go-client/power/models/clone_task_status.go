@@ -6,17 +6,18 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // CloneTaskStatus clone task status
+//
 // swagger:model CloneTaskStatus
 type CloneTaskStatus struct {
 
@@ -59,7 +60,6 @@ func (m *CloneTaskStatus) Validate(formats strfmt.Registry) error {
 }
 
 func (m *CloneTaskStatus) validateClonedVolumes(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.ClonedVolumes) { // not required
 		return nil
 	}
@@ -73,6 +73,8 @@ func (m *CloneTaskStatus) validateClonedVolumes(formats strfmt.Registry) error {
 			if err := m.ClonedVolumes[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("clonedVolumes" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("clonedVolumes" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -121,7 +123,7 @@ const (
 
 // prop value enum
 func (m *CloneTaskStatus) validateStatusEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, cloneTaskStatusTypeStatusPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, cloneTaskStatusTypeStatusPropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -136,6 +138,40 @@ func (m *CloneTaskStatus) validateStatus(formats strfmt.Registry) error {
 	// value enum
 	if err := m.validateStatusEnum("status", "body", *m.Status); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this clone task status based on the context it is used
+func (m *CloneTaskStatus) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateClonedVolumes(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *CloneTaskStatus) contextValidateClonedVolumes(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.ClonedVolumes); i++ {
+
+		if m.ClonedVolumes[i] != nil {
+			if err := m.ClonedVolumes[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("clonedVolumes" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("clonedVolumes" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

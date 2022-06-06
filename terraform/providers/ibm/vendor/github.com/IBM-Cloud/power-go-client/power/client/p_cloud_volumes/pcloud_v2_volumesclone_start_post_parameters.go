@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudV2VolumescloneStartPostParams creates a new PcloudV2VolumescloneStartPostParams object
-// with the default values initialized.
+// NewPcloudV2VolumescloneStartPostParams creates a new PcloudV2VolumescloneStartPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudV2VolumescloneStartPostParams() *PcloudV2VolumescloneStartPostParams {
-	var ()
 	return &PcloudV2VolumescloneStartPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudV2VolumescloneStartPostParamsWithTimeout creates a new PcloudV2VolumescloneStartPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudV2VolumescloneStartPostParamsWithTimeout(timeout time.Duration) *PcloudV2VolumescloneStartPostParams {
-	var ()
 	return &PcloudV2VolumescloneStartPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudV2VolumescloneStartPostParamsWithContext creates a new PcloudV2VolumescloneStartPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudV2VolumescloneStartPostParamsWithContext(ctx context.Context) *PcloudV2VolumescloneStartPostParams {
-	var ()
 	return &PcloudV2VolumescloneStartPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudV2VolumescloneStartPostParamsWithHTTPClient creates a new PcloudV2VolumescloneStartPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudV2VolumescloneStartPostParamsWithHTTPClient(client *http.Client) *PcloudV2VolumescloneStartPostParams {
-	var ()
 	return &PcloudV2VolumescloneStartPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudV2VolumescloneStartPostParams contains all the parameters to send to the API endpoint
-for the pcloud v2 volumesclone start post operation typically these are written to a http.Request
+/* PcloudV2VolumescloneStartPostParams contains all the parameters to send to the API endpoint
+   for the pcloud v2 volumesclone start post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudV2VolumescloneStartPostParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*VolumesCloneID
-	  Volumes Clone ID
 
+	/* VolumesCloneID.
+
+	   Volumes Clone ID
 	*/
 	VolumesCloneID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud v2 volumesclone start post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2VolumescloneStartPostParams) WithDefaults() *PcloudV2VolumescloneStartPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud v2 volumesclone start post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2VolumescloneStartPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud v2 volumesclone start post params

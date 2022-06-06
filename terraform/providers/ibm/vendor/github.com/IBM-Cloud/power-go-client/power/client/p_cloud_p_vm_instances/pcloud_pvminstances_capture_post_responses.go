@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudPvminstancesCapturePostReader is a Reader for the PcloudPvminstancesCapturePost structure.
@@ -24,51 +23,44 @@ type PcloudPvminstancesCapturePostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudPvminstancesCapturePostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudPvminstancesCapturePostOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 202:
 		result := NewPcloudPvminstancesCapturePostAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudPvminstancesCapturePostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudPvminstancesCapturePostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudPvminstancesCapturePostUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudPvminstancesCapturePostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudPvminstancesCapturePostOK() *PcloudPvminstancesCapturePostOK {
 	return &PcloudPvminstancesCapturePostOK{}
 }
 
-/*PcloudPvminstancesCapturePostOK handles this case with default header values.
+/* PcloudPvminstancesCapturePostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -87,6 +79,9 @@ type PcloudPvminstancesCapturePostOK struct {
 
 func (o *PcloudPvminstancesCapturePostOK) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostOK  %+v", 200, o.Payload)
+}
+func (o *PcloudPvminstancesCapturePostOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesCapturePostOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,7 +99,7 @@ func NewPcloudPvminstancesCapturePostAccepted() *PcloudPvminstancesCapturePostAc
 	return &PcloudPvminstancesCapturePostAccepted{}
 }
 
-/*PcloudPvminstancesCapturePostAccepted handles this case with default header values.
+/* PcloudPvminstancesCapturePostAccepted describes a response with status code 202, with default header values.
 
 Accepted, upload to cloud storage in progress
 */
@@ -114,6 +109,9 @@ type PcloudPvminstancesCapturePostAccepted struct {
 
 func (o *PcloudPvminstancesCapturePostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostAccepted  %+v", 202, o.Payload)
+}
+func (o *PcloudPvminstancesCapturePostAccepted) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesCapturePostAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -131,7 +129,7 @@ func NewPcloudPvminstancesCapturePostBadRequest() *PcloudPvminstancesCapturePost
 	return &PcloudPvminstancesCapturePostBadRequest{}
 }
 
-/*PcloudPvminstancesCapturePostBadRequest handles this case with default header values.
+/* PcloudPvminstancesCapturePostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -141,6 +139,9 @@ type PcloudPvminstancesCapturePostBadRequest struct {
 
 func (o *PcloudPvminstancesCapturePostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudPvminstancesCapturePostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesCapturePostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -160,7 +161,7 @@ func NewPcloudPvminstancesCapturePostUnauthorized() *PcloudPvminstancesCapturePo
 	return &PcloudPvminstancesCapturePostUnauthorized{}
 }
 
-/*PcloudPvminstancesCapturePostUnauthorized handles this case with default header values.
+/* PcloudPvminstancesCapturePostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -170,6 +171,9 @@ type PcloudPvminstancesCapturePostUnauthorized struct {
 
 func (o *PcloudPvminstancesCapturePostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudPvminstancesCapturePostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesCapturePostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -189,7 +193,7 @@ func NewPcloudPvminstancesCapturePostUnprocessableEntity() *PcloudPvminstancesCa
 	return &PcloudPvminstancesCapturePostUnprocessableEntity{}
 }
 
-/*PcloudPvminstancesCapturePostUnprocessableEntity handles this case with default header values.
+/* PcloudPvminstancesCapturePostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -199,6 +203,9 @@ type PcloudPvminstancesCapturePostUnprocessableEntity struct {
 
 func (o *PcloudPvminstancesCapturePostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudPvminstancesCapturePostUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesCapturePostUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -218,7 +225,7 @@ func NewPcloudPvminstancesCapturePostInternalServerError() *PcloudPvminstancesCa
 	return &PcloudPvminstancesCapturePostInternalServerError{}
 }
 
-/*PcloudPvminstancesCapturePostInternalServerError handles this case with default header values.
+/* PcloudPvminstancesCapturePostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -228,6 +235,9 @@ type PcloudPvminstancesCapturePostInternalServerError struct {
 
 func (o *PcloudPvminstancesCapturePostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudPvminstancesCapturePostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesCapturePostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

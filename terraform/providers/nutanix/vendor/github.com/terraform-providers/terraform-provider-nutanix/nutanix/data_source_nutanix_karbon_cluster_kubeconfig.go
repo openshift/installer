@@ -1,17 +1,18 @@
 package nutanix
 
 import (
-	"fmt"
+	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-nutanix/client/karbon"
 	"gopkg.in/yaml.v2"
 )
 
 func dataSourceNutanixKarbonClusterKubeconfig() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixKarbonClusterKubeconfigRead,
+		ReadContext: dataSourceNutanixKarbonClusterKubeconfigRead,
 
 		Schema: map[string]*schema.Schema{
 			"karbon_cluster_id": {
@@ -45,7 +46,7 @@ func dataSourceNutanixKarbonClusterKubeconfig() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixKarbonClusterKubeconfigRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixKarbonClusterKubeconfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).KarbonAPI
 	setTimeout(meta)
@@ -54,7 +55,7 @@ func dataSourceNutanixKarbonClusterKubeconfigRead(d *schema.ResourceData, meta i
 	karbonClusterName, nok := d.GetOk("karbon_cluster_name")
 
 	if !iok && !nok {
-		return fmt.Errorf("please provide one of karbon_cluster_id or karbon_cluster_name attributes")
+		return diag.Errorf("please provide one of karbon_cluster_id or karbon_cluster_name attributes")
 	}
 
 	var err error
@@ -68,25 +69,25 @@ func dataSourceNutanixKarbonClusterKubeconfigRead(d *schema.ResourceData, meta i
 
 	if err != nil {
 		d.SetId("")
-		return err
+		return diag.FromErr(err)
 	}
 	if len(resp.Clusters) != 1 {
-		return fmt.Errorf("incorrect amount of cluster information retrieved via kubeconfig, must be 1")
+		return diag.Errorf("incorrect amount of cluster information retrieved via kubeconfig, must be 1")
 	}
 	if len(resp.Users) != 1 {
-		return fmt.Errorf("incorrect amount of user information retrieved via kubeconfig must be 1")
+		return diag.Errorf("incorrect amount of user information retrieved via kubeconfig must be 1")
 	}
 	if err := d.Set("cluster_ca_certificate", resp.Clusters[0].Cluster.CertificateAuthorityData); err != nil {
-		return fmt.Errorf("error setting `cluster_ca_certificate` for Karbon cluster (%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `cluster_ca_certificate` for Karbon cluster (%s): %s", d.Id(), err)
 	}
 	if err := d.Set("cluster_url", resp.Clusters[0].Cluster.Server); err != nil {
-		return fmt.Errorf("error setting `cluster_url` for Karbon cluster (%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `cluster_url` for Karbon cluster (%s): %s", d.Id(), err)
 	}
 	if err := d.Set("access_token", resp.Users[0].User.Token); err != nil {
-		return fmt.Errorf("error setting `access_token` for Karbon cluster (%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `access_token` for Karbon cluster (%s): %s", d.Id(), err)
 	}
 	if err := d.Set("name", resp.Clusters[0].Name); err != nil {
-		return fmt.Errorf("error setting `name` for Karbon cluster (%s): %s", d.Id(), err)
+		return diag.Errorf("error setting `name` for Karbon cluster (%s): %s", d.Id(), err)
 	}
 
 	d.SetId(resource.UniqueId())

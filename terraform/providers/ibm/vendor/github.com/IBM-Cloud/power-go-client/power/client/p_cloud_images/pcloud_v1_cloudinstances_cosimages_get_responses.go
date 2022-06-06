@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudV1CloudinstancesCosimagesGetReader is a Reader for the PcloudV1CloudinstancesCosimagesGet structure.
@@ -24,37 +23,32 @@ type PcloudV1CloudinstancesCosimagesGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudV1CloudinstancesCosimagesGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudV1CloudinstancesCosimagesGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewPcloudV1CloudinstancesCosimagesGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudV1CloudinstancesCosimagesGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudV1CloudinstancesCosimagesGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -63,7 +57,7 @@ func NewPcloudV1CloudinstancesCosimagesGetOK() *PcloudV1CloudinstancesCosimagesG
 	return &PcloudV1CloudinstancesCosimagesGetOK{}
 }
 
-/*PcloudV1CloudinstancesCosimagesGetOK handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,6 +67,9 @@ type PcloudV1CloudinstancesCosimagesGetOK struct {
 
 func (o *PcloudV1CloudinstancesCosimagesGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesGetOK  %+v", 200, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesGetOK) GetPayload() *models.Job {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -92,7 +89,7 @@ func NewPcloudV1CloudinstancesCosimagesGetUnauthorized() *PcloudV1Cloudinstances
 	return &PcloudV1CloudinstancesCosimagesGetUnauthorized{}
 }
 
-/*PcloudV1CloudinstancesCosimagesGetUnauthorized handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -102,6 +99,9 @@ type PcloudV1CloudinstancesCosimagesGetUnauthorized struct {
 
 func (o *PcloudV1CloudinstancesCosimagesGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesGetUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -121,7 +121,7 @@ func NewPcloudV1CloudinstancesCosimagesGetNotFound() *PcloudV1CloudinstancesCosi
 	return &PcloudV1CloudinstancesCosimagesGetNotFound{}
 }
 
-/*PcloudV1CloudinstancesCosimagesGetNotFound handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -131,6 +131,9 @@ type PcloudV1CloudinstancesCosimagesGetNotFound struct {
 
 func (o *PcloudV1CloudinstancesCosimagesGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesGetNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesGetNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -150,7 +153,7 @@ func NewPcloudV1CloudinstancesCosimagesGetInternalServerError() *PcloudV1Cloudin
 	return &PcloudV1CloudinstancesCosimagesGetInternalServerError{}
 }
 
-/*PcloudV1CloudinstancesCosimagesGetInternalServerError handles this case with default header values.
+/* PcloudV1CloudinstancesCosimagesGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -160,6 +163,9 @@ type PcloudV1CloudinstancesCosimagesGetInternalServerError struct {
 
 func (o *PcloudV1CloudinstancesCosimagesGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudV1CloudinstancesCosimagesGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV1CloudinstancesCosimagesGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

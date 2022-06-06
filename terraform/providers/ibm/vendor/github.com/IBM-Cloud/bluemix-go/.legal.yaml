@@ -1,7 +1,7 @@
 schemaVersion: oss-license-declaration.cloud.ibm.com:v4
 name: bluemix-go
 source: https://github.com/IBM-Cloud/bluemix-go
-issues: https://github.ibm.com/blueprint/schematics-compliance/issues
+issues: https://github.ibm.com/blueprint/security-project-management/issues
 objectCodeOnly: false
 additionalDownloads:
   include:
@@ -121,6 +121,8 @@ dependencies:
       - BSD-3-Clause
   - name: github.com/google/go-cmp
     version: v0.5.5
+    licenses:
+      - BSD-3-Clause
   - name: github.com/google/uuid
     version: v1.1.1
     licenses:
@@ -131,6 +133,8 @@ dependencies:
       - MIT
   - name: github.com/inconshreveable/mousetrap
     version: v1.0.0
+    licenses:
+      - Apache-2.0
   - name: github.com/jmespath/go-jmespath
     version: v0.4.0
     licenses:
@@ -141,24 +145,34 @@ dependencies:
       - MIT
   - name: github.com/joho/godotenv
     version: v1.3.0
+    licenses:
+      - MIT
   - name: github.com/karrick/godirwalk
     version: v1.10.3
     licenses:
       - BSD-2-Clause
   - name: github.com/klauspost/compress
     version: v1.9.5
+    licenses:
+      - Apache-2.0
+      - BSD-3-Clause
+      - MIT
   - name: github.com/konsorten/go-windows-terminal-sequences
     version: v1.0.2
     licenses:
       - MIT
   - name: github.com/kr/pretty
     version: v0.1.0
+    licenses:
+      - MIT
   - name: github.com/kr/pty
     version: v1.1.1
     licenses:
       - MIT
   - name: github.com/kr/text
     version: v0.2.0
+    licenses:
+      - MIT
   - name: github.com/markbates/oncer
     version: v0.0.0-20181203154359-bf2de49a0be2
     licenses:
@@ -169,12 +183,16 @@ dependencies:
       - MIT
   - name: github.com/mitchellh/mapstructure
     version: v1.3.3
+    licenses:
+      - MIT
   - name: github.com/montanaflynn/stats
     version: v0.0.0-20171201202039-1bf9dbcd8cbe
     licenses:
       - MIT
   - name: github.com/niemeyer/pretty
     version: v0.0.0-20200227124842-a10e7caefd8e
+    licenses:
+      - MIT
   - name: github.com/nxadm/tail
     version: v1.4.8
     licenses:
@@ -184,7 +202,9 @@ dependencies:
     licenses:
       - MIT
   - name: github.com/onsi/gomega
-    version: v1.14.0
+    version: v1.16.0
+    licenses:
+      - MIT
   - name: github.com/pelletier/go-toml
     version: v1.7.0
     licenses:
@@ -192,12 +212,16 @@ dependencies:
       - MIT
   - name: github.com/pkg/errors
     version: v0.9.1
+    licenses:
+      - BSD-2-Clause
   - name: github.com/pmezard/go-difflib
     version: v1.0.0
     licenses:
       - BSD-3-Clause
   - name: github.com/rogpeppe/go-internal
     version: v1.3.0
+    licenses:
+      - BSD-3-Clause
   - name: github.com/sirupsen/logrus
     version: v1.4.2
     licenses:
@@ -208,12 +232,16 @@ dependencies:
       - Apache-2.0
   - name: github.com/spf13/pflag
     version: v1.0.3
+    licenses:
+      - BSD-3-Clause
   - name: github.com/stretchr/objx
     version: v0.1.1
     licenses:
       - MIT
   - name: github.com/stretchr/testify
     version: v1.6.1
+    licenses:
+      - MIT
   - name: github.com/tidwall/pretty
     version: v1.0.0
     licenses:
@@ -224,6 +252,8 @@ dependencies:
       - Apache-2.0
   - name: github.com/xdg/stringprep
     version: v0.0.0-20180714160509-73f8eece6fdc
+    licenses:
+      - Apache-2.0
   - name: github.com/yuin/goldmark
     version: v1.2.1
     licenses:
@@ -234,30 +264,44 @@ dependencies:
       - Apache-2.0
   - name: golang.org/x/crypto
     version: v0.0.0-20200622213623-75b288015ac9
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/mod
     version: v0.3.0
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/net
     version: v0.0.0-20210614182718-04defd469f4e
     licenses:
       - BSD-3-Clause
   - name: golang.org/x/sync
     version: v0.0.0-20201020160332-67f06af15bc9
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/sys
     version: v0.0.0-20210423082822-04245dca01da
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/term
     version: v0.0.0-20201126162022-7de9c90e9dd1
     licenses:
       - BSD-3-Clause
   - name: golang.org/x/text
     version: v0.3.6
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/tools
     version: v0.0.0-20201224043029-2b0845dc783e
     licenses:
       - BSD-3-Clause
   - name: golang.org/x/xerrors
     version: v0.0.0-20200804184101-5ec99f83aff1
+    licenses:
+      - BSD-3-Clause
   - name: google.golang.org/protobuf
     version: v1.26.0
+    licenses:
+      - BSD-3-Clause
   - name: gopkg.in/check.v1
     version: v1.0.0-20200227125254-8fa46927fb4f
     licenses:
@@ -268,11 +312,18 @@ dependencies:
       - BSD-3-Clause
   - name: gopkg.in/fsnotify.v1
     version: v1.4.7
+    licenses:
+      - BSD-3-Clause
   - name: gopkg.in/tomb.v1
     version: v1.0.0-20141024135613-dd632973f1e7
     licenses:
       - BSD-3-Clause
   - name: gopkg.in/yaml.v2
     version: v2.4.0
+    licenses:
+      - Apache-2.0
   - name: gopkg.in/yaml.v3
     version: v3.0.0-20200605160147-a5ece683394c
+    licenses:
+      - Apache-2.0
+      - MIT

@@ -2,6 +2,8 @@ package v3
 
 import (
 	"time"
+
+	"github.com/terraform-providers/terraform-provider-nutanix/client"
 )
 
 // Reference ...
@@ -47,6 +49,9 @@ type VMNic struct {
 	Model *string `json:"model,omitempty" mapstructure:"model,omitempty"`
 
 	NetworkFunctionChainReference *Reference `json:"network_function_chain_reference,omitempty" mapstructure:"network_function_chain_reference,omitempty"`
+
+	// The number of queues for this NIC
+	NumQueues *int64 `json:"num_queues,omitempty" mapstructure:"num_queues,omitempty"`
 
 	// The type of this Network function NIC. Defaults to INGRESS.
 	NetworkFunctionNicType *string `json:"network_function_nic_type,omitempty" mapstructure:"network_function_nic_type,omitempty"`
@@ -286,6 +291,9 @@ type VMResources struct {
 	// Indicates whether to passthrough the host’s CPU features to the guest. Enabling this will disable live migration of the VM.
 	EnableCPUPassthrough *bool `json:"enable_cpu_passthrough,omitempty" mapstructure:"enable_cpu_passthrough,omitempty"`
 
+	// Indicates whether a VMs cores are getting pinned on either CPU1, CPU2, CPU3 or CPU4. By default, the Linux Scheduler in AHV will pin all cores wherever they are best available.
+	EnableCPUPinning *bool `json:"is_vcpu_hard_pinned,omitempty" mapstructure:"is_vcpu_hard_pinned,omitempty"`
+
 	// Information regarding vNUMA configuration.
 	VMVnumaConfig *VMVnumaConfig `json:"vnuma_config,omitempty" mapstructure:"vnuma_config,omitempty"`
 
@@ -362,6 +370,9 @@ type VMNicOutputStatus struct {
 	Model *string `json:"model,omitempty" mapstructure:"model,omitempty"`
 
 	NetworkFunctionChainReference *Reference `json:"network_function_chain_reference,omitempty" mapstructure:"network_function_chain_reference,omitempty"`
+
+	// The number of queues for this NIC
+	NumQueues *int64 `json:"num_queues,omitempty" mapstructure:"num_queues,omitempty"`
 
 	// The type of this Network function NIC. Defaults to INGRESS.
 	NetworkFunctionNicType *string `json:"network_function_nic_type,omitempty" mapstructure:"network_function_nic_type,omitempty"`
@@ -516,6 +527,9 @@ type VMResourcesDefStatus struct {
 	// Indicates whether to passthrough the host’s CPU features to the guest. Enabling this will disable live migration of the VM.
 	EnableCPUPassthrough *bool `json:"enable_cpu_passthrough,omitempty" mapstructure:"enable_cpu_passthrough,omitempty"`
 
+	// Indicates whether a VMs cores are getting pinned on either CPU1, CPU2, CPU3 or CPU4. By default, the Linux Scheduler in AHV will pin all cores wherever they are best available.
+	EnableCPUPinning *bool `json:"is_vcpu_hard_pinned,omitempty" mapstructure:"is_vcpu_hard_pinned,omitempty"`
+
 	// Information regarding vNUMA configuration.
 	VnumaConfig *VMVnumaConfig `json:"vnuma_config,omitempty" mapstructure:"vnuma_config,omitempty"`
 
@@ -583,6 +597,9 @@ type DSMetadata struct {
 
 	// The sort order in which results are returned
 	SortOrder *string `json:"sort_order,omitempty" mapstructure:"sort_order,omitempty"`
+
+	// Additional filters for client side filtering api response
+	ClientSideFilters []*client.AdditionalFilter `json:"-"`
 }
 
 // VMIntentResource Response object for intentful operations on a vm
@@ -868,6 +885,9 @@ type ImageResources struct {
 	// The image version
 	Version *ImageVersionResources `json:"version,omitempty" mapstructure:"version,omitempty"`
 
+	// Cluster reference lists
+	InitialPlacementRefList []*ReferenceValues `json:"initial_placement_ref_list,omitempty" mapstructure:"initial_placement_ref_list, omitempty"`
+
 	// Reference to the source image such as 'vm_disk
 	DataSourceReference *Reference `json:"data_source_reference,omitempty" mapstructure:"data_source_reference,omitempty"`
 }
@@ -972,6 +992,12 @@ type ImageResourcesDefStatus struct {
 
 	// The source URI points at the location of a the source image which is used to create/update image.
 	SourceURI *string `json:"source_uri,omitempty" mapstructure:"source_uri,omitempty"`
+
+	// Cluster reference lists
+	InitialPlacementRefList []*ReferenceValues `json:"initial_placement_ref_list,omitempty" mapstructure:"initial_placement_ref_list, omitempty"`
+
+	// cluster reference list when request was made without refs
+	CurrentClusterReferenceList []*ReferenceValues `json:"current_cluster_reference_list,omitempty" mapstructure:"current_cluster_reference_list, omitempty"`
 
 	// The image version
 	Version *ImageVersionStatus `json:"version,omitempty" mapstructure:"version,omitempty"`
@@ -2516,4 +2542,61 @@ type RecoveryPlanInput struct {
 	APIVersion string            `json:"api_version,omitempty"`
 	Metadata   *Metadata         `json:"metadata,omitempty"`
 	Spec       *RecoveryPlanSpec `json:"spec,omitempty"`
+}
+
+type ServiceListEntry struct {
+	Protocol         *string                        `json:"protocol,omitempty"`
+	TCPPortRangeList []*PortRange                   `json:"tcp_port_range_list,omitempty"`
+	UDPPortRangeList []*PortRange                   `json:"udp_port_range_list,omitempty"`
+	IcmpTypeCodeList []*NetworkRuleIcmpTypeCodeList `json:"icmp_type_code_list,omitempty"`
+}
+
+type ServiceGroupListEntry struct {
+	UUID                   *string            `json:"uuid,omitempty"`
+	ServiceGroup           *ServiceGroupInput `json:"service_group,omitempty"`
+	AssociatedPoliciesList []*ReferenceValues `json:"associated_policies_list,omitempty"`
+}
+
+type ServiceGroupInput struct {
+	Name          *string             `json:"name,omitempty"`
+	Description   *string             `json:"description,omitempty"`
+	ServiceList   []*ServiceListEntry `json:"service_list,omitempty"`
+	SystemDefined *bool               `json:"is_system_defined,omitempty"`
+}
+
+type ServiceGroupListResponse struct {
+	Metadata *ListMetadataOutput      `json:"metadata,omitempty"`
+	Entities []*ServiceGroupListEntry `json:"entities,omitempty"`
+}
+
+type ServiceGroupResponse struct {
+	ServiceGroup *ServiceGroupInput `json:"service_group,omitempty"`
+	UUID         *string            `json:"uuid,omitempty"`
+}
+
+type IPAddressBlock struct {
+	IPAddress    *string `json:"ip,omitempty"`
+	PrefixLength *int64  `json:"prefix_length,omitempty"`
+}
+
+type AddressGroupInput struct {
+	Name               *string           `json:"name,omitempty"`
+	Description        *string           `json:"description,omitempty"`
+	BlockList          []*IPAddressBlock `json:"ip_address_block_list,omitempty"`
+	AddressGroupString *string           `json:"address_group_string,omitempty"`
+}
+
+type AddressGroupResponse struct {
+	UUID         *string            `json:"uuid,omitempty"`
+	AddressGroup *AddressGroupInput `json:"address_group,omitempty"`
+}
+
+type AddressGroupListEntry struct {
+	AddressGroup           *AddressGroupInput `json:"address_group,omitempty"`
+	AssociatedPoliciesList []*ReferenceValues `json:"associated_policies_list,omitempty"`
+}
+
+type AddressGroupListResponse struct {
+	Metadata *ListMetadataOutput      `json:"metadata,omitempty"`
+	Entities []*AddressGroupListEntry `json:"entities,omitempty"`
 }

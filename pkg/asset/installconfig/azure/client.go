@@ -11,9 +11,9 @@ import (
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
+	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 //go:generate mockgen -source=./client.go -destination=mock/azureclient_generated.go -package=mock
@@ -31,7 +31,12 @@ type API interface {
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
 	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
-	GetHyperVGenerationVersion(ctx context.Context, instanceType string, diskType string, region string) (string, error)
+	GetHyperVGenerationVersion(ctx context.Context, instanceType string, region string, imageHyperVGen string) (string, error)
+	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error)
+	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
+	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
+	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
+	GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error)
 }
 
 // Client makes calls to the Azure API.
@@ -271,27 +276,101 @@ func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, group
 	return &diskEncryptionSet, nil
 }
 
-// GetHyperVGenerationVersion gets the HyperVGeneration version for the given disk instance type. Defaults to V2 if either V1 or V2
-// available.
-func (c *Client) GetHyperVGenerationVersion(ctx context.Context, instanceType string, diskType string, region string) (version string, err error) {
+// GetVMCapabilities retrieves the capabilities of an instant type in a specific region. Returns these values
+// in a map with the capability name as the key and the corresponding value.
+func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error) {
 	typeMeta, err := c.GetVirtualMachineSku(ctx, instanceType, region)
 	if err != nil {
-		return "", fmt.Errorf("error onnecting to Azure client: %s", err.Error())
+		return nil, fmt.Errorf("error connecting to Azure client: %v", err)
+	}
+	if typeMeta == nil {
+		return nil, fmt.Errorf("not found in region %s", region)
 	}
 
+	capabilities := make(map[string]string)
 	for _, capability := range *typeMeta.Capabilities {
-		if strings.EqualFold(*capability.Name, "HyperVGenerations") {
-			generations := sets.NewString()
-			for _, g := range strings.Split(to.String(capability.Value), ",") {
-				g = strings.TrimSpace(g)
-				g = strings.ToUpper(g)
-				generations.Insert(g)
+		capabilities[to.String(capability.Name)] = to.String(capability.Value)
+	}
+	return capabilities, nil
+}
+
+// GetHyperVGenerationVersion gets the HyperVGeneration version for the given instance type and marketplace image version, if specified. Defaults to V2 if either V1 or V2
+// available.
+func (c *Client) GetHyperVGenerationVersion(ctx context.Context, instanceType string, region string, imageHyperVGen string) (version string, err error) {
+	capabilities, err := c.GetVMCapabilities(ctx, instanceType, region)
+	if err != nil {
+		return "", err
+	}
+
+	return GetHyperVGenerationVersion(capabilities, imageHyperVGen)
+}
+
+// GetMarketplaceImage get the specified marketplace VM image.
+func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error) {
+	client := azenc.NewVirtualMachineImagesClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
+	client.Authorizer = c.ssn.Authorizer
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	image, err := client.Get(ctx, region, publisher, offer, sku, version)
+	return image, errors.Wrap(err, "could not get marketplace image")
+}
+
+// AreMarketplaceImageTermsAccepted tests whether the terms have been accepted for the specified marketplace VM image.
+func (c *Client) AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error) {
+	client := azmarketplace.NewMarketplaceAgreementsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
+	client.Authorizer = c.ssn.Authorizer
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	terms, err := client.Get(ctx, publisher, offer, sku)
+	if err != nil {
+		return false, err
+	}
+
+	if terms.AgreementProperties == nil {
+		return false, errors.New("no agreement properties for image")
+	}
+
+	return terms.AgreementProperties.Accepted != nil && *terms.AgreementProperties.Accepted, nil
+}
+
+// GetAvailabilityZones retrieves a list of availability zones for the given region, and instance type.
+func (c *Client) GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error) {
+	locationInfo, err := c.GetLocationInfo(ctx, region, instanceType)
+	if err != nil {
+		return nil, err
+	}
+	if locationInfo != nil {
+		return to.StringSlice(locationInfo.Zones), nil
+	}
+
+	return nil, fmt.Errorf("error retrieving availability zones for %s in %s", instanceType, region)
+}
+
+// GetLocationInfo retrieves the location info associated with the instance type in region
+func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error) {
+	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
+	client.Authorizer = c.ssn.Authorizer
+
+	// Only supported filter atm is `location`
+	filter := fmt.Sprintf("location eq '%s'", region)
+	for res, err := client.List(ctx, filter); res.NotDone(); err = res.NextWithContext(ctx) {
+		if err != nil {
+			return nil, err
+		}
+
+		for _, resSku := range res.Values() {
+			if !strings.EqualFold(to.String(resSku.ResourceType), "virtualMachines") {
+				continue
 			}
-			if generations.Has("V2") {
-				return "V2", nil
+			if strings.EqualFold(to.String(resSku.Name), instanceType) {
+				for _, locationInfo := range *resSku.LocationInfo {
+					return &locationInfo, nil
+				}
 			}
-			return "V1", nil
 		}
 	}
-	return "", fmt.Errorf("failed to fetch HyperVGeneration version for given instance type")
+
+	return nil, fmt.Errorf("location information not found for %s in %s", instanceType, region)
 }

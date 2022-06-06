@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/spf13/cast"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
@@ -58,7 +58,7 @@ func flattenNicListStatus(nics []*v3.VMNicOutputStatus) []map[string]interface{}
 			}
 			nic["ip_endpoint_list"] = ipEndpointList
 			nic["network_function_chain_reference"] = flattenReferenceValues(v.NetworkFunctionChainReference)
-
+			nic["num_queues"] = utils.Int64Value(v.NumQueues)
 			if v.SubnetReference != nil {
 				nic["subnet_uuid"] = utils.StringValue(v.SubnetReference.UUID)
 				nic["subnet_name"] = utils.StringValue(v.SubnetReference.Name)
@@ -97,7 +97,7 @@ func flattenNicList(nics []*v3.VMNic) []map[string]interface{} {
 			}
 			nic["ip_endpoint_list"] = ipEndpointList
 			nic["network_function_chain_reference"] = flattenReferenceValues(v.NetworkFunctionChainReference)
-
+			nic["num_queues"] = utils.Int64Value(v.NumQueues)
 			if v.SubnetReference != nil {
 				nic["subnet_uuid"] = utils.StringValue(v.SubnetReference.UUID)
 				nic["subnet_name"] = utils.StringValue(v.SubnetReference.Name)
@@ -130,6 +130,22 @@ func usesGuestCustomization(d *schema.ResourceData) bool {
 	return false
 }
 
+func usesGuestCustomizationDiff(d *schema.ResourceDiff) bool {
+	keys := []string{
+		"guest_customization_cloud_init_user_data",
+		"guest_customization_cloud_init_meta_data",
+		"guest_customization_cloud_init_custom_key_values",
+		"guest_customization_is_overridable",
+		"guest_customization_sysprep",
+		"guest_customization_sysprep_custom_key_values"}
+	for _, k := range keys {
+		if _, ok := d.GetOk(k); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func getDeviceIndexForDisk(disk *v3.VMDisk) (*int64, error) {
 	if disk.DeviceProperties == nil {
 		return nil, fmt.Errorf("deviceproperties was nil for disk")
@@ -144,22 +160,49 @@ func getDeviceIndexForDisk(disk *v3.VMDisk) (*int64, error) {
 	return &diskIndex, nil
 }
 
+type CloudInitHelper struct {
+	Index          int
+	CloudInitCDrom *v3.VMDisk
+	UUID           string
+}
+
 func flattenDiskListFilterCloudInit(d *schema.ResourceData, disks []*v3.VMDisk) ([]map[string]interface{}, error) {
 	//todo check if guestcust is passed -> if it is not passed, just continue without searching for cloud-init uuid
 	// reason: no device_index or disk id will result in crash
 	cloudInitCdromUUID := ""
+	cloudInitWasSet := false
 	if cloudInitCdromUUIDInput, cliOk := d.GetOk("cloud_init_cdrom_uuid"); cliOk {
 		cloudInitCdromUUID = cloudInitCdromUUIDInput.(string)
+		cloudInitWasSet = true
 	}
+	cloudInitHelper, fDiskList, err := flattenDiskListFilterCloudInitHelper(cloudInitCdromUUID, usesGuestCustomization(d), expandDiskList(d), disks, true)
+	if err != nil {
+		return fDiskList, err
+	}
+	cloudInitCdromUUID = cloudInitHelper.UUID
+	if !cloudInitWasSet {
+		d.Set("cloud_init_cdrom_uuid", cloudInitCdromUUID)
+	}
+	return fDiskList, nil
+}
+
+func flattenDiskListFilterCloudInitHelper(
+	cloudInitCdromUUID string,
+	usesGuestCustomization bool,
+	expandedDisks, disks []*v3.VMDisk,
+	removeCloudInit bool) (*CloudInitHelper, []map[string]interface{}, error) {
+	//todo check if guestcust is passed -> if it is not passed, just continue without searching for cloud-init uuid
+	// reason: no device_index or disk id will result in crash
+	cloudInitHelper := &CloudInitHelper{}
 	filteredDiskList := disks
-	potentialCloudInitIDs := make([]string, 0)
-	if cloudInitCdromUUID == "" && usesGuestCustomization(d) {
+	potentialCloudInitHelpers := make([]CloudInitHelper, 0)
+	if cloudInitCdromUUID == "" && usesGuestCustomization {
 		filteredDiskList = make([]*v3.VMDisk, 0)
 		//expand the user inputted list of disks
-		expandedOrgDiskList := expandDiskList(d)
+		expandedOrgDiskList := expandedDisks
 		//extract the CD-rom drives
 		userCdromDiskList := GetCdromDiskList(expandedOrgDiskList)
-		for _, eDisk := range disks {
+		for index, eDisk := range disks {
 			//if existing disk is not CD-rom, append it to the list and continue
 			if !isCdromDisk(eDisk) {
 				filteredDiskList = append(filteredDiskList, eDisk)
@@ -168,7 +211,7 @@ func flattenDiskListFilterCloudInit(d *schema.ResourceData, disks []*v3.VMDisk) 
 				//Get existing CDrom device Index
 				eDiskIndexP, err := getDeviceIndexForDisk(eDisk) //*eDisk.DeviceProperties.DiskAddress.DeviceIndex
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 				eDiskIndex := *eDiskIndexP
 				match := false
@@ -177,7 +220,7 @@ func flattenDiskListFilterCloudInit(d *schema.ResourceData, disks []*v3.VMDisk) 
 					//extract the device index of the user defined cdrom
 					uDiskIndexP, err := getDeviceIndexForDisk(uDisk)
 					if err != nil {
-						return nil, err
+						return nil, nil, err
 					}
 					uDiskIndex := *uDiskIndexP
 					// if there is a matching device index for a userdefined and an existing cdrom, it is not the cloud-init one
@@ -188,73 +231,86 @@ func flattenDiskListFilterCloudInit(d *schema.ResourceData, disks []*v3.VMDisk) 
 					}
 				}
 				if !match {
-					potentialCloudInitIDs = append(potentialCloudInitIDs, *eDisk.UUID)
+					potentialCloudInitHelpers = append(potentialCloudInitHelpers, CloudInitHelper{
+						UUID:           *eDisk.UUID,
+						CloudInitCDrom: eDisk,
+						Index:          index,
+					})
+					if !removeCloudInit {
+						filteredDiskList = append(filteredDiskList, eDisk)
+					}
 				}
 			}
 		}
-		if len(potentialCloudInitIDs) == 1 {
-			cloudInitCdromUUID = potentialCloudInitIDs[0]
-			d.Set("cloud_init_cdrom_uuid", cloudInitCdromUUID)
+		if len(potentialCloudInitHelpers) == 1 {
+			cloudInitHelper = &potentialCloudInitHelpers[0]
+			cloudInitCdromUUID = cloudInitHelper.UUID
 		}
-		if len(potentialCloudInitIDs) > 1 {
-			return nil, fmt.Errorf("more than 1 unknown cd-rom device: %v", potentialCloudInitIDs)
+		if len(potentialCloudInitHelpers) > 1 {
+			return nil, nil, fmt.Errorf("more than 1 unknown cd-rom device")
 		}
 	}
-	fDiskList := flattenDiskListHelper(filteredDiskList, cloudInitCdromUUID)
-	return fDiskList, nil
+	fDiskList := flattenDiskListHelper(filteredDiskList, cloudInitCdromUUID, removeCloudInit)
+	return cloudInitHelper, fDiskList, nil
 }
+
 func flattenDiskList(disks []*v3.VMDisk) []map[string]interface{} {
-	return flattenDiskListHelper(disks, "")
+	return flattenDiskListHelper(disks, "", true)
 }
-func flattenDiskListHelper(disks []*v3.VMDisk, cloudInitCdromUUID string) []map[string]interface{} {
+func flattenDiskListHelper(disks []*v3.VMDisk, cloudInitCdromUUID string, removeCloudInit bool) []map[string]interface{} {
 	diskList := make([]map[string]interface{}, 0)
 	for _, v := range disks {
-		var deviceProps []map[string]interface{}
-		var storageConfig []map[string]interface{}
-
-		if v.DeviceProperties != nil {
-			deviceProps = make([]map[string]interface{}, 1)
-			index := fmt.Sprintf("%d", utils.Int64Value(v.DeviceProperties.DiskAddress.DeviceIndex))
-			adapter := v.DeviceProperties.DiskAddress.AdapterType
-
-			deviceProps[0] = map[string]interface{}{
-				"device_type": v.DeviceProperties.DeviceType,
-				"disk_address": map[string]interface{}{
-					"device_index": index,
-					"adapter_type": adapter,
-				},
-			}
-		}
-
-		if v.StorageConfig != nil {
-			storageConfig = append(storageConfig, map[string]interface{}{
-				"flash_mode": cast.ToString(v.StorageConfig.FlashMode),
-				"storage_container_reference": []map[string]interface{}{
-					{
-						"url":  cast.ToString(v.StorageConfig.StorageContainerReference.URL),
-						"kind": cast.ToString(v.StorageConfig.StorageContainerReference.Kind),
-						"name": cast.ToString(v.StorageConfig.StorageContainerReference.Name),
-						"uuid": cast.ToString(v.StorageConfig.StorageContainerReference.UUID),
-					},
-				},
-			})
-		}
-
-		diskUUID := utils.StringValue(v.UUID)
-		if cloudInitCdromUUID == diskUUID {
+		flatDisk := flattenDisk(v)
+		diskUUID := flatDisk["uuid"]
+		if cloudInitCdromUUID == diskUUID && removeCloudInit {
 			continue
 		}
-		diskList = append(diskList, map[string]interface{}{
-			"uuid":                   diskUUID,
-			"disk_size_bytes":        utils.Int64Value(v.DiskSizeBytes),
-			"disk_size_mib":          utils.Int64Value(v.DiskSizeMib),
-			"device_properties":      deviceProps,
-			"storage_config":         storageConfig,
-			"data_source_reference":  flattenReferenceValues(v.DataSourceReference),
-			"volume_group_reference": flattenReferenceValues(v.VolumeGroupReference),
-		})
+		diskList = append(diskList, flatDisk)
 	}
 	return diskList
+}
+
+func flattenDisk(v *v3.VMDisk) map[string]interface{} {
+	var deviceProps []map[string]interface{}
+	var storageConfig []map[string]interface{}
+
+	if v.DeviceProperties != nil {
+		deviceProps = make([]map[string]interface{}, 1)
+		index := fmt.Sprintf("%d", utils.Int64Value(v.DeviceProperties.DiskAddress.DeviceIndex))
+		adapter := v.DeviceProperties.DiskAddress.AdapterType
+
+		deviceProps[0] = map[string]interface{}{
+			"device_type": v.DeviceProperties.DeviceType,
+			"disk_address": map[string]interface{}{
+				"device_index": index,
+				"adapter_type": adapter,
+			},
+		}
+	}
+
+	if v.StorageConfig != nil {
+		storageConfig = append(storageConfig, map[string]interface{}{
+			"flash_mode": cast.ToString(v.StorageConfig.FlashMode),
+			"storage_container_reference": []map[string]interface{}{
+				{
+					"url":  cast.ToString(v.StorageConfig.StorageContainerReference.URL),
+					"kind": cast.ToString(v.StorageConfig.StorageContainerReference.Kind),
+					"name": cast.ToString(v.StorageConfig.StorageContainerReference.Name),
+					"uuid": cast.ToString(v.StorageConfig.StorageContainerReference.UUID),
+				},
+			},
+		})
+	}
+
+	return map[string]interface{}{
+		"uuid":                   utils.StringValue(v.UUID),
+		"disk_size_bytes":        utils.Int64Value(v.DiskSizeBytes),
+		"disk_size_mib":          utils.Int64Value(v.DiskSizeMib),
+		"device_properties":      deviceProps,
+		"storage_config":         storageConfig,
+		"data_source_reference":  flattenReferenceValues(v.DataSourceReference),
+		"volume_group_reference": flattenReferenceValues(v.VolumeGroupReference),
+	}
 }
 
 func flattenSerialPortList(serialPorts []*v3.VMSerialPort) []map[string]interface{} {
@@ -318,8 +374,10 @@ func flattenNutanixGuestTools(d *schema.ResourceData, guest *v3.GuestToolsStatus
 		return err
 	}
 
-	if err := d.Set("ngt_credentials", ngtCredentials); err != nil {
-		return err
+	if _, ok := d.GetOk("ngt_credentials"); !ok {
+		if err := d.Set("ngt_credentials", ngtCredentials); err != nil {
+			return err
+		}
 	}
 
 	if err := d.Set("nutanix_guest_tools", nutanixGuestTools); err != nil {

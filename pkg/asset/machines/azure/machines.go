@@ -5,11 +5,13 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 )
@@ -20,7 +22,7 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, hyperVGen string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, fmt.Errorf("non-Azure configuration: %q", configPlatform)
 	}
@@ -29,6 +31,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	platform := config.Platform.Azure
 	mpool := pool.Platform.Azure
+
 	if len(mpool.Zones) == 0 {
 		// if no azs are given we set to []string{""} for convenience over later operations.
 		// It means no-zoned for the machine API
@@ -46,7 +49,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		if len(azs) > 0 {
 			azIndex = int(idx) % len(azs)
 		}
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, hyperVGen)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -78,13 +81,41 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, hyperVGen string) (*machineapi.AzureMachineProviderSpec, error) {
+func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string) (*machineapi.AzureMachineProviderSpec, error) {
 	var az *string
 	if len(mpool.Zones) > 0 && azIdx != nil {
 		az = &mpool.Zones[*azIdx]
 	}
 
+	hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")
+	if err != nil {
+		return nil, err
+	}
+
+	if mpool.VMNetworkingType == "" {
+		acceleratedNetworking := icazure.GetVMNetworkingCapability(capabilities)
+		if acceleratedNetworking {
+			mpool.VMNetworkingType = string(azure.VMnetworkingTypeAccelerated)
+		} else {
+			logrus.Infof("Instance type %s does not support Accelerated Networking. Using Basic Networking instead.", mpool.InstanceType)
+		}
+	}
 	rg := platform.ClusterResourceGroupName(clusterID)
+
+	var image machineapi.Image
+	if mpool.OSImage.Publisher != "" {
+		image.Type = machineapi.AzureImageTypeMarketplaceWithPlan
+		image.Publisher = mpool.OSImage.Publisher
+		image.Offer = mpool.OSImage.Offer
+		image.SKU = mpool.OSImage.SKU
+		image.Version = mpool.OSImage.Version
+	} else {
+		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
+		if hyperVGen == "V2" {
+			imageID += "-gen2"
+		}
+		image.ResourceID = imageID
+	}
 
 	networkResourceGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role)
 	if err != nil {
@@ -118,10 +149,6 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 			EncryptionAtHost: &mpool.EncryptionAtHost,
 		}
 	}
-	image := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
-	if hyperVGen == "V2" {
-		image += "-gen2"
-	}
 
 	ultraSSDCapability := machineapi.AzureUltraSSDCapabilityState(mpool.UltraSSDCapability)
 
@@ -134,9 +161,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		CredentialsSecret: &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		Location:          platform.Region,
 		VMSize:            mpool.InstanceType,
-		Image: machineapi.Image{
-			ResourceID: image,
-		},
+		Image:             image,
 		OSDisk: machineapi.OSDisk{
 			OSType:     "Linux",
 			DiskSizeGB: mpool.OSDisk.DiskSizeGB,
@@ -145,15 +170,16 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				DiskEncryptionSet:  diskEncryptionSet,
 			},
 		},
-		SecurityProfile:      securityProfile,
-		UltraSSDCapability:   ultraSSDCapability,
-		Zone:                 az,
-		Subnet:               subnet,
-		ManagedIdentity:      managedIdentity,
-		Vnet:                 virtualNetwork,
-		ResourceGroup:        rg,
-		NetworkResourceGroup: networkResourceGroup,
-		PublicLoadBalancer:   publicLB,
+		SecurityProfile:       securityProfile,
+		UltraSSDCapability:    ultraSSDCapability,
+		Zone:                  az,
+		Subnet:                subnet,
+		ManagedIdentity:       managedIdentity,
+		Vnet:                  virtualNetwork,
+		ResourceGroup:         rg,
+		NetworkResourceGroup:  networkResourceGroup,
+		PublicLoadBalancer:    publicLB,
+		AcceleratedNetworking: getVMNetworkingType(mpool.VMNetworkingType),
 	}
 
 	if platform.CloudName == azure.StackCloud {
@@ -181,4 +207,9 @@ func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, s
 	default:
 		return "", "", "", fmt.Errorf("unrecognized machine role %s", role)
 	}
+}
+
+// getVMNetworkingType should set the correct capability for instance type
+func getVMNetworkingType(value string) bool {
+	return value == string(azure.VMnetworkingTypeAccelerated)
 }

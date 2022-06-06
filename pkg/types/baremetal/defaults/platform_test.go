@@ -2,6 +2,7 @@ package defaults
 
 import (
 	"errors"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -180,6 +181,21 @@ func TestSetPlatformDefaults(t *testing.T) {
 			}
 			SetPlatformDefaults(tc.platform, ic)
 			if tc.expected != nil {
+				//Check Generated Provisioning MAC address
+				provisioningmac, err := net.ParseMAC(tc.platform.ProvisioningMACAddress)
+				if err != nil {
+					assert.Fail(t, "Invalid Provisioning MAC %s", string(provisioningmac), err)
+				} else {
+					tc.expected.ProvisioningMACAddress = tc.platform.ProvisioningMACAddress
+				}
+				//Check Generated External MAC address
+				externalmac, err := net.ParseMAC(tc.platform.ExternalMACAddress)
+				if err != nil {
+					assert.Fail(t, "Invalid External MAC %s", string(externalmac), err)
+				} else {
+					tc.expected.ExternalMACAddress = tc.platform.ExternalMACAddress
+				}
+
 				assert.Equal(t, tc.expected, tc.platform, "unexpected platform")
 			}
 

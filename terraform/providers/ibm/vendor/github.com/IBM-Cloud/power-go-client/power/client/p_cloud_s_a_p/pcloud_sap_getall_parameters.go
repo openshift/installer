@@ -13,63 +13,76 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudSapGetallParams creates a new PcloudSapGetallParams object
-// with the default values initialized.
+// NewPcloudSapGetallParams creates a new PcloudSapGetallParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudSapGetallParams() *PcloudSapGetallParams {
-	var ()
 	return &PcloudSapGetallParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudSapGetallParamsWithTimeout creates a new PcloudSapGetallParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudSapGetallParamsWithTimeout(timeout time.Duration) *PcloudSapGetallParams {
-	var ()
 	return &PcloudSapGetallParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudSapGetallParamsWithContext creates a new PcloudSapGetallParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudSapGetallParamsWithContext(ctx context.Context) *PcloudSapGetallParams {
-	var ()
 	return &PcloudSapGetallParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudSapGetallParamsWithHTTPClient creates a new PcloudSapGetallParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudSapGetallParamsWithHTTPClient(client *http.Client) *PcloudSapGetallParams {
-	var ()
 	return &PcloudSapGetallParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudSapGetallParams contains all the parameters to send to the API endpoint
-for the pcloud sap getall operation typically these are written to a http.Request
+/* PcloudSapGetallParams contains all the parameters to send to the API endpoint
+   for the pcloud sap getall operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudSapGetallParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud sap getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudSapGetallParams) WithDefaults() *PcloudSapGetallParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud sap getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudSapGetallParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud sap getall params

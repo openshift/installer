@@ -1,3 +1,215 @@
+## 1.5.0 (May 7, 2022)
+
+[Full Changelog](https://github.com/nutanix/terraform-provider-nutanix/compare/v1.5.0-beta.2...v1.5.0)
+
+**Merged pull requests:**
+
+- Update Acceptance tests workflow to run specific provider tests [\#437](https://github.com/nutanix/terraform-provider-nutanix/pull/437) ([bhatipradeep](https://github.com/bhatipradeep))
+- Foundation unit tests and existing test fixes [\#433](https://github.com/nutanix/terraform-provider-nutanix/pull/433) ([bhatipradeep](https://github.com/bhatipradeep))
+- Foundation Acceptance tests and minor fixes [\#436](https://github.com/nutanix/terraform-provider-nutanix/pull/436) ([bhatipradeep](https://github.com/bhatipradeep))
+- Foundation Central unit tests and acceptance tests [\#439](https://github.com/nutanix/terraform-provider-nutanix/pull/439) ([abhimutant](https://github.com/abhimutant))
+- Optimize Image upload to avoid buffering. Add cluster related fields in image upload resource & data source for PC [\#432](https://github.com/nutanix/terraform-provider-nutanix/pull/432) ([bhatipradeep](https://github.com/bhatipradeep))
+- fixing karbon docs at registry [\#434](https://github.com/nutanix/terraform-provider-nutanix/pull/434)([abhimutant](https://github.com/abhimutant)) 
+- Example for using config downloaded from install.nutanix.com to image nodes[\#444](https://github.com/nutanix/terraform-provider-nutanix/pull/444) ([bhatipradeep](https://github.com/bhatipradeep))
+- Add example to pull secrets from hashicorp vault to use them in node imaging [\#431](https://github.com/nutanix/terraform-provider-nutanix/pull/431) ([bhatipradeep](https://github.com/bhatipradeep))
+
+
+**Fixed Bugs:**
+
+- Image upload failures [\#430](https://github.com/nutanix/terraform-provider-nutanix/issues/430)
+- Not able to upload image to a specific cluster [\#428](https://github.com/nutanix/terraform-provider-nutanix/issues/428)
+- Doc for Nutanix karbon_cluster_kubeConfig pointing to deadlink in registry [\#429](https://github.com/nutanix/terraform-provider-nutanix/issues/429)
+
+
+**Closed Issues:**
+
+- Add Example for using config json file downloaded from install.nutanix.com to image nodes using terraform nutanix foundation [\#435](https://github.com/nutanix/terraform-provider-nutanix/issues/435)
+- Image upload failures [\#430](https://github.com/nutanix/terraform-provider-nutanix/issues/430)
+- Not able to upload image to a specific cluster [\#428](https://github.com/nutanix/terraform-provider-nutanix/issues/428)
+- Add IPMI validations for verifying successfull IPMI configuration [\#425](https://github.com/nutanix/terraform-provider-nutanix/issues/425)
+- Add examples of vault integration with node imaging using foundation [\#424](https://github.com/nutanix/terraform-provider-nutanix/issues/424)
+
+
+## 1.5.0-beta.2 (April 12, 2022)
+
+[Full Changelog](https://github.com/nutanix/terraform-provider-nutanix/compare/v1.5.0-beta...v1.5.0-beta.2)
+
+**New Feature:**
+
+- Add resources and data sources for Nutanix Foundation Central  [\#422](https://github.com/nutanix/terraform-provider-nutanix/pull/422)
+
+    New Data Sources :
+    -   nutanix_foundation_central_api_keys
+    -   nutanix_foundation_central_list_api_keys
+    -   nutanix_foundation_central_imaged_nodes_list
+    -   nutanix_foundation_central_imaged_clusters_list
+    -   nutanix_foundation_central_cluster_details
+    -   nutanix_foundation_central_imaged_node_details
+
+    
+    New Resources :
+    -   nutanix_foundation_central_image_cluster
+    -   nutanix_foundation_central_api_keys
+
+    New Modules : 
+    -   aos-based-node-imaging/node-serials-filter
+    -   manual-mode-imaging
+
+
+## 1.5.0-beta (April 1, 2022)
+
+[Full Changelog](https://github.com/nutanix/terraform-provider-nutanix/compare/v1.4.1...v1.5.0-beta)
+
+**New Feature:**
+
+- Add resources and data sources for Nutanix Foundation  [\#413](https://github.com/nutanix/terraform-provider-nutanix/issues/413)
+
+    New Data Sources :
+    -   nutanix_foundation_nos_packages
+    -   nutanix_foundation_hypervisor_isos
+    -   nutanix_foundation_discover_nodes
+    -   nutanix_foundation_node_network_details
+    
+    New Resources :
+    -   nutanix_foundation_image_nodes
+    -   nutanix_foundation_ipmi_config
+    -   nutanix_foundation_image
+
+    New Modules : 
+    -   aos-based-node-imaging/node-serials-filter
+    -   discover-nodes-network-details/node-serials-filter
+    -   manual-mode-imaging
+
+**Merged pull requests:**
+
+- Feature: Foundation datasources, resources, modules & documentation [\#410](https://github.com/nutanix/terraform-provider-nutanix/pull/410) ([bhatipradeep](https://github.com/bhatipradeep)) ([abhimutant](https://github.com/abhimutant))
+
+> For the 1.5.0-beta release of the provider it will have N-1 compatibility with the Nutanix Foundation. This release was tested against Foundation versions v5.2 and v5.1.1
+
+## 1.4.1 (March 24, 2022)
+
+[Full Changelog](https://github.com/nutanix/terraform-provider-nutanix/compare/v1.4.0...v1.4.1)
+
+
+**Fixed Bugs**
+
+- Network Security Rules: ip subnet is passed as an empty object in the API to create network security which causes API to get failed [\#399](https://github.com/nutanix/terraform-provider-nutanix/issues/399)
+
+
+**Merged pull requests:**
+
+- Network Security Rules: ip subnet is passed as an empty object in the API to create network security which causes API to get failed [\#348](https://github.com/nutanix/terraform-provider-nutanix/pull/397)([siddharth-kulshrestha](https://github.com/siddharth-kulshrestha))
+
+
+
+## 1.4.0 (March 17, 2022)
+
+[Full Changelog](https://github.com/nutanix/terraform-provider-nutanix/compare/v1.3.0...v1.4.0)
+
+**Implemented enhancements:**
+
+- Datasources for service groups along with test cases [\#353](https://github.com/nutanix/terraform-provider-nutanix/issues/353)
+- Set default value of disk_list.device_properties.device_type to DISK [\#157](https://github.com/nutanix/terraform-provider-nutanix/pull/157)
+- Add num_queues parameter for virtual machine NICs [\#324](https://github.com/nutanix/terraform-provider-nutanix/pull/324)
+- Add support for linking service and address groups to network security rules [\#345](https://github.com/nutanix/terraform-provider-nutanix/pull/345)
+
+
+**Fixed Bugs**
+
+- Karbon 2.4 Cluster creation failing [\#373](https://github.com/nutanix/terraform-provider-nutanix/issues/373)
+- Use correct API endpoint for category queries [\#348](https://github.com/nutanix/terraform-provider-nutanix/pull/348)
+- Terraform crashed while creating VM in Nutanix [\#205](https://github.com/nutanix/terraform-provider-nutanix/issues/205)
+- nutanix_recovery_plan "Duplicate network mapping" [\#386](https://github.com/nutanix/terraform-provider-nutanix/issues/386)
+
+**Closed issues:**
+
+- fixed unchecked gets in getMetadataAttributes [\#206](https://github.com/nutanix/terraform-provider-nutanix/pull/206)
+- Support defining categories_mapping for a VM [\#321](https://github.com/nutanix/terraform-provider-nutanix/issues/321)
+- Add a complete example of parameter nutanix_guest_tools [\#299](https://github.com/nutanix/terraform-provider-nutanix/issues/299)
+
+**Merged pull requests:**
+
+- Use correct API endpoint for category queries [\#348](https://github.com/nutanix/terraform-provider-nutanix/pull/348)([embik](https://github.com/embik))
+- Set default value of disk_list.device_properties.device_type to DISK [\#157](https://github.com/nutanix/terraform-provider-nutanix/pull/157) ([maxaudron](https://github.com/maxaudron))
+- Added singular and plural datasources for service groups with test cases [\#363](https://github.com/nutanix/terraform-provider-nutanix/pull/363) ([siddharth-kulshrestha](https://github.com/siddharth-kulshrestha))
+- Add acceptance tests [\#355](https://github.com/nutanix/terraform-provider-nutanix/pull/355) ([bhatipradeep](https://github.com/bhatipradeep))
+- Change default node pool names for karbon cluster creation [\#381](https://github.com/nutanix/terraform-provider-nutanix/pull/381) [bhatipradeep](https://github.com/bhatipradeep))
+- bug fix for issue-205 [\#380](https://github.com/nutanix/terraform-provider-nutanix/pull/380) ([abhimutant](https://github.com/abhimutant))
+- Task/m 324 check [\#385](https://github.com/nutanix/terraform-provider-nutanix/pull/385) ([abhimutant](https://github.com/abhimutant))
+- Security rules with service group and address groups [\#384](https://github.com/nutanix/terraform-provider-nutanix/pull/384) ([siddharth-kulshrestha](https://github.com/siddharth-kulshrestha))
+- Fix bug where networkmappings are incorrectly referenced in recovery plan [\#392](https://github.com/nutanix/terraform-provider-nutanix/pull/392) ([yannickstruyf3](https://github.com/yannickstruyf3))
+
+
+
+## 1.3.0 (Feb 16, 2022)
+
+[Full Changelog](https://github.com/nutanix/terraform-provider-nutanix/compare/v1.2.2...v1.3.0)
+
+**Implemented enhancements:**
+
+- Implement Timeout blocks on resource level [\#254](https://github.com/nutanix/terraform-provider-nutanix/issues/254)
+- SDK V2 Upgrade: Upgrade Terraform provider to the latest SDK [\#287](https://github.com/nutanix/terraform-provider-nutanix/issues/287)
+- Allow Subnet Datasources to filter based on PE ID [\#308](https://github.com/nutanix/terraform-provider-nutanix/issues/308)
+- Implement CI/CD pipeline for this project [\#314](https://github.com/nutanix/terraform-provider-nutanix/issues/314)
+- Clean up existing tests with dynamic config  [\#315](https://github.com/nutanix/terraform-provider-nutanix/issues/315)
+- Develop integration tests with code coverage. [\#316](https://github.com/nutanix/terraform-provider-nutanix/issues/316)
+
+
+**Fixed Bugs**
+
+- Provider plugin crashes when nutanix_subnet datasource queried with overlay subnet [\#327](https://github.com/nutanix/terraform-provider-nutanix/issues/327)
+- `nutanix_projects` and `nutanix_project` throws error when there is external network associated to a project [\#337](https://github.com/nutanix/terraform-provider-nutanix/issues/337)
+
+
+**Closed issues:**
+
+- Implement Timeout blocks on resource level [\#254](https://github.com/nutanix/terraform-provider-nutanix/issues/254)
+- Upgrade Terraform provider to the latest SDK [\#287](https://github.com/nutanix/terraform-provider-nutanix/issues/287)
+- Allow Subnet Datasources to filter based on PE ID [\#308](https://github.com/nutanix/terraform-provider-nutanix/issues/308)
+- Implement CI/CD pipeline for this project [\#314](https://github.com/nutanix/terraform-provider-nutanix/issues/314)
+- Clean up existing tests with dynamic config  [\#315](https://github.com/nutanix/terraform-provider-nutanix/issues/315)
+- Develop integration tests with code coverage. [\#316](https://github.com/nutanix/terraform-provider-nutanix/issues/316)
+- Provider plugin crashes when nutanix_subnet datasource queried with overlay subnet [\#327](https://github.com/nutanix/terraform-provider-nutanix/issues/327)
+- `nutanix_projects` and `nutanix_project` throws error when there is external network associated to a project [\#337](https://github.com/nutanix/terraform-provider-nutanix/issues/337)
+
+
+
+**Merged pull requests:**
+
+- Workflow for automated acceptance test cases [\#325](https://github.com/nutanix/terraform-provider-nutanix/pull/325) ([siddharth-kulshrestha](https://github.com/siddharth-kulshrestha))
+- update go release to 1.17 [\#317](https://github.com/nutanix/terraform-provider-nutanix/pull/317) ([tuxtof](https://github.com/tuxtof))
+- Workflow for automated acceptance test cases [\#325](https://github.com/nutanix/terraform-provider-nutanix/pull/325) ([siddharth-kulshrestha](https://github.com/siddharth-kulshrestha))
+- Fix nutanix_project and nutanix_projects datasource to not use "kind" attribute in "external_network_list" [\#335](https://github.com/nutanix/terraform-provider-nutanix/pull/335) ([bhati-pradeep](https://github.com/bhati-pradeep))
+- Add check for cluster_reference before set to avoid it in case of overlay subnets in datasource nutanix_subnet [\#328](https://github.com/nutanix/terraform-provider-nutanix/pull/328) ([bhati-pradeep](https://github.com/bhati-pradeep))
+- fixed a typo in subnet.html.markdown [\#273](https://github.com/nutanix/terraform-provider-nutanix/pull/273) ([gowatana](https://github.com/gowatana))
+- Update subnets.html.markdown [\#293](https://github.com/nutanix/terraform-provider-nutanix/pull/293) ([jastrom85](https://github.com/jastrom85))
+- Add filter by cluster uuid in subnet datasource [\#323](https://github.com/nutanix/terraform-provider-nutanix/pull/323) ([shreevari](https://github.com/shreevari))
+- Modify tests and example to use is_vcpu_hard_pinned for nutanix_virtual_machine [\#338](https://github.com/nutanix/terraform-provider-nutanix/pull/338) ([bhati-pradeep](https://github.com/bhati-pradeep))
+- Add resources for address groups and service groups [\#322](https://github.com/nutanix/terraform-provider-nutanix/pull/322) ([svalabs](https://github.com/svalabs))
+- Service group fix [\#340](https://github.com/nutanix/terraform-provider-nutanix/pull/340) ([abhimutant](https://github.com/abhimutant))
+- V2 SDK upgrade [\#332](https://github.com/nutanix/terraform-provider-nutanix/pull/332) ([siddharth-kulshrestha](https://github.com/siddharth-kulshrestha))
+- Add vCPU hard pinning  [\#307](https://github.com/nutanix/terraform-provider-nutanix/pull/307) ([basraayman](https://github.com/basraayman))
+- bugfix 254 - timeout on resource level [\#333](https://github.com/nutanix/terraform-provider-nutanix/pull/333) ([venkatavivek-ntnx](https://github.com/venkatavivek-ntnx))
+- Fix existing examples. Add new examples [\#346](https://github.com/nutanix/terraform-provider-nutanix/pull/346) ([bhati-pradeep](https://github.com/bhati-pradeep))
+- Automation for manual testcases [\#334](https://github.com/nutanix/terraform-provider-nutanix/issues/334) ([abhimutant](https://github.com/abhimutant))
+
+
+
+## 1.2.2 (Nov 29, 2021)
+
+[Full Changelog](https://github.com/nutanix/terraform-provider-nutanix/compare/v1.2.1...v1.2.2)
+
+**Closed issues:**
+
+- Cloud_init and sysprep CDROMs being detected and destroyed forcing VM reboot. [\#285](https://github.com/nutanix/terraform-provider-nutanix/issues/285)
+- Provider crash when using NGT credentials attribute in nutanix_virtual_machine resource type. [\#297](https://github.com/nutanix/terraform-provider-nutanix/issues/297)
+
+**Merged pull requests:**
+
+- Add support for CPU passthrough [\#288](https://github.com/nutanix/terraform-provider-nutanix/pull/288) ([svalabs](https://github.com/svalabs))
+
+
+
 ## 1.2.1 (Feb 01, 2021)
 
 [Full Changelog](https://github.com/nutanix/terraform-provider-nutanix/compare/v1.1.1...HEAD)

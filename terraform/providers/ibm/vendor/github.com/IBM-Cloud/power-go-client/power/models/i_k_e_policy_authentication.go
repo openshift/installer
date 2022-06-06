@@ -6,31 +6,42 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
 // IKEPolicyAuthentication authentication of the IKE policy
+// Example: sha-256
+//
 // swagger:model IKEPolicyAuthentication
 type IKEPolicyAuthentication string
 
+func NewIKEPolicyAuthentication(value IKEPolicyAuthentication) *IKEPolicyAuthentication {
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated IKEPolicyAuthentication.
+func (m IKEPolicyAuthentication) Pointer() *IKEPolicyAuthentication {
+	return &m
+}
+
 const (
 
-	// IKEPolicyAuthenticationNone captures enum value "none"
-	IKEPolicyAuthenticationNone IKEPolicyAuthentication = "none"
+	// IKEPolicyAuthenticationShaDash256 captures enum value "sha-256"
+	IKEPolicyAuthenticationShaDash256 IKEPolicyAuthentication = "sha-256"
 
-	// IKEPolicyAuthenticationSha256 captures enum value "sha-256"
-	IKEPolicyAuthenticationSha256 IKEPolicyAuthentication = "sha-256"
-
-	// IKEPolicyAuthenticationSha384 captures enum value "sha-384"
-	IKEPolicyAuthenticationSha384 IKEPolicyAuthentication = "sha-384"
+	// IKEPolicyAuthenticationShaDash384 captures enum value "sha-384"
+	IKEPolicyAuthenticationShaDash384 IKEPolicyAuthentication = "sha-384"
 
 	// IKEPolicyAuthenticationSha1 captures enum value "sha1"
 	IKEPolicyAuthenticationSha1 IKEPolicyAuthentication = "sha1"
+
+	// IKEPolicyAuthenticationNone captures enum value "none"
+	IKEPolicyAuthenticationNone IKEPolicyAuthentication = "none"
 )
 
 // for schema
@@ -38,7 +49,7 @@ var iKEPolicyAuthenticationEnum []interface{}
 
 func init() {
 	var res []IKEPolicyAuthentication
-	if err := json.Unmarshal([]byte(`["none","sha-256","sha-384","sha1"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["sha-256","sha-384","sha1","none"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -47,7 +58,7 @@ func init() {
 }
 
 func (m IKEPolicyAuthentication) validateIKEPolicyAuthenticationEnum(path, location string, value IKEPolicyAuthentication) error {
-	if err := validate.Enum(path, location, value, iKEPolicyAuthenticationEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, iKEPolicyAuthenticationEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -65,5 +76,10 @@ func (m IKEPolicyAuthentication) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+// ContextValidate validates this i k e policy authentication based on context it is used
+func (m IKEPolicyAuthentication) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }

@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudV2VolumescloneExecutePostParams creates a new PcloudV2VolumescloneExecutePostParams object
-// with the default values initialized.
+// NewPcloudV2VolumescloneExecutePostParams creates a new PcloudV2VolumescloneExecutePostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudV2VolumescloneExecutePostParams() *PcloudV2VolumescloneExecutePostParams {
-	var ()
 	return &PcloudV2VolumescloneExecutePostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudV2VolumescloneExecutePostParamsWithTimeout creates a new PcloudV2VolumescloneExecutePostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudV2VolumescloneExecutePostParamsWithTimeout(timeout time.Duration) *PcloudV2VolumescloneExecutePostParams {
-	var ()
 	return &PcloudV2VolumescloneExecutePostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudV2VolumescloneExecutePostParamsWithContext creates a new PcloudV2VolumescloneExecutePostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudV2VolumescloneExecutePostParamsWithContext(ctx context.Context) *PcloudV2VolumescloneExecutePostParams {
-	var ()
 	return &PcloudV2VolumescloneExecutePostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudV2VolumescloneExecutePostParamsWithHTTPClient creates a new PcloudV2VolumescloneExecutePostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudV2VolumescloneExecutePostParamsWithHTTPClient(client *http.Client) *PcloudV2VolumescloneExecutePostParams {
-	var ()
 	return &PcloudV2VolumescloneExecutePostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudV2VolumescloneExecutePostParams contains all the parameters to send to the API endpoint
-for the pcloud v2 volumesclone execute post operation typically these are written to a http.Request
+/* PcloudV2VolumescloneExecutePostParams contains all the parameters to send to the API endpoint
+   for the pcloud v2 volumesclone execute post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudV2VolumescloneExecutePostParams struct {
 
-	/*Body
-	  Parameters for the cloning of volumes
+	/* Body.
 
+	   Parameters for the cloning of volumes
 	*/
 	Body *models.VolumesCloneExecute
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*VolumesCloneID
-	  Volumes Clone ID
 
+	/* VolumesCloneID.
+
+	   Volumes Clone ID
 	*/
 	VolumesCloneID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud v2 volumesclone execute post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2VolumescloneExecutePostParams) WithDefaults() *PcloudV2VolumescloneExecutePostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud v2 volumesclone execute post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2VolumescloneExecutePostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud v2 volumesclone execute post params
@@ -157,7 +172,6 @@ func (o *PcloudV2VolumescloneExecutePostParams) WriteToRequest(r runtime.ClientR
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

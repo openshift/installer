@@ -6,46 +6,52 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // IPSecPolicy IPSec Policy object
+//
 // swagger:model IPSecPolicy
 type IPSecPolicy struct {
 
 	// authentication
 	// Required: true
-	Authentication IPSECPolicyAuthentication `json:"authentication"`
+	Authentication *IPSECPolicyAuthentication `json:"authentication"`
 
 	// Diffie-Hellman group
+	// Example: 2
 	// Required: true
 	// Enum: [1 2 5 14 19 20 24]
 	DhGroup *int64 `json:"dhGroup"`
 
 	// connection encryption policy
+	// Example: aes-256-cbc
 	// Required: true
-	// Enum: [3des-cbc aes-128-cbc aes-128-gcm aes-192-cbc aes-192-gcm aes-256-cbc aes-256-gcm des-cbc]
+	// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-192-gcm aes-128-gcm 3des-cbc]
 	Encryption *string `json:"encryption"`
 
 	// unique identifier of the IPSec Policy
+	// Example: 6edc8988-eb18-4b5c-a594-0d73d8254463
 	// Required: true
 	ID *string `json:"id"`
 
 	// key lifetime
 	// Required: true
-	KeyLifetime KeyLifetime `json:"keyLifetime"`
+	KeyLifetime *KeyLifetime `json:"keyLifetime"`
 
 	// IPSec Policy name
+	// Example: ipSecPolicy2
 	// Required: true
 	Name *string `json:"name"`
 
 	// Perfect Forward Secrecy
+	// Example: true
 	// Required: true
 	Pfs *bool `json:"pfs"`
 }
@@ -90,11 +96,23 @@ func (m *IPSecPolicy) Validate(formats strfmt.Registry) error {
 
 func (m *IPSecPolicy) validateAuthentication(formats strfmt.Registry) error {
 
-	if err := m.Authentication.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("authentication")
-		}
+	if err := validate.Required("authentication", "body", m.Authentication); err != nil {
 		return err
+	}
+
+	if err := validate.Required("authentication", "body", m.Authentication); err != nil {
+		return err
+	}
+
+	if m.Authentication != nil {
+		if err := m.Authentication.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("authentication")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("authentication")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -114,7 +132,7 @@ func init() {
 
 // prop value enum
 func (m *IPSecPolicy) validateDhGroupEnum(path, location string, value int64) error {
-	if err := validate.Enum(path, location, value, ipSecPolicyTypeDhGroupPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, ipSecPolicyTypeDhGroupPropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -138,7 +156,7 @@ var ipSecPolicyTypeEncryptionPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["3des-cbc","aes-128-cbc","aes-128-gcm","aes-192-cbc","aes-192-gcm","aes-256-cbc","aes-256-gcm","des-cbc"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-192-gcm","aes-128-gcm","3des-cbc"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -148,34 +166,31 @@ func init() {
 
 const (
 
-	// IPSecPolicyEncryptionNr3desCbc captures enum value "3des-cbc"
-	IPSecPolicyEncryptionNr3desCbc string = "3des-cbc"
+	// IPSecPolicyEncryptionAesDash256DashCbc captures enum value "aes-256-cbc"
+	IPSecPolicyEncryptionAesDash256DashCbc string = "aes-256-cbc"
 
-	// IPSecPolicyEncryptionAes128Cbc captures enum value "aes-128-cbc"
-	IPSecPolicyEncryptionAes128Cbc string = "aes-128-cbc"
+	// IPSecPolicyEncryptionAesDash192DashCbc captures enum value "aes-192-cbc"
+	IPSecPolicyEncryptionAesDash192DashCbc string = "aes-192-cbc"
 
-	// IPSecPolicyEncryptionAes128Gcm captures enum value "aes-128-gcm"
-	IPSecPolicyEncryptionAes128Gcm string = "aes-128-gcm"
+	// IPSecPolicyEncryptionAesDash128DashCbc captures enum value "aes-128-cbc"
+	IPSecPolicyEncryptionAesDash128DashCbc string = "aes-128-cbc"
 
-	// IPSecPolicyEncryptionAes192Cbc captures enum value "aes-192-cbc"
-	IPSecPolicyEncryptionAes192Cbc string = "aes-192-cbc"
+	// IPSecPolicyEncryptionAesDash256DashGcm captures enum value "aes-256-gcm"
+	IPSecPolicyEncryptionAesDash256DashGcm string = "aes-256-gcm"
 
-	// IPSecPolicyEncryptionAes192Gcm captures enum value "aes-192-gcm"
-	IPSecPolicyEncryptionAes192Gcm string = "aes-192-gcm"
+	// IPSecPolicyEncryptionAesDash192DashGcm captures enum value "aes-192-gcm"
+	IPSecPolicyEncryptionAesDash192DashGcm string = "aes-192-gcm"
 
-	// IPSecPolicyEncryptionAes256Cbc captures enum value "aes-256-cbc"
-	IPSecPolicyEncryptionAes256Cbc string = "aes-256-cbc"
+	// IPSecPolicyEncryptionAesDash128DashGcm captures enum value "aes-128-gcm"
+	IPSecPolicyEncryptionAesDash128DashGcm string = "aes-128-gcm"
 
-	// IPSecPolicyEncryptionAes256Gcm captures enum value "aes-256-gcm"
-	IPSecPolicyEncryptionAes256Gcm string = "aes-256-gcm"
-
-	// IPSecPolicyEncryptionDesCbc captures enum value "des-cbc"
-	IPSecPolicyEncryptionDesCbc string = "des-cbc"
+	// IPSecPolicyEncryptionNr3desDashCbc captures enum value "3des-cbc"
+	IPSecPolicyEncryptionNr3desDashCbc string = "3des-cbc"
 )
 
 // prop value enum
 func (m *IPSecPolicy) validateEncryptionEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, ipSecPolicyTypeEncryptionPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, ipSecPolicyTypeEncryptionPropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -206,11 +221,23 @@ func (m *IPSecPolicy) validateID(formats strfmt.Registry) error {
 
 func (m *IPSecPolicy) validateKeyLifetime(formats strfmt.Registry) error {
 
-	if err := m.KeyLifetime.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("keyLifetime")
-		}
+	if err := validate.Required("keyLifetime", "body", m.KeyLifetime); err != nil {
 		return err
+	}
+
+	if err := validate.Required("keyLifetime", "body", m.KeyLifetime); err != nil {
+		return err
+	}
+
+	if m.KeyLifetime != nil {
+		if err := m.KeyLifetime.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("keyLifetime")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("keyLifetime")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -229,6 +256,56 @@ func (m *IPSecPolicy) validatePfs(formats strfmt.Registry) error {
 
 	if err := validate.Required("pfs", "body", m.Pfs); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this IP sec policy based on the context it is used
+func (m *IPSecPolicy) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateAuthentication(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateKeyLifetime(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *IPSecPolicy) contextValidateAuthentication(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Authentication != nil {
+		if err := m.Authentication.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("authentication")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("authentication")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *IPSecPolicy) contextValidateKeyLifetime(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.KeyLifetime != nil {
+		if err := m.KeyLifetime.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("keyLifetime")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("keyLifetime")
+			}
+			return err
+		}
 	}
 
 	return nil

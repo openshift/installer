@@ -49,6 +49,10 @@ linters:
     - nestif
     - godot
     - goconst
+    - unparam
+    - unused
+    - staticcheck
+    - deadcode
 
 issues:
   exclude:
@@ -58,6 +62,12 @@ issues:
       linters:
         - testpackage
       # part of the golangci govet package is picking up things that go vet doesn't. Seems flaky, shutting that specific error off
+    - path: client/client.go
+      linters:
+        - interfacer
+      # interfacer lint on `filter` func suggests lint changes that dont compile
+      # Details: linter suggests to convert `body` param to io.Reader since we don't use Close method, but return type requires
+      ## io.ReadCloser thus failing to compile
 
 run:
   # which dirs to skip: they won't be analyzed;

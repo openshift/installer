@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // OwnerInfo owner info
+//
 // swagger:model OwnerInfo
 type OwnerInfo struct {
 
@@ -44,7 +45,7 @@ type OwnerInfo struct {
 	Name *string `json:"name"`
 
 	// (deprecated - replaced by softlayerSubscriptions) Array of Soft Layer IDs
-	SoftlayerIds []string `json:"softlayerIDs"`
+	SoftlayerIDs []string `json:"softlayerIDs"`
 
 	// Array of softlayer subscriptions
 	// Required: true
@@ -166,6 +167,8 @@ func (m *OwnerInfo) validateSoftlayerSubscriptions(formats strfmt.Registry) erro
 			if err := m.SoftlayerSubscriptions[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("softlayerSubscriptions" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("softlayerSubscriptions" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -180,6 +183,40 @@ func (m *OwnerInfo) validateUserID(formats strfmt.Registry) error {
 
 	if err := validate.Required("userID", "body", m.UserID); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this owner info based on the context it is used
+func (m *OwnerInfo) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateSoftlayerSubscriptions(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *OwnerInfo) contextValidateSoftlayerSubscriptions(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.SoftlayerSubscriptions); i++ {
+
+		if m.SoftlayerSubscriptions[i] != nil {
+			if err := m.SoftlayerSubscriptions[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("softlayerSubscriptions" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("softlayerSubscriptions" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

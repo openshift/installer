@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudV2ImagesExportPostReader is a Reader for the PcloudV2ImagesExportPost structure.
@@ -24,58 +23,50 @@ type PcloudV2ImagesExportPostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudV2ImagesExportPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 202:
 		result := NewPcloudV2ImagesExportPostAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudV2ImagesExportPostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudV2ImagesExportPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudV2ImagesExportPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudV2ImagesExportPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudV2ImagesExportPostUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudV2ImagesExportPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -84,7 +75,7 @@ func NewPcloudV2ImagesExportPostAccepted() *PcloudV2ImagesExportPostAccepted {
 	return &PcloudV2ImagesExportPostAccepted{}
 }
 
-/*PcloudV2ImagesExportPostAccepted handles this case with default header values.
+/* PcloudV2ImagesExportPostAccepted describes a response with status code 202, with default header values.
 
 Accepted, image export successfully added to the jobs queue
 */
@@ -94,6 +85,9 @@ type PcloudV2ImagesExportPostAccepted struct {
 
 func (o *PcloudV2ImagesExportPostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportPostAccepted  %+v", 202, o.Payload)
+}
+func (o *PcloudV2ImagesExportPostAccepted) GetPayload() *models.JobReference {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportPostAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -113,7 +107,7 @@ func NewPcloudV2ImagesExportPostBadRequest() *PcloudV2ImagesExportPostBadRequest
 	return &PcloudV2ImagesExportPostBadRequest{}
 }
 
-/*PcloudV2ImagesExportPostBadRequest handles this case with default header values.
+/* PcloudV2ImagesExportPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -123,6 +117,9 @@ type PcloudV2ImagesExportPostBadRequest struct {
 
 func (o *PcloudV2ImagesExportPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportPostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudV2ImagesExportPostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -142,7 +139,7 @@ func NewPcloudV2ImagesExportPostUnauthorized() *PcloudV2ImagesExportPostUnauthor
 	return &PcloudV2ImagesExportPostUnauthorized{}
 }
 
-/*PcloudV2ImagesExportPostUnauthorized handles this case with default header values.
+/* PcloudV2ImagesExportPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -152,6 +149,9 @@ type PcloudV2ImagesExportPostUnauthorized struct {
 
 func (o *PcloudV2ImagesExportPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportPostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudV2ImagesExportPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -171,7 +171,7 @@ func NewPcloudV2ImagesExportPostNotFound() *PcloudV2ImagesExportPostNotFound {
 	return &PcloudV2ImagesExportPostNotFound{}
 }
 
-/*PcloudV2ImagesExportPostNotFound handles this case with default header values.
+/* PcloudV2ImagesExportPostNotFound describes a response with status code 404, with default header values.
 
 image id not found
 */
@@ -181,6 +181,9 @@ type PcloudV2ImagesExportPostNotFound struct {
 
 func (o *PcloudV2ImagesExportPostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportPostNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudV2ImagesExportPostNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -200,7 +203,7 @@ func NewPcloudV2ImagesExportPostConflict() *PcloudV2ImagesExportPostConflict {
 	return &PcloudV2ImagesExportPostConflict{}
 }
 
-/*PcloudV2ImagesExportPostConflict handles this case with default header values.
+/* PcloudV2ImagesExportPostConflict describes a response with status code 409, with default header values.
 
 Conflict, a conflict has prevented adding image export job
 */
@@ -210,6 +213,9 @@ type PcloudV2ImagesExportPostConflict struct {
 
 func (o *PcloudV2ImagesExportPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportPostConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudV2ImagesExportPostConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportPostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -229,7 +235,7 @@ func NewPcloudV2ImagesExportPostUnprocessableEntity() *PcloudV2ImagesExportPostU
 	return &PcloudV2ImagesExportPostUnprocessableEntity{}
 }
 
-/*PcloudV2ImagesExportPostUnprocessableEntity handles this case with default header values.
+/* PcloudV2ImagesExportPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -239,6 +245,9 @@ type PcloudV2ImagesExportPostUnprocessableEntity struct {
 
 func (o *PcloudV2ImagesExportPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudV2ImagesExportPostUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportPostUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -258,7 +267,7 @@ func NewPcloudV2ImagesExportPostInternalServerError() *PcloudV2ImagesExportPostI
 	return &PcloudV2ImagesExportPostInternalServerError{}
 }
 
-/*PcloudV2ImagesExportPostInternalServerError handles this case with default header values.
+/* PcloudV2ImagesExportPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -268,6 +277,9 @@ type PcloudV2ImagesExportPostInternalServerError struct {
 
 func (o *PcloudV2ImagesExportPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportPostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudV2ImagesExportPostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2ImagesExportPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

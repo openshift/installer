@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudV2VolumesPostReader is a Reader for the PcloudV2VolumesPost structure.
@@ -24,51 +23,44 @@ type PcloudV2VolumesPostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudV2VolumesPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 201:
 		result := NewPcloudV2VolumesPostCreated()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudV2VolumesPostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudV2VolumesPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudV2VolumesPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudV2VolumesPostUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudV2VolumesPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudV2VolumesPostCreated() *PcloudV2VolumesPostCreated {
 	return &PcloudV2VolumesPostCreated{}
 }
 
-/*PcloudV2VolumesPostCreated handles this case with default header values.
+/* PcloudV2VolumesPostCreated describes a response with status code 201, with default header values.
 
 Created
 */
@@ -87,6 +79,9 @@ type PcloudV2VolumesPostCreated struct {
 
 func (o *PcloudV2VolumesPostCreated) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes][%d] pcloudV2VolumesPostCreated  %+v", 201, o.Payload)
+}
+func (o *PcloudV2VolumesPostCreated) GetPayload() *models.Volumes {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesPostCreated) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -106,7 +101,7 @@ func NewPcloudV2VolumesPostBadRequest() *PcloudV2VolumesPostBadRequest {
 	return &PcloudV2VolumesPostBadRequest{}
 }
 
-/*PcloudV2VolumesPostBadRequest handles this case with default header values.
+/* PcloudV2VolumesPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -116,6 +111,9 @@ type PcloudV2VolumesPostBadRequest struct {
 
 func (o *PcloudV2VolumesPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes][%d] pcloudV2VolumesPostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudV2VolumesPostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -135,7 +133,7 @@ func NewPcloudV2VolumesPostUnauthorized() *PcloudV2VolumesPostUnauthorized {
 	return &PcloudV2VolumesPostUnauthorized{}
 }
 
-/*PcloudV2VolumesPostUnauthorized handles this case with default header values.
+/* PcloudV2VolumesPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -145,6 +143,9 @@ type PcloudV2VolumesPostUnauthorized struct {
 
 func (o *PcloudV2VolumesPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes][%d] pcloudV2VolumesPostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudV2VolumesPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -164,7 +165,7 @@ func NewPcloudV2VolumesPostConflict() *PcloudV2VolumesPostConflict {
 	return &PcloudV2VolumesPostConflict{}
 }
 
-/*PcloudV2VolumesPostConflict handles this case with default header values.
+/* PcloudV2VolumesPostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -174,6 +175,9 @@ type PcloudV2VolumesPostConflict struct {
 
 func (o *PcloudV2VolumesPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes][%d] pcloudV2VolumesPostConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudV2VolumesPostConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesPostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -193,7 +197,7 @@ func NewPcloudV2VolumesPostUnprocessableEntity() *PcloudV2VolumesPostUnprocessab
 	return &PcloudV2VolumesPostUnprocessableEntity{}
 }
 
-/*PcloudV2VolumesPostUnprocessableEntity handles this case with default header values.
+/* PcloudV2VolumesPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -203,6 +207,9 @@ type PcloudV2VolumesPostUnprocessableEntity struct {
 
 func (o *PcloudV2VolumesPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes][%d] pcloudV2VolumesPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudV2VolumesPostUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesPostUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -222,7 +229,7 @@ func NewPcloudV2VolumesPostInternalServerError() *PcloudV2VolumesPostInternalSer
 	return &PcloudV2VolumesPostInternalServerError{}
 }
 
-/*PcloudV2VolumesPostInternalServerError handles this case with default header values.
+/* PcloudV2VolumesPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -232,6 +239,9 @@ type PcloudV2VolumesPostInternalServerError struct {
 
 func (o *PcloudV2VolumesPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes][%d] pcloudV2VolumesPostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudV2VolumesPostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumesPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -6,17 +6,18 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // PVMInstanceCreate p VM instance create
+//
 // swagger:model PVMInstanceCreate
 type PVMInstanceCreate struct {
 
@@ -38,7 +39,7 @@ type PVMInstanceCreate struct {
 	Migratable *bool `json:"migratable,omitempty"`
 
 	// (deprecated - replaced by networks) List of Network IDs
-	NetworkIds []string `json:"networkIDs"`
+	NetworkIDs []string `json:"networkIDs"`
 
 	// The pvm instance networks information
 	Networks []*PVMInstanceAddNetwork `json:"networks"`
@@ -99,7 +100,7 @@ type PVMInstanceCreate struct {
 	VirtualCores *VirtualCores `json:"virtualCores,omitempty"`
 
 	// List of volume IDs
-	VolumeIds []string `json:"volumeIDs"`
+	VolumeIDs []string `json:"volumeIDs"`
 }
 
 // Validate validates this p VM instance create
@@ -183,7 +184,6 @@ func (m *PVMInstanceCreate) validateMemory(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceCreate) validateNetworks(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Networks) { // not required
 		return nil
 	}
@@ -197,6 +197,8 @@ func (m *PVMInstanceCreate) validateNetworks(formats strfmt.Registry) error {
 			if err := m.Networks[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -208,7 +210,6 @@ func (m *PVMInstanceCreate) validateNetworks(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceCreate) validatePinPolicy(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.PinPolicy) { // not required
 		return nil
 	}
@@ -216,6 +217,8 @@ func (m *PVMInstanceCreate) validatePinPolicy(formats strfmt.Registry) error {
 	if err := m.PinPolicy.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("pinPolicy")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("pinPolicy")
 		}
 		return err
 	}
@@ -249,7 +252,7 @@ const (
 
 // prop value enum
 func (m *PVMInstanceCreate) validateProcTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, pVmInstanceCreateTypeProcTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, pVmInstanceCreateTypeProcTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -295,8 +298,8 @@ const (
 	// PVMInstanceCreateReplicantAffinityPolicyAffinity captures enum value "affinity"
 	PVMInstanceCreateReplicantAffinityPolicyAffinity string = "affinity"
 
-	// PVMInstanceCreateReplicantAffinityPolicyAntiAffinity captures enum value "anti-affinity"
-	PVMInstanceCreateReplicantAffinityPolicyAntiAffinity string = "anti-affinity"
+	// PVMInstanceCreateReplicantAffinityPolicyAntiDashAffinity captures enum value "anti-affinity"
+	PVMInstanceCreateReplicantAffinityPolicyAntiDashAffinity string = "anti-affinity"
 
 	// PVMInstanceCreateReplicantAffinityPolicyNone captures enum value "none"
 	PVMInstanceCreateReplicantAffinityPolicyNone string = "none"
@@ -304,14 +307,13 @@ const (
 
 // prop value enum
 func (m *PVMInstanceCreate) validateReplicantAffinityPolicyEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, pVmInstanceCreateTypeReplicantAffinityPolicyPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, pVmInstanceCreateTypeReplicantAffinityPolicyPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *PVMInstanceCreate) validateReplicantAffinityPolicy(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.ReplicantAffinityPolicy) { // not required
 		return nil
 	}
@@ -347,14 +349,13 @@ const (
 
 // prop value enum
 func (m *PVMInstanceCreate) validateReplicantNamingSchemeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, pVmInstanceCreateTypeReplicantNamingSchemePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, pVmInstanceCreateTypeReplicantNamingSchemePropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *PVMInstanceCreate) validateReplicantNamingScheme(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.ReplicantNamingScheme) { // not required
 		return nil
 	}
@@ -377,7 +378,6 @@ func (m *PVMInstanceCreate) validateServerName(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceCreate) validateSoftwareLicenses(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.SoftwareLicenses) { // not required
 		return nil
 	}
@@ -386,6 +386,8 @@ func (m *PVMInstanceCreate) validateSoftwareLicenses(formats strfmt.Registry) er
 		if err := m.SoftwareLicenses.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("softwareLicenses")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("softwareLicenses")
 			}
 			return err
 		}
@@ -395,7 +397,6 @@ func (m *PVMInstanceCreate) validateSoftwareLicenses(formats strfmt.Registry) er
 }
 
 func (m *PVMInstanceCreate) validateStorageAffinity(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.StorageAffinity) { // not required
 		return nil
 	}
@@ -404,6 +405,8 @@ func (m *PVMInstanceCreate) validateStorageAffinity(formats strfmt.Registry) err
 		if err := m.StorageAffinity.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("storageAffinity")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("storageAffinity")
 			}
 			return err
 		}
@@ -432,14 +435,13 @@ const (
 
 // prop value enum
 func (m *PVMInstanceCreate) validateStorageConnectionEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, pVmInstanceCreateTypeStorageConnectionPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, pVmInstanceCreateTypeStorageConnectionPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *PVMInstanceCreate) validateStorageConnection(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.StorageConnection) { // not required
 		return nil
 	}
@@ -453,7 +455,6 @@ func (m *PVMInstanceCreate) validateStorageConnection(formats strfmt.Registry) e
 }
 
 func (m *PVMInstanceCreate) validateVirtualCores(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.VirtualCores) { // not required
 		return nil
 	}
@@ -462,6 +463,120 @@ func (m *PVMInstanceCreate) validateVirtualCores(formats strfmt.Registry) error 
 		if err := m.VirtualCores.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("virtualCores")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("virtualCores")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this p VM instance create based on the context it is used
+func (m *PVMInstanceCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateNetworks(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidatePinPolicy(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSoftwareLicenses(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateStorageAffinity(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateVirtualCores(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *PVMInstanceCreate) contextValidateNetworks(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Networks); i++ {
+
+		if m.Networks[i] != nil {
+			if err := m.Networks[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceCreate) contextValidatePinPolicy(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.PinPolicy.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("pinPolicy")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("pinPolicy")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceCreate) contextValidateSoftwareLicenses(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.SoftwareLicenses != nil {
+		if err := m.SoftwareLicenses.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("softwareLicenses")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("softwareLicenses")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceCreate) contextValidateStorageAffinity(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.StorageAffinity != nil {
+		if err := m.StorageAffinity.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("storageAffinity")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("storageAffinity")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceCreate) contextValidateVirtualCores(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.VirtualCores != nil {
+		if err := m.VirtualCores.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("virtualCores")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("virtualCores")
 			}
 			return err
 		}

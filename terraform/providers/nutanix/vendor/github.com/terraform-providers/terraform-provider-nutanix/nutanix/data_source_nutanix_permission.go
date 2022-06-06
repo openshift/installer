@@ -1,16 +1,18 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixPermission() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixPermissionRead,
+		ReadContext: dataSourceNutanixPermissionRead,
 		Schema: map[string]*schema.Schema{
 			"permission_id": {
 				Type:          schema.TypeString,
@@ -29,78 +31,23 @@ func dataSourceNutanixPermission() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
 			"owner_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"name": {
@@ -126,7 +73,6 @@ func dataSourceNutanixPermission() *schema.Resource {
 			"fields": {
 				Type:     schema.TypeList,
 				Computed: true,
-				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"field_mode": {
@@ -147,7 +93,7 @@ func dataSourceNutanixPermission() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixPermissionRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixPermissionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).API
 
@@ -155,7 +101,7 @@ func dataSourceNutanixPermissionRead(d *schema.ResourceData, meta interface{}) e
 	permissionName, rnOk := d.GetOk("permission_name")
 
 	if !iok && !rnOk {
-		return fmt.Errorf("please provide `permission_id` or `permission_name`")
+		return diag.Errorf("please provide `permission_id` or `permission_name`")
 	}
 
 	var err error
@@ -169,47 +115,47 @@ func dataSourceNutanixPermissionRead(d *schema.ResourceData, meta interface{}) e
 	}
 
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValues(resp.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValues(resp.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("api_version", resp.APIVersion); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if status := resp.Status; status != nil {
 		if err := d.Set("name", utils.StringValue(resp.Status.Name)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("description", utils.StringValue(resp.Status.Description)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("state", utils.StringValue(resp.Status.State)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if res := status.Resources; res != nil {
 			if err := d.Set("operation", utils.StringValue(res.Operation)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 			if err := d.Set("kind", utils.StringValue(res.Kind)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 			if err := d.Set("fields", flattenFieldsPermission(res.Fields)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 		}
 	}

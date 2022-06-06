@@ -6,17 +6,18 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // PVMInstanceClone p VM instance clone
+//
 // swagger:model PVMInstanceClone
 type PVMInstanceClone struct {
 
@@ -45,7 +46,7 @@ type PVMInstanceClone struct {
 	SoftwareLicenses *SoftwareLicenses `json:"softwareLicenses,omitempty"`
 
 	// List of volume IDs
-	VolumeIds []string `json:"volumeIDs"`
+	VolumeIDs []string `json:"volumeIDs"`
 }
 
 // Validate validates this p VM instance clone
@@ -98,6 +99,8 @@ func (m *PVMInstanceClone) validateNetworks(formats strfmt.Registry) error {
 			if err := m.Networks[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -134,14 +137,13 @@ const (
 
 // prop value enum
 func (m *PVMInstanceClone) validateProcTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, pVmInstanceCloneTypeProcTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, pVmInstanceCloneTypeProcTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *PVMInstanceClone) validateProcType(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.ProcType) { // not required
 		return nil
 	}
@@ -155,7 +157,6 @@ func (m *PVMInstanceClone) validateProcType(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceClone) validateSoftwareLicenses(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.SoftwareLicenses) { // not required
 		return nil
 	}
@@ -164,6 +165,62 @@ func (m *PVMInstanceClone) validateSoftwareLicenses(formats strfmt.Registry) err
 		if err := m.SoftwareLicenses.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("softwareLicenses")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("softwareLicenses")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this p VM instance clone based on the context it is used
+func (m *PVMInstanceClone) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateNetworks(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSoftwareLicenses(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *PVMInstanceClone) contextValidateNetworks(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Networks); i++ {
+
+		if m.Networks[i] != nil {
+			if err := m.Networks[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceClone) contextValidateSoftwareLicenses(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.SoftwareLicenses != nil {
+		if err := m.SoftwareLicenses.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("softwareLicenses")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("softwareLicenses")
 			}
 			return err
 		}

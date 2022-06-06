@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudNetworksDeleteParams creates a new PcloudNetworksDeleteParams object
-// with the default values initialized.
+// NewPcloudNetworksDeleteParams creates a new PcloudNetworksDeleteParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudNetworksDeleteParams() *PcloudNetworksDeleteParams {
-	var ()
 	return &PcloudNetworksDeleteParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudNetworksDeleteParamsWithTimeout creates a new PcloudNetworksDeleteParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudNetworksDeleteParamsWithTimeout(timeout time.Duration) *PcloudNetworksDeleteParams {
-	var ()
 	return &PcloudNetworksDeleteParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudNetworksDeleteParamsWithContext creates a new PcloudNetworksDeleteParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudNetworksDeleteParamsWithContext(ctx context.Context) *PcloudNetworksDeleteParams {
-	var ()
 	return &PcloudNetworksDeleteParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudNetworksDeleteParamsWithHTTPClient creates a new PcloudNetworksDeleteParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudNetworksDeleteParamsWithHTTPClient(client *http.Client) *PcloudNetworksDeleteParams {
-	var ()
 	return &PcloudNetworksDeleteParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudNetworksDeleteParams contains all the parameters to send to the API endpoint
-for the pcloud networks delete operation typically these are written to a http.Request
+/* PcloudNetworksDeleteParams contains all the parameters to send to the API endpoint
+   for the pcloud networks delete operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudNetworksDeleteParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*NetworkID
-	  Network ID
 
+	/* NetworkID.
+
+	   Network ID
 	*/
 	NetworkID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud networks delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudNetworksDeleteParams) WithDefaults() *PcloudNetworksDeleteParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud networks delete params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudNetworksDeleteParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud networks delete params

@@ -4,6 +4,7 @@ import (
 	"context"
 	"path/filepath"
 	"sort"
+	"strconv"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -210,7 +211,38 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			CISInstanceCRN: cisInstanceCRN,
 		}
 	case nutanix.Name:
+		nutanixPlatform := installConfig.Config.Nutanix
+
+		// Retrieve the prism element name
+		nc, err := nutanix.CreateNutanixClient(context.Background(),
+			nutanixPlatform.PrismCentral.Endpoint.Address,
+			strconv.Itoa(int(nutanixPlatform.PrismCentral.Endpoint.Port)),
+			nutanixPlatform.PrismCentral.Username,
+			nutanixPlatform.PrismCentral.Password)
+		if err != nil {
+			return errors.Wrapf(err, "unable to connect to Prism Central %s", nutanixPlatform.PrismCentral.Endpoint.Address)
+		}
+		pe, err := nc.V3.GetCluster(nutanixPlatform.PrismElements[0].UUID)
+		if err != nil {
+			return errors.Wrapf(err, "fail to find the Prism Element (cluster) with uuid %s", nutanixPlatform.PrismElements[0].UUID)
+		}
+		peName := *pe.Spec.Name
+
 		config.Spec.PlatformSpec.Type = configv1.NutanixPlatformType
+		config.Spec.PlatformSpec.Nutanix = &configv1.NutanixPlatformSpec{
+			PrismCentral: configv1.NutanixPrismEndpoint{
+				Address: nutanixPlatform.PrismCentral.Endpoint.Address,
+				Port:    nutanixPlatform.PrismCentral.Endpoint.Port,
+			},
+			PrismElements: []configv1.NutanixPrismElementEndpoint{{
+				Name: peName,
+				Endpoint: configv1.NutanixPrismEndpoint{
+					Address: nutanixPlatform.PrismElements[0].Endpoint.Address,
+					Port:    nutanixPlatform.PrismElements[0].Endpoint.Port,
+				},
+			}},
+		}
+
 		if installConfig.Config.Nutanix.APIVIP != "" {
 			config.Status.PlatformStatus.Nutanix = &configv1.NutanixPlatformStatus{
 				APIServerInternalIP: installConfig.Config.Nutanix.APIVIP,

@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudPvminstancesVolumesSetbootPutReader is a Reader for the PcloudPvminstancesVolumesSetbootPut structure.
@@ -24,44 +23,38 @@ type PcloudPvminstancesVolumesSetbootPutReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudPvminstancesVolumesSetbootPutReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudPvminstancesVolumesSetbootPutOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudPvminstancesVolumesSetbootPutBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudPvminstancesVolumesSetbootPutUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudPvminstancesVolumesSetbootPutNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudPvminstancesVolumesSetbootPutInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudPvminstancesVolumesSetbootPutOK() *PcloudPvminstancesVolumesSetboo
 	return &PcloudPvminstancesVolumesSetbootPutOK{}
 }
 
-/*PcloudPvminstancesVolumesSetbootPutOK handles this case with default header values.
+/* PcloudPvminstancesVolumesSetbootPutOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudPvminstancesVolumesSetbootPutOK struct {
 
 func (o *PcloudPvminstancesVolumesSetbootPutOK) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutOK  %+v", 200, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesSetbootPutOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -97,7 +93,7 @@ func NewPcloudPvminstancesVolumesSetbootPutBadRequest() *PcloudPvminstancesVolum
 	return &PcloudPvminstancesVolumesSetbootPutBadRequest{}
 }
 
-/*PcloudPvminstancesVolumesSetbootPutBadRequest handles this case with default header values.
+/* PcloudPvminstancesVolumesSetbootPutBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -107,6 +103,9 @@ type PcloudPvminstancesVolumesSetbootPutBadRequest struct {
 
 func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -126,7 +125,7 @@ func NewPcloudPvminstancesVolumesSetbootPutUnauthorized() *PcloudPvminstancesVol
 	return &PcloudPvminstancesVolumesSetbootPutUnauthorized{}
 }
 
-/*PcloudPvminstancesVolumesSetbootPutUnauthorized handles this case with default header values.
+/* PcloudPvminstancesVolumesSetbootPutUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -136,6 +135,9 @@ type PcloudPvminstancesVolumesSetbootPutUnauthorized struct {
 
 func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -155,7 +157,7 @@ func NewPcloudPvminstancesVolumesSetbootPutNotFound() *PcloudPvminstancesVolumes
 	return &PcloudPvminstancesVolumesSetbootPutNotFound{}
 }
 
-/*PcloudPvminstancesVolumesSetbootPutNotFound handles this case with default header values.
+/* PcloudPvminstancesVolumesSetbootPutNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -165,6 +167,9 @@ type PcloudPvminstancesVolumesSetbootPutNotFound struct {
 
 func (o *PcloudPvminstancesVolumesSetbootPutNotFound) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesSetbootPutNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -184,7 +189,7 @@ func NewPcloudPvminstancesVolumesSetbootPutInternalServerError() *PcloudPvminsta
 	return &PcloudPvminstancesVolumesSetbootPutInternalServerError{}
 }
 
-/*PcloudPvminstancesVolumesSetbootPutInternalServerError handles this case with default header values.
+/* PcloudPvminstancesVolumesSetbootPutInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -194,6 +199,9 @@ type PcloudPvminstancesVolumesSetbootPutInternalServerError struct {
 
 func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

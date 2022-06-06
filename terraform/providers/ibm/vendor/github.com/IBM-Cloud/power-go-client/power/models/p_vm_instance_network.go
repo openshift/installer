@@ -6,12 +6,14 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // PVMInstanceNetwork A map containing information about a network address
+//
 // swagger:model PVMInstanceNetwork
 type PVMInstanceNetwork struct {
 
@@ -45,6 +47,11 @@ type PVMInstanceNetwork struct {
 
 // Validate validates this p VM instance network
 func (m *PVMInstanceNetwork) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this p VM instance network based on context it is used
+func (m *PVMInstanceNetwork) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

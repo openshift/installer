@@ -1,15 +1,18 @@
 package nutanix
 
 import (
+	"context"
+
 	"github.com/spf13/cast"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 )
 
 func dataSourceNutanixHost() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixHostRead,
+		ReadContext: dataSourceNutanixHostRead,
 		Schema: map[string]*schema.Schema{
 			"host_id": {
 				Type:     schema.TypeString,
@@ -26,45 +29,15 @@ func dataSourceNutanixHost() *schema.Resource {
 			"failover_cluster": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"domain_credencial": {
-							Type:     schema.TypeMap,
-							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"username": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"password": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
-							},
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"ipmi": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"cpu_model": {
@@ -83,45 +56,8 @@ func dataSourceNutanixHost() *schema.Resource {
 			"windows_domain": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name_server_ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"organization_unit_path": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name_prefix": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"domain_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"domain_credencial": {
-							Type:     schema.TypeMap,
-							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"username": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"password": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
-							},
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"gpu_list": {
@@ -185,21 +121,8 @@ func dataSourceNutanixHost() *schema.Resource {
 						"consumer_reference": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"kind": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"uuid": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"mode": {
@@ -260,21 +183,8 @@ func dataSourceNutanixHost() *schema.Resource {
 			"hypervisor": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"num_vms": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"hypervisor_full_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"host_type": {
@@ -288,93 +198,29 @@ func dataSourceNutanixHost() *schema.Resource {
 			"rackable_unit_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"controller_vm": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"nat_ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"oplog_usage": {
-							Type:     schema.TypeMap,
-							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"opolog_disk_pct": {
-										Type:     schema.TypeFloat,
-										Computed: true,
-									},
-									"opolog_disk_size": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
-							},
-						},
-						"nat_port": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"block": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"block_serial_number": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"block_model": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"cluster_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"api_version": {
@@ -384,85 +230,30 @@ func dataSourceNutanixHost() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"owner_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 		},
 	}
 }
 
-func dataSourceNutanixHostRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixHostRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).API
 
@@ -470,85 +261,85 @@ func dataSourceNutanixHostRead(d *schema.ResourceData, meta interface{}) error {
 
 	host, err := conn.V3.GetHost(hostID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("name", host.Status.Name); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("gpu_driver_version", host.Status.Resources.GPUDriverVersion); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("failover_cluster", flattenFailOverCluster(host.Status.Resources.FailoverCluster)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("ipmi", flattenIMPI(host.Status.Resources.IPMI)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("cpu_model", host.Status.Resources.CPUModel); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("host_nics_id_list", host.Status.Resources.HostNicsIDList); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("num_cpu_sockets", host.Status.Resources.NumCPUSockets); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("windows_domain", flattenWindowsDomain(host.Status.Resources.WindowsDomain)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("gpu_list", flattenGpuList(host.Status.Resources.GPUList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("serial_number", host.Status.Resources.SerialNumber); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("cpu_capacity_hz", host.Status.Resources.CPUCapacityHZ); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("memory_capacity_mib", host.Status.Resources.MemoryVapacityMib); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("host_disks_reference_list", flattenReferenceList(host.Status.Resources.HostDisksReferenceList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("monitoring_state", host.Status.Resources.MonitoringState); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("hypervisor", flattenHypervisor(host.Status.Resources.Hypervisor)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("host_type", host.Status.Resources.HostType); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("num_cpu_cores", host.Status.Resources.NumCPUCores); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("rackable_unit_reference", flattenReference(host.Status.Resources.RackableUnitReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("controller_vm", flattenControllerVM(host.Status.Resources.ControllerVM)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("block", flattenBlock(host.Status.Resources.Block)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("cluster_reference", flattenReference(host.Status.ClusterReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	m, c := setRSEntityMetadata(host.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValues(host.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValues(host.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(hostID)
@@ -558,9 +349,8 @@ func dataSourceNutanixHostRead(d *schema.ResourceData, meta interface{}) error {
 func flattenFailOverCluster(failOvercluster *v3.FailoverCluster) map[string]interface{} {
 	if failOvercluster != nil {
 		return map[string]interface{}{
-			"ip":                failOvercluster.IP,
-			"name":              failOvercluster.Name,
-			"domain_credencial": flattenDomainCredencials(failOvercluster.DomainCredencial),
+			"ip":   failOvercluster.IP,
+			"name": failOvercluster.Name,
 		}
 	}
 	return map[string]interface{}{}
@@ -592,8 +382,6 @@ func flattenWindowsDomain(windowsDomain *v3.WindowsDomain) map[string]interface{
 			"name_server_ip":         windowsDomain.NameServerIP,
 			"organization_unit_path": windowsDomain.OrganizationUnitPath,
 			"name_prefix":            windowsDomain.NamePrefix,
-			"domain_name":            windowsDomain.DomainCredencial,
-			"domain_credencial":      windowsDomain.DomainCredencial,
 		}
 	}
 	return map[string]interface{}{}
@@ -644,6 +432,26 @@ func flattenReferenceList(references []*v3.ReferenceValues) []map[string]interfa
 	if len(references) > 0 {
 		for i, r := range references {
 			res[i] = flattenReference(r)
+		}
+	}
+	return res
+}
+
+func flattenExternalNetworkListReference(reference *v3.ReferenceValues) map[string]interface{} {
+	if reference != nil {
+		return map[string]interface{}{
+			"uuid": reference.UUID,
+			"name": reference.Name,
+		}
+	}
+	return map[string]interface{}{}
+}
+
+func flattenExternalNetworkListReferenceList(references []*v3.ReferenceValues) []map[string]interface{} {
+	res := make([]map[string]interface{}, len(references))
+	if len(references) > 0 {
+		for i, r := range references {
+			res[i] = flattenExternalNetworkListReference(r)
 		}
 	}
 	return res

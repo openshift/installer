@@ -4,6 +4,7 @@ variable "hostnames_ip_addresses" {
 
 variable "ignition" {
   type    = string
+  sensitive = true
   default = ""
 }
 

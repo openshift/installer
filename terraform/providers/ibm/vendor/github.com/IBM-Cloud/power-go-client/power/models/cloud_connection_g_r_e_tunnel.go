@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // CloudConnectionGRETunnel cloud connection g r e tunnel
+//
 // swagger:model CloudConnectionGRETunnel
 type CloudConnectionGRETunnel struct {
 
@@ -59,6 +61,11 @@ func (m *CloudConnectionGRETunnel) validateSourceIPAddress(formats strfmt.Regist
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this cloud connection g r e tunnel based on context it is used
+func (m *CloudConnectionGRETunnel) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

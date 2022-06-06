@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // VolumesClone volumes clone
+//
 // swagger:model VolumesClone
 type VolumesClone struct {
 
@@ -68,7 +70,6 @@ func (m *VolumesClone) Validate(formats strfmt.Registry) error {
 }
 
 func (m *VolumesClone) validateCreationDate(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.CreationDate) { // not required
 		return nil
 	}
@@ -81,7 +82,6 @@ func (m *VolumesClone) validateCreationDate(formats strfmt.Registry) error {
 }
 
 func (m *VolumesClone) validateLastUpdateDate(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.LastUpdateDate) { // not required
 		return nil
 	}
@@ -99,6 +99,11 @@ func (m *VolumesClone) validatePercentComplete(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this volumes clone based on context it is used
+func (m *VolumesClone) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

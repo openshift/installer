@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // CloudConnectionUpdate cloud connection update
+//
 // swagger:model CloudConnectionUpdate
 type CloudConnectionUpdate struct {
 
@@ -62,7 +63,6 @@ func (m *CloudConnectionUpdate) Validate(formats strfmt.Registry) error {
 }
 
 func (m *CloudConnectionUpdate) validateClassic(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Classic) { // not required
 		return nil
 	}
@@ -71,6 +71,8 @@ func (m *CloudConnectionUpdate) validateClassic(formats strfmt.Registry) error {
 		if err := m.Classic.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("classic")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("classic")
 			}
 			return err
 		}
@@ -93,14 +95,13 @@ func init() {
 
 // prop value enum
 func (m *CloudConnectionUpdate) validateSpeedEnum(path, location string, value int64) error {
-	if err := validate.Enum(path, location, value, cloudConnectionUpdateTypeSpeedPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, cloudConnectionUpdateTypeSpeedPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *CloudConnectionUpdate) validateSpeed(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Speed) { // not required
 		return nil
 	}
@@ -114,7 +115,6 @@ func (m *CloudConnectionUpdate) validateSpeed(formats strfmt.Registry) error {
 }
 
 func (m *CloudConnectionUpdate) validateVpc(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Vpc) { // not required
 		return nil
 	}
@@ -123,6 +123,58 @@ func (m *CloudConnectionUpdate) validateVpc(formats strfmt.Registry) error {
 		if err := m.Vpc.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("vpc")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("vpc")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this cloud connection update based on the context it is used
+func (m *CloudConnectionUpdate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateClassic(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateVpc(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *CloudConnectionUpdate) contextValidateClassic(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Classic != nil {
+		if err := m.Classic.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("classic")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("classic")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *CloudConnectionUpdate) contextValidateVpc(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Vpc != nil {
+		if err := m.Vpc.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("vpc")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("vpc")
 			}
 			return err
 		}

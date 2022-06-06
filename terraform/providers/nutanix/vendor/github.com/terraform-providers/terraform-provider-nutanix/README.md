@@ -2,8 +2,9 @@
 
 Terraform provider plugin to integrate with Nutanix Enterprise Cloud
 
-NOTE: The latest version of the Nutanix provider is [v1.2.0](https://github.com/nutanix/terraform-provider-nutanix/releases/tag/v1.2.0)
+NOTE: The latest version of the Nutanix provider is [v1.5.0](https://github.com/nutanix/terraform-provider-nutanix/releases/tag/v1.5.0)
 
+Modules based on Terraform Nutanix Provider can be found here : [Modules](https://github.com/nutanix/terraform-provider-nutanix/tree/master/modules)
 ## Build, Quality Status
 
  [![Go Report Card](https://goreportcard.com/badge/github.com/nutanix/terraform-provider-nutanix)](https://goreportcard.com/report/github.com/nutanix/terraform-provider-nutanix)
@@ -22,13 +23,40 @@ For a slack invite, please contact terraform@nutanix.com from your business emai
 
 ### Provider Development
 * [Terraform](https://www.terraform.io/downloads.html) 0.12+
-* [Go](https://golang.org/doc/install) 1.12+ (to build the provider plugin)
+* [Go](https://golang.org/doc/install) 1.17+ (to build the provider plugin)
+* This provider uses [SDKv2](https://www.terraform.io/plugin/sdkv2/sdkv2-intro) from release 1.3.0
 
 ### Provider Use
 
-The Terraform Nutanix provider is designed to work with Nutanix Prism Central, such that you can manage one or more Prism Element clusters at scale. AOS/PC 5.6.0 or higher is required, as this Provider makes exclusive use of the v3 APIs
+The Terraform Nutanix provider is designed to work with Nutanix Prism Central and Standalone Foundation, such that you can manage one or more Prism Element clusters at scale. AOS/PC 5.6.0 or higher is required, as this Provider makes exclusive use of the v3 APIs. It also consists components to work with Foundation to performing node imaging and related activities.
 
 > For the 1.2.0 release of the provider it will have an N-1 compatibility with the Prism Central APIs. This provider was tested against Prism Central versions 2020.9 and 2020.11, as well as AOS version 5.18 and 5.19
+
+
+> For the 1.3.0 release of the provider it will have N-2 compatibility with the Prism Central APIs. This release was tested against Prism Central versions pc.2021.9.0.4, pc.2021.8.0.1 and pc.2021.7.
+
+
+> For the 1.4.0 & 1.4.1 release of the provider it will have N-2 compatibility with the Prism Central APIs. This release was tested against Prism Central versions pc2022.1 pc.2021.9.0.4 and pc.2021.8.0.1.  
+
+> For the 1.5.0 release of the provider it will have N-2 compatibility with the Prism Central APIs. This release was tested against Prism Central versions pc2022.1.0.2 pc.2021.9.0.4 and pc.2021.8.0.1.
+
+## Foundation
+> For the 1.5.0-beta release of the provider it will have N-1 compatibility with the Foundation. This release was tested against Foundation versions v5.2 and v5.1.1
+
+> For the 1.5.0 release of the provider it will have N-1 compatibility with the Foundation. This release was tested against Foundation versions v5.2 and v5.1.1
+
+Foundation based examples : https://github.com/nutanix/terraform-provider-nutanix/blob/master/examples/foundation/
+
+Foundation based modules & examples : https://github.com/nutanix/terraform-provider-nutanix/blob/master/modules/foundation/
+
+## Foundation Central
+> For the 1.5.0-beta.2 release of the provider it will have N-1 compatibility with the Foundation Central. This release was tested with v1.2 and v1.3 Foundation Central versions.
+
+> For the 1.5.0 release of the provider it will have N-1 compatibility with the Foundation Central. This release was tested with v1.2 and v1.3 Foundation Central versions.
+
+Foundation Central based examples : https://github.com/nutanix/terraform-provider-nutanix/blob/master/examples/foundationCentral/
+
+Foundation Central based modules and examples : Foundation based modules & examples : https://github.com/nutanix/terraform-provider-nutanix/blob/master/modules/foundationCentral/
 
 ## Example Usage
 
@@ -60,6 +88,37 @@ provider "nutanix" {
 }
 ```
 
+## From terraform-provider-nutanix v1.5.0-beta :
+
+The following keys can be used to configure the provider.
+
+* **endpoint** - (Optional) IP address for the Nutanix Prism Central.
+* **username** - (Optional) Username for Nutanix Prism Central. Could be local cluster auth (e.g. `auth`) or directory auth.
+* **password** - (Optional) Password for the provided username.
+* **port** - (Optional) Port for the Nutanix Prism Central. Default port is 9440.
+* **insecure** - (Optional) Explicitly allow the provider to perform insecure SSL requests. If omitted, default value is false.
+* **wait_timeout** - (optional) Set if you know that the creation or update of a resource may take long time (minutes).
+* **foundation_endpoint** - (optional) IP address of foundation vm.
+* **foundation_port** - (optional) Port of foundation vm. Default port is 8000.
+
+```hcl
+provider "nutanix" {
+  username            = "admin"
+  password            = "myPassword"
+  port                = 9440
+  endpoint            = "10.36.7.201"
+  insecure            = true
+  wait_timeout        = 10
+  foundation_endpoint = "10.xx.xx.xx"
+  foundation_port     = 8000
+}
+```
+
+### Provider Configuration Requirements & Warnings
+From foundation getting released in 1.5.0-beta, provider configuration will accomodate prism central and foundation apis connection details. **It will show warnings for disabled api connections as per the attributes given in provider configuration in above mentioned format**. The below are the required attributes for corresponding provider componenets :
+* endpoint, username and password are required fields for using Prism Central & Karbon based resources and data sources
+* foundation_endpoint is required field for using Foundation based resources and data sources
+
 ## Resources
 
 * nutanix_access_control_policy
@@ -76,7 +135,13 @@ provider "nutanix" {
 * nutanix_subnet
 * nutanix_user
 * nutanix_virtual_machine
-
+* nutanix_service_group
+* nutanix_address_group
+* nutanix_foundation_image_nodes
+* nutanix_foundation_ipmi_config
+* nutanix_foundation_image
+* nutanix_foundation_central_api_keys
+* nutanix_foundation_central_image_cluster
 
 ## Data Sources
 
@@ -112,7 +177,18 @@ provider "nutanix" {
 * nutanix_protection_rules
 * nutanix_recovery_plan
 * nutanix_recovery_plans
-
+* nutanix_address_groups
+* nutanix_address_group
+* nutanix_foundation_discover_nodes
+* nutanix_foundation_node_network_details
+* nutanix_foundation_nos_packages
+* nutanix_foundation_hypervisor_isos
+* nutanix_foundation_central_api_keys
+* nutanix_foundation_central_list_api_keys
+* nutanix_foundation_central_imaged_nodes_list
+* nutanix_foundation_central_imaged_clusters_list
+* nutanix_foundation_central_cluster_details
+* nutanix_foundation_central_imaged_node_details
 
 ## Quick Install
 
@@ -159,7 +235,7 @@ $ make tools
 $ make cibuild
 ```
 
-This coommand will create a `pkg/` directory with all the binaries for the most popular OS.
+This command will create a `pkg/` directory with all the binaries for the most popular OS.
 
 
 ### Common Issues using the development binary.

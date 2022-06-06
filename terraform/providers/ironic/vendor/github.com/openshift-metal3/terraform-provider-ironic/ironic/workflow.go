@@ -19,11 +19,12 @@ type provisionStateWorkflow struct {
 
 	configDrive interface{}
 	deploySteps []nodes.DeployStep
+	cleanSteps  []nodes.CleanStep
 }
 
 // ChangeProvisionStateToTarget drives Ironic's state machine through the process to reach our desired end state. This requires multiple
 // possibly long-running steps.  If required, we'll build a config drive ISO for deployment.
-func ChangeProvisionStateToTarget(client *gophercloud.ServiceClient, uuid string, target nodes.TargetProvisionState, configDrive interface{}, deploySteps []nodes.DeployStep) error {
+func ChangeProvisionStateToTarget(client *gophercloud.ServiceClient, uuid string, target nodes.TargetProvisionState, configDrive interface{}, deploySteps []nodes.DeployStep, cleanSteps []nodes.CleanStep) error {
 	// Run the provisionStateWorkflow - this could take a while
 	wf := provisionStateWorkflow{
 		target:      target,
@@ -32,6 +33,7 @@ func ChangeProvisionStateToTarget(client *gophercloud.ServiceClient, uuid string
 		uuid:        uuid,
 		configDrive: configDrive,
 		deploySteps: deploySteps,
+		cleanSteps:  cleanSteps,
 	}
 
 	return wf.run()
@@ -113,7 +115,7 @@ func (workflow *provisionStateWorkflow) toClean() (bool, error) {
 		return true, err
 	}
 	if workflow.node.ProvisionState != string(nodes.Manageable) {
-		if err := ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil, nil); err != nil {
+		if err := ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil, nil, nil); err != nil {
 			return true, err
 		}
 	}
@@ -152,7 +154,7 @@ func (workflow *provisionStateWorkflow) toInspect() (bool, error) {
 		return true, err
 	}
 	if workflow.node.ProvisionState != string(nodes.Manageable) {
-		if err := ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil, nil); err != nil {
+		if err := ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil, nil, nil); err != nil {
 			return true, err
 		}
 	}
@@ -285,10 +287,11 @@ func (workflow *provisionStateWorkflow) buildProvisionStateOpts(target nodes.Tar
 		}
 	}
 	if target == "clean" {
-		opts.CleanSteps = []nodes.CleanStep{}
-		// TODO if we want to actually clean, then we need clean_steps
-		// currently bmo does quite a lot of work to get raid cleaning working.
-		// https://github.com/metal3-io/baremetal-operator/blob/master/pkg/provisioner/ironic/ironic.go#L1249-L1292
+		if workflow.cleanSteps != nil {
+			opts.CleanSteps = workflow.cleanSteps
+		} else {
+			opts.CleanSteps = []nodes.CleanStep{}
+		}
 	}
 
 	return &opts, nil

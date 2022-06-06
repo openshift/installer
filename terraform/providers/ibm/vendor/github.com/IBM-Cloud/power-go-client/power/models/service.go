@@ -6,17 +6,18 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // Service service
+//
 // swagger:model Service
 type Service struct {
 
@@ -116,7 +117,6 @@ func (m *Service) validateBindable(formats strfmt.Registry) error {
 }
 
 func (m *Service) validateDashboardClient(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.DashboardClient) { // not required
 		return nil
 	}
@@ -125,6 +125,8 @@ func (m *Service) validateDashboardClient(formats strfmt.Registry) error {
 		if err := m.DashboardClient.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("dashboard_client")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("dashboard_client")
 			}
 			return err
 		}
@@ -175,6 +177,8 @@ func (m *Service) validatePlans(formats strfmt.Registry) error {
 			if err := m.Plans[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("plans" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("plans" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -198,14 +202,13 @@ func init() {
 }
 
 func (m *Service) validateRequiresItemsEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, serviceRequiresItemsEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, serviceRequiresItemsEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *Service) validateRequires(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Requires) { // not required
 		return nil
 	}
@@ -215,6 +218,60 @@ func (m *Service) validateRequires(formats strfmt.Registry) error {
 		// value enum
 		if err := m.validateRequiresItemsEnum("requires"+"."+strconv.Itoa(i), "body", m.Requires[i]); err != nil {
 			return err
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this service based on the context it is used
+func (m *Service) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateDashboardClient(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidatePlans(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Service) contextValidateDashboardClient(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.DashboardClient != nil {
+		if err := m.DashboardClient.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("dashboard_client")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("dashboard_client")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Service) contextValidatePlans(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Plans); i++ {
+
+		if m.Plans[i] != nil {
+			if err := m.Plans[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("plans" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("plans" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
 		}
 
 	}

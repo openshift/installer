@@ -52,6 +52,7 @@ module "master" {
   private                    = var.azure_private
   outbound_udr               = var.azure_outbound_user_defined_routing
   ultra_ssd_enabled          = var.azure_control_plane_ultra_ssd_enabled
+  vm_networking_type         = var.azure_control_plane_vm_networking_type
 
   use_ipv4 = var.use_ipv4
   use_ipv6 = var.use_ipv6

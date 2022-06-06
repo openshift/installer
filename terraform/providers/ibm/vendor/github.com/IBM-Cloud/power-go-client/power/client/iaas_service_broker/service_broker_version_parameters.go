@@ -13,56 +13,69 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewServiceBrokerVersionParams creates a new ServiceBrokerVersionParams object
-// with the default values initialized.
+// NewServiceBrokerVersionParams creates a new ServiceBrokerVersionParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceBrokerVersionParams() *ServiceBrokerVersionParams {
-
 	return &ServiceBrokerVersionParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceBrokerVersionParamsWithTimeout creates a new ServiceBrokerVersionParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceBrokerVersionParamsWithTimeout(timeout time.Duration) *ServiceBrokerVersionParams {
-
 	return &ServiceBrokerVersionParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceBrokerVersionParamsWithContext creates a new ServiceBrokerVersionParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceBrokerVersionParamsWithContext(ctx context.Context) *ServiceBrokerVersionParams {
-
 	return &ServiceBrokerVersionParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceBrokerVersionParamsWithHTTPClient creates a new ServiceBrokerVersionParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceBrokerVersionParamsWithHTTPClient(client *http.Client) *ServiceBrokerVersionParams {
-
 	return &ServiceBrokerVersionParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceBrokerVersionParams contains all the parameters to send to the API endpoint
-for the service broker version operation typically these are written to a http.Request
+/* ServiceBrokerVersionParams contains all the parameters to send to the API endpoint
+   for the service broker version operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceBrokerVersionParams struct {
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service broker version params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerVersionParams) WithDefaults() *ServiceBrokerVersionParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service broker version params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerVersionParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service broker version params

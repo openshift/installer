@@ -13,73 +13,88 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewServiceInstanceGetParams creates a new ServiceInstanceGetParams object
-// with the default values initialized.
+// NewServiceInstanceGetParams creates a new ServiceInstanceGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceInstanceGetParams() *ServiceInstanceGetParams {
-	var ()
 	return &ServiceInstanceGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceInstanceGetParamsWithTimeout creates a new ServiceInstanceGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceInstanceGetParamsWithTimeout(timeout time.Duration) *ServiceInstanceGetParams {
-	var ()
 	return &ServiceInstanceGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceInstanceGetParamsWithContext creates a new ServiceInstanceGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceInstanceGetParamsWithContext(ctx context.Context) *ServiceInstanceGetParams {
-	var ()
 	return &ServiceInstanceGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceInstanceGetParamsWithHTTPClient creates a new ServiceInstanceGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceInstanceGetParamsWithHTTPClient(client *http.Client) *ServiceInstanceGetParams {
-	var ()
 	return &ServiceInstanceGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceInstanceGetParams contains all the parameters to send to the API endpoint
-for the service instance get operation typically these are written to a http.Request
+/* ServiceInstanceGetParams contains all the parameters to send to the API endpoint
+   for the service instance get operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceInstanceGetParams struct {
 
-	/*XBrokerAPIOriginatingIdentity
-	  identity of the user that initiated the request from the Platform
+	/* XBrokerAPIOriginatingIdentity.
 
+	   identity of the user that initiated the request from the Platform
 	*/
 	XBrokerAPIOriginatingIdentity *string
-	/*XBrokerAPIVersion
-	  version number of the Service Broker API that the Platform will use
 
+	/* XBrokerAPIVersion.
+
+	   version number of the Service Broker API that the Platform will use
 	*/
 	XBrokerAPIVersion string
-	/*InstanceID
-	  instance id of instance to provision
 
+	/* InstanceID.
+
+	   instance id of instance to provision
 	*/
 	InstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service instance get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceInstanceGetParams) WithDefaults() *ServiceInstanceGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service instance get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceInstanceGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service instance get params
@@ -162,7 +177,6 @@ func (o *ServiceInstanceGetParams) WriteToRequest(r runtime.ClientRequest, reg s
 		if err := r.SetHeaderParam("X-Broker-API-Originating-Identity", *o.XBrokerAPIOriginatingIdentity); err != nil {
 			return err
 		}
-
 	}
 
 	// header param X-Broker-API-Version
