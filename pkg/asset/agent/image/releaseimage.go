@@ -1,4 +1,4 @@
-package imagebuilder
+package image
 
 import (
 	"encoding/json"
@@ -38,11 +38,12 @@ func releaseImageFromPullSpec(pullSpec, arch string) (releaseImage, error) {
 		}, nil
 	}
 
-	components := strings.SplitN(pullSpec, ":", 2)
+	components := strings.Split(pullSpec, ":")
 	if len(components) < 2 {
 		return releaseImage{}, fmt.Errorf("invalid release image \"%s\"", pullSpec)
 	}
-	tag := strings.TrimSuffix(components[1], fmt.Sprintf("-%s", arch))
+	lastIndex := len(components) - 1
+	tag := strings.TrimSuffix(components[lastIndex], fmt.Sprintf("-%s", arch))
 
 	versionComponents := strings.Split(tag, ".")
 	if len(versionComponents) < 2 {

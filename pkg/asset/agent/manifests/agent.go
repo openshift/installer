@@ -28,13 +28,13 @@ var (
 type AgentManifests struct {
 	FileList []*asset.File
 
-	PullSecret          *corev1.Secret
-	InfraEnv            *aiv1beta1.InfraEnv
-	StaticNetworkConfig []*models.HostStaticNetworkConfig
-	NMStateConfig       []*aiv1beta1.NMStateConfig
-	AgentClusterInstall *hiveext.AgentClusterInstall
-	ClusterDeployment   *hivev1.ClusterDeployment
-	ClusterImageSet     *hivev1.ClusterImageSet
+	PullSecret           *corev1.Secret
+	InfraEnv             *aiv1beta1.InfraEnv
+	StaticNetworkConfigs []*models.HostStaticNetworkConfig
+	NMStateConfigs       []*aiv1beta1.NMStateConfig
+	AgentClusterInstall  *hiveext.AgentClusterInstall
+	ClusterDeployment    *hivev1.ClusterDeployment
+	ClusterImageSet      *hivev1.ClusterImageSet
 }
 
 // Name returns a human friendly name.
@@ -73,8 +73,8 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		case *InfraEnv:
 			m.InfraEnv = v.Config
 		case *NMStateConfig:
-			m.StaticNetworkConfig = append(m.StaticNetworkConfig, v.StaticNetworkConfig...)
-			m.NMStateConfig = append(m.NMStateConfig, v.NMStateConfig...)
+			m.StaticNetworkConfigs = append(m.StaticNetworkConfigs, v.StaticNetworkConfig...)
+			m.NMStateConfigs = append(m.NMStateConfigs, v.Config...)
 		case *AgentClusterInstall:
 			m.AgentClusterInstall = v.Config
 		case *ClusterDeployment:
@@ -128,7 +128,7 @@ func (m *AgentManifests) validateNMStateLabelSelector() field.ErrorList {
 
 	fieldPath := field.NewPath("Spec", "NMStateConfigLabelSelector", "MatchLabels")
 
-	for _, networkConfig := range m.NMStateConfig {
+	for _, networkConfig := range m.NMStateConfigs {
 		if !reflect.DeepEqual(m.InfraEnv.Spec.NMStateConfigLabelSelector.MatchLabels, networkConfig.ObjectMeta.Labels) {
 			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("infraEnv and %s.NMStateConfig labels do not match", networkConfig.Name)))
 		}

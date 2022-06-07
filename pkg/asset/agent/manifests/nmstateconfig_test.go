@@ -264,11 +264,11 @@ spec:
 			}
 			if tc.expectedFound {
 				assert.Equal(t, tc.expectedConfig, asset.StaticNetworkConfig, "unexpected Config in NMStateConfig")
-				assert.Equal(t, len(tc.expectedConfig), len(asset.NMStateConfig))
+				assert.Equal(t, len(tc.expectedConfig), len(asset.Config))
 				for i := 0; i < len(tc.expectedConfig); i++ {
 
 					staticNetworkConfig := asset.StaticNetworkConfig[i]
-					nmStateConfig := asset.NMStateConfig[i]
+					nmStateConfig := asset.Config[i]
 
 					for n := 0; n < len(staticNetworkConfig.MacInterfaceMap); n++ {
 						macInterfaceMap := staticNetworkConfig.MacInterfaceMap[n]

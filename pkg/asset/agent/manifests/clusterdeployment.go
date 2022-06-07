@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	clusterDeploymentFilename = filepath.Join(clusterManifestDir, "cluster-deployment.yml")
+	clusterDeploymentFilename = filepath.Join(clusterManifestDir, "cluster-deployment.yaml")
 )
 
 // ClusterDeployment generates the cluster-deployment.yaml file.

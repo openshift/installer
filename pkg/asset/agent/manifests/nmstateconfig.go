@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"path/filepath"
 
@@ -27,7 +28,22 @@ var (
 type NMStateConfig struct {
 	File                *asset.File
 	StaticNetworkConfig []*models.HostStaticNetworkConfig
-	NMStateConfig       []*aiv1beta1.NMStateConfig
+	Config              []*aiv1beta1.NMStateConfig
+}
+
+type nmStateConfig struct {
+	Interfaces []struct {
+		IPV4 struct {
+			Address []struct {
+				IP string `yaml:"ip,omitempty"`
+			} `yaml:"address,omitempty"`
+		} `yaml:"ipv4,omitempty"`
+		IPV6 struct {
+			Address []struct {
+				IP string `yaml:"ip,omitempty"`
+			} `yaml:"address,omitempty"`
+		} `yaml:"ipv6,omitempty"`
+	} `yaml:"interfaces,omitempty"`
 }
 
 var _ asset.WritableAsset = (*NMStateConfig)(nil)
@@ -99,7 +115,7 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 		return false, errors.Wrapf(err, "staticNetwork configuration is not valid")
 	}
 
-	n.File, n.StaticNetworkConfig, n.NMStateConfig = file, staticNetworkConfig, nmStateConfigList
+	n.File, n.StaticNetworkConfig, n.Config = file, staticNetworkConfig, nmStateConfigList
 	if err = n.finish(); err != nil {
 		return false, err
 	}
@@ -130,13 +146,60 @@ func (n *NMStateConfig) validateNMStateLabels() field.ErrorList {
 
 	fieldPath := field.NewPath("ObjectMeta", "Labels")
 
-	for _, nmStateConfig := range n.NMStateConfig {
+	for _, nmStateConfig := range n.Config {
 		if len(nmStateConfig.ObjectMeta.Labels) == 0 {
 			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("%s does not have any label set", nmStateConfig.Name)))
 		}
 	}
 
 	return allErrs
+}
+
+// GetNodeZeroIP retrieves the first IP from the user provided NMStateConfigs to set as the node0 IP
+func GetNodeZeroIP(nmStateConfigs []*aiv1beta1.NMStateConfig) (string, error) {
+	var nmStateConfig nmStateConfig
+	// Use entry for first host
+	err := yaml.Unmarshal(nmStateConfigs[0].Spec.NetConfig.Raw, &nmStateConfig)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshalling nodeZero nmStateConfig: %v", err)
+	}
+
+	var nodeZeroIP string
+	if nmStateConfig.Interfaces == nil {
+		return "", fmt.Errorf("invalid NMStateConfig yaml, no valid interfaces set")
+	}
+
+	if nmStateConfig.Interfaces[0].IPV4.Address != nil {
+		nodeZeroIP = nmStateConfig.Interfaces[0].IPV4.Address[0].IP
+	}
+	if nmStateConfig.Interfaces[0].IPV6.Address != nil {
+		nodeZeroIP = nmStateConfig.Interfaces[0].IPV6.Address[0].IP
+	}
+	if net.ParseIP(nodeZeroIP) == nil {
+		return "", fmt.Errorf("could not parse nodeZeroIP: %s", nodeZeroIP)
+	}
+
+	return nodeZeroIP, nil
+}
+
+// GetNMIgnitionFiles returns the list of NetworkManager configuration files
+func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) ([]staticnetworkconfig.StaticNetworkConfigData, error) {
+	log := logrus.New()
+	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
+
+	networkConfigStr, err := staticNetworkConfigGenerator.FormatStaticNetworkConfigForDB(staticNetworkConfig)
+	if err != nil {
+		err = fmt.Errorf("error marshalling StaticNetwork configuration: %w", err)
+		return nil, err
+	}
+
+	filesList, err := staticNetworkConfigGenerator.GenerateStaticNetworkConfigData(context.Background(), networkConfigStr)
+	if err != nil {
+		err = fmt.Errorf("failed to create StaticNetwork config data: %w", err)
+		return nil, err
+	}
+
+	return filesList, err
 }
 
 type nmStateConfigYamlDecoder int

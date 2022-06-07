@@ -47,7 +47,7 @@ func TestAgentManifests_Generate(t *testing.T) {
 				&InfraEnv{Config: fakeInfraEnv},
 				&NMStateConfig{
 					StaticNetworkConfig: fakeStaticNetworkConfig,
-					NMStateConfig:       fakeNMStatConfig,
+					Config:              fakeNMStatConfig,
 				},
 				&AgentClusterInstall{Config: fakeAgentClusterInstall},
 				&ClusterDeployment{Config: fakeClusterDeployment},
@@ -76,7 +76,7 @@ func TestAgentManifests_Generate(t *testing.T) {
 				}},
 				&NMStateConfig{
 					StaticNetworkConfig: fakeStaticNetworkConfig,
-					NMStateConfig:       fakeNMStatConfig,
+					Config:              fakeNMStatConfig,
 				},
 				&AgentClusterInstall{},
 				&ClusterDeployment{},
@@ -107,13 +107,16 @@ func TestAgentManifests_Generate(t *testing.T) {
 				assert.Equal(t, tt.ExpectedInfraEnv, m.InfraEnv)
 			}
 			if tt.ExpectedStaticNetworkConfig != nil {
-				assert.Equal(t, tt.ExpectedStaticNetworkConfig, m.StaticNetworkConfig)
+				assert.Equal(t, tt.ExpectedStaticNetworkConfig, m.StaticNetworkConfigs)
 			}
 			if tt.ExpectedNMStateConfig != nil {
-				assert.Equal(t, tt.ExpectedNMStateConfig, m.NMStateConfig)
+				assert.Equal(t, tt.ExpectedNMStateConfig, m.NMStateConfigs)
 			}
 			if tt.ExpectedClusterDeployment != nil {
 				assert.Equal(t, tt.ExpectedClusterDeployment, m.ClusterDeployment)
+			}
+			if tt.ExpectedClusterImageSet != nil {
+				assert.Equal(t, tt.ExpectedClusterImageSet, m.ClusterImageSet)
 			}
 		})
 	}
