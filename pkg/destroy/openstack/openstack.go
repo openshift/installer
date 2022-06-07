@@ -846,17 +846,17 @@ func getRouterByPort(client *gophercloud.ServiceClient, allPorts []ports.Port) (
 	return empty, nil
 }
 
-func deleteLeftoverLoadBalancers(opts *clientconfig.ClientOpts, logger logrus.FieldLogger, networkID string) {
+func deleteLeftoverLoadBalancers(opts *clientconfig.ClientOpts, logger logrus.FieldLogger, networkID string) error {
 	conn, err := clientconfig.NewServiceClient("load-balancer", opts)
 	if err != nil {
 		// Ignore the error if Octavia is not available for the cloud
 		var gerr *gophercloud.ErrEndpointNotFound
 		if errors.As(err, &gerr) {
 			logger.Debug("Skip load balancer deletion because Octavia endpoint is not found")
-			return
+			return nil
 		}
 		logger.Error(err)
-		return
+		return err
 	}
 
 	listOpts := loadbalancers.ListOpts{
@@ -865,17 +865,18 @@ func deleteLeftoverLoadBalancers(opts *clientconfig.ClientOpts, logger logrus.Fi
 	allPages, err := loadbalancers.List(conn, listOpts).AllPages()
 	if err != nil {
 		logger.Error(err)
-		return
+		return err
 	}
 
 	allLoadBalancers, err := loadbalancers.ExtractLoadBalancers(allPages)
 	if err != nil {
 		logger.Error(err)
-		return
+		return err
 	}
 	deleteOpts := loadbalancers.DeleteOpts{
 		Cascade: true,
 	}
+	deleted := 0
 	for _, loadbalancer := range allLoadBalancers {
 		if !strings.HasPrefix(loadbalancer.Description, "Kubernetes external service") {
 			logger.Debugf("Not deleting LoadBalancer %q with description %q", loadbalancer.ID, loadbalancer.Description)
@@ -902,8 +903,13 @@ func deleteLeftoverLoadBalancers(opts *clientconfig.ClientOpts, logger logrus.Fi
 			}
 			logger.Debugf("Cannot find load balancer %q. It's probably already been deleted.", loadbalancer.ID)
 		}
+		deleted++
 	}
-	return
+
+	if deleted != len(allLoadBalancers) {
+		return errors.Errorf("Only deleted %d of %d load balancers", deleted, len(allLoadBalancers))
+	}
+	return nil
 }
 
 func isClusterSubnet(subnets []subnets.Subnet, subnetID string) bool {
@@ -990,24 +996,30 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 	numberToDelete := len(allNetworks)
 	numberDeleted := 0
 	for _, network := range allNetworks {
-		// Before deleting network, try to remove all the ports it may contain
-		_, err := deletePortsByNetwork(opts, network.ID, logger)
-		if err != nil {
-			logger.Error(err)
-			return false, nil
-		}
-
 		logger.Debugf("Deleting network: %q", network.ID)
 		err = networks.Delete(conn, network.ID).ExtractErr()
 		if err != nil {
 			// Ignore the error if the network cannot be found
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
-				// This can fail when network is still in use
-				// Just log the error and move on to the next port
+				// This can fail when network is still in use. Let's log an error and try to fix this.
 				logger.Debugf("Deleting Network %q failed: %v", network.ID, err)
-				// Try to delete eventual leftover load balancers
-				deleteLeftoverLoadBalancers(opts, logger, network.ID)
+
+				// First try to delete eventual leftover load balancers
+				// *This has to be done before attempt to remove ports or we'll delete LB ports!*
+				err := deleteLeftoverLoadBalancers(opts, logger, network.ID)
+				if err != nil {
+					logger.Error(err)
+					// Do not attempt to delete ports on LB removal problem or we'll lose FIP associations!
+					continue
+				}
+
+				// Only then try to remove all the ports it may still contain (untagged as well).
+				// *We cannot delete ports before LBs because we'll lose FIP associations!*
+				_, err = deletePortsByNetwork(opts, network.ID, logger)
+				if err != nil {
+					logger.Error(err)
+				}
 				continue
 			}
 			logger.Debugf("Cannot find network %q. It's probably already been deleted.", network.ID)
