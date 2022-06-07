@@ -161,7 +161,8 @@ type DNSTransportConfig struct {
 	// as an empty value but may be useful when a cluster admin wants to be more explicit about the transport,
 	// or wants to switch from "TLS" to "Cleartext" explicitly.
 	// "TLS" - This indicates that DNS queries should be sent over a TLS connection. If Transport is set to TLS,
-	// you MUST also set ServerName.
+	// you MUST also set ServerName. If a port is not included with the upstream IP, port 853 will be tried by default
+	// per RFC 7858 section 3.1; https://datatracker.ietf.org/doc/html/rfc7858#section-3.1.
 	//
 	// +optional
 	// +unionDiscriminator
@@ -185,13 +186,13 @@ type DNSOverTLSConfig struct {
 	ServerName string `json:"serverName"`
 
 	// caBundle references a ConfigMap that must contain either a single
-	// CA Certificate or a CA Bundle (in the case of multiple upstreams signed
-	// by different CAs). This allows cluster administrators to provide their
+	// CA Certificate or a CA Bundle. This allows cluster administrators to provide their
 	// own CA or CA bundle for validating the certificate of upstream resolvers.
 	//
 	// 1. The configmap must contain a `ca-bundle.crt` key.
 	// 2. The value must be a PEM encoded CA certificate or CA bundle.
 	// 3. The administrator must create this configmap in the openshift-config namespace.
+	// 4. The upstream server certificate must contain a Subject Alternative Name (SAN) that matches ServerName.
 	//
 	// +optional
 	CABundle v1.ConfigMapNameReference `json:"caBundle,omitempty"`

@@ -110,15 +110,6 @@ func (LoadBalancerReference) SwaggerDoc() map[string]string {
 	return map_LoadBalancerReference
 }
 
-var map_LocalAWSPlacementGroupReference = map[string]string{
-	"":     "LocalAWSPlacementGroupReference contains enough information to let you locate the referenced AWSPlacementGroup inside the same namespace.",
-	"name": "Name of the AWSPlacementGroup.",
-}
-
-func (LocalAWSPlacementGroupReference) SwaggerDoc() map[string]string {
-	return map_LocalAWSPlacementGroupReference
-}
-
 var map_MetadataServiceOptions = map[string]string{
 	"":               "MetadataServiceOptions defines the options available to a user when configuring Instance Metadata Service (IMDS) Options.",
 	"authentication": "Authentication determines whether or not the host requires the use of authentication when interacting with the metadata service. When using authentication, this enforces v2 interaction method (IMDSv2) with the metadata service. When omitted, this means the user has no opinion and the value is left to the platform to choose a good default, which is subject to change over time. The current default is optional. At this point this field represents `HttpTokens` parameter from `InstanceMetadataOptionsRequest` structure in AWS EC2 API https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceMetadataOptionsRequest.html",
@@ -133,8 +124,6 @@ var map_Placement = map[string]string{
 	"region":           "Region is the region to use to create the instance",
 	"availabilityZone": "AvailabilityZone is the availability zone of the instance",
 	"tenancy":          "Tenancy indicates if instance should run on shared or single-tenant hardware. There are supported 3 options: default, dedicated and host.",
-	"group":            "Group specifies a reference to an AWSPlacementGroup resource to create the Machine within. If the group specified does not exist, the Machine will not be created and will enter the failed phase.",
-	"partitionNumber":  "PartitionNumber specifies the numbered partition in which instances should be launched. It is recommended to only use this value if multiple MachineSets share a single Placement Group, in which case, each MachineSet should represent an individual partition number. If unset, when a Partition placement group is used, AWS will attempt to distribute instances evenly between partitions. If PartitionNumber is set when used with a non Partition type Placement Group, this will be considered an error.",
 }
 
 func (Placement) SwaggerDoc() map[string]string {

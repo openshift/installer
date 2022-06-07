@@ -18,13 +18,12 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	powervsapi "github.com/openshift/machine-api-provider-powervs/pkg/apis"
-	powervsprovider "github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
@@ -165,9 +164,9 @@ func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
 
 func defaultPowerVSMachinePoolPlatform() powervstypes.MachinePool {
 	return powervstypes.MachinePool{
-		Memory:     "32",
-		Processors: "0.5",
-		ProcType:   powervstypes.Shared,
+		MemoryGiB:  32,
+		Processors: intstr.FromString("0.5"),
+		ProcType:   machinev1.PowerVSProcessorTypeShared,
 		SysType:    "s922",
 	}
 }
@@ -633,7 +632,6 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
-	powervsapi.AddToScheme(scheme)
 	scheme.AddKnownTypes(machinev1beta1.SchemeGroupVersion,
 		&machinev1beta1.AWSMachineProviderConfig{},
 		&machinev1beta1.VSphereMachineProviderSpec{},
@@ -644,6 +642,7 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	scheme.AddKnownTypes(machinev1.GroupVersion,
 		&machinev1.AlibabaCloudMachineProviderConfig{},
 		&machinev1.NutanixMachineProviderConfig{},
+		&machinev1.PowerVSMachineProviderConfig{},
 	)
 	machinev1beta1.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
@@ -653,7 +652,6 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 		machinev1.GroupVersion,
 		openstackprovider.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
-		powervsprovider.GroupVersion,
 		machinev1beta1.SchemeGroupVersion,
 	)
 

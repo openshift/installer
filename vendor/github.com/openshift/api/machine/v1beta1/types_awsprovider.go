@@ -216,29 +216,6 @@ type Placement struct {
 	// supported 3 options: default, dedicated and host.
 	// +optional
 	Tenancy InstanceTenancy `json:"tenancy,omitempty"`
-	// Group specifies a reference to an AWSPlacementGroup resource to create the Machine within.
-	// If the group specified does not exist, the Machine will not be created and will enter the failed phase.
-	// +optional
-	Group LocalAWSPlacementGroupReference `json:"group,omitempty"`
-	// PartitionNumber specifies the numbered partition in which instances should be launched.
-	// It is recommended to only use this value if multiple MachineSets share
-	// a single Placement Group, in which case, each MachineSet should represent an individual partition number.
-	// If unset, when a Partition placement group is used, AWS will attempt to
-	// distribute instances evenly between partitions.
-	// If PartitionNumber is set when used with a non Partition type Placement Group, this will be considered an error.
-	// +kubebuilder:validation:Minimum:=1
-	// +kubebuilder:validation:Maximum:=7
-	// +optional
-	PartitionNumber int32 `json:"partitionNumber,omitempty"`
-}
-
-// LocalAWSPlacementGroupReference contains enough information to let you locate the
-// referenced AWSPlacementGroup inside the same namespace.
-// +structType=atomic
-type LocalAWSPlacementGroupReference struct {
-	// Name of the AWSPlacementGroup.
-	// +kubebuilder:validation:=Required
-	Name string `json:"name"`
 }
 
 // Filter is a filter used to identify an AWS resource

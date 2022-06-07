@@ -14,7 +14,6 @@ import (
 	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	powervsprovider "github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -702,9 +701,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 
-		masterConfigs := make([]*powervsprovider.PowerVSMachineProviderConfig, len(masters))
+		masterConfigs := make([]*machinev1.PowerVSMachineProviderConfig, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*powervsprovider.PowerVSMachineProviderConfig)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
 		}
 
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)

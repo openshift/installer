@@ -42,7 +42,7 @@ require (
 	github.com/metal3-io/baremetal-operator v0.0.0-20220128094204-28771f489634
 	github.com/metal3-io/baremetal-operator/apis v0.0.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0
-	github.com/openshift/api v0.0.0-20220412182430-7c9d6528f1cc
+	github.com/openshift/api v0.0.0-20220504105152-6f735e7109c8
 	github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e
@@ -50,7 +50,6 @@ require (
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
 	github.com/openshift/library-go v0.0.0-20220121154930-b7889002d63e
-	github.com/openshift/machine-api-provider-powervs v0.0.2-0.20220404072532-0bd184db2e40
 	github.com/openshift/machine-config-operator v0.0.0
 	github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
 	github.com/pborman/uuid v1.2.0

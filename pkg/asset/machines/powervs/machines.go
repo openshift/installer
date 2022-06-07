@@ -4,12 +4,10 @@ package powervs
 import (
 	"fmt"
 
-	corev1 "k8s.io/api/core/v1"
-
+	machinev1 "github.com/openshift/api/machine/v1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/powervs"
-	powervsprovider "github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -72,7 +70,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *powervs.Platform, mpool *powervs.MachinePool, userDataSecret string, image string, network string) (*powervsprovider.PowerVSMachineProviderConfig, error) {
+func provider(clusterID string, platform *powervs.Platform, mpool *powervs.MachinePool, userDataSecret string, image string, network string) (*machinev1.PowerVSMachineProviderConfig, error) {
 
 	if clusterID == "" || platform == nil || mpool == nil || userDataSecret == "" || image == "" {
 		return nil, fmt.Errorf("invalid value passed to provider")
@@ -81,26 +79,42 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 	dhcpNetRegex := "^DHCPSERVER[0-9a-z]{32}_Private$"
 
 	//Setting only the mandatory parameters
-	config := &powervsprovider.PowerVSMachineProviderConfig{
+	config := &machinev1.PowerVSMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PowerVSMachineProviderConfig",
-			APIVersion: powervsprovider.GroupVersion.String(),
+			APIVersion: machinev1.GroupVersion.String(),
 		},
-		ObjectMeta:        metav1.ObjectMeta{},
-		ServiceInstanceID: platform.ServiceInstanceID,
-		Image:             powervsprovider.PowerVSResourceReference{Name: &image},
-		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
-		CredentialsSecret: &corev1.LocalObjectReference{Name: "powervs-credentials"},
-		SysType:           mpool.SysType,
-		ProcType:          string(mpool.ProcType),
-		Processors:        mpool.Processors,
-		Memory:            mpool.Memory,
-		KeyPairName:       fmt.Sprintf("%s-key", clusterID),
+		ObjectMeta: metav1.ObjectMeta{},
+		ServiceInstance: machinev1.PowerVSResource{
+			Type: machinev1.PowerVSResourceTypeID,
+			ID:   &platform.ServiceInstanceID,
+		},
+		Image: machinev1.PowerVSResource{
+			Type: machinev1.PowerVSResourceTypeName,
+			Name: &image,
+		},
+		UserDataSecret: &machinev1.PowerVSSecretReference{
+			Name: userDataSecret,
+		},
+		CredentialsSecret: &machinev1.PowerVSSecretReference{
+			Name: "powervs-credentials",
+		},
+		SystemType:    mpool.SysType,
+		ProcessorType: mpool.ProcType,
+		Processors:    mpool.Processors,
+		MemoryGiB:     mpool.MemoryGiB,
+		KeyPairName:   fmt.Sprintf("%s-key", clusterID),
 	}
 	if network != "" {
-		config.Network = powervsprovider.PowerVSResourceReference{Name: &network}
+		config.Network = machinev1.PowerVSResource{
+			Type: machinev1.PowerVSResourceTypeName,
+			Name: &network,
+		}
 	} else {
-		config.Network = powervsprovider.PowerVSResourceReference{RegEx: &dhcpNetRegex}
+		config.Network = machinev1.PowerVSResource{
+			Type:  machinev1.PowerVSResourceTypeRegEx,
+			RegEx: &dhcpNetRegex,
+		}
 	}
 	return config, nil
 }
