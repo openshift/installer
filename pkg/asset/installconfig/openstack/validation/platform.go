@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -46,7 +47,11 @@ func validateMachinesSubnet(p *openstack.Platform, n *types.Networking, ci *Clou
 		} else if !validUUIDv4(p.MachinesSubnet) {
 			allErrs = append(allErrs, field.InternalError(fldPath.Child("machinesSubnet"), errors.New("invalid subnet ID")))
 		} else {
-			if n.MachineNetwork[0].CIDR.String() != ci.MachinesSubnet.CIDR {
+			machineSubnetCidr := ipnet.MustParseCIDR(ci.MachinesSubnet.CIDR)
+			machineSubnetCidrMaskSize, _ := machineSubnetCidr.Mask.Size()
+			machineNetworkCidrMaskSize, _ := n.MachineNetwork[0].CIDR.Mask.Size()
+			if n.MachineNetwork[0].CIDR.IP.String() != machineSubnetCidr.IP.String() ||
+				machineNetworkCidrMaskSize > machineSubnetCidrMaskSize {
 				allErrs = append(allErrs, field.InternalError(fldPath.Child("machinesSubnet"), fmt.Errorf("the first CIDR in machineNetwork, %s, doesn't match the CIDR of the machineSubnet, %s", n.MachineNetwork[0].CIDR.String(), ci.MachinesSubnet.CIDR)))
 			}
 		}

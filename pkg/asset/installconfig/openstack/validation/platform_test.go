@@ -434,6 +434,31 @@ func TestMachineSubnet(t *testing.T) {
 			}(),
 			expectedErrMsg: "",
 		},
+		{
+			name: "included machine subnet",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.MachinesSubnet = "031a5b9d-5a89-4465-8d54-3517ec2bad48"
+				return p
+			}(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.MachinesSubnet = &subnets.Subnet{
+					ID: "031a5b9d-5a89-4465-8d54-3517ec2bad48",
+				}
+				ci.MachinesSubnet.CIDR = "172.0.0.1/24"
+				return ci
+			}(),
+			networking: func() *types.Networking {
+				n := validNetworking()
+				machineNetworkEntry := &types.MachineNetworkEntry{
+					CIDR: *ipnet.MustParseCIDR("172.0.0.1/16"),
+				}
+				n.MachineNetwork = []types.MachineNetworkEntry{*machineNetworkEntry}
+				return n
+			}(),
+			expectedErrMsg: "",
+		},
 	}
 
 	for _, tc := range cases {
