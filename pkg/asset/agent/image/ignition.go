@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 const manifestPath = "/etc/assisted/manifests"
@@ -65,12 +66,16 @@ func (a *Ignition) Name() string {
 func (a *Ignition) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&manifests.AgentManifests{},
+		&tls.KubeAPIServerLBSignerCertKey{},
+		&tls.KubeAPIServerLocalhostSignerCertKey{},
+		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
+		&tls.AdminKubeConfigSignerCertKey{},
+		&tls.AdminKubeConfigClientCertKey{},
 	}
 }
 
 // Generate generates the agent installer ignition.
 func (a *Ignition) Generate(dependencies asset.Parents) error {
-
 	agentManifests := &manifests.AgentManifests{}
 	dependencies.Get(agentManifests)
 
@@ -131,6 +136,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
+	addTLSData(&config, dependencies)
+
 	a.Config = &config
 	return nil
 }
@@ -180,4 +187,22 @@ func addStaticNetworkConfig(config *igntypes.Config, staticNetworkConfig []*mode
 	config.Storage.Files = append(config.Storage.Files, nmStateScript)
 
 	return nil
+}
+
+func addTLSData(config *igntypes.Config, dependencies asset.Parents) {
+	certKeys := []asset.Asset{
+		&tls.KubeAPIServerLBSignerCertKey{},
+		&tls.KubeAPIServerLocalhostSignerCertKey{},
+		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
+		&tls.AdminKubeConfigSignerCertKey{},
+		&tls.AdminKubeConfigClientCertKey{},
+	}
+	dependencies.Get(certKeys...)
+
+	for _, ck := range certKeys {
+		for _, d := range ck.(asset.WritableAsset).Files() {
+			f := ignition.FileFromBytes(path.Join("/opt/agent", d.Filename), "root", 0600, d.Data)
+			config.Storage.Files = append(config.Storage.Files, f)
+		}
+	}
 }
