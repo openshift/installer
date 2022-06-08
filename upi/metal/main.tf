@@ -105,19 +105,19 @@ resource "matchbox_group" "worker" {
   }
 }
 
-# ================PACKET=====================
+# ================METAL=====================
 
 
 resource "metal_device" "masters" {
   count                   = var.master_count
   hostname                = "master-${count.index}.${var.cluster_domain}"
-  plan                    = var.packet_plan
-  facilities              = [var.packet_facility]
+  plan                    = var.metal_plan
+  facilities              = [var.metal_facility]
   operating_system        = "custom_ipxe"
   ipxe_script_url         = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=master"
   billing_cycle           = "hourly"
-  project_id              = var.packet_project_id
-  hardware_reservation_id = var.packet_hardware_reservation_id
+  project_id              = var.metal_project_id
+  hardware_reservation_id = var.metal_hardware_reservation_id
 
   depends_on = [matchbox_group.master]
 }
@@ -125,13 +125,13 @@ resource "metal_device" "masters" {
 resource "metal_device" "workers" {
   count                   = var.worker_count
   hostname                = "worker-${count.index}.${var.cluster_domain}"
-  plan                    = var.packet_plan
-  facilities              = [var.packet_facility]
+  plan                    = var.metal_plan
+  facilities              = [var.metal_facility]
   operating_system        = "custom_ipxe"
   ipxe_script_url         = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=worker"
   billing_cycle           = "hourly"
-  project_id              = var.packet_project_id
-  hardware_reservation_id = var.packet_hardware_reservation_id
+  project_id              = var.metal_project_id
+  hardware_reservation_id = var.metal_hardware_reservation_id
 
   depends_on = [matchbox_group.worker]
 }
@@ -152,11 +152,11 @@ module "bootstrap" {
 
   cluster_id = var.cluster_id
 
-  packet_facility   = var.packet_facility
-  packet_project_id = var.packet_project_id
-  packet_plan       = var.packet_plan
+  metal_facility   = var.metal_facility
+  metal_project_id = var.metal_project_id
+  metal_plan       = var.metal_plan
 
-  packet_hardware_reservation_id = var.packet_hardware_reservation_id
+  metal_hardware_reservation_id = var.metal_hardware_reservation_id
 }
 
 # ================AWS=====================

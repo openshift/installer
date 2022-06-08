@@ -24,9 +24,9 @@ Setup a Project in [Equinix Metal][equinix-metal] that will be used to deploy se
 
 Setup API keys for your project in Equinix Metal using this [guide][metal-api-keys]
 
-Store the API keys in `PACKET_AUTH_TOKEN` so that `terraform-provider-packet`
+Store the API keys in `METAL_AUTH_TOKEN` so that `terraform-provider-metal`
 can use it to deploy servers in the project. For more info see
-[this][terraform-provider-packet-auth]
+[this][terraform-provider-metal-auth]
 
 #### Terraform
 
@@ -53,7 +53,7 @@ terraform-examples config.tf > terraform.tfvars.example
 [metal-deploy-server]: https://metal.equinix.com/developers/docs/deploy/on-demand/
 [terraform-examples]: https://github.com/s-urbaniak/terraform-examples#terraform-examples
 [terraform-getting-started]: https://learn.hashicorp.com/terraform/getting-started/install.html
-[terraform-provider-packet-auth]: https://registry.terraform.io/providers/packethost/packet/latest/docs#auth_token
+[terraform-provider-metal-auth]: https://registry.terraform.io/providers/equinix/metal/latest/docs#auth_token
 [acquisition]: https://www.equinix.com/newsroom/press-releases/2020/03/equinix-completes-acquisition-of-bare-metal-leader-packet
 [introducing-equinix-metal]: https://blog.equinix.com/blog/2020/10/06/equinix-metal-metal-and-more/
 [equinix-metal]: https://metal.equinix.com

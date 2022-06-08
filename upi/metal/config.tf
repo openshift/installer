@@ -165,43 +165,43 @@ EOF
 
 }
 
-# ================PACKET=====================
+# ================METAL=====================
 
-variable "packet_project_id" {
+variable "metal_project_id" {
   type = string
 
   description = <<EOF
-The Project ID for Packet.net where servers will be deployed.
+The Project ID for Equinix Metal where servers will be deployed.
 EOF
 
 }
 
-variable "packet_plan" {
+variable "metal_plan" {
   type    = string
   default = "c1.small.x86"
 
   description = <<EOF
-The Packet.Net device plan slug.
+The Equinix Metal device plan slug.
 EOF
 
 }
 
-variable "packet_facility" {
+variable "metal_facility" {
   type    = string
   default = "any"
 
   description = <<EOF
-The Packet.Net facilities code to be used.
+The Equinix Metal facilities code to be used.
 EOF
 
 }
 
-variable "packet_hardware_reservation_id" {
+variable "metal_hardware_reservation_id" {
   type    = string
   default = ""
 
   description = <<EOF
-The UUID of the hardware reservation where you want this device deployed on Packet.net.
+The UUID of the hardware reservation where you want this device deployed on Equinix Metal.
 EOF
 
 }
