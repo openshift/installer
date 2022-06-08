@@ -6,12 +6,14 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // ServiceInstancePreviousValues service instance previous values
+//
 // swagger:model ServiceInstancePreviousValues
 type ServiceInstancePreviousValues struct {
 
@@ -30,6 +32,11 @@ type ServiceInstancePreviousValues struct {
 
 // Validate validates this service instance previous values
 func (m *ServiceInstancePreviousValues) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this service instance previous values based on context it is used
+func (m *ServiceInstancePreviousValues) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

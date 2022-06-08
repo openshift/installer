@@ -88,7 +88,7 @@ func ServeNFC(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusInternalServerError
 		msg = err.Error()
 	}
-	log.Printf("nfc %s %s: %s", r.Method, file, msg)
+	tracef("nfc %s %s: %s", r.Method, file, msg)
 	w.WriteHeader(status)
 }
 
@@ -111,7 +111,7 @@ func NewHttpNfcLease(ctx *Context, entity types.ManagedObjectReference) *HttpNfc
 }
 
 func (l *HttpNfcLease) HttpNfcLeaseComplete(ctx *Context, req *types.HttpNfcLeaseComplete) soap.HasFault {
-	ctx.Session.Remove(req.This)
+	ctx.Session.Remove(ctx, req.This)
 	nfcLease.Delete(req.This)
 
 	return &methods.HttpNfcLeaseCompleteBody{
@@ -120,7 +120,7 @@ func (l *HttpNfcLease) HttpNfcLeaseComplete(ctx *Context, req *types.HttpNfcLeas
 }
 
 func (l *HttpNfcLease) HttpNfcLeaseAbort(ctx *Context, req *types.HttpNfcLeaseAbort) soap.HasFault {
-	ctx.Session.Remove(req.This)
+	ctx.Session.Remove(ctx, req.This)
 	nfcLease.Delete(req.This)
 
 	return &methods.HttpNfcLeaseAbortBody{

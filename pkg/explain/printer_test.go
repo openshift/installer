@@ -249,6 +249,8 @@ KIND:     InstallConfig
 VERSION:  v1
 
 RESOURCE: <string>
+  Default: "External"
+  Valid Values: "","External","Internal"
   Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed. When no strategy is specified, the strategy is "External".
 		`,
 	}, {

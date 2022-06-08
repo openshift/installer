@@ -25,6 +25,8 @@ var (
 		}
 		return v
 	}()
+
+	validMetadataAuthValues = sets.NewString("Required", "Optional")
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
@@ -36,12 +38,51 @@ func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *fi
 		}
 	}
 
-	if p.IOPS < 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("iops"), p.IOPS, "Storage IOPS must be positive"))
+	if p.EC2RootVolume.Type != "" {
+		allErrs = append(allErrs, validateVolumeSize(p, fldPath)...)
+		allErrs = append(allErrs, validateIOPS(p, fldPath)...)
 	}
-	if p.Size < 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("size"), p.Size, "Storage size must be positive"))
+
+	if p.EC2Metadata.Authentication != "" && !validMetadataAuthValues.Has(p.EC2Metadata.Authentication) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("authentication"), p.EC2Metadata.Authentication, "must be either Required or Optional"))
 	}
+
+	return allErrs
+}
+
+func validateVolumeSize(p *aws.MachinePool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	volumeSize := p.EC2RootVolume.Size
+
+	if volumeSize <= 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("size"), volumeSize, "volume size value must be a positive number"))
+	}
+
+	return allErrs
+}
+
+func validateIOPS(p *aws.MachinePool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	volumeType := strings.ToLower(p.EC2RootVolume.Type)
+	iops := p.EC2RootVolume.IOPS
+
+	switch volumeType {
+	case "io1", "io2":
+		if iops <= 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("iops"), iops, "iops must be a positive number"))
+		}
+	case "gp3":
+		if iops < 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("iops"), iops, "iops must be a positive number"))
+		}
+	case "gp2", "st1", "sc1", "standard":
+		if iops != 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("iops"), iops, fmt.Sprintf("iops not supported for type %s", volumeType)))
+		}
+	default:
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), volumeType, fmt.Sprintf("failed to find volume type %s", volumeType)))
+	}
+
 	return allErrs
 }
 

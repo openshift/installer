@@ -13,63 +13,84 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudDhcpPostParams creates a new PcloudDhcpPostParams object
-// with the default values initialized.
+// NewPcloudDhcpPostParams creates a new PcloudDhcpPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudDhcpPostParams() *PcloudDhcpPostParams {
-	var ()
 	return &PcloudDhcpPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudDhcpPostParamsWithTimeout creates a new PcloudDhcpPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudDhcpPostParamsWithTimeout(timeout time.Duration) *PcloudDhcpPostParams {
-	var ()
 	return &PcloudDhcpPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudDhcpPostParamsWithContext creates a new PcloudDhcpPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudDhcpPostParamsWithContext(ctx context.Context) *PcloudDhcpPostParams {
-	var ()
 	return &PcloudDhcpPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudDhcpPostParamsWithHTTPClient creates a new PcloudDhcpPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudDhcpPostParamsWithHTTPClient(client *http.Client) *PcloudDhcpPostParams {
-	var ()
 	return &PcloudDhcpPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudDhcpPostParams contains all the parameters to send to the API endpoint
-for the pcloud dhcp post operation typically these are written to a http.Request
+/* PcloudDhcpPostParams contains all the parameters to send to the API endpoint
+   for the pcloud dhcp post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudDhcpPostParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* Body.
 
+	   Parameters used during creation of DHCP service
+	*/
+	Body *models.DHCPServerCreate
+
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud dhcp post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudDhcpPostParams) WithDefaults() *PcloudDhcpPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud dhcp post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudDhcpPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud dhcp post params
@@ -105,6 +126,17 @@ func (o *PcloudDhcpPostParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithBody adds the body to the pcloud dhcp post params
+func (o *PcloudDhcpPostParams) WithBody(body *models.DHCPServerCreate) *PcloudDhcpPostParams {
+	o.SetBody(body)
+	return o
+}
+
+// SetBody adds the body to the pcloud dhcp post params
+func (o *PcloudDhcpPostParams) SetBody(body *models.DHCPServerCreate) {
+	o.Body = body
+}
+
 // WithCloudInstanceID adds the cloudInstanceID to the pcloud dhcp post params
 func (o *PcloudDhcpPostParams) WithCloudInstanceID(cloudInstanceID string) *PcloudDhcpPostParams {
 	o.SetCloudInstanceID(cloudInstanceID)
@@ -123,6 +155,11 @@ func (o *PcloudDhcpPostParams) WriteToRequest(r runtime.ClientRequest, reg strfm
 		return err
 	}
 	var res []error
+	if o.Body != nil {
+		if err := r.SetBodyParam(o.Body); err != nil {
+			return err
+		}
+	}
 
 	// path param cloud_instance_id
 	if err := r.SetPathParam("cloud_instance_id", o.CloudInstanceID); err != nil {

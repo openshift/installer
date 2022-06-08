@@ -13,56 +13,69 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewServiceBrokerAuthCallbackParams creates a new ServiceBrokerAuthCallbackParams object
-// with the default values initialized.
+// NewServiceBrokerAuthCallbackParams creates a new ServiceBrokerAuthCallbackParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceBrokerAuthCallbackParams() *ServiceBrokerAuthCallbackParams {
-
 	return &ServiceBrokerAuthCallbackParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceBrokerAuthCallbackParamsWithTimeout creates a new ServiceBrokerAuthCallbackParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceBrokerAuthCallbackParamsWithTimeout(timeout time.Duration) *ServiceBrokerAuthCallbackParams {
-
 	return &ServiceBrokerAuthCallbackParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceBrokerAuthCallbackParamsWithContext creates a new ServiceBrokerAuthCallbackParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceBrokerAuthCallbackParamsWithContext(ctx context.Context) *ServiceBrokerAuthCallbackParams {
-
 	return &ServiceBrokerAuthCallbackParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceBrokerAuthCallbackParamsWithHTTPClient creates a new ServiceBrokerAuthCallbackParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceBrokerAuthCallbackParamsWithHTTPClient(client *http.Client) *ServiceBrokerAuthCallbackParams {
-
 	return &ServiceBrokerAuthCallbackParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceBrokerAuthCallbackParams contains all the parameters to send to the API endpoint
-for the service broker auth callback operation typically these are written to a http.Request
+/* ServiceBrokerAuthCallbackParams contains all the parameters to send to the API endpoint
+   for the service broker auth callback operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceBrokerAuthCallbackParams struct {
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service broker auth callback params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerAuthCallbackParams) WithDefaults() *ServiceBrokerAuthCallbackParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service broker auth callback params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerAuthCallbackParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service broker auth callback params

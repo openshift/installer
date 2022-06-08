@@ -13,68 +13,89 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 )
 
-// NewPcloudCloudinstancesVolumesGetallParams creates a new PcloudCloudinstancesVolumesGetallParams object
-// with the default values initialized.
+// NewPcloudCloudinstancesVolumesGetallParams creates a new PcloudCloudinstancesVolumesGetallParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudinstancesVolumesGetallParams() *PcloudCloudinstancesVolumesGetallParams {
-	var ()
 	return &PcloudCloudinstancesVolumesGetallParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudinstancesVolumesGetallParamsWithTimeout creates a new PcloudCloudinstancesVolumesGetallParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudinstancesVolumesGetallParamsWithTimeout(timeout time.Duration) *PcloudCloudinstancesVolumesGetallParams {
-	var ()
 	return &PcloudCloudinstancesVolumesGetallParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudinstancesVolumesGetallParamsWithContext creates a new PcloudCloudinstancesVolumesGetallParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudinstancesVolumesGetallParamsWithContext(ctx context.Context) *PcloudCloudinstancesVolumesGetallParams {
-	var ()
 	return &PcloudCloudinstancesVolumesGetallParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudinstancesVolumesGetallParamsWithHTTPClient creates a new PcloudCloudinstancesVolumesGetallParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudinstancesVolumesGetallParamsWithHTTPClient(client *http.Client) *PcloudCloudinstancesVolumesGetallParams {
-	var ()
 	return &PcloudCloudinstancesVolumesGetallParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudinstancesVolumesGetallParams contains all the parameters to send to the API endpoint
-for the pcloud cloudinstances volumes getall operation typically these are written to a http.Request
+/* PcloudCloudinstancesVolumesGetallParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudinstances volumes getall operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesVolumesGetallParams struct {
 
-	/*Affinity
-	  A pvmInstance (id or name), limits a volumes list response to only volumes that have affinity to the pvmInstance
+	/* Affinity.
 
+	   A pvmInstance (id or name), limits a volumes list response to only volumes that have affinity to the pvmInstance
 	*/
 	Affinity *string
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
+
+	/* ReplicationEnabled.
+
+	   true or false, limits a volumes list to replication or non replication enabled volumes
+	*/
+	ReplicationEnabled *bool
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudinstances volumes getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesVolumesGetallParams) WithDefaults() *PcloudCloudinstancesVolumesGetallParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudinstances volumes getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesVolumesGetallParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudinstances volumes getall params
@@ -132,6 +153,17 @@ func (o *PcloudCloudinstancesVolumesGetallParams) SetCloudInstanceID(cloudInstan
 	o.CloudInstanceID = cloudInstanceID
 }
 
+// WithReplicationEnabled adds the replicationEnabled to the pcloud cloudinstances volumes getall params
+func (o *PcloudCloudinstancesVolumesGetallParams) WithReplicationEnabled(replicationEnabled *bool) *PcloudCloudinstancesVolumesGetallParams {
+	o.SetReplicationEnabled(replicationEnabled)
+	return o
+}
+
+// SetReplicationEnabled adds the replicationEnabled to the pcloud cloudinstances volumes getall params
+func (o *PcloudCloudinstancesVolumesGetallParams) SetReplicationEnabled(replicationEnabled *bool) {
+	o.ReplicationEnabled = replicationEnabled
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *PcloudCloudinstancesVolumesGetallParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -144,21 +176,39 @@ func (o *PcloudCloudinstancesVolumesGetallParams) WriteToRequest(r runtime.Clien
 
 		// query param affinity
 		var qrAffinity string
+
 		if o.Affinity != nil {
 			qrAffinity = *o.Affinity
 		}
 		qAffinity := qrAffinity
 		if qAffinity != "" {
+
 			if err := r.SetQueryParam("affinity", qAffinity); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	// path param cloud_instance_id
 	if err := r.SetPathParam("cloud_instance_id", o.CloudInstanceID); err != nil {
 		return err
+	}
+
+	if o.ReplicationEnabled != nil {
+
+		// query param replicationEnabled
+		var qrReplicationEnabled bool
+
+		if o.ReplicationEnabled != nil {
+			qrReplicationEnabled = *o.ReplicationEnabled
+		}
+		qReplicationEnabled := swag.FormatBool(qrReplicationEnabled)
+		if qReplicationEnabled != "" {
+
+			if err := r.SetQueryParam("replicationEnabled", qReplicationEnabled); err != nil {
+				return err
+			}
+		}
 	}
 
 	if len(res) > 0 {

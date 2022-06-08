@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudPvminstancesPostReader is a Reader for the PcloudPvminstancesPost structure.
@@ -24,72 +23,62 @@ type PcloudPvminstancesPostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudPvminstancesPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudPvminstancesPostOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 201:
 		result := NewPcloudPvminstancesPostCreated()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 202:
 		result := NewPcloudPvminstancesPostAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudPvminstancesPostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudPvminstancesPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudPvminstancesPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudPvminstancesPostUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudPvminstancesPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 504:
 		result := NewPcloudPvminstancesPostGatewayTimeout()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -98,7 +87,7 @@ func NewPcloudPvminstancesPostOK() *PcloudPvminstancesPostOK {
 	return &PcloudPvminstancesPostOK{}
 }
 
-/*PcloudPvminstancesPostOK handles this case with default header values.
+/* PcloudPvminstancesPostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -108,6 +97,9 @@ type PcloudPvminstancesPostOK struct {
 
 func (o *PcloudPvminstancesPostOK) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudPvminstancesPostOK  %+v", 200, o.Payload)
+}
+func (o *PcloudPvminstancesPostOK) GetPayload() models.PVMInstanceList {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesPostOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -125,7 +117,7 @@ func NewPcloudPvminstancesPostCreated() *PcloudPvminstancesPostCreated {
 	return &PcloudPvminstancesPostCreated{}
 }
 
-/*PcloudPvminstancesPostCreated handles this case with default header values.
+/* PcloudPvminstancesPostCreated describes a response with status code 201, with default header values.
 
 Created
 */
@@ -135,6 +127,9 @@ type PcloudPvminstancesPostCreated struct {
 
 func (o *PcloudPvminstancesPostCreated) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudPvminstancesPostCreated  %+v", 201, o.Payload)
+}
+func (o *PcloudPvminstancesPostCreated) GetPayload() models.PVMInstanceList {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesPostCreated) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -152,7 +147,7 @@ func NewPcloudPvminstancesPostAccepted() *PcloudPvminstancesPostAccepted {
 	return &PcloudPvminstancesPostAccepted{}
 }
 
-/*PcloudPvminstancesPostAccepted handles this case with default header values.
+/* PcloudPvminstancesPostAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -162,6 +157,9 @@ type PcloudPvminstancesPostAccepted struct {
 
 func (o *PcloudPvminstancesPostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudPvminstancesPostAccepted  %+v", 202, o.Payload)
+}
+func (o *PcloudPvminstancesPostAccepted) GetPayload() models.PVMInstanceList {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesPostAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -179,7 +177,7 @@ func NewPcloudPvminstancesPostBadRequest() *PcloudPvminstancesPostBadRequest {
 	return &PcloudPvminstancesPostBadRequest{}
 }
 
-/*PcloudPvminstancesPostBadRequest handles this case with default header values.
+/* PcloudPvminstancesPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -189,6 +187,9 @@ type PcloudPvminstancesPostBadRequest struct {
 
 func (o *PcloudPvminstancesPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudPvminstancesPostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudPvminstancesPostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -208,7 +209,7 @@ func NewPcloudPvminstancesPostUnauthorized() *PcloudPvminstancesPostUnauthorized
 	return &PcloudPvminstancesPostUnauthorized{}
 }
 
-/*PcloudPvminstancesPostUnauthorized handles this case with default header values.
+/* PcloudPvminstancesPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -218,6 +219,9 @@ type PcloudPvminstancesPostUnauthorized struct {
 
 func (o *PcloudPvminstancesPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudPvminstancesPostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudPvminstancesPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -237,7 +241,7 @@ func NewPcloudPvminstancesPostConflict() *PcloudPvminstancesPostConflict {
 	return &PcloudPvminstancesPostConflict{}
 }
 
-/*PcloudPvminstancesPostConflict handles this case with default header values.
+/* PcloudPvminstancesPostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -247,6 +251,9 @@ type PcloudPvminstancesPostConflict struct {
 
 func (o *PcloudPvminstancesPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudPvminstancesPostConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudPvminstancesPostConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesPostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -266,7 +273,7 @@ func NewPcloudPvminstancesPostUnprocessableEntity() *PcloudPvminstancesPostUnpro
 	return &PcloudPvminstancesPostUnprocessableEntity{}
 }
 
-/*PcloudPvminstancesPostUnprocessableEntity handles this case with default header values.
+/* PcloudPvminstancesPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -276,6 +283,9 @@ type PcloudPvminstancesPostUnprocessableEntity struct {
 
 func (o *PcloudPvminstancesPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudPvminstancesPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudPvminstancesPostUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesPostUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -295,7 +305,7 @@ func NewPcloudPvminstancesPostInternalServerError() *PcloudPvminstancesPostInter
 	return &PcloudPvminstancesPostInternalServerError{}
 }
 
-/*PcloudPvminstancesPostInternalServerError handles this case with default header values.
+/* PcloudPvminstancesPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -305,6 +315,9 @@ type PcloudPvminstancesPostInternalServerError struct {
 
 func (o *PcloudPvminstancesPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudPvminstancesPostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudPvminstancesPostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -324,7 +337,7 @@ func NewPcloudPvminstancesPostGatewayTimeout() *PcloudPvminstancesPostGatewayTim
 	return &PcloudPvminstancesPostGatewayTimeout{}
 }
 
-/*PcloudPvminstancesPostGatewayTimeout handles this case with default header values.
+/* PcloudPvminstancesPostGatewayTimeout describes a response with status code 504, with default header values.
 
 Gateway Timeout. Request is still processing and taking longer than expected.
 */
@@ -334,6 +347,9 @@ type PcloudPvminstancesPostGatewayTimeout struct {
 
 func (o *PcloudPvminstancesPostGatewayTimeout) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudPvminstancesPostGatewayTimeout  %+v", 504, o.Payload)
+}
+func (o *PcloudPvminstancesPostGatewayTimeout) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesPostGatewayTimeout) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

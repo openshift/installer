@@ -6,13 +6,14 @@ package authentication
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new authentication API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,43 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	ServiceBrokerAuthCallback(params *ServiceBrokerAuthCallbackParams, opts ...ClientOption) (*ServiceBrokerAuthCallbackOK, error)
+
+	ServiceBrokerAuthDeviceCodePost(params *ServiceBrokerAuthDeviceCodePostParams, opts ...ClientOption) (*ServiceBrokerAuthDeviceCodePostOK, error)
+
+	ServiceBrokerAuthDeviceTokenPost(params *ServiceBrokerAuthDeviceTokenPostParams, opts ...ClientOption) (*ServiceBrokerAuthDeviceTokenPostOK, error)
+
+	ServiceBrokerAuthInfoToken(params *ServiceBrokerAuthInfoTokenParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerAuthInfoTokenOK, error)
+
+	ServiceBrokerAuthInfoUser(params *ServiceBrokerAuthInfoUserParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerAuthInfoUserOK, error)
+
+	ServiceBrokerAuthLogin(params *ServiceBrokerAuthLoginParams, opts ...ClientOption) (*ServiceBrokerAuthLoginOK, error)
+
+	ServiceBrokerAuthLogout(params *ServiceBrokerAuthLogoutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerAuthLogoutOK, error)
+
+	ServiceBrokerAuthRegistration(params *ServiceBrokerAuthRegistrationParams, opts ...ClientOption) (*ServiceBrokerAuthRegistrationOK, error)
+
+	ServiceBrokerAuthRegistrationCallback(params *ServiceBrokerAuthRegistrationCallbackParams, opts ...ClientOption) (*ServiceBrokerAuthRegistrationCallbackOK, error)
+
+	ServiceBrokerAuthTokenPost(params *ServiceBrokerAuthTokenPostParams, opts ...ClientOption) (*ServiceBrokerAuthTokenPostOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-ServiceBrokerAuthCallback returns an access token and set cookie
+  ServiceBrokerAuthCallback returns an access token and set cookie
 */
-func (a *Client) ServiceBrokerAuthCallback(params *ServiceBrokerAuthCallbackParams) (*ServiceBrokerAuthCallbackOK, error) {
+func (a *Client) ServiceBrokerAuthCallback(params *ServiceBrokerAuthCallbackParams, opts ...ClientOption) (*ServiceBrokerAuthCallbackOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerAuthCallbackParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.auth.callback",
 		Method:             "GET",
 		PathPattern:        "/auth/v1/callback",
@@ -44,24 +72,34 @@ func (a *Client) ServiceBrokerAuthCallback(params *ServiceBrokerAuthCallbackPara
 		Reader:             &ServiceBrokerAuthCallbackReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerAuthCallbackOK), nil
-
+	success, ok := result.(*ServiceBrokerAuthCallbackOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.auth.callback: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerAuthDeviceCodePost requests a authorization device code
+  ServiceBrokerAuthDeviceCodePost requests a authorization device code
 */
-func (a *Client) ServiceBrokerAuthDeviceCodePost(params *ServiceBrokerAuthDeviceCodePostParams) (*ServiceBrokerAuthDeviceCodePostOK, error) {
+func (a *Client) ServiceBrokerAuthDeviceCodePost(params *ServiceBrokerAuthDeviceCodePostParams, opts ...ClientOption) (*ServiceBrokerAuthDeviceCodePostOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerAuthDeviceCodePostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.auth.device.code.post",
 		Method:             "POST",
 		PathPattern:        "/auth/v1/device/code",
@@ -72,24 +110,34 @@ func (a *Client) ServiceBrokerAuthDeviceCodePost(params *ServiceBrokerAuthDevice
 		Reader:             &ServiceBrokerAuthDeviceCodePostReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerAuthDeviceCodePostOK), nil
-
+	success, ok := result.(*ServiceBrokerAuthDeviceCodePostOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.auth.device.code.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerAuthDeviceTokenPost polls for authorization device token
+  ServiceBrokerAuthDeviceTokenPost polls for authorization device token
 */
-func (a *Client) ServiceBrokerAuthDeviceTokenPost(params *ServiceBrokerAuthDeviceTokenPostParams) (*ServiceBrokerAuthDeviceTokenPostOK, error) {
+func (a *Client) ServiceBrokerAuthDeviceTokenPost(params *ServiceBrokerAuthDeviceTokenPostParams, opts ...ClientOption) (*ServiceBrokerAuthDeviceTokenPostOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerAuthDeviceTokenPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.auth.device.token.post",
 		Method:             "POST",
 		PathPattern:        "/auth/v1/device/token",
@@ -100,24 +148,34 @@ func (a *Client) ServiceBrokerAuthDeviceTokenPost(params *ServiceBrokerAuthDevic
 		Reader:             &ServiceBrokerAuthDeviceTokenPostReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerAuthDeviceTokenPostOK), nil
-
+	success, ok := result.(*ServiceBrokerAuthDeviceTokenPostOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.auth.device.token.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerAuthInfoToken information about current access token
+  ServiceBrokerAuthInfoToken information about current access token
 */
-func (a *Client) ServiceBrokerAuthInfoToken(params *ServiceBrokerAuthInfoTokenParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceBrokerAuthInfoTokenOK, error) {
+func (a *Client) ServiceBrokerAuthInfoToken(params *ServiceBrokerAuthInfoTokenParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerAuthInfoTokenOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerAuthInfoTokenParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.auth.info.token",
 		Method:             "GET",
 		PathPattern:        "/auth/v1/info/token",
@@ -129,24 +187,34 @@ func (a *Client) ServiceBrokerAuthInfoToken(params *ServiceBrokerAuthInfoTokenPa
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerAuthInfoTokenOK), nil
-
+	success, ok := result.(*ServiceBrokerAuthInfoTokenOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.auth.info.token: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerAuthInfoUser information about current user
+  ServiceBrokerAuthInfoUser information about current user
 */
-func (a *Client) ServiceBrokerAuthInfoUser(params *ServiceBrokerAuthInfoUserParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceBrokerAuthInfoUserOK, error) {
+func (a *Client) ServiceBrokerAuthInfoUser(params *ServiceBrokerAuthInfoUserParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerAuthInfoUserOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerAuthInfoUserParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.auth.info.user",
 		Method:             "GET",
 		PathPattern:        "/auth/v1/info/user",
@@ -158,24 +226,34 @@ func (a *Client) ServiceBrokerAuthInfoUser(params *ServiceBrokerAuthInfoUserPara
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerAuthInfoUserOK), nil
-
+	success, ok := result.(*ServiceBrokerAuthInfoUserOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.auth.info.user: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerAuthLogin logins
+  ServiceBrokerAuthLogin logins
 */
-func (a *Client) ServiceBrokerAuthLogin(params *ServiceBrokerAuthLoginParams) (*ServiceBrokerAuthLoginOK, error) {
+func (a *Client) ServiceBrokerAuthLogin(params *ServiceBrokerAuthLoginParams, opts ...ClientOption) (*ServiceBrokerAuthLoginOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerAuthLoginParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.auth.login",
 		Method:             "GET",
 		PathPattern:        "/auth/v1/login",
@@ -186,24 +264,34 @@ func (a *Client) ServiceBrokerAuthLogin(params *ServiceBrokerAuthLoginParams) (*
 		Reader:             &ServiceBrokerAuthLoginReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerAuthLoginOK), nil
-
+	success, ok := result.(*ServiceBrokerAuthLoginOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.auth.login: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerAuthLogout logouts
+  ServiceBrokerAuthLogout logouts
 */
-func (a *Client) ServiceBrokerAuthLogout(params *ServiceBrokerAuthLogoutParams, authInfo runtime.ClientAuthInfoWriter) (*ServiceBrokerAuthLogoutOK, error) {
+func (a *Client) ServiceBrokerAuthLogout(params *ServiceBrokerAuthLogoutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerAuthLogoutOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerAuthLogoutParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.auth.logout",
 		Method:             "GET",
 		PathPattern:        "/auth/v1/logout",
@@ -215,24 +303,34 @@ func (a *Client) ServiceBrokerAuthLogout(params *ServiceBrokerAuthLogoutParams, 
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerAuthLogoutOK), nil
-
+	success, ok := result.(*ServiceBrokerAuthLogoutOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.auth.logout: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerAuthRegistration registrations of a new tenant and login
+  ServiceBrokerAuthRegistration registrations of a new tenant and login
 */
-func (a *Client) ServiceBrokerAuthRegistration(params *ServiceBrokerAuthRegistrationParams) (*ServiceBrokerAuthRegistrationOK, error) {
+func (a *Client) ServiceBrokerAuthRegistration(params *ServiceBrokerAuthRegistrationParams, opts ...ClientOption) (*ServiceBrokerAuthRegistrationOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerAuthRegistrationParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.auth.registration",
 		Method:             "GET",
 		PathPattern:        "/auth/v1/registration",
@@ -243,24 +341,34 @@ func (a *Client) ServiceBrokerAuthRegistration(params *ServiceBrokerAuthRegistra
 		Reader:             &ServiceBrokerAuthRegistrationReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerAuthRegistrationOK), nil
-
+	success, ok := result.(*ServiceBrokerAuthRegistrationOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.auth.registration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerAuthRegistrationCallback associates the user with a tenant and returns an access token
+  ServiceBrokerAuthRegistrationCallback associates the user with a tenant and returns an access token
 */
-func (a *Client) ServiceBrokerAuthRegistrationCallback(params *ServiceBrokerAuthRegistrationCallbackParams) (*ServiceBrokerAuthRegistrationCallbackOK, error) {
+func (a *Client) ServiceBrokerAuthRegistrationCallback(params *ServiceBrokerAuthRegistrationCallbackParams, opts ...ClientOption) (*ServiceBrokerAuthRegistrationCallbackOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerAuthRegistrationCallbackParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.auth.registration.callback",
 		Method:             "GET",
 		PathPattern:        "/auth/v1/callback-registration",
@@ -271,24 +379,34 @@ func (a *Client) ServiceBrokerAuthRegistrationCallback(params *ServiceBrokerAuth
 		Reader:             &ServiceBrokerAuthRegistrationCallbackReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerAuthRegistrationCallbackOK), nil
-
+	success, ok := result.(*ServiceBrokerAuthRegistrationCallbackOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.auth.registration.callback: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-ServiceBrokerAuthTokenPost requests a new token from a refresh token
+  ServiceBrokerAuthTokenPost requests a new token from a refresh token
 */
-func (a *Client) ServiceBrokerAuthTokenPost(params *ServiceBrokerAuthTokenPostParams) (*ServiceBrokerAuthTokenPostOK, error) {
+func (a *Client) ServiceBrokerAuthTokenPost(params *ServiceBrokerAuthTokenPostParams, opts ...ClientOption) (*ServiceBrokerAuthTokenPostOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceBrokerAuthTokenPostParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "serviceBroker.auth.token.post",
 		Method:             "POST",
 		PathPattern:        "/auth/v1/token",
@@ -299,12 +417,23 @@ func (a *Client) ServiceBrokerAuthTokenPost(params *ServiceBrokerAuthTokenPostPa
 		Reader:             &ServiceBrokerAuthTokenPostReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ServiceBrokerAuthTokenPostOK), nil
-
+	success, ok := result.(*ServiceBrokerAuthTokenPostOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceBroker.auth.token.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client

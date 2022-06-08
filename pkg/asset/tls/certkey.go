@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -67,6 +68,39 @@ func (c *CertKey) generateFiles(filenameBase string) {
 // Load is a no-op because TLS assets are not written to disk.
 func (c *CertKey) Load(asset.FileFetcher) (bool, error) {
 	return false, nil
+}
+
+func (c *CertKey) loadCertKey(f asset.FileFetcher, filenameBase string) (bool, error) {
+	if os.Getenv("OPENSHIFT_INSTALL_LOAD_CLUSTER_CERTS") != "true" {
+		return c.Load(f)
+	}
+
+	loadFile := func(suffix string) (*asset.File, error) {
+		file, err := f.FetchByName(assetFilePath(filenameBase + suffix))
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		return file, err
+	}
+
+	key, err := loadFile(".key")
+	if key == nil {
+		return false, err
+	}
+
+	cert, err := loadFile(".crt")
+	if cert == nil {
+		return false, err
+	}
+
+	c.KeyRaw = key.Data
+	c.CertRaw = cert.Data
+	c.FileList = []*asset.File{key, cert}
+
+	return true, nil
 }
 
 // AppendParentChoice dictates whether the parent's cert is to be added to the

@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudCloudinstancesJobsGetallReader is a Reader for the PcloudCloudinstancesJobsGetall structure.
@@ -24,44 +23,38 @@ type PcloudCloudinstancesJobsGetallReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudCloudinstancesJobsGetallReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudCloudinstancesJobsGetallOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudCloudinstancesJobsGetallBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudCloudinstancesJobsGetallUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudCloudinstancesJobsGetallNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudCloudinstancesJobsGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudCloudinstancesJobsGetallOK() *PcloudCloudinstancesJobsGetallOK {
 	return &PcloudCloudinstancesJobsGetallOK{}
 }
 
-/*PcloudCloudinstancesJobsGetallOK handles this case with default header values.
+/* PcloudCloudinstancesJobsGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudCloudinstancesJobsGetallOK struct {
 
 func (o *PcloudCloudinstancesJobsGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs][%d] pcloudCloudinstancesJobsGetallOK  %+v", 200, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsGetallOK) GetPayload() *models.Jobs {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsGetallOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -99,7 +95,7 @@ func NewPcloudCloudinstancesJobsGetallBadRequest() *PcloudCloudinstancesJobsGeta
 	return &PcloudCloudinstancesJobsGetallBadRequest{}
 }
 
-/*PcloudCloudinstancesJobsGetallBadRequest handles this case with default header values.
+/* PcloudCloudinstancesJobsGetallBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,6 +105,9 @@ type PcloudCloudinstancesJobsGetallBadRequest struct {
 
 func (o *PcloudCloudinstancesJobsGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs][%d] pcloudCloudinstancesJobsGetallBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsGetallBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -128,7 +127,7 @@ func NewPcloudCloudinstancesJobsGetallUnauthorized() *PcloudCloudinstancesJobsGe
 	return &PcloudCloudinstancesJobsGetallUnauthorized{}
 }
 
-/*PcloudCloudinstancesJobsGetallUnauthorized handles this case with default header values.
+/* PcloudCloudinstancesJobsGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -138,6 +137,9 @@ type PcloudCloudinstancesJobsGetallUnauthorized struct {
 
 func (o *PcloudCloudinstancesJobsGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs][%d] pcloudCloudinstancesJobsGetallUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsGetallUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -157,7 +159,7 @@ func NewPcloudCloudinstancesJobsGetallNotFound() *PcloudCloudinstancesJobsGetall
 	return &PcloudCloudinstancesJobsGetallNotFound{}
 }
 
-/*PcloudCloudinstancesJobsGetallNotFound handles this case with default header values.
+/* PcloudCloudinstancesJobsGetallNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -167,6 +169,9 @@ type PcloudCloudinstancesJobsGetallNotFound struct {
 
 func (o *PcloudCloudinstancesJobsGetallNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs][%d] pcloudCloudinstancesJobsGetallNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsGetallNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -186,7 +191,7 @@ func NewPcloudCloudinstancesJobsGetallInternalServerError() *PcloudCloudinstance
 	return &PcloudCloudinstancesJobsGetallInternalServerError{}
 }
 
-/*PcloudCloudinstancesJobsGetallInternalServerError handles this case with default header values.
+/* PcloudCloudinstancesJobsGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -196,6 +201,9 @@ type PcloudCloudinstancesJobsGetallInternalServerError struct {
 
 func (o *PcloudCloudinstancesJobsGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs][%d] pcloudCloudinstancesJobsGetallInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudCloudinstancesJobsGetallInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudCloudinstancesJobsGetallInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

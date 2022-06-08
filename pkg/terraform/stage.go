@@ -24,7 +24,7 @@ type Stage interface {
 
 	// Destroy destroys the resources created in the stage. This should only be called if the stage should be destroyed
 	// when destroying the bootstrap resources.
-	Destroy(directory string, varFiles []string) error
+	Destroy(directory string, terraformDir string, varFiles []string) error
 
 	// ExtractHostAddresses extracts the IPs of the bootstrap and control plane machines.
 	ExtractHostAddresses(directory string, config *types.InstallConfig) (bootstrap string, port int, masters []string, err error)

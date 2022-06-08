@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // CloudInstanceReference cloud instance reference
+//
 // swagger:model CloudInstanceReference
 type CloudInstanceReference struct {
 
@@ -133,6 +135,8 @@ func (m *CloudInstanceReference) validateLimits(formats strfmt.Registry) error {
 		if err := m.Limits.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("limits")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("limits")
 			}
 			return err
 		}
@@ -154,6 +158,36 @@ func (m *CloudInstanceReference) validateRegion(formats strfmt.Registry) error {
 
 	if err := validate.Required("region", "body", m.Region); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this cloud instance reference based on the context it is used
+func (m *CloudInstanceReference) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateLimits(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *CloudInstanceReference) contextValidateLimits(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Limits != nil {
+		if err := m.Limits.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("limits")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("limits")
+			}
+			return err
+		}
 	}
 
 	return nil

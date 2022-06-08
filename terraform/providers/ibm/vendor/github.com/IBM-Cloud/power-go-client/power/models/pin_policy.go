@@ -6,17 +6,27 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
 // PinPolicy Specify PVM pin policy
+//
 // swagger:model PinPolicy
 type PinPolicy string
+
+func NewPinPolicy(value PinPolicy) *PinPolicy {
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated PinPolicy.
+func (m PinPolicy) Pointer() *PinPolicy {
+	return &m
+}
 
 const (
 
@@ -44,7 +54,7 @@ func init() {
 }
 
 func (m PinPolicy) validatePinPolicyEnum(path, location string, value PinPolicy) error {
-	if err := validate.Enum(path, location, value, pinPolicyEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, pinPolicyEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -62,5 +72,10 @@ func (m PinPolicy) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+// ContextValidate validates this pin policy based on context it is used
+func (m PinPolicy) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }

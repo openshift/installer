@@ -13,63 +13,76 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudCloudconnectionsVirtualprivatecloudsGetallParams creates a new PcloudCloudconnectionsVirtualprivatecloudsGetallParams object
-// with the default values initialized.
+// NewPcloudCloudconnectionsVirtualprivatecloudsGetallParams creates a new PcloudCloudconnectionsVirtualprivatecloudsGetallParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudconnectionsVirtualprivatecloudsGetallParams() *PcloudCloudconnectionsVirtualprivatecloudsGetallParams {
-	var ()
 	return &PcloudCloudconnectionsVirtualprivatecloudsGetallParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudconnectionsVirtualprivatecloudsGetallParamsWithTimeout creates a new PcloudCloudconnectionsVirtualprivatecloudsGetallParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudconnectionsVirtualprivatecloudsGetallParamsWithTimeout(timeout time.Duration) *PcloudCloudconnectionsVirtualprivatecloudsGetallParams {
-	var ()
 	return &PcloudCloudconnectionsVirtualprivatecloudsGetallParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudconnectionsVirtualprivatecloudsGetallParamsWithContext creates a new PcloudCloudconnectionsVirtualprivatecloudsGetallParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudconnectionsVirtualprivatecloudsGetallParamsWithContext(ctx context.Context) *PcloudCloudconnectionsVirtualprivatecloudsGetallParams {
-	var ()
 	return &PcloudCloudconnectionsVirtualprivatecloudsGetallParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudconnectionsVirtualprivatecloudsGetallParamsWithHTTPClient creates a new PcloudCloudconnectionsVirtualprivatecloudsGetallParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudconnectionsVirtualprivatecloudsGetallParamsWithHTTPClient(client *http.Client) *PcloudCloudconnectionsVirtualprivatecloudsGetallParams {
-	var ()
 	return &PcloudCloudconnectionsVirtualprivatecloudsGetallParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudconnectionsVirtualprivatecloudsGetallParams contains all the parameters to send to the API endpoint
-for the pcloud cloudconnections virtualprivateclouds getall operation typically these are written to a http.Request
+/* PcloudCloudconnectionsVirtualprivatecloudsGetallParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudconnections virtualprivateclouds getall operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudconnectionsVirtualprivatecloudsGetallParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudconnections virtualprivateclouds getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallParams) WithDefaults() *PcloudCloudconnectionsVirtualprivatecloudsGetallParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudconnections virtualprivateclouds getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudconnections virtualprivateclouds getall params

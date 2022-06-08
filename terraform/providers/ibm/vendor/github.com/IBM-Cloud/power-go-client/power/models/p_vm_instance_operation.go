@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // PVMInstanceOperation p VM instance operation
+//
 // swagger:model PVMInstanceOperation
 type PVMInstanceOperation struct {
 
@@ -57,6 +58,8 @@ func (m *PVMInstanceOperation) validateOperation(formats strfmt.Registry) error 
 		if err := m.Operation.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("operation")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("operation")
 			}
 			return err
 		}
@@ -88,7 +91,7 @@ const (
 
 // prop value enum
 func (m *PVMInstanceOperation) validateOperationTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, pVmInstanceOperationTypeOperationTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, pVmInstanceOperationTypeOperationTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -103,6 +106,36 @@ func (m *PVMInstanceOperation) validateOperationType(formats strfmt.Registry) er
 	// value enum
 	if err := m.validateOperationTypeEnum("operationType", "body", *m.OperationType); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this p VM instance operation based on the context it is used
+func (m *PVMInstanceOperation) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateOperation(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *PVMInstanceOperation) contextValidateOperation(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Operation != nil {
+		if err := m.Operation.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("operation")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("operation")
+			}
+			return err
+		}
 	}
 
 	return nil

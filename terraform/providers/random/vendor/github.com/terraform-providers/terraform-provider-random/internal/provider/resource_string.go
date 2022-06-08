@@ -14,9 +14,11 @@ func resourceString() *schema.Resource {
 			"Historically this resource's intended usage has been ambiguous as the original example used " +
 			"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
 			"use [random_id](id.html), for sensitive random values please use [random_password](password.html).",
-		Create:        createStringFunc(false),
-		Read:          readNil,
-		Delete:        schema.RemoveFromState,
+		CreateContext: createStringFunc(false),
+		ReadContext:   readNil,
+		DeleteContext: RemoveResourceFromState,
+		// MigrateState is deprecated but the implementation is being left in place as per the
+		// [SDK documentation](https://github.com/hashicorp/terraform-plugin-sdk/blob/main/helper/schema/resource.go#L91).
 		MigrateState:  resourceRandomStringMigrateState,
 		SchemaVersion: 1,
 		Schema:        stringSchemaV1(false),

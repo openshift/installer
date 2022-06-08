@@ -3,10 +3,9 @@ package nutanix
 import (
 	"encoding/json"
 
-	nutanixapis "github.com/openshift/machine-api-provider-nutanix/pkg/apis/nutanixprovider/v1beta1"
+	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/pkg/errors"
 
-	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 )
 
@@ -22,7 +21,7 @@ type config struct {
 	PrismElementUUID               string `json:"nutanix_prism_element_uuid"`
 	SubnetUUID                     string `json:"nutanix_subnet_uuid"`
 	Image                          string `json:"nutanix_image"`
-	ImageFilePath                  string `json:"nutanix_image_filepath"`
+	ImageURI                       string `json:"nutanix_image_uri"`
 	BootstrapIgnitionImage         string `json:"nutanix_bootstrap_ignition_image"`
 	BootstrapIgnitionImageFilePath string `json:"nutanix_bootstrap_ignition_image_filepath"`
 }
@@ -33,19 +32,14 @@ type TFVarsSources struct {
 	Port                  string
 	Username              string
 	Password              string
-	ImageURL              string
+	ImageURI              string
 	BootstrapIgnitionData string
 	ClusterID             string
-	ControlPlaneConfigs   []*nutanixapis.NutanixMachineProviderConfig
+	ControlPlaneConfigs   []*machinev1.NutanixMachineProviderConfig
 }
 
 //TFVars generate Nutanix-specific Terraform variables
 func TFVars(sources TFVarsSources) ([]byte, error) {
-	cachedImage, err := cache.DownloadImageFile(sources.ImageURL)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to use cached nutanix image")
-	}
-
 	bootstrapIgnitionImagePath, err := nutanixtypes.CreateBootstrapISO(sources.ClusterID, sources.BootstrapIgnitionData)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create bootstrap ignition iso")
@@ -58,14 +52,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PrismCentralAddress:            sources.PrismCentralAddress,
 		Username:                       sources.Username,
 		Password:                       sources.Password,
-		MemoryMiB:                      controlPlaneConfig.MemorySizeMib,
-		DiskSizeMiB:                    controlPlaneConfig.DiskSizeMib,
-		NumCPUs:                        controlPlaneConfig.NumSockets,
-		NumCoresPerSocket:              controlPlaneConfig.NumVcpusPerSocket,
-		PrismElementUUID:               controlPlaneConfig.ClusterReferenceUUID,
-		SubnetUUID:                     controlPlaneConfig.SubnetUUID,
-		Image:                          controlPlaneConfig.ImageName,
-		ImageFilePath:                  cachedImage,
+		MemoryMiB:                      controlPlaneConfig.MemorySize.Value() / (1024 * 1024),
+		DiskSizeMiB:                    controlPlaneConfig.SystemDiskSize.Value() / (1024 * 1024),
+		NumCPUs:                        int64(controlPlaneConfig.VCPUSockets),
+		NumCoresPerSocket:              int64(controlPlaneConfig.VCPUsPerSocket),
+		PrismElementUUID:               *controlPlaneConfig.Cluster.UUID,
+		SubnetUUID:                     *controlPlaneConfig.Subnets[0].UUID,
+		Image:                          *controlPlaneConfig.Image.Name,
+		ImageURI:                       sources.ImageURI,
 		BootstrapIgnitionImage:         bootstrapIgnitionImageName,
 		BootstrapIgnitionImageFilePath: bootstrapIgnitionImagePath,
 	}

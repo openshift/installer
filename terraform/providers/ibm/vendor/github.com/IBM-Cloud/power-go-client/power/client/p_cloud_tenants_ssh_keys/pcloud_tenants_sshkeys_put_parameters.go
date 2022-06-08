@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudTenantsSshkeysPutParams creates a new PcloudTenantsSshkeysPutParams object
-// with the default values initialized.
+// NewPcloudTenantsSshkeysPutParams creates a new PcloudTenantsSshkeysPutParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudTenantsSshkeysPutParams() *PcloudTenantsSshkeysPutParams {
-	var ()
 	return &PcloudTenantsSshkeysPutParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudTenantsSshkeysPutParamsWithTimeout creates a new PcloudTenantsSshkeysPutParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudTenantsSshkeysPutParamsWithTimeout(timeout time.Duration) *PcloudTenantsSshkeysPutParams {
-	var ()
 	return &PcloudTenantsSshkeysPutParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudTenantsSshkeysPutParamsWithContext creates a new PcloudTenantsSshkeysPutParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudTenantsSshkeysPutParamsWithContext(ctx context.Context) *PcloudTenantsSshkeysPutParams {
-	var ()
 	return &PcloudTenantsSshkeysPutParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudTenantsSshkeysPutParamsWithHTTPClient creates a new PcloudTenantsSshkeysPutParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudTenantsSshkeysPutParamsWithHTTPClient(client *http.Client) *PcloudTenantsSshkeysPutParams {
-	var ()
 	return &PcloudTenantsSshkeysPutParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudTenantsSshkeysPutParams contains all the parameters to send to the API endpoint
-for the pcloud tenants sshkeys put operation typically these are written to a http.Request
+/* PcloudTenantsSshkeysPutParams contains all the parameters to send to the API endpoint
+   for the pcloud tenants sshkeys put operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudTenantsSshkeysPutParams struct {
 
-	/*Body
-	  Parameters for updating a Tenant's SSH Key
+	/* Body.
 
+	   Parameters for updating a Tenant's SSH Key
 	*/
 	Body *models.SSHKey
-	/*SshkeyName
-	  SSH key name for a pcloud tenant
 
+	/* SshkeyName.
+
+	   SSH key name for a pcloud tenant
 	*/
 	SshkeyName string
-	/*TenantID
-	  Tenant ID of a pcloud tenant
 
+	/* TenantID.
+
+	   Tenant ID of a pcloud tenant
 	*/
 	TenantID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud tenants sshkeys put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudTenantsSshkeysPutParams) WithDefaults() *PcloudTenantsSshkeysPutParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud tenants sshkeys put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudTenantsSshkeysPutParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud tenants sshkeys put params
@@ -157,7 +172,6 @@ func (o *PcloudTenantsSshkeysPutParams) WriteToRequest(r runtime.ClientRequest, 
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

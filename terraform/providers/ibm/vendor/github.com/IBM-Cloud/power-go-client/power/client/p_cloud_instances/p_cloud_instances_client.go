@@ -6,13 +6,14 @@ package p_cloud_instances
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"github.com/go-openapi/runtime"
+	"fmt"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new p cloud instances API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,16 +25,29 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientOption is the option for Client methods
+type ClientOption func(*runtime.ClientOperation)
+
+// ClientService is the interface for Client methods
+type ClientService interface {
+	PcloudCloudinstancesDelete(params *PcloudCloudinstancesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesDeleteOK, error)
+
+	PcloudCloudinstancesGet(params *PcloudCloudinstancesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesGetOK, error)
+
+	PcloudCloudinstancesPut(params *PcloudCloudinstancesPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesPutOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-PcloudCloudinstancesDelete deletes a power cloud instance
+  PcloudCloudinstancesDelete deletes a power cloud instance
 */
-func (a *Client) PcloudCloudinstancesDelete(params *PcloudCloudinstancesDeleteParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesDeleteOK, error) {
+func (a *Client) PcloudCloudinstancesDelete(params *PcloudCloudinstancesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesDeleteOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesDeleteParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.delete",
 		Method:             "DELETE",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}",
@@ -45,24 +59,34 @@ func (a *Client) PcloudCloudinstancesDelete(params *PcloudCloudinstancesDeletePa
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesDeleteOK), nil
-
+	success, ok := result.(*PcloudCloudinstancesDeleteOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudCloudinstancesGet gets a cloud instance s current state information
+  PcloudCloudinstancesGet gets a cloud instance s current state information
 */
-func (a *Client) PcloudCloudinstancesGet(params *PcloudCloudinstancesGetParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesGetOK, error) {
+func (a *Client) PcloudCloudinstancesGet(params *PcloudCloudinstancesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesGetOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesGetParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.get",
 		Method:             "GET",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}",
@@ -74,24 +98,34 @@ func (a *Client) PcloudCloudinstancesGet(params *PcloudCloudinstancesGetParams, 
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesGetOK), nil
-
+	success, ok := result.(*PcloudCloudinstancesGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-PcloudCloudinstancesPut updates upgrade a cloud instance
+  PcloudCloudinstancesPut updates upgrade a cloud instance
 */
-func (a *Client) PcloudCloudinstancesPut(params *PcloudCloudinstancesPutParams, authInfo runtime.ClientAuthInfoWriter) (*PcloudCloudinstancesPutOK, error) {
+func (a *Client) PcloudCloudinstancesPut(params *PcloudCloudinstancesPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesPutOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudCloudinstancesPutParams()
 	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
+	op := &runtime.ClientOperation{
 		ID:                 "pcloud.cloudinstances.put",
 		Method:             "PUT",
 		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}",
@@ -103,12 +137,23 @@ func (a *Client) PcloudCloudinstancesPut(params *PcloudCloudinstancesPutParams, 
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
-	})
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PcloudCloudinstancesPutOK), nil
-
+	success, ok := result.(*PcloudCloudinstancesPutOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client

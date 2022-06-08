@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // ServiceBrokerAuthCallbackReader is a Reader for the ServiceBrokerAuthCallback structure.
@@ -24,30 +23,26 @@ type ServiceBrokerAuthCallbackReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ServiceBrokerAuthCallbackReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewServiceBrokerAuthCallbackOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewServiceBrokerAuthCallbackUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewServiceBrokerAuthCallbackInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -56,7 +51,7 @@ func NewServiceBrokerAuthCallbackOK() *ServiceBrokerAuthCallbackOK {
 	return &ServiceBrokerAuthCallbackOK{}
 }
 
-/*ServiceBrokerAuthCallbackOK handles this case with default header values.
+/* ServiceBrokerAuthCallbackOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -66,6 +61,9 @@ type ServiceBrokerAuthCallbackOK struct {
 
 func (o *ServiceBrokerAuthCallbackOK) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackOK  %+v", 200, o.Payload)
+}
+func (o *ServiceBrokerAuthCallbackOK) GetPayload() *models.AccessToken {
+	return o.Payload
 }
 
 func (o *ServiceBrokerAuthCallbackOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -85,7 +83,7 @@ func NewServiceBrokerAuthCallbackUnauthorized() *ServiceBrokerAuthCallbackUnauth
 	return &ServiceBrokerAuthCallbackUnauthorized{}
 }
 
-/*ServiceBrokerAuthCallbackUnauthorized handles this case with default header values.
+/* ServiceBrokerAuthCallbackUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -95,6 +93,9 @@ type ServiceBrokerAuthCallbackUnauthorized struct {
 
 func (o *ServiceBrokerAuthCallbackUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackUnauthorized  %+v", 401, o.Payload)
+}
+func (o *ServiceBrokerAuthCallbackUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBrokerAuthCallbackUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -114,7 +115,7 @@ func NewServiceBrokerAuthCallbackInternalServerError() *ServiceBrokerAuthCallbac
 	return &ServiceBrokerAuthCallbackInternalServerError{}
 }
 
-/*ServiceBrokerAuthCallbackInternalServerError handles this case with default header values.
+/* ServiceBrokerAuthCallbackInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -124,6 +125,9 @@ type ServiceBrokerAuthCallbackInternalServerError struct {
 
 func (o *ServiceBrokerAuthCallbackInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackInternalServerError  %+v", 500, o.Payload)
+}
+func (o *ServiceBrokerAuthCallbackInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBrokerAuthCallbackInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

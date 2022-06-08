@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudV2VolumescloneStartPostReader is a Reader for the PcloudV2VolumescloneStartPost structure.
@@ -24,37 +23,32 @@ type PcloudV2VolumescloneStartPostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudV2VolumescloneStartPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudV2VolumescloneStartPostOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewPcloudV2VolumescloneStartPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudV2VolumescloneStartPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudV2VolumescloneStartPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -63,7 +57,7 @@ func NewPcloudV2VolumescloneStartPostOK() *PcloudV2VolumescloneStartPostOK {
 	return &PcloudV2VolumescloneStartPostOK{}
 }
 
-/*PcloudV2VolumescloneStartPostOK handles this case with default header values.
+/* PcloudV2VolumescloneStartPostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,6 +67,9 @@ type PcloudV2VolumescloneStartPostOK struct {
 
 func (o *PcloudV2VolumescloneStartPostOK) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/start][%d] pcloudV2VolumescloneStartPostOK  %+v", 200, o.Payload)
+}
+func (o *PcloudV2VolumescloneStartPostOK) GetPayload() *models.VolumesClone {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumescloneStartPostOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -92,7 +89,7 @@ func NewPcloudV2VolumescloneStartPostUnauthorized() *PcloudV2VolumescloneStartPo
 	return &PcloudV2VolumescloneStartPostUnauthorized{}
 }
 
-/*PcloudV2VolumescloneStartPostUnauthorized handles this case with default header values.
+/* PcloudV2VolumescloneStartPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -102,6 +99,9 @@ type PcloudV2VolumescloneStartPostUnauthorized struct {
 
 func (o *PcloudV2VolumescloneStartPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/start][%d] pcloudV2VolumescloneStartPostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudV2VolumescloneStartPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumescloneStartPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -121,7 +121,7 @@ func NewPcloudV2VolumescloneStartPostNotFound() *PcloudV2VolumescloneStartPostNo
 	return &PcloudV2VolumescloneStartPostNotFound{}
 }
 
-/*PcloudV2VolumescloneStartPostNotFound handles this case with default header values.
+/* PcloudV2VolumescloneStartPostNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -131,6 +131,9 @@ type PcloudV2VolumescloneStartPostNotFound struct {
 
 func (o *PcloudV2VolumescloneStartPostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/start][%d] pcloudV2VolumescloneStartPostNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudV2VolumescloneStartPostNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumescloneStartPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -150,7 +153,7 @@ func NewPcloudV2VolumescloneStartPostInternalServerError() *PcloudV2Volumesclone
 	return &PcloudV2VolumescloneStartPostInternalServerError{}
 }
 
-/*PcloudV2VolumescloneStartPostInternalServerError handles this case with default header values.
+/* PcloudV2VolumescloneStartPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -160,6 +163,9 @@ type PcloudV2VolumescloneStartPostInternalServerError struct {
 
 func (o *PcloudV2VolumescloneStartPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/start][%d] pcloudV2VolumescloneStartPostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudV2VolumescloneStartPostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudV2VolumescloneStartPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

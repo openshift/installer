@@ -1,12 +1,14 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/terraform-providers/terraform-provider-nutanix/client/foundation"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
@@ -22,15 +24,15 @@ func getMetadataAttributes(d *schema.ResourceData, metadata *v3.Metadata, kind s
 
 	if p, ok := d.GetOk("project_reference"); ok {
 		pr := p.(map[string]interface{})
-		r := &v3.Reference{
-			// Kind: utils.StringPtr(pr["kind"].(string)),
-			UUID: utils.StringPtr(pr["uuid"].(string)),
-		}
-		if vKind, okKind := pr["kind"]; okKind {
-			r.Kind = utils.StringPtr(vKind.(string))
-		}
+		r := &v3.Reference{}
 		if v1, ok1 := pr["name"]; ok1 {
 			r.Name = utils.StringPtr(v1.(string))
+		}
+		if v2, ok2 := pr["kind"]; ok2 {
+			r.Kind = utils.StringPtr(v2.(string))
+		}
+		if v3, ok3 := pr["uuid"]; ok3 {
+			r.UUID = utils.StringPtr(v3.(string))
 		}
 		metadata.ProjectReference = r
 	}
@@ -214,6 +216,24 @@ func taskStateRefreshFunc(client *v3.Client, taskUUID string) resource.StateRefr
 	}
 }
 
+func foundationImageRefresh(ctx context.Context, client *foundation.Client, sessionUUID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		v, err := client.NodeImaging.ImageNodesProgress(ctx, sessionUUID)
+
+		if err != nil {
+			if strings.Contains(err.Error(), "Failed") {
+				return v, ERROR, nil
+			}
+			return nil, "FAILED", err
+		}
+
+		if utils.BoolValue(v.ImagingStopped) {
+			return v, "COMPLETED", nil
+		}
+		return v, "PENDING", nil
+	}
+}
+
 func validateArrayRef(references interface{}, kindValue *string) []*v3.Reference {
 	refs := make([]*v3.Reference, 0)
 
@@ -235,6 +255,31 @@ func validateArrayRef(references interface{}, kindValue *string) []*v3.Reference
 		if v, ok := ref["name"]; ok {
 			r.Name = utils.StringPtr(v.(string))
 		}
+
+		refs = append(refs, &r)
+	}
+	if len(refs) > 0 {
+		return refs
+	}
+
+	return nil
+}
+
+func validateArrayRefValues(references interface{}, kindValue string) []*v3.ReferenceValues {
+	refs := make([]*v3.ReferenceValues, 0)
+
+	for _, s := range references.([]interface{}) {
+		ref := s.(map[string]interface{})
+		r := v3.ReferenceValues{}
+
+		if kindValue != "" {
+			r.Kind = kindValue
+		} else {
+			r.Kind = ref["kind"].(string)
+		}
+
+		r.UUID = ref["uuid"].(string)
+		r.Name = ref["name"].(string)
 
 		refs = append(refs, &r)
 	}
@@ -306,6 +351,23 @@ func flattenReferenceValuesList(r *v3.Reference) []interface{} {
 		}
 
 		references = append(references, reference)
+	}
+	return references
+}
+
+func flattenArrayOfReferenceValues(refs []*v3.ReferenceValues) []map[string]interface{} {
+	references := make([]map[string]interface{}, 0)
+	for _, r := range refs {
+		reference := make(map[string]interface{})
+		if r != nil {
+			reference["kind"] = r.Kind
+			reference["uuid"] = r.UUID
+
+			if r.Name != "" {
+				reference["name"] = r.Name
+			}
+			references = append(references, reference)
+		}
 	}
 	return references
 }

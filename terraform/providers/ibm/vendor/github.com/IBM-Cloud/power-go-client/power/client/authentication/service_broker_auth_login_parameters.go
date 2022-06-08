@@ -13,85 +13,101 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewServiceBrokerAuthLoginParams creates a new ServiceBrokerAuthLoginParams object
-// with the default values initialized.
+// NewServiceBrokerAuthLoginParams creates a new ServiceBrokerAuthLoginParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceBrokerAuthLoginParams() *ServiceBrokerAuthLoginParams {
-	var (
-		accessTypeDefault = string("online")
-	)
 	return &ServiceBrokerAuthLoginParams{
-		AccessType: &accessTypeDefault,
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceBrokerAuthLoginParamsWithTimeout creates a new ServiceBrokerAuthLoginParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceBrokerAuthLoginParamsWithTimeout(timeout time.Duration) *ServiceBrokerAuthLoginParams {
-	var (
-		accessTypeDefault = string("online")
-	)
 	return &ServiceBrokerAuthLoginParams{
-		AccessType: &accessTypeDefault,
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceBrokerAuthLoginParamsWithContext creates a new ServiceBrokerAuthLoginParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceBrokerAuthLoginParamsWithContext(ctx context.Context) *ServiceBrokerAuthLoginParams {
-	var (
-		accessTypeDefault = string("online")
-	)
 	return &ServiceBrokerAuthLoginParams{
-		AccessType: &accessTypeDefault,
-
 		Context: ctx,
 	}
 }
 
 // NewServiceBrokerAuthLoginParamsWithHTTPClient creates a new ServiceBrokerAuthLoginParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceBrokerAuthLoginParamsWithHTTPClient(client *http.Client) *ServiceBrokerAuthLoginParams {
-	var (
-		accessTypeDefault = string("online")
-	)
 	return &ServiceBrokerAuthLoginParams{
-		AccessType: &accessTypeDefault,
 		HTTPClient: client,
 	}
 }
 
-/*ServiceBrokerAuthLoginParams contains all the parameters to send to the API endpoint
-for the service broker auth login operation typically these are written to a http.Request
+/* ServiceBrokerAuthLoginParams contains all the parameters to send to the API endpoint
+   for the service broker auth login operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceBrokerAuthLoginParams struct {
 
-	/*AccessType
-	  Determines if a refresh token is returned
+	/* AccessType.
 
+	   Determines if a refresh token is returned
+
+	   Default: "online"
 	*/
 	AccessType *string
-	/*RedirectURL
-	  The URL to redirect to after login/registration
 
+	/* RedirectURL.
+
+	   The URL to redirect to after login/registration
 	*/
 	RedirectURL *string
-	/*UserID
-	  The user id of the user
 
+	/* UserID.
+
+	   The user id of the user
 	*/
 	UserID *string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service broker auth login params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerAuthLoginParams) WithDefaults() *ServiceBrokerAuthLoginParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service broker auth login params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerAuthLoginParams) SetDefaults() {
+	var (
+		accessTypeDefault = string("online")
+	)
+
+	val := ServiceBrokerAuthLoginParams{
+		AccessType: &accessTypeDefault,
+	}
+
+	val.timeout = o.timeout
+	val.Context = o.Context
+	val.HTTPClient = o.HTTPClient
+	*o = val
 }
 
 // WithTimeout adds the timeout to the service broker auth login params
@@ -172,48 +188,51 @@ func (o *ServiceBrokerAuthLoginParams) WriteToRequest(r runtime.ClientRequest, r
 
 		// query param access_type
 		var qrAccessType string
+
 		if o.AccessType != nil {
 			qrAccessType = *o.AccessType
 		}
 		qAccessType := qrAccessType
 		if qAccessType != "" {
+
 			if err := r.SetQueryParam("access_type", qAccessType); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if o.RedirectURL != nil {
 
 		// query param redirect_url
 		var qrRedirectURL string
+
 		if o.RedirectURL != nil {
 			qrRedirectURL = *o.RedirectURL
 		}
 		qRedirectURL := qrRedirectURL
 		if qRedirectURL != "" {
+
 			if err := r.SetQueryParam("redirect_url", qRedirectURL); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if o.UserID != nil {
 
 		// query param user_id
 		var qrUserID string
+
 		if o.UserID != nil {
 			qrUserID = *o.UserID
 		}
 		qUserID := qrUserID
 		if qUserID != "" {
+
 			if err := r.SetQueryParam("user_id", qUserID); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	if len(res) > 0 {

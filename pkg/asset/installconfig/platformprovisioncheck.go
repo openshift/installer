@@ -57,7 +57,8 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		return awsconfig.ValidateForProvisioning(session, ic.Config, ic.AWS)
+		client := awsconfig.NewClient(session)
+		return awsconfig.ValidateForProvisioning(client, ic.Config, ic.AWS)
 	case azure.Name:
 		dnsConfig, err := ic.Azure.DNSConfig()
 		if err != nil {

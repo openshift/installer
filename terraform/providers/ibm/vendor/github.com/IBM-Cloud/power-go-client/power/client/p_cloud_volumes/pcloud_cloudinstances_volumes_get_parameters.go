@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudCloudinstancesVolumesGetParams creates a new PcloudCloudinstancesVolumesGetParams object
-// with the default values initialized.
+// NewPcloudCloudinstancesVolumesGetParams creates a new PcloudCloudinstancesVolumesGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudinstancesVolumesGetParams() *PcloudCloudinstancesVolumesGetParams {
-	var ()
 	return &PcloudCloudinstancesVolumesGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudinstancesVolumesGetParamsWithTimeout creates a new PcloudCloudinstancesVolumesGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudinstancesVolumesGetParamsWithTimeout(timeout time.Duration) *PcloudCloudinstancesVolumesGetParams {
-	var ()
 	return &PcloudCloudinstancesVolumesGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudinstancesVolumesGetParamsWithContext creates a new PcloudCloudinstancesVolumesGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudinstancesVolumesGetParamsWithContext(ctx context.Context) *PcloudCloudinstancesVolumesGetParams {
-	var ()
 	return &PcloudCloudinstancesVolumesGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudinstancesVolumesGetParamsWithHTTPClient creates a new PcloudCloudinstancesVolumesGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudinstancesVolumesGetParamsWithHTTPClient(client *http.Client) *PcloudCloudinstancesVolumesGetParams {
-	var ()
 	return &PcloudCloudinstancesVolumesGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudinstancesVolumesGetParams contains all the parameters to send to the API endpoint
-for the pcloud cloudinstances volumes get operation typically these are written to a http.Request
+/* PcloudCloudinstancesVolumesGetParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudinstances volumes get operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesVolumesGetParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*VolumeID
-	  Volume ID
 
+	/* VolumeID.
+
+	   Volume ID
 	*/
 	VolumeID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudinstances volumes get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesVolumesGetParams) WithDefaults() *PcloudCloudinstancesVolumesGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudinstances volumes get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesVolumesGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudinstances volumes get params

@@ -28,12 +28,14 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 
+	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/types"
 )
 
@@ -67,6 +69,10 @@ func (c *container) inspect(vm *VirtualMachine) error {
 	}
 
 	var objects []struct {
+		State struct {
+			Running bool
+			Paused  bool
+		}
 		NetworkSettings struct {
 			networkSettings
 			Networks map[string]networkSettings
@@ -93,8 +99,12 @@ func (c *container) inspect(vm *VirtualMachine) error {
 			break
 		}
 
-		if s.IPAddress == "" {
-			continue
+		if o.State.Paused {
+			vm.Runtime.PowerState = types.VirtualMachinePowerStateSuspended
+		} else if o.State.Running {
+			vm.Runtime.PowerState = types.VirtualMachinePowerStatePoweredOn
+		} else {
+			vm.Runtime.PowerState = types.VirtualMachinePowerStatePoweredOff
 		}
 
 		vm.Guest.IpAddress = s.IPAddress
@@ -110,7 +120,10 @@ func (c *container) inspect(vm *VirtualMachine) error {
 	return nil
 }
 
-func (c *container) prepareGuestOperation(vm *VirtualMachine, auth types.BaseGuestAuthentication) types.BaseMethodFault {
+func (c *container) prepareGuestOperation(
+	vm *VirtualMachine,
+	auth types.BaseGuestAuthentication) types.BaseMethodFault {
+
 	if c.id == "" {
 		return new(types.GuestOperationsUnavailable)
 	}
@@ -131,12 +144,19 @@ func (c *container) prepareGuestOperation(vm *VirtualMachine, auth types.BaseGue
 	return nil
 }
 
+var sanitizeNameRx = regexp.MustCompile(`[\(\)\s]`)
+
+func sanitizeName(name string) string {
+	return sanitizeNameRx.ReplaceAllString(name, "-")
+}
+
 // createDMI writes BIOS UUID DMI files to a container volume
 func (c *container) createDMI(vm *VirtualMachine, name string) error {
 	image := os.Getenv("VCSIM_BUSYBOX")
 	if image == "" {
 		image = "busybox"
 	}
+
 	cmd := exec.Command("docker", "run", "--rm", "-i", "-v", name+":"+"/"+name, image, "tar", "-C", "/"+name, "-xf", "-")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -172,19 +192,32 @@ func (c *container) createDMI(vm *VirtualMachine, name string) error {
 	_ = tw.Close()
 	_ = stdin.Close()
 
-	err = cmd.Wait()
-	if err != nil {
+	if err := cmd.Wait(); err != nil {
 		stderr := ""
 		if xerr, ok := err.(*exec.ExitError); ok {
 			stderr = string(xerr.Stderr)
 		}
 		log.Printf("%s %s: %s %s", vm.Name, cmd.Args, err, stderr)
+		return err
 	}
-	return err
+
+	return nil
 }
 
+var (
+	toolsRunning = []types.PropertyChange{
+		{Name: "guest.toolsStatus", Val: types.VirtualMachineToolsStatusToolsOk},
+		{Name: "guest.toolsRunningStatus", Val: string(types.VirtualMachineToolsRunningStatusGuestToolsRunning)},
+	}
+
+	toolsNotRunning = []types.PropertyChange{
+		{Name: "guest.toolsStatus", Val: types.VirtualMachineToolsStatusToolsNotRunning},
+		{Name: "guest.toolsRunningStatus", Val: string(types.VirtualMachineToolsRunningStatusGuestToolsNotRunning)},
+	}
+)
+
 // start runs the container if specified by the RUN.container extraConfig property.
-func (c *container) start(vm *VirtualMachine) {
+func (c *container) start(ctx *Context, vm *VirtualMachine) {
 	if c.id != "" {
 		start := "start"
 		if vm.Runtime.PowerState == types.VirtualMachinePowerStateSuspended {
@@ -194,6 +227,8 @@ func (c *container) start(vm *VirtualMachine) {
 		err := cmd.Run()
 		if err != nil {
 			log.Printf("%s %s: %s", vm.Name, cmd.Args, err)
+		} else {
+			ctx.Map.Update(vm, toolsRunning)
 		}
 		return
 	}
@@ -226,7 +261,7 @@ func (c *container) start(vm *VirtualMachine) {
 		env = append(env, "--env", "VMX_GUESTINFO=true")
 	}
 
-	c.name = fmt.Sprintf("vcsim-%s-%s", vm.Name, vm.uid)
+	c.name = fmt.Sprintf("vcsim-%s-%s", sanitizeName(vm.Name), vm.uid)
 	run := append([]string{"docker", "run", "-d", "--name", c.name}, env...)
 
 	if err := c.createDMI(vm, c.name); err != nil {
@@ -246,16 +281,88 @@ func (c *container) start(vm *VirtualMachine) {
 		return
 	}
 
+	ctx.Map.Update(vm, toolsRunning)
 	c.id = strings.TrimSpace(string(out))
 	vm.logPrintf("%s %s: %s", cmd.Path, cmd.Args, c.id)
 
 	if err = c.inspect(vm); err != nil {
 		log.Printf("%s inspect %s: %s", vm.Name, c.id, err)
 	}
+
+	// Start watching the container resource.
+	go c.watchContainer(vm)
+}
+
+// watchContainer monitors the underlying container and updates the VM
+// properties based on the container status. This occurs until either
+// the container or the VM is removed.
+func (c *container) watchContainer(vm *VirtualMachine) {
+
+	inspectInterval := time.Duration(5 * time.Second)
+	if d, err := time.ParseDuration(os.Getenv("VCSIM_INSPECT_INTERVAL")); err == nil {
+		inspectInterval = d
+	}
+
+	var (
+		ctx    = SpoofContext()
+		done   = make(chan struct{})
+		ticker = time.NewTicker(inspectInterval)
+	)
+
+	stopUpdatingVmFromContainer := func() {
+		ticker.Stop()
+		close(done)
+	}
+
+	destroyVm := func() {
+		// If the container cannot be found then destroy this VM.
+		taskRef := vm.DestroyTask(ctx, &types.Destroy_Task{
+			This: vm.Self,
+		}).(*methods.Destroy_TaskBody).Res.Returnval
+		task := ctx.Map.Get(taskRef).(*Task)
+
+		// Wait for the task to complete and see if there is an error.
+		task.Wait()
+		if task.Info.Error != nil {
+			vm.logPrintf("failed to destroy vm: err=%v", *task.Info.Error)
+		}
+	}
+
+	updateVmFromContainer := func() {
+		// Exit the monitor loop if the VM was removed from the API side.
+		if c.id == "" {
+			stopUpdatingVmFromContainer()
+			return
+		}
+
+		if err := c.inspect(vm); err != nil {
+			// If there is an error inspecting the container because it no
+			// longer exists, then destroy the VM as well. Please note the
+			// reason this logic does not invoke stopUpdatingVmFromContainer
+			// is because that will be handled the next time this function
+			// is entered and c.id is empty.
+			if err, ok := err.(*exec.ExitError); ok {
+				if strings.Contains(string(err.Stderr), "No such object") {
+					destroyVm()
+				}
+			}
+		}
+	}
+
+	// Update the VM from the container at regular intervals until the done
+	// channel is closed.
+	for {
+		select {
+		case <-ticker.C:
+			ctx.WithLock(vm, updateVmFromContainer)
+		case <-done:
+			return
+		}
+	}
 }
 
 // stop the container (if any) for the given vm.
-func (c *container) stop(vm *VirtualMachine) {
+func (c *container) stop(ctx *Context, vm *VirtualMachine) {
 	if c.id == "" {
 		return
 	}
@@ -264,11 +371,13 @@ func (c *container) stop(vm *VirtualMachine) {
 	err := cmd.Run()
 	if err != nil {
 		log.Printf("%s %s: %s", vm.Name, cmd.Args, err)
+	} else {
+		ctx.Map.Update(vm, toolsNotRunning)
 	}
 }
 
 // pause the container (if any) for the given vm.
-func (c *container) pause(vm *VirtualMachine) {
+func (c *container) pause(ctx *Context, vm *VirtualMachine) {
 	if c.id == "" {
 		return
 	}
@@ -277,6 +386,23 @@ func (c *container) pause(vm *VirtualMachine) {
 	err := cmd.Run()
 	if err != nil {
 		log.Printf("%s %s: %s", vm.Name, cmd.Args, err)
+	} else {
+		ctx.Map.Update(vm, toolsNotRunning)
+	}
+}
+
+// restart the container (if any) for the given vm.
+func (c *container) restart(ctx *Context, vm *VirtualMachine) {
+	if c.id == "" {
+		return
+	}
+
+	cmd := exec.Command("docker", "restart", c.id)
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("%s %s: %s", vm.Name, cmd.Args, err)
+	} else {
+		ctx.Map.Update(vm, toolsRunning)
 	}
 }
 
@@ -287,8 +413,8 @@ func (c *container) remove(vm *VirtualMachine) {
 	}
 
 	args := [][]string{
-		[]string{"rm", "-v", "-f", c.id},
-		[]string{"volume", "rm", "-f", c.name},
+		{"rm", "-v", "-f", c.id},
+		{"volume", "rm", "-f", c.name},
 	}
 
 	for i := range args {
@@ -302,8 +428,30 @@ func (c *container) remove(vm *VirtualMachine) {
 	c.id = ""
 }
 
-func guestUpload(file string, r *http.Request) error {
-	cmd := exec.Command("docker", "cp", "-", path.Dir(file))
+func (c *container) exec(ctx *Context, vm *VirtualMachine, auth types.BaseGuestAuthentication, args []string) (string, types.BaseMethodFault) {
+	fault := vm.run.prepareGuestOperation(vm, auth)
+	if fault != nil {
+		return "", fault
+	}
+
+	args = append([]string{"exec", vm.run.id}, args...)
+	cmd := exec.Command("docker", args...)
+
+	res, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("%s: %s (%s)", vm.Self, cmd.Args, string(res))
+		return "", new(types.GuestOperationsFault)
+	}
+
+	return strings.TrimSpace(string(res)), nil
+}
+
+// From https://docs.docker.com/engine/reference/commandline/cp/ :
+// > It is not possible to copy certain system files such as resources under /proc, /sys, /dev, tmpfs, and mounts created by the user in the container.
+// > However, you can still copy such files by manually running tar in docker exec.
+func guestUpload(id string, file string, r *http.Request) error {
+	cmd := exec.Command("docker", "exec", "-i", id, "tar", "Cxf", path.Dir(file), "-")
+	cmd.Stderr = os.Stderr
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return err
@@ -329,8 +477,9 @@ func guestUpload(file string, r *http.Request) error {
 	return cmd.Wait()
 }
 
-func guestDownload(file string, w http.ResponseWriter) error {
-	cmd := exec.Command("docker", "cp", file, "-")
+func guestDownload(id string, file string, w http.ResponseWriter) error {
+	cmd := exec.Command("docker", "exec", id, "tar", "Ccf", path.Dir(file), "-", path.Base(file))
+	cmd.Stderr = os.Stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
@@ -348,8 +497,6 @@ func guestDownload(file string, w http.ResponseWriter) error {
 	w.Header().Set("Content-Length", strconv.FormatInt(header.Size, 10))
 	_, _ = io.Copy(w, tr)
 
-	_ = stdout.Close()
-
 	return cmd.Wait()
 }
 
@@ -361,14 +508,14 @@ func ServeGuest(w http.ResponseWriter, r *http.Request) {
 	// vcsim form:        /guestFile/tmp/foo/bar?id=ebc8837b8cb6&token=...
 
 	id := r.URL.Query().Get("id")
-	file := id + ":" + strings.TrimPrefix(r.URL.Path, guestPrefix[:len(guestPrefix)-1])
+	file := strings.TrimPrefix(r.URL.Path, guestPrefix[:len(guestPrefix)-1])
 	var err error
 
 	switch r.Method {
 	case http.MethodPut:
-		err = guestUpload(file, r)
+		err = guestUpload(id, file, r)
 	case http.MethodGet:
-		err = guestDownload(file, w)
+		err = guestDownload(id, file, w)
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return

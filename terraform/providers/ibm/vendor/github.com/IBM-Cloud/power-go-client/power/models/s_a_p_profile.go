@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // SAPProfile s a p profile
+//
 // swagger:model SAPProfile
 type SAPProfile struct {
 
@@ -130,16 +131,16 @@ const (
 	// SAPProfileTypeMemory captures enum value "memory"
 	SAPProfileTypeMemory string = "memory"
 
-	// SAPProfileTypeNonProduction captures enum value "non-production"
-	SAPProfileTypeNonProduction string = "non-production"
+	// SAPProfileTypeNonDashProduction captures enum value "non-production"
+	SAPProfileTypeNonDashProduction string = "non-production"
 
-	// SAPProfileTypeUltraMemory captures enum value "ultra-memory"
-	SAPProfileTypeUltraMemory string = "ultra-memory"
+	// SAPProfileTypeUltraDashMemory captures enum value "ultra-memory"
+	SAPProfileTypeUltraDashMemory string = "ultra-memory"
 )
 
 // prop value enum
 func (m *SAPProfile) validateTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, sAPProfileTypeTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, sAPProfileTypeTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -156,6 +157,11 @@ func (m *SAPProfile) validateType(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this s a p profile based on context it is used
+func (m *SAPProfile) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

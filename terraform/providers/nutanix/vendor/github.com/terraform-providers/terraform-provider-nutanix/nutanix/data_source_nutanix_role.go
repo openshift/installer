@@ -1,16 +1,18 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixRole() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixRoleRead,
+		ReadContext: dataSourceNutanixRoleRead,
 		Schema: map[string]*schema.Schema{
 			"role_id": {
 				Type:          schema.TypeString,
@@ -29,78 +31,23 @@ func dataSourceNutanixRole() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
 			"owner_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"name": {
@@ -139,7 +86,7 @@ func dataSourceNutanixRole() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixRoleRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).API
 
@@ -147,7 +94,7 @@ func dataSourceNutanixRoleRead(d *schema.ResourceData, meta interface{}) error {
 	roleName, rnOk := d.GetOk("role_name")
 
 	if !iok && !rnOk {
-		return fmt.Errorf("please provide `role_id` or `role_name`")
+		return diag.Errorf("please provide `role_id` or `role_name`")
 	}
 
 	var err error
@@ -161,41 +108,41 @@ func dataSourceNutanixRoleRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValues(resp.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValues(resp.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("api_version", resp.APIVersion); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if status := resp.Status; status != nil {
 		if err := d.Set("name", utils.StringValue(resp.Status.Name)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("description", utils.StringValue(resp.Status.Description)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("state", utils.StringValue(resp.Status.State)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if res := status.Resources; res != nil {
 			if err := d.Set("permission_reference_list", flattenArrayReferenceValues(status.Resources.PermissionReferenceList)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 		}
 	}

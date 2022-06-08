@@ -49,6 +49,28 @@ func TestClusterName(t *testing.T) {
 	}
 }
 
+func TestOnPremClusterName(t *testing.T) {
+	cases := []struct {
+		name        string
+		clusterName string
+		valid       bool
+	}{
+		{"single lowercase", "a", true},
+		{"has a dot", "a.a", false},
+		{"valid name", "abcde", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := OnPremClusterName(tc.clusterName)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestClusterName1035(t *testing.T) {
 	maxSizeName := "a" + strings.Repeat("123456789.", 5) + "123"
 

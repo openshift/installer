@@ -57,40 +57,41 @@ type Zone struct {
 
 //ClusterInfo ...
 type ClusterInfo struct {
-	CreatedDate       string        `json:"createdDate"`
-	DataCenter        string        `json:"dataCenter"`
-	ID                string        `json:"id"`
-	Location          string        `json:"location"`
-	Entitlement       string        `json:"entitlement"`
-	MasterKubeVersion string        `json:"masterKubeVersion"`
-	Name              string        `json:"name"`
-	Region            string        `json:"region"`
-	ResourceGroupID   string        `json:"resourceGroup"`
-	State             string        `json:"state"`
-	IsPaid            bool          `json:"isPaid"`
-	Addons            []Addon       `json:"addons"`
-	OwnerEmail        string        `json:"ownerEmail"`
-	Type              string        `json:"type"`
-	TargetVersion     string        `json:"targetVersion"`
-	ServiceSubnet     string        `json:"serviceSubnet"`
-	ResourceGroupName string        `json:"resourceGroupName"`
-	Provider          string        `json:"provider"`
-	PodSubnet         string        `json:"podSubnet"`
-	MultiAzCapable    bool          `json:"multiAzCapable"`
-	APIUser           string        `json:"apiUser"`
-	ServerURL         string        `json:"serverURL"`
-	MasterURL         string        `json:"masterURL"`
-	MasterStatus      string        `json:"masterStatus"`
-	DisableAutoUpdate bool          `json:"disableAutoUpdate"`
-	WorkerZones       []string      `json:"workerZones"`
-	Vpcs              []string      `json:"vpcs"`
-	CRN               string        `json:"crn"`
-	VersionEOS        string        `json:"versionEOS"`
-	ServiceEndpoints  Endpoints     `json:"serviceEndpoints"`
-	Lifecycle         LifeCycleInfo `json:"lifecycle"`
-	WorkerCount       int           `json:"workerCount"`
-	Ingress           IngresInfo    `json:"ingress"`
-	Features          Feat          `json:"features"`
+	CreatedDate          string        `json:"createdDate"`
+	DataCenter           string        `json:"dataCenter"`
+	ID                   string        `json:"id"`
+	Location             string        `json:"location"`
+	Entitlement          string        `json:"entitlement"`
+	MasterKubeVersion    string        `json:"masterKubeVersion"`
+	Name                 string        `json:"name"`
+	Region               string        `json:"region"`
+	ResourceGroupID      string        `json:"resourceGroup"`
+	State                string        `json:"state"`
+	IsPaid               bool          `json:"isPaid"`
+	Addons               []Addon       `json:"addons"`
+	OwnerEmail           string        `json:"ownerEmail"`
+	Type                 string        `json:"type"`
+	TargetVersion        string        `json:"targetVersion"`
+	ServiceSubnet        string        `json:"serviceSubnet"`
+	ResourceGroupName    string        `json:"resourceGroupName"`
+	Provider             string        `json:"provider"`
+	PodSubnet            string        `json:"podSubnet"`
+	MultiAzCapable       bool          `json:"multiAzCapable"`
+	APIUser              string        `json:"apiUser"`
+	ServerURL            string        `json:"serverURL"`
+	MasterURL            string        `json:"masterURL"`
+	MasterStatus         string        `json:"masterStatus"`
+	DisableAutoUpdate    bool          `json:"disableAutoUpdate"`
+	WorkerZones          []string      `json:"workerZones"`
+	Vpcs                 []string      `json:"vpcs"`
+	CRN                  string        `json:"crn"`
+	VersionEOS           string        `json:"versionEOS"`
+	ServiceEndpoints     Endpoints     `json:"serviceEndpoints"`
+	Lifecycle            LifeCycleInfo `json:"lifecycle"`
+	WorkerCount          int           `json:"workerCount"`
+	Ingress              IngresInfo    `json:"ingress"`
+	Features             Feat          `json:"features"`
+	ImageSecurityEnabled bool          `json:"imageSecurityEnabled"`
 }
 type Feat struct {
 	KeyProtectEnabled bool `json:"keyProtectEnabled"`
@@ -139,7 +140,8 @@ type Clusters interface {
 	GetCluster(name string, target ClusterTargetHeader) (*ClusterInfo, error)
 	GetClusterConfigDetail(name, homeDir string, admin bool, target ClusterTargetHeader) (containerv1.ClusterKeyInfo, error)
 	StoreConfigDetail(name, baseDir string, admin bool, createCalicoConfig bool, target ClusterTargetHeader) (string, containerv1.ClusterKeyInfo, error)
-
+	EnableImageSecurityEnforcement(name string, target ClusterTargetHeader) error
+	DisableImageSecurityEnforcement(name string, target ClusterTargetHeader) error
 	//TODO Add other opertaions
 }
 type clusters struct {
@@ -534,4 +536,18 @@ func (r *clusters) StoreConfigDetail(name, dir string, admin, createCalicoConfig
 	}
 	clusterkey.FilePath = kubeconfigFileName
 	return calicoConfig, clusterkey, nil
+}
+
+func (r *clusters) EnableImageSecurityEnforcement(name string, target ClusterTargetHeader) error {
+	rawURL := "/v2/enableImageSecurity"
+	body := map[string]string{"cluster": name}
+	_, err := r.client.Post(rawURL, body, nil, target.ToMap())
+	return err
+}
+
+func (r *clusters) DisableImageSecurityEnforcement(name string, target ClusterTargetHeader) error {
+	rawURL := "/v2/disableImageSecurity"
+	body := map[string]string{"cluster": name}
+	_, err := r.client.Post(rawURL, body, nil, target.ToMap())
+	return err
 }

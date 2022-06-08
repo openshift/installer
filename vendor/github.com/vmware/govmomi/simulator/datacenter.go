@@ -50,8 +50,8 @@ func NewDatacenter(ctx *Context, f *mo.Folder) *Datacenter {
 	return dc
 }
 
-func (dc *Datacenter) RenameTask(r *types.Rename_Task) soap.HasFault {
-	return RenameTask(dc, r)
+func (dc *Datacenter) RenameTask(ctx *Context, r *types.Rename_Task) soap.HasFault {
+	return RenameTask(ctx, dc, r)
 }
 
 // Create Datacenter Folders.
@@ -153,19 +153,30 @@ func (dc *Datacenter) PowerOnMultiVMTask(ctx *Context, req *types.PowerOnMultiVM
 			return nil, new(types.NotImplemented)
 		}
 
+		// Return per-VM tasks, structured as:
+		// thisTask.result - DC level task
+		//    +- []Attempted
+		//        +- subTask.result - VM level powerOn task result
+		//        +- ...
+		res := types.ClusterPowerOnVmResult{}
+		res.Attempted = []types.ClusterAttemptedVmInfo{}
+
 		for _, ref := range req.Vm {
 			vm := Map.Get(ref).(*VirtualMachine)
-			Map.WithLock(vm, func() {
-				vm.PowerOnVMTask(ctx, &types.PowerOnVM_Task{})
+			// NOTE: Simulator does not actually perform any specific host-level placement
+			// (equivalent to vSphere DRS).
+			ctx.WithLock(vm, func() {
+				vmTaskBody := vm.PowerOnVMTask(ctx, &types.PowerOnVM_Task{}).(*methods.PowerOnVM_TaskBody)
+				res.Attempted = append(res.Attempted, types.ClusterAttemptedVmInfo{Vm: ref, Task: &vmTaskBody.Res.Returnval})
 			})
 		}
 
-		return nil, nil
+		return res, nil
 	})
 
 	return &methods.PowerOnMultiVM_TaskBody{
 		Res: &types.PowerOnMultiVM_TaskResponse{
-			Returnval: task.Run(),
+			Returnval: task.Run(ctx),
 		},
 	}
 }
@@ -192,7 +203,7 @@ func (d *Datacenter) DestroyTask(ctx *Context, req *types.Destroy_Task) soap.Has
 
 	return &methods.Destroy_TaskBody{
 		Res: &types.Destroy_TaskResponse{
-			Returnval: task.Run(),
+			Returnval: task.Run(ctx),
 		},
 	}
 }

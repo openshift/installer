@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudPvminstancesNetworksPostParams creates a new PcloudPvminstancesNetworksPostParams object
-// with the default values initialized.
+// NewPcloudPvminstancesNetworksPostParams creates a new PcloudPvminstancesNetworksPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPvminstancesNetworksPostParams() *PcloudPvminstancesNetworksPostParams {
-	var ()
 	return &PcloudPvminstancesNetworksPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPvminstancesNetworksPostParamsWithTimeout creates a new PcloudPvminstancesNetworksPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPvminstancesNetworksPostParamsWithTimeout(timeout time.Duration) *PcloudPvminstancesNetworksPostParams {
-	var ()
 	return &PcloudPvminstancesNetworksPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPvminstancesNetworksPostParamsWithContext creates a new PcloudPvminstancesNetworksPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPvminstancesNetworksPostParamsWithContext(ctx context.Context) *PcloudPvminstancesNetworksPostParams {
-	var ()
 	return &PcloudPvminstancesNetworksPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPvminstancesNetworksPostParamsWithHTTPClient creates a new PcloudPvminstancesNetworksPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPvminstancesNetworksPostParamsWithHTTPClient(client *http.Client) *PcloudPvminstancesNetworksPostParams {
-	var ()
 	return &PcloudPvminstancesNetworksPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPvminstancesNetworksPostParams contains all the parameters to send to the API endpoint
-for the pcloud pvminstances networks post operation typically these are written to a http.Request
+/* PcloudPvminstancesNetworksPostParams contains all the parameters to send to the API endpoint
+   for the pcloud pvminstances networks post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPvminstancesNetworksPostParams struct {
 
-	/*Body
-	  Add network to PVM Instance parameters
+	/* Body.
 
+	   Add network to PVM Instance parameters
 	*/
 	Body *models.PVMInstanceAddNetwork
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PvmInstanceID
-	  PCloud PVM Instance ID
 
+	/* PvmInstanceID.
+
+	   PCloud PVM Instance ID
 	*/
 	PvmInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud pvminstances networks post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesNetworksPostParams) WithDefaults() *PcloudPvminstancesNetworksPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud pvminstances networks post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesNetworksPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud pvminstances networks post params
@@ -157,7 +172,6 @@ func (o *PcloudPvminstancesNetworksPostParams) WriteToRequest(r runtime.ClientRe
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

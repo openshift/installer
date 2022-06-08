@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // PVMInstanceUpdate p VM instance update
+//
 // swagger:model PVMInstanceUpdate
 type PVMInstanceUpdate struct {
 
@@ -81,7 +82,6 @@ func (m *PVMInstanceUpdate) Validate(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceUpdate) validatePinPolicy(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.PinPolicy) { // not required
 		return nil
 	}
@@ -89,6 +89,8 @@ func (m *PVMInstanceUpdate) validatePinPolicy(formats strfmt.Registry) error {
 	if err := m.PinPolicy.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("pinPolicy")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("pinPolicy")
 		}
 		return err
 	}
@@ -122,14 +124,13 @@ const (
 
 // prop value enum
 func (m *PVMInstanceUpdate) validateProcTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, pVmInstanceUpdateTypeProcTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, pVmInstanceUpdateTypeProcTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *PVMInstanceUpdate) validateProcType(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.ProcType) { // not required
 		return nil
 	}
@@ -143,7 +144,6 @@ func (m *PVMInstanceUpdate) validateProcType(formats strfmt.Registry) error {
 }
 
 func (m *PVMInstanceUpdate) validateSoftwareLicenses(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.SoftwareLicenses) { // not required
 		return nil
 	}
@@ -152,6 +152,8 @@ func (m *PVMInstanceUpdate) validateSoftwareLicenses(formats strfmt.Registry) er
 		if err := m.SoftwareLicenses.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("softwareLicenses")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("softwareLicenses")
 			}
 			return err
 		}
@@ -161,7 +163,6 @@ func (m *PVMInstanceUpdate) validateSoftwareLicenses(formats strfmt.Registry) er
 }
 
 func (m *PVMInstanceUpdate) validateVirtualCores(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.VirtualCores) { // not required
 		return nil
 	}
@@ -170,6 +171,76 @@ func (m *PVMInstanceUpdate) validateVirtualCores(formats strfmt.Registry) error 
 		if err := m.VirtualCores.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("virtualCores")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("virtualCores")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this p VM instance update based on the context it is used
+func (m *PVMInstanceUpdate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidatePinPolicy(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSoftwareLicenses(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateVirtualCores(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *PVMInstanceUpdate) contextValidatePinPolicy(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.PinPolicy.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("pinPolicy")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("pinPolicy")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceUpdate) contextValidateSoftwareLicenses(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.SoftwareLicenses != nil {
+		if err := m.SoftwareLicenses.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("softwareLicenses")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("softwareLicenses")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceUpdate) contextValidateVirtualCores(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.VirtualCores != nil {
+		if err := m.VirtualCores.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("virtualCores")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("virtualCores")
 			}
 			return err
 		}

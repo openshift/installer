@@ -1,35 +1,49 @@
-# TODO(mjturek): network and image data blocks can be in main module
-#                as master and bootstrap will be using the same
-#                network and image. Once we add in master module, make
-#                the move.
-data "ibm_pi_network" "network" {
-  pi_network_name      = var.network_name
-  pi_cloud_instance_id = var.cloud_instance_id
+provider "ibm" {
+  alias            = "vpc"
+  ibmcloud_api_key = var.api_key
+  region           = var.vpc_region
+  zone             = var.vpc_zone
 }
 
-# Create the master instances
-resource "ibm_pi_instance" "master" {
-  count                = var.instance_count
-  pi_memory            = var.memory
-  pi_processors        = var.processors
-  pi_instance_name     = "${var.cluster_id}-master-${count.index}"
-  pi_proc_type         = var.proc_type
-  pi_image_id          = var.image_id
-  pi_sys_type          = var.sys_type
-  pi_cloud_instance_id = var.cloud_instance_id
-  pi_network {
-    network_id = data.ibm_pi_network.network.id
+provider "ibm" {
+  alias            = "powervs"
+  ibmcloud_api_key = var.api_key
+  region           = var.powervs_region
+  zone             = var.powervs_zone
+}
+
+module "vm" {
+  providers = {
+    ibm = ibm.powervs
   }
-  pi_user_data     = base64encode(var.ignition)
-  pi_key_pair_name = var.key_id
-  pi_health_status = "WARNING"
+  source = "./vm"
+
+  instance_count    = var.instance_count
+  memory            = var.memory
+  processors        = var.processors
+  cluster_id        = var.cluster_id
+  proc_type         = var.proc_type
+  image_id          = var.image_id
+  sys_type          = var.sys_type
+  cloud_instance_id = var.cloud_instance_id
+  resource_group    = var.resource_group
+  ignition          = var.ignition
+  ssh_key_id        = var.ssh_key_id
+  dhcp_id           = var.dhcp_id
+  dhcp_network_id   = var.dhcp_network_id
 }
 
-data "ibm_pi_instance_ip" "master_ip" {
-  count      = var.instance_count
-  depends_on = [ibm_pi_instance.master]
+module "lb" {
+  providers = {
+    ibm = ibm.vpc
+  }
+  source = "./lb"
 
-  pi_instance_name     = ibm_pi_instance.master[count.index].pi_instance_name
-  pi_network_name      = data.ibm_pi_network.network.pi_network_name
-  pi_cloud_instance_id = var.cloud_instance_id
+  instance_count      = var.instance_count
+  master_ips          = module.vm.master_ips
+  lb_int_id           = var.lb_int_id
+  lb_ext_id           = var.lb_ext_id
+  api_pool_ext_id     = var.api_pool_ext_id
+  api_pool_int_id     = var.api_pool_int_id
+  machine_cfg_pool_id = var.machine_cfg_pool_id
 }

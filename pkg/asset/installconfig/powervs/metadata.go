@@ -3,6 +3,15 @@ package powervs
 import (
 	"context"
 	"fmt"
+	"github.com/IBM-Cloud/bluemix-go"
+	"github.com/IBM-Cloud/bluemix-go/authentication"
+	"github.com/IBM-Cloud/bluemix-go/http"
+	"github.com/IBM-Cloud/bluemix-go/rest"
+	bxsession "github.com/IBM-Cloud/bluemix-go/session"
+	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/IBM/networking-go-sdk/zonesv1"
+	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
+	gohttp "net/http"
 	"sync"
 )
 
@@ -13,6 +22,7 @@ type Metadata struct {
 	BaseDomain string
 
 	accountID      string
+	apiKey         string
 	cisInstanceCRN string
 	client         *Client
 
@@ -30,20 +40,138 @@ func (m *Metadata) AccountID(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	if m.accountID == "" {
-		client, err := m.Client()
+	if m.client == nil {
+		client, err := NewClient()
 		if err != nil {
 			return "", err
 		}
 
-		apiKeyDetails, err := client.GetAuthenticatorAPIKeyDetails(ctx)
+		m.client = client
+	}
+
+	if m.accountID == "" {
+		apiKeyDetails, err := m.client.GetAuthenticatorAPIKeyDetails(ctx)
 		if err != nil {
 			return "", err
 		}
 
 		m.accountID = *apiKeyDetails.AccountID
 	}
+
 	return m.accountID, nil
+}
+
+// APIKey returns the IBM Cloud account API Key associated with the authentication
+// credentials.
+func (m *Metadata) APIKey(ctx context.Context) (string, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if m.client == nil {
+		client, err := NewClient()
+		if err != nil {
+			return "", err
+		}
+
+		m.client = client
+	}
+
+	if m.apiKey == "" {
+		m.apiKey = m.client.GetAPIKey()
+	}
+
+	return m.apiKey, nil
+}
+
+// GetCISInstanceCRN gets the CRN name for the specified base domain.
+func GetCISInstanceCRN(APIKey string, BaseDomain string) (string, error) {
+	var CISInstanceCRN string = ""
+	var bxSession *bxsession.Session
+	var err error
+	var tokenProviderEndpoint string = "https://iam.cloud.ibm.com"
+	var tokenRefresher *authentication.IAMAuthRepository
+	var authenticator *core.IamAuthenticator
+	var controllerSvc *resourcecontrollerv2.ResourceControllerV2
+	var listInstanceOptions *resourcecontrollerv2.ListResourceInstancesOptions
+	var listResourceInstancesResponse *resourcecontrollerv2.ResourceInstancesList
+	var instance resourcecontrollerv2.ResourceInstance
+	var zonesService *zonesv1.ZonesV1
+	var listZonesOptions *zonesv1.ListZonesOptions
+	var listZonesResponse *zonesv1.ListZonesResp
+
+	bxSession, err = bxsession.New(&bluemix.Config{
+		BluemixAPIKey:         APIKey,
+		TokenProviderEndpoint: &tokenProviderEndpoint,
+		Debug:                 false,
+	})
+	if err != nil {
+		return CISInstanceCRN, fmt.Errorf("getCISInstanceCRN: bxsession.New: %v", err)
+	}
+	tokenRefresher, err = authentication.NewIAMAuthRepository(bxSession.Config, &rest.Client{
+		DefaultHeader: gohttp.Header{
+			"User-Agent": []string{http.UserAgent()},
+		},
+	})
+	if err != nil {
+		return CISInstanceCRN, fmt.Errorf("getCISInstanceCRN: authentication.NewIAMAuthRepository: %v", err)
+	}
+	err = tokenRefresher.AuthenticateAPIKey(bxSession.Config.BluemixAPIKey)
+	if err != nil {
+		return CISInstanceCRN, fmt.Errorf("getCISInstanceCRN: tokenRefresher.AuthenticateAPIKey: %v", err)
+	}
+	authenticator = &core.IamAuthenticator{
+		ApiKey: APIKey,
+	}
+	err = authenticator.Validate()
+	if err != nil {
+		return CISInstanceCRN, fmt.Errorf("getCISInstanceCRN: authenticator.Validate: %v", err)
+	}
+	// Instantiate the service with an API key based IAM authenticator
+	controllerSvc, err = resourcecontrollerv2.NewResourceControllerV2(&resourcecontrollerv2.ResourceControllerV2Options{
+		Authenticator: authenticator,
+		ServiceName:   "cloud-object-storage",
+		URL:           "https://resource-controller.cloud.ibm.com",
+	})
+	if err != nil {
+		return CISInstanceCRN, fmt.Errorf("getCISInstanceCRN: creating ControllerV2 Service: %v", err)
+	}
+	listInstanceOptions = controllerSvc.NewListResourceInstancesOptions()
+	listInstanceOptions.SetResourceID(cisServiceID)
+	listResourceInstancesResponse, _, err = controllerSvc.ListResourceInstances(listInstanceOptions)
+	if err != nil {
+		return CISInstanceCRN, fmt.Errorf("getCISInstanceCRN: ListResourceInstances: %v", err)
+	}
+	for _, instance = range listResourceInstancesResponse.Resources {
+		authenticator = &core.IamAuthenticator{
+			ApiKey: APIKey,
+		}
+
+		err = authenticator.Validate()
+		if err != nil {
+		}
+
+		zonesService, err = zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
+			Authenticator: authenticator,
+			Crn:           instance.CRN,
+		})
+		if err != nil {
+			return CISInstanceCRN, fmt.Errorf("getCISInstanceCRN: NewZonesV1: %v", err)
+		}
+		listZonesOptions = zonesService.NewListZonesOptions()
+		listZonesResponse, _, err = zonesService.ListZones(listZonesOptions)
+		if listZonesResponse == nil {
+			return CISInstanceCRN, fmt.Errorf("getCISInstanceCRN: ListZones: %v", err)
+		}
+		for _, zone := range listZonesResponse.Result {
+			if *zone.Status == "active" {
+				if *zone.Name == BaseDomain {
+					CISInstanceCRN = *instance.CRN
+				}
+			}
+		}
+	}
+
+	return CISInstanceCRN, nil
 }
 
 // CISInstanceCRN returns the Cloud Internet Services instance CRN that is
@@ -52,41 +180,35 @@ func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	if m.cisInstanceCRN == "" {
-		client, err := m.Client()
+	if m.client == nil {
+		client, err := NewClient()
 		if err != nil {
 			return "", err
 		}
 
-		zones, err := client.GetDNSZones(ctx)
-		if err != nil {
-			return "", err
-		}
-
-		for _, z := range zones {
-			if z.Name == m.BaseDomain {
-				m.SetCISInstanceCRN(z.CISInstanceCRN)
-				return m.cisInstanceCRN, nil
-			}
-		}
-		return "", fmt.Errorf("cisInstanceCRN unknown due to DNS zone %q not found", m.BaseDomain)
+		m.client = client
 	}
+
+	if m.apiKey == "" {
+		m.apiKey = m.client.GetAPIKey()
+	}
+
+	if m.cisInstanceCRN == "" {
+		var cisInstanceCRN string = ""
+		var err error
+
+		cisInstanceCRN, err = GetCISInstanceCRN(m.apiKey, m.BaseDomain)
+		if err != nil {
+			return "", err
+		}
+
+		m.cisInstanceCRN = cisInstanceCRN
+	}
+
 	return m.cisInstanceCRN, nil
 }
 
 // SetCISInstanceCRN sets Cloud Internet Services instance CRN to a string value.
 func (m *Metadata) SetCISInstanceCRN(crn string) {
 	m.cisInstanceCRN = crn
-}
-
-// Client returns a client used for making API calls to IBM Cloud services.
-func (m *Metadata) Client() (*Client, error) {
-	if m.client == nil {
-		client, err := NewClient()
-		if err != nil {
-			return nil, err
-		}
-		m.client = client
-	}
-	return m.client, nil
 }

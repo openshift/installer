@@ -9,7 +9,12 @@ import (
 // Platform collects powervs-specific configuration.
 func Platform() (*powervs.Platform, error) {
 
-	ssn, err := GetSession()
+	bxCli, err := NewBxClient()
+	if err != nil {
+		return nil, err
+	}
+
+	err = bxCli.NewPISession()
 	if err != nil {
 		return nil, err
 	}
@@ -23,9 +28,9 @@ func Platform() (*powervs.Platform, error) {
 		p.ClusterOSImage = osOverride
 	}
 
-	p.Region = ssn.Session.Options.Region
-	p.Zone = ssn.Session.Options.Zone
-	p.UserID = ssn.Session.Options.UserAccount
+	p.Region = bxCli.PISession.Options.Region
+	p.Zone = bxCli.PISession.Options.Zone
+	p.UserID = bxCli.PISession.Options.UserAccount
 
 	return &p, nil
 }

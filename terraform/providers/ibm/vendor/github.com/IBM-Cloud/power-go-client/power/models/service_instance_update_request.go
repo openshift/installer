@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ServiceInstanceUpdateRequest service instance update request
+//
 // swagger:model ServiceInstanceUpdateRequest
 type ServiceInstanceUpdateRequest struct {
 
@@ -53,7 +55,6 @@ func (m *ServiceInstanceUpdateRequest) Validate(formats strfmt.Registry) error {
 }
 
 func (m *ServiceInstanceUpdateRequest) validatePreviousValues(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.PreviousValues) { // not required
 		return nil
 	}
@@ -62,6 +63,8 @@ func (m *ServiceInstanceUpdateRequest) validatePreviousValues(formats strfmt.Reg
 		if err := m.PreviousValues.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("previous_values")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("previous_values")
 			}
 			return err
 		}
@@ -74,6 +77,36 @@ func (m *ServiceInstanceUpdateRequest) validateServiceID(formats strfmt.Registry
 
 	if err := validate.Required("service_id", "body", m.ServiceID); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this service instance update request based on the context it is used
+func (m *ServiceInstanceUpdateRequest) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidatePreviousValues(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ServiceInstanceUpdateRequest) contextValidatePreviousValues(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.PreviousValues != nil {
+		if err := m.PreviousValues.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("previous_values")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("previous_values")
+			}
+			return err
+		}
 	}
 
 	return nil

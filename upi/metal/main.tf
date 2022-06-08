@@ -1,8 +1,22 @@
-# ================IGNITION=====================
+# ================PROVIDERS=====================
 
-# force local ignition provider binary
-provider "ignition" {
-  version = "0.0.0"
+terraform {
+  required_providers {
+    ignition = {
+      source  = "community-terraform-providers/ignition"
+      version = "2.1.2"
+    }
+
+    metal = {
+      source = "equinix/metal"
+      version = "3.2.2"
+    }
+
+    matchbox = {
+      source  = "poseidon/matchbox"
+      version = "0.5.0"
+    }
+  }
 }
 
 # ================MATCHBOX=====================
@@ -93,11 +107,8 @@ resource "matchbox_group" "worker" {
 
 # ================PACKET=====================
 
-provider "packet" {
-  version = "3.2.0"
-}
 
-resource "packet_device" "masters" {
+resource "metal_device" "masters" {
   count                   = var.master_count
   hostname                = "master-${count.index}.${var.cluster_domain}"
   plan                    = var.packet_plan
@@ -111,7 +122,7 @@ resource "packet_device" "masters" {
   depends_on = [matchbox_group.master]
 }
 
-resource "packet_device" "workers" {
+resource "metal_device" "workers" {
   count                   = var.worker_count
   hostname                = "worker-${count.index}.${var.cluster_domain}"
   plan                    = var.packet_plan
@@ -155,10 +166,10 @@ provider aws {
 }
 
 locals {
-  master_public_ipv4_networks = flatten(packet_device.masters.*.network)
+  master_public_ipv4_networks = flatten(metal_device.masters.*.network)
   master_public_ipv4          = data.template_file.master_ips.*.rendered
 
-  worker_public_ipv4_networks = flatten(packet_device.workers.*.network)
+  worker_public_ipv4_networks = flatten(metal_device.workers.*.network)
   worker_public_ipv4          = data.template_file.worker_ips.*.rendered
   ctrp_records                = compact(concat(var.bootstrap_dns ? [module.bootstrap.device_ip] : [], local.master_public_ipv4))
 }

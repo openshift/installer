@@ -2,13 +2,14 @@ package nutanix
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/spf13/cast"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
@@ -16,12 +17,17 @@ import (
 
 func resourceNutanixRole() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixRoleCreate,
-		Read:   resourceNutanixRoleRead,
-		Update: resourceNutanixRoleUpdate,
-		Delete: resourceNutanixRoleDelete,
+		CreateContext: resourceNutanixRoleCreate,
+		ReadContext:   resourceNutanixRoleRead,
+		UpdateContext: resourceNutanixRoleUpdate,
+		DeleteContext: resourceNutanixRoleDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Update: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
+			Delete: schema.DefaultTimeout(DEFAULTWAITTIMEOUT * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"api_version": {
@@ -36,44 +42,8 @@ func resourceNutanixRole() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
@@ -156,14 +126,14 @@ func resourceNutanixRole() *schema.Resource {
 					m := v.(map[string]interface{})
 					buf.WriteString(fmt.Sprintf("%s-", m["kind"].(string)))
 					buf.WriteString(fmt.Sprintf("%s-", m["uuid"].(string)))
-					return hashcode.String(buf.String())
+					return utils.HashcodeString(buf.String())
 				},
 			},
 		},
 	}
 }
 
-func resourceNutanixRoleCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixRoleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	request := &v3.Role{}
@@ -175,11 +145,11 @@ func resourceNutanixRoleCreate(d *schema.ResourceData, meta interface{}) error {
 	permissions, permissionsOk := d.GetOk("permission_reference_list")
 
 	if !nameOk && !permissionsOk {
-		return fmt.Errorf("please provide the required `name` and `permission_reference_list`  attribute")
+		return diag.Errorf("please provide the required `name` and `permission_reference_list`  attribute")
 	}
 
 	if err := getMetadataAttributesV2(d, metadata, "role"); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	spec.Name = utils.StringPtr(name.(string))
@@ -197,7 +167,7 @@ func resourceNutanixRoleCreate(d *schema.ResourceData, meta interface{}) error {
 
 	resp, err := conn.V3.CreateRole(request)
 	if err != nil {
-		return fmt.Errorf("error creating Nutanix Role %s: %+v", utils.StringValue(spec.Name), err)
+		return diag.Errorf("error creating Nutanix Role %s: %+v", utils.StringValue(spec.Name), err)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -207,15 +177,15 @@ func resourceNutanixRoleCreate(d *schema.ResourceData, meta interface{}) error {
 		Pending:    []string{"QUEUED", "RUNNING", "PENDING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		id := d.Id()
 		d.SetId("")
-		return fmt.Errorf("error waiting for role  id (%s) to create: %+v", id, err)
+		return diag.Errorf("error waiting for role  id (%s) to create: %+v", id, err)
 	}
 
 	// Setting Description because in Get request is not present.
@@ -223,10 +193,10 @@ func resourceNutanixRoleCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(utils.StringValue(resp.Metadata.UUID))
 
-	return resourceNutanixRoleRead(d, meta)
+	return resourceNutanixRoleRead(ctx, d, meta)
 }
 
-func resourceNutanixRoleRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 	id := d.Id()
 	resp, err := conn.V3.GetRole(id)
@@ -235,44 +205,44 @@ func resourceNutanixRoleRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		errDel := resourceNutanixRoleDelete(d, meta)
+		errDel := resourceNutanixRoleDelete(ctx, d, meta)
 		if errDel != nil {
-			return fmt.Errorf("error deleting role (%s) after read error: %+v", id, errDel)
+			return diag.Errorf("error deleting role (%s) after read error: %+v", id, errDel)
 		}
 		d.SetId("")
-		return fmt.Errorf("error reading role id (%s): %+v", id, err)
+		return diag.Errorf("error reading role id (%s): %+v", id, err)
 	}
 
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValuesList(resp.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValuesList(resp.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	d.Set("api_version", resp.APIVersion)
 
 	if status := resp.Status; status != nil {
 		if err := d.Set("name", utils.StringValue(resp.Status.Name)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("description", utils.StringValue(resp.Status.Description)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("state", utils.StringValue(resp.Status.State)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if res := status.Resources; res != nil {
 			if err := d.Set("permission_reference_list", flattenArrayReferenceValues(status.Resources.PermissionReferenceList)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 		}
 	}
@@ -280,7 +250,7 @@ func resourceNutanixRoleRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceNutanixRoleUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 	request := &v3.Role{}
 	metadata := &v3.Metadata{}
@@ -294,7 +264,7 @@ func resourceNutanixRoleUpdate(d *schema.ResourceData, meta interface{}) error {
 		if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
 			d.SetId("")
 		}
-		return fmt.Errorf("error retrieving for role id (%s) :%+v", id, err)
+		return diag.Errorf("error retrieving for role id (%s) :%+v", id, err)
 	}
 
 	if response.Metadata != nil {
@@ -335,7 +305,7 @@ func resourceNutanixRoleUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	resp, errUpdate := conn.V3.UpdateRole(d.Id(), request)
 	if errUpdate != nil {
-		return fmt.Errorf("error updating role id %s): %s", d.Id(), errUpdate)
+		return diag.Errorf("error updating role id %s): %s", d.Id(), errUpdate)
 	}
 
 	taskUUID := resp.Status.ExecutionContext.TaskUUID.(string)
@@ -345,27 +315,27 @@ func resourceNutanixRoleUpdate(d *schema.ResourceData, meta interface{}) error {
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, taskUUID),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutUpdate),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf(
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf(
 			"error waiting for role (%s) to update: %s", d.Id(), err)
 	}
 	// Setting Description because in Get request is not present.
 	d.Set("description", utils.StringValue(resp.Spec.Description))
 
-	return resourceNutanixRoleRead(d, meta)
+	return resourceNutanixRoleRead(ctx, d, meta)
 }
 
-func resourceNutanixRoleDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixRoleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 
 	resp, err := conn.V3.DeleteRole(d.Id())
 	if err != nil {
-		return fmt.Errorf("error deleting role id %s): %s", d.Id(), err)
+		return diag.Errorf("error deleting role id %s): %s", d.Id(), err)
 	}
 
 	// Wait for the VM to be available
@@ -373,13 +343,13 @@ func resourceNutanixRoleDelete(d *schema.ResourceData, meta interface{}) error {
 		Pending:    []string{"QUEUED", "RUNNING", "DELETED_PENDING"},
 		Target:     []string{"SUCCEEDED"},
 		Refresh:    taskStateRefreshFunc(conn, cast.ToString(resp.Status.ExecutionContext.TaskUUID)),
-		Timeout:    subnetTimeout,
+		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      subnetDelay,
 		MinTimeout: subnetMinTimeout,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf(
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf(
 			"error waiting for role (%s) to update: %s", d.Id(), err)
 	}
 

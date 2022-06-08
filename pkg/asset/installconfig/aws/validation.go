@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"sort"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
-	"golang.org/x/net/proxy"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -321,20 +320,12 @@ func validateEndpointAccessibility(endpointURL string) error {
 	if endpointURL == "e2e.local" {
 		return nil
 	}
-	URL, err := url.Parse(endpointURL)
+	_, err := url.Parse(endpointURL)
 	if err != nil {
 		return err
 	}
-	port := URL.Port()
-	if port == "" {
-		port = "https"
-	}
-	conn, err := proxy.Dial(context.Background(), "tcp", net.JoinHostPort(URL.Hostname(), port))
-	if err != nil {
-		return err
-	}
-	conn.Close()
-	return nil
+	_, err = http.Head(endpointURL)
+	return err
 }
 
 var requiredServices = []string{
@@ -348,7 +339,7 @@ var requiredServices = []string{
 }
 
 // ValidateForProvisioning validates if the install config is valid for provisioning the cluster.
-func ValidateForProvisioning(session *session.Session, ic *types.InstallConfig, metadata *Metadata) error {
+func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Metadata) error {
 	if ic.Publish == types.InternalPublishingStrategy && ic.AWS.HostedZone == "" {
 		return nil
 	}
@@ -359,13 +350,12 @@ func ValidateForProvisioning(session *session.Session, ic *types.InstallConfig, 
 
 	errors := field.ErrorList{}
 	allErrs := field.ErrorList{}
-	client := route53.New(session)
 
 	if ic.AWS.HostedZone != "" {
-		zoneName := ic.AWS.HostedZone
-		zonePath := field.NewPath("aws", "hostedZone")
-		zoneOutput, errors := getHostedZone(client, zonePath, zoneName)
-		if len(errors) > 0 {
+		zoneName = ic.AWS.HostedZone
+		zonePath = field.NewPath("aws", "hostedZone")
+		zoneOutput, err := client.GetHostedZone(zoneName)
+		if err != nil {
 			return field.ErrorList{
 				field.Invalid(zonePath, zoneName, "cannot find hosted zone"),
 			}.ToAggregate()
@@ -377,62 +367,23 @@ func ValidateForProvisioning(session *session.Session, ic *types.InstallConfig, 
 
 		zone = zoneOutput.HostedZone
 	} else {
-		zoneName := ic.BaseDomain
-		zonePath := field.NewPath("baseDomain")
-		zone, errors = getBaseDomain(session, zonePath, zoneName)
-		if len(errors) > 0 {
+		zoneName = ic.BaseDomain
+		zonePath = field.NewPath("baseDomain")
+		baseDomainOutput, err := client.GetBaseDomain(zoneName)
+		if err != nil {
 			return field.ErrorList{
 				field.Invalid(zonePath, zoneName, "cannot find base domain"),
 			}.ToAggregate()
 		}
+
+		zone = baseDomainOutput
 	}
 
-	if errors = validateZoneRecords(client, zone, zoneName, zonePath, ic); len(errors) > 0 {
+	if errors = client.ValidateZoneRecords(zone, zoneName, zonePath, ic); len(errors) > 0 {
 		allErrs = append(allErrs, errors...)
 	}
 
 	return allErrs.ToAggregate()
-}
-
-func validateZoneRecords(client *route53.Route53, zone *route53.HostedZone, zoneName string, zonePath *field.Path, ic *types.InstallConfig) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	problematicRecords, err := getSubDomainDNSRecords(client, zone, ic)
-	if err != nil {
-		allErrs = append(allErrs, field.InternalError(zonePath,
-			errors.Wrapf(err, "could not list record sets for domain %q", zoneName)))
-	}
-
-	if len(problematicRecords) > 0 {
-		detail := fmt.Sprintf(
-			"the zone already has record sets for the domain of the cluster: [%s]",
-			strings.Join(problematicRecords, ", "),
-		)
-		allErrs = append(allErrs, field.Invalid(zonePath, zoneName, detail))
-	}
-
-	return allErrs
-}
-
-func getBaseDomain(session *session.Session, baseDomainPath *field.Path, baseDomainName string) (*route53.HostedZone, field.ErrorList) {
-	baseDomainZone, err := GetPublicZone(session, baseDomainName)
-	if err != nil {
-		return nil, field.ErrorList{
-			field.Invalid(baseDomainPath, baseDomainName, "cannot find base domain"),
-		}
-	}
-	return baseDomainZone, nil
-}
-
-func getHostedZone(client *route53.Route53, hostedZonePath *field.Path, hostedZoneName string) (*route53.GetHostedZoneOutput, field.ErrorList) {
-	// validate that the hosted zone exists
-	hostedZoneOutput, err := client.GetHostedZone(&route53.GetHostedZoneInput{Id: aws.String(hostedZoneName)})
-	if err != nil {
-		return nil, field.ErrorList{
-			field.Invalid(hostedZonePath, hostedZoneName, "cannot find hosted zone"),
-		}
-	}
-	return hostedZoneOutput, nil
 }
 
 func validateHostedZone(hostedZoneOutput *route53.GetHostedZoneOutput, hostedZonePath *field.Path, hostedZoneName string, metadata *Metadata) field.ErrorList {
@@ -451,43 +402,6 @@ func validateHostedZone(hostedZoneOutput *route53.GetHostedZoneOutput, hostedZon
 	return allErrs
 }
 
-func getSubDomainDNSRecords(client *route53.Route53, hostedZone *route53.HostedZone, ic *types.InstallConfig) ([]string, error) {
-	dottedClusterDomain := ic.ClusterDomain() + "."
-
-	// validate that the domain of the hosted zone is the cluster domain or a parent of the cluster domain
-	if !isHostedZoneDomainParentOfClusterDomain(hostedZone, dottedClusterDomain) {
-		return nil, errors.Errorf("hosted zone domain %q is not a parent of the cluster domain %q", *hostedZone.Name, dottedClusterDomain)
-	}
-
-	var problematicRecords []string
-	// validate that the hosted zone does not already have any record sets for the cluster domain
-	if err := client.ListResourceRecordSetsPages(
-		&route53.ListResourceRecordSetsInput{HostedZoneId: hostedZone.Id},
-		func(out *route53.ListResourceRecordSetsOutput, lastPage bool) bool {
-			for _, recordSet := range out.ResourceRecordSets {
-				name := aws.StringValue(recordSet.Name)
-				// skip record sets that are not sub-domains of the cluster domain. Such record sets may exist for
-				// hosted zones that are used for other clusters or other purposes.
-				if !strings.HasSuffix(name, dottedClusterDomain) {
-					continue
-				}
-				// skip record sets that are the cluster domain. Record sets for the cluster domain are fine. If the
-				// hosted zone has the name of the cluster domain, then there will be NS and SOA record sets for the
-				// cluster domain.
-				if len(name) == len(dottedClusterDomain) {
-					continue
-				}
-				problematicRecords = append(problematicRecords, fmt.Sprintf("%s (%s)", name, aws.StringValue(recordSet.Type)))
-			}
-			return !lastPage
-		},
-	); err != nil {
-		return nil, err
-	}
-
-	return problematicRecords, nil
-}
-
 func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcID string) bool {
 	if vpcID == "" {
 		return false
@@ -498,11 +412,4 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 		}
 	}
 	return false
-}
-
-func isHostedZoneDomainParentOfClusterDomain(hostedZone *route53.HostedZone, dottedClusterDomain string) bool {
-	if *hostedZone.Name == dottedClusterDomain {
-		return true
-	}
-	return strings.HasSuffix(dottedClusterDomain, "."+*hostedZone.Name)
 }

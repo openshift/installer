@@ -28,7 +28,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -38,7 +37,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
@@ -130,10 +130,26 @@ func Fault(msg string, fault types.BaseMethodFault) *soap.Fault {
 	return f
 }
 
+func tracef(format string, v ...interface{}) {
+	if Trace {
+		log.Printf(format, v...)
+	}
+}
+
 func (s *Service) call(ctx *Context, method *Method) soap.HasFault {
 	handler := ctx.Map.Get(method.This)
 	session := ctx.Session
 	ctx.Caller = &method.This
+
+	if ctx.Map.Handler != nil {
+		h, fault := ctx.Map.Handler(ctx, method)
+		if fault != nil {
+			return &serverFaultBody{Reason: Fault("", fault)}
+		}
+		if h != nil {
+			handler = h
+		}
+	}
 
 	if session == nil {
 		switch method.Name {
@@ -189,22 +205,8 @@ func (s *Service) call(ctx *Context, method *Method) soap.HasFault {
 	}
 
 	// We have a valid call. Introduce a delay if requested
-	//
 	if s.delay != nil {
-		d := 0
-		if s.delay.Delay > 0 {
-			d = s.delay.Delay
-		}
-		if md, ok := s.delay.MethodDelay[method.Name]; ok {
-			d += md
-		}
-		if s.delay.DelayJitter > 0 {
-			d += int(rand.NormFloat64() * s.delay.DelayJitter * float64(d))
-		}
-		if d > 0 {
-			//fmt.Printf("Delaying method %s %d ms\n", name, d)
-			time.Sleep(time.Duration(d) * time.Millisecond)
-		}
+		s.delay.delay(method.Name)
 	}
 
 	var args, res []reflect.Value
@@ -212,11 +214,19 @@ func (s *Service) call(ctx *Context, method *Method) soap.HasFault {
 		args = append(args, reflect.ValueOf(ctx))
 	}
 	args = append(args, reflect.ValueOf(method.Body))
-	ctx.Map.WithLock(handler, func() {
+	ctx.Map.WithLock(ctx, handler, func() {
 		res = m.Call(args)
 	})
 
 	return res[0].Interface().(soap.HasFault)
+}
+
+// internalSession is the session for use by the in-memory client (Service.RoundTrip)
+var internalSession = &Session{
+	UserSession: types.UserSession{
+		Key: uuid.New().String(),
+	},
+	Registry: NewRegistry(),
 }
 
 // RoundTrip implements the soap.RoundTripper interface in process.
@@ -241,7 +251,7 @@ func (s *Service) RoundTrip(ctx context.Context, request, response soap.HasFault
 	res := s.call(&Context{
 		Map:     Map,
 		Context: ctx,
-		Session: internalContext.Session,
+		Session: internalSession,
 	}, method)
 
 	if err := res.Fault(); err != nil {
@@ -336,32 +346,34 @@ func (s *Service) About(w http.ResponseWriter, r *http.Request) {
 
 	f := reflect.TypeOf((*soap.HasFault)(nil)).Elem()
 
-	for _, obj := range Map.objects {
-		kind := obj.Reference().Type
-		if seen[kind] {
-			continue
-		}
-		seen[kind] = true
-
-		about.Types = append(about.Types, kind)
-
-		t := reflect.TypeOf(obj)
-		for i := 0; i < t.NumMethod(); i++ {
-			m := t.Method(i)
-			if seen[m.Name] {
+	for _, sdk := range s.sdk {
+		for _, obj := range sdk.objects {
+			kind := obj.Reference().Type
+			if seen[kind] {
 				continue
 			}
-			seen[m.Name] = true
+			seen[kind] = true
 
-			in := m.Type.NumIn()
-			if in < 2 || in > 3 { // at least 2 params (receiver and request), optionally a 3rd param (context)
-				continue
-			}
-			if m.Type.NumOut() != 1 || m.Type.Out(0) != f { // all methods return soap.HasFault
-				continue
-			}
+			about.Types = append(about.Types, kind)
 
-			about.Methods = append(about.Methods, strings.Replace(m.Name, "Task", "_Task", 1))
+			t := reflect.TypeOf(obj)
+			for i := 0; i < t.NumMethod(); i++ {
+				m := t.Method(i)
+				if seen[m.Name] {
+					continue
+				}
+				seen[m.Name] = true
+
+				in := m.Type.NumIn()
+				if in < 2 || in > 3 { // at least 2 params (receiver and request), optionally a 3rd param (context)
+					continue
+				}
+				if m.Type.NumOut() != 1 || m.Type.Out(0) != f { // all methods return soap.HasFault
+					continue
+				}
+
+				about.Methods = append(about.Methods, strings.Replace(m.Name, "Task", "_Task", 1))
+			}
 		}
 	}
 
@@ -408,7 +420,15 @@ func (s *Service) HandleFunc(pattern string, handler func(http.ResponseWriter, *
 }
 
 // RegisterSDK adds an HTTP handler for the Registry's Path and Namespace.
+// If r.Path is already registered, r's objects are added to the existing Registry.
 func (s *Service) RegisterSDK(r *Registry) {
+	if existing, ok := s.sdk[r.Path]; ok {
+		for id, obj := range r.objects {
+			existing.objects[id] = obj
+		}
+		return
+	}
+
 	if s.ServeMux == nil {
 		s.ServeMux = http.NewServeMux()
 	}
@@ -455,7 +475,7 @@ func (s *Service) ServeSDK(w http.ResponseWriter, r *http.Request) {
 		Map:     s.sdk[r.URL.Path],
 		Context: context.Background(),
 	}
-	ctx.Map.WithLock(s.sm, ctx.mapSession)
+	ctx.Map.WithLock(ctx, s.sm, ctx.mapSession)
 
 	var res soap.HasFault
 	var soapBody interface{}

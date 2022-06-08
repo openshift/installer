@@ -13,89 +13,107 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-
-	strfmt "github.com/go-openapi/strfmt"
 )
 
-// NewServiceBrokerAuthRegistrationParams creates a new ServiceBrokerAuthRegistrationParams object
-// with the default values initialized.
+// NewServiceBrokerAuthRegistrationParams creates a new ServiceBrokerAuthRegistrationParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewServiceBrokerAuthRegistrationParams() *ServiceBrokerAuthRegistrationParams {
-	var ()
 	return &ServiceBrokerAuthRegistrationParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewServiceBrokerAuthRegistrationParamsWithTimeout creates a new ServiceBrokerAuthRegistrationParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewServiceBrokerAuthRegistrationParamsWithTimeout(timeout time.Duration) *ServiceBrokerAuthRegistrationParams {
-	var ()
 	return &ServiceBrokerAuthRegistrationParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewServiceBrokerAuthRegistrationParamsWithContext creates a new ServiceBrokerAuthRegistrationParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewServiceBrokerAuthRegistrationParamsWithContext(ctx context.Context) *ServiceBrokerAuthRegistrationParams {
-	var ()
 	return &ServiceBrokerAuthRegistrationParams{
-
 		Context: ctx,
 	}
 }
 
 // NewServiceBrokerAuthRegistrationParamsWithHTTPClient creates a new ServiceBrokerAuthRegistrationParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewServiceBrokerAuthRegistrationParamsWithHTTPClient(client *http.Client) *ServiceBrokerAuthRegistrationParams {
-	var ()
 	return &ServiceBrokerAuthRegistrationParams{
 		HTTPClient: client,
 	}
 }
 
-/*ServiceBrokerAuthRegistrationParams contains all the parameters to send to the API endpoint
-for the service broker auth registration operation typically these are written to a http.Request
+/* ServiceBrokerAuthRegistrationParams contains all the parameters to send to the API endpoint
+   for the service broker auth registration operation.
+
+   Typically these are written to a http.Request.
 */
 type ServiceBrokerAuthRegistrationParams struct {
 
-	/*EntitlementID
-	  Entitlement ID of for this tenant
+	/* EntitlementID.
 
+	   Entitlement ID of for this tenant
 	*/
 	EntitlementID string
-	/*Icn
-	  IBM Customer Number (ICN) for this tenant
 
+	/* Icn.
+
+	   IBM Customer Number (ICN) for this tenant
 	*/
 	Icn string
-	/*Plan
-	  Plan for this tenant and entitlement
 
+	/* Plan.
+
+	   Plan for this tenant and entitlement
 	*/
 	Plan string
-	/*RedirectURL
-	  The URL to redirect to after login/registration
 
+	/* RedirectURL.
+
+	   The URL to redirect to after login/registration
 	*/
 	RedirectURL *string
-	/*Regions
-	  An array of regions matching the number of cloud-instances in the plan
 
+	/* Regions.
+
+	   An array of regions matching the number of cloud-instances in the plan
 	*/
 	Regions []string
-	/*TenantID
-	  Tenant ID of a pcloud tenant
 
+	/* TenantID.
+
+	   Tenant ID of a pcloud tenant
 	*/
 	TenantID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the service broker auth registration params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerAuthRegistrationParams) WithDefaults() *ServiceBrokerAuthRegistrationParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the service broker auth registration params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *ServiceBrokerAuthRegistrationParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the service broker auth registration params
@@ -209,6 +227,7 @@ func (o *ServiceBrokerAuthRegistrationParams) WriteToRequest(r runtime.ClientReq
 	qrEntitlementID := o.EntitlementID
 	qEntitlementID := qrEntitlementID
 	if qEntitlementID != "" {
+
 		if err := r.SetQueryParam("entitlement_id", qEntitlementID); err != nil {
 			return err
 		}
@@ -218,6 +237,7 @@ func (o *ServiceBrokerAuthRegistrationParams) WriteToRequest(r runtime.ClientReq
 	qrIcn := o.Icn
 	qIcn := qrIcn
 	if qIcn != "" {
+
 		if err := r.SetQueryParam("icn", qIcn); err != nil {
 			return err
 		}
@@ -227,6 +247,7 @@ func (o *ServiceBrokerAuthRegistrationParams) WriteToRequest(r runtime.ClientReq
 	qrPlan := o.Plan
 	qPlan := qrPlan
 	if qPlan != "" {
+
 		if err := r.SetQueryParam("plan", qPlan); err != nil {
 			return err
 		}
@@ -236,30 +257,35 @@ func (o *ServiceBrokerAuthRegistrationParams) WriteToRequest(r runtime.ClientReq
 
 		// query param redirect_url
 		var qrRedirectURL string
+
 		if o.RedirectURL != nil {
 			qrRedirectURL = *o.RedirectURL
 		}
 		qRedirectURL := qrRedirectURL
 		if qRedirectURL != "" {
+
 			if err := r.SetQueryParam("redirect_url", qRedirectURL); err != nil {
 				return err
 			}
 		}
-
 	}
 
-	valuesRegions := o.Regions
+	if o.Regions != nil {
 
-	joinedRegions := swag.JoinByFormat(valuesRegions, "")
-	// query array param regions
-	if err := r.SetQueryParam("regions", joinedRegions...); err != nil {
-		return err
+		// binding items for regions
+		joinedRegions := o.bindParamRegions(reg)
+
+		// query array param regions
+		if err := r.SetQueryParam("regions", joinedRegions...); err != nil {
+			return err
+		}
 	}
 
 	// query param tenant_id
 	qrTenantID := o.TenantID
 	qTenantID := qrTenantID
 	if qTenantID != "" {
+
 		if err := r.SetQueryParam("tenant_id", qTenantID); err != nil {
 			return err
 		}
@@ -269,4 +295,21 @@ func (o *ServiceBrokerAuthRegistrationParams) WriteToRequest(r runtime.ClientReq
 		return errors.CompositeValidationError(res...)
 	}
 	return nil
+}
+
+// bindParamServiceBrokerAuthRegistration binds the parameter regions
+func (o *ServiceBrokerAuthRegistrationParams) bindParamRegions(formats strfmt.Registry) []string {
+	regionsIR := o.Regions
+
+	var regionsIC []string
+	for _, regionsIIR := range regionsIR { // explode []string
+
+		regionsIIV := regionsIIR // string as string
+		regionsIC = append(regionsIC, regionsIIV)
+	}
+
+	// items.CollectionFormat: ""
+	regionsIS := swag.JoinByFormat(regionsIC, "")
+
+	return regionsIS
 }

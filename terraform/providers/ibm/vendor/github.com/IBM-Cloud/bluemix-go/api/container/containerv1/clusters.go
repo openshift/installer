@@ -63,6 +63,7 @@ type ClusterInfo struct {
 	Provider                      string   `json:"provider"`
 	PodSubnet                     string   `json:"podSubnet"`
 	ServiceSubnet                 string   `json:"serviceSubnet"`
+	ImageSecurityEnabled          bool     `json:"imageSecurityEnabled"`
 }
 
 // ClusterUpdateParam ...

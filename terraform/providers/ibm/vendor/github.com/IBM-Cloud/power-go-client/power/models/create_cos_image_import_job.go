@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // CreateCosImageImportJob create cos image import job
+//
 // swagger:model CreateCosImageImportJob
 type CreateCosImageImportJob struct {
 
@@ -120,14 +121,13 @@ const (
 
 // prop value enum
 func (m *CreateCosImageImportJob) validateBucketAccessEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, createCosImageImportJobTypeBucketAccessPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, createCosImageImportJobTypeBucketAccessPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *CreateCosImageImportJob) validateBucketAccess(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.BucketAccess) { // not required
 		return nil
 	}
@@ -196,14 +196,13 @@ const (
 
 // prop value enum
 func (m *CreateCosImageImportJob) validateOsTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, createCosImageImportJobTypeOsTypePropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, createCosImageImportJobTypeOsTypePropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *CreateCosImageImportJob) validateOsType(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.OsType) { // not required
 		return nil
 	}
@@ -226,7 +225,6 @@ func (m *CreateCosImageImportJob) validateRegion(formats strfmt.Registry) error 
 }
 
 func (m *CreateCosImageImportJob) validateStorageAffinity(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.StorageAffinity) { // not required
 		return nil
 	}
@@ -235,6 +233,38 @@ func (m *CreateCosImageImportJob) validateStorageAffinity(formats strfmt.Registr
 		if err := m.StorageAffinity.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("storageAffinity")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("storageAffinity")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this create cos image import job based on the context it is used
+func (m *CreateCosImageImportJob) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateStorageAffinity(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *CreateCosImageImportJob) contextValidateStorageAffinity(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.StorageAffinity != nil {
+		if err := m.StorageAffinity.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("storageAffinity")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("storageAffinity")
 			}
 			return err
 		}

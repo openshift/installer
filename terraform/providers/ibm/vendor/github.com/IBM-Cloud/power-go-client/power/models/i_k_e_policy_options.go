@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // IKEPolicyOptions i k e policy options
+//
 // swagger:model IKEPolicyOptions
 type IKEPolicyOptions struct {
 
@@ -69,6 +71,8 @@ func (m *IKEPolicyOptions) validateAuthentications(formats strfmt.Registry) erro
 	if err := m.Authentications.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("authentications")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("authentications")
 		}
 		return err
 	}
@@ -85,6 +89,8 @@ func (m *IKEPolicyOptions) validateDhGroups(formats strfmt.Registry) error {
 	if err := m.DhGroups.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("dhGroups")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("dhGroups")
 		}
 		return err
 	}
@@ -101,6 +107,8 @@ func (m *IKEPolicyOptions) validateEncryptions(formats strfmt.Registry) error {
 	if err := m.Encryptions.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("encryptions")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("encryptions")
 		}
 		return err
 	}
@@ -117,6 +125,90 @@ func (m *IKEPolicyOptions) validateVersions(formats strfmt.Registry) error {
 	if err := m.Versions.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("versions")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("versions")
+		}
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this i k e policy options based on the context it is used
+func (m *IKEPolicyOptions) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateAuthentications(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateDhGroups(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateEncryptions(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateVersions(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *IKEPolicyOptions) contextValidateAuthentications(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.Authentications.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("authentications")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("authentications")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *IKEPolicyOptions) contextValidateDhGroups(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.DhGroups.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("dhGroups")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("dhGroups")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *IKEPolicyOptions) contextValidateEncryptions(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.Encryptions.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("encryptions")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("encryptions")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *IKEPolicyOptions) contextValidateVersions(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.Versions.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("versions")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("versions")
 		}
 		return err
 	}

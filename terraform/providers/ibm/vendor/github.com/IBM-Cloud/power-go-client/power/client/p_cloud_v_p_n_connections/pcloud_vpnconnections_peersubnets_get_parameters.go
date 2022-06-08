@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudVpnconnectionsPeersubnetsGetParams creates a new PcloudVpnconnectionsPeersubnetsGetParams object
-// with the default values initialized.
+// NewPcloudVpnconnectionsPeersubnetsGetParams creates a new PcloudVpnconnectionsPeersubnetsGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudVpnconnectionsPeersubnetsGetParams() *PcloudVpnconnectionsPeersubnetsGetParams {
-	var ()
 	return &PcloudVpnconnectionsPeersubnetsGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudVpnconnectionsPeersubnetsGetParamsWithTimeout creates a new PcloudVpnconnectionsPeersubnetsGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudVpnconnectionsPeersubnetsGetParamsWithTimeout(timeout time.Duration) *PcloudVpnconnectionsPeersubnetsGetParams {
-	var ()
 	return &PcloudVpnconnectionsPeersubnetsGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudVpnconnectionsPeersubnetsGetParamsWithContext creates a new PcloudVpnconnectionsPeersubnetsGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudVpnconnectionsPeersubnetsGetParamsWithContext(ctx context.Context) *PcloudVpnconnectionsPeersubnetsGetParams {
-	var ()
 	return &PcloudVpnconnectionsPeersubnetsGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudVpnconnectionsPeersubnetsGetParamsWithHTTPClient creates a new PcloudVpnconnectionsPeersubnetsGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudVpnconnectionsPeersubnetsGetParamsWithHTTPClient(client *http.Client) *PcloudVpnconnectionsPeersubnetsGetParams {
-	var ()
 	return &PcloudVpnconnectionsPeersubnetsGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudVpnconnectionsPeersubnetsGetParams contains all the parameters to send to the API endpoint
-for the pcloud vpnconnections peersubnets get operation typically these are written to a http.Request
+/* PcloudVpnconnectionsPeersubnetsGetParams contains all the parameters to send to the API endpoint
+   for the pcloud vpnconnections peersubnets get operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudVpnconnectionsPeersubnetsGetParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*VpnConnectionID
-	  ID of a VPN connection
 
+	/* VpnConnectionID.
+
+	   ID of a VPN connection
 	*/
 	VpnConnectionID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud vpnconnections peersubnets get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudVpnconnectionsPeersubnetsGetParams) WithDefaults() *PcloudVpnconnectionsPeersubnetsGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud vpnconnections peersubnets get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudVpnconnectionsPeersubnetsGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud vpnconnections peersubnets get params

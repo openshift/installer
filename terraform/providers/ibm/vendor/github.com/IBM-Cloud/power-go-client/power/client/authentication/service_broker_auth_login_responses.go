@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // ServiceBrokerAuthLoginReader is a Reader for the ServiceBrokerAuthLogin structure.
@@ -24,30 +23,26 @@ type ServiceBrokerAuthLoginReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ServiceBrokerAuthLoginReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewServiceBrokerAuthLoginOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewServiceBrokerAuthLoginUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewServiceBrokerAuthLoginInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -56,7 +51,7 @@ func NewServiceBrokerAuthLoginOK() *ServiceBrokerAuthLoginOK {
 	return &ServiceBrokerAuthLoginOK{}
 }
 
-/*ServiceBrokerAuthLoginOK handles this case with default header values.
+/* ServiceBrokerAuthLoginOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -66,6 +61,9 @@ type ServiceBrokerAuthLoginOK struct {
 
 func (o *ServiceBrokerAuthLoginOK) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/login][%d] serviceBrokerAuthLoginOK  %+v", 200, o.Payload)
+}
+func (o *ServiceBrokerAuthLoginOK) GetPayload() *models.AccessToken {
+	return o.Payload
 }
 
 func (o *ServiceBrokerAuthLoginOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -85,7 +83,7 @@ func NewServiceBrokerAuthLoginUnauthorized() *ServiceBrokerAuthLoginUnauthorized
 	return &ServiceBrokerAuthLoginUnauthorized{}
 }
 
-/*ServiceBrokerAuthLoginUnauthorized handles this case with default header values.
+/* ServiceBrokerAuthLoginUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -95,6 +93,9 @@ type ServiceBrokerAuthLoginUnauthorized struct {
 
 func (o *ServiceBrokerAuthLoginUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/login][%d] serviceBrokerAuthLoginUnauthorized  %+v", 401, o.Payload)
+}
+func (o *ServiceBrokerAuthLoginUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBrokerAuthLoginUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -114,7 +115,7 @@ func NewServiceBrokerAuthLoginInternalServerError() *ServiceBrokerAuthLoginInter
 	return &ServiceBrokerAuthLoginInternalServerError{}
 }
 
-/*ServiceBrokerAuthLoginInternalServerError handles this case with default header values.
+/* ServiceBrokerAuthLoginInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -124,6 +125,9 @@ type ServiceBrokerAuthLoginInternalServerError struct {
 
 func (o *ServiceBrokerAuthLoginInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/login][%d] serviceBrokerAuthLoginInternalServerError  %+v", 500, o.Payload)
+}
+func (o *ServiceBrokerAuthLoginInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceBrokerAuthLoginInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

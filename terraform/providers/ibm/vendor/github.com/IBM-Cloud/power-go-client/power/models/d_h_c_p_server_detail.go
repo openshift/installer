@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // DHCPServerDetail d h c p server detail
+//
 // swagger:model DHCPServerDetail
 type DHCPServerDetail struct {
 
@@ -71,7 +72,6 @@ func (m *DHCPServerDetail) validateID(formats strfmt.Registry) error {
 }
 
 func (m *DHCPServerDetail) validateLeases(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Leases) { // not required
 		return nil
 	}
@@ -85,6 +85,8 @@ func (m *DHCPServerDetail) validateLeases(formats strfmt.Registry) error {
 			if err := m.Leases[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("leases" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("leases" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -105,6 +107,8 @@ func (m *DHCPServerDetail) validateNetwork(formats strfmt.Registry) error {
 		if err := m.Network.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("network")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("network")
 			}
 			return err
 		}
@@ -117,6 +121,60 @@ func (m *DHCPServerDetail) validateStatus(formats strfmt.Registry) error {
 
 	if err := validate.Required("status", "body", m.Status); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this d h c p server detail based on the context it is used
+func (m *DHCPServerDetail) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateLeases(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateNetwork(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *DHCPServerDetail) contextValidateLeases(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Leases); i++ {
+
+		if m.Leases[i] != nil {
+			if err := m.Leases[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("leases" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("leases" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *DHCPServerDetail) contextValidateNetwork(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Network != nil {
+		if err := m.Network.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("network")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("network")
+			}
+			return err
+		}
 	}
 
 	return nil

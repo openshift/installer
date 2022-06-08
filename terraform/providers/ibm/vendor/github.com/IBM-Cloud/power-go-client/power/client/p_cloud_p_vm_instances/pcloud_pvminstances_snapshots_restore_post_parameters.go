@@ -13,85 +13,102 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudPvminstancesSnapshotsRestorePostParams creates a new PcloudPvminstancesSnapshotsRestorePostParams object
-// with the default values initialized.
+// NewPcloudPvminstancesSnapshotsRestorePostParams creates a new PcloudPvminstancesSnapshotsRestorePostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPvminstancesSnapshotsRestorePostParams() *PcloudPvminstancesSnapshotsRestorePostParams {
-	var ()
 	return &PcloudPvminstancesSnapshotsRestorePostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPvminstancesSnapshotsRestorePostParamsWithTimeout creates a new PcloudPvminstancesSnapshotsRestorePostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPvminstancesSnapshotsRestorePostParamsWithTimeout(timeout time.Duration) *PcloudPvminstancesSnapshotsRestorePostParams {
-	var ()
 	return &PcloudPvminstancesSnapshotsRestorePostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPvminstancesSnapshotsRestorePostParamsWithContext creates a new PcloudPvminstancesSnapshotsRestorePostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPvminstancesSnapshotsRestorePostParamsWithContext(ctx context.Context) *PcloudPvminstancesSnapshotsRestorePostParams {
-	var ()
 	return &PcloudPvminstancesSnapshotsRestorePostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPvminstancesSnapshotsRestorePostParamsWithHTTPClient creates a new PcloudPvminstancesSnapshotsRestorePostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPvminstancesSnapshotsRestorePostParamsWithHTTPClient(client *http.Client) *PcloudPvminstancesSnapshotsRestorePostParams {
-	var ()
 	return &PcloudPvminstancesSnapshotsRestorePostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPvminstancesSnapshotsRestorePostParams contains all the parameters to send to the API endpoint
-for the pcloud pvminstances snapshots restore post operation typically these are written to a http.Request
+/* PcloudPvminstancesSnapshotsRestorePostParams contains all the parameters to send to the API endpoint
+   for the pcloud pvminstances snapshots restore post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPvminstancesSnapshotsRestorePostParams struct {
 
-	/*Body
-	  PVM Instance snapshot restore parameters
+	/* Body.
 
+	   PVM Instance snapshot restore parameters
 	*/
 	Body *models.SnapshotRestore
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PvmInstanceID
-	  PCloud PVM Instance ID
 
+	/* PvmInstanceID.
+
+	   PCloud PVM Instance ID
 	*/
 	PvmInstanceID string
-	/*RestoreFailAction
-	  Action to take on a failed snapshot restore
 
+	/* RestoreFailAction.
+
+	   Action to take on a failed snapshot restore
 	*/
 	RestoreFailAction *string
-	/*SnapshotID
-	  PVM Instance snapshot id
 
+	/* SnapshotID.
+
+	   PVM Instance snapshot id
 	*/
 	SnapshotID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud pvminstances snapshots restore post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesSnapshotsRestorePostParams) WithDefaults() *PcloudPvminstancesSnapshotsRestorePostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud pvminstances snapshots restore post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesSnapshotsRestorePostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud pvminstances snapshots restore post params
@@ -189,7 +206,6 @@ func (o *PcloudPvminstancesSnapshotsRestorePostParams) WriteToRequest(r runtime.
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err
@@ -210,16 +226,17 @@ func (o *PcloudPvminstancesSnapshotsRestorePostParams) WriteToRequest(r runtime.
 
 		// query param restore_fail_action
 		var qrRestoreFailAction string
+
 		if o.RestoreFailAction != nil {
 			qrRestoreFailAction = *o.RestoreFailAction
 		}
 		qRestoreFailAction := qrRestoreFailAction
 		if qRestoreFailAction != "" {
+
 			if err := r.SetQueryParam("restore_fail_action", qRestoreFailAction); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	// path param snapshot_id

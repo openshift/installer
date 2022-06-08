@@ -13,63 +13,76 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudCloudinstancesImagesGetallParams creates a new PcloudCloudinstancesImagesGetallParams object
-// with the default values initialized.
+// NewPcloudCloudinstancesImagesGetallParams creates a new PcloudCloudinstancesImagesGetallParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudCloudinstancesImagesGetallParams() *PcloudCloudinstancesImagesGetallParams {
-	var ()
 	return &PcloudCloudinstancesImagesGetallParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudCloudinstancesImagesGetallParamsWithTimeout creates a new PcloudCloudinstancesImagesGetallParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudCloudinstancesImagesGetallParamsWithTimeout(timeout time.Duration) *PcloudCloudinstancesImagesGetallParams {
-	var ()
 	return &PcloudCloudinstancesImagesGetallParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudCloudinstancesImagesGetallParamsWithContext creates a new PcloudCloudinstancesImagesGetallParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudCloudinstancesImagesGetallParamsWithContext(ctx context.Context) *PcloudCloudinstancesImagesGetallParams {
-	var ()
 	return &PcloudCloudinstancesImagesGetallParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudCloudinstancesImagesGetallParamsWithHTTPClient creates a new PcloudCloudinstancesImagesGetallParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudCloudinstancesImagesGetallParamsWithHTTPClient(client *http.Client) *PcloudCloudinstancesImagesGetallParams {
-	var ()
 	return &PcloudCloudinstancesImagesGetallParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudCloudinstancesImagesGetallParams contains all the parameters to send to the API endpoint
-for the pcloud cloudinstances images getall operation typically these are written to a http.Request
+/* PcloudCloudinstancesImagesGetallParams contains all the parameters to send to the API endpoint
+   for the pcloud cloudinstances images getall operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesImagesGetallParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud cloudinstances images getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesImagesGetallParams) WithDefaults() *PcloudCloudinstancesImagesGetallParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud cloudinstances images getall params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudCloudinstancesImagesGetallParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud cloudinstances images getall params

@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // PVMInstanceAction p VM instance action
+//
 // swagger:model PVMInstanceAction
 type PVMInstanceAction struct {
 
@@ -59,22 +60,22 @@ const (
 	// PVMInstanceActionActionStop captures enum value "stop"
 	PVMInstanceActionActionStop string = "stop"
 
-	// PVMInstanceActionActionImmediateShutdown captures enum value "immediate-shutdown"
-	PVMInstanceActionActionImmediateShutdown string = "immediate-shutdown"
+	// PVMInstanceActionActionImmediateDashShutdown captures enum value "immediate-shutdown"
+	PVMInstanceActionActionImmediateDashShutdown string = "immediate-shutdown"
 
-	// PVMInstanceActionActionHardReboot captures enum value "hard-reboot"
-	PVMInstanceActionActionHardReboot string = "hard-reboot"
+	// PVMInstanceActionActionHardDashReboot captures enum value "hard-reboot"
+	PVMInstanceActionActionHardDashReboot string = "hard-reboot"
 
-	// PVMInstanceActionActionSoftReboot captures enum value "soft-reboot"
-	PVMInstanceActionActionSoftReboot string = "soft-reboot"
+	// PVMInstanceActionActionSoftDashReboot captures enum value "soft-reboot"
+	PVMInstanceActionActionSoftDashReboot string = "soft-reboot"
 
-	// PVMInstanceActionActionResetState captures enum value "reset-state"
-	PVMInstanceActionActionResetState string = "reset-state"
+	// PVMInstanceActionActionResetDashState captures enum value "reset-state"
+	PVMInstanceActionActionResetDashState string = "reset-state"
 )
 
 // prop value enum
 func (m *PVMInstanceAction) validateActionEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, pVmInstanceActionTypeActionPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, pVmInstanceActionTypeActionPropEnum, true); err != nil {
 		return err
 	}
 	return nil
@@ -91,6 +92,11 @@ func (m *PVMInstanceAction) validateAction(formats strfmt.Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this p VM instance action based on context it is used
+func (m *PVMInstanceAction) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

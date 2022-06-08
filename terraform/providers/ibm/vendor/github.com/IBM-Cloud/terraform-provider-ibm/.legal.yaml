@@ -1,7 +1,7 @@
 schemaVersion: oss-license-declaration.cloud.ibm.com:v4
 name: terraform-provider-ibm
 source: https://github.com/IBM-Cloud/terraform-provider-ibm
-issues: https://github.ibm.com/blueprint/schematics-compliance/issues
+issues: https://github.ibm.com/blueprint/security-project-management/issues
 objectCodeOnly: false
 additionalDownloads:
   include:
@@ -15,7 +15,7 @@ additionalDownloads:
     documentation: Package manager not invoked in build nor runtime use
 dependencies:
   - name: cloud.google.com/go
-    version: v0.61.0
+    version: v0.65.0
     licenses:
       - Apache-2.0
   - name: cloud.google.com/go/bigquery
@@ -48,7 +48,7 @@ dependencies:
       - BSD-3-Clause
       - GooglePatentClause
   - name: github.com/IBM-Cloud/bluemix-go
-    version: v0.0.0-20210706092416-dc4055f8e0ea
+    version: v0.0.0-20220209072802-61d92fc63fd1
     licenses:
       - Apache-2.0
   - name: github.com/IBM-Cloud/container-services-go-sdk
@@ -60,7 +60,7 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/IBM-Cloud/power-go-client
-    version: v1.0.55
+    version: v1.1.2
     licenses:
       - Apache-2.0
   - name: github.com/IBM/apigateway-go-sdk
@@ -71,28 +71,36 @@ dependencies:
     version: v0.1.0
     licenses:
       - Apache-2.0
-  - name: github.com/IBM/container-registry-go-sdk
-    version: v0.0.13
+  - name: github.com/IBM/appid-management-go-sdk
+    version: v0.0.0-20210908164609-dd0e0eaf732f
     licenses:
       - Apache-2.0
-  - name: github.com/IBM/go-sdk-core
-    version: v1.1.0
+  - name: github.com/IBM/cloudant-go-sdk
+    version: v0.0.36
+    licenses:
+      - Apache-2.0
+  - name: github.com/IBM/container-registry-go-sdk
+    version: v0.0.15
+    licenses:
+      - Apache-2.0
+  - name: github.com/IBM/event-notifications-go-admin-sdk
+    version: v0.0.2
+    licenses:
+      - Apache-2.0
+  - name: github.com/IBM/eventstreams-go-sdk
+    version: v1.2.0
     licenses:
       - Apache-2.0
   - name: github.com/IBM/go-sdk-core/v3
     version: v3.2.4
     licenses:
       - Apache-2.0
-  - name: github.com/IBM/go-sdk-core/v4
-    version: v4.10.0
-    licenses:
-      - Apache-2.0
   - name: github.com/IBM/go-sdk-core/v5
-    version: v5.5.1
+    version: v5.9.1
     licenses:
       - Apache-2.0
   - name: github.com/IBM/ibm-cos-sdk-go
-    version: v1.7.0
+    version: v1.8.0
     licenses:
       - Apache-2.0
   - name: github.com/IBM/ibm-cos-sdk-go-config
@@ -100,7 +108,7 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/IBM/ibm-hpcs-tke-sdk
-    version: v0.0.0-20210723145459-a232c3f3ac91
+    version: v0.0.0-20211109141421-a4b61b05f7d1
     licenses:
       - Apache-2.0
   - name: github.com/IBM/keyprotect-go-client
@@ -108,19 +116,27 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/IBM/networking-go-sdk
-    version: v0.19.0
+    version: v0.26.0
     licenses:
       - Apache-2.0
   - name: github.com/IBM/platform-services-go-sdk
-    version: v0.18.16
+    version: v0.22.6
     licenses:
       - Apache-2.0
   - name: github.com/IBM/push-notifications-go-sdk
     version: v0.0.0-20210310100607-5790b96c47f5
     licenses:
       - Apache-2.0
+  - name: github.com/IBM/scc-go-sdk
+    version: v1.3.4
+    licenses:
+      - Apache-2.0
+  - name: github.com/IBM/scc-go-sdk/v3
+    version: v3.1.0
+    licenses:
+      - Apache-2.0
   - name: github.com/IBM/schematics-go-sdk
-    version: v0.0.2
+    version: v0.1.3
     licenses:
       - Apache-2.0
   - name: github.com/IBM/secrets-manager-go-sdk
@@ -128,7 +144,7 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/IBM/vpc-go-sdk
-    version: v0.8.0
+    version: v0.16.0
     licenses:
       - Apache-2.0
   - name: github.com/Logicalis/asn1
@@ -151,6 +167,10 @@ dependencies:
     version: v0.4.16
     licenses:
       - MIT
+  - name: github.com/PromonLogicalis/asn1
+    version: v0.0.0-20190312173541-d60463189a56
+    licenses:
+      - MIT
   - name: github.com/ProtonMail/go-crypto
     version: v0.0.0-20210428141323-04723f9f07d7
     licenses:
@@ -168,7 +188,7 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/Shopify/sarama
-    version: v1.27.2
+    version: v1.29.1
     licenses:
       - MIT
   - name: github.com/Shopify/toxiproxy
@@ -230,7 +250,7 @@ dependencies:
     licenses:
       - MIT
   - name: github.com/aws/aws-sdk-go
-    version: v1.34.28
+    version: v1.37.0
     licenses:
       - Apache-2.0
   - name: github.com/bgentry/go-netrc
@@ -335,7 +355,7 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/form3tech-oss/jwt-go
-    version: v3.2.2+incompatible
+    version: v3.2.3+incompatible
     licenses:
       - MIT
   - name: github.com/fortytw2/leaktest
@@ -343,7 +363,7 @@ dependencies:
     licenses:
       - BSD-3-Clause
   - name: github.com/frankban/quicktest
-    version: v1.10.2
+    version: v1.11.3
     licenses:
       - MIT
   - name: github.com/fsnotify/fsnotify
@@ -388,11 +408,11 @@ dependencies:
     licenses:
       - BSD-3-Clause
   - name: github.com/go-openapi/analysis
-    version: v0.19.16
+    version: v0.21.1
     licenses:
       - Apache-2.0
   - name: github.com/go-openapi/errors
-    version: v0.19.9
+    version: v0.20.1
     licenses:
       - Apache-2.0
   - name: github.com/go-openapi/jsonpointer
@@ -400,39 +420,39 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/go-openapi/jsonreference
-    version: v0.19.5
+    version: v0.19.6
     licenses:
       - Apache-2.0
   - name: github.com/go-openapi/loads
-    version: v0.20.0
+    version: v0.21.0
     licenses:
       - Apache-2.0
   - name: github.com/go-openapi/runtime
-    version: v0.19.24
+    version: v0.21.0
     licenses:
       - Apache-2.0
   - name: github.com/go-openapi/spec
-    version: v0.20.0
+    version: v0.20.4
     licenses:
       - Apache-2.0
   - name: github.com/go-openapi/strfmt
-    version: v0.20.1
+    version: v0.21.1
     licenses:
       - Apache-2.0
   - name: github.com/go-openapi/swag
-    version: v0.19.12
+    version: v0.19.15
     licenses:
       - Apache-2.0
   - name: github.com/go-openapi/validate
-    version: v0.20.1
+    version: v0.20.3
     licenses:
       - Apache-2.0
   - name: github.com/go-playground/locales
-    version: v0.13.0
+    version: v0.14.0
     licenses:
       - MIT
   - name: github.com/go-playground/universal-translator
-    version: v0.17.0
+    version: v0.18.0
     licenses:
       - MIT
   - name: github.com/go-sql-driver/mysql
@@ -440,7 +460,7 @@ dependencies:
     licenses:
       - MPL-2.0
   - name: github.com/go-stack/stack
-    version: v1.8.0
+    version: v1.8.1
     licenses:
       - MIT
   - name: github.com/go-task/slim-sprig
@@ -500,7 +520,7 @@ dependencies:
     licenses:
       - MIT
   - name: github.com/golang-jwt/jwt
-    version: v3.2.1+incompatible
+    version: v3.2.2+incompatible
     licenses:
       - MIT
   - name: github.com/golang/glog
@@ -512,7 +532,7 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/golang/mock
-    version: v1.4.3
+    version: v1.4.4
     licenses:
       - Apache-2.0
   - name: github.com/golang/protobuf
@@ -520,7 +540,7 @@ dependencies:
     licenses:
       - BSD-3-Clause
   - name: github.com/golang/snappy
-    version: v0.0.1
+    version: v0.0.3
     licenses:
       - BSD-3-Clause
   - name: github.com/google/btree
@@ -552,11 +572,19 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/google/uuid
-    version: v1.2.0
+    version: v1.3.0
     licenses:
       - BSD-3-Clause
   - name: github.com/googleapis/gax-go/v2
     version: v2.0.5
+    licenses:
+      - BSD-3-Clause
+  - name: github.com/gorilla/securecookie
+    version: v1.1.1
+    licenses:
+      - BSD-3-Clause
+  - name: github.com/gorilla/sessions
+    version: v1.2.1
     licenses:
       - BSD-3-Clause
   - name: github.com/h2non/parth
@@ -596,7 +624,7 @@ dependencies:
     licenses:
       - MPL-2.0
   - name: github.com/hashicorp/go-retryablehttp
-    version: v0.6.6
+    version: v0.7.0
     licenses:
       - MPL-2.0
   - name: github.com/hashicorp/go-safetemp
@@ -616,7 +644,7 @@ dependencies:
     licenses:
       - MPL-2.0
   - name: github.com/hashicorp/hcl/v2
-    version: v2.3.0
+    version: v2.8.2
     licenses:
       - MPL-2.0
   - name: github.com/hashicorp/logutils
@@ -675,10 +703,30 @@ dependencies:
     version: v0.0.0-20150711004518-d14ea06fba99
     licenses:
       - MIT
+  - name: github.com/jcmturner/aescts/v2
+    version: v2.0.0
+    licenses:
+      - Apache-2.0
+  - name: github.com/jcmturner/dnsutils/v2
+    version: v2.0.0
+    licenses:
+      - Apache-2.0
   - name: github.com/jcmturner/gofork
     version: v1.0.0
     licenses:
       - BSD-3-Clause
+  - name: github.com/jcmturner/goidentity/v6
+    version: v6.0.1
+    licenses:
+      - Apache-2.0
+  - name: github.com/jcmturner/gokrb5/v8
+    version: v8.4.2
+    licenses:
+      - Apache-2.0
+  - name: github.com/jcmturner/rpc/v2
+    version: v2.0.3
+    licenses:
+      - Apache-2.0
   - name: github.com/jessevdk/go-flags
     version: v1.5.0
     licenses:
@@ -687,6 +735,10 @@ dependencies:
     version: v1.6.0
     licenses:
       - Apache-2.0
+  - name: github.com/jinzhu/copier
+    version: v0.3.2
+    licenses:
+      - MIT
   - name: github.com/jmespath/go-jmespath
     version: v0.4.0
     licenses:
@@ -724,9 +776,11 @@ dependencies:
     licenses:
       - MIT
   - name: github.com/klauspost/compress
-    version: v1.11.2
+    version: v1.13.6
     licenses:
+      - Apache-2.0
       - BSD-3-Clause
+      - MIT
   - name: github.com/konsorten/go-windows-terminal-sequences
     version: v1.0.2
     licenses:
@@ -752,7 +806,7 @@ dependencies:
     licenses:
       - MIT
   - name: github.com/mailru/easyjson
-    version: v0.7.6
+    version: v0.7.7
     licenses:
       - MIT
   - name: github.com/markbates/oncer
@@ -804,7 +858,7 @@ dependencies:
     licenses:
       - MIT
   - name: github.com/mitchellh/mapstructure
-    version: v1.4.0
+    version: v1.4.3
     licenses:
       - MIT
   - name: github.com/mitchellh/reflectwalk
@@ -848,9 +902,13 @@ dependencies:
     licenses:
       - MIT
   - name: github.com/onsi/gomega
-    version: v1.13.0
+    version: v1.16.0
     licenses:
       - MIT
+  - name: github.com/opentracing/opentracing-go
+    version: v1.2.0
+    licenses:
+      - Apache-2.0
   - name: github.com/pborman/uuid
     version: v1.2.0
     licenses:
@@ -861,7 +919,7 @@ dependencies:
       - Apache-2.0
       - MIT
   - name: github.com/pierrec/lz4
-    version: v2.5.2+incompatible
+    version: v2.6.0+incompatible
     licenses:
       - BSD-3-Clause
   - name: github.com/pkg/errors
@@ -881,7 +939,7 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/rcrowley/go-metrics
-    version: v0.0.0-20200313005456-10cdbea86bc0
+    version: v0.0.0-20201227073835-cf1acfcdf475
     licenses:
       - BSD-2-Clause-Views
   - name: github.com/rogpeppe/go-internal
@@ -977,11 +1035,11 @@ dependencies:
     licenses:
       - Apache-2.0
   - name: github.com/xdg/scram
-    version: v0.0.0-20180814205039-7eeb5667e42c
+    version: v1.0.3
     licenses:
       - Apache-2.0
   - name: github.com/xdg/stringprep
-    version: v1.0.0
+    version: v1.0.3
     licenses:
       - Apache-2.0
   - name: github.com/youmark/pkcs8
@@ -989,7 +1047,7 @@ dependencies:
     licenses:
       - MIT
   - name: github.com/yuin/goldmark
-    version: v1.2.1
+    version: v1.4.0
     licenses:
       - MIT
   - name: github.com/zclconf/go-cty
@@ -1001,7 +1059,7 @@ dependencies:
     licenses:
       - MIT
   - name: go.mongodb.org/mongo-driver
-    version: v1.5.1
+    version: v1.8.2
     licenses:
       - Apache-2.0
   - name: go.opencensus.io
@@ -1014,54 +1072,76 @@ dependencies:
       - BSD-3-Clause
   - name: golang.org/x/exp
     version: v0.0.0-20200224162631-6cc2880d07d6
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/image
     version: v0.0.0-20190802002840-cff245a6509b
     licenses:
       - BSD-3-Clause
   - name: golang.org/x/lint
     version: v0.0.0-20200302205851-738671d3881b
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/mobile
     version: v0.0.0-20190719004257-d2bd2a29d028
     licenses:
       - BSD-3-Clause
   - name: golang.org/x/mod
-    version: v0.3.0
+    version: v0.4.2
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/net
-    version: v0.0.0-20210614182718-04defd469f4e
+    version: v0.0.0-20220107192237-5cfca573fb4d
     licenses:
       - BSD-3-Clause
   - name: golang.org/x/oauth2
-    version: v0.0.0-20200107190931-bf48bf16ab8d
+    version: v0.0.0-20200902213428-5d25da1a8d43
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/sync
-    version: v0.0.0-20201020160332-67f06af15bc9
+    version: v0.0.0-20210220032951-036812b2e83c
     licenses:
       - BSD-3-Clause
   - name: golang.org/x/sys
-    version: v0.0.0-20210615035016-665e8c7367d1
+    version: v0.0.0-20211004093028-2c5d950f24ef
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/term
     version: v0.0.0-20201126162022-7de9c90e9dd1
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/text
-    version: v0.3.6
+    version: v0.3.7
     licenses:
       - BSD-3-Clause
   - name: golang.org/x/time
     version: v0.0.0-20191024005414-555d28b269f0
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/tools
-    version: v0.0.0-20210107193943-4ed967dd8eff
+    version: v0.1.7
+    licenses:
+      - BSD-3-Clause
   - name: golang.org/x/xerrors
     version: v0.0.0-20200804184101-5ec99f83aff1
     licenses:
       - BSD-3-Clause
   - name: google.golang.org/api
-    version: v0.29.0
+    version: v0.34.0
+    licenses:
+      - BSD-3-Clause
   - name: google.golang.org/appengine
     version: v1.6.6
+    licenses:
+      - Apache-2.0
   - name: google.golang.org/genproto
-    version: v0.0.0-20200711021454-869866162049
+    version: v0.0.0-20200904004341-0bd0a958aa1d
     licenses:
       - Apache-2.0
   - name: google.golang.org/grpc
     version: v1.32.0
+    licenses:
+      - Apache-2.0
   - name: google.golang.org/protobuf
     version: v1.26.0
     licenses:
@@ -1072,61 +1152,61 @@ dependencies:
       - BSD-2-Clause
   - name: gopkg.in/cheggaaa/pb.v1
     version: v1.0.27
+    licenses:
+      - BSD-3-Clause
   - name: gopkg.in/errgo.v2
     version: v2.1.0
     licenses:
       - BSD-3-Clause
   - name: gopkg.in/fsnotify.v1
     version: v1.4.7
+    licenses:
+      - BSD-3-Clause
   - name: gopkg.in/go-playground/assert.v1
     version: v1.2.1
+    licenses:
+      - MIT
   - name: gopkg.in/go-playground/validator.v9
     version: v9.31.0
     licenses:
       - MIT
   - name: gopkg.in/h2non/gock.v1
     version: v1.0.15
-  - name: gopkg.in/jcmturner/aescts.v1
-    version: v1.0.1
     licenses:
-      - Apache-2.0
-  - name: gopkg.in/jcmturner/dnsutils.v1
-    version: v1.0.1
-  - name: gopkg.in/jcmturner/goidentity.v3
-    version: v3.0.0
-    licenses:
-      - Apache-2.0
-  - name: gopkg.in/jcmturner/gokrb5.v7
-    version: v7.5.0
-    licenses:
-      - Apache-2.0
-  - name: gopkg.in/jcmturner/rpc.v1
-    version: v1.1.0
-    licenses:
-      - Apache-2.0
+      - MIT
   - name: gopkg.in/tomb.v1
     version: v1.0.0-20141024135613-dd632973f1e7
     licenses:
       - BSD-3-Clause
   - name: gopkg.in/warnings.v0
     version: v0.1.2
+    licenses:
+      - BSD-2-Clause
   - name: gopkg.in/yaml.v2
     version: v2.4.0
+    licenses:
+      - Apache-2.0
   - name: gopkg.in/yaml.v3
-    version: v3.0.0-20200615113413-eeeca48fe776
+    version: v3.0.0-20210107192922-496545a6307b
     licenses:
       - Apache-2.0
       - MIT
   - name: gotest.tools
     version: v2.2.0+incompatible
+    licenses:
+      - Apache-2.0
   - name: honnef.co/go/tools
     version: v0.0.1-2020.1.4
     licenses:
       - MIT
   - name: rsc.io/binaryregexp
     version: v0.2.0
+    licenses:
+      - BSD-3-Clause
   - name: rsc.io/quote/v3
     version: v3.1.0
+    licenses:
+      - BSD-3-Clause
   - name: rsc.io/sampler
     version: v1.3.0
     licenses:

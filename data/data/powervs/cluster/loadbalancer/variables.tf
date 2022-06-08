@@ -3,24 +3,19 @@ variable "cluster_id" {
   description = "The ID created by the installer to uniquely identify the created cluster."
 }
 
-variable "vpc_name" {
+variable "master_count" {
   type        = string
-  description = "The name of the VPC if precreated."
+  description = "The number of master nodes."
+}
+
+variable "vpc_id" {
+  type        = string
+  description = "The ID of the VPC."
 }
 
 variable "vpc_subnet_id" {
   type        = string
-  description = "The name of the VPC subnet if precreated."
-}
-
-variable "bootstrap_ip" {
-  type        = string
-  description = "The IP address of the bootstrap node."
-}
-
-variable "master_ips" {
-  type        = list(string)
-  description = "The IP addresses of the master nodes."
+  description = "The ID of the VPC subnet."
 }
 
 variable "resource_group" {

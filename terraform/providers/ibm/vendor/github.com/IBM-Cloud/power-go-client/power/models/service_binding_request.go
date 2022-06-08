@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ServiceBindingRequest service binding request
+//
 // swagger:model ServiceBindingRequest
 type ServiceBindingRequest struct {
 
@@ -61,7 +63,6 @@ func (m *ServiceBindingRequest) Validate(formats strfmt.Registry) error {
 }
 
 func (m *ServiceBindingRequest) validateBindResource(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.BindResource) { // not required
 		return nil
 	}
@@ -70,6 +71,8 @@ func (m *ServiceBindingRequest) validateBindResource(formats strfmt.Registry) er
 		if err := m.BindResource.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("bind_resource")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("bind_resource")
 			}
 			return err
 		}
@@ -91,6 +94,36 @@ func (m *ServiceBindingRequest) validateServiceID(formats strfmt.Registry) error
 
 	if err := validate.Required("service_id", "body", m.ServiceID); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this service binding request based on the context it is used
+func (m *ServiceBindingRequest) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateBindResource(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ServiceBindingRequest) contextValidateBindResource(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.BindResource != nil {
+		if err := m.BindResource.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("bind_resource")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("bind_resource")
+			}
+			return err
+		}
 	}
 
 	return nil

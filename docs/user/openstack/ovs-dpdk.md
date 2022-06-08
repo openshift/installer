@@ -116,17 +116,16 @@ The ID of the network will be later used to inform the cluster which ports to at
     openshift-install create cluster --log-level=debug
     ```
 
-### Install Performance Addon Operator (PAO) and create a performance profile
+### Create a performance profile
 
 To get the best performance out of the workers attached to the VFIO interface, the correct settings for hugepages and other relevant settings need to be used.
-The performance-operator is used to configure these settings on the desired worker nodes.
-For details on installing and using the performance-operator see the [official documentation][2].
+The node-tuning-operator component is used to configure these settings on the desired worker nodes.
 
 The following is an example of the performance profile that should be applied.
 The user should provide the values for kernel args, `HUGEPAGES`, `CPU_ISOLATED` and `CPU_RESERVED` depending on their system:
 
 ``` yaml
-apiVersion: performance.openshift.io/v1
+apiVersion: performance.openshift.io/v2
 kind: PerformanceProfile
 metadata:
   name: cnf-performanceprofile
@@ -156,93 +155,91 @@ spec:
     enabled: false
 ```
 
-### Enable `vfio-noiommu` driver
+### Label your CNF workers
 
-In the case of deploying workers in virtual machines, the underlying virtualization platform doesn't support
-a virtualized IOMMU and we need to explicitly enable it via `options vfio enable_unsafe_noiommu_mode=1`.
-This can be done via a MachineConfig resource:
+Once the CNF workers are deployed, you must label them SR-IOV capable:
 
-``` yaml
-kind: MachineConfig
-apiVersion: machineconfiguration.openshift.io/v1
+```sh
+oc label node <node-name> feature.node.kubernetes.io/network-sriov.capable="true"
+```
+
+These workers will be used to run the CNF workloads.
+
+### Install the SRIOV Network Operator and configure a network device
+
+You must install the SR-IOV Network Operator. To install the Operator, you will need access to an account on your OpenShift cluster that has `cluster-admin` privileges. After you log in to the account, [install the Operator][2].
+
+Then, [configure your SR-IOV network device][3]. Note that only `netFilter` needs to be used from the `nicSelector`, as we'll give the Neutron network ID used for DPDK traffic.
+
+Example of `SriovNetworkNodePolicy` named `dpdk1`:
+
+```
+apiVersion: sriovnetwork.openshift.io/v1
+kind: SriovNetworkNodePolicy
 metadata:
-  name: 99-vfio-noiommu 
-  labels:
-    machineconfiguration.openshift.io/role: worker
+  name: dpdk1
+  namespace: openshift-sriov-network-operator
 spec:
-  config:
-    ignition:
-      version: 3.2.0
-    storage:
-      files:
-      - path: /etc/modprobe.d/vfio-noiommu.conf
-        mode: 0644
-        contents:
-          source: data:;base64,b3B0aW9ucyB2ZmlvIGVuYWJsZV91bnNhZmVfbm9pb21tdV9tb2RlPTEK
+  deviceType: vfio-pci
+  isRdma: false
+  nicSelector:
+    netFilter: openstack/NetworkID:55a54d05-9ec1-4051-8adb-1b5a7be4f1b6
+  nodeSelector:
+    feature.node.kubernetes.io/network-sriov.capable: 'true'
+  numVfs: 1
+  priority: 99
+  resourceName: dpdk1
 ```
 
-More documentation about that can be found [here][3].
+Note: If the network device plugged to the network is not from Intel and is from Mellanox, then `deviceType` must be set to `netdevice` and `isRdma` set to `true`. 
 
-### Bind the `vfio-pci` kernel driver to the appropriate NICs
+The SR-IOV network operator will automatically discover the devices connected on that network for each worker, and make them available for use by the CNF pods later.
 
-The workers connected to the `VFIO_NETWORK` require the `vfi-pci` kernel driver to be bound to the ports attached to the `VFIO_NETWORK`.
 
-We basically need to create a MachineSet for the workers which will be attached to the `VFIO_NETWORK` network.
-The MachineConfig used in the MachineSet should contain the necessary SystemD unit definitions to install the poll mode driver (`vfio-pci`) on boot.
-This [Ansible role][4] provides an easy way to generate the required MachineSet.
-The playbooks also provide the ability to automatically install the MachineSet, but it is highly recommended to use the playbooks for generating a MachineSet file (.yaml).
-Then the user should explicitly install this on their cluster using the appropriate `oc` commands.
+## Deploy a testpmd pod
 
-To generate the MachineSet file, run the following commands:
+This pod is an example how we can create a container that uses the hugepages, the reserved CPUs and the DPDK port:
 
-``` bash
-openstack network show <name of VFIO network> -f value -c id
-ansible-playbook play.yaml -e network_ids="ID of VFIO network" --extra-vars "mc_config_file=/tmp/vhostuser.yaml"
-oc create -f /tmp/vhostuser.yaml
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpmd-dpdk
+  namespace: mynamespace
+spec:
+  containers:
+  - name: testpmd
+    command: ["sleep", "99999"]
+    image: registry.redhat.io/openshift4/dpdk-base-rhel8:v4.9
+    securityContext:
+      capabilities:
+        add: ["IPC_LOCK","SYS_ADMIN"]
+      privileged: true
+      runAsUser: 0
+    resources:
+      requests:
+        memory: 1000Mi
+        hugepages-1Gi: 1Gi
+        cpu: '2'
+        openshift.io/dpdk1: 1
+      limits:
+        hugepages-1Gi: 1Gi
+        cpu: '2'
+        memory: 1000Mi
+        openshift.io/dpdk1: 1
+    volumeMounts:
+      - mountPath: /dev/hugepages
+        name: hugepage
+        readOnly: False
+  volumes:
+  - name: hugepage
+    emptyDir:
+      medium: HugePages
 ```
 
-In the case of multiple networks, a comma-separated list of IDs can be provided to `network_ids`.
-
-The MachineSet will enable a script at boot which will inspects the config drive attached to the VM for the required information. If not found there, it queries the metadata server for it. Based on the network ID, the MAC address of the port is learned and this is translated into the correct PCI bus ID. This means that on boot the vfio-pci module is bound to any port that is attached to the network identified by the OpenStack network ID.
-
-The result is that the interface will have the vfio-pci driver bound to it. You can verify this by executing the `lspci -k` command on the workers in question. The result should be similar to this:
-
-``` bash
-lspci -k
-...
-00:07.0 Ethernet controller: Red Hat, Inc. Virtio network device
-	Subsystem: Red Hat, Inc. Device 0001
-	Kernel driver in use: vfio-pci
-```
-
-As you can see, the Ethernet controller at bus ID `00:07.0` is using the vfio-pci kernel driver.
-
-### Expose host-device interface to pod
-
-The host-device CNI plugin can be used to expose an interface on the host to the pod.
-The plugin moves the interface from the host network namespace to the pods namespace.
-Effectively given direct control of the interface to the pod running in the namespace.
-
-This can be done by [creating an additional network attachment with the host-device CNI plug-in][5]:
-``` yaml
-additionalNetworks:
-- name: vhost1
-  namespace: <your-cnf-namespace>
-  type: Raw
-  rawCNIConfig: '{
-    "cniVersion": "0.3.1",
-    "name": "vhost1",
-    "type": "host-device",
-    "pciBusId": "0000:00:04.0",
-    "ipam": {}
-    }
-  }'
-```
-
-After this step, validation can be done by doing `oc -n <your-cnf-namespace> get net-attach-def` to ensure the networks are created on the namespace.
+More examples are documented [here][4].
 
 [1]: https://doc.dpdk.org/guides/prog_guide/poll_mode_drv.html
-[2]: https://docs.openshift.com/container-platform/4.9/scalability_and_performance/cnf-performance-addon-operator-for-low-latency-nodes.html
-[3]: https://github.com/k8snetworkplumbingwg/sriov-network-device-plugin/blob/master/docs/dpdk/README-virt.md
-[4]: https://github.com/rh-nfv-int/shift-on-stack-vhostuser
-[5]: https://docs.openshift.com/container-platform/4.9/networking/multiple_networks/configuring-additional-network.html#nw-multus-host-device-object_configuring-additional-network
+[2]: https://docs.openshift.com/container-platform/4.10/networking/hardware_networks/installing-sriov-operator.html
+[3]: https://docs.openshift.com/container-platform/4.10/networking/hardware_networks/configuring-sriov-device.html
+[4]: https://docs.openshift.com/container-platform/4.10/networking/hardware_networks/using-dpdk-and-rdma.html#example-vf-use-in-dpdk-mode-intel_using-dpdk-and-rdma

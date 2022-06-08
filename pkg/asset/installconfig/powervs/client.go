@@ -23,6 +23,7 @@ type API interface {
 	GetDNSZoneIDByName(ctx context.Context, name string) (string, error)
 	GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error)
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
+	GetAPIKey() string
 }
 
 // Client makes calls to the PowerVS API.
@@ -58,13 +59,13 @@ type DNSZoneResponse struct {
 
 // NewClient initializes a client with a session.
 func NewClient() (*Client, error) {
-	ssn, err := GetSession()
+	bxCli, err := NewBxClient()
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
-		APIKey: ssn.APIKey,
+		APIKey: bxCli.APIKey,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
@@ -250,5 +251,17 @@ func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentit
 	if err != nil {
 		return nil, err
 	}
+	// NOTE: details.Apikey
+	// https://cloud.ibm.com/apidocs/iam-identity-token-api?code=go#get-api-keys-details
+	// This property only contains the API key value for the following cases: create an API key,
+	// update a service ID API key that stores the API key value as retrievable, or get a service
+	// ID API key that stores the API key value as retrievable. All other operations don't return
+	// the API key value, for example all user API key related operations, except for create,
+	// don't contain the API key value.
 	return details, nil
+}
+
+// GetAPIKey returns the PowerVS API key
+func (c *Client) GetAPIKey() string {
+	return c.APIKey
 }

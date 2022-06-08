@@ -13,73 +13,88 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudPvminstancesVolumesSetbootPutParams creates a new PcloudPvminstancesVolumesSetbootPutParams object
-// with the default values initialized.
+// NewPcloudPvminstancesVolumesSetbootPutParams creates a new PcloudPvminstancesVolumesSetbootPutParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPvminstancesVolumesSetbootPutParams() *PcloudPvminstancesVolumesSetbootPutParams {
-	var ()
 	return &PcloudPvminstancesVolumesSetbootPutParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPvminstancesVolumesSetbootPutParamsWithTimeout creates a new PcloudPvminstancesVolumesSetbootPutParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPvminstancesVolumesSetbootPutParamsWithTimeout(timeout time.Duration) *PcloudPvminstancesVolumesSetbootPutParams {
-	var ()
 	return &PcloudPvminstancesVolumesSetbootPutParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPvminstancesVolumesSetbootPutParamsWithContext creates a new PcloudPvminstancesVolumesSetbootPutParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPvminstancesVolumesSetbootPutParamsWithContext(ctx context.Context) *PcloudPvminstancesVolumesSetbootPutParams {
-	var ()
 	return &PcloudPvminstancesVolumesSetbootPutParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPvminstancesVolumesSetbootPutParamsWithHTTPClient creates a new PcloudPvminstancesVolumesSetbootPutParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPvminstancesVolumesSetbootPutParamsWithHTTPClient(client *http.Client) *PcloudPvminstancesVolumesSetbootPutParams {
-	var ()
 	return &PcloudPvminstancesVolumesSetbootPutParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPvminstancesVolumesSetbootPutParams contains all the parameters to send to the API endpoint
-for the pcloud pvminstances volumes setboot put operation typically these are written to a http.Request
+/* PcloudPvminstancesVolumesSetbootPutParams contains all the parameters to send to the API endpoint
+   for the pcloud pvminstances volumes setboot put operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPvminstancesVolumesSetbootPutParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PvmInstanceID
-	  PCloud PVM Instance ID
 
+	/* PvmInstanceID.
+
+	   PCloud PVM Instance ID
 	*/
 	PvmInstanceID string
-	/*VolumeID
-	  Volume ID
 
+	/* VolumeID.
+
+	   Volume ID
 	*/
 	VolumeID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud pvminstances volumes setboot put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesVolumesSetbootPutParams) WithDefaults() *PcloudPvminstancesVolumesSetbootPutParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud pvminstances volumes setboot put params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesVolumesSetbootPutParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud pvminstances volumes setboot put params

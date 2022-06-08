@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudV2VolumescloneGetParams creates a new PcloudV2VolumescloneGetParams object
-// with the default values initialized.
+// NewPcloudV2VolumescloneGetParams creates a new PcloudV2VolumescloneGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudV2VolumescloneGetParams() *PcloudV2VolumescloneGetParams {
-	var ()
 	return &PcloudV2VolumescloneGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudV2VolumescloneGetParamsWithTimeout creates a new PcloudV2VolumescloneGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudV2VolumescloneGetParamsWithTimeout(timeout time.Duration) *PcloudV2VolumescloneGetParams {
-	var ()
 	return &PcloudV2VolumescloneGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudV2VolumescloneGetParamsWithContext creates a new PcloudV2VolumescloneGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudV2VolumescloneGetParamsWithContext(ctx context.Context) *PcloudV2VolumescloneGetParams {
-	var ()
 	return &PcloudV2VolumescloneGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudV2VolumescloneGetParamsWithHTTPClient creates a new PcloudV2VolumescloneGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudV2VolumescloneGetParamsWithHTTPClient(client *http.Client) *PcloudV2VolumescloneGetParams {
-	var ()
 	return &PcloudV2VolumescloneGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudV2VolumescloneGetParams contains all the parameters to send to the API endpoint
-for the pcloud v2 volumesclone get operation typically these are written to a http.Request
+/* PcloudV2VolumescloneGetParams contains all the parameters to send to the API endpoint
+   for the pcloud v2 volumesclone get operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudV2VolumescloneGetParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*VolumesCloneID
-	  Volumes Clone ID
 
+	/* VolumesCloneID.
+
+	   Volumes Clone ID
 	*/
 	VolumesCloneID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud v2 volumesclone get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2VolumescloneGetParams) WithDefaults() *PcloudV2VolumescloneGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud v2 volumesclone get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2VolumescloneGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud v2 volumesclone get params

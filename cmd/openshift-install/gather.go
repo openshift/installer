@@ -23,6 +23,8 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/asset/tls"
+	serialgather "github.com/openshift/installer/pkg/gather"
+	_ "github.com/openshift/installer/pkg/gather/aws"
 	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
@@ -45,14 +47,12 @@ to debug the installation failures`,
 	return cmd
 }
 
-var (
-	gatherBootstrapOpts struct {
-		bootstrap    string
-		masters      []string
-		sshKeys      []string
-		skipAnalysis bool
-	}
-)
+var gatherBootstrapOpts struct {
+	bootstrap    string
+	masters      []string
+	sshKeys      []string
+	skipAnalysis bool
+}
 
 func newGatherBootstrapCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -142,6 +142,24 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 }
 
 func gatherBootstrap(bootstrap string, port int, masters []string, directory string) (string, error) {
+	gatherID := time.Now().Format("20060102150405")
+
+	serialLogBundle := filepath.Join(directory, fmt.Sprintf("serial-log-bundle-%s.tar.gz", gatherID))
+	serialLogBundlePath, err := filepath.Abs(serialLogBundle)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to stat log file")
+	}
+
+	consoleGather, err := serialgather.New(logrus.StandardLogger(), serialLogBundlePath, bootstrap, masters, directory)
+	if err != nil {
+		logrus.Infof("Skipping VM console logs gather: %s", err.Error())
+	} else {
+		logrus.Info("Pulling VM console logs")
+		if err := consoleGather.Run(); err != nil {
+			logrus.Infof("Failed to gather VM console logs: %s", err.Error())
+		}
+	}
+
 	logrus.Info("Pulling debug logs from the bootstrap machine")
 	client, err := ssh.NewClient("core", net.JoinHostPort(bootstrap, strconv.Itoa(port)), gatherBootstrapOpts.sshKeys)
 	if err != nil {
@@ -151,19 +169,28 @@ func gatherBootstrap(bootstrap string, port int, masters []string, directory str
 		return "", errors.Wrap(err, "failed to create SSH client")
 	}
 
-	gatherID := time.Now().Format("20060102150405")
 	if err := ssh.Run(client, fmt.Sprintf("/usr/local/bin/installer-gather.sh --id %s %s", gatherID, strings.Join(masters, " "))); err != nil {
 		return "", errors.Wrap(err, "failed to run remote command")
 	}
-	file := filepath.Join(directory, fmt.Sprintf("log-bundle-%s.tar.gz", gatherID))
+
+	file := filepath.Join(directory, fmt.Sprintf("cluster-log-bundle-%s.tar.gz", gatherID))
 	if err := ssh.PullFileTo(client, fmt.Sprintf("/home/core/log-bundle-%s.tar.gz", gatherID), file); err != nil {
 		return "", errors.Wrap(err, "failed to pull log file from remote")
 	}
-	path, err := filepath.Abs(file)
+
+	clusterLogBundlePath, err := filepath.Abs(file)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to stat log file")
 	}
-	return path, nil
+
+	logBundlePath := filepath.Join(filepath.Dir(clusterLogBundlePath), fmt.Sprintf("log-bundle-%s.tar.gz", gatherID))
+	archives := map[string]string{serialLogBundlePath: "serial", clusterLogBundlePath: ""}
+	err = serialgather.CombineArchives(logBundlePath, archives)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to combine archives")
+	}
+
+	return logBundlePath, nil
 }
 
 func logClusterOperatorConditions(ctx context.Context, config *rest.Config) error {

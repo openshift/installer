@@ -25,8 +25,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 
 	platform := config.Platform.PowerVS
 	mpool := pool.Platform.PowerVS
+	var network string
 	image := fmt.Sprintf("rhcos-%s", clusterID)
-	network := fmt.Sprintf("pvs-net-%s", clusterID)
 	if platform.ClusterOSImage != "" {
 		image = platform.ClusterOSImage
 	}

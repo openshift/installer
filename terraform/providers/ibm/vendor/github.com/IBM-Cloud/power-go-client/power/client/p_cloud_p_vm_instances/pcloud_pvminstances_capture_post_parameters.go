@@ -13,75 +13,90 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudPvminstancesCapturePostParams creates a new PcloudPvminstancesCapturePostParams object
-// with the default values initialized.
+// NewPcloudPvminstancesCapturePostParams creates a new PcloudPvminstancesCapturePostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPvminstancesCapturePostParams() *PcloudPvminstancesCapturePostParams {
-	var ()
 	return &PcloudPvminstancesCapturePostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPvminstancesCapturePostParamsWithTimeout creates a new PcloudPvminstancesCapturePostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPvminstancesCapturePostParamsWithTimeout(timeout time.Duration) *PcloudPvminstancesCapturePostParams {
-	var ()
 	return &PcloudPvminstancesCapturePostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPvminstancesCapturePostParamsWithContext creates a new PcloudPvminstancesCapturePostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPvminstancesCapturePostParamsWithContext(ctx context.Context) *PcloudPvminstancesCapturePostParams {
-	var ()
 	return &PcloudPvminstancesCapturePostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPvminstancesCapturePostParamsWithHTTPClient creates a new PcloudPvminstancesCapturePostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPvminstancesCapturePostParamsWithHTTPClient(client *http.Client) *PcloudPvminstancesCapturePostParams {
-	var ()
 	return &PcloudPvminstancesCapturePostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPvminstancesCapturePostParams contains all the parameters to send to the API endpoint
-for the pcloud pvminstances capture post operation typically these are written to a http.Request
+/* PcloudPvminstancesCapturePostParams contains all the parameters to send to the API endpoint
+   for the pcloud pvminstances capture post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPvminstancesCapturePostParams struct {
 
-	/*Body
-	  Parameters for the capture PVMInstance
+	/* Body.
 
+	   Parameters for the capture PVMInstance
 	*/
 	Body *models.PVMInstanceCapture
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PvmInstanceID
-	  PCloud PVM Instance ID
 
+	/* PvmInstanceID.
+
+	   PCloud PVM Instance ID
 	*/
 	PvmInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud pvminstances capture post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesCapturePostParams) WithDefaults() *PcloudPvminstancesCapturePostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud pvminstances capture post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesCapturePostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud pvminstances capture post params
@@ -157,7 +172,6 @@ func (o *PcloudPvminstancesCapturePostParams) WriteToRequest(r runtime.ClientReq
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

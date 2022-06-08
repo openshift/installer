@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudNetworksPortsPostReader is a Reader for the PcloudNetworksPortsPost structure.
@@ -24,51 +23,44 @@ type PcloudNetworksPortsPostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudNetworksPortsPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 201:
 		result := NewPcloudNetworksPortsPostCreated()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudNetworksPortsPostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudNetworksPortsPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewPcloudNetworksPortsPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudNetworksPortsPostUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudNetworksPortsPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudNetworksPortsPostCreated() *PcloudNetworksPortsPostCreated {
 	return &PcloudNetworksPortsPostCreated{}
 }
 
-/*PcloudNetworksPortsPostCreated handles this case with default header values.
+/* PcloudNetworksPortsPostCreated describes a response with status code 201, with default header values.
 
 Created
 */
@@ -87,6 +79,9 @@ type PcloudNetworksPortsPostCreated struct {
 
 func (o *PcloudNetworksPortsPostCreated) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsPostCreated  %+v", 201, o.Payload)
+}
+func (o *PcloudNetworksPortsPostCreated) GetPayload() *models.NetworkPort {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsPostCreated) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -106,7 +101,7 @@ func NewPcloudNetworksPortsPostBadRequest() *PcloudNetworksPortsPostBadRequest {
 	return &PcloudNetworksPortsPostBadRequest{}
 }
 
-/*PcloudNetworksPortsPostBadRequest handles this case with default header values.
+/* PcloudNetworksPortsPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -116,6 +111,9 @@ type PcloudNetworksPortsPostBadRequest struct {
 
 func (o *PcloudNetworksPortsPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsPostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudNetworksPortsPostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -135,7 +133,7 @@ func NewPcloudNetworksPortsPostUnauthorized() *PcloudNetworksPortsPostUnauthoriz
 	return &PcloudNetworksPortsPostUnauthorized{}
 }
 
-/*PcloudNetworksPortsPostUnauthorized handles this case with default header values.
+/* PcloudNetworksPortsPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -145,6 +143,9 @@ type PcloudNetworksPortsPostUnauthorized struct {
 
 func (o *PcloudNetworksPortsPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsPostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudNetworksPortsPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -164,7 +165,7 @@ func NewPcloudNetworksPortsPostConflict() *PcloudNetworksPortsPostConflict {
 	return &PcloudNetworksPortsPostConflict{}
 }
 
-/*PcloudNetworksPortsPostConflict handles this case with default header values.
+/* PcloudNetworksPortsPostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -174,6 +175,9 @@ type PcloudNetworksPortsPostConflict struct {
 
 func (o *PcloudNetworksPortsPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsPostConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudNetworksPortsPostConflict) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsPostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -193,7 +197,7 @@ func NewPcloudNetworksPortsPostUnprocessableEntity() *PcloudNetworksPortsPostUnp
 	return &PcloudNetworksPortsPostUnprocessableEntity{}
 }
 
-/*PcloudNetworksPortsPostUnprocessableEntity handles this case with default header values.
+/* PcloudNetworksPortsPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -203,6 +207,9 @@ type PcloudNetworksPortsPostUnprocessableEntity struct {
 
 func (o *PcloudNetworksPortsPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudNetworksPortsPostUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsPostUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -222,7 +229,7 @@ func NewPcloudNetworksPortsPostInternalServerError() *PcloudNetworksPortsPostInt
 	return &PcloudNetworksPortsPostInternalServerError{}
 }
 
-/*PcloudNetworksPortsPostInternalServerError handles this case with default header values.
+/* PcloudNetworksPortsPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -232,6 +239,9 @@ type PcloudNetworksPortsPostInternalServerError struct {
 
 func (o *PcloudNetworksPortsPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsPostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudNetworksPortsPostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksPortsPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

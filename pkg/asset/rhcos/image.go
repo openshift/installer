@@ -174,7 +174,7 @@ func osImage(config *types.InstallConfig) (string, error) {
 			vpcRegion := powervs.Regions[config.Platform.PowerVS.Region].VPCRegion
 			img := streamArch.Images.PowerVS.Regions[vpcRegion]
 			logrus.Debug("Power VS using image ", img.Object)
-			return img.Object, nil
+			return fmt.Sprintf("%s/%s", img.Bucket, img.Object), nil
 		}
 
 		return "", fmt.Errorf("%s: No Power VS build found", st.FormatPrefix(archName))

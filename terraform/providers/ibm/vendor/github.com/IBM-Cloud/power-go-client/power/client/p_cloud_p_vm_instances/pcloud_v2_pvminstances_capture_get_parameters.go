@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudV2PvminstancesCaptureGetParams creates a new PcloudV2PvminstancesCaptureGetParams object
-// with the default values initialized.
+// NewPcloudV2PvminstancesCaptureGetParams creates a new PcloudV2PvminstancesCaptureGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudV2PvminstancesCaptureGetParams() *PcloudV2PvminstancesCaptureGetParams {
-	var ()
 	return &PcloudV2PvminstancesCaptureGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudV2PvminstancesCaptureGetParamsWithTimeout creates a new PcloudV2PvminstancesCaptureGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudV2PvminstancesCaptureGetParamsWithTimeout(timeout time.Duration) *PcloudV2PvminstancesCaptureGetParams {
-	var ()
 	return &PcloudV2PvminstancesCaptureGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudV2PvminstancesCaptureGetParamsWithContext creates a new PcloudV2PvminstancesCaptureGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudV2PvminstancesCaptureGetParamsWithContext(ctx context.Context) *PcloudV2PvminstancesCaptureGetParams {
-	var ()
 	return &PcloudV2PvminstancesCaptureGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudV2PvminstancesCaptureGetParamsWithHTTPClient creates a new PcloudV2PvminstancesCaptureGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudV2PvminstancesCaptureGetParamsWithHTTPClient(client *http.Client) *PcloudV2PvminstancesCaptureGetParams {
-	var ()
 	return &PcloudV2PvminstancesCaptureGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudV2PvminstancesCaptureGetParams contains all the parameters to send to the API endpoint
-for the pcloud v2 pvminstances capture get operation typically these are written to a http.Request
+/* PcloudV2PvminstancesCaptureGetParams contains all the parameters to send to the API endpoint
+   for the pcloud v2 pvminstances capture get operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudV2PvminstancesCaptureGetParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PvmInstanceID
-	  PCloud PVM Instance ID
 
+	/* PvmInstanceID.
+
+	   PCloud PVM Instance ID
 	*/
 	PvmInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud v2 pvminstances capture get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2PvminstancesCaptureGetParams) WithDefaults() *PcloudV2PvminstancesCaptureGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud v2 pvminstances capture get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2PvminstancesCaptureGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud v2 pvminstances capture get params

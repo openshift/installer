@@ -1,16 +1,17 @@
 package nutanix
 
 import (
-	"fmt"
+	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixKarbonClusters() *schema.Resource {
 	return &schema.Resource{
-		Read:          dataSourceNutanixKarbonClustersRead,
+		ReadContext:   dataSourceNutanixKarbonClustersRead,
 		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
 			"clusters": {
@@ -24,7 +25,7 @@ func dataSourceNutanixKarbonClusters() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixKarbonClustersRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixKarbonClustersRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).KarbonAPI
 	setTimeout(meta)
@@ -40,20 +41,20 @@ func dataSourceNutanixKarbonClustersRead(d *schema.ResourceData, meta interface{
 	for k, v := range *resp {
 		cluster := make(map[string]interface{})
 		if err != nil {
-			return fmt.Errorf("error searching for cluster via legacy API: %s", err)
+			return diag.Errorf("error searching for cluster via legacy API: %s", err)
 		}
 		karbonClusterName := *v.Name
 		flattenedEtcdNodepool, err := flattenNodePools(d, conn, "etcd_node_pool", karbonClusterName, v.ETCDConfig.NodePools)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		flattenedWorkerNodepool, err := flattenNodePools(d, conn, "worker_node_pool", karbonClusterName, v.WorkerConfig.NodePools)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		flattenedMasterNodepool, err := flattenNodePools(d, conn, "master_node_pool", karbonClusterName, v.MasterConfig.NodePools)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		cluster["name"] = utils.StringValue(v.Name)
 
@@ -73,7 +74,7 @@ func dataSourceNutanixKarbonClustersRead(d *schema.ResourceData, meta interface{
 	}
 
 	if err := d.Set("clusters", clusters); err != nil {
-		return fmt.Errorf("failed to set clusters output: %s", err)
+		return diag.Errorf("failed to set clusters output: %s", err)
 	}
 
 	d.SetId(resource.UniqueId())

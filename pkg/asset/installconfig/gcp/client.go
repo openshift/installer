@@ -24,6 +24,7 @@ type API interface {
 	GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error)
 	GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error)
 	GetProjects(ctx context.Context) (map[string]string, error)
+	GetRegions(ctx context.Context, project string) ([]string, error)
 	GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error)
 	GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error)
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
@@ -52,14 +53,13 @@ func NewClient(ctx context.Context) (*Client, error) {
 
 // GetMachineType uses the GCP Compute Service API to get the specified machine type.
 func (c *Client) GetMachineType(ctx context.Context, project, zone, machineType string) (*compute.MachineType, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
 	svc, err := c.getComputeService(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
 	req, err := svc.MachineTypes.Get(project, zone, machineType).Context(ctx).Do()
 	if err != nil {
 		return nil, err
@@ -70,13 +70,13 @@ func (c *Client) GetMachineType(ctx context.Context, project, zone, machineType 
 
 // GetNetwork uses the GCP Compute Service API to get a network by name from a project.
 func (c *Client) GetNetwork(ctx context.Context, network, project string) (*compute.Network, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
 	svc, err := c.getComputeService(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
 	res, err := svc.Networks.Get(project, network).Context(ctx).Do()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get network %s", network)
@@ -162,9 +162,6 @@ func (c *Client) GetRecordSets(ctx context.Context, project, zone string) ([]*dn
 
 // GetSubnetworks uses the GCP Compute Service API to retrieve all subnetworks in a given network.
 func (c *Client) GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
 	svc, err := c.getComputeService(ctx)
 	if err != nil {
 		return nil, err
@@ -173,6 +170,10 @@ func (c *Client) GetSubnetworks(ctx context.Context, network, project, region st
 	filter := fmt.Sprintf("network eq .*%s", network)
 	req := svc.Subnetworks.List(project, region).Filter(filter)
 	var res []*compute.Subnetwork
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
 	if err := req.Pages(ctx, func(page *compute.SubnetworkList) error {
 		res = append(res, page.Items...)
 		return nil
@@ -183,6 +184,9 @@ func (c *Client) GetSubnetworks(ctx context.Context, network, project, region st
 }
 
 func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	svc, err := compute.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create compute service")
@@ -222,13 +226,30 @@ func (c *Client) GetProjects(ctx context.Context) (map[string]string, error) {
 	return projects, nil
 }
 
+// GetRegions gets the regions that are valid for the project. An error is returned when unsuccessful
+func (c *Client) GetRegions(ctx context.Context, project string) ([]string, error) {
+	svc, err := c.getComputeService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	gcpRegionsList, err := svc.Regions.List(project).Context(ctx).Do()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get regions for project")
+	}
+
+	computeRegions := make([]string, len(gcpRegionsList.Items))
+	for _, region := range gcpRegionsList.Items {
+		computeRegions = append(computeRegions, region.Name)
+	}
+
+	return computeRegions, nil
+}
+
 // GetZones uses the GCP Compute Service API to get a list of zones from a project.
 func (c *Client) GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error) {
-	zones := []*compute.Zone{}
-
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
 	svc, err := c.getComputeService(ctx)
 	if err != nil {
 		return nil, err
@@ -239,6 +260,9 @@ func (c *Client) GetZones(ctx context.Context, project, filter string) ([]*compu
 		req = req.Filter(filter)
 	}
 
+	zones := []*compute.Zone{}
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
 	if err := req.Pages(ctx, func(page *compute.ZoneList) error {
 		for _, zone := range page.Items {
 			zones = append(zones, zone)

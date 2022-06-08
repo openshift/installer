@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ImageReference image reference
+//
 // swagger:model ImageReference
 type ImageReference struct {
 
@@ -182,6 +184,8 @@ func (m *ImageReference) validateSpecifications(formats strfmt.Registry) error {
 		if err := m.Specifications.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("specifications")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("specifications")
 			}
 			return err
 		}
@@ -212,6 +216,36 @@ func (m *ImageReference) validateStorageType(formats strfmt.Registry) error {
 
 	if err := validate.Required("storageType", "body", m.StorageType); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this image reference based on the context it is used
+func (m *ImageReference) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateSpecifications(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ImageReference) contextValidateSpecifications(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Specifications != nil {
+		if err := m.Specifications.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("specifications")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("specifications")
+			}
+			return err
+		}
 	}
 
 	return nil

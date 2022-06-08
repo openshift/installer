@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudV2ImagesExportGetParams creates a new PcloudV2ImagesExportGetParams object
-// with the default values initialized.
+// NewPcloudV2ImagesExportGetParams creates a new PcloudV2ImagesExportGetParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudV2ImagesExportGetParams() *PcloudV2ImagesExportGetParams {
-	var ()
 	return &PcloudV2ImagesExportGetParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudV2ImagesExportGetParamsWithTimeout creates a new PcloudV2ImagesExportGetParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudV2ImagesExportGetParamsWithTimeout(timeout time.Duration) *PcloudV2ImagesExportGetParams {
-	var ()
 	return &PcloudV2ImagesExportGetParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudV2ImagesExportGetParamsWithContext creates a new PcloudV2ImagesExportGetParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudV2ImagesExportGetParamsWithContext(ctx context.Context) *PcloudV2ImagesExportGetParams {
-	var ()
 	return &PcloudV2ImagesExportGetParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudV2ImagesExportGetParamsWithHTTPClient creates a new PcloudV2ImagesExportGetParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudV2ImagesExportGetParamsWithHTTPClient(client *http.Client) *PcloudV2ImagesExportGetParams {
-	var ()
 	return &PcloudV2ImagesExportGetParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudV2ImagesExportGetParams contains all the parameters to send to the API endpoint
-for the pcloud v2 images export get operation typically these are written to a http.Request
+/* PcloudV2ImagesExportGetParams contains all the parameters to send to the API endpoint
+   for the pcloud v2 images export get operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudV2ImagesExportGetParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*ImageID
-	  Image ID of a image
 
+	/* ImageID.
+
+	   Image ID of a image
 	*/
 	ImageID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud v2 images export get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2ImagesExportGetParams) WithDefaults() *PcloudV2ImagesExportGetParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud v2 images export get params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudV2ImagesExportGetParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud v2 images export get params

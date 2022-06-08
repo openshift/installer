@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudNetworksDeleteReader is a Reader for the PcloudNetworksDelete structure.
@@ -24,44 +23,38 @@ type PcloudNetworksDeleteReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudNetworksDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudNetworksDeleteOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudNetworksDeleteBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudNetworksDeleteUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 410:
 		result := NewPcloudNetworksDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudNetworksDeleteInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudNetworksDeleteOK() *PcloudNetworksDeleteOK {
 	return &PcloudNetworksDeleteOK{}
 }
 
-/*PcloudNetworksDeleteOK handles this case with default header values.
+/* PcloudNetworksDeleteOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudNetworksDeleteOK struct {
 
 func (o *PcloudNetworksDeleteOK) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksDeleteOK  %+v", 200, o.Payload)
+}
+func (o *PcloudNetworksDeleteOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudNetworksDeleteOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -97,7 +93,7 @@ func NewPcloudNetworksDeleteBadRequest() *PcloudNetworksDeleteBadRequest {
 	return &PcloudNetworksDeleteBadRequest{}
 }
 
-/*PcloudNetworksDeleteBadRequest handles this case with default header values.
+/* PcloudNetworksDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -107,6 +103,9 @@ type PcloudNetworksDeleteBadRequest struct {
 
 func (o *PcloudNetworksDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksDeleteBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudNetworksDeleteBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -126,7 +125,7 @@ func NewPcloudNetworksDeleteUnauthorized() *PcloudNetworksDeleteUnauthorized {
 	return &PcloudNetworksDeleteUnauthorized{}
 }
 
-/*PcloudNetworksDeleteUnauthorized handles this case with default header values.
+/* PcloudNetworksDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -136,6 +135,9 @@ type PcloudNetworksDeleteUnauthorized struct {
 
 func (o *PcloudNetworksDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksDeleteUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudNetworksDeleteUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -155,7 +157,7 @@ func NewPcloudNetworksDeleteGone() *PcloudNetworksDeleteGone {
 	return &PcloudNetworksDeleteGone{}
 }
 
-/*PcloudNetworksDeleteGone handles this case with default header values.
+/* PcloudNetworksDeleteGone describes a response with status code 410, with default header values.
 
 Gone
 */
@@ -165,6 +167,9 @@ type PcloudNetworksDeleteGone struct {
 
 func (o *PcloudNetworksDeleteGone) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksDeleteGone  %+v", 410, o.Payload)
+}
+func (o *PcloudNetworksDeleteGone) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksDeleteGone) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -184,7 +189,7 @@ func NewPcloudNetworksDeleteInternalServerError() *PcloudNetworksDeleteInternalS
 	return &PcloudNetworksDeleteInternalServerError{}
 }
 
-/*PcloudNetworksDeleteInternalServerError handles this case with default header values.
+/* PcloudNetworksDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -194,6 +199,9 @@ type PcloudNetworksDeleteInternalServerError struct {
 
 func (o *PcloudNetworksDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksDeleteInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudNetworksDeleteInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudNetworksDeleteInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

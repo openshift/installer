@@ -1,14 +1,15 @@
 package provider
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 
-	"github.com/hashicorp/errwrap"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -28,11 +29,11 @@ the ` + "`create_before_destroy`" + ` lifecycle flag set to avoid conflicts with
 unique names during the brief period where both the old and new resources
 exist concurrently.
 `,
-		Create: CreateID,
-		Read:   RepopulateEncodings,
-		Delete: schema.RemoveFromState,
+		CreateContext: CreateID,
+		ReadContext:   RepopulateEncodings,
+		DeleteContext: RemoveResourceFromState,
 		Importer: &schema.ResourceImporter{
-			State: ImportID,
+			StateContext: ImportID,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -95,31 +96,38 @@ exist concurrently.
 	}
 }
 
-func CreateID(d *schema.ResourceData, meta interface{}) error {
+func CreateID(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	byteLength := d.Get("byte_length").(int)
 	bytes := make([]byte, byteLength)
 
 	n, err := rand.Reader.Read(bytes)
 	if n != byteLength {
-		return errors.New("generated insufficient random bytes")
+		return append(diags, diag.Errorf("generated insufficient random bytes: %s", err)...)
 	}
 	if err != nil {
-		return errwrap.Wrapf("error generating random bytes: {{err}}", err)
+		return append(diags, diag.Errorf("error generating random bytes: %s", err)...)
 	}
 
 	b64Str := base64.RawURLEncoding.EncodeToString(bytes)
 	d.SetId(b64Str)
 
-	return RepopulateEncodings(d, meta)
+	repopEncsDiags := RepopulateEncodings(ctx, d, meta)
+	if repopEncsDiags != nil {
+		return append(diags, repopEncsDiags...)
+	}
+
+	return diags
 }
 
-func RepopulateEncodings(d *schema.ResourceData, _ interface{}) error {
+func RepopulateEncodings(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	prefix := d.Get("prefix").(string)
 	base64Str := d.Id()
 
 	bytes, err := base64.RawURLEncoding.DecodeString(base64Str)
 	if err != nil {
-		return errwrap.Wrapf("Error decoding ID: {{err}}", err)
+		return append(diags, diag.Errorf("error decoding ID: %s", err)...)
 	}
 
 	b64StdStr := base64.StdEncoding.EncodeToString(bytes)
@@ -138,7 +146,7 @@ func RepopulateEncodings(d *schema.ResourceData, _ interface{}) error {
 	return nil
 }
 
-func ImportID(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func ImportID(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 	id := d.Id()
 
 	sep := strings.LastIndex(id, ",")
@@ -149,7 +157,7 @@ func ImportID(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData,
 
 	bytes, err := base64.RawURLEncoding.DecodeString(id)
 	if err != nil {
-		return nil, errwrap.Wrapf("Error decoding ID: {{err}}", err)
+		return nil, fmt.Errorf("error decoding ID: %w", err)
 	}
 
 	d.Set("byte_length", len(bytes))

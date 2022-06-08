@@ -21,6 +21,7 @@ type config struct {
 	VPCZone              string `json:"powervs_vpc_zone"`
 	PowerVSResourceGroup string `json:"powervs_resource_group"`
 	CISInstanceCRN       string `json:"powervs_cis_crn"`
+	ImageBucketName      string `json:"powervs_image_bucket_name"`
 	ImageBucketFileName  string `json:"powervs_image_bucket_file_name"`
 	NetworkName          string `json:"powervs_network_name"`
 	VPCName              string `json:"powervs_vpc_name"`
@@ -40,6 +41,7 @@ type TFVarsSources struct {
 	SSHKey               string
 	Region               string
 	Zone                 string
+	ImageBucketName      string
 	ImageBucketFileName  string
 	NetworkName          string
 	PowerVSResourceGroup string
@@ -58,9 +60,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	// @TODO: Align this with a region later.
 	rand.Seed(time.Now().UnixNano())
 	// All supported Regions are MZRs and have Zones named "region-[1-3]"
-	vpcZone := fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(3))
+	vpcZone := fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1)
 
-	//@TODO: Add resource group to platform
 	cfg := &config{
 		ServiceInstanceID:    masterConfig.ServiceInstanceID,
 		APIKey:               sources.APIKey,
@@ -71,8 +72,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VPCZone:              vpcZone,
 		PowerVSResourceGroup: sources.PowerVSResourceGroup,
 		CISInstanceCRN:       sources.CISInstanceCRN,
+		ImageBucketName:      sources.ImageBucketName,
 		ImageBucketFileName:  sources.ImageBucketFileName,
-		NetworkName:          *masterConfig.Network.Name,
 		VPCName:              sources.VPCName,
 		VPCSubnetName:        sources.VPCSubnetName,
 		BootstrapMemory:      masterConfig.Memory,
@@ -81,6 +82,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterProcessors:     masterConfig.Processors,
 		ProcType:             masterConfig.ProcType,
 		SysType:              masterConfig.SysType,
+	}
+	if masterConfig.Network.Name != nil {
+		cfg.NetworkName = *masterConfig.Network.Name
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

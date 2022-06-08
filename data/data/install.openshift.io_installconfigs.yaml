@@ -151,13 +151,35 @@ spec:
                             for the instance profile of the machine. Leave unset to
                             have the installer create the IAM Role on your behalf.
                           type: string
+                        metadataService:
+                          description: EC2MetadataOptions defines metadata service
+                            interaction options for EC2 instances in the machine pool.
+                          properties:
+                            authentication:
+                              description: Authentication determines whether or not
+                                the host requires the use of authentication when interacting
+                                with the metadata service. When using authentication,
+                                this enforces v2 interaction method (IMDSv2) with
+                                the metadata service. When omitted, this means the
+                                user has no opinion and the value is left to the platform
+                                to choose a good default, which is subject to change
+                                over time. The current default is optional. At this
+                                point this field represents `HttpTokens` parameter
+                                from `InstanceMetadataOptionsRequest` structure in
+                                AWS EC2 API https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceMetadataOptionsRequest.html
+                              enum:
+                              - Required
+                              - Optional
+                              type: string
+                          type: object
                         rootVolume:
                           description: EC2RootVolume defines the root volume for EC2
                             instances in the machine pool.
                           properties:
                             iops:
                               description: IOPS defines the amount of provisioned
-                                IOPS. This is only valid for type io1.
+                                IOPS. (KiB/s). IOPS may only be set for io1, io2,
+                                & gp3 volume types.
                               minimum: 0
                               type: integer
                             kmsKeyARN:
@@ -237,14 +259,47 @@ spec:
                           required:
                           - diskSizeGB
                           type: object
+                        osImage:
+                          description: OSImage defines the image to use for the OS.
+                          properties:
+                            offer:
+                              description: Offer is the offer of the image.
+                              type: string
+                            publisher:
+                              description: Publisher is the publisher of the image.
+                              type: string
+                            sku:
+                              description: SKU is the SKU of the image.
+                              type: string
+                            version:
+                              description: Version is the version of the image.
+                              type: string
+                          required:
+                          - offer
+                          - publisher
+                          - sku
+                          - version
+                          type: object
                         type:
                           description: InstanceType defines the azure instance type.
                             eg. Standard_DS_V2
                           type: string
                         ultraSSDCapability:
                           description: ultraSSDCapability defines if the instance
-                            should use Ultra SSD disks. The valid values are Enabled,
-                            Disabled.
+                            should use Ultra SSD disks.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
+                        vmNetworkingType:
+                          description: 'VMNetworkingType specifies whether to enable
+                            accelerated networking. Accelerated networking enables
+                            single root I/O virtualization (SR-IOV) to a VM, greatly
+                            improving its networking performance. eg. values: "Accelerated",
+                            "Basic"'
+                          enum:
+                          - Accelerated
+                          - Basic
                           type: string
                         zones:
                           description: Zones is list of availability zones that can
@@ -271,10 +326,9 @@ spec:
                               maximum: 65536
                               minimum: 16
                               type: integer
-                            DiskType:
-                              description: DiskType defines the type of disk. The
-                                valid values are pd-standard and pd-ssd For control
-                                plane nodes, the valid value is pd-ssd.
+                            diskType:
+                              description: DiskType defines the type of disk. For
+                                control plane nodes, the valid value is pd-ssd.
                               enum:
                               - pd-ssd
                               - pd-standard
@@ -385,9 +439,12 @@ spec:
                         on Nutanix.
                       properties:
                         coresPerSocket:
-                          description: NumCoresPerSocket is the number of cores per
+                          description: 'NumCoresPerSocket is the number of cores per
                             socket in a vm. The number of vCPUs on the vm will be
-                            NumCPUs/NumCoresPerSocket.
+                            NumCPUs times NumCoresPerSocket. For example: 4 CPUs and
+                            4 Cores per socket will result in 16 VPUs. The AHV scheduler
+                            treats socket and core allocation exactly the same so
+                            there is no benefit to configuring cores over CPUs.'
                           format: int64
                           type: integer
                         cpus:
@@ -722,13 +779,35 @@ spec:
                           the instance profile of the machine. Leave unset to have
                           the installer create the IAM Role on your behalf.
                         type: string
+                      metadataService:
+                        description: EC2MetadataOptions defines metadata service interaction
+                          options for EC2 instances in the machine pool.
+                        properties:
+                          authentication:
+                            description: Authentication determines whether or not
+                              the host requires the use of authentication when interacting
+                              with the metadata service. When using authentication,
+                              this enforces v2 interaction method (IMDSv2) with the
+                              metadata service. When omitted, this means the user
+                              has no opinion and the value is left to the platform
+                              to choose a good default, which is subject to change
+                              over time. The current default is optional. At this
+                              point this field represents `HttpTokens` parameter from
+                              `InstanceMetadataOptionsRequest` structure in AWS EC2
+                              API https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceMetadataOptionsRequest.html
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                        type: object
                       rootVolume:
                         description: EC2RootVolume defines the root volume for EC2
                           instances in the machine pool.
                         properties:
                           iops:
                             description: IOPS defines the amount of provisioned IOPS.
-                              This is only valid for type io1.
+                              (KiB/s). IOPS may only be set for io1, io2, & gp3 volume
+                              types.
                             minimum: 0
                             type: integer
                           kmsKeyARN:
@@ -807,13 +886,46 @@ spec:
                         required:
                         - diskSizeGB
                         type: object
+                      osImage:
+                        description: OSImage defines the image to use for the OS.
+                        properties:
+                          offer:
+                            description: Offer is the offer of the image.
+                            type: string
+                          publisher:
+                            description: Publisher is the publisher of the image.
+                            type: string
+                          sku:
+                            description: SKU is the SKU of the image.
+                            type: string
+                          version:
+                            description: Version is the version of the image.
+                            type: string
+                        required:
+                        - offer
+                        - publisher
+                        - sku
+                        - version
+                        type: object
                       type:
                         description: InstanceType defines the azure instance type.
                           eg. Standard_DS_V2
                         type: string
                       ultraSSDCapability:
                         description: ultraSSDCapability defines if the instance should
-                          use Ultra SSD disks. The valid values are Enabled, Disabled.
+                          use Ultra SSD disks.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
+                      vmNetworkingType:
+                        description: 'VMNetworkingType specifies whether to enable
+                          accelerated networking. Accelerated networking enables single
+                          root I/O virtualization (SR-IOV) to a VM, greatly improving
+                          its networking performance. eg. values: "Accelerated", "Basic"'
+                        enum:
+                        - Accelerated
+                        - Basic
                         type: string
                       zones:
                         description: Zones is list of availability zones that can
@@ -839,10 +951,9 @@ spec:
                             maximum: 65536
                             minimum: 16
                             type: integer
-                          DiskType:
-                            description: DiskType defines the type of disk. The valid
-                              values are pd-standard and pd-ssd For control plane
-                              nodes, the valid value is pd-ssd.
+                          diskType:
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid value is pd-ssd.
                             enum:
                             - pd-ssd
                             - pd-standard
@@ -953,8 +1064,12 @@ spec:
                       on Nutanix.
                     properties:
                       coresPerSocket:
-                        description: NumCoresPerSocket is the number of cores per
-                          socket in a vm. The number of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
+                        description: 'NumCoresPerSocket is the number of cores per
+                          socket in a vm. The number of vCPUs on the vm will be NumCPUs
+                          times NumCoresPerSocket. For example: 4 CPUs and 4 Cores
+                          per socket will result in 16 VPUs. The AHV scheduler treats
+                          socket and core allocation exactly the same so there is
+                          no benefit to configuring cores over CPUs.'
                         format: int64
                         type: integer
                       cpus:
@@ -1342,9 +1457,9 @@ spec:
                   type: object
                 type: array
               networkType:
-                default: OpenShiftSDN
                 description: NetworkType is the type of network to install. The default
-                  is OpenShiftSDN
+                  value is OVNKubernetes for Single Node OpenShift and OpenShiftSDN
+                  for all other platforms.
                 type: string
               serviceCIDR:
                 description: Deprecated way to configure an IP address pool for services.
@@ -1466,13 +1581,35 @@ spec:
                           the instance profile of the machine. Leave unset to have
                           the installer create the IAM Role on your behalf.
                         type: string
+                      metadataService:
+                        description: EC2MetadataOptions defines metadata service interaction
+                          options for EC2 instances in the machine pool.
+                        properties:
+                          authentication:
+                            description: Authentication determines whether or not
+                              the host requires the use of authentication when interacting
+                              with the metadata service. When using authentication,
+                              this enforces v2 interaction method (IMDSv2) with the
+                              metadata service. When omitted, this means the user
+                              has no opinion and the value is left to the platform
+                              to choose a good default, which is subject to change
+                              over time. The current default is optional. At this
+                              point this field represents `HttpTokens` parameter from
+                              `InstanceMetadataOptionsRequest` structure in AWS EC2
+                              API https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceMetadataOptionsRequest.html
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                        type: object
                       rootVolume:
                         description: EC2RootVolume defines the root volume for EC2
                           instances in the machine pool.
                         properties:
                           iops:
                             description: IOPS defines the amount of provisioned IOPS.
-                              This is only valid for type io1.
+                              (KiB/s). IOPS may only be set for io1, io2, & gp3 volume
+                              types.
                             minimum: 0
                             type: integer
                           kmsKeyARN:
@@ -1646,13 +1783,46 @@ spec:
                         required:
                         - diskSizeGB
                         type: object
+                      osImage:
+                        description: OSImage defines the image to use for the OS.
+                        properties:
+                          offer:
+                            description: Offer is the offer of the image.
+                            type: string
+                          publisher:
+                            description: Publisher is the publisher of the image.
+                            type: string
+                          sku:
+                            description: SKU is the SKU of the image.
+                            type: string
+                          version:
+                            description: Version is the version of the image.
+                            type: string
+                        required:
+                        - offer
+                        - publisher
+                        - sku
+                        - version
+                        type: object
                       type:
                         description: InstanceType defines the azure instance type.
                           eg. Standard_DS_V2
                         type: string
                       ultraSSDCapability:
                         description: ultraSSDCapability defines if the instance should
-                          use Ultra SSD disks. The valid values are Enabled, Disabled.
+                          use Ultra SSD disks.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
+                      vmNetworkingType:
+                        description: 'VMNetworkingType specifies whether to enable
+                          accelerated networking. Accelerated networking enables single
+                          root I/O virtualization (SR-IOV) to a VM, greatly improving
+                          its networking performance. eg. values: "Accelerated", "Basic"'
+                        enum:
+                        - Accelerated
+                        - Basic
                         type: string
                       zones:
                         description: Zones is list of availability zones that can
@@ -1928,10 +2098,9 @@ spec:
                             maximum: 65536
                             minimum: 16
                             type: integer
-                          DiskType:
-                            description: DiskType defines the type of disk. The valid
-                              values are pd-standard and pd-ssd For control plane
-                              nodes, the valid value is pd-ssd.
+                          diskType:
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid value is pd-ssd.
                             enum:
                             - pd-ssd
                             - pd-standard
@@ -2148,8 +2317,12 @@ spec:
                       define their own platform configuration.
                     properties:
                       coresPerSocket:
-                        description: NumCoresPerSocket is the number of cores per
-                          socket in a vm. The number of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
+                        description: 'NumCoresPerSocket is the number of cores per
+                          socket in a vm. The number of vCPUs on the vm will be NumCPUs
+                          times NumCoresPerSocket. For example: 4 CPUs and 4 Cores
+                          per socket will result in 16 VPUs. The AHV scheduler treats
+                          socket and core allocation exactly the same so there is
+                          no benefit to configuring cores over CPUs.'
                         format: int64
                         type: integer
                       cpus:
@@ -2173,35 +2346,87 @@ spec:
                   ingressVIP:
                     description: IngressVIP is the virtual IP address for ingress
                     type: string
-                  password:
-                    description: Password is the password for the user to use to connect
-                      to the Prism Central.
-                    type: string
-                  port:
-                    description: Port is the port to use to connect to the Prism Central.
-                    type: string
                   prismCentral:
-                    description: PrismCentral is the domain name or IP address of
-                      the Prism Central.
-                    type: string
-                  prismElementUUID:
-                    description: PrismElementUUID is the UUID of the Prism Element
-                      cluster to use in the Prism Central.
-                    type: string
-                  subnetUUID:
-                    description: SubnetUUID specifies the UUID of the subnet to be
-                      used by the cluster.
-                    type: string
-                  username:
-                    description: Username is the name of the user to use to connect
-                      to the Prism Central.
-                    type: string
+                    description: PrismCentral is the endpoint (address and port) and
+                      credentials to connect to the Prism Central.
+                    properties:
+                      endpoint:
+                        description: Endpoint holds the address and port of the Prism
+                          Central
+                        properties:
+                          address:
+                            description: address is the endpoint address (DNS name
+                              or IP address) of the Nutanix Prism Central or Element
+                              (cluster)
+                            type: string
+                          port:
+                            description: port is the port number to access the Nutanix
+                              Prism Central or Element (cluster)
+                            format: int32
+                            type: integer
+                        required:
+                        - address
+                        - port
+                        type: object
+                      password:
+                        description: Password is the password for the user to connect
+                          to the Prism Central
+                        type: string
+                      username:
+                        description: Username is the name of the user to connect to
+                          the Prism Central
+                        type: string
+                    required:
+                    - endpoint
+                    - password
+                    - username
+                    type: object
+                  prismElements:
+                    description: PrismElements holds a list of Prism Elements (clusters).
+                      A Prism Element encompasses all Nutanix resources (VMs, subnets,
+                      etc.) used to host the OpenShift cluster. Currently only a single
+                      Prism Element may be defined.
+                    items:
+                      description: PrismElement holds the uuid, endpoint of the Prism
+                        Element (cluster)
+                      properties:
+                        endpoint:
+                          description: Endpoint holds the address and port of the
+                            Prism Element
+                          properties:
+                            address:
+                              description: address is the endpoint address (DNS name
+                                or IP address) of the Nutanix Prism Central or Element
+                                (cluster)
+                              type: string
+                            port:
+                              description: port is the port number to access the Nutanix
+                                Prism Central or Element (cluster)
+                              format: int32
+                              type: integer
+                          required:
+                          - address
+                          - port
+                          type: object
+                        uuid:
+                          description: UUID is the UUID of the Prism Element (cluster)
+                          type: string
+                      required:
+                      - endpoint
+                      - uuid
+                      type: object
+                    type: array
+                  subnetUUIDs:
+                    description: SubnetUUIDs identifies the network subnets to be
+                      used by the cluster. Currently we only support one subnet for
+                      an OpenShift cluster.
+                    items:
+                      type: string
+                    type: array
                 required:
-                - password
-                - port
                 - prismCentral
-                - prismElementUUID
-                - username
+                - prismElements
+                - subnetUUIDs
                 type: object
               openstack:
                 description: OpenStack is the configuration used when installing on

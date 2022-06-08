@@ -1,18 +1,20 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 func dataSourceNutanixCluster() *schema.Resource {
 	return &schema.Resource{
-		Read:          dataSourceNutanixClusterRead,
+		ReadContext:   dataSourceNutanixClusterRead,
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
 			{
@@ -31,78 +33,23 @@ func dataSourceNutanixCluster() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"owner_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"api_version": {
@@ -148,21 +95,8 @@ func dataSourceNutanixCluster() *schema.Resource {
 			"client_auth": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"status": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ca_chain": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"authorized_public_key_list": {
@@ -204,37 +138,8 @@ func dataSourceNutanixCluster() *schema.Resource {
 			"ssl_key_signing_info": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"city": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"common_name_suffix": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"state": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"country_code": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"common_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"organization": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"email_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"ssl_key_expire_datetime": {
@@ -253,37 +158,8 @@ func dataSourceNutanixCluster() *schema.Resource {
 			"certification_signing_info": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"city": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"common_name_suffix": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"state": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"country_code": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"common_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"organization": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"email_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"operation_mode": {
@@ -318,33 +194,8 @@ func dataSourceNutanixCluster() *schema.Resource {
 			"build": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"commit_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"full_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"commit_date": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"short_commit_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"build_type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"timezone": {
@@ -400,17 +251,8 @@ func dataSourceNutanixCluster() *schema.Resource {
 						"credentials": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"username": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"password": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"proxy_type_list": {
@@ -421,25 +263,8 @@ func dataSourceNutanixCluster() *schema.Resource {
 						"address": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"ip": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"fqdn": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"port": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"ipv6": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 					},
@@ -456,17 +281,8 @@ func dataSourceNutanixCluster() *schema.Resource {
 			"smtp_server_credentials": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"username": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"password": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"smtp_server_proxy_type_list": {
@@ -477,25 +293,8 @@ func dataSourceNutanixCluster() *schema.Resource {
 			"smtp_server_address": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"fqdn": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"port": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ipv6": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"ntp_server_ip_list": {
@@ -526,17 +325,8 @@ func dataSourceNutanixCluster() *schema.Resource {
 			"domain_server_credentials": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"username": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"password": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"nfs_subnet_whitelist": {
@@ -568,36 +358,15 @@ func dataSourceNutanixCluster() *schema.Resource {
 			"analysis_vm_efficiency_map": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"bully_vm_num": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"constrained_vm_num": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"dead_vm_num": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"inefficient_vm_num": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"overprovisioned_vm_num": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 		},
 	}
 }
 
-func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Get client connection
 	conn := meta.(*Client).API
 
@@ -608,47 +377,47 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 		// Make request to the API
 		v, err = conn.V3.GetCluster(c.(string))
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	} else {
 		n, ok := d.GetOk("name")
 		if !ok {
-			return fmt.Errorf("please provide the cluster_id or name attribute")
+			return diag.Errorf("please provide the cluster_id or name attribute")
 		}
 		v, err = findClusterByName(conn, n.(string))
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
 	m, c := setRSEntityMetadata(v.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("api_version", utils.StringValue(v.APIVersion)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("project_reference", flattenReferenceValues(v.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("owner_reference", flattenReferenceValues(v.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("name", utils.StringValue(v.Status.Name)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("state", utils.StringValue(v.Status.State)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	nodes := make([]map[string]interface{}, 0)
@@ -668,12 +437,12 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("nodes", nodes); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	config := v.Status.Resources.Config
 	if err := d.Set("gpu_driver_version", utils.StringValue(config.GpuDriverVersion)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	clientAuth := make(map[string]interface{})
@@ -684,7 +453,7 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("client_auth", clientAuth); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	authPublicKey := make([]map[string]interface{}, 0)
@@ -700,7 +469,7 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("authorized_public_key_list", authPublicKey); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	ncc := make(map[string]interface{})
@@ -721,26 +490,26 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("software_map_ncc", ncc); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("software_map_nos", nos); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("encryption_status", utils.StringValue(config.EncryptionStatus)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	signingInfo := make(map[string]interface{})
 
 	if config.SslKey != nil {
 		if err := d.Set("ssl_key_type", utils.StringValue(config.SslKey.KeyType)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if err := d.Set("ssl_key_name", utils.StringValue(config.SslKey.KeyName)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if config.SslKey.SigningInfo != nil {
@@ -754,36 +523,36 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 		}
 
 		if err := d.Set("ssl_key_signing_info", signingInfo); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if err := d.Set("ssl_key_expire_datetime", utils.StringValue(config.SslKey.ExpireDatetime)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	} else {
 		if err := d.Set("ssl_key_type", ""); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if err := d.Set("ssl_key_name", ""); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if err := d.Set("ssl_key_signing_info", signingInfo); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if err := d.Set("ssl_key_expire_datetime", ""); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
 	if err := d.Set("service_list", utils.StringValueSlice(config.ServiceList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("supported_information_verbosity", utils.StringValue(config.SupportedInformationVerbosity)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	certSigning := make(map[string]interface{})
@@ -798,11 +567,11 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("certification_signing_info", certSigning); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("operation_mode", utils.StringValue(config.OperationMode)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	caCert := make([]map[string]interface{}, 0)
@@ -819,15 +588,15 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("ca_certificate_list", caCert); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("enabled_feature_list", utils.StringValueSlice(config.EnabledFeatureList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("is_available", utils.BoolValue(config.IsAvailable)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	build := make(map[string]interface{})
@@ -841,15 +610,15 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("build", build); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("timezone", utils.StringValue(config.Timezone)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("cluster_arch", utils.StringValue(config.ClusterArch)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	managementServer := make([]map[string]interface{}, 0)
@@ -868,20 +637,20 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("management_server_list", managementServer); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	network := v.Status.Resources.Network
 	if err := d.Set("masquerading_port", utils.Int64Value(network.MasqueradingPort)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("masquerading_ip", utils.StringValue(network.MasqueradingIP)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("external_ip", utils.StringValue(network.ExternalIP)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	httpProxy := make([]map[string]interface{}, 0)
@@ -912,7 +681,7 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("http_proxy_list", httpProxy); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	smtpServCreds := make(map[string]interface{})
@@ -920,16 +689,16 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 
 	if network.SMTPServer != nil {
 		if err := d.Set("smtp_server_type", utils.StringValue(network.SMTPServer.Type)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if err := d.Set("smtp_server_email_address", utils.StringValue(network.SMTPServer.EmailAddress)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if network.SMTPServer.Server != nil {
 			if err := d.Set("smtp_server_proxy_type_list", utils.StringValueSlice(network.SMTPServer.Server.ProxyTypeList)); err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 
 			if network.SMTPServer.Server.Credentials != nil {
@@ -944,44 +713,44 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 		}
 
 		if err := d.Set("smtp_server_credentials", smtpServCreds); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if err := d.Set("smtp_server_address", smtpServAddr); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	} else {
 		if err := d.Set("smtp_server_type", ""); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("smtp_server_email_address", ""); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("smtp_server_credentials", smtpServCreds); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("smtp_server_proxy_type_list", make([]string, 0)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("smtp_server_address", smtpServAddr); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
 	if err := d.Set("ntp_server_ip_list", utils.StringValueSlice(network.NameServerIPList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("external_subnet", utils.StringValue(network.ExternalSubnet)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("external_data_services_ip", utils.StringValue(network.ExternalDataServicesIP)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("internal_subnet", utils.StringValue(network.InternalSubnet)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	domain := network.DomainServer
@@ -989,37 +758,37 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 
 	if domain != nil {
 		if err := d.Set("domain_server_nameserver", utils.StringValue(domain.Nameserver)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if err := d.Set("domain_server_name", utils.StringValue(domain.Name)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		domServCreds["username"] = utils.StringValue(domain.DomainCredentials.Username)
 		domServCreds["password"] = utils.StringValue(domain.DomainCredentials.Password)
 
 		if err := d.Set("domain_server_credentials", domServCreds); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	} else {
 		if err := d.Set("domain_server_nameserver", ""); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("domain_server_name", ""); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("domain_server_credentials", domServCreds); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
 	if err := d.Set("nfs_subnet_whitelist", utils.StringValueSlice(network.NFSSubnetWhitelist)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("name_server_ip_list", utils.StringValueSlice(network.NameServerIPList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	httpWhiteList := make([]map[string]interface{}, 0)
@@ -1035,7 +804,7 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("http_proxy_whitelist", httpWhiteList); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	analysis := make(map[string]interface{})
@@ -1048,12 +817,12 @@ func dataSourceNutanixClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("analysis_vm_efficiency_map", analysis); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	cUUID := utils.StringValue(v.Metadata.UUID)
 	if err := d.Set("cluster_id", cUUID); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(cUUID)
@@ -1091,7 +860,7 @@ func findClusterByName(conn *v3.Client, name string) (*v3.ClusterIntentResponse,
 	return found[0], nil
 }
 
-func resourceDatasourceClusterStateUpgradeV0(is map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func resourceDatasourceClusterStateUpgradeV0(ctx context.Context, is map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	log.Printf("[DEBUG] Entering resourceDatasourceClusterStateUpgradeV0")
 	return resourceNutanixCategoriesMigrateState(is, meta)
 }
@@ -1108,37 +877,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": {
@@ -1149,41 +889,15 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 			"project_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"owner_reference": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"api_version": {
@@ -1229,21 +943,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 			"client_auth": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"status": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ca_chain": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"authorized_public_key_list": {
@@ -1285,37 +986,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 			"ssl_key_signing_info": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"city": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"common_name_suffix": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"state": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"country_code": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"common_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"organization": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"email_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"ssl_key_expire_datetime": {
@@ -1334,37 +1006,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 			"certification_signing_info": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"city": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"common_name_suffix": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"state": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"country_code": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"common_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"organization": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"email_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"operation_mode": {
@@ -1399,33 +1042,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 			"build": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"commit_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"full_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"commit_date": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"short_commit_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"build_type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"timezone": {
@@ -1481,17 +1099,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 						"credentials": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"username": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"password": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"proxy_type_list": {
@@ -1502,25 +1111,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 						"address": {
 							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"ip": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"fqdn": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"port": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"ipv6": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 					},
@@ -1537,17 +1129,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 			"smtp_server_credentials": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"username": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"password": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"smtp_server_proxy_type_list": {
@@ -1558,25 +1141,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 			"smtp_server_address": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"fqdn": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"port": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ipv6": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"ntp_server_ip_list": {
@@ -1607,17 +1173,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 			"domain_server_credentials": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"username": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"password": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"nfs_subnet_whitelist": {
@@ -1649,29 +1206,8 @@ func resourceNutanixDatasourceClusterResourceV0() *schema.Resource {
 			"analysis_vm_efficiency_map": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"bully_vm_num": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"constrained_vm_num": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"dead_vm_num": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"inefficient_vm_num": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"overprovisioned_vm_num": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 		},

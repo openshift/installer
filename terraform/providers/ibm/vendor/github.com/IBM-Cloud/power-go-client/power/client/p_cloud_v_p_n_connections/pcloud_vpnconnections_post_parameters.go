@@ -13,70 +13,84 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// NewPcloudVpnconnectionsPostParams creates a new PcloudVpnconnectionsPostParams object
-// with the default values initialized.
+// NewPcloudVpnconnectionsPostParams creates a new PcloudVpnconnectionsPostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudVpnconnectionsPostParams() *PcloudVpnconnectionsPostParams {
-	var ()
 	return &PcloudVpnconnectionsPostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudVpnconnectionsPostParamsWithTimeout creates a new PcloudVpnconnectionsPostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudVpnconnectionsPostParamsWithTimeout(timeout time.Duration) *PcloudVpnconnectionsPostParams {
-	var ()
 	return &PcloudVpnconnectionsPostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudVpnconnectionsPostParamsWithContext creates a new PcloudVpnconnectionsPostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudVpnconnectionsPostParamsWithContext(ctx context.Context) *PcloudVpnconnectionsPostParams {
-	var ()
 	return &PcloudVpnconnectionsPostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudVpnconnectionsPostParamsWithHTTPClient creates a new PcloudVpnconnectionsPostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudVpnconnectionsPostParamsWithHTTPClient(client *http.Client) *PcloudVpnconnectionsPostParams {
-	var ()
 	return &PcloudVpnconnectionsPostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudVpnconnectionsPostParams contains all the parameters to send to the API endpoint
-for the pcloud vpnconnections post operation typically these are written to a http.Request
+/* PcloudVpnconnectionsPostParams contains all the parameters to send to the API endpoint
+   for the pcloud vpnconnections post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudVpnconnectionsPostParams struct {
 
-	/*Body
-	  VPN Connection object used for creation
+	/* Body.
 
+	   VPN Connection object used for creation
 	*/
 	Body *models.VPNConnectionCreate
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
 
+	/* CloudInstanceID.
+
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud vpnconnections post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudVpnconnectionsPostParams) WithDefaults() *PcloudVpnconnectionsPostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud vpnconnections post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudVpnconnectionsPostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud vpnconnections post params
@@ -141,7 +155,6 @@ func (o *PcloudVpnconnectionsPostParams) WriteToRequest(r runtime.ClientRequest,
 		return err
 	}
 	var res []error
-
 	if o.Body != nil {
 		if err := r.SetBodyParam(o.Body); err != nil {
 			return err

@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudSapGetReader is a Reader for the PcloudSapGet structure.
@@ -24,44 +23,38 @@ type PcloudSapGetReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudSapGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudSapGetOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudSapGetBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudSapGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudSapGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudSapGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -70,7 +63,7 @@ func NewPcloudSapGetOK() *PcloudSapGetOK {
 	return &PcloudSapGetOK{}
 }
 
-/*PcloudSapGetOK handles this case with default header values.
+/* PcloudSapGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -80,6 +73,9 @@ type PcloudSapGetOK struct {
 
 func (o *PcloudSapGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}][%d] pcloudSapGetOK  %+v", 200, o.Payload)
+}
+func (o *PcloudSapGetOK) GetPayload() *models.SAPProfile {
+	return o.Payload
 }
 
 func (o *PcloudSapGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -99,7 +95,7 @@ func NewPcloudSapGetBadRequest() *PcloudSapGetBadRequest {
 	return &PcloudSapGetBadRequest{}
 }
 
-/*PcloudSapGetBadRequest handles this case with default header values.
+/* PcloudSapGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,6 +105,9 @@ type PcloudSapGetBadRequest struct {
 
 func (o *PcloudSapGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}][%d] pcloudSapGetBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudSapGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -128,7 +127,7 @@ func NewPcloudSapGetUnauthorized() *PcloudSapGetUnauthorized {
 	return &PcloudSapGetUnauthorized{}
 }
 
-/*PcloudSapGetUnauthorized handles this case with default header values.
+/* PcloudSapGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -138,6 +137,9 @@ type PcloudSapGetUnauthorized struct {
 
 func (o *PcloudSapGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}][%d] pcloudSapGetUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudSapGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -157,7 +159,7 @@ func NewPcloudSapGetNotFound() *PcloudSapGetNotFound {
 	return &PcloudSapGetNotFound{}
 }
 
-/*PcloudSapGetNotFound handles this case with default header values.
+/* PcloudSapGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -167,6 +169,9 @@ type PcloudSapGetNotFound struct {
 
 func (o *PcloudSapGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}][%d] pcloudSapGetNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudSapGetNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -186,7 +191,7 @@ func NewPcloudSapGetInternalServerError() *PcloudSapGetInternalServerError {
 	return &PcloudSapGetInternalServerError{}
 }
 
-/*PcloudSapGetInternalServerError handles this case with default header values.
+/* PcloudSapGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -196,6 +201,9 @@ type PcloudSapGetInternalServerError struct {
 
 func (o *PcloudSapGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}][%d] pcloudSapGetInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudSapGetInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudSapGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

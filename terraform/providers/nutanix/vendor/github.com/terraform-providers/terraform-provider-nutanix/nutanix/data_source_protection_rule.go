@@ -1,19 +1,21 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	v3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceNutanixProtectionRule() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceNutanixProtectionRuleRead,
+		ReadContext: dataSourceNutanixProtectionRuleRead,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
@@ -38,43 +40,13 @@ func dataSourceNutanixProtectionRule() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"last_update_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"kind": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"creation_time": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_version": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"spec_hash": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"categories": categoriesSchema(),
 			"owner_reference": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -95,7 +67,6 @@ func dataSourceNutanixProtectionRule() *schema.Resource {
 			},
 			"project_reference": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -147,8 +118,6 @@ func dataSourceNutanixProtectionRule() *schema.Resource {
 									"local_snapshot_retention_policy": {
 										Type:     schema.TypeList,
 										Computed: true,
-										MaxItems: 1,
-										MinItems: 1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"num_snapshots": {
@@ -177,8 +146,6 @@ func dataSourceNutanixProtectionRule() *schema.Resource {
 									"remote_snapshot_retention_policy": {
 										Type:     schema.TypeList,
 										Computed: true,
-										MaxItems: 1,
-										MinItems: 1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"num_snapshots": {
@@ -221,8 +188,6 @@ func dataSourceNutanixProtectionRule() *schema.Resource {
 			"category_filter": {
 				Type:     schema.TypeList,
 				Computed: true,
-				MaxItems: 1,
-				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
@@ -265,13 +230,13 @@ func dataSourceNutanixProtectionRule() *schema.Resource {
 	}
 }
 
-func dataSourceNutanixProtectionRuleRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceNutanixProtectionRuleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*Client).API
 	protectionRuleID, iOk := d.GetOk("protection_rule_id")
 	protectionRuleName, nOk := d.GetOk("protection_rule_name")
 
 	if !iOk && !nOk {
-		return fmt.Errorf("please provide `protection_rule_id` or `role_name`")
+		return diag.Errorf("please provide `protection_rule_id` or `role_name`")
 	}
 
 	var err error
@@ -294,36 +259,36 @@ func dataSourceNutanixProtectionRuleRead(d *schema.ResourceData, meta interface{
 	m, c := setRSEntityMetadata(resp.Metadata)
 
 	if err := d.Set("metadata", m); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("categories", c); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("project_reference", flattenReferenceValuesList(resp.Metadata.ProjectReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("owner_reference", flattenReferenceValuesList(resp.Metadata.OwnerReference)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("name", resp.Spec.Name); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("start_time", resp.Spec.Resources.StartTime); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("category_filter", flattenCategoriesFilter(resp.Spec.Resources.CategoryFilter)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("availability_zone_connectivity_list",
 		flattenAvailabilityZoneConnectivityList(resp.Spec.Resources.AvailabilityZoneConnectivityList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("ordered_availability_zone_list",
 		flattenOrderAvailibilityList(resp.Spec.Resources.OrderedAvailabilityZoneList)); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("state", resp.Status.State); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(*resp.Metadata.UUID)

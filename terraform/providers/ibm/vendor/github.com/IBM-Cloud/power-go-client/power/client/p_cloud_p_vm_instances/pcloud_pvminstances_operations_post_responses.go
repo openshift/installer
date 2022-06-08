@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 // PcloudPvminstancesOperationsPostReader is a Reader for the PcloudPvminstancesOperationsPost structure.
@@ -24,51 +23,44 @@ type PcloudPvminstancesOperationsPostReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PcloudPvminstancesOperationsPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewPcloudPvminstancesOperationsPostOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPcloudPvminstancesOperationsPostBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPcloudPvminstancesOperationsPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPcloudPvminstancesOperationsPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 422:
 		result := NewPcloudPvminstancesOperationsPostUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 500:
 		result := NewPcloudPvminstancesOperationsPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
-		return nil, runtime.NewAPIError("unknown error", response, response.Code())
+		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
 }
 
@@ -77,7 +69,7 @@ func NewPcloudPvminstancesOperationsPostOK() *PcloudPvminstancesOperationsPostOK
 	return &PcloudPvminstancesOperationsPostOK{}
 }
 
-/*PcloudPvminstancesOperationsPostOK handles this case with default header values.
+/* PcloudPvminstancesOperationsPostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -87,6 +79,9 @@ type PcloudPvminstancesOperationsPostOK struct {
 
 func (o *PcloudPvminstancesOperationsPostOK) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostOK  %+v", 200, o.Payload)
+}
+func (o *PcloudPvminstancesOperationsPostOK) GetPayload() models.Object {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesOperationsPostOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,7 +99,7 @@ func NewPcloudPvminstancesOperationsPostBadRequest() *PcloudPvminstancesOperatio
 	return &PcloudPvminstancesOperationsPostBadRequest{}
 }
 
-/*PcloudPvminstancesOperationsPostBadRequest handles this case with default header values.
+/* PcloudPvminstancesOperationsPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -114,6 +109,9 @@ type PcloudPvminstancesOperationsPostBadRequest struct {
 
 func (o *PcloudPvminstancesOperationsPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostBadRequest  %+v", 400, o.Payload)
+}
+func (o *PcloudPvminstancesOperationsPostBadRequest) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesOperationsPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -133,7 +131,7 @@ func NewPcloudPvminstancesOperationsPostUnauthorized() *PcloudPvminstancesOperat
 	return &PcloudPvminstancesOperationsPostUnauthorized{}
 }
 
-/*PcloudPvminstancesOperationsPostUnauthorized handles this case with default header values.
+/* PcloudPvminstancesOperationsPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -143,6 +141,9 @@ type PcloudPvminstancesOperationsPostUnauthorized struct {
 
 func (o *PcloudPvminstancesOperationsPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostUnauthorized  %+v", 401, o.Payload)
+}
+func (o *PcloudPvminstancesOperationsPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesOperationsPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -162,7 +163,7 @@ func NewPcloudPvminstancesOperationsPostNotFound() *PcloudPvminstancesOperations
 	return &PcloudPvminstancesOperationsPostNotFound{}
 }
 
-/*PcloudPvminstancesOperationsPostNotFound handles this case with default header values.
+/* PcloudPvminstancesOperationsPostNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -172,6 +173,9 @@ type PcloudPvminstancesOperationsPostNotFound struct {
 
 func (o *PcloudPvminstancesOperationsPostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudPvminstancesOperationsPostNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesOperationsPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -191,7 +195,7 @@ func NewPcloudPvminstancesOperationsPostUnprocessableEntity() *PcloudPvminstance
 	return &PcloudPvminstancesOperationsPostUnprocessableEntity{}
 }
 
-/*PcloudPvminstancesOperationsPostUnprocessableEntity handles this case with default header values.
+/* PcloudPvminstancesOperationsPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -201,6 +205,9 @@ type PcloudPvminstancesOperationsPostUnprocessableEntity struct {
 
 func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -220,7 +227,7 @@ func NewPcloudPvminstancesOperationsPostInternalServerError() *PcloudPvminstance
 	return &PcloudPvminstancesOperationsPostInternalServerError{}
 }
 
-/*PcloudPvminstancesOperationsPostInternalServerError handles this case with default header values.
+/* PcloudPvminstancesOperationsPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -230,6 +237,9 @@ type PcloudPvminstancesOperationsPostInternalServerError struct {
 
 func (o *PcloudPvminstancesOperationsPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostInternalServerError  %+v", 500, o.Payload)
+}
+func (o *PcloudPvminstancesOperationsPostInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PcloudPvminstancesOperationsPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -13,68 +13,82 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
-// NewPcloudPvminstancesConsolePostParams creates a new PcloudPvminstancesConsolePostParams object
-// with the default values initialized.
+// NewPcloudPvminstancesConsolePostParams creates a new PcloudPvminstancesConsolePostParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPcloudPvminstancesConsolePostParams() *PcloudPvminstancesConsolePostParams {
-	var ()
 	return &PcloudPvminstancesConsolePostParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPcloudPvminstancesConsolePostParamsWithTimeout creates a new PcloudPvminstancesConsolePostParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPcloudPvminstancesConsolePostParamsWithTimeout(timeout time.Duration) *PcloudPvminstancesConsolePostParams {
-	var ()
 	return &PcloudPvminstancesConsolePostParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPcloudPvminstancesConsolePostParamsWithContext creates a new PcloudPvminstancesConsolePostParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPcloudPvminstancesConsolePostParamsWithContext(ctx context.Context) *PcloudPvminstancesConsolePostParams {
-	var ()
 	return &PcloudPvminstancesConsolePostParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPcloudPvminstancesConsolePostParamsWithHTTPClient creates a new PcloudPvminstancesConsolePostParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPcloudPvminstancesConsolePostParamsWithHTTPClient(client *http.Client) *PcloudPvminstancesConsolePostParams {
-	var ()
 	return &PcloudPvminstancesConsolePostParams{
 		HTTPClient: client,
 	}
 }
 
-/*PcloudPvminstancesConsolePostParams contains all the parameters to send to the API endpoint
-for the pcloud pvminstances console post operation typically these are written to a http.Request
+/* PcloudPvminstancesConsolePostParams contains all the parameters to send to the API endpoint
+   for the pcloud pvminstances console post operation.
+
+   Typically these are written to a http.Request.
 */
 type PcloudPvminstancesConsolePostParams struct {
 
-	/*CloudInstanceID
-	  Cloud Instance ID of a PCloud Instance
+	/* CloudInstanceID.
 
+	   Cloud Instance ID of a PCloud Instance
 	*/
 	CloudInstanceID string
-	/*PvmInstanceID
-	  PCloud PVM Instance ID
 
+	/* PvmInstanceID.
+
+	   PCloud PVM Instance ID
 	*/
 	PvmInstanceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the pcloud pvminstances console post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesConsolePostParams) WithDefaults() *PcloudPvminstancesConsolePostParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the pcloud pvminstances console post params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PcloudPvminstancesConsolePostParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the pcloud pvminstances console post params

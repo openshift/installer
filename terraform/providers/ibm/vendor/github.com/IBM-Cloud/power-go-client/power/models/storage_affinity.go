@@ -6,16 +6,17 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // StorageAffinity storage affinity
+//
 // swagger:model StorageAffinity
 type StorageAffinity struct {
 
@@ -67,20 +68,19 @@ const (
 	// StorageAffinityAffinityPolicyAffinity captures enum value "affinity"
 	StorageAffinityAffinityPolicyAffinity string = "affinity"
 
-	// StorageAffinityAffinityPolicyAntiAffinity captures enum value "anti-affinity"
-	StorageAffinityAffinityPolicyAntiAffinity string = "anti-affinity"
+	// StorageAffinityAffinityPolicyAntiDashAffinity captures enum value "anti-affinity"
+	StorageAffinityAffinityPolicyAntiDashAffinity string = "anti-affinity"
 )
 
 // prop value enum
 func (m *StorageAffinity) validateAffinityPolicyEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, storageAffinityTypeAffinityPolicyPropEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, storageAffinityTypeAffinityPolicyPropEnum, true); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *StorageAffinity) validateAffinityPolicy(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.AffinityPolicy) { // not required
 		return nil
 	}
@@ -90,6 +90,11 @@ func (m *StorageAffinity) validateAffinityPolicy(formats strfmt.Registry) error 
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this storage affinity based on context it is used
+func (m *StorageAffinity) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

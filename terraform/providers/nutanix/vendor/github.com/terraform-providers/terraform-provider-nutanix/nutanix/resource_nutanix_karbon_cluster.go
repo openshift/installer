@@ -1,6 +1,7 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -9,15 +10,16 @@ import (
 	karbon "github.com/terraform-providers/terraform-provider-nutanix/client/karbon"
 	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
-	DEFAULTMASTERNODEPOOLNAME = "master_node_pool"
-	DEFAULTETCDNODEPOOLNAME   = "etcd_node_pool"
-	DEFAULTWORKERNODEPOOLNAME = "worker_node_pool"
+	DEFAULTMASTERNODEPOOLNAME = "master-node-pool"
+	DEFAULTETCDNODEPOOLNAME   = "etcd-node-pool"
+	DEFAULTWORKERNODEPOOLNAME = "worker-node-pool"
 	DEFAULTPODIPV4CIDR        = "172.20.0.0/16"
 	DEFAULTSERVICEIPV4CIDR    = "172.19.0.0/16"
 	DEFAULTRECLAIMPOLICY      = "Delete"
@@ -53,13 +55,13 @@ const (
 
 func resourceNutanixKarbonCluster() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceNutanixKarbonClusterCreate,
-		Read:   resourceNutanixKarbonClusterRead,
-		Update: resourceNutanixKarbonClusterUpdate,
-		Delete: resourceNutanixKarbonClusterDelete,
-		Exists: resourceNutanixKarbonClusterExists,
+		CreateContext: resourceNutanixKarbonClusterCreate,
+		ReadContext:   resourceNutanixKarbonClusterRead,
+		UpdateContext: resourceNutanixKarbonClusterUpdate,
+		DeleteContext: resourceNutanixKarbonClusterDelete,
+		Exists:        resourceNutanixKarbonClusterExists,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		SchemaVersion: 1,
 		Schema:        KarbonClusterResourceMap(),
@@ -389,7 +391,7 @@ func nodePoolSchema(defaultNodepoolName string, forceNewNodes bool, cpuDefault i
 	}
 }
 
-func resourceNutanixKarbonClusterCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixKarbonClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Print("[Debug] Entering resourceNutanixKarbonClusterCreate")
 	// Get client connection
 	client := meta.(*Client)
@@ -399,64 +401,64 @@ func resourceNutanixKarbonClusterCreate(d *schema.ResourceData, meta interface{}
 	var err error
 	karbonVersion, err := conn.Meta.GetSemanticVersion()
 	if err != nil {
-		return fmt.Errorf("unable to get karbon version during cluster create: %s", err)
+		return diag.Errorf("unable to get karbon version during cluster create: %s", err)
 	}
 	etcdNodePoolInput, okETCD := d.GetOk("etcd_node_pool")
 	if !okETCD {
-		return fmt.Errorf("unable to retrieve mandatory parameter etcd_node_pool")
+		return diag.Errorf("unable to retrieve mandatory parameter etcd_node_pool")
 	}
 	workerNodePoolInput, okWorker := d.GetOk("worker_node_pool")
 	if !okWorker {
-		return fmt.Errorf("unable to retrieve mandatory parameter worker_node_pool")
+		return diag.Errorf("unable to retrieve mandatory parameter worker_node_pool")
 	}
 	masterNodePoolInput, okMaster := d.GetOk("master_node_pool")
 	if !okMaster {
-		return fmt.Errorf("unable to retrieve mandatory parameter master_node_pool")
+		return diag.Errorf("unable to retrieve mandatory parameter master_node_pool")
 	}
 	storageClassConfigInput, okStorageClassConfig := d.GetOk("storage_class_config")
 	if !okStorageClassConfig {
-		return fmt.Errorf("unable to retrieve mandatory parameter storage_class_config")
+		return diag.Errorf("unable to retrieve mandatory parameter storage_class_config")
 	}
 	cniInput, okCNI := d.GetOk("cni_config")
 	if !okCNI {
-		return fmt.Errorf("unable to retrieve mandatory parameter cni_config")
+		return diag.Errorf("unable to retrieve mandatory parameter cni_config")
 	}
 	karbonClusterNameInput, okName := d.GetOk("name")
 	if !okName {
-		return fmt.Errorf("unable to retrieve mandatory parameter name")
+		return diag.Errorf("unable to retrieve mandatory parameter name")
 	}
 	versionInput, okVersion := d.GetOk("version")
 	if !okVersion {
-		return fmt.Errorf("unable to retrieve mandatory parameter version")
+		return diag.Errorf("unable to retrieve mandatory parameter version")
 	}
 	timeout, timeoutErr := getTimeout(d)
 	if timeoutErr != nil {
-		return timeoutErr
+		return diag.FromErr(timeoutErr)
 	}
 
 	karbonClusterName := karbonClusterNameInput.(string)
 
 	etcdNodePool, err := expandNodePool(etcdNodePoolInput.([]interface{}), karbonVersion)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	workerNodePool, err := expandNodePool(workerNodePoolInput.([]interface{}), karbonVersion)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	masterNodePool, err := expandNodePool(masterNodePoolInput.([]interface{}), karbonVersion)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	// storageclass
 	storageClassConfig, err := expandStorageClassConfig(storageClassConfigInput.(*schema.Set).List())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	// CNI
 	cniConfig, err := expandCNI(cniInput.([]interface{}))
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	karbonCluster := &karbon.ClusterIntentInput{
 		Name:      karbonClusterName,
@@ -479,7 +481,7 @@ func resourceNutanixKarbonClusterCreate(d *schema.ResourceData, meta interface{}
 	activePassiveConfig, apcOk := d.GetOk("active_passive_config")
 	externalLbConfig, elbcOk := d.GetOk("external_lb_config")
 	if apcOk && elbcOk {
-		return fmt.Errorf("cannot pass both active_passive_config and external_lb_config")
+		return diag.Errorf("cannot pass both active_passive_config and external_lb_config")
 	}
 	if !apcOk && !elbcOk {
 		karbonCluster.MastersConfig.SingleMasterConfig = &karbon.ClusterSingleMasterConfigIntentInput{}
@@ -488,47 +490,47 @@ func resourceNutanixKarbonClusterCreate(d *schema.ResourceData, meta interface{}
 	if apcOk {
 		err = addActivePassiveConfig(activePassiveConfig, karbonCluster)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 	if elbcOk {
 		// set active active config
 		err = addExternalLBConfig(externalLbConfig, karbonCluster)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
 	createClusterResponse, err := conn.Cluster.CreateKarbonCluster(karbonCluster)
 	if err != nil {
-		return fmt.Errorf("error occurred during cluster creation:\n %s", err)
+		return diag.Errorf("error occurred during cluster creation:\n %s", err)
 	}
 	if createClusterResponse.TaskUUID == "" {
-		return fmt.Errorf("did not retrieve task uuid")
+		return diag.Errorf("did not retrieve task uuid")
 	}
 	if createClusterResponse.ClusterUUID == "" {
-		return fmt.Errorf("did not retrieve cluster uuid")
+		return diag.Errorf("did not retrieve cluster uuid")
 	}
 	// Set terraform state id
 	d.SetId(createClusterResponse.ClusterUUID)
-	err = WaitForKarbonCluster(client, timeout, createClusterResponse.TaskUUID)
+	err = WaitForKarbonCluster(ctx, client, timeout, createClusterResponse.TaskUUID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if privateRegistries, ok := d.GetOk("private_registry"); ok {
 		newPrivateRegistries, err := expandPrivateRegistries(privateRegistries.(*schema.Set).List())
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		for _, newP := range *newPrivateRegistries {
 			conn.Cluster.AddPrivateRegistry(karbonClusterName, newP)
 		}
 	}
-	return resourceNutanixKarbonClusterRead(d, meta)
+	return resourceNutanixKarbonClusterRead(ctx, d, meta)
 }
 
-func resourceNutanixKarbonClusterRead(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixKarbonClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Print("[Debug] Entering resourceNutanixKarbonClusterRead")
 	// Get client connection
 	conn := meta.(*Client).KarbonAPI
@@ -543,21 +545,21 @@ func resourceNutanixKarbonClusterRead(d *schema.ResourceData, meta interface{}) 
 	karbonClusterName := *resp.Name
 	flattenedEtcdNodepool, err := flattenNodePools(d, conn, "etcd_node_pool", karbonClusterName, resp.ETCDConfig.NodePools)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	flattenedWorkerNodepool, err := flattenNodePools(d, conn, "worker_node_pool", karbonClusterName, resp.WorkerConfig.NodePools)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	flattenedMasterNodepool, err := flattenNodePools(d, conn, "master_node_pool", karbonClusterName, resp.MasterConfig.NodePools)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.Set("name", utils.StringValue(resp.Name))
 
 	if err = d.Set("status", utils.StringValue(resp.Status)); err != nil {
-		return fmt.Errorf("error setting status for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting status for Karbon Cluster %s: %s", d.Id(), err)
 	}
 
 	// Must use know version because GA API reports different version
@@ -568,40 +570,40 @@ func resourceNutanixKarbonClusterRead(d *schema.ResourceData, meta interface{}) 
 		versionSet = utils.StringValue(resp.Version)
 	}
 	if err = d.Set("version", versionSet); err != nil {
-		return fmt.Errorf("error setting version for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting version for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("kubeapi_server_ipv4_address", utils.StringValue(resp.KubeAPIServerIPv4Address)); err != nil {
-		return fmt.Errorf("error setting kubeapi_server_ipv4_address for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting kubeapi_server_ipv4_address for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("deployment_type", resp.MasterConfig.DeploymentType); err != nil {
-		return fmt.Errorf("error setting deployment_type for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting deployment_type for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("worker_node_pool", flattenedWorkerNodepool); err != nil {
-		return fmt.Errorf("error setting worker_node_pool for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting worker_node_pool for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("etcd_node_pool", flattenedEtcdNodepool); err != nil {
-		return fmt.Errorf("error setting etcd_node_pool for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting etcd_node_pool for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("master_node_pool", flattenedMasterNodepool); err != nil {
-		return fmt.Errorf("error setting worker_node_pool for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting worker_node_pool for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	flattenedPrivateRegistries, err := flattenPrivateRegisties(conn, karbonClusterName)
 	if err != nil {
-		return fmt.Errorf("error getting flat private_registry for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error getting flat private_registry for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	if err = d.Set("private_registry", flattenedPrivateRegistries); err != nil {
-		return fmt.Errorf("error setting private_registry for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting private_registry for Karbon Cluster %s: %s", d.Id(), err)
 	}
 	flatCNIConfig := flattenCNIConfig(resp.CNIConfig)
 	if err = d.Set("cni_config", flatCNIConfig); err != nil {
-		return fmt.Errorf("error setting cni_config for Karbon Cluster %s: %s", d.Id(), err)
+		return diag.Errorf("error setting cni_config for Karbon Cluster %s: %s", d.Id(), err)
 	}
 
 	d.SetId(*resp.UUID)
 	return nil
 }
 
-func resourceNutanixKarbonClusterUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixKarbonClusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Print("[Debug] Entering resourceNutanixKarbonClusterUpdate")
 	// Get client connection
 	client := meta.(*Client)
@@ -611,45 +613,45 @@ func resourceNutanixKarbonClusterUpdate(d *schema.ResourceData, meta interface{}
 	// Make request to the API
 	resp, err := conn.Cluster.GetKarbonCluster(d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	karbonVersion, err := conn.Meta.GetSemanticVersion()
 	if err != nil {
-		return fmt.Errorf("unable to get karbon version during cluster update: %s", err)
+		return diag.Errorf("unable to get karbon version during cluster update: %s", err)
 	}
 	karbonClusterName := *resp.Name
 	if d.HasChange("worker_node_pool") {
 		timeout, timeoutErr := getTimeout(d)
 		if timeoutErr != nil {
-			return timeoutErr
+			return diag.FromErr(timeoutErr)
 		}
 		_, n := d.GetChange("worker_node_pool")
 		newWorkerNodePool, err := expandNodePool(n.([]interface{}), karbonVersion)
 		if err != nil {
-			return fmt.Errorf("error occurred while expanding new worker node pool: %s", err)
+			return diag.Errorf("error occurred while expanding new worker node pool: %s", err)
 		}
 		currentNodePool, err := GetNodePoolsForCluster(conn, karbonClusterName, resp.WorkerConfig.NodePools)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		taskUUID, err := determineNodepoolsScaling(client, karbonClusterName, currentNodePool, newWorkerNodePool)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
-		err = WaitForKarbonCluster(client, timeout, taskUUID)
+		err = WaitForKarbonCluster(ctx, client, timeout, taskUUID)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 	if d.HasChange("private_registry") {
 		_, p := d.GetChange("private_registry")
 		newPrivateRegistries, err := expandPrivateRegistries(p.(*schema.Set).List())
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		currentPrivateRegistriesList, err := conn.Cluster.ListPrivateRegistries(karbonClusterName)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		currentPrivateRegistries := convertKarbonPrivateRegistriesIntentInputToOperations(*currentPrivateRegistriesList)
 		toAdd := diffFlatPrivateRegistrySlices(*newPrivateRegistries, currentPrivateRegistries)
@@ -661,31 +663,31 @@ func resourceNutanixKarbonClusterUpdate(d *schema.ResourceData, meta interface{}
 			conn.Cluster.DeletePrivateRegistry(karbonClusterName, *r.RegistryName)
 		}
 	}
-	return resourceNutanixKarbonClusterRead(d, meta)
+	return resourceNutanixKarbonClusterRead(ctx, d, meta)
 }
 
-func resourceNutanixKarbonClusterDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceNutanixKarbonClusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Print("[Debug] Entering resourceNutanixKarbonClusterDelete")
 	client := meta.(*Client)
 	conn := client.KarbonAPI
 	setTimeout(meta)
 	timeout, timeoutErr := getTimeout(d)
 	if timeoutErr != nil {
-		return timeoutErr
+		return diag.FromErr(timeoutErr)
 	}
 	karbonClusterNameInput, okName := d.GetOk("name")
 	if !okName {
-		return fmt.Errorf("unable to retrieve mandatory parameter name")
+		return diag.Errorf("unable to retrieve mandatory parameter name")
 	}
 	karbonClusterName := karbonClusterNameInput.(string)
 
 	clusterDeleteResponse, err := conn.Cluster.DeleteKarbonCluster(karbonClusterName)
 	if err != nil {
-		return fmt.Errorf("error while deleting Karbon Cluster UUID(%s): %s", d.Id(), err)
+		return diag.Errorf("error while deleting Karbon Cluster UUID(%s): %s", d.Id(), err)
 	}
-	err = WaitForKarbonCluster(client, timeout, clusterDeleteResponse.TaskUUID)
+	err = WaitForKarbonCluster(ctx, client, timeout, clusterDeleteResponse.TaskUUID)
 	if err != nil {
-		return fmt.Errorf("error while waiting for Karbon Cluster deletion with UUID(%s): %s", d.Id(), err)
+		return diag.Errorf("error while waiting for Karbon Cluster deletion with UUID(%s): %s", d.Id(), err)
 	}
 	d.SetId("")
 	return nil
@@ -982,7 +984,7 @@ func GetNodePoolsForCluster(conn *karbon.Client, karbonClusterName string, nodep
 	return nodepoolStructs, nil
 }
 
-func WaitForKarbonCluster(client *Client, waitTimeoutMinutes int64, taskUUID string) error {
+func WaitForKarbonCluster(ctx context.Context, client *Client, waitTimeoutMinutes int64, taskUUID string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"QUEUED", "RUNNING"},
 		Target:     []string{"SUCCEEDED"},
@@ -992,7 +994,7 @@ func WaitForKarbonCluster(client *Client, waitTimeoutMinutes int64, taskUUID str
 		MinTimeout: WAITMINTIMEOUT,
 	}
 
-	if _, errWaitTask := stateConf.WaitForState(); errWaitTask != nil {
+	if _, errWaitTask := stateConf.WaitForStateContext(ctx); errWaitTask != nil {
 		return fmt.Errorf("error waiting for karbon cluster to create: %s", errWaitTask)
 	}
 	return nil

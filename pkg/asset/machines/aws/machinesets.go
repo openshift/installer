@@ -43,6 +43,7 @@ func MachineSets(clusterID string, region string, subnets map[string]string, poo
 			subnet,
 			mpool.InstanceType,
 			&mpool.EC2RootVolume,
+			mpool.EC2Metadata,
 			mpool.AMIID,
 			az,
 			role,

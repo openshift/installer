@@ -126,5 +126,68 @@ Example to get boot device for a node
 	if err != nil {
 		panic(err)
 	}
+
+Example to list all vendor passthru methods
+
+	methods, err := nodes.GetVendorPassthruMethods(client, "a62b8495-52e2-407b-b3cb-62775d04c2b8").Extract()
+	if err != nil {
+		panic(err)
+	}
+
+Example to list all subscriptions
+
+	method := nodes.CallVendorPassthruOpts{
+		Method: "get_all_subscriptions",
+	}
+	allSubscriptions, err := nodes.GetAllSubscriptions(client, "a62b8495-52e2-407b-b3cb-62775d04c2b8", method).Extract()
+	if err != nil {
+		panic(err)
+	}
+
+Example to get a subscription
+
+	method := nodes.CallVendorPassthruOpts{
+		Method: "get_subscription",
+	}
+	subscriptionOpt := nodes.GetSubscriptionOpts{
+		Id:     "subscription id",
+	}
+
+	subscription, err := nodes.GetSubscription(client, "a62b8495-52e2-407b-b3cb-62775d04c2b8", method, subscriptionOpt).Extract()
+	if err != nil {
+		panic(err)
+	}
+
+Example to delete a subscription
+
+	method := nodes.CallVendorPassthruOpts{
+		Method: "delete_subscription",
+	}
+	subscriptionDeleteOpt := nodes.DeleteSubscriptionOpts{
+		Id: "subscription id",
+	}
+
+	err := nodes.DeleteSubscription(client, "a62b8495-52e2-407b-b3cb-62775d04c2b8", method, subscriptionDeleteOpt).ExtractErr()
+	if err != nil {
+		panic(err)
+	}
+
+Example to create a subscription
+
+	method := nodes.CallVendorPassthruOpts{
+		Method: "create_subscription",
+	}
+	subscriptionCreateOpt := nodes.CreateSubscriptionOpts{
+		Destination: "https://subscription_destination_url"
+		Context:     "MyContext",
+		Protocol:    "Redfish",
+		EventTypes:  ["Alert"],
+		HttpHeaders: [{"Key1":"Value1"}, {"Key2":"Value2"}],
+	}
+
+	newSubscription, err := nodes.CreateSubscription(client, "a62b8495-52e2-407b-b3cb-62775d04c2b8", method, subscriptionCreateOpt).Extract()
+	if err != nil {
+		panic(err)
+	}
 */
 package nodes

@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // PVMInstanceVolumeUpdate p VM instance volume update
+//
 // swagger:model PVMInstanceVolumeUpdate
 type PVMInstanceVolumeUpdate struct {
 
@@ -42,6 +44,11 @@ func (m *PVMInstanceVolumeUpdate) validateDeleteOnTermination(formats strfmt.Reg
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this p VM instance volume update based on context it is used
+func (m *PVMInstanceVolumeUpdate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

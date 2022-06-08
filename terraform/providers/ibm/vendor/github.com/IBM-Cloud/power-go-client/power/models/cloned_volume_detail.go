@@ -6,14 +6,16 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"context"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ClonedVolumeDetail cloned volume detail
+//
 // swagger:model ClonedVolumeDetail
 type ClonedVolumeDetail struct {
 
@@ -54,6 +56,8 @@ func (m *ClonedVolumeDetail) validateClone(formats strfmt.Registry) error {
 		if err := m.Clone.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("clone")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("clone")
 			}
 			return err
 		}
@@ -72,6 +76,58 @@ func (m *ClonedVolumeDetail) validateSource(formats strfmt.Registry) error {
 		if err := m.Source.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("source")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("source")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this cloned volume detail based on the context it is used
+func (m *ClonedVolumeDetail) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateClone(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSource(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ClonedVolumeDetail) contextValidateClone(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Clone != nil {
+		if err := m.Clone.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("clone")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("clone")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *ClonedVolumeDetail) contextValidateSource(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Source != nil {
+		if err := m.Source.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("source")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("source")
 			}
 			return err
 		}
