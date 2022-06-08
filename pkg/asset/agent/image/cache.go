@@ -201,7 +201,7 @@ func (u *urlWithIntegrity) download(dataType string) (string, error) {
 	// If the file has already been cached, return its path
 	_, err = os.Stat(filePath)
 	if err == nil {
-		logrus.Infof("The file was found in cache: %v. Reusing...", filePath)
+		logrus.Debugf("The file was found in cache: %v. Reusing...", filePath)
 		return filePath, nil
 	}
 	if !os.IsNotExist(err) {
@@ -232,7 +232,7 @@ func (u *urlWithIntegrity) download(dataType string) (string, error) {
 // puts it in the cache and returns the local file path.  If the file is compressed
 // by a known compressor, the file is uncompressed prior to being returned.
 func DownloadImageFile(baseURL string) (string, error) {
-	logrus.Infof("Obtaining RHCOS image file from '%v'", baseURL)
+	logrus.Debugf("Obtaining RHCOS image file from '%v'", baseURL)
 
 	var u urlWithIntegrity
 	parsedURL, err := url.ParseRequestURI(baseURL)

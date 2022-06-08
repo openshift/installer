@@ -84,7 +84,7 @@ stringData:
 		{
 			name:          "not-yaml",
 			data:          `This is not a yaml file`,
-			expectedError: "failed to unmarshal manifests/pull-secret.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1.Secret",
+			expectedError: "failed to unmarshal cluster-manifests/pull-secret.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1.Secret",
 		},
 		{
 			name:          "empty",
@@ -120,7 +120,7 @@ stringData:
 		{
 			name:          "error-fetching-file",
 			fetchError:    errors.New("fetch failed"),
-			expectedError: "failed to load manifests/pull-secret.yaml file: fetch failed",
+			expectedError: "failed to load cluster-manifests/pull-secret.yaml file: fetch failed",
 		},
 		{
 			name: "unknown-field",
@@ -130,7 +130,7 @@ stringData:
 		  namespace: cluster0
 		spec:
 		  wrongField: wrongValue`,
-			expectedError: "failed to unmarshal manifests/pull-secret.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
+			expectedError: "failed to unmarshal cluster-manifests/pull-secret.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
 		},
 	}
 	for _, tc := range cases {

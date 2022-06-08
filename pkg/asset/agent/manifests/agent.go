@@ -17,7 +17,7 @@ import (
 const (
 	// This could be change to "cluster-manifests" once all the agent code will be migrated to using
 	// assets (and will stop reading from the hard-code "manifests" relative path)
-	clusterManifestDir = "manifests"
+	clusterManifestDir = "cluster-manifests"
 )
 
 var (

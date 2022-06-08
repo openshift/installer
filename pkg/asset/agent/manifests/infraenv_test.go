@@ -107,7 +107,7 @@ spec:
 		{
 			name:          "not-yaml",
 			data:          `This is not a yaml file`,
-			expectedError: "failed to unmarshal manifests/infraenv.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1beta1.InfraEnv",
+			expectedError: "failed to unmarshal cluster-manifests/infraenv.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1beta1.InfraEnv",
 		},
 		{
 			name:       "file-not-found",
@@ -116,7 +116,7 @@ spec:
 		{
 			name:          "error-fetching-file",
 			fetchError:    errors.New("fetch failed"),
-			expectedError: "failed to load manifests/infraenv.yaml file: fetch failed",
+			expectedError: "failed to load cluster-manifests/infraenv.yaml file: fetch failed",
 		},
 		{
 			name: "unknown-field",
@@ -126,7 +126,7 @@ spec:
 		  namespace: cluster0
 		spec:
 		  wrongField: wrongValue`,
-			expectedError: "failed to unmarshal manifests/infraenv.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
+			expectedError: "failed to unmarshal cluster-manifests/infraenv.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
 		},
 		{
 			name: "empty-NMStateLabelSelector",

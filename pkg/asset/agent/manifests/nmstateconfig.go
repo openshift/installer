@@ -108,6 +108,7 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	log := logrus.New()
+	log.Level = logrus.WarnLevel
 	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
 
 	// Validate the network config using nmstatectl
@@ -243,7 +244,7 @@ func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInter
 	// TODO - this eventually will move to another asset so the interface definition can be shared with Butane
 	macInterfaceMap := make(models.MacInterfaceMap, 0, len(nmStateConfig.Spec.Interfaces))
 	for _, cfg := range nmStateConfig.Spec.Interfaces {
-		logrus.Println("adding MAC interface map to host static network config - Name: ", cfg.Name, " MacAddress:", cfg.MacAddress)
+		logrus.Debug("adding MAC interface map to host static network config - Name: ", cfg.Name, " MacAddress:", cfg.MacAddress)
 		macInterfaceMap = append(macInterfaceMap, &models.MacInterfaceMapItems0{
 			MacAddress:     cfg.MacAddress,
 			LogicalNicName: cfg.Name,
