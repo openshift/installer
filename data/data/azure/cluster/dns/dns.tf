@@ -3,55 +3,55 @@ locals {
   api_external_name = "api.${replace(var.cluster_domain, ".${var.base_domain}", "")}"
 }
 
-resource "azureprivatedns_zone" "private" {
+resource "azurerm_private_dns_zone" "private" {
   name                = var.cluster_domain
   resource_group_name = var.resource_group_name
 
   depends_on = [azurerm_dns_cname_record.api_external_v4, azurerm_dns_cname_record.api_external_v6]
 }
 
-resource "azureprivatedns_zone_virtual_network_link" "network" {
+resource "azurerm_private_dns_zone_virtual_network_link" "network" {
   name                  = "${var.cluster_id}-network-link"
   resource_group_name   = var.resource_group_name
-  private_dns_zone_name = azureprivatedns_zone.private.name
+  private_dns_zone_name = azurerm_private_dns_zone.private.name
   virtual_network_id    = var.virtual_network_id
 }
 
-resource "azureprivatedns_a_record" "apiint_internal" {
+resource "azurerm_private_dns_a_record" "apiint_internal" {
   count = var.use_ipv4 ? 1 : 0
 
   name                = "api-int"
-  zone_name           = azureprivatedns_zone.private.name
+  zone_name           = azurerm_private_dns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 300
   records             = [var.internal_lb_ipaddress_v4]
 }
 
-resource "azureprivatedns_aaaa_record" "apiint_internal_v6" {
+resource "azurerm_private_dns_aaaa_record" "apiint_internal_v6" {
   count = var.use_ipv6 ? 1 : 0
 
   name                = "api-int"
-  zone_name           = azureprivatedns_zone.private.name
+  zone_name           = azurerm_private_dns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 300
   records             = [var.internal_lb_ipaddress_v6]
 }
 
-resource "azureprivatedns_a_record" "api_internal" {
+resource "azurerm_private_dns_a_record" "api_internal" {
   count = var.use_ipv4 ? 1 : 0
 
   name                = "api"
-  zone_name           = azureprivatedns_zone.private.name
+  zone_name           = azurerm_private_dns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 300
   records             = [var.internal_lb_ipaddress_v4]
 }
 
-resource "azureprivatedns_aaaa_record" "api_internal_v6" {
+resource "azurerm_private_dns_aaaa_record" "api_internal_v6" {
   count = var.use_ipv6 ? 1 : 0
 
   name                = "api"
-  zone_name           = azureprivatedns_zone.private.name
+  zone_name           = azurerm_private_dns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 300
   records             = [var.internal_lb_ipaddress_v6]
