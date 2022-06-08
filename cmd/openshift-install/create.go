@@ -40,10 +40,20 @@ import (
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
 )
 
+var (
+	createOpts struct {
+		bootstrapTimeout int
+	}
+)
+
 type target struct {
 	name    string
 	command *cobra.Command
 	assets  []asset.WritableAsset
+
+	// commandF can be used to alter the `command` above; this is necessary for
+	// things like persistent flags
+	commandF func(cmd *cobra.Command)
 }
 
 const (
@@ -166,6 +176,9 @@ var (
 				timer.LogSummary()
 			},
 		},
+		commandF: func(cmd *cobra.Command) {
+			cmd.PersistentFlags().IntVar(&createOpts.bootstrapTimeout, "bootstrap-timeout", 20, "Bootstrap timeout in minutes")
+		},
 		assets: targetassets.Cluster,
 	}
 
@@ -233,6 +246,9 @@ func newCreateCmd() *cobra.Command {
 	for _, t := range targets {
 		t.command.Args = cobra.ExactArgs(0)
 		t.command.Run = runTargetCmd(t.assets...)
+		if t.commandF != nil {
+			t.commandF(t.command)
+		}
 		cmd.AddCommand(t.command)
 	}
 
@@ -349,7 +365,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 
 	discovery := client.Discovery()
 
-	apiTimeout := 20 * time.Minute
+	apiTimeout := time.Duration(createOpts.bootstrapTimeout) * time.Minute
 	untilTime := time.Now().Add(apiTimeout)
 	logrus.Infof("Waiting up to %v (until %v) for the Kubernetes API at %s...",
 		apiTimeout, untilTime.Format(time.Kitchen), config.Host)
