@@ -213,7 +213,7 @@ func logClusterOperatorConditions(ctx context.Context, config *rest.Config) erro
 			} else if (condition.Type == configv1.OperatorDegraded || condition.Type == configv1.OperatorProgressing) && condition.Status == configv1.ConditionFalse {
 				continue
 			}
-			if condition.Type == configv1.OperatorDegraded {
+			if condition.Type == configv1.OperatorAvailable || condition.Type == configv1.OperatorDegraded {
 				logrus.Errorf("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
 			} else {
 				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
