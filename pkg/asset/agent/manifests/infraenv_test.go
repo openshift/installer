@@ -10,48 +10,83 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/mock"
-	"github.com/openshift/installer/pkg/types"
 )
 
 func TestInfraEnv_Generate(t *testing.T) {
 
-	t.Skip("Skipping asset generation test")
-
-	installConfig := &installconfig.InstallConfig{
-		Config: &types.InstallConfig{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "ocp-edge-cluster-0",
-				Namespace: "cluster0",
-			},
-			PullSecret: "secret-agent",
-			SSHKey:     "ssh-key",
+	cases := []struct {
+		name           string
+		dependencies   []asset.Asset
+		expectedError  string
+		expectedConfig *aiv1beta1.InfraEnv
+	}{
+		{
+			name:          "missing-config",
+			expectedError: "missing configuration or manifest file",
 		},
+		// {
+		// 	name: "default",
+		// 	dependencies: []asset.Asset{
+		// 		&installconfig.InstallConfig{
+		// 			Config: &types.InstallConfig{
+		// 				ObjectMeta: v1.ObjectMeta{
+		// 					Name:      "ocp-edge-cluster-0",
+		// 					Namespace: "cluster-0",
+		// 				},
+		// 				PullSecret: "secret-agent",
+		// 				SSHKey:     "ssh-key",
+		// 			},
+		// 		},
+		// 		&AgentPullSecret{},
+		// 	},
+		// 	expectedConfig: &aiv1beta1.InfraEnv{
+		// 		ObjectMeta: v1.ObjectMeta{
+		// 			Name:      "infraEnv",
+		// 			Namespace: "cluster-0",
+		// 		},
+		// 		Spec: aiv1beta1.InfraEnvSpec{
+		// 			ClusterRef: &aiv1beta1.ClusterReference{
+		// 				Name:      "ocp-edge-cluster-0",
+		// 				Namespace: "cluster-0",
+		// 			},
+		// 			SSHAuthorizedKey: "ssh-key",
+		// 			PullSecretRef: &corev1.LocalObjectReference{
+		// 				Name: "pull-secret",
+		// 			},
+		// 		},
+		// 	},
+		// },
 	}
-	agentPullSecret := &AgentPullSecret{}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 
-	parents := asset.Parents{}
-	parents.Add(installConfig, agentPullSecret)
+			parents := asset.Parents{}
+			parents.Add(tc.dependencies...)
 
-	asset := &InfraEnv{}
-	err := asset.Generate(parents)
-	assert.NoError(t, err)
+			asset := &InfraEnv{}
+			err := asset.Generate(parents)
 
-	assert.NotEmpty(t, asset.Files())
-	infraEnvFile := asset.Files()[0]
-	assert.Equal(t, "cluster-manifests/infraenv.yml", infraEnvFile.Filename)
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedConfig, asset.Config)
+				assert.NotEmpty(t, asset.Files())
 
-	infraEnv := asset.Config
-	assert.Equal(t, "infraEnv", infraEnv.Name)
-	assert.Equal(t, "cluster0", infraEnv.Namespace)
-	assert.Equal(t, "ocp-edge-cluster-0", infraEnv.Spec.ClusterRef.Name)
-	assert.Equal(t, "cluster0", infraEnv.Spec.ClusterRef.Namespace)
-	assert.Equal(t, "ssh-key", infraEnv.Spec.SSHAuthorizedKey)
-	assert.Equal(t, "pull-secret", infraEnv.Spec.PullSecretRef.Name)
+				configFile := asset.Files()[0]
+				assert.Equal(t, "cluster-manifests/infraenv.yaml", configFile.Filename)
 
+				var actualConfig aiv1beta1.InfraEnv
+				err = yaml.Unmarshal(configFile.Data, &actualConfig)
+				assert.NoError(t, err)
+				assert.Equal(t, *tc.expectedConfig, actualConfig)
+			}
+		})
+	}
 }
 
 func TestInfraEnv_LoadedFromDisk(t *testing.T) {

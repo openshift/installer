@@ -13,7 +13,94 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
+
+func TestAgentClusterInstall_Generate(t *testing.T) {
+
+	cases := []struct {
+		name           string
+		dependencies   []asset.Asset
+		expectedError  string
+		expectedConfig *hiveext.AgentClusterInstall
+	}{
+		{
+			name:          "missing-config",
+			expectedError: "missing configuration or manifest file",
+		},
+		// {
+		// 	name: "default",
+		// 	dependencies: []asset.Asset{
+		// 		&installconfig.InstallConfig{
+		// 			Config: &types.InstallConfig{
+		// 				ObjectMeta: v1.ObjectMeta{
+		// 					Name:      "ocp-edge-cluster-0",
+		// 					Namespace: "cluster-0",
+		// 				},
+		// 				SSHKey: "ssh-key",
+		// 				ControlPlane: &types.MachinePool{
+		// 					Name:     "master",
+		// 					Replicas: pointer.Int64Ptr(3),
+		// 					Platform: types.MachinePoolPlatform{},
+		// 				},
+		// 				Compute: []types.MachinePool{
+		// 					{
+		// 						Name:     "worker-machine-pool-1",
+		// 						Replicas: pointer.Int64Ptr(2),
+		// 					},
+		// 					{
+		// 						Name:     "worker-machine-pool-2",
+		// 						Replicas: pointer.Int64Ptr(3),
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	expectedConfig: &hiveext.AgentClusterInstall{
+		// 		ObjectMeta: v1.ObjectMeta{
+		// 			Name:      "agent-cluster-install",
+		// 			Namespace: "cluster-0",
+		// 		},
+		// 		Spec: hiveext.AgentClusterInstallSpec{
+		// 			ClusterDeploymentRef: corev1.LocalObjectReference{
+		// 				Name: "ocp-edge-cluster-0",
+		// 			},
+		// 			ProvisionRequirements: hiveext.ProvisionRequirements{
+		// 				ControlPlaneAgents: 3,
+		// 				WorkerAgents:       5,
+		// 			},
+		// 			SSHPublicKey: "ssh-key",
+		// 		},
+		// 	},
+		// },
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			parents := asset.Parents{}
+			parents.Add(tc.dependencies...)
+
+			asset := &AgentClusterInstall{}
+			err := asset.Generate(parents)
+
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedConfig, asset.Config)
+				assert.NotEmpty(t, asset.Files())
+
+				configFile := asset.Files()[0]
+				assert.Equal(t, "cluster-manifests/agent-cluster-install.yaml", configFile.Filename)
+
+				var actualConfig hiveext.AgentClusterInstall
+				err = yaml.Unmarshal(configFile.Data, &actualConfig)
+				assert.NoError(t, err)
+				assert.Equal(t, *tc.expectedConfig, actualConfig)
+			}
+		})
+	}
+}
 
 // func TestAgentClusterInstall_Generate(t *testing.T) {
 
