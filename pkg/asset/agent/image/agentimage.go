@@ -17,7 +17,7 @@ const (
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
 type AgentImage struct {
-	asset.DefaultFileWriter
+	File *asset.File
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -79,4 +79,9 @@ func (a *AgentImage) Load(f asset.FileFetcher) (bool, error) {
 func (a *AgentImage) Files() []*asset.File {
 	// Return empty array because File will never be loaded.
 	return []*asset.File{}
+}
+
+func (a *AgentImage) PersistToFile(directory string) error {
+	// Do some or all of the stuff from Generate here
+	return nil
 }
