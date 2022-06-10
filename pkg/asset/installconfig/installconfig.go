@@ -2,7 +2,9 @@ package installconfig
 
 import (
 	"context"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -240,4 +242,17 @@ func (a *InstallConfig) platformValidation() error {
 		return icnutanix.Validate(a.Config)
 	}
 	return field.ErrorList{}.ToAggregate()
+}
+
+func (a *InstallConfig) PersistToFile(directory string) error {
+	for _, f := range a.Files() {
+		path := filepath.Join(directory, f.Filename)
+		if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
+			return errors.Wrap(err, "failed to create dir")
+		}
+		if err := ioutil.WriteFile(path, f.Data, 0640); err != nil {
+			return errors.Wrap(err, "failed to write file")
+		}
+	}
+	return nil
 }

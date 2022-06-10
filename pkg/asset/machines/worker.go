@@ -3,6 +3,7 @@ package machines
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -675,4 +676,17 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	}
 
 	return machineSets, nil
+}
+
+func (a *Worker) PersistToFile(directory string) error {
+	for _, f := range a.Files() {
+		path := filepath.Join(directory, f.Filename)
+		if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
+			return errors.Wrap(err, "failed to create dir")
+		}
+		if err := ioutil.WriteFile(path, f.Data, 0640); err != nil {
+			return errors.Wrap(err, "failed to write file")
+		}
+	}
+	return nil
 }

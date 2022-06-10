@@ -22,7 +22,7 @@ var (
 // have made to the pointer ignition configs before creating the cluster. If customizations
 // are made, then the updates are reconciled as a MachineConfig file
 type WorkerIgnitionCustomizations struct {
-	File *asset.File
+	asset.DefaultFileWriter
 }
 
 var _ asset.WritableAsset = (*WorkerIgnitionCustomizations)(nil)

@@ -90,7 +90,7 @@ type platformTemplateData struct {
 // Common is an asset that generates the ignition config for bootstrap nodes.
 type Common struct {
 	Config *igntypes.Config
-	File   *asset.File
+	asset.DefaultFileWriter
 }
 
 // Dependencies returns the assets on which the Bootstrap asset depends.

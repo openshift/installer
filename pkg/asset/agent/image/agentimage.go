@@ -17,7 +17,7 @@ const (
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
 type AgentImage struct {
-	File *asset.File
+	asset.DefaultFileWriter
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)

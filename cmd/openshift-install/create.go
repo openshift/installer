@@ -252,7 +252,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 				err = errors.Wrapf(err, "failed to fetch %s", a.Name())
 			}
 
-			if err2 := asset.PersistToFile(a, directory); err2 != nil {
+			if err2 := a.PersistToFile(directory); err2 != nil {
 				err2 = errors.Wrapf(err2, "failed to write asset (%s) to disk", a.Name())
 				if err != nil {
 					logrus.Error(err2)

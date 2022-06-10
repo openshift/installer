@@ -16,9 +16,10 @@ var (
 
 // KubeadminPassword is the asset for the kubeadmin user password
 type KubeadminPassword struct {
+	asset.DefaultFileWriter
+
 	Password     string
 	PasswordHash []byte
-	File         *asset.File
 }
 
 var _ asset.WritableAsset = (*KubeadminPassword)(nil)
@@ -89,14 +90,6 @@ func (a *KubeadminPassword) generateRandomPasswordHash(length int) error {
 // Name returns the human-friendly name of the asset.
 func (a *KubeadminPassword) Name() string {
 	return "Kubeadmin Password"
-}
-
-// Files returns the password file.
-func (a *KubeadminPassword) Files() []*asset.File {
-	if a.File != nil {
-		return []*asset.File{a.File}
-	}
-	return []*asset.File{}
 }
 
 // Load returns false as the password file is read-only.
