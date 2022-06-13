@@ -12,4 +12,4 @@ done
 echo "Fetched infra-env-id and found: $INFRA_ENV_ID"
 
 # use infra-env-id to have agent register this host with assisted-service
-exec /usr/local/bin/agent --url '{{.ServiceBaseURL}}' --infra-env-id "$INFRA_ENV_ID" --agent-version quay.io/edge-infrastructure/assisted-installer-agent:latest --insecure=true
+exec /usr/local/bin/agent --url '{{.ServiceBaseURL}}' --infra-env-id "$INFRA_ENV_ID" --agent-version registry-proxy.engineering.redhat.com/rh-osbs/openshift-ose-agent-installer-node-agent:v4.11.0-202206090854.p0.g77c8ce0.assembly.test --insecure=true

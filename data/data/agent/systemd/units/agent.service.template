@@ -13,7 +13,7 @@ Environment=no_proxy=
 # https://github.com/openshift/assisted-service/blob/master/internal/ignition/ignition.go#L1381
 Environment=PULL_SECRET_TOKEN={{.PullSecretToken}}
 TimeoutStartSec=3000
-ExecStartPre=podman run --privileged --rm -v /usr/local/bin:/hostbin quay.io/edge-infrastructure/assisted-installer-agent:latest cp /usr/bin/agent /hostbin
+ExecStartPre=podman run --privileged --rm -v /usr/local/bin:/hostbin registry-proxy.engineering.redhat.com/rh-osbs/openshift-ose-agent-installer-node-agent:v4.11.0-202206090854.p0.g77c8ce0.assembly.test cp /usr/bin/agent /hostbin
 ExecStart=/usr/local/bin/start-agent.sh
 [Unit]
 Wants=network-online.target
