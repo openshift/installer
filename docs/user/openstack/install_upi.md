@@ -33,7 +33,6 @@ of this method of installation.
     - [Modify NetworkType (Required for Kuryr SDN)](#modify-networktype-required-for-kuryr-sdn)
   - [Edit Manifests](#edit-manifests)
     - [Remove Machines and MachineSets](#remove-machines-and-machinesets)
-    - [Make control-plane nodes unschedulable](#make-control-plane-nodes-unschedulable)
   - [Ignition Config](#ignition-config)
     - [Infra ID](#infra-id)
     - [Bootstrap Ignition](#bootstrap-ignition)
@@ -462,23 +461,6 @@ Leave the compute MachineSets in if you want to create compute machines via the 
 * The OS image: `spec.template.spec.providerSpec.value.image`
 
 [mao]: https://github.com/openshift/machine-api-operator
-
-### Make control-plane nodes unschedulable
-
-Currently [emptying the compute pools][empty-compute-pools] makes control-plane nodes schedulable. But due to a [Kubernetes limitation][kubebug], router pods running on control-plane nodes will not be reachable by the ingress load balancer. Update the scheduler configuration to keep router pods and other workloads off the control-plane nodes:
-<!--- e2e-openstack-upi: INCLUDE START --->
-```sh
-$ python -c '
-import yaml
-path = "manifests/cluster-scheduler-02-config.yml"
-data = yaml.safe_load(open(path))
-data["spec"]["mastersSchedulable"] = False
-open(path, "w").write(yaml.dump(data, default_flow_style=False))'
-```
-<!--- e2e-openstack-upi: INCLUDE END --->
-
-[empty-compute-pools]: #empty-compute-pools
-[kubebug]: https://github.com/kubernetes/kubernetes/issues/65618
 
 ## Ignition Config
 
