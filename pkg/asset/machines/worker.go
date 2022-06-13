@@ -177,7 +177,7 @@ func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
 		NumCoresPerSocket: 1,
 		MemoryMiB:         16384,
 		OSDisk: nutanixtypes.OSDisk{
-			DiskSizeMiB: decimalRootVolumeSize * 1024,
+			DiskSizeGiB: decimalRootVolumeSize,
 		},
 	}
 }

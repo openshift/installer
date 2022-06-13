@@ -459,9 +459,9 @@ spec:
                         osDisk:
                           description: OSDisk defines the storage for instance.
                           properties:
-                            diskSizeMiB:
-                              description: DiskSizeMiB defines the size of disk in
-                                MiB.
+                            diskSizeGiB:
+                              description: DiskSizeGiB defines the size of disk in
+                                GiB.
                               format: int64
                               type: integer
                           type: object
@@ -1089,8 +1089,8 @@ spec:
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:
-                          diskSizeMiB:
-                            description: DiskSizeMiB defines the size of disk in MiB.
+                          diskSizeGiB:
+                            description: DiskSizeGiB defines the size of disk in GiB.
                             format: int64
                             type: integer
                         type: object
@@ -2347,8 +2347,8 @@ spec:
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:
-                          diskSizeMiB:
-                            description: DiskSizeMiB defines the size of disk in MiB.
+                          diskSizeGiB:
+                            description: DiskSizeGiB defines the size of disk in GiB.
                             format: int64
                             type: integer
                         type: object

@@ -9,8 +9,8 @@ import (
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(p *nutanix.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if p.DiskSizeMiB < 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("diskSizeMiB"), p.DiskSizeMiB, "storage disk size must be positive"))
+	if p.DiskSizeGiB < 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("diskSizeGiB"), p.DiskSizeGiB, "storage disk size must be positive"))
 	}
 	if p.MemoryMiB < 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("memoryMiB"), p.MemoryMiB, "memory size must be positive"))
