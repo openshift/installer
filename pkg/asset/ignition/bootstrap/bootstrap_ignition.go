@@ -38,27 +38,9 @@ func parseCertificateBundle(userCA []byte) ([]igntypes.Resource, error) {
 // GenerateIgnitionShimWithCertBundle is used to generate an ignition file that contains a user ca bundle
 // in its Security section.
 func GenerateIgnitionShimWithCertBundle(bootstrapConfigURL string, userCA string) ([]byte, error) {
-	ign := igntypes.Config{
-		Ignition: igntypes.Ignition{
-			Version: igntypes.MaxVersion.String(),
-			Config: igntypes.IgnitionConfig{
-				Replace: igntypes.Resource{
-					Source: ignutil.StrToPtr(bootstrapConfigURL),
-				},
-			},
-		},
-	}
-
-	carefs, err := parseCertificateBundle([]byte(userCA))
+	ign, err := generateIgnitionShimWithCertBundle(bootstrapConfigURL, userCA)
 	if err != nil {
 		return nil, err
-	}
-	if len(carefs) > 0 {
-		ign.Ignition.Security = igntypes.Security{
-			TLS: igntypes.TLS{
-				CertificateAuthorities: carefs,
-			},
-		}
 	}
 
 	data, err := ignition.Marshal(ign)
@@ -69,9 +51,7 @@ func GenerateIgnitionShimWithCertBundle(bootstrapConfigURL string, userCA string
 	return data, nil
 }
 
-// GenerateIgnitionShimWithCertBundleAndProxy is used to generate an ignition file that contains both a user ca bundle
-// in its Security section and proxy settings.
-func GenerateIgnitionShimWithCertBundleAndProxy(bootstrapConfigURL string, userCA string, proxy *types.Proxy) ([]byte, error) {
+func generateIgnitionShimWithCertBundle(bootstrapConfigURL string, userCA string) (igntypes.Config, error) {
 	ign := igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
@@ -80,13 +60,12 @@ func GenerateIgnitionShimWithCertBundleAndProxy(bootstrapConfigURL string, userC
 					Source: ignutil.StrToPtr(bootstrapConfigURL),
 				},
 			},
-			Proxy: ignitionProxy(proxy),
 		},
 	}
 
 	carefs, err := parseCertificateBundle([]byte(userCA))
 	if err != nil {
-		return nil, err
+		return ign, err
 	}
 	if len(carefs) > 0 {
 		ign.Ignition.Security = igntypes.Security{
@@ -95,6 +74,18 @@ func GenerateIgnitionShimWithCertBundleAndProxy(bootstrapConfigURL string, userC
 			},
 		}
 	}
+	return ign, nil
+}
+
+// GenerateIgnitionShimWithCertBundleAndProxy is used to generate an ignition file that contains both a user ca bundle
+// in its Security section and proxy settings.
+func GenerateIgnitionShimWithCertBundleAndProxy(bootstrapConfigURL string, userCA string, proxy *types.Proxy) ([]byte, error) {
+	ign, err := generateIgnitionShimWithCertBundle(bootstrapConfigURL, userCA)
+	if err != nil {
+		return nil, err
+	}
+
+	ign.Ignition.Proxy = ignitionProxy(proxy)
 
 	data, err := ignition.Marshal(ign)
 	if err != nil {
