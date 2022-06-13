@@ -96,7 +96,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Spec.PlatformSpec.AWS = &configv1.AWSPlatformSpec{}
 
 		var resourceTags []configv1.AWSResourceTag
-		if installConfig.Config.AWS.ExperimentalPropagateUserTag {
+		if installConfig.Config.AWS.PropagateUserTag {
 			resourceTags = make([]configv1.AWSResourceTag, 0, len(installConfig.Config.AWS.UserTags))
 			for k, v := range installConfig.Config.AWS.UserTags {
 				resourceTags = append(resourceTags, configv1.AWSResourceTag{Key: k, Value: v})
