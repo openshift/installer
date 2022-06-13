@@ -7,7 +7,9 @@ import (
 
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 )
 
@@ -31,11 +33,45 @@ func (*ClusterImageSet) Name() string {
 // Dependencies returns all of the dependencies directly needed to generate
 // the asset.
 func (*ClusterImageSet) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{
+		// &releaseimage.Image{},
+		// &installconfig.InstallConfig{},
+	}
 }
 
 // Generate generates the ClusterImageSet manifest.
 func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
+
+	// releaseImage := &releaseimage.Image{}
+	// installConfig := &installconfig.InstallConfig{}
+	// dependencies.Get(releaseImage, installConfig)
+
+	// currentVersion, err := version.Version()
+	// if err != nil {
+	// 	return err
+	// }
+
+	// clusterImageSet := &hivev1.ClusterImageSet{
+	// 	ObjectMeta: v1.ObjectMeta{
+	// 		Name:      fmt.Sprintf("openshift-%s", currentVersion),
+	// 		Namespace: installConfig.Config.Namespace,
+	// 	},
+	// 	Spec: hivev1.ClusterImageSetSpec{
+	// 		ReleaseImage: releaseImage.PullSpec,
+	// 	},
+	// }
+	// a.Config = clusterImageSet
+
+	// configData, err := yaml.Marshal(clusterImageSet)
+	// if err != nil {
+	// 	return errors.Wrap(err, "failed to marshal agent cluster image set")
+	// }
+
+	// a.File = &asset.File{
+	// 	Filename: clusterImageSetFilename,
+	// 	Data:     configData,
+	// }
+
 	return a.finish()
 }
 
@@ -79,5 +115,35 @@ func (a *ClusterImageSet) finish() error {
 		return errors.New("missing configuration or manifest file")
 	}
 
+	if err := a.validateClusterImageSet().ToAggregate(); err != nil {
+		return errors.Wrapf(err, "invalid ClusterImageSet configuration")
+	}
+
 	return nil
+}
+
+func (a *ClusterImageSet) validateClusterImageSet() field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if err := a.validateReleaseVersion(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	return allErrs
+}
+
+func (a *ClusterImageSet) validateReleaseVersion() field.ErrorList {
+
+	var allErrs field.ErrorList
+
+	fieldPath := field.NewPath("Spec", "ReleaseImage")
+
+	releaseImage := &releaseimage.Image{}
+	releaseImage.Generate(asset.Parents{})
+
+	if a.Config.Spec.ReleaseImage != releaseImage.PullSpec {
+		allErrs = append(allErrs, field.Forbidden(fieldPath, fmt.Sprintf("value must be equal to %s", releaseImage.PullSpec)))
+	}
+
+	return allErrs
 }
