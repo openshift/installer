@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
+	nutanixclient "github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix"
+	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix/v3"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	nutanixclient "github.com/terraform-providers/terraform-provider-nutanix/client"
-	nutanixclientv3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 
 	"github.com/openshift/installer/pkg/types/nutanix"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"

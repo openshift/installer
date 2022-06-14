@@ -10,9 +10,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kdomanski/iso9660"
+	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix/v3"
+	"github.com/nutanix-cloud-native/prism-go-client/pkg/utils"
 	"github.com/pkg/errors"
-	nutanixclientv3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
-	"github.com/terraform-providers/terraform-provider-nutanix/utils"
 )
 
 const (
