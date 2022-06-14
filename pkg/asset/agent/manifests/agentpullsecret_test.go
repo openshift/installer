@@ -1,49 +1,84 @@
 package manifests
 
 import (
-	"encoding/base64"
 	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/mock"
-	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func TestAgentPullSecret_Generate(t *testing.T) {
 
-	t.Skip("Skipping asset generation test")
-
-	installconfigAsset := &installconfig.InstallConfig{
-		Config: &types.InstallConfig{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "cluster0",
-			},
-			PullSecret: "secret-agent",
+	cases := []struct {
+		name           string
+		dependencies   []asset.Asset
+		expectedError  string
+		expectedConfig *corev1.Secret
+	}{
+		{
+			name:          "missing-config",
+			expectedError: "missing configuration or manifest file",
 		},
+		// {
+		// 	name: "default",
+		// 	dependencies: []asset.Asset{
+		// 		&installconfig.InstallConfig{
+		// 			Config: &types.InstallConfig{
+		// 				ObjectMeta: v1.ObjectMeta{
+		// 					Namespace: "cluster-0",
+		// 				},
+		// 				PullSecret: "secret-agent",
+		// 			},
+		// 		},
+		// 	},
+		// 	expectedConfig: &corev1.Secret{
+		// 		TypeMeta: v1.TypeMeta{
+		// 			Kind:       "Secret",
+		// 			APIVersion: "v1",
+		// 		},
+		// 		ObjectMeta: v1.ObjectMeta{
+		// 			Name:      "pull-secret",
+		// 			Namespace: "cluster-0",
+		// 		},
+		// 		StringData: map[string]string{
+		// 			".dockerconfigjson": "c2VjcmV0LWFnZW50",
+		// 		},
+		// 	},
+		// },
 	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 
-	parents := asset.Parents{}
-	parents.Add(installconfigAsset)
+			parents := asset.Parents{}
+			parents.Add(tc.dependencies...)
 
-	asset := &AgentPullSecret{}
-	err := asset.Generate(parents)
-	assert.NoError(t, err)
+			asset := &AgentPullSecret{}
+			err := asset.Generate(parents)
 
-	assert.NotEmpty(t, asset.Files())
-	pullSecretFile := asset.Files()[0]
-	assert.Equal(t, "cluster-manifests/pull-secret.yaml", pullSecretFile.Filename)
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedConfig, asset.Config)
+				assert.NotEmpty(t, asset.Files())
 
-	secret := asset.Config
-	data, err := base64.StdEncoding.DecodeString(secret.StringData[".dockerconfigjson"])
-	assert.NoError(t, err)
-	assert.Equal(t, installconfigAsset.Config.PullSecret, string(data))
+				configFile := asset.Files()[0]
+				assert.Equal(t, "cluster-manifests/pull-secret.yaml", configFile.Filename)
+
+				var actualConfig corev1.Secret
+				err = yaml.Unmarshal(configFile.Data, &actualConfig)
+				assert.NoError(t, err)
+				assert.Equal(t, *tc.expectedConfig, actualConfig)
+			}
+		})
+	}
 }
 
 func TestAgentPullSecret_LoadedFromDisk(t *testing.T) {

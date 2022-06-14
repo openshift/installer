@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
@@ -16,7 +17,33 @@ import (
 
 func TestNMStateConfig_Generate(t *testing.T) {
 
-	// TODO
+	cases := []struct {
+		name           string
+		dependencies   []asset.Asset
+		expectedError  string
+		expectedConfig *aiv1beta1.NMStateConfig
+	}{
+		{
+			name:          "missing-config",
+			expectedError: "missing configuration or manifest file",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			parents := asset.Parents{}
+			parents.Add(tc.dependencies...)
+
+			asset := &NMStateConfig{}
+			err := asset.Generate(parents)
+
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 
 }
 
@@ -215,11 +242,6 @@ spec:
 			name:          "not-yaml",
 			data:          `This is not a yaml file`,
 			expectedError: "could not decode YAML for cluster-manifests/nmstateconfig.yaml: Error reading multiple YAMLs: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1beta1.NMStateConfig",
-		},
-		{
-			name:          "empty",
-			data:          "",
-			expectedFound: true,
 		},
 		{
 			name:       "file-not-found",

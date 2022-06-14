@@ -13,6 +13,38 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func TestClusterImageSet_Generate(t *testing.T) {
+
+	cases := []struct {
+		name           string
+		dependencies   []asset.Asset
+		expectedError  string
+		expectedConfig *hivev1.ClusterImageSet
+	}{
+		{
+			name:          "missing-config",
+			expectedError: "missing configuration or manifest file",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			parents := asset.Parents{}
+			parents.Add(tc.dependencies...)
+
+			asset := &ClusterImageSet{}
+			err := asset.Generate(parents)
+
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+
+}
+
 func TestClusterImageSet_LoadedFromDisk(t *testing.T) {
 
 	cases := []struct {
