@@ -30,7 +30,7 @@ func WaitForNodeZeroAgentRestAPIInit(ctx context.Context, zeroClient *nodeZeroCl
 	defer cancel()
 
 	wait.Until(func() {
-		live, versions, err := isAgentAPILive(zeroClient, ctx)
+		live, err := isAgentAPILive(ctx, zeroClient)
 		if live && err == nil {
 			logrus.Info("Node Zero Agent API Initialized")
 			cancel()
@@ -74,10 +74,14 @@ func WaitForBootstrapComplete(ctx context.Context, zeroClient *nodeZeroClient, t
 	// Wait to see assisted service API for the first time
 	WaitForNodeZeroAgentRestAPIInit(ctx, zeroClient, 5)
 
+	// Wait for cluster validations to succeed
 	// WaitForClusterValidationSuccess(ctx, zeroClient, 1)
 
+	// Wait for kubeAPI to come up and kubeconfig to be created
 	// WaitForKubeAPI(ctx, zeroClient, 20)
 
+	// TODO(lranjbar): How to detect?
+	// Wait for bootstrap node to reboot
 	// WaitForNodeZeroReboot(ctx, zeroClient, 20)
 
 	return nil

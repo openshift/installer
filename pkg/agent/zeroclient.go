@@ -14,6 +14,11 @@ import (
 	"github.com/openshift/installer/pkg/agent/manifests"
 )
 
+type NodeZeroClient interface {
+	isAgentAPILive(ctx context.Context, zero *nodeZeroClient) (bool, error)
+	getClusterZero(ctx context.Context, zero *nodeZeroClient) (*models.Cluster, error)
+}
+
 type nodeZeroClient struct {
 	restClient          *client.AssistedInstall
 	NodeZeroIP          string
@@ -21,9 +26,9 @@ type nodeZeroClient struct {
 	clusterZeroInfraEnv *strfmt.UUID
 }
 
-type clusterZeroMetadata struct {
-	zeroInfraEnv  string
-	zeroClusterID string
+type clusterZero struct {
+	clusterZeroID       *strfmt.UUID
+	clusterZeroInfraEnv *strfmt.UUID
 }
 
 func NewNodeZeroClient() (*nodeZeroClient, error) {
@@ -58,22 +63,21 @@ func NewNodeZeroClient() (*nodeZeroClient, error) {
 	return &nodeZeroClient{restClient, nodeZeroIP, clusterZeroID, clusterZeroInfraEnv}, nil
 }
 
-func isAgentAPILive(zero *nodeZeroClient, ctx context.Context) (bool, models.OpenshiftVersions, error) {
+func isAgentAPILive(ctx context.Context, zero *nodeZeroClient) (bool, error) {
 
 	// GET /v2/openshift-versions
 	listOpenshiftVersionsParams := versions.NewV2ListSupportedOpenshiftVersionsParams()
-	result, err := zero.restClient.Versions.ListSupportedOpenshiftVersions(ctx, (*versions.ListSupportedOpenshiftVersionsParams)(listOpenshiftVersionsParams))
+	_, err := zero.restClient.Versions.ListSupportedOpenshiftVersions(ctx, (*versions.ListSupportedOpenshiftVersionsParams)(listOpenshiftVersionsParams))
 	if err != nil {
-		return false, nil, err
+		return false, err
 	}
-	supportedOpenshiftVersions := result.Payload
 
-	return true, supportedOpenshiftVersions, nil
+	return true, nil
 }
 
-func getClusterZero(zero *nodeZeroClient, ctx context.Context) (*models.Cluster, error) {
+func getClusterZero(ctx context.Context, zero *nodeZeroClient) (*models.Cluster, error) {
 
-	// GET /v2/clusters/{cluster_zero_id}
+	// GET /v2/clusters/${cluster_zero_id}
 	getClusterParams := &installer.V2GetClusterParams{ClusterID: *zero.clusterZeroID}
 	result, err := zero.restClient.Installer.V2GetCluster(ctx, getClusterParams)
 	if err != nil {
