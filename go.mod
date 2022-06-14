@@ -31,17 +31,18 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.7
+	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.2.0
 	github.com/gophercloud/gophercloud v0.24.0
 	github.com/gophercloud/utils v0.0.0-20220307143606-8e7800759d16
 	github.com/h2non/filetype v1.0.12
-	github.com/hashicorp/terraform-exec v0.16.0
+	github.com/hashicorp/terraform-exec v0.16.1
 	github.com/kdomanski/iso9660 v0.2.1
 	github.com/libvirt/libvirt-go v5.10.0+incompatible
 	github.com/metal3-io/baremetal-operator v0.0.0-20220128094204-28771f489634
 	github.com/metal3-io/baremetal-operator/apis v0.0.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0
+	github.com/nutanix-cloud-native/prism-go-client v0.2.0
 	github.com/openshift/api v0.0.0-20220504105152-6f735e7109c8
 	github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
@@ -60,8 +61,7 @@ require (
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
-	github.com/stretchr/testify v1.7.0
-	github.com/terraform-providers/terraform-provider-nutanix v1.1.0
+	github.com/stretchr/testify v1.7.2
 	github.com/ulikunitz/xz v0.5.8
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.27.4
@@ -71,7 +71,7 @@ require (
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
 	google.golang.org/api v0.44.0
 	google.golang.org/genproto v0.0.0-20210831024726-fe130286e0e2
-	google.golang.org/grpc v1.40.0
+	google.golang.org/grpc v1.46.0
 	gopkg.in/ini.v1 v1.66.2
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.23.0
@@ -100,10 +100,10 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/component-base v0.23.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
 	sigs.k8s.io/controller-runtime v0.11.0 // indirect
@@ -157,13 +157,11 @@ require (
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-hclog v0.16.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
-	github.com/hashicorp/go-version v1.4.0 // indirect
+	github.com/hashicorp/go-version v1.5.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
-	github.com/hashicorp/terraform-json v0.13.0 // indirect
-	github.com/hashicorp/terraform-plugin-log v0.2.0 // indirect
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1 // indirect
+	github.com/hashicorp/terraform-json v0.14.0 // indirect
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -179,7 +177,7 @@ require (
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
-	github.com/mitchellh/mapstructure v1.4.3 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
@@ -212,5 +210,3 @@ replace k8s.io/client-go => k8s.io/client-go v0.23.0
 
 // Needed so that the InstallConfig CRD can be created. Later versions of controller-gen balk at using IPNet as a field.
 replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
-
-replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0

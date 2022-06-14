@@ -390,13 +390,14 @@ github.com/golang/mock/mockgen
 github.com/golang/mock/mockgen/model
 # github.com/golang/protobuf v1.5.2
 ## explicit; go 1.9
+github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/google/go-cmp v0.5.7
-## explicit; go 1.11
+# github.com/google/go-cmp v0.5.8
+## explicit; go 1.13
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -484,31 +485,24 @@ github.com/h2non/filetype/types
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-hclog v0.16.1
-## explicit; go 1.13
-github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-retryablehttp v0.7.0
 ## explicit; go 1.13
 github.com/hashicorp/go-retryablehttp
-# github.com/hashicorp/go-version v1.4.0
+# github.com/hashicorp/go-version v1.5.0
 ## explicit
 github.com/hashicorp/go-version
 # github.com/hashicorp/logutils v1.0.0
 ## explicit
 github.com/hashicorp/logutils
-# github.com/hashicorp/terraform-exec v0.16.0
-## explicit; go 1.14
+# github.com/hashicorp/terraform-exec v0.16.1
+## explicit; go 1.17
 github.com/hashicorp/terraform-exec/internal/version
 github.com/hashicorp/terraform-exec/tfexec
-# github.com/hashicorp/terraform-json v0.13.0
+# github.com/hashicorp/terraform-json v0.14.0
 ## explicit; go 1.13
 github.com/hashicorp/terraform-json
-# github.com/hashicorp/terraform-plugin-log v0.2.0
-## explicit; go 1.16
-github.com/hashicorp/terraform-plugin-log/internal/logging
-github.com/hashicorp/terraform-plugin-log/tfsdklog
-# github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
-## explicit; go 1.16
+# github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0
+## explicit; go 1.17
 github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging
 # github.com/imdario/mergo v0.3.12
 ## explicit; go 1.13
@@ -572,7 +566,7 @@ github.com/mitchellh/go-homedir
 # github.com/mitchellh/go-testing-interface v1.14.1
 ## explicit; go 1.14
 github.com/mitchellh/go-testing-interface
-# github.com/mitchellh/mapstructure v1.4.3
+# github.com/mitchellh/mapstructure v1.5.0
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
@@ -581,6 +575,11 @@ github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.2
 ## explicit; go 1.12
 github.com/modern-go/reflect2
+# github.com/nutanix-cloud-native/prism-go-client v0.2.0
+## explicit; go 1.16
+github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix
+github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix/v3
+github.com/nutanix-cloud-native/prism-go-client/pkg/utils
 # github.com/oklog/ulid v1.3.1
 ## explicit
 github.com/oklog/ulid
@@ -697,14 +696,9 @@ github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/stretchr/testify v1.7.0
+# github.com/stretchr/testify v1.7.2
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
-# github.com/terraform-providers/terraform-provider-nutanix v1.1.0 => github.com/nutanix/terraform-provider-nutanix v1.5.0
-## explicit; go 1.13
-github.com/terraform-providers/terraform-provider-nutanix/client
-github.com/terraform-providers/terraform-provider-nutanix/client/v3
-github.com/terraform-providers/terraform-provider-nutanix/utils
 # github.com/ulikunitz/xz v0.5.8
 ## explicit; go 1.12
 github.com/ulikunitz/xz
@@ -929,8 +923,8 @@ google.golang.org/genproto/googleapis/longrunning
 google.golang.org/genproto/googleapis/monitoring/v3
 google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/googleapis/type/calendarperiod
-# google.golang.org/grpc v1.40.0
-## explicit; go 1.11
+# google.golang.org/grpc v1.46.0
+## explicit; go 1.14
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
@@ -941,6 +935,7 @@ google.golang.org/grpc/balancer/grpclb/grpc_lb_v1
 google.golang.org/grpc/balancer/grpclb/state
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
+google.golang.org/grpc/channelz
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
@@ -952,12 +947,14 @@ google.golang.org/grpc/credentials/alts/internal/handshaker
 google.golang.org/grpc/credentials/alts/internal/handshaker/service
 google.golang.org/grpc/credentials/alts/internal/proto/grpc_gcp
 google.golang.org/grpc/credentials/google
+google.golang.org/grpc/credentials/insecure
 google.golang.org/grpc/credentials/oauth
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
+google.golang.org/grpc/internal/balancer/gracefulswitch
 google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
 google.golang.org/grpc/internal/buffer
@@ -970,6 +967,7 @@ google.golang.org/grpc/internal/grpcrand
 google.golang.org/grpc/internal/grpcsync
 google.golang.org/grpc/internal/grpcutil
 google.golang.org/grpc/internal/metadata
+google.golang.org/grpc/internal/pretty
 google.golang.org/grpc/internal/resolver
 google.golang.org/grpc/internal/resolver/dns
 google.golang.org/grpc/internal/resolver/passthrough
@@ -987,8 +985,8 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.27.1
-## explicit; go 1.9
+# google.golang.org/protobuf v1.28.0
+## explicit; go 1.11
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
@@ -1037,7 +1035,7 @@ gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+# gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
 # k8s.io/api v0.23.0
@@ -1376,4 +1374,3 @@ sigs.k8s.io/yaml
 # github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 # k8s.io/client-go => k8s.io/client-go v0.23.0
 # sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
-# github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
