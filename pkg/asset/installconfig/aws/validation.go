@@ -28,15 +28,17 @@ type resourceRequirements struct {
 	minimumMemory int64
 }
 
-var controlPlaneReq = resourceRequirements{
-	minimumVCpus:  4,
-	minimumMemory: 16384,
-}
-
-var computeReq = resourceRequirements{
-	minimumVCpus:  2,
-	minimumMemory: 8192,
-}
+var (
+	dhcpKeys        = []string{"domain-name", "domain-name-servers"}
+	controlPlaneReq = resourceRequirements{
+		minimumVCpus:  4,
+		minimumMemory: 16384,
+	}
+	computeReq = resourceRequirements{
+		minimumVCpus:  2,
+		minimumMemory: 8192,
+	}
+)
 
 // Validate executes platform-specific validation.
 func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) error {
@@ -47,6 +49,8 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	}
 	allErrs = append(allErrs, validateAMI(ctx, config)...)
 	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
+
+	allErrs = append(allErrs, validateVPC(ctx, meta, field.NewPath("metadata"))...)
 
 	if config.ControlPlane != nil && config.ControlPlane.Platform.AWS != nil {
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, field.NewPath("controlPlane", "platform", "aws"), config.Platform.AWS, config.ControlPlane.Platform.AWS, controlPlaneReq)...)
@@ -124,6 +128,62 @@ func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorLi
 
 	// fail validation since we do not have an AMI to use
 	return field.ErrorList{field.Required(field.NewPath("platform", "aws", "amiID"), "AMI must be provided")}
+}
+
+func validateVPC(ctx context.Context, meta *Metadata, fldPath *field.Path) field.ErrorList {
+	if meta.vpc == "" {
+		return field.ErrorList{field.Required(fldPath, "vpc")}
+	}
+
+	if meta.Region == "" {
+		return field.ErrorList{field.Required(fldPath, "region")}
+	}
+
+	ec2Session := session.Must(session.NewSession())
+	svc := ec2.New(ec2Session, aws.NewConfig().WithRegion(meta.Region))
+
+	// Get all VPCs
+	params := &ec2.DescribeVpcsInput{VpcIds: []*string{aws.String(meta.vpc)}}
+	vpcOutput, err := svc.DescribeVpcs(params)
+	if err != nil {
+		return field.ErrorList{field.Invalid(fldPath.Child("vpc"), meta.vpc, "no vpc provided")}
+	}
+	if len(vpcOutput.Vpcs) != 1 {
+		return field.ErrorList{field.Invalid(fldPath.Child("vpc"), vpcOutput, "expected 1 vpc")}
+	}
+
+	vpc := vpcOutput.Vpcs[0]
+	dhcpInput := &ec2.DescribeDhcpOptionsInput{
+		DhcpOptionsIds: []*string{vpc.DhcpOptionsId},
+	}
+	dhcpOptionsOutput, err := svc.DescribeDhcpOptions(dhcpInput)
+	if err != nil {
+		return field.ErrorList{field.Required(fldPath.Child("vpc"), "dhcp-options-set")}
+	}
+
+	// Retrieve the DNS information from the Option Set
+	for _, dhcpOption := range dhcpOptionsOutput.DhcpOptions {
+
+		// retrieve all DHCP Option set parameters
+		dhcpConfigSet := make(map[string]int)
+		for _, dhcpConfig := range dhcpOption.DhcpConfigurations {
+			dhcpConfigSet[*dhcpConfig.Key] = len(dhcpConfig.Values)
+		}
+
+		// make sure that all expected DHCP option set keys are provided
+		for _, key := range dhcpKeys {
+			if values, ok := dhcpConfigSet[key]; !ok {
+				return field.ErrorList{field.Required(fldPath.Child("vpc").Child("dhcp-options-set"), key)}
+			} else {
+				if values <= 0 {
+					return field.ErrorList{field.Required(fldPath.Child("vpc").Child("dhcp-options-set"), key)}
+				}
+			}
+		}
+
+	}
+
+	return nil
 }
 
 func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, subnets []string, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
