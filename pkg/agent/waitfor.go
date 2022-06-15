@@ -14,24 +14,25 @@ import (
 // 	return nil
 // }
 
+// TODO(lranjbar)[AGENT-172]: Add wait for cluster validation
 func WaitForClusterValidationSuccess() error {
 	logrus.Info("agentWaitForValidationSuccess")
 
-	zeroClient, err := NewNodeZeroClient()
-	if err != nil {
-		return err
-	}
+	// zeroClient, err := NewNodeZeroClient()
+	// if err != nil {
+	// 	return err
+	// }
 
-	// Wait to see assisted service API for the first time
-	WaitForNodeZeroAgentRestAPIInit(zeroClient, 5)
+	// // Wait to see assisted service API for the first time
+	// WaitForNodeZeroAgentRestAPIInit(zeroClient, 5)
 
-	clusterZero, err := NewClusterZero(zeroClient)
-	if err != nil {
-		return err
-	}
+	// clusterZero, err := NewClusterZero(zeroClient)
+	// if err != nil {
+	// 	return err
+	// }
 
-	// Wait for cluster validations to succeed
-	WaitForClusterZeroManifestsToValidate(clusterZero, 5)
+	// // Wait for cluster validations to succeed
+	// WaitForClusterZeroManifestsToValidate(clusterZero, 5)
 
 	return nil
 }
@@ -48,19 +49,24 @@ func WaitForBootstrapComplete() error {
 	// Wait to see assisted service API for the first time
 	WaitForNodeZeroAgentRestAPIInit(zeroClient, 5)
 
-	clusterZero, err := NewClusterZero(zeroClient)
-	if err != nil {
-		return err
-	}
+	// Research notes: In installer main package create.go:
+	// waitForBootstrapComplete(), waitForBootstrapConfigMap()
 
+	// TODO(lranjbar)[AGENT-172]: Add wait for cluster validation
+	// clusterZero, err := NewClusterZero(zeroClient)
+	// if err != nil {
+	// 	return err
+	// }
 	// Wait for cluster validations to succeed
-	WaitForClusterZeroManifestsToValidate(clusterZero, 5)
+	// WaitForClusterZeroManifestsToValidate(clusterZero, 5)
 
-	// Wait for kubeAPI to come up and kubeconfig to be created
-	// WaitForKubeAPI(ctx, zeroClient, 20)
+	// Wait for cluster Kube API to come up and kubeconfig to be created
+	// WaitForClusterZeroKubeAPILive()
+
+	// Wait for bootstrap configmap
 
 	// Wait for bootstrap node to reboot
-	// WaitForNodeZeroReboot(ctx, zeroClient, 20)
+	// WaitForNodeZeroReboot()
 
 	return nil
 }
@@ -69,6 +75,10 @@ func WaitForBootstrapComplete() error {
 func WaitForInstallComplete() error {
 	logrus.Info("WaitForInstallComplete")
 
+	// Research notes: In installer main package create.go:
+	// waitForInitializedCluster()
+
+	// TODO(lranjbar): Add wait for install complete in AGENT-173
 	// WaitForBootstrapComplete()
 
 	return nil
@@ -110,7 +120,7 @@ func WaitForClusterZeroManifestsToValidate(clusterZero *clusterZero, timeoutMins
 	return nil
 }
 
-func WaitForKubeAPI(timeoutMins int) error {
+func WaitForClusterZeroKubeAPILive(timeoutMins int) error {
 
 	return nil
 }
