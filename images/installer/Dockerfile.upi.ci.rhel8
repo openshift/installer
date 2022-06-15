@@ -38,6 +38,8 @@ RUN yum update -y && \
     rm -rf /var/cache/yum/* && \
     chmod g+w /etc/passwd
 
+RUN curl -L https://github.com/mikefarah/yq/releases/download/3.3.0/yq_linux_amd64 -o /bin/yq-3.3.0 && chmod +x /bin/yq-3.3.0
+
 # Not packaged for Python 2, but required by gcloud.  See https://cloud.google.com/sdk/crypto
 RUN pip-2 install pyopenssl
 ENV CLOUDSDK_PYTHON=/usr/bin/python

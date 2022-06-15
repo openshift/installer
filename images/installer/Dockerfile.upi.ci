@@ -44,6 +44,7 @@ RUN python -m pip install pyopenssl
 ENV CLOUDSDK_PYTHON=/usr/bin/python
 
 RUN python3 -m pip install yq
+RUN curl -L https://github.com/mikefarah/yq/releases/download/3.3.0/yq_linux_amd64 -o /bin/yq-3.3.0 && chmod +x /bin/yq-3.3.0
 
 ENV TERRAFORM_VERSION=1.0.11
 RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
