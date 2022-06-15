@@ -1,5 +1,7 @@
 package ovirt
 
+import "fmt"
+
 // MachinePool stores the configuration for a machine pool installed
 // on ovirt.
 type MachinePool struct {
@@ -120,6 +122,10 @@ const (
 // with the specific size.
 // +kubebuilder:validation:Enum=2048;1048576
 type Hugepages int32
+
+func (h Hugepages) String() string {
+	return fmt.Sprintf("%d", h)
+}
 
 const (
 	// Hugepages2MB for using 2MB hugepages.
