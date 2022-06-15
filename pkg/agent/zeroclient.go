@@ -4,15 +4,21 @@ import (
 	"context"
 	"net"
 	"net/url"
+	"path/filepath"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/openshift/assisted-service/client"
 	"github.com/openshift/assisted-service/client/installer"
 	"github.com/openshift/assisted-service/client/versions"
 	"github.com/openshift/assisted-service/models"
 
-	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	assetstore "github.com/openshift/installer/pkg/asset/store"
 )
 
 type nodeZeroClient struct {
@@ -22,13 +28,19 @@ type nodeZeroClient struct {
 	nodeZeroIP string
 }
 
-func NewNodeZeroClient() (*nodeZeroClient, error) {
+func NewNodeZeroClient(directory string) (*nodeZeroClient, error) {
 	zero := &nodeZeroClient{}
-	agentManifests := &manifests.AgentManifests{}
-	dependencies := &asset.Parents{}
-	dependencies.Get(agentManifests)
 
-	nodeZeroIP, err := manifests.GetNodeZeroIP(agentManifests.NMStateConfigs)
+	assetStore, err := assetstore.NewStore(directory)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create asset store")
+	}
+	nmState := &manifests.NMStateConfig{}
+	if err := assetStore.Fetch(nmState); err != nil {
+		return nil, errors.Wrapf(err, "failed to fetch %s", nmState.Name())
+	}
+
+	nodeZeroIP, err := manifests.GetNodeZeroIP(nmState.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -125,14 +137,35 @@ func (czero *clusterZero) parseValidationInfo(*models.Cluster) (bool, error) {
 	return false, nil
 }
 
-func (czero *clusterZero) isKubeAPILive() (bool, error) {
+func (czero *clusterZero) isKubeAPILive(directory string) (bool, error) {
 
-	return false, nil
+	config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(directory, "auth", "kubeconfig"))
+	if err != nil {
+		return false, errors.Wrap(err, "loading kubeconfig")
+	}
+
+	kubeClient, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return false, errors.Wrap(err, "creating a Kubernetes client")
+	}
+
+	discovery := kubeClient.Discovery()
+	version, err := discovery.ServerVersion()
+	if err != nil {
+		return false, err
+	}
+	logrus.Infof("Cluster API is up and running %s", version)
+	return true, nil
 }
 
-func (czero *clusterZero) doesKubeConfigExist() (bool, error) {
+func (czero *clusterZero) doesKubeConfigExist(directory string) (bool, error) {
 
-	return false, nil
+	kubeconfig := filepath.Join(directory, "auth", "kubeconfig")
+	_, err := clientcmd.LoadFromFile(kubeconfig)
+	if err != nil {
+		return false, errors.Wrap(err, "loading kubeconfig")
+	}
+	return true, nil
 }
 
 func (czero *clusterZero) printInstallStatus() error {

@@ -1,13 +1,15 @@
 package main
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/openshift/installer/cmd/openshift-install/agent"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
+
+	agentpkg "github.com/openshift/installer/pkg/agent"
 )
 
 func newAgentCmd() *cobra.Command {
@@ -20,7 +22,7 @@ func newAgentCmd() *cobra.Command {
 	}
 
 	agentCmd.AddCommand(newAgentCreateCmd())
-	agentCmd.AddCommand(agent.NewWaitForCmd())
+	agentCmd.AddCommand(newAgentWaitForCmd())
 	return agentCmd
 }
 
@@ -71,4 +73,75 @@ func newAgentCreateCmd() *cobra.Command {
 	}
 
 	return cmd
+}
+
+func newAgentWaitForCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "wait-for",
+		Short: "Wait for install-time events",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+
+	cmd.AddCommand(newAgentWaitForClusterValidationSuccessCmd())
+	cmd.AddCommand(newAgentWaitForBootstrapCompleteCmd())
+	cmd.AddCommand(newAgentWaitForInstallCompleteCmd())
+	return cmd
+}
+
+func newAgentWaitForClusterValidationSuccessCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "cluster-validated",
+		Short: "Wait until the cluster manifests are validated for install",
+		Args:  cobra.ExactArgs(0),
+		Run: func(_ *cobra.Command, _ []string) {
+			err := runAgentWaitForClusterValidationSuccessCmd()
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		},
+	}
+}
+
+func newAgentWaitForBootstrapCompleteCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "bootstrap-complete",
+		Short: "Wait until the cluster bootstrap is complete",
+		Args:  cobra.ExactArgs(0),
+		Run: func(_ *cobra.Command, _ []string) {
+			err := runAgentWaitForBootstrapCompleteCmd(rootOpts.dir)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		},
+	}
+}
+
+func newAgentWaitForInstallCompleteCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "install-complete",
+		Short: "Wait until the cluster installation is complete",
+		Args:  cobra.ExactArgs(0),
+		Run: func(_ *cobra.Command, _ []string) {
+			err := runAgentWaitForInstallCompleteCmd()
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		},
+	}
+
+}
+
+func runAgentWaitForClusterValidationSuccessCmd() error {
+	return agentpkg.WaitForClusterValidationSuccess()
+}
+
+func runAgentWaitForBootstrapCompleteCmd(directory string) error {
+	return agentpkg.WaitForBootstrapComplete(directory)
+}
+
+func runAgentWaitForInstallCompleteCmd() error {
+	return agentpkg.WaitForInstallComplete()
 }

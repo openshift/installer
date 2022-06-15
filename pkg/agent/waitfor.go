@@ -38,10 +38,10 @@ func WaitForClusterValidationSuccess() error {
 }
 
 // Wait for the bootstrap complete triggered by the agent installer.
-func WaitForBootstrapComplete() error {
+func WaitForBootstrapComplete(directory string) error {
 	logrus.Info("WaitForBootstrapComplete")
 
-	zeroClient, err := NewNodeZeroClient()
+	zeroClient, err := NewNodeZeroClient(directory)
 	if err != nil {
 		return err
 	}
@@ -71,6 +71,7 @@ func WaitForBootstrapComplete() error {
 	return nil
 }
 
+// TODO(lranjbar)[AGENT-172]: Add wait for install complete in AGENT-173
 // Wait for the installation complete triggered by the agent installer.
 func WaitForInstallComplete() error {
 	logrus.Info("WaitForInstallComplete")
@@ -78,7 +79,6 @@ func WaitForInstallComplete() error {
 	// Research notes: In installer main package create.go:
 	// waitForInitializedCluster()
 
-	// TODO(lranjbar): Add wait for install complete in AGENT-173
 	// WaitForBootstrapComplete()
 
 	return nil
@@ -105,14 +105,31 @@ func WaitForNodeZeroAgentRestAPIInit(zeroClient *nodeZeroClient, timeoutMins int
 func WaitForClusterZeroManifestsToValidate(clusterZero *clusterZero, timeoutMins int) error {
 	logrus.Info("WaitForClusterZeroManifestsToValidate")
 
+	// timeout := time.Duration(timeoutMins) * time.Minute
+	// serviceContext, cancel := context.WithTimeout(clusterZero.zeroClient.ctx, timeout)
+	// defer cancel()
+
+	// wait.Until(func() {
+	// 	clusterProgress, _ := clusterZero.get()
+	// 	validate, err := clusterZero.parseValidationInfo(clusterProgress)
+	// 	if validate && err == nil {
+	// 		cancel()
+	// 	}
+	// }, 5*time.Second, serviceContext.Done())
+
+	return nil
+}
+
+func WaitForClusterZeroKubeConfigToExist(clusterZero *clusterZero, directory string, timeoutMins int) error {
+
 	timeout := time.Duration(timeoutMins) * time.Minute
 	serviceContext, cancel := context.WithTimeout(clusterZero.zeroClient.ctx, timeout)
 	defer cancel()
 
 	wait.Until(func() {
-		clusterProgress, _ := clusterZero.get()
-		validate, err := clusterZero.parseValidationInfo(clusterProgress)
-		if validate && err == nil {
+		exist, err := clusterZero.doesKubeConfigExist(directory)
+		if exist && err == nil {
+			logrus.Info("Found kubeconfig")
 			cancel()
 		}
 	}, 5*time.Second, serviceContext.Done())
@@ -120,7 +137,19 @@ func WaitForClusterZeroManifestsToValidate(clusterZero *clusterZero, timeoutMins
 	return nil
 }
 
-func WaitForClusterZeroKubeAPILive(timeoutMins int) error {
+func WaitForClusterZeroKubeAPILive(clusterZero *clusterZero, directory string, timeoutMins int) error {
+
+	timeout := time.Duration(timeoutMins) * time.Minute
+	serviceContext, cancel := context.WithTimeout(clusterZero.zeroClient.ctx, timeout)
+	defer cancel()
+
+	wait.Until(func() {
+		live, err := clusterZero.isKubeAPILive(directory)
+		if live && err == nil {
+			logrus.Info("Cluster API Initialized")
+			cancel()
+		}
+	}, 5*time.Second, serviceContext.Done())
 
 	return nil
 }
