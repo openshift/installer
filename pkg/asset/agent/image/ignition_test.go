@@ -47,7 +47,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 
 	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, "x86_64")
 	assert.NoError(t, err)
-	templateData := getTemplateData(pullSecret, nodeZeroIP, releaseImageList, agentClusterInstall)
+	templateData := getTemplateData(pullSecret, nodeZeroIP, releaseImageList, agentClusterInstall, nil)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, "http://"+nodeZeroIP+":8090/", templateData.ServiceBaseURL)
 	assert.Equal(t, pullSecret, templateData.PullSecret)

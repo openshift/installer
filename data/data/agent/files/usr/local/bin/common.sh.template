@@ -7,3 +7,26 @@ wait_for_assisted_service() {
         sleep 5
     done
 }
+
+find_and_export_infra_env_and_cluster_id() {
+    BASE_URL="{{.ServiceBaseURL}}api/assisted-install/v2"
+
+    CLUSTER_ID=""
+    INFRA_ENV_ID=""
+    while [[ "${INFRA_ENV_ID}" = "" || "${CLUSTER_ID}" = "" ]]
+    do
+        # Get cluster id
+        CLUSTER_ID=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].id)
+        # Get INFRA_ENV_ID
+        INFRA_ENV_ID=$(curl -s -S "${BASE_URL}/infra-envs"| jq -r .[].id)
+        if [[ "${INFRA_ENV_ID}" = "" || "${CLUSTER_ID}" = "" ]]; then
+            sleep 2
+        fi
+    done
+    export infra_env_id=$INFRA_ENV_ID
+    export INFRA_ENV_ID=$INFRA_ENV_ID
+    export cluster_id=$CLUSTER_ID
+    export CLUSTER_ID=$CLUSTER_ID
+    echo -e "Found CLUSTER_ID=${CLUSTER_ID}\n" 1>&2
+    echo -e "Found INFRA_ENV_ID=${INFRA_ENV_ID}\n" 1>&2
+}

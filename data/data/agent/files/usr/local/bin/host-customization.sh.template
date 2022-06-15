@@ -1,0 +1,12 @@
+#!/bin/bash
+
+source common.sh
+
+export SERVICE_BASE_URL={{.ServiceBaseURL}}
+
+find_and_export_infra_env_and_cluster_id
+
+# from start-cluster-installation.sh
+echo "Starting to apply host-specific customizations to assisted-service REST-API"  1>&2
+{{.HostCustomizations}}
+echo "Finished applying host-specific customizations"  1>&2

@@ -7,19 +7,7 @@ wait_for_assisted_service
 
 BASE_URL="{{.ServiceBaseURL}}api/assisted-install/v2"
 
-cluster_id=""
-infra_env_id=""
-while [[ "${infra_env_id}" = "" || "${cluster_id}" = "" ]]
-do
-    # Get cluster id
-    cluster_id=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].id)
-    # Get infra_env_id
-    infra_env_id=$(curl -s -S "${BASE_URL}/infra-envs"| jq -r .[].id)
-    if [[ "${infra_env_id}" = "" || "${cluster_id}" = "" ]]; then
-        sleep 2
-    fi
-done
-echo -e "\nInfra env id is $infra_env_id" 1>&2
+find_and_export_infra_env_and_cluster_id
 
 required_master_nodes={{.ControlPlaneAgents}}
 required_worker_nodes={{.WorkerAgents}}
@@ -58,6 +46,8 @@ if [[ "${APIVIP}" != "" ]]; then
         curl -s -S -X PATCH "${BASE_URL}/clusters/${cluster_id}" -H "Content-Type: application/json" -d '{"api_vip": "{{.APIVIP}}"}'
     fi
 fi
+
+host-customization.sh
 
 while [[ "${cluster_status}" != "ready" ]]
 do

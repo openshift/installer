@@ -40,6 +40,7 @@ type agentTemplateData struct {
 	ControlPlaneAgents  int
 	WorkerAgents        int
 	ReleaseImages       string
+	HostCustomizations  string
 }
 
 var (
@@ -71,13 +72,15 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
+		&manifests.Agent{},
 	}
 }
 
 // Generate generates the agent installer ignition.
 func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentManifests := &manifests.AgentManifests{}
-	dependencies.Get(agentManifests)
+	agent := &manifests.Agent{}
+	dependencies.Get(agentManifests, agent)
 
 	infraEnv := agentManifests.InfraEnv
 
@@ -112,7 +115,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		agentManifests.GetPullSecretData(),
 		nodeZeroIP,
 		releaseImageList,
-		agentManifests.AgentClusterInstall)
+		agentManifests.AgentClusterInstall,
+		agent)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -143,14 +147,15 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 }
 
 func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList string,
-	agentClusterInstall *hiveext.AgentClusterInstall) *agentTemplateData {
+	agentClusterInstall *hiveext.AgentClusterInstall,
+	agent *manifests.Agent) *agentTemplateData {
 	serviceBaseURL := url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
 		Path:   "/",
 	}
 
-	return &agentTemplateData{
+	templateData := &agentTemplateData{
 		ServiceProtocol:     serviceBaseURL.Scheme,
 		ServiceBaseURL:      serviceBaseURL.String(),
 		PullSecret:          pullSecret,
@@ -162,6 +167,14 @@ func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList stri
 		WorkerAgents:        agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
 		ReleaseImages:       releaseImageList,
 	}
+
+	hostCustomizations := ""
+	if agent != nil {
+		hostCustomizations = agent.HostCustomizations()
+	}
+	templateData.HostCustomizations = hostCustomizations
+
+	return templateData
 }
 
 func addStaticNetworkConfig(config *igntypes.Config, staticNetworkConfig []*models.HostStaticNetworkConfig) (err error) {
