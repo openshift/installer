@@ -18,14 +18,44 @@ func NewWaitForCmd() *cobra.Command {
 		},
 	}
 
+	cmd.AddCommand(newWaitForClusterValidationSuccessCmd())
+	cmd.AddCommand(newWaitForBootstrapCompleteCmd())
 	cmd.AddCommand(newWaitForInstallCompleteCmd())
 	return cmd
+}
+
+func newWaitForClusterValidationSuccessCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "cluster-validated",
+		Short: "Wait until the cluster manifests are validated for install",
+		Args:  cobra.ExactArgs(0),
+		Run: func(_ *cobra.Command, _ []string) {
+			err := runWaitForClusterValidationSuccessCmd()
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		},
+	}
+}
+
+func newWaitForBootstrapCompleteCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "bootstrap-complete",
+		Short: "Wait until the cluster bootstrap is complete",
+		Args:  cobra.ExactArgs(0),
+		Run: func(_ *cobra.Command, _ []string) {
+			err := runWaitForInstallCompleteCmd()
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		},
+	}
 }
 
 func newWaitForInstallCompleteCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "install-complete",
-		Short: "Wait until the cluster is ready",
+		Short: "Wait until the cluster installation is complete",
 		Args:  cobra.ExactArgs(0),
 		Run: func(_ *cobra.Command, _ []string) {
 			err := runWaitForInstallCompleteCmd()
@@ -37,6 +67,14 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 
 }
 
+func runWaitForClusterValidationSuccessCmd() error {
+	return agentcmd.WaitForClusterValidationSuccess()
+}
+
+func runWaitForBootstrapCompleteCmd() error {
+	return agentcmd.WaitForBootstrapComplete()
+}
+
 func runWaitForInstallCompleteCmd() error {
-	return agentcmd.WaitFor()
+	return agentcmd.WaitForInstallComplete()
 }
