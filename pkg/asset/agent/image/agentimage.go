@@ -2,8 +2,10 @@ package image
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
@@ -17,7 +19,7 @@ const (
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
 type AgentImage struct {
-	File *asset.File
+	imageReader isoeditor.ImageReader
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -48,18 +50,29 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
-	defer custom.Close()
+
+	a.imageReader = custom
+	return nil
+}
+
+func (a *AgentImage) PersistToFile(directory string) error {
+	if a.imageReader == nil {
+		return errors.New("image reader not available")
+	}
+
+	defer a.imageReader.Close()
+	agentIsoFile := filepath.Join(directory, agentISOFilename)
 
 	// Remove symlink if it exists
-	os.Remove(agentISOFilename)
+	os.Remove(agentIsoFile)
 
-	output, err := os.Create(agentISOFilename)
+	output, err := os.Create(agentIsoFile)
 	if err != nil {
 		return err
 	}
 	defer output.Close()
 
-	_, err = io.Copy(output, custom)
+	_, err = io.Copy(output, a.imageReader)
 	return err
 }
 
