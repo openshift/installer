@@ -281,8 +281,9 @@ func (p *Platform) Name() string {
 // Networking defines the pod network provider in the cluster.
 type Networking struct {
 	// NetworkType is the type of network to install.
-	// The default value is OVNKubernetes for Single Node OpenShift
-	// and OpenShiftSDN for all other platforms.
+	// The default value is OVNKubernetes.
+	//
+	// +kubebuilder:default=OVNKubernetes
 	// +optional
 	NetworkType string `json:"networkType,omitempty"`
 

@@ -20,7 +20,7 @@ func validPlatform() *alibabacloud.Platform {
 
 func validNetworking() *types.Networking {
 	return &types.Networking{
-		NetworkType: "OpenShiftSDN",
+		NetworkType: "OVNKubernetes",
 		MachineNetwork: []types.MachineNetworkEntry{{
 			CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
 		}},
@@ -29,7 +29,7 @@ func validNetworking() *types.Networking {
 
 func invalidMachineNetwork() *types.Networking {
 	return &types.Networking{
-		NetworkType: "OpenShiftSDN",
+		NetworkType: "OVNKubernetes",
 		MachineNetwork: []types.MachineNetworkEntry{{
 			CIDR: *ipnet.MustParseCIDR("100.100.100.0/24"),
 		}},
@@ -38,7 +38,7 @@ func invalidMachineNetwork() *types.Networking {
 
 func invalidServiceNetwork() *types.Networking {
 	return &types.Networking{
-		NetworkType: "OpenShiftSDN",
+		NetworkType: "OVNKubernetes",
 		ServiceNetwork: []ipnet.IPNet{{
 			IPNet: net.IPNet{
 				IP:   net.IP{0x64, 0x64, 0x64, 0x00},
@@ -50,7 +50,7 @@ func invalidServiceNetwork() *types.Networking {
 
 func invalidClusterNetwork() *types.Networking {
 	return &types.Networking{
-		NetworkType: "OpenShiftSDN",
+		NetworkType: "OVNKubernetes",
 		ClusterNetwork: []types.ClusterNetworkEntry{{
 			CIDR: ipnet.IPNet{
 				IPNet: net.IPNet{

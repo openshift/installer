@@ -23,7 +23,7 @@ func validPlatform() *openstack.Platform {
 
 func validNetworking() *types.Networking {
 	return &types.Networking{
-		NetworkType: "OpenShiftSDN",
+		NetworkType: "OVNKubernetes",
 		MachineNetwork: []types.MachineNetworkEntry{{
 			CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
 		}},
