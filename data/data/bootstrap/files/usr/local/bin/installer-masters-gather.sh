@@ -30,11 +30,14 @@ do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/journals/${service}.log"
 done
 
+journalctl --no-pager | gzip > "${ARTIFACTS}/journals/journal.log.gz"
+
 echo "Gathering master networking ..."
 mkdir -p "${ARTIFACTS}/network"
 ip addr >& "${ARTIFACTS}/network/ip-addr.txt"
 ip route >& "${ARTIFACTS}/network/ip-route.txt"
 hostname >& "${ARTIFACTS}/network/hostname.txt"
+netstat -anp >& "${ARTIFACTS}/network/netstat.txt"
 cp -r /etc/resolv.conf "${ARTIFACTS}/network/"
 
 echo "Gathering master containers ..."
