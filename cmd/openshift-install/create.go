@@ -329,15 +329,6 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 
 	apiTimeout := 20 * time.Minute
 
-	// Wait longer for baremetal, due to length of time it takes to boot
-	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
-		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
-			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
-				apiTimeout = 60 * time.Minute
-			}
-		}
-	}
-
 	untilTime := time.Now().Add(apiTimeout)
 	logrus.Infof("Waiting up to %v (until %v) for the Kubernetes API at %s...",
 		apiTimeout, untilTime.Format(time.Kitchen), config.Host)
@@ -389,6 +380,16 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 // completed.
 func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) *clusterCreateError {
 	timeout := 30 * time.Minute
+
+	// Wait longer for baremetal, due to length of time it takes to boot
+	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
+		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
+			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
+				timeout = 60 * time.Minute
+			}
+		}
+	}
+
 	untilTime := time.Now().Add(timeout)
 	logrus.Infof("Waiting up to %v (until %v) for bootstrapping to complete...",
 		timeout, untilTime.Format(time.Kitchen))
