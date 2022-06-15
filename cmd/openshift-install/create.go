@@ -239,6 +239,15 @@ func newCreateCmd() *cobra.Command {
 	return cmd
 }
 
+func asFileWriter(a asset.WritableAsset) asset.FileWriter {
+	switch v := a.(type) {
+	case asset.FileWriter:
+		return v
+	default:
+		return asset.NewDefaultFileWriter(a)
+	}
+}
+
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
 	runner := func(directory string) error {
 		assetStore, err := assetstore.NewStore(directory)
@@ -252,7 +261,8 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 				err = errors.Wrapf(err, "failed to fetch %s", a.Name())
 			}
 
-			if err2 := asset.PersistToFile(a, directory); err2 != nil {
+			err2 := asFileWriter(a).PersistToFile(directory)
+			if err2 != nil {
 				err2 = errors.Wrapf(err2, "failed to write asset (%s) to disk", a.Name())
 				if err != nil {
 					logrus.Error(err2)
