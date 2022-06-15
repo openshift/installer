@@ -38,12 +38,17 @@ RUN yum update -y && \
     rm -rf /var/cache/yum/* && \
     chmod g+w /etc/passwd
 
+ARG YQ_URI=https://github.com/mikefarah/yq/releases/download/3.3.0/yq_linux_amd64
+ARG YQ_HASH=e70e482e7ddb9cf83b52f5e83b694a19e3aaf36acf6b82512cbe66e41d569201
+RUN echo "${YQ_HASH} -" > /tmp/sum.txt && \
+  curl -L --fail "${YQ_URI}" | tee /bin/yq | sha256sum -c /tmp/sum.txt >/dev/null && \
+  chmod +x /bin/yq && \
+  rm /tmp/sum.txt
+
 RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
 RUN python get-pip.py 'pip<21.0'
 RUN python -m pip install pyopenssl
 ENV CLOUDSDK_PYTHON=/usr/bin/python
-
-RUN python3 -m pip install yq
 
 ENV TERRAFORM_VERSION=1.0.11
 RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
