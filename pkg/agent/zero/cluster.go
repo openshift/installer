@@ -10,6 +10,18 @@ import (
 	"github.com/openshift/assisted-service/models"
 )
 
+// DEV_NOTES(lranjbar): Maybe we move these into a seperate "ClusterChecker" interface.
+// I expect most of these to take a *models.Cluster object at least until the bootstrap reboots.
+// After bootstrap reboots we will only have the kubeAPI to check on things. So while it wouldn't
+// be the models.Cluster perhaps it is an object from kubernetes instead.
+type ClusterZeroChecker interface {
+	IsInstalling(cluster *models.Cluster) (bool, string)
+	HasErrored(cluster *models.Cluster) (bool, string)
+	HasStoppedInstalling(cluster *models.Cluster) (bool, string)
+	ParseValidationInfo(cluster *models.Cluster) (bool, error)
+	PrintInstallStatus(cluster *models.Cluster) (string, error)
+}
+
 type ClusterZero struct {
 	Ctx                   context.Context
 	Api                   *zeroClient
@@ -66,10 +78,52 @@ func (czero *ClusterZero) Get() (*models.Cluster, error) {
 	return clusterZero, nil
 }
 
-// TODO(lranjbar): Print install status from the Cluster object
-func (czero *ClusterZero) PrintInstallStatus(*models.Cluster) error {
+func (czero *ClusterZero) IsInstalling(cluster *models.Cluster) (bool, string) {
+	clusterInstallingStates := map[string]bool{
+		models.ClusterStatusInsufficient:                false,
+		models.ClusterStatusError:                       false,
+		models.ClusterStatusReady:                       true,
+		models.ClusterStatusPreparingForInstallation:    true,
+		models.ClusterStatusPendingForInput:             true,
+		models.ClusterStatusInstalling:                  true,
+		models.ClusterStatusFinalizing:                  true,
+		models.ClusterStatusAddingHosts:                 true,
+		models.ClusterStatusCancelled:                   false,
+		models.ClusterStatusInstallingPendingUserAction: false,
+	}
+	return clusterInstallingStates[*cluster.Status], *cluster.Status
+}
 
-	return nil
+func (czero *ClusterZero) HasErrored(cluster *models.Cluster) (bool, string) {
+	clusterErrorStates := map[string]bool{
+		models.ClusterStatusInsufficient:                true,
+		models.ClusterStatusError:                       true,
+		models.ClusterStatusReady:                       false,
+		models.ClusterStatusPreparingForInstallation:    false,
+		models.ClusterStatusPendingForInput:             false,
+		models.ClusterStatusInstalling:                  false,
+		models.ClusterStatusFinalizing:                  false,
+		models.ClusterStatusAddingHosts:                 false,
+		models.ClusterStatusCancelled:                   false,
+		models.ClusterStatusInstallingPendingUserAction: true,
+	}
+	return clusterErrorStates[*cluster.Status], *cluster.Status
+}
+
+func (czero *ClusterZero) HasStoppedInstalling(cluster *models.Cluster) (bool, string) {
+	clusterStoppedInstallingStates := map[string]bool{
+		models.ClusterStatusInsufficient:                true,
+		models.ClusterStatusError:                       true,
+		models.ClusterStatusReady:                       false,
+		models.ClusterStatusPreparingForInstallation:    false,
+		models.ClusterStatusPendingForInput:             false,
+		models.ClusterStatusInstalling:                  false,
+		models.ClusterStatusFinalizing:                  false,
+		models.ClusterStatusAddingHosts:                 false,
+		models.ClusterStatusCancelled:                   true,
+		models.ClusterStatusInstallingPendingUserAction: true,
+	}
+	return clusterStoppedInstallingStates[*cluster.Status], *cluster.Status
 }
 
 // TODO(lranjbar)[AGENT-172]: Need to parse the validations_info object returned by the REST API
@@ -163,7 +217,13 @@ func (czero *ClusterZero) PrintInstallStatus(*models.Cluster) error {
 // ]
 // TODO(lranjbar)[AGENT-172]: Need to parse the validations_info object returned by the REST API
 // *models.Cluster I expect have a validations_info JSON object to marshal
-func (czero *ClusterZero) ParseValidationInfo(*models.Cluster) (bool, error) {
+func (czero *ClusterZero) ParseValidationInfo(cluster *models.Cluster) (bool, error) {
 
-	return false, nil
+	return true, nil
+}
+
+// TODO(lranjbar): Print install status from the Cluster object
+func (czero *ClusterZero) PrintInstallStatus(cluster *models.Cluster) (string, error) {
+
+	return "", nil
 }

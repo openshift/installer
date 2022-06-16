@@ -10,28 +10,18 @@ import (
 	"github.com/openshift/installer/pkg/agent/zero"
 )
 
-// func WaitFor() error {
-// 	logrus.Info("WaitFor command")
-
-// 	return nil
-// }
-
 // TODO(lranjbar)[AGENT-172]: Add wait for cluster validation
 func WaitForClusterValidationSuccess(assetDir string) error {
 	logrus.Info("agentWaitForValidationSuccess")
 
-	// zeroClient, err := NewNodeZeroClient()
-	// if err != nil {
-	// 	return err
-	// }
+	ctx := context.Background()
+	clusterZero, err := zero.NewClusterZero(ctx, assetDir)
+	if err != nil {
+		return err
+	}
 
 	// // Wait to see assisted service API for the first time
-	// WaitForNodeZeroAgentRestAPIInit(zeroClient, 5)
-
-	// clusterZero, err := NewClusterZero(zeroClient)
-	// if err != nil {
-	// 	return err
-	// }
+	WaitForNodeZeroAgentRestAPIInit(clusterZero, 5)
 
 	// // Wait for cluster validations to succeed
 	// WaitForClusterZeroManifestsToValidate(clusterZero, 5)
@@ -49,16 +39,8 @@ func WaitForBootstrapComplete(assetDir string) error {
 		return err
 	}
 
-	// zeroRestClient, err := zero.NewNodeZeroRestClient(assetDir)
-	// if err != nil {
-	// 	return err
-	// }
-
 	// Wait to see assisted service API for the first time
 	WaitForNodeZeroAgentRestAPIInit(clusterZero, 5)
-
-	// Research notes: In installer main package create.go:
-	// waitForBootstrapComplete(), waitForBootstrapConfigMap()
 
 	// TODO(lranjbar)[AGENT-172]: Add wait for cluster validation
 	// Wait for cluster validations to succeed
@@ -68,10 +50,15 @@ func WaitForBootstrapComplete(assetDir string) error {
 	WaitForClusterZeroKubeConfigToExist(clusterZero, 5)
 	WaitForClusterZeroKubeAPILive(clusterZero, 5)
 
-	// Wait for bootstrap configmap
-
 	// Wait for bootstrap node to reboot
-	// WaitForNodeZeroReboot()
+	WaitForNodeZeroReboot(clusterZero, 30)
+
+	// DEV_NOTES(lranjbar): Maybe this is WaitFor_BootstrapConfigMap_OR_NodeZeroReboot()
+	// Research notes: In installer main package create.go:
+	// waitForBootstrapComplete(), waitForBootstrapConfigMap()
+
+	// Wait for bootstrap configmap
+	// WaitForBootstrapConfigMap(clusterZero, 30)
 
 	return nil
 }
@@ -115,7 +102,7 @@ func WaitForClusterZeroManifestsToValidate(clusterZero *zero.ClusterZero, timeou
 	// defer cancel()
 
 	// wait.Until(func() {
-	// 	clusterState, _ := clusterZero.get()
+	// 	clusterState, _ := clusterZero.Get()
 	// 	validate, err := clusterZero.Api.Kube.ParseValidationInfo(clusterState)
 	// 	if validate && err == nil {
 	// 		cancel()
@@ -160,14 +147,33 @@ func WaitForClusterZeroKubeAPILive(clusterZero *zero.ClusterZero, timeoutMins in
 	return nil
 }
 
-// TODO(lranjbar): Look at waitForBootStrapConfigMap in the main function
-func WaitForBootstrapConfigMap(clusterZero *zero.ClusterZero, timeoutMins int) error {
+// DEV_NOTES(lranjbar): Probably rename this function... I think it is safe to assume this logic.
+// If the Assisted REST API on node zero is gone then it is likely that node zero has rebooted
+func WaitForNodeZeroReboot(clusterZero *zero.ClusterZero, timeoutMins int) error {
+
+	timeout := time.Duration(timeoutMins) * time.Minute
+	waitContext, cancel := context.WithTimeout(clusterZero.Ctx, timeout)
+	defer cancel()
+
+	wait.Until(func() {
+		clusterState, err := clusterZero.Get()
+		if err != nil {
+			logrus.Info("Node Zero Agent API Gone")
+			cancel()
+		} else {
+			installing, _ := clusterZero.IsInstalling(clusterState)
+			if !installing {
+				logrus.Fatal("Cluster has stopped installing")
+				cancel()
+			}
+		}
+	}, 5*time.Second, waitContext.Done())
 
 	return nil
 }
 
-// TODO(lranjbar): How to detect?
-func WaitForNodeZeroReboot(timeoutMins int) error {
+// TODO(lranjbar): Look at waitForBootStrapConfigMap in the main function
+func WaitForBootstrapConfigMap(clusterZero *zero.ClusterZero, timeoutMins int) error {
 
 	return nil
 }

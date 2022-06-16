@@ -62,7 +62,7 @@ func (zerokube *clusterZeroKubeAPIClient) DoesKubeConfigExist() (bool, error) {
 	return true, nil
 }
 
-func (zerokube *clusterZeroKubeAPIClient) doesBootstrapConfigMapExist() (bool, error) {
+func (zerokube *clusterZeroKubeAPIClient) DoesBootstrapConfigMapExist() (bool, error) {
 
 	return true, nil
 }
