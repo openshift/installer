@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -48,6 +49,11 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 	// resource pool is optional, but if provided should pass validation
 	if len(p.ResourcePool) != 0 {
 		allErrs = append(allErrs, validateResourcePool(p, fldPath)...)
+	}
+
+	// diskType is optional, but if provided should pass validation
+	if len(p.DiskType) != 0 {
+		allErrs = append(allErrs, validateDiskType(p, fldPath)...)
 	}
 
 	return allErrs
@@ -127,6 +133,19 @@ func validateResourcePool(p *vsphere.Platform, fldPath *field.Path) field.ErrorL
 	if !strings.HasPrefix(p.ResourcePool, expectedPrefix) {
 		errMsg := fmt.Sprintf("resourcePool must be absolute path: expected prefix %s", expectedPrefix)
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("resourcePool"), p.ResourcePool, errMsg))
+	}
+
+	return allErrs
+}
+
+// validateDiskType checks that the specified diskType is valid
+func validateDiskType(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	validDiskTypes := sets.NewString(string(vsphere.DiskTypeThin), string(vsphere.DiskTypeThick), string(vsphere.DiskTypeEagerZeroedThick))
+	if !validDiskTypes.Has(string(p.DiskType)) {
+		errMsg := fmt.Sprintf("diskType must be one of %v", validDiskTypes.List())
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("diskType"), p.DiskType, errMsg))
 	}
 
 	return allErrs
