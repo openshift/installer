@@ -31,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/version"
 )
 
@@ -181,6 +182,16 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = %v", metadata.ClusterPlatformMetadata.PowerVS.VPCRegion)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Zone = %v", metadata.ClusterPlatformMetadata.PowerVS.Zone)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID = %v", metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID)
+
+	// Handle an optional setting in install-config.yaml
+	if metadata.ClusterPlatformMetadata.PowerVS.VPCRegion == "" {
+		var derivedVPCRegion string
+		if derivedVPCRegion, err = powervstypes.VPCRegionForPowerVSRegion(metadata.ClusterPlatformMetadata.PowerVS.Region); err != nil {
+			return nil, errors.Wrap(err, "powervs.New failed to derive VPCRegion")
+		}
+		logger.Debugf("powervs.New: PowerVS.VPCRegion is missing, derived VPCRegion = %v", derivedVPCRegion)
+		metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = derivedVPCRegion
+	}
 
 	return &ClusterUninstaller{
 		APIKey:             APIKey,
