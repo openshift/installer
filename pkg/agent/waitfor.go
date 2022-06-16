@@ -6,6 +6,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	"github.com/openshift/installer/pkg/agent/zero"
 )
 
 // func WaitFor() error {
@@ -15,7 +17,7 @@ import (
 // }
 
 // TODO(lranjbar)[AGENT-172]: Add wait for cluster validation
-func WaitForClusterValidationSuccess() error {
+func WaitForClusterValidationSuccess(assetDir string) error {
 	logrus.Info("agentWaitForValidationSuccess")
 
 	// zeroClient, err := NewNodeZeroClient()
@@ -38,30 +40,33 @@ func WaitForClusterValidationSuccess() error {
 }
 
 // Wait for the bootstrap complete triggered by the agent installer.
-func WaitForBootstrapComplete(directory string) error {
+func WaitForBootstrapComplete(assetDir string) error {
 	logrus.Info("WaitForBootstrapComplete")
 
-	zeroClient, err := NewNodeZeroClient(directory)
+	ctx := context.Background()
+	clusterZero, err := zero.NewClusterZero(ctx, assetDir)
 	if err != nil {
 		return err
 	}
 
+	// zeroRestClient, err := zero.NewNodeZeroRestClient(assetDir)
+	// if err != nil {
+	// 	return err
+	// }
+
 	// Wait to see assisted service API for the first time
-	WaitForNodeZeroAgentRestAPIInit(zeroClient, 5)
+	WaitForNodeZeroAgentRestAPIInit(clusterZero, 5)
 
 	// Research notes: In installer main package create.go:
 	// waitForBootstrapComplete(), waitForBootstrapConfigMap()
 
 	// TODO(lranjbar)[AGENT-172]: Add wait for cluster validation
-	// clusterZero, err := NewClusterZero(zeroClient)
-	// if err != nil {
-	// 	return err
-	// }
 	// Wait for cluster validations to succeed
 	// WaitForClusterZeroManifestsToValidate(clusterZero, 5)
 
 	// Wait for cluster Kube API to come up and kubeconfig to be created
-	// WaitForClusterZeroKubeAPILive()
+	WaitForClusterZeroKubeConfigToExist(clusterZero, 5)
+	WaitForClusterZeroKubeAPILive(clusterZero, 5)
 
 	// Wait for bootstrap configmap
 
@@ -71,9 +76,9 @@ func WaitForBootstrapComplete(directory string) error {
 	return nil
 }
 
-// TODO(lranjbar)[AGENT-172]: Add wait for install complete in AGENT-173
+// TODO(lranjbar)[AGENT-173]: Add wait for install complete in AGENT-173
 // Wait for the installation complete triggered by the agent installer.
-func WaitForInstallComplete() error {
+func WaitForInstallComplete(assetDir string) error {
 	logrus.Info("WaitForInstallComplete")
 
 	// Research notes: In installer main package create.go:
@@ -84,72 +89,79 @@ func WaitForInstallComplete() error {
 	return nil
 }
 
-func WaitForNodeZeroAgentRestAPIInit(zeroClient *nodeZeroClient, timeoutMins int) error {
+func WaitForNodeZeroAgentRestAPIInit(clusterZero *zero.ClusterZero, timeoutMins int) error {
 	logrus.Info("WaitForNodeZeroAgentRestAPIInit")
 
 	timeout := time.Duration(timeoutMins) * time.Minute
-	serviceContext, cancel := context.WithTimeout(zeroClient.ctx, timeout)
+	waitContext, cancel := context.WithTimeout(clusterZero.Ctx, timeout)
 	defer cancel()
 
 	wait.Until(func() {
-		live, err := zeroClient.isAgentAPILive()
+		live, err := clusterZero.Api.Rest.IsAgentAPILive()
 		if live && err == nil {
 			logrus.Info("Node Zero Agent API Initialized")
 			cancel()
 		}
-	}, 5*time.Second, serviceContext.Done())
+	}, 5*time.Second, waitContext.Done())
 
 	return nil
 }
 
-func WaitForClusterZeroManifestsToValidate(clusterZero *clusterZero, timeoutMins int) error {
+func WaitForClusterZeroManifestsToValidate(clusterZero *zero.ClusterZero, timeoutMins int) error {
 	logrus.Info("WaitForClusterZeroManifestsToValidate")
 
 	// timeout := time.Duration(timeoutMins) * time.Minute
-	// serviceContext, cancel := context.WithTimeout(clusterZero.zeroClient.ctx, timeout)
+	// waitContext, cancel := context.WithTimeout(clusterZero.Ctx, timeout)
 	// defer cancel()
 
 	// wait.Until(func() {
-	// 	clusterProgress, _ := clusterZero.get()
-	// 	validate, err := clusterZero.parseValidationInfo(clusterProgress)
+	// 	clusterState, _ := clusterZero.get()
+	// 	validate, err := clusterZero.Api.Kube.ParseValidationInfo(clusterState)
 	// 	if validate && err == nil {
 	// 		cancel()
 	// 	}
-	// }, 5*time.Second, serviceContext.Done())
+	// }, 5*time.Second, waitContext.Done())
 
 	return nil
 }
 
-func WaitForClusterZeroKubeConfigToExist(clusterZero *clusterZero, directory string, timeoutMins int) error {
+// DEV_NOTES(lranjbar): Potentially redundant? We will fail when making the client if kubeconfig is not around
+func WaitForClusterZeroKubeConfigToExist(clusterZero *zero.ClusterZero, timeoutMins int) error {
 
 	timeout := time.Duration(timeoutMins) * time.Minute
-	serviceContext, cancel := context.WithTimeout(clusterZero.zeroClient.ctx, timeout)
+	waitContext, cancel := context.WithTimeout(clusterZero.Ctx, timeout)
 	defer cancel()
 
 	wait.Until(func() {
-		exist, err := clusterZero.doesKubeConfigExist(directory)
+		exist, err := clusterZero.Api.Kube.DoesKubeConfigExist()
 		if exist && err == nil {
 			logrus.Info("Found kubeconfig")
 			cancel()
 		}
-	}, 5*time.Second, serviceContext.Done())
+	}, 5*time.Second, waitContext.Done())
 
 	return nil
 }
 
-func WaitForClusterZeroKubeAPILive(clusterZero *clusterZero, directory string, timeoutMins int) error {
+func WaitForClusterZeroKubeAPILive(clusterZero *zero.ClusterZero, timeoutMins int) error {
 
 	timeout := time.Duration(timeoutMins) * time.Minute
-	serviceContext, cancel := context.WithTimeout(clusterZero.zeroClient.ctx, timeout)
+	waitContext, cancel := context.WithTimeout(clusterZero.Ctx, timeout)
 	defer cancel()
 
 	wait.Until(func() {
-		live, err := clusterZero.isKubeAPILive(directory)
+		live, err := clusterZero.Api.Kube.IsKubeAPILive()
 		if live && err == nil {
 			logrus.Info("Cluster API Initialized")
 			cancel()
 		}
-	}, 5*time.Second, serviceContext.Done())
+	}, 5*time.Second, waitContext.Done())
+
+	return nil
+}
+
+// TODO(lranjbar): Look at waitForBootStrapConfigMap in the main function
+func WaitForBootstrapConfigMap(clusterZero *zero.ClusterZero, timeoutMins int) error {
 
 	return nil
 }
