@@ -133,7 +133,6 @@ func NewBxClient() (*BxClient, error) {
 
 	bxSess, err := bxsession.New(&bluemix.Config{
 		BluemixAPIKey: pisv.APIKey,
-		Region:        powervs.Regions[pisv.Region].VPCRegion,
 	})
 	if err != nil {
 		return nil, err
@@ -157,6 +156,7 @@ func NewBxClient() (*BxClient, error) {
 	}
 
 	c.AccountAPIV2 = accClient.Accounts()
+	c.Session.Config.Region = powervs.Regions[pisv.Region].VPCRegion
 	return c, nil
 }
 
