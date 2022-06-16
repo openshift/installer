@@ -72,11 +72,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}
 	case powervs.Name:
-		bxCli, err := powervsconfig.NewBxClient()
-		if err != nil {
-			return err
-		}
-		err = bxCli.NewPISession()
+		_, err = powervsconfig.NewClient()
 		if err != nil {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}

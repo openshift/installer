@@ -146,15 +146,11 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		}
 		summarizeReport(reports)
 	case powervs.Name:
-		bxCli, err := configpowervs.NewBxClient()
+		bxCli, err := configpowervs.NewBxClient(false)
 		if err != nil {
 			return errors.Wrap(err, "failed to create bluemix client")
 		}
 
-		err = bxCli.NewPISession()
-		if err != nil {
-			return errors.Wrap(err, "failed to get PowerVS connection details")
-		}
 		err = bxCli.ValidateCloudConnectionInPowerVSRegion(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
 		if err != nil {
 			return errors.Wrap(err, "failed to meet the prerequisite for Cloud Connections")

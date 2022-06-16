@@ -39,6 +39,8 @@ var (
 type BxClient struct {
 	*bxsession.Session
 	APIKey       string
+	Region       string
+	Zone         string
 	PISession    *ibmpisession.IBMPISession
 	User         *User
 	AccountAPIV2 accountv2.Accounts
@@ -51,8 +53,16 @@ type User struct {
 	Account string
 }
 
-// PISessionVars is an object that holds the variables required to create an ibmpisession object.
-type PISessionVars struct {
+// SessionCreds is an object that holds credentials and variables required to create an ibmpisession object.
+type SessionCreds struct {
+	ID            string `json:"id,omitempty"`
+	APIKey        string `json:"apikey,omitempty"`
+	DefaultRegion string `json:"defaultregion,omitempty"`
+	DefaultZone   string `json:"defaultzone,omitempty"`
+}
+
+// SessionVars is an object that holds the variables required to create an ibmpisession object.
+type SessionVars struct {
 	ID     string `json:"id,omitempty"`
 	APIKey string `json:"apikey,omitempty"`
 	Region string `json:"region,omitempty"`
@@ -101,37 +111,16 @@ func fetchUserDetails(sess *bxsession.Session) (*User, error) {
 }
 
 //NewBxClient func returns bluemix client
-func NewBxClient() (*BxClient, error) {
+func NewBxClient(survey bool) (*BxClient, error) {
 	c := &BxClient{}
-
-	var pisv PISessionVars
-	// Grab variables from the installer written authFilePath
-	logrus.Debug("Gathering variables from AuthFile")
-	err := getPISessionVarsFromAuthFile(&pisv)
-	if err != nil {
-		return nil, err
-	}
-
-	// Grab variables from the users environment
-	logrus.Debug("Gathering variables from user environment")
-	err = getPISessionVarsFromEnv(&pisv)
-	if err != nil {
-		return nil, err
-	}
-
-	// Prompt the user for the remaining variables.
-	err = getPISessionVarsFromUser(&pisv)
-	if err != nil {
-		return nil, err
-	}
-
-	// Save variables to disk.
-	err = savePISessionVars(&pisv)
+	pisv, err := getSessionVars(survey)
 	if err != nil {
 		return nil, err
 	}
 
 	c.APIKey = pisv.APIKey
+	c.Region = pisv.Region
+	c.Zone = pisv.Zone
 
 	bxSess, err := bxsession.New(&bluemix.Config{
 		BluemixAPIKey: pisv.APIKey,
@@ -160,6 +149,54 @@ func NewBxClient() (*BxClient, error) {
 	c.AccountAPIV2 = accClient.Accounts()
 	c.Session.Config.Region = powervs.Regions[pisv.Region].VPCRegion
 	return c, nil
+}
+
+func getSessionVars(survey bool) (SessionVars, error) {
+	var pisv SessionVars
+	var pisc SessionCreds
+
+	// Grab credentials from the installer written authFilePath
+	logrus.Debug("Gathering credentials from AuthFile")
+	err := getSessionCredsFromAuthFile(&pisc)
+	if err != nil {
+		return pisv, err
+	}
+
+	// Transfer creds to vars if they were found in the AuthFile
+	pisv.ID = pisc.ID
+	pisv.APIKey = pisc.APIKey
+	if !survey {
+		pisv.Region = pisc.DefaultRegion
+		pisv.Zone = pisc.DefaultZone
+	}
+	// Grab variables from the users environment
+	logrus.Debug("Gathering variables from user environment")
+	err = getSessionVarsFromEnv(&pisv)
+	if err != nil {
+		return pisv, err
+	}
+
+	if survey {
+		// Prompt the user for the remaining variables.
+		err = getSessionVarsFromUser(&pisv, &pisc)
+		if err != nil {
+			return pisv, err
+		}
+	}
+
+	// Transfer vars to creds to write out creds not found in AuthFile
+	pisc.ID = pisv.ID
+	pisc.APIKey = pisv.APIKey
+	pisc.DefaultRegion = pisv.Region
+	pisc.DefaultZone = pisv.Zone
+
+	// Save credentials to disk.
+	err = saveSessionCreds(&pisc)
+	if err != nil {
+		return pisv, err
+	}
+
+	return pisv, nil
 }
 
 //GetAccountType func return the type of account TRAIL/PAID
@@ -242,15 +279,6 @@ func (c *BxClient) ValidateCloudConnectionInPowerVSRegion(ctx context.Context, s
 
 // NewPISession updates pisession details, return error on fail
 func (c *BxClient) NewPISession() error {
-	var pisv PISessionVars
-
-	// Grab variables from the installer written authFilePath
-	logrus.Debug("Gathering variables from AuthFile")
-	err := getPISessionVarsFromAuthFile(&pisv)
-	if err != nil {
-		return err
-	}
-
 	var authenticator core.Authenticator = &core.IamAuthenticator{
 		ApiKey: c.APIKey,
 	}
@@ -259,11 +287,11 @@ func (c *BxClient) NewPISession() error {
 	options := &ibmpisession.IBMPIOptions{
 		Authenticator: authenticator,
 		UserAccount:   c.User.Account,
-		Region:        pisv.Region,
-		Zone:          pisv.Zone,
+		Region:        c.Region,
+		Zone:          c.Zone,
 		Debug:         false,
 	}
-
+	var err error
 	c.PISession, err = ibmpisession.NewIBMPISession(options)
 	if err != nil {
 		return err
@@ -276,10 +304,10 @@ func (c *BxClient) GetBxClientAPIKey() string {
 	return c.APIKey
 }
 
-func getPISessionVarsFromAuthFile(pisv *PISessionVars) error {
+func getSessionCredsFromAuthFile(pisc *SessionCreds) error {
 
-	if pisv == nil {
-		return errors.New("nil var: PISessionVars")
+	if pisc == nil {
+		return errors.New("nil var: SessionVars")
 	}
 
 	authFilePath := defaultAuthFilePath
@@ -296,7 +324,7 @@ func getPISessionVarsFromAuthFile(pisv *PISessionVars) error {
 		return err
 	}
 
-	err = json.Unmarshal(content, pisv)
+	err = json.Unmarshal(content, pisc)
 	if err != nil {
 		return err
 	}
@@ -304,7 +332,7 @@ func getPISessionVarsFromAuthFile(pisv *PISessionVars) error {
 	return nil
 }
 
-func getPISessionVarsFromEnv(pisv *PISessionVars) error {
+func getSessionVarsFromEnv(pisv *SessionVars) error {
 
 	if pisv == nil {
 		return errors.New("nil var: PiSessionVars")
@@ -333,7 +361,7 @@ func getPISessionVarsFromEnv(pisv *PISessionVars) error {
 	return nil
 }
 
-func getPISessionVarsFromUser(pisv *PISessionVars) error {
+func getSessionVarsFromUser(pisv *SessionVars, pisc *SessionCreds) error {
 	var err error
 
 	if pisv == nil {
@@ -371,7 +399,7 @@ func getPISessionVarsFromUser(pisv *PISessionVars) error {
 	}
 
 	if len(pisv.Region) == 0 {
-		pisv.Region, err = GetRegion()
+		pisv.Region, err = GetRegion(pisc.DefaultRegion)
 		if err != nil {
 			return err
 		}
@@ -379,7 +407,7 @@ func getPISessionVarsFromUser(pisv *PISessionVars) error {
 	}
 
 	if len(pisv.Zone) == 0 {
-		pisv.Zone, err = GetZone(pisv.Region)
+		pisv.Zone, err = GetZone(pisv.Region, pisc.DefaultZone)
 		if err != nil {
 			return err
 		}
@@ -388,14 +416,14 @@ func getPISessionVarsFromUser(pisv *PISessionVars) error {
 	return nil
 }
 
-func savePISessionVars(pisv *PISessionVars) error {
+func saveSessionCreds(pisc *SessionCreds) error {
 
 	authFilePath := defaultAuthFilePath
 	if f := os.Getenv("POWERVS_AUTH_FILEPATH"); len(f) > 0 {
 		authFilePath = f
 	}
 
-	jsonVars, err := json.Marshal(*pisv)
+	jsonVars, err := json.Marshal(*pisc)
 	if err != nil {
 		return err
 	}

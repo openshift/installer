@@ -165,7 +165,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		err      error
 	)
 
-	bxClient, err = powervs.NewBxClient()
+	bxClient, err = powervs.NewBxClient(false)
 	if err != nil {
 		return nil, err
 	}

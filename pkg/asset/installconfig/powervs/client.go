@@ -59,7 +59,7 @@ type DNSZoneResponse struct {
 
 // NewClient initializes a client with a session.
 func NewClient() (*Client, error) {
-	bxCli, err := NewBxClient()
+	bxCli, err := NewBxClient(false)
 	if err != nil {
 		return nil, err
 	}

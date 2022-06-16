@@ -92,7 +92,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 	case ibmcloud.Name:
 		// TODO: IBM[#90]: platformpermscheck
 	case powervs.Name:
-		bxCli, err := powervsconfig.NewBxClient()
+		bxCli, err := powervsconfig.NewBxClient(false)
 		if err != nil {
 			return err
 		}

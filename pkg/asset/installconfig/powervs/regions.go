@@ -48,7 +48,7 @@ func IsKnownZone(region string, zone string) bool {
 }
 
 // GetRegion prompts the user to select a region and returns that region.
-func GetRegion() (string, error) {
+func GetRegion(defaultRegion string) (string, error) {
 	regions := knownRegions()
 
 	longRegions := make([]string, 0, len(regions))
@@ -71,12 +71,19 @@ func GetRegion() (string, error) {
 	}
 
 	var region string
+	li := sort.SearchStrings(shortRegions, defaultRegion)
+	if li == len(shortRegions) || shortRegions[li] != defaultRegion {
+		defaultRegion = ""
+	} else {
+		defaultRegion = longRegions[li]
+	}
 
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The Power VS region to be used for installation.",
+				Default: fmt.Sprintf("%s", defaultRegion),
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
@@ -98,9 +105,11 @@ func GetRegion() (string, error) {
 }
 
 // GetZone prompts the user for a zone given a zone.
-func GetZone(region string) (string, error) {
+func GetZone(region string, defaultZone string) (string, error) {
 	zones := knownZones(region)
-	defaultZone := zones[0]
+	if len(defaultZone) == 0 {
+		defaultZone = zones[0]
+	}
 
 	var zoneTransform survey.Transformer = func(ans interface{}) interface{} {
 		switch v := ans.(type) {
