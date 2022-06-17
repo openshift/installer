@@ -81,7 +81,6 @@ func TestIgnition_addStaticNetworkConfig(t *testing.T) {
 			expectedFileList: []string{
 				"/etc/assisted/network/host0/eth0.nmconnection",
 				"/etc/assisted/network/host0/mac_interface.ini",
-				"/usr/local/bin/pre-network-manager-config.sh",
 			},
 		},
 		{

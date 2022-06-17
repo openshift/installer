@@ -181,11 +181,6 @@ func addStaticNetworkConfig(config *igntypes.Config, staticNetworkConfig []*mode
 		config.Storage.Files = append(config.Storage.Files, nmStateIgnFile)
 	}
 
-	nmStateScriptFilePath := "/usr/local/bin/pre-network-manager-config.sh"
-	// A local version of the assisted-service internal script is currently used
-	nmStateScript := ignition.FileFromBytes(nmStateScriptFilePath, "root", 0755, []byte(manifests.PreNetworkConfigScript))
-	config.Storage.Files = append(config.Storage.Files, nmStateScript)
-
 	return nil
 }
 
