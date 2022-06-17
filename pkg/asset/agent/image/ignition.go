@@ -71,13 +71,15 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
+		&manifests.AgentConfigAsset{},
 	}
 }
 
 // Generate generates the agent installer ignition.
 func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentManifests := &manifests.AgentManifests{}
-	dependencies.Get(agentManifests)
+	agentConfigAsset := &manifests.AgentConfigAsset{}
+	dependencies.Get(agentManifests, agentConfigAsset)
 
 	infraEnv := agentManifests.InfraEnv
 
@@ -124,6 +126,13 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		manifestFile := ignition.FileFromBytes(filepath.Join(manifestPath, filepath.Base(file.Filename)),
 			"root", 0600, file.Data)
 		config.Storage.Files = append(config.Storage.Files, manifestFile)
+	}
+
+	// add AgentConfig if provided
+	if agentConfigAsset.Config != nil {
+		agentConfigFile := ignition.FileFromBytes(filepath.Join(manifestPath, filepath.Base(agentConfigAsset.File.Filename)),
+			"root", 0600, agentConfigAsset.File.Data)
+		config.Storage.Files = append(config.Storage.Files, agentConfigFile)
 	}
 
 	err = addStaticNetworkConfig(&config, agentManifests.StaticNetworkConfigs)

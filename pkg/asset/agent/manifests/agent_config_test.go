@@ -1,0 +1,231 @@
+package manifests
+
+import (
+	"os"
+	"testing"
+
+	"github.com/golang/mock/gomock"
+	metal3v1alpha1 "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func TestAgentConfig_LoadedFromDisk(t *testing.T) {
+	falseBool := false
+	falsePtr := &falseBool
+
+	cases := []struct {
+		name           string
+		data           string
+		fetchError     error
+		expectedFound  bool
+		expectedError  string
+		expectedConfig *AgentConfig
+	}{
+		{
+			name: "valid-config-single-node",
+			data: `
+metadata:
+  name: agent-config-cluster0
+spec:
+  node0: control-0.example.org
+  nodes:
+    - hostname: control-0.example.org
+      role: master
+      rootDeviceHints:
+        deviceName: "/dev/sda"
+        hctl: "hctl-value"
+        model: "model-value"
+        vendor: "vendor-value"
+        serialNumber: "serial-number-value"
+        minSizeGigabytes: 20
+        wwn: "wwn-value"
+        wwnWithExtension: "wwn-with-extension-value"
+        wwnVendorExtension: "wwn-vendor-extension-value"
+        rotational: false
+      interfaces:
+        - name: enp2s0
+          macAddress: 98:af:65:a5:8d:01
+        - name: enp3s1
+          macAddress: 28:d2:44:d2:b2:1a`,
+			expectedFound: true,
+			expectedConfig: &AgentConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "agent-config-cluster0",
+				},
+				Spec: AgentConfigSpec{
+					Node0: "control-0.example.org",
+					Nodes: []AgentConfigNode{
+						{
+							Hostname: "control-0.example.org",
+							Role:     "master",
+							RootDeviceHints: metal3v1alpha1.RootDeviceHints{
+								DeviceName:         "/dev/sda",
+								HCTL:               "hctl-value",
+								Model:              "model-value",
+								Vendor:             "vendor-value",
+								SerialNumber:       "serial-number-value",
+								MinSizeGigabytes:   20,
+								WWN:                "wwn-value",
+								WWNWithExtension:   "wwn-with-extension-value",
+								WWNVendorExtension: "wwn-vendor-extension-value",
+								Rotational:         falsePtr,
+							},
+							Interfaces: []*aiv1beta1.Interface{
+								{
+									Name:       "enp2s0",
+									MacAddress: "98:af:65:a5:8d:01",
+								},
+								{
+									Name:       "enp3s1",
+									MacAddress: "28:d2:44:d2:b2:1a",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid-config-multiple-nodes",
+			data: `
+metadata:
+  name: agent-config-cluster0
+spec:
+  node0: control-0.example.org
+  nodes:
+    - hostname: control-0.example.org
+      role: master
+      rootDeviceHints:
+        deviceName: "/dev/sda"
+        hctl: "hctl-value"
+        model: "model-value"
+        vendor: "vendor-value"
+        serialNumber: "serial-number-value"
+        minSizeGigabytes: 20
+        wwn: "wwn-value"
+        wwnWithExtension: "wwn-with-extension-value"
+        wwnVendorExtension: "wwn-vendor-extension-value"
+        rotational: false
+      interfaces:
+        - name: enp2s0
+          macAddress: 98:af:65:a5:8d:01
+        - name: enp3s1
+          macAddress: 28:d2:44:d2:b2:1a
+    - hostname: control-1.example.org
+      role: master
+      interfaces:
+        - name: enp2s0
+          macAddress: 98:af:65:a5:8d:02
+        - name: enp3s1
+          macAddress: 28:d2:44:d2:b2:1b`,
+			expectedFound: true,
+			expectedConfig: &AgentConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "agent-config-cluster0",
+				},
+				Spec: AgentConfigSpec{
+					Node0: "control-0.example.org",
+					Nodes: []AgentConfigNode{
+						{
+							Hostname: "control-0.example.org",
+							Role:     "master",
+							RootDeviceHints: metal3v1alpha1.RootDeviceHints{
+								DeviceName:         "/dev/sda",
+								HCTL:               "hctl-value",
+								Model:              "model-value",
+								Vendor:             "vendor-value",
+								SerialNumber:       "serial-number-value",
+								MinSizeGigabytes:   20,
+								WWN:                "wwn-value",
+								WWNWithExtension:   "wwn-with-extension-value",
+								WWNVendorExtension: "wwn-vendor-extension-value",
+								Rotational:         falsePtr,
+							},
+							Interfaces: []*aiv1beta1.Interface{
+								{
+									Name:       "enp2s0",
+									MacAddress: "98:af:65:a5:8d:01",
+								},
+								{
+									Name:       "enp3s1",
+									MacAddress: "28:d2:44:d2:b2:1a",
+								},
+							},
+						},
+						{
+							Hostname: "control-1.example.org",
+							Role:     "master",
+							Interfaces: []*aiv1beta1.Interface{
+								{
+									Name:       "enp2s0",
+									MacAddress: "98:af:65:a5:8d:02",
+								},
+								{
+									Name:       "enp3s1",
+									MacAddress: "28:d2:44:d2:b2:1b",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:          "not-yaml",
+			data:          `This is not a yaml file`,
+			expectedError: "failed to unmarshal cluster-manifests/agent-config.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type manifests.AgentConfig",
+		},
+		{
+			name:       "file-not-found",
+			fetchError: &os.PathError{Err: os.ErrNotExist},
+		},
+		{
+			name:          "error-fetching-file",
+			fetchError:    errors.New("fetch failed"),
+			expectedError: "failed to load cluster-manifests/agent-config.yaml file: fetch failed",
+		},
+		{
+			name: "unknown-field",
+			data: `
+		metadata:
+		  name: agent-config-wrong
+		spec:
+		  wrongField: wrongValue`,
+			expectedError: "failed to unmarshal cluster-manifests/agent-config.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+			fileFetcher.EXPECT().FetchByName(agentConfigFilename).
+				Return(
+					&asset.File{
+						Filename: agentConfigFilename,
+						Data:     []byte(tc.data)},
+					tc.fetchError,
+				)
+
+			asset := &AgentConfigAsset{}
+			found, err := asset.Load(fileFetcher)
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
+			if tc.expectedFound {
+				assert.Equal(t, tc.expectedConfig, asset.Config, "unexpected Config in AgentConfig")
+			}
+		})
+	}
+
+}
