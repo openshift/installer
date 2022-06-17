@@ -527,6 +527,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		var cisCRN, dnsID string
+		vpcPermitted := false
 
 		if installConfig.Config.Publish == types.InternalPublishingStrategy {
 			// Get DNSInstanceCRN from InstallConfig metadata
@@ -536,6 +537,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 			if dnsInstance != nil {
 				dnsID = dnsInstance.ID
+			}
+			// If the VPC already exists and the cluster is Private, check if the VPC is already a Permitted Network on DNS Instance
+			if preexistingVPC {
+				vpcPermitted, err = installConfig.IBMCloud.IsVPCPermittedNetwork(ctx, installConfig.Config.Platform.IBMCloud.VPCName)
+				if err != nil {
+					return err
+				}
 			}
 		} else {
 			// Get CISInstanceCRN from InstallConfig metadata
@@ -556,6 +564,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PreexistingVPC:       preexistingVPC,
 				PublishStrategy:      installConfig.Config.Publish,
 				ResourceGroupName:    installConfig.Config.Platform.IBMCloud.ResourceGroupName,
+				VPCPermitted:         vpcPermitted,
 				WorkerConfigs:        workerConfigs,
 				WorkerDedicatedHosts: workerDedicatedHosts,
 			},

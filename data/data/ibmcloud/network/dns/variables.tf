@@ -10,6 +10,10 @@ variable "vpc_crn" {
   type = string
 }
 
+variable "vpc_permitted" {
+  type = bool
+}
+
 variable "base_domain" {
   type = string
 }

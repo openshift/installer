@@ -61,6 +61,12 @@ variable "ibmcloud_preexisting_vpc" {
   default     = false
 }
 
+variable "ibmcloud_vpc_permitted" {
+  type        = bool
+  description = "Specifies whether an existing VPC is already a Permitted Network for DNS Instance, for Private clusters."
+  default     = false
+}
+
 variable "ibmcloud_vpc" {
   type        = string
   description = "The name of an existing cluster VPC."

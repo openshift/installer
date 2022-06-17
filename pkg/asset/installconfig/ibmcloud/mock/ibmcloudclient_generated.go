@@ -86,6 +86,21 @@ func (mr *MockAPIMockRecorder) GetDNSInstance(ctx, crnstr interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSInstance", reflect.TypeOf((*MockAPI)(nil).GetDNSInstance), ctx, crnstr)
 }
 
+// GetDNSInstancePermittedNetworks mocks base method.
+func (m *MockAPI) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID, dnsZone string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDNSInstancePermittedNetworks", ctx, dnsID, dnsZone)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDNSInstancePermittedNetworks indicates an expected call of GetDNSInstancePermittedNetworks.
+func (mr *MockAPIMockRecorder) GetDNSInstancePermittedNetworks(ctx, dnsID, dnsZone interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSInstancePermittedNetworks", reflect.TypeOf((*MockAPI)(nil).GetDNSInstancePermittedNetworks), ctx, dnsID, dnsZone)
+}
+
 // GetDNSRecordsByName mocks base method.
 func (m *MockAPI) GetDNSRecordsByName(ctx context.Context, crnstr, zoneID, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error) {
 	m.ctrl.T.Helper()
@@ -249,6 +264,21 @@ func (m *MockAPI) GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error) 
 func (mr *MockAPIMockRecorder) GetVPC(ctx, vpcID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPC", reflect.TypeOf((*MockAPI)(nil).GetVPC), ctx, vpcID)
+}
+
+// GetVPCByName mocks base method.
+func (m *MockAPI) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVPCByName", ctx, vpcName)
+	ret0, _ := ret[0].(*vpcv1.VPC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVPCByName indicates an expected call of GetVPCByName.
+func (mr *MockAPIMockRecorder) GetVPCByName(ctx, vpcName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCByName", reflect.TypeOf((*MockAPI)(nil).GetVPCByName), ctx, vpcName)
 }
 
 // GetVPCZonesForRegion mocks base method.

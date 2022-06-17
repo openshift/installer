@@ -38,6 +38,7 @@ type config struct {
 	ImageFilePath           string          `json:"ibmcloud_image_filepath,omitempty"`
 	PreexistingVPC          bool            `json:"ibmcloud_preexisting_vpc,omitempty"`
 	VPC                     string          `json:"ibmcloud_vpc,omitempty"`
+	VPCPermitted            bool            `json:"ibmcloud_vpc_permitted,omitempty"`
 	ControlPlaneSubnets     []string        `json:"ibmcloud_control_plane_subnets,omitempty"`
 	ComputeSubnets          []string        `json:"ibmcloud_compute_subnets,omitempty"`
 }
@@ -53,6 +54,7 @@ type TFVarsSources struct {
 	PreexistingVPC       bool
 	PublishStrategy      types.PublishingStrategy
 	ResourceGroupName    string
+	VPCPermitted         bool
 	WorkerConfigs        []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	WorkerDedicatedHosts []DedicatedHost
 }
@@ -104,6 +106,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		WorkerDedicatedHosts:    sources.WorkerDedicatedHosts,
 		PreexistingVPC:          sources.PreexistingVPC,
 		VPC:                     vpc,
+		VPCPermitted:            sources.VPCPermitted,
 		ControlPlaneSubnets:     masterSubnets,
 		ComputeSubnets:          workerSubnets,
 
