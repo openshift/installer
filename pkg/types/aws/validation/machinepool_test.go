@@ -122,7 +122,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "invalid metadata auth option",
 			pool: &aws.MachinePool{
-				EC2Metadata: aws.EC2Metadata{
+				EC2Metadata: &aws.EC2Metadata{
 					Authentication: "foobarbaz",
 				},
 			},

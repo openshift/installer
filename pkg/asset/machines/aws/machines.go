@@ -78,7 +78,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 	return machines, nil
 }
 
-func provider(clusterID string, region string, subnet string, instanceType string, root *aws.EC2RootVolume, imds aws.EC2Metadata, osImage string, zone, role, userDataSecret string, userTags map[string]string) (*machineapi.AWSMachineProviderConfig, error) {
+func provider(clusterID string, region string, subnet string, instanceType string, root *aws.EC2RootVolume, imds *aws.EC2Metadata, osImage string, zone, role, userDataSecret string, userTags map[string]string) (*machineapi.AWSMachineProviderConfig, error) {
 	tags, err := tagsFromUserTags(clusterID, userTags)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
@@ -131,7 +131,7 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 		config.AMI.ID = pointer.StringPtr(osImage)
 	}
 
-	if imds.Authentication != "" {
+	if imds != nil && imds.Authentication != "" {
 		config.MetadataServiceOptions.Authentication = machineapi.MetadataServiceAuthentication(imds.Authentication)
 	}
 

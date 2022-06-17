@@ -28,7 +28,7 @@ type MachinePool struct {
 	// EC2MetadataOptions defines metadata service interaction options for EC2 instances in the machine pool.
 	//
 	// +optional
-	EC2Metadata EC2Metadata `json:"metadataService"`
+	EC2Metadata *EC2Metadata `json:"metadataService,omitempty"`
 
 	// IAMRole is the name of the IAM Role to use for the instance profile of the machine.
 	// Leave unset to have the installer create the IAM Role on your behalf.
@@ -67,7 +67,7 @@ func (a *MachinePool) Set(required *MachinePool) {
 		a.EC2RootVolume.KMSKeyARN = required.EC2RootVolume.KMSKeyARN
 	}
 
-	if required.EC2Metadata.Authentication != "" {
+	if required.EC2Metadata != nil && required.EC2Metadata.Authentication != "" {
 		a.EC2Metadata.Authentication = required.EC2Metadata.Authentication
 	}
 
