@@ -198,6 +198,52 @@ spec:
 		  wrongField: wrongValue`,
 			expectedError: "failed to unmarshal cluster-manifests/agent-config.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
 		},
+		{
+			name: "interface-missing-mac-address-error",
+			data: `
+metadata:
+  name: agent-config-cluster0
+spec:
+  node0: control-0.example.org
+  nodes:
+    - hostname: control-0.example.org
+      interfaces:
+        - name: enp2s0
+        - name: enp3s1
+          macAddress: 28:d2:44:d2:b2:1a`,
+			expectedError: "invalid Agent Config configuration: Spec.Nodes.Interfaces.macAddress: Required value: each interface must have a mac address defined",
+		},
+		{
+			name: "node-hostname-and-role-are-not-required",
+			data: `
+metadata:
+  name: agent-config-cluster0
+spec:
+  node0: control-0.example.org
+  nodes:
+    - interfaces:
+        - name: enp3s1
+          macAddress: 28:d2:44:d2:b2:1a`,
+			expectedFound: true,
+			expectedConfig: &AgentConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "agent-config-cluster0",
+				},
+				Spec: AgentConfigSpec{
+					Node0: "control-0.example.org",
+					Nodes: []AgentConfigNode{
+						{
+							Interfaces: []*aiv1beta1.Interface{
+								{
+									Name:       "enp3s1",
+									MacAddress: "28:d2:44:d2:b2:1a",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

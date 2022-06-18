@@ -80,5 +80,34 @@ func (a *AgentConfigAsset) finish() error {
 
 func (a *AgentConfigAsset) validateAgent() field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	if err := a.validateNodesHaveAtLeastOneMacAddressDefined(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	return allErrs
+}
+
+func (a *AgentConfigAsset) validateNodesHaveAtLeastOneMacAddressDefined() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if len(a.Config.Spec.Nodes) == 0 {
+		return allErrs
+	}
+
+	for i := range a.Config.Spec.Nodes {
+		node := a.Config.Spec.Nodes[i]
+		if len(node.Interfaces) == 0 {
+			interfacePath := field.NewPath("Spec", "Nodes", "Interfaces", "macAddress")
+			allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
+		}
+
+		for j := range node.Interfaces {
+			if node.Interfaces[j].MacAddress == "" {
+				macAddressPath := field.NewPath("Spec", "Nodes", "Interfaces", "macAddress")
+				allErrs = append(allErrs, field.Required(macAddressPath, "each interface must have a mac address defined"))
+			}
+		}
+	}
 	return allErrs
 }
