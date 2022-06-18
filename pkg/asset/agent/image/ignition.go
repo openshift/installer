@@ -11,6 +11,7 @@ import (
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -71,14 +72,14 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
-		&manifests.AgentConfigAsset{},
+		&agentconfig.Asset{},
 	}
 }
 
 // Generate generates the agent installer ignition.
 func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentManifests := &manifests.AgentManifests{}
-	agentConfigAsset := &manifests.AgentConfigAsset{}
+	agentConfigAsset := &agentconfig.Asset{}
 	dependencies.Get(agentManifests, agentConfigAsset)
 
 	infraEnv := agentManifests.InfraEnv

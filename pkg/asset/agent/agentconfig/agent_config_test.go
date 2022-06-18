@@ -1,14 +1,14 @@
-package manifests
+package agentconfig
 
 import (
 	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	metal3v1alpha1 "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,8 +32,8 @@ func TestAgentConfig_LoadedFromDisk(t *testing.T) {
 metadata:
   name: agent-config-cluster0
 spec:
-  node0: control-0.example.org
-  nodes:
+  rendezvousIP: 192.168.111.80
+  hosts:
     - hostname: control-0.example.org
       role: master
       rootDeviceHints:
@@ -57,13 +57,13 @@ spec:
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
-				Spec: AgentConfigSpec{
-					Node0: "control-0.example.org",
-					Nodes: []AgentConfigNode{
+				Spec: Spec{
+					RendezvousIP: "192.168.111.80",
+					Hosts: []Host{
 						{
 							Hostname: "control-0.example.org",
 							Role:     "master",
-							RootDeviceHints: metal3v1alpha1.RootDeviceHints{
+							RootDeviceHints: baremetal.RootDeviceHints{
 								DeviceName:         "/dev/sda",
 								HCTL:               "hctl-value",
 								Model:              "model-value",
@@ -96,8 +96,8 @@ spec:
 metadata:
   name: agent-config-cluster0
 spec:
-  node0: control-0.example.org
-  nodes:
+  rendezvousIP: 192.168.111.80
+  hosts:
     - hostname: control-0.example.org
       role: master
       rootDeviceHints:
@@ -128,13 +128,13 @@ spec:
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
-				Spec: AgentConfigSpec{
-					Node0: "control-0.example.org",
-					Nodes: []AgentConfigNode{
+				Spec: Spec{
+					RendezvousIP: "192.168.111.80",
+					Hosts: []Host{
 						{
 							Hostname: "control-0.example.org",
 							Role:     "master",
-							RootDeviceHints: metal3v1alpha1.RootDeviceHints{
+							RootDeviceHints: baremetal.RootDeviceHints{
 								DeviceName:         "/dev/sda",
 								HCTL:               "hctl-value",
 								Model:              "model-value",
@@ -178,7 +178,7 @@ spec:
 		{
 			name:          "not-yaml",
 			data:          `This is not a yaml file`,
-			expectedError: "failed to unmarshal cluster-manifests/agent-config.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type manifests.AgentConfig",
+			expectedError: "failed to unmarshal agent-config.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type agentconfig.AgentConfig",
 		},
 		{
 			name:       "file-not-found",
@@ -187,7 +187,7 @@ spec:
 		{
 			name:          "error-fetching-file",
 			fetchError:    errors.New("fetch failed"),
-			expectedError: "failed to load cluster-manifests/agent-config.yaml file: fetch failed",
+			expectedError: "failed to load agent-config.yaml file: fetch failed",
 		},
 		{
 			name: "unknown-field",
@@ -196,7 +196,7 @@ spec:
 		  name: agent-config-wrong
 		spec:
 		  wrongField: wrongValue`,
-			expectedError: "failed to unmarshal cluster-manifests/agent-config.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
+			expectedError: "failed to unmarshal agent-config.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
 		},
 		{
 			name: "interface-missing-mac-address-error",
@@ -204,14 +204,14 @@ spec:
 metadata:
   name: agent-config-cluster0
 spec:
-  node0: control-0.example.org
-  nodes:
+  rendezvousIP: 192.168.111.80
+  hosts:
     - hostname: control-0.example.org
       interfaces:
         - name: enp2s0
         - name: enp3s1
           macAddress: 28:d2:44:d2:b2:1a`,
-			expectedError: "invalid Agent Config configuration: Spec.Nodes.Interfaces.macAddress: Required value: each interface must have a mac address defined",
+			expectedError: "invalid Agent Config configuration: Spec.Hosts.Interfaces.macAddress: Required value: each interface must have a MAC address defined",
 		},
 		{
 			name: "node-hostname-and-role-are-not-required",
@@ -219,8 +219,8 @@ spec:
 metadata:
   name: agent-config-cluster0
 spec:
-  node0: control-0.example.org
-  nodes:
+  rendezvousIP: 192.168.111.80
+  hosts:
     - interfaces:
         - name: enp3s1
           macAddress: 28:d2:44:d2:b2:1a`,
@@ -229,9 +229,9 @@ spec:
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
-				Spec: AgentConfigSpec{
-					Node0: "control-0.example.org",
-					Nodes: []AgentConfigNode{
+				Spec: Spec{
+					RendezvousIP: "192.168.111.80",
+					Hosts: []Host{
 						{
 							Interfaces: []*aiv1beta1.Interface{
 								{
@@ -260,7 +260,7 @@ spec:
 					tc.fetchError,
 				)
 
-			asset := &AgentConfigAsset{}
+			asset := &Asset{}
 			found, err := asset.Load(fileFetcher)
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())
