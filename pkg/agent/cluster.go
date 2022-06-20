@@ -164,6 +164,10 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 			return false, errors.New("cluster metadata returned nil from Agent Rest API")
 		}
 
+		if !checkHostsValidations(clusterMetadata, logrus.StandardLogger()) {
+			return false, errors.New("cluster host validations failed")
+		}
+
 		czero.PrintInstallStatus(clusterMetadata)
 		czero.installHistory.RestAPIPreviousClusterStatus = *clusterMetadata.Status
 
